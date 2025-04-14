@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -372,7 +372,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature, LLM_IF_Tools_WebSearch], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
     chatPrice: { input: 2.5, output: 10 },
     isPreview: true,
@@ -385,7 +385,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature, LLM_IF_Tools_WebSearch], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
     chatPrice: { input: 2.5, output: 10 },
     isPreview: true,
@@ -562,7 +562,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature, LLM_IF_Tools_WebSearch], // NOTE: this support function calling, but only its own, not a Custom Function
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
     chatPrice: { input: 0.15, output: 0.6 },
     isPreview: true,
@@ -575,7 +575,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature, LLM_IF_Tools_WebSearch], // NOTE: this support function calling, but only its own, not a Custom Function
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
     chatPrice: { input: 0.15, output: 0.6 },
     isPreview: true,

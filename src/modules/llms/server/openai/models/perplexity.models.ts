@@ -1,6 +1,6 @@
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
 
@@ -10,7 +10,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Deep Research 🌐',
     description: 'Expert-level research model conducting exhaustive searches and generating comprehensive reports with 128k context window',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 2,
       output: 8,
@@ -26,7 +26,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Premier reasoning model powered by DeepSeek R1 with Chain of Thought (CoT), 128k context window and 8k max output tokens',
     contextWindow: 128000,
     maxCompletionTokens: 8000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 2,
       output: 8,
@@ -38,7 +38,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Reasoning 🌐',
     description: 'Fast, real-time reasoning model with Chain of Thought (CoT) and 128k context window. Based on DeepSeek R1.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 1,
       output: 5,
@@ -51,7 +51,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Advanced search model with enhanced capabilities and 200k context window, optimized for complex queries',
     contextWindow: 200000,
     maxCompletionTokens: 8000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 3,
       output: 15,
@@ -64,7 +64,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Lightweight, cost-effective search model with 128k context window for quick, grounded answers',
     contextWindow: 128000,
     maxCompletionTokens: 4000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 1,
       output: 1,
@@ -90,7 +90,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Small Online (Legacy)',
     description: 'Llama 3.1 Sonar Small 128k Online (Legacy, deprecated after 2/22/2025)',
     contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 0.2,
       output: 0.2,
@@ -103,7 +103,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Large Online (Legacy)',
     description: 'Llama 3.1 Sonar Large 128k Online (Legacy, deprecated after 2/22/2025)',
     contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 1,
       output: 1,
@@ -116,7 +116,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Huge Online (Legacy)',
     description: 'Llama 3.1 Sonar Huge 128k Online (Legacy, deprecated after 2/22/2025)',
     contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     chatPrice: {
       input: 5,
       output: 5,

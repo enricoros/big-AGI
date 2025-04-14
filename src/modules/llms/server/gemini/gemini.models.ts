@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -168,7 +168,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-live-001',
     labelOverride: 'Gemini 2.0 Flash Live',
     chatPrice: gemini20FlashLivePricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_Outputs_Audio, LLM_IF_GEM_CodeExecution],
     isPreview: true,
   },
 
@@ -211,6 +211,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpFree,
     interfaces: [
       LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_CodeExecution,
+      LLM_IF_Outputs_Image,
       LLM_IF_HOTFIX_StripSys0, // This first Gemini Image Generation model does not support the developer instruction
     ],
     parameterSpecs: [],
@@ -427,7 +428,7 @@ const _knownGeminiModels: ({
     id: 'models/imagen-3.0-generate-002',
     isPreview: false,
     // chatPrice: { input: 0.03, output: 0.03 }, // per image pricing
-    interfaces: [], // Not a chat model
+    interfaces: [LLM_IF_Outputs_Image], // Not a chat model
     hidden: true, // Not accessible through the normal chat interface
   },
 
