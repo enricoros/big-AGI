@@ -28,7 +28,8 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
-import { VoiceSettings } from './VoiceSettings';
+import { MicrophoneSettings } from './voice/MicrophoneSettings';
+import { GeneralVoiceSettings } from './voice/GeneralVoiceSettings';
 
 
 // configuration
@@ -270,8 +271,11 @@ export function SettingsModal(props: {
 
         <TabPanel value='voice' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
+            <Topic>
+              <GeneralVoiceSettings />
+            </Topic>
             <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
-              <VoiceSettings />
+              <MicrophoneSettings />
             </Topic>
             <Topic icon={/*'📢'*/ <RecordVoiceOverIcon />} title='ElevenLabs API'>
               <ElevenlabsSettings />

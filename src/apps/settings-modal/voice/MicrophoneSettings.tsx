@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { FormControl } from '@mui/joy';
 
-import { useChatMicTimeoutMs } from '../chat/store-app-chat';
+import { useChatMicTimeoutMs } from '../../chat/store-app-chat';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
@@ -10,7 +10,7 @@ import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
-export function VoiceSettings() {
+export function MicrophoneSettings() {
 
   // external state
   const isMobile = useIsMobile();
