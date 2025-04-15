@@ -1,6 +1,6 @@
 import { Is } from '~/common/util/pwaUtils';
 
-import { createSpeechRecognitionResults, IRecognitionEngine, SpeechDoneReason, SpeechRecognitionState, SpeechResult } from './useSpeechRecognition';
+import { createSpeechRecognitionResults, IRecognitionEngine, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechDoneReason, SpeechRecognitionState, SpeechResult } from './useSpeechRecognition';
 
 
 /**
@@ -76,6 +76,13 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
       this.withinBeginEnd = false;          // instant
       setState({ isActive: false });  // delayed
 
+      /**
+       * Important edge case: when termination is not manually requested, or in general when the end comes before
+       * an onresult with a final result, we may lose the last interim result.
+       */
+      if (this.results.interimTranscript && this.results.interimTranscript !== PLACEHOLDER_INTERIM_TRANSCRIPT) {
+        this.results.transcript = _chunkExpressionReplaceEN(((this.results.transcript + ' ').trim() + this.results.interimTranscript + ' '));
+      }
       this.results.interimTranscript = '';
       this.results.done = true;
       this.results.doneReason = this.results.doneReason ?? 'api-unknown-timeout';
