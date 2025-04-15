@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Checkbox, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -9,8 +11,7 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
-
-import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
+import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHorizontal';
@@ -20,6 +21,7 @@ import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSpl
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { optimaActions } from '~/common/layout/optima/useOptima';
+import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
 import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
@@ -54,6 +56,14 @@ export function ChatPane(props: {
   const { canAddPane, isMultiPane } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
+
+  const { isArchived, setArchived } = useChatStore(useShallow((state) => {
+    const conversation = state.conversations.find(_c => _c.id === props.conversationId);
+    return {
+      isArchived: !conversation ? undefined : !!conversation.isArchived,
+      setArchived: state.setArchived,
+    };
+  }));
 
 
   // Window
@@ -98,6 +108,11 @@ export function ChatPane(props: {
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
+  const handleToggleArchive = React.useCallback(() => {
+    if (!props.conversationId || !setArchived) return;
+    setArchived(props.conversationId, !isArchived);
+  }, [isArchived, props.conversationId, setArchived]);
+
   const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
 
 
@@ -136,6 +151,11 @@ export function ChatPane(props: {
 
     {/* Chat Actions group */}
     <OptimaPanelGroupedList title='Actions'>
+
+      <MenuItem disabled={props.disableItems} onClick={handleToggleArchive}>
+        <ListItemDecorator>{isArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}</ListItemDecorator>
+        {isArchived ? <b>Unarchive</b> : 'Archive'}
+      </MenuItem>
 
       <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
         <ListItemDecorator><ForkRightIcon /></ListItemDecorator>

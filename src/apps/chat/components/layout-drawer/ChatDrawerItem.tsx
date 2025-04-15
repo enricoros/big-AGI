@@ -59,6 +59,7 @@ export interface ChatNavigationItemData {
   isEmpty: boolean;
   isIncognito: boolean;
   title: string;
+  isArchived: boolean;
   userSymbol: string | undefined;
   userFlagsSummary: string | undefined;
   containsDocAttachments: boolean;

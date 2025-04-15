@@ -51,6 +51,9 @@ interface AppChatStore {
   filterHasStars: boolean;
   toggleFilterHasStars: () => void;
 
+  filterIsArchived: boolean;
+  toggleFilterIsArchived: () => void;
+
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
@@ -106,7 +109,7 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     // Chat UI
 
-    clearFilters: () => _set({ filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
+    clearFilters: () => _set({ filterIsArchived: false, filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
 
     filterHasDocFragments: false,
     toggleFilterHasDocFragments: () => _set(({ filterHasDocFragments }) => ({ filterHasDocFragments: !filterHasDocFragments })),
@@ -116,6 +119,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     filterHasStars: false,
     toggleFilterHasStars: () => _set(({ filterHasStars }) => ({ filterHasStars: !filterHasStars })),
+
+    filterIsArchived: false,
+    toggleFilterIsArchived: () => _set(({ filterIsArchived }) => ({ filterIsArchived: !filterIsArchived })),
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
@@ -213,12 +219,14 @@ export function useChatDrawerFilters() {
     filterHasDocFragments: state.filterHasDocFragments,
     filterHasImageAssets: state.filterHasImageAssets,
     filterHasStars: state.filterHasStars,
+    filterIsArchived: state.filterIsArchived,
     showPersonaIcons: state.showPersonaIcons2,
     showRelativeSize: state.showRelativeSize,
     clearFilters: state.clearFilters,
     toggleFilterHasDocFragments: state.toggleFilterHasDocFragments,
     toggleFilterHasImageAssets: state.toggleFilterHasImageAssets,
     toggleFilterHasStars: state.toggleFilterHasStars,
+    toggleFilterIsArchived: state.toggleFilterIsArchived,
     toggleShowPersonaIcons: state.toggleShowPersonaIcons,
     toggleShowRelativeSize: state.toggleShowRelativeSize,
   })));
