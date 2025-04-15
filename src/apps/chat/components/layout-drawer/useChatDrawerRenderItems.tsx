@@ -87,6 +87,7 @@ export function useChatDrawerRenderItems(
   filterHasStars: boolean,
   filterHasImageAssets: boolean,
   filterHasDocFragments: boolean,
+  filterIsArchived: boolean,
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
@@ -109,7 +110,11 @@ export function useChatDrawerRenderItems(
 
   const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>(undefined);
 
-  return useChatStore(({ conversations }) => {
+  return useChatStore(({ conversations: convPreFilter }) => {
+
+      // filter 0: archival status
+      const conversations = filterIsArchived ? convPreFilter.filter(c => !!c.isArchived)
+        : convPreFilter.filter(c => !c.isArchived);
 
       // filter 1: select all conversations or just the ones in the active folder
       const conversationsInFolder = !activeFolder ? conversations
@@ -168,6 +173,7 @@ export function useChatDrawerRenderItems(
             isIncognito: !!_c._isIncognito,
             isEmpty: !messageCount && !_c.userTitle,
             title,
+            isArchived: !!_c.isArchived,
             userSymbol: _c.userSymbol || undefined,
             userFlagsSummary: userFlagsUnique,
             containsDocAttachments: hasDocs && filterHasDocFragments, // special case: only show this icon when filtering - too many icons otherwise

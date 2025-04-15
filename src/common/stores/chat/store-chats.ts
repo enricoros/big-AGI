@@ -54,6 +54,7 @@ export interface ChatActions {
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
+  setArchived: (cId: DConversationId, isArchived: boolean) => void;
   title: (cId: DConversationId) => string | undefined;
 
   // utility function
@@ -441,6 +442,13 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             userSymbol: userSymbol || undefined,
+          }),
+
+      setArchived: (conversationId: DConversationId, isArchived: boolean) =>
+        _get()._editConversation(conversationId,
+          {
+            isArchived: isArchived,
+            // updated: Date.now(), // don't update this - the 'entity state' shall update, but not this soft time
           }),
 
     }),
