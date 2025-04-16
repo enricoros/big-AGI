@@ -27,6 +27,7 @@ function FusionControls(props: {
   llmLabel: string,
   llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
   fusionAvatarTooltip: React.ReactNode,
+  onIconClick: (event: React.MouseEvent) => void,
   onRemove: () => void,
   onToggleGenerate: () => void,
 }) {
@@ -36,7 +37,7 @@ function FusionControls(props: {
       {/* LLM Icon with Tooltip */}
       {!!props.llmVendorIcon && (
         <TooltipOutlined asLargePane enableInteractive title={props.fusionAvatarTooltip || props.llmLabel} placement='top-start'>
-          <Box sx={{ display: 'flex' }}>
+          <Box sx={{ display: 'flex' }} onClick={props.onIconClick}>
             <props.llmVendorIcon sx={{ fontSize: 'lg', my: 'auto' }} />
           </Box>
         </TooltipOutlined>
