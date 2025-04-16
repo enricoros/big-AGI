@@ -849,6 +849,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
 const openAIModelsDenyList: string[] = [
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
+  'o1-pro', // FIXME: support these
 
   // Legacy GPT models
   'gpt-3.5-turbo-0301',
