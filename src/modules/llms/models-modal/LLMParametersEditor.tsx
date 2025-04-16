@@ -188,7 +188,7 @@ export function LLMParametersEditor(props: {
         checked={llmVndOaiRestoreMarkdown}
         onChange={checked => {
           if (!checked)
-            onRemoveParameter('llmVndOaiRestoreMarkdown');
+            onChangeParameter({ llmVndOaiRestoreMarkdown: false });
           else
             onChangeParameter({ llmVndOaiRestoreMarkdown: true });
         }}
