@@ -188,8 +188,10 @@ export class EventBus {
 
 /**
  * Helper class for working with a specific domain
+ * Collects unsubscribe functions and provides a single dispose method to prevent memory leaks
  */
 export class DomainEventHelper<D extends EventDomainName> {
+  private readonly unsubscribeFunctions: EventUnsubscribe[] = [];
 
   constructor(
     protected readonly bus: EventBus,
@@ -211,7 +213,14 @@ export class DomainEventHelper<D extends EventDomainName> {
     name: E,
     listener: EventListener<D, E>,
   ): EventUnsubscribe {
-    return this.bus.on(this.domain, name, listener);
+    const unsubscribe = this.bus.on(this.domain, name, listener);
+    this.unsubscribeFunctions.push(unsubscribe);
+    return () => {
+      const index = this.unsubscribeFunctions.indexOf(unsubscribe);
+      if (index !== -1)
+        this.unsubscribeFunctions.splice(index, 1);
+      unsubscribe();
+    };
   }
 
   /** Listen for an event once in this domain */
@@ -219,11 +228,29 @@ export class DomainEventHelper<D extends EventDomainName> {
     name: E,
     listener: EventListener<D, E>,
   ): EventUnsubscribe {
-    return this.bus.once(this.domain, name, listener);
+    const unsubscribe = this.bus.once(this.domain, name, listener);
+    this.unsubscribeFunctions.push(unsubscribe);
+    return () => {
+      const index = this.unsubscribeFunctions.indexOf(unsubscribe);
+      if (index !== -1)
+        this.unsubscribeFunctions.splice(index, 1);
+      unsubscribe();
+    };
   }
 
+  /** Dispose of this helper and unsubscribe from all events */
+  disposeUnsubscribeAll(): void {
+    for (const unsubscribe of this.unsubscribeFunctions)
+      unsubscribe();
+    this.unsubscribeFunctions.length = 0;
+  }
 }
 
 
-// singleton App-wide Bus
+/**
+ * Singleton App-wide Bus.
+ *
+ * Make sure to Unsubscribe from events even during unmounts/Domain lifecycle unmounts,
+ * otherwise hot module reload could still dispatch to older instances in memory.
+ */
 export const appEvents = new EventBus();
