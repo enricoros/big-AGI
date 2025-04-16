@@ -42,9 +42,12 @@ export const aixRouter = createTRPCRouter({
 
       // Intake derived state
       const intakeAbortSignal = ctx.reqSignal;
-      const { access, model, chatGenerate, streaming, connectionOptions } = input;
+      const { access, model, chatGenerate, streaming: aixStreaming, connectionOptions } = input;
       const accessDialect = access.dialect;
       const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
+
+      // Applies per-model streaming suppression; added for o3 without verification
+      const streaming = model.forceNoStream ? false : aixStreaming;
 
 
       // Intake Transmitters

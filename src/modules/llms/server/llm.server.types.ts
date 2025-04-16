@@ -74,6 +74,7 @@ const ModelParameterSpec_schema = z.object({
    */
   paramId: z.enum([
     'llmTopP',
+    'llmForceNoStream',
     'llmVndAntThinkingBudget',
     'llmVndGeminiShowThoughts',
     'llmVndOaiReasoningEffort',
