@@ -848,7 +848,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
 const openAIModelsDenyList: string[] = [
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
-  // 'computer-use-preview', 'computer-use-preview-2025-03-11',
+  'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
 
   // Legacy GPT models
   'gpt-3.5-turbo-0301',
@@ -866,10 +866,10 @@ const openAIModelsDenyList: string[] = [
   'text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002',
 
   // TTS Models: /v1/audio/speech
-  'tts-1-hd', 'tts-1',
+  'tts-1-hd', 'tts-1', 'gpt-4o-mini-tts', // FIXME: support these
 
   // STT models: /v1/audio/transcriptions, /v1/audio/translations
-  'whisper-1',
+  'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', // FIXME: support these
 
   // Image models: /v1/images/generations
   'dall-e-3', 'dall-e-2',
