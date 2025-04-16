@@ -373,7 +373,7 @@ function ChatDrawer(props: {
                 {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
                 {item.message}
               </Typography>
-              {(filterHasStars || filterHasImageAssets || filterHasDocFragments) && (
+              {(filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) && (
                 <Tooltip title='Clear Filters'>
                   <IconButton size='sm' color='primary' onClick={clearFilters}>
                     <ClearIcon />
