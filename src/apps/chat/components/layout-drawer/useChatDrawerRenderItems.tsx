@@ -288,8 +288,9 @@ export function useChatDrawerRenderItems(
             : filterHasDocFragments ? 'No attachment results'
               : filterHasImageAssets ? 'No image results'
                 : filterHasStars ? 'No starred results'
-                  : isSearching ? 'Text not found'
-                    : 'No conversations in folder',
+                  : filterIsArchived ? 'No archived conversations'
+                    : isSearching ? 'Text not found'
+                      : 'No conversations in folder',
         });
       } else {
         // filtering reminder (will be rendered with a clear button too)
