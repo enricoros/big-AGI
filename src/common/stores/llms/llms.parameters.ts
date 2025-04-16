@@ -66,6 +66,17 @@ export const DModelParameterRegistry = {
     incompatibleWith: ['temperature'] as const,
   } as const,
 
+  /**
+   * First introduced as a user-configurable parameter for the 'Verification' required by o3.
+   * [2025-04-16] Adding parameter to disable streaming for o3, and possibly more models.
+   */
+  llmForceNoStream: {
+    label: 'Disable Streaming',
+    type: 'boolean' as const,
+    description: 'Disables streaming for this model',
+    // initialValue: false, // we don't need the initial value here, will be assumed off
+  } as const,
+
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer' as const,

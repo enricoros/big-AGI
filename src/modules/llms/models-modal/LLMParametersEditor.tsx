@@ -52,6 +52,7 @@ export function LLMParametersEditor(props: {
   // derived state
   const llmTemperature: number | null = allParameters.llmTemperature === undefined ? FALLBACK_LLM_PARAM_TEMPERATURE : allParameters.llmTemperature;
   const llmResponseTokens = allParameters.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
+  const llmForceNoStream = allParameters.llmForceNoStream ?? false;
   const llmVndAntThinkingBudget = allParameters.llmVndAntThinkingBudget;
   const llmVndGeminiShowThoughts = allParameters.llmVndGeminiShowThoughts;
   const llmVndOaiReasoningEffort = allParameters.llmVndOaiReasoningEffort;
@@ -80,6 +81,7 @@ export function LLMParametersEditor(props: {
   const { llmVndAntThinkingBudget: defAntTB } = DModelParameterRegistry;
 
   // optional params specs - a spec is a definition of a parameter, and whether it's required or hidden, for a particular model
+  const paramSpecForceNoStream = parameterSpecs?.find(p => p.paramId === 'llmForceNoStream') as DModelParameterSpec<'llmForceNoStream'> | undefined;
   const paramSpecAntThinkingBudget = parameterSpecs?.find(p => p.paramId === 'llmVndAntThinkingBudget') as DModelParameterSpec<'llmVndAntThinkingBudget'> | undefined;
   const paramSpecGeminiShowThoughts = parameterSpecs?.find(p => p.paramId === 'llmVndGeminiShowThoughts') as DModelParameterSpec<'llmVndGeminiShowThoughts'> | undefined;
   const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
@@ -225,6 +227,21 @@ export function LLMParametersEditor(props: {
                 onChangeParameter({ llmVndOaiWebSearchGeolocation: true });
             });
           }
+        }}
+      />
+    )}
+
+    {paramSpecForceNoStream && (
+      <FormSwitchControl
+        title='Disable Streaming'
+        description='Receive complete responses'
+        tooltip='Turn on to get entire responses at once. Useful for models with streaming issues, but will make responses appear slower.'
+        checked={llmForceNoStream}
+        onChange={checked => {
+          if (!checked)
+            onRemoveParameter('llmForceNoStream');
+          else
+            onChangeParameter({ llmForceNoStream: true });
         }}
       />
     )}
