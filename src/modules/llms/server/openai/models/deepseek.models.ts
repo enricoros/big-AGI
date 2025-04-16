@@ -10,23 +10,23 @@ const _knownDeepseekChatModels: ManualMappings = [
   // [List Models](https://api-docs.deepseek.com/api/list-models)
   {
     idPrefix: 'deepseek-reasoner',
-    label: 'DeepSeek Reasoner R1',
+    label: 'DeepSeek-R1',
     description: 'Reasoning model with Chain-of-Thought capabilities, 64K context length. No discount.',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.55, output: 2.19, cache: { cType: 'oai-ac', read: 0.14 } },
-    benchmark: { cbaElo: 1361 },
+    benchmark: { cbaElo: 1359 },
   },
   {
     idPrefix: 'deepseek-chat',
-    label: 'DeepSeek Chat V3',
+    label: 'DeepSeek-V3',
     description: 'General-purpose model with 64K context length.',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.27, output: 1.10, cache: { cType: 'oai-ac', read: 0.07 } },
-    benchmark: { cbaElo: 1316 },
+    benchmark: { cbaElo: 1370 }, // note: this is for V3-0324, before V3 was 1318
   },
   {
     idPrefix: 'deepseek-coder',
@@ -36,7 +36,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat],
     maxCompletionTokens: 4096,
     // chatPrice: { input: 0.14, output: 0.28 },
-    benchmark: { cbaElo: 1214 },
+    benchmark: { cbaElo: 1214 }, // assuming this is deepseek-coder-v2-0724
     hidden: true,
   },
 ];

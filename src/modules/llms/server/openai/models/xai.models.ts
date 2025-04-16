@@ -24,6 +24,7 @@ const _knownXAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Nov 2024', // November 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 3, output: 15 },
+    benchmark: { cbaElo: 1402 },
   },
   {
     isPreview: true,
@@ -35,6 +36,7 @@ const _knownXAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Nov 2024', // November 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 5, output: 25 },
+    benchmark: { cbaElo: 1402 },
   },
   {
     isPreview: true,
@@ -47,6 +49,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 0.3, output: 0.5 },
+    // benchmark unreported
   },
   {
     isPreview: true,
@@ -59,6 +62,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 0.6, output: 4 },
+    // benchmark unreported
   },
 
   // Grok 2
