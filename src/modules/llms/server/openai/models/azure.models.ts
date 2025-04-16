@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 // import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
+
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -26,6 +28,25 @@ const _knownAzureChatModels: ManualMappings = [
   //   chatPrice: { input: 2, output: 6 },
   // },
   //
+
+  // [Azure] variants: Azure names these differently compared to OpenAI (no dots) - also: obsolete
+  {
+    idPrefix: 'gpt-35-turbo-16k',
+    label: '3.5-Turbo 16k',
+    hidden: true, // OLD
+    description: 'Fair speed and smarts, large context',
+    contextWindow: 16384,
+    interfaces: [LLM_IF_OAI_Chat], // as azure doesn't version model id's (in the deployments), let's assume no function calling
+  },
+  {
+    idPrefix: 'gpt-35-turbo',
+    label: '3.5-Turbo',
+    contextWindow: 4096,
+    hidden: true, // OLD
+    description: 'Fair speed and smarts',
+    interfaces: [LLM_IF_OAI_Chat], // as azure doesn't version model id's (in the deployments), let's assume no function calling
+  },
+
 ];
 
 

@@ -779,24 +779,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
-  // [Azure] variants: Azure names these differently compared to OpenAI (no dots) - also: obsolete
-  {
-    idPrefix: 'gpt-35-turbo-16k',
-    label: '3.5-Turbo 16k',
-    description: 'Fair speed and smarts, large context',
-    contextWindow: 16384,
-    interfaces: [LLM_IF_OAI_Chat], // as azure doesn't version model id's (in the deployments), let's assume no function calling
-    hidden: true,
-  },
-  {
-    idPrefix: 'gpt-35-turbo',
-    label: '3.5-Turbo',
-    contextWindow: 4096,
-    description: 'Fair speed and smarts',
-    interfaces: [LLM_IF_OAI_Chat], // as azure doesn't version model id's (in the deployments), let's assume no function calling
-    hidden: true,
-  },
-
   // Fallback - unknown
   {
     idPrefix: '',
