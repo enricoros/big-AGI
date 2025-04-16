@@ -13,7 +13,7 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
     maxCompletionTokens: 65536, // Extended thinking mode - note that the 'anthropic-beta: output-128k-2025-02-19' header would point to a 128k instead
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
-    benchmark: { cbaElo: 1283 + 1 },
+    benchmark: { cbaElo: 1303 },
   },
 
 } as const;
@@ -31,7 +31,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Oct 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1283 + 2 /* temporary to be preferred/on top */ },
+    benchmark: { cbaElo: 1295 },
   },
 
   // Claude 3.5 models
@@ -67,7 +67,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Jul 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 0.80, output: 4.00, cache: { cType: 'ant-bp', read: 0.08, write: 1.00, duration: 300 } },
-    benchmark: { cbaElo: 1236, cbaMmlu: 75.2 },
+    benchmark: { cbaElo: 1237, cbaMmlu: 75.2 },
   },
 
   // Claude 3 models

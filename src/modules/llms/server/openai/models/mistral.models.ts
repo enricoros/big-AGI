@@ -20,6 +20,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 131 * 1024, // 131K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 6 },
+    benchmark: { cbaElo: 1248 },
   },
   {
     isLegacy: true,
@@ -30,6 +31,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 6 },
+    benchmark: { cbaElo: 1251 },
   },
   {
     isLegacy: true,
@@ -40,6 +42,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 6 },
+    benchmark: { cbaElo: 1157 },
   },
   {
     hidden: true,
@@ -51,6 +54,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 131 * 1024, // 131K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 6 },
+    benchmark: { cbaElo: 1248 },
   },
 
 
@@ -84,6 +88,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 32 * 1024, // 32K tokens
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 0.1, output: 0.3 },
+    benchmark: { cbaElo: 1216 },
   },
   {
     // isLegacy: true,
@@ -369,6 +374,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 32 * 1024,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 2.75, output: 8.1 },
+    benchmark: { cbaElo: 1148 },
   },
   {
     isLegacy: true,
@@ -381,6 +387,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 32 * 1024,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 2.75, output: 8.1 },
+    benchmark: { cbaElo: 1148 },
   },
   {
     isLegacy: true,
@@ -393,6 +400,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 32 * 1024,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 2.75, output: 8.1 },
+    benchmark: { cbaElo: 1148 },
   },
 
   // Mixtral 8x22B
@@ -405,6 +413,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 64 * 1024, // 64K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 6 },
+    benchmark: { cbaElo: 1147 },
   },
   {
     isLegacy: true,
@@ -417,6 +426,7 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 64 * 1024, // 64K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 6 },
+    benchmark: { cbaElo: 1147 },
   },
 
   // Mixtral 8x7B

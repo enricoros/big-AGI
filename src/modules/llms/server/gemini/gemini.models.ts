@@ -119,7 +119,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
-    benchmark: { cbaElo: 1440 },
+    benchmark: { cbaElo: 1437 },
   },
   // 2.5 Pro Experimental (Free Tier)
   {
@@ -128,7 +128,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
-    benchmark: { cbaElo: 1443 },
+    benchmark: { cbaElo: 1437 + 1 /* +1 because free */ },
   },
 
 
@@ -170,6 +170,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashLivePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_Outputs_Audio, LLM_IF_GEM_CodeExecution],
     isPreview: true,
+    // benchmark: not available because of the Live API (non benchmarkable)
   },
 
   // 2.0 Flash Thinking Experimental
@@ -178,7 +179,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
-    benchmark: { cbaElo: 1385 },
+    benchmark: { cbaElo: 1380 },
     isPreview: true,
   },
   {
@@ -190,7 +191,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
-    benchmark: { cbaElo: 1385 },
+    benchmark: { cbaElo: 1380 },
     isPreview: true,
   },
   {
@@ -215,6 +216,7 @@ const _knownGeminiModels: ({
       LLM_IF_HOTFIX_StripSys0, // This first Gemini Image Generation model does not support the developer instruction
     ],
     parameterSpecs: [],
+    // non benchmarkable because generates images
     isPreview: true,
   },
 
@@ -223,7 +225,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-001',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1358 },
+    benchmark: { cbaElo: 1354 },
   },
   {
     id: 'models/gemini-2.0-flash',
@@ -231,7 +233,7 @@ const _knownGeminiModels: ({
     // copied from symlink
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1358 },
+    benchmark: { cbaElo: 1354 },
   },
 
   // 2.0 Flash Lite
@@ -240,13 +242,13 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashLitePricing,
     symLink: 'models/gemini-2.0-flash-lite-001',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1309 },
+    benchmark: { cbaElo: 1310 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-001',
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1309 },
+    benchmark: { cbaElo: 1310 },
   },
   {
     hidden: true, // discouraged, as the official is out
@@ -254,7 +256,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1309 },
+    benchmark: { cbaElo: 1310 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-preview',
@@ -263,7 +265,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1309 },
+    benchmark: { cbaElo: 1310 },
   },
 
 
@@ -313,19 +315,20 @@ const _knownGeminiModels: ({
     isPreview: false,
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    benchmark: { cbaElo: 1212 },
   },
   {
     id: 'models/gemini-1.5-flash-8b',
     symLink: 'models/gemini-1.5-flash-8b-001',
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1213 },
+    benchmark: { cbaElo: 1212 },
   },
   {
     id: 'models/gemini-1.5-flash-8b-001',
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1213 },
+    benchmark: { cbaElo: 1212 },
     hidden: true,
   },
 

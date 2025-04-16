@@ -17,7 +17,7 @@ const _knownAlibabaChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     maxCompletionTokens: 8192,
     chatPrice: { input: 1.6, output: 6.4 },
-    benchmark: { cbaElo: 1332 },
+    benchmark: { cbaElo: 1340 },
   },
   {
     idPrefix: 'qwen-plus',
@@ -27,7 +27,7 @@ const _knownAlibabaChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.4, output: 1.2 },
-    benchmark: { cbaElo: 1282 },
+    benchmark: { cbaElo: 1310 },
   },
   {
     idPrefix: 'qwen-turbo',
@@ -37,6 +37,7 @@ const _knownAlibabaChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.05, output: 0.2 },
+    // unknown/unreported benchmark
   },
 
   // Vision Models
