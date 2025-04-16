@@ -46,7 +46,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // - o1 models also use the new 'max_completion_tokens' rather than 'max_tokens', breaking API compatibility, so we have to address it here
   const hotFixOpenAIOFamily = (openAIDialect === 'openai' || openAIDialect === 'azure') && (
     model.id === 'o1' || model.id.startsWith('o1-') ||
-    model.id === 'o3' || model.id.startsWith('o3-')
+    model.id === 'o3' || model.id.startsWith('o3-') ||
+    model.id === 'o4' || model.id.startsWith('o4-') ||
+    model.id === 'o5' || model.id.startsWith('o5-')
   );
 
   // Throw if function support is needed but missing
