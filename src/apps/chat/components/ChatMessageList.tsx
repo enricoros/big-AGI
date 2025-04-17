@@ -12,7 +12,7 @@ import type { ConversationHandler } from '~/common/chat-overlay/ConversationHand
 import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -223,6 +223,16 @@ export function ChatMessageList(props: {
 
   // operate on the local selection set
 
+  const areAllSelectedMessagesHidden = React.useMemo(() => {
+    if (selectedMessages.size === 0) return false;
+    for (const messageId of selectedMessages) {
+      const message = conversationMessages.find(m => m.id === messageId);
+      if (message && !messageHasUserFlag(message, MESSAGE_FLAG_AIX_SKIP))
+        return false;
+    }
+    return true;
+  }, [selectedMessages, conversationMessages]);
+
   const handleSelectAll = (selected: boolean) => {
     const newSelected = new Set<string>();
     if (selected)
@@ -242,11 +252,11 @@ export function ChatMessageList(props: {
     setSelectedMessages(new Set());
   }, [conversationHandler, selectedMessages]);
 
-  const handleSelectionHide = React.useCallback(() => {
+  const handleSelectionToggleVisibility = React.useCallback(() => {
     for (let selectedMessage of Array.from(selectedMessages))
-      conversationHandler?.messageSetUserFlag(selectedMessage, MESSAGE_FLAG_AIX_SKIP, true, true);
+      conversationHandler?.messageSetUserFlag(selectedMessage, MESSAGE_FLAG_AIX_SKIP, !areAllSelectedMessagesHidden, true);
     setSelectedMessages(new Set());
-  }, [conversationHandler, selectedMessages]);
+  }, [conversationHandler, selectedMessages, areAllSelectedMessagesHidden]);
 
   const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
 
@@ -324,7 +334,8 @@ export function ChatMessageList(props: {
           onClose={() => props.setIsMessageSelectionMode(false)}
           onSelectAll={handleSelectAll}
           onDeleteMessages={handleSelectionDelete}
-          onHideMessages={handleSelectionHide}
+          onToggleVisibility={handleSelectionToggleVisibility}
+          areAllMessagesHidden={areAllSelectedMessagesHidden}
         />
       )}
 
