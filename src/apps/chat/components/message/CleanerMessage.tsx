@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
@@ -16,7 +17,15 @@ import { messageSkippedSx } from './ChatMessage';
 /**
  * Header bar for controlling the operations during the Selection mode
  */
-export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens: number, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void, onHideMessages: () => void }) =>
+export const MessagesSelectionHeader = (props: {
+  hasSelected: boolean,
+  sumTokens: number,
+  onClose: () => void,
+  onSelectAll: (selected: boolean) => void,
+  onDeleteMessages: () => void,
+  onToggleVisibility: () => void,
+  areAllMessagesHidden: boolean,
+}) =>
   <Sheet color='warning' variant='solid' invertedColors sx={{
     position: 'sticky', top: 0, left: 0, right: 0, zIndex: 101 /* Cleanup Selection Header on top of messages */,
     boxShadow: 'md',
@@ -30,8 +39,14 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens
     <Box sx={{ fontSize: 'sm' }}>Select all ({props.sumTokens?.toLocaleString()})</Box>
 
     <Box sx={{ mx: 'auto', display: 'flex', gap: 1 }}>
-      <Button size='sm' disabled={!props.hasSelected} onClick={props.onHideMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<VisibilityOffIcon />}>
-        Hide
+      <Button
+        size='sm'
+        disabled={!props.hasSelected}
+        onClick={props.onToggleVisibility}
+        sx={{ minWidth: { md: 120 } }}
+        endDecorator={props.areAllMessagesHidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
+      >
+        {props.areAllMessagesHidden ? 'Show' : 'Hide'}
       </Button>
       <Button size='sm' disabled={!props.hasSelected} onClick={props.onDeleteMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<DeleteOutlineIcon />}>
         Delete
