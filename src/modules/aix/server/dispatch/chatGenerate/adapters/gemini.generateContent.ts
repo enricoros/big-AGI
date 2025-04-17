@@ -74,11 +74,20 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.topP = model.topP;
   }
 
-  // Thinking models: add showing the thinking trace
-  if (model.vndGeminiShowThoughts)
-    payload.generationConfig!.thinkingConfig = {
-      includeThoughts: true,
-    };
+  // Thinking models: thinking budget and show thoughts
+  if (model.vndGeminiShowThoughts === true || model.vndGeminiThinkingBudget !== undefined) {
+    const thinkingConfig: Exclude<TRequest['generationConfig'], undefined>['thinkingConfig'] = {};
+
+    // This seems deprecated keep it in case Gemini turns it on again
+    if (model.vndGeminiShowThoughts)
+      thinkingConfig.includeThoughts = true;
+
+    // 0 disables thinking explicitly
+    if (model.vndGeminiThinkingBudget !== undefined)
+      thinkingConfig.thinkingBudget = model.vndGeminiThinkingBudget;
+
+    payload.generationConfig!.thinkingConfig = thinkingConfig;
+  }
 
   // [Gemini, 2025-03-14] Experimental Image generation: Request
   if (hotFixImageGenerationModels1) {
