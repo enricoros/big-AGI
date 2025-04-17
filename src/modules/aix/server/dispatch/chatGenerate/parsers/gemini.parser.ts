@@ -217,6 +217,9 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         TIn: generationChunk.usageMetadata.promptTokenCount,
         TOut: generationChunk.usageMetadata.candidatesTokenCount,
       };
+      if (generationChunk.usageMetadata.thoughtsTokenCount)
+        metricsUpdate.TOutR = generationChunk.usageMetadata.thoughtsTokenCount;
+
       if (isStreaming && timeToFirstEvent !== undefined)
         metricsUpdate.dtStart = timeToFirstEvent;
 
