@@ -394,6 +394,7 @@ export namespace AixWire_API {
     forceNoStream: z.boolean().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
+    vndGeminiThinkingBudget: z.number().optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
