@@ -123,7 +123,7 @@ const useAppChatStore = create<AppChatStore>()(persist(
     filterIsArchived: false,
     toggleFilterIsArchived: () => _set(({ filterIsArchived }) => ({ filterIsArchived: !filterIsArchived })),
 
-    micTimeoutMs: 2000,
+    micTimeoutMs: 5000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
 
     // new default on 2024-11-18: disable icons by default, too confusing
