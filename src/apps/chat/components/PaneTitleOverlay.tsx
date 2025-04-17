@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, Sheet } from '@mui/joy';
+import { Box, IconButton, Sheet, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -48,6 +48,7 @@ const _styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+    cursor: 'pointer',
   } as const,
   toolButton: {
     '--IconButton-size': '1.5rem',
@@ -157,15 +158,19 @@ export function PaneTitleOverlay(props: {
             mx: { md: 1 },
           }}
         />
-      ) : hasTitle ? (
-        <Box sx={_styles.title} onDoubleClick={handleTitleEditBegin}>
+      ) : !!props.conversationId && <>
+        {hasTitle && <Box sx={_styles.title} onClick={handleTitleEditBegin}>
           {title}
-        </Box>
-      ) : !!props.conversationId && (
-        <IconButton title='Edit Chat Title' size='sm' color={color} variant={variantP} onClick={handleTitleEditBegin} sx={_styles.toolButton}>
-          <EditRoundedIcon sx={_styles.toolIcon} />
-        </IconButton>
-      )}
+        </Box>}
+        {!hasTitle && <Typography level='body-sm' fontStyle='italic' onClick={handleTitleEditBegin}>
+          untitled
+        </Typography>}
+        {!hasTitle && <TooltipOutlined title='Edit Chat Title'>
+          <IconButton title='' size='sm' color={color} variant={variantP} onClick={handleTitleEditBegin} sx={_styles.toolButton}>
+            <EditRoundedIcon sx={_styles.toolIcon} />
+          </IconButton>
+        </TooltipOutlined>}
+      </>}
 
       {/* Delete This */}
       {ENABLE_DELETE && hasTitle && !!props.conversationId && (
