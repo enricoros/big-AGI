@@ -159,7 +159,7 @@ export function LogViewerDialog(props: {
           <Typography level='body-lg'>No logs to display</Typography>
         </Box>
       ) : (
-        <Box sx={{ maxHeight: '50vh', overflow: 'auto', my: 1 }}>
+        <Box sx={{ minHeight: '12rem', maxHeight: 'calc(100vh - 18rem)', overflow: 'auto', my: 1 }}>
           <Table
             size='sm'
             variant='outlined'
