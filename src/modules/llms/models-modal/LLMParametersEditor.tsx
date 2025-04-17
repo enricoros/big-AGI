@@ -28,7 +28,7 @@ const _webSearchContextOptions = [
 
 
 export function LLMParametersEditor(props: {
-  // consts
+  // constants
   maxOutputTokens: number | null,
   parameterSpecs: DModelParameterSpec<DModelParameterId>[],
   parameterOmitTemperature?: boolean,
@@ -43,29 +43,39 @@ export function LLMParametersEditor(props: {
   simplified?: boolean,
 }) {
 
-  // derived input
-  const { maxOutputTokens, parameterSpecs, baselineParameters, parameters, onChangeParameter, onRemoveParameter, simplified } = props;
 
-  // external state
-  const allParameters = getAllModelParameterValues(baselineParameters, parameters);
+  // specs: whether a models supports a parameter
+  const modelParamSpec = React.useMemo(() => {
+    return Object.fromEntries(
+      (props.parameterSpecs ?? []).map(spec => [spec.paramId, spec]),
+    ) as Record<DModelParameterId, DModelParameterSpec<DModelParameterId>>;
+  }, [props.parameterSpecs]);
 
-  // derived state
-  const llmTemperature: number | null = allParameters.llmTemperature === undefined ? FALLBACK_LLM_PARAM_TEMPERATURE : allParameters.llmTemperature;
-  const llmResponseTokens = allParameters.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
-  const llmForceNoStream = allParameters.llmForceNoStream ?? false;
-  const llmVndAntThinkingBudget = allParameters.llmVndAntThinkingBudget;
-  const llmVndGeminiShowThoughts = allParameters.llmVndGeminiShowThoughts;
-  const llmVndOaiReasoningEffort = allParameters.llmVndOaiReasoningEffort;
-  const llmVndOaiRestoreMarkdown = !!allParameters.llmVndOaiRestoreMarkdown;
-  const llmVndOaiWebSearchContext = allParameters.llmVndOaiWebSearchContext;
-  const llmVndOaiWebSearchGeolocation = allParameters.llmVndOaiWebSearchGeolocation;
+
+  // current values: { ...fallback, ...baseline, ...user }
+  const allParameters = getAllModelParameterValues(props.baselineParameters, props.parameters);
+  const {
+    llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, // fallback for undefined, result is number | null
+    llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
+    llmForceNoStream,
+    llmVndAntThinkingBudget,
+    llmVndGeminiShowThoughts,
+    llmVndOaiReasoningEffort,
+    llmVndOaiRestoreMarkdown,
+    llmVndOaiWebSearchContext,
+    llmVndOaiWebSearchGeolocation,
+  } = allParameters;
+
+
+  // state (here because the initial state depends on props)
   const tempAboveOne = llmTemperature !== null && llmTemperature > 1;
-
-  // more state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(tempAboveOne);
+  const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
 
   // handlers
+
+  const { onChangeParameter, onRemoveParameter } = props;
 
   const handleOverheatToggle = React.useCallback(() => {
     // snap to 1 when disabling overheating
@@ -78,19 +88,9 @@ export function LLMParametersEditor(props: {
 
 
   // optional parameters definitions
-  const { llmVndAntThinkingBudget: defAntTB } = DModelParameterRegistry;
+  const defAntTB = DModelParameterRegistry['llmVndAntThinkingBudget'];
 
-  // optional params specs - a spec is a definition of a parameter, and whether it's required or hidden, for a particular model
-  const paramSpecForceNoStream = parameterSpecs?.find(p => p.paramId === 'llmForceNoStream') as DModelParameterSpec<'llmForceNoStream'> | undefined;
-  const paramSpecAntThinkingBudget = parameterSpecs?.find(p => p.paramId === 'llmVndAntThinkingBudget') as DModelParameterSpec<'llmVndAntThinkingBudget'> | undefined;
-  const paramSpecGeminiShowThoughts = parameterSpecs?.find(p => p.paramId === 'llmVndGeminiShowThoughts') as DModelParameterSpec<'llmVndGeminiShowThoughts'> | undefined;
-  const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
-  const paramSpecRestoreMarkdown = parameterSpecs?.find(p => p.paramId === 'llmVndOaiRestoreMarkdown') as DModelParameterSpec<'llmVndOaiRestoreMarkdown'> | undefined;
-  const paramSpecWebSearchContext = parameterSpecs?.find(p => p.paramId === 'llmVndOaiWebSearchContext') as DModelParameterSpec<'llmVndOaiWebSearchContext'> | undefined;
-  const paramSpecWebSearchGeolocation = parameterSpecs?.find(p => p.paramId === 'llmVndOaiWebSearchGeolocation') as DModelParameterSpec<'llmVndOaiWebSearchGeolocation'> | undefined;
-
-  const hideTemperature = !!paramSpecAntThinkingBudget;
-  const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
+  const hideTemperature = 'llmVndAntThinkingBudget' in modelParamSpec;
 
   const llmVndAntThinkingNull = llmVndAntThinkingBudget === null;
 
@@ -101,7 +101,7 @@ export function LLMParametersEditor(props: {
       description={llmTemperature === null ? 'Unsupported' : llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
       disabled={props.parameterOmitTemperature}
       min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
-      valueLabelDisplay={parameters?.llmTemperature !== undefined ? 'on' : 'auto'}
+      valueLabelDisplay={props.parameters?.llmTemperature !== undefined ? 'on' : 'auto'} // detect user-overridden or not
       value={llmTemperature}
       onChange={value => onChangeParameter({ llmTemperature: value })}
       endAdornment={
@@ -117,22 +117,22 @@ export function LLMParametersEditor(props: {
       }
     />}
 
-    {llmResponseTokens === null || maxOutputTokens === null ? (
+    {llmResponseTokens === null || props.maxOutputTokens === null ? (
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
     ) : !props.simplified && (
       <Box sx={{ mr: 1 }}>
         <FormSliderControl
           title='Output Tokens' ariaLabel='Model Max Tokens'
           description='Max Size'
-          min={256} max={maxOutputTokens} step={256} defaultValue={1024}
-          valueLabelDisplay={parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'}
+          min={256} max={props.maxOutputTokens} step={256} defaultValue={1024}
+          valueLabelDisplay={props.parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'} // detect user-overridden or not
           value={llmResponseTokens}
           onChange={value => onChangeParameter({ llmResponseTokens: value })}
         />
       </Box>
     )}
 
-    {paramSpecAntThinkingBudget && (
+    {modelParamSpec['llmVndAntThinkingBudget'] && (
       <FormSliderControl
         title='Thinking Budget' ariaLabel='Anthropic Extended Thinking Token Budget'
         description='Tokens'
@@ -158,7 +158,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecGeminiShowThoughts && (
+    {modelParamSpec['llmVndGeminiShowThoughts'] && (
       <FormSwitchControl
         title='Show Chain of Thought'
         description={`Displays Gemini\'s reasoning process`}
@@ -167,7 +167,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecReasoningEffort && (
+    {modelParamSpec['llmVndOaiReasoningEffort'] && (
       <FormSelectControl
         title='Reasoning Effort'
         tooltip='Controls how much effort the model spends on reasoning'
@@ -182,12 +182,12 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecRestoreMarkdown && (
+    {modelParamSpec['llmVndOaiRestoreMarkdown'] && (
       <FormSwitchControl
         title='Restore Markdown'
         description='Enable markdown formatting'
         tooltip='o1 and o3 models in the API will avoid generating responses with markdown formatting. This option signals to the model to re-enable markdown formatting in the respons'
-        checked={llmVndOaiRestoreMarkdown}
+        checked={!!llmVndOaiRestoreMarkdown}
         onChange={checked => {
           if (!checked)
             onChangeParameter({ llmVndOaiRestoreMarkdown: false });
@@ -197,7 +197,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecWebSearchContext && (
+    {modelParamSpec['llmVndOaiWebSearchContext'] && (
       <FormSelectControl
         title='Search Context Size'
         tooltip='Controls how much context is retrieved from the web'
@@ -212,7 +212,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecWebSearchGeolocation && (
+    {modelParamSpec['llmVndOaiWebSearchGeolocation'] && (
       <FormSwitchControl
         title='Add User Location'
         description='Use approximate location for better search results'
@@ -231,12 +231,12 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecForceNoStream && (
+    {modelParamSpec['llmForceNoStream'] && (
       <FormSwitchControl
         title='Disable Streaming'
         description='Receive complete responses'
         tooltip='Turn on to get entire responses at once. Useful for models with streaming issues, but will make responses appear slower.'
-        checked={llmForceNoStream}
+        checked={!!llmForceNoStream}
         onChange={checked => {
           if (!checked)
             onRemoveParameter('llmForceNoStream');
