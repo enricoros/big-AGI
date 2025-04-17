@@ -1,7 +1,8 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Typography } from '@mui/joy';
+import { Typography, Button } from '@mui/joy';
+import { SystemPurposes } from 'src/data';
 
 import { Link } from '~/common/components/Link';
 import { useUIContentScaling } from '~/common/stores/store-ui';
@@ -37,5 +38,8 @@ export function Viewer(props: { selectedSimplePersonaId: string }) {
       {simplePersona.inputProvenance?.type === 'text' && <>The source was a text snippet of {simplePersona.inputText?.length.toLocaleString()} characters.</>}
     </Typography>
 
+    <Button onClick={() => {
+      delete SystemPurposes[props.selectedSimplePersonaId];
+    }}>Delete</Button>
   </>;
 }
