@@ -341,6 +341,7 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
 
 
 const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|chatgpt-4o|computer-use-/;
+const geminiRegex = /gemini-|gemma-|learnlm-/;
 
 
 /** Pretty name for a chat model ID - VERY HARDCODED - shall use the Avatar Label-style code instead */
@@ -350,9 +351,8 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // TODO: fully reform this function to be using information from the DLLM, rather than this manual mapping
 
   // [OpenAI]
-  if (model.search(oaiORegex) !== -1) {
-    // remove text before the -o3- or -o4- prefix (regex)
-    const prefixIndex = model.search(oaiORegex);
+  let prefixIndex = model.search(oaiORegex);
+  if (prefixIndex !== -1) {
     let cutModel = prefixIndex === -1 ? model : model.slice(prefixIndex);
     // remove version: cut before the '-202..' if present
     const versionIndex = cutModel.search(/-20\d{2}/);
@@ -396,12 +396,34 @@ export function prettyShortChatModelName(model: string | undefined): string {
   const prettyAnthropic = _prettyAnthropicModelName(model);
   if (prettyAnthropic) return prettyAnthropic;
   // [Gemini]
-  if (model.includes('gemini-')) {
-    return model.replaceAll('-', ' ')
+  prefixIndex = model.search(geminiRegex);
+  if (prefixIndex !== -1) {
+    let cutModel = prefixIndex === -1 ? model : model.slice(prefixIndex);
+    // Check for -NN-NN at the end (e.g., -05-15)
+    let datePattern = '';
+    const dateMatch = cutModel.match(/-(\d{2}-\d{2})$/);
+    if (dateMatch) {
+      datePattern = ' ' + dateMatch[1]; // extract '05-15'
+      cutModel = cutModel.slice(0, cutModel.length - dateMatch[0].length); // remove '-05-15'
+    }
+    const geminiName = cutModel
+      .replace('non-thinking', '') // NOTE: this is our variant, injected in gemini.models.ts
+      .replaceAll('-', ' ')
+      // products
       .replace('gemini', 'Gemini')
+      .replace('gemma', 'Gemma')
+      .replace('learnlm', 'LearnLM')
+      // price variants
       .replace('pro', 'Pro')
       .replace('flash', 'Flash')
-      .replace('thinking', 'Thinking');
+      // feature variants
+      .replace('generation', 'Gen')
+      .replace('image', 'Image')
+      .replace('thinking', 'Thinking')
+      .replace('preview', '')
+      .replace('experimental', 'exp')
+      .replace('exp', '(exp)');
+    return geminiName + datePattern;
   }
   // [Deepseek]
   if (model.includes('deepseek-')) {
