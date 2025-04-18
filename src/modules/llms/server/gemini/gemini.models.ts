@@ -128,7 +128,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
-    benchmark: { cbaElo: 1437 },
+    benchmark: { cbaElo: 1439 },
   },
   // 2.5 Pro Experimental (Free Tier)
   {
@@ -137,7 +137,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
-    benchmark: { cbaElo: 1437 + 1 /* +1 because free */ },
+    benchmark: { cbaElo: 1439 + 1 /* +1 because free */ },
   },
 
   // 2.5 Flash Preview
@@ -283,7 +283,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1310 },
+    benchmark: { cbaElo: 1311 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-preview',
@@ -292,7 +292,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1310 },
+    benchmark: { cbaElo: 1311 },
   },
 
 
