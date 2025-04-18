@@ -496,9 +496,9 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 const _sortOderIdPrefix: string[] = [
   'models/gemini-exp',
   'models/gemini-2.5-pro-preview',
-  'models/gemini-2.5-flash-preview',
   'models/gemini-2.5-pro-exp',
   'models/gemini-2.5-pro',
+  'models/gemini-2.5-flash-preview',
   'models/gemini-2.5-flash',
   'models/gemini-2.0-pro',
   'models/gemini-2.0-flash-exp-image-generation',
