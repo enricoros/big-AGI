@@ -83,8 +83,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
       thinkingConfig.includeThoughts = true;
 
     // 0 disables thinking explicitly
-    if (model.vndGeminiThinkingBudget !== undefined)
+    if (model.vndGeminiThinkingBudget !== undefined) {
+      if (model.vndGeminiThinkingBudget > 0)
+        thinkingConfig.includeThoughts = true;
       thinkingConfig.thinkingBudget = model.vndGeminiThinkingBudget;
+    }
 
     payload.generationConfig!.thinkingConfig = thinkingConfig;
   }
