@@ -45,8 +45,10 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       };
 
     case 'gemini':
-      // const hotFixImageGenerationModels2 = model.id.includes('image-generation');
-      const useV1Alpha = !!model.vndGeminiShowThoughts /* || hotFixImageGenerationModels2 */;
+      /**
+       * [Gemini, 2025-04-17] For newer thinking parameters, use v1alpha (we only see statistically better results)
+       */
+      const useV1Alpha = !!model.vndGeminiShowThoughts || model.vndGeminiThinkingBudget !== undefined;
       return {
         request: {
           ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath, useV1Alpha),
