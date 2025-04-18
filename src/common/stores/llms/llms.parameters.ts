@@ -95,6 +95,14 @@ export const DModelParameterRegistry = {
     initialValue: true,
   } as const,
 
+  llmVndGeminiThinkingBudget: {
+    label: 'Thinking Budget',
+    type: 'integer' as const,
+    range: [0, 24576] as const, // 0 disables thinking, undefined means 'auto thinking budget'
+    // initialValue: unset, // auto-budgeting
+    description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
+  } as const,
+
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,

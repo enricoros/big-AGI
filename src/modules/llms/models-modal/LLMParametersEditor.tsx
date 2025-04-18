@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Box, IconButton, Tooltip } from '@mui/joy';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ClearIcon from '@mui/icons-material/Clear';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
@@ -43,6 +44,9 @@ export function LLMParametersEditor(props: {
   simplified?: boolean,
 }) {
 
+  // registry (const) values
+  const defAntTB = DModelParameterRegistry['llmVndAntThinkingBudget'];
+  const defGemTB = DModelParameterRegistry['llmVndGeminiThinkingBudget'];
 
   // specs: whether a models supports a parameter
   const modelParamSpec = React.useMemo(() => {
@@ -60,6 +64,7 @@ export function LLMParametersEditor(props: {
     llmForceNoStream,
     llmVndAntThinkingBudget,
     llmVndGeminiShowThoughts,
+    llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort,
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
@@ -87,16 +92,15 @@ export function LLMParametersEditor(props: {
   }, [onChangeParameter, overheat, tempAboveOne]);
 
 
-  // optional parameters definitions
-  const defAntTB = DModelParameterRegistry['llmVndAntThinkingBudget'];
-
-  const hideTemperature = 'llmVndAntThinkingBudget' in modelParamSpec;
-
-  const llmVndAntThinkingNull = llmVndAntThinkingBudget === null;
+  // semantics
+  const temperatureHide = 'llmVndAntThinkingBudget' in modelParamSpec;
+  const antThinkingOff = llmVndAntThinkingBudget === null;
+  const gemThinkingAuto = llmVndGeminiThinkingBudget === undefined;
+  const gemThinkingOff = llmVndGeminiThinkingBudget === 0;
 
   return <>
 
-    {!hideTemperature && <FormSliderControl
+    {!temperatureHide && <FormSliderControl
       title='Temperature' ariaLabel='Model Temperature'
       description={llmTemperature === null ? 'Unsupported' : llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
       disabled={props.parameterOmitTemperature}
@@ -137,15 +141,15 @@ export function LLMParametersEditor(props: {
         title='Thinking Budget' ariaLabel='Anthropic Extended Thinking Token Budget'
         description='Tokens'
         min={defAntTB.range[0]} max={defAntTB.range[1]} step={1024}
-        valueLabelDisplay={llmVndAntThinkingNull ? 'off' : 'on'}
+        valueLabelDisplay={antThinkingOff ? 'off' : 'on'}
         value={llmVndAntThinkingBudget ?? 0}
-        disabled={llmVndAntThinkingNull}
+        disabled={antThinkingOff}
         onChange={value => onChangeParameter({ llmVndAntThinkingBudget: value })}
         endAdornment={
-          <Tooltip arrow disableInteractive title={llmVndAntThinkingNull ? 'Enable Thinking' : 'Disable Thinking'}>
+          <Tooltip arrow disableInteractive title={antThinkingOff ? 'Enable Thinking' : 'Disable Thinking'}>
             <IconButton
-              variant={llmVndAntThinkingNull ? 'solid' : 'outlined'}
-              onClick={() => llmVndAntThinkingNull
+              variant={antThinkingOff ? 'solid' : 'outlined'}
+              onClick={() => antThinkingOff
                 ? onRemoveParameter('llmVndAntThinkingBudget')
                 : onChangeParameter({ llmVndAntThinkingBudget: null })
               }
@@ -164,6 +168,43 @@ export function LLMParametersEditor(props: {
         description={`Displays Gemini\'s reasoning process`}
         checked={!!llmVndGeminiShowThoughts}
         onChange={checked => onChangeParameter({ llmVndGeminiShowThoughts: checked })}
+      />
+    )}
+
+    {modelParamSpec['llmVndGeminiThinkingBudget'] && (
+      <FormSliderControl
+        title='Thinking Budget' ariaLabel='Gemini Thinking Token Budget'
+        description={gemThinkingAuto ? 'Auto' : gemThinkingOff ? 'Thinking Off' : 'Tokens'}
+        min={defGemTB.range[0]} max={defGemTB.range[1]} step={1024}
+        valueLabelDisplay={(gemThinkingAuto || gemThinkingOff) ? 'off' : 'on'}
+        value={llmVndGeminiThinkingBudget ?? [defGemTB.range[0], defGemTB.range[1]]}
+        variant={gemThinkingAuto ? 'soft' : undefined}
+        // disabled={gemThinkingAuto}
+        onChange={value => onChangeParameter({ llmVndGeminiThinkingBudget: Array.isArray(value) ? (value[0] || value[1]) : value })}
+        startAdornment={
+          <Tooltip arrow disableInteractive title={gemThinkingOff ? undefined : 'Disable Thinking'}>
+            <IconButton
+              variant={gemThinkingOff ? 'solid' : 'outlined'}
+              // disabled={gemThinkingOff}
+              onClick={() => onChangeParameter({ llmVndGeminiThinkingBudget: 0 })}
+              sx={{ mr: 2 }}
+            >
+              <ClearIcon sx={{ fontSize: 'lg' }} />
+            </IconButton>
+          </Tooltip>
+        }
+        endAdornment={
+          <Tooltip arrow disableInteractive title={gemThinkingAuto ? undefined : 'Auto Thinking Budget (default)'}>
+            <IconButton
+              variant={gemThinkingAuto ? 'solid' : 'outlined'}
+              // disabled={gemThinkingAuto}
+              onClick={() => onRemoveParameter('llmVndGeminiThinkingBudget')}
+              sx={{ ml: 2 }}
+            >
+              <AutoModeIcon sx={{ fontSize: 'xl' }} />
+            </IconButton>
+          </Tooltip>
+        }
       />
     )}
 
