@@ -4,6 +4,7 @@ import { Box, IconButton, Tooltip } from '@mui/joy';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ClearIcon from '@mui/icons-material/Clear';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
@@ -93,7 +94,11 @@ export function LLMParametersEditor(props: {
 
 
   // semantics
-  const temperatureHide = 'llmVndAntThinkingBudget' in modelParamSpec;
+  function showParam(paramId: DModelParameterId): boolean {
+    return paramId in modelParamSpec && !modelParamSpec[paramId].hidden;
+  }
+
+  const temperatureHide = showParam('llmVndAntThinkingBudget');
   const antThinkingOff = llmVndAntThinkingBudget === null;
   const gemThinkingAuto = llmVndGeminiThinkingBudget === undefined;
   const gemThinkingOff = llmVndGeminiThinkingBudget === 0;
@@ -136,7 +141,7 @@ export function LLMParametersEditor(props: {
       </Box>
     )}
 
-    {modelParamSpec['llmVndAntThinkingBudget'] && (
+    {showParam('llmVndAntThinkingBudget') && (
       <FormSliderControl
         title='Thinking Budget' ariaLabel='Anthropic Extended Thinking Token Budget'
         description='Tokens'
@@ -162,7 +167,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmVndGeminiShowThoughts'] && (
+    {showParam('llmVndGeminiShowThoughts') && (
       <FormSwitchControl
         title='Show Chain of Thought'
         description={`Displays Gemini\'s reasoning process`}
@@ -171,7 +176,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmVndGeminiThinkingBudget'] && (
+    {showParam('llmVndGeminiThinkingBudget') && (
       <FormSliderControl
         title='Thinking Budget' ariaLabel='Gemini Thinking Token Budget'
         description={gemThinkingAuto ? 'Auto' : gemThinkingOff ? 'Thinking Off' : 'Tokens'}
@@ -182,19 +187,19 @@ export function LLMParametersEditor(props: {
         // disabled={gemThinkingAuto}
         onChange={value => onChangeParameter({ llmVndGeminiThinkingBudget: Array.isArray(value) ? (value[0] || value[1]) : value })}
         startAdornment={
-          <Tooltip arrow disableInteractive title={gemThinkingOff ? undefined : 'Disable Thinking'}>
+          <Tooltip arrow disableInteractive title={gemThinkingOff ? 'Thinking Off' : 'Disable Thinking'}>
             <IconButton
               variant={gemThinkingOff ? 'solid' : 'outlined'}
               // disabled={gemThinkingOff}
               onClick={() => onChangeParameter({ llmVndGeminiThinkingBudget: 0 })}
               sx={{ mr: 2 }}
             >
-              <ClearIcon sx={{ fontSize: 'lg' }} />
+              {gemThinkingOff ? <ClearIcon sx={{ fontSize: 'lg' }} /> : <PowerSettingsNewIcon />}
             </IconButton>
           </Tooltip>
         }
         endAdornment={
-          <Tooltip arrow disableInteractive title={gemThinkingAuto ? undefined : 'Auto Thinking Budget (default)'}>
+          <Tooltip arrow disableInteractive title={gemThinkingAuto ? 'Automatic Thinking (default)' : 'Auto Budget'}>
             <IconButton
               variant={gemThinkingAuto ? 'solid' : 'outlined'}
               // disabled={gemThinkingAuto}
@@ -208,7 +213,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmVndOaiReasoningEffort'] && (
+    {showParam('llmVndOaiReasoningEffort') && (
       <FormSelectControl
         title='Reasoning Effort'
         tooltip='Controls how much effort the model spends on reasoning'
@@ -223,7 +228,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmVndOaiRestoreMarkdown'] && (
+    {showParam('llmVndOaiRestoreMarkdown') && (
       <FormSwitchControl
         title='Restore Markdown'
         description='Enable markdown formatting'
@@ -238,7 +243,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmVndOaiWebSearchContext'] && (
+    {showParam('llmVndOaiWebSearchContext') && (
       <FormSelectControl
         title='Search Context Size'
         tooltip='Controls how much context is retrieved from the web'
@@ -253,7 +258,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmVndOaiWebSearchGeolocation'] && (
+    {showParam('llmVndOaiWebSearchGeolocation') && (
       <FormSwitchControl
         title='Add User Location'
         description='Use approximate location for better search results'
@@ -272,7 +277,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {modelParamSpec['llmForceNoStream'] && (
+    {showParam('llmForceNoStream') && (
       <FormSwitchControl
         title='Disable Streaming'
         description='Receive complete responses'
