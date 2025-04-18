@@ -150,13 +150,6 @@ const _knownGeminiModels: ({
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
     benchmark: { cbaElo: 1392 },
   },
-  // TEMP: NON-thinking variant - TODO: add this 'virtual' model
-  // {
-  //   // ...models/gemini-2.5-flash-preview-04-17,
-  //   labelOverride: 'Gemini 2.5 Flash Preview (Non-thinking)',
-  //   chatPrice: gemini25FlashPreviewNonThinkingPricing,
-  //   parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget', hidden: true, fixedValue: 0 }],
-  // },
 
 
   /// Generation 2.0
@@ -619,4 +612,41 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     hidden,
     // deprecated: knownModel?.deprecated,
   };
+}
+
+
+const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSchema>[] } = {
+
+  // Changes to the thinking variant (same model ID) for the Claude 3.7 Sonnet model
+  'models/gemini-2.5-flash-preview-04-17': [{
+    idVariant: '-non-thinking',
+    label: 'Gemini 2.5 Flash Preview (Non-thinking, 04-17)',
+    chatPrice: gemini25FlashPreviewNonThinkingPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{
+      paramId: 'llmVndGeminiThinkingBudget',
+      hidden: true,
+      initialValue: 0, // non-thinking: we fix the thinking budget to 0
+    }],
+    hidden: true,
+  }],
+
+} as const;
+
+export function geminiModelsAddVariants(models: ModelDescriptionSchema[]): ModelDescriptionSchema[] {
+  return models.reduce((acc, model, idx) => {
+
+    // insert the model in the same order
+    acc.push(model);
+
+    // add variants, if defined
+    if (hardcodedGeminiVariants[model.id])
+      for (const variant of hardcodedGeminiVariants[model.id])
+        acc.push({
+          ...model,
+          ...variant,
+        });
+
+    return acc;
+  }, [] as ModelDescriptionSchema[]);
 }
