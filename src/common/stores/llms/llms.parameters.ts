@@ -127,7 +127,7 @@ export const DModelParameterRegistry = {
   } as const,
 
   llmVndOaiWebSearchGeolocation: {
-    // NOTE: for now this is a booolean to enable/disable using client-side geolocation, but
+    // NOTE: for now this is a boolean to enable/disable using client-side geolocation, but
     // in the future we could have it a more complex object. Note that the payload that comes
     // back if of type AixAPI_Model.userGeolocation, which is the AIX Wire format for the
     // location payload.
@@ -146,6 +146,7 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
   paramId: T;
   required?: boolean;
   hidden?: boolean;
+  initialValue?: number | string | null;
   // upstreamDefault?: DModelParameterValue<T>;
 }
 
@@ -176,23 +177,27 @@ type DModelParameterValue<T extends DModelParameterId> =
 
 /// Utility Functions
 
-export function applyModelParameterInitialValues(parameterIds: DModelParameterId[], parameterValues: DModelParameterValues, overwrite: boolean): void {
-  for (const paramId of parameterIds) {
+export function applyModelParameterInitialValues(destValues: DModelParameterValues, parameterSpecs: DModelParameterSpec<DModelParameterId>[], overwriteExisting: boolean): void {
+  for (const param of parameterSpecs) {
+    const paramId = param.paramId;
 
-    // skip if the value is already present
-    if (!overwrite && paramId in parameterValues)
+    // skip if already present
+    if (!overwriteExisting && paramId in destValues)
       continue;
 
-    // find the parameter definition
-    const paramDef = DModelParameterRegistry[paramId];
-    if (!paramDef) {
-      console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
+    // 1. (if present) apply Spec.initialValue
+    if (param.initialValue !== undefined) {
+      destValues[paramId] = param.initialValue as DModelParameterValue<typeof paramId>;
       continue;
     }
 
-    // apply the initial value
-    if ('initialValue' in paramDef && paramDef.initialValue !== undefined)
-      parameterValues[paramId] = paramDef.initialValue as DModelParameterValue<typeof paramId>;
+    // 2. (if present) apply Registry[paramId].initialValue
+    const registryDef = DModelParameterRegistry[paramId];
+    if (registryDef) {
+      if ('initialValue' in registryDef && registryDef.initialValue !== undefined)
+        destValues[paramId] = registryDef.initialValue as DModelParameterValue<typeof paramId>;
+    } else
+      console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
   }
 }
 

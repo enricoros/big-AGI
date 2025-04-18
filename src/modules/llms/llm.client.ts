@@ -92,8 +92,8 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   };
 
   // set other params from spec
-  if (d.parameterSpecs?.length)
-    applyModelParameterInitialValues(d.parameterSpecs.map(p => p.paramId), dllm.initialParameters, false);
+  if (dllm.parameterSpecs?.length)
+    applyModelParameterInitialValues(dllm.initialParameters, dllm.parameterSpecs, false);
 
   // set the pricing
   if (d.chatPrice && typeof d.chatPrice === 'object') {
