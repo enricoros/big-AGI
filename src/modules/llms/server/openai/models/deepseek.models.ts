@@ -16,7 +16,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.55, output: 2.19, cache: { cType: 'oai-ac', read: 0.14 } },
-    benchmark: { cbaElo: 1359 },
+    benchmark: { cbaElo: 1358 },
   },
   {
     idPrefix: 'deepseek-chat',
@@ -26,7 +26,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.27, output: 1.10, cache: { cType: 'oai-ac', read: 0.07 } },
-    benchmark: { cbaElo: 1370 }, // note: this is for V3-0324, before V3 was 1318
+    benchmark: { cbaElo: 1372 }, // note: this is for V3-0324, before V3 was 1318
   },
   {
     idPrefix: 'deepseek-coder',

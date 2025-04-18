@@ -349,7 +349,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 75, cache: { cType: 'oai-ac', read: 37.5 }, output: 150 },
-    benchmark: { cbaElo: 1397 },
+    benchmark: { cbaElo: 1398 },
     isPreview: true,
   },
   {
@@ -364,7 +364,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 75, cache: { cType: 'oai-ac', read: 37.5 }, output: 150 },
-    benchmark: { cbaElo: 1397 },
+    benchmark: { cbaElo: 1398 },
     isPreview: true,
   },
 
@@ -430,7 +430,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // does not support Tools
     chatPrice: { input: 5, output: 15 },
-    benchmark: { cbaElo: 1406 },
+    benchmark: { cbaElo: 1407 },
   },
 
   // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
