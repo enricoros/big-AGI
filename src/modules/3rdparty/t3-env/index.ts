@@ -3,8 +3,8 @@ import type {
   ServerClientOptions,
   StandardSchemaV1,
   StrictOptions,
-} from "@t3-oss/env-core";
-import { createEnv as createEnvCore } from "@t3-oss/env-core";
+} from "./env-core";
+import { createEnv as createEnvCore } from "./env-core";
 
 const CLIENT_PREFIX = "NEXT_PUBLIC_" as const;
 type ClientPrefix = typeof CLIENT_PREFIX;
