@@ -6,7 +6,7 @@ import { default as TurndownService } from 'turndown';
 import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env';
 
 import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
 

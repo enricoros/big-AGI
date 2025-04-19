@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env';
 
 import packageJson from '../../../../../package.json';
 

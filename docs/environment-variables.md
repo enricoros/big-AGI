@@ -3,7 +3,7 @@
 This document provides an explanation of the environment variables used in the big-AGI application.
 
 **All variables are optional**; and _UI options_ take precedence over _backend environment variables_,
-which take place over _defaults_. This file is kept in sync with [`../src/server/env.mjs`](../src/server/env.mjs).
+which take place over _defaults_. This file is kept in sync with [`../src/server/env.ts`](../src/server/env.ts).
 
 ### Setting Environment Variables
 
