@@ -1,5 +1,6 @@
+import type { NextConfig } from 'next';
 import { execSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 
 // Build information: from CI, or git commit hash
 let buildHash = process.env.NEXT_PUBLIC_BUILD_HASH || process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA; // Docker or custom, GitHub Actions, Vercel
@@ -13,21 +14,21 @@ try {
 }
 // The following are used by/available to Release.buildInfo(...)
 process.env.NEXT_PUBLIC_BUILD_HASH = (buildHash || '').slice(0, 10);
-process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + await readFile(new URL('./package.json', import.meta.url))).version;
+process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + readFileSync(new URL('./package.json', import.meta.url))).version;
 process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
 process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE = process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE || (process.env.VERCEL_ENV ? `vercel-${process.env.VERCEL_ENV}` : 'local'); // Docker or custom, Vercel
 console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH})`);
 
 // Non-default build types
 const buildType =
-  process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone'
-    : process.env.BIG_AGI_BUILD === 'static' ? 'export'
+  process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone' as const
+    : process.env.BIG_AGI_BUILD === 'static' ? 'export' as const
       : undefined;
 
 buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
-let nextConfig = {
+let nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
@@ -46,7 +47,7 @@ let nextConfig = {
   // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
   serverExternalPackages: ['puppeteer-core'],
 
-  webpack: (config, { isServer }) => {
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
@@ -104,13 +105,13 @@ let nextConfig = {
 };
 
 // Validate environment variables, if set at build time. Will be actually read and used at runtime.
-// This is the reason both this file and the servr/env.mjs files have this extension.
-await import('./src/server/env.mjs');
+import { verifyBuildTimeVars } from '~/server/env';
+verifyBuildTimeVars();
 
 // conditionally enable the nextjs bundle analyzer
+import withBundleAnalyzer from '@next/bundle-analyzer';
 if (process.env.ANALYZE_BUNDLE) {
-  const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer');
-  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig);
+  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig) as NextConfig;
 }
 
 export default nextConfig;

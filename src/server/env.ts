@@ -1,4 +1,5 @@
-import { createEnv } from '@t3-oss/env-nextjs';
+// noinspection ES6PreferShortImport - because the build would not find this file with ~/...
+import { createEnv } from '../modules/3rdparty/t3-env';
 import { z } from 'zod';
 
 export const env = createEnv({
@@ -123,3 +124,13 @@ export const env = createEnv({
     NEXT_PUBLIC_PLANTUML_SERVER_URL: process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL,
   },
 });
+
+/**
+ * Dummy function to validate any build-time environment variables.
+ * Does nothing really, but forces the creation of the `env` object.
+ *
+ * At runtime the `env` object is actually used.
+ */
+export function verifyBuildTimeVars(): number {
+  return Object.keys(env).length;
+}
