@@ -33,7 +33,6 @@
     "@mui/material": "^5.17.1",
     "@next/bundle-analyzer": "~15.1.7",
     "@prisma/client": "~5.22.0",
-    "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.71.10",
     "@trpc/client": "11.0.0-rc.802",
     "@trpc/next": "11.0.0-rc.802",
