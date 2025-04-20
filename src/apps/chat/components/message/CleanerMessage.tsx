@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, IconButton, ListItem, Sheet } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -12,6 +12,50 @@ import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessage
 import { TokenBadgeMemo } from '../composer/tokens/TokenBadge';
 import { isErrorChatMessage } from './explainServiceErrors';
 import { messageSkippedSx } from './ChatMessage';
+
+
+// configuration
+/**
+ * This is being introduced because despite the automated ellipses, the text will still be fully layouted
+ * by the Browser layout engine and as such very slow.
+ */
+const CLEANER_MESSAGE_MAX_LENGTH = 256;
+
+
+const styles = {
+  listItem: {
+    borderBottom: '1px solid',
+    borderBottomColor: 'divider',
+    typography: 'body-sm',
+  } as const,
+
+  tokenBadge: {
+    display: 'flex',
+    minWidth: { xs: 32, sm: 45 },
+    justifyContent: 'flex-end',
+  } as const,
+
+  avatar: {
+    display: { xs: 'none', sm: 'flex' } as const,
+    minWidth: { xs: 40, sm: 48 } as const,
+    justifyContent: 'center',
+  } as const,
+
+  role: {
+    minWidth: 64,
+  } as const,
+
+  message: {
+    flexGrow: 1,
+    textOverflow: 'ellipsis', overflow: 'hidden',
+    // whiteSpace: 'nowrap',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    maxHeight: '2.9em',
+  } as const,
+
+} as const;
 
 
 /**
@@ -77,7 +121,9 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
     updated: messageUpdated,
   } = props.message;
 
-  const messageText = messageFragmentsReduceText(props.message.fragments);
+  let messageText = messageFragmentsReduceText(props.message.fragments, '\n\n', true);
+  if (messageText.length > CLEANER_MESSAGE_MAX_LENGTH)
+    messageText = messageText.substring(0, CLEANER_MESSAGE_MAX_LENGTH - 2) + '...';
 
   const fromAssistant = messageRole === 'assistant';
 
@@ -100,11 +146,10 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
     <ListItem
       onClick={() => props.onToggleSelected?.(messageId, !props.selected)}
       sx={{
+        backgroundColor,
         display: 'flex', flexDirection: !fromAssistant ? 'row' : 'row', alignItems: 'center',
         gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 2,
-        backgroundColor,
-        borderBottom: '1px solid',
-        borderBottomColor: 'divider',
+        ...styles.listItem,
         ...(isUserMessageSkipped && messageSkippedSx),
         // position: 'relative',
         '&:hover > button': { opacity: 1 },
@@ -115,29 +160,21 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
         <Checkbox size='md' checked={props.selected} onChange={handleCheckedChange} />
       </Box>}
 
-      {props.remainingTokens !== undefined && <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
+      {props.remainingTokens !== undefined && <Box sx={styles.tokenBadge}>
         <TokenBadgeMemo direct={messageTokenCount} limit={props.remainingTokens} inline />
       </Box>}
 
-      <Box sx={{ display: { xs: 'none', sm: 'flex' }, minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
+      <Box sx={styles.avatar}>
         {avatarIconEl}
       </Box>
 
-      <Typography level='body-sm' sx={{ minWidth: 64 }}>
+      <Box sx={styles.role}>
         {messageRole}
-      </Typography>
+      </Box>
 
-      <Typography level='body-sm' sx={{
-        flexGrow: 1,
-        textOverflow: 'ellipsis', overflow: 'hidden',
-        // whiteSpace: 'nowrap',
-        display: '-webkit-box',
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: 'vertical',
-        maxHeight: '2.9em',
-      }}>
+      <Box sx={styles.message}>
         {messageText}
-      </Typography>
+      </Box>
 
     </ListItem>
   );
