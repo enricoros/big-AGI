@@ -206,7 +206,14 @@ const reactMarkdownComponents = {
 const remarkPluginsStable: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
   remarkMark, // Mark-Highlight, for ==yellow==
-  [remarkMath, { singleDollarTextMath: false }], // Math
+  [remarkMath, {
+    /**
+     * NOTE: this could be configurable, some users reported liking single dollar signs math, despite even the official
+     * LaTeX documentation recommending against it: https://docs.mathjax.org/en/latest/input/tex/delimiters.html
+     * So in the future this could be a user setting.
+     */
+    singleDollarTextMath: false,
+  }],
 ];
 
 const rehypePluginsStable: UnifiedPluggable[] = [
@@ -220,15 +227,17 @@ const rehypePluginsStable: UnifiedPluggable[] = [
  * disable on purpose the single dollar sign for inline math, as it can clash
  * with other markdown syntax.
  */
+// noinspection RegExpRedundantEscape
 const preprocessMarkdown = (markdownText: string) => markdownText
   // Replace LaTeX delimiters with $$...$$
   // Replace inline LaTeX delimiters \( and \) with $$
-  .replace(/(\s*)\\\((.*?)\\\)/gs, (_match, leadingSpace, mathContent) =>
-    `${leadingSpace}$$${mathContent}$$`
+  // [2025-04-20] NOTE: it was reported that we had infinite recursion on the (.*?) version of inline math; as such, we now stay on the same line
+  .replace(/(\s*)\\\(([^\n]*?)\\\)/g, (_match, leadingSpace, mathContent) =>
+    `${leadingSpace}$$${mathContent}$$`,
   )
   // Replace block LaTeX delimiters \[ and \] with $$
-  .replace(/(\s*)\\\[(.*?)\\]/gs, (_match, leadingSpace, mathContent) =>
-    `${leadingSpace}$$${mathContent}$$`
+  .replace(/(\s*)\\\[((?:.|\n)*?)\\\]/g, (_match, leadingSpace, mathContent) =>
+    `${leadingSpace}$$${mathContent}$$`,
   )
   // Replace <mark>...</mark> with ==...==, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
   .replace(/<mark>([\s\S]*?)<\/mark>/g, (_match, p1) => wrapWithMarkdownSyntax(p1, '=='))
