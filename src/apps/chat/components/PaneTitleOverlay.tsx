@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, Sheet, Typography } from '@mui/joy';
+import { Box, IconButton, Sheet } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -49,6 +49,8 @@ const _styles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     cursor: 'pointer',
+    minWidth: '2.75rem',
+    textAlign: 'center',
   } as const,
   toolButton: {
     '--IconButton-size': '1.5rem',
@@ -162,9 +164,9 @@ export function PaneTitleOverlay(props: {
         {hasTitle && <Box sx={_styles.title} onClick={handleTitleEditBegin}>
           {title}
         </Box>}
-        {!hasTitle && <Typography level='body-sm' fontStyle='italic' onClick={handleTitleEditBegin}>
+        {!hasTitle && <Box fontStyle='italic' onClick={handleTitleEditBegin}>
           untitled
-        </Typography>}
+        </Box>}
         {!hasTitle && <TooltipOutlined title='Edit Chat Title'>
           <IconButton title='' size='sm' color={color} variant={variantP} onClick={handleTitleEditBegin} sx={_styles.toolButton}>
             <EditRoundedIcon sx={_styles.toolIcon} />
