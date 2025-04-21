@@ -164,10 +164,9 @@ export function AppChat() {
   }, [chatPanes]);
 
   const beamsOpens = useAreBeamsOpen(paneBeamStores);
-  const beamOpenStoreInFocusedPane = React.useMemo(() => {
-    const open = focusedPaneIndex !== null ? (beamsOpens?.[focusedPaneIndex] ?? false) : false;
-    return open ? paneBeamStores?.[focusedPaneIndex!] ?? null : null;
-  }, [beamsOpens, focusedPaneIndex, paneBeamStores]);
+  const beamOpenStoreInFocusedPane = focusedPaneIndex === null ? null
+    : !beamsOpens?.[focusedPaneIndex] ? null
+      : paneBeamStores?.[focusedPaneIndex] ?? null;
 
   const {
     // focused

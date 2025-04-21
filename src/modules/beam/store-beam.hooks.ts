@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { type StoreApi, useStore } from 'zustand';
 
+import { useShallowStable } from '~/common/util/hooks/useShallowObject';
+
 import type { BeamStore } from './store-beam_vanilla';
 
 
@@ -28,33 +30,26 @@ export const useBeamStore = <T, >(beamStore: BeamStoreApi, selector: (store: Bea
   return open;
 };*/
 
-export const useAreBeamsOpen = (beamStores: (BeamStoreApi | null)[]): boolean[] => {
-  const [opens, setOpens] = React.useState<boolean[]>([]);
+export function useAreBeamsOpen(beamStores: (BeamStoreApi | null)[]): boolean[] {
 
+  // state
+  const [_changeVersion, setChangeVersion] = React.useState(0);
+
+  // [effect] monitor the stores for changes
   React.useEffect(() => {
-    // Reflect the current state
-    setOpens(beamStores.map((beamStore) => !!beamStore?.getState().isOpen));
+    const updateIfOpenChanges = (state: BeamStore, prevState: BeamStore) => {
+      if (state.isOpen !== prevState.isOpen)
+        setChangeVersion(version => version + 1);
+    };
 
-    // Attach to the current beamStores
-    const unsubscribes = beamStores.map((beamStore, index) => {
-      if (!beamStore) {
-        return () => {
-        }; // Explicitly return a no-op function for clarity
-      }
-      return beamStore.subscribe((state: BeamStore, prevState: BeamStore) => {
-        if (state.isOpen !== prevState.isOpen) {
-          setOpens((opens) => {
-            const nextOpens = [...opens];
-            nextOpens[index] = state.isOpen;
-            return nextOpens;
-          });
-        }
-      });
+    // monitor the open status of all stores
+    const unsubscribes = beamStores.filter(store => !!store).map((beamStore) => {
+      return beamStore?.subscribe(updateIfOpenChanges);
     });
 
-    // Cleanup: unsubscribe from all subscriptions when the component unmounts or beamStores changes
-    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+    // unsubscribe on cleanup or when the stores change
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe?.());
   }, [beamStores]);
 
-  return opens;
-};
+  return useShallowStable(beamStores.map(beamStore => beamStore?.getState().isOpen ?? false));
+}
