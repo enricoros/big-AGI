@@ -272,14 +272,14 @@ function preprocessMarkdown(markdownText: string) {
   }
 }
 
-export default function CustomMarkdownRenderer(props: { content: string }) {
+export default function CustomMarkdownRenderer(props: { content: string, disablePreprocessor?: boolean }) {
   return (
     <ReactMarkdown
       components={reactMarkdownComponents}
       remarkPlugins={remarkPluginsStable}
       rehypePlugins={rehypePluginsStable}
     >
-      {preprocessMarkdown(props.content)}
+      {props.disablePreprocessor ? props.content : preprocessMarkdown(props.content)}
     </ReactMarkdown>
   );
 }
