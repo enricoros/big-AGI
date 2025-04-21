@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { FormControl, IconButton, ListDivider, ListItemDecorator, Option, Select, SvgIconProps } from '@mui/joy';
+import { ColorPaletteProp, FormControl, IconButton, ListDivider, ListItemDecorator, Option, Select, SvgIconProps, VariantProp } from '@mui/joy';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
@@ -44,6 +44,7 @@ const _slotProps = {
       '--ListItem-paddingLeft': '1rem',
       '--ListItem-minHeight': '2.5rem',
       // minWidth: '100%',
+      zIndex: 1300, // on top of ScratchChat
     } as const,
   } as const,
   button: {
@@ -60,6 +61,9 @@ const _slotProps = {
 
 interface LLMSelectOptions {
   label: string;
+  sx?: SxProps;
+  color?: ColorPaletteProp;
+  variant?: VariantProp;
   larger?: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -149,7 +153,8 @@ export function useLLMSelect(
       {!!label && <FormLabelStart title={label} sx={/*{ mb: '0.25rem' }*/ undefined} />}
       {/*<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>*/}
       <Select
-        variant='outlined'
+        color={options.color}
+        variant={options.variant ?? 'outlined'}
         value={llmId ?? null}
         size={larger ? undefined : 'sm'}
         disabled={disabled}
@@ -165,13 +170,13 @@ export function useLLMSelect(
             </IconButton>
           </TooltipOutlined>
           : isReasoning ? '🧠' : undefined}
-        sx={llmSelectSx}
+        sx={options.sx ?? llmSelectSx}
       >
         {optionsArray}
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [autoRefreshDomain, controlledOpen, disabled, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, optionsArray, placeholder]);
+  ), [autoRefreshDomain, controlledOpen, disabled, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, options.color, options.sx, options.variant, optionsArray, placeholder]);
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
