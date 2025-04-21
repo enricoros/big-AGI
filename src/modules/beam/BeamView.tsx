@@ -158,7 +158,8 @@ export function BeamView(props: {
       // ...props.sx,
 
       // enter animation
-      animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
+      // NOTE: disabled: off-putting/confusing when the beam content is large - things won't combine nicely
+      // animation: `${animationEnterScaleUp} 5s cubic-bezier(.17,.84,.44,1)`,
 
       // config
       '--Pad': { xs: '1rem', md: '1.5rem' },
