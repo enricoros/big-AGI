@@ -17,6 +17,7 @@ import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server
 import { alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './models/azure.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
+import { fastAPIHeuristic, fastAPIModels } from './models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
 import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
@@ -179,6 +180,10 @@ export const llmOpenAIRouter = createTRPCRouter({
           // [FireworksAI] special case for model enumeration
           if (fireworksAIHeuristic(access.oaiHost))
             return { models: fireworksAIModelsToModelDescriptions(openAIModels) };
+
+          // [FastChat] make the best of the little info
+          if (fastAPIHeuristic(openAIModels))
+            return { models: fastAPIModels(openAIModels) };
 
           models = openAIModels
 
