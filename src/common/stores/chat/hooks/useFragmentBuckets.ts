@@ -42,7 +42,7 @@ export function useFragmentBuckets(messageFragments: DMessageFragment[]): Fragme
       } else if (isVoidFragment(fragment)) {
         voidFragments.push(fragment);
       } else
-        console.warn('[DEV] Unexpected fragment type:', fragment.ft);
+        console.warn('[DEV] Unexpected fragment type:', { fragment });
     });
 
     // For each bucket, return the new value if it's different, otherwise return the stable ref
