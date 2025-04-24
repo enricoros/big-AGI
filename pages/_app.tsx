@@ -14,6 +14,7 @@ import '~/common/styles/NProgress.css';
 import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
 
+import { ErrorBoundary } from '~/common/components/ErrorBoundary';
 import { Is } from '~/common/util/pwaUtils';
 import { OverlaysInsert } from '~/common/layout/overlays/OverlaysInsert';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
@@ -43,11 +44,13 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
       <ProviderSingleTab>
         <ProviderBackendCapabilities>
           {/* ^ Backend capabilities & SSR boundary */}
-          <ProviderBootstrapLogic>
-            <SnackbarInsert />
-            {getLayout(<Component {...pageProps} />)}
-            <OverlaysInsert />
-          </ProviderBootstrapLogic>
+          <ErrorBoundary outer>
+            <ProviderBootstrapLogic>
+              <SnackbarInsert />
+              {getLayout(<Component {...pageProps} />)}
+              <OverlaysInsert />
+            </ProviderBootstrapLogic>
+          </ErrorBoundary>
         </ProviderBackendCapabilities>
       </ProviderSingleTab>
     </ProviderTheming>
