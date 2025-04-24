@@ -198,16 +198,16 @@ export type DMessageDataRef =
 
 /// Helpers - Fragment Type Guards - (we don't need 'fragment is X' since TypeScript 5.5.2)
 
-export function isContentFragment(fragment: DMessageFragment) {
-  return fragment.ft === 'content';
+export function isContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment {
+  return fragment.ft === 'content' && !!fragment.part?.pt;
 }
 
 export function isTextContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageTextPart } {
   return fragment.ft === 'content' && fragment.part.pt === 'text';
 }
 
-export function isAttachmentFragment(fragment: DMessageFragment) {
-  return fragment.ft === 'attachment';
+export function isAttachmentFragment(fragment: DMessageFragment): fragment is DMessageAttachmentFragment {
+  return fragment.ft === 'attachment' && !!fragment.part?.pt;
 }
 
 export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
@@ -215,8 +215,8 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
 }
 
 
-export function isVoidFragment(fragment: DMessageFragment) {
-  return fragment.ft === 'void';
+export function isVoidFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment {
+  return fragment.ft === 'void' && !!fragment.part?.pt;
 }
 
 export function isVoidAnnotationsFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment & { part: DVoidModelAnnotationsPart } {
