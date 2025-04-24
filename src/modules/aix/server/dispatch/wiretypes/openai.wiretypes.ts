@@ -566,7 +566,8 @@ export namespace OpenAIWire_API_Chat_Completions {
       'chat.completion.chunk',
       'chat.completion', // [Perplexity] sent an email on 2024-07-14 to inform them about the misnomer
       '', // [Azure] bad response: the first packet communicates 'prompt_filter_results'
-    ]),
+    ])
+      .optional(), // [FastAPI, 2025-04-24] the FastAPI dialect sadly misses the 'chat.completion.chunk' type
     id: z.string(),
 
     /**
@@ -578,7 +579,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     model: z.string(), // The model used for the chat completion.
     usage: Usage_schema.optional(), // If requested
-    created: z.number(), // The Unix timestamp (in seconds) of when the chat completion was created.
+    created: z.number() // The Unix timestamp (in seconds) of when the chat completion was created.
+      .optional(), // [FastAPI, 2025-04-24] the FastAPI dialect sadly misses the 'created' field
     system_fingerprint: z.string().optional() // The backend configuration that the model runs with.
       .nullable(), // [Grow, undocumented OpenAI] fingerprint is null on some OpenAI examples too
     // service_tier: z.unknown().optional(),
