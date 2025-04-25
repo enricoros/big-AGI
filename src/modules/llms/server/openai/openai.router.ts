@@ -108,11 +108,23 @@ const createImageConfigD2 = _createImageConfigBase.extend({
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
-  config: z.discriminatedUnion('model', [
+  generationConfig: z.discriminatedUnion('model', [
     createImageConfigGI,
     createImageConfigD3,
     createImageConfigD2,
   ]),
+  editConfig: z.object({
+    /**
+     * This is the exact copy of AixWire_Parts.InlineImagePart_schema, but somehow we must keep
+     * this module separate for now, or we'll get circular dependencies during the build.
+     */
+    inputImages: z.array(z.object({
+      pt: z.literal('inline_image'),
+      mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+      base64: z.string(),
+    })),
+    // maskImage: AixWire_Parts.InlineImagePart_schema.optional(),
+  }).optional(),
 });
 
 
@@ -258,7 +270,7 @@ export const llmOpenAIRouter = createTRPCRouter({
   createImages: publicProcedure
     .input(createImagesInputSchema)
     .output(t2iCreateImagesOutputSchema)
-    .mutation(async ({ input: { access, config } }) => {
+    .mutation(async ({ input: { access, generationConfig: config, editConfig } }) => {
 
       // validate input
       if (config.model === 'dall-e-3' && config.count > 1)
@@ -324,6 +336,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         };
       });
     }),
+
 
   /* [OpenAI] check for content policy violations */
   moderation: publicProcedure

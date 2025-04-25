@@ -1,3 +1,5 @@
+import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
+
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
@@ -12,7 +14,7 @@ import { DalleImageQuality, DalleModelId, DalleSize, useDalleStore } from './sto
 /**
  * Client function to call the OpenAI image generation API.
  */
-export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
+export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number): Promise<T2iCreateImageOutput[]> {
 
   // Use the current settings
   const {
@@ -37,12 +39,21 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   if (dalleNoRewrite && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
     prompt = 'I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: ' + prompt;
 
+  // Warn about a misconfiguration
+  if (aixInlineImageParts?.length && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
+    throw new Error('Image transformation is not available with this model. Please use GPT-Image-1 instead.');
 
   // Function to generate images in batches
   const generateImagesBatch = async (imageCount: number): Promise<T2iCreateImageOutput[]> =>
     apiAsync.llmOpenAI.createImages.mutate({
       access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceId).transportAccess,
-      config: dalleModelId === 'gpt-image-1' ? {
+      ...(aixInlineImageParts?.length && {
+        editConfig: {
+          inputImages: aixInlineImageParts,
+          // maskImage: ...
+        },
+      }),
+      generationConfig: dalleModelId === 'gpt-image-1' ? {
         model: 'gpt-image-1',
         prompt: prompt.slice(0, 32000 - 1), // GPT-Image-1 accepts much longer prompts
         count: imageCount,
