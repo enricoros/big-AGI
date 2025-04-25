@@ -66,19 +66,55 @@ const listModelsInputSchema = z.object({
   access: openAIAccessSchema,
 });
 
+
+const _createImageConfigBase = z.object({
+  // prompt: z.string().max(32000),
+  count: z.number().min(1).max(10),
+  user: z.string().optional(),
+});
+
+// GPT Image
+const createImageConfigGI = _createImageConfigBase.extend({
+  model: z.literal('gpt-image-1'),
+  prompt: z.string().max(32000),
+  size: z.enum([/*'auto',*/ '1024x1024', '1536x1024', '1024x1536']),
+  quality: z.enum(['high', 'medium', 'low']).optional(),
+  background: z.enum(['auto', 'transparent', 'opaque']).optional(),
+  output_format: z.enum(['png', 'jpeg', 'webp']).optional(),
+  output_compression: z.number().min(0).max(100).int().optional(),
+  moderation: z.enum(['low', 'auto']).optional(),
+});
+
+// DALL-E 3
+const createImageConfigD3 = _createImageConfigBase.extend({
+  model: z.literal('dall-e-3'),
+  count: z.number().min(1).max(1), // DALL-E 3 only supports n=1
+  prompt: z.string().max(4000),
+  quality: z.enum(['standard', 'hd']),
+  size: z.enum(['1024x1024', '1792x1024', '1024x1792']),
+  style: z.enum(['vivid', 'natural']).optional(),
+  response_format: z.enum([/*'url',*/ 'b64_json']).optional(),
+});
+
+// DALL-E 2
+const createImageConfigD2 = _createImageConfigBase.extend({
+  model: z.literal('dall-e-2'),
+  prompt: z.string().max(1000),
+  quality: z.literal('standard').optional(),
+  size: z.enum(['256x256', '512x512', '1024x1024']),
+  response_format: z.enum([/*'url',*/ 'b64_json']).optional(),
+});
+
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
-  // for this object sync with <> wireOpenAICreateImageRequestSchema
-  config: z.object({
-    prompt: z.string(),
-    count: z.number().min(1),
-    model: z.enum(['dall-e-2', 'dall-e-3' /*, 'stablediffusion' for [LocalAI] */]),
-    quality: z.enum(['standard', 'hd']),
-    responseFormat: z.enum(['url', 'b64_json']), /* udpated to directly match OpenAI's formats - shall have an intermediate representation instead? */
-    size: z.enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792']),
-    style: z.enum(['natural', 'vivid']),
-  }),
+  // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
+  config: z.discriminatedUnion('model', [
+    createImageConfigGI,
+    createImageConfigD3,
+    createImageConfigD2,
+  ]),
 });
+
 
 const moderationInputSchema = z.object({
   access: openAIAccessSchema,
@@ -224,21 +260,28 @@ export const llmOpenAIRouter = createTRPCRouter({
     .output(t2iCreateImagesOutputSchema)
     .mutation(async ({ input: { access, config } }) => {
 
-      // Validate input
+      // validate input
       if (config.model === 'dall-e-3' && config.count > 1)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
+      // if (config.model !== 'gpt-image-1' && (config.background || config.moderation || config.output_compression || config.output_format))
+      //   throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] background, moderation, output_compression, output_format are only supported for gpt-image-1` });
+      // if (config.model !== 'dall-e-3' && config.style)
+      //   throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] style is only supported for dall-e-3` });
 
       // images/generations request body
+      const { count, ...restConfig } = config;
       const requestBody: OpenAIWire_API_Images_Generations.Request = {
-        prompt: config.prompt,
-        model: config.model,
+        ...restConfig,
         n: config.count,
-        quality: config.quality,
-        response_format: config.responseFormat,
-        size: config.size,
-        style: config.style,
-        user: 'big-AGI',
+        user: 'Big-AGI',
       };
+
+      // mimetype assumption
+      let mimeType = 'image/png';
+      if (config.model !== 'dall-e-2' && config.model !== 'dall-e-3')
+        mimeType = config.output_format === 'jpeg' ? 'image/jpeg'
+          : config.output_format === 'webp' ? 'image/webp'
+            : 'image/png';
 
       // [LocalAI] Fix: LocalAI does not want the 'response_format' field
       if (access.dialect === 'localai')
@@ -250,25 +293,31 @@ export const llmOpenAIRouter = createTRPCRouter({
       );
 
       // common return fields
-      const [width, height] = config.size.split('x').map(nStr => parseInt(nStr));
+      const [width, height] = (config.size as any) === 'auto'
+        ? [1024, 1024] // NOTE: this is broken, bad assumption, but so that we don't throw an error
+        : config.size.split('x').map(nStr => parseInt(nStr));
       if (!width || !height) {
         console.error(`openai.router.createImages: invalid size ${config.size}`);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Invalid size ${config.size}` });
       }
-      const { count: _count, responseFormat: _responseFormat, prompt: origPrompt, ...parameters } = config;
+      const { count: _ignoreCount, prompt: origPrompt, ...parameters } = config;
 
       // expect a single image and as URL
-      const generatedImages = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput).data;
-      return generatedImages.map((image): T2iCreateImageOutput => {
+      const { data, usage: tokens } = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput);
+
+      // still parse as-if it was a list of images
+      return data.map((image): T2iCreateImageOutput => {
         if (!('b64_json' in image))
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
 
         return {
-          mimeType: 'image/png',
+          mimeType: mimeType,
           base64Data: image.b64_json!,
           altText: image.revised_prompt || origPrompt,
           width,
           height,
+          ...(tokens?.input_tokens !== undefined ? { inputTokens: tokens.input_tokens } : {}),
+          ...(tokens?.output_tokens !== undefined ? { outputTokens: tokens.output_tokens } : {}),
           generatorName: config.model,
           parameters: parameters,
           generatedAt: new Date().toISOString(),
