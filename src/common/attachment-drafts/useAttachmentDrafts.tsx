@@ -194,6 +194,13 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
     if (attachText && (textHtml || textPlain)) {
+
+      // only-images: skip this data transfer text attachment
+      if (filterOnlyImages) {
+        notifyOnlyImages(textPlain || textHtml);
+        return false;
+      }
+
       void _createAttachmentDraft({
         media: 'text', method, textPlain, textHtml,
       }, { hintAddImages });
@@ -206,7 +213,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, filterOnlyImages, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -275,6 +282,13 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
       // attach as Text
       if (textHtml || textPlain) {
+
+        // only-images: skip this clipboard text attachment
+        if (filterOnlyImages) {
+          notifyOnlyImages(textPlain || textHtml);
+          return false;
+        }
+
         void _createAttachmentDraft({
           media: 'text', method: 'clipboard-read', textPlain, textHtml,
         }, { hintAddImages });
