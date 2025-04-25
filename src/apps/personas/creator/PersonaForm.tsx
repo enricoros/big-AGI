@@ -36,6 +36,8 @@ export function PersonaForm() {
 
     SystemPurposes[newPersonaId as any] = newPersona;
 
+    localStorage.setItem('personas', JSON.stringify(SystemPurposes));
+
     console.log('New persona added:', { newPersonaId, newPersona });
     console.log('SystemPurposes:', SystemPurposes);
   };
@@ -60,7 +62,7 @@ export function PersonaForm() {
         />
       </FormControl>
       <FormControl>
-        <FormLabel>System Message</FormLabel>
+        <FormLabel>System Prompt</FormLabel>
         <Textarea
           placeholder="You are a code reviewer. You provide feedback on code quality, style, and best practices."
           value={systemMessage}

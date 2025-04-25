@@ -24,8 +24,25 @@ import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/3rdparty/GoogleAnalytics';
 import { hasPostHogAnalytics, OptionalPostHogAnalytics } from '~/common/components/3rdparty/PostHogAnalytics';
 
+import { SystemPurposes } from 'src/data';
 
 const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
+
+  React.useEffect(() => {
+    const storedPersonas = localStorage.getItem('personas');
+    if (storedPersonas) {
+      try {
+        const parsedPersonas = JSON.parse(storedPersonas);
+        // Update SystemPurposes with the loaded personas
+        Object.keys(parsedPersonas).forEach(key => {
+          SystemPurposes[key as any] = parsedPersonas[key];
+        });
+        console.log('Loaded personas from local storage:', SystemPurposes);
+      } catch (error) {
+        console.error('Error loading personas from local storage:', error);
+      }
+    }
+  }, []);
 
   // We are using a nextjs per-page layout pattern to bring the (Optima) layout creation to a shared place
   // This reduces the flicker and the time switching between apps, and seems to not have impact on
