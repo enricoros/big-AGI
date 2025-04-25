@@ -159,6 +159,8 @@ export async function t2iGenerateImageContentFragments(
       metadata: {
         width: _i.width || 0,
         height: _i.height || 0,
+        // inputTokens: _i.inputTokens,
+        // outputTokens: _i.outputTokens,
         // description: '',
       },
     });

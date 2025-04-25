@@ -16,6 +16,10 @@ const t2iCreateImageOutputSchema = z.object({
   width: z.number(),
   height: z.number(),
 
+  // costs
+  inputTokens: z.number().optional(),
+  outputTokens: z.number().optional(),
+
   // origin
   generatorName: z.string(),
   parameters: z.record(z.any()),
