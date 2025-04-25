@@ -109,7 +109,15 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
 }
 
 
-export function openAIImageModelsPrice(modelId: DalleModelId): undefined | { inputText: number, inputImage: number, outputImage: number } {
+export function openAIImageModelsCurrentGeneratorName() {
+  const dalleModelId = useDalleStore.getState().dalleModelId;
+  if (dalleModelId === 'gpt-image-1') return 'GPT Image';
+  else if (dalleModelId === 'dall-e-3') return 'DALL·E 3';
+  else if (dalleModelId === 'dall-e-2') return 'DALL·E 2';
+  return 'OpenAI Image generator';
+}
+
+function openAIImageModelsPrice(modelId: DalleModelId): undefined | { inputText: number, inputImage: number, outputImage: number } {
   if (modelId === 'gpt-image-1')
     return { inputText: 5.00, inputImage: 10.0, outputImage: 40.0 };
   return undefined;

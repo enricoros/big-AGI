@@ -40,7 +40,7 @@ How to set up AI models and features in big-AGI.
 - **Enhanced AI Features**:
   - **[Web Browsing](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud
   - **Web Search**: Google Search API (see '[Environment Variables](environment-variables.md)')
-  - **Image Generation**: DALL·E 3 and 2, or Prodia API for Stable Diffusion XL
+  - **Image Generation**: GPT Image (gpt-image-1), DALL·E 3 and 2, or Prodia API for Stable Diffusion XL
   - **Voice Synthesis**: ElevenLabs API for voice generation
 
 ## Deployment & Customization
