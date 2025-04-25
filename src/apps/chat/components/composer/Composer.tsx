@@ -105,6 +105,7 @@ export function Composer(props: {
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement | null>;
   targetConversationId: DConversationId | null;
   capabilityHasT2I: boolean;
+  capabilityHasT2IEdit: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
   onAction: (conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
@@ -188,11 +189,12 @@ export function Composer(props: {
     )), [onConversationsImportFromFiles, showPromisedOverlay]);
 
   // attachments-overlay: comes from the attachments slice of the conversation overlay
+  const showChatAttachments = chatExecuteModeCanAttach(chatExecuteMode, props.capabilityHasT2IEdit);
   const {
     /* items */ attachmentDrafts,
     /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile, attachAppendUrl,
     /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType,
-  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile);
+  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile, showChatAttachments === 'only-images');
 
   // attachments derived state
   const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
@@ -210,7 +212,6 @@ export function Composer(props: {
   const isMobile = props.isMobile;
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
-  const showChatAttachments = chatExecuteModeCanAttach(chatExecuteMode);
 
   const composerTextSuffix = chatExecuteMode === 'generate-image' && isDesktop && drawRepeat > 1 ? ` x${drawRepeat}` : '';
 
@@ -300,7 +301,7 @@ export function Composer(props: {
     if (composerText)
       fragments.push(createTextContentFragment(composerText + composerTextSuffix));
 
-    const canAttach = chatExecuteModeCanAttach(_chatExecuteMode);
+    const canAttach = chatExecuteModeCanAttach(_chatExecuteMode, props.capabilityHasT2IEdit);
     if (canAttach) {
       const attachmentFragments = await attachmentsTakeAllFragments('global', 'app-chat');
       fragments.push(...attachmentFragments);
@@ -319,7 +320,7 @@ export function Composer(props: {
     if (enqueued)
       _handleClearText();
     return enqueued;
-  }, [attachmentsTakeAllFragments, composerTextSuffix, confirmProceedIfAttachmentsNotSupported, _handleClearText, inReferenceTo, onAction, targetConversationId]);
+  }, [targetConversationId, confirmProceedIfAttachmentsNotSupported, composerTextSuffix, props.capabilityHasT2IEdit, inReferenceTo, onAction, _handleClearText, attachmentsTakeAllFragments]);
 
   const handleSendAction = React.useCallback(async (chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     setSendStarted(true);
@@ -753,8 +754,10 @@ export function Composer(props: {
                 {/* Responsive Camera OCR button */}
                 {showChatAttachments && <ButtonAttachCameraMemo isMobile onOpenCamera={openCamera} />}
 
+                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />}
+
                 {/* [mobile] [+] button */}
-                {showChatAttachments && (
+                {showChatAttachments === true && (
                   <Dropdown>
                     <MenuButton slots={{ root: IconButton }}>
                       <AddCircleOutlineIcon />
@@ -798,10 +801,10 @@ export function Composer(props: {
                 <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
 
                 {/* Responsive Web button */}
-                <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />
+                {showChatAttachments !== 'only-images' && <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />}
 
                 {/* Responsive Paste button */}
-                {supportsClipboardRead() && <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />}
+                {supportsClipboardRead() && showChatAttachments !== 'only-images' && <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />}
 
                 {/* Responsive Screen Capture button */}
                 {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}
