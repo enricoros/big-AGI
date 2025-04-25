@@ -188,7 +188,7 @@ export function AppChat() {
   // const focusedConversationWorkspaceId = workspaceForConversationIdentity(focusedPaneConversationId);
   //// const focusedConversationWorkspace = useWorkspaceIdForConversation(focusedPaneConversationId);
 
-  const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
+  const { mayWork: capabilityHasT2I, mayEdit: capabilityHasT2IEdit } = useCapabilityTextToImage();
 
   const activeFolderId = useFolderStore(({ enableFolders, folders }) => {
     const activeFolderId = enableFolders ? _activeFolderId : null;
@@ -737,6 +737,7 @@ export function AppChat() {
       composerTextAreaRef={composerTextAreaRef}
       targetConversationId={focusedPaneConversationId}
       capabilityHasT2I={capabilityHasT2I}
+      capabilityHasT2IEdit={capabilityHasT2IEdit}
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
       isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
