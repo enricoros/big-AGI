@@ -70,7 +70,9 @@ export function RenderImageRefDBlob(props: {
     queryKey: ['regen-image-asset', props.dataRefDBlobAssetId, recreationPrompt],
     queryFn: async ({ signal }) => {
       if (signal?.aborted || !recreationPrompt || !props.onReplaceFragment) return;
-      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, 1, 'global', 'app-chat');
+      // NOTE: we shall prevent this operation from happening if the image was not fully generated from the prompt, but also had images
+      // const recreationImages = [];
+      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, [], 1, 'global', 'app-chat');
       if (newImageFragments.length === 1)
         props.onReplaceFragment?.(newImageFragments[0]);
     },

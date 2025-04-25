@@ -1,8 +1,12 @@
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 
+import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
+import { aixConvertImageRefToInlineImageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
+import type { Immutable } from '~/common/types/immutable.types';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, DMessageFragment, isContentOrAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 
 // NOTE: also see src/common/stores/chat/chat.gc.ts, which has cleanup code for images create here
@@ -11,7 +15,7 @@ import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments'
 /**
  * Text to image, appended as an 'assistant' message
  */
-export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText?: string) {
+export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText: string, imageFragments?: Immutable<DMessageFragment[]>) {
   if (!imageText) {
     cHandler.messageAppendAssistantText('Issue: no image description provided.', 'issue');
     return false;
@@ -37,8 +41,31 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
     { generator: { mgt: 'named', name: t2iProvider.painter } },
   );
 
+  // edit-generation: ready the images payload
+  const aixInlineImageParts: AixParts_InlineImagePart[] = [];
+  if (imageFragments?.length) {
+    for (const fragment of imageFragments) {
+      if (!isContentOrAttachmentFragment(fragment) || !isImageRefPart(fragment.part)) {
+        console.log('[DEV] Invalid image fragment', { fragment });
+        continue;
+      }
+
+      // dereference and ready for transmission - do not resize any input
+      try {
+        const aixImageInlinePart = await aixConvertImageRefToInlineImageOrThrow(fragment.part, false);
+        if (!aixImageInlinePart) {
+          console.log('[DEV] Invalid image fragment', { fragment });
+          continue;
+        }
+        aixInlineImageParts.push(aixImageInlinePart);
+      } catch (error: any) {
+        console.log('[DEV] Error converting image fragment', { fragment, error });
+      }
+    }
+  }
+
   try {
-    const imageContentFragments = await t2iGenerateImageContentFragments(t2iProvider, imageText, repeat, 'global', 'app-chat');
+    const imageContentFragments = await t2iGenerateImageContentFragments(t2iProvider, imageText, aixInlineImageParts, repeat, 'global', 'app-chat');
 
     // add the image content fragments to the message
     for (const imageContentFragment of imageContentFragments)

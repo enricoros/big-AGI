@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
@@ -135,7 +136,10 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
  * If t2iprovider is null, the active provider will be used
  */
 export async function t2iGenerateImageContentFragments(
-  t2iProvider: TextToImageProvider | null, prompt: string, count: number,
+  t2iProvider: TextToImageProvider | null,
+  prompt: string,
+  aixInlineImageParts: AixParts_InlineImagePart[],
+  count: number,
   contextId: DBlobDBContextId, scopeId: DBlobDBScopeId,
 ): Promise<DMessageContentFragment[]> {
 
