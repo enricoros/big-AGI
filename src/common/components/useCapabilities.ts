@@ -50,6 +50,7 @@ type TextToImageVendor = 'localai' | 'openai' | 'prodia';
 
 export interface CapabilityTextToImage {
   mayWork: boolean;
+  mayEdit: boolean;
   providers: TextToImageProvider[],
   activeProviderId: string | null;
   setActiveProviderId: (providerId: string | null) => void;
