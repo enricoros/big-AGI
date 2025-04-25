@@ -100,7 +100,7 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
 
   // 2. Check for non-200s
   // These are the MOST FREQUENT errors, application level response. Such as:
-  //  - 400 when requesting an invalid size to Dall-E3, etc..
+  //  - 400 when requesting an invalid size to Dall-E-3, etc..
   //  - 403 when requesting a localhost URL from a public server, etc..
   if (!response.ok) {
     // try to parse a json or text payload, which frequently contains the error, if present

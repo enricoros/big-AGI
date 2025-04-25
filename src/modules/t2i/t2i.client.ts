@@ -13,7 +13,7 @@ import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms'
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { T2iCreateImageOutput } from './t2i.server';
-import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
+import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
 import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
 import { useProdiaStore } from './prodia/store-module-prodia';
 import { useTextToImageStore } from './store-module-t2i';
@@ -215,8 +215,9 @@ function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasP
         providers.push({
           providerId: modelServiceId,
           label: label,
-          painter: 'DALL·E',
-          description: 'OpenAI\'s DALL·E models',
+          painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
+          // painter: 'DALL·E',
+          description: 'OpenAI Image generation models',
           configured: hasAnyModels,
           vendor: 'openai',
         });

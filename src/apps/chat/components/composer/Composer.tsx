@@ -6,7 +6,6 @@ import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuB
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -55,6 +54,7 @@ import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
+import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 
@@ -682,7 +682,7 @@ export function Composer(props: {
       : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
         : isReAct ? <PsychologyIcon />
           : isTextBeam ? <ChatBeamIcon /> /* <GavelIcon /> */
-            : isDraw ? <FormatPaintTwoToneIcon />
+            : isDraw ? <PhPaintBrush />
               : <TelegramIcon />;
 
   const beamButtonColor: ColorPaletteProp | undefined =
