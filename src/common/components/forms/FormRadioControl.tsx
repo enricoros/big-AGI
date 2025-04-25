@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Radio, RadioGroup } from '@mui/joy';
 
+import type { Immutable } from '~/common/types/immutable.types';
 
 import { FormLabelStart } from './FormLabelStart';
 
@@ -18,7 +19,7 @@ export const FormRadioControl = <TValue extends string>(props: {
   description?: string | React.JSX.Element,
   tooltip?: string | React.JSX.Element,
   disabled?: boolean;
-  options: FormRadioOption<TValue>[];
+  options: Immutable<FormRadioOption<TValue>[]>;
   value?: TValue;
   onChange: (value: TValue) => void;
 }) =>
