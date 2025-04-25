@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router'
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import { formatModelsCost } from '~/common/util/costUtils';
-
 import type { T2iCreateImageOutput } from '../t2i.server';
 import { DalleImageQuality, DalleModelId, DalleSize, useDalleStore } from './store-module-dalle';
 
@@ -36,7 +34,7 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   } = useDalleStore.getState();
 
   // This trick is explained on: https://platform.openai.com/docs/guides/images/usage?context=node
-  if (dalleNoRewrite)
+  if (dalleNoRewrite && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
     prompt = 'I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: ' + prompt;
 
 
@@ -151,7 +149,7 @@ export function openAIImageModelsPricing(modelId: DalleModelId, quality: DalleIm
       return 'varies by tokens';
     }
     const outputImageCost = price.outputImage * outTokens / 1_000_000;
-    return '> ' + formatModelsCost(outputImageCost); // e.g. 0.17 for high/square
+    return outputImageCost.toFixed(2) + ' +'; // e.g. 0.17 for high/square
   } else if (modelId === 'dall-e-3') {
     if (quality === 'hd') {
       if (size === '1024x1024') return '0.08';
