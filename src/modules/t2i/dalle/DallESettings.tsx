@@ -18,7 +18,7 @@ const CONF = {
   MODEL_OPTS: [
     { value: 'dall-e-2', label: 'DALL·E 2' },
     { value: 'dall-e-3', label: 'DALL·E 3' },
-    { value: 'gpt-image-1', label: 'GPT Image 1' },
+    { value: 'gpt-image-1', label: 'GPT Image' },
   ],
 
   RES_D2: ['256x256', '512x512', '1024x1024'] as DalleImageSize[],
@@ -112,6 +112,8 @@ export function DallESettings() {
   const currentResolution = isD2 ? dalleSizeD2 : isD3 ? dalleSizeD3 : dalleSizeGI;
   const hasResolution = resolutions.includes(currentResolution);
 
+  const isGICompressible = dalleOutputFormatGI === 'webp' || dalleOutputFormatGI === 'jpeg';
+
   const showTransparencyWarning = isGI
     && dalleBackgroundGI === 'transparent'
     && dalleOutputFormatGI !== 'png'
@@ -150,7 +152,7 @@ export function DallESettings() {
         }}
       >
         {resolutions.map((resolution) =>
-          <Option key={'dalle-res-' + resolution} value={resolution}>
+          <Option key={'res-' + resolution} value={resolution}>
             {resolution.replace('x', ' x ')}
           </Option>,
         )}
@@ -161,7 +163,7 @@ export function DallESettings() {
     {isGI && <>
       <FormChipControl
         title='Quality'
-        color='primary'
+        // color='primary'
         description='Higher quality takes longer'
         options={CONF.QUALITY_GI}
         value={dalleQualityGI} onChange={setDalleQualityGI}
@@ -169,7 +171,7 @@ export function DallESettings() {
 
       <FormChipControl
         title='Background'
-        color='primary'
+        // color='primary'
         description={
           !showTransparencyWarning
             ? 'Transparency'
@@ -182,24 +184,26 @@ export function DallESettings() {
       />
 
       {advanced.on && <FormChipControl
-        title='Output Format'
-        color='primary'
+        title='File Format'
+        // color='primary'
         description='File format for the generated image'
         options={CONF.OUT_FORMAT_GI}
         value={dalleOutputFormatGI} onChange={setDalleOutputFormatGI}
       />}
 
       {advanced.on && /*(dalleOutputFormatGI === 'webp' || dalleOutputFormatGI === 'jpeg') &&*/ (
-        <FormControl disabled={dalleOutputFormatGI !== 'webp' && dalleOutputFormatGI !== 'jpeg'} orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <FormLabelStart title={dalleOutputFormatGI !== 'png' ? dalleOutputFormatGI?.toLocaleUpperCase() + ' Compression' : 'Compression'}
-                          description={`${dalleOutputCompressionGI}% quality`} />
+        <FormControl disabled={!isGICompressible} orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <FormLabelStart title='File Quality'
+                          description={(isGICompressible && dalleOutputCompressionGI !== 100) ? `${100 - dalleOutputCompressionGI}% compression` : 'Uncompressed'} />
           <Slider
-            aria-label='Compression'
+            aria-label='File Quality'
+            color='neutral'
             disabled={dalleOutputFormatGI !== 'webp' && dalleOutputFormatGI !== 'jpeg'}
-            value={dalleOutputCompressionGI}
+            value={!isGICompressible ? 0 : dalleOutputCompressionGI}
             onChange={handleCompressionChange}
             min={5}
             max={100}
+            step={5}
             // valueLabelDisplay='auto'
             sx={{ width: '180px', mr: 1 }}
           />
