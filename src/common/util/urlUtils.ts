@@ -192,6 +192,11 @@ export function base64ToArrayBuffer(base64Data: string) {
   return base64ToUint8Array(base64Data).buffer;
 }
 
+export function base64ToBlob(base64Data: string, mimeType: string) {
+  const buffer = Buffer.from(base64Data, 'base64');
+  return new Blob([buffer], { type: mimeType });
+}
+
 
 /**
  * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance) from a Data URL
