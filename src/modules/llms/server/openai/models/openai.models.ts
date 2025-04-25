@@ -895,7 +895,7 @@ const openAIModelsDenyList: string[] = [
   'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', // FIXME: support these
 
   // Image models: /v1/images/generations
-  'dall-e-3', 'dall-e-2',
+  'gpt-image-1', 'dall-e-3', 'dall-e-2',
 
   // Moderation models
   'omni-moderation-latest', 'omni-moderation-2024-09-26',
