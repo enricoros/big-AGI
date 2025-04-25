@@ -138,7 +138,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
           case 'image_ref':
             // note, we don't resize, as the user image is resized following the user's preferences
-            uMsg.parts.push(await _convertImageRefToInlineImageOrThrow(uFragment.part, false));
+            uMsg.parts.push(await aixConvertImageRefToInlineImageOrThrow(uFragment.part, false));
             break;
 
           case 'doc':
@@ -223,7 +223,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
              */
             const isLastAssistantMessage = _index === lastAssistantMessageIndex;
             const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
-            modelMessage.parts.push(await _convertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
+            modelMessage.parts.push(await aixConvertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
             break;
 
           case 'tool_response':
@@ -291,7 +291,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
 /// Parts that differ from DMessage*Part to AIX
 
-async function _convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
+export async function aixConvertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
 
   // validate
   const { dataRef } = imageRefPart;
