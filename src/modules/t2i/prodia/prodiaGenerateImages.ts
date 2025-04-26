@@ -1,4 +1,4 @@
-import { apiAsync } from '~/common/util/trpc.client';
+import { apiStream } from '~/common/util/trpc.client';
 
 import { useProdiaStore } from './store-module-prodia';
 
@@ -17,7 +17,7 @@ export async function prodiaGenerateImages(imageText: string, count: number): Pr
 
   // Function to generate a single image
   const generateImage = async (): Promise<T2iCreateImageOutput[]> => {
-    const generatedImages = await apiAsync.prodia.createImage.query({
+    const operations = await apiStream.prodia.createImage.query({
       ...(!!prodiaKey && { prodiaKey }),
       prodiaModel: prodiaModelId || 'sd_xl_base_1.0.safetensors [be9edd61]', // was: Realistic_Vision_V5.0.safetensors [614d1063]
       prodiaGen: prodiaModelGen || 'sd', // data versioning fix
@@ -31,8 +31,13 @@ export async function prodiaGenerateImages(imageText: string, count: number): Pr
       ...(!!seed && { seed }),
     });
 
-    if (generatedImages.length !== 1)
-      throw new Error('Prodia image generation failed - expected 1 image, got ' + generatedImages.length);
+    const generatedImages: T2iCreateImageOutput[] = [];
+    for await (const op of operations)
+      if (op.p == 'createImage')
+        generatedImages.push(op.image);
+
+    if (!generatedImages.length)
+      throw new Error('Prodia image generation failed');
 
     return generatedImages;
   };

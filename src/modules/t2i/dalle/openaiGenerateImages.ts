@@ -1,6 +1,6 @@
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 
-import { apiAsync } from '~/common/util/trpc.client';
+import { apiStream } from '~/common/util/trpc.client';
 
 import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
 
@@ -44,15 +44,11 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
     throw new Error('Image transformation is not available with this model. Please use GPT-Image-1 instead.');
 
   // Function to generate images in batches
-  const generateImagesBatch = async (imageCount: number): Promise<T2iCreateImageOutput[]> =>
-    apiAsync.llmOpenAI.createImages.mutate({
+  async function generateImagesBatch(imageCount: number): Promise<T2iCreateImageOutput[]> {
+
+    // we use an async generator to stream heartbeat events while waiting for the images
+    const operations = await apiStream.llmOpenAI.createImages.mutate({
       access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceId).transportAccess,
-      ...(aixInlineImageParts?.length && {
-        editConfig: {
-          inputImages: aixInlineImageParts,
-          // maskImage: ...
-        },
-      }),
       generationConfig: dalleModelId === 'gpt-image-1' ? {
         model: 'gpt-image-1',
         prompt: prompt.slice(0, 32000 - 1), // GPT-Image-1 accepts much longer prompts
@@ -80,22 +76,36 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
         size: dalleSizeD2,
         response_format: 'b64_json',
       },
+      ...(aixInlineImageParts?.length && {
+        editConfig: {
+          inputImages: aixInlineImageParts,
+          // maskImage: ...
+        },
+      }),
     });
+
+    const createdImages: T2iCreateImageOutput[] = [];
+    for await (const op of operations)
+      if (op.p === 'createImage')
+        createdImages.push(op.image);
+
+    return createdImages;
+  }
 
 
   // Calculate the number of batches required
   const isD3 = dalleModelId === 'dall-e-3';
   const maxBatchSize = isD3 ? 1 : 10; // DALL-E 3 only supports n=1, so we parallelize the requests instead
-  const totalBatches = Math.ceil(count / maxBatchSize);
 
-  // Create an array of promises for image generation
-  const imagePromises = Array.from({ length: totalBatches }, (_, index) => {
-    const batchCount = Math.min(count - index * maxBatchSize, maxBatchSize);
-    return generateImagesBatch(batchCount);
-  });
+  // Operate in batches of maxBatchSize
+  const batchPromises: Promise<T2iCreateImageOutput[]>[] = [];
+  for (let i = 0; i < count; i += maxBatchSize) {
+    const batchSize = Math.min(maxBatchSize, count - i);
+    batchPromises.push(generateImagesBatch(batchSize));
+  }
 
   // Run all image generation requests in parallel and handle all results
-  const imageRefsBatchesResults = await Promise.allSettled(imagePromises);
+  const imageRefsBatchesResults = await Promise.allSettled(batchPromises);
 
 
   // Throw if ALL promises were rejected

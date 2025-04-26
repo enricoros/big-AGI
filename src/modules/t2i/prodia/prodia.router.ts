@@ -4,7 +4,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { getPngDimensionsFromBytes, t2iCreateImagesOutputSchema } from '../t2i.server';
+import { getPngDimensionsFromBytes, T2ICreateImageAsyncStreamOp } from '../t2i.server';
 
 import { HARDCODED_MODELS } from './prodia.models';
 
@@ -33,8 +33,10 @@ export const prodiaRouter = createTRPCRouter({
   /** [Prodia] Generate an image, returning the cloud URL */
   createImage: publicProcedure
     .input(createImageInputSchema)
-    .output(t2iCreateImagesOutputSchema)
-    .query(async ({ input }) => {
+    .query(async function* ({ input }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
+
+      // -> state.started
+      yield { p: 'state', state: 'started' };
 
       // timeout, in seconds
       const timeout = 25;
@@ -78,6 +80,9 @@ export const prodiaRouter = createTRPCRouter({
         j = await getJobStatus(input.prodiaKey, j.job);
         if (sleepDelay >= 300)
           sleepDelay /= 2;
+
+        // -> heartbeat
+        yield { p: '❤' };
       }
 
       // check for success
@@ -97,16 +102,19 @@ export const prodiaRouter = createTRPCRouter({
 
       // respond with 1 result
       const { prompt: altText, ...otherParameters } = jobRequest;
-      return [{
-        mimeType: 'image/png',
-        base64Data: base64Image,
-        altText,
-        width,
-        height,
-        generatorName: 'prodia-' + input.prodiaModel,
-        parameters: otherParameters,
-        generatedAt: new Date().toISOString(),
-      }];
+      yield {
+        p: 'createImage',
+        image: {
+          mimeType: 'image/png',
+          base64Data: base64Image,
+          altText,
+          width,
+          height,
+          generatorName: 'prodia-' + input.prodiaModel,
+          parameters: otherParameters,
+          generatedAt: new Date().toISOString(),
+        },
+      };
     }),
 
   /** List models - for now just hardcode the list, as there's no endpoint */
