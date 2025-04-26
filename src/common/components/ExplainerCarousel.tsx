@@ -5,7 +5,7 @@ import { Box, Button, Step, stepClasses, StepIndicator, stepIndicatorClasses, St
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
@@ -84,7 +84,7 @@ function AllStepsStepper(props: {
                 onClick={() => props.onStepClicked(stepIndex)}
                 sx={{ cursor: 'pointer' }}
               >
-                {completed ? <CheckRoundedIcon sx={{ fontSize: 'md' }} /> : active ? <KeyboardArrowDownRoundedIcon sx={{ fontSize: 'lg' }} /> : undefined}
+                {completed ? <CheckRoundedIcon sx={{ fontSize: 'md' }} /> : active ? <KeyboardArrowDownIcon sx={{ fontSize: 'lg' }} /> : undefined}
               </StepIndicator>
             }
           >
