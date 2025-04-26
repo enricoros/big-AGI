@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { Box, FormHelperText, FormLabel, IconButton, Stack } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
@@ -24,7 +23,7 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
       )}
       {!!props.collapsible && !props.asLink && (
         <IconButton onClick={() => setCollapsed(!collapsed)} sx={{ ml: 1 }}>
-          {!collapsed ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          {!collapsed ? <KeyboardArrowDownIcon sx={{ transform: 'rotate(180deg)' }} /> : <KeyboardArrowDownIcon />}
         </IconButton>
       )}
     </Stack>
