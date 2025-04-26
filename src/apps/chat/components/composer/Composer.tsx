@@ -754,7 +754,8 @@ export function Composer(props: {
                 {/* Responsive Camera OCR button */}
                 {showChatAttachments && <ButtonAttachCameraMemo isMobile onOpenCamera={openCamera} />}
 
-                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />}
+                {/* [mobile] Attach file button (in draw with image mode)  */}
+                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
 
                 {/* [mobile] [+] button */}
                 {showChatAttachments === true && (
