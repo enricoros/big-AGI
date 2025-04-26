@@ -46,7 +46,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     return stableLlmsModelServices.current = next;
   });
 
-  const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
+  const hasProdiaModels = useProdiaStore(state => !!state.modelId);
 
 
   // memo
@@ -97,7 +97,7 @@ export function getActiveTextToImageProviderOrThrow() {
   // [immediate] get all providers
   const { llms, sources: modelsServices } = llmsStoreState();
   const openAIModelsServiceIDs = getLlmsModelServices(llms, modelsServices);
-  const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().prodiaModelId);
+  const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().modelId);
 
   // find the active provider
   const activeProvider = providers.find(p => p.providerId === activeProviderId);
@@ -123,7 +123,7 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
 
     case 'prodia':
       const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
-      const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
+      const hasProdiaClientModels = !!useProdiaStore.getState().modelId;
       if (!hasProdiaServer && !hasProdiaClientModels)
         throw new Error('No Prodia configuration found for TextToImage');
       if (aixInlineImageParts?.length)
