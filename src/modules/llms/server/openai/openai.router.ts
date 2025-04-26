@@ -6,7 +6,8 @@ import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
-import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server';
+import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
+import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
 
 import { Brand } from '~/common/app.config';
 import { base64ToBlob, fixupHost } from '~/common/util/urlUtils';
@@ -273,8 +274,9 @@ export const llmOpenAIRouter = createTRPCRouter({
   /* [OpenAI/LocalAI] images/generations */
   createImages: publicProcedure
     .input(createImagesInputSchema)
-    .output(t2iCreateImagesOutputSchema)
-    .mutation(async ({ input: { access, generationConfig: config, editConfig } }) => {
+    .mutation(async function* ({ input }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
+
+      const { access, generationConfig: config, editConfig } = input;
 
       // Determine if this is an edit request
       const isEdit = !!editConfig?.inputImages?.length && config.model === 'gpt-image-1';
@@ -346,15 +348,20 @@ export const llmOpenAIRouter = createTRPCRouter({
           );
       }
 
-      // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
-      const wireOpenAICreateImageOutput = await openaiPOSTOrThrow<OpenAIWire_API_Images_Generations.Response, OpenAIWire_API_Images_Generations.Request | FormData>(
-        access,
-        config.model,  // modelRefId not really needed for these endpoints
-        requestBody,
-        isEdit ? '/v1/images/edits' : '/v1/images/generations',
+      // -> state.started
+      yield { p: 'state', state: 'started' };
+
+      // -> heartbeats, while waiting for the generation response
+      const wireOpenAICreateImageOutput = yield* heartbeatsWhileAwaiting(
+        openaiPOSTOrThrow<OpenAIWire_API_Images_Generations.Response, OpenAIWire_API_Images_Generations.Request | FormData>(
+          access,
+          config.model,  // modelRefId not really needed for these endpoints
+          requestBody,
+          isEdit ? '/v1/images/edits' : '/v1/images/generations',
+        ),
       );
 
-      // common return fields
+      // common image fields
       const [width, height] = (config.size as any) === 'auto'
         ? [1024, 1024] // NOTE: this is broken, bad assumption, but so that we don't throw an error
         : config.size.split('x').map(nStr => parseInt(nStr));
@@ -364,27 +371,29 @@ export const llmOpenAIRouter = createTRPCRouter({
       }
       const { count: _ignoreCount, prompt: origPrompt, ...parameters } = config;
 
-      // expect a single image and as URL
-      const { data, usage: tokens } = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput);
-
-      // still parse as-if it was a list of images
-      return data.map((image): T2iCreateImageOutput => {
+      // parse the response and emit all images in the response
+      const { data: images, usage: tokens } = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput);
+      for (const image of images) {
         if (!('b64_json' in image))
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
 
-        return {
-          mimeType: genImageMimeType,
-          base64Data: image.b64_json!,
-          altText: image.revised_prompt || origPrompt,
-          width,
-          height,
-          ...(tokens?.input_tokens !== undefined ? { inputTokens: tokens.input_tokens } : {}),
-          ...(tokens?.output_tokens !== undefined ? { outputTokens: tokens.output_tokens } : {}),
-          generatorName: config.model,
-          parameters: parameters,
-          generatedAt: new Date().toISOString(),
+        // -> createImage
+        yield {
+          p: 'createImage',
+          image: {
+            mimeType: genImageMimeType,
+            base64Data: image.b64_json!,
+            altText: image.revised_prompt || origPrompt,
+            width,
+            height,
+            ...(tokens?.input_tokens !== undefined ? { inputTokens: tokens.input_tokens } : {}),
+            ...(tokens?.output_tokens !== undefined ? { outputTokens: tokens.output_tokens } : {}),
+            generatorName: config.model,
+            parameters: parameters,
+            generatedAt: new Date().toISOString(),
+          },
         };
-      });
+      }
     }),
 
 
