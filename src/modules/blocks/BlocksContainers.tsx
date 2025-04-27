@@ -8,7 +8,7 @@ const blocksTextStyleSx = {
   lineHeight: lineHeightChatTextMd,
 
   // customize the text selection color (also in edit mode)
-  '& *::selection': {
+  '&::selection': {
     // backgroundColor: '#fc70c3',
     backgroundColor: 'var(--joy-palette-primary-solidBg)',
     color: 'var(--joy-palette-primary-solidColor)',
