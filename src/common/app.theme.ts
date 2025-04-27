@@ -1,4 +1,4 @@
-import createCache from '@emotion/cache';
+import createCache, { StylisElement, StylisPlugin } from '@emotion/cache';
 
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
@@ -256,6 +256,35 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
 
 const isBrowser = typeof document !== 'undefined';
 
+const emotionStylisPlugins: StylisPlugin[] = [
+
+  /**
+   * 1. remove the default prefixer plugin: probably not needed and bloating
+   */
+  // prefixer,
+
+  /**
+   * 2. add a function to remove wide-matching CSS rules from Joy UI.
+   * Culprit: https://github.com/mui/material-ui/blob/a705e1f15075b2deb59263868bfa7b1d9f84cdd4/packages/mui-joy/src/Checkbox/Checkbox.tsx#L59
+   * These '~ *' rules are slow and cause a lot of reflows.
+   *
+   * To validate, search the Elements tab for JoyCheckbox-root, and see if there's the '~ *' rule.
+   */
+  function removeSlowCSS(element: StylisElement /*, index, children, callback*/) {
+    if (
+      element.type === 'rule' // only operate on rules
+      && element.value.endsWith('~*')  // where the selector is broad reaching
+      && Array.isArray(element.children)  // and there are children (rules)
+    ) {
+      // console.log('✓ Filtering out problematic selector:', element);
+      element.return = ' ';  // removes the selector (empirical)
+      element.children = []; // removes the rule (empirical)
+    }
+  },
+
+];
+
+
 export function createEmotionCache() {
   let insertionPoint: HTMLElement | undefined;
 
@@ -268,7 +297,7 @@ export function createEmotionCache() {
     insertionPoint = emotionInsertionPoint ?? undefined;
   }
 
-  return createCache({ key: 'mui-style', insertionPoint: insertionPoint });
+  return createCache({ key: 'mui-style', insertionPoint: insertionPoint, stylisPlugins: emotionStylisPlugins });
 }
 
 // MISC
