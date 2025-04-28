@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3';
 
+import { Release } from '~/common/app.release';
 import { agiUuid } from '~/common/util/idUtils';
 import { logger } from '~/common/logger';
 
@@ -254,3 +255,9 @@ export class DomainEventHelper<D extends EventDomainName> {
  * otherwise hot module reload could still dispatch to older instances in memory.
  */
 export const appEvents = new EventBus();
+
+// HMR handling - only runs in development when hot module replacement is active
+if (Release.IsNodeDevBuild && typeof module !== 'undefined' && 'hot' in module) {
+  logger.error(`~HMR detected: appEvents regenerated - some components may still be listening to the old EventBus.`);
+  // (module.hot as any).dispose(() => ...);
+}
