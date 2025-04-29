@@ -257,7 +257,7 @@ export class DomainEventHelper<D extends EventDomainName> {
 export const appEvents = new EventBus();
 
 // HMR handling - only runs in development when hot module replacement is active
-if (Release.IsNodeDevBuild && typeof module !== 'undefined' && 'hot' in module) {
-  logger.error(`~HMR detected: appEvents regenerated - some components may still be listening to the old EventBus.`);
-  // (module.hot as any).dispose(() => ...);
-}
+// if (Release.IsNodeDevBuild && typeof module !== 'undefined' && 'hot' in module) {
+//   logger.info(`~HMR detected: appEvents regenerated - some components may still be listening to the old EventBus.`);
+//   (module.hot as any).dispose(() => ...);
+// }
