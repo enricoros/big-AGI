@@ -6,14 +6,16 @@ import { logger } from './logger.client';
  * Creates a module-specific logger with a predefined source and optional event prefix.
  *
  * @param source The source identifier for all logs from this module
- * @param eventPrefix Optional prefix to prepend to all log messages
+ * @param prefix Optional prefix/function prefix to prepend to all log messages
  * @returns A logger instance with preset source and prefix
  */
-export function createModuleLogger(source: LogSource | string, eventPrefix: string = ''): ClientLogger {
+export function createModuleLogger(source: LogSource | string, prefix?: string | (() => string)): ClientLogger {
+
   // format message with prefix if provided
-  const prefixMessage = eventPrefix
-    ? (message: string): string => `${eventPrefix}: ${message}`
-    : (message: string): string => message;
+  const prefixMessage =
+    typeof prefix === 'function' ? (message: string): string => `${prefix()} ${message}`
+      : prefix ? (message: string): string => `${prefix}: ${message}`
+        : (message: string): string => message;
 
   return {
     DEV: (message: string, details?: any, _overrideSource?: LogSource, options?: LogOptions) =>
