@@ -41,7 +41,7 @@ export function LogEntryDetails(props: {
 
   return (
     <Card variant='outlined' sx={{ backgroundColor: 'background.popup' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography level='title-md'>{entry.message}</Typography>
         <Button
           size='sm'
