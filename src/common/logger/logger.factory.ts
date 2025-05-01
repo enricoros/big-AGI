@@ -9,7 +9,7 @@ import { logger } from './logger.client';
  * @param prefix Optional prefix/function prefix to prepend to all log messages
  * @returns A logger instance with preset source and prefix
  */
-export function createModuleLogger(source: LogSource | string, prefix?: string | (() => string)): ClientLogger {
+export function createModuleLogger(source: LogSource | string, prefix?: string | (() => string)): ClientLogger & { source: string } {
 
   // format message with prefix if provided
   const prefixMessage =
@@ -41,5 +41,8 @@ export function createModuleLogger(source: LogSource | string, prefix?: string |
     markActionCompleted: logger.markActionCompleted,
     markDismissed: logger.markDismissed,
     getPendingActions: logger.getPendingActions,
+
+    // the name
+    source,
   };
 }
