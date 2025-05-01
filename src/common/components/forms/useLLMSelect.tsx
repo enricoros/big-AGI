@@ -11,6 +11,7 @@ import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
@@ -19,6 +20,8 @@ import { FormLabelStart } from './FormLabelStart';
 // configuration
 const LLM_SELECT_REDUCE_OPTIONS = 10; // optimization: number of options over which only the selected is kept when closed (we'll have special notes for accessibility)
 const LLM_SELECT_SHOW_REASONING_ICON = false;
+const LLM_TEXT_PLACEHOLDER = 'Models …';
+const LLM_TEXT_CONFIGURE = 'Configure …';
 
 
 /*export function useLLMSelectGlobalState(): [DLLMId | null, (llmId: DLLMId | null) => void] {
@@ -91,7 +94,7 @@ export function useLLMSelect(
   const _filteredLLMs = useVisibleLLMs(llmId);
 
   // derived state
-  const { label, larger = false, disabled = false, placeholder = 'Models …', isHorizontal = false, autoRefreshDomain } = options;
+  const { label, larger = false, disabled = false, placeholder = LLM_TEXT_PLACEHOLDER, isHorizontal = false, autoRefreshDomain } = options;
   const noIcons = false; //smaller;
   const llm = !llmId ? null : _filteredLLMs.find(llm => llm.id === llmId) ?? null;
   const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
@@ -147,6 +150,9 @@ export function useLLMSelect(
 
   const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => value && setLlmId(value), [setLlmId]);
 
+  const hasNoModels = _filteredLLMs.length === 0;
+  const showNoOptions = !optionsArray.length;
+
   // memo Select
   const llmSelectComponent = React.useMemo(() => (
     <FormControl orientation={(isHorizontal || autoRefreshDomain) ? 'horizontal' : undefined}>
@@ -155,13 +161,13 @@ export function useLLMSelect(
       <Select
         color={options.color}
         variant={options.variant ?? 'outlined'}
-        value={llmId ?? null}
+        value={showNoOptions ? null : llmId ?? null}
         size={larger ? undefined : 'sm'}
         disabled={disabled}
         onChange={onSelectChange}
         listboxOpen={controlledOpen}
-        onListboxOpenChange={setControlledOpen}
-        placeholder={placeholder}
+        onListboxOpenChange={hasNoModels ? optimaOpenModels : setControlledOpen}
+        placeholder={hasNoModels ? LLM_TEXT_CONFIGURE : placeholder}
         slotProps={_slotProps}
         endDecorator={autoRefreshDomain ?
           <TooltipOutlined title='Auto-select the model'>
@@ -176,7 +182,7 @@ export function useLLMSelect(
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [autoRefreshDomain, controlledOpen, disabled, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, options.color, options.sx, options.variant, optionsArray, placeholder]);
+  ), [autoRefreshDomain, controlledOpen, disabled, hasNoModels, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, options.color, options.sx, options.variant, optionsArray, placeholder, showNoOptions]);
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
