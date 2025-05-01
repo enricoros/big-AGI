@@ -55,3 +55,40 @@ function safeObjectToString(obj: object): string {
   }
   return `{ ${pairs.join(', ')} }`;
 }
+
+
+/**
+ * Serialize an error object to a plain object for storage or transmission.
+ */
+export function serializeError(value: any): any {
+  // handle Error objects
+  if (value instanceof Error) {
+    return {
+      _isError: true,  // Mark as serialized error for identification
+      name: value.name ?? 'SError',
+      message: value.message ?? 'No SMessage',
+      ...(value.stack !== undefined && { stack: value.stack }), // Include stack if available
+      ...(value.cause !== undefined && { cause: serializeError(value.cause) }), // Recursively serialize cause
+      // Capture other properties
+      ...Object.fromEntries(
+        Object.entries(value).filter(([k]) => !['name', 'message', 'stack', 'cause'].includes(k)),
+      ),
+    };
+  }
+
+  // handle objects that might contain errors
+  if (value && typeof value === 'object') {
+    if (Array.isArray(value)) {
+      return value.map(serializeError);
+    }
+
+    const result: Record<string, any> = {};
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = serializeError(val);
+    }
+    return result;
+  }
+
+  // Return primitives as-is
+  return value;
+}

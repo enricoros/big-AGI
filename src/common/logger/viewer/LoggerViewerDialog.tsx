@@ -99,7 +99,7 @@ export function LogViewerDialog(props: {
       title='Client Logs'
       unfilterBackdrop
       // themedColor='neutral'
-      sx={{ maxWidth: undefined }}
+      sx={{ maxWidth: undefined, overflow: 'hidden' }}
     >
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 1 }}>
 
@@ -159,7 +159,7 @@ export function LogViewerDialog(props: {
           <Typography level='body-lg'>No logs to display</Typography>
         </Box>
       ) : (
-        <Box sx={{ minHeight: '12rem', maxHeight: 'calc(100vh - 18rem)', overflow: 'auto', my: 1 }}>
+        <Box sx={{ minHeight: '12rem', overflow: 'auto', my: 1 }}>
           <Table
             size='sm'
             variant='outlined'
@@ -177,7 +177,7 @@ export function LogViewerDialog(props: {
               <th style={{ width: '30px' }}></th>
               <th style={{ width: '120px' }}>Time</th>
               <th style={{ width: '80px' }}>Level</th>
-              <th style={{ width: '100px' }}>Source</th>
+              <th style={{ width: '120px' }}>Source</th>
               <th style={{ minWidth: '100px' }}>Message</th>
               <th style={{ width: '100px' }}>Actions</th>
             </tr>
@@ -201,7 +201,7 @@ export function LogViewerDialog(props: {
                     {entry.level}
                   </Chip>
                 </td>
-                <td>{entry.source}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{entry.source}</td>
                 <td className='agi-ellipsize'>{entry.message}</td>
                 <td>
                   {entry.actions && entry.actions.length > 0 && (
