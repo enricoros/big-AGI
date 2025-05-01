@@ -90,6 +90,8 @@ const chatMessageListSx: SxProps = {
 
 const chatBeamWrapperSx: SxProps = {
   flexGrow: 1,
+  // we added these after removing the minSize={20} (%) from the containing panel.
+  minWidth: '18rem',
   // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
 };
 
