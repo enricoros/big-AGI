@@ -68,7 +68,7 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
       // Option: clip width to 160...360px
       [`& .${optionClasses.root}`]: {
         maxWidth: 'min(360px, calc(100dvw - 1rem))',
-        minWidth: 160,
+        minWidth: 200,
       } as const,
 
       // Decorator: icon size
@@ -78,7 +78,7 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
 
       // Button styles
       [`& .${listItemButtonClasses.root}`]: {
-        minWidth: 160,
+        minWidth: 200,
       } as const,
     } as const,
   } as const,
