@@ -85,7 +85,7 @@ const _styles = {
     // boxShadow: 'inset 2px 0px 4px -2px var(--joy-palette-background-backdrop)',
     boxShadow: 'xs',
     // minWidth: '1rem',
-    paddingBlock: '1px',
+    paddingBlock: '2px',
     paddingInline: '1px',
     // pointerEvents: 'none',
     cursor: 'pointer',
