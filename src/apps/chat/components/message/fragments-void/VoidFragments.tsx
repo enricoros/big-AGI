@@ -58,6 +58,7 @@ export function VoidFragments(props: {
   messageRole: DMessageRole,
   messagePendingIncomplete?: boolean,
 
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 
 }) {
@@ -100,6 +101,7 @@ export function VoidFragments(props: {
         //       zenMode={props.uiComplexityMode === 'minimal'}
         //       contentScaling={props.contentScaling}
         //       isLastVoid={index === props.voidFragments.length - 1}
+        //       onFragmentDelete={props.onFragmentDelete}
         //       onFragmentReplace={props.onFragmentReplace}
         //     />
         //   );

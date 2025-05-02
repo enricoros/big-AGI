@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { ColorPaletteProp } from '@mui/joy/styles/types';
 import { Box, Chip, Typography } from '@mui/joy';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 
 import { RenderMarkdown } from '~/modules/blocks/markdown/RenderMarkdown';
@@ -111,6 +112,7 @@ export function BlockPartModelAux(props: {
   zenMode: boolean,
   contentScaling: ContentScaling,
   isLastVoid: boolean,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
 
@@ -131,13 +133,31 @@ export function BlockPartModelAux(props: {
 
   // handlers
 
-  const { onFragmentReplace } = props;
+  const { onFragmentDelete, onFragmentReplace } = props;
+  const showDelete = !!onFragmentDelete;
   const showInline = !!onFragmentReplace;
 
   const handleToggleExpanded = React.useCallback(() => {
     setNeverExpanded(false);
     setExpanded(on => !on);
   }, []);
+
+  const handleDelete = React.useCallback(() => {
+    if (!onFragmentDelete) return;
+    showPromisedOverlay('chat-message-delete-aux', {}, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={<>
+          Delete this {typeText.toLowerCase()} completely?
+          <br />
+          This action cannot be undone.
+        </>}
+        positiveActionText='Delete'
+      />,
+    ).then(() => {
+      onFragmentDelete(props.fragmentId);
+    }).catch(() => null /* ignore closure */);
+  }, [onFragmentDelete, props.fragmentId, showPromisedOverlay, typeText]);
 
   const handleInline = React.useCallback(() => {
     if (!onFragmentReplace) return;
@@ -181,18 +201,36 @@ export function BlockPartModelAux(props: {
         Show {typeText}
       </Chip>
 
-      {expanded && showInline && !!props.auxText && (
-        <Chip
-          color={REASONING_COLOR}
-          variant='soft'
-          size='sm'
-          disabled={!onFragmentReplace || props.messagePendingIncomplete}
-          onClick={!onFragmentReplace ? undefined : handleInline}
-          endDecorator={<TextFieldsIcon />}
-          sx={(!onFragmentReplace || props.messagePendingIncomplete) ? _styles.chipDisabled : _styles.chip}
-        >
-          Make Regular Text
-        </Chip>
+      {expanded && (showInline || showDelete) && !!props.auxText && (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+
+          {/* Make inline */}
+          {showInline && <Chip
+            color={REASONING_COLOR}
+            variant='soft'
+            size='sm'
+            disabled={!onFragmentReplace || props.messagePendingIncomplete}
+            onClick={!onFragmentReplace ? undefined : handleInline}
+            endDecorator={<TextFieldsIcon />}
+            sx={(!onFragmentReplace || props.messagePendingIncomplete) ? _styles.chipDisabled : _styles.chip}
+          >
+            Make Regular Text
+          </Chip>}
+
+          {/* Delete */}
+          {showDelete && <Chip
+            color={REASONING_COLOR}
+            variant='soft'
+            size='sm'
+            disabled={!onFragmentDelete || props.messagePendingIncomplete}
+            onClick={!onFragmentDelete ? undefined : handleDelete}
+            endDecorator={<DeleteOutlineIcon />}
+            sx={(!onFragmentDelete || props.messagePendingIncomplete) ? _styles.chipDisabled : _styles.chip}
+          >
+            Delete
+          </Chip>}
+
+        </Box>
       )}
     </Box>
 
