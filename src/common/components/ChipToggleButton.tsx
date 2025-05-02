@@ -15,12 +15,14 @@ const _chipTBSx = {
 export function ChipToggleButton(props: {
   text: React.ReactNode,
   active?: boolean,
+  disabled?: boolean,
   size?: 'sm' | 'md' | 'lg',
   variant?: VariantProp,
   onClick?: () => void
 }) {
   return (
     <Chip
+      disabled={props.disabled}
       variant={props.active ? 'solid' : props.variant || 'outlined'}
       size={props.size}
       onClick={props.onClick}
