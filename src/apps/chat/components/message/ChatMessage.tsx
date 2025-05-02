@@ -782,6 +782,7 @@ export function ChatMessage(props: {
               uiComplexityMode={uiComplexityMode}
               messageRole={messageRole}
               messagePendingIncomplete={messagePendingIncomplete}
+              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
               onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
             />
           )}
