@@ -7,6 +7,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { useDontBlurTextarea } from '~/common/components/useDontBlurTextarea';
 
 
 const micLegend = (errorMessage: string | null) =>
@@ -35,12 +36,7 @@ function ButtonMic(props: {
 }) {
 
   // Mobile: don't blur the textarea when clicking the mic button
-  const handleDontBlurTextArea = React.useCallback((event: React.MouseEvent) => {
-    const isTextAreaFocused = document.activeElement?.tagName === 'TEXTAREA';
-    // If a textarea is focused, prevent the default blur behavior
-    if (isTextAreaFocused)
-      event.preventDefault();
-  }, []);
+  const handleDontBlurTextArea = useDontBlurTextarea();
 
   return (
     <GoodTooltip placement='top' arrow enableInteractive title={micLegend(props.errorMessage)}>
