@@ -28,7 +28,7 @@ export function ChipExpander(props: {
       onClick={props.onToggleExpanded}
       endDecorator={<KeyboardArrowDownIcon />}
       aria-expanded={props.expanded}
-      sx={_chipExpanderSx}
+      sx={chipExpanderSx}
     >
       {props.text}
     </Chip>
