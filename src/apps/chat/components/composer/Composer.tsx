@@ -1004,7 +1004,7 @@ export function Composer(props: {
                     <Button
                       key='composer-act'
                       fullWidth
-                      disabled={noConversation || noLLM}
+                      disabled={noConversation /* || noLLM*/}
                       loading={sendStarted}
                       loadingPosition='end'
                       onClick={handleSendClicked}
@@ -1044,8 +1044,8 @@ export function Composer(props: {
 
                   {/* Mode expander */}
                   <IconButton
-                    variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
-                    disabled={noConversation || noLLM || chatExecuteMenuShown}
+                    variant={chatExecuteMenuShown ? 'outlined' : assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
+                    disabled={noConversation /*|| chatExecuteMenuShown*/}
                     onClick={showChatExecuteMenu}
                   >
                     <ExpandLessIcon />
@@ -1056,7 +1056,7 @@ export function Composer(props: {
                 {isDesktop && showChatExtras && !assistantAbortible && (
                   <ButtonBeamMemo
                     color={beamButtonColor}
-                    disabled={noConversation || noLLM}
+                    disabled={noConversation /*|| noLLM*/}
                     hasContent={!!composeText}
                     onClick={handleSendTextBeamClicked}
                   />
