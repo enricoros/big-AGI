@@ -18,8 +18,8 @@ export function FeatureBadge(props: Omit<BadgeProps, 'size'> & {
   size?: 'sm' | 'md' | 'lg';  // default: 'sm'
 }) {
 
-  const featureKey = 'feature-badge-' + props.featureKey;
-  const { active, label, size = 'sm', color, children, ...badgeProps } = props;
+  const { featureKey: featureKeySuffix, active, label, size = 'sm', color, children, ...badgeProps } = props;
+  const featureKey = 'feature-badge-' + featureKeySuffix;
 
   // external state
   const isDismissed = useUIIsDismissed(featureKey) ?? false;
