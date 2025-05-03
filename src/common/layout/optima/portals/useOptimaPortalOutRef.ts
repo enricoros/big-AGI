@@ -25,6 +25,7 @@ export function useOptimaPortalOutRef(portalTargetId: OptimaPortalId, debugCalle
       console.warn(`useOptimaPortalOut: ref.current is null for type ${portalTargetId} (called by ${debugCallerName})`);
     } else {
       setElement(portalTargetId, ref.current);
+      ref.current.dataset['optimaOutId'] = portalTargetId.replace('optima-portal-', '');
     }
     return () => setElement(portalTargetId, null);
   }, [debugCallerName, portalTargetId]);
