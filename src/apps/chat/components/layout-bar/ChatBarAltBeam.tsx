@@ -7,6 +7,7 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 
+import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -16,6 +17,27 @@ import { animationBackgroundBeamGather, animationColorBeamScatterINV, animationE
 
 
 const _styles = {
+
+  bar: {
+    // layout
+    display: 'flex',
+    alignItems: 'center',
+    gap: { xs: 1, md: 2 } as const,
+
+    minWidth: 0, // ensures the breadcrumbs don't overflow
+    // Customize breadcrumbs to enable collapse of the first one (chat title)
+    '& nav': {
+      overflow: 'hidden',
+    },
+    '& nav > ol': {
+      flexWrap: 'nowrap',
+    } as const,
+    '& nav > ol > li:first-of-type': {
+      overflow: 'hidden',
+      maxWidth: { xs: '110px', md: '140px' },
+    } as const,
+
+  } as const,
 
   barScatter: {
     animation: `${animationColorBeamScatterINV} 5s infinite, ${animationEnterBelow} 0.6s`,
@@ -31,6 +53,7 @@ const _styles = {
 
 export function ChatBarAltBeam(props: {
   beamStore: BeamStoreApi,
+  conversationTitle: string,
   isMobile: boolean,
 }) {
 
@@ -81,7 +104,7 @@ export function ChatBarAltBeam(props: {
 
 
   return (
-    <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'center' }}>
+    <Box sx={_styles.bar}>
 
       {/* [desktop] maximize button, or a disabled spacer  */}
       {!props.isMobile && (
@@ -92,19 +115,25 @@ export function ChatBarAltBeam(props: {
         </GoodTooltip>
       )}
 
-      {/* Title & Status */}
-      <Typography level='title-md'>
-        <Box
-          component='span'
-          sx={Release.Features.LIGHTER_ANIMATIONS ? undefined
-            : isGatheringAny ? _styles.barGather
-              : isScattering ? _styles.barScatter
-                : undefined}
-        >
-          {isGatheringAny ? 'Merging...' : isScattering ? 'Beaming...' : isEditMode ? 'Beam Edit' : 'Beam'}
-        </Box>
-        {(!isGatheringAny && !isScattering && !isEditMode) && ' Mode'}
-      </Typography>
+      <AppBreadcrumbs rootTitle={
+        <Box className='agi-ellipsize'>{props.conversationTitle || 'Chat'}</Box>
+      }>
+
+        {/* Title & Status */}
+        <Typography level='title-md' noWrap>
+          <Box
+            component='span'
+            sx={Release.Features.LIGHTER_ANIMATIONS ? undefined
+              : isGatheringAny ? _styles.barGather
+                : isScattering ? _styles.barScatter
+                  : undefined}
+          >
+            {isGatheringAny ? 'Merging...' : isScattering ? 'Beaming...' : isEditMode ? 'Beam Edit' : 'Beam'}
+          </Box>
+          {(!isGatheringAny && !isScattering && !isEditMode) && ' Mode'}
+        </Typography>
+
+      </AppBreadcrumbs>
 
       {/* Right Close Icon */}
       <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke variant='outlined' combo='Esc' /></Box>}>
