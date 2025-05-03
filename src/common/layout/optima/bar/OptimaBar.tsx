@@ -41,6 +41,8 @@ const centerItemsContainerSx: SxProps = {
   display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
   my: 'auto',
   gap: { xs: 0, md: 1 },
+  // ensure we can keep the plugged center bars in check
+  overflow: 'hidden',
   // [electron] make the blank part of the bar draggable (and not the contents)
   WebkitAppRegion: 'drag',
   '& > *': { WebkitAppRegion: 'no-drag' },
