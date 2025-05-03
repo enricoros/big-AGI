@@ -3,7 +3,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 
@@ -110,13 +109,15 @@ export function ChatBarAltBeam(props: {
       {!props.isMobile && (
         <GoodTooltip variantOutlined title={<Box sx={{ p: 1 }}>Maximize Beam</Box>}>
           <IconButton size='sm' onClick={handleMaximizeBeam}>
-            <OpenInFullIcon sx={{ fontSize: 'md' }} />
+            {/*<OpenInFullIcon sx={{ fontSize: 'md' }} />*/}
           </IconButton>
         </GoodTooltip>
       )}
 
       <AppBreadcrumbs rootTitle={
-        <Box className='agi-ellipsize'>{props.conversationTitle || 'Chat'}</Box>
+        props.conversationTitle?.length > 3
+          ? <Box className='agi-ellipsize'>{props.conversationTitle || 'Chat'}</Box>
+          : undefined
       }>
 
         {/* Title & Status */}
