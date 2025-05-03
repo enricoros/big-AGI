@@ -451,11 +451,11 @@ export function AppChat() {
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
 
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
-      ? <ChatBarAltBeam beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
+      ? <ChatBarAltBeam conversationTitle={focusedChatTitle ?? 'No Chat'} beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
       : (barAltTitle === null)
         ? <ChatBarDropdowns conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} />
         : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
-    , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId, isMobile],
+    , [barAltTitle, beamOpenStoreInFocusedPane, focusedChatTitle, focusedPaneConversationId, isMobile],
   );
 
 
