@@ -172,15 +172,21 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode !== 'minimal') || isFullscreen);
 
 
-  // Language & Highlight
-  const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
-    const inferredCodeLanguage = inferCodeLanguage(blockTitle, code);
-    const highlightedCode =
-      !renderSyntaxHighlight ? null
-        : code ? highlightCode(inferredCodeLanguage, code, renderLineNumbers)
-          : null;
-    return { highlightedCode, inferredCodeLanguage };
-  }, [code, blockTitle, highlightCode, inferCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
+  // Language & Highlight (2-stages)
+  const inferredCodeLanguage = React.useMemo(() => {
+    // shortcut - this mimics a similar path in inferCodeLanguage
+    if (isHTMLCode)
+      return 'html';
+    // workhorse - could be slow, hence the memo
+    return inferCodeLanguage(blockTitle, code);
+  }, [blockTitle, code, inferCodeLanguage, isHTMLCode]);
+
+  const highlightedCode = React.useMemo(() => {
+    // fast-off
+    if (!renderSyntaxHighlight || !code)
+      return null;
+    return highlightCode(inferredCodeLanguage, code, renderLineNumbers);
+  }, [code, highlightCode, inferredCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
 
 
   // Title
