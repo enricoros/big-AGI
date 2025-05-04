@@ -66,7 +66,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       preferredLanguage: BrowserLang.orUS,
       setPreferredLanguage: (preferredLanguage: string) => set({ preferredLanguage }),
 
-      centerMode: 'wide',
+      centerMode: 'full',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
 
       complexityMode: 'pro',
