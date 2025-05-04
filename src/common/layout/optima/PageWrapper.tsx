@@ -29,12 +29,14 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
     return (
       <Box>
         <Container id='app-page-container' disableGutters maxWidth={false}>
-          <PageCore component={props.component} currentApp={props.currentApp} isMobile={true}>
+          <PageCore component={props.component} currentApp={props.currentApp} isFull isMobile>
             {props.children}
           </PageCore>
         </Container>
       </Box>
     );
+
+  const isFull = amplitude === 'full';
 
   return (
 
@@ -62,17 +64,17 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
       <Container
         id='app-page-container'
         disableGutters
-        maxWidth={amplitude === 'full' ? false : amplitude === 'narrow' ? 'md' : 'xl'}
+        maxWidth={isFull ? false : amplitude === 'narrow' ? 'md' : 'xl'}
         sx={{
           boxShadow: {
             xs: 'none',
             md: amplitude === 'narrow' ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
-            xl: amplitude !== 'full' ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
+            xl: !isFull ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
           },
         }}
       >
 
-        <PageCore component={props.component} currentApp={props.currentApp} isMobile={false}>
+        <PageCore component={props.component} currentApp={props.currentApp} isFull={isFull} isMobile={false}>
           {props.children}
         </PageCore>
 

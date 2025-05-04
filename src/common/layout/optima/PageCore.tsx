@@ -19,6 +19,11 @@ const pageCoreSx: SxProps = {
   transition: 'background-color 0.5s cubic-bezier(.17,.84,.44,1)',
 };
 
+const pageCoreFullSx: SxProps = {
+  ...pageCoreSx,
+  backgroundColor: 'transparent',
+} as const;
+
 const pageCoreBrighterSx: SxProps = {
   ...pageCoreSx,
   backgroundColor: 'background.surface',
@@ -36,12 +41,13 @@ const pageCoreMobileNavSx: SxProps = {
 export const PageCore = (props: {
   component: React.ElementType,
   currentApp?: NavItemApp,
+  isFull: boolean,
   isMobile: boolean,
   children: React.ReactNode,
 }) =>
   <Box
     component={props.component}
-    sx={!props.currentApp?.pageBrighter ? pageCoreSx : pageCoreBrighterSx}
+    sx={props.currentApp?.pageBrighter ? pageCoreBrighterSx : props.isFull ? pageCoreFullSx : pageCoreSx}
   >
 
     {/* Optional deployment MOTD */}
