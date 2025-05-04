@@ -16,6 +16,12 @@ const pageCoreSx: SxProps = {
   backgroundColor: themeBgApp,
   height: '100dvh',
   display: 'flex', flexDirection: 'column',
+  transition: 'background-color 0.5s cubic-bezier(.17,.84,.44,1)',
+};
+
+const pageCoreBrighterSx: SxProps = {
+  ...pageCoreSx,
+  backgroundColor: 'background.surface',
 };
 
 const pageCoreBarSx: SxProps = {
@@ -35,7 +41,7 @@ export const PageCore = (props: {
 }) =>
   <Box
     component={props.component}
-    sx={pageCoreSx}
+    sx={!props.currentApp?.pageBrighter ? pageCoreSx : pageCoreBrighterSx}
   >
 
     {/* Optional deployment MOTD */}
