@@ -726,7 +726,7 @@ export function Composer(props: {
   }), [dragContainerSx]);
 
   return (
-    <Box aria-label='User Message' component='section' sx={props.sx}>
+    <Box aria-label='New Message' component='section' sx={props.sx}>
 
       {!isMobile && labsShowShortcutBar && <StatusBarMemo toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
 
