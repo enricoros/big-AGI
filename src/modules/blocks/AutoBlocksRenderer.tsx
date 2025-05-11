@@ -157,27 +157,27 @@ export function AutoBlocksRenderer(props: {
               <EnhancedRenderCode
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
-                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
+                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
                 contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
                 isMobile={props.isMobile}
                 initialShowHTML={props.showUnsafeHtmlCode}
                 initialIsCollapsed={enhancedStartCollapsed}
-                noCopyButton={props.blocksProcessor === 'diagram'}
+                noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
-                onReplaceInCode={setText ? handleReplaceCode : undefined}
+                onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
                 codeSx={scaledCodeSx}
               />
             ) : (
               <RenderCodeMemoOrNot
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
-                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
+                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
                 fitScreen={props.fitScreen}
                 initialShowHTML={props.showUnsafeHtmlCode /* && !bkInput.isPartial NOTE: with this, it would be only auto-rendered at the end, preventing broken renders */}
-                noCopyButton={props.blocksProcessor === 'diagram'}
+                noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
-                onReplaceInCode={setText ? handleReplaceCode : undefined}
+                onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
                 sx={scaledCodeSx}
               />
             );
