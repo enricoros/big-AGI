@@ -77,7 +77,16 @@ Test your application thoroughly using local development (refer to README.md for
 
 ## Debugging
 
-We introduced the `/info/debug` page that provides a detailed overview of the application's environment, including the API keys, environment variables, and other configuration settings.
+The application includes a client-side logging system. You can view recent logs via the UI (Settings > Tools > Logs).
+
+For deeper debugging during development:
+
+1. **Debug Page**: Access the `/info/debug` page for an overview of the application's environment, configuration, API status, and environment variables available to the client.
+2. **Conditional Breakpoints**: To automatically pause execution in your browser's developer tools when critical errors (`error`, `critical`, `DEV` levels) are logged to the console, set the following environment variable in your local `.env.local` file and restart your development server:
+   ```bash
+   NEXT_PUBLIC_DEBUG_BREAKS=true
+   ```
+   This allows you to inspect the application state at the exact moment an important error occurs. This feature only works in development mode (`npm run dev`) and requires the environment variable to be explicitly set to `true`.
 
 <br/>
 

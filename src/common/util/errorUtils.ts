@@ -1,3 +1,5 @@
+import { Release } from '~/common/app.release';
+
 /**
  * Present an error to the user in a human-readable format.
  * Be exhaustive and not repetitive. Ignore the stack trace.
@@ -91,4 +93,18 @@ export function serializeError(value: any): any {
 
   // Return primitives as-is
   return value;
+}
+
+/**
+ * Conditionally triggers the debugger
+ */
+export function maybeDebuggerBreak(): void {
+
+  const isBreakEnabled = process.env.NEXT_PUBLIC_DEBUG_BREAKS === 'true';
+
+  if (Release.IsNodeDevBuild && isBreakEnabled) {
+    // eslint-disable-next-line no-debugger
+    debugger; // This line will be hit only if DevTools are open.
+    // Build tools often remove debugger statements in production.
+  }
 }

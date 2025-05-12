@@ -54,6 +54,7 @@ export interface LogOptions {
   source?: LogSource;
   action?: Omit<LogEntryAction, 'completed' | 'completedTimestamp'>; // Single action convenience
   actions?: Omit<LogEntryAction, 'completed' | 'completedTimestamp'>[]; // Multiple actions
+  skipDebuggerBreak?: boolean; // Skip debugger break even if applicable to the level/build/env
 }
 
 /** Potential action associated with an entry */
