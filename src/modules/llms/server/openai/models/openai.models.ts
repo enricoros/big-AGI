@@ -59,7 +59,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.275 }, output: 4.4 },
-    // benchmarks not available yet, as of 2025-04-16 (intro)
+    // benchmark: { cbaElo: 1351 /* unknown variant */ },
   },
   {
     idPrefix: 'o4-mini',
@@ -89,7 +89,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 10, cache: { cType: 'oai-ac', read: 2.5 }, output: 40 },
-    // benchmarks not available yet, as of 2025-04-16 (intro)
+    // benchmark: { cbaElo: 1413 /* unknown variant, as of 2025-05-12 */ },
   },
   {
     idPrefix: 'o3',
@@ -265,7 +265,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
-    // benchmarks: will be available soon, hopefully
+    benchmark: { cbaElo: 1366 },
   },
   {
     idPrefix: 'gpt-4.1',
@@ -293,7 +293,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 0.4, cache: { cType: 'oai-ac', read: 0.1 }, output: 1.6 },
-    // benchmarks: will be available soon, hopefully
+    benchmark: { cbaElo: 1322 },
   },
   {
     idPrefix: 'gpt-4.1-mini',
@@ -430,7 +430,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // does not support Tools
     chatPrice: { input: 5, output: 15 },
-    benchmark: { cbaElo: 1407 },
+    benchmark: { cbaElo: 1408 },
   },
 
   // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
