@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 
 import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
@@ -9,6 +9,7 @@ import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
 export const ButtonAttachNewMemo = React.memo(ButtonAttachNew);
 
 function ButtonAttachNew(props: {
+  color?: ColorPaletteProp,
   isMobile?: boolean,
   disabled?: boolean,
   fullWidth?: boolean,
@@ -16,7 +17,7 @@ function ButtonAttachNew(props: {
   onAttachNew: () => void,
 }) {
   return props.isMobile ? (
-    <IconButton disabled={props.disabled} onClick={props.onAttachNew}>
+    <IconButton color={props.color} disabled={props.disabled} onClick={props.onAttachNew}>
       <AddRoundedIcon />
     </IconButton>
   ) : (
@@ -29,8 +30,8 @@ function ButtonAttachNew(props: {
       </Box>
     )}>
       <Button
-        variant='plain'
-        color='neutral'
+        variant={props.color ? 'soft' : 'plain'}
+        color={props.color || 'neutral'}
         disabled={props.disabled}
         fullWidth={props.fullWidth}
         startDecorator={<AddRoundedIcon />}

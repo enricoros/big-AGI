@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 
@@ -12,6 +12,7 @@ import { CameraCaptureModal } from '../CameraCaptureModal';
 export const ButtonAttachCameraMemo = React.memo(ButtonAttachCamera);
 
 function ButtonAttachCamera(props: {
+  color?: ColorPaletteProp,
   isMobile?: boolean,
   disabled?: boolean,
   fullWidth?: boolean,
@@ -19,7 +20,7 @@ function ButtonAttachCamera(props: {
   onOpenCamera: () => void,
 }) {
   return props.isMobile ? (
-    <IconButton disabled={props.disabled} onClick={props.onOpenCamera}>
+    <IconButton color={props.color} disabled={props.disabled} onClick={props.onOpenCamera}>
       <AddAPhotoIcon />
     </IconButton>
   ) : (
@@ -30,8 +31,8 @@ function ButtonAttachCamera(props: {
       </Box>
     )}>
       <Button
-        variant='plain'
-        color='neutral'
+        variant={props.color ? 'soft' : 'plain'}
+        color={props.color || 'neutral'}
         disabled={props.disabled}
         fullWidth={props.fullWidth}
         startDecorator={<CameraAltOutlinedIcon />}

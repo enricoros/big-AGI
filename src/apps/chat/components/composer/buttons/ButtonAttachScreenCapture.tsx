@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 
 import { Is } from '~/common/util/pwaUtils';
@@ -11,6 +11,7 @@ import { takeScreenCapture } from '~/common/util/screenCaptureUtils';
 export const ButtonAttachScreenCaptureMemo = React.memo(ButtonAttachScreenCapture);
 
 function ButtonAttachScreenCapture(props: {
+  color?: ColorPaletteProp,
   isMobile?: boolean,
   disabled?: boolean,
   fullWidth?: boolean,
@@ -41,7 +42,7 @@ function ButtonAttachScreenCapture(props: {
 
 
   return props.isMobile ? (
-    <IconButton disabled={props.disabled} onClick={handleTakeScreenCapture}>
+    <IconButton color={props.color} disabled={props.disabled} onClick={handleTakeScreenCapture}>
       <ScreenshotMonitorIcon />
     </IconButton>
   ) : (
@@ -55,8 +56,8 @@ function ButtonAttachScreenCapture(props: {
       </Box>
     )}>
       <Button
-        variant={capturing ? 'solid' : 'plain'}
-        color={!!error ? 'danger' : 'neutral'}
+        variant={capturing ? 'solid' : props.color ? 'soft' : 'plain'}
+        color={!!error ? 'danger' : props.color || 'neutral'}
         disabled={props.disabled}
         fullWidth={props.fullWidth}
         loading={capturing}
