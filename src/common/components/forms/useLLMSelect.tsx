@@ -21,7 +21,7 @@ import { FormLabelStart } from './FormLabelStart';
 const LLM_SELECT_REDUCE_OPTIONS = 10; // optimization: number of options over which only the selected is kept when closed (we'll have special notes for accessibility)
 const LLM_SELECT_SHOW_REASONING_ICON = false;
 const LLM_TEXT_PLACEHOLDER = 'Models …';
-const LLM_TEXT_CONFIGURE = 'Configure …';
+const LLM_TEXT_CONFIGURE = 'Add Models …';
 
 
 /*export function useLLMSelectGlobalState(): [DLLMId | null, (llmId: DLLMId | null) => void] {
