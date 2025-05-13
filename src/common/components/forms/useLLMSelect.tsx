@@ -1,14 +1,14 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { ColorPaletteProp, FormControl, IconButton, ListDivider, ListItemDecorator, Option, Select, SvgIconProps, VariantProp } from '@mui/joy';
+import { Chip, ColorPaletteProp, FormControl, IconButton, ListDivider, ListItemDecorator, Option, optionClasses, Select, SelectSlotsAndSlotProps, SvgIconProps, VariantProp } from '@mui/joy';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
-import { DLLM, DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
@@ -40,12 +40,40 @@ const llmSelectSx: SxProps = {
   // minWidth: '200',
 } as const;
 
-const _slotProps = {
+const styleChips: SxProps = {
+  ml: 'auto',
+  backgroundColor: 'background.popup',
+  boxShadow: 'xs',
+} as const;
+
+const _slotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
+  // see the OptimaBarDropdown.listbox for a well made customization (max-height, max-width, etc.)
   listbox: {
     sx: {
       // larger list
       '--ListItem-paddingLeft': '1rem',
-      '--ListItem-minHeight': '2.5rem',
+      '--ListItem-minHeight': '2.5rem', // note that in the Optima Dropdowns we use 2.75rem
+
+      // No need for larger SVG icons here
+      // '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+
+      // No need to remove the gutter
+      // paddingBlock: 0,
+
+      // v-size: keep the default
+      // maxHeight: 'calc(100dvh - 56px - 24px)',
+
+      // Decorator: do not change the emoji size
+      // [`& .${listItemDecoratorClasses.root}`]: {
+      //   fontSize: 'var(--joy-fontSize-lg)',
+      // } as const,
+
+      // Option: clip width to 160...360px
+      [`& .${optionClasses.root}`]: {
+        maxWidth: 'min(600px, calc(100dvw - 0.25rem))', // the small reduction is to avoid accidental h-scrolling because of the border
+        minWidth: 200,
+      } as const,
+
       // minWidth: '100%',
       zIndex: 1300, // on top of ScratchChat
     } as const,
@@ -122,10 +150,24 @@ export function useLLMSelect(
       if (addSeparator && !optimizeToSingleVisibleId)
         acc.push(<ListDivider key={'llm-sep-' + llm.id}>{vendor?.name}</ListDivider>);
 
+      let features = '';
+      const isNotSymlink = !llm.label.startsWith('🔗');
+      const seemsFree = !!llm.pricing?.chat?._isFree;
+      if (isNotSymlink) {
+        // check features
+        if (seemsFree) features += 'free ';
+        if (llm.interfaces.includes(LLM_IF_OAI_Reasoning))
+          features += '🧠 '; // can reason
+        if (llm.interfaces.includes(LLM_IF_Tools_WebSearch))
+          features += '🌐 '; // can web search
+        if (llm.interfaces.includes(LLM_IF_Outputs_Image))
+          features += '🖼️ '; // can draw images
+      }
+
       // the option component
       acc.push(
         <Option
-          key={'llm-' + llm.id}
+          key={llm.id}
           value={llm.id}
           // Disabled to avoid regenerating the memo too frequently
           // sx={llm.id === llmId ? { fontWeight: 'md' } : undefined}
@@ -137,7 +179,12 @@ export function useLLMSelect(
             </ListItemDecorator>
           )}
           {/*<Tooltip title={llm.description}>*/}
-          {llm.label}
+
+          <div className='agi-ellipsize'>{llm.label}</div>
+
+          {/* Features Chips - sync with `ModelsList.tsx` */}
+          {!!features && <Chip size='sm' color={seemsFree ? 'success' : undefined} variant='plain' sx={styleChips}>{features.trim().replace(' ', ' ')}</Chip>}
+
           {/*</Tooltip>*/}
           {/*{llm.gen === 'sdxl' && <Chip size='sm' variant='outlined'>XL</Chip>} {llm.label}*/}
         </Option>,
