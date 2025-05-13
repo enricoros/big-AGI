@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import { maybeDebuggerBreak } from '~/common/util/errorUtils';
+
+
+// configuration
+const ENABLE_NON_STANDARD = false; // if true, it will enable 'undefined' as a valid value in JSON objects
+
 
 //
 // JSON validation - used before saving to DB/sync transmission - to ensure valid structure
@@ -10,6 +16,8 @@ const literalSchema = z.union([
   z.number(),
   z.boolean(),
   z.null(),
+  // NON-STANDARD, but adding this because we do have 'undefined' in in-mem objects
+  ...(ENABLE_NON_STANDARD ? [z.undefined()] : []),
 ]);
 
 type Literal = z.infer<typeof literalSchema>;
@@ -27,6 +35,12 @@ const jsonSchema: z.ZodType<Json> = z.lazy(() =>
  * Checks if the given value is a valid JSON object, which will be serialized
  * without errors for storage or transmission.
  */
-export function isValidJson(value: unknown): value is Json {
-  return jsonSchema.safeParse(value).success;
+export function isValidJson(value: unknown, debugLocation: string): value is Json {
+  const result = jsonSchema.safeParse(value);
+  if (result.success)
+    return true;
+
+  console.log(`[DEV] ${debugLocation}: Invalid JSON:`, { error: result.error });
+  maybeDebuggerBreak();
+  return result.success;
 }
