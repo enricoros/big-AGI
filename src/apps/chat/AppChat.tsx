@@ -103,7 +103,7 @@ const composerOpenSx: SxProps = {
   borderTop: `1px solid`,
   borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   // hack: eats the bottom of the last message (as it has a 1px divider)
-  mt: '-1px',
+  // mt: '-1px',
 };
 
 const composerClosedSx: SxProps = {
