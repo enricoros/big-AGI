@@ -44,6 +44,9 @@ interface UIPreferencesStore {
   showPersonaFinder: boolean;
   setShowPersonaFinder: (showPersonaFinder: boolean) => void;
 
+  composerQuickButton: 'off' | 'call' | 'beam';
+  setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => void;
+
   // UI Dismissals
 
   dismissals: Record<string, boolean>;
@@ -96,6 +99,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       // Deprecated
       showPersonaFinder: false,
       setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
+
+      composerQuickButton: 'call',
+      setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => set({ composerQuickButton }),
 
       // UI Dismissals
 
