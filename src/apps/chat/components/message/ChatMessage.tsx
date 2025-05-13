@@ -687,8 +687,8 @@ export function ChatMessage(props: {
               ) : (
                 <IconButton
                   size='sm'
-                  variant={opsMenuAnchor ? 'solid' : (zenMode && fromAssistant) ? 'plain' : 'soft'}
-                  color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'}
+                  variant={opsMenuAnchor ? 'solid' : zenMode ? 'plain' : 'soft'}
+                  color={(fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary'}
                   sx={avatarIconSx}
                 >
                   <MoreVertIcon />
