@@ -107,6 +107,14 @@ const composerOpenSx: SxProps = {
   // mt: '-1px',
 };
 
+const composerOpenMobileSx: SxProps = {
+  zIndex: 21, // allocates the surface, possibly enables shadow if we like
+  borderTop: `1px solid`,
+  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+  pt: 0.5, // have some breathing room
+  // boxShadow: '0px -1px 8px -2px rgba(0, 0, 0, 0.4)',
+};
+
 const composerClosedSx: SxProps = {
   display: 'none',
 };
@@ -748,7 +756,7 @@ export function AppChat() {
       onConversationsImportFromFiles={handleConversationsImportFromFiles}
       onTextImagine={handleImagineFromText}
       setIsMulticast={setIsComposerMulticast}
-      sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
+      sx={beamOpenStoreInFocusedPane ? composerClosedSx : isMobile ? composerOpenMobileSx : composerOpenSx}
     />
 
     {/* Diagrams */}
