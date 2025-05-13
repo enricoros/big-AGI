@@ -79,10 +79,12 @@ const tooltipMetricsGridSx: SxProps = {
 
 
 /** Whole message background color, based on the message role and state */
-export function messageBackground(messageRole: DMessageRole | string, wasEdited: boolean, isAssistantIssue: boolean): string {
+export function messageBackground(messageRole: DMessageRole | string, userCommand: 'draw' | 'react' | false, wasEdited: boolean, isAssistantIssue: boolean): string {
   switch (messageRole) {
     case 'user':
-      return 'primary.plainHoverBg'; // was .background.level1
+      return userCommand === 'draw' ? 'warning.softActiveBg'
+        : userCommand === 'react' ? 'success.softHoverBg'
+          : 'primary.plainHoverBg'; // was .background.level1
     case 'assistant':
       return isAssistantIssue ? 'danger.softBg' : 'background.surface';
     case 'system':
