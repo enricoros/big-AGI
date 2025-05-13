@@ -17,7 +17,7 @@ const EMERGENCY_CLEANUP_PARTS = false;
 
 export namespace V4ToHeadConverters {
 
-  export function inMemHeadCleanDConversations(cs: DConversation[]): void {
+  export function inMemHeadCleanDConversations(cs: ReadonlyArray<DConversation>): void {
     const validLiveFileIDs = liveFileGetAllValidIDs();
     for (const c of cs)
       _inMemHeadCleanDConversation(c, validLiveFileIDs);
