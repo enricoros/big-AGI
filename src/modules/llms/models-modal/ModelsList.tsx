@@ -189,7 +189,7 @@ function ModelItem(props: {
           {props.chipFast && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>util</Chip>}
         </>}
 
-        {/* Features Chips */}
+        {/* Features Chips - sync with `useLLMSelect.tsx` */}
         {llm.interfaces.includes(LLM_IF_OAI_Reasoning) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🧠</Chip>}
         {llm.interfaces.includes(LLM_IF_Tools_WebSearch) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🌐</Chip>}
         {llm.interfaces.includes(LLM_IF_Outputs_Image) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🖼️</Chip>}
