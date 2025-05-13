@@ -133,7 +133,12 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
 
   const isAssistantError = fromAssistant && isErrorChatMessage(messageText);
 
-  const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
+  const userCommandApprox = messageRole !== 'user' ? false
+    : messageText.startsWith('/draw ') ? 'draw'
+      : messageText.startsWith('/react ') ? 'react'
+        : false;
+
+  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
     return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false, false);
