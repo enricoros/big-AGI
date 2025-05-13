@@ -14,6 +14,7 @@ import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { SettingUIComplexity } from './SettingUIComplexity';
+import { SettingUIComposerQuickButton } from './SettingUIComposerQuickButton';
 import { SettingUIContentScaling } from './SettingUIContentScaling';
 
 
@@ -113,8 +114,6 @@ export function AppChatSettingsUI() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
 
-    <SettingUIComplexity />
-
     <SettingUIContentScaling />
 
     {!isPwa() && !isMobile && (
@@ -126,5 +125,9 @@ export function AppChatSettingsUI() {
       />
     )}
 
+    <SettingUIComplexity />
+
+    {isMobile && <SettingUIComposerQuickButton />}
+
   </>;
-};
+}
