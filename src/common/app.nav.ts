@@ -44,6 +44,7 @@ interface ItemBase {
 
 export interface NavItemApp extends ItemBase {
   type: 'app',
+  mobileName?: string,
   route: string,
   landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
   barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)

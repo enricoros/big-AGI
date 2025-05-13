@@ -56,14 +56,14 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
           const isActive = app === props.currentApp;
           return (
             <Button
-              key={'app-' + app.name}
+              key={'app-' + (app.mobileName || app.name)}
               size='sm'
               variant={isActive ? 'solid' : undefined}
               onClick={() => Router.push(app.landingRoute || app.route)}
               sx={{ flexDirection: 'column', gap: 0, minWidth: 80, py: 1 }}
               startDecorator={(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}
             >
-              {app.name}
+              {app.mobileName || app.name}
             </Button>
           );
         })}
