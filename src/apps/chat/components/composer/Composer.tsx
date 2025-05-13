@@ -36,7 +36,7 @@ import { glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/
 import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
 import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
-import { lineHeightTextareaMd } from '~/common/app.theme';
+import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
@@ -729,7 +729,12 @@ export function Composer(props: {
   }), [dragContainerSx]);
 
   return (
-    <Box aria-label='New Message' component='section' sx={props.sx}>
+    <Box
+      aria-label='New Message'
+      component='section'
+      bgcolor={showTint ? `var(--joy-palette-${showTint}-softBg)` : themeBgAppChatComposer}
+      sx={props.sx}
+    >
 
       {!isMobile && labsShowShortcutBar && <StatusBarMemo toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
 
@@ -874,7 +879,7 @@ export function Composer(props: {
                     }}
                     sx={{
                       height: '100%',
-                      backgroundColor: 'background.level1',
+                      backgroundColor: showTint ? undefined : 'background.level1',
                       '&:focus-within': { backgroundColor: 'background.popup', '.within-composer-focus': { backgroundColor: 'background.popup' } },
                       lineHeight: lineHeightTextareaMd,
                     }} />
