@@ -17,6 +17,7 @@ import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useUIComplexityMode } from '~/common/stores/store-ui';
 
 
 function LLMDropdown(props: {
@@ -29,6 +30,10 @@ function LLMDropdown(props: {
 
   // state
   const [filterString, setfilterString] = React.useState<string | null>(null);
+
+  // external state
+  const uiComplexityMode = useUIComplexityMode();
+  const showSymbols = uiComplexityMode !== 'minimal';
 
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
@@ -190,6 +195,7 @@ function LLMDropdown(props: {
       prependOption={llmDropdownPrependOptions}
       appendOption={llmDropdownAppendOptions}
       activeEndDecorator={llmDropdownButton}
+      showSymbols={showSymbols ? 'compact' : false}
     />
   );
 }

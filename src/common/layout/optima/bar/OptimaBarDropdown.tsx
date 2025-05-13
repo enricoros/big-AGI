@@ -130,7 +130,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
   prependOption?: React.JSX.Element
   appendOption?: React.JSX.Element,
   placeholder?: string,
-  showSymbols?: boolean,
+  showSymbols?: boolean | 'compact',
   showGone?: boolean,
 }, ref: React.Ref<OptimaBarControlMethods>) {
 
@@ -200,7 +200,9 @@ function OptimaBarDropdown<TValue extends string>(props: {
           ) : (
             <Option key={_itemKey} value={_itemKey} label={label}>
               {/* Icon / Symbol */}
-              {(props.showSymbols && _item.icon || _item.symbol !== undefined) && <ListItemDecorator>{_item.icon || _item.symbol || ''}</ListItemDecorator>}
+              {(props.showSymbols === true || (props.showSymbols === 'compact' && _item.symbol !== undefined)) && <ListItemDecorator>
+                {_item.icon || _item.symbol || ''}
+              </ListItemDecorator>}
 
               {/* Text */}
               <div className='agi-ellipsize'>{safeTitle}</div>
