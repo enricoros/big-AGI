@@ -103,6 +103,7 @@ const composerOpenSx: SxProps = {
   borderTop: `1px solid`,
   borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   // hack: eats the bottom of the last message (as it has a 1px divider)
+  // NOTE: commented on 2024-05-13, as other content was stepping on the border due to it and missing zIndex
   // mt: '-1px',
 };
 
@@ -348,9 +349,10 @@ export function AppChat() {
       useFolderStore.getState().addConversationToFolder(activeFolderId, conversationId);
 
     // focus the composer
-    composerTextAreaRef.current?.focus();
+    if (!isMobile)
+      composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, prependNewConversation, recycleNewConversationId]);
+  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
