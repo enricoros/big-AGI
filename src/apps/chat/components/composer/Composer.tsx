@@ -691,6 +691,8 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
+  const showTint: ColorPaletteProp | undefined = isDraw ? 'warning' : isReAct ? 'success' : undefined;
+
   // stable randomization of the /verb, between '/draw', '/react'
   const placeholderAction = React.useMemo(() => {
     const actions: string[] = ['/react'];
@@ -750,13 +752,13 @@ export function Composer(props: {
               <Box sx={{ flexGrow: 0, display: 'grid', gap: 1, alignSelf: 'flex-start' }}>
 
                 {/* [mobile] Mic button */}
-                {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
+                {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor === 'danger' ? 'danger' : showTint || micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
 
                 {/* Responsive Camera OCR button */}
-                {showChatAttachments && <ButtonAttachCameraMemo isMobile onOpenCamera={openCamera} />}
+                {showChatAttachments && <ButtonAttachCameraMemo color={showTint} isMobile onOpenCamera={openCamera} />}
 
                 {/* [mobile] Attach file button (in draw with image mode)  */}
-                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
+                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
 
                 {/* [mobile] [+] button */}
                 {showChatAttachments === true && (
@@ -800,19 +802,19 @@ export function Composer(props: {
                 {/*</FormHelperText>*/}
 
                 {/* Responsive Open Files button */}
-                <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
+                <ButtonAttachFilesMemo color={showTint} onAttachFiles={handleAttachFiles} fullWidth multiple />
 
                 {/* Responsive Web button */}
-                {showChatAttachments !== 'only-images' && <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />}
+                {showChatAttachments !== 'only-images' && <ButtonAttachWebMemo color={showTint} disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />}
 
                 {/* Responsive Paste button */}
-                {supportsClipboardRead() && showChatAttachments !== 'only-images' && <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />}
+                {supportsClipboardRead() && showChatAttachments !== 'only-images' && <ButtonAttachClipboardMemo color={showTint} onAttachClipboard={attachAppendClipboardItems} />}
 
                 {/* Responsive Screen Capture button */}
-                {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}
+                {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo color={showTint} onAttachScreenCapture={handleAttachScreenCapture} />}
 
                 {/* Responsive Camera OCR button */}
-                {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
+                {labsCameraDesktop && <ButtonAttachCameraMemo color={showTint} onOpenCamera={openCamera} />}
 
               </Box>)}
 
