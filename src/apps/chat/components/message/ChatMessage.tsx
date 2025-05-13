@@ -576,7 +576,7 @@ export function ChatMessage(props: {
     // filter: 'url(#agi-futuristic-glow)',
 
     // style: omit border if set externally
-    ...(!('borderBottom' in (props.sx || {})) && {
+    ...(!('borderBottom' in (props.sx || {})) && !props.isBottom && {
       borderBottom: '1px solid',
       borderBottomColor: 'divider',
     }),
@@ -623,7 +623,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.isBottom, props.sx, uiComplexityMode]);
 
 
   // avatar icon & label & tooltip
