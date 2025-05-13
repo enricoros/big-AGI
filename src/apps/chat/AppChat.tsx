@@ -109,6 +109,7 @@ const composerOpenSx: SxProps = {
 
 const composerOpenMobileSx: SxProps = {
   zIndex: 21, // allocates the surface, possibly enables shadow if we like
+  backgroundColor: themeBgAppChatComposer,
   borderTop: `1px solid`,
   borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   pt: 0.5, // have some breathing room
