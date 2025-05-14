@@ -262,14 +262,55 @@ async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
 }
 
 async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
+  // expected local DBs to restore over, from the latest `v2-dev` (2025-05-14)
+  const dbTargetVersions: { [dbName: string]: number } = {
+    'keyval-store': 1,
+    'Big-AGI': 1,
+  };
+
   // process each database in sequence
   for (const dbName in allDbData) {
     try {
       const dbStoresData = allDbData[dbName] as Record<string, { key: any; value: any }[]>;
+      const dbStoreNames = Object.keys(dbStoresData);
+      const dbStoreVersion = dbTargetVersions[dbName] || 1;
 
       await new Promise<void>((resolve, reject) => {
         try {
-          const openRequest = window.indexedDB.open(dbName);
+          const openRequest = window.indexedDB.open(dbName, dbStoreVersion);
+
+          // If the DB was not there, it means we're loading the flash over the new architecture (ZYNC). In this case, we need to recreate
+          // the stores inside this new DB first.
+          openRequest.onupgradeneeded = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result;
+            logger.info(`onupgradeneeded triggered for DB "${dbName}" (oldVersion: ${event.oldVersion}, newVersion: ${event.newVersion})`);
+
+            for (const storeName of dbStoreNames) {
+              if (!db.objectStoreNames.contains(storeName)) {
+                logger.info(`Creating missing object store "${storeName}" in DB "${dbName}"`);
+
+                if (dbName === 'keyval-store' && storeName === 'keyval') {
+                  // v2-dev-style key-value store for the chats cell
+                  db.createObjectStore(storeName);
+                  logger.info(`Created keyval object store in keyval-store database`);
+                } else if (dbName === 'Big-AGI' && storeName === 'largeAssets') {
+                  // v2-dev-style Blobs store
+                  const largeAssetsStore = db.createObjectStore(storeName, { keyPath: 'id' });
+                  largeAssetsStore.createIndex('contextId+scopeId', ['contextId', 'scopeId']);
+                  largeAssetsStore.createIndex('assetType', 'assetType');
+                  largeAssetsStore.createIndex('assetType+contextId+scopeId', ['assetType', 'contextId', 'scopeId']);
+                  largeAssetsStore.createIndex('data.mimeType', 'data.mimeType');
+                  largeAssetsStore.createIndex('origin.ot', 'origin.ot');
+                  largeAssetsStore.createIndex('origin.source', 'origin.source');
+                  largeAssetsStore.createIndex('createdAt', 'createdAt');
+                  largeAssetsStore.createIndex('updatedAt', 'updatedAt');
+                  logger.info(`Created largeAssets object store with all needed indexes in Big-AGI database`);
+                } else {
+                  logger.warn(`Cannot automatically create object store "${storeName}" in DB "${dbName}" as its schema is unknown.`);
+                }
+              }
+            }
+          };
 
           openRequest.onerror = (event) => {
             const target = event.target as IDBOpenDBRequest;
@@ -280,11 +321,11 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
           openRequest.onsuccess = (event) => {
             const db = (event.target as IDBOpenDBRequest).result;
             const existingStoreNames = Array.from(db.objectStoreNames);
-            const storesToRestore = Object.keys(dbStoresData)
-              .filter(name => existingStoreNames.includes(name));
+            const storesToRestore = dbStoreNames.filter(name => existingStoreNames.includes(name));
 
+            if (storesToRestore.length < dbStoreNames.length)
+              logger.error(`No matching stores found in ${dbName}, expected '${dbStoreNames.join(', ')}' but found '${existingStoreNames.join(', ')}'`);
             if (storesToRestore.length === 0) {
-              logger.warn(`No matching stores found in ${dbName}, skipping`);
               db.close();
               resolve();
               return;
