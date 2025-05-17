@@ -55,7 +55,21 @@ interface RenderCodeBaseProps {
 
 function RenderCode(props: RenderCodeBaseProps) {
   return (
-    <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...props.sx }} />}>
+    <React.Suspense
+      fallback={
+        // Mimic the structure of the RenderCodeImpl - to mitigate race conditions that could cause problematic rendering
+        // of code (where two components were missing from the structure)
+        <Box sx={renderCodecontainerSx}>
+          <Box component='code' className='language-unknown' aria-label='Displaying Code...' sx={{ p: 1.5, display: 'block', ...props.sx }}>
+            <Box component='span' sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <Box component='span' className='code-container' aria-label='Code block'>
+                {/* Just wait until the correct implementation renders */}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      }
+    >
       <_DynamicPrism {...props} />
     </React.Suspense>
   );
@@ -258,7 +272,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             chars in a non-proper way.
             Since this damages the 'fullscreen' operation, we restore it somehow.
         */}
-        <Box sx={!isFullscreen ? undefined : { flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box component='span' sx={!isFullscreen ? undefined : { flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
           {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} isFullscreen={isFullscreen} />
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
