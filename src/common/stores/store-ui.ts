@@ -100,7 +100,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       showPersonaFinder: false,
       setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
 
-      composerQuickButton: 'call',
+      composerQuickButton: 'beam',
       setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => set({ composerQuickButton }),
 
       // UI Dismissals
