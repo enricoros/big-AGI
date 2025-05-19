@@ -96,6 +96,9 @@ export function ScrollToBottom(props: {
   const bootToBottom = props.bootToBottom || false;
   const scrollBehavior: ScrollBehavior = (state.booting && !props.bootSmoothly) ? 'auto' : 'smooth';
 
+  const stateRef = React.useRef(state);
+  stateRef.current = state;
+
 
   // [Debugging]
   if (DEBUG_SCROLL_TO_BOTTOM)
@@ -167,14 +170,12 @@ export function ScrollToBottom(props: {
         if (DEBUG_SCROLL_TO_BOTTOM)
           console.log('   -> large enough window', entries.length);
 
-        // udpate state only if this changed
-        setState(state => (state.atBottom !== true)
-          ? ({ ...state, atBottom: true })
-          : state,
-        );
+        // update state only if this changed
+        if (stateRef.current.atBottom !== true)
+          setState(state => ({ ...state, atBottom: true }));
       }
 
-      if (entries.length > 0 && state.stickToBottom)
+      if (entries.length > 0 && stateRef.current.stickToBottom)
         doScrollToBottom();
     });
 
@@ -182,7 +183,7 @@ export function ScrollToBottom(props: {
     Array.from(scrollable.children).forEach(child => _containerResizeObserver.observe(child));
     return () => _containerResizeObserver.disconnect();
 
-  }, [state.stickToBottom, doScrollToBottom]);
+  }, [doScrollToBottom]);
 
   /**
    * (User) Scroll events listener
