@@ -27,7 +27,7 @@ export function GoodModal(props: {
   animateEnter?: boolean,
   unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
   open: boolean,
-  onClose?: () => void,
+  onClose?: ((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => void) | undefined,
   hideBottomClose?: boolean,
   darkBottomClose?: boolean,
   startButton?: React.JSX.Element,
@@ -100,7 +100,7 @@ export function GoodModal(props: {
             justifyContent: 'space-between',
           }}>
             {props.startButton}
-            {showBottomClose && <Button aria-label='Close Dialog' variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
+            {showBottomClose && <Button aria-label='Close Dialog' variant='solid' color='neutral' onClick={(event) => props.onClose?.(event, 'closeClick')} sx={{ ml: 'auto', minWidth: 100 }}>
               {props.closeText || 'Close'}
             </Button>}
           </Box>}
