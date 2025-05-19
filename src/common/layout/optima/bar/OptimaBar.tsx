@@ -132,8 +132,8 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
   }, [releaseNotesUrl, showPromisedOverlay]);
 
   const handleShowTechnologies = React.useCallback(async () => {
-    return await showPromisedOverlay<void>('app-recent-changes', {}, ({ onResolve }) =>
-      <GoodModal open onClose={onResolve} noTitleBar unfilterBackdrop>
+    return await showPromisedOverlay<boolean>('app-recent-changes', { rejectWithValue: false }, ({ onUserReject }) =>
+      <GoodModal open onClose={onUserReject} noTitleBar unfilterBackdrop>
         <BuildInfoCard noMargin />
       </GoodModal>,
     );
