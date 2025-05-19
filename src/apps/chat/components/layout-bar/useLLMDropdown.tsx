@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Box, IconButton, ListItemButton, ListItemDecorator } from '@mui/joy';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -174,11 +175,14 @@ function LLMDropdown(props: {
     {/*  </ListItemButton>*/}
     {/*)}*/}
 
-    <ListItemButton key='menu-llms' onClick={optimaOpenModels} sx={{ backgroundColor: 'background.surface' }}>
+    <ListItemButton key='menu-llms' onClick={optimaOpenModels} sx={{ backgroundColor: 'background.surface', py: 'calc(2 * var(--ListDivider-gap))' }}>
       <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
-      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'center' }}>
         Models
-        <KeyStroke variant='outlined' combo='Ctrl + Shift + M' sx={{ ml: 2 }} />
+        {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>*/}
+        {/*  <KeyStroke variant='outlined' size='sm' combo='Ctrl + Shift + M' sx={{ ml: 2, bgcolor: 'background.popup' }} />*/}
+        <ArrowForwardRoundedIcon sx={{ ml: 'auto', fontSize: 'xl' }} />
+        {/*</Box>*/}
       </Box>
     </ListItemButton>
 
