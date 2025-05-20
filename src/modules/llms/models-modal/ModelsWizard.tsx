@@ -261,6 +261,7 @@ export function ModelsWizard(props: {
   isMobile: boolean,
   onSkip?: () => void,
   onSwitchToAdvanced?: () => void,
+  onSwitchToWhy?: () => void,
 }) {
 
   // state
@@ -281,7 +282,7 @@ export function ModelsWizard(props: {
           <Chip variant={isLocal ? 'solid' : 'outlined'} sx={{ mx: 0.25 }} onClick={() => setActiveCategory('local')}>
             Local
           </Chip>
-          {' '}AI services below.
+          {' '}<Box component='a' onClick={props.onSwitchToWhy} sx={{ color: 'text.tertiary', cursor: 'pointer' }}>AI services </Box> below.
         </Typography>
         {/*<Box sx={{ fontSize: 'sm', color: 'text.primary' }}>*/}
         {/*  Enter API keys to connect your AI services.{' '}*/}
