@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Checkbox, Divider } from '@mui/joy';
+import { Box, Button, Checkbox, Divider, Typography } from '@mui/joy';
 
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
@@ -10,7 +10,8 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
+import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { LLMVendorSetup } from '../components/LLMVendorSetup';
 import { ModelsList } from './ModelsList';
@@ -111,6 +112,73 @@ export function ModelsConfiguratorModal(props: {
   }, [handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
 
 
+  // Explainer section
+  const isMissingModels = useModelsZeroState();
+  const { novel: isFirstVisit, touch: markVisited } = useUICounter('models-setup-first-visit', 1);
+  const [showExplainer, setShowExplainer] = React.useState(isMissingModels && isFirstVisit); // show the explainer only if we don't have models and it's the first visit
+
+  const handleShowExplainerAgain = React.useCallback(() => {
+    setShowExplainer(true);
+  }, []);
+
+  const handleDismissExplainer = React.useCallback((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
+    // hide for both the 'x' button and close
+    setShowExplainer(false);
+
+    // mark as visited on close only
+    if (reason === 'closeClick')
+      markVisited();
+  }, [markVisited]);
+
+  if (showExplainer) {
+    return (
+      <GoodModal
+        title={
+          <AppBreadcrumbs size='md' rootTitle='Welcome'>
+            <AppBreadcrumbs.Leaf>Important <b>AI Models</b> Notice</AppBreadcrumbs.Leaf>
+          </AppBreadcrumbs>
+        }
+        open
+        onClose={handleDismissExplainer}
+        disableBackdropClose
+        animateEnter
+        unfilterBackdrop
+        sx={{ maxWidth: '28rem' }}
+        closeText='Got It'
+      >
+        <Box sx={{
+          py: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          // justifyContent: 'center',
+          gap: 3,
+          // textAlign: 'center',
+          maxWidth: '500px',
+          minHeight: '14rem',
+          m: 'auto',
+        }}>
+          {/*<Typography level='title-md' mb={1}>*/}
+          {/*  Bring your own AI Keys*/}
+          {/*</Typography>*/}
+          <Typography level='body-md' lineHeight='lg'>
+            You&#39;ll need to <strong>provide your own API keys</strong> to use the models.
+          </Typography>
+          <Typography level='body-md' textColor='text.secondary' lineHeight='lg'>
+            Big-AGI connects directly to the latest AI models using your API keys.{' '}
+            {/*Big-AGI is a local App running on your computer.{' '}*/}
+            {/*We want you to have access to the top models. */}
+            We don&#39;t limit or bill your usage, giving you full control,
+            high privacy, unparalleled speed and zero vendor lock-in.
+          </Typography>
+          <Typography level='body-md' textColor='text.secondary' lineHeight='lg'>
+            You want the cleanest AI experience possible.
+          </Typography>
+        </Box>
+      </GoodModal>
+    );
+  }
+
+
   return (
     <GoodModal
       title={isTabWizard ? (
@@ -144,7 +212,7 @@ export function ModelsConfiguratorModal(props: {
     >
 
       {isTabWizard && <Divider />}
-      {isTabWizard && <ModelsWizard isMobile={isMobile} onSkip={optimaActions().closeModels} onSwitchToAdvanced={handleShowAdvanced} />}
+      {isTabWizard && <ModelsWizard isMobile={isMobile} onSkip={optimaActions().closeModels} onSwitchToAdvanced={handleShowAdvanced} onSwitchToWhy={handleShowExplainerAgain} />}
 
       {isTabSetup && <ModelsServiceSelector modelsServices={modelsServices} selectedServiceId={activeServiceId} setSelectedServiceId={setConfServiceId} onSwitchToWizard={handleShowWizard} />}
       {isTabSetup && <Divider sx={activeService ? undefined : { visibility: 'hidden' }} />}
