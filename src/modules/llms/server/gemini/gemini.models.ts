@@ -57,7 +57,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (May 12, 2025)
+// Pricing based on https://ai.google.dev/pricing (May 20, 2025)
 
 const gemini25ProPreviewPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
@@ -154,13 +154,21 @@ const _knownGeminiModels: ({
 
   // 2.5 Flash Preview
   {
+    id: 'models/gemini-2.5-flash-preview-05-20',
+    isPreview: true,
+    chatPrice: gemini25FlashPreviewThinkingPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    benchmark: { cbaElo: 1424 },
+  },
+  {
     id: 'models/gemini-2.5-flash-preview-04-17',
-    // labelOverride: 'Gemini 2.5 Flash Preview 04-17',
     isPreview: true,
     chatPrice: gemini25FlashPreviewThinkingPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
     benchmark: { cbaElo: 1392 },
+    hidden: true, // Hidden now that 05-20 is available
   },
   {
     id: 'models/gemini-2.5-flash-preview-04-17-thinking',
@@ -438,6 +446,14 @@ const _knownGeminiModels: ({
 
   /// Other Experimental Models
 
+  // Gemma 3n Model (newer than 3, first seen on the May 2025 update)
+  {
+    id: 'models/gemma-3n-e4b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree, // Free tier only according to pricing page
+    benchmark: { cbaElo: 1275 }, // Estimating based on comparable models
+  },
   // Gemma 3 Experimental Models - note: we apply workarounds:
   // - LLM_IF_HOTFIX_StripImages, because: "Image input modality is not enabled for models/gemma-3-27b-it"
   // - LLM_IF_HOTFIX_Sys0ToUsr0, because: "Developer instruction is not enabled for models/gemma-3-27b-it"
@@ -476,14 +492,6 @@ const _knownGeminiModels: ({
   // LearnLM Experimental Model
   {
     id: 'models/learnlm-2.0-flash-experimental',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: geminiExpFree,
-    // hidden: true,
-    // _delete: true,
-  },
-  {
-    id: 'models/learnlm-1.5-pro-experimental',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     chatPrice: geminiExpFree,
@@ -562,6 +570,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-1.5-flash-8b',
   'models/gemini-1.0-pro',
   'models/gemini-pro',
+  'models/gemma-3n-',
   'models/gemma-3-27b',
   'models/gemma-3-12b',
   'models/gemma-3-4b',
@@ -665,6 +674,20 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 
 
 const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSchema>[] } = {
+
+  // Adding non-thinking variant for the newest Gemini 2.5 Flash Preview 05-20 model
+  'models/gemini-2.5-flash-preview-05-20': [{
+    idVariant: '-non-thinking',
+    label: 'Gemini 2.5 Flash Preview (Non-thinking, 05-20)',
+    chatPrice: gemini25FlashPreviewNonThinkingPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{
+      paramId: 'llmVndGeminiThinkingBudget',
+      hidden: true,
+      initialValue: 0, // non-thinking: we fix the thinking budget to 0
+    }],
+    hidden: true,
+  }],
 
   // Changes to the thinking variant (same model ID) for the Gemini 2.5 Flash Preview model
   'models/gemini-2.5-flash-preview-04-17': [{
