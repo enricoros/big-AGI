@@ -3,7 +3,7 @@ import createCache, { StylisElement, StylisPlugin } from '@emotion/cache';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
-import { animationEnterModal } from '~/common/util/animUtils';
+import { animationEnterBelow } from '~/common/util/animUtils';
 
 
 // Definitions
@@ -140,7 +140,7 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
         },
         root: uiComplexityMinimal ? undefined : {
           '& .agi-animate-enter': {
-            animation: `${animationEnterModal} 0.2s`,
+            animation: `${animationEnterBelow} 0.16s ease-out`,
           },
         },
       },
