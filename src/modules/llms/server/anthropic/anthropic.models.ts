@@ -5,6 +5,27 @@ import type { ModelDescriptionSchema } from '../llm.server.types';
 
 export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
 
+  // Claude 4 models with thinking variants
+  'claude-opus-4-20250514': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4 (Thinking)',
+    description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
+    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    maxCompletionTokens: 32000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
+    benchmark: { cbaElo: 1303 + 10 + 10 /* N/A - just rank it on top + thinking */ },
+  },
+
+  'claude-sonnet-4-20250514': {
+    idVariant: 'thinking',
+    label: 'Claude Sonnet 4 (Thinking)',
+    description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
+    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    maxCompletionTokens: 64000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
+    benchmark: { cbaElo: 1303 + 10 /* N/A - just rank it on top + thinking */ },
+  },
+
   // Changes to the thinking variant (same model ID) for the Claude 3.7 Sonnet model
   'claude-3-7-sonnet-20250219': {
     idVariant: 'thinking',
@@ -21,11 +42,35 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
 
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
 
+  // Claude 4 models
+  {
+    id: 'claude-opus-4-20250514', // Active
+    label: 'Claude Opus 4', // 🌟
+    description: 'Capable and intelligent model. Sets new standards in complex reasoning and advanced coding',
+    contextWindow: 200000,
+    maxCompletionTokens: 32000,
+    trainingDataCutoff: 'Mar 2025',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+    benchmark: { cbaElo: 1295 + 10 + 10 /* N/A - just rank it on top */ },
+  },
+  {
+    id: 'claude-sonnet-4-20250514', // Active
+    label: 'Claude Sonnet 4', // 🌟
+    description: 'High-performance model with exceptional reasoning and efficiency',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    trainingDataCutoff: 'Mar 2025',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
+    benchmark: { cbaElo: 1295 + 10 /* N/A - just rank it on top */ },
+  },
+
   // Claude 3.7 models
   {
     id: 'claude-3-7-sonnet-20250219', // Active | Guaranteed Until: February 2026
-    label: 'Claude 3.7 Sonnet', // 🌟
-    description: 'Highest level of intelligence and capability with toggleable extended thinking',
+    label: 'Claude 3.7 Sonnet',
+    description: 'High-performance model with early extended thinking',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Oct 2024',
