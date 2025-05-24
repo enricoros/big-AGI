@@ -11,7 +11,8 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useConversationTitle } from '~/common/stores/chat/hooks/useConversationTitle';
 
-import { panesManagerActions } from './panes/store-panes-manager';
+// import { panesManagerActions } from './panes/store-panes-manager';
+import { usePanesManager } from './panes/store-panes-manager'; // Assuming usePanesManager provides chatPanes
 
 
 // configuration
@@ -81,6 +82,8 @@ export function PaneTitleOverlay(props: {
 
   // external state
   const { title, setUserTitle } = useConversationTitle(props.conversationId);
+  const { chatPanes, removePane, removeOtherPanes } = usePanesManager(); // Get chatPanes and actions
+  const numberOfPanes = chatPanes.length;
   // if (!title || title?.length < 3)
   //   return null;
 
@@ -88,12 +91,12 @@ export function PaneTitleOverlay(props: {
   // close tabs handlers
 
   const handleCloseThis = React.useCallback(() => {
-    panesManagerActions().removePane(props.paneIdx);
-  }, [props.paneIdx]);
+    removePane(props.paneIdx);
+  }, [props.paneIdx, removePane]);
 
   const handleCloseOthers = React.useCallback(() => {
-    panesManagerActions().removeOtherPanes(props.paneIdx);
-  }, [props.paneIdx]);
+    removeOtherPanes(props.paneIdx);
+  }, [props.paneIdx, removeOtherPanes]);
 
 
   // title handles
@@ -140,7 +143,7 @@ export function PaneTitleOverlay(props: {
     >
       {/* Close Others*/}
       {/*<TooltipOutlined title='Close Other Tabs'>*/}
-      {!editingTitle && <IconButton title='Close Other Tabs' size='sm' color={color} variant={variantP} onClick={handleCloseOthers} sx={_styles.toolButton}>
+      {!editingTitle && <IconButton title='Close Other Tabs' size='sm' color={color} variant={variantP} onClick={handleCloseOthers} sx={_styles.toolButton} disabled={numberOfPanes > 2}>
         <OpenInFullIcon sx={_styles.toolIcon} />
       </IconButton>}
       {/*</TooltipOutlined>*/}
@@ -185,7 +188,7 @@ export function PaneTitleOverlay(props: {
 
       {/* Close This */}
       {/*<TooltipOutlined title='Close'>*/}
-      {!editingTitle && <IconButton title='Close Tab' size='sm' color={color} variant={variantP} onClick={handleCloseThis} sx={_styles.toolButton}>
+      {!editingTitle && <IconButton title='Close Tab' size='sm' color={color} variant={variantP} onClick={handleCloseThis} sx={_styles.toolButton} disabled={numberOfPanes > 2}>
         <ClearIcon sx={_styles.toolIconLg} />
       </IconButton>}
       {/*</TooltipOutlined>*/}
