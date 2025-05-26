@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
-import { delayPostAsyncGeneratorOnEdge } from '~/server/trpc/trpc.next-edge';
 
 
 // configuration
@@ -81,7 +80,7 @@ export const elevenlabsRouter = createTRPCRouter({
    */
   speech: publicProcedure
     .input(speechInputSchema)
-    .mutation(delayPostAsyncGeneratorOnEdge(0, async function* ({ input: { xiKey, text, voiceId, nonEnglish, audioStreaming, audioTurbo }, ctx }) {
+    .mutation(async function* ({ input: { xiKey, text, voiceId, nonEnglish, audioStreaming, audioTurbo }, ctx }) {
 
       // start streaming back
       yield { control: 'start' };
@@ -183,7 +182,7 @@ export const elevenlabsRouter = createTRPCRouter({
 
       // end streaming (if a control error wasn't thrown)
       yield { control: 'end' };
-    })),
+    }),
 
 });
 

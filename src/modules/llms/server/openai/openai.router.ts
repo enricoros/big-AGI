@@ -30,7 +30,6 @@ import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/p
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
-import { delayPostAsyncGeneratorOnEdge } from '~/server/trpc/trpc.next-edge';
 
 
 const openAIDialects = z.enum([
@@ -275,7 +274,7 @@ export const llmOpenAIRouter = createTRPCRouter({
   /* [OpenAI/LocalAI] images/generations */
   createImages: publicProcedure
     .input(createImagesInputSchema)
-    .mutation(delayPostAsyncGeneratorOnEdge(0, async function* ({ input }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
+    .mutation(async function* ({ input }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
 
       const { access, generationConfig: config, editConfig } = input;
 
@@ -395,7 +394,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           },
         };
       }
-    })),
+    }),
 
 
   /* [OpenAI] check for content policy violations */

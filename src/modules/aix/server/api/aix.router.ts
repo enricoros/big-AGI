@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString, serverCapitalizeFirstLetter } from '~/server/wire';
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { delayPostAsyncGeneratorOnEdge } from '~/server/trpc/trpc.next-edge';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixDemuxers } from '../dispatch/stream.demuxers';
@@ -38,7 +37,7 @@ export const aixRouter = createTRPCRouter({
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
-    .mutation(delayPostAsyncGeneratorOnEdge(0, async function* ({ input, ctx }): AsyncGenerator<AixWire_Particles.ChatGenerateOp> {
+    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixWire_Particles.ChatGenerateOp> {
 
 
       // Intake derived state
@@ -236,6 +235,6 @@ export const aixRouter = createTRPCRouter({
       // or an error that has already been queued up for this last flush
       yield* chatGenerateTx.flushParticles();
 
-    })),
+    }),
 
 });
