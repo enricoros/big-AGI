@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString, serverCapitalizeFirstLetter } from '~/server/wire';
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { delayPostAsyncGeneratorOnEdge } from '~/server/trpc/trpc.next-edge';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixDemuxers } from '../dispatch/stream.demuxers';
@@ -37,7 +38,7 @@ export const aixRouter = createTRPCRouter({
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
-    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixWire_Particles.ChatGenerateOp> {
+    .mutation(delayPostAsyncGeneratorOnEdge(0, async function* ({ input, ctx }): AsyncGenerator<AixWire_Particles.ChatGenerateOp> {
 
 
       // Intake derived state
@@ -235,26 +236,6 @@ export const aixRouter = createTRPCRouter({
       // or an error that has already been queued up for this last flush
       yield* chatGenerateTx.flushParticles();
 
-      /**
-       * 2025-05-22: Workaround an issue that appeared in all Vercel deployments.
-       *
-       * This is an emergency fix deployed with priority.
-       *
-       * Analysis:
-       * - the server side saw the following exceptions on Vercel, during the call to this server-side tRPC
-       *   streaming chatGenerateContent function:
-       *
-       *   TypeError: Cannot read properties of undefined (reading 'return')
-       *     at (node_modules/@trpc/server/dist/unstable-core-do-not-import/stream/utils/disposable.mjs:38:0)
-       *     at (node_modules/@trpc/server/dist/unstable-core-do-not-import/stream/jsonl.mjs:204:0)
-       *
-       * - we haven't isolated the cause, but seems that awaiting for the next event loop cycle suppresses
-       *   the issue.
-       *
-       * Ext refs: posted to the tRCP Discord on the streaming channel if anyone else saw this issue.
-       */
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-    }),
+    })),
 
 });
