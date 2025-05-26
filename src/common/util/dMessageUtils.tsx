@@ -474,14 +474,21 @@ export function prettyShortChatModelName(model: string | undefined): string {
 }
 
 function _prettyAnthropicModelName(modelId: string): string | null {
-  const claudeIndex = modelId.indexOf('claude-3');
-  if (claudeIndex === -1) return null;
+  let claudeIndex = modelId.indexOf('claude-4');
+  if (claudeIndex === -1) {
+    claudeIndex = modelId.indexOf('claude-3');
+    if (claudeIndex === -1) {
+      claudeIndex = modelId.indexOf('claude-2');
+      if (claudeIndex === -1) return null; // not a Claude model
+    }
+  }
 
   const subStr = modelId.slice(claudeIndex);
   const version =
-    subStr.includes('-3-7-') ? '3.7'
-      : subStr.includes('-3-5-') ? '3.5'
-        : '3';
+    subStr.includes('-4-') ? '4'
+      : subStr.includes('-3-7-') ? '3.7'
+        : subStr.includes('-3-5-') ? '3.5'
+          : '3';
 
   if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
   if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;
