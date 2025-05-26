@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { delayPostAsyncGeneratorOnEdge } from '~/server/trpc/trpc.next-edge';
 import { env } from '~/server/env';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
@@ -27,7 +28,7 @@ export const prodiaRouter = createTRPCRouter({
       height: z.number().optional(),
       seed: z.number().optional(),
     }))
-    .query(async function* ({ input }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
+    .query(delayPostAsyncGeneratorOnEdge(0, async function* ({ input }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
 
       const key = (input.prodiaKey || env.PRODIA_API_KEY || '').trim();
       if (!key)
@@ -138,6 +139,6 @@ export const prodiaRouter = createTRPCRouter({
         },
       };
 
-    }),
+    })),
 
 });

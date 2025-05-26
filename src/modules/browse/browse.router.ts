@@ -6,6 +6,7 @@ import { default as TurndownService } from 'turndown';
 import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { delayPostAsyncGeneratorOnEdge } from '~/server/trpc/trpc.next-edge';
 import { env } from '~/server/env';
 
 import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
@@ -71,7 +72,7 @@ export const browseRouter = createTRPCRouter({
 
   fetchPagesStreaming: publicProcedure
     .input(fetchPageInputSchema)
-    .mutation(async function* ({ input: { access, requests } }) {
+    .mutation(delayPostAsyncGeneratorOnEdge(0, async function* ({ input: { access, requests } }) {
 
       // get endpoint
       const endpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
@@ -116,7 +117,7 @@ export const browseRouter = createTRPCRouter({
         pages,
         workerHost,
       };
-    }),
+    })),
 
 });
 
