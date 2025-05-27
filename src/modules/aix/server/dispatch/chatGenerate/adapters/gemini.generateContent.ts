@@ -93,6 +93,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
   const noTextOutput = !model.acceptsOutputs.includes('text');
   if (model.acceptsOutputs.includes('audio')) {
 
+    // (undocumented) Adapt the request
+    delete payload.systemInstruction;
+    delete payload.generationConfig!.maxOutputTokens; // maxOutputTokens is not supported for audio-only output
+    payload.generationConfig!.temperature = 1;
+
     // activate audio (/only) output
     payload.generationConfig!.responseModalities = noTextOutput ? ['AUDIO'] : ['TEXT', 'AUDIO'];
 
