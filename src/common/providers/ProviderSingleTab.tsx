@@ -2,19 +2,18 @@ import * as React from 'react';
 
 import { Button, Sheet, Typography } from '@mui/joy';
 
-import { reloadPage } from '../app.routes';
 import { useSingleTabEnforcer } from '../components/useSingleTabEnforcer';
 
 
 export const ProviderSingleTab = (props: { children: React.ReactNode }) => {
 
-  // state
-  const isSingleTab = useSingleTabEnforcer('big-agi-tabs');
+  // state: [isActive, activate]
+  const [isActive, activate] = useSingleTabEnforcer('big-agi-tabs');
 
-  // pass-through until we know for sure that other tabs are open
-  if (isSingleTab === null || isSingleTab)
-    return props.children;
-
+  // only render the app when this tab owns it
+  if (isActive) {
+    return <>{props.children}</>;
+  }
 
   return (
     <Sheet
@@ -29,11 +28,11 @@ export const ProviderSingleTab = (props: { children: React.ReactNode }) => {
 
       <Typography>
         It looks like this app is already running in another browser Tab or Window.<br />
-        To continue here, please close the other instance first.
+        Click "Use here" to switch to this window.
       </Typography>
 
-      <Button onClick={reloadPage}>
-        Reload
+      <Button onClick={activate}>
+        Use here
       </Button>
 
     </Sheet>
