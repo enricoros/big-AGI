@@ -14,13 +14,13 @@ const geminiChatInterfaces: GeminiWire_API_Models_List.Model['supportedGeneratio
 
 // unsupported interfaces
 const filterUnallowedNames = ['Legacy'];
-const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = [
-  'generateAnswer',     // e.g. removes "models/aqa"
-  'embedContent',       // e.g. removes "models/embedding-001"
-  'embedText',          // e.g. removes "models/text-embedding-004"
-  'predict',            // e.g. removes "models/imagen-3.0-generate-002" (appeared on 2025-02-09)
-  'predictLongRunning', // e.g. removes "models/veo-2.0-generate-001" (appeared on 2025-04-10)
-];
+// const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = [
+//   'generateAnswer',     // e.g. removes "models/aqa"
+//   'embedContent',       // e.g. removes "models/embedding-001"
+//   'embedText',          // e.g. removes "models/text-embedding-004"
+//   'predict',            // e.g. removes "models/imagen-3.0-generate-002" (appeared on 2025-02-09)
+//   'predictLongRunning', // e.g. removes "models/veo-2.0-generate-001" (appeared on 2025-04-10)
+// ];
 const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   // 2025-02-27: verified, old model is no more
   'models/gemini-2.0-flash-exp', // verified, replaced by gemini-2.0-flash, which is non-free anymore
@@ -571,9 +571,10 @@ export function geminiDevCheckForParserMisses_DEV(wireModels: unknown, parsedMod
 
 export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model): boolean {
   const isAllowed = !filterUnallowedNames.some(name => geminiModel.displayName.includes(name));
-  const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
+  // const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
+  const isChatSupported = geminiModel.supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
   const isWhatItSaysItIs = !filterLyingModelNames.includes(geminiModel.name);
-  return isAllowed && isSupported && isWhatItSaysItIs;
+  return isAllowed && isChatSupported && isWhatItSaysItIs;
 }
 
 
@@ -644,6 +645,15 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   // if (DEV_DEBUG_GEMINI_MODELS)
   //   console.log('geminiModelToModelDescription', geminiModel);
 
+  // handle unsupported interfaces
+  const hasChatInterfaces = supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
+  if (!hasChatInterfaces) {
+    if (DEV_DEBUG_GEMINI_MODELS)
+      console.warn(`geminiModelToModelDescription: no chat interfaces (${supportedGenerationMethods.join(', ')}) for model ${modelId} (${displayName}) - skipping.`);
+    return null; // skip models without chat interfaces
+  }
+
+
   // find known manual mapping
   const knownModel = _knownGeminiModels.find(m => m.id === modelId);
   if (!knownModel && DEV_DEBUG_GEMINI_MODELS)
@@ -663,7 +673,6 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   //   label += ' (really: 1114)';
 
   // handle hidden models
-  const hasChatInterfaces = supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
   const hidden = knownModel?.hidden || !!knownModel?.symLink || !hasChatInterfaces;
 
   // context window
@@ -734,7 +743,7 @@ const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSche
 } as const;
 
 export function geminiModelsAddVariants(models: ModelDescriptionSchema[]): ModelDescriptionSchema[] {
-  return models.reduce((acc, model, idx) => {
+  return models.reduce((acc, model) => {
 
     // insert the model in the same order
     acc.push(model);
