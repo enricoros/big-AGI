@@ -67,7 +67,7 @@ export async function callBrowseFetchPageOrThrow(
         const page = message.pages[0];
         if (page.error) {
           const haveNoContent = !page.content || !Object.keys(page.content).length;
-          console.warn('[DEV] browse.client: puppeteer error:', page.error);
+          console.warn('[DEV] browse.client: puppeteer error:', { page });
           if (haveNoContent)
             throw new Error(page.error);
         }

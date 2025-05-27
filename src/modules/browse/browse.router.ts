@@ -81,7 +81,7 @@ export const browseRouter = createTRPCRouter({
 
       yield { type: 'ack-start' as const };
 
-      // start all requests in parallel, intercepting erros too
+      // start all requests in parallel, intercepting errors too
       const results = await Promise.allSettled(requests.map(request =>
         workerPuppeteer(endpoint, request.url, request.transforms, request.allowFileDownloads || false, request.screenshot),
       ));
