@@ -541,6 +541,34 @@ export function geminiDevCheckForSuperfluousModels_DEV(apiModelIds: string[]): v
 }
 
 
+/**
+ * Checks if Gemini has updated the API.
+
+ * Compares wireModels with parsedModels for missing or mismatched parsed data.
+ * @param wireModels is the raw API response from Gemini, containing the .models[] array
+ * @param parsedModels is the parsed models array, which should match the wireModels
+ */
+export function geminiDevCheckForParserMisses_DEV(wireModels: unknown, parsedModels: object[]): void {
+
+  if (DEV_DEBUG_GEMINI_MODELS) {
+
+    // ensure wireModels has .models array
+    if (!wireModels || !Array.isArray((wireModels as any)?.models)) {
+      console.warn('[DEV] Gemini: wireModels.models is not an array', wireModels);
+      return;
+    }
+
+    // find differences between wireModels and parsedModels using JSON.stringify
+    const wireModelsJson = JSON.stringify((wireModels as any).models);
+    const parsedModelsJson = JSON.stringify(parsedModels);
+    if (wireModelsJson !== parsedModelsJson)
+      console.warn('[DEV] Gemini: wireModels and parsedModels do not match!', wireModelsJson, parsedModelsJson);
+
+  }
+
+}
+
+
 export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model): boolean {
   const isAllowed = !filterUnallowedNames.some(name => geminiModel.displayName.includes(name));
   const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
