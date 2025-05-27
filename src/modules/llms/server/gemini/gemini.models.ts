@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -175,7 +175,11 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Pro Preview TTS (unsupported)',
     isPreview: true,
     chatPrice: gemini25ProPreviewTTSPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText],
+    interfaces: [
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+      LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
+      LLM_IF_HOTFIX_NoStream, // generateContent, not streamGenerateContent?alt=sse
+    ],
     benchmark: undefined, // TTS models are not benchmarkable
     hidden: true, // audio outputs are unavailable as of 2025-05-27
     _delete: true, // we are receiving API errors from Gemini - disabled for now as of 2025-05-27
@@ -215,7 +219,11 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Flash Preview TTS (unsupported)',
     isPreview: true,
     chatPrice: gemini25FlashPreviewTTSPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText],
+    interfaces: [
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+      LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
+      LLM_IF_HOTFIX_NoStream, // generateContent, not streamGenerateContent?alt=sse
+    ],
     benchmark: undefined, // TTS models are not benchmarkable
     hidden: true, // audio outputs are unavailable as of 2025-05-27
     _delete: true, // we are receiving API errors from Gemini - disabled for now as of 2025-05-27
