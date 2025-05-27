@@ -97,13 +97,13 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.responseModalities = noTextOutput ? ['AUDIO'] : ['TEXT', 'AUDIO'];
 
     // default voice config - list here: https://ai.google.dev/gemini-api/docs/speech-generation#voices
-    // payload.generationConfig!.speechConfig = {
-    //   voiceConfig: {
-    //     prebuiltVoiceConfig: {
-    //       voiceName: 'Kore',
-    //     },
-    //   },
-    // };
+    payload.generationConfig!.speechConfig = {
+      voiceConfig: {
+        prebuiltVoiceConfig: {
+          voiceName: 'Kore',
+        },
+      },
+    };
   }
   // [Gemini, 2025-03-14] Experimental Image generation: Request
   else if (model.acceptsOutputs.includes('image')) {
