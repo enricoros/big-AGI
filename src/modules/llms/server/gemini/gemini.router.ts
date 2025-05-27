@@ -11,7 +11,7 @@ import { GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/ser
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
-import { geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
+import { geminiDevCheckForParserMisses_DEV, geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
 
 
 // Default hosts
@@ -98,6 +98,7 @@ export const llmGeminiRouter = createTRPCRouter({
       // get the models
       const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath, false);
       const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
+      geminiDevCheckForParserMisses_DEV(wireModels, detailedModels);
       geminiDevCheckForSuperfluousModels_DEV(detailedModels.map(model => model.name));
 
       // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,
