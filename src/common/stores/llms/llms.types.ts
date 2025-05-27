@@ -69,6 +69,7 @@ export type DModelInterfaceV1 =
   | 'gem-code-execution'
   | 'outputs-audio'            // TEMP: ui flag - supports audio output (e.g., text-to-speech)
   | 'outputs-image'            // TEMP: ui flag - supports image output (image generation)
+  | 'outputs-no-text'          // disable text outputs (used in conjunction with alt-outputs) - assumed off
   | 'tools-web-search'         // TEMP: ui flag - supports integrated web search tool
   | 'hotfix-no-stream'         // disable streaming for o1-preview (old) and o1 (20241217)
   | 'hotfix-no-temperature'    // disable temperature for deepseek-r1
@@ -87,6 +88,7 @@ export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
 export const LLM_IF_OAI_Reasoning: DModelInterfaceV1 = 'oai-chat-reasoning';
 export const LLM_IF_Outputs_Audio: DModelInterfaceV1 = 'outputs-audio';
 export const LLM_IF_Outputs_Image: DModelInterfaceV1 = 'outputs-image';
+export const LLM_IF_Outputs_NoText: DModelInterfaceV1 = 'outputs-no-text';
 export const LLM_IF_Tools_WebSearch: DModelInterfaceV1 = 'tools-web-search';
 export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
@@ -112,6 +114,7 @@ export const LLMS_ALL_INTERFACES = [
   LLM_IF_OAI_Reasoning,       // COSMETIC ONLY - may show a 'brain' icon in supported screens
   LLM_IF_Outputs_Audio,       // COSMETIC ONLY FOR NOW - Models that generate audio output (TTS models)
   LLM_IF_Outputs_Image,       // COSMETIC ONLY FOR NOW - Models that can generate images (Gemini, DALL-E, etc.)
+  LLM_IF_Outputs_NoText,      // Disable Text Outputs - e.g. Gemini pure TTS
   LLM_IF_Tools_WebSearch,     // Models with web search capability (Perplexity, GPT-4o Search, etc.)
   // Vendor-specific capabilities
   LLM_IF_ANT_PromptCaching,   // [Anthropic] model supports anthropic-specific caching
