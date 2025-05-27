@@ -92,18 +92,17 @@ export const browseRouter = createTRPCRouter({
           case 'fulfilled':
             return result.value;
           case 'rejected':
+            // server-side log the exception
+            console.warn('[DEV] browse.worker: fetchPagesStreaming error:', result.reason);
             return {
               url: requests[index].url,
               title: '',
               content: undefined,
               file: undefined,
-              error: typeof result.reason === 'string' 
-  ? result.reason
-  : result.reason instanceof Error
-    ? result.reason.message
-    : result.reason 
-      ? JSON.stringify(result.reason)
-      : 'Unknown fetch error',
+              error: typeof result.reason === 'string' ? result.reason
+                : result.reason instanceof Error ? result.reason.message
+                  : result.reason ? JSON.stringify(result.reason)
+                    : 'Unknown fetch error',
               stopReason: 'error',
               screenshot: undefined,
             } satisfies FetchPageWorkerOutputSchema;
