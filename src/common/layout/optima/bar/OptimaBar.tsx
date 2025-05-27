@@ -24,7 +24,6 @@ import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { navigateToIndex, ROUTE_INDEX } from '~/common/app.routes';
-// import { useDynamicUsersnap } from '~/common/components/3rdparty/Usersnap';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
@@ -101,7 +100,6 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
    * - prob not because this could be a per-company deployment, and we don't know the tenant's release notes
    */
   const releaseNotesUrl = Release.App.releaseNotes;
-  // const { openUsersnap, loadingError: usersnapLoadingError } = useDynamicUsersnap();
   const { showPromisedOverlay } = useOverlayComponents();
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
   const { panelAsPopup, panelHasContent, panelShownAsPanel, panelShownAsPopup } = useOptimaPanelOpen(props.isMobile, props.currentApp);
@@ -209,14 +207,6 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
               {isScratchClipVisible ? 'Hide ' : ''}Clipboard History
             </MenuItem>}
 
-            {/*<ListDivider />*/}
-
-            {/*<TooltipOutlined title={usersnapLoadingError}>*/}
-            {/*  <MenuItem onClick={openUsersnap}>*/}
-            {/*    <ListItemDecorator><FeedbackIcon /></ListItemDecorator>*/}
-            {/*    Feedback -&gt; Enrico*/}
-            {/*  </MenuItem>*/}
-            {/*</TooltipOutlined>*/}
           </Menu>
         </Dropdown>
       )}
