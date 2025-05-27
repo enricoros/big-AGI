@@ -8,7 +8,7 @@ import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
-import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
@@ -161,6 +161,8 @@ export function useLLMSelect(
           features += '🧠 '; // can reason
         if (llm.interfaces.includes(LLM_IF_Tools_WebSearch))
           features += '🌐 '; // can web search
+        if (llm.interfaces.includes(LLM_IF_Outputs_Audio))
+          features += '🔊 '; // can output audio
         if (llm.interfaces.includes(LLM_IF_Outputs_Image))
           features += '🖼️ '; // can draw images
       }

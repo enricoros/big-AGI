@@ -9,7 +9,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DLLM, DLLMId, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -192,6 +192,7 @@ function ModelItem(props: {
         {/* Features Chips - sync with `useLLMSelect.tsx` */}
         {llm.interfaces.includes(LLM_IF_OAI_Reasoning) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🧠</Chip>}
         {llm.interfaces.includes(LLM_IF_Tools_WebSearch) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🌐</Chip>}
+        {llm.interfaces.includes(LLM_IF_Outputs_Audio) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🔊️</Chip>}
         {llm.interfaces.includes(LLM_IF_Outputs_Image) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipCapability}>🖼️</Chip>}
         {seemsFree && isNotSymlink && <Chip size='sm' color='success' variant='plain' sx={styles.chipFree}>free</Chip>}
 
