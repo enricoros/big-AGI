@@ -105,7 +105,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.speechConfig = {
       voiceConfig: {
         prebuiltVoiceConfig: {
-          voiceName: 'Kore',
+          voiceName: 'Zephyr',
         },
       },
     };
@@ -169,6 +169,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(GeminiWire_ContentParts.TextPart(part.text));
           break;
 
+        case 'inline_audio':
         case 'inline_image':
           parts.push(GeminiWire_ContentParts.InlineDataPart(part.mimeType, part.base64));
           break;
