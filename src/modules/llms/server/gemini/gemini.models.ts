@@ -177,7 +177,8 @@ const _knownGeminiModels: ({
     interfaces: [
       LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
       LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
-      LLM_IF_HOTFIX_NoStream, // generateContent, not streamGenerateContent?alt=sse
+      LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
+      LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
     ],
     benchmark: undefined, // TTS models are not benchmarkable
     hidden: true, // audio outputs are unavailable as of 2025-05-27
@@ -219,7 +220,8 @@ const _knownGeminiModels: ({
     interfaces: [
       LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
       LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
-      LLM_IF_HOTFIX_NoStream, // generateContent, not streamGenerateContent?alt=sse
+      LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
+      LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
     ],
     benchmark: undefined, // TTS models are not benchmarkable
     hidden: true, // audio outputs are unavailable as of 2025-05-27
