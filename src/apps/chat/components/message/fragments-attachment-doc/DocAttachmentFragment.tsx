@@ -40,6 +40,7 @@ const _styles = {
 
 export function DocAttachmentFragment(props: {
   fragment: DMessageAttachmentFragment,
+  controlledEditor: boolean,
   editedText?: string,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
   messageRole: DMessageRole,
@@ -292,6 +293,7 @@ export function DocAttachmentFragment(props: {
           initialText={fragmentDocPart.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}
+          controlled={props.controlledEditor}
           editedText={editedText}
           setEditedText={props.setEditedText}
           squareTopBorder
