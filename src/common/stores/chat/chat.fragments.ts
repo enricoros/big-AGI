@@ -590,6 +590,9 @@ export function filterDocAttachmentFragments(fragments: DMessageAttachmentFragme
  * Updates a fragment with the edited text, ensuring the fragment retains its type and structure.
  * @returns A new fragment with the edited text applied or null if the fragment type isn't handled.
  */
+export function updateFragmentWithEditedText(fragment: DMessageContentFragment, editedText: string): DMessageContentFragment | null;
+export function updateFragmentWithEditedText(fragment: DMessageAttachmentFragment, editedText: string): DMessageAttachmentFragment | null;
+export function updateFragmentWithEditedText(fragment: DMessageFragment, editedText: string): DMessageFragment | null;
 export function updateFragmentWithEditedText(
   fragment: DMessageFragment,
   editedText: string,
