@@ -360,6 +360,34 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               chatMessages.push({ role: 'assistant', content: part.text });
               break;
 
+            case 'inline_audio':
+              // Implementation notes
+              // - audio parts are not supported on the assistant side, but on the user side, so we
+              //   create a user part instead
+
+              let audioFormat: 'wav' | 'mp3' | undefined = undefined;
+              switch (part.mimeType) {
+                case 'audio/wav':
+                  audioFormat = 'wav';
+                  break;
+                case 'audio/mp3':
+                  audioFormat = 'mp3';
+                  break;
+                default:
+                  throw new Error(`Unsupported inline audio format: ${(part as any).mimeType}`);
+              }
+
+              // create a new OpenAI_AudioContentPart of type User
+              const audioBase64DataUrl = `data:${part.mimeType};base64,${part.base64}`;
+              const audioContentPart = OpenAIWire_ContentParts.OpenAI_AudioContentPart(audioBase64DataUrl, audioFormat);
+
+              // Append to existing content[], or new message
+              if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
+                currentMessage.content.push(audioContentPart);
+              else
+                chatMessages.push({ role: 'user', content: [audioContentPart] });
+              break;
+
             case 'inline_image':
               // Implementation notes
               // - image parts are not supported on the assistant side, but on the user side, so we
@@ -367,9 +395,8 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               // - we use the 'high' detail level for the image content part (how to expose to the user?)
 
               // create a new OpenAIWire_ImageContentPart of type User
-              const { mimeType, base64 } = part;
-              const base64DataUrl = `data:${mimeType};base64,${base64}`;
-              const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
+              const imageBase64DataUrl = `data:${part.mimeType};base64,${part.base64}`;
+              const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(imageBase64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))

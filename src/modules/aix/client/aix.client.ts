@@ -2,7 +2,7 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
-import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { apiStream } from '~/common/util/trpc.client';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
@@ -61,6 +61,12 @@ export function aixCreateModelFromLLMOptions(
   if (llmTemperature === undefined)
     console.warn(`[DEV] AIX: Missing temperature for model ${debugLlmId}, using default.`);
 
+  // Output modalities
+  const acceptsOutputs: AixAPI_Model['acceptsOutputs'] = [];
+  if (!llmInterfaces.includes(LLM_IF_Outputs_NoText)) acceptsOutputs.push('text');
+  if (llmInterfaces.includes(LLM_IF_Outputs_Audio)) acceptsOutputs.push('audio');
+  if (llmInterfaces.includes(LLM_IF_Outputs_Image)) acceptsOutputs.push('image');
+
   // Client-side late stage model HotFixes
   const hotfixOmitTemperature = llmInterfaces.includes(LLM_IF_HOTFIX_NoTemperature);
 
@@ -81,6 +87,7 @@ export function aixCreateModelFromLLMOptions(
 
   return {
     id: llmRef,
+    acceptsOutputs: acceptsOutputs,
     ...(hotfixOmitTemperature ? { temperature: null } : llmTemperature !== undefined ? { temperature: llmTemperature } : {}),
     ...(llmResponseTokens /* null: similar to undefined, will omit the value */ ? { maxTokens: llmResponseTokens } : {}),
     ...(llmTopP !== undefined ? { topP: llmTopP } : {}),

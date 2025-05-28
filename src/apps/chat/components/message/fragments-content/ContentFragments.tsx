@@ -161,6 +161,17 @@ export function ContentFragments(props: {
           );
 
 
+        case 'audio_ref':
+          // unsupported for now
+          return (
+            <BlockPartError
+              key={fId}
+              errorText='Audio fragments are not supported yet.'
+              messageRole={props.messageRole}
+              contentScaling={props.contentScaling}
+            />
+          );
+
         case 'image_ref':
           return (
             <BlockPartImageRef

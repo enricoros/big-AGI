@@ -5,6 +5,8 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
+import { geminiConvertPCM2WAV } from './gemini.audioutils';
+
 
 // configuration
 const ENABLE_RECITATIONS_AS_CITATIONS = false;
@@ -87,9 +89,33 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           // <- InlineDataPart
           case 'inlineData' in mPart:
             // [Gemini, 2025-03-14] Experimental Image generation: Response
-            if (mPart.inlineData.mimeType.startsWith('image/'))
-              pt.appendImageInline(mPart.inlineData.mimeType, mPart.inlineData.data, 'Gemini Generated Image', 'Gemini', '');
-            else
+            if (mPart.inlineData.mimeType.startsWith('image/')) {
+              pt.appendImageInline(
+                mPart.inlineData.mimeType,
+                mPart.inlineData.data,
+                'Gemini Generated Image',
+                'Gemini',
+                '',
+              );
+            } else if (mPart.inlineData.mimeType.startsWith('audio/')) {
+              try {
+                // Convert the API response from PCM to WAV: {
+                //   "mimeType": "audio/L16;codec=pcm;rate=24000",
+                //   "data": "7P/z/wQACg...==" (57,024 bytes)
+                // }
+                const convertedAudio = geminiConvertPCM2WAV(mPart.inlineData.mimeType, mPart.inlineData.data);
+                pt.appendAudioInline(
+                  convertedAudio.mimeType,
+                  convertedAudio.base64Data,
+                  'Gemini Generated Audio',
+                  'Gemini',
+                  convertedAudio.durationMs,
+                );
+              } catch (error) {
+                console.warn('[Gemini] Failed to convert audio:', error);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+              }
+            } else
               pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null);
             break;
 

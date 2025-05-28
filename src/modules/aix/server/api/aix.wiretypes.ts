@@ -18,6 +18,7 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
 // Export types
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
+// export type AixParts_InlineAudioPart = z.infer<typeof AixWire_Parts.InlineAudioPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
 export type AixParts_ModelAuxPart = z.infer<typeof AixWire_Parts.ModelAuxPart_schema>;
 export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
@@ -97,7 +98,22 @@ export namespace AixWire_Parts {
     text: z.string(),
   });
 
-  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than bein referred to
+  export const InlineAudioPart_schema = z.object({
+    pt: z.literal('inline_audio'),
+    /**
+     * Minimal audio format support for browser compatibility:
+     * - audio/wav: Most compatible, converted from Gemini PCM
+     * - audio/mp3: Widely supported, efficient
+     * - audio/ogg: Open format, good compression
+     */
+    mimeType: z.enum(['audio/wav', 'audio/mp3']), // was (['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac'])
+    base64: z.string(),
+    // sampleRate: z.number().optional(), // for PCM formats
+    // channels: z.number().optional(),   // for PCM formats
+    // durationMs: z.number().optional(),
+  });
+
+  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than being referred to
   export const InlineImagePart_schema = z.object({
     pt: z.literal('inline_image'),
     /**
@@ -109,13 +125,6 @@ export namespace AixWire_Parts {
     mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
     base64: z.string(),
   });
-
-  // Disabling inline audio for now, as it's only supported by Gemini
-  // const InlineAudioPart_schema = z.object({
-  //   pt: z.literal('inline_audio'),
-  //   mimeType: z.enum(['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac']),
-  //   base64: z.string(),
-  // });
 
   // The reason of existence of a doc part, is to be encoded differently depending on
   // the target llm (e.g. xml for anthropic, markdown titled block for others, ...)
@@ -246,6 +255,7 @@ export namespace AixWire_Content {
     role: z.literal('user'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      // AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.DocPart_schema,
       AixWire_Parts.MetaCacheControl_schema,
@@ -257,6 +267,7 @@ export namespace AixWire_Content {
     role: z.literal('model'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.ToolInvocationPart_schema,
       AixWire_Parts.ModelAuxPart_schema,
@@ -387,6 +398,7 @@ export namespace AixWire_API {
 
   export const Model_schema = z.object({
     id: z.string(),
+    acceptsOutputs: z.array(z.enum(['text', 'image', 'audio'])),
     temperature: z.number().min(0).max(2).optional()
       .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
     maxTokens: z.number().min(1).optional(),
@@ -588,6 +600,7 @@ export namespace AixWire_Particles {
     | { p: '_fci', _args: string }
     | { p: 'cei', id: string, language: string, code: string, author: 'gemini_auto_inline' }
     | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline', environment: DMessageToolResponsePart['environment'] }
+    | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
     | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string } // inline image, complete
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string }; // url citation
 

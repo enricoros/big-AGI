@@ -755,6 +755,7 @@ export function AppChat() {
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
       isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
+      onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
       onConversationsImportFromFiles={handleConversationsImportFromFiles}
       onTextImagine={handleImagineFromText}
       setIsMulticast={setIsComposerMulticast}

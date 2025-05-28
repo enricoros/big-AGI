@@ -474,14 +474,25 @@ export function prettyShortChatModelName(model: string | undefined): string {
 }
 
 function _prettyAnthropicModelName(modelId: string): string | null {
-  const claudeIndex = modelId.indexOf('claude-3');
-  if (claudeIndex === -1) return null;
+  if (modelId.indexOf('claude-') === -1) return null; // not a Claude model
+
+  // must match any known prefix
+  let claudeIndex = -1;
+  const claudePrefixes = ['claude-opus-4', 'claude-sonnet-4', 'claude-haiku-4', 'claude-3', 'claude-2'];
+  for (const prefix of claudePrefixes) {
+    const index = modelId.indexOf(prefix);
+    if (index !== -1) {
+      claudeIndex = index;
+      break;
+    }
+  }
 
   const subStr = modelId.slice(claudeIndex);
   const version =
-    subStr.includes('-3-7-') ? '3.7'
-      : subStr.includes('-3-5-') ? '3.5'
-        : '3';
+    subStr.includes('-4-') ? '4'
+      : subStr.includes('-3-7-') ? '3.7'
+        : subStr.includes('-3-5-') ? '3.5'
+          : '3';
 
   if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
   if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;

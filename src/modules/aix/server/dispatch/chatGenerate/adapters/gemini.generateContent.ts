@@ -11,9 +11,6 @@ const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
-  // FIXME: this is a weak and hacky way to detect the image generation models - TODO: declare this as a param? with Resolution too?
-  const hotFixImageGenerationModels1 = model.id.includes('image-generation');
-
   // Note: the streaming setting is ignored as it only belongs in the path
 
   // System Instructions
@@ -92,9 +89,30 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.thinkingConfig = thinkingConfig;
   }
 
+  // [Gemini, 2025-05-20] Experimental Audio generation (TTS - audio only, no text): Request
+  const noTextOutput = !model.acceptsOutputs.includes('text');
+  if (model.acceptsOutputs.includes('audio')) {
+
+    // (undocumented) Adapt the request
+    delete payload.systemInstruction;
+    delete payload.generationConfig!.maxOutputTokens; // maxOutputTokens is not supported for audio-only output
+    payload.generationConfig!.temperature = 1;
+
+    // activate audio (/only) output
+    payload.generationConfig!.responseModalities = noTextOutput ? ['AUDIO'] : ['TEXT', 'AUDIO'];
+
+    // default voice config - list here: https://ai.google.dev/gemini-api/docs/speech-generation#voices
+    payload.generationConfig!.speechConfig = {
+      voiceConfig: {
+        prebuiltVoiceConfig: {
+          voiceName: 'Zephyr',
+        },
+      },
+    };
+  }
   // [Gemini, 2025-03-14] Experimental Image generation: Request
-  if (hotFixImageGenerationModels1) {
-    payload.generationConfig!.responseModalities = ['TEXT', 'IMAGE'];
+  else if (model.acceptsOutputs.includes('image')) {
+    payload.generationConfig!.responseModalities = noTextOutput ? ['IMAGE'] : ['TEXT', 'IMAGE'];
     // 2025-03-14: both APIs v1alpha and v1beta do not support specifying the resolution
     // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
   }
@@ -151,6 +169,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(GeminiWire_ContentParts.TextPart(part.text));
           break;
 
+        case 'inline_audio':
         case 'inline_image':
           parts.push(GeminiWire_ContentParts.InlineDataPart(part.mimeType, part.base64));
           break;

@@ -61,6 +61,10 @@ export namespace OpenAIWire_ContentParts {
     return { type: 'image_url', image_url: { url, detail } };
   }
 
+  export function OpenAI_AudioContentPart(data: string, format: 'wav' | 'mp3'): z.infer<typeof OpenAI_AudioContentPart_schema> {
+    return { type: 'input_audio', input_audio: { data, format } };
+  }
+
   /// Content parts - Output
 
   const PredictedFunctionCall_schema = z.object({
