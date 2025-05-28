@@ -598,10 +598,11 @@ export function updateFragmentWithEditedText(
   editedText: string,
 ): DMessageFragment | null {
 
-  if (editedText.length === 0) {
-    // If the edited text is empty, we may choose to delete the fragment (depending on the caller's logic)
-    return null;
-  }
+  // NOTE: we transfer the responsibility of this to the caller
+  // if (editedText.length === 0) {
+  //   // If the edited text is empty, we may choose to delete the fragment (depending on the caller's logic)
+  //   return null;
+  // }
 
   if (isContentFragment(fragment)) {
     const { fId, part } = fragment;
