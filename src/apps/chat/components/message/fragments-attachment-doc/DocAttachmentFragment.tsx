@@ -173,6 +173,13 @@ export function DocAttachmentFragment(props: {
 
   const handleEditApply = React.useCallback(() => {
     setIsDeleteArmed(false);
+
+    if (props.controlledEditor) {
+      setIsEditing(false);
+      setIsEditingTitle(false); // just in case
+      return; // controlled editor, already applied, delete is only allowed via the button
+    }
+
     if (editedText === undefined)
       return;
 
@@ -184,7 +191,7 @@ export function DocAttachmentFragment(props: {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText, onFragmentDelete]);
+  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText, onFragmentDelete, props.controlledEditor]);
 
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
