@@ -64,7 +64,7 @@ export function DocAttachmentFragment(props: {
   zenMode: boolean,
   disableMarkdownText: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
-  onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
 
   // state
@@ -105,7 +105,7 @@ export function DocAttachmentFragment(props: {
   }, [fragment, fragmentId, onFragmentReplace]);
 
   const handleReplaceFragmentLiveFileId = React.useCallback((liveFileId: LiveFileId) => {
-    onFragmentReplace(fragmentId, { ...fragment, liveFileId: liveFileId });
+    onFragmentReplace?.(fragmentId, { ...fragment, liveFileId: liveFileId });
   }, [fragment, fragmentId, onFragmentReplace]);
 
 
