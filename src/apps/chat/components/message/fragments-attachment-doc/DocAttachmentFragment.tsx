@@ -328,7 +328,7 @@ export function DocAttachmentFragment(props: {
       {/* Edit / Save */}
       {!!onFragmentReplace && (
         <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
-          <Button
+          {(!props.controlledEditor || !isEditing) && <Button
             variant='soft'
             color={DocSelColor}
             size='sm'
@@ -337,14 +337,14 @@ export function DocAttachmentFragment(props: {
             sx={_styles.button}
           >
             {isEditing ? 'Cancel' : 'Edit'}
-          </Button>
+          </Button>}
           {isEditing && (
             <Button
-              variant='solid'
-              color={!showDeleteInstead ? 'success' : 'danger'}
+              variant={props.controlledEditor ? 'soft' : 'solid'}
+              color={showDeleteInstead ? 'danger' : props.controlledEditor ? undefined : 'success'}
               onClick={handleEditApply}
               size='sm'
-              startDecorator={!showDeleteInstead ? <CheckRoundedIcon /> : <DeleteForeverIcon />}
+              startDecorator={showDeleteInstead ? <DeleteForeverIcon /> : props.controlledEditor ? undefined : <CheckRoundedIcon />}
               sx={_styles.button}
             >
               {!showDeleteInstead ? 'Save' : 'Delete'}
@@ -353,7 +353,7 @@ export function DocAttachmentFragment(props: {
         </Box>
       )}
     </Box>
-  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, reverseToolbar, showDeleteInstead]);
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, props.controlledEditor, reverseToolbar, showDeleteInstead]);
 
 
   return (
