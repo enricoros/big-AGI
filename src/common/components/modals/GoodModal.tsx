@@ -26,11 +26,14 @@ export function GoodModal(props: {
   closeText?: string, // defaults to 'Close'
   animateEnter?: boolean,
   unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
+  /** if true, if true, forces contents to stay within the screen viewport, inner scrollable (not outer) */
+  autoOverflow?: boolean,
   open: boolean,
   onClose?: ((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => void) | undefined,
   hideBottomClose?: boolean,
   darkBottomClose?: boolean,
   startButton?: React.JSX.Element,
+  /** sx of the ModalDialog (Modal > ModalOverflow > ModalDialog), not the Modal */
   sx?: SxProps,
   children: React.ReactNode,
 }) {
@@ -43,8 +46,13 @@ export function GoodModal(props: {
     maxWidth: 700,
     display: 'grid',
     gap: 'var(--Card-padding)',
+    // apply autoOverflow if set, otherwise leave the default behavior
+    ...(props.autoOverflow ? {
+      // maxHeight: '80lvh',
+      overflow: 'auto',
+    } : {}),
     ...props.sx,
-  }), [props.sx, props.themedColor]);
+  }), [props.autoOverflow, props.sx, props.themedColor]);
 
   const backdropSx = React.useMemo(() => {
     return props.themedColor ? {
