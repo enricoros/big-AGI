@@ -172,7 +172,6 @@ const _knownGeminiModels: ({
   // 2.5 Pro Preview TTS
   {
     id: 'models/gemini-2.5-pro-preview-tts',
-    labelOverride: 'Gemini 2.5 Pro Preview TTS (unsupported)',
     isPreview: true,
     chatPrice: gemini25ProPreviewTTSPricing,
     interfaces: [
@@ -182,7 +181,6 @@ const _knownGeminiModels: ({
     ],
     benchmark: undefined, // TTS models are not benchmarkable
     hidden: true, // audio outputs are unavailable as of 2025-05-27
-    _delete: true, // we are receiving API errors from Gemini - disabled for now as of 2025-05-27
   },
 
   // 2.5 Flash Preview
@@ -216,7 +214,6 @@ const _knownGeminiModels: ({
   // 2.5 Flash Preview TTS
   {
     id: 'models/gemini-2.5-flash-preview-tts',
-    labelOverride: 'Gemini 2.5 Flash Preview TTS (unsupported)',
     isPreview: true,
     chatPrice: gemini25FlashPreviewTTSPricing,
     interfaces: [
@@ -226,7 +223,6 @@ const _knownGeminiModels: ({
     ],
     benchmark: undefined, // TTS models are not benchmarkable
     hidden: true, // audio outputs are unavailable as of 2025-05-27
-    _delete: true, // we are receiving API errors from Gemini - disabled for now as of 2025-05-27
   },
 
   // 2.5 Flash Native Audio (Dialog and Thinking variants)
