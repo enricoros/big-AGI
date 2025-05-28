@@ -51,6 +51,10 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
     switch (cPart.pt) {
       case 'error':
         return estimateTextTokens(cPart.error, llm, debugFrom);
+      case 'audio_ref':
+        // we don't have token/costs estimates for audio yet
+        console.warn('Unhandled token preview for audio_ref content part:', cPart);
+        return 0;
       case 'image_ref':
         const forcedSize = role === 'assistant' ? 512 : undefined;
         return estimateImageTokens(forcedSize || cPart.width, forcedSize || cPart.height, debugFrom, llm);
