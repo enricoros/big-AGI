@@ -32,9 +32,8 @@ export type DMessageFragment =
  */
 export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
   | DMessageTextPart              // plain text or mixed content -> BlockRenderer
-  | DMessageAudioRefPart          // audio blob reference
   | DMessageImageRefPart          // large image
-  | DMessageToolInvocationPart    // shown to dev only, signature of the llm function call
+  | DMessageToolInvocationPart    // shown to dev only, singature of the llm function call
   | DMessageToolResponsePart      // shown to dev only, response of the llm
   | DMessageErrorPart             // red message, e.g. non-content application issues
   | _SentinelPart
@@ -95,8 +94,6 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
 export type DMessageTextPart = { pt: 'text', text: string };
 
 export type DMessageErrorPart = { pt: 'error', error: string };
-
-export type DMessageAudioRefPart = { pt: 'audio_ref', dataRef: DMessageDataRef, altText?: string, durationMs?: number };
 
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 
@@ -235,10 +232,6 @@ export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttach
   return part.pt === 'doc';
 }
 
-export function isAudioRefPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
-  return part.pt === 'audio_ref';
-}
-
 export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'image_ref';
 }
@@ -276,10 +269,6 @@ export function createTextContentFragment(text: string): DMessageContentFragment
 
 export function createErrorContentFragment(error: string): DMessageContentFragment {
   return _createContentFragment(_create_Error_Part(error));
-}
-
-export function createAudioContentFragment(dataRef: DMessageDataRef, altText?: string, durationMs?: number): DMessageContentFragment {
-  return _createContentFragment(_create_AudioRef_Part(dataRef, altText, durationMs));
 }
 
 export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
@@ -399,10 +388,6 @@ function _create_Doc_Part(vdt: DMessageDocMimeType, data: DMessageDataInline, re
   return { pt: 'doc', vdt, data, ref, l1Title, version, meta };
 }
 
-function _create_AudioRef_Part(dataRef: DMessageDataRef, altText?: string, durationMs?: number): DMessageAudioRefPart {
-  return { pt: 'audio_ref', dataRef, altText, durationMs };
-}
-
 function _create_ImageRef_Part(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
   return { pt: 'image_ref', dataRef, altText, width, height };
 }
@@ -463,9 +448,6 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
 
     case 'error':
       return _create_Error_Part(part.error) as TPart;
-
-    case 'audio_ref':
-      return _create_AudioRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.durationMs) as TPart;
 
     case 'image_ref':
       return _create_ImageRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
