@@ -5,11 +5,11 @@ import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
-import { fixupHost } from '~/common/util/urlUtils';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { hardcodedAnthropicModels, hardcodedAnthropicVariants } from './anthropic.models';
+import { fixupHost } from '~/modules/llms/server/openai/openai.router';
 
 
 // configuration and defaults

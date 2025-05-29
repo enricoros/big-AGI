@@ -8,10 +8,9 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
-import { fixupHost } from '~/common/util/urlUtils';
-
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { geminiDevCheckForParserMisses_DEV, geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
+import { fixupHost } from '~/modules/llms/server/openai/openai.router';
 
 
 // Default hosts

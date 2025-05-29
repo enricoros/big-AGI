@@ -98,17 +98,6 @@ export function asValidURL(textString: string | null, relaxProtocol: boolean = f
 }
 
 /**
- * Add https if missing, and remove trailing slash if present and the path starts with a slash.
- */
-export function fixupHost(host: string, apiPath: string): string {
-  if (!host.startsWith('http'))
-    host = `https://${host}`;
-  if (host.endsWith('/') && apiPath.startsWith('/'))
-    host = host.slice(0, -1);
-  return host;
-}
-
-/**
  * Extracts URLs from a text string.
  */
 export function extractUrlsFromText(text: string): string[] {
@@ -190,11 +179,6 @@ export function base64ToUint8Array(base64Data: string) {
 
 export function base64ToArrayBuffer(base64Data: string) {
   return base64ToUint8Array(base64Data).buffer;
-}
-
-export function base64ToBlob(base64Data: string, mimeType: string) {
-  const buffer = Buffer.from(base64Data, 'base64');
-  return new Blob([buffer], { type: mimeType });
 }
 
 
