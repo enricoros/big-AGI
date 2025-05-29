@@ -137,11 +137,6 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             uMsg.parts.push(uFragment.part);
             break;
 
-          case 'audio_ref':
-            // Note: unsupported for now (shall await for the audio blob to upload it as inline audio for the model)
-            console.warn('aixCGR_FromDMessages: audio_ref part from User not implemented yet');
-            break;
-
           case 'image_ref':
             // note, we don't resize, as the user image is resized following the user's preferences
             try {
@@ -215,18 +210,14 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'doc':
-            console.warn('aixCGR_FromDMessages: doc part from Assistant not possible');
+            // TODO
+            console.warn('aixCGR_FromDMessages: doc part from Assistant not implemented yet');
             // mMsg.parts.push(aFragment.part);
             break;
 
           case 'error':
             // Note: the llm will receive the extra '[ERROR]' text; this could be optimized to handle errors better
             modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aFragment.part.error}` });
-            break;
-
-          case 'audio_ref':
-            // Note: unsupported for now (shall await for the audio blob to upload it as inline audio for the model)
-            console.warn('aixCGR_FromDMessages: audio_ref part from Assistant not implemented yet');
             break;
 
           case 'image_ref':
