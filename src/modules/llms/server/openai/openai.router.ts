@@ -10,7 +10,6 @@ import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
 import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
 
 import { Brand } from '~/common/app.config';
-import { base64ToBlob, fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
@@ -59,6 +58,18 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 //   content: z.string(),
 // }));
 // export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
+
+
+// Fixup host function
+
+/** Add https if missing, and remove trailing slash if present and the path starts with a slash. */
+export function fixupHost(host: string, apiPath: string): string {
+  if (!host.startsWith('http'))
+    host = `https://${host}`;
+  if (host.endsWith('/') && apiPath.startsWith('/'))
+    host = host.slice(0, -1);
+  return host;
+}
 
 
 // Router Input Schemas
@@ -334,7 +345,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           const { base64, mimeType } = editConfig.inputImages[i];
           requestBody.append(
             imagesCount === 1 ? 'image' : 'image[]',
-            base64ToBlob(base64, mimeType),
+            server_base64ToBlob(base64, mimeType),
             `image_${i}.${mimeType.split('/')[1] || 'png'}`, // important to be a unique filename
           );
         }
@@ -343,7 +354,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         if (editConfig.maskImage)
           requestBody.append(
             'mask',
-            base64ToBlob(editConfig.maskImage.base64, editConfig.maskImage.mimeType),
+            server_base64ToBlob(editConfig.maskImage.base64, editConfig.maskImage.mimeType),
             `mask.${editConfig.maskImage.mimeType.split('/')[1] || 'png'}`,
           );
       }
@@ -467,6 +478,7 @@ const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
+
 
 /**
  * Get a random key from a comma-separated list of API keys
@@ -763,4 +775,11 @@ async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema,
 async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object | FormData>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, modelRefId, apiPath);
   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}` });
+}
+
+
+/** @serverSide Buffer is a Node.js API, not a Browser API. */
+function server_base64ToBlob(base64Data: string, mimeType: string) {
+  const buffer = Buffer.from(base64Data, 'base64');
+  return new Blob([buffer], { type: mimeType });
 }
