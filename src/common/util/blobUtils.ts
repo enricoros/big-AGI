@@ -77,7 +77,7 @@ export async function convert_Base64WithMimeType_To_Blob(base64: string, blobMim
         const response = await fetch(dataUrl);
         if (!response.ok) {
           // noinspection ExceptionCaughtLocallyJS
-          throw new Error(`Fetch failed (${response.status})`);
+          throw new Error(`Fetch Blob failed (${response.status})`);
         }
 
         // Empty blob from successful fetch is valid - represents empty content
