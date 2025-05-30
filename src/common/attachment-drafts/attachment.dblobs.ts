@@ -14,7 +14,7 @@ import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './a
  */
 export async function imageDataToImageAttachmentFragmentViaDBlob(
   mimeType: string,
-  inputData: string | ArrayBuffer | unknown,
+  inputData: string | ArrayBuffer | Blob | unknown,
   source: AttachmentDraftSource,
   title: string,
   caption: string,
@@ -24,14 +24,17 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
   let base64Data: string;
   let inputLength: number;
 
-  if (inputData instanceof ArrayBuffer) {
+  if (inputData instanceof ArrayBuffer || inputData instanceof Blob) {
     // Convert ArrayBuffer to base64
     try {
-      const buffer = Buffer.from(inputData);
+      // Convert Blob to ArrayBuffer, then to base64
+      let arrayBuffer: ArrayBuffer = inputData instanceof Blob ? await inputData.arrayBuffer() : inputData;
+      // Convert ArrayBuffer to base64
+      const buffer = Buffer.from(arrayBuffer);
       base64Data = buffer.toString('base64');
       inputLength = buffer.byteLength;
     } catch (error) {
-      console.log('imageAttachment: Error converting ArrayBuffer to base64:', error);
+      console.warn(`[DEV] imageAttachment: Error converting ${inputData instanceof Blob ? 'Blob' : 'ArrayBuffer'} to base64:`, { error });
       return null;
     }
   } else if (typeof inputData === 'string') {
@@ -93,7 +96,14 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
     const imageAssetDataRef = createDMessageDataRefDBlob(dblobAssetId, mimeType, inputLength);
 
     // return an Image Attachment Fragment
-    return createImageAttachmentFragment(title, caption, imageAssetDataRef, undefined, dimensions?.width, dimensions?.height);
+    return createImageAttachmentFragment(
+      title,
+      caption,
+      imageAssetDataRef,
+      undefined,
+      dimensions?.width,
+      dimensions?.height,
+    );
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
     return null;
