@@ -4,7 +4,7 @@ import { Release } from '~/common/app.release';
 /// --- Base64 -> X --- ///
 
 // Convert a base64 string to a Uint8Array (byte array).
-export function convert_Base64_To_UInt8Array(base64: string, debugCaller: string): Uint8Array {
+export function convert_Base64_To_UInt8Array(base64: string, debugCaller: string): Uint8Array<ArrayBuffer> {
   try {
     // Remove data URL prefix if present - shall NOT happen
     let base64Data = base64;
@@ -52,10 +52,10 @@ export async function convert_Base64_To_Blob(base64: string, blobMimeType: strin
   try {
     // First attempt: Use our UInt8Array conversion
     try {
-      // Validate base64 string
-      if (!base64 || !base64.length) {
+      // Validate base64 string - allow empty strings as they are valid
+      if (base64 === null || base64 === undefined) {
         // noinspection ExceptionCaughtLocallyJS
-        throw new Error('Empty base64 data');
+        throw new Error('Null or undefined base64 data');
       }
 
       // Convert base64 to byte array
@@ -81,13 +81,8 @@ export async function convert_Base64_To_Blob(base64: string, blobMimeType: strin
           throw new Error(`Fetch failed with status: ${response.status}`);
         }
 
-        const blob = await response.blob();
-        if (blob.size === 0) {
-          // noinspection ExceptionCaughtLocallyJS
-          throw new Error('Fallback produced empty blob');
-        }
-
-        return blob;
+        // Empty blob from successful fetch is valid - represents empty content
+        return await response.blob();
       } catch (fallbackError) {
         Release.IsNodeDevBuild && console.warn(`[DEV] convert_Base64_To_Blob: Both methods failed in (${debugCaller}):`, { primaryError, fallbackError });
         // noinspection ExceptionCaughtLocallyJS
@@ -114,12 +109,8 @@ export async function convert_Blob_To_Base64(blob: Blob, debugCaller: string): P
       // noinspection ExceptionCaughtLocallyJS
       throw new Error('Invalid data URL format: missing comma');
     }
-    const base64 = base64DataURL.substring(commaIndex + 1);
-    if (!base64 || base64.length === 0) {
-      // noinspection ExceptionCaughtLocallyJS
-      throw new Error('Empty base64 data');
-    }
-    return base64;
+    // Empty base64 result from empty blob is valid - represents empty content
+    return base64DataURL.substring(commaIndex + 1);
   } catch (error) {
     Release.IsNodeDevBuild && console.warn(`[DEV] convert_Blob_To_Base64: Conversion failed in (${debugCaller}):`, error);
     throw new Error(`Failed to convert Blob to base64 in (${debugCaller}): ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -129,9 +120,9 @@ export async function convert_Blob_To_Base64(blob: Blob, debugCaller: string): P
 // Convert a Blob to a base64 data URL string. [Fast] uses the FileReader API
 async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: string): Promise<string> {
   try {
-    if (!blob || !(blob instanceof Blob) || blob.size === 0) {
+    if (!blob || !(blob instanceof Blob)) {
       // noinspection ExceptionCaughtLocallyJS
-      throw new Error('Empty or invalid blob');
+      throw new Error('Invalid blob (null, undefined, or not a Blob instance)');
     }
 
     return new Promise<string>((resolve, reject) => {
@@ -156,9 +147,9 @@ async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: string): P
 // Convert a Blob to a Uint8Array (byte array)
 export async function convert_Blob_To_UInt8Array(blob: Blob, debugCaller: string): Promise<Uint8Array> {
   try {
-    if (!blob || blob.size === 0) {
+    if (!blob || !(blob instanceof Blob)) {
       // noinspection ExceptionCaughtLocallyJS
-      throw new Error('Empty or invalid blob');
+      throw new Error('Invalid blob (null, undefined, or not a Blob instance)');
     }
 
     const arrayBuffer = await blob.arrayBuffer();
@@ -176,9 +167,9 @@ export async function convert_Blob_To_UInt8Array(blob: Blob, debugCaller: string
 // Convert a Uint8Array (byte array) to a Blob
 export function convert_UInt8Array_To_Blob(bytes: Uint8Array, blobMimeType: string, debugCaller: string): Blob {
   try {
-    if (!bytes || bytes.length === 0) {
+    if (!bytes || !((bytes as unknown) instanceof Uint8Array)) {
       // noinspection ExceptionCaughtLocallyJS
-      throw new Error('Empty or invalid byte array');
+      throw new Error('Invalid byte array (null, undefined, or not a Uint8Array instance)');
     }
 
     return new Blob([bytes], { type: blobMimeType });
