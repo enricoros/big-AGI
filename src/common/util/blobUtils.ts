@@ -29,13 +29,12 @@ export function convert_Base64_To_UInt8Array(base64: string, debugCaller: string
       binaryString = atob(paddedBase64);
     }
 
-    // Convert binary string to Uint8Array
-    // Other impl?: Uint8Array.from(binaryString, char => char.charCodeAt(0)) // not sure if this is faster and supports all browsers
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++)
-      bytes[i] = binaryString.charCodeAt(i);
+    // Convert binary string to Uint8Array - MODERNIZED from:
+    // const bytes = new Uint8Array(binaryString.length);
+    // for (let i = 0; i < binaryString.length; i++)
+    //   bytes[i] = binaryString.charCodeAt(i);
+    return Uint8Array.from(binaryString, char => char.charCodeAt(0));
 
-    return bytes;
   } catch (error) {
     Release.IsNodeDevBuild && console.warn(`[DEV] convert_Base64_To_UInt8Array: Conversion failed in (${debugCaller}):`, error);
     throw new Error(`Failed to convert base64 to byte array in (${debugCaller}): ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -48,12 +47,12 @@ export function convert_Base64_To_UInt8Array(base64: string, debugCaller: string
  * @param blobMimeType MIME type of the resulting Blob, e.g. 'image/png', 'audio/wav', etc.
  * @param debugCaller User-visible label for debugging purposes, e.g. 'Voice Recorder'
  */
-export async function convert_Base64_To_Blob(base64: string, blobMimeType: string, debugCaller: string): Promise<Blob> {
+export async function convert_Base64WithMimeType_To_Blob(base64: string, blobMimeType: string, debugCaller: string): Promise<Blob> {
   try {
     // First attempt: Use our UInt8Array conversion
     try {
       // Validate base64 string - allow empty strings as they are valid
-      if (base64 === null || base64 === undefined) {
+      if (base64 == null) {
         // noinspection ExceptionCaughtLocallyJS
         throw new Error('Null or undefined base64 data');
       }
@@ -96,6 +95,84 @@ export async function convert_Base64_To_Blob(base64: string, blobMimeType: strin
   }
 }
 
+// Convert (encode) separate base64 data and MIME type to a base64 data URL.
+export function convert_Base64WithMimeType_To_Base64DataURL(base64Data: string, mimeType: string, debugCaller: string): string {
+  try {
+    if (base64Data == null) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid base64 data (null or undefined)');
+    }
+
+    if (typeof (mimeType as unknown) !== 'string' || !mimeType.trim()) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid MIME type (null, undefined, or not a string)');
+    }
+
+    // Ensure base64Data doesn't already have data URL prefix
+    if (base64Data.startsWith('data:')) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(`Base64 data in (${debugCaller}) already has 'data URL' prefix`);
+    }
+
+    // Construct the data URL
+    return `data:${mimeType};base64,${base64Data}`;
+
+  } catch (error) {
+    Release.IsNodeDevBuild && console.warn(`[DEV] convert_Base64WithMimeType_To_Base64DataURL: Conversion failed in (${debugCaller}):`, error);
+    throw new Error(`Failed to convert base64 with MIME type to data URL in (${debugCaller}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+
+/// --- Base64 Data URL <-> X --- ///
+
+// Convert a base64 data URL (e.g. 'data:image/png;base64,iVBOUgAA...') to separate base64 data and MIME type.
+export function convert_Base64DataURL_To_Base64WithMimeType(dataUrl: string, debugCaller: string): { base64Data: string, mimeType: string } {
+  try {
+    if (typeof (dataUrl as unknown) !== 'string') {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid data URL (null, undefined, or not a string)');
+    }
+
+    if (!dataUrl.startsWith('data:')) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid data URL format: must start with "data:"');
+    }
+
+    // Parse the data URL format: data:[<mediatype>][;base64],<data>
+    const commaIndex = dataUrl.indexOf(',');
+    if (commaIndex === -1) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid data URL format: missing comma separator');
+    }
+
+    const header = dataUrl.substring(5, commaIndex); // Skip "data:" prefix
+    const base64Data = dataUrl.substring(commaIndex + 1);
+
+    // Parse the header to extract MIME type
+    let mimeType = '';
+    if (header.includes(';base64')) {
+      // Format: data:image/png;base64,
+      mimeType = header.replace(';base64', '');
+    } else {
+      // Format without explicit base64 encoding (assume it's base64 anyway)
+      Release.IsNodeDevBuild && console.warn(`[DEV] convert_Base64DataURL_To_Base64WithMimeType: Data URL in (${debugCaller}) doesn't specify base64 encoding, assuming base64`);
+      mimeType = header;
+    }
+
+    // Default MIME type if empty
+    if (!mimeType.trim()) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(`MIME type required in data URL (${debugCaller})`);
+    }
+
+    return { base64Data, mimeType };
+  } catch (error) {
+    Release.IsNodeDevBuild && console.warn(`[DEV] convert_Base64DataURL_To_Base64WithMimeType: Conversion failed in (${debugCaller}):`, error);
+    throw new Error(`Failed to convert data URL to base64 with MIME type in (${debugCaller}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 
 /// --- Blob -> X --- ///
 
@@ -120,7 +197,7 @@ export async function convert_Blob_To_Base64(blob: Blob, debugCaller: string): P
 // Convert a Blob to a base64 data URL string. [Fast] uses the FileReader API
 async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: string): Promise<string> {
   try {
-    if (!blob || !(blob instanceof Blob)) {
+    if (!((blob as unknown) instanceof Blob)) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error('Invalid blob (null, undefined, or not a Blob instance)');
     }
@@ -147,7 +224,7 @@ async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: string): P
 // Convert a Blob to a Uint8Array (byte array)
 export async function convert_Blob_To_UInt8Array(blob: Blob, debugCaller: string): Promise<Uint8Array> {
   try {
-    if (!blob || !(blob instanceof Blob)) {
+    if (!((blob as unknown) instanceof Blob)) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error('Invalid blob (null, undefined, or not a Blob instance)');
     }
@@ -165,9 +242,9 @@ export async function convert_Blob_To_UInt8Array(blob: Blob, debugCaller: string
 /// --- UInt8Array -> X --- ///
 
 // Convert a Uint8Array (byte array) to a Blob
-export function convert_UInt8Array_To_Blob(bytes: Uint8Array, blobMimeType: string, debugCaller: string): Blob {
+export function convert_UInt8ArrayWithMimeType_To_Blob(bytes: Uint8Array, blobMimeType: string, debugCaller: string): Blob {
   try {
-    if (!bytes || !((bytes as unknown) instanceof Uint8Array)) {
+    if (!((bytes as unknown) instanceof Uint8Array)) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error('Invalid byte array (null, undefined, or not a Uint8Array instance)');
     }
@@ -180,27 +257,32 @@ export function convert_UInt8Array_To_Blob(bytes: Uint8Array, blobMimeType: stri
   }
 }
 
-// // Convert a Uint8Array (byte array) to a base64 string
-// export function convert_UInt8Array_To_Base64(bytes: Uint8Array, debugCaller: string): string {
-//   try {
-//     if (!bytes || bytes.length === 0) {
-//       // noinspection ExceptionCaughtLocallyJS
-//       throw new Error('Empty or invalid byte array');
-//     }
-//
-//     // Convert byte array to binary string
-//     let binaryString = '';
-//     const chunkSize = 0x8000; // 32KB chunks
-//     for (let i = 0; i < bytes.length; i += chunkSize) {
-//       const chunk = bytes.slice(i, i + chunkSize);
-//       binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-//     }
-//
-//     // Convert binary string to base64
-//     return btoa(binaryString);
-//
-//   } catch (error) {
-//     Release.IsNodeDevBuild && console.warn(`[DEV] convert_UInt8Array_To_Base64: Conversion failed in (${debugCaller}):`, error);
-//     throw new Error(`Failed to convert byte array to base64 in (${debugCaller}): ${error instanceof Error ? error.message : 'Unknown error'}`);
-//   }
-// }
+// Convert a Uint8Array (byte array) to a base64 string - SLOW? - minimize usage
+export function convert_UInt8Array_To_Base64(bytes: Uint8Array, debugCaller: string): string {
+  try {
+    if (!((bytes as unknown) instanceof Uint8Array)) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Invalid byte array (null, undefined, or not a Uint8Array instance)');
+    }
+
+    // Handle empty array case
+    if (bytes.length === 0)
+      return '';
+
+    // Method 1: Using Buffer (if available in Node.js environment)
+    if (typeof Buffer !== 'undefined')
+      return Buffer.from(bytes).toString('base64');
+
+    // Method 2: Current implementation with apply fix
+    let binaryString = '';
+    const chunkSize = 0x8000; // 32KB chunks
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize); // subarray is more efficient than slice
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    return btoa(binaryString); // binary string to base64
+  } catch (error) {
+    Release.IsNodeDevBuild && console.warn(`[DEV] convert_UInt8Array_To_Base64: Conversion failed in (${debugCaller}):`, error);
+    throw new Error(`Failed to convert byte array to base64 in (${debugCaller}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
