@@ -6,7 +6,7 @@ import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
 import { Is } from '~/common/util/pwaUtils';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
-import { base64ToArrayBuffer } from '~/common/util/urlUtils';
+import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
@@ -125,16 +125,20 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
           else
             edit({ inputError: 'No content found at this link' });
         } else if (file) {
-          const data = base64ToArrayBuffer(file.data);
-          edit({
-            label: file.fileName || source.refUrl,
-            // ref: source.refUrl,
-            input: {
-              mimeType: file.mimeType,
-              data: data,
-              dataSize: data.byteLength,
-            },
-          });
+          try {
+            const dataArray = convert_Base64_To_UInt8Array(file.data, 'attachment-draft-load-input')
+            edit({
+              label: file.fileName || source.refUrl,
+              // ref: source.refUrl,
+              input: {
+                mimeType: file.mimeType,
+                data: dataArray.buffer,
+                dataSize: dataArray.byteLength,
+              },
+            });
+          } catch (error: any) {
+            edit({ inputError: `Issue downloading web file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
+          }
         } else
           edit({ inputError: 'No content or file found at this link' });
       } catch (error: any) {

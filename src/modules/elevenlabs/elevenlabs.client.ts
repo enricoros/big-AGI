@@ -4,7 +4,7 @@ import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
 import { apiStream } from '~/common/util/trpc.client';
-import { base64ToArrayBuffer } from '~/common/util/urlUtils';
+import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { getElevenLabsData, useElevenLabsData } from './store-module-elevenlabs';
@@ -57,13 +57,15 @@ export async function elevenLabsSpeakText(text: string, voiceId: string | undefi
         if (!liveAudioPlayer)
           liveAudioPlayer = new AudioLivePlayer();
 
-        const chunkBuffer = base64ToArrayBuffer(piece.audioChunk.base64);
-        liveAudioPlayer.enqueueChunk(chunkBuffer);
+        // enqueue a decoded audio chunk - this will throw on malformed base64 data
+        const chunkArray = convert_Base64_To_UInt8Array(piece.audioChunk.base64, 'elevenLabsSpeakText (chunk)')
+        liveAudioPlayer.enqueueChunk(chunkArray.buffer);
 
       } else if (piece.audio) {
 
-        // also consieder mergin LiveAudioPlayer into AudioPlayer
-        void AudioPlayer.playBuffer(base64ToArrayBuffer(piece.audio.base64)); // fire/forget - it's a single piece of audio (could be long tho)
+        // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
+        const audioArray = convert_Base64_To_UInt8Array(piece.audio.base64, 'elevenLabsSpeakText');
+        void AudioPlayer.playBuffer(audioArray.buffer); // fire/forget - it's a single piece of audio (could be long tho)
 
       } else if (piece.errorMessage)
         console.log('ElevenLabs issue:', piece.errorMessage);

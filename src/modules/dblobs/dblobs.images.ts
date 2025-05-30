@@ -1,5 +1,5 @@
 import { Is } from '~/common/util/pwaUtils';
-import { createBlobURLFromData } from '~/common/util/urlUtils';
+import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 import { _addDBAsset, gcDBAssetsByScope, getDBAsset } from './dblobs.db';
@@ -67,9 +67,14 @@ export async function getImageAsset(id: DBlobAssetId) {
 
 export async function getImageAssetAsBlobURL(id: DBlobAssetId) {
   const imageAsset = await getImageAsset(id);
-  if (imageAsset)
-    return createBlobURLFromData(imageAsset.data.base64, imageAsset.data.mimeType);
-  return null;
+  if (!imageAsset) return null;
+  try {
+    const imageBlob = await convert_Base64WithMimeType_To_Blob(imageAsset.data.base64, imageAsset.data.mimeType, 'getImageAssetAsBlobURL');
+    return URL.createObjectURL(imageBlob);
+  } catch (error) {
+    console.warn('[DEV] getImageAssetAsBlobURL: Failed to convert image data to Blob.', error);
+    return null;
+  }
 }
 
 // export async function getImageAssetAsDataURL(id: DBlobAssetId) {
