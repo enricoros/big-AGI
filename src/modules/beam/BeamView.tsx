@@ -87,9 +87,9 @@ export function BeamView(props: {
     }
   }, [props.beamStore]);
 
-  const handleScatterStart = React.useCallback(() => {
+  const handleScatterStart = React.useCallback((restart: boolean) => {
     setHasAutoMerged(false);
-    startScatteringAll();
+    startScatteringAll(restart);
   }, [startScatteringAll]);
 
 
@@ -141,7 +141,7 @@ export function BeamView(props: {
 
   // intercept ctrl+enter and esc
   useGlobalShortcuts('BeamView', React.useMemo(() => [
-    { key: ShortcutKey.Enter, ctrl: true, action: handleScatterStart, disabled: isScattering, level: 1 },
+    { key: ShortcutKey.Enter, ctrl: true, action: () => handleScatterStart(false), disabled: isScattering, level: 1 },
     ...(isScattering ? [{ key: ShortcutKey.Esc, action: stopScatteringAll, level: 10 + 1 /* becasuse > ChatBarAltBeam */ }] : []),
   ], [handleScatterStart, isScattering, stopScatteringAll]));
 
@@ -191,6 +191,7 @@ export function BeamView(props: {
         showRayAdd={!cardAdd}
         startEnabled={inputReady}
         startBusy={isScattering}
+        startRestart={!props.isMobile && raysReady >= 1 && raysReady < raysCount && !isScattering}
         onStart={handleScatterStart}
         onStop={stopScatteringAll}
         onExplainerShow={explainerShow}
