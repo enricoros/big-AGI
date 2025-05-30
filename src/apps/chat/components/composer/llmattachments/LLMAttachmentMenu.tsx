@@ -314,7 +314,7 @@ export function LLMAttachmentMenu(props: {
                 <Link onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  showImageDataURLInNewTab(draftInput?.urlImage?.imgDataUrl || '');
+                  void showImageDataURLInNewTab(draftInput?.urlImage?.imgDataUrl || '');
                 }}>
                   open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                 </Link>

@@ -6,15 +6,22 @@
  */
 
 import { canvasToDataURLAndMimeType } from './canvasUtils';
-import { createBlobURLFromDataURL } from './urlUtils';
+import { convert_Base64DataURL_To_Base64WithMimeType, convert_Base64WithMimeType_To_Blob, } from '~/common/util/blobUtils';
 
 
 /**
  * Opens an image Data URL in a new tab
  */
-export function showImageDataURLInNewTab(imageDataURL: string) {
-  const blobURL = createBlobURLFromDataURL(imageDataURL);
-  return blobURL ? showBlobURLInNewTab(blobURL) : false;
+export async function showImageDataURLInNewTab(imageDataURL: string) {
+  try {
+    const { base64Data, mimeType } = convert_Base64DataURL_To_Base64WithMimeType(imageDataURL, 'showImageDataURLInNewTab');
+    const imageBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'showImageDataURLInNewTab')
+    // NOTE: we don't really know when to release this, as the user may still be viewing the image in the new tab
+    return URL.createObjectURL(imageBlob);
+  } catch (error) {
+    console.warn('showImageDataURLInNewTab: Failed to convert image Data URL to Blob URL.', error);
+    return false;
+  }
 }
 
 export function showBlobURLInNewTab(blobURL: string) {

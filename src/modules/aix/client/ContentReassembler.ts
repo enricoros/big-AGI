@@ -3,6 +3,7 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
 import { convertBase64Image, getImageDimensions } from '~/common/util/imageUtils';
+import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -14,7 +15,6 @@ import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-clie
 import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
 
 import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
-import { base64ToUint8Array } from '~/common/util/urlUtils';
 
 
 // configuration
@@ -400,8 +400,8 @@ export class ContentReassembler {
 
     try {
 
-      // create blob and play audio
-      const bytes = base64ToUint8Array(base64Data); // convert base64 to blob
+      // create blob and play audio - this will throw on malformed data
+      const bytes = convert_Base64_To_UInt8Array(base64Data, 'ContentReassembler.onAppendInlineAudio');
       const audioBlob = new Blob([bytes], { type: mimeType });
       const audioUrl = URL.createObjectURL(audioBlob);
 
