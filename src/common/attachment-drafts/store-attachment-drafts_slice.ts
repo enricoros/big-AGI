@@ -36,7 +36,7 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
    * Extracts typed fragments from the attachment drafts and optionally removes them from the store.
    * If `attachmentDraftId` is null, all the attachments are processed, otherwise only this.
    */
-  takeFragmentsByType: (fragmentsType: DMessageAttachmentFragment['part']['pt'], attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
+  takeFragmentsByType: (fragmentsType: Extract<DMessageAttachmentFragment['part']['pt'], 'doc'>, attachmentDraftIdOrAll: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
 
   removeAttachmentDraftOutputFragment: (attachmentDraftId: AttachmentDraftId, fragmentIndex: number) => void;
 
@@ -193,36 +193,38 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     return transferredFragments;
   },
 
-  takeFragmentsByType: (fragmentsType: DMessageAttachmentFragment['part']['pt'], attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean): DMessageAttachmentFragment[] => {
+  takeFragmentsByType: (fragmentsType, attachmentDraftIdOrAll, removeFragments): DMessageAttachmentFragment[] => {
     const { attachmentDrafts } = _get();
 
-    const textFragments: DMessageAttachmentFragment[] = [];
+    const takenFragments: DMessageAttachmentFragment[] = [];
     const keptDrafts: AttachmentDraft[] = [];
 
     for (const draft of attachmentDrafts) {
 
       // non-touched attachments
-      if (attachmentDraftId !== null && draft.id !== attachmentDraftId) {
+      if (attachmentDraftIdOrAll !== null && draft.id !== attachmentDraftIdOrAll) {
         keptDrafts.push(draft);
         continue;
       }
 
-      // Extract text fragments
-      const extractedTextFragments = draft.outputFragments.filter(fragment => fragment.part.pt === fragmentsType);
-      textFragments.push(...extractedTextFragments);
+      // Extract 'doc' attachment fragments (the only allowed)
+      const extractedDocFragments = draft.outputFragments.filter(fragment => fragment.part.pt === fragmentsType);
+      takenFragments.push(...extractedDocFragments);
 
       // keep as-is if there's nothing to remove
-      if (!removeFragments || extractedTextFragments.length === 0) {
+      if (!removeFragments || extractedDocFragments.length === 0) {
         keptDrafts.push(draft);
         continue;
       }
 
-      // Removal: rmeove associated DBlob items
-      for (let removedFragment of extractedTextFragments) {
+      // Removal: remove associated DBlob items
+      // NOTE: there shall be no DBAsset associated with this purely text 'doc' fragment, but we keep this
+      // for consistency and future-proofing
+      for (let removedFragment of extractedDocFragments) {
         void removeAttachmentOwnedDBAsset(removedFragment);
       }
 
-      // Removal: leave non-text fragments in the draft
+      // Removal: leave non-doc fragments in the draft
       const keptFragments = draft.outputFragments.filter(fragment => fragment.part.pt !== fragmentsType);
       if (keptFragments.length || draft.outputsConverting) {
         keptDrafts.push({
@@ -238,7 +240,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
         attachmentDrafts: keptDrafts,
       });
 
-    return textFragments;
+    return takenFragments;
   },
 
 
