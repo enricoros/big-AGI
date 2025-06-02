@@ -127,7 +127,7 @@ export function CameraCaptureModal(props: {
 
   const handleVideoDownloadClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
-    await downloadVideoFrame(videoRef.current, 'camera', 'image/jpeg', 0.98);
+    await downloadVideoFrame(videoRef.current, 'camera', 'image/jpeg', 0.98).catch(alert);
   }, [videoRef]);
 
 
