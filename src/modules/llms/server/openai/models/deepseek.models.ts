@@ -1,4 +1,4 @@
-import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -10,34 +10,23 @@ const _knownDeepseekChatModels: ManualMappings = [
   // [List Models](https://api-docs.deepseek.com/api/list-models)
   {
     idPrefix: 'deepseek-reasoner',
-    label: 'DeepSeek-R1',
-    description: 'Reasoning model with Chain-of-Thought capabilities, 64K context length. No discount.',
+    label: 'DeepSeek R1 (0528)',
+    description: 'Reasoning model with Chain-of-Thought capabilities, 64K context length. Supports JSON output and function calling.',
     contextWindow: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    maxCompletionTokens: 8192,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 32768, // default, max: 65536,
     chatPrice: { input: 0.55, output: 2.19, cache: { cType: 'oai-ac', read: 0.14 } },
     benchmark: { cbaElo: 1358 },
   },
   {
     idPrefix: 'deepseek-chat',
-    label: 'DeepSeek-V3',
-    description: 'General-purpose model with 64K context length.',
+    label: 'DeepSeek V3 (0324)',
+    description: 'General-purpose model with 64K context length. Supports JSON output and function calling.',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    maxCompletionTokens: 8192,
+    maxCompletionTokens: 8192, // default is 4096, max is 8192
     chatPrice: { input: 0.27, output: 1.10, cache: { cType: 'oai-ac', read: 0.07 } },
     benchmark: { cbaElo: 1372 }, // note: this is for V3-0324, before V3 was 1318
-  },
-  {
-    idPrefix: 'deepseek-coder',
-    label: 'DeepSeek Coder V2',
-    description: 'Good at coding and math tasks, 128K context length',
-    contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
-    maxCompletionTokens: 4096,
-    // chatPrice: { input: 0.14, output: 0.28 },
-    benchmark: { cbaElo: 1214 }, // assuming this is deepseek-coder-v2-0724
-    hidden: true,
   },
 ];
 
@@ -56,7 +45,7 @@ export function deepseekModelToModelDescription(deepseekModelId: string): ModelD
     description: 'New Deepseek Model',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat], // assume..
+    interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });
 }
