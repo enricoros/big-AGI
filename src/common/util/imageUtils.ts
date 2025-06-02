@@ -5,7 +5,7 @@
  * Also see videoUtils.ts for more image-related functions.
  */
 
-import { canvasToDataURLAndMimeType } from './canvasUtils';
+import { asyncCanvasToBlob, canvasToDataURLAndMimeType } from './canvasUtils';
 import { convert_Base64DataURL_To_Base64WithMimeType, convert_Base64WithMimeType_To_Blob, } from '~/common/util/blobUtils';
 
 
@@ -30,6 +30,61 @@ export function showBlobURLInNewTab(blobURL: string) {
     return true;
   }
   return false;
+}
+
+
+/**
+ * Converts an SVG string to a PNG Blob via an intermediate canvas.
+ */
+export async function renderSVGToPNGBlob(svgCode: string, transparentBackground: boolean, renderScale: number = 2.0): Promise<Blob | null> {
+  if (!svgCode) return null;
+
+  // Create a Blob URL for the SVG
+  const svgBlob = new Blob([svgCode], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  // Load the SVG image
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = url;
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = (e) => {
+      console.error('Error loading SVG image:', e);
+      reject(e);
+    };
+  });
+
+  // Prepare canvas @[Scale]x, e.g. @2x
+  const canvasWidth = img.width * renderScale;
+  const canvasHeight = img.height * renderScale;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    URL.revokeObjectURL(url);
+    return null;
+  }
+
+  // Handle background
+  if (!transparentBackground) {
+    // TODO: make it responsive, such as with:
+    // document.querySelector('html')?.getAttribute('data-joy-color-scheme') === 'dark'
+    // ctx.fillStyle = '#FFFFFF';
+    // ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  } else {
+    // clear the canvas to ensure transparency
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  }
+
+  // Draw the SVG image @2x
+  ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+
+  // Convert canvas to PNG Blob, and we're done
+  const pngBlob = await asyncCanvasToBlob(canvas, 'image/png');
+  URL.revokeObjectURL(url);
+  return pngBlob;
 }
 
 
