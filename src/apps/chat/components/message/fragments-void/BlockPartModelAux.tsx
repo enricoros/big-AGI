@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { ColorPaletteProp } from '@mui/joy/styles/types';
 import { Box, Chip, Typography } from '@mui/joy';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
@@ -15,6 +16,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 
 // configuration
 // const REASONING_COLOR = '#ca74b8'; // '#f22a85' (folder-aligned), '#ca74b8' (emoji-aligned)
+const REASONING_COLOR: ColorPaletteProp = 'success';
 const ANTHROPIC_REDACTED_EXPLAINER = //  https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#example-streaming-with-redacted-thinking
   'Some of Claude\'s internal reasoning has been automatically encrypted for safety reasons. This doesn\'t affect the quality of responses.';
 
@@ -30,8 +32,8 @@ const _styles = {
     py: 0.375,
     my: '1px', // to not crop the outline on mobile
     outline: '1px solid',
-    outlineColor: 'success.solidBg', // .outlinedBorder
-    boxShadow: `1px 2px 4px -3px var(--joy-palette-success-solidBg)`,
+    outlineColor: `${REASONING_COLOR}.solidBg`, // .outlinedBorder
+    boxShadow: `1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
   } as const,
 
   chipIcon: {
@@ -50,8 +52,8 @@ const _styles = {
   text: {
     borderRadius: '12px',
     border: '1px solid',
-    borderColor: 'success.outlinedColor',
-    backgroundColor: 'rgb(var(--joy-palette-success-lightChannel) / 15%)', // similar to success.50
+    borderColor: `${REASONING_COLOR}.outlinedColor`,
+    backgroundColor: `rgb(var(--joy-palette-${REASONING_COLOR}-lightChannel) / 15%)`, // similar to success.50
     boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
     mt: 1,
     p: 1,
@@ -134,7 +136,7 @@ export function BlockPartModelAux(props: {
     {/* Chip to expand/collapse */}
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
-        color='success'
+        color={REASONING_COLOR}
         variant={expanded ? 'solid' : 'soft'}
         size='sm'
         onClick={handleToggleExpanded}
@@ -147,7 +149,7 @@ export function BlockPartModelAux(props: {
 
       {expanded && showInline && !!props.auxText && (
         <Chip
-          color='success'
+          color={REASONING_COLOR}
           variant='soft'
           size='sm'
           disabled={!onFragmentReplace}
