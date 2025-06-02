@@ -241,7 +241,7 @@ export function AppChat() {
     else if (outcome === 'err-t2i-unconfigured')
       optimaOpenPreferences('draw');
     else if (outcome === 'err-no-persona')
-      addSnackbar({ key: 'chat-no-persona', message: 'No persona selected.', type: 'issue' });
+      addSnackbar({ key: 'chat-no-persona', message: 'No persona selected.', type: 'issue', overrides: { autoHideDuration: 4000 } });
     else if (outcome === 'err-no-conversation')
       addSnackbar({ key: 'chat-no-conversation', message: 'No active conversation.', type: 'issue' });
     else if (outcome === 'err-no-last-message')
