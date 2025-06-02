@@ -52,7 +52,7 @@
     "nanoid": "^5.1.5",
     "next": "~15.1.8",
     "nprogress": "^0.2.0",
-    "pdfjs-dist": "4.10.38",
+    "pdfjs-dist": "5.3.31",
     "posthog-js": "^1.249.1",
     "prismjs": "^1.30.0",
     "puppeteer-core": "^24.10.0",
