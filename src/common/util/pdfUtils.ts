@@ -21,7 +21,7 @@ export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: n
     console.log('pdfToText: [dev] pdfjs-dist loading skipped');
     return '';
   }
-  const pdf = await getDocument(pdfBuffer).promise;
+  const pdf = await getDocument({ data: pdfBuffer }).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages
   onProgress(0);
 
