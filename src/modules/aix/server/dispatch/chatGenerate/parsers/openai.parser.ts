@@ -410,7 +410,7 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
   // Input Metrics
 
   // Input redistribution: Cache Read
-  if (usage.prompt_tokens_details !== undefined) {
+  if (usage.prompt_tokens_details) {
     const TCacheRead = usage.prompt_tokens_details.cached_tokens;
     if (TCacheRead !== undefined && TCacheRead > 0) {
       metricsUpdate.TCacheRead = TCacheRead;
@@ -434,8 +434,11 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
   // Output Metrics
 
   // Output breakdown: Reasoning
-  if (usage.completion_tokens_details?.reasoning_tokens !== undefined)
-    metricsUpdate.TOutR = usage.completion_tokens_details.reasoning_tokens;
+  if (usage.completion_tokens_details) {
+    const details = usage.completion_tokens_details || {};
+    if (details.reasoning_tokens !== undefined)
+      metricsUpdate.TOutR = usage.completion_tokens_details.reasoning_tokens;
+  }
 
   // TODO: Output breakdown: Audio
 
