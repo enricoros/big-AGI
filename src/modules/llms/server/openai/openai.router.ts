@@ -16,6 +16,7 @@ import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWi
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './models/azure.models';
+import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './models/chutesai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
 import { fastAPIHeuristic, fastAPIModels } from './models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
@@ -240,6 +241,10 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         // [OpenAI]: chat-only models, custom sort, manual mapping
         case 'openai':
+
+          // [ChutesAI] special case for model enumeration
+          if (chutesAIHeuristic(access.oaiHost))
+            return { models: chutesAIModelsToModelDescriptions(openAIModels) };
 
           // [FireworksAI] special case for model enumeration
           if (fireworksAIHeuristic(access.oaiHost))
