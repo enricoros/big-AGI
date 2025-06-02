@@ -6,15 +6,14 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
-
-import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
@@ -33,6 +32,9 @@ export function Fusion(props: {
   isMobile: boolean,
 }) {
 
+  // state
+  const [showLlmSelector, setShowLlmSelector] = React.useState(false);
+
   // external state
   const fusion = useBeamStore(props.beamStore, store => store.fusions.find(fusion => fusion.fusionId === props.fusionId) ?? null);
   const cardScrolling = useBeamCardScrolling();
@@ -49,25 +51,23 @@ export function Fusion(props: {
 
   const factory = findFusionFactory(fusion?.factoryId);
 
-  const { removeFusion, toggleFusionGathering } = props.beamStore.getState();
-
+  const { removeFusion, toggleFusionGathering, fusionSetLlmId } = props.beamStore.getState();
 
   // get LLM Label and Vendor Icon
   const llmId = fusion?.llmId ?? null;
-  const { llmLabel, llmVendorIcon } = React.useMemo(() => {
-    if (llmId) {
-      try {
-        const llm = findLLMOrThrow(llmId);
-        return {
-          llmLabel: llm.label,
-          llmVendorIcon: findModelVendor(llm.vId)?.Icon,
-        };
-      } catch (e) {
-      }
-    }
-    return { llmLabel: 'Model unknown', llmVendorIcon: undefined };
-  }, [llmId]);
+  const setLlmId = React.useCallback((llmId: DLLMId | null) => fusionSetLlmId(props.fusionId, llmId), [props.fusionId, fusionSetLlmId]);
+  const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, {
+    label: '',
+    disabled: isFusing,
+  });
 
+  // hide selector when fusion starts
+  React.useEffect(() => {
+    isFusing && setShowLlmSelector(false);
+  }, [isFusing]);
+
+  // more derived
+  const llmLabel = llmOrNull?.label || 'Model unknown';
 
   // handlers
   const handleFusionCopyToClipboard = React.useCallback(() => {
@@ -85,11 +85,15 @@ export function Fusion(props: {
       onSuccessCallback(fusion.outputDMessage);
   }, [props.beamStore, props.fusionId]);
 
-  const handleDebugPrint = React.useCallback((event: React.MouseEvent) => {
-    if (!event.shiftKey) return;
-    const fusion = props.beamStore.getState().fusions.find(fusion => fusion.fusionId === props.fusionId);
-    console.log({ fusion });
-  }, [props.beamStore, props.fusionId]);
+  const handleIconClick = React.useCallback((event: React.MouseEvent) => {
+    if (event.shiftKey) {
+      const fusion = props.beamStore.getState().fusions.find(fusion => fusion.fusionId === props.fusionId);
+      console.log({ fusion });
+      return;
+    }
+    // Toggle LLM selector
+    setShowLlmSelector(!showLlmSelector);
+  }, [showLlmSelector, props.beamStore, props.fusionId]);
 
   const handleFusionRemove = React.useCallback(() => {
     removeFusion(props.fusionId);
@@ -124,10 +128,11 @@ export function Fusion(props: {
         isInterrupted={isStopped}
         isMobile={props.isMobile}
         isUsable={isUsable}
+        llmComponent={(isFusing || !showLlmSelector) ? undefined : llmComponent}
         llmLabel={llmLabel}
         llmVendorIcon={llmVendorIcon}
         fusionAvatarTooltip={fusionAvatarTooltip}
-        onIconClick={handleDebugPrint}
+        onIconClick={isFusing ? undefined : handleIconClick}
         onRemove={handleFusionRemove}
         onToggleGenerate={handleToggleFusionGather}
       />
