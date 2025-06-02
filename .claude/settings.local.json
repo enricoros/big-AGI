@@ -2,15 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(cat:*)",
+      "Bash(cp:*)",
       "Bash(git branch:*)",
       "Bash(grep:*)",
+      "Bash(ls:*)",
       "Bash(node:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
       "Bash(rg:*)",
       "Bash(rm:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebFetch(domain:github.com)"
     ],
-    "deny": []
+    "deny": [
+      "Read(node_modules)",
+      "Read(node_modules/**)"
+    ]
   }
 }
