@@ -96,8 +96,5 @@
   },
   "engines": {
     "node": "^24.0.0 || ^22.0.0 || ^20.0.0"
-  },
-  "overrides": {
-    "uri-js": "npm:uri-js-replace"
   }
 }
