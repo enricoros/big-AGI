@@ -10,6 +10,7 @@ import { useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
@@ -157,12 +158,20 @@ export async function t2iGenerateImageContentFragments(
   const imageFragments: DMessageContentFragment[] = [];
   for (const _i of generatedImages) {
 
-    // add the image to the DB
-    const dblobAssetId = await addDBImageAsset(contextId, scopeId, {
+    // base64 -> blob conversion
+    const imageBlob = await convert_Base64WithMimeType_To_Blob(_i.base64Data, _i.mimeType, 't2iGenerateImageContentFragments');
+
+    // NOTE: no resize/type conversion, store as-is
+
+    // add the image to the DBlobs DB
+    const dblobAssetId = await addDBImageAsset(contextId, scopeId, imageBlob, {
       label: prompt,
-      data: {
-        mimeType: _i.mimeType as any,
-        base64: _i.base64Data,
+      metadata: {
+        width: _i.width || 0,
+        height: _i.height || 0,
+        // description: '',
+        // inputTokens: _i.inputTokens,
+        // outputTokens: _i.outputTokens,
       },
       origin: {
         ot: 'generated',
@@ -172,20 +181,21 @@ export async function t2iGenerateImageContentFragments(
         parameters: _i.parameters,
         generatedAt: _i.generatedAt,
       },
-      metadata: {
-        width: _i.width || 0,
-        height: _i.height || 0,
-        // inputTokens: _i.inputTokens,
-        // outputTokens: _i.outputTokens,
-        // description: '',
-      },
     });
 
-    // create a data reference for the image
-    const imageAssetDataRef = createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length);
+    // create the DMessage _Content_ Fragment (not attachment)
+    // so this is akin to the model-generated images
+    const imageContentFragment = createImageContentFragment(
+      createDMessageDataRefDBlob( // Data Reference {} for the image
+        dblobAssetId,
+        imageBlob.type,
+        imageBlob.size,
+      ),
+      _i.altText,
+      _i.width,
+      _i.height,
+    );
 
-    // create an Image Content Fragment
-    const imageContentFragment = createImageContentFragment(imageAssetDataRef, _i.altText, _i.width, _i.height);
     imageFragments.push(imageContentFragment);
   }
   return imageFragments;

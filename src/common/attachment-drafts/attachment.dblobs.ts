@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import { deleteDBAsset, gcDBAssetsByScope, transferDBAssetContextScope } from '~/modules/dblobs/dblobs.db';
 
 import { CommonImageMimeTypes, imageBlobTransform, LLMImageResizeMode } from '~/common/util/imageUtils';
-import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
+import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraftSource } from './attachment.types';
@@ -48,17 +48,14 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
       throwOnResizeError: true,
       throwOnTypeConversionError: true,
     });
-    const imageType = imageBlob.type; // no fallbacks, always assume correct operation
-
-    // We store the image as a base64 string in the DB, so we need to convert it
-    const imageBase64 = await convert_Blob_To_Base64(imageBlob, 'image-attachment');
 
     // add the image to the DBlobs DB
-    const dblobAssetId = await addDBImageAsset('global', 'attachment-drafts', {
+    const dblobAssetId = await addDBImageAsset('global', 'attachment-drafts', imageBlob, {
       label: title ? 'Image: ' + title : 'Image',
-      data: {
-        mimeType: imageType as any, // we assume the mime is supported
-        base64: imageBase64,
+      metadata: {
+        width: imageWidth,
+        height: imageHeight,
+        // description: '',
       },
       origin: { // User originated
         ot: 'user',
@@ -67,25 +64,17 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
         url: source.media === 'url' ? source.url : undefined,
         fileName: source.media === 'file' ? source.refPath : undefined,
       },
-      metadata: {
-        width: imageWidth,
-        height: imageHeight,
-        // description: '',
-      },
     });
-
-    // create DMessage a Data Reference {} for the image
-    const imageAssetDataRef = createDMessageDataRefDBlob(
-      dblobAssetId,
-      imageType,
-      imageBlob.size,
-    );
 
     // return an Image _Attachment_ Fragment
     return createImageAttachmentFragment(
       title,
       caption,
-      imageAssetDataRef,
+      createDMessageDataRefDBlob( // Data Reference {} for the image
+        dblobAssetId,
+        imageBlob.type,
+        imageBlob.size,
+      ),
       undefined,
       imageWidth || undefined,
       imageHeight || undefined,

@@ -1,5 +1,5 @@
 import { Is } from '~/common/util/pwaUtils';
-import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
+import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 import { _addDBAsset, gcDBAssetsByScope, getDBAsset } from './dblobs.db';
@@ -13,15 +13,31 @@ const THUMBNAIL_ENCODING_MIMETYPE = !Is.Browser.Safari ? DBlobMimeType.IMG_WEBP 
 export async function addDBImageAsset(
   contextId: DBlobDBContextId,
   scopeId: DBlobDBScopeId,
+  imageBlob: Blob,
   image: {
     label: string,
-    data: DBlobImageAsset['data'],
     origin: DBlobImageAsset['origin'],
     metadata: DBlobImageAsset['metadata'],
   },
 ): Promise<DBlobAssetId> {
+
+  // Blob -> base64
+  const base64Data = await convert_Blob_To_Base64(imageBlob, 'addDBImageAsset');
+  const imageType = imageBlob.type; // We assume the mime type is supported
+
+  const assetData: DBlobImageAsset['data'] = {
+    base64: base64Data,
+    mimeType: imageType as any,
+  };
+
   // create the image asset object
-  const imageAsset = _createAssetObject(DBlobAssetType.IMAGE, image.label, image.data, image.origin, image.metadata);
+  const imageAsset = _createAssetObject(
+    DBlobAssetType.IMAGE,
+    image.label,
+    assetData,
+    image.origin,
+    image.metadata,
+  );
 
   // add to the DB
   return _addDBImageAsset(imageAsset, contextId, scopeId);

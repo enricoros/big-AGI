@@ -160,6 +160,8 @@ interface ImageTransformOptions {
   throwOnResizeError?: boolean,
   /** If true, type conversion errors (image type conversion) will throw (default: false) */
   throwOnTypeConversionError?: boolean,
+  /** If set, prints conversion stats (if converted) to the console */
+  debugConversionLabel?: string,
 }
 
 interface ImageTransformOperationResult extends ImageOperationResult {
@@ -167,8 +169,8 @@ interface ImageTransformOperationResult extends ImageOperationResult {
   hasTypeConverted: boolean;
   initialSize: number;
   initialType: string;
-  finalSize: number;
-  sizeRatio: number; // percentage difference in size compared to the initial size
+  // finalSize: number;
+  // sizeRatio: number; // percentage difference in size compared to the initial size
 }
 
 interface ImageOperationResult {
@@ -199,6 +201,8 @@ export async function imageBlobTransform(inputImage: Blob, options: ImageTransfo
   // 1. Resize & Format-convert image if requested
   let hasResized = false;
   let hasTypeConverted = false;
+  const toMimeType = options.convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE;
+  const toLossyQuality = options.convertToLossyQuality ?? DEFAULT_ADRAFT_IMAGE_QUALITY;
   if (options.resizeMode) {
 
     // if null, resizing was not needed or possible (size could not be a fit)
@@ -207,8 +211,8 @@ export async function imageBlobTransform(inputImage: Blob, options: ImageTransfo
       const resized = await imageBlobResizeIfNeeded(
         workingBlob,
         options.resizeMode,
-        options.convertToMimeType ?? DEFAULT_ADRAFT_IMAGE_MIMETYPE,
-        options.convertToLossyQuality ?? DEFAULT_ADRAFT_IMAGE_QUALITY,
+        toMimeType,
+        toLossyQuality,
       );
       if (resized) {
         hasResized = true;
@@ -230,7 +234,7 @@ export async function imageBlobTransform(inputImage: Blob, options: ImageTransfo
       const converted = await imageBlobConvertType(
         workingBlob,
         options.convertToMimeType,
-        options.convertToLossyQuality ?? DEFAULT_ADRAFT_IMAGE_QUALITY,
+        toLossyQuality,
       );
       hasTypeConverted = true;
       workingBlob = converted.blob;
@@ -256,7 +260,12 @@ export async function imageBlobTransform(inputImage: Blob, options: ImageTransfo
   }
 
   // return the result
-  const finalSize = workingBlob.size;
+  if (options.debugConversionLabel && (hasResized || hasTypeConverted)) {
+    const finalSize = workingBlob.size;
+    const sizeRatio = (initialSize && finalSize) ? Math.round(((finalSize - initialSize) / initialSize) * 100) : 1;
+    console.log(`[${options.debugConversionLabel}] stored generated ${initialType} -> ${workingBlob.type} (quality:${toLossyQuality}, ${sizeRatio}% reduction, ${initialSize?.toLocaleString()} -> ${finalSize?.toLocaleString()})`);
+  }
+
   return {
     blob: workingBlob,
     width: workingWidth,
@@ -265,8 +274,6 @@ export async function imageBlobTransform(inputImage: Blob, options: ImageTransfo
     hasTypeConverted: hasTypeConverted,
     initialType: initialType,
     initialSize: initialSize,
-    finalSize: finalSize,
-    sizeRatio: (initialSize && finalSize) ? Math.round(((finalSize - initialSize) / initialSize) * 100) : 1,
   };
 }
 
