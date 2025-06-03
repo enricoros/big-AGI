@@ -2,10 +2,10 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
-import { convertBase64Image, getImageDimensions } from '~/common/util/imageUtils';
-import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
+import { convert_Base64_To_UInt8Array, convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { imageBlobTransform } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
@@ -477,45 +477,37 @@ export class ContentReassembler {
     // Break text accumulation, as we have a full image part in the middle
     this.currentTextFragmentIndex = null;
 
-    let { mimeType, i_b64: base64Data, label, generator, prompt } = particle;
+    let { i_b64: inputBase64, mimeType: inputType, label, generator, prompt } = particle;
     const safeLabel = label || 'Generated Image';
 
     try {
 
-      let safeWidth;
-      let safeHeight;
+      // base64 -> blob conversion
+      let inputImage = await convert_Base64WithMimeType_To_Blob(inputBase64, inputType, 'ContentReassembler.onAppendInlineImage');
 
-      // TODO: re-evaluate conversion-before-storage (quality is 0.98 and WebP is really optimized, but still, this is not the 'original' data)
-      // PNG -> conversion to WebP or JPEG to save IndexedDB space - will
-      if (GENERATED_IMAGES_CONVERT_TO_COMPRESSED && mimeType === 'image/png') {
-        const preSize = base64Data.length;
-        const convertedData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, DEFAULT_ADRAFT_IMAGE_MIMETYPE, GENERATED_IMAGES_COMPRESSION_QUALITY).catch(() => null);
-        if (convertedData) {
-          mimeType = convertedData.mimeType;
-          base64Data = convertedData.base64;
-          safeWidth = convertedData.width || 0;
-          safeHeight = convertedData.height || 0;
-        }
-        const postSize = base64Data.length;
-        const sizeDiffPerc = preSize ? Math.round(((postSize - preSize) / preSize) * 100) : 0;
-        console.warn(`[image-pipeline] stored generated PNG as ${mimeType} (quality:${GENERATED_IMAGES_COMPRESSION_QUALITY}, ${sizeDiffPerc}% reduction, ${preSize?.toLocaleString()} -> ${postSize?.toLocaleString()})`);
-      }
+      // perform resize/type conversion if desired, and find the image dimensions
+      const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && inputType === 'image/png';
+      const { blob: imageBlob, height: imageHeight, width: imageWidth, hasTypeConverted, initialSize, finalSize, sizeRatio } = await imageBlobTransform(inputImage, {
+        convertToMimeType: shallConvert ? DEFAULT_ADRAFT_IMAGE_MIMETYPE : undefined,
+        convertToLossyQuality: GENERATED_IMAGES_COMPRESSION_QUALITY,
+        throwOnTypeConversionError: true,
+      });
+      const imageType = imageBlob.type; // no fallbacks, always assume correct operation
 
-      // find out the dimensions (frontend)
-      if (!safeWidth || !safeHeight) {
-        const dimensions = await getImageDimensions(`data:${mimeType};base64,${base64Data}`).catch(() => null);
-        safeWidth = dimensions?.width || 0;
-        safeHeight = dimensions?.height || 0;
-      }
+      if (hasTypeConverted)
+        console.warn(`[image-pipeline] stored generated ${inputType} -> ${imageBlob.type} (quality:${GENERATED_IMAGES_COMPRESSION_QUALITY}, ${sizeRatio}% reduction, ${initialSize?.toLocaleString()} -> ${finalSize?.toLocaleString()})`);
+
+      // We store the image as a base64 string in the DB, so we need to convert it
+      const imageBase64 = await convert_Blob_To_Base64(imageBlob, 'ContentReassembler.onAppendInlineImage');
 
       // add the image to the DBlobs DB
       const dblobAssetId = await addDBImageAsset('global', 'app-chat', {
         label: safeLabel,
         data: {
-          mimeType: mimeType as any,
-          base64: base64Data,
+          mimeType: imageType as any,
+          base64: imageBase64,
         },
-        origin: {
+        origin: { // Generation originated
           ot: 'generated',
           source: 'ai-text-to-image',
           generatorName: generator ?? '',
@@ -524,32 +516,31 @@ export class ContentReassembler {
           generatedAt: new Date().toISOString(),
         },
         metadata: {
-          width: safeWidth,
-          height: safeHeight,
+          width: imageWidth,
+          height: imageHeight,
           // description: '',
         },
       });
 
-      // create DMessage a data reference {} for the image
-      const bytesSizeApprox = Math.ceil((base64Data.length * 3) / 4);
+      // create DMessage a Data Reference {} for the image
       const imageAssetDataRef = createDMessageDataRefDBlob(
         dblobAssetId,
-        particle.mimeType,
-        bytesSizeApprox,
+        imageType,
+        imageBlob.size,
       );
 
-      // create the DMessageContentFragment - not attachment! as this comes from the assistant - so this is akin to the t2i-generated images
+      // create the DMessage _Content_ Fragment - not attachment! as this comes from the assistant - so this is akin to the t2i-generated images
       const imageContentFragment = createImageContentFragment(
         imageAssetDataRef,
         safeLabel,
-        safeWidth,
-        safeHeight,
+        imageWidth || undefined,
+        imageHeight || undefined,
       );
 
       this.accumulator.fragments.push(imageContentFragment);
 
     } catch (error: any) {
-      console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, mimeType, size: base64Data.length });
+      console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
     }
   }
 
