@@ -8,7 +8,6 @@
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from '../attachment-drafts/attachment.pipeline';
 
 import { asyncCanvasToBlobWithValidation } from './canvasUtils';
-import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from './blobUtils';
 
 // configuration
 const IMAGE_DIMENSIONS = {
@@ -81,31 +80,6 @@ export async function renderSVGToPNGBlob(svgCode: string, transparentBackground:
   } finally {
     URL.revokeObjectURL(url);
   }
-}
-
-
-// ===== BASE64-BASED IMAGE UTILITIES (Legacy - thin wrappers) =====
-
-/**
- * @returns null if the image does not need resizing
- * @throws error if the resize mode is unsupported or if resizing fails or if any conversion fails.
- * @deprecated Use imageBlobResizeIfNeeded for better performance and memory efficiency
- */
-export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: CommonImageMimeTypes /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
-  base64: string,
-  mimeType: string,
-} | null> {
-
-  const inputBlob = await convert_Base64WithMimeType_To_Blob(inputBase64Data, inputMimeType, 'resizeBase64ImageIfNeeded');
-
-  const resizedBlob = await imageBlobResizeIfNeeded(inputBlob, resizeMode, destMimeType, destQuality);
-  if (!resizedBlob) return null;
-
-  const base64Data = await convert_Blob_To_Base64(resizedBlob.blob, 'resizeBase64ImageIfNeeded');
-  return {
-    base64: base64Data,
-    mimeType: resizedBlob.blob.type,
-  };
 }
 
 
