@@ -4,9 +4,10 @@ import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
+import type { CommonImageMimeTypes } from '~/common/util/imageUtils';
 import { Is } from '~/common/util/pwaUtils';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
-import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
+import { convert_Base64DataURL_To_Base64WithMimeType, convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
@@ -21,7 +22,7 @@ import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs'
 
 
 // configuration
-export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
+export const DEFAULT_ADRAFT_IMAGE_MIMETYPE: CommonImageMimeTypes = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
 export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
@@ -718,8 +719,7 @@ export async function attachmentPerformConversion(
         try {
           // get the data
           const { mimeType, imgDataUrl } = input.urlImage;
-          const dataIndex = imgDataUrl.indexOf(',');
-          const base64Data = imgDataUrl.slice(dataIndex + 1);
+          const { base64Data } = convert_Base64DataURL_To_Base64WithMimeType(imgDataUrl, 'attachment-url-page-image');
           // do not convert, as we're in the optimal webp already
           // do not resize, as the 512x512 is optimal for most LLM Vendors, an a great tradeoff of quality/size/cost
           const screenshotImageF = await imageDataToImageAttachmentFragmentViaDBlob(mimeType, base64Data, source, `Screenshot of ${title}`, caption, false, false);
