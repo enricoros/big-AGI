@@ -105,6 +105,23 @@ export function extractUrlsFromText(text: string): string[] {
   return text.match(urlRegex) || [];
 }
 
+/**
+ * Opens a blob URL in a new tab
+ * @deprecated minimize this usage, prefer to open in the app instead, so we can handle URL revocation properly
+ * @returns true if window.open succeeded, false otherwise
+ */
+export function openObjectRLInNewTab(blobURL: string): boolean {
+  if (typeof window !== 'undefined') {
+    try {
+      return window.open(blobURL, '_blank', 'noopener,noreferrer') !== null;
+    } catch (error) {
+      console.warn('showBlobURLInNewTab: Failed to open new tab.', error);
+      return false;
+    }
+  }
+  return false;
+}
+
 
 // added for future in-app routing
 // export namespace SearchParams {
