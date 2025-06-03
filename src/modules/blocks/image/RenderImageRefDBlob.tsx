@@ -72,7 +72,7 @@ export function RenderImageRefDBlob(props: {
       if (signal?.aborted || !recreationPrompt || !props.onReplaceFragment) return;
       // NOTE: we shall prevent this operation from happening if the image was not fully generated from the prompt, but also had images
       // const recreationImages = [];
-      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, [], 1, 'global', 'app-chat');
+      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, [], 1, 'app-chat');
       if (newImageFragments.length === 1)
         props.onReplaceFragment?.(newImageFragments[0]);
     },

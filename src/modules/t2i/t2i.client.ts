@@ -143,7 +143,7 @@ export async function t2iGenerateImageContentFragments(
   prompt: string,
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
-  contextId: DBlobDBContextId, scopeId: DBlobDBScopeId,
+  scopeId: DBlobDBScopeId,
 ): Promise<DMessageContentFragment[]> {
 
   // T2I: Use the active provider if null
@@ -164,7 +164,7 @@ export async function t2iGenerateImageContentFragments(
     // NOTE: no resize/type conversion, store as-is
 
     // add the image to the DBlobs DB
-    const dblobAssetId = await addDBImageAsset(contextId, scopeId, imageBlob, {
+    const dblobAssetId = await addDBImageAsset(scopeId, imageBlob, {
       label: prompt,
       metadata: {
         width: _i.width || 0,
