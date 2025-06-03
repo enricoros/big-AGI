@@ -27,23 +27,6 @@ export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google'
 
 
 /**
- * Opens a blob URL in a new tab
- * @returns true if window.open succeeded, false otherwise
- */
-export function showBlobObjectURLInNewTab(blobURL: string): boolean {
-  if (typeof window !== 'undefined') {
-    try {
-      return window.open(blobURL, '_blank', 'noopener,noreferrer') !== null;
-    } catch (error) {
-      console.warn('showBlobURLInNewTab: Failed to open new tab.', error);
-      return false;
-    }
-  }
-  return false;
-}
-
-
-/**
  * Converts an SVG string to a PNG Blob via an intermediate canvas.
  */
 export async function renderSVGToPNGBlob(svgCode: string, transparentBackground: boolean, renderScale: number = 2.0): Promise<Blob | null> {

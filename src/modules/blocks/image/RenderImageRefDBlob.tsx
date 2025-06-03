@@ -12,7 +12,7 @@ import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
-import { showBlobObjectURLInNewTab } from '~/common/util/imageUtils';
+import { openObjectRLInNewTab } from '~/common/util/urlUtils';
 
 import { RenderImageURL, RenderImageURLVariant } from './RenderImageURL';
 
@@ -33,7 +33,7 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
 
   // notify the user that the image has been opened in a new tab (for Safari when it's blocking by default)
   addSnackbar({ key: 'opened-image-in-new-tab', message: 'Image opened in a New Tab.', type: 'success', closeButton: false, overrides: { autoHideDuration: 1600 } });
-  return showBlobObjectURLInNewTab(imageBlobURL);
+  return openObjectRLInNewTab(imageBlobURL);
 }
 
 
