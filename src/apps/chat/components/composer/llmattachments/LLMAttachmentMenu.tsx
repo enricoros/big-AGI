@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Checkbox, Chip, CircularProgress, LinearProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, Checkbox, Chip, CircularProgress, LinearProgress, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -10,7 +10,6 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import LaunchIcon from '@mui/icons-material/Launch';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -19,7 +18,6 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -311,13 +309,23 @@ export function LLMAttachmentMenu(props: {
               <Typography level='body-sm' sx={indicatorGapSx}>
                 {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.imgDataUrl?.length.toLocaleString()}
                 {' · '}
-                <Link onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  void showImageDataURLInNewTab(draftInput?.urlImage?.imgDataUrl || '');
+                <Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => {
+                  if (draftInput?.urlImage?.imgDataUrl) {
+                    // Invoke the viewer but with a virtual 'temp' part description to see this preview image
+                    handleViewImageRefPart(event, {
+                      pt: 'image_ref',
+                      dataRef: {
+                        reftype: 'url',
+                        url: draftInput.urlImage.imgDataUrl,
+                      },
+                      altText: draft.label || 'URL Image Preview',
+                      width: draftInput.urlImage.width || undefined,
+                      height: draftInput.urlImage.height || undefined,
+                    });
+                  }
                 }}>
-                  open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
-                </Link>
+                  view
+                </Chip>
               </Typography>
             )}
 
