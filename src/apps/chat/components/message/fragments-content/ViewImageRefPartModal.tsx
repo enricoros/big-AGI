@@ -29,7 +29,10 @@ const imageViewerContainerSx: SxProps = {
 };
 
 
-export function ViewImageRefPartModal(props: { imageRefPart: DMessageImageRefPart, onClose: () => void }) {
+export function ViewImageRefPartModal(props: {
+  imageRefPart: DMessageImageRefPart,
+  onClose: () => void,
+}) {
   const title = props.imageRefPart.altText || 'Attachment Image';
   return (
     <GoodModal
@@ -40,7 +43,11 @@ export function ViewImageRefPartModal(props: { imageRefPart: DMessageImageRefPar
       sx={imageViewerModalSx}
     >
       <Box sx={imageViewerContainerSx}>
-        <BlockPartImageRef imageRefPart={props.imageRefPart} contentScaling='sm' />
+        <BlockPartImageRef
+          disableViewer={true /* we're in the Modal, we won't pop this up anymore */}
+          imageRefPart={props.imageRefPart}
+          contentScaling='sm'
+        />
       </Box>
     </GoodModal>
   );

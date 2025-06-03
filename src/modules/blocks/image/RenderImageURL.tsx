@@ -12,7 +12,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { Link } from '~/common/components/Link';
 
-import { RenderBlockInputs } from '../blocks.types';
+import type { RenderBlockInputs } from '../blocks.types';
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, StyledOverlayButton } from '../OverlayButton';
 
 
@@ -57,16 +57,19 @@ const overlayButtonsGridSx: SxProps = {
 
 export type RenderImageURLVariant = 'content-part' | 'attachment-card' | 'attachment-button';
 
+/**
+ * Renders an Image Data URL, or a remote URL.
+ */
 export const RenderImageURL = (props: {
   imageURL: string | null,        // remote URL, or data URL: `data:image/png;base64,...`
   overlayText?: React.ReactNode,  // bottom overlay text
   expandableText?: string,        // expandable pane below the image
   variant: RenderImageURLVariant,  // either a responsive Block image, or an inline Card
   disabled?: boolean,             // if true, interaction is disabled
-  onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
   onImageRegenerate?: () => void,
   onClick?: (e: React.MouseEvent) => void,  // use this generic as a fallback, but should not be needed
+  onViewImage?: (e: React.MouseEvent) => void,
   scaledImageSx?: SxProps,
   className?: string,
 }) => {
@@ -85,7 +88,7 @@ export const RenderImageURL = (props: {
   }, []);
 
   // handlers
-  const { onImageDelete, onImageRegenerate, onOpenInNewTab } = props;
+  const { onImageDelete, onImageRegenerate, onViewImage } = props;
 
   const handleToggleInfoOpen = React.useCallback(() => {
     setDeleteArmed(false);
@@ -93,11 +96,11 @@ export const RenderImageURL = (props: {
     setInfoOpen(open => !open);
   }, []);
 
-  const handleOpenInNewTab = React.useCallback((e: React.MouseEvent) => {
+  const handleViewImage = React.useCallback((e: React.MouseEvent) => {
     setDeleteArmed(false);
     setRegenArmed(false);
-    onOpenInNewTab?.(e);
-  }, [onOpenInNewTab]);
+    onViewImage?.(e);
+  }, [onViewImage]);
 
   const handleToggleDeleteArmed = React.useCallback((event: React.MouseEvent) => {
     // immediate deletion if shift is pressed
@@ -114,7 +117,7 @@ export const RenderImageURL = (props: {
   }, [onImageRegenerate]);
 
   const handleToggleRegenArmed = React.useCallback((event: React.MouseEvent) => {
-    // imemdiate regeneration if shift is presset
+    // immediate regeneration if shift is pressed
     if (!regenArmed && event.shiftKey) // immediately regenerate:image
       return handleImageRegenerate();
     setDeleteArmed(false);
@@ -226,8 +229,8 @@ export const RenderImageURL = (props: {
           )}
 
           {!!props.imageURL && (
-            props.onOpenInNewTab ? (
-              <OverlayButton tooltip='Open in new tab' variant='outlined' color={isCard ? 'primary' : undefined} onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
+            props.onViewImage ? (
+              <OverlayButton tooltip='View Image' variant='outlined' color={isCard ? 'primary' : undefined} onClick={handleViewImage} sx={{ gridRow: '1', gridColumn: '2' }}>
                 <OpenInNewIcon />
               </OverlayButton>
             ) : props.imageURL.startsWith('http') ? (

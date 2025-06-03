@@ -6,35 +6,12 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
-import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
-import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
-import { openObjectRLInNewTab } from '~/common/util/urlUtils';
+import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import { RenderImageURL, RenderImageURLVariant } from './RenderImageURL';
-
-
-/**
- * Opens am image data ref in a new tab (fetches and shows it)
- */
-export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
-  let imageBlobURL: string | null = null;
-  if (dataRef.reftype === 'url')
-    imageBlobURL = dataRef.url;
-  else if (dataRef.reftype === 'dblob')
-    imageBlobURL = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
-
-  // the upstream hsould not let this happen
-  if (!imageBlobURL)
-    return false;
-
-  // notify the user that the image has been opened in a new tab (for Safari when it's blocking by default)
-  addSnackbar({ key: 'opened-image-in-new-tab', message: 'Image opened in a New Tab.', type: 'success', closeButton: false, overrides: { autoHideDuration: 1600 } });
-  return openObjectRLInNewTab(imageBlobURL);
-}
 
 
 export function RenderImageRefDBlob(props: {
@@ -48,9 +25,9 @@ export function RenderImageRefDBlob(props: {
   variant: RenderImageURLVariant,
   disabled?: boolean,
   onClick?: (e: React.MouseEvent) => void,  // use this generic as a fallback, but should not be needed
-  onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
+  onViewImage?: () => void
   scaledImageSx?: SxProps,
 }) {
 
@@ -147,9 +124,9 @@ export function RenderImageRefDBlob(props: {
       expandableText={altText}
       overlayText={overlayText}
       onClick={props.onClick}
-      onOpenInNewTab={props.onOpenInNewTab}
       onImageDelete={props.onDeleteFragment}
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
+      onViewImage={props.onViewImage}
       className={isRegenerating ? 'agi-border-4' /* CSS Effect while regenerating */ : undefined}
       scaledImageSx={props.scaledImageSx}
       disabled={props.disabled}
