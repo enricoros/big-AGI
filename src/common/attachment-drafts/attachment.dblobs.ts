@@ -50,7 +50,7 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
     });
 
     // add the image to the DBlobs DB
-    const dblobAssetId = await addDBImageAsset('global', 'attachment-drafts', imageBlob, {
+    const dblobAssetId = await addDBImageAsset('attachment-drafts', imageBlob, {
       label: title ? 'Image: ' + title : 'Image',
       metadata: {
         width: imageWidth,

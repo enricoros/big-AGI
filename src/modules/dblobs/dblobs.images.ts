@@ -11,7 +11,6 @@ const THUMBNAIL_ENCODING_MIMETYPE = !Is.Browser.Safari ? DBlobMimeType.IMG_WEBP 
 
 
 export async function addDBImageAsset(
-  contextId: DBlobDBContextId,
   scopeId: DBlobDBScopeId,
   imageBlob: Blob,
   image: {
@@ -40,10 +39,10 @@ export async function addDBImageAsset(
   );
 
   // add to the DB
-  return _addDBImageAsset(imageAsset, contextId, scopeId);
+  return _addDBImageAsset(imageAsset, 'global', scopeId);
 }
 
-async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId): Promise<DBlobAssetId> {
+async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: 'global', scopeId: DBlobDBScopeId): Promise<DBlobAssetId> {
 
   // Auto-Thumbnail: when adding an image, generate a thumbnail-256 cache level
   if (!imageAsset.cache?.thumb256) {

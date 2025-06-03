@@ -494,7 +494,7 @@ export class ContentReassembler {
       });
 
       // add the image to the DBlobs DB
-      const dblobAssetId = await addDBImageAsset('global', 'app-chat', imageBlob, {
+      const dblobAssetId = await addDBImageAsset('app-chat', imageBlob, {
         label: safeLabel,
         metadata: {
           width: imageWidth,
