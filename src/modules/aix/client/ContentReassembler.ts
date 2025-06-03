@@ -2,7 +2,7 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
-import { convert_Base64_To_UInt8Array, convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
+import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform } from '~/common/util/imageUtils';
@@ -401,8 +401,7 @@ export class ContentReassembler {
     try {
 
       // create blob and play audio - this will throw on malformed data
-      const bytes = convert_Base64_To_UInt8Array(base64Data, 'ContentReassembler.onAppendInlineAudio');
-      const audioBlob = new Blob([bytes], { type: mimeType });
+      const audioBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'ContentReassembler.onAppendInlineAudio');
       const audioUrl = URL.createObjectURL(audioBlob);
 
       // Play the audio
@@ -487,25 +486,20 @@ export class ContentReassembler {
 
       // perform resize/type conversion if desired, and find the image dimensions
       const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && inputType === 'image/png';
-      const { blob: imageBlob, height: imageHeight, width: imageWidth, hasTypeConverted, initialSize, finalSize, sizeRatio } = await imageBlobTransform(inputImage, {
+      const { blob: imageBlob, height: imageHeight, width: imageWidth } = await imageBlobTransform(inputImage, {
         convertToMimeType: shallConvert ? DEFAULT_ADRAFT_IMAGE_MIMETYPE : undefined,
         convertToLossyQuality: GENERATED_IMAGES_COMPRESSION_QUALITY,
         throwOnTypeConversionError: true,
+        debugConversionLabel: `ContentReassembler(ii)`,
       });
-      const imageType = imageBlob.type; // no fallbacks, always assume correct operation
-
-      if (hasTypeConverted)
-        console.warn(`[image-pipeline] stored generated ${inputType} -> ${imageBlob.type} (quality:${GENERATED_IMAGES_COMPRESSION_QUALITY}, ${sizeRatio}% reduction, ${initialSize?.toLocaleString()} -> ${finalSize?.toLocaleString()})`);
-
-      // We store the image as a base64 string in the DB, so we need to convert it
-      const imageBase64 = await convert_Blob_To_Base64(imageBlob, 'ContentReassembler.onAppendInlineImage');
 
       // add the image to the DBlobs DB
-      const dblobAssetId = await addDBImageAsset('global', 'app-chat', {
+      const dblobAssetId = await addDBImageAsset('global', 'app-chat', imageBlob, {
         label: safeLabel,
-        data: {
-          mimeType: imageType as any,
-          base64: imageBase64,
+        metadata: {
+          width: imageWidth,
+          height: imageHeight,
+          // description: '',
         },
         origin: { // Generation originated
           ot: 'generated',
@@ -515,30 +509,22 @@ export class ContentReassembler {
           parameters: {}, // ?
           generatedAt: new Date().toISOString(),
         },
-        metadata: {
-          width: imageWidth,
-          height: imageHeight,
-          // description: '',
-        },
       });
 
-      // create DMessage a Data Reference {} for the image
-      const imageAssetDataRef = createDMessageDataRefDBlob(
-        dblobAssetId,
-        imageType,
-        imageBlob.size,
-      );
-
-      // create the DMessage _Content_ Fragment - not attachment! as this comes from the assistant - so this is akin to the t2i-generated images
+      // create the DMessage _Content_ Fragment (not attachment), as this comes from the assistant
+      // so this is akin to the t2i-generated images
       const imageContentFragment = createImageContentFragment(
-        imageAssetDataRef,
+        createDMessageDataRefDBlob( // Data Reference {} for the image
+          dblobAssetId,
+          imageBlob.type,
+          imageBlob.size,
+        ),
         safeLabel,
         imageWidth || undefined,
         imageHeight || undefined,
       );
 
       this.accumulator.fragments.push(imageContentFragment);
-
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
     }
