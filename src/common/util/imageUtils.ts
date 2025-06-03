@@ -8,7 +8,7 @@
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from '../attachment-drafts/attachment.pipeline';
 
 import { asyncCanvasToBlobWithValidation } from './canvasUtils';
-import { convert_Base64DataURL_To_Base64WithMimeType, convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from './blobUtils';
+import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from './blobUtils';
 
 // configuration
 const IMAGE_DIMENSIONS = {
@@ -25,27 +25,6 @@ const IMAGE_DIMENSIONS = {
 export type CommonImageMimeTypes = 'image/png' | 'image/jpeg' | 'image/webp';
 export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google' | 'anthropic' | 'thumbnail-128' | 'thumbnail-256';
 
-
-/**
- * Opens an image Data URL in a new tab
- */
-export async function showImageDataURLInNewTab(imageDataURL: string) {
-  try {
-    const { base64Data, mimeType } = convert_Base64DataURL_To_Base64WithMimeType(imageDataURL, 'showImageDataURLInNewTab');
-    const imageBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'showImageDataURLInNewTab');
-    const blobURL = URL.createObjectURL(imageBlob);
-
-    if (showBlobObjectURLInNewTab(blobURL)) {
-      return blobURL;
-    } else {
-      URL.revokeObjectURL(blobURL);
-      return null;
-    }
-  } catch (error) {
-    console.warn('showImageDataURLInNewTab: Failed to convert image Data URL to Blob URL.', error);
-    return null;
-  }
-}
 
 /**
  * Opens a blob URL in a new tab
