@@ -34,20 +34,6 @@ export function canvasToDataURLAndMimeType(
 }
 
 /**
- * Creates a Blob object representing the image contained in the canvas
- * @param canvas The canvas element to convert to a Blob.
- * @param imageFormat Browsers are required to support image/png; many will support additional formats including image/jpeg and image/webp.
- * @param imageQuality A Number between 0 and 1 indicating image quality if the requested type is image/jpeg or image/webp.
- */
-export async function asyncCanvasToBlob(
-  canvas: HTMLCanvasElement,
-  imageFormat: 'image/png' | 'image/jpeg',
-  imageQuality?: number
-): Promise<Blob | null> {
-  return new Promise((resolve) => canvas.toBlob(resolve, imageFormat, imageQuality));
-}
-
-/**
  * Creates a Blob object representing the image contained in the canvas, with format validation and fallback
  * @param canvas The canvas element to convert
  * @param requestedMimeType Desired MIME type - browsers are required to support image/png; many will support additional formats including image/jpeg and some may support image/webp.
