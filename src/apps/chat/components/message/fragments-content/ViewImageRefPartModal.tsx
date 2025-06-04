@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button } from '@mui/joy';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { downloadBlob, downloadToFile } from '~/common/util/downloadUtils';
+import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { BlockPartImageRef } from './BlockPartImageRef';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
@@ -42,39 +42,52 @@ export function ViewImageRefPartModal(props: {
 
   // state
   const [downloading, setDownloading] = React.useState(false);
+  // const [copying, setCopying] = React.useState(false);
+
+  // derived state
+  const { dataRef, altText } = props.imageRefPart;
+  const isDBlob = dataRef.reftype === 'dblob';
 
   // handlers
 
+  // const handleCopy = React.useCallback(async () => {
+  //   if (dataRef.reftype !== 'dblob') return;
+  //
+  //   setCopying(true);
+  //   try {
+  //     const imageAsset = await getImageAsset(dataRef.dblobAssetId);
+  //     if (!imageAsset) return;
+  //
+  //     const blob = convert_Base64WithMimeType_To_Blob(imageAsset.data.base64, imageAsset.data.mimeType, 'ViewImageRefPartModal');
+  //
+  //     copyBlobPromiseToClipboard(imageAsset.data.mimeType, blob, 'Image');
+  //   } catch (error) {
+  //     console.error('Failed to copy image:', error);
+  //   } finally {
+  //     setCopying(false);
+  //   }
+  // }, [dataRef]);
+
   const handleDownload = React.useCallback(async () => {
-    const { dataRef, altText } = props.imageRefPart;
+    if (dataRef.reftype !== 'dblob') return;
 
     setDownloading(true);
     try {
-      if (dataRef.reftype === 'dblob') {
-        // Get the image asset from the DB
-        const imageAsset = await getImageAsset(dataRef.dblobAssetId);
-        if (imageAsset) {
-          // Convert base64 -> Blob
-          const blob = await convert_Base64WithMimeType_To_Blob(imageAsset.data.base64, imageAsset.data.mimeType, 'ViewImageRefPartModal.download');
+      const imageAsset = await getImageAsset(dataRef.dblobAssetId);
+      if (!imageAsset) return;
 
-          // Suggest filename with extension
-          const extension = imageAsset.data.mimeType.split('/')[1] || 'png';
-          const filename = `${altText || 'image'}.${extension}`.replace(/[^a-z0-9.\-_]/gi, '_');
+      const blob = await convert_Base64WithMimeType_To_Blob(imageAsset.data.base64, imageAsset.data.mimeType, 'ViewImageRefPartModal');
 
-          // Download the blob
-          downloadBlob(blob, filename);
-        }
-      } else if (dataRef.reftype === 'url') {
-        // For URL images, use direct download
-        const filename = `${altText || 'image'}.png`.replace(/[^a-z0-9.\-_]/gi, '_');
-        downloadToFile(dataRef.url, filename);
-      }
+      const extension = imageAsset.data.mimeType.split('/')[1] || 'png';
+      const filename = `${altText || 'image'}.${extension}`.replace(/[^a-z0-9.\-_]/gi, '_');
+
+      downloadBlob(blob, filename);
     } catch (error) {
       console.error('Failed to download image:', error);
     } finally {
       setDownloading(false);
     }
-  }, [props.imageRefPart]);
+  }, [dataRef, altText]);
 
   const title = props.imageRefPart.altText || 'Attachment Image';
   return (
@@ -88,18 +101,30 @@ export function ViewImageRefPartModal(props: {
       }
       // themedColor='neutral'
       unfilterBackdrop
-      startButton={
-        <Button
-          variant='soft'
-          color='neutral'
-          loading={downloading}
-          loadingPosition='start'
-          startDecorator={<FileDownloadIcon />}
-          onClick={handleDownload}
-        >
-          Download
-        </Button>
-      }
+      startButton={isDBlob ? (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {/*<Button*/}
+          {/*  variant='soft'*/}
+          {/*  color='neutral'*/}
+          {/*  loading={copying}*/}
+          {/*  loadingPosition='start'*/}
+          {/*  startDecorator={<ContentCopyIcon sx={{ fontSize: 'lg' }} />}*/}
+          {/*  onClick={handleCopy}*/}
+          {/*>*/}
+          {/*  Copy*/}
+          {/*</Button>*/}
+          <Button
+            variant='soft'
+            color='neutral'
+            loading={downloading}
+            loadingPosition='start'
+            startDecorator={<FileDownloadOutlinedIcon />}
+            onClick={handleDownload}
+          >
+            Download
+          </Button>
+        </Box>
+      ) : undefined}
       sx={imageViewerModalSx}
     >
       <Box sx={imageViewerContainerSx}>
