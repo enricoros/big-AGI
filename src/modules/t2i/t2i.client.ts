@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
-import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
+import type { DBlobDBContextId, DBlobDBScopeId } from '~/common/stores/blob/dblobs-portability';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
-import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
+import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
 

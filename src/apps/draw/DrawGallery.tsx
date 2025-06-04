@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Box, Table } from '@mui/joy';
 
-import { DBlobAssetType, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { useDBAssetsByScopeAndType } from '~/modules/dblobs/dblobs.hooks';
+import { DBlobAssetType, DBlobImageAsset } from '~/common/stores/blob/dblobs-portability';
+import { useDBAssetsByScopeAndType } from '~/common/stores/blob/dblobs-portability';
 
 import { ZeroGallery } from './gallery/ZeroGallery';
 
