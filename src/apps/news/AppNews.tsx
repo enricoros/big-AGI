@@ -87,8 +87,8 @@ function BuildInfoSheet() {
       PL: <strong>{Release.TenantSlug}</strong> · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
       Frontend: {frontendBuild.gitSha} - deployed {frontendBuild.timestamp ? <strong><TimeAgo date={frontendBuild.timestamp} /></strong> : 'unknown'}, and
       backend {backendBuild?.gitSha}{backendBuild?.timestamp === frontendBuild.timestamp ? '.' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown.'}<br />
-      Ships with -modal/-model: {Object.entries(Release.TechLevels).map(([name, version], idx, arr) => <><strong>{name}</strong> v{version}{idx < arr.length - 1 ? ', ' : ''}</>)}.<br />
-      Ships with intelligent functions: {Release.AiFunctions.map((name, idx, arr) => <><i>{name}</i>{idx < arr.length - 1 ? ', ' : ''}</>)}.
+      Ships with -modal/-model: {Object.entries(Release.TechLevels).map(([name, version], idx, arr) => <React.Fragment key={name}><strong>{name}</strong> v{version}{idx < arr.length - 1 ? ', ' : ''}</React.Fragment>)}.<br />
+      Ships with intelligent functions: {Release.AiFunctions.map((name, idx, arr) => <React.Fragment key={name}><i>{name}</i>{idx < arr.length - 1 ? ', ' : ''}</React.Fragment>)}.
     </Sheet>
   );
 }
