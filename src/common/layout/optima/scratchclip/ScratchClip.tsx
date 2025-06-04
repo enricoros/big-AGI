@@ -59,6 +59,7 @@ export function ScratchClip() {
       open={isVisible}
       onClose={handleClose}
       titleStartDecorator={<HistoryIcon />}
+      unfilterBackdrop
       title={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
