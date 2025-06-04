@@ -115,8 +115,8 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
 };
 
 function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void) {
-  const activeConterters = attachmentDraft.converters.filter(c => c.isActive);
-  if (activeConterters.length === 0)
+  const activeConverters = attachmentDraft.converters.filter(c => c.isActive);
+  if (activeConverters.length === 0)
     return null;
 
   // Alternate icon for the Web Page Screenshot
@@ -162,12 +162,13 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
     )}
 
     {/* Render DBlob referred images in place of converter icons */}
-    {outputSingleImageRefDBlobs.map((dataRef, i) => dataRef && (
+    {outputSingleImageRefDBlobs.map((dataRef, _i) => dataRef && (
       <TooltipOutlined key={`image-${dataRef.dblobAssetId}`} title={noTooltips ? null : <>View converted image{/* <br/>{dataRef?.bytesSize?.toLocaleString()} bytes */}</>} placement='top-start'>
         <div>
           <RenderImageRefDBlob
             dataRefDBlobAssetId={dataRef.dblobAssetId}
             dataRefMimeType={dataRef.mimeType}
+            dataRefBytesSize={dataRef.bytesSize}
             variant='attachment-button'
             scaledImageSx={attachmentIconSx}
             onClick={handleViewFirstImage}
@@ -176,8 +177,8 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
       </TooltipOutlined>
     ))}
 
-    {/*{activeConterters.some(c => c.id.startsWith('url-page-')) ? <LanguageIcon sx={{ opacity: 0.2, ml: -2.5 }} /> : null}*/}
-    {renderConverterIcons && activeConterters.map((_converter, idx) => {
+    {/*{activeConverters.some(c => c.id.startsWith('url-page-')) ? <LanguageIcon sx={{ opacity: 0.2, ml: -2.5 }} /> : null}*/}
+    {renderConverterIcons && activeConverters.map((_converter, idx) => {
       const Icon = converterTypeToIconMap[_converter.id] ?? null;
       return !Icon ? null : (
         <TooltipOutlined key={`${_converter.id}-${idx}`} title={noTooltips ? null : `Attached as ${_converter.name}`} placement='top-start'>

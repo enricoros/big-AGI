@@ -10,6 +10,7 @@ import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import { humanReadableBytes } from '~/common/util/textUtils';
 
 import { RenderImageURL, RenderImageURLVariant } from './RenderImageURL';
 
@@ -18,6 +19,7 @@ export function RenderImageRefDBlob(props: {
   // from ImageRef
   dataRefDBlobAssetId: DBlobAssetId,
   dataRefMimeType: string,
+  dataRefBytesSize?: number, // only used for the overlay text
   imageAltText?: string,
   imageWidth?: number,
   imageHeight?: number,
@@ -75,13 +77,14 @@ export function RenderImageRefDBlob(props: {
     let overlayText: React.ReactNode = null;
     const extension = (imageItem.data.mimeType || props.dataRefMimeType || '').replace('image/', '');
     const overlayDate = imageItem.updatedAt || imageItem.createdAt || undefined;
+    const formattedSize = !props.dataRefBytesSize ? undefined : humanReadableBytes(props.dataRefBytesSize);
 
     switch (imageItem.origin.ot) {
       case 'user':
         overlayText = <Box sx={{ fontSize: '0.875em' }}>
           {/*&quot; {imageItem.label.length > 120 ? imageItem.label.slice(0, 120 - 3) + '...' : imageItem.label} &quot;*/}
           <Box sx={{ opacity: 0.8 }}>
-            {imageItem.origin.source} · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}
+            {imageItem.origin.source} · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}{formattedSize ? ' · ' + formattedSize : ''}
           </Box>
           <Box sx={{ opacity: 0.8 }}>
             {imageItem.origin.media}{imageItem.origin.fileName ? ' · ' + imageItem.origin.fileName : ''}
@@ -96,7 +99,7 @@ export function RenderImageRefDBlob(props: {
         overlayText = <Box sx={{ fontSize: '0.875em' }}>
           &quot; {imageItem.label.length > 120 ? imageItem.label.slice(0, 120 - 3) + '...' : imageItem.label} &quot;
           <Box sx={{ opacity: 0.8 }}>
-            AI Image · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}
+            AI Image · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}{formattedSize ? ' · ' + formattedSize : ''}
           </Box>
           <Box sx={{ opacity: 0.8 }}>
             {Object.entries(imageItem.origin.parameters).reduce((acc, [key, value]) => {
@@ -116,7 +119,7 @@ export function RenderImageRefDBlob(props: {
       altText: props.imageAltText || imageItem.metadata?.description || imageItem.label || '',
       overlayText: overlayText,
     };
-  }, [imageItem, props.dataRefMimeType, props.imageAltText, props.imageHeight, props.imageWidth, props.variant]);
+  }, [imageItem, props.dataRefMimeType, props.dataRefBytesSize, props.imageAltText, props.imageHeight, props.imageWidth, props.variant]);
 
   return (
     <RenderImageURL
