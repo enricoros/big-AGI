@@ -1,4 +1,4 @@
-import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
+import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';

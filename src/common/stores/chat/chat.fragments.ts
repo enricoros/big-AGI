@@ -1,4 +1,4 @@
-import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
+import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { agiId } from '~/common/util/idUtils';
