@@ -62,3 +62,8 @@ export const Release = {
   IsNodeDevBuild: process.env.NODE_ENV === 'development',
 
 } as const;
+
+
+export const BaseProduct = {
+  SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-agi/issues',
+} as const;
