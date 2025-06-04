@@ -16,7 +16,6 @@ export const Release = {
   App: {
     versionCode: '2.0.0-open-rc3',       // 1.92.0 sequentially...
     versionName: 'Big-AGI 2',
-    releaseNotes: '',
   },
 
   // Future compatibility
@@ -65,5 +64,6 @@ export const Release = {
 
 
 export const BaseProduct = {
+  ReleaseNotes: '',
   SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-agi/issues',
 } as const;
