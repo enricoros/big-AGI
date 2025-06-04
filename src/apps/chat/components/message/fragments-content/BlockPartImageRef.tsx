@@ -56,11 +56,12 @@ export function BlockPartImageRef(props: {
   return (
     <BlocksContainer>
 
-      {/* Render DBlob / URL / Error */}
+      {/* Render DBlob / URL / Error -> downloads -> Calls RenderImageURL */}
       {dataRef.reftype === 'dblob' ? (
         <RenderImageRefDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
+          dataRefBytesSize={dataRef.bytesSize}
           imageAltText={imageRefPart.altText}
           imageWidth={imageRefPart.width}
           imageHeight={imageRefPart.height}

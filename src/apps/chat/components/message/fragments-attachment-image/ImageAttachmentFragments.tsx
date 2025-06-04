@@ -103,6 +103,7 @@ export function ImageAttachmentFragments(props: {
               key={'att-img-' + attachmentFragment.fId}
               dataRefDBlobAssetId={dataRef.dblobAssetId}
               dataRefMimeType={dataRef.mimeType}
+              dataRefBytesSize={dataRef.bytesSize}
               imageAltText={imageRefPart.altText || title}
               imageWidth={imageRefPart.width}
               imageHeight={imageRefPart.height}
