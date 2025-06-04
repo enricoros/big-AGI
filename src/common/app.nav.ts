@@ -177,6 +177,8 @@ export const navItems: {
       route: '/tokens',
       hideDrawer: true,
       hideOnMobile: true,
+      hideIcon: true,
+      isDev: true,
     },
     {
       name: 'Beam',
