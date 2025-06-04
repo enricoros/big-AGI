@@ -153,6 +153,7 @@ export const navItems: {
     },
     {
       name: 'Create Personas',
+      mobileName: 'Personas',
       icon: Diversity2Icon, // was: Outlined.. but they look the same
       // iconActive: Diversity2Icon,
       type: 'app',
@@ -166,6 +167,7 @@ export const navItems: {
       type: 'app',
       route: '/diff',
       hideDrawer: true,
+      hideOnMobile: true,
     },
     {
       name: 'Tokenize Text',
@@ -174,6 +176,7 @@ export const navItems: {
       type: 'app',
       route: '/tokens',
       hideDrawer: true,
+      hideOnMobile: true,
     },
     {
       name: 'Beam',
@@ -214,6 +217,7 @@ export const navItems: {
       route: '/news',
       hideBar: true,
       hideDrawer: true,
+      hideOnMobile: true,
     },
   ],
 

@@ -22,13 +22,14 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
   // const overflowApps: NavItemApp[] = [];
 
   navItems.apps.forEach((app) => {
-    if (!checkVisibileIcon(app, false, props.currentApp)) return;
+    if (!checkVisibileIcon(app, true, props.currentApp)) return;
     if (checkDivider(app)) {
       crossedDivider = true;
       return;
     }
-    if (!crossedDivider)
-      visibleApps.push(app);
+    // NOTE: using the 'hideOnMobile' flag instead of the crossing
+    // if (!crossedDivider)
+    visibleApps.push(app);
     // else overflowApps.push(app);
   });
 
