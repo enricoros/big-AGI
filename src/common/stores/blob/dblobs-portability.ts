@@ -20,5 +20,16 @@ export {
   useDBAssetsByScopeAndType,
 } from '~/modules/dblobs/dblobs.hooks';
 
-// Re-export all types
-export * from '~/modules/dblobs/dblobs.types';
+// Re-export select enums
+export {
+  DBlobAssetType,
+  DBlobMimeType,
+} from '~/modules/dblobs/dblobs.types';
+// Re-export select types
+export type {
+  DBlobAssetId,
+  DBlobDBAsset,
+  DBlobDBContextId,
+  DBlobDBScopeId,
+  DBlobImageAsset,
+} from '~/modules/dblobs/dblobs.types';
