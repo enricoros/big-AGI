@@ -14,7 +14,7 @@ export const Release = {
   TenantSlug: 'open',
 
   App: {
-    versionCode: '2.0.0-open-rc2',       // 1.92.0 sequentially...
+    versionCode: '2.0.0-open-rc3',       // 1.92.0 sequentially...
     versionName: 'Big-AGI 2',
     releaseNotes: '',
   },
