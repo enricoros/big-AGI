@@ -3,6 +3,7 @@
     "allow": [
       "Bash(cat:*)",
       "Bash(cp:*)",
+      "Bash(find:*)",
       "Bash(git branch:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
@@ -14,6 +15,7 @@
       "Bash(rg:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
+      "WebFetch(domain:big-agi.com)",
       "WebFetch(domain:github.com)"
     ],
     "deny": [
