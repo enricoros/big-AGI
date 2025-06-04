@@ -13,6 +13,7 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 import { Release } from '~/common/app.release';
 import { animationColorBlues, animationColorRainbow } from '~/common/util/animUtils';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
@@ -97,6 +98,9 @@ export function AppNews() {
   // state
   const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(NEWS_INITIAL_COUNT - 1);
 
+  // external state
+  const isMobile = useIsMobile();
+
   // news selection
   const news = NewsItems.filter((_, idx) => idx <= lastNewsIdx);
   const firstNews = news[0] ?? null;
@@ -149,9 +153,6 @@ export function AppNews() {
             // const firstCard = idx === 0;
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
-
-              {/* Inject the Build Info Sheet */}
-              {idx === 0 && <BuildInfoCard />}
 
               {/* Inject the Big-AGI 2.0 item here*/}
               {/*{idx === 1 && (*/}
@@ -236,6 +237,9 @@ export function AppNews() {
 
             </React.Fragment>;
           })}
+
+          {/* Inject the Build Info Sheet */}
+          {!isMobile && <BuildInfoCard />}
 
           {canExpand && (
             <Button
