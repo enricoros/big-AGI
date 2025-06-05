@@ -64,9 +64,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     // Throws on malformed event data
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
     const chunkData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
-
+    
     // [OpenRouter] transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardOpenRouterDataError(chunkData, pt))
+    if (_isOpenRouterResponse(chunkData) && _forwardOpenRouterDataError(chunkData, pt))
       return;
 
     const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(chunkData);
@@ -259,15 +259,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
     // Throws on malformed event data
     const completeData = JSON.parse(eventData);
-
-    // [OpenRouter] transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardOpenRouterDataError(completeData, pt))
-      return;
-
-    // [OpenAI] we don't know yet if warning messages are sent in non-streaming - for now we log
-    if (completeData.warning)
-      console.log('AIX: OpenAI-dispatch-NS warning:', completeData.warning);
-
+    
     // Parse the complete response
     const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(completeData);
 
@@ -295,6 +287,11 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       // handle missing content
       if (!message)
         throw new Error(`server response missing content (finish_reason: ${finish_reason})`);
+
+      // Handle reasoning field from OpenRouter
+      if (typeof message.reasoning === 'string') {
+        pt.appendReasoningText(message.reasoning);
+      }
 
       // message: Text
       if (typeof message.content === 'string') {
@@ -448,6 +445,21 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
     metricsUpdate.dtStart = timeToFirstEvent;
 
   return metricsUpdate;
+}
+
+/**
+ * Check if the response is from OpenRouter based on its structure or provider information
+ */
+function _isOpenRouterResponse(parsedData: any): boolean {
+  if (!parsedData) return false;
+  
+  // Check for OpenRouter-specific properties
+  if (parsedData.provider) return true;
+  
+  // Check for error metadata which is OpenRouter-specific
+  if (parsedData.error?.metadata?.provider_name) return true;
+  
+  return false;
 }
 
 /**
