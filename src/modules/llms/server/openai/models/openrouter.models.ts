@@ -75,7 +75,6 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
     || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
 
-
   return fromManualMapping([], model.id, undefined, undefined, {
     idPrefix: model.id,
     // latest: ...

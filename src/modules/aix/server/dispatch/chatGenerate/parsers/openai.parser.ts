@@ -64,7 +64,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     // Throws on malformed event data
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
     const chunkData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
-    
+
     // [OpenRouter] transmits upstream errors pre-parsing (object wouldn't be valid)
     if (_isOpenRouterResponse(chunkData) && _forwardOpenRouterDataError(chunkData, pt))
       return;

@@ -348,12 +348,6 @@ export namespace OpenAIWire_API_Chat_Completions {
       }).nullable().optional(),
     }).optional(),
 
-    // [Anthropic] Extended thinking feature for Claude models
-    thinking: z.object({
-      type: z.literal('enabled'),
-      budget_tokens: z.number().int().positive(),
-    }).optional(),
-
     // [OpenRouter] Reasoning parameter for Claude models
     reasoning: z.object({
       max_tokens: z.number().int().positive(),
