@@ -159,8 +159,6 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     throw new Error(`Invalid sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
   }
 
-  // OpenRouter payload validation completed
-
   // if (hotFixUseDeprecatedFunctionCalls)
   //   validated.data = _fixUseDeprecatedFunctionCalls(validated.data);
 
