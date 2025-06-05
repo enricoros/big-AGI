@@ -404,10 +404,6 @@ export const Model_schema = z.object({
   maxTokens: z.number().min(1).optional(),
   topP: z.number().min(0).max(1).optional(),
   forceNoStream: z.boolean().optional(),
-  /**
-   * [Anthropic] Extended thinking for Claude models. A value of 0 (or null/undefined) disables the feature.
-   * When enabled, this parameter indicates how many tokens the model can use for extended thinking.
-   */
   vndAntThinkingBudget: z.number().nullable().optional(),
   vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(),
