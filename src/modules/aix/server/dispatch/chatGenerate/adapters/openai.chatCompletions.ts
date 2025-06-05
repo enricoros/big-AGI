@@ -132,18 +132,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     thinkingBudget = model.vndAntThinkingBudget;
   }
   
-  // Add thinking parameter if the model supports it
+  // Add reasoning parameter for Claude 4 thinking capability via OpenRouter
   if (openAIDialect === 'openrouter' && (thinkingBudget !== undefined || hasThinkingSuffix)) {
     // Use explicitly configured budget if provided, otherwise fall back to default
-    const finalThinkingBudget = thinkingBudget !== undefined ? thinkingBudget : 256;
+    const finalThinkingBudget = thinkingBudget !== undefined ? thinkingBudget : 1024;
     
-    payload.thinking = {
-      type: "enabled",
-      budget_tokens: finalThinkingBudget,
+    // OpenRouter expects reasoning.max_tokens for Anthropic's thinking feature
+    payload.reasoning = {
+      max_tokens: finalThinkingBudget,
     };
-    
-    // Debug log to show the final request to OpenRouter
-    console.log(`[DEBUG] OpenRouter request for model: ${payload.model}, thinking budget: ${finalThinkingBudget}`);
   }
 
   if (hotFixOpenAIOFamily)
@@ -151,6 +148,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   if (hotFixRemoveStreamOptions)
     payload = _fixRemoveStreamOptions(payload);
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);
