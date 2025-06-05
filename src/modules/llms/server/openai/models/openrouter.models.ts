@@ -75,6 +75,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
     || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
 
+  // Initialize extraProps for any model-specific settings
+  const extraProps: Record<string, any> = {};
+
   return fromManualMapping([], model.id, undefined, undefined, {
     idPrefix: model.id,
     // latest: ...
@@ -89,6 +92,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     // benchmark: ...
     chatPrice,
     hidden,
+    ...extraProps, // Add our extra properties like vndAntThinkingBudget
   });
 }
 

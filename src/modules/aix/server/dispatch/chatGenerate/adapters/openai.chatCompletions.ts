@@ -120,6 +120,32 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       };
   }
 
+  // Handle Anthropic Claude thinking capability via OpenRouter
+  const hasThinkingSuffix = model.id.includes(':thinking');
+  if (hasThinkingSuffix && openAIDialect === 'openrouter') {
+    payload.model = model.id.replace(':thinking', '');
+  }
+  
+  // Get thinking budget from the model's vndAntThinkingBudget property
+  let thinkingBudget: number | undefined;
+  if (typeof model.vndAntThinkingBudget === 'number') {
+    thinkingBudget = model.vndAntThinkingBudget;
+  }
+  
+  // Add thinking parameter if the model supports it
+  if (openAIDialect === 'openrouter' && (thinkingBudget !== undefined || hasThinkingSuffix)) {
+    // Use explicitly configured budget if provided, otherwise fall back to default
+    const finalThinkingBudget = thinkingBudget !== undefined ? thinkingBudget : 256;
+    
+    payload.thinking = {
+      type: "enabled",
+      budget_tokens: finalThinkingBudget,
+    };
+    
+    // Debug log to show the final request to OpenRouter
+    console.log(`[DEBUG] OpenRouter request for model: ${payload.model}, thinking budget: ${finalThinkingBudget}`);
+  }
+
   if (hotFixOpenAIOFamily)
     payload = _fixRequestForOpenAIO1_maxCompletionTokens(payload);
 
@@ -132,6 +158,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     console.warn('OpenAI: invalid chatCompletions payload. Error:', validated.error);
     throw new Error(`Invalid sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
   }
+
+  // OpenRouter payload validation completed
 
   // if (hotFixUseDeprecatedFunctionCalls)
   //   validated.data = _fixUseDeprecatedFunctionCalls(validated.data);

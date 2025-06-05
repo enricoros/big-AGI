@@ -474,6 +474,17 @@ export function prettyShortChatModelName(model: string | undefined): string {
 }
 
 function _prettyAnthropicModelName(modelId: string): string | null {
+  // Check for OpenRouter Anthropic models (format: "anthropic/claude-...")
+  if (modelId.includes('anthropic/claude-')) {
+    const subStr = modelId.replace('anthropic/', '');
+    
+    // Handle Claude 4 models from OpenRouter
+    if (subStr.includes('claude-opus-4')) return 'Claude 4 Opus';
+    if (subStr.includes('claude-sonnet-4')) return 'Claude 4 Sonnet';
+    if (subStr.includes('claude-haiku-4')) return 'Claude 4 Haiku';
+  }
+
+  // Handle direct Anthropic models
   if (modelId.indexOf('claude-') === -1) return null; // not a Claude model
 
   // must match any known prefix

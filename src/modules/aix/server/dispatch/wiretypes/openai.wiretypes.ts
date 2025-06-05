@@ -344,6 +344,12 @@ export namespace OpenAIWire_API_Chat_Completions {
       }).nullable().optional(),
     }).optional(),
 
+    // [Anthropic] Extended thinking feature for Claude models
+    thinking: z.object({
+      type: z.literal('enabled'),
+      budget_tokens: z.number().int().positive(),
+    }).optional(),
+
     seed: z.number().int().optional(),
     stop: z.array(z.string()).optional(), // Up to 4 sequences where the API will stop generating further tokens.
     user: z.string().optional(),
