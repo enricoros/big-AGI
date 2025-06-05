@@ -88,7 +88,7 @@ export function AppChatSettingsAI() {
       title={!showModelIcons ? 'Coding model' : <><CodeIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Coding model</>}
       description='Code tasks'
       tooltip={<>
-        Smart <b>code editing</b> model (must support Tool Calls) with great conding skills and not too slow. Used for:
+        Smart <b>code editing</b> model (must support Tool Calls) with great coding skills and not too slow. Used for:
         <ul>
           <li>Diagrams generation</li>
           <li>HTML UI generation</li>
