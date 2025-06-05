@@ -397,15 +397,15 @@ export namespace AixWire_API {
   /// Model
 
 export const Model_schema = z.object({
-  id: z.string(),
-  acceptsOutputs: z.array(z.enum(['text', 'image', 'audio'])),
-  temperature: z.number().min(0).max(2).optional()
-    .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
-  maxTokens: z.number().min(1).optional(),
-  topP: z.number().min(0).max(1).optional(),
-  forceNoStream: z.boolean().optional(),
-  vndAntThinkingBudget: z.number().nullable().optional(),
-  vndGeminiShowThoughts: z.boolean().optional(),
+    id: z.string(),
+    acceptsOutputs: z.array(z.enum(['text', 'image', 'audio'])),
+    temperature: z.number().min(0).max(2).optional()
+      .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
+    maxTokens: z.number().min(1).optional(),
+    topP: z.number().min(0).max(1).optional(),
+    forceNoStream: z.boolean().optional(),
+    vndAntThinkingBudget: z.number().nullable().optional(),
+    vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
