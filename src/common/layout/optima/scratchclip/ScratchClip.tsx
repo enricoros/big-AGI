@@ -85,7 +85,7 @@ export function ScratchClip() {
       {/* Content */}
       {!history.length ? (
         <Typography sx={{ p: 3, textAlign: 'center' }}>
-          Clipboard history is empty.
+          Local clipboard history is empty.
         </Typography>
       ) : (
         <List
