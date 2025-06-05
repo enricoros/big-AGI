@@ -396,7 +396,7 @@ export namespace AixWire_API {
 
   /// Model
 
-export const Model_schema = z.object({
+  export const Model_schema = z.object({
     id: z.string(),
     acceptsOutputs: z.array(z.enum(['text', 'image', 'audio'])),
     temperature: z.number().min(0).max(2).optional()
