@@ -120,6 +120,23 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       };
   }
 
+
+  // [Anthropic] via OpenAI API (OpenRouter) - https://openrouter.ai/docs/use-cases/reasoning-tokens
+  if (openAIDialect === 'openrouter' && model.vndAntThinkingBudget !== undefined) {
+
+    // vndAntThinkingBudget's presence indicates a user preference:
+    // - [x] a number, which is the budget in tokens
+    // - [ ] null: shall disable thinking, but openrouter does not support this?
+    if (model.vndAntThinkingBudget === null) {
+      // simply not setting the reasoning field downgrades this to a non-thinking model
+      // console.warn('OpenRouter does not support disabling thinking of Anthropic models. Using default.');
+    } else {
+      payload.reasoning = {
+        max_tokens: model.vndAntThinkingBudget || 1024,
+      };
+    }
+  }
+
   if (hotFixOpenAIOFamily)
     payload = _fixRequestForOpenAIO1_maxCompletionTokens(payload);
 

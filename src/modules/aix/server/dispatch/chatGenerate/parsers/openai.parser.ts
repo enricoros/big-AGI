@@ -65,7 +65,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
     const chunkData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
 
-    // [OpenRouter] transmits upstream errors pre-parsing (object wouldn't be valid)
+    // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
     if (_forwardOpenRouterDataError(chunkData, pt))
       return;
 
@@ -260,7 +260,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
     // Throws on malformed event data
     const completeData = JSON.parse(eventData);
 
-    // [OpenRouter] transmits upstream errors pre-parsing (object wouldn't be valid)
+    // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
     if (_forwardOpenRouterDataError(completeData, pt))
       return;
 
@@ -304,6 +304,10 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         }
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
+
+      // [OpenRouter, 2025-06-05] Handle reasoning field from OpenRouter
+      if (typeof message.reasoning === 'string')
+        pt.appendReasoningText(message.reasoning);
 
       // message: Tool Calls
       for (const toolCall of (message.tool_calls || [])) {
