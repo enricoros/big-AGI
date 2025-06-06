@@ -148,7 +148,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25ProPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ }],
     benchmark: { cbaElo: 1470 },
   },
   // 2.5 Pro Preview 05-06 version

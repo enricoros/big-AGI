@@ -102,6 +102,10 @@ export function LLMParametersEditor(props: {
   const antThinkingOff = llmVndAntThinkingBudget === null;
   const gemThinkingAuto = llmVndGeminiThinkingBudget === undefined;
   const gemThinkingOff = llmVndGeminiThinkingBudget === 0;
+  
+  // Get the range override if available for Gemini thinking budget
+  const gemTBSpec = modelParamSpec['llmVndGeminiThinkingBudget'];
+  const gemTBMinMax = gemTBSpec?.rangeOverride || defGemTB.range;
 
   return <>
 
@@ -180,13 +184,13 @@ export function LLMParametersEditor(props: {
       <FormSliderControl
         title='Thinking Budget' ariaLabel='Gemini Thinking Token Budget'
         description={gemThinkingAuto ? 'Auto' : gemThinkingOff ? 'Thinking Off' : 'Tokens'}
-        min={defGemTB.range[0]} max={defGemTB.range[1]} step={1024}
+        min={gemTBMinMax[0]} max={gemTBMinMax[1]} step={1024}
         valueLabelDisplay={(gemThinkingAuto || gemThinkingOff) ? 'off' : 'on'}
-        value={llmVndGeminiThinkingBudget ?? [defGemTB.range[0], defGemTB.range[1]]}
+        value={llmVndGeminiThinkingBudget ?? [gemTBMinMax[0], gemTBMinMax[1]]}
         variant={gemThinkingAuto ? 'soft' : undefined}
         // disabled={gemThinkingAuto}
         onChange={value => onChangeParameter({ llmVndGeminiThinkingBudget: Array.isArray(value) ? (value[0] || value[1]) : value })}
-        startAdornment={
+        startAdornment={gemTBMinMax[0] === 0 && (
           <Tooltip arrow disableInteractive title={gemThinkingOff ? 'Thinking Off' : 'Disable Thinking'}>
             <IconButton
               variant={gemThinkingOff ? 'solid' : 'outlined'}
@@ -197,7 +201,7 @@ export function LLMParametersEditor(props: {
               {gemThinkingOff ? <ClearIcon sx={{ fontSize: 'lg' }} /> : <PowerSettingsNewIcon />}
             </IconButton>
           </Tooltip>
-        }
+        )}
         endAdornment={
           <Tooltip arrow disableInteractive title={gemThinkingAuto ? 'Automatic Thinking (default)' : 'Auto Budget'}>
             <IconButton
