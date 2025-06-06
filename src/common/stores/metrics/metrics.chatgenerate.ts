@@ -179,9 +179,9 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
   const isPartialMessage = metrics.TsR === 'pending' || metrics.TsR === 'aborted';
 
   // Calculate costs
-  const tierTokens = sumInputTokens;
-  const $inNew = getLlmCostForTokens(tierTokens, inNewTokens, pricing.input);
-  const $out = getLlmCostForTokens(tierTokens, outTokens, pricing.output);
+  const inputTierTokens = sumInputTokens;
+  const $inNew = getLlmCostForTokens(inputTierTokens, inNewTokens, pricing.input);
+  const $out = getLlmCostForTokens(outTokens, outTokens, pricing.output);
   if ($inNew === undefined || $out === undefined) {
     // many llms don't have pricing information, so the cost computation ends here
     return { $code: 'partial-price' };
@@ -201,14 +201,12 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
     return { $c: $noCacheRounded, $code: 'partial-price' };
   }
 
-  // 2024-08-22: DEV Note: we put this here to break in case we start having tiered price with cache,
-  // for which we don't know if the tier discriminator is the input tokens level, or the equivalent
-  // tokens level (input + cache)
-  if (Array.isArray(cachePricing.read) || ('write' in cachePricing && Array.isArray(cachePricing.write)))
-    throw new Error('Tiered pricing with cache is not supported');
+  // 2025-01-10: Now supporting tiered cache pricing
+  // Note: We use the total input tokens (new + cache) as the tier discriminator,
+  // as this aligns with how providers typically structure their pricing tiers
 
   // compute the input cache read costs
-  const $cacheRead = getLlmCostForTokens(tierTokens, inCacheReadTokens, cachePricing.read);
+  const $cacheRead = getLlmCostForTokens(inputTierTokens, inCacheReadTokens, cachePricing.read);
   if ($cacheRead === undefined) {
     console.log(`Missing cache read pricing for ${logLlmRefId}`);
     return { $c: $noCacheRounded, $code: 'partial-price' };
@@ -218,7 +216,7 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
   let $cacheWrite;
   switch (cachePricing.cType) {
     case 'ant-bp':
-      $cacheWrite = getLlmCostForTokens(tierTokens, inCacheWriteTokens, cachePricing.write);
+      $cacheWrite = getLlmCostForTokens(inputTierTokens, inCacheWriteTokens, cachePricing.write);
       break;
     case 'oai-ac':
       $cacheWrite = 0;
@@ -235,7 +233,7 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
   const $c = Math.round(($inNew + $cacheRead + $cacheWrite + $out) * USD_TO_CENTS * 10000) / 10000;
 
   // compute the advantage from caching
-  const $inAsIfNoCache = getLlmCostForTokens(tierTokens, sumInputTokens, pricing.input)!;
+  const $inAsIfNoCache = getLlmCostForTokens(inputTierTokens, sumInputTokens, pricing.input)!;
   const $cdCache = Math.round(($inAsIfNoCache - $inNew - $cacheRead - $cacheWrite) * USD_TO_CENTS * 10000) / 10000;
 
   // mark the costs as partial if the message was not completely received - i.e. the server did not tell us the final tokens count
