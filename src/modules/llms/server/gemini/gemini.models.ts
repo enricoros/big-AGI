@@ -139,6 +139,16 @@ const _knownGeminiModels: ({
 
   /// Generation 2.5
 
+  // 2.5 Pro Preview 06-05 version
+  {
+    id: 'models/gemini-2.5-pro-preview-06-05',
+    labelOverride: 'Gemini 2.5 Pro Preview 06-05', // overriding because the API does not have the version on this
+    isPreview: true,
+    chatPrice: gemini25ProPreviewPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
+    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    benchmark: { cbaElo: 1470 },
+  },
   // 2.5 Pro Preview 05-06 version
   {
     id: 'models/gemini-2.5-pro-preview-05-06',
@@ -146,12 +156,12 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1446 },
+    hidden: true, // superseded by 06-05 version
   },
   // 2.5 Pro Preview 03-25 version
   {
     id: 'models/gemini-2.5-pro-preview-03-25',
     isPreview: true,
-    // symLink: 'models/gemini-2.5-pro-preview-05-06', // Points to the newer version
     chatPrice: gemini25ProPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
@@ -776,6 +786,9 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 
 
 const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSchema>[] } = {
+
+  // The Gemini 2.5 Pro Preview model does not have a non-thinking variant,
+  // so we cannot add it here.
 
   // Adding non-thinking variant for the newest Gemini 2.5 Flash Preview 05-20 model
   'models/gemini-2.5-flash-preview-05-20': [{
