@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -38,7 +38,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
    - Latest stable     version  gemini-1.0-pro  <model>-<generation>-<variation>
    - Stable versions   gemini-1.0-pro-001       <model>-<generation>-<variation>-<version>
 
-   Gemini capabilities chart (updated 2025-05-27):
+   Gemini capabilities chart (updated 2025-06-05):
    - [table stakes] System instructions
    - JSON Mode, with optional JSON Schema
    - Adjustable Safety Settings
@@ -59,21 +59,24 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (May 27, 2025)
+// Pricing based on https://ai.google.dev/pricing (June 5, 2025)
 
 const gemini25ProPreviewPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
   output: [{ upTo: 200000, price: 10.00 }, { upTo: null, price: 15.00 }],
+  cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.31 }, { upTo: null, price: 0.625 }] },
 };
 
 const gemini25FlashPreviewNonThinkingPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.15, // text/image/video; audio is $1.00 but we don't differentiate yet
   output: 0.60, // non-thinking
+  cache: { cType: 'oai-ac', read: 0.0375 }, // text/image/video; audio is $0.25 but we don't differentiate yet
 };
 
 const gemini25FlashPreviewThinkingPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.15, // text/image/video; audio is $1.00 but we don't differentiate yet
   output: 3.50, // thinking
+  cache: { cType: 'oai-ac', read: 0.0375 }, // text/image/video; audio is $0.25 but we don't differentiate yet
 };
 
 const gemini25FlashNativeAudioPricing: ModelDescriptionSchema['chatPrice'] = {
@@ -94,7 +97,7 @@ const gemini25ProPreviewTTSPricing: ModelDescriptionSchema['chatPrice'] = {
 const gemini20FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10, // text/image/video; audio is $0.70 but we don't differentiate yet
   output: 0.40,
-  // Caching pricing available
+  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: 0.025 }, // text/image/video; audio is $0.175 but we don't differentiate yet
   // Image generation pricing: 0.039 - Image output is priced at $30 per 1,000,000 tokens. Output images up to 1024x1024px consume 1290 tokens and are equivalent to $0.039 per image.
 };
 
@@ -106,25 +109,24 @@ const gemini20FlashLivePricing: ModelDescriptionSchema['chatPrice'] = {
 const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.075,
   output: 0.30,
-  // Caching pricing available
 };
 
 const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 0.075 }, { upTo: null, price: 0.15 }],
   output: [{ upTo: 128000, price: 0.30 }, { upTo: null, price: 0.60 }],
-  // Caching available
+  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: [{ upTo: 128000, price: 0.01875 }, { upTo: null, price: 0.0375 }] },
 };
 
 const gemini15Flash8BPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 0.0375 }, { upTo: null, price: 0.075 }],
   output: [{ upTo: 128000, price: 0.15 }, { upTo: null, price: 0.30 }],
-  // Caching available
+  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: [{ upTo: 128000, price: 0.01 }, { upTo: null, price: 0.02 }] },
 };
 
 const gemini15ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 1.25 }, { upTo: null, price: 2.50 }],
   output: [{ upTo: 128000, price: 5.00 }, { upTo: null, price: 10.00 }],
-  // Caching available
+  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: [{ upTo: 128000, price: 0.3125 }, { upTo: null, price: 0.625 }] },
 };
 
 
@@ -154,7 +156,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.5-pro-preview-05-06',
     isPreview: true,
     chatPrice: gemini25ProPreviewPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
     benchmark: { cbaElo: 1446 },
     hidden: true, // superseded by 06-05 version
   },
@@ -163,7 +165,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.5-pro-preview-03-25',
     isPreview: true,
     chatPrice: gemini25ProPreviewPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
     benchmark: { cbaElo: 1439 },
     hidden: true, // hard-superseded, but keeping this as non-symlink in case Gemini restores it
@@ -173,7 +175,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.5-pro-exp-03-25',
     isPreview: true,
     chatPrice: geminiExpFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
     benchmark: { cbaElo: 1437 /* +1 because free */ },
     hidden: true, // seems to be discouraged - still available, but cannot rely on it
