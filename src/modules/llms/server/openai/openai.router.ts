@@ -25,7 +25,7 @@ import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToMode
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
 import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
-import { openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
+import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
@@ -278,7 +278,8 @@ export const llmOpenAIRouter = createTRPCRouter({
           models = openAIModels
             .sort(openRouterModelFamilySortFn)
             .map(openRouterModelToModelDescription)
-            .filter(desc => !!desc);
+            .filter(desc => !!desc)
+            .reduce(openRouterInjectVariants, [] as ModelDescriptionSchema[]);
           break;
 
       }
