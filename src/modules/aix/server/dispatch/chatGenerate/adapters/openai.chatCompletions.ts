@@ -120,27 +120,21 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       };
   }
 
-  // Handle Anthropic Claude thinking capability via OpenRouter
-  const hasThinkingSuffix = model.id.includes(':thinking');
-  if (hasThinkingSuffix && openAIDialect === 'openrouter') {
-    payload.model = model.id.replace(':thinking', '');
-  }
-  
-  // Get thinking budget from the model's vndAntThinkingBudget property
-  let thinkingBudget: number | undefined;
-  if (typeof model.vndAntThinkingBudget === 'number') {
-    thinkingBudget = model.vndAntThinkingBudget;
-  }
-  
-  // Add reasoning parameter for Claude 4 thinking capability via OpenRouter
-  if (openAIDialect === 'openrouter' && (thinkingBudget !== undefined || hasThinkingSuffix)) {
-    // Use explicitly configured budget if provided, otherwise fall back to default
-    const finalThinkingBudget = thinkingBudget !== undefined ? thinkingBudget : 1024;
-    
-    // OpenRouter expects reasoning.max_tokens for Anthropic's thinking feature
-    payload.reasoning = {
-      max_tokens: finalThinkingBudget,
-    };
+
+  // [Anthropic] via OpenAI API (OpenRouter) - https://openrouter.ai/docs/use-cases/reasoning-tokens
+  if (openAIDialect === 'openrouter' && model.vndAntThinkingBudget !== undefined) {
+
+    // vndAntThinkingBudget's presence indicates a user preference:
+    // - [x] a number, which is the budget in tokens
+    // - [ ] null: shall disable thinking, but openrouter does not support this?
+    if (model.vndAntThinkingBudget === null) {
+      // simply not setting the reasoning field downgrades this to a non-thinking model
+      // console.warn('OpenRouter does not support disabling thinking of Anthropic models. Using default.');
+    } else {
+      payload.reasoning = {
+        max_tokens: model.vndAntThinkingBudget || 1024,
+      };
+    }
   }
 
   if (hotFixOpenAIOFamily)
