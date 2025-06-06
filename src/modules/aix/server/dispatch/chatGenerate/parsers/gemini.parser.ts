@@ -243,8 +243,19 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         TIn: generationChunk.usageMetadata.promptTokenCount,
         TOut: generationChunk.usageMetadata.candidatesTokenCount,
       };
-      if (generationChunk.usageMetadata.thoughtsTokenCount)
+
+      // Add reasoning tokens if available
+      if (generationChunk.usageMetadata.thoughtsTokenCount) {
         metricsUpdate.TOutR = generationChunk.usageMetadata.thoughtsTokenCount;
+        metricsUpdate.TOut = (metricsUpdate.TOut ?? 0) + metricsUpdate.TOutR; // in gemini candidatesTokenCount does not include reasoning tokens
+      }
+
+      // Subtract auto-cached (read) input tokens
+      if (generationChunk.usageMetadata.cachedContentTokenCount) {
+        metricsUpdate.TCacheRead = generationChunk.usageMetadata.cachedContentTokenCount;
+        if ((metricsUpdate.TIn ?? 0) > metricsUpdate.TCacheRead)
+          metricsUpdate.TIn = (metricsUpdate.TIn ?? 0) - metricsUpdate.TCacheRead;
+      }
 
       if (isStreaming && timeToFirstEvent !== undefined)
         metricsUpdate.dtStart = timeToFirstEvent;

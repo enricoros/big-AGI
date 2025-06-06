@@ -685,7 +685,7 @@ export namespace GeminiWire_API_Generate_Content {
 
     // Modality breakdowns - mostly commented out because we don't want to spend energy parsing them for now (we don't use them)
     promptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
-    // cacheTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    cacheTokensDetails: z.array(ModalityTokenCount_schema).optional(),
     // candidatesTokensDetails: z.array(ModalityTokenCount_schema).optional(),
     // toolUsePromptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
   });
