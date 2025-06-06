@@ -86,6 +86,8 @@ const ModelParameterSpec_schema = z.object({
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
   initialValue: z.number().or(z.string()).nullable().optional(),
+  // special params
+  rangeOverride: z.tuple([z.number(), z.number()]).optional(), // [min, max]
 });
 
 export const ModelDescription_schema = z.object({
