@@ -25,7 +25,7 @@ import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToMode
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
 import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
-import { openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
+import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
@@ -183,18 +183,6 @@ export const llmOpenAIRouter = createTRPCRouter({
       // [OpenAI-dialects]: fetch openAI-style for all but Azure (will be then used in each dialect)
       const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire_API_Models_List.Response>(access, '/v1/models');
 
-      // Log raw models from OpenRouter API
-      if (access.dialect === 'openrouter') {
-        console.log('[DEBUG] openai.router.ts - Raw OpenRouter Models List (sample):', JSON.stringify(openAIWireModelsResponse?.data?.slice(0, 5), null, 2));
-        
-        // Log all Anthropic Claude models to check the exact IDs
-        const claudeModels = openAIWireModelsResponse?.data?.filter((model: any) => model.id.startsWith('anthropic/claude'));
-        console.log('[DEBUG] openai.router.ts - All Claude Models:', JSON.stringify(claudeModels, null, 2));
-        
-        // Count how many models we have total from OpenRouter
-        console.log('[DEBUG] openai.router.ts - Total models from OpenRouter:', openAIWireModelsResponse?.data?.length);
-      }
-
       // [Together] missing the .data property
       if (access.dialect === 'togetherai')
         return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
@@ -286,90 +274,12 @@ export const llmOpenAIRouter = createTRPCRouter({
           break;
 
         case 'openrouter':
-          console.log('[DEBUG] openai.router.ts - Processing OpenRouter models');
-          
-          // Look for any Claude 4 models to determine actual IDs
-          const allClaudeModelIds = openAIModels
-            .filter((m: any) => m.id.startsWith('anthropic/claude'))
-            .map((m: any) => m.id);
-          
-          console.log('[DEBUG] openai.router.ts - All Claude model IDs:', allClaudeModelIds);
-          
-          // Look specifically for Claude Opus 4 and Sonnet 4 models (using exact IDs)
-          const claudeOpus4Models = openAIModels.filter((m: any) => 
-            m.id === 'anthropic/claude-opus-4');
-          const claudeSonnet4Models = openAIModels.filter((m: any) => 
-            m.id === 'anthropic/claude-sonnet-4');
-          
-          console.log('[DEBUG] openai.router.ts - Claude Opus 4 models:', 
-            claudeOpus4Models.map((m: any) => m.id));
-          console.log('[DEBUG] openai.router.ts - Claude Sonnet 4 models:', 
-            claudeSonnet4Models.map((m: any) => m.id));
-          
-          // Define the Claude model IDs that should have thinking variants
-          // Use actual IDs found in the OpenRouter response if possible
-          const CLAUDE_MODELS_FOR_THINKING_VARIANT = [
-            // Try to find the actual model IDs dynamically if they exist
-            claudeOpus4Models.length > 0 ? claudeOpus4Models[0].id : 'anthropic/claude-opus-4',
-            claudeSonnet4Models.length > 0 ? claudeSonnet4Models[0].id : 'anthropic/claude-sonnet-4',
-          ];
-          
-          console.log('[DEBUG] openai.router.ts - Using these IDs for thinking variants:', 
-            CLAUDE_MODELS_FOR_THINKING_VARIANT);
-          
           // openRouterStatTokenizers(openAIModels);
           models = openAIModels
             .sort(openRouterModelFamilySortFn)
-            .flatMap(rawOpenRouterModel => {
-              const standardDescription = openRouterModelToModelDescription(rawOpenRouterModel);
-              if (!standardDescription) {
-                return []; // Skip if standard model description fails
-              }
-
-              const modelIdFromOpenRouter = rawOpenRouterModel.id;
-              
-              // Log when we find one of our target models
-              if (CLAUDE_MODELS_FOR_THINKING_VARIANT.includes(modelIdFromOpenRouter)) {
-                console.log('[DEBUG] openai.router.ts - Found target Claude model:', modelIdFromOpenRouter);
-              }
-
-              // Check if this model is one of our targets and doesn't already have a thinking indicator
-              if (CLAUDE_MODELS_FOR_THINKING_VARIANT.includes(modelIdFromOpenRouter) && 
-                  !modelIdFromOpenRouter.includes(':thinking')) {
-                console.log('[DEBUG] openai.router.ts - Creating thinking variant for:', modelIdFromOpenRouter);
-                
-                // Create the "thinking" variant based on the standard one
-                const thinkingDescription: ModelDescriptionSchema = {
-                  ...standardDescription,
-                  id: `${standardDescription.id}:thinking`, // Append suffix for uniqueness
-                  label: `${standardDescription.label} (thinking)`,
-                  // Add parameter spec for the thinking budget
-                  parameterSpecs: [
-                    ...(standardDescription.parameterSpecs || []),
-                    {
-                      paramId: 'llmVndAntThinkingBudget',
-                      initialValue: 1024,
-                    },
-                  ],
-                };
-                
-                console.log('[DEBUG] openai.router.ts - Created standard model:', standardDescription.id, standardDescription.label);
-                console.log('[DEBUG] openai.router.ts - Created thinking model:', thinkingDescription.id, thinkingDescription.label);
-                
-                return [standardDescription, thinkingDescription];
-              } else {
-                return [standardDescription]; // Only the standard version
-              }
-            })
-            .filter(desc => !!desc);
-          
-          // Count how many models we have after processing
-          console.log('[DEBUG] openai.router.ts - Total final models after processing:', models.length);
-          
-          // Log the mapped OpenRouter model descriptions (focusing on Anthropic models)
-          const claudeModelsAfterProcessing = models.filter(m => m.id && m.id.includes('anthropic/claude'));
-          console.log('[DEBUG] openai.router.ts - All Claude models after processing:', 
-            JSON.stringify(claudeModelsAfterProcessing.map(m => ({ id: m.id, label: m.label })), null, 2));
+            .map(openRouterModelToModelDescription)
+            .filter(desc => !!desc)
+            .reduce(openRouterInjectVariants, [] as ModelDescriptionSchema[]);
           break;
 
       }

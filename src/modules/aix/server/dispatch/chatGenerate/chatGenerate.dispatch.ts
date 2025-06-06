@@ -98,9 +98,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           body: aixToOpenAIChatCompletions(access.dialect, model, chatGenerate, false, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
-        chatGenerateParse: streaming 
-          ? createOpenAIChatCompletionsChunkParser() 
-          : createOpenAIChatCompletionsParserNS(),
+        chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
   }
 }
