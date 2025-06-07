@@ -25,6 +25,7 @@ import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
 import { useOpenInWebEditors } from './code-buttons/useOpenInWebEditors';
+import { useStickyCodeOverlay } from './useStickyCodeOverlay';
 
 // style for line-numbers
 import './RenderCode.css';
@@ -130,6 +131,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // external state
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenElement(fullScreenElementRef);
+  const { overlayRef, overlayBoundaryRef } = useStickyCodeOverlay({ disabled: props.optimizeLightweight || isFullscreen });
+
+  // sticky overlay positioning
   const { uiComplexityMode, showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
     uiComplexityMode: state.complexityMode,
     showLineNumbers: state.renderCodeLineNumbers,
@@ -245,6 +249,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   return (
     <Box
+      ref={overlayBoundaryRef}
       // onMouseEnter={handleMouseOverEnter}
       // onMouseLeave={handleMouseOverLeave}
       sx={renderCodecontainerSx}
@@ -285,7 +290,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
       {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
       {(ALWAYS_SHOW_OVERLAY /*|| isHovering*/) && (
-        <Box className={overlayButtonsClassName} sx={overlayGridSx}>
+        <Box
+          ref={overlayRef}
+          className={overlayButtonsClassName}
+          sx={overlayGridSx}
+        >
 
           {/* [row 1] */}
           <Box sx={overlayFirstRowSx}>
