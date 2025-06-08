@@ -298,8 +298,18 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
       _set(state => {
         if (state.chatPaneFocusIndex === paneIndex)
           return state;
+
+        const newFocusIndex =
+          (paneIndex >= 0 && paneIndex < state.chatPanes.length) ? paneIndex // Valid index, set focus to it
+            /**
+             * If trying to set an invalid index but we have panes - default to first pane (0)
+             * This fixed the bug where maxing out a pane would cause the focus to 'null' out
+             */
+            : (paneIndex >= 0 && state.chatPanes.length > 0) ? 0
+              : null; // Unfocus
+
         return {
-          chatPaneFocusIndex: paneIndex >= 0 && paneIndex < state.chatPanes.length ? paneIndex : null,
+          chatPaneFocusIndex: newFocusIndex,
         };
       }),
 
