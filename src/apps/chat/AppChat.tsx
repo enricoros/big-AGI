@@ -637,8 +637,10 @@ export function AppChat() {
             defaultSize={(_panesCount === 3 && idx === 1) ? 34 : Math.round(100 / _panesCount)}
             // minSize={20 /* IMPORTANT: this forces a reflow even on a simple on hover */}
             onClick={(event) => {
-              const setFocus = chatPanes.length < 2 || !event.altKey;
-              setFocusedPaneIndex(setFocus ? idx : -1);
+              // Alt + Click: undocumented feature to clear focus
+              if (event.altKey && chatPanes.length > 1)
+                return setFocusedPaneIndex(-1);
+              setFocusedPaneIndex(idx);
             }}
             onCollapse={() => {
               // NOTE: despite the delay to try to let the draggin settle, there seems to be an issue with the Pane locking the screen
