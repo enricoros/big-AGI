@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { useTheme } from '@mui/joy';
+import { Box, useTheme } from '@mui/joy';
 
 import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
@@ -51,6 +51,7 @@ import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
+import { composerCompressorMixinSx, useComposerAutoHide } from './components/composer/useComposerAutoHide';
 import { PaneTitleOverlay } from './components/PaneTitleOverlay';
 import { usePanesManager } from './components/panes/store-panes-manager';
 
@@ -105,6 +106,8 @@ const composerOpenSx: SxProps = {
   // hack: eats the bottom of the last message (as it has a 1px divider)
   // NOTE: commented on 2024-05-13, as other content was stepping on the border due to it and missing zIndex
   // mt: '-1px',
+  // enables the composer to be compressed
+  ...composerCompressorMixinSx,
 };
 
 const composerOpenMobileSx: SxProps = {
@@ -139,6 +142,7 @@ export function AppChat() {
 
   // external state
   const theme = useTheme();
+  const [composerHasContent, setComposerHasContent] = React.useState(false);
 
   const isMobile = useIsMobile();
   const isTallScreen = useIsTallScreen();
@@ -209,6 +213,8 @@ export function AppChat() {
     return activeFolder?.id ?? null;
   });
 
+  // Composer Auto-hiding
+  const composerAutoHide = useComposerAutoHide(!!beamOpenStoreInFocusedPane, composerHasContent, isMobile);
 
   // Window actions
 
@@ -747,22 +753,29 @@ export function AppChat() {
 
     </PanelGroup>
 
-    <Composer
-      isMobile={isMobile}
-      chatLLM={chatLLM}
-      composerTextAreaRef={composerTextAreaRef}
-      targetConversationId={focusedPaneConversationId}
-      capabilityHasT2I={capabilityHasT2I}
-      capabilityHasT2IEdit={capabilityHasT2IEdit}
-      isMulticast={!isMultiConversationId ? null : isComposerMulticast}
-      isDeveloperMode={isFocusedChatDeveloper}
-      onAction={handleComposerAction}
-      onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
-      onConversationsImportFromFiles={handleConversationsImportFromFiles}
-      onTextImagine={handleImagineFromText}
-      setIsMulticast={setIsComposerMulticast}
-      sx={beamOpenStoreInFocusedPane ? composerClosedSx : isMobile ? composerOpenMobileSx : composerOpenSx}
-    />
+    {/* Composer with auto-hide */}
+    <Box {...composerAutoHide.compressorProps}>
+      <Composer
+        isMobile={isMobile}
+        chatLLM={chatLLM}
+        composerTextAreaRef={composerTextAreaRef}
+        targetConversationId={focusedPaneConversationId}
+        capabilityHasT2I={capabilityHasT2I}
+        capabilityHasT2IEdit={capabilityHasT2IEdit}
+        isMulticast={!isMultiConversationId ? null : isComposerMulticast}
+        isDeveloperMode={isFocusedChatDeveloper}
+        onAction={handleComposerAction}
+        onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
+        onConversationsImportFromFiles={handleConversationsImportFromFiles}
+        onTextImagine={handleImagineFromText}
+        setIsMulticast={setIsComposerMulticast}
+        onComposerHasContent={setComposerHasContent}
+        sx={isMobile ? composerOpenMobileSx : composerOpenSx}
+      />
+    </Box>
+
+    {/* Hover zone for auto-hide */}
+    {composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
 
     {/* Diagrams */}
     {!!diagramConfig && (
