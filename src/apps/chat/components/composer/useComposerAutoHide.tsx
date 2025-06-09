@@ -54,7 +54,7 @@ export function useComposerAutoHide(forceHide: boolean, isContentful: boolean, _
   const [isFocused, setIsFocused] = React.useState(false);
   const [isHovering, setIsHovering] = React.useState(false);
   const [forceShowUntil, setForceShowUntil] = React.useState<number>(0);
-  console.log('useComposerAutoHide', { forceHide, isContentful, _isMobile, isAutoHidden, isFocused, isHovering, forceShowUntil });
+
   // external state
   const autoHideEnabled = useUXLabsStore((state) => !_isMobile && state.labsAutoHideComposer);
 
