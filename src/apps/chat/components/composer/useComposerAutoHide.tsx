@@ -8,9 +8,10 @@ const HIDE_DELAY = 1500; // milliseconds before hiding after mouse leaves
 const FORCE_SHOW_DURATION = 3000; // milliseconds to keep shown after user interaction
 
 
-export const composerCompressorMixinSx = {
+const compressibleStyle = {
   minHeight: 0, // makes the compressor collapse this
   overflow: 'hidden', // when collapsing cuts the content
+  contain: 'paint', // improves performance by limiting the area to paint
 
   // Note: the following in the composer's style would make for a much better animation
   // sx={{
@@ -142,6 +143,7 @@ export function useComposerAutoHide(forceHide: boolean, isContentful: boolean, _
   return {
     isHidden: doHide,
     compressorProps,
+    compressibleStyle,
     detectorProps,
     forceShow,
   };

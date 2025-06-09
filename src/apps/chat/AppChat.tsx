@@ -51,8 +51,8 @@ import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
-import { composerCompressorMixinSx, useComposerAutoHide } from './components/composer/useComposerAutoHide';
 import { PaneTitleOverlay } from './components/PaneTitleOverlay';
+import { useComposerAutoHide } from './components/composer/useComposerAutoHide';
 import { usePanesManager } from './components/panes/store-panes-manager';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -106,8 +106,6 @@ const composerOpenSx: SxProps = {
   // hack: eats the bottom of the last message (as it has a 1px divider)
   // NOTE: commented on 2024-05-13, as other content was stepping on the border due to it and missing zIndex
   // mt: '-1px',
-  // enables the composer to be compressed
-  ...composerCompressorMixinSx,
 } as const;
 
 const composerOpenMobileSx: SxProps = {
@@ -751,7 +749,7 @@ export function AppChat() {
     </PanelGroup>
 
     {/* Composer with auto-hide */}
-    <Box {...composerAutoHide.compressorProps}>
+    <Box {...composerAutoHide.compressorProps}><div style={composerAutoHide.compressibleStyle}>
       <Composer
         isMobile={isMobile}
         chatLLM={chatLLM}
@@ -769,7 +767,7 @@ export function AppChat() {
         onComposerHasContent={setComposerHasContent}
         sx={isMobile ? composerOpenMobileSx : composerOpenSx}
       />
-    </Box>
+    </div></Box>
 
     {/* Hover zone for auto-hide */}
     {!isMobile && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
