@@ -108,21 +108,18 @@ const composerOpenSx: SxProps = {
   // mt: '-1px',
   // enables the composer to be compressed
   ...composerCompressorMixinSx,
-};
+} as const;
 
 const composerOpenMobileSx: SxProps = {
   zIndex: 21, // allocates the surface, possibly enables shadow if we like
-  // backgroundColor: themeBgAppChatComposer, // inlined in the Composer
-  transition: 'background-color 0.5s ease-out',
-  borderTop: `1px solid`,
-  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   pt: 0.5, // have some breathing room
   // boxShadow: '0px -1px 8px -2px rgba(0, 0, 0, 0.4)',
-};
+  ...composerOpenSx,
+} as const;
 
-const composerClosedSx: SxProps = {
-  display: 'none',
-};
+// const composerClosedSx: SxProps = {
+//   display: 'none',
+// };
 
 
 export function AppChat() {
@@ -775,7 +772,7 @@ export function AppChat() {
     </Box>
 
     {/* Hover zone for auto-hide */}
-    {composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
+    {!isMobile && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
 
     {/* Diagrams */}
     {!!diagramConfig && (
