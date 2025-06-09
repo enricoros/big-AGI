@@ -116,6 +116,7 @@ export function Composer(props: {
   onConversationsImportFromFiles: (files: File[]) => Promise<void>;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
+  onComposerHasContent: (hasContent: boolean) => void;
   sx?: SxProps;
 }) {
 
@@ -243,6 +244,13 @@ export function Composer(props: {
       setComposeText(startupText);
     }
   }, [setComposeText, setStartupText, startupText]);
+
+  // Effect: notify the parent of presence/absence of content
+  const isContentful = composeText.length > 0 || !!attachmentDrafts.length;
+  const { onComposerHasContent } = props;
+  React.useEffect(() => {
+    onComposerHasContent?.(isContentful);
+  }, [isContentful, onComposerHasContent]);
 
 
   // Overlay actions

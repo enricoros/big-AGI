@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, Switch, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CodeIcon from '@mui/icons-material/Code';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
@@ -33,6 +34,7 @@ export function UxLabsSettings() {
     labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks,
     labsHighPerformance, setLabsHighPerformance,
     labsShowCost, setLabsShowCost,
+    labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsDevMode, setLabsDevMode,
     labsDevNoStreaming, setLabsDevNoStreaming,
@@ -104,6 +106,11 @@ export function UxLabsSettings() {
     {!isMobile && <FormSwitchControl
       title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Shortcuts Bar</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
       checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
+    />}
+
+    {(!isMobile || labsAutoHideComposer) && <FormSwitchControl
+      title={<><EditNoteIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Auto-hide input</>} description={labsAutoHideComposer ? 'Hover to show' : 'Always visible'}
+      checked={labsAutoHideComposer} onChange={setLabsAutoHideComposer}
     />}
 
     {/*
