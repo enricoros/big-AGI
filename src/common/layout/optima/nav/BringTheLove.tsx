@@ -43,11 +43,12 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
         </DesktopNavIcon>
       ) : (
         <Button
+          variant='plain'
+          color='neutral'
           component={Link} href={props.link} target='_blank' noLinkStyle
           onClick={() => setLoved(true)}
           sx={{
             '&:hover': { animation: `${animationColorRainbow} 5s linear infinite` },
-            background: 'transparent',
             ...props.sx,
           }}
         >
