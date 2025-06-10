@@ -209,7 +209,8 @@ export function AppChat() {
   });
 
   // Composer Auto-hiding
-  const composerAutoHide = useComposerAutoHide(!!beamOpenStoreInFocusedPane, composerHasContent, isMobile);
+  const forceComposerHide = !!beamOpenStoreInFocusedPane;
+  const composerAutoHide = useComposerAutoHide(forceComposerHide, composerHasContent);
 
   // Window actions
 
@@ -749,28 +750,30 @@ export function AppChat() {
     </PanelGroup>
 
     {/* Composer with auto-hide */}
-    <Box {...composerAutoHide.compressorProps}><div style={composerAutoHide.compressibleStyle}>
-      <Composer
-        isMobile={isMobile}
-        chatLLM={chatLLM}
-        composerTextAreaRef={composerTextAreaRef}
-        targetConversationId={focusedPaneConversationId}
-        capabilityHasT2I={capabilityHasT2I}
-        capabilityHasT2IEdit={capabilityHasT2IEdit}
-        isMulticast={!isMultiConversationId ? null : isComposerMulticast}
-        isDeveloperMode={isFocusedChatDeveloper}
-        onAction={handleComposerAction}
-        onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
-        onConversationsImportFromFiles={handleConversationsImportFromFiles}
-        onTextImagine={handleImagineFromText}
-        setIsMulticast={setIsComposerMulticast}
-        onComposerHasContent={setComposerHasContent}
-        sx={isMobile ? composerOpenMobileSx : composerOpenSx}
-      />
-    </div></Box>
+    <Box {...composerAutoHide.compressorProps}>
+      <div style={composerAutoHide.compressibleStyle}>
+        <Composer
+          isMobile={isMobile}
+          chatLLM={chatLLM}
+          composerTextAreaRef={composerTextAreaRef}
+          targetConversationId={focusedPaneConversationId}
+          capabilityHasT2I={capabilityHasT2I}
+          capabilityHasT2IEdit={capabilityHasT2IEdit}
+          isMulticast={!isMultiConversationId ? null : isComposerMulticast}
+          isDeveloperMode={isFocusedChatDeveloper}
+          onAction={handleComposerAction}
+          onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
+          onConversationsImportFromFiles={handleConversationsImportFromFiles}
+          onTextImagine={handleImagineFromText}
+          setIsMulticast={setIsComposerMulticast}
+          onComposerHasContent={setComposerHasContent}
+          sx={isMobile ? composerOpenMobileSx : composerOpenSx}
+        />
+      </div>
+    </Box>
 
     {/* Hover zone for auto-hide */}
-    {!isMobile && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
+    {!forceComposerHide && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
 
     {/* Diagrams */}
     {!!diagramConfig && (
