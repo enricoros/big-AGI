@@ -23,6 +23,9 @@ function DrawerContentPortal() {
         // layout: column
         display: 'flex',
         flexDirection: 'column',
+        // (optional) style: cast shadow to the nav items
+        // zIndex: 1,
+        // boxShadow: '0 2px 4px rgb(var(--joy-palette-neutral-darkChannel) / 14%)',
       }}
     />
   );
@@ -63,12 +66,18 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
         // },
       }}
       slotProps={{
+        backdrop: {
+          sx: {
+            backdropFilter: 'none',
+          },
+        },
         content: {
           sx: {
             // style: round the right drawer corners
             backgroundColor: OPTIMA_DRAWER_BACKGROUND,
             borderTopRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
             borderBottomRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+            // boxShadow: 'none',
           },
         },
       }}
