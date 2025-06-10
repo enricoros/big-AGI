@@ -108,10 +108,10 @@ export function UxLabsSettings() {
       checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
     />}
 
-    {(!isMobile || labsAutoHideComposer) && <FormSwitchControl
+    <FormSwitchControl
       title={<><EditNoteIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Auto-hide input</>} description={labsAutoHideComposer ? 'Hover to show' : 'Always visible'}
       checked={labsAutoHideComposer} onChange={setLabsAutoHideComposer}
-    />}
+    />
 
     {/*
       Other Graduated (removed or backlog):

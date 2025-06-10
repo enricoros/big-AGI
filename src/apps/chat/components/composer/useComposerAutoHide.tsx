@@ -40,15 +40,16 @@ const _styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    height: '40px',
-    // backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)', // Uncomment for debugging
+    height: '2rem',
+    backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
+    // backgroundColor: { xs: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)', md: 'transparent' },
     zIndex: 20,
   } as const,
 
 } as const;
 
 
-export function useComposerAutoHide(forceHide: boolean, isContentful: boolean, _isMobile: boolean) {
+export function useComposerAutoHide(forceHide: boolean, isContentful: boolean) {
 
   // state
   const [isAutoHidden, setAutoHidden] = React.useState(false);
@@ -57,7 +58,7 @@ export function useComposerAutoHide(forceHide: boolean, isContentful: boolean, _
   const [forceShowUntil, setForceShowUntil] = React.useState<number>(0);
 
   // external state
-  const autoHideEnabled = useUXLabsStore((state) => !_isMobile && state.labsAutoHideComposer);
+  const autoHideEnabled = useUXLabsStore((state) => state.labsAutoHideComposer);
 
   const hideTimeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
 
