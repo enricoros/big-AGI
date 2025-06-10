@@ -4,7 +4,6 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
-import { MobileNavItems } from '../nav/MobileNavItems';
 import { MobilePreferencesListItem } from './MobilePreferencesListItem';
 import { OPTIMA_DRAWER_MOBILE_RADIUS, OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { OptimaPanelGroupedList } from './OptimaPanelGroupedList';
@@ -70,8 +69,6 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
 
       </Box>
 
-      {/* [Mobile] Nav Items */}
-      <MobileNavItems currentApp={props.currentApp} />
 
     </Drawer>
   );
