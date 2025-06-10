@@ -4,6 +4,7 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
+import { MobileNavItems } from '../nav/MobileNavItems';
 import { OPTIMA_DRAWER_BACKGROUND, OPTIMA_DRAWER_MOBILE_RADIUS } from '../optima.config';
 import { optimaCloseDrawer, useOptimaDrawerOpen } from '../useOptima';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
@@ -70,6 +71,9 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
     >
 
       <DrawerContentPortal />
+
+      {/* [Mobile] Nav Items */}
+      <MobileNavItems currentApp={props.currentApp} />
 
     </Drawer>
   );
