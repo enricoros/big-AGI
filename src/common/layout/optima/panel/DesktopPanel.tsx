@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, List, Sheet, styled } from '@mui/joy';
 
 import { NavItemApp } from '~/common/app.nav';
-import { themeScalingMap, themeZIndexDesktopPanel } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap, themeZIndexDesktopPanel, } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
 
@@ -66,8 +66,7 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
 
   // external state
   const isMobile = useIsMobile();
-  const _contentScaling = useUIContentScaling();
-  const contentScaling = isMobile ? 'md' : _contentScaling;
+  const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
   const { panelShownAsPanel: isOpen, panelAsPopup } = useOptimaPanelOpen(false, props.currentApp);
 
   // Close the panel if the current page goes for a popup instead
