@@ -8,8 +8,6 @@ import { themeScalingMap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
 
-import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
-
 
 const gutterSx: SxProps = {
   px: 'var(--ListItem-paddingX)',
@@ -78,11 +76,16 @@ const groupListSx: SxProps = {
   borderRadius: 0,
   background: 'transparent',
   flexGrow: 0,
-  mb: OPTIMA_PANEL_GROUPS_SPACING,
+
+  // NOTE 2: removed the margin-bottom, so the spacing is used as gap only
+  // NOTE: switched to smaller margin on mobile, keeping it larger on desktop
+  // mb: { xs: 1, md: OPTIMA_PANEL_GROUPS_SPACING } as const,
+  // mb: OPTIMA_PANEL_GROUPS_SPACING,
+
   // fontSize: '0.9375rem', // 15px (14 too small, 16 too big?)
   // py: 0,
   // py: 'var(--ListDivider-gap)',
-};
+} as const;
 
 
 export function OptimaPanelGroupedList(props: {
