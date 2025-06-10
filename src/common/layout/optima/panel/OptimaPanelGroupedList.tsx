@@ -5,6 +5,7 @@ import { Box, Checkbox, MenuList } from '@mui/joy';
 
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { themeScalingMap } from '~/common/app.theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
@@ -97,7 +98,9 @@ export function OptimaPanelGroupedList(props: {
   const [_expanded, setExpanded] = React.useState(props.startExpanded === true);
 
   // external state
-  const contentScaling = useUIContentScaling();
+  const isMobile = useIsMobile();
+  const _contentScaling = useUIContentScaling();
+  const contentScaling = isMobile ? 'md' : _contentScaling;
 
   // derived state
   const isCollapsible = !!props.persistentCollapsibleId;

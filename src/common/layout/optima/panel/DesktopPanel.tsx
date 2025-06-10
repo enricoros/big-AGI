@@ -5,6 +5,7 @@ import { Box, List, Sheet, styled } from '@mui/joy';
 
 import { NavItemApp } from '~/common/app.nav';
 import { themeScalingMap, themeZIndexDesktopPanel } from '~/common/app.theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { PanelContentPortal } from './PanelContentPortal';
@@ -64,7 +65,9 @@ const sheetClosedSx: SxProps = {
 export function DesktopPanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const contentScaling = useUIContentScaling();
+  const isMobile = useIsMobile();
+  const _contentScaling = useUIContentScaling();
+  const contentScaling = isMobile ? 'md' : _contentScaling;
   const { panelShownAsPanel: isOpen, panelAsPopup } = useOptimaPanelOpen(false, props.currentApp);
 
   // Close the panel if the current page goes for a popup instead
