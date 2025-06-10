@@ -206,7 +206,7 @@ export function ChatPane(props: {
     <OptimaPanelGroupedList title='Persona'>
       <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
         <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
-        System Instruction
+        Show Instruction
         {/*<FormLabelStart title='View System Instruction' />*/}
         <Switch size='sm' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
         {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
