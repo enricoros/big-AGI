@@ -21,7 +21,7 @@ export function MobilePreferencesListItem(props: { autoClosePanel?: boolean }) {
     <ListItem endAction={<DarkModeToggleButton />}>
       <ListItemButton onClick={handleShowPreferences}>
         <ListItemDecorator><SettingsIcon /></ListItemDecorator>
-        Big-AGI Preferences{/*<KeyStroke combo='Ctrl + ,' />*/}
+        Preferences{/*<KeyStroke combo='Ctrl + ,' />*/}
       </ListItemButton>
     </ListItem>
   );
