@@ -33,7 +33,8 @@ const headerSx: SxProps = {
   backgroundColor: 'background.level1',
   borderBottom: '1px solid',
   borderTop: '1px solid',
-  borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
+  borderTopColor: 'var(--joy-palette-neutral-outlinedDisabledBorder)',
+  borderBottomColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.05)',
 
   // mimics ListItem
   px: 'var(--ListItem-paddingX, 0.75rem)',
@@ -60,11 +61,17 @@ const headerSx: SxProps = {
       backgroundColor: 'background.level2',
     },
   },
+
+  // if expanded, soften the bottom border
+  '&[aria-expanded="false"]': {
+    backgroundColor: 'background.surface',
+    borderColor: 'transparent',
+  },
 };
 
 const headerTitleSx: SxProps = {
   color: 'text.tertiary',
-  fontSize: 'sm',
+  fontSize: 'xs',
   fontWeight: 'lg',
 };
 
@@ -121,6 +128,7 @@ export function OptimaPanelGroupedList(props: {
       {/* Header */}
       {(!!props.title || isCollapsible) && (
         <Box
+          aria-expanded={isExpanded}
           onClick={isCollapsible ? toggleExpanded : undefined}
           role={isCollapsible ? 'button' : undefined}
           sx={headerSx}
