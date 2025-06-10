@@ -71,7 +71,7 @@ const headerSx: SxProps = {
 
 const headerTitleSx: SxProps = {
   color: 'text.tertiary',
-  fontSize: 'xs',
+  // fontSize: 'xs',
   fontWeight: 'lg',
 };
 
@@ -110,6 +110,7 @@ export function OptimaPanelGroupedList(props: {
   // external state
   const isMobile = useIsMobile();
   const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
+  const smallerContentScaling = adjustContentScaling(contentScaling, -1);
 
   // derived state
   const isCollapsible = !!props.persistentCollapsibleId;
@@ -133,7 +134,7 @@ export function OptimaPanelGroupedList(props: {
           role={isCollapsible ? 'button' : undefined}
           sx={headerSx}
         >
-          <Box sx={headerTitleSx}>{props.title}</Box>
+          <Box fontSize={smallerContentScaling} sx={headerTitleSx}>{props.title}</Box>
           {isCollapsible && <Checkbox size='md' variant='outlined' color='neutral' checked={isExpanded} />}
         </Box>
       )}
