@@ -1,18 +1,71 @@
 import * as React from 'react';
 import Router from 'next/router';
 
-import { Box, Button, ButtonGroup, Sheet } from '@mui/joy';
+import { Box, Button, ButtonGroup, ColorPaletteProp, Sheet } from '@mui/joy';
 
+import { ROUTE_APP_NEWS } from '~/common/app.routes';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
+
 import { BringTheLove } from './BringTheLove';
+import { optimaCloseDrawer, optimaOpenModels } from '../useOptima';
 
 
-import { navigateToNews } from '~/common/app.routes';
-import { optimaOpenModels } from '~/common/layout/optima/useOptima';
+// configuration
+const INVERT_PANE = true; // if true, the pane will be darker
+const COLOR_PANE: ColorPaletteProp = 'neutral';
+
+
+const _styles = {
+
+  sheet: {
+    // borderTopLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+    // borderTopRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+    display: 'grid',
+    rowGap: 0.5,
+    py: 2,
+    ...(INVERT_PANE ? {} : {
+      borderTop: '1px solid',
+      borderTopColor: 'divider',
+    }),
+  } as const,
+
+  appsButtonGroup: {
+    '--ButtonGroup-separatorSize': 0,
+    '--ButtonGroup-connected': 0,
+    gap: 1,
+    justifyContent: 'center',
+    overflowX: 'auto',
+  } as const,
+
+  button: {
+    minWidth: '5.5rem',
+    p: '0.5rem 0 0.375rem',
+    borderRadius: 'sm',
+    color: INVERT_PANE ? 'text.secondary' : undefined,
+    fontWeight: 'sm',
+    lineHeight: 'xs',
+    '&[aria-selected="true"]': {
+      boxShadow: INVERT_PANE ? `inset 1px 1px 3px -2px var(--joy-palette-${COLOR_PANE}-solidBg)` : undefined,
+      // backgroundColor: INVERT_PANE ? undefined : 'background.popup',
+      color: INVERT_PANE ? 'text.primary' : undefined,
+      fontWeight: 'lg',
+    },
+    // layout
+    flexDirection: 'column',
+    gap: 0.75,
+  } as const,
+
+  linksGroup: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: 1,
+  } as const,
+
+} as const;
+
 
 /**
- * This is used from the Menu of the Pagebar, to have nav items on Mobile, before we add
- * a dedicated Mobile Navigation bar.
+ * This can be plugged to the Drawer or Panel, to have nav items on Mobile.
  */
 export function MobileNavItems(props: { currentApp?: NavItemApp }) {
 
@@ -20,6 +73,12 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
   let crossedDivider = false;
   const visibleApps: NavItemApp[] = [];
   // const overflowApps: NavItemApp[] = [];
+
+  const handleNavigate = React.useCallback((path: string, closeDrawer: boolean = true) => {
+    void Router.push(path);
+    if (closeDrawer)
+      optimaCloseDrawer();
+  }, []);
 
   navItems.apps.forEach((app) => {
     if (!checkVisibileIcon(app, true, props.currentApp)) return;
@@ -35,53 +94,43 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
 
   return (
 
-    <Sheet variant='solid' invertedColors sx={{
-      display: 'grid',
-      gap: 1,
-      p: 1,
-    }}>
+    <Sheet color={COLOR_PANE} variant={INVERT_PANE ? 'solid' : 'soft'} invertedColors={INVERT_PANE} sx={_styles.sheet}>
 
       {/* Group 1: Apps */}
       <ButtonGroup
         component='nav'
-        variant='plain'
-        sx={{
-          '--ButtonGroup-separatorSize': 0,
-          '--ButtonGroup-connected': 0,
-          gap: 1,
-          justifyContent: 'center',
-          '& .MuiButton-startDecorator': { mx: 'auto', py: 0.5 },
-        }}
+        sx={_styles.appsButtonGroup}
       >
         {visibleApps.map((app) => {
           const isActive = app === props.currentApp;
           return (
             <Button
               key={'app-' + (app.mobileName || app.name)}
+              aria-selected={isActive}
               size='sm'
-              variant={isActive ? 'solid' : undefined}
-              onClick={() => Router.push(app.landingRoute || app.route)}
-              sx={{ flexDirection: 'column', gap: 0, minWidth: 80, py: 1 }}
-              startDecorator={(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}
+              color={COLOR_PANE}
+              variant={isActive ? (INVERT_PANE ? 'soft' : 'solid') : 'plain'}
+              onClick={() => handleNavigate(app.landingRoute || app.route, !!app.hideDrawer)}
+              sx={_styles.button}
             >
-              {app.mobileName || app.name}
+              {(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}
+              <Box component='span'>
+                {app.mobileName || app.name}
+              </Box>
             </Button>
           );
         })}
       </ButtonGroup>
 
       {/* Group 2: Modals & Social Links */}
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: 1,
-      }}>
+      <Box sx={_styles.linksGroup}>
         <Button
           size='sm'
           color='neutral'
-          variant={props.currentApp?.route === '/news' ? 'solid' : 'plain'}
-          onClick={() => navigateToNews()}
-          sx={{ minWidth: 80 }}
+          aria-selected={props.currentApp?.route === '/news'}
+          variant={props.currentApp?.route === '/news' ? (INVERT_PANE ? 'soft' : 'solid') : 'plain'}
+          onClick={() => handleNavigate(ROUTE_APP_NEWS, true)}
+          sx={_styles.button}
         >
           News
         </Button>
@@ -92,7 +141,7 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
           color='neutral'
           variant='plain'
           onClick={optimaOpenModels}
-          sx={{ minWidth: 80 }}
+          sx={_styles.button}
         >
           Models
         </Button>
@@ -102,7 +151,7 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
           text={navItems.links[0].name}
           icon={navItems.links[0].icon}
           link={navItems.links[0].href}
-          sx={{ color: 'text.primary', px: 0, minWidth: 80 }}
+          sx={_styles.button}
         />
       </Box>
 
