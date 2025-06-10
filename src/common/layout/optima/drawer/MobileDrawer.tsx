@@ -16,7 +16,11 @@ function DrawerContentPortal() {
     <Box
       ref={drawerPortalRef}
       sx={{
+        // make this compressible
+        overflow: 'hidden',
+        // expand to fix - note: relies on contents being scrollable
         flex: 1,
+        // layout: column
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -70,6 +74,7 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
       }}
     >
 
+      {/* Insertion point for the Drawer - expands even if empty */}
       <DrawerContentPortal />
 
       {/* [Mobile] Nav Items */}
