@@ -38,6 +38,9 @@ const useDeviceStore = create<PerClientStore>()(persist(
  * Thread-safe: multiple calls return the same ID.
  */
 export function deviceGetGlobalDeviceId(): string {
+  // SSR: return a dummy id
+  if (!isBrowser) return 'ssr-dummy-device-id';
+
   let { localDeviceId } = useDeviceStore.getState();
 
   // Return existing ID if available
