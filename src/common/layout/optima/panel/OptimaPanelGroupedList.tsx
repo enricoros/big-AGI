@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Checkbox, MenuList } from '@mui/joy';
 
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import { themeScalingMap } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap, } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
 
@@ -102,8 +102,7 @@ export function OptimaPanelGroupedList(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const _contentScaling = useUIContentScaling();
-  const contentScaling = isMobile ? 'md' : _contentScaling;
+  const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
 
   // derived state
   const isCollapsible = !!props.persistentCollapsibleId;
