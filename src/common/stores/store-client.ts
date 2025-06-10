@@ -8,29 +8,20 @@ import { generateDeviceName, isBrowser, isPwa } from '~/common/util/pwaUtils';
 /// Store ///
 
 interface PerClientStore {
-  // individual device identification for multi-device sync
+
+  /**
+   * Global (same per each users in this browser/device) device identifier.
+   */
   localDeviceId: string;
 
-  // actions
-  getLocalDeviceId: () => string;
 }
 
 const useDeviceStore = create<PerClientStore>()(persist(
-  (set, get) => ({
+  () => ({
+
     // initial state
     localDeviceId: '',
 
-    // actions
-    getLocalDeviceId: () => {
-      // use existing ID
-      let { localDeviceId } = get();
-      if (localDeviceId) return localDeviceId;
-
-      // or generate new, once per device
-      localDeviceId = generateLocalDeviceIdentifier();
-      set({ localDeviceId });
-      return localDeviceId;
-    },
   }),
   {
     name: 'app-device',
@@ -39,9 +30,30 @@ const useDeviceStore = create<PerClientStore>()(persist(
 ));
 
 
+/// Global Device ID ///
+
+/**
+ * Gets or generates the global device ID (hardware-specific).
+ * This ID is shared across all users on the same device.
+ * Thread-safe: multiple calls return the same ID.
+ */
+export function deviceGetGlobalDeviceId(): string {
+  let { localDeviceId } = useDeviceStore.getState();
+
+  // Return existing ID if available
+  if (localDeviceId)
+    return localDeviceId;
+
+  // Generate new ID and persist
+  localDeviceId = _generateLocalDeviceIdentifier();
+  useDeviceStore.setState({ localDeviceId });
+  return localDeviceId;
+}
+
+
 /// Device/ID functions ///
 
-export interface DeviceRegistrationClientPayload {
+interface DeviceRegistrationClientPayload {
   deviceId: string;               // device identifier for sync
   deviceName: string;             // human-readable name
   environment: {
@@ -57,9 +69,8 @@ export interface DeviceRegistrationClientPayload {
  * Nothing except the deviceId is stored locally
  */
 export function deviceCreateRegistrationPayload(): DeviceRegistrationClientPayload {
-  const deviceId = useDeviceStore.getState().getLocalDeviceId();
   return {
-    deviceId,
+    deviceId: deviceGetGlobalDeviceId(),
     deviceName: generateDeviceName(),
     // generated at call time, server-side checked for consistency
     environment: {
@@ -71,6 +82,7 @@ export function deviceCreateRegistrationPayload(): DeviceRegistrationClientPaylo
   };
 }
 
+
 /**
  * Generates a local device identifier for sync capabilities.
  * This ID combines a timestamp component with random characters for patterned uniqueness.
@@ -80,8 +92,12 @@ export function deviceCreateRegistrationPayload(): DeviceRegistrationClientPaylo
  *
  * This ID is only used to distinguish between devices during sync operations.
  * It never leaves your device/browser unless you explicitly enable sync functionality.
+ *
+ * NOTE: This is the hardware device ID used for device registration only.
+ * Vector clocks can use a separate user-scoped device ID generated server-side
+ * to prevent conflicts when multiple users share the same device.
  */
-function generateLocalDeviceIdentifier(): string {
+function _generateLocalDeviceIdentifier(): string {
   // Generate 6 random characters
   const random = agiId('vector-device-id10').slice(0, 6);
 
