@@ -63,7 +63,7 @@ export function useStickyCodeOverlay(options?: UseStickyCodeOverlayOptions) {
         overlay.style.position = 'fixed';
         overlay.style.top = `${stickyThreshold}px`;
         overlay.style.right = `${window.innerWidth - containerRect.right}px`;
-        overlay.style.zIndex = '10';
+        overlay.style.zIndex = '1';
       } else if (overlay.style.position === 'fixed') {
         resetToNormalPosition();
       }
