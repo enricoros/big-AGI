@@ -30,7 +30,6 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^5.17.1",
     "@mui/joy": "^5.0.0-beta.52",
-    "@mui/material": "^5.17.1",
     "@next/bundle-analyzer": "~15.1.8",
     "@prisma/client": "~5.22.0",
     "@tanstack/react-query": "^5.80.6",
