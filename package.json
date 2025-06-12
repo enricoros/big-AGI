@@ -66,7 +66,7 @@
     "remark-gfm": "^4.0.1",
     "remark-mark-highlight": "^0.1.1",
     "remark-math": "^6.0.0",
-    "sharp": "~0.33.5",
+    "sharp": "^0.33.5",
     "superjson": "^2.2.2",
     "tesseract.js": "^6.0.1",
     "tiktoken": "^1.0.21",
