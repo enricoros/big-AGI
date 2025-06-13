@@ -18,14 +18,14 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 
 const _keepThinkingBlocksOptions: FormSelectOption<'all' | 'last-only'>[] = [
   {
-    value: 'all',
-    label: 'Preserve All',
-    description: 'Keep all traces',
-  },
-  {
     value: 'last-only',
     label: 'Most Recent',
     description: 'Default',
+  },
+  {
+    value: 'all',
+    label: 'Preserve All',
+    description: 'Keep all traces',
   },
 ] as const;
 
