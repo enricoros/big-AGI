@@ -174,7 +174,7 @@ export function ChatPane(props: {
 
           <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
             <ListItemDecorator><CompressIcon /></ListItemDecorator>
-            Minify
+            Compact
           </MenuItem>
 
           <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
