@@ -19,13 +19,13 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 const _keepThinkingBlocksOptions: FormSelectOption<'all' | 'last-only'>[] = [
   {
     value: 'all',
-    label: 'All Messages',
-    description: 'Keep all blocks',
+    label: 'Preserve All',
+    description: 'Keep all traces',
   },
   {
     value: 'last-only',
-    label: 'Last Message Only',
-    description: 'Only keep last',
+    label: 'Most Recent',
+    description: 'Default',
   },
 ] as const;
 
@@ -101,7 +101,7 @@ export function AppChatSettingsAI() {
     <FormControlDomainModel
       domainId='fastUtil'
       title={!showModelIcons ? 'Utility model' : <><EditRoundedIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Utility model</>}
-      description='Fast, misc. tasks'
+      description='Titles, misc tasks'
       tooltip={<>
         Lightweight model (must support Tool Calls) used for &quot;fast&quot;, low-cost operations, such as:
         <ul>
@@ -124,7 +124,7 @@ export function AppChatSettingsAI() {
     )}
 
     <FormSelectControl
-      title='Reasoning blocks'
+      title='Reasoning traces'
       tooltip='Controls how AI thinking/reasoning blocks are kept in your chat history. Keeping only in the last message (default) reduces clutter.'
       options={_keepThinkingBlocksOptions}
       value={chatKeepLastThinkingOnly ? 'last-only' : 'all'}
