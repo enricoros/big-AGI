@@ -208,7 +208,7 @@ export function FlattenerModal(props: {
         )}
 
         {/* Review or Edit Text */}
-        {isSuccess && <InlineTextarea initialText={flattenedText} onEdit={setText} />}
+        {isSuccess && <InlineTextarea initialText={flattenedText} selectAllOnFocus={false} onEdit={setText} />}
 
       </Box>}
 
