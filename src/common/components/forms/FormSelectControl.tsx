@@ -1,9 +1,21 @@
 import * as React from 'react';
 
-import { FormControl, Option, Select } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { FormControl, Option, Select, SelectSlotsAndSlotProps } from '@mui/joy';
 
 import { FormLabelStart } from './FormLabelStart';
-import { SxProps } from '@mui/joy/styles/types';
+
+
+// copied from useLLMSelect.tsx - inspired by optimaSelectSlotProps.listbox
+const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
+  button: {
+    sx: {
+      // whiteSpace: 'inherit', // note: we try to keep it in one line for now
+      wordBreak: 'break-word',
+      minWidth: '6rem',
+    } as const,
+  } as const,
+} as const;
 
 
 export type FormSelectOption<T extends string> = {
@@ -39,6 +51,7 @@ export const FormSelectControl = <TValue extends string>(props: {
         value={props.value}
         onChange={(_, value) => value && props.onChange(value as TValue)}
         placeholder={props.placeholder}
+        slotProps={_selectSlotProps}
         sx={props.selectSx}
       >
         {props.options.map((option, idx) => (
