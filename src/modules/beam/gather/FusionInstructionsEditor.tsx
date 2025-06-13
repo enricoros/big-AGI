@@ -51,6 +51,7 @@ function EditableChatInstructionPrompt(props: {
         decolor
         initialText={props.itemValue}
         minRows={3}
+        selectAllOnFocus={false}
         onCancel={handleEditCancel}
         onEdit={handleEdit}
         sx={{
