@@ -10,10 +10,6 @@ import { optimaCloseDrawer, optimaOpenDrawer, useOptimaDrawerOpen, useOptimaDraw
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
 
-// set to 0 to always keep the drawer mounted (smoother on/off)
-const UNMOUNT_DELAY_MS = 0;
-
-
 // Desktop Drawer
 
 const DesktopDrawerFixRoot = styled(Box)({
@@ -85,28 +81,6 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
   const isDrawerPeeking = useOptimaDrawerPeeking();
   const isDrawerOpen = _isDrawerOpen || isDrawerPeeking;
   // const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
-
-  // local state
-  const [_softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
-
-
-  // 'soft unmount': remove contents after a delay
-  React.useEffect(() => {
-    if (!UNMOUNT_DELAY_MS)
-      return;
-
-    // drawer open: do not unmount
-    if (isDrawerOpen) {
-      setSoftDrawerUnmount(false);
-      return;
-    }
-
-    // drawer closed: delayed unmount
-    const unmountTimeoutId = setTimeout(() =>
-        setSoftDrawerUnmount(true)
-      , UNMOUNT_DELAY_MS);
-    return () => clearTimeout(unmountTimeoutId);
-  }, [isDrawerOpen]);
 
 
   // Desktop-only?: close the drawer if the current app doesn't use it
