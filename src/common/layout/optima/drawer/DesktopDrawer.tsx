@@ -21,25 +21,25 @@ const DesktopDrawerFixRoot = styled(Box)({
   width: 'var(--AGI-Desktop-Drawer-width)',
   flexShrink: 0,
   flexGrow: 0,
-  
+
   // Base state
   zIndex: themeZIndexDesktopDrawer,
-  
+
   '&[aria-hidden="true"]': {
     contain: 'strict',
     pointerEvents: 'none',
   },
-  
+
   '&.drawer-peeking': {
     zIndex: themeZIndexDesktopDrawer + 1, // elevate z-index when peeking
   },
 });
 
 const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
-  // layouting
+  // layout
   width: '100%',
   height: '100dvh',
-  zIndex: 1, // just to allocate a layer; this was: themeZIndexDesktopDrawer, but it's probably wrong to have it here?
+  zIndex: 1, // just to allocate a layer; this was: themeZIndexDesktopDrawer
 
   // styling
   backgroundColor: OPTIMA_DRAWER_BACKGROUND,
@@ -50,26 +50,27 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // borderBottomRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
   // contain: 'strict',
   // boxShadow: theme.shadow.md, // too thin and complex; also tried 40px blurs
-  boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`, // shadow of the Drawer on the Page
+  boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`,
 
   // content layout
   display: 'flex',
   flexDirection: 'column',
 
-  // Base state with default transition
+
+  // base state
   transform: 'none',
   transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Default: normal open/close, and peeking exit
-  willChange: 'transform', // Optimize for transform animations
-  
-  // Hidden state via aria attribute
+  willChange: 'transform', // optimize for transform animations
+
+  // Closed state via aria
   '&[aria-hidden="true"]': {
     transform: 'translateX(-100%)',
   },
-  
-  // Peek state overrides
+
+  // Peek state via class
   '&.drawer-peeking': {
-    transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', // Faster enter animation
-    boxShadow: theme.shadow.lg, // Additional shadow when overlaying
+    transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', // faster enter animation
+    boxShadow: theme.shadow.lg,
   },
 })) as typeof Sheet;
 
