@@ -30,10 +30,6 @@ export function useOptimaDrawerPeeking() {
   return useLayoutOptimaStore(({ drawerIsPeeking }) => drawerIsPeeking);
 }
 
-export function optimaGetPeekActions(): { peekDrawerEnter: () => void, peekDrawerLeave: () => void } {
-  return useLayoutOptimaStore.getState();
-}
-
 
 // Panel
 
@@ -63,6 +59,10 @@ export function useOptimaPanelOpen(isMobile: boolean, currentApp?: NavItemApp) {
     panelShownAsPanel: panelIsOpen && panelHasContent && !panelAsPopup,
     panelShownAsPopup: panelIsOpen && panelHasContent && panelAsPopup,
   };
+}
+
+export function useOptimaPanelPeeking() {
+  return useLayoutOptimaStore(({ panelIsPeeking }) => panelIsPeeking);
 }
 
 
