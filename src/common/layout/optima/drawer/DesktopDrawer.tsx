@@ -6,7 +6,7 @@ import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
 import { OPTIMA_DRAWER_BACKGROUND } from '../optima.config';
-import { optimaCloseDrawer, optimaOpenDrawer, useOptimaDrawerOpen } from '../useOptima';
+import { optimaCloseDrawer, optimaOpenDrawer, useOptimaDrawerOpen, useOptimaDrawerPeeking } from '../useOptima';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
 
@@ -55,7 +55,9 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
   const drawerPortalRef = useOptimaPortalOutRef('optima-portal-drawer', 'DesktopDrawer');
 
   // external state
-  const isDrawerOpen = useOptimaDrawerOpen();
+  const _isDrawerOpen = useOptimaDrawerOpen();
+  const isDrawerPeeking = useOptimaDrawerPeeking();
+  const isDrawerOpen = _isDrawerOpen || isDrawerPeeking;
   // const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
 
   // local state
@@ -101,6 +103,8 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
       sx={{
         contain: isDrawerOpen ? undefined : 'strict',
         pointerEvents: isDrawerOpen ? undefined : 'none',
+        // When peeking, drawer overlays content so needs higher z-index
+        zIndex: isDrawerPeeking ? themeZIndexDesktopDrawer + 1 : themeZIndexDesktopDrawer,
       }}
     >
 
@@ -110,6 +114,8 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
         sx={{
           transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
           // backgroundColor: hasDrawerContent ? undefined : 'background.surface',
+          // Add shadow when peeking to show it's overlaying content
+          // boxShadow: isDrawerPeeking ? '2px 0 8px 0 rgba(0, 0, 0, 0.15)' : undefined,
         }}
       >
 

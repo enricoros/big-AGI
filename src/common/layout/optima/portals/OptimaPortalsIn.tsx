@@ -2,11 +2,29 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 
 import { OptimaPortalId, useLayoutPortalsStore } from './store-layout-portals';
+import { optimaGetPeekActions } from '../useOptima';
 
+
+const _drawerWrapperStyle = {
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+} as const;
 
 export function OptimaDrawerIn(props: { children: React.ReactNode }) {
   const portalElement = useOptimaPortalTargetElement('optima-portal-drawer');
-  return portalElement ? createPortal(props.children, portalElement) : null;
+  if (!portalElement) return null;
+
+  // wrap portal contents in a div that updates the hover state of the drawer
+  const { peekDrawerEnter, peekDrawerLeave } = optimaGetPeekActions();
+  return createPortal(
+    <div
+      onMouseEnter={peekDrawerEnter}
+      onMouseLeave={peekDrawerLeave}
+      style={_drawerWrapperStyle}
+    >
+      {props.children}
+    </div>, portalElement);
 }
 
 export function OptimaPanelIn(props: { children: React.ReactNode }) {

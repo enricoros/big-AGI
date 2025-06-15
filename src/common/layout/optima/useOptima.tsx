@@ -26,6 +26,14 @@ export function useOptimaDrawerOpen() {
   return useLayoutOptimaStore(({ drawerIsOpen }) => drawerIsOpen);
 }
 
+export function useOptimaDrawerPeeking() {
+  return useLayoutOptimaStore(({ drawerIsPeeking }) => drawerIsPeeking);
+}
+
+export function optimaGetPeekActions(): { peekDrawerEnter: () => void, peekDrawerLeave: () => void } {
+  return useLayoutOptimaStore.getState();
+}
+
 
 // Panel
 

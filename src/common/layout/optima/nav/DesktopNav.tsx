@@ -25,7 +25,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 import { BringTheLove } from './BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
-import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModals } from '../useOptima';
+import { optimaGetPeekActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModals } from '../useOptima';
 import { scratchClipSupported, useScratchClipVisibility } from '../scratchclip/store-scratchclip';
 
 
@@ -59,6 +59,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
   const isDrawerOpen = useOptimaDrawerOpen();
   const { showPromisedOverlay } = useOverlayComponents();
   const { showModels, showPreferences } = useOptimaModals();
+  const { peekDrawerEnter, peekDrawerLeave } = optimaGetPeekActions();
   const { isVisible: isScratchClipVisible, toggleVisibility: toggleScratchClipVisibility } = useScratchClipVisibility();
 
   // derived state
@@ -279,6 +280,8 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       component={props.component}
       direction='vertical'
       sx={desktopNavBarSx}
+      onMouseEnter={appUsesDrawer ? peekDrawerEnter : undefined}
+      onMouseLeave={peekDrawerLeave}
     >
 
       <InvertedBarCornerItem>

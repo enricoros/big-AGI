@@ -31,6 +31,8 @@ export const InvertedBar = (props: {
   direction: 'horizontal' | 'vertical',
   sx?: SxProps
   children: React.ReactNode,
+  onMouseEnter?: () => void,
+  onMouseLeave?: () => void,
 }) => {
 
   // check for dark mode
@@ -60,6 +62,8 @@ export const InvertedBar = (props: {
       component={props.component}
       variant={isDark ? 'soft' : 'solid'}
       invertedColors={!isDark ? true : undefined}
+      onMouseEnter={props.onMouseEnter}
+      onMouseLeave={props.onMouseLeave}
       sx={sx}
     >
       {props.children}
