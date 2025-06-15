@@ -5,6 +5,8 @@ import { getIsMobile } from '~/common/components/useMatchMedia';
 import { isBrowser } from '~/common/util/pwaUtils';
 import { navItems } from '~/common/app.nav';
 
+import { OPTIMA_DRAWER_HOVER_TIMEOUT } from './optima.config';
+
 
 export type PreferencesTabId = 'chat' | 'voice' | 'draw' | 'tools' | undefined;
 
@@ -16,6 +18,7 @@ interface OptimaState {
 
   // panes
   drawerIsOpen: boolean;
+  drawerIsPeeking: boolean;
   panelIsOpen: boolean;
 
   // modals
@@ -58,6 +61,7 @@ const initialState: OptimaState = {
 
   // panes
   drawerIsOpen: initialDrawerOpen(),
+  drawerIsPeeking: false,
   panelIsOpen: false,
 
   // modals that can overlay anything
@@ -76,6 +80,8 @@ export interface OptimaActions {
   closeDrawer: () => void;
   openDrawer: () => void;
   toggleDrawer: () => void;
+  peekDrawerEnter: () => void;
+  peekDrawerLeave: () => void;
 
   closePanel: () => void;
   openPanel: () => void;
@@ -102,6 +108,10 @@ export interface OptimaActions {
 }
 
 
+// global state: peek hover logic timer
+let peekLeaveTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+
 export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _get) => ({
 
   ...initialState,
@@ -111,10 +121,31 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
   closeDrawer: () => {
     // close the drawer, but only if it's been open for 100ms
     if (Date.now() - _get().lastDrawerOpenTime >= 100)
-      _set({ drawerIsOpen: false });
+      _set({ drawerIsOpen: false, drawerIsPeeking: false });
   },
-  openDrawer: () => _set({ drawerIsOpen: true, lastDrawerOpenTime: Date.now() }),
+  openDrawer: () => _set({ drawerIsOpen: true, drawerIsPeeking: false, lastDrawerOpenTime: Date.now() }),
   toggleDrawer: () => _get().drawerIsOpen ? _get().closeDrawer() : _get().openDrawer(),
+
+  peekDrawerEnter: () => {
+    // cancel any closing pending timer
+    if (peekLeaveTimeoutId) {
+      clearTimeout(peekLeaveTimeoutId);
+      peekLeaveTimeoutId = null;
+    }
+    // if drawer is closed, start peeking
+    const { drawerIsOpen } = _get();
+    if (!drawerIsOpen)
+      _set({ drawerIsPeeking: true });
+  },
+  peekDrawerLeave: () => {
+    // cancel any existing timer
+    if (peekLeaveTimeoutId)
+      clearTimeout(peekLeaveTimeoutId);
+    // start a new timer to close the drawer
+    peekLeaveTimeoutId = setTimeout(() => {
+      _set({ drawerIsPeeking: false });
+    }, OPTIMA_DRAWER_HOVER_TIMEOUT);
+  },
 
   closePanel: () => {
     // NOTE: would this make sense?
