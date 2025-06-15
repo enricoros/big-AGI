@@ -21,16 +21,25 @@ const DesktopDrawerFixRoot = styled(Box)({
   width: 'var(--AGI-Desktop-Drawer-width)',
   flexShrink: 0,
   flexGrow: 0,
+  
+  // Base state
+  zIndex: themeZIndexDesktopDrawer,
+  
+  '&[aria-hidden="true"]': {
+    contain: 'strict',
+    pointerEvents: 'none',
+  },
+  
+  '&.drawer-peeking': {
+    zIndex: themeZIndexDesktopDrawer + 1, // elevate z-index when peeking
+  },
 });
 
 const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // layouting
   width: '100%',
   height: '100dvh',
-
-  // sliding - moved to component props for dynamic timing
-  // transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
-  zIndex: themeZIndexDesktopDrawer,
+  zIndex: 1, // just to allocate a layer; this was: themeZIndexDesktopDrawer, but it's probably wrong to have it here?
 
   // styling
   backgroundColor: OPTIMA_DRAWER_BACKGROUND,
@@ -46,6 +55,22 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // content layout
   display: 'flex',
   flexDirection: 'column',
+
+  // Base state with default transition
+  transform: 'none',
+  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Default: normal open/close, and peeking exit
+  willChange: 'transform', // Optimize for transform animations
+  
+  // Hidden state via aria attribute
+  '&[aria-hidden="true"]': {
+    transform: 'translateX(-100%)',
+  },
+  
+  // Peek state overrides
+  '&.drawer-peeking': {
+    transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', // Faster enter animation
+    boxShadow: theme.shadow.lg, // Additional shadow when overlaying
+  },
 })) as typeof Sheet;
 
 
@@ -100,28 +125,15 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
 
   return (
     <DesktopDrawerFixRoot
-      sx={{
-        contain: isDrawerOpen ? undefined : 'strict',
-        pointerEvents: isDrawerOpen ? undefined : 'none',
-        // When peeking, drawer overlays content so needs higher z-index
-        zIndex: isDrawerPeeking ? themeZIndexDesktopDrawer + 1 : themeZIndexDesktopDrawer,
-      }}
+      aria-hidden={!isDrawerOpen}
+      className={isDrawerPeeking ? 'drawer-peeking' : undefined}
     >
 
       <DesktopDrawerTranslatingSheet
         ref={drawerPortalRef}
         component={props.component}
-        sx={{
-          // Peek: 250ms smooth slide + fade, Normal: 420ms with custom curve
-          transition: isDrawerPeeking
-            ? 'transform 0.25s cubic-bezier(.4,0,.2,1)' // Peek: faster, more responsive
-            : 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Open: time-synced with the Page transition
-          transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
-          // backgroundColor: hasDrawerContent ? undefined : 'background.surface',
-          // Add shadow when peeking to show it's overlaying content
-          // boxShadow: isDrawerPeeking ? '2px 0 8px 0 rgba(0, 0, 0, 0.15)' : undefined,
-          // opacity: isDrawerOpen ? 1 : 0,
-        }}
+        aria-hidden={!isDrawerOpen}
+        className={isDrawerPeeking ? 'drawer-peeking' : undefined}
       >
 
         {/* NOTE: this sort of algo was not used when we migrated this to Portals on 2024-07-30, so not restoring it ... */}
