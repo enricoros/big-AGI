@@ -19,16 +19,25 @@ const DesktopPanelFixRoot = styled(Box)({
   width: 'var(--AGI-Desktop-Panel-width)',
   flexShrink: 0,
   flexGrow: 0,
+  
+  // Base state
+  zIndex: themeZIndexDesktopPanel,
+  
+  '&[aria-hidden="true"]': {
+    contain: 'strict',
+    pointerEvents: 'none',
+  },
+  
+  '&.panel-peeking': {
+    zIndex: themeZIndexDesktopPanel + 1, // elevate z-index when peeking
+  },
 });
 
 const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // layout
   width: '100%',
   height: '100dvh',
-
-  // sliding
-  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
-  zIndex: themeZIndexDesktopPanel,
+  zIndex: 1, // just to allocate a layer; this was: themeZIndexDesktopPanel
 
   // styling
   backgroundColor: 'var(--joy-palette-background-surface)',
@@ -44,22 +53,25 @@ const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // content layout
   display: 'flex',
   flexDirection: 'column',
-})) as typeof Sheet;
 
-const panelFixRootSx: SxProps = {
-  contain: 'strict',
-  pointerEvents: 'none',
-};
+  overflowY: 'auto', // NOTE: this was not present on DesktopDrawer -- we added it here
 
-const sheetOpenSx: SxProps = {
+  // base state
   transform: 'none',
-  overflowY: 'auto',
-};
+  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Default: normal open/close, and peeking exit
+  willChange: 'transform', // optimize for transform animations
 
-const sheetClosedSx: SxProps = {
-  transform: 'translateX(100%)',
-  overflowY: 'auto',
-};
+  // Closed state via aria
+  '&[aria-hidden="true"]': {
+    transform: 'translateX(100%)',
+  },
+
+  // Peek state via class
+  '&.panel-peeking': {
+    transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', // faster enter animation
+    boxShadow: theme.shadow.lg,
+  },
+})) as typeof Sheet;
 
 
 export function DesktopPanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
@@ -76,11 +88,15 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
   }, [panelAsPopup]);
 
   return (
-    <DesktopPanelFixRoot sx={isOpen ? undefined : panelFixRootSx}>
+    <DesktopPanelFixRoot
+      aria-hidden={!isOpen}
+      // className={isPanelPeeking ? 'panel-peeking' : undefined}
+    >
 
       <DesktopPanelTranslatingSheet
         component={props.component}
-        sx={isOpen ? sheetOpenSx : sheetClosedSx}
+        aria-hidden={!isOpen}
+        // className={isPanelPeeking ? 'panel-peeking' : undefined}
       >
 
         <List size={themeScalingMap[contentScaling]?.optimaPanelGroupSize} sx={{ '--ListItem-minHeight': '2.5rem', py: 0 /*0.75*/, flex: 0 }}>
