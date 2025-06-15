@@ -21,7 +21,7 @@ const DesktopDrawerFixRoot = styled(Box)({
   // Base state
   zIndex: themeZIndexDesktopDrawer,
 
-  '&[aria-hidden="true"]': {
+  '&[data-closed="true"]': {
     contain: 'strict',
     pointerEvents: 'none',
   },
@@ -58,8 +58,8 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Default: normal open/close, and peeking exit
   willChange: 'transform', // optimize for transform animations
 
-  // Closed state via aria
-  '&[aria-hidden="true"]': {
+  // Closed state via data attribute
+  '&[data-closed="true"]': {
     transform: 'translateX(-100%)',
   },
 
@@ -100,14 +100,14 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
 
   return (
     <DesktopDrawerFixRoot
-      aria-hidden={!isDrawerOpen}
+      data-closed={!isDrawerOpen}
       className={isDrawerPeeking ? 'drawer-peeking' : undefined}
     >
 
       <DesktopDrawerTranslatingSheet
         ref={drawerPortalRef}
         component={props.component}
-        aria-hidden={!isDrawerOpen}
+        data-closed={!isDrawerOpen}
         className={isDrawerPeeking ? 'drawer-peeking' : undefined}
       >
 

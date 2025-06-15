@@ -23,7 +23,7 @@ const DesktopPanelFixRoot = styled(Box)({
   // Base state
   zIndex: themeZIndexDesktopPanel,
   
-  '&[aria-hidden="true"]': {
+  '&:not([data-open="true"])': {
     contain: 'strict',
     pointerEvents: 'none',
   },
@@ -61,8 +61,8 @@ const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Default: normal open/close, and peeking exit
   willChange: 'transform', // optimize for transform animations
 
-  // Closed state via aria
-  '&[aria-hidden="true"]': {
+  // Closed state via data attribute
+  '&:not([data-open="true"])': {
     transform: 'translateX(100%)',
   },
 
@@ -89,14 +89,14 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
 
   return (
     <DesktopPanelFixRoot
-      aria-hidden={!isOpen}
+      data-closed={!isOpen}
       // className={isPanelPeeking ? 'panel-peeking' : undefined}
     >
 
       <DesktopPanelTranslatingSheet
         component={props.component}
-        aria-hidden={!isOpen}
-        // className={isPanelPeeking ? 'panel-peeking' : undefined}
+        data-closed={!isOpen}
+      // className={isPanelPeeking ? 'panel-peeking' : undefined}
       >
 
         <List size={themeScalingMap[contentScaling]?.optimaPanelGroupSize} sx={{ '--ListItem-minHeight': '2.5rem', py: 0 /*0.75*/, flex: 0 }}>
