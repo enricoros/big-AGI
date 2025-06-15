@@ -1,8 +1,9 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, IconButton, List, ListItem, ListItemContent, ListItemDecorator, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, IconButton, List, ListItem, ListItemContent, ListItemDecorator, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import HistoryIcon from '@mui/icons-material/History';
@@ -10,7 +11,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { copyToClipboard, getClipboardItems, supportsClipboardRead } from '~/common/util/clipboardUtils';
 
 import { ClipboardHistoryItem, scratchClipActions, useScratchClipHistory } from './store-scratchclip';
 
@@ -49,6 +50,35 @@ export function ScratchClip() {
     addSnackbar({ message: 'Clipboard history cleared.', type: 'info', key: 'clip-clear' });
   }, []);
 
+  const handleReadClipboard = React.useCallback(async () => {
+    const clipboardItems = await getClipboardItems();
+
+    if (!clipboardItems || clipboardItems.length === 0) {
+      addSnackbar({ key: 'clipboard-issue', type: 'issue', message: 'Clipboard empty or access denied', overrides: { autoHideDuration: 2000, } });
+      return;
+    }
+
+    // Process clipboard items
+    for (const item of clipboardItems) {
+      const types = item.types;
+
+      // Try to get text content
+      if (types.includes('text/plain')) {
+        try {
+          const blob = await item.getType('text/plain');
+          const text = await blob.text();
+
+          if (text.trim()) {
+            scratchClipActions().addSnippet(text);
+            addSnackbar({ message: 'Added clipboard content to history', type: 'success', key: 'clip-read-success' });
+          }
+        } catch (error) {
+          console.warn('Failed to read clipboard text:', error);
+        }
+      }
+    }
+  }, []);
+
 
   // conditional rendering
   // if (!isVisible) return null;
@@ -79,6 +109,16 @@ export function ScratchClip() {
 
         </Box>
       }
+      startButton={!supportsClipboardRead() ? undefined : (
+        <Button
+          variant='soft'
+          color='neutral'
+          startDecorator={<ContentPasteGoIcon />}
+          onClick={handleReadClipboard}
+        >
+          Add from Clipboard
+        </Button>
+      )}
       sx={{ animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.07,1.14,.85,1.02)` }}
     >
 
