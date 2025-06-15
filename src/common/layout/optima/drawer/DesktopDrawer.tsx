@@ -28,8 +28,8 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   width: '100%',
   height: '100dvh',
 
-  // sliding
-  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
+  // sliding - moved to component props for dynamic timing
+  // transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
   zIndex: themeZIndexDesktopDrawer,
 
   // styling
@@ -112,10 +112,15 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
         ref={drawerPortalRef}
         component={props.component}
         sx={{
+          // Peek: 250ms smooth slide + fade, Normal: 420ms with custom curve
+          transition: isDrawerPeeking
+            ? 'transform 0.25s cubic-bezier(.4,0,.2,1)' // Peek: faster, more responsive
+            : 'transform 0.42s cubic-bezier(.17,.84,.44,1)', // Open: time-synced with the Page transition
           transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
           // backgroundColor: hasDrawerContent ? undefined : 'background.surface',
           // Add shadow when peeking to show it's overlaying content
           // boxShadow: isDrawerPeeking ? '2px 0 8px 0 rgba(0, 0, 0, 0.15)' : undefined,
+          // opacity: isDrawerOpen ? 1 : 0,
         }}
       >
 
