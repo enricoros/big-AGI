@@ -24,7 +24,7 @@ import { findModelVendor } from '../vendors/vendors.registry';
 const SHOW_LLM_INTERFACES = false;
 
 
-const absorbListPadding: SxProps = { my: 'calc(var(--ListItem-paddingY) / -2)' };
+const absorbListPadding: SxProps = { my: 'round(calc(var(--ListItem-paddingY) / -2))' };
 
 const styles = {
   liButton: {

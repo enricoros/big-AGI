@@ -81,8 +81,8 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
     // squircle animation
     borderStartStartRadius: `var(--joy-radius-${OPTIMA_NAV_RADIUS})`,
     borderEndStartRadius: `var(--joy-radius-${OPTIMA_NAV_RADIUS})`,
-    // borderStartStartRadius: 'calc(var(--IconButton-size) / 4)',
-    // borderEndStartRadius: 'calc(var(--IconButton-size) / 4)',
+    // borderStartStartRadius: 'round(calc(var(--IconButton-size) / 4))',
+    // borderEndStartRadius: 'round(calc(var(--IconButton-size) / 4))',
     borderStartEndRadius: 0,
     borderEndEndRadius: 0,
     marginLeft: 'calc(2 * var(--MarginX))',

@@ -24,7 +24,7 @@ const beamWrapperStyles = {
     position: 'absolute',
     top: '0.25rem',
     // left: '0.25rem',
-    left: { xs: 'calc(50% - 3rem)', md: '50%' }, // center on desktop, a bit left (for the islands) on mobile
+    left: { xs: 'round(calc(50% - 3rem))', md: '50%' }, // center on desktop, a bit left (for the islands) on mobile
     // transform: 'translate(-50%, 0)',
     zIndex: themeZIndexBeamView, // stay on top of Message > Chips (:1), and Overlays (:2) - note: Desktop Drawer (:26)
   } as const,
