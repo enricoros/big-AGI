@@ -48,7 +48,10 @@ export function optimaTogglePanel(event?: React.MouseEvent) {
 }
 
 export function useOptimaPanelOpen(isMobile: boolean, currentApp?: NavItemApp) {
-  const panelIsOpen = useLayoutOptimaStore(state => state.panelIsOpen);
+  const { panelIsOpen, panelIsPeeking } = useLayoutOptimaStore(useShallow(state => ({
+    panelIsOpen: state.panelIsOpen,
+    panelIsPeeking: state.panelIsPeeking,
+  })));
   const panelAsPopup = !isMobile && currentApp?.panelAsMenu === true;
   const panelHasContent = useOptimaPortalHasInputs('optima-portal-panel') || isMobile;
 
@@ -57,12 +60,9 @@ export function useOptimaPanelOpen(isMobile: boolean, currentApp?: NavItemApp) {
     panelAsPopup,
     panelHasContent,
     panelShownAsPanel: panelIsOpen && panelHasContent && !panelAsPopup,
+    panelShownAsPeeking: panelIsPeeking && !panelIsOpen && panelHasContent && !panelAsPopup,
     panelShownAsPopup: panelIsOpen && panelHasContent && panelAsPopup,
   };
-}
-
-export function useOptimaPanelPeeking() {
-  return useLayoutOptimaStore(({ panelIsPeeking }) => panelIsPeeking);
 }
 
 

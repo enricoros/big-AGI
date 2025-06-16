@@ -79,7 +79,8 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
   // external state
   const isMobile = useIsMobile();
   const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
-  const { panelShownAsPanel: isOpen, panelAsPopup } = useOptimaPanelOpen(false, props.currentApp);
+  const { panelShownAsPanel, panelShownAsPeeking, panelAsPopup } = useOptimaPanelOpen(false, props.currentApp);
+  const isOpen = panelShownAsPanel || panelShownAsPeeking;
 
   // Close the panel if the current page goes for a popup instead
   React.useEffect(() => {
@@ -90,13 +91,13 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
   return (
     <DesktopPanelFixRoot
       data-closed={!isOpen}
-      // className={isPanelPeeking ? 'panel-peeking' : undefined}
+      className={panelShownAsPeeking ? 'panel-peeking' : undefined}
     >
 
       <DesktopPanelTranslatingSheet
         component={props.component}
         data-closed={!isOpen}
-      // className={isPanelPeeking ? 'panel-peeking' : undefined}
+        className={panelShownAsPeeking ? 'panel-peeking' : undefined}
       >
 
         <List size={themeScalingMap[contentScaling]?.optimaPanelGroupSize} sx={{ '--ListItem-minHeight': '2.5rem', py: 0 /*0.75*/, flex: 0 }}>
