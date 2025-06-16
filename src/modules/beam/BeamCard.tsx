@@ -57,7 +57,7 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   gap: 'var(--Pad_2)',
 
   // uncomment the following to limit the card height
-  // maxHeight: 'round(calc(0.8 * (100dvh - 16rem)))',
+  // maxHeight: 'calc(0.8 * (100dvh - 16rem))',
   // overflow: 'auto',
 }));
 BeamCard.displayName = 'BeamCard'; // [shared] scatter/gather pane style
@@ -69,7 +69,7 @@ export const beamCardMessageWrapperSx: SxProps = {
   flexDirection: 'column',
   // uncomment the following to limit the message height
   // overflow: 'auto',
-  // maxHeight: 'round(calc(0.8 * (100vh - 16rem)))',
+  // maxHeight: 'calc(0.8 * (100vh - 16rem))',
   // aspectRatio: 1,
 };
 
@@ -86,7 +86,7 @@ export const beamCardMessageSx: SxProps = {
 export const beamCardMessageScrollingSx: SxProps = {
   ...beamCardMessageSx,
   overflow: 'auto',
-  maxHeight: 'max(18rem, round(calc(50lvh - 16rem)))',
+  maxHeight: 'max(18rem, calc(50lvh - 16rem))',
 };
 
 
@@ -96,7 +96,7 @@ export const beamCardMessageScrollingSx: SxProps = {
 export const beamPaneSx: SxProps = {
   // style
   p: 'var(--Pad)',
-  py: 'round(calc(3 * var(--Pad) / 4))',
+  py: 'calc(3 * var(--Pad) / 4)',
   zIndex: BEAM_PANE_ZINDEX, // cast shadow on the rays/fusion, and be on top of the overlay pane
 
   // layout

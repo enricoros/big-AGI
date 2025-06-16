@@ -15,8 +15,7 @@ code.line-numbers {
         position: absolute;
         top: 0;
         left: calc(-1 * var(--ln-padding));
-        /*noinspection CssInvalidFunction*/
-        width: round(calc(var(--ln-padding) - 0.8em));
+        width: calc(var(--ln-padding) - 0.8em);
         font-size: 100%;
         letter-spacing: -1px;
         /*noinspection CssUnresolvedCustomProperty*/

@@ -16,7 +16,7 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
     sx: {
       backgroundColor: 'transparent',
       // minWidth: selectMinWidth, // 160
-      maxWidth: 'round(calc(100dvw - 4.5rem))', /* 36px * 2 buttons (2 * var(--Bar)) */
+      maxWidth: 'calc(100dvw - 4.5rem)', /* 36px * 2 buttons (2 * var(--Bar)) */
       // disappear when the 'agi-gone' class is set
       '&.agi-gone': {
         display: 'none',
@@ -63,11 +63,11 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
       paddingBlock: 0,
 
       // v-size: do not exceed the height of the screen
-      maxHeight: 'round(calc(100dvh - 56px - 24px))',
+      maxHeight: 'calc(100dvh - 56px - 24px)',
 
       // Option: clip width to 160...360px
       [`& .${optionClasses.root}`]: {
-        maxWidth: 'min(360px, round(calc(100dvw - 1rem)))',
+        maxWidth: 'min(360px, calc(100dvw - 1rem))',
         minWidth: 200,
       } as const,
 

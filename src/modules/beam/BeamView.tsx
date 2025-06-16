@@ -163,7 +163,7 @@ export function BeamView(props: {
 
       // config
       '--Pad': { xs: '1rem', md: '1.5rem' },
-      '--Pad_2': 'round(calc(var(--Pad) / 2))',
+      '--Pad_2': 'calc(var(--Pad) / 2)',
 
       // layout
       display: 'flex',

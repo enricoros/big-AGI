@@ -61,7 +61,7 @@ export function DrawSectionHeading(props: {
       <Box sx={{
         flex: 1,
         pt: 0.5,
-        ml: 'round(calc(var(--icon-size) / 2))',
+        ml: 'calc(var(--icon-size) / 2)',
         position: 'relative',
       }}>
         <Box sx={{ display: 'flex', alignItems: 'start' }}>
