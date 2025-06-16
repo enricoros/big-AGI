@@ -1,15 +1,24 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
+import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { OptimaPortalId, useLayoutPortalsStore } from './store-layout-portals';
 import { optimaActions } from '../useOptima';
 
 
-const _wrapperStyle = {
+const drawerWrapperStyle = {
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
 } as const;
+
+const panelWrapperStyle = {
+  ...drawerWrapperStyle,
+  // replicates PanelContentPortal.portalContentSx.gap, as we have added a div which deletes the gap
+  flex: 1,
+  gap: `${OPTIMA_PANEL_GROUPS_SPACING / 2}rem`, //
+} as const;
+
 
 export function OptimaDrawerIn(props: { children: React.ReactNode }) {
   const portalElement = useOptimaPortalTargetElement('optima-portal-drawer');
@@ -21,7 +30,7 @@ export function OptimaDrawerIn(props: { children: React.ReactNode }) {
     <div
       onMouseEnter={peekDrawerEnter}
       onMouseLeave={peekDrawerLeave}
-      style={_wrapperStyle}
+      style={drawerWrapperStyle}
     >
       {props.children}
     </div>, portalElement);
@@ -37,7 +46,7 @@ export function OptimaPanelIn(props: { children: React.ReactNode }) {
     <div
       onMouseEnter={peekPanelEnter}
       onMouseLeave={peekPanelLeave}
-      style={_wrapperStyle}
+      style={panelWrapperStyle}
     >
       {props.children}
     </div>, portalElement);
