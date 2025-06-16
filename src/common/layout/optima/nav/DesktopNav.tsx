@@ -137,6 +137,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
             variant={isActive ? 'solid' : undefined}
             onPointerDown={isDrawerable ? optimaToggleDrawer : () => Router.push(app.landingRoute || app.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''} ${app.isDev ? navItemClasses.dev : ''}`}
+            sx={appIdx !== 0 ? undefined : { '--Icon-fontSize': '1.375rem!important' /* temp patch for the first icon, to go at 22px rather than 1.25rem (20px) */ }}
           >
             {(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}
             {/*<app.icon />*/}
