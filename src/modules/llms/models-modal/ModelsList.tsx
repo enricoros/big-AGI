@@ -4,7 +4,6 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import SdCardOutlinedIcon from '@mui/icons-material/SdCardOutlined';
-import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
@@ -133,8 +132,8 @@ function ModelItem(props: {
       return null;
     return llm.interfaces.map((iface, i) => {
       switch (iface) {
-        case LLM_IF_OAI_Chat:
-          return <Chip key={i} size='sm' variant={props.chipChat ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}><TextsmsOutlinedIcon /></Chip>;
+        // case LLM_IF_OAI_Chat:
+        //   return <Chip key={i} size='sm' variant={props.chipChat ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}><TextsmsOutlinedIcon /></Chip>;
         case LLM_IF_OAI_Vision:
           return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><VisibilityOutlinedIcon />️</Chip>;
         case LLM_IF_OAI_Reasoning:
