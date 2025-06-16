@@ -12,8 +12,6 @@ import ImageIcon from '@mui/icons-material/Image';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
-import TextsmsIcon from '@mui/icons-material/Textsms';
-import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 // Link icons
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { DiscordIcon } from '~/common/components/icons/3rdparty/DiscordIcon';
@@ -24,6 +22,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { Brand } from '~/common/app.config';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
+import { PhChats } from '~/common/components/icons/phosphor/PhChats';
+import { PhChatsDuotone } from '~/common/components/icons/phosphor/PhChatsDuotone';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-share-link';
 
 
@@ -88,8 +88,8 @@ export const navItems: {
   apps: [
     {
       name: 'Chat',
-      icon: TextsmsOutlinedIcon,
-      iconActive: TextsmsIcon,
+      icon: PhChats, // was: TextsmsOutlinedIcon
+      iconActive: PhChatsDuotone, // was: TextsmsIcon
       type: 'app',
       route: '/',
     },
