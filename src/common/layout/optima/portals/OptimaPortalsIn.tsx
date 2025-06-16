@@ -13,9 +13,10 @@ const drawerWrapperStyle = {
 } as const;
 
 const panelWrapperStyle = {
-  ...drawerWrapperStyle,
-  // replicates PanelContentPortal.portalContentSx.gap, as we have added a div which deletes the gap
   flex: 1,
+  ...drawerWrapperStyle,
+
+  // replicates PanelContentPortal.portalContentSx.gap, as we have added a div which deletes the gap
   gap: `${OPTIMA_PANEL_GROUPS_SPACING / 2}rem`, //
 } as const;
 
@@ -28,6 +29,7 @@ export function OptimaDrawerIn(props: { children: React.ReactNode }) {
   const { peekDrawerEnter, peekDrawerLeave } = optimaActions();
   return createPortal(
     <div
+      data-optima-piw='drawer' // portal input wrapper
       onMouseEnter={peekDrawerEnter}
       onMouseLeave={peekDrawerLeave}
       style={drawerWrapperStyle}
@@ -44,6 +46,7 @@ export function OptimaPanelIn(props: { children: React.ReactNode }) {
   const { peekPanelEnter, peekPanelLeave } = optimaActions();
   return createPortal(
     <div
+      data-optima-piw='panel' // portal input wrapper
       onMouseEnter={peekPanelEnter}
       onMouseLeave={peekPanelLeave}
       style={panelWrapperStyle}
