@@ -5,7 +5,7 @@ import { getIsMobile } from '~/common/components/useMatchMedia';
 import { isBrowser } from '~/common/util/pwaUtils';
 import { navItems } from '~/common/app.nav';
 
-import { OPTIMA_OPEN_DEBOUNCE, OPTIMA_PEEK_HOVER_ENTER_DELAY, OPTIMA_PEEK_HOVER_TIMEOUT } from './optima.config';
+import { OPTIMA_OPEN_DEBOUNCE, OPTIMA_PEEK_HOVER_ENTER_DELAY, OPTIMA_PEEK_HOVER_ENTER_DELAY_PANEL, OPTIMA_PEEK_HOVER_TIMEOUT } from './optima.config';
 
 
 export type PreferencesTabId = 'chat' | 'voice' | 'draw' | 'tools' | undefined;
@@ -113,7 +113,7 @@ export interface OptimaActions {
 
 
 const drawerPeek = createPeekHandlers('drawerIsOpen', 'drawerIsPeeking');
-const panelPeek = createPeekHandlers('panelIsOpen', 'panelIsPeeking');
+const panelPeek = createPeekHandlers('panelIsOpen', 'panelIsPeeking', OPTIMA_PEEK_HOVER_ENTER_DELAY_PANEL);
 
 function createPeekHandlers<
   TOpenKey extends keyof OptimaState,

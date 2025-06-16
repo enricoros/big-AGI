@@ -16,7 +16,7 @@ import { navigateToIndex, ROUTE_INDEX } from '~/common/app.routes';
 
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
 import { PopupPanel } from '../panel/PopupPanel';
-import { optimaOpenDrawer, optimaOpenPanel, optimaTogglePanel, useOptimaPanelOpen } from '../useOptima';
+import { optimaActions, optimaOpenDrawer, optimaOpenPanel, optimaTogglePanel, useOptimaPanelOpen } from '../useOptima';
 import { useOptimaPortalHasInputs } from '../portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
@@ -83,7 +83,7 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
 
   // external state
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
-  const { panelAsPopup, panelHasContent, panelShownAsPanel, panelShownAsPopup } = useOptimaPanelOpen(props.isMobile, props.currentApp);
+  const { panelAsPopup, panelHasContent, panelShownAsPanel, panelShownAsPeeking, panelShownAsPopup } = useOptimaPanelOpen(props.isMobile, props.currentApp);
 
   // derived state
   const navIsShown = checkVisibleNav(props.currentApp);
@@ -121,7 +121,10 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
 
       {/* Panel Open: has content always on Mobile (the app menu) */}
       {panelHasContent && (
-        <InvertedBarCornerItem>
+        <InvertedBarCornerItem
+           onMouseEnter={(props.isMobile || panelAsPopup || panelShownAsPanel) ? undefined : optimaActions().peekPanelEnter}
+           onMouseLeave={(props.isMobile || panelShownAsPeeking) ? undefined : optimaActions().peekPanelLeave}
+        >
           {/*<Tooltip disableInteractive title={contentToPopup ? (panelIsOpen ? 'Close' : 'Open') + ' Menu' : (panelIsOpen ? 'Close' : 'Open')}>*/}
           <IconButton
             ref={appMenuAnchor}

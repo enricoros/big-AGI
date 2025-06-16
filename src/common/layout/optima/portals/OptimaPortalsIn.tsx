@@ -5,7 +5,7 @@ import { OptimaPortalId, useLayoutPortalsStore } from './store-layout-portals';
 import { optimaActions } from '../useOptima';
 
 
-const _drawerWrapperStyle = {
+const _wrapperStyle = {
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -21,7 +21,7 @@ export function OptimaDrawerIn(props: { children: React.ReactNode }) {
     <div
       onMouseEnter={peekDrawerEnter}
       onMouseLeave={peekDrawerLeave}
-      style={_drawerWrapperStyle}
+      style={_wrapperStyle}
     >
       {props.children}
     </div>, portalElement);
@@ -29,7 +29,18 @@ export function OptimaDrawerIn(props: { children: React.ReactNode }) {
 
 export function OptimaPanelIn(props: { children: React.ReactNode }) {
   const portalElement = useOptimaPortalTargetElement('optima-portal-panel');
-  return portalElement ? createPortal(props.children, portalElement) : null;
+  if (!portalElement) return null;
+
+  // wrap portal contents in a div that updates the hover state of the panel
+  const { peekPanelEnter, peekPanelLeave } = optimaActions();
+  return createPortal(
+    <div
+      onMouseEnter={peekPanelEnter}
+      onMouseLeave={peekPanelLeave}
+      style={_wrapperStyle}
+    >
+      {props.children}
+    </div>, portalElement);
 }
 
 export function OptimaToolbarIn(props: { children: React.ReactNode }) {
