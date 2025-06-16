@@ -61,6 +61,7 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // Closed state via data attribute
   '&[data-closed="true"]': {
     transform: 'translateX(-100%)',
+    borderRightColor: 'transparent',
   },
 
   // Peek state via class
