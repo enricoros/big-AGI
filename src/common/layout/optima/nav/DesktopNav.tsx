@@ -138,8 +138,8 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
             onPointerDown={isDrawerable ? optimaToggleDrawer : () => Router.push(app.landingRoute || app.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''} ${app.isDev ? navItemClasses.dev : ''}`}
           >
-            {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
-            <app.icon />
+            {(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}
+            {/*<app.icon />*/}
           </DesktopNavIcon>
         </Tooltip>
       );
