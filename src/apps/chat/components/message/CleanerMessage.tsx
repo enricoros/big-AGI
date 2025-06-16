@@ -71,7 +71,7 @@ export const MessagesSelectionHeader = (props: {
   areAllMessagesHidden: boolean,
 }) =>
   <Sheet color='warning' variant='solid' invertedColors sx={{
-    position: 'sticky', top: 0, left: 0, right: 0, zIndex: 101 /* Cleanup Selection Header on top of messages */,
+    position: 'sticky', top: 0, left: 0, right: 0, zIndex: 5 /* Cleanup Selection Header on top of messages */,
     boxShadow: 'md',
     display: 'flex',
     flexDirection: 'row',
