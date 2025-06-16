@@ -369,7 +369,7 @@ function ChatDrawer(props: {
             </Typography>
           ) : item.type === 'nav-item-info-message' ? (
             <Box key={'nav-info-' + idx} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, ml: 2 }}>
-              <Typography level='body-xs' sx={{ color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
+              <Typography level='body-xs' sx={{ color: 'primary.softColor', my: 'round(calc(var(--ListItem-minHeight) / 4))' }}>
                 {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
                 {item.message}
               </Typography>

@@ -47,7 +47,7 @@ const _styles = {
     // background: 'linear-gradient(135deg, var(--joy-palette-primary-500), var(--joy-palette-primary-700))',
     // background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
     display: 'grid',
-    gap: 'calc(0.75 * var(--Card-padding))',
+    gap: 'round(calc(0.75 * var(--Card-padding)))',
   } as const,
 
   text1: {

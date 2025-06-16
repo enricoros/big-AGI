@@ -75,7 +75,7 @@ export function CloseablePopup(props: {
     // style
     backgroundColor: 'background.popup',
     boxShadow: 'md',
-    ...(props.maxHeightGapPx !== undefined ? { maxHeight: `calc(100dvh - ${props.maxHeightGapPx}px)`, overflowY: 'auto' } : {}),
+    ...(props.maxHeightGapPx !== undefined ? { maxHeight: `round(calc(100dvh - ${props.maxHeightGapPx}px))`, overflowY: 'auto' } : {}),
     ...(props.maxWidth !== undefined && { maxWidth: props.maxWidth }),
     ...(props.minWidth !== undefined && { minWidth: props.minWidth }),
 

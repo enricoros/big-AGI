@@ -285,7 +285,7 @@ export function CameraCaptureModal(props: {
               display: 'block',
               width: !Is.Browser.Safari ? '100%' : undefined,
               marginLeft: 'auto', marginRight: 'auto',
-              maxHeight: 'calc(100vh - 200px)',
+              maxHeight: 'round(calc(100vh - 200px))',
               background: '#8888', //opacity: ocrProgress !== null ? 0.5 : 1,
             }}
           />
@@ -311,7 +311,7 @@ export function CameraCaptureModal(props: {
             </Typography>
           )}
 
-          {/*{ocrProgress !== null && <CircularProgress sx={{ position: 'absolute', top: 'calc(50% - 34px / 2)', left: 'calc(50% - 34px / 2)', zIndex: 2 }} />}*/}
+          {/*{ocrProgress !== null && <CircularProgress sx={{ position: 'absolute', top: 'round(calc(50% - 34px / 2))', left: 'round(calc(50% - 34px / 2))', zIndex: 2 }} />}*/}
         </Box>
 
         {/* Bottom controls (zoom, download) & progress */}
