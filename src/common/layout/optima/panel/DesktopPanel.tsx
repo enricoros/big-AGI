@@ -22,8 +22,8 @@ const DesktopPanelFixRoot = styled(Box)({
   
   // Base state
   zIndex: themeZIndexDesktopPanel,
-  
-  '&:not([data-open="true"])': {
+
+  '&[data-closed="true"]': {
     contain: 'strict',
     pointerEvents: 'none',
   },
@@ -62,7 +62,7 @@ const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   willChange: 'transform', // optimize for transform animations
 
   // Closed state via data attribute
-  '&:not([data-open="true"])': {
+  '&[data-closed="true"]': {
     transform: 'translateX(100%)',
   },
 
