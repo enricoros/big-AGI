@@ -58,7 +58,7 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
       open={isDrawerOpen}
       onClose={optimaCloseDrawer}
       sx={{
-        '--Drawer-horizontalSize': 'clamp(var(--AGI-Drawer-width), 30%, 100%)',
+        '--Drawer-horizontalSize': 'round(clamp(var(--AGI-Mobile-Drawer-width), 30%, 100%))',
         '--Drawer-transitionDuration': '0.2s',
         // '& .MuiDrawer-paper': {
         //   width: 256,
