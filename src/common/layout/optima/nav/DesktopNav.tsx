@@ -260,6 +260,9 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       // attract the attention to the models configuration when no LLMs are available (a bit hardcoded here)
       const isAttractive = noLLMs && item.overlayId === 'models';
 
+      // skip the models configuration, unless it is required
+      if (item.overlayId === 'models' && !isAttractive) return null;
+
       return (
         <Tooltip key={'n-m-' + item.overlayId} title={isAttractive ? 'Add Language Models - REQUIRED' : item.name}>
           <DesktopNavIcon
@@ -271,7 +274,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
           </DesktopNavIcon>
         </Tooltip>
       );
-    });
+    }).filter(component => !!component); // filter out null components
   }, [noLLMs, showModels, showPreferences]);
 
 
