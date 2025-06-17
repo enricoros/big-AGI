@@ -26,7 +26,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       open={panelShownAsPanel}
       onClose={optimaClosePanel}
       sx={{
-        '--Drawer-horizontalSize': 'round(clamp(var(--AGI-Mobile-Panel-width), 30%, 100%))',
+        '--Drawer-horizontalSize': 'round(clamp(30%, var(--AGI-Mobile-Panel-width), 100%), 1px)',
         '--Drawer-transitionDuration': '0.2s',
         // '& .MuiDrawer-paper': {
         //   width: 256,
