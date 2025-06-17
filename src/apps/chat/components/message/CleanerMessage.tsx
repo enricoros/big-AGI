@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Checkbox, Chip, IconButton, ListItem, Sheet, Stack } from '@mui/joy';
+import { Box, Button, Checkbox, Chip, IconButton, ListItem, Sheet } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -93,13 +93,13 @@ const styles = {
 
   tokenBadge: {
     display: 'flex',
-    minWidth: { xs: 45, sm: 45 },
+    minWidth: { xs: 45, sm: 50 },
     justifyContent: 'flex-end',
   } as const,
 
   avatar: {
     display: { xs: 'none', sm: 'flex' } as const,
-    minWidth: { xs: 40, sm: 48 } as const,
+    minWidth: 40 as const,
     justifyContent: 'center',
   } as const,
 
@@ -219,12 +219,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
       onClick={() => props.onToggleSelected?.(messageId, !props.selected)}
       sx={{
         backgroundColor,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        px: { xs: 1, md: 2 },
-        py: 2,
-        gap: 0,
+        display: 'flex', flexDirection: !fromAssistant ? 'row' : 'row', alignItems: 'center',
+        gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 2,
         ...styles.listItem,
         ...(isUserMessageSkipped && messageSkippedSx),
         // position: 'relative',
@@ -232,40 +228,31 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
       }}
     >
 
-      {/* Main message row */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+      {!!props.onToggleSelected && <Box sx={{ display: 'flex', minWidth: 24, justifyContent: 'center' }}>
+        <Checkbox size='md' checked={props.selected} onChange={handleCheckedChange} sx={{ zIndex: 2 }} />
+      </Box>}
 
-        {!!props.onToggleSelected && <Box sx={{ display: 'flex', minWidth: 24, justifyContent: 'center' }}>
-          <Checkbox size='md' checked={props.selected} onChange={handleCheckedChange} sx={{ zIndex: 2 }} />
-        </Box>}
+      {props.remainingTokens !== undefined && <Box sx={styles.tokenBadge}>
+        <TokenBadgeMemo direct={messageTokenCount} limit={props.remainingTokens} inline />
+      </Box>}
 
-        {props.remainingTokens !== undefined && <Box sx={styles.tokenBadge}>
-          <TokenBadgeMemo direct={messageTokenCount} limit={props.remainingTokens} inline />
-        </Box>}
+      <Box sx={styles.avatar}>
+        {avatarIconEl}
+      </Box>
 
-        <Box sx={styles.avatar}>
-          {avatarIconEl}
-        </Box>
+      <Box sx={styles.role}>
+        {messageRole.replace('assistant', 'AI').replace('user', 'User').replace('system', 'Sys')}
+      </Box>
 
-        <Box sx={styles.role}>
-          {messageRole.replace('assistant', 'AI').replace('user', 'User').replace('system', 'Sys')}
-        </Box>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
         <Box sx={styles.message}>
           {messageText || <span style={{ fontStyle: 'italic', color: 'text.tertiary' }}>No content</span>}
         </Box>
-      </Box>
 
-      {/* Fragment statistics chips row */}
-      {hasChips && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, mt: 1 }}>
-          {/* Spacers to align with message content */}
-          {!!props.onToggleSelected && <Box sx={{ minWidth: 24 }} />}
-          {props.remainingTokens !== undefined && <Box sx={{ minWidth: { xs: 32, sm: 45 } }} />}
-          <Box sx={{ display: { xs: 'none', sm: 'flex' }, minWidth: { xs: 40, sm: 48 } }} />
-          <Box sx={{ minWidth: 52 }} />
-
-          <Stack direction='row' spacing={0.5} flexWrap='wrap' useFlexGap sx={{ flexGrow: 1 }}>
+        {/* Fragment statistics chips row */}
+        {hasChips && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, mt: 1 }}>
             {analysis.textCount > 1 && (
               <Chip size='sm' variant='solid' color='neutral' startDecorator={<TextFieldsIcon />} sx={{ px: 1 }}>
                 {analysis.textCount} sections
@@ -302,9 +289,10 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
                 </Chip>
               );
             })}
-          </Stack>
-        </Box>
-      )}
+          </Box>
+        )}
+
+      </Box>
     </ListItem>
   );
 }
