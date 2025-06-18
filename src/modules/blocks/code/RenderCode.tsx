@@ -51,6 +51,7 @@ interface RenderCodeBaseProps {
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
   onReplaceInCode?: (search: string, replace: string) => boolean;
+  renderHideTitle?: boolean,
   sx?: SxProps,
 }
 
@@ -208,7 +209,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
 
   // Title
-  let showBlockTitle = (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
+  let showBlockTitle = !props.renderHideTitle && (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
   // Beautify: hide the block title when rendering HTML
   if (renderHTML)
     showBlockTitle = false;
@@ -265,7 +266,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         {/* Markdown Title (File/Type) */}
         {showBlockTitle && (
           <Sheet sx={{ backgroundColor: 'background.popup', boxShadow: 'xs', borderRadius: 'sm', border: '1px solid var(--joy-palette-neutral-outlinedBorder)', m: -0.5, mb: 1.5 }}>
-            <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }}>
+            <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }} className='agi-ellipsize'>
               {blockTitle}
               {/*{inferredCodeLanguage}*/}
             </Typography>
