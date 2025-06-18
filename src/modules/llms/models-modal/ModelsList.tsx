@@ -227,6 +227,7 @@ function ModelItem(props: {
 
 export function ModelsList(props: {
   filterServiceId: DModelsServiceId | null,
+  showHiddenModels: boolean,
   onOpenLLMOptions: (id: DLLMId) => void,
   sx?: SxProps,
 }) {
@@ -259,6 +260,10 @@ export function ModelsList(props: {
     // generate the list items, prepending headers when necessary
     const items: React.JSX.Element[] = [];
     for (const llm of llms) {
+
+      // skip hidden models if requested
+      if (!props.showHiddenModels && llm.hidden)
+        continue;
 
       // get the service label
       const serviceLabel = findModelsServiceOrNull(llm.sId)?.label ?? llm.sId;
@@ -295,13 +300,13 @@ export function ModelsList(props: {
     }
 
     return items;
-  }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId]);
+  }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId, props.showHiddenModels]);
 
   return (
     <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
       {modelItems.length > 0 ? modelItems : (
         <ListItem sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Typography level='body-sm'>
+          <Typography level='body-sm' mx={2}>
             Please complete the configuration and refresh the models list.
           </Typography>
           {/*<Skeleton variant='rectangular' animation={false} height={24} width={160} />*/}
