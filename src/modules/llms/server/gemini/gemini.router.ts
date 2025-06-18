@@ -118,4 +118,73 @@ export const llmGeminiRouter = createTRPCRouter({
       };
     }),
 
+  /**
+   * [Gemini] models.generateContent / models.streamGenerateContent
+   */
+  generateContent: publicProcedure
+    .input(z.object({
+      access: geminiAccessSchema,
+      modelRefId: z.string(), // e.g., 'models/gemini-1.5-flash-latest'
+      requestBody: z.object({ // Based on Gemini REST API for generateContent
+        contents: z.array(z.object({ // User and model messages
+          role: z.enum(['user', 'model']).optional(), // 'model' for assistant
+          parts: z.array(z.object({
+            text: z.string().optional(),
+            inline_data: z.object({ // For images
+              mime_type: z.string(), // e.g., 'image/png'
+              data: z.string(), // base64 encoded image
+            }).optional(),
+          })),
+        })),
+        generationConfig: z.object({
+          temperature: z.number().optional(),
+          topP: z.number().optional(),
+          topK: z.number().optional(),
+          maxOutputTokens: z.number().optional(),
+          candidateCount: z.number().optional(), // Not for streaming
+          stopSequences: z.array(z.string()).optional(),
+        }).optional(),
+        safetySettings: z.array(z.object({ // Optional safety settings
+          category: GeminiWire_Safety.HarmCategory_enum,
+          threshold: GeminiWire_Safety.HarmBlockThreshold_enum,
+        })).optional(),
+        // tools: ... further development for tool use
+      }),
+      stream: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { access, modelRefId, requestBody, stream } = input;
+      const apiPath = stream ? `/v1beta/${modelRefId}:streamGenerateContent?alt=sse` : `/v1beta/${modelRefId}:generateContent`;
+
+      // Use the geminiPOST helper, which should handle JSON stringification and response parsing.
+      // For streaming, the response is not JSON but a stream of Server-Sent Events.
+      // The fetchJsonOrTRPCThrow helper used by geminiPOST might need adjustment for SSE.
+      // For now, let's assume geminiPOST can handle it or we'll adjust.
+      // If geminiPOST is strictly for JSON, we'll need a new helper for SSE.
+
+      // NOTE: The existing `geminiPOST` and `fetchJsonOrTRPCThrow` are designed for JSON request/response.
+      // Streaming with SSE needs a different handling for the response.
+      // I will proceed by constructing the fetch call directly here for the streaming case.
+
+      const { headers, url } = geminiAccess(access, null, apiPath, false); // modelRefId is already in apiPath
+
+      if (stream) {
+        const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(requestBody) });
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Gemini API request failed: ${response.status} ${response.statusText} - ${errorBody}`,
+          });
+        }
+        if (!response.body) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No response body from Gemini stream.' });
+        }
+        return response.body; // Return ReadableStream directly
+      } else {
+        // Non-streaming: use the existing helper if it fits, or direct fetch
+        const responseData = await geminiPOST<object, typeof requestBody>(access, null, requestBody, apiPath, false);
+        return responseData; // This will be a JSON object
+      }
+    }),
 });

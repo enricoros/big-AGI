@@ -12,8 +12,10 @@ import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenPipe } from './openpipe/openpipe.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
+import { vendorPollinations } from './pollinations/pollinations.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
 import { ModelVendorXAI } from './xai/xai.vendor';
+import { vendorZhipuAI } from './zhipuai/zhipuai.vendor';
 
 import type { IModelVendor } from './IModelVendor';
 
@@ -33,8 +35,10 @@ export type ModelVendorId =
   | 'openpipe'
   | 'openrouter'
   | 'perplexity'
+  | 'pollinations'
   | 'togetherai'
   | 'xai'
+  | 'zhipuai'
   ;
 
 /** Global: Vendor Instances Registry **/
@@ -53,8 +57,10 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   openpipe: ModelVendorOpenPipe,
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
+  pollinations: vendorPollinations,
   togetherai: ModelVendorTogetherAI,
   xai: ModelVendorXAI,
+  zhipuai: vendorZhipuAI,
 } as Record<string, IModelVendor>;
 
 

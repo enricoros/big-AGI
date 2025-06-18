@@ -14,6 +14,7 @@ import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContent
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
+import { apiAsync } from '~/common/util/trpc.client';
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
 import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
@@ -52,7 +53,8 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   // memo
 
   const { mayWork, mayEdit, providers, activeProvider } = React.useMemo(() => {
-    const providers = getTextToImageProviders(llmsModelServices, hasProdiaModels);
+    const { llms, sources } = llmsStoreState(); // Get all LLMs and sources/services
+    const providers = getTextToImageProviders(llmsModelServices, hasProdiaModels, llms, sources);
     const activeProvider = !activeProviderId ? undefined : providers.find(p => p.providerId === activeProviderId);
     const mayWork = providers.some(p => p.configured);
     const mayEdit = activeProvider?.vendor === 'openai' && dalleModelId === 'gpt-image-1';
@@ -95,9 +97,9 @@ export function getActiveTextToImageProviderOrThrow() {
     throw new Error('No TextToImage Provider selected');
 
   // [immediate] get all providers
-  const { llms, sources: modelsServices } = llmsStoreState();
-  const openAIModelsServiceIDs = getLlmsModelServices(llms, modelsServices);
-  const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().modelId);
+  const { llms, sources: modelsServicesFromStore } = llmsStoreState(); // Renamed to avoid conflict
+  const llmsModelServicesForT2I = getLlmsModelServices(llms, modelsServicesFromStore);
+  const providers = getTextToImageProviders(llmsModelServicesForT2I, !!useProdiaStore.getState().modelId, llms, modelsServicesFromStore);
 
   // find the active provider
   const activeProvider = providers.find(p => p.providerId === activeProviderId);
@@ -130,6 +132,106 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
         throw new Error('Prodia image editing is not yet available');
       return await prodiaGenerateImages(prompt, count);
 
+    case 'pollinations':
+      if (!providerId) // Should be 'pollinations' itself or a specific model ID
+        throw new Error('No Pollinations Model service configured for TextToImage');
+      if (aixInlineImageParts?.length)
+        throw new Error('Pollinations image editing is not yet available');
+
+      // TODO: Get actual modelId, width, height, seed from somewhere (e.g. active model settings or UI)
+      // The modelId used here should be the one without the "pollinations-" prefix.
+      const anImageLLM = llmsStoreState().llms.find(m => m.vId === 'pollinations' && m.interfaces.includes('outputs-image'));
+      if (!anImageLLM)
+        throw new Error('No Pollinations image model found. Please update models.');
+
+      // Extract default width/height/seed from model if available in initialParameters
+      const modelWidth = anImageLLM.initialParameters?.['width'] as number | undefined;
+      const modelHeight = anImageLLM.initialParameters?.['height'] as number | undefined;
+      const modelSeed = anImageLLM.initialParameters?.['seed'] as number | undefined;
+
+      const { imageUrl } = await apiAsync.llmPollinations.generateImage.mutate({
+        modelId: anImageLLM.id, // This will be like 'pollinations-flux-1.0-sde'
+        prompt,
+        width: modelWidth, // Pass parameters from the model definition
+        height: modelHeight,
+        seed: modelSeed,
+      });
+
+      // Client-side fetch and conversion to base64 - less ideal but works if TRPC returns URL
+      const imageResponse = await fetch(imageUrl);
+      if (!imageResponse.ok)
+        throw new Error(`Failed to fetch image from Pollinations URL: ${imageResponse.statusText}`);
+      const imageBlob = await imageResponse.blob();
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageBlob);
+      });
+
+      return [{
+        mimeType: imageBlob.type || 'image/png', // Get mimeType from blob
+        base64Data,
+        altText: prompt,
+        generatorName: anImageLLM.label || 'Pollinations', // Or model name
+        // width, height, parameters, generatedAt, inputTokens, outputTokens if available
+        width: modelWidth, // Assuming these are the dimensions of the generated image
+        height: modelHeight,
+        parameters: { model: anImageLLM.id, seed: modelSeed },
+        generatedAt: Date.now(),
+      }];
+
+    case 'zhipuai':
+      if (!providerId)
+        throw new Error('No ZhipuAI Model service configured for TextToImage');
+      if (aixInlineImageParts?.length)
+        throw new Error('ZhipuAI image editing (img2img) is not yet available via this flow.');
+
+      // providerId here is the DModelsServiceId for ZhipuAI
+      const zhipuImageModel = llmsStoreState().llms.find(m => m.vId === 'zhipuai' && m.interfaces.includes('outputs-image') && m.sId === providerId);
+      if (!zhipuImageModel)
+        throw new Error(`ZhipuAI image model for service ${providerId} not found. Please update models.`);
+
+      // Extract parameters for ZhipuAI
+      // The model ID for the API call should not have the vendor prefix.
+      const zhipuApiSpecificModelId = zhipuImageModel.id.startsWith('zhipuai-') ? zhipuImageModel.id.substring('zhipuai-'.length) : zhipuImageModel.id;
+      const zhipuSize = zhipuImageModel.initialParameters?.['size'] as string || '1024x1024'; // Default if not set
+      const zhipuQuality = zhipuImageModel.initialParameters?.['quality'] as string || 'standard'; // Default if not set
+
+      // Note: ZhipuAI API key is handled by the TRPC backend via ZhipuAIAccessSchema in context
+      const { imageUrl, response: zhipuResponse } = await apiAsync.llmZhipuAI.generateImage.mutate({
+        model: zhipuApiSpecificModelId, // e.g., "cogview-3" (or "cogview-3-flash" depending on exact model ID from vendor)
+        prompt,
+        size: zhipuSize,
+        quality: zhipuQuality,
+        // user_id: can be added if available globally or from user settings
+      });
+
+      // Fetch image from URL and convert to base64
+      const imageResp = await fetch(imageUrl);
+      if (!imageResp.ok)
+        throw new Error(`Failed to fetch image from ZhipuAI URL: ${imageResp.statusText}`);
+      const imageBlob = await imageResp.blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageBlob);
+      });
+
+      const width = parseInt(zhipuSize.split('*')[0]);
+      const height = parseInt(zhipuSize.split('*')[1]);
+
+      return [{
+        mimeType: imageBlob.type || 'image/png',
+        base64Data: base64,
+        altText: prompt,
+        generatorName: zhipuImageModel.label || 'ZhipuAI CogView',
+        width: width,
+        height: height,
+        parameters: { model: zhipuImageModel.id, size: zhipuSize, quality: zhipuQuality },
+        generatedAt: zhipuResponse?.created ? zhipuResponse.created * 1000 : Date.now(), // created is in seconds
+      }];
   }
 }
 
@@ -210,7 +312,7 @@ function getLlmsModelServices(llms: DLLM[], services: DModelsService[]) {
   }));
 }
 
-function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasProdiaClientModels: boolean) {
+function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasProdiaClientModels: boolean, llms: DLLM[], services: DModelsService[]) {
   const providers: TextToImageProvider[] = [];
 
   // add OpenAI and/or LocalAI providers
@@ -254,6 +356,29 @@ function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasP
     description: 'Prodia\'s models',
     configured: hasProdiaServer || hasProdiaClientModels,
     vendor: 'prodia',
+  });
+
+  // add Pollinations provider
+  const hasPollinationsModels = llms.some(m => m.vId === 'pollinations' && m.interfaces.includes('outputs-image'));
+  providers.push({
+    providerId: 'pollinations', // Unique ID for this provider type
+    label: 'Pollinations',
+    painter: 'Pollinations', // Or a specific model family like "Flux"
+    description: 'Pollinations.ai free image models',
+    configured: hasPollinationsModels, // configured if we have models
+    vendor: 'pollinations',
+  });
+
+  // add ZhipuAI provider
+  const hasZhipuAIModels = llms.some(m => m.vId === 'zhipuai' && m.interfaces.includes('outputs-image'));
+  const zhipuAIService = services.find(s => s.vId === 'zhipuai');
+  providers.push({
+    providerId: zhipuAIService?.id || 'zhipuai', // Use serviceId if available, fallback for safety
+    label: zhipuAIService?.label || 'ZhipuAI',
+    painter: 'CogView', // Or ZhipuAI
+    description: 'ZhipuAI image models (CogView)',
+    configured: hasZhipuAIModels && !!zhipuAIService, // Requires models and a configured service
+    vendor: 'zhipuai',
   });
 
   return providers;
