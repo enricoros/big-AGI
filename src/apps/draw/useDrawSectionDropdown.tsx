@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
+import { BrandIcon } from '~/common/components/icons/BrandIcon';
 import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
@@ -56,7 +56,7 @@ export function useDrawSectionDropdown(remainingJobs: number, cancelAllJobs: () 
       gap: 1,
     }}>
       <Link href={ROUTE_INDEX}>
-        <BigAgiSquircleIcon inverted sx={{ width: 32, height: 32, color: 'white' }} />
+        <BrandIcon />
       </Link>
 
       <DrawSectionDropdown

@@ -12,10 +12,9 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 
-import { BuildInfoCard } from '../../../../apps/news/AppNews';
 import { blocksRenderHTMLIFrameCss } from '~/modules/blocks/code/code-renderers/RenderCodeHtmlIFrame';
 
-import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
+import { BrandIcon } from '~/common/components/icons/BrandIcon';
 import { Brand } from '~/common/app.config';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { LayoutSidebarRight } from '~/common/components/icons/LayoutSidebarRight';
@@ -74,7 +73,7 @@ function CenterItemsFallback(props: { currentApp?: NavItemApp }) {
 
     {/* Squircle */}
     <Link href={ROUTE_INDEX}>
-      <BigAgiSquircleIcon inverted sx={{ width: 32, height: 32, color: 'white' }} />
+      <BrandIcon />
     </Link>
 
     {/* Title */}
@@ -132,14 +131,6 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
     );
   }, [releaseNotesUrl, showPromisedOverlay]);
 
-  const handleShowTechnologies = React.useCallback(async () => {
-    return await showPromisedOverlay<boolean>('app-recent-changes', { rejectWithValue: false }, ({ onUserReject }) =>
-      <GoodModal open onClose={onUserReject} noTitleBar unfilterBackdrop>
-        <BuildInfoCard noMargin />
-      </GoodModal>,
-    );
-  }, [showPromisedOverlay]);
-
   // [Desktop] optionally hide the Bar if the current app asks for it
   if (props.currentApp?.hideBar && !props.isMobile && !panelHasContent)
     return null;
@@ -195,12 +186,6 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
                 Release Notes
               </MenuItem>
             )}
-            <MenuItem onClick={handleShowTechnologies}>
-              {/*<ListItemDecorator><EventNoteOutlinedIcon /></ListItemDecorator>*/}
-              <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
-              Build Info
-            </MenuItem>
-
 
             {scratchClipSupported() && <MenuItem onClick={toggleScratchClipVisibility}>
               <ListItemDecorator><HistoryIcon /></ListItemDecorator>

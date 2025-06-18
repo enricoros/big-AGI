@@ -6,7 +6,7 @@ import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Toolt
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
+import { BrandIcon } from '~/common/components/icons/BrandIcon';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
@@ -182,7 +182,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
             onPointerDown={logoButtonTogglesPane ? optimaToggleDrawer : undefined}
             className={navItemClasses.typeMenu}
           >
-            {logoButtonTogglesPane ? <MenuIcon /> : <BigAgiSquircleIcon inverted sx={{ color: 'white' }} />}
+            {logoButtonTogglesPane ? <MenuIcon /> : <BrandIcon style={{ width: 24, height: 24 }} />}
           </DesktopNavIcon>
         </Tooltip>
       </InvertedBarCornerItem>
