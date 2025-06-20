@@ -1,9 +1,9 @@
 {
-  "name": "big-AGI",
-  "short_name": "big-AGI",
+  "name": "FylloAI",
+  "short_name": "FylloAI",
   "theme_color": "#32383E",
   "background_color": "#9FA6AD",
-  "description": "Your Generative AI Suite",
+  "description": "FylloAI - Your Generative AI Suite",
   "categories": [
     "productivity",
     "AI",
@@ -37,9 +37,9 @@
     {
       "action": "/link/share_target",
       "accept": {
-        "application/big-agi": [
-          ".agi",
-          ".agi.json"
+        "application/fylloai": [
+          ".fyllo",
+          ".fyllo.json"
         ]
       }
     }

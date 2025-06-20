@@ -12,7 +12,7 @@ body:
       label: Environment
       description: (required) Where are you experiencing this issue?
       options:
-        - big-agi.com (production website)
+        - fyllo.m7ai.top (production website)
         - GitHub v2-dev branch
         - GitHub other branch (specify in description)
         - Docker container (specify in description)

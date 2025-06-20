@@ -1,29 +1,30 @@
-# BIG-AGI 🧠
+# FylloAI 🧠
 
-Welcome to big-AGI, the AI suite for professionals that need function, form,
+Welcome to FylloAI, the AI suite for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 15 vendors and
-open-source servers, `big-AGI` offers best-in-class Chats,
+open-source servers, `FylloAI` offers best-in-class Chats,
 [Beams](https://github.com/enricoros/big-AGI/issues/470),
 and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
 visualizations, coding, drawing, side-by-side chatting, and more -- all wrapped in a polished UX.
 
-Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
+Stay ahead of the curve with FylloAI. 🚀 Pros & Devs love FylloAI. 🤖
 
-[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
+[![Official Website](https://img.shields.io/badge/FylloAI-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://fyllo.m7ai.top)
+<!-- Shield URL text updated to FylloAI, link to fyllo.m7ai.top -->
 
-> 🚀 Big-AGI 2 is launching soon.
+> 🚀 FylloAI 2 is launching soon.
 
 Or fork & run on Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=FylloAI)
 
 ### New Version
 
 This repository contains two main versions:
 
-- Big-AGI 2: next-generation, bringing the most advanced AI experience
+- FylloAI 2: next-generation, bringing the most advanced AI experience
   - `v2-dev`: V2 development branch, the exciting one, future default (this branch)
-- Big-AGI Stable: as deployed on big-agi.com
+- FylloAI Stable: as deployed on fyllo.m7ai.top
   - `v1-stable`: Current stable version, and currently the Docker 'latest' tagged images
 
 Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and `v1-stable` will reach EOL.
@@ -34,7 +35,7 @@ Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and 
 
 ### 5,000 Commits Milestone · Jan 2025
 
-Hit 5k commits last week. That's a lot of code, and it's the [foundation for what's coming](https://big-agi.com/blog/big-agi-2-is-almost-ready).
+Hit 5k commits last week. That's a lot of code, and it's the [foundation for what's coming](https://fyllo.m7ai.top/blog/fylloai-2-is-almost-ready).
 
 Recent work has been intense:
 - Chain of thought reasoning across multiple LLMs: **OpenAI o3** and o1, **DeepSeek R1**, **Gemini 2.0 Flash Thinking**, and more
@@ -42,7 +43,7 @@ Recent work has been intense:
 - New AIX framework lets us scale features we couldn't before
 - UI is faster than ever. Like, terminal-fast
 
-Big-AGI 2 is weeks away. Yes, we're late, but we're making it right. The new architecture is solid and the speed improvements are real.
+FylloAI 2 is weeks away. Yes, we're late, but we're making it right. The new architecture is solid and the speed improvements are real.
 
 Stay tuned. This is going to be good.
 
@@ -50,8 +51,8 @@ Stay tuned. This is going to be good.
 
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 
-- 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
-- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
+- 1.16.9: Docker Gemini fix (R1 models are supported in FylloAI 2)
+- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in FylloAI 2)
 - 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
@@ -66,7 +67,7 @@ Stay tuned. This is going to be good.
 
 ### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
 
-- [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
+- [Beam](https://fyllo.m7ai.top/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
 - Chat cost estimation 💰 (enable it in Labs / hover the token counter)
 - Save/load chat files with Ctrl+S / Ctrl+O on desktop
 - Major enhancements to the Auto-Diagrams tool
@@ -77,14 +78,14 @@ Stay tuned. This is going to be good.
 
 #### 3,000 Commits Milestone · April 7, 2024
 
-![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
+![FylloAI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
 
 - 🥇 Today we <b>celebrate commit 3000</b> in just over one year, and going stronger 🚀
-- 📢️ Thanks everyone for your support and words of love for Big-AGI, we are committed to creating the best AI experiences for everyone.
+- 📢️ Thanks everyone for your support and words of love for FylloAI, we are committed to creating the best AI experiences for everyone.
 
 ### What's New in 1.15.0 · April 1, 2024 · Beam
 
-- ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- ⚠️ [**Beam**: the multi-model AI chat](https://fyllo.m7ai.top/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
 - Managed Deployments **Auto-Configuration**: simplify the UI models setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
 - Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
 - Enhanced the default Persona
@@ -99,7 +100,7 @@ Stay tuned. This is going to be good.
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
 - **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
 - **Mistral** Large and Google **Gemini 1.5** support
-- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=fylloai), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
 
@@ -170,9 +171,9 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
 | **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
 
-![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
+![FylloAI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
-You can easily configure 100s of AI models in big-AGI:
+You can easily configure 100s of AI models in FylloAI:
 
 | **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                            |
 |:--------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -213,17 +214,17 @@ Add extra functionality with these integrations:
 
 ## 🚀 Installation
 
-To get started with big-AGI, follow our comprehensive [Installation Guide](docs/installation.md).
+To get started with FylloAI, follow our comprehensive [Installation Guide](docs/installation.md).
 The guide covers various installation options, whether you're spinning it up on
 your local computer, deploying on Vercel, on Cloudflare, or rolling it out
 through Docker.
 
 Whether you're a developer, system integrator, or enterprise user, you'll find step-by-step instructions
-to set up big-AGI quickly and easily.
+to set up FylloAI quickly and easily.
 
 [![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
 
-Or bring your API keys and jump straight into our free instance on [big-AGI.com](https://big-agi.com).
+Or bring your API keys and jump straight into our free instance on [fyllo.m7ai.top](https://fyllo.m7ai.top).
 
 <br/>
 
@@ -250,11 +251,11 @@ Or bring your API keys and jump straight into our free instance on [big-AGI.com]
 
 ## 📜 Licensing
 
-Big-AGI incorporates third-party software components that are subject
+FylloAI incorporates third-party software components that are subject
 to separate license terms. For detailed information about these
 components and their respective licenses, please refer to
 the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
 
 ---
 
-2023-2024 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
+2023-2024 · Enrico Ros x [FylloAI](https://fyllo.m7ai.top) · Like this project? Leave a star! 💫⭐

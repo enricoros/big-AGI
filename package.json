@@ -1,5 +1,6 @@
 {
-  "name": "big-agi",
+  "name": "fylloai",
+  "description": "FylloAI - Your Generative AI Suite",
   "version": "1.92.0",
   "private": true,
   "author": "Enrico Ros <enrico.ros@gmail.com>",

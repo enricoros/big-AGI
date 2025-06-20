@@ -1,6 +1,6 @@
-# Big-AGI Documentation
+# FylloAI Documentation
 
-Information you need to get started, configure, and use big-AGI productively.
+Information you need to get started, configure, and use FylloAI productively.
 
 ## Getting Started
 
@@ -11,9 +11,9 @@ Essential guides:
 
 ## AI Services
 
-How to set up AI models and features in big-AGI.
+How to set up AI models and features in FylloAI.
 
-> 👉 The following applies to users of big-AGI.com, as the public instance is empty and requires user configuration.
+> 👉 The following applies to users of fyllo.m7ai.top, as the public instance is empty and requires user configuration.
 
 - **Cloud AI Services**:
   - Easy API key configuration:
@@ -45,12 +45,12 @@ How to set up AI models and features in big-AGI.
 
 ## Deployment & Customization
 
-> 👉 The following applies to developers and experts who deploy their own big-AGI instance.
+> 👉 The following applies to developers and experts who deploy their own FylloAI instance.
 
-For deploying a custom big-AGI instance:
+For deploying a custom FylloAI instance:
 
 - **[Installation Guide](installation.md)**, including:
-  - Set up your own big-AGI instance
+  - Set up your own FylloAI instance
   - Source build or pre-built options
   - Local, cloud, or on-premises deployment
 
@@ -65,7 +65,7 @@ For deploying a custom big-AGI instance:
 ## Community & Support
 
 - Visit our [GitHub repository](https://github.com/enricoros/big-AGI) for source code and issue tracking
-- Check the latest updates in the [Changelog](changelog.md) or in-app [News](https://get.big-agi.com/news)
+- Check the latest updates in the [Changelog](changelog.md) or in-app [News](https://fyllo.m7ai.top/news)
 - Join our [Discord](https://discord.gg/MkH4qj2Jp9) for discussions and help
 
 Let's build something great.

@@ -1,13 +1,13 @@
 # Enabling Microphone Access for Speech Recognition
 
 This guide explains how to enable microphone access for speech recognition in various browsers and mobile devices.
-Ensuring microphone access is essential for using voice features in applications like big-AGI.
+Ensuring microphone access is essential for using voice features in applications like FylloAI.
 
 ## Desktop Browsers
 
 ### Google Chrome (All Platforms, recommended)
 
-1. Open the website (e.g., big-AGI) in Chrome.
+1. Open the website (e.g., FylloAI) in Chrome.
 2. Click the **lock icon** in the address bar.
 3. In the dropdown, find **"Microphone"**.
    - Set it to **"Allow"**.
@@ -31,11 +31,11 @@ If you're seeing a "Speech Recognition permission denied" error, follow these st
    - Select **Settings**.
    - Go to the **Websites** tab.
    - Select **Microphone** from the sidebar.
-   - Find big-AGI (or localhost for developers) in the list and set it to **Allow**.
+   - Find FylloAI (or localhost for developers) in the list and set it to **Allow**.
    - Close the Settings window.
 3. **Refresh** the page.
 
-This quick and simple fix should get essential voice input working in big-AGI on your Mac.
+This quick and simple fix should get essential voice input working in FylloAI on your Mac.
 
 ### Microsoft Edge (Windows)
 
@@ -119,11 +119,11 @@ If you're still experiencing issues after enabling microphone access:
 
 - Disable extensions that might block access to the microphone.
 
-For persistent issues, consult your browser's official support resources or contact big-AGI support.
+For persistent issues, consult your browser's official support resources or contact FylloAI support.
 
 ## Technical Details
 
-Big-AGI uses the [Web Speech API (SpeechRecognition)](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition)
+FylloAI uses the [Web Speech API (SpeechRecognition)](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition)
 to transcribe spoken words into text. This API provides real-time transcription with live previews and works on most
 modern mobile and desktop browsers.
 

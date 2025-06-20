@@ -17,15 +17,15 @@ process.env.NEXT_PUBLIC_BUILD_HASH = (buildHash || '').slice(0, 10);
 process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + readFileSync(new URL('./package.json', import.meta.url))).version;
 process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
 process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE = process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE || (process.env.VERCEL_ENV ? `vercel-${process.env.VERCEL_ENV}` : 'local'); // Docker or custom, Vercel
-console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH})`);
+console.log(` 🧠 \x1b[1mFylloAI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH})`);
 
 // Non-default build types
 const buildType =
-  process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone' as const
-    : process.env.BIG_AGI_BUILD === 'static' ? 'export' as const
+  process.env.FYLLOAI_BUILD === 'standalone' ? 'standalone' as const
+    : process.env.FYLLOAI_BUILD === 'static' ? 'export' as const
       : undefined;
 
-buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
+buildType && console.log(` 🧠 FylloAI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig: NextConfig = {

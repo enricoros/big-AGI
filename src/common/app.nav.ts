@@ -12,6 +12,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
+import MovieIcon from '@mui/icons-material/Movie'; // Or VideocamIcon
 import TextsmsIcon from '@mui/icons-material/Textsms';
 import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 // Link icons
@@ -205,6 +206,14 @@ export const navItems: {
       panelAsMenu: true,
       hideIcon: hasNoChatLinkItems,
       hideNav: hasNoChatLinkItems,
+    },
+    {
+      name: 'Generate Video',
+      icon: MovieIcon, // Using MovieIcon
+      type: 'app',
+      route: '/generate-video',
+      hideDrawer: true, // Assuming similar behavior to other tool pages
+      // isDev: true, // Can mark as dev if it's experimental
     },
   ],
 

@@ -8,12 +8,12 @@ by release.
 ### 1.17.0 - Jun 2024
 
 - milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
-- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+- work in progress: [FylloAI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 
-- 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
-- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
+- 1.16.9: Docker Gemini fix (R1 models are supported in FylloAI 2)
+- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in FylloAI 2)
 - 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
@@ -28,7 +28,7 @@ by release.
 
 ### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
 
-- [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
+- [Beam](https://fyllo.m7ai.top/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
 - Chat cost estimation 💰 (enable it in Labs / hover the token counter)
 - Save/load chat files with Ctrl+S / Ctrl+O on desktop
 - Major enhancements to the Auto-Diagrams tool
@@ -46,7 +46,7 @@ by release.
 
 ### What's New in 1.15.0 · April 1, 2024 · Beam
 
-- ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- ⚠️ [**Beam**: the multi-model AI chat](https://fyllo.m7ai.top/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
 - Managed Deployments **Auto-Configuration**: simplify the UI mdoels setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
 - Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
 - Enhanced the default Persona
@@ -59,7 +59,7 @@ by release.
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
 - **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
 - **Mistral** Large and Google **Gemini 1.5** support
-- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=fylloai), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
 - [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)
@@ -128,7 +128,7 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 - Mac Shortcuts Fix: Improved UX on Mac
 - **Single-Tab Mode**: Data integrity with single window. [#268](https://github.com/enricoros/big-agi/issues/268)
 - **Updated Models**: Latest Ollama (v0.1.17) and OpenRouter models
-- Official Downloads: Easy access to the latest big-AGI on [big-AGI.com](https://big-agi.com)
+- Official Downloads: Easy access to the latest FylloAI on [fyllo.m7ai.top](https://fyllo.m7ai.top)
 - For developers: [troubleshot networking](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483), fixed Vercel deployment, cleaned up the LLMs/Streaming framework
 
 ### What's New in 1.7.0 · Dec 11, 2023 · Attachment Theory
@@ -206,7 +206,7 @@ For Developers:
 - Improved Dialogs and Messages
 - Much Enhanced DX: TRPC integration, modularization, pluggable UI, etc
 
-### April / May: more #big-agi-energy
+### April / May: more #fylloai-energy
 
 - **[Google Search](../docs/pixels/feature_react_google.png)** active in ReAct - add your keys to Settings > Google
   Search

@@ -1,15 +1,15 @@
 # Frequently Asked Questions
 
-Quick answers to common questions about Big-AGI. For detailed documentation, see our [Website Docs](https://big-agi.com/docs).
+Quick answers to common questions about FylloAI. For detailed documentation, see our [Website Docs](https://fyllo.m7ai.top/docs).
 
 ### Versions
 
 <details open>
-<summary><b>How do I check my Big-AGI version?</b></summary>
+<summary><b>How do I check my FylloAI version?</b></summary>
 
 You can see the version in the _News_ section of the app, as per the image below.
 
-![Version location in Big-AGI](https://github.com/user-attachments/assets/cd295094-0114-420f-a5b9-0d762e59b506)
+![Version location in FylloAI](https://github.com/user-attachments/assets/cd295094-0114-420f-a5b9-0d762e59b506)
 </details>
 
 <details open>

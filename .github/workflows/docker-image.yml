@@ -60,10 +60,10 @@ jobs:
             type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
             type=sha,format=short,prefix=sha- # Just in case none of the above applies
           labels: |
-            org.opencontainers.image.title=Big-AGI
-            org.opencontainers.image.description=Generative AI suite powered by state-of-the-art models
+            org.opencontainers.image.title=FylloAI
+            org.opencontainers.image.description=FylloAI - Generative AI suite powered by state-of-the-art models
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.documentation=https://big-agi.com
+            org.opencontainers.image.documentation=https://fyllo.m7ai.top
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6

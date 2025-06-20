@@ -46,11 +46,11 @@ assignees: enricoros
 ## Artifacts Generation
 
 ```markdown
-You help me generate the following collateral for the new release of my opensource application called big-AGI. The new release is 1.2.3.
+You help me generate the following collateral for the new release of my opensource application called FylloAI. The new release is 1.2.3.
 To familiarize yourself with the application, the following are the Website and the GitHub README.md.
 ```
 
-- paste the URL: https://big-agi.com
+- paste the URL: https://fyllo.m7ai.top
 - drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/v2-dev/README.md)
 
 ```markdown
@@ -88,7 +88,7 @@ I need the following from you:
 ### release name
 
 ```markdown
-please brainstorm 10 different names for this release. see the former names here: https://big-agi.com/blog
+please brainstorm 10 different names for this release. see the former names here: https://fyllo.m7ai.top/blog
 ```
 
 You can follow with 'What do you think of Modelmorphic?' or other selected name
@@ -127,6 +127,6 @@ some stats (# of commits, etc.), and roll it for the new release.
 ### Discord announcement
 
 ```markdown
-Can you generate my 1.2.3 big-AGI discord announcement from the GitHub Release announcement?
+Can you generate my 1.2.3 FylloAI discord announcement from the GitHub Release announcement?
 Please keep the formatting and stye of the discord announcement for 1.1.0, but with the new messaging above.
 ```

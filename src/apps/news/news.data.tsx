@@ -69,12 +69,12 @@ export const NewsItems: NewsItem[] = [
     versionName: Release.App.versionName,
     versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
-      { text: <>You&apos;re running an unsupported <B>develpers build</B> of Big-AGI 2. This branch carries breaking features that are subject to change and may break.</> },
+      { text: <>You&apos;re running an unsupported <B>develpers build</B> of FylloAI 2. This branch carries breaking features that are subject to change and may break.</> },
       { text: <><B>dev-branch:</B> LFS, Apply, MM-reAct, fu-Chart, fu-UI, fu-Diagram, C-fixes</> },
-      { text: <><B>big-agi-2:</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567'>here</ExternalLink></> },
+      { text: <><B>fylloai-2:</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567'>here</ExternalLink></> },
       { text: <>Please report screenshots of breakages and console error messages.</> },
       { text: <>2,000+ changes, 60,000+ lines of code changed vs. 1.16</> },
-      { text: <>Do not use, no cloud backups, <ExternalLink href='https://big-agi.com'>stable version here</ExternalLink>.</> },
+      { text: <>Do not use, no cloud backups, <ExternalLink href='https://fyllo.m7ai.top'>stable version here</ExternalLink>.</> },
     ],
   },
   {
@@ -103,7 +103,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.7: Gpt-4o <B>2024-08-06</B></> },
       { text: <>1.16.8: <B>ChatGPT-4o</B> latest</> },
       { text: <>1.16.9: <B>Gemini</B> fixes</> },
-      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
+      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require FylloAI 2. <B href='https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
     ],
   },
   {
@@ -232,7 +232,7 @@ export const NewsItems: NewsItem[] = [
       { text: <><B>Single-Tab</B> mode, enhances data integrity and prevents DB corruption</> },
       { text: <>Updated Ollama (v0.1.17) and OpenRouter models</> },
       { text: <>More: fixed ⌘ shortcuts on Mac</> },
-      { text: <><Link href='https://big-agi.com'>Website</Link>: official downloads</> },
+      { text: <><Link href='https://fyllo.m7ai.top'>Website</Link>: official downloads</> },
       { text: <>Easier Vercel deployment, documented <Link href='https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483'>network troubleshooting</Link></>, dev: true },
     ],
   },
@@ -317,6 +317,7 @@ export const NewsItems: NewsItem[] = [
     versionCode: '1.2.1',
     // text: '',
     items: [
+      // Updated to use Brand.URIs.Home which is now fyllo.m7ai.top
       { text: <>New home page: <b><Link href={Brand.URIs.Home + clientUtmSource()} target='_blank'>{Brand.URIs.Home.replace('https://', '')}</Link></b></> },
       { text: 'Support 𝑓unction models' }, // (n)
       { text: <Box sx={{ display: 'flex', alignItems: 'center' }}>Labs: experiments</Box> }, // ⚗️🧬🔬🥼 🥽🧪 <ScienceIcon sx={{ fontSize: 24, opacity: 0.5 }} />
@@ -335,9 +336,9 @@ function B(props: {
   children: React.ReactNode
 }) {
   const href =
-    props.issue ? `${Brand.URIs.OpenRepo}/issues/${props.issue}`
-      : props.code ? `${Brand.URIs.OpenRepo}/blob/main/${props.code}`
-        : props.href;
+    props.issue ? `${Brand.URIs.OpenRepo}/issues/${props.issue}` // Stays big-AGI repo
+      : props.code ? `${Brand.URIs.OpenRepo}/blob/main/${props.code}` // Stays big-AGI repo
+        : props.href; // Could be an external link or an app link (now fyllo.m7ai.top if from Brand.URIs)
   const boldText = (
     <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 'lg' }}>
       {props.children}
@@ -346,6 +347,7 @@ function B(props: {
   if (!href)
     return boldText;
   // append UTM details if missing
+  // Ensure that if href already points to fyllo.m7ai.top (e.g. from Brand.URIs), it's handled correctly
   const hrefWithUtm = href.includes('utm_source=') ? href : href + clientUtmSource();
   return (
     <ExternalLink href={hrefWithUtm} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>

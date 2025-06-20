@@ -1,5 +1,5 @@
 /**
- * Middleware to protect `big-AGI` with HTTP Basic Authentication
+ * Middleware to protect `FylloAI` with HTTP Basic Authentication
  *
  * For more information on how to deploy with HTTP Basic Authentication, see:
  *  - [deploy-authentication.md](docs/deploy-authentication.md)
@@ -42,7 +42,7 @@ export function middleware(request: NextRequest) {
 const unauthResponse: ResponseInit = {
   status: 401,
   headers: {
-    'WWW-Authenticate': 'Basic realm="Secure big-AGI"',
+    'WWW-Authenticate': 'Basic realm="Secure FylloAI"',
   },
 };
 

@@ -1,8 +1,8 @@
-# `Ollama` x `big-AGI` :llama:
+# `Ollama` x `FylloAI` :llama:
 
 This guide helps you connect [Ollama](https://ollama.ai) [models](https://ollama.ai/library) to
-[big-AGI](https://big-agi.com) for a professional AI/AGI operation and a good UI/Conversational
-experience. The integration brings the popular big-AGI features to Ollama, including: voice chats,
+[FylloAI](https://fyllo.m7ai.top) for a professional AI/AGI operation and a good UI/Conversational
+experience. The integration brings the popular FylloAI features to Ollama, including: voice chats,
 editing tools, models switching, personas, and more.
 
 _Last updated Dec 16, 2023_
@@ -14,11 +14,11 @@ _Last updated Dec 16, 2023_
 1. **Ensure Ollama API Server is Running**: Follow the official instructions to get Ollama up and running on your machine
    - For detailed instructions on setting up the Ollama API server, please refer to the
    [Ollama download page](https://ollama.ai/download) and [instructions for linux](https://github.com/jmorganca/ollama/blob/main/docs/linux.md).
-2. **Add Ollama as a Model Source**: In `big-AGI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**
+2. **Add Ollama as a Model Source**: In `FylloAI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**
 3. **Enter Ollama Host URL**: Provide the Ollama Host URL where the API server is accessible (e.g., `http://localhost:11434`)
 4. **Refresh Model List**: Once connected, refresh the list of available models to include the Ollama models
    > Optional: use the Ollama Admin interface to see which models are available and 'Pull' them in your local machine. Note
-   that this operation will likely timeout due to Edge Functions timeout on the big-AGI server while pulling, and
+   that this operation will likely timeout due to Edge Functions timeout on the FylloAI server while pulling, and
    you'll have to press the 'Pull' button again, until a green message appears.
 5. **Chat with Ollama models**: select an Ollama model and begin chatting with AI personas
 
@@ -43,7 +43,7 @@ In addition to using the UI, configuration can also be done using
 If you get errors about the server having trouble connecting with Ollama, please see
 [this message](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483) on Issue #276.
 
-And in brief, make sure the Ollama endpoint is accessible from the servers where you run big-AGI (which could
+And in brief, make sure the Ollama endpoint is accessible from the servers where you run FylloAI (which could
 be localhost or cloud servers).
 ![Ollama Networking Chart](pixels/config-ollama-network.png)
 
@@ -51,13 +51,13 @@ be localhost or cloud servers).
 
 ### Advanced: Model parameters
 
-For users who wish to delve deeper into advanced settings, `big-AGI` offers additional configuration options, such
+For users who wish to delve deeper into advanced settings, `FylloAI` offers additional configuration options, such
 as the model temperature, maximum tokens, etc.
 
 ### Advanced: Ollama under a reverse proxy
 
 You can elegantly expose your Ollama server to the internet (and thus make it easier to use from your server-side
-big-AGI deployments) by exposing it on an http/https URL, such as: `https://yourdomain.com/ollama`
+FylloAI deployments) by exposing it on an http/https URL, such as: `https://yourdomain.com/ollama`
 
 On Ubuntu Servers, you will need to install `nginx` and configure it to proxy requests to Ollama.
 
@@ -102,5 +102,5 @@ Join our community to share your experiences, get help, and discuss best practic
 
 ---
 
-`big-AGI` is committed to providing a powerful, intuitive, and privacy-respecting AI experience.
+`FylloAI` is committed to providing a powerful, intuitive, and privacy-respecting AI experience.
 We are excited for you to explore the possibilities with Ollama models. Happy creating!
