@@ -7,6 +7,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import HistoryIcon from '@mui/icons-material/History';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 
 import { blocksRenderHTMLIFrameCss } from '~/modules/blocks/code/code-renderers/RenderCodeHtmlIFrame';
 
@@ -25,7 +26,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 import { BringTheLove } from './BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
-import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModals } from '../useOptima';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaDrawerPeeking, useOptimaModals } from '../useOptima';
 import { scratchClipSupported, useScratchClipVisibility } from '../scratchclip/store-scratchclip';
 
 
@@ -57,6 +58,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
 
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
+  const isDrawerPeeking = useOptimaDrawerPeeking();
   const { showPromisedOverlay } = useOverlayComponents();
   const { showModels, showPreferences } = useOptimaModals();
   const { peekDrawerEnter, peekDrawerLeave } = optimaActions();
@@ -289,13 +291,13 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     >
 
       <InvertedBarCornerItem>
-        <Tooltip disableInteractive title={isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer'}>
+        <Tooltip disableInteractive title={isDrawerPeeking ? 'Pin Drawer' : (isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer')}>
           <DesktopNavIcon
             disabled={!logoButtonTogglesPane}
             onPointerDown={logoButtonTogglesPane ? optimaToggleDrawer : undefined}
             className={navItemClasses.typeMenu}
           >
-            {logoButtonTogglesPane ? <MenuIcon /> : <BigAgiSquircleIcon inverted sx={{ color: 'white' }} />}
+            {logoButtonTogglesPane ? (isDrawerPeeking ? <PushPinOutlinedIcon sx={{ fontSize: 'xl', transform: 'rotate(45deg)' }} /> : <MenuIcon />) : <BigAgiSquircleIcon inverted sx={{ color: 'white' }} />}
           </DesktopNavIcon>
         </Tooltip>
       </InvertedBarCornerItem>
