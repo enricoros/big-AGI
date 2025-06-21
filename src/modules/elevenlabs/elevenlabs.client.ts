@@ -26,17 +26,29 @@ export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
 }
 
 
-export async function elevenLabsSpeakText(text: string, voiceId: string | undefined, audioStreaming: boolean, audioTurbo: boolean) {
-  if (!(text?.trim())) return;
+/**
+ * Speaks text using ElevenLabs TTS
+ * @returns boolean - true if playback started successfully, false otherwise
+ */
+export async function elevenLabsSpeakText(text: string, voiceId: string | undefined, audioStreaming: boolean, audioTurbo: boolean): Promise<boolean> {
+  // Early validation
+  if (!(text?.trim())) {
+    // console.log('ElevenLabs: No text to speak');
+    return false;
+  }
 
   const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
-  if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
+  if (!isElevenLabsEnabled(elevenLabsApiKey)) {
+    // console.warn('ElevenLabs: Service not enabled or configured');
+    return false;
+  }
 
   const { preferredLanguage } = useUIPreferencesStore.getState();
   const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
 
   // audio live player instance, if needed
   let liveAudioPlayer: AudioLivePlayer | undefined;
+  let playbackStarted = false;
 
   try {
 
@@ -50,34 +62,54 @@ export async function elevenLabsSpeakText(text: string, voiceId: string | undefi
     });
 
     for await (const piece of stream) {
+
+      // ElevenLabs stream buffer
       if (piece.audioChunk) {
+        try {
+          // create the live audio player as needed
+          // NOTE: in the future we can have a centralized audio playing system
+          if (!liveAudioPlayer)
+            liveAudioPlayer = new AudioLivePlayer();
 
-        // create the live audio player as needed
-        // NOTE: in the future we can have a centralized audio playing system
-        if (!liveAudioPlayer)
-          liveAudioPlayer = new AudioLivePlayer();
+          // enqueue a decoded audio chunk - this will throw on malformed base64 data
+          const chunkArray = convert_Base64_To_UInt8Array(piece.audioChunk.base64, 'elevenLabsSpeakText (chunk)');
+          liveAudioPlayer.enqueueChunk(chunkArray.buffer);
+          playbackStarted = true;
+        } catch (audioError) {
+          console.error('ElevenLabs audio chunk error:', audioError);
+          return false;
+        }
+      }
 
-        // enqueue a decoded audio chunk - this will throw on malformed base64 data
-        const chunkArray = convert_Base64_To_UInt8Array(piece.audioChunk.base64, 'elevenLabsSpeakText (chunk)')
-        liveAudioPlayer.enqueueChunk(chunkArray.buffer);
+      // ElevenLabs full audio buffer
+      else if (piece.audio) {
+        try {
+          // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
+          const audioArray = convert_Base64_To_UInt8Array(piece.audio.base64, 'elevenLabsSpeakText');
+          void AudioPlayer.playBuffer(audioArray.buffer); // fire/forget - it's a single piece of audio (could be long tho)
+          playbackStarted = true;
+        } catch (audioError) {
+          console.error('ElevenLabs audio buffer error:', audioError);
+          return false;
+        }
+      }
 
-      } else if (piece.audio) {
-
-        // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
-        const audioArray = convert_Base64_To_UInt8Array(piece.audio.base64, 'elevenLabsSpeakText');
-        void AudioPlayer.playBuffer(audioArray.buffer); // fire/forget - it's a single piece of audio (could be long tho)
-
-      } else if (piece.errorMessage)
-        console.log('ElevenLabs issue:', piece.errorMessage);
-      else if (piece.warningMessage)
-        console.log('ElevenLabs warning:', piece.errorMessage);
-      else if (piece.control === 'start' || piece.control === 'end') {
-        // ignore..
-      } else
-        console.log('piece:', piece);
+      // Errors
+      else if (piece.errorMessage) {
+        console.error('ElevenLabs error:', piece.errorMessage);
+        return false;
+      } else if (piece.warningMessage) {
+        console.warn('ElevenLabs warning:', piece.warningMessage);
+        // Continue processing warnings
+      } else if (piece.control === 'start' || piece.control === 'end') {
+        // Control messages - continue processing
+      } else {
+        console.log('ElevenLabs unknown piece:', piece);
+      }
     }
-
+    return playbackStarted;
   } catch (error) {
-    console.error('Error playing first text:', error);
+    console.error('ElevenLabs playback error:', error);
+    return false;
   }
 }
