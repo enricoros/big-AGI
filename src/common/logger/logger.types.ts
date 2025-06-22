@@ -80,6 +80,9 @@ export interface LogEntry {
   shown?: boolean;           // Whether displayed to user (for notifications)
   dismissed?: boolean;       // Whether explicitly dismissed by user
   hasPendingActions?: boolean; // Calculated flag: has actions not completed/dismissed
+  
+  // Repetition tracking
+  repetitionCount?: number;  // Number of times this exact message was repeated
 }
 
 type LogEntryId = string;
