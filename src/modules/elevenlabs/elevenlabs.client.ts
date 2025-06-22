@@ -12,9 +12,9 @@ import { getElevenLabsData, useElevenLabsData } from './store-module-elevenlabs'
 
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
-export const isElevenLabsEnabled = (apiKey?: string) => apiKey
-  ? isValidElevenLabsApiKey(apiKey)
-  : getBackendCapabilities().hasVoiceElevenLabs;
+export const isElevenLabsEnabled = (apiKey?: string) =>
+  apiKey ? isValidElevenLabsApiKey(apiKey)
+    : getBackendCapabilities().hasVoiceElevenLabs;
 
 
 export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
@@ -26,21 +26,27 @@ export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
 }
 
 
+interface ElevenLabsSpeakResult {
+  success: boolean;
+  audioBase64?: string; // Available when not streaming
+}
+
+
 /**
  * Speaks text using ElevenLabs TTS
- * @returns boolean - true if playback started successfully, false otherwise
+ * @returns Object with success status and optionally the audio base64 (when not streaming)
  */
-export async function elevenLabsSpeakText(text: string, voiceId: string | undefined, audioStreaming: boolean, audioTurbo: boolean): Promise<boolean> {
+export async function elevenLabsSpeakText(text: string, voiceId: string | undefined, audioStreaming: boolean, audioTurbo: boolean): Promise<ElevenLabsSpeakResult> {
   // Early validation
   if (!(text?.trim())) {
     // console.log('ElevenLabs: No text to speak');
-    return false;
+    return { success: false };
   }
 
   const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
   if (!isElevenLabsEnabled(elevenLabsApiKey)) {
     // console.warn('ElevenLabs: Service not enabled or configured');
-    return false;
+    return { success: false };
   }
 
   const { preferredLanguage } = useUIPreferencesStore.getState();
@@ -49,6 +55,7 @@ export async function elevenLabsSpeakText(text: string, voiceId: string | undefi
   // audio live player instance, if needed
   let liveAudioPlayer: AudioLivePlayer | undefined;
   let playbackStarted = false;
+  let audioBase64: string | undefined;
 
   try {
 
@@ -77,27 +84,31 @@ export async function elevenLabsSpeakText(text: string, voiceId: string | undefi
           playbackStarted = true;
         } catch (audioError) {
           console.error('ElevenLabs audio chunk error:', audioError);
-          return false;
+          return { success: false };
         }
       }
 
       // ElevenLabs full audio buffer
       else if (piece.audio) {
         try {
+          // return base64 for potential reuse
+          if (!audioStreaming)
+            audioBase64 = piece.audio.base64;
+
           // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
           const audioArray = convert_Base64_To_UInt8Array(piece.audio.base64, 'elevenLabsSpeakText');
           void AudioPlayer.playBuffer(audioArray.buffer); // fire/forget - it's a single piece of audio (could be long tho)
           playbackStarted = true;
         } catch (audioError) {
           console.error('ElevenLabs audio buffer error:', audioError);
-          return false;
+          return { success: false };
         }
       }
 
       // Errors
       else if (piece.errorMessage) {
         console.error('ElevenLabs error:', piece.errorMessage);
-        return false;
+        return { success: false };
       } else if (piece.warningMessage) {
         console.warn('ElevenLabs warning:', piece.warningMessage);
         // Continue processing warnings
@@ -107,9 +118,9 @@ export async function elevenLabsSpeakText(text: string, voiceId: string | undefi
         console.log('ElevenLabs unknown piece:', piece);
       }
     }
-    return playbackStarted;
+    return { success: playbackStarted, audioBase64 };
   } catch (error) {
     console.error('ElevenLabs playback error:', error);
-    return false;
+    return { success: false };
   }
 }
