@@ -184,7 +184,7 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
   // [Perplexity, 2025-06-23] HotFix: if an assistant message comes before the first user message, we prepend an empty user message
   const firstUserIndex = chatMessages.findIndex(message => message.role === 'user');
   const firstAssistantIndex = chatMessages.findIndex(message => message.role === 'assistant');
-  if (firstAssistantIndex < firstUserIndex)
+  if (firstAssistantIndex !== -1 && firstAssistantIndex < firstUserIndex)
     chatMessages.splice(firstAssistantIndex, 0, { role: 'user', content: [{ type: 'text', text: '' }] });
 
   return chatMessages.reduce((acc, historyItem) => {
