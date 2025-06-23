@@ -532,7 +532,7 @@ export class ContentReassembler {
 
   private onAddUrlCitation(urlc: Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>): void {
 
-    const { title, url, num: refNumber, from: startIndex, to: endIndex, text: textSnippet } = urlc;
+    const { title, url, num: refNumber, from: startIndex, to: endIndex, text: textSnippet, pubTs } = urlc;
 
     // reuse existing annotations - single fragment per message
     const existingFragment = this.accumulator.fragments.find(isVoidAnnotationsFragment);
@@ -543,7 +543,7 @@ export class ContentReassembler {
       if (!sameUrlCitation) {
         existingFragment.part.annotations = [
           ...existingFragment.part.annotations,
-          createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet),
+          createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet, pubTs),
         ];
       } else {
         if (startIndex !== undefined && endIndex !== undefined) {
@@ -557,7 +557,7 @@ export class ContentReassembler {
     } else {
 
       // create the *only* annotations fragment in the message
-      const newCitation = createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet);
+      const newCitation = createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet, pubTs);
       this.accumulator.fragments.push(createAnnotationsVoidFragment([newCitation]));
 
     }

@@ -391,7 +391,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Creates a CE result part, flushing the previous one if needed, and completes it */
-  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string) {
+  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number) {
     this.endMessagePart();
     this.transmissionQueue.push({
       p: 'urlc',
@@ -401,6 +401,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       ...(startIndex !== undefined ? { from: startIndex } : {}),
       ...(endIndex !== undefined ? { to: endIndex } : {}),
       ...(textSnippet ? { text: textSnippet } : {}),
+      ...(pubTs !== undefined ? { pubTs } : {}),
     } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>);
   }
 
