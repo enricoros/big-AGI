@@ -27,7 +27,17 @@ const _webSearchContextOptions = [
   { value: 'low', label: 'Low', description: 'Smallest, cheapest, fastest' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
-
+const _perplexitySearchModeOptions = [
+  { value: _UNSPECIFIED, label: 'Default', description: 'General web sources' },
+  { value: 'academic', label: 'Academic', description: 'Scholarly and peer-reviewed sources' },
+] as const;
+const _perplexityDateFilterOptions = [
+  { value: _UNSPECIFIED, label: 'All Time', description: 'No date restriction' },
+  { value: '1m', label: 'Last Month', description: 'Results from last 30 days' },
+  { value: '3m', label: 'Last 3 Months', description: 'Results from last 90 days' },
+  { value: '6m', label: 'Last 6 Months', description: 'Results from last 6 months' },
+  { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
+] as const;
 
 export function LLMParametersEditor(props: {
   // constants
@@ -70,6 +80,8 @@ export function LLMParametersEditor(props: {
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
+    llmVndPerplexityDateFilter,
+    llmVndPerplexitySearchMode,
   } = allParameters;
 
 
@@ -102,7 +114,7 @@ export function LLMParametersEditor(props: {
   const antThinkingOff = llmVndAntThinkingBudget === null;
   const gemThinkingAuto = llmVndGeminiThinkingBudget === undefined;
   const gemThinkingOff = llmVndGeminiThinkingBudget === 0;
-  
+
   // Get the range override if available for Gemini thinking budget
   const gemTBSpec = modelParamSpec['llmVndGeminiThinkingBudget'];
   const gemTBMinMax = gemTBSpec?.rangeOverride || defGemTB.range;
@@ -214,6 +226,36 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndPerplexityDateFilter') && (
+      <FormSelectControl
+        title='Date Range'
+        tooltip='Filter search results by publication date'
+        value={llmVndPerplexityDateFilter ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndPerplexityDateFilter');
+          else
+            onChangeParameter({ llmVndPerplexityDateFilter: value });
+        }}
+        options={_perplexityDateFilterOptions}
+      />
+    )}
+
+    {showParam('llmVndPerplexitySearchMode') && (
+      <FormSelectControl
+        title='Search Mode'
+        tooltip='Type of sources to prioritize in search results'
+        value={llmVndPerplexitySearchMode ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndPerplexitySearchMode');
+          else
+            onChangeParameter({ llmVndPerplexitySearchMode: value });
+        }}
+        options={_perplexitySearchModeOptions}
       />
     )}
 
