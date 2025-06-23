@@ -124,6 +124,21 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     if (json.choices.length !== 1)
       throw new Error(`expected 1 completion, got ${json.choices.length}`);
 
+
+    // [Perplexity] .citations (DEPRECATED)
+    if (json.citations && !perplexityAlreadyCited && Array.isArray(json.citations)) {
+
+      for (const citationUrl of json.citations)
+        if (typeof citationUrl === 'string')
+          pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
+
+      // Perplexity detection: streaming of full objects, hence we don't re-send the citations at every chunk
+      if (json.object === 'chat.completion')
+        perplexityAlreadyCited = true;
+
+    }
+
+
     for (const { index, delta, finish_reason } of json.choices) {
 
       // n=1 -> single Choice only
@@ -230,20 +245,6 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       //   pt.setDialectTerminatingIssue('finish-reason');
 
     } // .choices[]
-
-
-    // [Perplexity] .citations
-    if (json.citations && !perplexityAlreadyCited && Array.isArray(json.citations)) {
-
-      for (const citationUrl of json.citations)
-        if (typeof citationUrl === 'string')
-          pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
-
-      // Perplexity detection: streaming of full objects, hence we don't re-send the citations at every chunk
-      if (json.object === 'chat.completion')
-        perplexityAlreadyCited = true;
-
-    }
 
   };
 }
