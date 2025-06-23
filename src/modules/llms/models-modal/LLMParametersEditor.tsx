@@ -229,21 +229,6 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndPerplexityDateFilter') && (
-      <FormSelectControl
-        title='Date Range'
-        tooltip='Filter search results by publication date'
-        value={llmVndPerplexityDateFilter ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value)
-            onRemoveParameter('llmVndPerplexityDateFilter');
-          else
-            onChangeParameter({ llmVndPerplexityDateFilter: value });
-        }}
-        options={_perplexityDateFilterOptions}
-      />
-    )}
-
     {showParam('llmVndPerplexitySearchMode') && (
       <FormSelectControl
         title='Search Mode'
@@ -262,7 +247,7 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndOaiWebSearchContext') && (
       <FormSelectControl
         title='Search Size'
-        tooltip='Controls how much context is retrieved from the web'
+        tooltip='Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI)'
         value={llmVndOaiWebSearchContext ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value)
@@ -290,6 +275,21 @@ export function LLMParametersEditor(props: {
             });
           }
         }}
+      />
+    )}
+
+    {showParam('llmVndPerplexityDateFilter') && (
+      <FormSelectControl
+        title='Date Range'
+        tooltip='Filter search results by publication date'
+        value={llmVndPerplexityDateFilter ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndPerplexityDateFilter');
+          else
+            onChangeParameter({ llmVndPerplexityDateFilter: value });
+        }}
+        options={_perplexityDateFilterOptions}
       />
     )}
 
