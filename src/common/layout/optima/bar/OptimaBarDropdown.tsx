@@ -188,7 +188,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
 
           // Label & Decorators
           const safeTitle = _item.title || '';
-          const label = (props.showSymbols && _item.symbol) ? `${_item.symbol} ${safeTitle}` : safeTitle;
+          const label = (props.showSymbols && _item.symbol && !(_item.title === 'Default' && _item.symbol === '🧠')) ? `${_item.symbol} ${safeTitle}` : safeTitle;
           const iconOrSymbol = _item.icon || _item.symbol || '';
 
           return _item.type === 'separator' ? (

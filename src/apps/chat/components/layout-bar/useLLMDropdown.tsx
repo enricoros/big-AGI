@@ -162,6 +162,9 @@ function LLMDropdown(props: {
   // }, [chatLlmId]);
 
 
+  // Zero State - no models available
+  const hasDropdownOptions = Object.keys(llmDropdownItems || {}).length > 0;
+
   // "Models Setup" button
   const llmDropdownAppendOptions = React.useMemo(() => <>
 
@@ -176,9 +179,9 @@ function LLMDropdown(props: {
     {/*)}*/}
 
     <ListItemButton key='menu-llms' onClick={optimaOpenModels} sx={{ backgroundColor: 'background.surface', py: 'calc(2 * var(--ListDivider-gap))' }}>
-      <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
+      <ListItemDecorator>{!hasDropdownOptions ? '⚠️' : <BuildCircleIcon color='success' />}</ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'center' }}>
-        Models
+        {!hasDropdownOptions ? 'Add Models' : 'Models'}
         {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>*/}
         {/*  <KeyStroke variant='outlined' size='sm' combo='Ctrl + Shift + M' sx={{ ml: 2, bgcolor: 'background.popup' }} />*/}
         <ArrowForwardRoundedIcon sx={{ ml: 'auto', fontSize: 'xl' }} />
@@ -186,7 +189,7 @@ function LLMDropdown(props: {
       </Box>
     </ListItemButton>
 
-  </>, []);
+  </>, [hasDropdownOptions]);
 
 
   return (
@@ -195,7 +198,7 @@ function LLMDropdown(props: {
       items={llmDropdownItems}
       value={chatLlmId}
       onChange={handleChatLLMChange}
-      placeholder={props.placeholder || 'Models …'}
+      placeholder={props.placeholder || '⚠️ Models …'}
       prependOption={llmDropdownPrependOptions}
       appendOption={llmDropdownAppendOptions}
       activeEndDecorator={llmDropdownButton}
