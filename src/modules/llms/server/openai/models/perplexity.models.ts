@@ -4,77 +4,99 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch } from '~
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
 
-  // Deep Research Model
+  // Research Models
   {
     id: 'sonar-deep-research',
     label: 'Sonar Deep Research 🌐',
-    description: 'Expert-level research model conducting exhaustive searches and generating comprehensive reports with 128k context window',
+    description: 'Expert-level research model for exhaustive searches and comprehensive reports. 128k context.',
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort' }, // REUSE!
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 2,
       output: 8,
-      // reasoning: 3, // Special pricing for reasoning tokens
-      // Note: also has $5 per 1000 searches cost
+      // Full pricing: $2/1M input, $8/1M output, $2/1M citation, $5/1k searches, $3/1M reasoning tokens
     },
   },
 
-  // Current Perplexity Models
+  // Reasoning Models
   {
     id: 'sonar-reasoning-pro',
     label: 'Sonar Reasoning Pro 🌐',
-    description: 'Premier reasoning model powered by DeepSeek R1 with Chain of Thought (CoT), 128k context window and 8k max output tokens',
+    description: 'Premier reasoning model (DeepSeek R1) with Chain of Thought. 128k context.',
     contextWindow: 128000,
-    maxCompletionTokens: 8000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 2,
       output: 8,
-      // Note: also has $5 per 1000 searches cost
+      // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
     },
   },
   {
     id: 'sonar-reasoning',
     label: 'Sonar Reasoning 🌐',
-    description: 'Fast, real-time reasoning model with Chain of Thought (CoT) and 128k context window. Based on DeepSeek R1.',
+    description: 'Fast, real-time reasoning model for quick problem-solving with search. 128k context.',
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 1,
       output: 5,
-      // Note: also has $5 per 1000 searches cost
+      // Per-request pricing: $12(High), $8(Medium), $5(Low) per 1k requests
     },
   },
+
+  // Search Models
   {
     id: 'sonar-pro',
     label: 'Sonar Pro 🌐',
-    description: 'Advanced search model with enhanced capabilities and 200k context window, optimized for complex queries',
+    description: 'Advanced search model for complex queries and deep content understanding. 200k context.',
     contextWindow: 200000,
     maxCompletionTokens: 8000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 3,
       output: 15,
-      // Note: also has $5 per 1000 searches cost
+      // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
     },
   },
   {
     id: 'sonar',
     label: 'Sonar 🌐',
-    description: 'Lightweight, cost-effective search model with 128k context window for quick, grounded answers',
+    description: 'Lightweight, cost-effective search model for quick, grounded answers. 128k context.',
     contextWindow: 128000,
-    maxCompletionTokens: 4000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 1,
       output: 1,
-      // Note: also has $5 per 1000 searches cost
+      // Per-request pricing: $12(High), $8(Medium), $5(Low) per 1k requests
     },
   },
+
+  // Offline Models
   {
     id: 'r1-1776',
     label: 'R1-1776',
-    description: 'Offline chat model with 128k context, post-trained for uncensored, unbiased, and factual information',
+    description: 'Offline chat model (DeepSeek R1) for uncensored, unbiased, and factual information. 128k context.',
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: {
@@ -84,46 +106,6 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     },
   },
 
-  // Legacy Models (to be deprecated after 2/22/2025)
-  {
-    id: 'llama-3.1-sonar-small-128k-online',
-    label: 'Sonar Small Online (Legacy)',
-    description: 'Llama 3.1 Sonar Small 128k Online (Legacy, deprecated after 2/22/2025)',
-    contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
-    chatPrice: {
-      input: 0.2,
-      output: 0.2,
-      // Note: also has $5 per 1000 requests cost
-    },
-    hidden: true,
-  },
-  {
-    id: 'llama-3.1-sonar-large-128k-online',
-    label: 'Sonar Large Online (Legacy)',
-    description: 'Llama 3.1 Sonar Large 128k Online (Legacy, deprecated after 2/22/2025)',
-    contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
-    chatPrice: {
-      input: 1,
-      output: 1,
-      // Note: also has $5 per 1000 requests cost
-    },
-    hidden: true,
-  },
-  {
-    id: 'llama-3.1-sonar-huge-128k-online',
-    label: 'Sonar Huge Online (Legacy)',
-    description: 'Llama 3.1 Sonar Huge 128k Online (Legacy, deprecated after 2/22/2025)',
-    contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
-    chatPrice: {
-      input: 5,
-      output: 5,
-      // Note: also has $5 per 1000 requests cost
-    },
-    hidden: true,
-  },
 ];
 
 const perplexityAIModelFamilyOrder = [
@@ -133,9 +115,6 @@ const perplexityAIModelFamilyOrder = [
   'sonar-pro',
   'sonar',
   'r1-1776',
-  'llama-3.1-sonar-huge',
-  'llama-3.1-sonar-large',
-  'llama-3.1-sonar-small',
   '',
 ];
 
