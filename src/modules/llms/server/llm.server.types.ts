@@ -82,6 +82,8 @@ const ModelParameterSpec_schema = z.object({
     'llmVndOaiRestoreMarkdown',
     'llmVndOaiWebSearchContext',
     'llmVndOaiWebSearchGeolocation',
+    'llmVndPerplexityDateFilter',
+    'llmVndPerplexitySearchMode',
   ]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
