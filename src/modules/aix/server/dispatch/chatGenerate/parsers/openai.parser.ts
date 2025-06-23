@@ -139,7 +139,13 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         processedSearchResultUrls.add(url);
 
         // Append the new citation
-        pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined);
+        let pubTs: number | undefined;
+        if (searchResult.date) {
+          const date = new Date(searchResult.date);
+          if (!isNaN(date.getTime()))
+            pubTs = date.getTime();
+        }
+        pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined, pubTs);
       }
 
     }
@@ -242,7 +248,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
           for (const { type: annotationType, url_citation: urlCitation } of delta.annotations) {
             if (annotationType !== 'url_citation')
               throw new Error(`unexpected annotation type: ${annotationType}`);
-            pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined);
+            pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined, undefined);
           }
         } else {
           // we don't abort for this issue - for our users
@@ -353,7 +359,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           for (const { type: annotationType, url_citation: urlCitation } of message.annotations) {
             if (annotationType !== 'url_citation')
               throw new Error(`unexpected annotation type: ${annotationType}`);
-            pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined);
+            pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined, undefined);
           }
         } else {
           // we don't abort for this issue
@@ -369,8 +375,16 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
       for (const searchResult of json.search_results) {
         const url = searchResult?.url;
-        if (url)
-          pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined);
+        if (url) {
+          // Append the new citation
+          let pubTs: number | undefined;
+          if (searchResult.date) {
+            const date = new Date(searchResult.date);
+            if (!isNaN(date.getTime()))
+              pubTs = date.getTime();
+          }
+          pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined, pubTs);
+        }
       }
 
     }

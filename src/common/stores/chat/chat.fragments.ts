@@ -163,6 +163,7 @@ export type DVoidWebCitation = {
   url: string,
   title: string,
   refNumber?: number,
+  pubTs?: number, // publication timestamp
   ranges: readonly { startIndex: number, endIndex: number, textSnippet?: string }[],
 };
 
@@ -408,9 +409,9 @@ function _create_CodeExecutionResponse_Part(id: string, error: boolean | string,
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
-export function createDVoidWebCitation(url: string, title: string, refNumber?: number, rangeStartIndex?: number, rangeEndIndex?: number, rangeTextSnippet?: string): DVoidWebCitation {
+export function createDVoidWebCitation(url: string, title: string, refNumber?: number, rangeStartIndex?: number, rangeEndIndex?: number, rangeTextSnippet?: string, pubTs?: number): DVoidWebCitation {
   return {
-    type: 'citation', url, title, ...(refNumber !== undefined ? { refNumber } : {}),
+    type: 'citation', url, title, ...(refNumber !== undefined ? { refNumber } : {}), ...(pubTs !== undefined ? { pubTs } : {}),
     ranges: (rangeStartIndex !== undefined && rangeEndIndex !== undefined) ? [{
       startIndex: rangeStartIndex,
       endIndex: rangeEndIndex,

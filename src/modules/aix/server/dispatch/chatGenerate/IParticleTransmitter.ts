@@ -57,7 +57,7 @@ export interface IParticleTransmitter {
   addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: 'upstream'): void;
 
   /** Adds a URL citation part */
-  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string): void;
+  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number): void;
 
   // Non-parts data //
 

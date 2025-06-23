@@ -163,7 +163,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       if (ENABLE_RECITATIONS_AS_CITATIONS && candidate0.citationMetadata?.citationSources?.length) {
         for (let { startIndex, endIndex, uri /*, license*/ } of candidate0.citationMetadata.citationSources) {
           // TODO: have a particle/part flag to state the purpose of a citation? (e.g. 'recitation' is weaker than 'grounding')
-          pt.appendUrlCitation('', uri || '', undefined, startIndex, endIndex, undefined);
+          pt.appendUrlCitation('', uri || '', undefined, startIndex, endIndex, undefined, undefined);
         }
       }
 
@@ -177,7 +177,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
          * - include the 'renderedContent' from .searchEntryPoint
          */
         for (const { web } of candidate0.groundingMetadata.groundingChunks) {
-          pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined);
+          pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
         }
       }
 
