@@ -172,7 +172,7 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
   paramId: T;
   required?: boolean;
   hidden?: boolean;
-  initialValue?: number | string | null;
+  initialValue?: boolean | number | string | null;
   // upstreamDefault?: DModelParameterValue<T>;
   /**
    * (optional, rare) Special: [min, max] range override for this parameter.
