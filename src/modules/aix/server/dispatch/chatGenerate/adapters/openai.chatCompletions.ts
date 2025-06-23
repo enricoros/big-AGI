@@ -176,6 +176,17 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
 
 function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TRequestMessages {
+
+  // [Perplexity, 2025-06-23] HotFix: if there's only 1 message from the system, treat it as a user message
+  if (chatMessages.length === 1 && chatMessages[0].role === 'system')
+    return [{ ...chatMessages[0], role: 'user' }];
+
+  // [Perplexity, 2025-06-23] HotFix: if an assistant message comes before the first user message, we prepend an empty user message
+  const firstUserIndex = chatMessages.findIndex(message => message.role === 'user');
+  const firstAssistantIndex = chatMessages.findIndex(message => message.role === 'assistant');
+  if (firstAssistantIndex < firstUserIndex)
+    chatMessages.splice(firstAssistantIndex, 0, { role: 'user', content: [{ type: 'text', text: '' }] });
+
   return chatMessages.reduce((acc, historyItem) => {
 
     // treat intermediate system messages as user messages
