@@ -36,7 +36,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
   let hasWarned = false;
   let timeToFirstEvent: number | undefined;
   let progressiveCitationNumber = 1;
-  let perplexityAlreadyCited = false;
+  // let perplexityAlreadyCited = false;
+  let processedSearchResultUrls = new Set<string>();
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
   // Supporting structure to accumulate the assistant message
@@ -125,18 +126,35 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       throw new Error(`expected 1 completion, got ${json.choices.length}`);
 
 
-    // [Perplexity] .citations (DEPRECATED)
-    if (json.citations && !perplexityAlreadyCited && Array.isArray(json.citations)) {
+    // [Perplexity] .search_results
+    if (json.search_results && Array.isArray(json.search_results)) {
 
-      for (const citationUrl of json.citations)
-        if (typeof citationUrl === 'string')
-          pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
+      // Process only new search results
+      for (const searchResult of json.search_results) {
 
-      // Perplexity detection: streaming of full objects, hence we don't re-send the citations at every chunk
-      if (json.object === 'chat.completion')
-        perplexityAlreadyCited = true;
+        // Incremental processing
+        const url = searchResult?.url;
+        if (!url || processedSearchResultUrls.has(url))
+          continue;
+        processedSearchResultUrls.add(url);
+
+        // Append the new citation
+        pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined);
+      }
 
     }
+    // [Perplexity] .citations (DEPRECATED)
+    // if (json.citations && !perplexityAlreadyCited && Array.isArray(json.citations)) {
+    //
+    //   for (const citationUrl of json.citations)
+    //     if (typeof citationUrl === 'string')
+    //       pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
+    //
+    //   // Perplexity detection: streaming of full objects, hence we don't re-send the citations at every chunk
+    //   if (json.object === 'chat.completion')
+    //     perplexityAlreadyCited = true;
+    //
+    // }
 
 
     for (const { index, delta, finish_reason } of json.choices) {
@@ -346,14 +364,24 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
     } // .choices[]
 
-    // [Perplexity] .citations
-    if (json.citations && Array.isArray(json.citations)) {
+    // [Perplexity] .search_results
+    if (json.search_results && Array.isArray(json.search_results)) {
 
-      for (const citationUrl of json.citations)
-        if (typeof citationUrl === 'string')
-          pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
+      for (const searchResult of json.search_results) {
+        const url = searchResult?.url;
+        if (url)
+          pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined);
+      }
 
     }
+    // [Perplexity] .citations (DEPRECATED)
+    // if (json.citations && Array.isArray(json.citations)) {
+    //
+    //   for (const citationUrl of json.citations)
+    //     if (typeof citationUrl === 'string')
+    //       pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
+    //
+    // }
 
   };
 }
