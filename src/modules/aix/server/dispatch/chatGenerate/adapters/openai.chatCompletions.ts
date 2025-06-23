@@ -303,7 +303,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
        * o3-mini accepts both system and developer roles, and they seem to have the same effects
        */
       role: !hotFixOpenAIo1Family ? 'system' : 'developer',
-      content: _toApproximateOpanAIFlattenSystemMessage(msg0TextParts),
+      content: _toApproximateOpenAIFlattenSystemMessage(msg0TextParts),
     });
 
 
@@ -572,7 +572,7 @@ function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string
 
 // Approximate conversions
 
-function _toApproximateOpanAIFlattenSystemMessage(texts: OpenAIWire_ContentParts.TextContentPart[]): string {
+function _toApproximateOpenAIFlattenSystemMessage(texts: OpenAIWire_ContentParts.TextContentPart[]): string {
   return texts.map(text => text.text).join(approxSystemMessageJoiner);
 }
 
