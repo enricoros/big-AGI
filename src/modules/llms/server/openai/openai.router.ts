@@ -26,7 +26,7 @@ import { mistralModelsSort, mistralModelToModelDescription } from './models/mist
 import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
-import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
+import { perplexityAIModelDescriptions, perplexityInjectVariants } from './models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
@@ -173,8 +173,11 @@ export const llmOpenAIRouter = createTRPCRouter({
       }
 
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/guides/model-cards)
-      if (access.dialect === 'perplexity')
-        return { models: perplexityAIModelDescriptions().sort(perplexityAIModelSort) };
+      if (access.dialect === 'perplexity') {
+        models = perplexityAIModelDescriptions()
+          .reduce(perplexityInjectVariants, [] as ModelDescriptionSchema[]);
+        return { models };
+      }
 
       // [xAI]: custom models listing
       if (access.dialect === 'xai')
