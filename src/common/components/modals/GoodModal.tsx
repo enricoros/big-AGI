@@ -30,6 +30,8 @@ export function GoodModal(props: {
   autoOverflow?: boolean,
   open: boolean,
   onClose?: ((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => void) | undefined,
+  disableBackdropClose?: boolean, // if true, the backdrop will not close the modal on click
+  disableEscapeKeyClose?: boolean, // if true, the escape key will not close the modal
   hideBottomClose?: boolean,
   darkBottomClose?: boolean,
   startButton?: React.JSX.Element,
@@ -77,18 +79,19 @@ export function GoodModal(props: {
 
   const handleOnClose = React.useCallback((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
     // ignore clicks on the backdrop that started from within the dialog
-    const ignoreDragOnBackdrop = reason === 'backdropClick' && dragFromDialogRef.current;
+    const ignoreDragOnBackdrop = reason === 'backdropClick' && (dragFromDialogRef.current || !!props.disableBackdropClose);
     dragFromDialogRef.current = false;
     if (ignoreDragOnBackdrop) return;
 
     // normal propagation
     onClose?.(event, reason);
-  }, [onClose]);
+  }, [onClose, props.disableBackdropClose]);
 
   return (
     <Modal
       open={props.open}
       onClose={!onClose ? undefined : handleOnClose}
+      disableEscapeKeyDown={props.disableEscapeKeyClose}
       slotProps={backdropSx}
     >
       <ModalOverflow sx={{ p: 1 }}>
