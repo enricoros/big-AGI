@@ -168,6 +168,11 @@ export function BlockPartModelAnnotations(props: {
                       </Box>
                       <Box sx={styles.lineLink} className='agi-ellipsize'>
                         {urlPrettyHref(citation.url, true, true)}
+                        {citation.pubTs && (
+                          <span style={{ marginLeft: '0.5em' }}>
+                            · {new Date(citation.pubTs).toLocaleDateString()}
+                          </span>
+                        )}
                       </Box>
                     </Box>
                   </Box>
