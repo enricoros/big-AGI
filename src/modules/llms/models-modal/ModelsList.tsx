@@ -150,7 +150,7 @@ function ModelItem(props: {
           return null;
       }
     }).reverse();
-  }, [llm.interfaces, props.chipChat]);
+  }, [llm.interfaces]);
 
   return (
     <ListItem>
