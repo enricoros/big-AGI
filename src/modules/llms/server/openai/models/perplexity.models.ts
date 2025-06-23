@@ -12,7 +12,8 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
     parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort' }, // REUSE!
+      { paramId: 'llmVndOaiReasoningEffort', initialValue: 'medium' }, // REUSE!
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
       { paramId: 'llmVndPerplexityDateFilter' },
     ],
@@ -31,6 +32,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
     parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
       { paramId: 'llmVndPerplexityDateFilter' },
     ],
@@ -47,6 +49,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
     parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
       { paramId: 'llmVndPerplexityDateFilter' },
     ],
@@ -66,6 +69,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 8000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
       { paramId: 'llmVndPerplexityDateFilter' },
     ],
@@ -82,6 +86,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
     parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
       { paramId: 'llmVndPerplexityDateFilter' },
     ],
