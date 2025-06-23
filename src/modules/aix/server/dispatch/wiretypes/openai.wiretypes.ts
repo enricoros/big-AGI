@@ -494,7 +494,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     warning: z.unknown().optional(),
 
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
+    // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
     citations: z.array(z.any()).optional(),
+    // [Perplexity, 2025-06-23] Search results
+    search_results: z.array(z.object({
+      title: z.string().optional().nullable(), // Title of the search result
+      url: z.string().optional().nullable(), // URL of the search result
+      date: z.string().optional().nullable(), // Date of the search result, e.g. '2024-01-01'
+    })).optional(),
   });
 
   /// Streaming Response
@@ -624,7 +631,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     }).optional(),
 
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
+    // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
     citations: z.array(z.any()).optional(),
+    // [Perplexity, 2025-06-23] Search results
+    search_results: z.array(z.object({
+      title: z.string().optional().nullable(), // Title of the search result
+      url: z.string().optional().nullable(), // URL of the search result
+      date: z.string().optional().nullable(), // Date of the search result, e.g. '2024-01-01'
+    })).optional(),
   });
 
 }
