@@ -22,7 +22,7 @@ const _reasoningEffortOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
 const _webSearchContextOptions = [
-  { value: 'high', label: 'High', description: 'Largest, highest cost, slower' } as const,
+  { value: 'high', label: 'Comprehensive', description: 'Largest, highest cost, slower' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced context, cost, and speed' } as const,
   { value: 'low', label: 'Low', description: 'Smallest, cheapest, fastest' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
@@ -259,39 +259,9 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndOaiReasoningEffort') && (
-      <FormSelectControl
-        title='Reasoning Effort'
-        tooltip='Controls how much effort the model spends on reasoning'
-        value={llmVndOaiReasoningEffort ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value)
-            onRemoveParameter('llmVndOaiReasoningEffort');
-          else
-            onChangeParameter({ llmVndOaiReasoningEffort: value });
-        }}
-        options={_reasoningEffortOptions}
-      />
-    )}
-
-    {showParam('llmVndOaiRestoreMarkdown') && (
-      <FormSwitchControl
-        title='Restore Markdown'
-        description='Enable markdown formatting'
-        tooltip='o1 and o3 models in the API will avoid generating responses with markdown formatting. This option signals to the model to re-enable markdown formatting in the respons'
-        checked={!!llmVndOaiRestoreMarkdown}
-        onChange={checked => {
-          if (!checked)
-            onChangeParameter({ llmVndOaiRestoreMarkdown: false });
-          else
-            onChangeParameter({ llmVndOaiRestoreMarkdown: true });
-        }}
-      />
-    )}
-
     {showParam('llmVndOaiWebSearchContext') && (
       <FormSelectControl
-        title='Search Context Size'
+        title='Search Size'
         tooltip='Controls how much context is retrieved from the web'
         value={llmVndOaiWebSearchContext ?? _UNSPECIFIED}
         onChange={(value) => {
@@ -319,6 +289,36 @@ export function LLMParametersEditor(props: {
                 onChangeParameter({ llmVndOaiWebSearchGeolocation: true });
             });
           }
+        }}
+      />
+    )}
+
+    {showParam('llmVndOaiReasoningEffort') && (
+      <FormSelectControl
+        title='Reasoning Effort'
+        tooltip='Controls how much effort the model spends on reasoning'
+        value={llmVndOaiReasoningEffort ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiReasoningEffort');
+          else
+            onChangeParameter({ llmVndOaiReasoningEffort: value });
+        }}
+        options={_reasoningEffortOptions}
+      />
+    )}
+
+    {showParam('llmVndOaiRestoreMarkdown') && (
+      <FormSwitchControl
+        title='Restore Markdown'
+        description='Enable markdown formatting'
+        tooltip='o1 and o3 models in the API will avoid generating responses with markdown formatting. This option signals to the model to re-enable markdown formatting in the respons'
+        checked={!!llmVndOaiRestoreMarkdown}
+        onChange={checked => {
+          if (!checked)
+            onChangeParameter({ llmVndOaiRestoreMarkdown: false });
+          else
+            onChangeParameter({ llmVndOaiRestoreMarkdown: true });
         }}
       />
     )}
