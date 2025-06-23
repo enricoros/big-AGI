@@ -37,7 +37,9 @@ export function GoodModal(props: {
   sx?: SxProps,
   children: React.ReactNode,
 }) {
-  const showBottomClose = !!props.onClose && props.hideBottomClose !== true;
+
+  const { onClose } = props;
+  const showBottomClose = !!onClose && props.hideBottomClose !== true;
 
   const dialogSx: SxProps = React.useMemo(() => ({
     borderRadius: 'xl',
@@ -65,10 +67,28 @@ export function GoodModal(props: {
     } : props.unfilterBackdrop ? noBackdropSlotProps : undefined;
   }, [props.themedColor, props.unfilterBackdrop]);
 
+
+  // Fix the issue where the backdrop will fire on clicks that initiated on the dialog
+  const dragFromDialogRef = React.useRef(false);
+
+  const handleMouseDownWithinDialog = React.useCallback(() => {
+    dragFromDialogRef.current = true;
+  }, []);
+
+  const handleOnClose = React.useCallback((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
+    // ignore clicks on the backdrop that started from within the dialog
+    const ignoreDragOnBackdrop = reason === 'backdropClick' && dragFromDialogRef.current;
+    dragFromDialogRef.current = false;
+    if (ignoreDragOnBackdrop) return;
+
+    // normal propagation
+    onClose?.(event, reason);
+  }, [onClose]);
+
   return (
     <Modal
       open={props.open}
-      onClose={props.onClose}
+      onClose={!onClose ? undefined : handleOnClose}
       slotProps={backdropSx}
     >
       <ModalOverflow sx={{ p: 1 }}>
@@ -77,6 +97,7 @@ export function GoodModal(props: {
           variant={props.themedColor ? 'soft' : 'plain' /* switched from bordered (undefined) to borderless (plain) */}
           invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
+          onMouseDown={handleMouseDownWithinDialog /* to fix the Backdrop drag-closes issue */}
           sx={dialogSx}
         >
 
