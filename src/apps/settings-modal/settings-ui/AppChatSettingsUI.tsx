@@ -12,6 +12,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { isPwa } from '~/common/util/pwaUtils';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
 
 import { SettingUIComplexity } from './SettingUIComplexity';
 import { SettingUIComposerQuickButton } from './SettingUIComposerQuickButton';
@@ -30,14 +31,16 @@ const OptionsPageSize = [
 ] as const;
 
 
-function ModelsSetupButton() {
+function ModelsSetupButton(props: { isMissingModels?: boolean }) {
   return <Button
     // variant='soft' color='success'
+    color={props.isMissingModels ? 'danger' : undefined}
     onClick={optimaOpenModels}
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
       minWidth: 150,
+      boxShadow: props.isMissingModels ? 'lg' : undefined,
     }}
   >
     {/*Admin Models*/}
@@ -50,6 +53,7 @@ export function AppChatSettingsUI() {
 
   // external state
   const isMobile = useIsMobile();
+  const isMissingModels = useModelsZeroState();
   const {
     centerMode, setCenterMode,
     disableMarkdown, setDisableMarkdown,
@@ -77,7 +81,7 @@ export function AppChatSettingsUI() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='AI Models'
                       description='Configure' />
-      <ModelsSetupButton />
+      <ModelsSetupButton isMissingModels={isMissingModels} />
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
