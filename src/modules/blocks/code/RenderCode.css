@@ -5,7 +5,7 @@ code.line-numbers {
     --ln-padding: 4.5em;
     padding-left: var(--ln-padding);
 
-    > .code-container {
+    .code-container {
         position: relative;
         counter-reset: linenumber;
         /*white-space: inherit;*/
