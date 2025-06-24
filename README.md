@@ -1,5 +1,15 @@
 # BIG-AGI 🧠
 
+<!-- Keep these links. Translations will automatically update with the README. -->
+[Deutsch](https://www.readme-i18n.com/enricoros/big-AGI?lang=de) | 
+[Español](https://www.readme-i18n.com/enricoros/big-AGI?lang=es) | 
+[français](https://www.readme-i18n.com/enricoros/big-AGI?lang=fr) | 
+[日本語](https://www.readme-i18n.com/enricoros/big-AGI?lang=ja) | 
+[한국어](https://www.readme-i18n.com/enricoros/big-AGI?lang=ko) | 
+[Português](https://www.readme-i18n.com/enricoros/big-AGI?lang=pt) | 
+[Русский](https://www.readme-i18n.com/enricoros/big-AGI?lang=ru) | 
+[中文](https://www.readme-i18n.com/enricoros/big-AGI?lang=zh)
+
 Welcome to big-AGI, the AI suite for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 15 vendors and
 open-source servers, `big-AGI` offers best-in-class Chats,
