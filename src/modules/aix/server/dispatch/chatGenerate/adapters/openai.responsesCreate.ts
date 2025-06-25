@@ -401,8 +401,8 @@ function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[]): NonNullable<T
         throw new Error('Gemini code interpreter is not supported');
 
       default:
-        const _exhaustiveCheck: never = itdType;
-        throw new Error(`Unsupported tool type in OpenAI Responses: ${itdType}`);
+        // const _exhaustiveCheck: never = itdType;
+        throw new Error(`OpenAI (Responses API) unsupported tool: ${itdType}`);
 
     }
   });
