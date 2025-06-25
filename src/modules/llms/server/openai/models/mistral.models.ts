@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
 
 // configuration
-const MISTRAL_DEV_SHOW_GAPS = true;
+const MISTRAL_DEV_SHOW_GAPS = Release.IsNodeDevBuild;
 
 
 // [Mistral]
