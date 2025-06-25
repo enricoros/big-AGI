@@ -69,7 +69,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.275 }, output: 4.4 },
     // benchmark: { cbaElo: 1351 /* unknown variant */ },
   },
@@ -84,7 +84,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.275 }, output: 4.4 },
     // benchmarks not available yet, as of 2025-04-16 (intro)
   },
@@ -99,7 +99,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 20, output: 80 },
     // benchmark: has not been measured yet
   },
@@ -114,7 +114,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 20, output: 80 },
     // benchmark: has not been measured yet
   },
@@ -129,7 +129,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
     // benchmark: { cbaElo: 1413 /* unknown variant, as of 2025-05-12 */ },
   },
@@ -144,7 +144,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
     // benchmarks not available yet, as of 2025-04-16 (intro)
   },
@@ -158,7 +158,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
     benchmark: { cbaElo: 1305 /* the -high variant has 1325 */ },
   },
@@ -173,14 +173,14 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
     benchmark: { cbaElo: 1305 },
   },
 
   // o1-pro - (v1/responses API) 💎💰
   {
-    hidden: true, // UNSUPPORTED /responses API yet
+    hidden: true,
     idPrefix: 'o1-pro-2025-03-19',
     label: 'o1 Pro (2025-03-19)',
     description: 'A version of o1 with more compute for better responses. Provides consistently better answers for complex tasks.',
@@ -188,7 +188,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'Sep 30, 2023',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 150, output: 600 },
     // benchmark: has not been measured yet by third parties
   },
@@ -203,7 +203,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'Sep 30, 2023',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 150, output: 600 },
     // benchmark: has not been measured yet by third parties
   },
