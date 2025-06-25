@@ -1104,15 +1104,15 @@ export namespace OpenAIWire_API_Responses {
   export type Request = z.infer<typeof Request_schema>;
   export const Request_schema = z.object({
 
-    // Input
-    input: z.array(OpenAIWire_Responses_InputTypes.InputItem_schema),
-    instructions: z.string().nullish(),
-
     // Model configuration
     model: z.string(),
     max_output_tokens: z.number().int().positive().nullish(),
     temperature: z.number().min(0).nullish(), // [OpenAI] Defaults to 1, max: 2
     top_p: z.number().min(0).nullish(), // [OpenAI] Defaults to 1, max: 1
+
+    // Input
+    instructions: z.string().nullish(),
+    input: z.array(OpenAIWire_Responses_InputTypes.InputItem_schema),
 
     // Tools
     tools: z.array(OpenAIWire_Responses_Tools.Tool_schema).optional(),
@@ -1191,19 +1191,19 @@ export namespace OpenAIWire_API_Responses {
     status: _OutputItemStatus_schema.optional(),
   });
 
-  const ImageGenerationCallOutput_schema = z.object({
-    type: z.literal('image_generation_call'),
-    id: z.string(), // unique ID of the image generation call (output item ID)
-    result: z.string().nullish(), // base64 image data
-    status: _OutputItemStatus_schema.optional(),
-  });
+  // const ImageGenerationCallOutput_schema = z.object({
+  //   type: z.literal('image_generation_call'),
+  //   id: z.string(), // unique ID of the image generation call (output item ID)
+  //   result: z.string().nullish(), // base64 image data
+  //   status: _OutputItemStatus_schema.optional(),
+  // });
 
   // NS combined output
   const OutputItem_schema = z.union([
     MessageItemOutput_schema,
     ReasoningItemOutput_schema,
     FunctionCallOutput_schema,
-    ImageGenerationCallOutput_schema,
+    // ImageGenerationCallOutput_schema,
     // FileSearchCallOutput_schema,
     // WebSearchCallOutput_schema,
     // ComputerUseCallOutput_schema,
@@ -1230,14 +1230,14 @@ export namespace OpenAIWire_API_Responses {
 
     usage: z.object({
       input_tokens: z.number(),
-      output_tokens: z.number(),
-      total_tokens: z.number(),
       input_tokens_details: z.object({
         cached_tokens: z.number().optional(),
       }).optional(),
+      output_tokens: z.number(),
       output_tokens_details: z.object({
         reasoning_tokens: z.number().optional(),
       }).optional(),
+      total_tokens: z.number(),
     }).optional(),
 
     // NOTE: the following fields seem an exact echo of what's in the request - let's ignore these for now

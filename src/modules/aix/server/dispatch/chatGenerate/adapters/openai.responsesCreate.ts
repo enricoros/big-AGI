@@ -33,8 +33,8 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   // Construct the request payload
   const payload: TRequest = {
     model: model.id,
-    input: requestInput,
     instructions: requestInstructions,
+    input: requestInput,
     max_output_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
     ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
     // top_p: undefined,
@@ -59,7 +59,7 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   if (model.vndOaiReasoningEffort) {
     payload.reasoning = {
       effort: model.vndOaiReasoningEffort,
-      summary: 'auto',
+      summary: 'detailed', // elevated from 'auto'
     };
   }
 
