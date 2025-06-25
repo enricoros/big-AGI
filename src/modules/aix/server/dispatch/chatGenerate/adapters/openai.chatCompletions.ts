@@ -1,6 +1,6 @@
 import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
-import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
+import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
 import { approxDocPart_To_String } from './anthropic.messageCreate';
@@ -310,7 +310,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
         break;
 
       case 'doc':
-        msg0TextParts.push(_toApproximateOpenAIDocPart(part));
+        msg0TextParts.push(aixDocPart_to_OpenAITextContent(part));
         break;
 
       case 'meta_cache_control':
@@ -332,7 +332,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
        * o3-mini accepts both system and developer roles, and they seem to have the same effects
        */
       role: !hotFixOpenAIo1Family ? 'system' : 'developer',
-      content: _toApproximateOpenAIFlattenSystemMessage(msg0TextParts),
+      content: aixTexts_to_OpenAIInstructionText(msg0TextParts.map(text => text.text)),
     });
 
 
@@ -356,7 +356,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             case 'doc':
-              const docContentPart = _toApproximateOpenAIDocPart(part);
+              const docContentPart = aixDocPart_to_OpenAITextContent(part);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -385,7 +385,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
             case 'meta_in_reference_to':
               chatMessages.push({
                 role: !hotFixOpenAIo1Family ? 'system' : 'user', // NOTE: o1Family does not support system messages for this, we downcast to 'user'
-                content: _toOpenAIInReferenceToText(part),
+                content: aixMetaRef_to_OpenAIText(part),
               });
               break;
 
@@ -411,19 +411,8 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               // - audio parts are not supported on the assistant side, but on the user side, so we
               //   create a user part instead
 
-              let audioFormat: 'wav' | 'mp3' | undefined = undefined;
-              switch (part.mimeType) {
-                case 'audio/wav':
-                  audioFormat = 'wav';
-                  break;
-                case 'audio/mp3':
-                  audioFormat = 'mp3';
-                  break;
-                default:
-                  throw new Error(`Unsupported inline audio format: ${(part as any).mimeType}`);
-              }
-
               // create a new OpenAI_AudioContentPart of type User
+              const audioFormat = aixAudioPart_to_OpenAIAudioFormat(part);
               const audioBase64DataUrl = `data:${part.mimeType};base64,${part.base64}`;
               const audioContentPart = OpenAIWire_ContentParts.OpenAI_AudioContentPart(audioBase64DataUrl, audioFormat);
 
@@ -453,7 +442,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
 
             case 'tool_invocation':
               // Implementation notes
-              // - the assistant called the tool (this is the invocation params) with out without text beforehand
+              // - the assistant called the tool (this is the invocation params) without text beforehand
               // - we will append to an existing assistant message, if there's space for a tool invocation
               // - otherwise we'll add an assistant message with null message
 
@@ -572,7 +561,23 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
   }
 }
 
-function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string {
+
+// Approximate conversions
+
+export function aixAudioPart_to_OpenAIAudioFormat(part: AixParts_InlineAudioPart) {
+  const audioMimeType = part.mimeType;
+  switch (audioMimeType) {
+    case 'audio/wav':
+      return 'wav';
+    case 'audio/mp3':
+      return 'mp3';
+    default:
+      const _exhaustiveCheck: never = audioMimeType;
+      throw new Error(`Unsupported inline audio format: ${audioMimeType}`);
+  }
+}
+
+export function aixMetaRef_to_OpenAIText(irt: AixParts_MetaInReferenceToPart): string {
   // Get the item texts without roles
   const items = irt.referTo.map(r => r.mText);
   if (items.length === 0)
@@ -598,20 +603,17 @@ function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string
     items.map((text, index) => formatItem(text, index)).join(allShort ? '\n' : '\n\n')}`;
 }
 
-
-// Approximate conversions
-
-function _toApproximateOpenAIFlattenSystemMessage(texts: OpenAIWire_ContentParts.TextContentPart[]): string {
-  return texts.map(text => text.text).join(approxSystemMessageJoiner);
-}
-
-function _toApproximateOpenAIDocPart(part: AixParts_DocPart): OpenAIWire_ContentParts.TextContentPart {
+export function aixDocPart_to_OpenAITextContent(part: AixParts_DocPart): OpenAIWire_ContentParts.TextContentPart {
 
   // Corner case, low probability: if the content is already enclosed in triple-backticks, return it as-is
   if (part.data.text.startsWith('```'))
     return OpenAIWire_ContentParts.TextContentPart(part.data.text);
 
   return OpenAIWire_ContentParts.TextContentPart(approxDocPart_To_String(part));
+}
+
+export function aixTexts_to_OpenAIInstructionText(texts: string[]): string {
+  return texts.join(approxSystemMessageJoiner);
 }
 
 

@@ -65,6 +65,7 @@ export type DModelInterfaceV1 =
   | 'ant-prompt-caching'
   | 'oai-prompt-caching'
   | 'oai-realtime'
+  | 'oai-responses'
   | 'oai-needs-audio'
   | 'gem-code-execution'
   | 'outputs-audio'            // TEMP: ui flag - supports audio output (e.g., text-to-speech)
@@ -94,6 +95,7 @@ export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
 export const LLM_IF_OAI_PromptCaching: DModelInterfaceV1 = 'oai-prompt-caching';
 export const LLM_IF_OAI_Realtime: DModelInterfaceV1 = 'oai-realtime';
+export const LLM_IF_OAI_Responses: DModelInterfaceV1 = 'oai-responses';
 export const LLM_IF_OAI_NeedsAudio: DModelInterfaceV1 = 'oai-needs-audio';
 export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
 export const LLM_IF_HOTFIX_NoStream: DModelInterfaceV1 = 'hotfix-no-stream';
@@ -121,6 +123,7 @@ export const LLMS_ALL_INTERFACES = [
   LLM_IF_GEM_CodeExecution,   // [Gemini] Tool: code execution
   LLM_IF_OAI_PromptCaching,   // [OpenAI] model supports OpenAI prompt caching
   LLM_IF_OAI_Realtime,        // [OpenAI] realtime API support - unused
+  LLM_IF_OAI_Responses,       // [OpenAI] Responses API (new) support
   // Hotfixes to patch specific model quirks
   LLM_IF_HOTFIX_NoStream,     // disable streaming (e.g., o1-preview(old))
   LLM_IF_HOTFIX_NoTemperature,// disable temperature parameter (e.g., deepseek-r1)
