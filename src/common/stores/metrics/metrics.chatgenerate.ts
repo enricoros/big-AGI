@@ -13,7 +13,7 @@ const METRICS_APPROXIMATE_VT_TOKENS_THRESHOLD = 40; // tokens
 export type DMetricsChatGenerate_Md =
   Omit<MetricsChatGenerateTokens, 'T'> &
   MetricsChatGenerateCost_Md &
-  Pick<MetricsChatGenerateTime, 'dtStart' | 'vTOutInner'>; // 2025-02-27: added the inner velocity, which wasn't stored before
+  Pick<MetricsChatGenerateTime, 'dtAll' | 'dtStart' | 'vTOutInner'>; // 2025-02-27: added the inner velocity, which wasn't stored before
 
 /**
  * In particular this is used 'as' AixWire_Particles.CGSelectMetrics
@@ -123,7 +123,7 @@ export function metricsChatGenerateLgToMd(metrics: DMetricsChatGenerate_Lg): DMe
   const allOptionalKeys: (keyof DMetricsChatGenerate_Md)[] = [
     '$c', '$cdCache', '$code', // select costs
     'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', // select token counts
-    'dtStart', 'vTOutInner', // select token timings/velocities
+    'dtAll', 'dtStart', 'vTOutInner', // select token timings/velocities
     'TsR', // stop reason
   ] as const;
   const extracted: DMetricsChatGenerate_Md = {};
