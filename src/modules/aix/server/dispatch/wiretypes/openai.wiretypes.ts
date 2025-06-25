@@ -985,7 +985,7 @@ export namespace OpenAIWire_Responses_InputTypes {
   // - type: 'mcp_call'
 
 
-  /**
+  /*
    * Old-style Item Message, used for compatibility with older APIs.
    *
    * NOTE: Over time we will move to the 'Item' type below, but it requires tracking lots
@@ -994,16 +994,29 @@ export namespace OpenAIWire_Responses_InputTypes {
    *
    * In the meantime this is a way out of that.
    */
-  const InputMessage_Compat_schema = z.object({
+  export type InputMessage_Compat = z.infer<typeof InputMessage_Compat_schema>;
+
+  const _InputMessage_Compat_User_schema = z.object({
     type: z.literal('message'),
-    role: z.enum(['user', 'assistant', 'system', 'developer']),
+    role: z.enum(['user', 'system', 'developer']),
+    // user/system/developer inputs: 'input_text', 'input_image', 'input_file'
     content: z.array(z.union([
       InputTextPart_schema,
       InputImagePart_schema,
       InputFilePart_schema,
     ])),
   });
-  export type InputMessage_Compat = z.infer<typeof InputMessage_Compat_schema>;
+  const _InputMessage_Compat_Model_schema = z.object({
+    type: z.literal('message'),
+    role: z.literal('assistant'),
+    // assistant inputs: 'output_text', 'refusal'
+    content: z.array(ContentPartTextOrRefusal_schema),
+  });
+
+  const InputMessage_Compat_schema = z.union([
+    _InputMessage_Compat_User_schema,
+    _InputMessage_Compat_Model_schema,
+  ]);
 
   // Input Item (combined)
 
@@ -1119,6 +1132,12 @@ export namespace OpenAIWire_API_Responses {
     tool_choice: OpenAIWire_Responses_Tools.ToolChoice_schema.optional(),
     parallel_tool_calls: z.boolean().nullish(),
 
+    // configure reasoning
+    reasoning: z.object({
+      effort: z.enum(['low', 'medium', 'high']).nullish(), // defaults to 'medium'
+      summary: z.enum(['auto', 'concise', 'detailed']).nullish(),
+    }).nullish(),
+
     // configure text output
     text: z.object({
       format: z.union([
@@ -1133,12 +1152,6 @@ export namespace OpenAIWire_API_Responses {
         // z.object({ type: z.literal('json_object') }), // deprecated
       ]).optional(),
     }).optional(),
-
-    // configure reasoning
-    reasoning: z.object({
-      effort: z.enum(['low', 'medium', 'high']).nullish(), // defaults to 'medium'
-      summary: z.enum(['auto', 'concise', 'detailed']).nullish(),
-    }).nullish(),
 
     // State management (we won't use this for stateless)
     // store: z.boolean().nullish(),
