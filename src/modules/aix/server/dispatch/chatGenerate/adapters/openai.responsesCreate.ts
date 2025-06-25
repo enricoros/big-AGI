@@ -381,7 +381,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
 
 function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequestTool[]> {
   return itds.map(itd => {
-    switch (itd.type) {
+    const itdType = itd.type;
+    switch (itdType) {
 
       case 'function_call':
         const { name, description, input_schema } = itd.function_call;
@@ -398,6 +399,10 @@ function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[]): NonNullable<T
 
       case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
+
+      default:
+        const _exhaustiveCheck: never = itdType;
+        throw new Error(`Unsupported tool type in OpenAI Responses: ${itdType}`);
 
     }
   });
