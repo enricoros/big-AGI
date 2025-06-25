@@ -25,7 +25,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     maxCompletionTokens: 1024,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature /* not actually a CHAT API model - this is here temporarily for debugging, before moving to /responses */],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
   },
@@ -39,7 +39,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     maxCompletionTokens: 1024,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature /* not actually a CHAT API model - this is here temporarily for debugging, before moving to /responses */],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
   },
@@ -91,10 +91,9 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // o3-pro - (v1/responses API)
   {
-    hidden: true, // UNSUPPORTED /responses API yet
     idPrefix: 'o3-pro-2025-06-10',
-    label: 'o3 Pro (2025-06-10) [unsupported]',
-    description: 'Requires (unsupported) Responses API. Version of o3 with more compute for better responses. Provides consistently better answers for complex tasks.',
+    label: 'o3 Pro (2025-06-10)',
+    description: 'Version of o3 with more compute for better responses. Provides consistently better answers for complex tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
@@ -106,7 +105,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'o3-pro',
     label: 'o3 Pro',
-    description: 'Requires (unsupported) Responses API. Version of o3 with more compute for better responses. Points to o3-pro-2025-06-10.',
+    description: 'Version of o3 with more compute for better responses. Points to o3-pro-2025-06-10.',
     symLink: 'o3-pro-2025-06-10',
     hidden: true, // prefer versioned
     // copied from symlinked
@@ -944,9 +943,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 const openAIModelsDenyList: string[] = [
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
-  'codex-mini-latest', // FIXME: support these
-  // 'o3-pro', // FIXME: support these
-  'o1-pro', // FIXME: support these
 
   // Legacy GPT models
   'gpt-3.5-turbo-0301',
@@ -986,9 +982,6 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 
 
 const _manualOrderingIdPrefixes = [
-  // Computer use models
-  'computer-use-20',
-  'computer-use-preview',
   // Reasoning models
   'o5-20',
   'o5-mini-20',
@@ -1031,6 +1024,10 @@ const _manualOrderingIdPrefixes = [
   'chatgpt-',
   // Codex
   'codex-',
+  // Computer use models
+  'computer-use-20',
+  'computer-use-preview',
+  'computer-use',
   // ...rest
   // 'gpt-4-turbo-',
   // 'gpt-4-',
