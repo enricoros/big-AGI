@@ -5,6 +5,10 @@ import { approxDocPart_To_String } from './anthropic.messageCreate';
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from '~/modules/aix/server/dispatch/chatGenerate/adapters/openai.chatCompletions';
 
 
+// configuration
+const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
+
+
 type TRequest = OpenAIWire_API_Responses.Request;
 type TRequestInput = OpenAIWire_Responses_InputTypes.InputItem;
 type TRequestTool = OpenAIWire_Responses_Tools.Tool;
@@ -19,51 +23,64 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
  */
 export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
 
-  // [OpenAI] - o models
-  const hotFixOpenAIOFamily = (
-    model.id === 'o1' || model.id.startsWith('o1-') ||
-    model.id === 'o3' || model.id.startsWith('o3-') ||
-    model.id === 'o4' || model.id.startsWith('o4-') ||
-    model.id === 'o5' || model.id.startsWith('o5-')
-  );
+  // [OpenAI] Vendor-specific model checks
+  const isOpenAIOFamily = ['o1', 'o3', 'o4', 'o5'].some(m => model.id === m || model.id.startsWith(m + '-'));
+  const isOpenAIComputerUse = model.id.includes('computer-use');
 
-  // Convert the chat messages to the OpenAI 4-Messages format
+  const hotFixNoTemperature = isOpenAIOFamily;
+  const hotFixNoTruncateAuto = isOpenAIComputerUse;
+
+  // ---
+  // construct the request payload
+  // NOTE: the zod parsing will remove the undefined values from the upstream request, enabling an easier construction
+  // ---
+
   const { requestInput, requestInstructions } = _toOpenAIResponsesRequestInput(chatGenerate.systemMessage, chatGenerate.chatSequence);
-
-  // Construct the request payload
   const payload: TRequest = {
+
+    // Model configuration
     model: model.id,
+    max_output_tokens: model.maxTokens ?? undefined, // response if unset: null
+    temperature: !hotFixNoTemperature ? model.temperature ?? undefined : undefined,
+    // top_p: ... below (alternative to temperature)
+
+    // Input
     instructions: requestInstructions,
     input: requestInput,
-    max_output_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
-    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
-    // top_p: undefined,
+
+    // Tools
     tools: chatGenerate.tools && _toOpenAIResponsesTools(chatGenerate.tools),
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIResponsesToolChoice(chatGenerate.toolsPolicy),
-    // parallel_tool_calls: undefined,
+    // parallel_tool_calls: undefined, // response if unset: true
+
+    // Operations Config
+    reasoning: !model.vndOaiReasoningEffort ? undefined : {
+      effort: model.vndOaiReasoningEffort,
+      // summary: 'detailed', // elevated from 'auto'
+    },
+
+    // Output Config
     // text: ... below
-    // reasoning: ... below
+
+    // API state management
+    store: false, // default would be 'true'
+    // previous_response_id: undefined,
+
+    // API options
     stream: streaming,
-    background: false,
-    // truncation: 'auto', // TODO: enable this by default?
+    // background: false, // response if unset: false
+    truncation: !hotFixNoTruncateAuto ? OPENAI_RESPONSES_DEFAULT_TRUNCATION : 'auto',
     // user: undefined,
+
   };
 
-  // Top-P instead of temperature
+  // "top-p": if present, use instead of temperature
   if (model.topP !== undefined) {
     delete payload.temperature;
     payload.top_p = model.topP;
   }
 
-  // [OpenAI] Vendor-specific reasoning effort, for o1 models only as of 2024-12-24
-  if (model.vndOaiReasoningEffort) {
-    payload.reasoning = {
-      effort: model.vndOaiReasoningEffort,
-      summary: 'detailed', // elevated from 'auto'
-    };
-  }
-
-  // JSON output - with schema
+  // JSON output: not implemented yet - will need a schema definition (similar to the tool args definition)
   if (jsonOutput) {
     console.warn('[DEV] notImplemented: responses: jsonOutput');
     // payload.text = {
@@ -73,12 +90,7 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
     // };
   }
 
-  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
-  if (model.vndOaiRestoreMarkdown) {
-    console.warn('notImplemented: responses: vndOaiRestoreMarkdown');
-  }
-
-  // [OpenAI] Vendor-specific web search context and/or geolocation
+  // Web Search Context - TODO: check if still exists
   if (model.vndOaiWebSearchContext || model.userGeolocation) {
     console.warn('notImplemented: responses: vndOaiWebSearchContext, userGeolocation');
     // payload.web_search_options = {};
@@ -94,9 +106,10 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
+  // this includes stripping 'undefined' fields
   const validated = OpenAIWire_API_Responses.Request_schema.safeParse(payload);
   if (!validated.success) {
-    console.warn('OpenAI: invalid Responses request payload. Error:', validated.error);
+    console.warn('[DEV] OpenAI: invalid Responses request payload. Error:', { error: validated.error });
     throw new Error(`Invalid sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
   }
 
@@ -137,7 +150,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   // We decide to adopt these schemas for the conversion (API gives us a few choices)
   const chatMessages: (UserMessage | ModelMessage | FunctionCallMessage | FunctionCallOutputMessage)[] = [];
   type UserMessage = Omit<OpenAIWire_Responses_InputTypes.UserItemMessage, 'role'> & { role: 'user' };
-  type ModelMessage = Omit<OpenAIWire_Responses_InputTypes.InputMessage_Compat, 'role'> & { role: 'assistant' };
+  type ModelMessage = Extract<OpenAIWire_Responses_InputTypes.InputMessage_Compat, { role: 'assistant' }>;
   type FunctionCallMessage = OpenAIWire_Responses_InputTypes.FunctionToolCall;
   type FunctionCallOutputMessage = OpenAIWire_Responses_InputTypes.FunctionToolCallOutput;
 
@@ -258,7 +271,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
 
             case 'text':
               modelMessage().content.push({
-                type: 'input_text',
+                type: 'output_text',
                 text: modelPart.text,
               });
               break;
