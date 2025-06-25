@@ -1,5 +1,4 @@
 import { safeErrorString } from '~/server/wire';
-import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
@@ -9,334 +8,420 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { OpenAIWire_API_Responses } from '../../wiretypes/openai.wiretypes';
 
 
+// configuration
+const OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
+const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n'; // true: shows the sequence of events
+
+
+type TResponse = OpenAIWire_API_Responses.Response;
+type TOutputItem = OpenAIWire_API_Responses.Response['output'][number];
+type TEventType = OpenAIWire_API_Responses.StreamingEvent['type'];
+
+
+/**
+ * We need this just to ensure events are not out of order, as out streaming is progressive
+ * and ordered part-by-part.
+ *
+ * Very simple, just checks for orders, indices, allowed operations.
+ */
+class ResponseParserStateMachine {
+
+  // timings
+  public parserCreationTimestamp = Date.now();
+  public timeToFirstEvent: number | undefined; // time to the first event, in ms
+
+  // low-level verifications
+  #sequenceNumber: number = 0;
+  #expectedEvents: TEventType[] | undefined;
+
+  // most recently updated response object
+  #response: TResponse | undefined;
+
+  // outer index pointing at 'message', 'reasoning' and 'function_call'
+  #inOutputIndex: number | undefined; // index of the output item being processed
+  #inOutputType: TOutputItem['type'] | undefined; // type of the output item being processed
+
+  // indices of the part within the output item
+  #contentIndex: number | undefined; // within 'message' output items
+  #contentAddSpacer: boolean = false; // whether we need to inject a spacer in the content part
+  #summaryIndex: number | undefined; // within 'reasoning' output items
+  #summaryAddSpacer: boolean = false; // whether we need to inject a spacer in the summary part
+
+
+  // Validations
+
+  validateSequenceNumber(sequenceNumber: number) {
+    // time-to-first-event
+    if (this.timeToFirstEvent === undefined)
+      this.timeToFirstEvent = Date.now() - this.parserCreationTimestamp;
+
+    if (sequenceNumber !== this.#sequenceNumber)
+      console.warn(`[DEV] AIX: OpenAI Responses: sequence mismatch: got ${sequenceNumber}, expected ${this.#sequenceNumber}`);
+    this.#sequenceNumber = sequenceNumber + 1;
+  }
+
+  validateExpectedEventType(eventType: TEventType) {
+    if (!this.#expectedEvents || !this.#expectedEvents.length || this.#expectedEvents.includes(eventType))
+      return true;
+    console.warn(`[DEV] AIX: OpenAI Responses: unexpected event type: got ${eventType}, expected one of ${this.#expectedEvents.join(', ')}`);
+    return false;
+  }
+
+  expectEvents(events: TEventType[] | undefined) {
+    this.#expectedEvents = (!events || !events.length) ? undefined : events;
+  }
+
+
+  // Response validation
+
+  setResponse(label: string, response: TResponse, excludeFields: string[] = []) {
+    if (!this.#response) {
+      this.#response = response;
+      return false;
+    }
+    const diff = _warnIfObjectPropertiesDiffer(this.#response, response, excludeFields);
+    if (diff)
+      console.warn(`[DEV] AIX: ${label}: response differs:`, { diff, excludedFields: excludeFields });
+    return !!diff;
+  }
+
+  get responseId() {
+    return this.#response?.id ?? 'new response';
+  }
+
+
+  // Monotonic indices validation
+
+  outputItemEnter(label: TEventType, outputIndex: number, outputType: TOutputItem['type']) {
+    const expectedIndex = outputIndex === 0 ? undefined : outputIndex - 1;
+    if (this.#inOutputIndex !== expectedIndex || this.#inOutputType !== undefined)
+      console.warn(`[DEV] AIX: ${label} - output item enter index/type mismatch: expected ${expectedIndex}/${outputType}, got ${this.#inOutputIndex}/${this.#inOutputType}`);
+    this.#inOutputIndex = outputIndex;
+    this.#inOutputType = outputType;
+  }
+
+  outputItemExit(label: TEventType, outputIndex: number, outputType: TOutputItem['type']) {
+    if (this.#inOutputIndex !== outputIndex || this.#inOutputType !== outputType)
+      console.warn(`[DEV] AIX: ${label} - output item exit index/type mismatch: expected ${outputIndex}/${outputType}, got ${this.#inOutputIndex}/${this.#inOutputType}`);
+    // this.#inOutputIndex = undefined; // leave the index to increase
+    this.#inOutputType = undefined;
+  }
+
+  outputItemVisit(label: TEventType, outputIndex: number, outputType: TOutputItem['type']) {
+    if (this.#inOutputIndex !== outputIndex || this.#inOutputType !== outputType)
+      console.warn(`[DEV] AIX: ${label} - output item visit index/type mismatch: expected ${outputIndex}/${outputType}, got ${this.#inOutputIndex}/${this.#inOutputType}`);
+    this.#inOutputIndex = outputIndex;
+    this.#inOutputType = outputType;
+  }
+
+
+  contentPartEnter(label: TEventType, outputIndex: number, contentIndex: number) {
+    this.outputItemVisit(label, outputIndex, 'message');
+    const previousIndex = contentIndex === 0 ? undefined : contentIndex - 1;
+    if (this.#contentIndex !== previousIndex)
+      console.warn(`[DEV] AIX: ${label} - content index mismatch: expected ${previousIndex}, got ${this.#contentIndex}`);
+    this.#contentIndex = contentIndex;
+    this.#contentAddSpacer = contentIndex > 0;
+  }
+
+  contentPartExit(label: TEventType, outputIndex: number, contentIndex: number) {
+    this.outputItemVisit(label, outputIndex, 'message');
+    if (this.#contentIndex !== contentIndex)
+      console.warn(`[DEV] AIX: ${label} - content index mismatch: expected ${contentIndex}, got ${this.#contentIndex}`);
+    this.#contentIndex = contentIndex;
+  }
+
+  contentPartVisit(label: TEventType, outputIndex: number, contentIndex: number) {
+    this.outputItemVisit(label, outputIndex, 'message');
+    if (this.#contentIndex !== contentIndex)
+      console.warn(`[DEV] AIX: ${label} - content index mismatch: expected ${contentIndex}, got ${this.#contentIndex}`);
+    this.#contentIndex = contentIndex;
+  }
+
+  contentPartInjectSpacer() {
+    if (!this.#contentAddSpacer) return false;
+    this.#contentAddSpacer = false;
+    return true;
+  }
+
+
+  summaryPartEnter(label: TEventType, outputIndex: number, summaryIndex: number) {
+    this.outputItemVisit(label, outputIndex, 'reasoning');
+    const previousIndex = summaryIndex === 0 ? undefined : summaryIndex - 1;
+    if (this.#summaryIndex !== previousIndex)
+      console.warn(`[DEV] AIX: ${label} - summary index mismatch: expected ${previousIndex}, got ${this.#summaryIndex}`);
+    this.#summaryIndex = summaryIndex;
+    this.#summaryAddSpacer = summaryIndex > 0;
+  }
+
+  summaryPartExit(label: TEventType, outputIndex: number, summaryIndex: number) {
+    this.outputItemVisit(label, outputIndex, 'reasoning');
+    if (this.#summaryIndex !== summaryIndex)
+      console.warn(`[DEV] AIX: ${label} - summary index mismatch: expected ${summaryIndex}, got ${this.#summaryIndex}`);
+    this.#summaryIndex = summaryIndex;
+  }
+
+  summaryPartVisit(label: TEventType, outputIndex: number, summaryIndex: number) {
+    this.outputItemVisit(label, outputIndex, 'reasoning');
+    if (this.#summaryIndex !== summaryIndex)
+      console.warn(`[DEV] AIX: ${label} - summary index mismatch: expected ${summaryIndex}, got ${this.#summaryIndex}`);
+    this.#summaryIndex = summaryIndex;
+  }
+
+  summaryPartInjectSpacer() {
+    if (!this.#summaryAddSpacer) return false;
+    this.#summaryAddSpacer = false;
+    return true;
+  }
+
+}
+
+
 /**
  * OpenAI Responses API Streaming Parser
- *
- * OpenAI uses a chunk-based streaming protocol for its chat completions:
- * 1. Each chunk contains a 'choices' array, typically with a single item.
- * 2. The 'delta' field in each choice contains incremental updates to the message.
- * 3. Text content is streamed as string fragments in delta.content.
- * 4. Tool calls (function calls) are streamed incrementally in delta.tool_calls.
- * 5. There may be a final chunk which may contain a 'finish_reason' - but we won't rely on it.
- *
- * Assumptions:
- * - 'text' parts are incremental
- * - 'functionCall' are streamed incrementally, but follow a scheme.
- *    1. the firs delta chunk contains the the full ID and name of the function, and likley empty arguments.
- *    2. Subsequent delta chunks will only contain incremental text for the arguments.
- * - Begin/End: at any point:
- *    - it's either streaming Text or Tool Calls on each chunk
- *    - and there can be multiple chunks for a single completion (e.g. a text chunk and a tool call 1 chunk)
- *    - the temporal order of the chunks implies the beginning/end of a tool call.
- * - There's no explicit end in this data protocol, but it's handled in the caller with a sse:[DONE] event.
  */
 export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
-  const parserCreationTimestamp = Date.now();
-  let hasBegun = false;
-  let hasWarned = false;
-  let timeToFirstEvent: number | undefined;
-  let progressiveCitationNumber = 1;
-  // let perplexityAlreadyCited = false;
-  let processedSearchResultUrls = new Set<string>();
-  // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
-
-  // Supporting structure to accumulate the assistant message
-  const accumulator: {
-    content: string | null;
-    tool_calls: {
-      id: string;
-      type: 'function';
-      function: {
-        name: string;
-        arguments: string | null;
-      };
-    }[];
-  } = {
-    content: null,
-    tool_calls: [],
-  };
+  const R = new ResponseParserStateMachine();
 
   return function(pt: IParticleTransmitter, eventData: string) {
 
-    // Time to first event
-    if (timeToFirstEvent === undefined)
-      timeToFirstEvent = Date.now() - parserCreationTimestamp;
-
-    // Throws on malformed event data
+    // throws on malformed event data
     const chunkData = JSON.parse(eventData);
 
-    // Streaming parser
     const event = OpenAIWire_API_Responses.StreamingEvent_schema.parse(chunkData);
     const eventType = event?.type;
-    console.log(eventType);
+
+    // Validations
+    R.validateSequenceNumber(event.sequence_number);
+    R.validateExpectedEventType(eventType);
+
+    // Debugging: show the sequence of events
+    OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE && console.log(`response ${R.responseId}: ${eventType}`);
+
     switch (eventType) {
+
+      // level 1. Lifecycle events
+
+      // 1.1. First event, with the response substrate
       case 'response.created':
+
+        /* This response has the following worth noting:
+         * - .id = 'resp_12345'
+         *
+         * Values set by the API even if unset in the request:
+         * - .model = 'model-real-name'
+         * - .temperature = 1
+         * - .top_p = 1
+         * - .tool_choice = 'auto', .tools = []
+         * - .truncation = 'disabled'
+         *
+         * Not useful, still set:
+         * - .text = { format: { type: 'text' } }
+         * - .usage = null
+         * - .metadata = {}
+         */
+        R.setResponse(eventType, event.response);
+
+        // -> Model
+        pt.setModelName(event.response.model);
+
+        // -> TODO: Generation Details:
+        //    .created_at, .truncation, .temperature, .top_p, .tool_choice, tool count, text output type
         break;
+
       case 'response.in_progress':
+        // NO CHANGES expected, since 'response.created'
+        R.setResponse(eventType, event.response);
         break;
+
       case 'response.completed':
+        // CHANGE of { status, output, usage } expected
+        R.setResponse(eventType, event.response, ['status', 'output', 'usage']);
+
+        // -> Status
+        // TODO: set the terminating reason?
+
+        // -> Output
+        // TODO: verify that we correctly captured all the outputs?
+
+        // -> Usage (incl. dtAll)
+        if (event.response.usage) {
+          const metrics = _fromResponseUsage(event.response.usage, R.parserCreationTimestamp, R.timeToFirstEvent);
+          if (metrics)
+            pt.updateMetrics(metrics);
+        }
         break;
+
       case 'response.failed':
-        break;
       case 'response.incomplete':
+        // TODO: We haven't seen one of those events yet; we need to see what happens and parse it!
+        console.warn(`[DEV] AIX: FIXME: we got a Response ${eventType}:`);
+        R.setResponse(eventType, event.response);
         break;
+
+
+      // level 2: Output Item events - in our implementation we let them set an index to compare against
+
       case 'response.output_item.added':
+        // expected the beginning of a new output item
+        // BLANK item expected, of type 'message', 'reasoning' or 'function_call'
+        R.outputItemEnter(eventType, event.output_index, event.item.type);
         break;
+
       case 'response.output_item.done':
+        R.outputItemExit(eventType, event.output_index, event.item.type);
+
+        // FULL ITEM parse
+        const doneItem = event.item;
+        const doneItemType = doneItem.type;
+        switch (doneItemType) {
+          case 'message':
+            // already parsed incrementally
+            break;
+
+          case 'reasoning':
+            // already parsed incrementally
+            break;
+
+          // -> FC: we parse function calls in full, for convenience
+          case 'function_call':
+            const {
+              // id: fcId,
+              call_id: fcCallId,
+              arguments: fcArguments,
+              name: fcName,
+            } = doneItem;
+            pt.startFunctionCallInvocation(fcCallId, fcName, 'incr_str', fcArguments);
+            break;
+
+          default:
+            const _exhaustiveCheck: never = doneItemType;
+            break;
+        }
+
+        // signal the end of the item
+        pt.endMessagePart();
         break;
+
+
+      // level 3: Output Items have multiple Parts
+
+      // 3.1. Message Items: 'output_text' and 'output_refusal' parts
+
       case 'response.content_part.added':
+        R.contentPartEnter(eventType, event.output_index, event.content_index);
+        R.expectEvents(['response.output_text.delta', 'response.output_text.done', 'response.output_text_annotation.added', 'response.content_part.done']);
+        // nothing else to do, the part is likely empty, and we will incrementally parse it
         break;
+
       case 'response.content_part.done':
+        R.contentPartExit(eventType, event.output_index, event.content_index);
+        R.expectEvents(undefined);
+        pt.endMessagePart();
         break;
-      case 'response.output_text.delta':
-        break;
-      case 'response.output_text.done':
-        break;
-      case 'response.output_refusal.delta':
-        break;
-      case 'response.output_refusal.done':
-        break;
-      case 'response.output_text_annotation.added':
-        break;
-      case 'response.reasoning.delta':
-        break;
-      case 'response.reasoning.done':
-        break;
-      case 'response.reasoning_summary.delta':
-        break;
-      case 'response.reasoning_summary.done':
-        break;
+
+      // 3.2. Summary Items: 'summary_text' parts
+
       case 'response.reasoning_summary_part.added':
+        R.summaryPartEnter(eventType, event.output_index, event.summary_index);
+        R.expectEvents(['response.reasoning_summary_text.delta', 'response.reasoning_summary_text.done', 'response.reasoning_summary_part.done']);
+        // nothing else to do, the part is likely empty, and we will incrementally parse it
         break;
+
       case 'response.reasoning_summary_part.done':
+        R.summaryPartExit(eventType, event.output_index, event.summary_index);
+        R.expectEvents(undefined);
+        // nothing to do here, as we parsed the content incrementally already
         break;
+
+
+      // level 4: Content Part sub-events (shall ensure this is within their added-done, to avoid out of sequence)
+
+      // 4.1 - Content Items
+
+      case 'response.output_text.delta':
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        // .delta: -> append the text content
+        pt.appendText(R.contentPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + event.delta : event.delta);
+        break;
+
+      case 'response.output_text.done':
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        // .text: ignore finalized content, we already transmitted all partials
+        break;
+
+      case 'response.output_refusal.delta':
+      case 'response.output_refusal.done':
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        // .delta: ignore refusal string piece for now
+        // .refusal: ignore finalized refusal, we already transmitted all partials
+        // FIXME: implement this, if it shows up
+        console.log(`[DEV] AIX: OpenAI Responses: ignoring output_refusal event: ${eventType}`, event);
+        break;
+
+      // 4.2 - Reasoning Items
+
       case 'response.reasoning_summary_text.delta':
+        R.summaryPartVisit(eventType, event.output_index, event.summary_index);
+        // .delta: -> append the reasoning content
+        pt.appendReasoningText(R.summaryPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + event.delta : event.delta);
         break;
+
       case 'response.reasoning_summary_text.done':
+        R.summaryPartVisit(eventType, event.output_index, event.summary_index);
+        // .text: ignore finalized content, we already transmitted all partials
         break;
+
+      // case 'response.reasoning.delta':
+      //   break;
+      // case 'response.reasoning.done':
+      //   break;
+      // case 'response.reasoning_summary.delta':
+      //   break;
+      // case 'response.reasoning_summary.done':
+      //   break;
+
+      // 4.3 - Function Calls
+
       case 'response.function_call_arguments.delta':
-        break;
       case 'response.function_call_arguments.done':
+        R.outputItemVisit(eventType, event.output_index, 'function_call');
+        // .delta: we parse this at the end
+        // .done: we parse this at the end
         break;
+
+      // 1.5 - Error
+
       case 'error':
+        // there are complexities related to parsing this type: the docs suggest a flat structure, but we see nested objects
+        // see the explanation on OpenAIWire_API_Responses.ErrorEvent_schema
+
+        const errorCode = safeErrorString(event.error?.type || event.error?.code || event.code) ?? undefined;
+        const errorMessage = safeErrorString(event.error?.message || event?.message) ?? undefined;
+        const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
+
+        // Transmit the error as text - note: throw if you want to transmit as 'error'
+        pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic);
         break;
 
       default:
-        const _exhaustiveCheck: never = eventType;
-        console.warn('[DEV] AIX: OpenAI-dispatch: unexpected event type:', eventType);
+        // const _exhaustiveCheck: never = eventType;
+        // FIXME: if we're here, we prob needed to implement the part
+        console.warn('[DEV] AIX: OpenAI Responses: unexpected event type:', eventType);
         break;
+
     }
-
-
-    // // -> Model
-    // if (!hasBegun && json.model) {
-    //   hasBegun = true;
-    //   pt.setModelName(json.model);
-    // }
-    //
-    // // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
-    // if (json.error) {
-    //   return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic);
-    // }
-    //
-    // // [OpenAI] if there's a warning, log it once
-    // if (json.warning && !hasWarned) {
-    //   hasWarned = true;
-    //   console.log('AIX: OpenAI-dispatch chunk warning:', json.warning);
-    // }
-    //
-    // // [Azure] we seem to get 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
-    // if (json.id === '' && json.object === '' && json.model === '')
-    //   return;
-    //
-    //
-    // // -> Stats
-    // if (json.usage) {
-    //   const metrics = _fromOpenAIUsage(json.usage, parserCreationTimestamp, timeToFirstEvent);
-    //   if (metrics)
-    //     pt.updateMetrics(metrics);
-    //   // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
-    //   if (!json.choices.length)
-    //     return;
-    // }
-    // // [Groq] -> Stats
-    // // Note: if still in queue, reset the event stats, until we're out of the queue
-    // if (json.x_groq?.queue_length)
-    //   timeToFirstEvent = undefined;
-    // if (json.x_groq?.usage) {
-    //   const { prompt_tokens, completion_tokens, completion_time } = json.x_groq.usage;
-    //   const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-    //     TIn: prompt_tokens,
-    //     TOut: completion_tokens,
-    //     vTOutInner: (completion_tokens && completion_time) ? Math.round((completion_tokens / completion_time) * 100) / 100 : undefined,
-    //     dtInner: Math.round((completion_time || 0) * 1000),
-    //     dtAll: Date.now() - parserCreationTimestamp,
-    //   };
-    //   if (timeToFirstEvent !== undefined)
-    //     metricsUpdate.dtStart = timeToFirstEvent;
-    //   pt.updateMetrics(metricsUpdate);
-    // }
-    //
-    // // expect: 1 completion, or stop
-    // if (json.choices.length !== 1)
-    //   throw new Error(`expected 1 completion, got ${json.choices.length}`);
-    //
-    //
-    // // [Perplexity] .search_results
-    // if (json.search_results && Array.isArray(json.search_results)) {
-    //
-    //   // Process only new search results
-    //   for (const searchResult of json.search_results) {
-    //
-    //     // Incremental processing
-    //     const url = searchResult?.url;
-    //     if (!url || processedSearchResultUrls.has(url))
-    //       continue;
-    //     processedSearchResultUrls.add(url);
-    //
-    //     // Append the new citation
-    //     let pubTs: number | undefined;
-    //     if (searchResult.date) {
-    //       const date = new Date(searchResult.date);
-    //       if (!isNaN(date.getTime()))
-    //         pubTs = date.getTime();
-    //     }
-    //     pt.appendUrlCitation(searchResult.title || '', url, progressiveCitationNumber++, undefined, undefined, undefined, pubTs);
-    //   }
-    //
-    // }
-    // // [Perplexity] .citations (DEPRECATED)
-    // // if (json.citations && !perplexityAlreadyCited && Array.isArray(json.citations)) {
-    // //
-    // //   for (const citationUrl of json.citations)
-    // //     if (typeof citationUrl === 'string')
-    // //       pt.appendUrlCitation('', citationUrl, progressiveCitationNumber++, undefined, undefined, undefined);
-    // //
-    // //   // Perplexity detection: streaming of full objects, hence we don't re-send the citations at every chunk
-    // //   if (json.object === 'chat.completion')
-    // //     perplexityAlreadyCited = true;
-    // //
-    // // }
-    //
-    //
-    // for (const { index, delta, finish_reason } of json.choices) {
-    //
-    //   // n=1 -> single Choice only
-    //   if (index !== 0 && index !== undefined /* [OpenRouter->Gemini] */)
-    //     throw new Error(`expected completion index 0, got ${index}`);
-    //
-    //   // handle missing content
-    //   if (!delta)
-    //     throw new Error(`server response missing content (finish_reason: ${finish_reason})`);
-    //
-    //   // delta: Reasoning Content [Deepseek, 2025-01-20]
-    //   let deltaHasReasoning = false;
-    //   if (typeof delta.reasoning_content === 'string') {
-    //
-    //     pt.appendReasoningText(delta.reasoning_content);
-    //     deltaHasReasoning = true;
-    //
-    //   }
-    //   // delta: Reasoning [OpenRouter, 2025-01-24]
-    //   else if (typeof delta.reasoning === 'string') {
-    //
-    //     pt.appendReasoningText(delta.reasoning);
-    //     deltaHasReasoning = true;
-    //
-    //   }
-    //
-    //   // delta: Text
-    //   if (typeof delta.content === 'string' &&
-    //     (!deltaHasReasoning || delta.content) // suppress if reasoning and empty
-    //   ) {
-    //
-    //     accumulator.content = (accumulator.content || '') + delta.content;
-    //     pt.appendAutoText_weak(delta.content);
-    //
-    //   }
-    //   // 2025-03-26: we don't have the full concurrency combinations of content/reasoning/reasoning_content yet
-    //   // if (delta.content !== undefined && delta.content !== null)
-    //   //   throw new Error(`unexpected delta content type: ${typeof delta.content}`);
-    //
-    //   // delta: Tool Calls
-    //   for (const deltaToolCall of (delta.tool_calls || [])) {
-    //
-    //     // validation
-    //     if (deltaToolCall.type !== undefined && deltaToolCall.type !== 'function')
-    //       throw new Error(`unexpected tool_call type: ${deltaToolCall.type}`);
-    //
-    //     // Creation -  Ensure the tool call exists in our accumulated structure
-    //     const tcIndex = deltaToolCall.index ?? accumulator.tool_calls.length;
-    //     if (!accumulator.tool_calls[tcIndex]) {
-    //       const created = accumulator.tool_calls[tcIndex] = {
-    //         id: deltaToolCall.id || serverSideId('aix-tool-call-id'),
-    //         type: 'function',
-    //         function: {
-    //           name: deltaToolCall.function.name || '',
-    //           arguments: deltaToolCall.function.arguments || '',
-    //         },
-    //       };
-    //       pt.startFunctionCallInvocation(created.id, created.function.name, 'incr_str', created.function.arguments);
-    //       break;
-    //     }
-    //
-    //     // Updating arguments
-    //     const accumulatedToolCall = accumulator.tool_calls[tcIndex];
-    //
-    //     // Validate
-    //     if (deltaToolCall.id && deltaToolCall.id !== accumulatedToolCall.id)
-    //       throw new Error(`unexpected tool_call id change: ${deltaToolCall.id}`);
-    //     if (deltaToolCall.function.name)
-    //       throw new Error(`unexpected tool_call name change: ${deltaToolCall.function.name}`);
-    //
-    //     // It's an arguments update - send it
-    //     if (deltaToolCall.function?.arguments) {
-    //       accumulatedToolCall.function.arguments += deltaToolCall.function.arguments;
-    //       pt.appendFunctionCallInvocationArgs(accumulatedToolCall.id, deltaToolCall.function.arguments);
-    //     }
-    //
-    //   } // .choices.tool_calls[]
-    //
-    //   // [OpenAI, 2025-03-11] delta: Annotations[].url_citation
-    //   if (delta.annotations !== undefined) {
-    //
-    //     if (Array.isArray(delta.annotations)) {
-    //       for (const { type: annotationType, url_citation: urlCitation } of delta.annotations) {
-    //         if (annotationType !== 'url_citation')
-    //           throw new Error(`unexpected annotation type: ${annotationType}`);
-    //         pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined, undefined);
-    //       }
-    //     } else {
-    //       // we don't abort for this issue - for our users
-    //       console.log('AIX: OpenAI-dispatch: unexpected annotations:', delta.annotations);
-    //     }
-    //
-    //   }
-    //
-    //   // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
-    //   if (finish_reason) {
-    //     const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
-    //     if (tokenStopReason !== null)
-    //       pt.setTokenStopReason(tokenStopReason);
-    //   }
-    //
-    //   // Note: not needed anymore - Workaround for implementations that don't send the [DONE] event
-    //   // if (finish_reason === 'max_tokens')
-    //   //   pt.setDialectTerminatingIssue('finish-reason');
-    //
-    // } // .choices[]
-
   };
 }
 
 
-/// OpenAI non-streaming ChatCompletions
-
+/**
+ * OpenAI Responses API Non-Streaming Parser
+ */
 export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
-  let progressiveCitationNumber = 1;
 
   return function(pt: IParticleTransmitter, eventData: string) {
 
@@ -352,13 +437,13 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
       console.log('AIX: OpenAI-Response-NS warning:', responseData.warning);
 
     // full response parsing
-    const response = OpenAIWire_API_Responses.ResponseNS_schema.parse(responseData);
+    const response = OpenAIWire_API_Responses.Response_schema.parse(responseData);
 
     // -> Model
     if (response.model)
       pt.setModelName(response.model);
 
-    // -> Stats
+    // -> Usage
     if (response.usage) {
       const metrics = _fromResponseUsage(response.usage, parserCreationTimestamp, undefined);
       if (metrics)
@@ -366,6 +451,10 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
     }
 
     // -> Status
+
+    // say it's okay for now
+    pt.setTokenStopReason('ok');
+
     switch (response.status) {
       case 'completed':
         // expected: the response is complete
@@ -404,10 +493,6 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
         console.warn('[DEV] AIX: OpenAI-Response-NS unexpected response status:', { status: response.status });
         break;
     }
-
-    // say it's okay for now
-    pt.setTokenStopReason('ok')
-
 
     // -> Output[]
     for (const oItem of response.output) {
@@ -528,39 +613,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 }
 
 
-function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
-  // expected: can be missing or nullified in certain cases - both for the streaming and non-streaming versions
-  if (!finish_reason)
-    return null;
-  switch (finish_reason) {
-
-    // [OpenAI] normal reach of a stop condition
-    case 'stop':
-    case 'stop_sequence': // [OpenRouter] Anthropic Claude 1
-    case 'end_turn': // [OpenRouter] Anthropic Claude 3.5 backend
-    case 'COMPLETE': // [OpenRouter] Command R+
-    case 'eos': // [OpenRouter] Phind: CodeLlama
-      return 'ok';
-
-    // [OpenAI] finished due to requesting tool+ to be called
-    case 'tool_calls':
-      return 'ok-tool_invocations';
-
-    // [OpenAI] broken due to reaching the max tokens limit
-    case 'length':
-      return 'out-of-tokens';
-
-    // [OpenAI] broken due to filtering
-    case 'content_filter':
-      return 'filter-content';
-  }
-
-  // Developers: show more finish reasons (not under flag for now, so we can add to the supported set)
-  console.log('AIX: OpenAI-dispatch unexpected finish_reason:', finish_reason);
-  return null;
-}
-
-function _fromResponseUsage(usage: OpenAIWire_API_Responses.ResponseNS['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined) {
+function _fromResponseUsage(usage: OpenAIWire_API_Responses.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined) {
 
   // -> Stats only in some packages
   if (!usage)
@@ -569,7 +622,7 @@ function _fromResponseUsage(usage: OpenAIWire_API_Responses.ResponseNS['usage'],
   // Require at least the completion tokens, or issue a DEV warning otherwise
   if (usage.output_tokens === undefined) {
     // Warn, so we may adjust this usage parsing for Non-OpenAI APIs
-    console.log('[DEV] AIX: OpenAI-dispatch missing completion tokens in usage', { usage });
+    console.log('[DEV] AIX: OpenAI Responses missing completion tokens in usage', { usage });
     return undefined;
   }
 
@@ -629,19 +682,47 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
     return false;
   }
 
-  // prepare the text message
-  let errorMessage = safeErrorString(error) || 'unknown.';
+  // Transmit the error as text - note: throw if you want to transmit as 'error'
+  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic);
+  return true;
+}
 
-  // [OpenRouter] we may have a more specific error message inside the 'metadata' field
-  if ('metadata' in error && typeof error.metadata === 'object') {
-    const { metadata } = error;
-    if ('provider_name' in metadata && 'raw' in metadata)
-      errorMessage += ` -- cause: ${safeErrorString(metadata.provider_name)} error: ${safeErrorString(metadata.raw)}`;
-    else
-      errorMessage += ` -- cause: ${safeErrorString(metadata)}`;
+
+// Support functions
+
+/**
+ * Generic function to compare two objects and return their differences.
+ * Uses JSON.stringify for deep comparison of top-level properties.
+ */
+function _warnIfObjectPropertiesDiffer(
+  a: object,
+  b: object,
+  excludeFields: string[] = [],
+): null | Record<string, { a: any, b: any }> {
+
+  // Get all keys from both objects
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  const allKeys = new Set([...aKeys, ...bKeys]);
+
+  // Remove excluded fields
+  const fieldsToCompare = Array.from(allKeys).filter(key => !excludeFields.includes(key));
+
+  // Compare each property using JSON.stringify for deep comparison
+  const diff: Record<string, { a: any, b: any }> = {};
+
+  for (const key of fieldsToCompare) {
+    const aValue = (a as any)[key];
+    const bValue = (b as any)[key];
+
+    // Deep compare using JSON.stringify
+    const aStr = JSON.stringify(aValue);
+    const bStr = JSON.stringify(bValue);
+
+    if (aStr !== bStr) {
+      diff[key] = { a: aValue, b: bValue };
+    }
   }
 
-  // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic);
-  return true;
+  return Object.keys(diff).length > 0 ? diff : null;
 }
