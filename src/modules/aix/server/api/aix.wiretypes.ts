@@ -18,7 +18,7 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
 // Export types
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
-// export type AixParts_InlineAudioPart = z.infer<typeof AixWire_Parts.InlineAudioPart_schema>;
+export type AixParts_InlineAudioPart = z.infer<typeof AixWire_Parts.InlineAudioPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
 export type AixParts_ModelAuxPart = z.infer<typeof AixWire_Parts.ModelAuxPart_schema>;
 export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
@@ -407,6 +407,7 @@ export namespace AixWire_API {
     vndAntThinkingBudget: z.number().nullable().optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(),
+    vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
