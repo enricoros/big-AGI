@@ -1,5 +1,5 @@
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
-import { OpenAIWire_API_Responses, OpenAIWire_Responses_InputTypes, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
+import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 import { approxDocPart_To_String } from './anthropic.messageCreate';
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from '~/modules/aix/server/dispatch/chatGenerate/adapters/openai.chatCompletions';
@@ -10,7 +10,7 @@ const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
-type TRequestInput = OpenAIWire_Responses_InputTypes.InputItem;
+type TRequestInput = OpenAIWire_Responses_Items.InputItem;
 type TRequestTool = OpenAIWire_Responses_Tools.Tool;
 
 
@@ -26,6 +26,7 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   // [OpenAI] Vendor-specific model checks
   const isOpenAIOFamily = ['o1', 'o3', 'o4', 'o5'].some(m => model.id === m || model.id.startsWith(m + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
+  const isOpenAIO1Pro = model.id === 'o1-pro' || model.id.startsWith('o1-pro-');
 
   const hotFixNoTemperature = isOpenAIOFamily;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
@@ -56,7 +57,7 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
     // Operations Config
     reasoning: !model.vndOaiReasoningEffort ? undefined : {
       effort: model.vndOaiReasoningEffort,
-      // summary: 'detailed', // elevated from 'auto'
+      summary: !isOpenAIO1Pro ? 'detailed' : 'auto', // elevated from 'auto' (o1-pro still at 'auto')
     },
 
     // Output Config
@@ -149,10 +150,10 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
 
   // We decide to adopt these schemas for the conversion (API gives us a few choices)
   const chatMessages: (UserMessage | ModelMessage | FunctionCallMessage | FunctionCallOutputMessage)[] = [];
-  type UserMessage = Omit<OpenAIWire_Responses_InputTypes.UserItemMessage, 'role'> & { role: 'user' };
-  type ModelMessage = Extract<OpenAIWire_Responses_InputTypes.InputMessage_Compat, { role: 'assistant' }>;
-  type FunctionCallMessage = OpenAIWire_Responses_InputTypes.FunctionToolCall;
-  type FunctionCallOutputMessage = OpenAIWire_Responses_InputTypes.FunctionToolCallOutput;
+  type UserMessage = Omit<OpenAIWire_Responses_Items.UserItemMessage, 'role'> & { role: 'user' };
+  type ModelMessage = Extract<OpenAIWire_Responses_Items.InputMessage_Compat, { role: 'assistant' }>;
+  type FunctionCallMessage = OpenAIWire_Responses_Items.OutputFunctionCallItem;
+  type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
 
   function userMessage() {
     // Ensure the last message is a user message, or create a new one
