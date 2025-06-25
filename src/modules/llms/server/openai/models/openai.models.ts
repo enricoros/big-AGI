@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -25,7 +25,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     maxCompletionTokens: 1024,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [/* not actually a CHAT API model - this is here temporarily for debugging, before moving to /responses */],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature /* not actually a CHAT API model - this is here temporarily for debugging, before moving to /responses */],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
   },
@@ -39,7 +39,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     maxCompletionTokens: 1024,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [/* not actually a CHAT API model - this is here temporarily for debugging, before moving to /responses */],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature /* not actually a CHAT API model - this is here temporarily for debugging, before moving to /responses */],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
   },
@@ -51,7 +51,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.5, cache: { cType: 'oai-ac', read: 0.375 }, output: 6 },
   },
@@ -89,7 +89,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     // benchmarks not available yet, as of 2025-04-16 (intro)
   },
 
-  // o3-pro - (v1/responses API - UNSUPPORTED YET) 💎💰
+  // o3-pro - (v1/responses API)
   {
     hidden: true, // UNSUPPORTED /responses API yet
     idPrefix: 'o3-pro-2025-06-10',
@@ -98,7 +98,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 20, output: 80 },
     // benchmark: has not been measured yet
@@ -113,7 +113,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 20, output: 80 },
     // benchmark: has not been measured yet
@@ -178,7 +178,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1305 },
   },
 
-  // o1-pro - (v1/responses API - UNSUPPORTED YET) 💎💰
+  // o1-pro - (v1/responses API) 💎💰
   {
     hidden: true, // UNSUPPORTED /responses API yet
     idPrefix: 'o1-pro-2025-03-19',
@@ -187,7 +187,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoStream],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 150, output: 600 },
     // benchmark: has not been measured yet by third parties
@@ -202,7 +202,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoStream],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 150, output: 600 },
     // benchmark: has not been measured yet by third parties
