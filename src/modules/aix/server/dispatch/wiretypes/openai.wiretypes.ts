@@ -867,32 +867,33 @@ export namespace OpenAIWire_API_Moderations_Create {
 
 // Chat > Responses API
 
-export namespace OpenAIWire_Responses_InputTypes {
+export namespace OpenAIWire_Responses_Items {
 
-  // Input Parts
+  // Parts - Input
 
-  const InputTextPart_schema = z.object({
+  const Input_TextPart_schema = z.object({
     type: z.literal('input_text'),
     text: z.string(),
   });
 
-  const InputImagePart_schema = z.object({
+  const Input_ImagePart_schema = z.object({
     type: z.literal('input_image'),
     detail: z.enum(['auto', 'low', 'high']).optional(), // defaults to 'auto'
     image_url: z.string().optional(), // URL or base64 encoded image in a data URL.
     file_id: z.string().optional(),
   });
 
-  const InputFilePart_schema = z.object({
+  const Input_FilePart_schema = z.object({
     type: z.literal('input_file'),
     file_data: z.string().optional(), // content of the file
     file_id: z.string().optional(), // ID of the file
     filename: z.string().optional(), // name of the file
   });
 
-  // Output Parts
 
-  export const ContentPartText_schema = z.object({
+  // Parts - Output
+
+  export const ContentItem_TextPart_schema = z.object({
     type: z.literal('output_text'),
     text: z.string(),
     // NOTE: this could also be file_citation, container_file_citation, file_path
@@ -906,20 +907,89 @@ export namespace OpenAIWire_Responses_InputTypes {
     // Log Probabilities are ignored on purpose
   });
 
-  export const ContentPartRefusal_schema = z.object({
+  export const ContentItem_RefusalPart_schema = z.object({
     type: z.literal('refusal'),
     refusal: z.string(), // explanation
   });
 
-  export const ContentPartTextOrRefusal_schema = z.union([
-    ContentPartText_schema,
-    ContentPartRefusal_schema,
+  export const _ContentItem_Parts_schema = z.union([
+    ContentItem_TextPart_schema,
+    ContentItem_RefusalPart_schema,
   ]);
 
-  export const ReasoningPartSummaryText_schema = z.object({
+  export const ReasoningItem_SummaryTextPart_schema = z.object({
     type: z.literal('summary_text'),
     text: z.string(), // summary text
   });
+
+
+  // Output Items: Content ('message': ['output_text', 'refusal']), Reasoning ('reasoning': [ReasoningItemSummaryTextPart_schema]), Function Call ('function_call': [OutputFunctionCallItem_schema]), and more
+
+  const _OutputItemBase_schema = z.object({
+    status: z.enum(['in_progress', 'completed', 'incomplete']).optional(), // status of the output item
+  });
+
+  const OutputContentItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('message'),
+    id: z.string(), // unique ID of the output item
+    role: z.literal('assistant'),
+    content: z.array(_ContentItem_Parts_schema),
+  });
+
+  const OutputReasoningItem = _OutputItemBase_schema.extend({
+    type: z.literal('reasoning'),
+    /**
+     * ID seems missing from the reasoning output (at least in response.reasoning_summary_part.added),
+     * but the docs say it's required as input?
+     */
+    // id: z.string(),
+    summary: z.array(ReasoningItem_SummaryTextPart_schema), // summary of the reasoning
+    encrypted_content: z.string().nullish(), // populated when a response is generated with reasoning.encrypted_content in the include
+  });
+
+  export type OutputFunctionCallItem = z.infer<typeof OutputFunctionCallItem_schema>;
+  const OutputFunctionCallItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('function_call'),
+    id: z.string().optional(), // unique ID of the output item - optional when looped back to input
+    arguments: z.string(), // JSON string of the arguments to pass to the function
+    call_id: z.string(), //  unique ID of the function tool call -- same as ID? verify
+    name: z.string(), // name of the function to call
+  });
+
+  // const ImageGenerationCallOutput_schema = z.object({
+  //   type: z.literal('image_generation_call'),
+  //   id: z.string(), // unique ID of the image generation call (output item ID)
+  //   result: z.string().nullish(), // base64 image data
+  //   status: _OutputItemStatus_schema.optional(),
+  // });
+
+  /**
+   * Output Items:
+   *
+   * - Content Item
+   *   - output_text part
+   *   - refusal part
+   *
+   * - Reasoning Item
+   *   - summary_text part
+   *
+   * - Function Call Item (no parts, details are inside)
+   *
+   */
+  export const OutputItem_schema = z.union([
+    OutputContentItem_schema,
+    OutputReasoningItem,
+    OutputFunctionCallItem_schema,
+    // ImageGenerationCallOutput_schema,
+    // FileSearchCallOutput_schema,
+    // WebSearchCallOutput_schema,
+    // ComputerUseCallOutput_schema,
+    // CodeInterpreterCallOutput_schema,
+    // LocalShellCallOutput_schema,
+    // MCPToolCallOutput_schema,
+    // MCPListToolsOutput_schema,
+    // MCPApprovalRequestOutput_schema,
+  ]);
 
 
   // Request 'Input' Item
@@ -933,34 +1003,10 @@ export namespace OpenAIWire_Responses_InputTypes {
     type: z.literal('message'),
     role: z.enum(['user', 'system', 'developer']),
     content: z.array(z.union([
-      InputTextPart_schema,
-      InputImagePart_schema,
-      InputFilePart_schema,
+      Input_TextPart_schema,
+      Input_ImagePart_schema,
+      Input_FilePart_schema,
     ])),
-  });
-
-  // export type ModelItemMessage = z.infer<typeof ModelItemMessage_schema>;
-  const ModelItemMessage_schema = _InputItem_schema.extend({
-    type: z.literal('message'),
-    id: z.string(), // unique ID of the output message
-    role: z.literal('assistant'),
-    content: z.array(ContentPartTextOrRefusal_schema),
-  });
-
-  const ReasoningItemMessage_schema = _InputItem_schema.extend({
-    type: z.literal('reasoning'),
-    id: z.string(), // unique ID of the reasoning content
-    summary: z.array(ReasoningPartSummaryText_schema),
-    encrypted_content: z.string().nullish(),
-  });
-
-  export type FunctionToolCall = z.infer<typeof FunctionToolCall_schema>;
-  const FunctionToolCall_schema = _InputItem_schema.extend({
-    type: z.literal('function_call'),
-    id: z.string().optional(), // unique ID of the function call
-    call_id: z.string().optional(), // unique ID of the function call generated by the model
-    name: z.string(), // the name of the function that was requested to run
-    arguments: z.string().optional(), // JSON string of the arguments to pass to the function
   });
 
   export type FunctionToolCallOutput = z.infer<typeof FunctionToolCallOutput_schema>;
@@ -1001,16 +1047,16 @@ export namespace OpenAIWire_Responses_InputTypes {
     role: z.enum(['user', 'system', 'developer']),
     // user/system/developer inputs: 'input_text', 'input_image', 'input_file'
     content: z.array(z.union([
-      InputTextPart_schema,
-      InputImagePart_schema,
-      InputFilePart_schema,
+      Input_TextPart_schema,
+      Input_ImagePart_schema,
+      Input_FilePart_schema,
     ])),
   });
   const _InputMessage_Compat_Model_schema = z.object({
     type: z.literal('message'),
     role: z.literal('assistant'),
     // assistant inputs: 'output_text', 'refusal'
-    content: z.array(ContentPartTextOrRefusal_schema),
+    content: z.array(_ContentItem_Parts_schema),
   });
 
   const InputMessage_Compat_schema = z.union([
@@ -1026,10 +1072,8 @@ export namespace OpenAIWire_Responses_InputTypes {
     InputMessage_Compat_schema,
     // Item:
     UserItemMessage_schema,
-    ModelItemMessage_schema,
-    ReasoningItemMessage_schema,
-    FunctionToolCall_schema,
     FunctionToolCallOutput_schema,
+    OutputItem_schema,
     // Item Reference (not used yet):
     z.object({
       type: z.literal('item_reference'),
@@ -1125,7 +1169,7 @@ export namespace OpenAIWire_API_Responses {
 
     // Input
     instructions: z.string().nullish(),
-    input: z.array(OpenAIWire_Responses_InputTypes.InputItem_schema),
+    input: z.array(OpenAIWire_Responses_Items.InputItem_schema),
 
     // Tools
     tools: z.array(OpenAIWire_Responses_Tools.Tool_schema).optional(),
@@ -1154,8 +1198,8 @@ export namespace OpenAIWire_API_Responses {
     }).optional(),
 
     // State management (we won't use this for stateless)
-    // store: z.boolean().nullish(),
-    // previous_response_id: z.string().nullish(),
+    store: z.boolean().nullish(), // defaults to true(!)
+    previous_response_id: z.string().nullish(),
 
     // API options
     stream: z.boolean().nullish(),
@@ -1175,71 +1219,22 @@ export namespace OpenAIWire_API_Responses {
   });
 
 
-  /// Response - NS
+  /// Response
 
-  const _OutputItemStatus_schema = z.enum(['in_progress', 'completed', 'incomplete']);
 
-  const MessageItemOutput_schema = z.object({
-    type: z.literal('message'),
-    id: z.string(), // unique ID of the output item
-    role: z.literal('assistant'),
-    content: z.array(OpenAIWire_Responses_InputTypes.ContentPartTextOrRefusal_schema),
-    status: _OutputItemStatus_schema.optional(),
-  });
-
-  const ReasoningItemOutput_schema = z.object({
-    type: z.literal('reasoning'),
-    id: z.string(), // unique ID of the output item
-    summary: z.array(OpenAIWire_Responses_InputTypes.ReasoningPartSummaryText_schema).nullish(), // summary of the reasoning
-    encrypted_content: z.string().nullish(), // populated when a response is generated with reasoning.encrypted_content in the include
-    status: _OutputItemStatus_schema.optional(),
-  });
-
-  const FunctionCallOutput_schema = z.object({
-    type: z.literal('function_call'),
-    id: z.string(), // unique ID of the function tool call (output item ID)
-    arguments: z.string(), // JSON string of the arguments to pass to the function
-    call_id: z.string(), //  unique ID of the function tool call -- same as ID? verify
-    name: z.string(), // name of the function to call
-    status: _OutputItemStatus_schema.optional(),
-  });
-
-  // const ImageGenerationCallOutput_schema = z.object({
-  //   type: z.literal('image_generation_call'),
-  //   id: z.string(), // unique ID of the image generation call (output item ID)
-  //   result: z.string().nullish(), // base64 image data
-  //   status: _OutputItemStatus_schema.optional(),
-  // });
-
-  // NS combined output
-  const OutputItem_schema = z.union([
-    MessageItemOutput_schema,
-    ReasoningItemOutput_schema,
-    FunctionCallOutput_schema,
-    // ImageGenerationCallOutput_schema,
-    // FileSearchCallOutput_schema,
-    // WebSearchCallOutput_schema,
-    // ComputerUseCallOutput_schema,
-    // CodeInterpreterCallOutput_schema,
-    // LocalShellCallOutput_schema,
-    // MCPToolCallOutput_schema,
-    // MCPListToolsOutput_schema,
-    // MCPApprovalRequestOutput_schema,
-  ]);
-
-  export type ResponseNS = z.infer<typeof ResponseNS_schema>;
-  export const ResponseNS_schema = z.object({
+  export type Response = z.infer<typeof Response_schema>;
+  export const Response_schema = z.object({
     object: z.literal('response'),
 
     id: z.string(), // unique ID for this response
     created_at: z.number(), // unix timestamp (in seconds)
     status: z.enum(['completed', 'failed', 'in_progress', 'cancelled', 'queued', 'incomplete']),
     incomplete_details: z.object({ reason: z.string() }).nullish(), // why the response is incomplete
-    error: z.object({ code: z.string(), message: z.string() }).nullish(),
+    error: z.object({ code: z.string(), message: z.string() }).nullish(), // (null)
 
     model: z.string(), // model used for the response
 
-    output: z.array(OutputItem_schema),
+    output: z.array(OpenAIWire_Responses_Items.OutputItem_schema),
 
     usage: z.object({
       input_tokens: z.number(),
@@ -1251,15 +1246,15 @@ export namespace OpenAIWire_API_Responses {
         reasoning_tokens: z.number().optional(),
       }).optional(),
       total_tokens: z.number(),
-    }).optional(),
+    }).nullish(),
 
     // NOTE: the following fields seem an exact echo of what's in the request - let's ignore these for now
-    // background: ...
+    // background: ... (false)
     // instructions: ...
     // max_output_tokens: ...
     // metadata: ...
     // parallel_tool_calls: ...
-    // previous_response_id: ...
+    // previous_response_id: ... (null)
     // prompt: ...
     // reasoning: ...
     // service_tier: ...
@@ -1284,29 +1279,29 @@ export namespace OpenAIWire_API_Responses {
 
   const ResponseCreatedEvent_schema = _BaseEvent_schema.extend({
     type: z.literal('response.created'),
-    response: ResponseNS_schema,
+    response: Response_schema,
   });
 
   const ResponseInProgress_schema = _BaseEvent_schema.extend({
     type: z.literal('response.in_progress'),
-    response: ResponseNS_schema,
+    response: Response_schema,
   });
 
   const ResponseCompletedEvent_schema = _BaseEvent_schema.extend({
     type: z.literal('response.completed'),
-    response: ResponseNS_schema,
+    response: Response_schema,
   });
 
   // finishes as failed
   const ResponseFailedEvent_schema = _BaseEvent_schema.extend({
     type: z.literal('response.failed'),
-    response: ResponseNS_schema,
+    response: Response_schema,
   });
 
   // finishes as incomplete
   const ResponseIncompleteEvent_schema = _BaseEvent_schema.extend({
     type: z.literal('response.incomplete'),
-    response: ResponseNS_schema,
+    response: Response_schema,
   });
 
   // Streaming > Output item
@@ -1317,12 +1312,12 @@ export namespace OpenAIWire_API_Responses {
 
   const OutputItemAddedEvent_schema = _OutputItemEvent_schema.extend({
     type: z.literal('response.output_item.added'),
-    item: OutputItem_schema,
+    item: OpenAIWire_Responses_Items.OutputItem_schema,
   });
 
   const OutputItemDoneEvent_schema = _OutputItemEvent_schema.extend({
     type: z.literal('response.output_item.done'),
-    item: OutputItem_schema,
+    item: OpenAIWire_Responses_Items.OutputItem_schema,
   });
 
   const _OutputIndexedEvent_schema = _OutputItemEvent_schema.extend({
@@ -1337,12 +1332,12 @@ export namespace OpenAIWire_API_Responses {
 
   const ContentPartAddedEvent_schema = _PartIndexedEvent_schema.extend({
     type: z.literal('response.content_part.added'),
-    part: OpenAIWire_Responses_InputTypes.ContentPartTextOrRefusal_schema,
+    part: OpenAIWire_Responses_Items._ContentItem_Parts_schema,
   });
 
   const ContentPartDoneEvent_schema = _PartIndexedEvent_schema.extend({
     type: z.literal('response.content_part.done'),
-    part: OpenAIWire_Responses_InputTypes.ContentPartTextOrRefusal_schema,
+    part: OpenAIWire_Responses_Items._ContentItem_Parts_schema,
   });
 
   const OutputTextDeltaEvent_schema = _PartIndexedEvent_schema.extend({
@@ -1399,12 +1394,12 @@ export namespace OpenAIWire_API_Responses {
 
   const OutputReasoningSummaryPartAddedEvent_schema = _SummaryIndexedEvent_schema.extend({
     type: z.literal('response.reasoning_summary_part.added'),
-    part: OpenAIWire_Responses_InputTypes.ReasoningPartSummaryText_schema,
+    part: OpenAIWire_Responses_Items.ReasoningItem_SummaryTextPart_schema,
   });
 
   const OutputReasoningSummaryPartDoneEvent_schema = _SummaryIndexedEvent_schema.extend({
     type: z.literal('response.reasoning_summary_part.done'),
-    part: OpenAIWire_Responses_InputTypes.ReasoningPartSummaryText_schema,
+    part: OpenAIWire_Responses_Items.ReasoningItem_SummaryTextPart_schema,
   });
 
   const OutputReasoningSummaryTextDeltaEvent_schema = _SummaryIndexedEvent_schema.extend({
@@ -1439,9 +1434,19 @@ export namespace OpenAIWire_API_Responses {
   // Error event
   const ErrorEvent_schema = _BaseEvent_schema.extend({
     type: z.literal('error'),
-    code: z.string().nullish(),
-    message: z.string(),
+
+    // error as per the docs
+    code: z.number().or(z.string()).nullish(),
+    message: z.string().nullish(),
     param: z.string().nullish(),
+
+    // error received sometimes:
+    error: z.object({
+      type: z.union([z.enum(['invalid_request_error']), z.string()]).nullish(),
+      message: z.string().nullish(),
+      code: z.number().or(z.string()).nullish(),
+      param: z.string().nullish(),
+    }).nullish(),
   });
 
   // Combined streaming event
