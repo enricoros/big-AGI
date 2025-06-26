@@ -329,7 +329,7 @@ export namespace OpenAIWire_API_Chat_Completions {
           name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
           description: z.string().optional(),
           schema: z.json().optional(), // JSON Mode: schema
-          strict: z.boolean().optional().default(false),
+          strict: z.boolean().optional(),
         }),
       }),
     ]).optional(),
