@@ -19,20 +19,20 @@ export const env = createEnv({
 
     // LLM: OpenAI
     OPENAI_API_KEY: z.string().optional(),
-    OPENAI_API_HOST: z.string().url().optional(),
+    OPENAI_API_HOST: z.url().optional(),
     OPENAI_API_ORG_ID: z.string().optional(),
 
     // LLM: Alibaba (OpenAI)
-    ALIBABA_API_HOST: z.string().url().optional(),
+    ALIBABA_API_HOST: z.url().optional(),
     ALIBABA_API_KEY: z.string().optional(),
 
     // LLM: Azure OpenAI
-    AZURE_OPENAI_API_ENDPOINT: z.string().url().optional(),
+    AZURE_OPENAI_API_ENDPOINT: z.url().optional(),
     AZURE_OPENAI_API_KEY: z.string().optional(),
 
     // LLM: Anthropic
     ANTHROPIC_API_KEY: z.string().optional(),
-    ANTHROPIC_API_HOST: z.string().url().optional(),
+    ANTHROPIC_API_HOST: z.url().optional(),
 
     // LLM: Deepseek AI
     DEEPSEEK_API_KEY: z.string().optional(),
@@ -44,14 +44,14 @@ export const env = createEnv({
     GROQ_API_KEY: z.string().optional(),
 
     // LLM: LocalAI
-    LOCALAI_API_HOST: z.string().url().optional(),
+    LOCALAI_API_HOST: z.url().optional(),
     LOCALAI_API_KEY: z.string().optional(),
 
     // LLM: Mistral
     MISTRAL_API_KEY: z.string().optional(),
 
     // LLM: Ollama
-    OLLAMA_API_HOST: z.string().url().optional(),
+    OLLAMA_API_HOST: z.url().optional(),
 
     // LLM: OpenPipe
     OPENPIPE_API_KEY: z.string().optional(),
@@ -74,7 +74,7 @@ export const env = createEnv({
 
 
     // Browsing Service
-    PUPPETEER_WSS_ENDPOINT: z.string().url().optional(),
+    PUPPETEER_WSS_ENDPOINT: z.url().optional(),
 
     // Google Custom Search
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
@@ -83,7 +83,7 @@ export const env = createEnv({
 
     // Text-To-Speech: ElevenLabs - speech.ts
     ELEVENLABS_API_KEY: z.string().optional(),
-    ELEVENLABS_API_HOST: z.string().url().optional(),
+    ELEVENLABS_API_HOST: z.url().optional(),
     ELEVENLABS_VOICE_ID: z.string().optional(),
 
     // Text-To-Image: Prodia
@@ -111,7 +111,7 @@ export const env = createEnv({
     NEXT_PUBLIC_GA4_MEASUREMENT_ID: z.string().optional(),
 
     // Frontend: server to use for PlantUML rendering
-    NEXT_PUBLIC_PLANTUML_SERVER_URL: z.string().url().optional(),
+    NEXT_PUBLIC_PLANTUML_SERVER_URL: z.url().optional(),
 
   },
 

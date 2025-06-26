@@ -28,7 +28,7 @@ const fetchPageInputSchema = z.object({
     wssEndpoint: z.string().trim().optional(),
   }),
   requests: z.array(z.object({
-    url: z.string().url(),
+    url: z.url(),
     transforms: z.array(pageTransformSchema),
     allowFileDownloads: z.boolean().optional(),
     screenshot: z.object({
