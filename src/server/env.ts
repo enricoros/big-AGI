@@ -1,6 +1,6 @@
 // noinspection ES6PreferShortImport - because the build would not find this file with ~/...
 import { createEnv } from '../modules/3rdparty/t3-env';
-import { z } from 'zod/v4';
+import * as z from 'zod/v4';
 
 export const env = createEnv({
 

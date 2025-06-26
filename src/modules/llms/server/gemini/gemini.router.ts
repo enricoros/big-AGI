@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import * as z from 'zod/v4';
 import { env } from '~/server/env';
 
 import packageJson from '../../../../../package.json';

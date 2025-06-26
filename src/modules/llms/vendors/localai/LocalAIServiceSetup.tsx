@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { z } from 'zod/v4';
+import * as z from 'zod/v4';
 
 import { Button, Chip, Typography } from '@mui/joy';
 

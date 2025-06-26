@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import * as z from 'zod/v4';
 
 import { LLMS_ALL_INTERFACES } from '~/common/stores/llms/llms.types';
 

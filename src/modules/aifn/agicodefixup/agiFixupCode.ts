@@ -1,4 +1,4 @@
-import type { ZodObject, ZodString } from 'zod/v4';
+import * as z from 'zod/v4';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
@@ -17,8 +17,8 @@ interface CodeFix {
   userInstructionTemplate: string; // Template with placeholders for `codeToFix` and `errorString`
   functionName: string;
   functionPolicy: 'invoke' | 'think-then-invoke';
-  outputSchema: ZodObject<{
-    corrected_code: ZodString;
+  outputSchema: z.ZodObject<{
+    corrected_code: z.ZodString;
   }>;
 }
 
