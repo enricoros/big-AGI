@@ -28,7 +28,7 @@ import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescr
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityInjectVariants } from './models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
-import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
+import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
 
 
@@ -456,7 +456,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     .mutation(async ({ input: { access, galleryName, modelName } }) => {
       const galleryModelId = `${galleryName}@${modelName}`;
       const wireLocalAIModelApply = await openaiPOSTOrThrow(access, null, { id: galleryModelId }, '/models/apply');
-      return wilreLocalAIModelsApplyOutputSchema.parse(wireLocalAIModelApply);
+      return wireLocalAIModelsApplyOutputSchema.parse(wireLocalAIModelApply);
     }),
 
   /* [LocalAI] Poll for a Model download Job status */
