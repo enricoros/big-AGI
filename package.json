@@ -72,7 +72,6 @@
     "tiktoken": "^1.0.21",
     "turndown": "^7.2.0",
     "zod": "^3.25.67",
-    "zod-to-json-schema": "^3.24.6",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
