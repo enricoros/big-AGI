@@ -111,7 +111,7 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   const validated = OpenAIWire_API_Responses.Request_schema.safeParse(payload);
   if (!validated.success) {
     console.warn('[DEV] OpenAI: invalid Responses request payload. Error:', { error: validated.error });
-    throw new Error(`Invalid sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+    throw new Error(`Invalid sequence for OpenAI models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
   }
 
   return validated.data;
