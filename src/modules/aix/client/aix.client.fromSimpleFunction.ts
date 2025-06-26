@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import * as z from 'zod/v4';
 
 import type { AixTools_FunctionCallDefinition } from '../server/api/aix.wiretypes';
 import { DMessageContentFragment, DMessageToolInvocationPart, DMessageVoidFragment, isContentFragment } from '~/common/stores/chat/chat.fragments';

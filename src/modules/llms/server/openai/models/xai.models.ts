@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import * as z from 'zod/v4';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 

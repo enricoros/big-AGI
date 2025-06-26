@@ -7,7 +7,7 @@
  * need to use are documented accordingly near the end.
  */
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
-import { z, ZodError } from 'zod/v4';
+import * as z from 'zod/v4';
 import { initTRPC } from '@trpc/server';
 import { transformer } from '~/server/trpc/trpc.transformer';
 
@@ -46,7 +46,7 @@ const t = initTRPC.context<typeof createTRPCFetchContext>().create({
       data: {
         ...shape.data,
         zodError:
-          error.cause instanceof ZodError ? z.treeifyError(error.cause) : null,
+          error.cause instanceof z.ZodError ? z.treeifyError(error.cause) : null,
       },
     };
   },
