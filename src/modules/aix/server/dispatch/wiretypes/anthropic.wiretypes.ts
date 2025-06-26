@@ -172,7 +172,7 @@ export namespace AnthropicWire_Tools {
     name: z.string(),
 
     /** 2024-10-22: cache-control can be set on the Tools block as well. We could make use of this instead of the System Instruction blocks for prompts with longer tools. */
-    cache_control: AnthropicWire_Blocks._CacheControl_schema.optional(),
+    cache_control: AnthropicWire_Blocks._CacheControl_schema.nullish(),
   });
 
   const _CustomToolDefinition_schema = _ToolDefinitionBase_schema.extend({
@@ -199,7 +199,8 @@ export namespace AnthropicWire_Tools {
       type: z.literal('object'),
       properties: z.record(z.unknown()).nullable(),
       required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
-    }).and(z.record(z.unknown())),
+    }),
+    // .and(z.record(z.unknown())), // 2025-06-26: removed this - unknown why it was here
   });
 
   const _ComputerUseTool_20241022_schema = _ToolDefinitionBase_schema.extend({
