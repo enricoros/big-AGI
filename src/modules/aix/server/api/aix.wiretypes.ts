@@ -70,7 +70,7 @@ export namespace OpenAPI_Schema {
     format: z.string().optional(),
 
     // [object] properties (recursively)
-    properties: z.record(z.any() /* could refer to self using z.lazy().... */).optional(),
+    properties: z.record(z.string(), z.any() /* could refer to self using z.lazy().... */).optional(),
     // [object] required properties
     required: z.array(z.string()).optional(),
 
@@ -315,7 +315,7 @@ export namespace AixWire_Tooling {
      */
     input_schema: z.object({
       // type: z.literal('object'), // Note: every protocol adapter adds this in the structure, here's we're just opting to not add it
-      properties: z.record(OpenAPI_Schema.Object_schema),
+      properties: z.record(z.string(), OpenAPI_Schema.Object_schema),
       required: z.array(z.string()).optional(),
     }).optional(),
   });

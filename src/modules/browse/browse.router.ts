@@ -46,7 +46,7 @@ const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
   title: z.string(),
 
-  content: z.record(pageTransformSchema, z.string()).optional(), // either...
+  content: z.partialRecord(pageTransformSchema, z.string()).optional(), // either...
   file: z.object({ // ...or
     mimeType: z.string(),
     encoding: z.literal('base64'),
