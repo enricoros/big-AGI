@@ -73,9 +73,10 @@ export namespace GeminiWire_ContentParts {
 
   export const FunctionCallPart_schema = z.object({
     functionCall: z.object({
+      id: z.string().optional(), // if populated, the client to execute the functionCall and return the response with the matching id
       name: z.string(),
       /** The function parameters and values in JSON object format. */
-      args: z.record(z.any()).optional(),
+      args: z.json().optional(), // FC args
     }),
   });
 
@@ -91,10 +92,24 @@ export namespace GeminiWire_ContentParts {
    */
   const FunctionResponsePart_schema = z.object({
     functionResponse: z.object({
+      /** The id of the function call this response is for */
+      id: z.string().optional(), // populated by the client to match the corresponding function call id.
       /** Corresponds to the related FunctionDeclaration.name */
       name: z.string(),
-      /** The function response in JSON object format. */
-      response: z.record(z.any()).optional(),
+      /** The function response in JSON object format */
+      response: z.json().optional(), // FC-R response
+
+      // -- the following fields are only applicable to NON_BLOCKING function calls
+
+      /** Signals that function call continues, and more responses will be returned, turning the function call into a generator. */
+      willContinue: z.boolean().optional(),
+      /** Specifies how the response should be scheduled in the conversation */
+      scheduling: z.enum([
+        'SCHEDULING_UNSPECIFIED', // unused
+        'SILENT', // only add the result to the conversation context, do not interrupt or trigger generation
+        'WHEN_IDLE', // add the result to the conversation context, and prompt to generate output without interrupting ongoing generation
+        'INTERRUPT', // add the result to the conversation context, interrupt ongoing generation and prompt to generate output.
+      ]).optional(),
     }),
   });
 
@@ -251,6 +266,7 @@ export namespace GeminiWire_ToolDeclarations {
   export const FunctionDeclaration_schema = z.object({
     name: z.string(),
     description: z.string(),
+
     /**
      *  Subset of OpenAPI 3.0 schema object
      *  https://ai.google.dev/api/rest/v1beta/cachedContents#schema
@@ -261,14 +277,22 @@ export namespace GeminiWire_ToolDeclarations {
       /**
        * For stricter validation, use the OpenAPI_Schema.Object_schema
        */
-      properties: z.record(z.any()).optional(),
+      properties: z.json().optional(), // FC-DEF params schema
       required: z.array(z.string()).optional(),
     }).optional(),
+
     /**
+     * The Schema defines the type used for the 'future' response value of the function.
      * JSON Schema output format (per-function). Reflects the Open API 3.03 Response Object.
-     * The Schema defines the type used for the response value of the function.
      */
-    response: z.record(z.any()).optional(),
+    response: z.json().optional(), // FC-DEF output schema
+
+    /** Specifies the function Behavior. Currently only supported by the BidiGenerateContent method. */
+    behavior: z.enum([
+      'UNSPECIFIED', // unused
+      'BLOCKING', // if set, the system will wait to receive the function response before continuing the conversation
+      'NON_BLOCKING', // if set, the system will attempt to handle function responses as they become available while maintaining the conversation between the user and the model
+    ]).optional(),
   });
 
   const GoogleSearch_schema = z.object({
@@ -452,7 +476,12 @@ export namespace GeminiWire_API_Generate_Content {
      * - [Classify mode] 'text/x.enum' + { "type": "STRING", "enum": ["A", "B", "C"] } = ENUM as a string response
      */
     responseMimeType: responseMimeType_enum.optional(),
-    responseSchema: z.record(z.any()).optional(), // if set, responseMimeType must be 'application/json'
+    /**
+     * Output schema of the generated candidate text.
+     * Schemas must be a subset of the OpenAPI schema and can be objects, primitives or arrays.
+     * if set -> responseMimeType must be 'application/json'
+     */
+    responseSchema: z.json().optional(), // JSON Mode: schema
 
     /**
      * Requested modalities of the response. (if empty this is equivalent ot ['TEXT'])

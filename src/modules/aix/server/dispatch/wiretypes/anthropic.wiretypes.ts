@@ -44,14 +44,14 @@ export namespace AnthropicWire_Blocks {
     type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(), // length: 1-64
-    input: z.any(), // NOTE: formally an 'object', not any, probably relaxed for parsing
+    input: z.any(), // FC args OBJ/STRING? - NOTE: formally an 'object', not any, probably relaxed for Zod parsing, will be checked via code
   });
 
   export const ToolResultBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_result'),
     tool_use_id: z.string(),
     // NOTE: could be a string too, but we force it to be an array for a better implementation
-    content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(),
+    content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(), // FC-R response STRING!
     is_error: z.boolean().optional(), // default: false
   });
 
@@ -197,7 +197,7 @@ export namespace AnthropicWire_Tools {
      */
     input_schema: z.object({
       type: z.literal('object'),
-      properties: z.record(z.unknown()).nullable(),
+      properties: z.json().nullable(), // FC-DEF params schema
       required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
     }),
     // .and(z.record(z.unknown())), // 2025-06-26: removed this - unknown why it was here

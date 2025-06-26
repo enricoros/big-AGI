@@ -121,7 +121,12 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
           // <- FunctionCallPart
           case 'functionCall' in mPart:
-            pt.startFunctionCallInvocation(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args ?? null);
+            let { id: fcId, name: fcName, args: fcArgs } = mPart.functionCall;
+            // Validate the function call arguments - we expect a JSON object, not just any JSON value
+            if (!fcArgs || typeof fcArgs !== 'object')
+              console.warn(`[Gemini] Invalid function call arguments: ${JSON.stringify(fcArgs)} for ${fcName}`);
+            else
+              pt.startFunctionCallInvocation(fcId ?? null, fcName, 'json_object', fcArgs);
             pt.endMessagePart();
             break;
 
