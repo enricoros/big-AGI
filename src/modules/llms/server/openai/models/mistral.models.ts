@@ -157,7 +157,7 @@ export function mistralModels(wireModels: unknown): ModelDescriptionSchema[] {
 
   // 1. Parse and filter the API response
   const mistralModels = wireMistralModelsListSchema.parse(wireModels)
-    .filter(m => !m.capabilities || !!m.capabilities.completion_chat); // removes: *-embed, *-moderation, *-ocr
+    .filter(m => !m.capabilities || m.capabilities.completion_chat); // removes: *-embed, *-moderation, *-ocr
 
 
   // 2. Auto-hide models based on alias groups
