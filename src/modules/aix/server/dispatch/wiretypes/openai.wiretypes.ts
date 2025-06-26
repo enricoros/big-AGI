@@ -722,7 +722,7 @@ export namespace OpenAIWire_API_Images_Generations {
     data: z.array(z.object({
       b64_json: z.string().optional(),
       revised_prompt: z.string().optional(),
-      url: z.string().url().optional(), // if the response_format is 'url' - DEPRECATED
+      url: z.url().optional(), // if the response_format is 'url' - DEPRECATED
     })),
 
     // gpt-image-1 only

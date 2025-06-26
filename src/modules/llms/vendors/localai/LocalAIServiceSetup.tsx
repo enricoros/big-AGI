@@ -22,7 +22,7 @@ import { LocalAIAdmin } from './LocalAIAdmin';
 import { ModelVendorLocalAI } from './localai.vendor';
 
 
-const localAIHostSchema = z.string().url().startsWith('http');
+const localAIHostSchema = z.url().startsWith('http');
 
 
 export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
