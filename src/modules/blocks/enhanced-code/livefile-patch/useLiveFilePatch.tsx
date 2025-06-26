@@ -111,7 +111,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
 
   const handleSelectFilePicker = React.useCallback(async (workspaceId: DWorkspaceId | null) => {
     // pick a file
-    const fileWithHandle = await fileOpen({ description: 'Insert into file...' }).catch(() => null /* The User closed the files picker */);
+    const fileWithHandle = await fileOpen({ description: 'Link file...' }).catch(() => null /* The User closed the files picker */);
     if (!fileWithHandle)
       return;
     const fileSystemFileHandle = fileWithHandle.handle;
