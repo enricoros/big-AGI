@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 import { getImageInformationFromBytes } from '~/modules/t2i/t2i.server';
 
