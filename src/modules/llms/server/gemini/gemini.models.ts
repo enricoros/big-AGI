@@ -171,16 +171,6 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1439 },
     hidden: true, // hard-superseded, but keeping this as non-symlink in case Gemini restores it
   },
-  // 2.5 Pro Experimental (Free Tier)
-  {
-    id: 'models/gemini-2.5-pro-exp-03-25',
-    isPreview: true,
-    chatPrice: geminiExpFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
-    benchmark: { cbaElo: 1437 /* +1 because free */ },
-    hidden: true, // seems to be discouraged - still available, but cannot rely on it
-  },
 
   // 2.5 Pro Preview TTS
   {
@@ -437,20 +427,6 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1271 },
     hidden: true,
   },
-  {
-    id: 'models/gemini-1.5-flash-001', // previous stable version
-    chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1227 },
-    hidden: true,
-  },
-  {
-    _delete: true, // Tuning seems supported by base model now
-    id: 'models/gemini-1.5-flash-001-tuning', // supports model tuning
-    chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution /* Tuning ... */],
-    hidden: true,
-  },
 
   // Gemini 1.5 Flash-8B Models
   {
@@ -494,13 +470,6 @@ const _knownGeminiModels: ({
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1302 },
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-pro-001',
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1260 },
     hidden: true,
   },
 
