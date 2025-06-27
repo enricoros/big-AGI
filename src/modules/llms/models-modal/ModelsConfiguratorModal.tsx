@@ -183,7 +183,8 @@ export function ModelsConfiguratorModal(props: {
       <GoodModal
         title={
           <AppBreadcrumbs size='md' rootTitle='Welcome'>
-            <AppBreadcrumbs.Leaf>Important <b>AI Models</b> Notice</AppBreadcrumbs.Leaf>
+            <AppBreadcrumbs.Leaf>Notice on linking AI services</AppBreadcrumbs.Leaf>
+            {/*<AppBreadcrumbs.Leaf>Important <b>AI Models</b> Notice</AppBreadcrumbs.Leaf>*/}
           </AppBreadcrumbs>
         }
         open
@@ -192,7 +193,8 @@ export function ModelsConfiguratorModal(props: {
         animateEnter
         unfilterBackdrop
         sx={{ maxWidth: '28rem' }}
-        closeText='Got It'
+        // closeText='Got It'
+        closeText='I understand'
       >
         <Box sx={{
           py: 3,
@@ -209,17 +211,18 @@ export function ModelsConfiguratorModal(props: {
           {/*  Bring your own AI Keys*/}
           {/*</Typography>*/}
           <Typography level='body-md' lineHeight='lg'>
-            You&#39;ll need to <strong>provide your own API keys</strong> to use the models.
+            You&#39;ll need to <strong>provide your API credentials</strong> to use AI services.
           </Typography>
-          <Typography level='body-md' textColor='text.secondary' lineHeight='lg'>
+          <Typography level='body-sm' textColor='text.secondary' lineHeight='lg'>
             Big-AGI connects directly to the latest AI models using your API keys.{' '}
             {/*Big-AGI is a local App running on your computer.{' '}*/}
             {/*We want you to have access to the top models. */}
             We don&#39;t limit or bill your usage, giving you full control,
-            high privacy, unparalleled speed and zero vendor lock-in.
+            privacy, freedom of choice and unparalleled speed.
           </Typography>
-          <Typography level='body-md' textColor='text.secondary' lineHeight='lg'>
-            You want the cleanest AI experience possible.
+          <Typography level='body-sm' textColor='text.secondary' lineHeight='lg'>
+            You get the cleanest AI experience.
+            {/*You want the cleanest AI experience possible.*/}
           </Typography>
         </Box>
       </GoodModal>
@@ -231,7 +234,8 @@ export function ModelsConfiguratorModal(props: {
     <GoodModal
       title={isTabWizard ? (
         <AppBreadcrumbs size='md' rootTitle='Welcome'>
-          <AppBreadcrumbs.Leaf>Setup <b>AI Models</b></AppBreadcrumbs.Leaf>
+          <AppBreadcrumbs.Leaf><b>Setup AI Models</b></AppBreadcrumbs.Leaf>
+          {/*<AppBreadcrumbs.Leaf>Setup <b>AI Models</b></AppBreadcrumbs.Leaf>*/}
         </AppBreadcrumbs>
       ) : (
         // <>Configure <b>AI Models</b></>
