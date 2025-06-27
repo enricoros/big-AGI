@@ -1365,9 +1365,12 @@ export namespace OpenAIWire_API_Responses {
   });
 
   const OutputTextAnnotationAddedEvent_schema = _PartIndexedEvent_schema.extend({
-    type: z.literal('response.output_text_annotation.added'),
+    type: z.enum([
+      'response.output_text_annotation.added', // from the spec
+      'response.output_text.annotation.added', // from unsing web_search_call
+    ]),
     annotation_index: z.number(),
-    annotation: z.any(), // will spec later
+    annotation: z.any(), // TODO will spec later
   });
 
   const OutputResponseReasoningDeltaEvent_schema = _PartIndexedEvent_schema.extend({
