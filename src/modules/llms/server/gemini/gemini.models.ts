@@ -180,6 +180,7 @@ const _knownGeminiModels: ({
 
   // 2.5 Pro Preview TTS
   {
+    hidden: true, // single-turn-only model - unhide and just send a message to make use of this
     id: 'models/gemini-2.5-pro-preview-tts',
     isPreview: true,
     chatPrice: gemini25ProPreviewTTSPricing,
@@ -436,6 +437,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15FlashPricing,
     // symLink: '-002 or newer',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-flash',
@@ -444,6 +446,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1271 },
+    hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-flash-002', // new stable version
@@ -460,6 +463,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1212 },
+    hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-flash-8b',
@@ -467,6 +471,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1212 },
+    hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-flash-8b-001',
@@ -482,6 +487,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15ProPricing,
     // symLink: '-002 or newer',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-pro',
@@ -489,6 +495,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1302 },
+    hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-pro-002',
@@ -532,6 +539,7 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
     benchmark: { cbaElo: 1275 }, // Estimating based on comparable models
+    hidden: true, // smaller model than the 3n-e4b-it
   },
   // Gemma 3 Experimental Models - note: we apply workarounds:
   // - LLM_IF_HOTFIX_StripImages, because: "Image input modality is not enabled for models/gemma-3-27b-it"
