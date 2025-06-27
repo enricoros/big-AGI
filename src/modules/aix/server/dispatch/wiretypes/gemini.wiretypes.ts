@@ -776,6 +776,7 @@ export namespace GeminiWire_API_Models_List {
     topP: z.number().optional(),
     topK: z.number().int().optional(),
     maxTemperature: z.number().optional(),
+    thinking: z.boolean().optional(),
   });
 
   export type Response = z.infer<typeof Response_schema>;
