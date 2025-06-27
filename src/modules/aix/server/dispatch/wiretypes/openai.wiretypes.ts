@@ -956,6 +956,12 @@ export namespace OpenAIWire_Responses_Items {
     name: z.string(), // name of the function to call
   });
 
+  const OutputWebSearchCallItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('web_search_call'),
+    id: z.string(), // unique ID of the output item
+    action: z.any().optional(), // TODO: expand this later
+  });
+
   // const ImageGenerationCallOutput_schema = z.object({
   //   type: z.literal('image_generation_call'),
   //   id: z.string(), // unique ID of the image generation call (output item ID)
@@ -980,6 +986,7 @@ export namespace OpenAIWire_Responses_Items {
     OutputContentItem_schema,
     OutputReasoningItem,
     OutputFunctionCallItem_schema,
+    OutputWebSearchCallItem_schema,
     // ImageGenerationCallOutput_schema,
     // FileSearchCallOutput_schema,
     // WebSearchCallOutput_schema,
@@ -1421,6 +1428,20 @@ export namespace OpenAIWire_API_Responses {
     arguments: z.string(), // JSON string of the arguments to pass to the function
   });
 
+  // Streaming > Output Item: Web Search Call
+
+  const OutputWebSearchCallInProgress_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.web_search_call.in_progress'),
+  });
+
+  const OutputWebSearchCallSearching_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.web_search_call.searching'),
+  });
+
+  const OutputWebSearchCallCompleted_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.web_search_call.completed'),
+  });
+
   // Streaming > Output Item: Ignoring:
   // - file_search_call.*
   // - web_search_call.*
@@ -1473,6 +1494,9 @@ export namespace OpenAIWire_API_Responses {
     OutputReasoningSummaryTextDoneEvent_schema,
     FunctionCallArgumentsDeltaEvent_schema,
     FunctionCallArgumentsDoneEvent_schema,
+    OutputWebSearchCallInProgress_schema,
+    OutputWebSearchCallSearching_schema,
+    OutputWebSearchCallCompleted_schema,
     ErrorEvent_schema,
   ]);
 
