@@ -284,8 +284,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             // already parsed incrementally
             break;
 
-          // -> FC: we parse function calls in full, for convenience
           case 'function_call':
+            // -> FC: we parse function calls in full, for convenience
             const {
               // id: fcId,
               call_id: fcCallId,
@@ -293,6 +293,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
               name: fcName,
             } = doneItem;
             pt.startFunctionCallInvocation(fcCallId, fcName, 'incr_str', fcArguments);
+            break;
+
+          case 'web_search_call':
+            // -> WSC: TODO
+            console.warn('[DEV] notImplemented: OpenAI Responses: web_search_call', { doneItem });
             break;
 
           default:
@@ -311,7 +316,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.content_part.added':
         R.contentPartEnter(eventType, event.output_index, event.content_index);
-        R.expectEvents(['response.output_text.delta', 'response.output_text.done', 'response.output_text_annotation.added', 'response.content_part.done']);
+        R.expectEvents(['response.output_text.delta', 'response.output_text.done', 'response.output_text_annotation.added', 'response.output_text.annotation.added', 'response.content_part.done']);
         // nothing else to do, the part is likely empty, and we will incrementally parse it
         break;
 
@@ -594,6 +599,11 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
           pt.startFunctionCallInvocation(fcCallId, fcName, 'incr_str', fcArguments);
           pt.endMessagePart();
+          break;
+
+        case 'web_search_call':
+          // -> WSC: TODO
+          console.warn('[DEV] notImplemented: OpenAI Responses: web_search_call', { oItem });
           break;
 
         default:
