@@ -59,6 +59,33 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   /// Reasoning models - o-series
 
+  // o4-mini-deep-research - (v1/responses API)
+  {
+    idPrefix: 'o4-mini-deep-research-2025-06-26',
+    label: 'o4 Mini Deep Research (2025-06-26)',
+    description: 'Faster, more affordable deep research model for complex, multi-step research tasks.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'May 31, 2024',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // parameterSpecs: deep research models do not support search context, nor location, nor reasoning effort
+    chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
+  },
+  {
+    idPrefix: 'o4-mini-deep-research',
+    label: 'o4 Mini Deep Research',
+    description: 'Faster, more affordable deep research model. Points to o4-mini-deep-research-2025-06-26.',
+    symLink: 'o4-mini-deep-research-2025-06-26',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'May 31, 2024',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // parameterSpecs: deep research models do not support search context, nor location, nor reasoning effort
+    chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
+  },
+
   /// o4-mini
   {
     isLatest: true,
@@ -87,6 +114,33 @@ export const _knownOpenAIChatModels: ManualMappings = [
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.275 }, output: 4.4 },
     // benchmarks not available yet, as of 2025-04-16 (intro)
+  },
+
+  // o3-deep-research - (v1/responses API)
+  {
+    idPrefix: 'o3-deep-research-2025-06-26',
+    label: 'o3 Deep Research (2025-06-26)',
+    description: 'Our most powerful deep research model for complex, multi-step research tasks.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'May 31, 2024',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // parameterSpecs: deep research models do not support search context, nor location, nor reasoning effort
+    chatPrice: { input: 10, cache: { cType: 'oai-ac', read: 2.5 }, output: 40 },
+  },
+  {
+    idPrefix: 'o3-deep-research',
+    label: 'o3 Deep Research',
+    description: 'Our most powerful deep research model. Points to o3-deep-research-2025-06-26.',
+    symLink: 'o3-deep-research-2025-06-26',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'May 31, 2024',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // parameterSpecs: deep research models do not support search context, nor location, nor reasoning effort
+    chatPrice: { input: 10, cache: { cType: 'oai-ac', read: 2.5 }, output: 40 },
   },
 
   // o3-pro - (v1/responses API)
@@ -986,11 +1040,17 @@ const _manualOrderingIdPrefixes = [
   'o5-20',
   'o5-mini-20',
   'o5-',
+  'o4-pro-20',
+  'o4-pro',
+  'o4-mini-deep-research-20',
+  'o4-mini-deep-research',
   'o4-20',
   'o4-mini-20',
   'o4-',
   'o3-pro-20',
   'o3-pro',
+  'o3-deep-research-20',
+  'o3-deep-research',
   'o3-20',
   'o3-mini-20',
   'o3-',
