@@ -27,9 +27,11 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   const isOpenAIOFamily = ['o1', 'o3', 'o4', 'o5'].some(m => model.id === m || model.id.startsWith(m + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
   const isOpenAIO1Pro = model.id === 'o1-pro' || model.id.startsWith('o1-pro-');
+  const isOpenAIDeepResearch = model.id.includes('-deep-research');
 
   const hotFixNoTemperature = isOpenAIOFamily;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
+  const hotFixForceSearchTool = isOpenAIDeepResearch;
 
   // ---
   // construct the request payload
@@ -91,20 +93,21 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
     // };
   }
 
-  // Web Search Context - TODO: check if still exists
-  if (model.vndOaiWebSearchContext || model.userGeolocation) {
-    console.warn('notImplemented: responses: vndOaiWebSearchContext, userGeolocation');
-    // payload.web_search_options = {};
-    // if (model.vndOaiWebSearchContext)
-    //   payload.web_search_options.search_context_size = model.vndOaiWebSearchContext;
-    // if (model.userGeolocation)
-    //   payload.web_search_options.user_location = {
-    //     type: 'approximate',
-    //     approximate: {
-    //       ...model.userGeolocation,
-    //     },
-    //   };
+  // Tool: Search: for search models, and deep research models
+  if (hotFixForceSearchTool || model.vndOaiWebSearchContext || model.userGeolocation) {
+    if (!payload.tools?.length)
+      payload.tools = [];
+    const webSearchTool: TRequestTool = {
+      type: 'web_search_preview',
+      search_context_size: model.vndOaiWebSearchContext ?? undefined,
+      user_location: model.userGeolocation && {
+        type: 'approximate',
+        ...model.userGeolocation, // .city, .country, .region, .timezone
+      },
+    };
+    payload.tools.push(webSearchTool);
   }
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   // this includes stripping 'undefined' fields
