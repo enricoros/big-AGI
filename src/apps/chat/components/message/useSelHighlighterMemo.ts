@@ -23,8 +23,9 @@ import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
 const APPLY_HTML_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
 const APPLY_HTML_STRIKE = (text: string) => `<del>${text}</del>`;
 const APPLY_MD_STRONG = (text: string) => wrapWithMarkdownSyntax(text, '**');
+const APPLY_CUT = (_text: string) => ''; // Cut removes the text entirely
 
-type HighlightTool = 'highlight' | 'strike' | 'strong';
+type HighlightTool = 'highlight' | 'strike' | 'strong' | 'cut';
 
 export function useSelHighlighterMemo(
   messageId: DMessageId,
@@ -60,12 +61,14 @@ export function useSelHighlighterMemo(
               tool === 'highlight' ? APPLY_HTML_HIGHLIGHT(selText)
                 : tool === 'strike' ? APPLY_HTML_STRIKE(selText)
                   : tool === 'strong' ? APPLY_MD_STRONG(selText)
-                    : selText;
+                    : tool === 'cut' ? APPLY_CUT(selText)
+                      : selText;
 
-            // Toggle, if the tooled text is already present
+            // Toggle, if the tooled text is already present (except for cut which always removes)
             const newFragmentText =
-              fragmentText.includes(highlighted) ? fragmentText.replace(highlighted, selText) // toggles selection
-                : fragmentText.replace(selText, highlighted);
+              tool === 'cut' ? fragmentText.replace(selText, highlighted) // Cut always removes text
+                : fragmentText.includes(highlighted) ? fragmentText.replace(highlighted, selText) // toggles selection
+                  : fragmentText.replace(selText, highlighted);
 
             // Replace the whole fragment within the message
             onMessageFragmentReplace(messageId, fragment.fId, createTextContentFragment(newFragmentText));
