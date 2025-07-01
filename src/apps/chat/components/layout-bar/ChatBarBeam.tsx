@@ -50,7 +50,7 @@ const _styles = {
 } as const;
 
 
-export function ChatBarAltBeam(props: {
+export function ChatBarBeam(props: {
   beamStore: BeamStoreApi,
   conversationTitle: string,
   isMobile: boolean,
