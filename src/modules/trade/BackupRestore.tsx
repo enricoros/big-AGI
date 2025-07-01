@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, Divider, FormControl, FormLabel, Sheet, Switch, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, Divider, FormControl, FormLabel, Sheet, Switch, Typography } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
 import DoneIcon from '@mui/icons-material/Done';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -626,6 +626,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   const [restoreState, setRestoreState] = React.useState<'idle' | 'processing' | 'confirm' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [backupDataForRestore, setBackupDataForRestore] = React.useState<DFlashSchema | null>(null);
+  const [restoreLocalStorageEnabled, setRestoreLocalStorageEnabled] = React.useState(false);
+  const [restoreIndexedDBEnabled, setRestoreIndexedDBEnabled] = React.useState(false);
 
   // derived state
   const isUnlocked = !!props.unlockRestore;
@@ -675,6 +677,9 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       // load data purely into state, and ready for confirmation
       setBackupDataForRestore(data);
       setRestoreState('confirm');
+      // Reset checkboxes to OFF by default for safety
+      setRestoreLocalStorageEnabled(false);
+      setRestoreIndexedDBEnabled(false);
     } catch (error: any) {
       logger.error('Restore preparation failed:', error);
       setRestoreState('error');
@@ -706,11 +711,20 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       //   // non-fatal, proceed with restore
       // }
 
-      // 2. Restore data (localStorage first, then IndexedDB)
-      await restoreLocalStorage(backupDataForRestore.storage.localStorage);
-      logger.info('localStorage restore complete');
-      await restoreIndexedDB(backupDataForRestore.storage.indexedDB);
-      logger.info('indexedDB restore complete');
+      // 2. Restore data based on user selections
+      if (restoreLocalStorageEnabled) {
+        await restoreLocalStorage(backupDataForRestore.storage.localStorage);
+        logger.info('localStorage restore complete');
+      }
+      if (restoreIndexedDBEnabled) {
+        await restoreIndexedDB(backupDataForRestore.storage.indexedDB);
+        logger.info('indexedDB restore complete');
+      }
+
+      // Check if nothing was selected
+      if (!restoreLocalStorageEnabled && !restoreIndexedDBEnabled)
+        throw new Error('No data was selected for restore. Please select at least one option.');
+
       setRestoreState('success');
 
       // 3. Alert and reload
@@ -726,7 +740,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
     } finally {
       setBackupDataForRestore(null);
     }
-  }, [backupDataForRestore]);
+  }, [backupDataForRestore, restoreIndexedDBEnabled, restoreLocalStorageEnabled]);
 
   const handleCancelRestore = React.useCallback(() => {
     setRestoreState('idle');
@@ -798,12 +812,53 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
           Setting Groups: {Object.keys(backupDataForRestore.storage.localStorage).length}<br />
         </Box>
       )}
+      <Box sx={{ mt: 2 }}>
+        <Typography level='body-sm' sx={{ mb: 1 }} color={!restoreLocalStorageEnabled && !restoreIndexedDBEnabled ? 'danger' : undefined}>
+          Select what to restore:
+        </Typography>
+        <Sheet variant='soft' sx={{ p: 2, borderRadius: 'md', border: '1px solid', borderColor: 'neutral.outlinedBorder', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+          <FormControl orientation='horizontal' sx={{ gap: 1, flex: 1 }}>
+            <Checkbox
+              size='md'
+              color='neutral'
+              checked={restoreLocalStorageEnabled}
+              onChange={(event) => setRestoreLocalStorageEnabled(event.target.checked)}
+            />
+            <FormLabel sx={{ fontWeight: 'sm', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              App Settings
+              <Typography level='body-xs' sx={{ fontWeight: 'normal', color: 'text.secondary' }}>
+                (preferences, models)
+              </Typography>
+            </FormLabel>
+          </FormControl>
+          <FormControl orientation='horizontal' sx={{ gap: 1, flex: 1 }}>
+            <Checkbox
+              size='md'
+              color='neutral'
+              checked={restoreIndexedDBEnabled}
+              onChange={(event) => setRestoreIndexedDBEnabled(event.target.checked)}
+            />
+            <FormLabel sx={{ fontWeight: 'sm', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              Conversations
+              <Typography level='body-xs' sx={{ fontWeight: 'normal', color: 'text.secondary' }}>
+                (chats, attachments)
+              </Typography>
+            </FormLabel>
+          </FormControl>
+        </Sheet>
+      </Box>
       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', pt: 2 }}>
         <Button variant='plain' color='neutral' onClick={handleCancelRestore}>
           Cancel
         </Button>
-        <Button variant='solid' color='danger' onClick={handleRestoreFlashConfirmed} loading={restoreState === 'processing'}>
-          Replace & Reset All Data
+        <Button
+          variant='solid'
+          color='danger'
+          onClick={handleRestoreFlashConfirmed}
+          loading={restoreState === 'processing'}
+          disabled={!restoreLocalStorageEnabled && !restoreIndexedDBEnabled}
+        >
+          Replace Selected Data
         </Button>
       </Box>
     </GoodModal>
