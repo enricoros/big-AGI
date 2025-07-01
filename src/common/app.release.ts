@@ -58,7 +58,7 @@ export const Release = {
     timestamp: process.env.NEXT_PUBLIC_BUILD_TIMESTAMP,
   }),
 
-  IsNodeDevBuild: process.env.NODE_ENV === 'development',
+  IsNodeDevBuild: process.env.NODE_ENV === 'development' as const,
 
 } as const;
 
