@@ -46,13 +46,21 @@ export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }
 }
 
 export function openRouterModelToModelDescription(wireModel: object): ModelDescriptionSchema {
-
   // parse the model
   const model = wireOpenrouterModelsListOutputSchema.parse(wireModel);
 
-  // parse pricing
-  const inputPrice = parseFloat(model.pricing.prompt);
-  const outputPrice = parseFloat(model.pricing.completion);
+  // Normalisasi pricing agar semua field selalu string
+  let pricing = model.pricing || {};
+  pricing = {
+    prompt: typeof pricing.prompt === 'string' ? pricing.prompt : '',
+    completion: typeof pricing.completion === 'string' ? pricing.completion : '',
+    image: typeof pricing.image === 'string' ? pricing.image : '',
+    request: typeof pricing.request === 'string' ? pricing.request : '',
+  };
+
+  // parse pricing lama (chatPrice)
+  const inputPrice = parseFloat(pricing.prompt);
+  const outputPrice = parseFloat(pricing.completion);
   const chatPrice: ModelDescriptionSchema['chatPrice'] = {
     input: inputPrice ? inputPrice * 1000 * 1000 : 'free',
     output: outputPrice ? outputPrice * 1000 * 1000 : 'free',
@@ -65,13 +73,12 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   let label = model.name || model.id.replace('/', ' · ');
   if (seemsFree)
     label += ' · 🎁'; // Free? Discounted?
-  // label = label.replace('(self-moderated)', '🔓');
 
   // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
   const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
     || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
 
-  return fromManualMapping([], model.id, undefined, undefined, {
+  const base = fromManualMapping([], model.id, undefined, undefined, {
     idPrefix: model.id,
     // latest: ...
     label,
@@ -86,4 +93,5 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     chatPrice,
     hidden,
   });
+  return base;
 }

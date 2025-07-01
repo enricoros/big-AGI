@@ -84,6 +84,8 @@ const moderationInputSchema = z.object({
 });
 
 
+
+
 export const llmOpenAIRouter = createTRPCRouter({
 
   /* [OpenAI] List the Models available */
@@ -617,3 +619,5 @@ async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object>(
   const { headers, url } = openAIAccess(access, modelRefId, apiPath);
   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}` });
 }
+
+// HAPUS implementasi lokal openRouterModelToModelDescription karena sudah di-import dari './models/openrouter.models'

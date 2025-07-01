@@ -8,8 +8,8 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
   pricing: z.object({
     prompt: z.string(),
     completion: z.string(),
-    image: z.string(),
-    request: z.string(),
+    image: z.string().optional().default(''),
+    request: z.string().optional().default(''),
   }),
   context_length: z.number(),
   architecture: z.object({
