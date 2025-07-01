@@ -283,30 +283,41 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
           // the stores inside this new DB first.
           openRequest.onupgradeneeded = (event) => {
             const db = (event.target as IDBOpenDBRequest).result;
-            logger.info(`onupgradeneeded triggered for DB "${dbName}" (oldVersion: ${event.oldVersion}, newVersion: ${event.newVersion})`);
+            logger.debug(`onupgradeneeded triggered for DB "${dbName}" (oldVersion: ${event.oldVersion}, newVersion: ${event.newVersion})`);
 
-            for (const storeName of dbStoreNames) {
-              if (!db.objectStoreNames.contains(storeName)) {
-                logger.info(`Creating missing object store "${storeName}" in DB "${dbName}"`);
-
-                if (dbName === 'keyval-store' && storeName === 'keyval') {
-                  // v2-dev-style key-value store for the chats cell
-                  db.createObjectStore(storeName);
-                  logger.info(`Created keyval object store in keyval-store database`);
-                } else if (dbName === 'Big-AGI' && storeName === 'largeAssets') {
-                  // v2-dev-style Blobs store
-                  const largeAssetsStore = db.createObjectStore(storeName, { keyPath: 'id' });
-                  largeAssetsStore.createIndex('contextId+scopeId', ['contextId', 'scopeId']);
-                  largeAssetsStore.createIndex('assetType', 'assetType');
-                  largeAssetsStore.createIndex('assetType+contextId+scopeId', ['assetType', 'contextId', 'scopeId']);
-                  largeAssetsStore.createIndex('data.mimeType', 'data.mimeType');
-                  largeAssetsStore.createIndex('origin.ot', 'origin.ot');
-                  largeAssetsStore.createIndex('origin.source', 'origin.source');
-                  largeAssetsStore.createIndex('createdAt', 'createdAt');
-                  largeAssetsStore.createIndex('updatedAt', 'updatedAt');
-                  logger.info(`Created largeAssets object store with all needed indexes in Big-AGI database`);
-                } else {
-                  logger.warn(`Cannot automatically create object store "${storeName}" in DB "${dbName}" as its schema is unknown.`);
+            // Create object stores based on the database name
+            if (dbName === 'keyval-store') {
+              // Create the keyval object store if it doesn't exist
+              if (!db.objectStoreNames.contains('keyval')) {
+                db.createObjectStore('keyval');
+                logger.info(`Created keyval object store in keyval-store database`);
+              }
+            } else if (dbName === 'Big-AGI') {
+              // Create the largeAssets object store with all its indices if it doesn't exist
+              if (!db.objectStoreNames.contains('largeAssets')) {
+                const largeAssetsStore = db.createObjectStore('largeAssets', { keyPath: 'id' });
+                // Create all the indices as defined in dblobs.db.ts
+                // Index common properties (and compound indexes)
+                largeAssetsStore.createIndex('[contextId+scopeId]', ['contextId', 'scopeId']);
+                largeAssetsStore.createIndex('assetType', 'assetType');
+                largeAssetsStore.createIndex('[assetType+contextId+scopeId]', ['assetType', 'contextId', 'scopeId']);
+                largeAssetsStore.createIndex('data.mimeType', 'data.mimeType');
+                largeAssetsStore.createIndex('origin.ot', 'origin.ot');
+                largeAssetsStore.createIndex('origin.source', 'origin.source');
+                largeAssetsStore.createIndex('createdAt', 'createdAt');
+                largeAssetsStore.createIndex('updatedAt', 'updatedAt');
+                logger.info(`Created largeAssets object store with all indices in Big-AGI database`);
+              }
+            } else {
+              // For any unknown database, try to create the object stores that are in the backup
+              for (const storeName of dbStoreNames) {
+                if (!db.objectStoreNames.contains(storeName)) {
+                  logger.warn(`Creating object store "${storeName}" in unknown DB "${dbName}" without schema`);
+                  try {
+                    db.createObjectStore(storeName);
+                  } catch (error) {
+                    logger.error(`Failed to create object store "${storeName}" in DB "${dbName}":`, error);
+                  }
                 }
               }
             }
@@ -349,7 +360,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                 if (transactionFailed) {
                   logger.warn(`Transaction for "${dbName}" completed with some errors. Restore may be incomplete.`);
                 } else {
-                  logger.info(`Successfully restored database: ${dbName}`);
+                  logger.warn(`Successfully restored database: ${dbName}`);
                 }
                 resolve();
               };
@@ -377,14 +388,23 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                       // Handle possible cases:
                       // 1. Store with keyPath - add value directly
                       // 2. Store without keyPath - add value with explicit key
-                      const request = store.keyPath !== null
-                        ? store.add(item.value)
-                        : store.add(item.value, item.key);
+                      let request: IDBRequest;
+
+                      // Special handling for keyval-store which has no keyPath
+                      if (dbName === 'keyval-store' && storeName === 'keyval') {
+                        request = store.add(item.value, item.key);
+                      } else if (store.keyPath !== null) {
+                        // Store has a keyPath, add value directly
+                        request = store.add(item.value);
+                      } else {
+                        // Store has no keyPath, add with explicit key
+                        request = store.add(item.value, item.key);
+                      }
 
                       request.onsuccess = () => {
                         itemsProcessed++;
                         if (itemsProcessed === items.length) {
-                          // logger.debug(`Restored ${items.length} items to store "${storeName}"`);
+                          logger.info(`Restored ${items.length} items to store "${storeName}" in "${dbName}"`);
                           completedStores++;
 
                           // Process next store
@@ -393,13 +413,14 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                       };
 
                       request.onerror = (event) => {
+                        const error = (event.target as IDBRequest).error;
                         logger.error(`Error adding item to "${storeName}" in "${dbName}" (Key: ${
                           typeof item.key === 'object' ? JSON.stringify(item.key) : item.key
-                        }): ${(event.target as IDBRequest).error?.message || 'Unknown error'}`);
+                        }): ${error?.message || 'Unknown error'}`);
 
                         itemsProcessed++;
                         if (itemsProcessed === items.length) {
-                          // logger.debug(`Restored ${items.length} items to store "${storeName}" with some errors`);
+                          logger.warn(`Restored ${items.length} items to store "${storeName}" with some errors`);
                           completedStores++;
 
                           // Process next store
