@@ -17,13 +17,13 @@ export const useDebugHook = (app: string) => {
   // test behavior of React.useRef with instance counter
   const testRef = React.useRef<number>(_increment(app));
 
-  console.log(app, 'render', hookId, testRef.current);
+  console.log(app + ' render', hookId, testRef.current);
 
   React.useEffect(() => {
-    console.log(app, 'effect', hookId, testRef.current);
+    console.log(app + ' effect start', hookId, testRef.current);
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      console.log(app, 'cleanup', hookId, testRef?.current);
+      console.log(app + ' effect cleanup', hookId, testRef?.current);
     };
   }, [app, hookId]);
 

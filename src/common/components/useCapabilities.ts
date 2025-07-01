@@ -40,7 +40,7 @@ export interface TextToImageProvider {
   vendor: TextToImageVendor;
   // UI attributes
   label: string;              // e.g. 'OpenAI #2'
-  painter: string;            // e.g. 'DALL·E' or 'Prodia'
+  painter: string;            // e.g. 'GPT Image', 'DALL·E' or 'Prodia'
   description: string;
   configured: boolean;
 }
@@ -50,6 +50,7 @@ type TextToImageVendor = 'localai' | 'openai' | 'prodia';
 
 export interface CapabilityTextToImage {
   mayWork: boolean;
+  mayEdit: boolean;
   providers: TextToImageProvider[],
   activeProviderId: string | null;
   setActiveProviderId: (providerId: string | null) => void;

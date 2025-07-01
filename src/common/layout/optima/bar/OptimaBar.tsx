@@ -16,7 +16,7 @@ import { navigateToIndex, ROUTE_INDEX } from '~/common/app.routes';
 
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
 import { PopupPanel } from '../panel/PopupPanel';
-import { optimaOpenDrawer, optimaOpenPanel, optimaTogglePanel, useOptimaPanelOpen } from '../useOptima';
+import { optimaActions, optimaOpenDrawer, optimaOpenPanel, optimaTogglePanel, useOptimaPanelOpen } from '../useOptima';
 import { useOptimaPortalHasInputs } from '../portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
@@ -29,6 +29,8 @@ const centerItemsContainerSx: SxProps = {
   display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
   my: 'auto',
   gap: { xs: 0, md: 1 },
+  // ensure we can keep the plugged center bars in check
+  overflow: 'hidden',
   // [electron] make the blank part of the bar draggable (and not the contents)
   WebkitAppRegion: 'drag',
   '& > *': { WebkitAppRegion: 'no-drag' },
@@ -81,7 +83,7 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
 
   // external state
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
-  const { panelAsPopup, panelHasContent, panelShownAsPanel, panelShownAsPopup } = useOptimaPanelOpen(props.isMobile, props.currentApp);
+  const { panelAsPopup, panelHasContent, panelShownAsPanel, panelShownAsPeeking, panelShownAsPopup } = useOptimaPanelOpen(props.isMobile, props.currentApp);
 
   // derived state
   const navIsShown = checkVisibleNav(props.currentApp);
@@ -115,9 +117,14 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
       {/* Pluggable Toolbar Items */}
       <CenterItemsPortal currentApp={props.currentApp} />
 
-      {/* Panel/Menu button */}
+      {/* We used to have the Preview (lightbulb) menu here */}
+
+      {/* Panel Open: has content always on Mobile (the app menu) */}
       {panelHasContent && (
-        <InvertedBarCornerItem>
+        <InvertedBarCornerItem
+           onMouseEnter={(props.isMobile || panelAsPopup || panelShownAsPanel) ? undefined : optimaActions().peekPanelEnter}
+           onMouseLeave={(props.isMobile || panelShownAsPeeking) ? undefined : optimaActions().peekPanelLeave}
+        >
           {/*<Tooltip disableInteractive title={contentToPopup ? (panelIsOpen ? 'Close' : 'Open') + ' Menu' : (panelIsOpen ? 'Close' : 'Open')}>*/}
           <IconButton
             ref={appMenuAnchor}

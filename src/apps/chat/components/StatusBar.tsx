@@ -11,7 +11,7 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 
 // configuration
@@ -74,22 +74,35 @@ const _styles = {
     } as const,
   } as const,
 
-  itemKey: {
+  itemKeyGroup: {
     fontSize: 'xs',
     fontWeight: 'md',
-    border: '1px solid',
-    borderColor: 'neutral.outlinedBorder',
+    outline: '1px solid',
+    outlineColor: 'neutral.outlinedBorder',
     borderRadius: 'xs',
     // backgroundColor: 'var(--joy-palette-neutral-outlinedBorder)',
     backgroundColor: 'background.popup',
     // boxShadow: 'inset 2px 0px 4px -2px var(--joy-palette-background-backdrop)',
     boxShadow: 'xs',
     // minWidth: '1rem',
-    paddingBlock: '1px',
-    paddingInline: '4px',
+    paddingBlock: '2px',
+    paddingInline: '1px',
     // pointerEvents: 'none',
     cursor: 'pointer',
     transition: 'background-color 1s ease',
+    display: 'flex',
+    textAlign: 'center',
+    // Remove the gap and use dividers instead
+    gap: 0,
+    '& > span': {
+      position: 'relative',
+      paddingInline: '4px',
+      minWidth: '1rem',
+      '&:not(:last-child)': {
+        borderRight: '1px solid',
+        borderRightColor: 'neutral.outlinedBorder',
+      },
+    },
   } as const,
 
   itemIcon: {
@@ -140,10 +153,12 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
       aria-disabled={props.shortcut.disabled}
       sx={_styles.shortcut}
     >
-      {!!props.shortcut.ctrl && <Box sx={_styles.itemKey}>{_platformAwareModifier('Ctrl')}</Box>}
-      {!!props.shortcut.shift && <Box sx={_styles.itemKey}>{_platformAwareModifier('Shift')}</Box>}
-      {/*{!!props.shortcut.altForNonMac && <Box sx={_styles.itemKey} onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <Box sx={_styles.itemKey}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</Box>
+      <Box sx={_styles.itemKeyGroup}>
+        {!!props.shortcut.ctrl && <span>{_platformAwareModifier('Ctrl')}</span>}
+        {!!props.shortcut.shift && <span>{_platformAwareModifier('Shift')}</span>}
+        {/*{!!props.shortcut.altForNonMac && <span>{_platformAwareModifier('Alt')}</span>}*/}
+        <span>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</span>
+      </Box>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
       {!!props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={_styles.itemIcon} />}
     </Box>

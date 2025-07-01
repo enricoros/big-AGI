@@ -96,8 +96,18 @@ export function debugGenerateCurlCommand(method: 'GET' | 'POST' | 'DELETE' | 'PU
   for (const header in headersRecord)
     curl += `-H '${header}: ${headersRecord[header]}' `;
 
-  if (method === 'POST' && body)
-    curl += `-d '${JSON.stringify(body)}'`;
+  if (method === 'POST' && body) {
+    if (body instanceof FormData) {
+      for (const [key, value] of body.entries()) {
+        if (value instanceof File) {
+          curl += `-F '${key}=@${value.name}' `;
+        } else {
+          curl += `-F '${key}=${value}' `;
+        }
+      }
+    } else
+      curl += `-d '${JSON.stringify(body)}'`;
+  }
 
   return curl;
 }

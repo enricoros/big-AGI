@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-import { Box, Chip, FormControl } from '@mui/joy';
+import { Box, Chip, ColorPaletteProp, FormControl } from '@mui/joy';
+
+import type { Immutable } from '~/common/types/immutable.types';
 
 import type { FormRadioOption } from './FormRadioControl';
 import { FormLabelStart } from './FormLabelStart';
@@ -33,19 +35,20 @@ const _styles = {
 export const FormChipControl = <TValue extends string>(props: {
   // specific
   size?: 'sm' | 'md' | 'lg',
+  color?: ColorPaletteProp,
   // =FormRadioControl
   title: string | React.JSX.Element;
   description?: string | React.JSX.Element;
   tooltip?: string | React.JSX.Element;
   disabled?: boolean;
-  options: FormRadioOption<TValue>[];
+  options: Immutable<FormRadioOption<TValue>[]>;
   value?: TValue;
-  onChange: (value: TValue) => void;
+  onChange: (value: Immutable<TValue>) => void;
 }) => {
 
   const { onChange } = props;
 
-  const handleChipClick = React.useCallback((value: TValue) => {
+  const handleChipClick = React.useCallback((value: Immutable<TValue>) => {
     if (!props.disabled)
       onChange(value);
   }, [onChange, props.disabled]);
@@ -57,6 +60,7 @@ export const FormChipControl = <TValue extends string>(props: {
         {props.options.map((option) => (
           <Chip
             key={'opt-' + option.value}
+            color={props.color}
             size={props.size}
             disabled={option.disabled || props.disabled}
             variant={props.value === option.value ? 'solid' : 'outlined'}

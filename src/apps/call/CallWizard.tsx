@@ -14,7 +14,7 @@ import { navigateBack } from '~/common/app.routes';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useUICounter } from '~/common/state/store-ui';
+import { useUICounter } from '~/common/stores/store-ui';
 
 
 function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: string, button?: React.JSX.Element }) {

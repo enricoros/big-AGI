@@ -1,17 +1,28 @@
+import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
+
+import type { MaybePromise } from '~/common/types/useful.types';
+import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
+import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { imageBlobTransform } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
+
+import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
+import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
 
 import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
+const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or JPEG to save IndexedDB space
+const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
+const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
-
-
-// hackey?: global to be accessed by the UI
-export let devMode_AixLastDispatchRequest: { url: string, headers: string, body: string, particles: string[] } | null = null;
+const DEBUG_LOG_PROFILER_ON_CLIENT = false; // print Profiling particles when they come in, otherwise ignore them
 
 
 /**
@@ -19,25 +30,165 @@ export let devMode_AixLastDispatchRequest: { url: string, headers: string, body:
  */
 export class ContentReassembler {
 
-  private currentTextFragmentIndex: number | null = null;
-  private readonly dispatchRequest: typeof devMode_AixLastDispatchRequest = null;
+  // constructor
+  private readonly debuggerFrameId: AixFrameId | null;
 
-  constructor(readonly accumulator: AixChatGenerateContent_LL, debugDispatchRequest: boolean) {
-    // [DEV] Debugging the request, last-write-wins for the global (displayed in the UI)
-    if (debugDispatchRequest) {
-      this.dispatchRequest = { url: '', headers: '', body: '', particles: [] };
-      devMode_AixLastDispatchRequest = this.dispatchRequest;
+  // processing mechanics
+  private readonly wireParticlesBacklog: AixWire_Particles.ChatGenerateOp[] = [];
+  private isProcessing = false;
+  private processingPromise = Promise.resolve();
+  private hadErrorInWireReassembly = false;
+
+  // reassembly state (plus the ext. accumulator)
+  private currentTextFragmentIndex: number | null = null;
+
+
+  constructor(
+    private readonly accumulator: AixChatGenerateContent_LL,
+    private readonly onAccumulatorUpdated?: () => MaybePromise<void>,
+    enableDebugContext?: AixClientDebugger.Context,
+    private readonly wireAbortSignal?: AbortSignal,
+  ) {
+
+    // [SUDO] Debugging the request, last-write-wins for the global (displayed in the UI)
+    this.debuggerFrameId = !enableDebugContext ? null : aixClientDebugger_init(enableDebugContext);
+
+  }
+
+
+  // PUBLIC: wire queueing and processing
+
+  enqueueWireParticle(op: AixWire_Particles.ChatGenerateOp): void {
+    if (this.#wireIsAborted) {
+      // console.log('Dropped particle due to abort:', op);
+      return;
+    }
+
+    this.wireParticlesBacklog.push(op);
+
+    // -> debugger, if active (ans skip the header particle)
+    if (this.debuggerFrameId && !('cg' in op && op.cg === '_debugDispatchRequest'))
+      aixClientDebugger_recordParticleReceived(this.debuggerFrameId, op, this.#wireIsAborted);
+
+    this.#continueWireBacklogProcessing();
+  }
+
+  async waitForWireComplete(): Promise<void> {
+    return this.processingPromise;
+  }
+
+
+  finalizeAccumulator(): void {
+
+    // Perform all the latest operations
+    const hasAborted = !!this.accumulator.genTokenStopReason;
+    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
+
+    // [SUDO] Debugging, finalize the frame
+    if (this.debuggerFrameId)
+      aixClientDebugger_completeFrame(this.debuggerFrameId);
+
+  }
+
+
+  async setClientAborted(): Promise<void> {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p: abort-client');
+
+    // NOTE: this doens't go to the debugger anymore - as we only publish external particles to the debugger
+    await this.#reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+  }
+
+  async setClientExcepted(errorAsText: string): Promise<void> {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p: issue:', errorAsText);
+
+    this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
+
+    // NOTE: this doens't go to the debugger anymore - as we only publish external particles to the debugger
+    await this.#reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
+  }
+
+
+  // processing - internal
+
+  #continueWireBacklogProcessing(): void {
+    // require work
+    if (this.isProcessing || !this.#hasBacklog) return;
+    // require not external abort
+    if (this.#wireIsAborted) return;
+    // require not former processing errors
+    if (this.hadErrorInWireReassembly) return;
+
+    this.isProcessing = true;
+
+    // schedule processing as a promise chain
+    // Key insight: the .then modifies the processingPromise in place, so we can chain it
+    this.processingPromise = this.processingPromise.then(() => this.#processWireBacklog());
+
+    // NOTE: we let errors propagate to the caller, as here we're too down deep to handle them
+    // .catch((error) => console.error('ContentReassembler: processing error', error));
+  }
+
+  async #processWireBacklog(): Promise<void> {
+    // try...finally does not stop the error propagation (grat because we handle errors in the caller)
+    // but allows this to continue processing the backlog
+    try {
+
+      while (this.#hasBacklog && !this.#wireIsAborted) {
+
+        // worker function, may be sync or async
+        const particle = this.wireParticlesBacklog.shift()!;
+        await this.#reassembleParticle(particle);
+
+        // signal all updates
+        await this.onAccumulatorUpdated?.();
+
+      }
+
+    } catch (error) {
+
+      // ERROR CATCHING - LIKE the _aixChatGenerateContent_LL which doesn't intercept this somehow
+      // NEW METHOD: shows Error Fragments on both Reassembly and Callbacks errors
+      //
+      // - we don't stop processing anymore, as the source may still be pumping particles
+      // - we insert an error fragment showing what happened - akin to how _aixChatGenerateContent_LL would do it
+      //
+      const showAsBold = !!this.accumulator.fragments.length;
+      const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
+      this._appendReassemblyDevError(`An unexpected issue occurred: ${errorText} Please retry.`, true);
+      await this.onAccumulatorUpdated?.()?.catch(console.error);
+
+      // FORMER METHOD - the THROW wasn't caught by the caller
+
+      // mark that we've encountered an error to prevent further scheduling
+      // this.hadErrorInWireReassembly = true;
+      // this.wireParticlesBacklog.length = 0; // empty the backlog
+
+      // te-throw to propagate to outer catch blocks
+      // throw error;
+
+    } finally {
+
+      // continue processing in case there's more to do
+      this.isProcessing = false;
+      this.#continueWireBacklogProcessing();
+
     }
   }
 
-  // reset(): void {
-  //   this.accumulator. ... = [];
-  //   this.currentTextFragmentIndex = null;
-  // }
+  get #hasBacklog(): boolean {
+    return this.wireParticlesBacklog.length > 0;
+  }
 
-  reassembleParticle(op: AixWire_Particles.ChatGenerateOp, debugIsAborted: boolean): void {
-    if (DEBUG_PARTICLES)
-      console.log('-> aix.p:', op);
+  get #wireIsAborted(): boolean {
+    return !!this.wireAbortSignal?.aborted;
+  }
+
+
+  /// Particle Reassembly ///
+
+  async #reassembleParticle(op: AixWire_Particles.ChatGenerateOp): Promise<void> {
     switch (true) {
 
       // TextParticleOp
@@ -48,6 +199,9 @@ export class ContentReassembler {
       // PartParticleOp
       case 'p' in op:
         switch (op.p) {
+          case '❤':
+            // ignore the heartbeats
+            break;
           case 'tr_':
             this.onAppendReasoningText(op);
             break;
@@ -69,7 +223,17 @@ export class ContentReassembler {
           case 'cer':
             this.onAddCodeExecutionResponse(op);
             break;
+          case 'ia':
+            await this.onAppendInlineAudio(op);
+            break;
+          case 'ii':
+            await this.onAppendInlineImage(op);
+            break;
+          case 'urlc':
+            this.onAddUrlCitation(op);
+            break;
           default:
+            // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected PartParticleOp: ${JSON.stringify(op)}`);
         }
@@ -78,9 +242,20 @@ export class ContentReassembler {
       // ChatControlOp
       case 'cg' in op:
         switch (op.cg) {
-          case '_debugRequest':
-            if (this.dispatchRequest)
-              Object.assign(this.dispatchRequest, op.request);
+          case '_debugDispatchRequest':
+            if (this.debuggerFrameId)
+              aixClientDebugger_setRequest(this.debuggerFrameId, op.dispatchRequest);
+            break;
+          case '_debugProfiler':
+            if (this.debuggerFrameId)
+              aixClientDebugger_setProfilerMeasurements(this.debuggerFrameId, op.measurements);
+            // Profiling particles will come in if the app is in "Debug Mode" + it's a Development build!
+            // Additionally to show them on the console (rather than just in the debugger) set the
+            // constant to `true`.
+            if (DEBUG_LOG_PROFILER_ON_CLIENT) {
+              console.warn('[AIX] chatGenerate profiler measurements:');
+              console.table(op.measurements);
+            }
             break;
           case 'end':
             this.onCGEnd(op);
@@ -95,40 +270,17 @@ export class ContentReassembler {
             this.onModelName(op);
             break;
           default:
+            // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
         }
         break;
 
       default:
+        // noinspection JSUnusedLocalSymbols
         const _exhaustiveCheck: never = op;
         this._appendReassemblyDevError(`unexpected particle: ${JSON.stringify(op)}`);
     }
-
-    // [DEV] Debugging
-    if (this.dispatchRequest && (!('cg' in op) || op.cg !== '_debugRequest'))
-      this.dispatchRequest.particles.push((debugIsAborted ? '!(A)! ' : '') + JSON.stringify(op));
-  }
-
-  reassembleClientAbort(): void {
-    if (DEBUG_PARTICLES)
-      console.log('-> aix.p: abort-client');
-    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' }, true);
-  }
-
-  reassembleClientException(errorAsText: string): void {
-    if (DEBUG_PARTICLES)
-      console.log('-> aix.p: issue:', errorAsText);
-    this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
-    this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' }, false);
-  }
-
-  reassembleFinalize(): void {
-
-    // Perform all the latest operations
-    const hasAborted = !!this.accumulator.genTokenStopReason;
-    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
-
   }
 
 
@@ -238,6 +390,182 @@ export class ContentReassembler {
     this.currentTextFragmentIndex = null;
   }
 
+  private async onAppendInlineAudio(particle: Extract<AixWire_Particles.PartParticleOp, { p: 'ia' }>): Promise<void> {
+
+    // Break text accumulation, as we have a full audio part in the middle
+    this.currentTextFragmentIndex = null;
+
+    const { mimeType, a_b64: base64Data, label, generator, durationMs } = particle;
+    const safeLabel = label || 'Generated Audio';
+
+    try {
+
+      // create blob and play audio - this will throw on malformed data
+      const audioBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'ContentReassembler.onAppendInlineAudio');
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      // Play the audio
+      const audio = new Audio(audioUrl);
+
+      // Clean up when audio ends or errors
+      const cleanup = () => {
+        URL.revokeObjectURL(audioUrl);
+        audio.removeEventListener('ended', cleanup);
+        audio.removeEventListener('error', cleanup);
+        audio.src = ''; // Release audio element reference
+      };
+      audio.addEventListener('ended', cleanup);
+      audio.addEventListener('error', cleanup);
+
+      // Play and handle immediate errors
+      audio.play().catch(error => {
+        console.warn('[Audio] Failed to play generated audio:', error);
+        cleanup();
+      });
+
+      // TEMP: show a label instead of adding the model part
+      this.accumulator.fragments.push(createTextContentFragment(`Playing ${safeLabel}${durationMs ? ` (${Math.round(durationMs / 10) / 100}s)` : ''}`));
+
+      // Add the audio to the DBlobs DB
+      // const dblobAssetId = await addDBAudioAsset('global', 'app-chat', {
+      //   label: safeLabel,
+      //   data: {
+      //     mimeType: mimeType as any,
+      //     base64: base64Data,
+      //   },
+      //   origin: {
+      //     ot: 'generated',
+      //     source: 'ai-text-to-speech',
+      //     generatorName: generator ?? '',
+      //     prompt: '', // Audio doesn't have a prompt in this context
+      //     parameters: {},
+      //     generatedAt: new Date().toISOString(),
+      //   },
+      //   metadata: {
+      //     durationMs: durationMs || 0,
+      //     // Other audio metadata could be added here
+      //   },
+      // });
+
+      // Create DMessage data reference for the audio
+      // const bytesSizeApprox = Math.ceil((base64Data.length * 3) / 4);
+      // const audioAssetDataRef = createDMessageDataRefDBlob(
+      //   dblobAssetId,
+      //   particle.mimeType,
+      //   bytesSizeApprox,
+      // );
+
+      // Create the DMessageContentFragment for audio
+      // const audioContentFragment = createAudioContentFragment(
+      //   audioAssetDataRef,
+      //   safeLabel,
+      //   durationMs,
+      // );
+
+      // this.accumulator.fragments.push(audioContentFragment);
+
+    } catch (error: any) {
+      console.warn('[DEV] Failed to add inline audio to DBlobs:', { label: safeLabel, error, mimeType, size: base64Data.length });
+      // Add an error fragment instead
+      this.accumulator.fragments.push(createErrorContentFragment(`Failed to process audio: ${error?.message || 'Unknown error'}`));
+    }
+  }
+
+  private async onAppendInlineImage(particle: Extract<AixWire_Particles.PartParticleOp, { p: 'ii' }>): Promise<void> {
+
+    // Break text accumulation, as we have a full image part in the middle
+    this.currentTextFragmentIndex = null;
+
+    let { i_b64: inputBase64, mimeType: inputType, label, generator, prompt } = particle;
+    const safeLabel = label || 'Generated Image';
+
+    try {
+
+      // base64 -> blob conversion
+      let inputImage = await convert_Base64WithMimeType_To_Blob(inputBase64, inputType, 'ContentReassembler.onAppendInlineImage');
+
+      // perform resize/type conversion if desired, and find the image dimensions
+      const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && inputType === 'image/png';
+      const { blob: imageBlob, height: imageHeight, width: imageWidth } = await imageBlobTransform(inputImage, {
+        convertToMimeType: shallConvert ? DEFAULT_ADRAFT_IMAGE_MIMETYPE : undefined,
+        convertToLossyQuality: GENERATED_IMAGES_COMPRESSION_QUALITY,
+        throwOnTypeConversionError: true,
+        debugConversionLabel: `ContentReassembler(ii)`,
+      });
+
+      // add the image to the DBlobs DB
+      const dblobAssetId = await addDBImageAsset('app-chat', imageBlob, {
+        label: safeLabel,
+        metadata: {
+          width: imageWidth,
+          height: imageHeight,
+          // description: '',
+        },
+        origin: { // Generation originated
+          ot: 'generated',
+          source: 'ai-text-to-image',
+          generatorName: generator ?? '',
+          prompt: prompt ?? '',
+          parameters: {}, // ?
+          generatedAt: new Date().toISOString(),
+        },
+      });
+
+      // create the DMessage _Content_ Fragment (not attachment), as this comes from the assistant
+      // so this is akin to the t2i-generated images
+      const imageContentFragment = createImageContentFragment(
+        createDMessageDataRefDBlob( // Data Reference {} for the image
+          dblobAssetId,
+          imageBlob.type,
+          imageBlob.size,
+        ),
+        safeLabel,
+        imageWidth || undefined,
+        imageHeight || undefined,
+      );
+
+      this.accumulator.fragments.push(imageContentFragment);
+    } catch (error: any) {
+      console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
+    }
+  }
+
+  private onAddUrlCitation(urlc: Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>): void {
+
+    const { title, url, num: refNumber, from: startIndex, to: endIndex, text: textSnippet, pubTs } = urlc;
+
+    // reuse existing annotations - single fragment per message
+    const existingFragment = this.accumulator.fragments.find(isVoidAnnotationsFragment);
+    if (existingFragment) {
+
+      // coalesce ranges if there are citations at the same URL
+      const sameUrlCitation = existingFragment.part.annotations.find(({ type, url: existingUrl }) => type === 'citation' && url === existingUrl);
+      if (!sameUrlCitation) {
+        existingFragment.part.annotations = [
+          ...existingFragment.part.annotations,
+          createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet, pubTs),
+        ];
+      } else {
+        if (startIndex !== undefined && endIndex !== undefined) {
+          sameUrlCitation.ranges = [
+            ...sameUrlCitation.ranges,
+            { startIndex, endIndex, ...(textSnippet ? { textSnippet } : {}) },
+          ];
+        }
+      }
+
+    } else {
+
+      // create the *only* annotations fragment in the message
+      const newCitation = createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet, pubTs);
+      this.accumulator.fragments.push(createAnnotationsVoidFragment([newCitation]));
+
+    }
+
+    // Important: Don't reset currentTextFragmentIndex to allow text to continue
+    // This ensures we don't interrupt the text flow
+  }
+
 
   /// Rest of the data ///
 
@@ -274,6 +602,8 @@ export class ContentReassembler {
 
       // unexpected
       default:
+        // noinspection JSUnusedLocalSymbols
+        const _exhaustiveCheck: never = tokenStopReason;
         this._appendReassemblyDevError(`Unexpected token stop reason: ${tokenStopReason}`);
         break;
     }
@@ -307,8 +637,14 @@ export class ContentReassembler {
 
   // utility
 
-  private _appendReassemblyDevError(errorText: string): void {
-    this.accumulator.fragments.push(createErrorContentFragment('ContentReassembler: ' + errorText));
+  private _appendReassemblyDevError(errorText: string, omitPrefix?: boolean): void {
+    if (ELLIPSIZE_DEV_ISSUE_MESSAGES) {
+      const excess = errorText.length - ELLIPSIZE_DEV_ISSUE_MESSAGES;
+      const truncationMessage = `\n\n ... (truncated ${excess?.toLocaleString()} characters) ... \n\n`;
+      if (excess > 0)
+        errorText = ellipsizeMiddle(errorText, ELLIPSIZE_DEV_ISSUE_MESSAGES - truncationMessage.length, truncationMessage);
+    }
+    this.accumulator.fragments.push(createErrorContentFragment((omitPrefix ? '' : 'AIX Content Reassembler: ') + errorText));
     this.currentTextFragmentIndex = null;
   }
 

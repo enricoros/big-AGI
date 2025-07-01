@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { Button, Chip, Typography } from '@mui/joy';
 
@@ -22,7 +22,7 @@ import { LocalAIAdmin } from './LocalAIAdmin';
 import { ModelVendorLocalAI } from './localai.vendor';
 
 
-const localAIHostSchema = z.string().url().startsWith('http');
+const localAIHostSchema = z.url().startsWith('http');
 
 
 export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {

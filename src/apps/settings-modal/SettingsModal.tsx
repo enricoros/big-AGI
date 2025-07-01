@@ -2,11 +2,13 @@ import * as React from 'react';
 import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import KeyboardCommandKeyOutlinedIcon from '@mui/icons-material/KeyboardCommandKeyOutlined';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
+import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
@@ -17,8 +19,10 @@ import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optima';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
-import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
+import { DarkModeToggleButton, darkModeToggleButtonSx } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { Is } from '~/common/util/pwaUtils';
+import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
@@ -195,6 +199,8 @@ export function SettingsModal(props: {
   // handlers
 
   const { setTab } = props;
+  const isToolsTab = props.tab === 'tools';
+  const enableAixDebugger = Is.Deployment.Localhost;
 
   const handleSetTab = React.useCallback((_event: any, value: string | number | null) => {
     setTab((value ?? undefined) as PreferencesTabId);
@@ -209,14 +215,20 @@ export function SettingsModal(props: {
         </AppBreadcrumbs>
       }
       open={props.open} onClose={props.onClose}
-      startButton={isMobile ? undefined : (
+      startButton={
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <DarkModeToggleButton hasText={true} />
-          <Button size='sm' variant='soft' color='neutral' onClick={props.onOpenShortcuts}>
-            👉 Shortcuts
-          </Button>
+          {!isToolsTab && <DarkModeToggleButton hasText />}
+          {!isMobile && !isToolsTab && <Button variant='soft' color='neutral' onClick={props.onOpenShortcuts} startDecorator={<KeyboardCommandKeyOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
+            Shortcuts
+          </Button>}
+          {isToolsTab && <Button variant='soft' color='neutral' onClick={optimaActions().openLogger} startDecorator={<TerminalOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
+            Logs Viewer
+          </Button>}
+          {isToolsTab && <Button variant='soft' color='neutral' disabled={!enableAixDebugger} onClick={optimaActions().openAIXDebugger} startDecorator={<TerminalOutlinedIcon color={enableAixDebugger ? 'primary' : undefined} />} sx={darkModeToggleButtonSx}>
+            AIX Debugger
+          </Button>}
         </Box>
-      )}
+      }
       sx={_styles.modal}
     >
 
@@ -272,7 +284,7 @@ export function SettingsModal(props: {
             <Topic>
               <T2ISettings />
             </Topic>
-            <Topic icon='🖍️️' title='OpenAI DALL·E'>
+            <Topic icon='🖍️️' title='OpenAI'>
               <DallESettings />
             </Topic>
             <Topic icon='🖍️️' title='Prodia API' startCollapsed>

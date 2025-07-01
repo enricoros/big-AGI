@@ -5,42 +5,21 @@ import { useQuery } from '@tanstack/react-query';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
-import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
-import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
-import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
-import { showBlobURLInNewTab } from '~/common/util/imageUtils';
+import { DBlobAssetId, DBlobImageAsset, useDBAsset } from '~/common/stores/blob/dblobs-portability';
+
+import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import { humanReadableBytes } from '~/common/util/textUtils';
 
 import { RenderImageURL, RenderImageURLVariant } from './RenderImageURL';
-
-
-/**
- * Opens am image data ref in a new tab (fetches and shows it)
- */
-export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
-  let imageBlobURL: string | null = null;
-  if (dataRef.reftype === 'url')
-    imageBlobURL = dataRef.url;
-  else if (dataRef.reftype === 'dblob')
-    imageBlobURL = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
-
-  // the upstream hsould not let this happen
-  if (!imageBlobURL)
-    return false;
-
-  // notify the user that the image has been opened in a new tab (for Safari when it's blocking by default)
-  addSnackbar({ key: 'opened-image-in-new-tab', message: 'Image opened in a New Tab.', type: 'success', closeButton: false, overrides: { autoHideDuration: 1600 } });
-  return showBlobURLInNewTab(imageBlobURL);
-}
 
 
 export function RenderImageRefDBlob(props: {
   // from ImageRef
   dataRefDBlobAssetId: DBlobAssetId,
   dataRefMimeType: string,
+  dataRefBytesSize?: number, // only used for the overlay text
   imageAltText?: string,
   imageWidth?: number,
   imageHeight?: number,
@@ -48,9 +27,9 @@ export function RenderImageRefDBlob(props: {
   variant: RenderImageURLVariant,
   disabled?: boolean,
   onClick?: (e: React.MouseEvent) => void,  // use this generic as a fallback, but should not be needed
-  onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
+  onViewImage?: () => void
   scaledImageSx?: SxProps,
 }) {
 
@@ -70,7 +49,9 @@ export function RenderImageRefDBlob(props: {
     queryKey: ['regen-image-asset', props.dataRefDBlobAssetId, recreationPrompt],
     queryFn: async ({ signal }) => {
       if (signal?.aborted || !recreationPrompt || !props.onReplaceFragment) return;
-      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, 1, 'global', 'app-chat');
+      // NOTE: we shall prevent this operation from happening if the image was not fully generated from the prompt, but also had images
+      // const recreationImages = [];
+      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, [], 1, 'app-chat');
       if (newImageFragments.length === 1)
         props.onReplaceFragment?.(newImageFragments[0]);
     },
@@ -96,13 +77,14 @@ export function RenderImageRefDBlob(props: {
     let overlayText: React.ReactNode = null;
     const extension = (imageItem.data.mimeType || props.dataRefMimeType || '').replace('image/', '');
     const overlayDate = imageItem.updatedAt || imageItem.createdAt || undefined;
+    const formattedSize = !props.dataRefBytesSize ? undefined : humanReadableBytes(props.dataRefBytesSize);
 
     switch (imageItem.origin.ot) {
       case 'user':
         overlayText = <Box sx={{ fontSize: '0.875em' }}>
           {/*&quot; {imageItem.label.length > 120 ? imageItem.label.slice(0, 120 - 3) + '...' : imageItem.label} &quot;*/}
           <Box sx={{ opacity: 0.8 }}>
-            {imageItem.origin.source} · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}
+            {imageItem.origin.source} · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}{formattedSize ? ' · ' + formattedSize : ''}
           </Box>
           <Box sx={{ opacity: 0.8 }}>
             {imageItem.origin.media}{imageItem.origin.fileName ? ' · ' + imageItem.origin.fileName : ''}
@@ -117,7 +99,7 @@ export function RenderImageRefDBlob(props: {
         overlayText = <Box sx={{ fontSize: '0.875em' }}>
           &quot; {imageItem.label.length > 120 ? imageItem.label.slice(0, 120 - 3) + '...' : imageItem.label} &quot;
           <Box sx={{ opacity: 0.8 }}>
-            AI Image · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}
+            AI Image · {imageItem.metadata?.width || props.imageWidth}x{imageItem.metadata?.height || props.imageHeight} · {extension}{formattedSize ? ' · ' + formattedSize : ''}
           </Box>
           <Box sx={{ opacity: 0.8 }}>
             {Object.entries(imageItem.origin.parameters).reduce((acc, [key, value]) => {
@@ -137,7 +119,7 @@ export function RenderImageRefDBlob(props: {
       altText: props.imageAltText || imageItem.metadata?.description || imageItem.label || '',
       overlayText: overlayText,
     };
-  }, [imageItem, props.dataRefMimeType, props.imageAltText, props.imageHeight, props.imageWidth, props.variant]);
+  }, [imageItem, props.dataRefMimeType, props.dataRefBytesSize, props.imageAltText, props.imageHeight, props.imageWidth, props.variant]);
 
   return (
     <RenderImageURL
@@ -145,9 +127,9 @@ export function RenderImageRefDBlob(props: {
       expandableText={altText}
       overlayText={overlayText}
       onClick={props.onClick}
-      onOpenInNewTab={props.onOpenInNewTab}
       onImageDelete={props.onDeleteFragment}
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
+      onViewImage={props.onViewImage}
       className={isRegenerating ? 'agi-border-4' /* CSS Effect while regenerating */ : undefined}
       scaledImageSx={props.scaledImageSx}
       disabled={props.disabled}

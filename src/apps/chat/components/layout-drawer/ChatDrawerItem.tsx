@@ -20,6 +20,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { ANIM_BUSY_TYPING } from '~/common/util/dMessageUtils';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -58,12 +59,14 @@ export interface ChatNavigationItemData {
   isEmpty: boolean;
   isIncognito: boolean;
   title: string;
+  isArchived: boolean;
   userSymbol: string | undefined;
   userFlagsSummary: string | undefined;
   containsDocAttachments: boolean;
   containsImageAssets: boolean;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;
+  hasBeamOpen: boolean;
   messageCount: number;
   beingGenerated: boolean;
   systemPurposeId: SystemPurposeId;
@@ -106,6 +109,7 @@ function ChatDrawerItem(props: {
     containsDocAttachments,
     containsImageAssets,
     folder,
+    hasBeamOpen,
     messageCount,
     beingGenerated,
     systemPurposeId,
@@ -210,7 +214,9 @@ function ChatDrawerItem(props: {
     {/* Symbol, if globally enabled */}
     {(props.showSymbols || isIncognito) && (
       <ListItemDecorator>
-        {isIncognito ? (
+        {hasBeamOpen ? (
+          <ChatBeamIcon sx={{ fontSize: 'xl' }} />
+        ) : isIncognito ? (
           <VisibilityOffIcon sx={{ fontSize: 'xl' }} />
         ) : (beingGenerated && props.showSymbols === 'gif') ? (
           <Avatar
@@ -286,7 +292,7 @@ function ChatDrawerItem(props: {
       </Box>
     ) : null}
 
-  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
+  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, hasBeamOpen, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
@@ -325,7 +331,16 @@ function ChatDrawerItem(props: {
           opacity: 1, // fade in buttons when hovering, but by default wash them out a bit
         },
         ...(isIncognito && {
-          filter: 'brightness(0.5) contrast(0.5)',
+          backgroundColor: 'background.level2',
+          backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
+          // border: 'none',
+          // border: '1px dashed',
+          borderColor: 'background.level3',
+          // purple icon to further indicate incognito mode
+          '& .MuiListItemDecorator-root': {
+            color: '#9C27B0',
+          },
+          // filter: 'brightness(0.5) contrast(0.5)',
         }),
       }}
     >

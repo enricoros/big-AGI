@@ -50,8 +50,9 @@ interface AppChatPanesActions {
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
   duplicateFocusedPane: (/*paneIndex: number*/) => void;
   insertEmptyAfterFocusedPane: (reuseEmpty: boolean) => void;
-  removeOtherPanes: () => void;
+  removeNonFocusedPanes: () => void;
   removePane: (paneIndex: number) => void;
+  removeOtherPanes: (keepPaneIndex: number) => void;
   setFocusedPaneIndex: (paneIndex: number) => void;
   _onConversationsChanged: (conversationIds: DConversationId[]) => void;
 
@@ -250,7 +251,7 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         };
       }),
 
-    removeOtherPanes: () =>
+    removeNonFocusedPanes: () =>
       _set(state => {
         const { chatPanes, chatPaneFocusIndex } = state;
         if (chatPanes.length < 2)
@@ -278,12 +279,37 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         };
       }),
 
+    removeOtherPanes: (keepPaneIdx: number) =>
+      _set(state => {
+        const { chatPanes } = state;
+        if (keepPaneIdx < 0 || keepPaneIdx >= chatPanes.length || chatPanes.length <= 1 /* if only one pane, no need to do anything */)
+          return state;
+
+        const newPanes = [chatPanes[keepPaneIdx]];
+
+        // focus the only remaining pane
+        return {
+          chatPanes: newPanes,
+          chatPaneFocusIndex: 0,
+        };
+      }),
+
     setFocusedPaneIndex: (paneIndex: number) =>
       _set(state => {
         if (state.chatPaneFocusIndex === paneIndex)
           return state;
+
+        const newFocusIndex =
+          (paneIndex >= 0 && paneIndex < state.chatPanes.length) ? paneIndex // Valid index, set focus to it
+            /**
+             * If trying to set an invalid index but we have panes - default to first pane (0)
+             * This fixed the bug where maxing out a pane would cause the focus to 'null' out
+             */
+            : (paneIndex >= 0 && state.chatPanes.length > 0) ? 0
+              : null; // Unfocus
+
         return {
-          chatPaneFocusIndex: paneIndex >= 0 && paneIndex < state.chatPanes.length ? paneIndex : null,
+          chatPaneFocusIndex: newFocusIndex,
         };
       }),
 

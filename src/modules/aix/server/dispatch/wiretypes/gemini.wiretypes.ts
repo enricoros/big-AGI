@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 
 export namespace GeminiWire_ContentParts {
@@ -48,6 +48,15 @@ export namespace GeminiWire_ContentParts {
     'text/rtf',
   ]);
 
+  export const ContentPartModality_enum = z.enum([
+    'MODALITY_UNSPECIFIED',
+    'TEXT', // plain text
+    'IMAGE',
+    'VIDEO',
+    'AUDIO',
+    'DOCUMENT', // e.g. PDF
+  ]);
+
   /// Content parts - Input
 
   export const TextPart_schema = z.object({
@@ -64,9 +73,10 @@ export namespace GeminiWire_ContentParts {
 
   export const FunctionCallPart_schema = z.object({
     functionCall: z.object({
+      id: z.string().optional(), // if populated, the client to execute the functionCall and return the response with the matching id
       name: z.string(),
       /** The function parameters and values in JSON object format. */
-      args: z.record(z.any()).optional(),
+      args: z.json().optional(), // FC args
     }),
   });
 
@@ -82,17 +92,31 @@ export namespace GeminiWire_ContentParts {
    */
   const FunctionResponsePart_schema = z.object({
     functionResponse: z.object({
+      /** The id of the function call this response is for */
+      id: z.string().optional(), // populated by the client to match the corresponding function call id.
       /** Corresponds to the related FunctionDeclaration.name */
       name: z.string(),
-      /** The function response in JSON object format. */
-      response: z.record(z.any()).optional(),
+      /** The function response in JSON object format */
+      response: z.json().optional(), // FC-R response
+
+      // -- the following fields are only applicable to NON_BLOCKING function calls
+
+      /** Signals that function call continues, and more responses will be returned, turning the function call into a generator. */
+      willContinue: z.boolean().optional(),
+      /** Specifies how the response should be scheduled in the conversation */
+      scheduling: z.enum([
+        'SCHEDULING_UNSPECIFIED', // unused
+        'SILENT', // only add the result to the conversation context, do not interrupt or trigger generation
+        'WHEN_IDLE', // add the result to the conversation context, and prompt to generate output without interrupting ongoing generation
+        'INTERRUPT', // add the result to the conversation context, interrupt ongoing generation and prompt to generate output.
+      ]).optional(),
     }),
   });
 
   const FileDataPart_schema = z.object({
     fileData: z.object({
       mimeType: z.union([z.string(), ianaStandardMimeType_schema]).optional(),
-      uri: z.string(),
+      fileUri: z.string(),
     }),
   });
 
@@ -157,6 +181,7 @@ export namespace GeminiWire_ContentParts {
 
   export const ModelContentPart_schema = z.union([
     TextPart_schema,
+    InlineDataPart_schema,
     FunctionCallPart_schema,
     ExecutableCodePart_schema,
     CodeExecutionResultPart_schema,
@@ -241,6 +266,7 @@ export namespace GeminiWire_ToolDeclarations {
   export const FunctionDeclaration_schema = z.object({
     name: z.string(),
     description: z.string(),
+
     /**
      *  Subset of OpenAPI 3.0 schema object
      *  https://ai.google.dev/api/rest/v1beta/cachedContents#schema
@@ -251,14 +277,44 @@ export namespace GeminiWire_ToolDeclarations {
       /**
        * For stricter validation, use the OpenAPI_Schema.Object_schema
        */
-      properties: z.record(z.any()).optional(),
+      properties: z.json().optional(), // FC-DEF params schema
       required: z.array(z.string()).optional(),
+    }).optional(),
+
+    /**
+     * The Schema defines the type used for the 'future' response value of the function.
+     * JSON Schema output format (per-function). Reflects the Open API 3.03 Response Object.
+     */
+    response: z.json().optional(), // FC-DEF output schema
+
+    /** Specifies the function Behavior. Currently only supported by the BidiGenerateContent method. */
+    behavior: z.enum([
+      'UNSPECIFIED', // unused
+      'BLOCKING', // if set, the system will wait to receive the function response before continuing the conversation
+      'NON_BLOCKING', // if set, the system will attempt to handle function responses as they become available while maintaining the conversation between the user and the model
+    ]).optional(),
+  });
+
+  const GoogleSearch_schema = z.object({
+    // Empty object in the API definition
+  });
+
+  // 2025-03-14: Gemini has de-facto phased out GoogleSearchRetrieval, there's no more
+  const GoogleSearchRetrieval_schema = z.object({
+    dynamicRetrievalConfig: z.object({
+      /** The mode of the predictor to be used in dynamic retrieval. */
+      mode: z.enum(['MODE_UNSPECIFIED', 'MODE_DYNAMIC']),
+      /** The threshold to be used in dynamic retrieval. If not set, a system default value is used. */
+      dynamicThreshold: z.number().optional(),
     }).optional(),
   });
 
   export const Tool_schema = z.object({
     codeExecution: CodeExecution_schema.optional(),
     functionDeclarations: z.array(FunctionDeclaration_schema).optional(),
+    googleSearch: GoogleSearch_schema.optional(),
+    // 2025-03-14: disabled as it's gone for all models
+    googleSearchRetrieval: GoogleSearchRetrieval_schema.optional(),
   });
 
   export const ToolConfig_schema = z.object({
@@ -291,16 +347,18 @@ export namespace GeminiWire_ToolDeclarations {
 
 export namespace GeminiWire_Safety {
 
-  /// Rating
+  /// Safety Rating
 
   export const HarmCategory_enum = z.enum([
     'HARM_CATEGORY_UNSPECIFIED',
+    // PaLM-only classifications:
     'HARM_CATEGORY_DEROGATORY',
     'HARM_CATEGORY_TOXICITY',
     'HARM_CATEGORY_VIOLENCE',
     'HARM_CATEGORY_SEXUAL',
     'HARM_CATEGORY_MEDICAL',
     'HARM_CATEGORY_DANGEROUS',
+    // Gemini classifications:
     'HARM_CATEGORY_HARASSMENT',
     'HARM_CATEGORY_HATE_SPEECH',
     'HARM_CATEGORY_SEXUALLY_EXPLICIT',
@@ -328,33 +386,37 @@ export namespace GeminiWire_Safety {
   export type HarmBlockThreshold = z.infer<typeof HarmBlockThreshold_enum>;
   export const HarmBlockThreshold_enum = z.enum([
     'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
-    'BLOCK_LOW_AND_ABOVE',
-    'BLOCK_MEDIUM_AND_ABOVE',
-    'BLOCK_ONLY_HIGH', // Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
-    'BLOCK_NONE', // All content will be allowed.
+    'BLOCK_LOW_AND_ABOVE',      // allows NEGLIGIBLE
+    'BLOCK_MEDIUM_AND_ABOVE',   // allows NEGLIGIBLE, LOW
+    'BLOCK_ONLY_HIGH',          // allows NEGLIGIBLE, LOW, MEDIUM
+    'BLOCK_NONE',               // allows all
     /**
      * 2025-01-10: see bug #720 and https://discuss.ai.google.dev/t/flash-2-0-doesnt-respect-block-none-on-all-harm-categories/59352/1
      */
-    'OFF', // Turn off the safety filter.
+    'OFF', // turns off the safety filter.
   ]);
 
   export const SafetySetting_schema = z.object({
     category: HarmCategory_enum,
+    /** Block at and beyond a specified harm probability. */
     threshold: HarmBlockThreshold_enum,
   });
 
   /// Blocking
 
   const BlockReason_enum = z.enum([
-    'BLOCK_REASON_UNSPECIFIED',
-    'SAFETY',
-    'OTHER',
-    'BLOCKLIST',
-    'PROHIBITED_CONTENT',
+    'BLOCK_REASON_UNSPECIFIED', // unused
+    'SAFETY',                   // inspect safetyRatings to see the category that blocked
+    'OTHER',                    // unknown reason
+    'BLOCKLIST',                // terms are included in the terminology blocklist
+    'PROHIBITED_CONTENT',       // prohibited content
+    'IMAGE_SAFETY',             // unsafe image generation content
   ]);
 
   export const PromptFeedback_schema = z.object({
+    /** Optional. If set, the prompt was blocked and no candidates are returned. */
     blockReason: BlockReason_enum.optional(),
+    /** At most one rating per category. */
     safetyRatings: z.array(SafetyRating_schema),
   });
 
@@ -372,9 +434,35 @@ export namespace GeminiWire_API_Generate_Content {
   /// Request
 
   const responseMimeType_enum = z.enum([
-    'text/plain', // default
-    'application/json', // JSON mode
+    'text/plain',       // default
+    'application/json', // JSON mode (JSON response in the response candidates)
+    'text/x.enum',      // ENUM as a string response in the response candidates
   ]);
+
+  const responseModality_enum = z.enum([
+    'MODALITY_UNSPECIFIED',
+    'TEXT', // model should return text
+    'IMAGE', // model should return images
+    'AUDIO', // model should return audio
+  ]);
+
+  const mediaResolution_enum = z.enum([
+    'MEDIA_RESOLUTION_UNSPECIFIED',
+    'MEDIA_RESOLUTION_LOW',     // 64 tokens
+    'MEDIA_RESOLUTION_MEDIUM',  //	256 tokens
+    'MEDIA_RESOLUTION_HIGH',    //	zoomed reframing with 256 tokens
+  ]);
+
+  const SpeechConfig_schema = z.object({
+    /** The configuration for the speaker to use. */
+    voiceConfig: z.object({
+      /** The configuration for the prebuilt voice to use. */
+      prebuiltVoiceConfig: z.object({
+        /** The name of the preset voice to use. */
+        voiceName: z.string(),
+      }).optional(),
+    }).optional(),
+  });
 
   const GenerationConfig_schema = z.object({
     /**
@@ -383,12 +471,31 @@ export namespace GeminiWire_API_Generate_Content {
     stopSequences: z.array(z.string()).optional(),
 
     /**
-     * [JSON mode] use 'application/json', and set the responseSchema
-     * - 'text/plain' is the default
-     * - 'application/json' JSON response in the candidates
+     * - [default] 'text/plain'
+     * - [JSON mode] 'application/json' + set .responseSchema => JSON response in the candidates
+     * - [Classify mode] 'text/x.enum' + { "type": "STRING", "enum": ["A", "B", "C"] } = ENUM as a string response
      */
     responseMimeType: responseMimeType_enum.optional(),
-    responseSchema: z.record(z.any()).optional(), // if set, responseMimeType must be 'application/json'
+    /**
+     * Output schema of the generated candidate text.
+     * Schemas must be a subset of the OpenAPI schema and can be objects, primitives or arrays.
+     * if set -> responseMimeType must be 'application/json'
+     */
+    responseSchema: z.json().optional(), // JSON Mode: schema
+
+    /**
+     * Requested modalities of the response. (if empty this is equivalent ot ['TEXT'])
+     * Exact match to the modalities of the response.
+     * An Error is raised if the array doesn't exactly match a supported combo for the model.
+     */
+    responseModalities: z.array(responseModality_enum).optional(), // TODO
+
+    /** Optional. Enables enhanced civic answers. Not be available for all models. */
+    enableEnhancedCivicAnswers: z.boolean().optional(), // TODO
+    /** Optional. The speech generation config. Still in preview (allowlist, 2025-03-14) */
+    speechConfig: SpeechConfig_schema.optional(), // TODO
+    /** Optional. The media resolution for the response. */
+    mediaResolution: mediaResolution_enum.optional(), // TODO
 
     candidateCount: z.number().int().optional(), // currently can only be set to 1
     maxOutputTokens: z.number().int().optional(),
@@ -398,18 +505,29 @@ export namespace GeminiWire_API_Generate_Content {
 
     // [Gemini, 2025-01-23] CoT support - undocumented yet
     thinkingConfig: z.object({
+      /**
+       * [2025-04-17] Used to work with v1alpha API, now it seems to not work in any model/api version combo.
+       */
       includeThoughts: z.boolean().optional(),
+      /**
+       * [Gemini, 2025-04-17] Introduced in Flash-2.5-Preview to set the thinking budget.
+       * - must be an integer in the range 0 to 24576; budgets from 1 to 1024 tokens will be set to 1024
+       * - set to 0 to disable thinking
+       */
+      thinkingBudget: z.number().optional(),
     }).optional(),
 
-    // Added on 2025-01-10 - commented out for now
-    // presencePenalty: z.number().optional(),
-    // frequencyPenalty: z.number().optional(),
-    // responseLogprobs: z.boolean().optional(),
-    // logprobs: z.number().int().optional(),
+    // Added on 2025-01-10 - Low-level - not requested/used yet but added
+    presencePenalty: z.number().optional(),     // A positive penalty incresases the vocabulary of the response
+    frequencyPenalty: z.number().optional(),    // A positive penalty incresases the vocabulary of the response
+    responseLogprobs: z.boolean().optional(),   // if true, exports the logprobs
+    logprobs: z.number().int().optional(),      // number of top logprobs to return
   });
 
   export type Request = z.infer<typeof Request_schema>;
   export const Request_schema = z.object({
+    // the 'model' parameter is in the path of the `generateContent` POST
+
     // required
     contents: z.array(GeminiWire_Messages.Content_schema),
 
@@ -419,7 +537,7 @@ export namespace GeminiWire_API_Generate_Content {
     safetySettings: z.array(GeminiWire_Safety.SafetySetting_schema).optional(),
     systemInstruction: GeminiWire_Messages.SystemInstruction_schema.optional(),
     generationConfig: GenerationConfig_schema.optional(),
-    // cachedContent: z.string().optional(),
+    cachedContent: z.string().optional(),
   });
 
   // Response
@@ -437,22 +555,78 @@ export namespace GeminiWire_API_Generate_Content {
     'PROHIBITED_CONTENT',         // Token generation stopped for potentially containing prohibited content.
     'SPII',                       // Token generation stopped because the content potentially contains Sensitive Personally Identifiable Information (SPII).
     'MALFORMED_FUNCTION_CALL',    // The function call generated by the model is invalid.
+    'IMAGE_SAFETY',               // Token generation stopped because generated images contain safety violations.
   ]);
 
+  /** A citation to a source for a portion of a specific response. **/
+  const CitationSource_schema = z.object({
+    startIndex: z.number().optional(),  // Start of segment of the response that is attributed to this source.
+    endIndex: z.number().optional(),    // End of the attributed segment, exclusive.
+    uri: z.string().optional(),         // URI that is attributed as a source for a portion of the text.
+    license: z.string().optional(),     // License for the GitHub project that is attributed as a source for segment.
+  });
+
+  /** A collection of source attributions for a piece of content. */
   const CitationMetadata_schema = z.object({
-    citationSources: z.array(
-      z.object({
-        startIndex: z.number().optional(),  // Start of segment of the response that is attributed to this source.
-        endIndex: z.number().optional(),    // End of the attributed segment, exclusive.
-        uri: z.string().optional(),         // URI that is attributed as a source for a portion of the text.
-        license: z.string().optional(),     // License for the GitHub project that is attributed as a source for segment.
+    citationSources: z.array(CitationSource_schema),
+  });
+
+  // for GenerateAnswer calls - UNWANTED by us
+  /*const GroundingAttribution_schema = z.object({
+    sourceId: z.object({
+      groundingPassage: z.object({
+        passageId: z.string(),
+        partIndex: z.number().int(),
+      }).optional(),
+      semanticRetrieverChunk: z.object({
+        source: z.string(),
+        chunk: z.string(),
+      }).optional(),
+    }),
+    content: GeminiWire_Messages.ModelContent_schema,
+  });*/
+
+  const groundingMetadata_Segment_schema = z.object({
+    partIndex: z.number().int().optional(),
+    startIndex: z.number().int().optional(),
+    endIndex: z.number().int(),
+    text: z.string(),
+  });
+
+  const GroundingMetadata_schema = z.object({
+    /** supporting references retrieved from specified grounding source */
+    groundingChunks: z.array(/*z.union([*/z.object({
+      web: z.object({
+        uri: z.string(),
+        title: z.string(),
       }),
-    ),
+    })).optional(),
+
+    /** List of grounding support: segment + arrays of chunks + arrays of probs  */
+    groundingSupports: z.array(z.object({
+      groundingChunkIndices: z.array(z.number().int()), // citations associated with the claim, indices into ../groundingChunks[]
+      confidenceScores: z.array(z.number()),            // 0..1
+      segment: groundingMetadata_Segment_schema,
+    })).optional(),
+
+    /** Web search queries for the following-up web search. */
+    webSearchQueries: z.array(z.string()).optional(),
+
+    /** Optional. Google search entry for the following-up web searches. */
+    searchEntryPoint: z.object({
+      renderedContent: z.string().optional(),   // Web content snippet that can be embedded in a web page or an app webview
+      sdkBlob: z.string().optional(),           // Base64 encoded JSON representing array of <search term, search url> tuple
+    }).optional(),
+
+    /** Metadata related to retrieval in the grounding flow. */
+    retrievalMetadata: z.object({
+      googleSearchDynamicRetrievalScore: z.number().optional(), // 0..1 indicating how likely information from google search could help answer the prompt
+    }).optional(),
   });
 
   const Candidate_schema = z.object({
     /**
-     * Index of the candidate in the list of candidates.
+     * Index of the candidate in the list of response candidates.
      * NOTE: see GenerationConfig_schema.candidateCount, which can only be set to 1, so index is supposed to be 0.
      */
     index: z.number()
@@ -467,17 +641,16 @@ export namespace GeminiWire_API_Generate_Content {
      */
     content: GeminiWire_Messages.ModelContent_schema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     /**
-     * List of ratings for the safety of a response candidate.
-     * At most one rating per category.
+     * List of ratings for the safety of this response candidate. At most one rating per category.
      *
      * Empirical observations:
      * - Not present on the first packet? Second and after?
      * - Not present when finishReason is 'RECITATION'
-     * - Usually defined for 4 categories: SEXUALLY_EXPLICIT, HATE_SPEECH, HARASSMENT, DANGEROUS_CONTENT
+     * - Usually defined for 4 categories: SEXUALLY_EXPLICIT, HATE_SPEECH, HARASSMENT, DANGEROUS_CONTENT (verified 2025-03-14)
      */
     safetyRatings: z.array(GeminiWire_Safety.SafetyRating_schema).optional(),
     /**
-     * A citation to a source for a portion of a specific response.
+     * Automatic - will cite sources seldomly (e.g. when asking for the national anthem)
      * This field may be populated with recitation information for any text included in the content.
      * These are passages that are "recited" from copyrighted material in the foundational LLM's training data.
      *
@@ -489,18 +662,63 @@ export namespace GeminiWire_API_Generate_Content {
     /**
      * Token count for this candidate.
      * Empirical observations:
-     * - NOTE: not present(!), probably replaced by the ^usageMetadata field
+     * - NOTE: not present(!), probably replaced by the ^usageMetadata field, so we DISABLE this field
      */
-    tokenCount: z.number().optional(),
-    // groundingAttributions: z.array(...).optional(), // This field is populated for GenerateAnswer calls.
+    // tokenCount: z.number(),
+
+    /**
+     * Attribution information for sources that contributed to a grounded answer.
+     * ONLY FOR GenerateAnswer calls - so we do not want this
+     */
+    // groundingAttributions: z.array(GroundingAttribution_schema).optional(),
+    /**
+     * Grounding metadata for the candidate.
+     * This field is populated for GenerateContent calls.
+     * ONLY for GenerateContent calls with grounding enabled:
+     * - tools = [{googleSearch: {}}], or
+     * - tools = [{googleSearchRetrieval: {}}]
+     */
+    groundingMetadata: GroundingMetadata_schema.optional(),
+
+    // We choose to ignore the following and save the parsing time (we do not use or support logProbs):
+    // avgLogprobs: z.number().optional(),
+    // logprobsResult: LogprobsResult_schema.optional(),
+  });
+
+
+  const ModalityTokenCount_schema = z.object({
+    modality: GeminiWire_ContentParts.ContentPartModality_enum,
+    tokenCount: z.number(),
   });
 
   const UsageMetadata_schema = z.object({
+    // effective prompt size, including tokens in the cached content
     promptTokenCount: z.number(),
-    candidatesTokenCount: z.number().optional(), // .optional: in case the first message is 'RECITATION' there could be no output token count
-    // totalTokenCount: z.number(),
-    // cachedContentTokenCount: z.number().optional(), // Not supported for now, hence disabled
+
+    // (usually there: missing on first packets, or 'RECITATION' answers) total tokens across all the generated candidates
+    candidatesTokenCount: z.number().optional(),
+
+    // (never missing, but optional for future safety) total tokens across all the generated candidates
+    // if candidatesTokenCount is missing, this is = promptTokenCount
+    totalTokenCount: z.number().optional(),
+
+    // Input parts
+    // (optional: only if caching) tokens in the cached part of the prompt (the cached content)
+    cachedContentTokenCount: z.number().optional(),
+    // (optional: only if tool usage) tokens in tool-use prompt(s)
+    toolUsePromptTokenCount: z.number().optional(),
+
+    // Output parts
+    // (optional: only for thinking models - and not in all packets) tokens of thoughts for thinking models
+    thoughtsTokenCount: z.number().optional(),
+
+    // Modality breakdowns - mostly commented out because we don't want to spend energy parsing them for now (we don't use them)
+    promptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    cacheTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    // candidatesTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    // toolUsePromptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
   });
+
 
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
@@ -512,6 +730,8 @@ export namespace GeminiWire_API_Generate_Content {
      * Note: seems to be present on all packets now, so we're commending the .optional()
      */
     usageMetadata: UsageMetadata_schema, // .optional()
+    /** Real model version used to generate the response (what we got, not what we asked for). */
+    modelVersion: z.string(),
   });
 
 }
@@ -524,7 +744,7 @@ export namespace GeminiWire_API_Models_List {
 
   export const getPath = '/v1beta/models?pageSize=1000';
 
-  const Methods_enum = z.enum([
+  export const Methods_enum = z.enum([
     'bidiGenerateContent', // appeared on 2024-12, see https://github.com/enricoros/big-AGI/issues/700
     'countMessageTokens',
     'countTextTokens',
@@ -539,6 +759,7 @@ export namespace GeminiWire_API_Models_List {
     'generateMessage',
     'generateText',
     'predict', // appeared on 2025-02-09, for `models/imagen-3.0-generate-002`
+    'predictLongRunning', // appeared on 2025-04-10, for `models/veo-2.0-generate-001`
   ]);
 
   export type Model = z.infer<typeof Model_schema>;
@@ -547,13 +768,15 @@ export namespace GeminiWire_API_Models_List {
     // baseModelId: z.string(),    // [Gemini]: documented as required, but not present! The name of the base model, pass this to the generation request.
     version: z.string(),
     displayName: z.string(),    // Human readable
-    description: z.string(),
+    description: z.string().optional(),
     inputTokenLimit: z.number(),
     outputTokenLimit: z.number(),
     supportedGenerationMethods: z.array(z.union([Methods_enum, z.string()])), // relaxed with z.union to not break on expansion
     temperature: z.number().optional(),
     topP: z.number().optional(),
     topK: z.number().int().optional(),
+    maxTemperature: z.number().optional(),
+    thinking: z.boolean().optional(),
   });
 
   export type Response = z.infer<typeof Response_schema>;

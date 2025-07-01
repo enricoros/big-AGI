@@ -1,17 +1,17 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { fixupHost } from '~/common/util/urlUtils';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
 import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
+import { fixupHost } from '~/modules/llms/server/openai/openai.router';
 
 
 // Default hosts

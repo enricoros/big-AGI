@@ -1,10 +1,11 @@
-import { getImageAsset } from '~/modules/dblobs/dblobs.images';
+import { getImageAsset } from '~/common/stores/blob/dblobs-portability';
 
-import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
+import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageFragment, DMessageImageRefPart, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isTextContentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
-import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
+import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
+import { imageBlobResizeIfNeeded, LLMImageResizeMode } from '~/common/util/imageUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_ToolMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart, AixParts_ModelAuxPart } from '../server/api/aix.wiretypes';
@@ -15,6 +16,7 @@ import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_
 // configuration
 const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
 const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
+const IGNORE_CGR_NO_IMAGE_DEREFERENCE = true; // set to false to raise an exception, otherwise the CGR will continue skipping the part
 
 
 // AIX <> Simple Text API helpers
@@ -108,6 +110,8 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
   // if the user has marked messages for exclusion, we skip them
   messageSequenceWithoutSystem = messageSequenceWithoutSystem.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
 
+  const lastAssistantMessageIndex = messageSequenceWithoutSystem.findLastIndex(m => m.role === 'assistant');
+
   // reduce history
   // NOTE: we used to have a "systemMessage" here, but we're moving to a more strict API with separate processing of it;
   //       - as such we now 'throw' if a system message is found (on dev mode, and just warn in production).
@@ -136,7 +140,12 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
           case 'image_ref':
             // note, we don't resize, as the user image is resized following the user's preferences
-            uMsg.parts.push(await _convertImageRefToInlineImageOrThrow(uFragment.part, false));
+            try {
+              uMsg.parts.push(await aixConvertImageRefToInlineImageOrThrow(uFragment.part, false));
+            } catch (error: any) {
+              if (IGNORE_CGR_NO_IMAGE_DEREFERENCE) console.warn(`Image from the user missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
+              else throw error;
+            }
             break;
 
           case 'doc':
@@ -215,8 +224,18 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
           case 'image_ref':
             // TODO: rescale shall be dependent on the LLM here - and be careful with the high-res options, as they can
             //  be really space consuming. how to choose between high and low? global option?
-            const resizeMode: LLMImageResizeMode = 'openai-low-res';
-            modelMessage.parts.push(await _convertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
+            /**
+             * FIXME for GEMINI IMAGE GENERATION
+             * For now we upload ONLY THE LAST IMAGE as full quality, while all others are resized before transmission.
+             */
+            const isLastAssistantMessage = _index === lastAssistantMessageIndex;
+            const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
+            try {
+              modelMessage.parts.push(await aixConvertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
+            } catch (error: any) {
+              if (IGNORE_CGR_NO_IMAGE_DEREFERENCE) console.warn(`Image from the assistant missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
+              else throw error;
+            }
             break;
 
           case 'tool_response':
@@ -284,7 +303,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
 /// Parts that differ from DMessage*Part to AIX
 
-async function _convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
+export async function aixConvertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
 
   // validate
   const { dataRef } = imageRefPart;
@@ -300,13 +319,24 @@ async function _convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageR
     throw new Error('Image asset not found');
   }
 
-  // convert if requested
+  // base64 -> blob conversion
   let { mimeType, base64: base64Data } = imageAsset.data;
+
+  // convert if requested (with intermediate Blob transformation)
   if (resizeMode) {
-    const resizedData = await resizeBase64ImageIfNeeded(mimeType, base64Data, resizeMode, MODEL_IMAGE_RESCALE_MIMETYPE, MODEL_IMAGE_RESCALE_QUALITY).catch(() => null);
-    if (resizedData) {
-      base64Data = resizedData.base64;
-      mimeType = resizedData.mimeType as any;
+    try {
+      // convert base64 -> Blob
+      const imageBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'aixConvertImageRefToInlineImage');
+      // resize Blob
+      const resizedOp = await imageBlobResizeIfNeeded(imageBlob, resizeMode, MODEL_IMAGE_RESCALE_MIMETYPE, MODEL_IMAGE_RESCALE_QUALITY);
+      if (resizedOp) {
+        // if resized, convert resized Blob back to base64
+        base64Data = await convert_Blob_To_Base64(resizedOp.blob, 'aixConvertImageRefToInlineImage');
+        mimeType = resizedOp.blob.type as any;
+      }
+    } catch (resizeError) {
+      console.warn('[DEV] aixConvertImageRefToInlineImageOrThrow: Error resizing image:', resizeError);
+      // continue without resizing, as this is not critical
     }
   }
 
@@ -336,6 +366,10 @@ export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interf
 
   let workaroundsCount = 0;
 
+  // Apply the remove-sys0 hot fix - at the time of doing it, Gemini Image Generation does not use the system instructions
+  if (llmInterfaces.includes(LLM_IF_HOTFIX_StripSys0))
+    workaroundsCount += clientHotFixGenerateRequest_StripSys0(aixChatGenerate);
+
   // Apply the cast-sys0-to-usr0 hot fix (e.g. o1-preview); however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   if (llmInterfaces.includes(LLM_IF_HOTFIX_Sys0ToUsr0))
     workaroundsCount += clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate);
@@ -351,38 +385,6 @@ export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interf
     console.warn(`[DEV] Working around '${modelName}' model limitations: client-side applied ${workaroundsCount} workarounds`);
 
   return { shallDisableStreaming, workaroundsCount };
-
-}
-
-
-/**
- * Hot fix for handling system messages in models that do not support them, such as `o1-preview`.
- * -> Converts System to User messages for compatibility.
- *
- * Notes for the o1-2024-12-17 model:
- * - we don't cast the system to user, as the aix dispatcher is casting the 'system' message to 'developer'
- */
-function clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate: AixAPIChatGenerate_Request): number {
-
-  // Convert the main system message if it exists
-  if (!aixChatGenerate.systemMessage)
-    return 0;
-
-  // Convert system message to user message
-  const systemAsUser: AixMessages_UserMessage = {
-    role: 'user',
-    parts: aixChatGenerate.systemMessage.parts,
-  };
-
-  // Insert the converted system message at the beginning of the chat sequence (recreating the array to not alter the original)
-  aixChatGenerate.chatSequence = [...aixChatGenerate.chatSequence];
-  aixChatGenerate.chatSequence.unshift(systemAsUser);
-
-  // Remove the original system message
-  aixChatGenerate.systemMessage = null;
-
-  // Log the workaround applied
-  return 1;
 
 }
 
@@ -415,5 +417,48 @@ function clientHotFixGenerateRequest_StripImages(aixChatGenerate: AixAPIChatGene
 
   // Log the number of workarounds applied
   return workaroundsCount;
+
+}
+
+/**
+ * Hot fix for models that don't want the system message - e.g. Gemini Image Generation (although this may change)
+ */
+function clientHotFixGenerateRequest_StripSys0(aixChatGenerate: AixAPIChatGenerate_Request): number {
+
+  const workaroundsCount = aixChatGenerate.systemMessage?.parts?.length ? 1 : 0;
+  aixChatGenerate.systemMessage = null;
+  return workaroundsCount;
+
+}
+
+
+/**
+ * Hot fix for handling system messages in models that do not support them, such as `o1-preview`.
+ * -> Converts System to User messages for compatibility.
+ *
+ * Notes for the o1-2024-12-17 model:
+ * - we don't cast the system to user, as the aix dispatcher is casting the 'system' message to 'developer'
+ */
+function clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate: AixAPIChatGenerate_Request): number {
+
+  // Convert the main system message if it exists
+  if (!aixChatGenerate.systemMessage)
+    return 0;
+
+  // Convert system message to user message
+  const systemAsUser: AixMessages_UserMessage = {
+    role: 'user',
+    parts: aixChatGenerate.systemMessage.parts,
+  };
+
+  // Insert the converted system message at the beginning of the chat sequence (recreating the array to not alter the original)
+  aixChatGenerate.chatSequence = [...aixChatGenerate.chatSequence];
+  aixChatGenerate.chatSequence.unshift(systemAsUser);
+
+  // Remove the original system message
+  aixChatGenerate.systemMessage = null;
+
+  // Log the workaround applied
+  return 1;
 
 }

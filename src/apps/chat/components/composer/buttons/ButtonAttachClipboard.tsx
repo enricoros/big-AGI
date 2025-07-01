@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -10,6 +10,7 @@ import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
 export const ButtonAttachClipboardMemo = React.memo(ButtonAttachClipboard);
 
 function ButtonAttachClipboard(props: {
+  color?: ColorPaletteProp,
   isMobile?: boolean,
   disabled?: boolean,
   fullWidth?: boolean,
@@ -17,7 +18,7 @@ function ButtonAttachClipboard(props: {
   onAttachClipboard: () => void,
 }) {
   return props.isMobile ? (
-    <IconButton disabled={props.disabled} onClick={props.onAttachClipboard}>
+    <IconButton color={props.color} disabled={props.disabled} onClick={props.onAttachClipboard}>
       <ContentPasteGoIcon />
     </IconButton>
   ) : (
@@ -29,8 +30,8 @@ function ButtonAttachClipboard(props: {
       </Box>
     )}>
       <Button
-        variant='plain'
-        color='neutral'
+        variant={props.color ? 'soft' : 'plain'}
+        color={props.color || 'neutral'}
         disabled={props.disabled}
         fullWidth={props.fullWidth}
         startDecorator={<ContentPasteGoIcon />}

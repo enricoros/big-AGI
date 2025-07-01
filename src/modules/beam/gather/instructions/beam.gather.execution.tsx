@@ -44,7 +44,7 @@ export function gatherStartFusion(
 
   // abort any current fusion
   const { instructions } = initialFusion;
-  initialFusion.fusingAbortController?.abort();
+  initialFusion.fusingAbortController?.abort('Merge Stopped');
 
   // validate preconditions
   const onError = (errorText: string) => onUpdateBFusion({
@@ -161,7 +161,7 @@ export function gatherStartFusion(
 
 
 export function gatherStopFusion(fusion: BFusion): BFusion {
-  fusion.fusingAbortController?.abort();
+  fusion.fusingAbortController?.abort('Merge Stopped');
   return {
     ...fusion,
     ...(fusion.stage === 'fusing' ? { status: 'stopped' /* speculative as the abort shall do the same */ } : {}),

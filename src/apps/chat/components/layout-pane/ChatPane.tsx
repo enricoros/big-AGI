@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
-import { Box, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Option, Select, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Checkbox, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -10,8 +11,7 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
-
-import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
+import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHorizontal';
@@ -19,9 +19,10 @@ import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconS
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/modals/GoodModal';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
-import { useLabsDevMode } from '~/common/state/store-ux-labs';
+import { optimaActions } from '~/common/layout/optima/useOptima';
+import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
+import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
@@ -52,9 +53,17 @@ export function ChatPane(props: {
 }): React.ReactNode {
 
   // external state
-  const { canAddPane, isMultiPane, removeOtherPanes } = usePaneDuplicateOrClose();
+  const { canAddPane, isMultiPane } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
+
+  const { isArchived, setArchived } = useChatStore(useShallow((state) => {
+    const conversation = state.conversations.find(_c => _c.id === props.conversationId);
+    return {
+      isArchived: !conversation ? undefined : !!conversation.isArchived,
+      setArchived: state.setArchived,
+    };
+  }));
 
 
   // Window
@@ -75,10 +84,10 @@ export function ChatPane(props: {
 
   const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
     if (isMultiPane)
-      removeOtherPanes();
+      panesManagerActions().removeNonFocusedPanes();
     else
       handleIncreaseMultiPane(undefined);
-  }, [handleIncreaseMultiPane, isMultiPane, removeOtherPanes]);
+  }, [handleIncreaseMultiPane, isMultiPane]);
 
 
   // Actions
@@ -99,47 +108,12 @@ export function ChatPane(props: {
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
+  const handleToggleArchive = React.useCallback(() => {
+    if (!props.conversationId || !setArchived) return;
+    setArchived(props.conversationId, !isArchived);
+  }, [isArchived, props.conversationId, setArchived]);
+
   const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
-
-
-  // [DEV MODE]
-
-  const [devModeDialog, setDevModeDialog] = React.useState<React.ReactNode | null>(null);
-
-  const handleAixShowLastRequest = React.useCallback(() => {
-    setDevModeDialog((
-      <GoodModal
-        open={true}
-        dividers
-        onClose={() => setDevModeDialog(null)}
-        title='Aix: Last Dispach Request Body'
-        sx={{ minWidth: '80vw', maxWidth: undefined, overflow: 'hidden' }}
-      >
-        {devMode_AixLastDispatchRequest ? (
-          <Box sx={{
-            m: 'calc(-1 * var(--Card-padding))',
-            p: 'calc(0.5 * var(--Card-padding))',
-            fontSize: 'sm',
-            display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 2, rowGap: 1,
-            overflow: 'auto',
-          }}>
-            <div>Url</div>
-            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.url}</div>
-            <div>Headers</div>
-            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.headers}</div>
-            <div>Body</div>
-            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.body}</div>
-            {devMode_AixLastDispatchRequest.particles.map(((particleString, idx) => (
-              <React.Fragment key={idx}>
-                <div>Particle {idx + 1}</div>
-                <div style={{ whiteSpace: 'break-spaces' }}>{particleString}</div>
-              </React.Fragment>
-            )))}
-          </Box>
-        ) : 'Contents will be shown after the next request.'}
-      </GoodModal>
-    ));
-  }, []);
 
 
   return <>
@@ -177,12 +151,44 @@ export function ChatPane(props: {
 
     {/* Chat Actions group */}
     <OptimaPanelGroupedList title='Actions'>
+      {/* Use 2 columns */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
-      <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
-        <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
-        Branch
-      </MenuItem>
+        {/* Left column */}
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
 
+          <MenuItem disabled={props.disableItems} onClick={handleToggleArchive}>
+            <ListItemDecorator>{isArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}</ListItemDecorator>
+            {isArchived ? <b>Unarchive</b> : 'Archive'}
+          </MenuItem>
+
+          <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
+            <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
+            Branch
+          </MenuItem>
+
+        </Box>
+
+        {/* Right column */}
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+
+          <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
+            <ListItemDecorator><CompressIcon /></ListItemDecorator>
+            Compact
+          </MenuItem>
+
+          <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
+            <ListItemDecorator><RestartAltIcon /></ListItemDecorator>
+            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+              Restart
+              {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
+            </Box>
+          </MenuItem>
+
+        </Box>
+      </Box>
+
+      {/* Spans both columns */}
       <MenuItem
         disabled={props.disableItems}
         color={props.isMessageSelectionMode ? 'warning' : 'neutral'}
@@ -190,31 +196,19 @@ export function ChatPane(props: {
         onClick={handleToggleMessageSelectionMode}
         sx={props.isMessageSelectionMode ? { fontWeight: 'lg' } : {}}
       >
-        <ListItemDecorator>{!props.isMessageSelectionMode ? <CleaningServicesOutlinedIcon /> : <CheckBoxOutlinedIcon />}</ListItemDecorator>
+        <ListItemDecorator>{!props.isMessageSelectionMode ? <CleaningServicesOutlinedIcon /> : <Checkbox size='md' color='warning' variant='plain' checked />}</ListItemDecorator>
         Cleanup
       </MenuItem>
 
-      <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
-        <ListItemDecorator><CompressIcon /></ListItemDecorator>
-        Minify
-      </MenuItem>
-
-      <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
-        <ListItemDecorator><RestartAltIcon /></ListItemDecorator>
-        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-          Restart
-          {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
-        </Box>
-      </MenuItem>
     </OptimaPanelGroupedList>
 
     {/* ... how do we name this? ... */}
     <OptimaPanelGroupedList title='Persona'>
       <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
         <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
-        System Instruction
+        Show Instruction
         {/*<FormLabelStart title='View System Instruction' />*/}
-        <Switch size='md' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
+        <Switch size='sm' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
         {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
       </ListItemButton>
     </OptimaPanelGroupedList>
@@ -222,15 +216,12 @@ export function ChatPane(props: {
     {/* [DEV] Development */}
     {labsDevMode && (
       <OptimaPanelGroupedList title='[Developers]'>
-        <MenuItem onClick={handleAixShowLastRequest}>
+        <MenuItem onClick={optimaActions().openAIXDebugger}>
           <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
           AIX: Show Last Request...
         </MenuItem>
       </OptimaPanelGroupedList>
     )}
-
-    {/* [DEV MODE] Show any dialog, if present */}
-    {devModeDialog}
 
   </>;
 }

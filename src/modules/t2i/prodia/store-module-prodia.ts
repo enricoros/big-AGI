@@ -1,45 +1,47 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { PRODIA_HARDCODED_MODELS } from '~/modules/t2i/prodia/prodia.models';
 
 
-// These work good for SDXL models, from: https://docs.prodia.com/reference/sdxl-generate
-export const HARDCODED_PRODIA_RESOLUTIONS: string[] = ['1024x1024', '1152x896', '1216x832', '1344x768', '1536x640', '640x1536', '768x1344', '832x1216'];
-export const DEFAULT_PRODIA_RESOLUTION = HARDCODED_PRODIA_RESOLUTIONS[0];
+export const DEFAULT_PRODIA_RESOLUTION = '1024x1024';
+export const HARDCODED_PRODIA_RESOLUTIONS: string[] = [
+  '512x512',
+  '768x768',
+  '1024x1024',
+  '1152x896',
+  '768x1344',
+  '1344x768',
+];
 
 
 interface ModuleProdiaStore {
 
-  // Prodia Image Generation settings
+  apiKey: string;
+  setApiKey: (apiKey: string) => void;
 
-  prodiaApiKey: string;
-  setProdiaApiKey: (apiKey: string) => void;
+  modelId: string;
+  setModelId: (modelId: string) => void;
 
-  prodiaModelId: string;
-  setProdiaModelId: (modelId: string) => void;
+  resolution: string;
+  setResolution: (resolution: string) => void;
 
-  prodiaModelGen: 'sd' | 'sdxl';
-  setProdiaModelGen: (modelGen: 'sd' | 'sdxl') => void;
+  negativePrompt: string;
+  setNegativePrompt: (negativePrompt: string) => void;
 
-  prodiaNegativePrompt: string;
-  setProdiaNegativePrompt: (negativePrompt: string) => void;
+  fluxSteps: number;
+  setFluxSteps: (fluxSteps: number) => void;
 
-  prodiaSteps: number;
-  setProdiaSteps: (steps: number) => void;
+  sdxlSteps: number;
+  setSdxlSteps: (sdxlSteps: number) => void;
 
-  prodiaCfgScale: number;
-  setProdiaCfgScale: (cfgScale: number) => void;
+  sdCfgScale: number;
+  setSdCfgScale: (sdCfgScale: number) => void;
 
-  prodiaAspectRatio: 'square' | 'portrait' | 'landscape';
-  setProdiaAspectRatio: (aspectRatio: 'square' | 'portrait' | 'landscape') => void;
+  stylePreset: string | null;
+  setStylePreset: (stylePreset: string | null) => void;
 
-  prodiaUpscale: boolean;
-  setProdiaUpscale: (upscale: boolean) => void;
-
-  prodiaResolution: string,
-  setProdiaResolution: (resolution: string) => void;
-
-  prodiaSeed: number | null;
-  setProdiaSeed: (seed: string) => void;
+  seed: number | null;
+  setSeed: (seed: string) => void;
 
 }
 
@@ -47,45 +49,38 @@ export const useProdiaStore = create<ModuleProdiaStore>()(
   persist(
     (set) => ({
 
-      // Prodia Image Generation settings
+      apiKey: '',
+      setApiKey: (apiKey) => set({ apiKey }),
 
-      prodiaApiKey: '',
-      setProdiaApiKey: (prodiaApiKey: string) => set({ prodiaApiKey }),
+      modelId: PRODIA_HARDCODED_MODELS[0].id,
+      setModelId: (modelId) => set({ modelId }),
 
-      prodiaModelId: '',
-      setProdiaModelId: (prodiaModelId: string) => set({ prodiaModelId }),
+      resolution: DEFAULT_PRODIA_RESOLUTION,
+      setResolution: (resolution) => set({ resolution }),
 
-      prodiaModelGen: 'sd',
-      setProdiaModelGen: (prodiaModelGen: 'sd' | 'sdxl') => set({ prodiaModelGen }),
+      negativePrompt: '',
+      setNegativePrompt: (negativePrompt) => set({ negativePrompt }),
 
-      prodiaNegativePrompt: '',
-      setProdiaNegativePrompt: (prodiaNegativePrompt: string) => set({ prodiaNegativePrompt }),
+      fluxSteps: 2,
+      setFluxSteps: (steps) => set({ fluxSteps: steps }),
 
-      prodiaSteps: 25,
-      setProdiaSteps: (prodiaSteps: number) => set({ prodiaSteps }),
+      sdxlSteps: 20,
+      setSdxlSteps: (steps) => set({ sdxlSteps: steps }),
 
-      prodiaCfgScale: 7,
-      setProdiaCfgScale: (prodiaCfgScale: number) => set({ prodiaCfgScale }),
+      sdCfgScale: 7,
+      setSdCfgScale: (sdCfgScale) => set({ sdCfgScale }),
 
-      prodiaAspectRatio: 'square',
-      setProdiaAspectRatio: (prodiaAspectRatio: 'square' | 'portrait' | 'landscape') => set({ prodiaAspectRatio }),
+      stylePreset: null,
+      setStylePreset: (stylePreset) => set({ stylePreset }),
 
-      prodiaUpscale: false,
-      setProdiaUpscale: (prodiaUpscale: boolean) => set({ prodiaUpscale }),
-
-      prodiaResolution: DEFAULT_PRODIA_RESOLUTION,
-      setProdiaResolution: (prodiaResolution: string) => set({ prodiaResolution }),
-
-      prodiaSeed: null,
-      setProdiaSeed: (prodiaSeed: string) => set({ prodiaSeed: (prodiaSeed === '' || prodiaSeed === '-1') ? null : parseInt(prodiaSeed) ?? null }),
+      seed: null,
+      setSeed: (seed) => set({
+        seed: (seed === '' || seed === '-1') ? null : parseInt(seed) ?? null,
+      }),
 
     }),
     {
-      name: 'app-module-prodia',
-      /* Version history:
-       * 2: [2023-10-27] Add SDXL support (prodiaModelGen, prodiaResolution)
-       */
-      version: 2,
+      name: 'app-module-prodia-v2',
     },
   ),
 );

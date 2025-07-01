@@ -1,6 +1,6 @@
 import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
-import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
+import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
 import { approxDocPart_To_String } from './anthropic.messageCreate';
@@ -44,9 +44,11 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [OpenAI] - o1 models
   // - o1 models don't support system messages, we could hotfix this here once and for all, but we want to transfer the responsibility to the UI for better messaging to the user
   // - o1 models also use the new 'max_completion_tokens' rather than 'max_tokens', breaking API compatibility, so we have to address it here
-  const hotFixOpenAIOFamily = openAIDialect === 'openai' && (
+  const hotFixOpenAIOFamily = (openAIDialect === 'openai' || openAIDialect === 'azure') && (
     model.id === 'o1' || model.id.startsWith('o1-') ||
-    model.id === 'o3' || model.id.startsWith('o3-')
+    model.id === 'o3' || model.id.startsWith('o3-') ||
+    model.id === 'o4' || model.id.startsWith('o4-') ||
+    model.id === 'o5' || model.id.startsWith('o5-')
   );
 
   // Throw if function support is needed but missing
@@ -100,8 +102,57 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
   }
+  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
   if (model.vndOaiRestoreMarkdown) {
     _fixVndOaiRestoreMarkdown_Inline(payload);
+  }
+  // [OpenAI] Vendor-specific web search context and/or geolocation
+  if (model.vndOaiWebSearchContext || model.userGeolocation) {
+    payload.web_search_options = {};
+    if (model.vndOaiWebSearchContext)
+      payload.web_search_options.search_context_size = model.vndOaiWebSearchContext;
+    if (model.userGeolocation)
+      payload.web_search_options.user_location = {
+        type: 'approximate',
+        approximate: {
+          ...model.userGeolocation,
+        },
+      };
+  }
+
+  // [Perplexity] Vendor-specific extensions for search models
+  if (openAIDialect === 'perplexity') {
+    // Reasoning effort (reuses OpenAI parameter)
+    if (model.vndOaiReasoningEffort) {
+      payload.reasoning_effort = model.vndOaiReasoningEffort;
+    }
+
+    // Search mode (academic filter)
+    if (model.vndPerplexitySearchMode && model.vndPerplexitySearchMode !== 'default') {
+      payload.search_mode = model.vndPerplexitySearchMode;
+    }
+
+    // Date range filter
+    if (model.vndPerplexityDateFilter && model.vndPerplexityDateFilter !== 'unfiltered') {
+      const filter = _convertPerplexityDateFilter(model.vndPerplexityDateFilter);
+      if (filter) payload.search_after_date_filter = filter;
+    }
+  }
+
+  // [OpenRouter] -> [Anthropic] via OpenAI API - https://openrouter.ai/docs/use-cases/reasoning-tokens
+  if (openAIDialect === 'openrouter' && model.vndAntThinkingBudget !== undefined) {
+
+    // vndAntThinkingBudget's presence indicates a user preference:
+    // - [x] a number, which is the budget in tokens
+    // - [ ] null: shall disable thinking, but openrouter does not support this?
+    if (model.vndAntThinkingBudget === null) {
+      // simply not setting the reasoning field downgrades this to a non-thinking model
+      // console.warn('OpenRouter does not support disabling thinking of Anthropic models. Using default.');
+    } else {
+      payload.reasoning = {
+        max_tokens: model.vndAntThinkingBudget || 1024,
+      };
+    }
   }
 
   if (hotFixOpenAIOFamily)
@@ -114,7 +165,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);
   if (!validated.success) {
     console.warn('OpenAI: invalid chatCompletions payload. Error:', validated.error);
-    throw new Error(`Invalid sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+    throw new Error(`Invalid sequence for OpenAI models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
   }
 
   // if (hotFixUseDeprecatedFunctionCalls)
@@ -125,6 +176,17 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
 
 function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TRequestMessages {
+
+  // [Perplexity, 2025-06-23] HotFix: if there's only 1 message from the system, treat it as a user message
+  if (chatMessages.length === 1 && chatMessages[0].role === 'system')
+    return [{ ...chatMessages[0], role: 'user' }];
+
+  // [Perplexity, 2025-06-23] HotFix: if an assistant message comes before the first user message, we prepend an empty user message
+  const firstUserIndex = chatMessages.findIndex(message => message.role === 'user');
+  const firstAssistantIndex = chatMessages.findIndex(message => message.role === 'assistant');
+  if (firstAssistantIndex !== -1 && firstAssistantIndex < firstUserIndex)
+    chatMessages.splice(firstAssistantIndex, 0, { role: 'user', content: [{ type: 'text', text: '' }] });
+
   return chatMessages.reduce((acc, historyItem) => {
 
     // treat intermediate system messages as user messages
@@ -248,7 +310,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
         break;
 
       case 'doc':
-        msg0TextParts.push(_toApproximateOpenAIDocPart(part));
+        msg0TextParts.push(aixDocPart_to_OpenAITextContent(part));
         break;
 
       case 'meta_cache_control':
@@ -270,7 +332,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
        * o3-mini accepts both system and developer roles, and they seem to have the same effects
        */
       role: !hotFixOpenAIo1Family ? 'system' : 'developer',
-      content: _toApproximateOpanAIFlattenSystemMessage(msg0TextParts),
+      content: aixTexts_to_OpenAIInstructionText(msg0TextParts.map(text => text.text)),
     });
 
 
@@ -294,7 +356,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             case 'doc':
-              const docContentPart = _toApproximateOpenAIDocPart(part);
+              const docContentPart = aixDocPart_to_OpenAITextContent(part);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -323,7 +385,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
             case 'meta_in_reference_to':
               chatMessages.push({
                 role: !hotFixOpenAIo1Family ? 'system' : 'user', // NOTE: o1Family does not support system messages for this, we downcast to 'user'
-                content: _toOpenAIInReferenceToText(part),
+                content: aixMetaRef_to_OpenAIText(part),
               });
               break;
 
@@ -344,6 +406,23 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               chatMessages.push({ role: 'assistant', content: part.text });
               break;
 
+            case 'inline_audio':
+              // Implementation notes
+              // - audio parts are not supported on the assistant side, but on the user side, so we
+              //   create a user part instead
+
+              // create a new OpenAI_AudioContentPart of type User
+              const audioFormat = aixAudioPart_to_OpenAIAudioFormat(part);
+              const audioBase64DataUrl = `data:${part.mimeType};base64,${part.base64}`;
+              const audioContentPart = OpenAIWire_ContentParts.OpenAI_AudioContentPart(audioBase64DataUrl, audioFormat);
+
+              // Append to existing content[], or new message
+              if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
+                currentMessage.content.push(audioContentPart);
+              else
+                chatMessages.push({ role: 'user', content: [audioContentPart] });
+              break;
+
             case 'inline_image':
               // Implementation notes
               // - image parts are not supported on the assistant side, but on the user side, so we
@@ -351,9 +430,8 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               // - we use the 'high' detail level for the image content part (how to expose to the user?)
 
               // create a new OpenAIWire_ImageContentPart of type User
-              const { mimeType, base64 } = part;
-              const base64DataUrl = `data:${mimeType};base64,${base64}`;
-              const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
+              const imageBase64DataUrl = `data:${part.mimeType};base64,${part.base64}`;
+              const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(imageBase64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -364,7 +442,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
 
             case 'tool_invocation':
               // Implementation notes
-              // - the assistant called the tool (this is the invocation params) with out without text beforehand
+              // - the assistant called the tool (this is the invocation params) without text beforehand
               // - we will append to an existing assistant message, if there's space for a tool invocation
               // - otherwise we'll add an assistant message with null message
 
@@ -439,7 +517,8 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
 
 function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['tools']> {
   return itds.map(itd => {
-    switch (itd.type) {
+    const itdType = itd.type;
+    switch (itdType) {
 
       case 'function_call':
         const { name, description, input_schema } = itd.function_call;
@@ -458,6 +537,10 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
 
       case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
+
+      default:
+        // const _exhaustiveCheck: never = itdType;
+        throw new Error(`OpenAI (classic API) unsupported tool: ${itdType}`);
 
     }
   });
@@ -483,7 +566,23 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
   }
 }
 
-function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string {
+
+// Approximate conversions
+
+export function aixAudioPart_to_OpenAIAudioFormat(part: AixParts_InlineAudioPart) {
+  const audioMimeType = part.mimeType;
+  switch (audioMimeType) {
+    case 'audio/wav':
+      return 'wav';
+    case 'audio/mp3':
+      return 'mp3';
+    default:
+      const _exhaustiveCheck: never = audioMimeType;
+      throw new Error(`Unsupported inline audio format: ${audioMimeType}`);
+  }
+}
+
+export function aixMetaRef_to_OpenAIText(irt: AixParts_MetaInReferenceToPart): string {
   // Get the item texts without roles
   const items = irt.referTo.map(r => r.mText);
   if (items.length === 0)
@@ -509,18 +608,35 @@ function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string
     items.map((text, index) => formatItem(text, index)).join(allShort ? '\n' : '\n\n')}`;
 }
 
-
-// Approximate conversions
-
-function _toApproximateOpanAIFlattenSystemMessage(texts: OpenAIWire_ContentParts.TextContentPart[]): string {
-  return texts.map(text => text.text).join(approxSystemMessageJoiner);
-}
-
-function _toApproximateOpenAIDocPart(part: AixParts_DocPart): OpenAIWire_ContentParts.TextContentPart {
+export function aixDocPart_to_OpenAITextContent(part: AixParts_DocPart): OpenAIWire_ContentParts.TextContentPart {
 
   // Corner case, low probability: if the content is already enclosed in triple-backticks, return it as-is
   if (part.data.text.startsWith('```'))
     return OpenAIWire_ContentParts.TextContentPart(part.data.text);
 
   return OpenAIWire_ContentParts.TextContentPart(approxDocPart_To_String(part));
+}
+
+export function aixTexts_to_OpenAIInstructionText(texts: string[]): string {
+  return texts.join(approxSystemMessageJoiner);
+}
+
+
+// Vendor specific extensions
+
+function _convertPerplexityDateFilter(filter: string): string {
+  const now = new Date();
+  switch (filter) {
+    case '1m':
+      return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toLocaleDateString('en-US');
+    case '3m':
+      return new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).toLocaleDateString('en-US');
+    case '6m':
+      return new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()).toLocaleDateString('en-US');
+    case '1y':
+      return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toLocaleDateString('en-US');
+    default:
+      console.warn('[DEV] Perplexity date filter not recognized:', filter);
+      return '';
+  }
 }

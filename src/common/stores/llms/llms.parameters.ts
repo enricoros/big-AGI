@@ -66,6 +66,17 @@ export const DModelParameterRegistry = {
     incompatibleWith: ['temperature'] as const,
   } as const,
 
+  /**
+   * First introduced as a user-configurable parameter for the 'Verification' required by o3.
+   * [2025-04-16] Adding parameter to disable streaming for o3, and possibly more models.
+   */
+  llmForceNoStream: {
+    label: 'Disable Streaming',
+    type: 'boolean' as const,
+    description: 'Disables streaming for this model',
+    // initialValue: false, // we don't need the initial value here, will be assumed off
+  } as const,
+
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer' as const,
@@ -84,6 +95,19 @@ export const DModelParameterRegistry = {
     initialValue: true,
   } as const,
 
+  llmVndGeminiThinkingBudget: {
+    label: 'Thinking Budget',
+    type: 'integer' as const,
+    /**
+     * can be overwritten, as gemini models seem to have different ranges which also does not include 0
+     * - value = 0 disables thinking
+     * - value = undefined means 'auto thinking budget'.
+     */
+    range: [0, 24576] as const,
+    // initialValue: unset, // auto-budgeting
+    description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
+  } as const,
+
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,
@@ -99,16 +123,62 @@ export const DModelParameterRegistry = {
     initialValue: true,
   } as const,
 
+  llmVndOaiWebSearchContext: {
+    label: 'Search Context Size',
+    type: 'enum' as const,
+    description: 'Amount of context retrieved from the web',
+    values: ['low', 'medium', 'high'] as const,
+    requiredFallback: 'medium',
+  } as const,
+
+  llmVndOaiWebSearchGeolocation: {
+    // NOTE: for now this is a boolean to enable/disable using client-side geolocation, but
+    // in the future we could have it a more complex object. Note that the payload that comes
+    // back if of type AixAPI_Model.userGeolocation, which is the AIX Wire format for the
+    // location payload.
+    label: 'Add User Location (Geolocation API)',
+    type: 'boolean' as const,
+    description: 'Approximate location for search results',
+    initialValue: false,
+  } as const,
+
+  // Perplexity-specific parameters
+
+  // llmVndPerplexityReasoningEffort - we reuse the OpenAI reasoning effort parameter
+
+  llmVndPerplexityDateFilter: {
+    label: 'Date Range',
+    type: 'enum' as const,
+    description: 'Filter results by publication date',
+    values: ['unfiltered', '1m', '3m', '6m', '1y'] as const,
+    // requiredFallback: 'unfiltered',
+  } as const,
+
+  llmVndPerplexitySearchMode: {
+    label: 'Search Mode',
+    type: 'enum' as const,
+    description: 'Type of sources to search',
+    values: ['default', 'academic'] as const,
+    // requiredFallback: 'default', // or leave unset for "unspecified"
+  } as const,
+
 } as const;
 
 
 /// Types
 
+// this is the client-side typescript definition that matches ModelParameterSpec_schema in `llm.server.types.ts`
 export interface DModelParameterSpec<T extends DModelParameterId> {
   paramId: T;
   required?: boolean;
   hidden?: boolean;
+  initialValue?: boolean | number | string | null;
   // upstreamDefault?: DModelParameterValue<T>;
+  /**
+   * (optional, rare) Special: [min, max] range override for this parameter.
+   * Used by llmVndGeminiThinkingBudget to allow different ranges for different models.
+   */
+  rangeOverride?: [number, number];
 }
 
 export type DModelParameterValues = {
@@ -138,23 +208,27 @@ type DModelParameterValue<T extends DModelParameterId> =
 
 /// Utility Functions
 
-export function applyModelParameterInitialValues(parameterIds: DModelParameterId[], parameterValues: DModelParameterValues, overwrite: boolean): void {
-  for (const paramId of parameterIds) {
+export function applyModelParameterInitialValues(destValues: DModelParameterValues, parameterSpecs: DModelParameterSpec<DModelParameterId>[], overwriteExisting: boolean): void {
+  for (const param of parameterSpecs) {
+    const paramId = param.paramId;
 
-    // skip if the value is already present
-    if (!overwrite && paramId in parameterValues)
+    // skip if already present
+    if (!overwriteExisting && paramId in destValues)
       continue;
 
-    // find the parameter definition
-    const paramDef = DModelParameterRegistry[paramId];
-    if (!paramDef) {
-      console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
+    // 1. (if present) apply Spec.initialValue
+    if (param.initialValue !== undefined) {
+      destValues[paramId] = param.initialValue as DModelParameterValue<typeof paramId>;
       continue;
     }
 
-    // apply the initial value
-    if ('initialValue' in paramDef && paramDef.initialValue !== undefined)
-      parameterValues[paramId] = paramDef.initialValue as DModelParameterValue<typeof paramId>;
+    // 2. (if present) apply Registry[paramId].initialValue
+    const registryDef = DModelParameterRegistry[paramId];
+    if (registryDef) {
+      if ('initialValue' in registryDef && registryDef.initialValue !== undefined)
+        destValues[paramId] = registryDef.initialValue as DModelParameterValue<typeof paramId>;
+    } else
+      console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
   }
 }
 

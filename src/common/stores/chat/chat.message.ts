@@ -81,6 +81,7 @@ export type DMessageGenerator = ({
   // A named generator is a simple string, presented as-is
   mgt: 'named';
   name: 'web' | 'issue' | 'help' | string;
+  // xeOpCode?: 'op-draw-text',
 } | {
   // An AIX generator preserves information about original model and vendor:
   // - vendor ids will be stable across time
@@ -178,6 +179,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
       return {
         mgt: 'named',
         name: generator.name,
+        // ...(generator.xeOpCode ? { xeOpCode: generator.xeOpCode } : {}),
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
         ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
       };
@@ -198,6 +200,10 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
 export function messageWasInterruptedAtStart(message: Pick<DMessage, 'generator' | 'fragments'>): boolean {
   return message.generator?.tokenStopReason === 'client-abort' && message.fragments.length === 0;
 }
+
+// export function messageOnlyContainsPlaceholder(message: Pick<DMessage, 'fragments'>): boolean {
+//   return message.fragments.length === 1 && isVoidFragment(message.fragments[0]) && isPlaceholderPart(message.fragments[0].part);
+// }
 
 
 // helpers - user flags

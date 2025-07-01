@@ -59,7 +59,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
       responseSchema: undefined, // (default, optional) NOTE: for JSON output, we'd take the schema here
       candidateCount: undefined, // (default, optional)
       maxOutputTokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
-      ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
+      ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
       topP: undefined, // (default, optional)
       topK: undefined, // (default, optional)
     },
@@ -71,17 +71,63 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.topP = model.topP;
   }
 
-  // Thinking models: add showing the thinking trace
-  if (model.vndGeminiShowThoughts)
-    payload.generationConfig!.thinkingConfig = {
-      includeThoughts: true,
+  // Thinking models: thinking budget and show thoughts
+  if (model.vndGeminiShowThoughts === true || model.vndGeminiThinkingBudget !== undefined) {
+    const thinkingConfig: Exclude<TRequest['generationConfig'], undefined>['thinkingConfig'] = {};
+
+    // This seems deprecated keep it in case Gemini turns it on again
+    if (model.vndGeminiShowThoughts)
+      thinkingConfig.includeThoughts = true;
+
+    // 0 disables thinking explicitly
+    if (model.vndGeminiThinkingBudget !== undefined) {
+      if (model.vndGeminiThinkingBudget > 0)
+        thinkingConfig.includeThoughts = true;
+      thinkingConfig.thinkingBudget = model.vndGeminiThinkingBudget;
+    }
+
+    payload.generationConfig!.thinkingConfig = thinkingConfig;
+  }
+
+  // [Gemini, 2025-05-20] Experimental Audio generation (TTS - audio only, no text): Request
+  const noTextOutput = !model.acceptsOutputs.includes('text');
+  if (model.acceptsOutputs.includes('audio')) {
+
+    // (undocumented) Adapt the request
+    delete payload.systemInstruction;
+    delete payload.generationConfig!.maxOutputTokens; // maxOutputTokens is not supported for audio-only output
+    payload.generationConfig!.temperature = 1;
+
+    // activate audio (/only) output
+    payload.generationConfig!.responseModalities = noTextOutput ? ['AUDIO'] : ['TEXT', 'AUDIO'];
+
+    // default voice config - list here: https://ai.google.dev/gemini-api/docs/speech-generation#voices
+    payload.generationConfig!.speechConfig = {
+      voiceConfig: {
+        prebuiltVoiceConfig: {
+          voiceName: 'Zephyr',
+        },
+      },
     };
+  }
+  // [Gemini, 2025-03-14] Experimental Image generation: Request
+  else if (model.acceptsOutputs.includes('image')) {
+    payload.generationConfig!.responseModalities = noTextOutput ? ['IMAGE'] : ['TEXT', 'IMAGE'];
+    // 2025-03-14: both APIs v1alpha and v1beta do not support specifying the resolution
+    // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
+  }
+
+  // TODO: Google Search Grounding: for the models that support it, it shall be declared and runtime toggleable
+  // it then becomes just a metter of:
+  // - payload.tools = [...payload.tools, { googleSearch: {} }]; -- for most models
+  // - emitting the missing particles, parsing, rendering
+  // - working around the limitations and idiosyncrasies of the Search API
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
   if (!validated.success) {
     console.warn('Gemini: invalid generateContent payload. Error:', validated.error.message);
-    throw new Error(`Invalid sequence for Gemini models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+    throw new Error(`Invalid sequence for Gemini models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
   }
 
   return validated.data;
@@ -123,6 +169,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(GeminiWire_ContentParts.TextPart(part.text));
           break;
 
+        case 'inline_audio':
         case 'inline_image':
           parts.push(GeminiWire_ContentParts.InlineDataPart(part.mimeType, part.base64));
           break;
@@ -307,6 +354,7 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
     { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: threshold },
     { category: 'HARM_CATEGORY_HARASSMENT', threshold: threshold },
     { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: threshold },
+    { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: threshold },
   ];
 }
 

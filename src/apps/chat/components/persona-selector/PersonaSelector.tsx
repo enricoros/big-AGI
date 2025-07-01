@@ -23,7 +23,7 @@ import { navigateToPersonas } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { usePurposeStore } from './store-purposes';
 
@@ -247,7 +247,7 @@ export function PersonaSelector(props: {
       maxWidth: 'md',
       minWidth: `${2 + 1 + tileSize * 2}rem`, // accomodate at least 2 columns (scroll-x in case)
       mx: 'auto',
-      minHeight: '60svh',
+      minHeight: '90%', // was 60svh - looked too big on desktop stacked
       display: 'grid',
       px: { xs: 0.5, sm: 1, md: 2 },
       py: 2,

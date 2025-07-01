@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
@@ -11,7 +11,7 @@ import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure
 
 export const importChatGptShareInputSchema = z.union([
   z.object({
-    url: z.string().url().startsWith('https://chatgpt.com/share/'),
+    url: z.url().startsWith('https://chatgpt.com/share/'),
   }),
   z.object({
     htmlPage: z.string(),

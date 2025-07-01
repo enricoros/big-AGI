@@ -4,10 +4,9 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Checkbox, MenuList } from '@mui/joy';
 
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import { themeScalingMap } from '~/common/app.theme';
-import { useUIContentScaling } from '~/common/state/store-ui';
-
-import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
+import { adjustContentScaling, themeScalingMap, } from '~/common/app.theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 
 const gutterSx: SxProps = {
@@ -34,7 +33,8 @@ const headerSx: SxProps = {
   backgroundColor: 'background.level1',
   borderBottom: '1px solid',
   borderTop: '1px solid',
-  borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
+  borderTopColor: 'var(--joy-palette-neutral-outlinedDisabledBorder)',
+  borderBottomColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.05)',
 
   // mimics ListItem
   px: 'var(--ListItem-paddingX, 0.75rem)',
@@ -61,11 +61,17 @@ const headerSx: SxProps = {
       backgroundColor: 'background.level2',
     },
   },
+
+  // if expanded, soften the bottom border
+  '&[aria-expanded="false"]': {
+    backgroundColor: 'background.surface',
+    borderColor: 'transparent',
+  },
 };
 
 const headerTitleSx: SxProps = {
   color: 'text.tertiary',
-  fontSize: 'sm',
+  // fontSize: 'xs',
   fontWeight: 'lg',
 };
 
@@ -77,11 +83,16 @@ const groupListSx: SxProps = {
   borderRadius: 0,
   background: 'transparent',
   flexGrow: 0,
-  mb: OPTIMA_PANEL_GROUPS_SPACING,
+
+  // NOTE 2: removed the margin-bottom, so the spacing is used as gap only
+  // NOTE: switched to smaller margin on mobile, keeping it larger on desktop
+  // mb: { xs: 1, md: OPTIMA_PANEL_GROUPS_SPACING } as const,
+  // mb: OPTIMA_PANEL_GROUPS_SPACING,
+
   // fontSize: '0.9375rem', // 15px (14 too small, 16 too big?)
   // py: 0,
   // py: 'var(--ListDivider-gap)',
-};
+} as const;
 
 
 export function OptimaPanelGroupedList(props: {
@@ -97,7 +108,9 @@ export function OptimaPanelGroupedList(props: {
   const [_expanded, setExpanded] = React.useState(props.startExpanded === true);
 
   // external state
-  const contentScaling = useUIContentScaling();
+  const isMobile = useIsMobile();
+  const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
+  const smallerContentScaling = adjustContentScaling(contentScaling, -1);
 
   // derived state
   const isCollapsible = !!props.persistentCollapsibleId;
@@ -116,11 +129,12 @@ export function OptimaPanelGroupedList(props: {
       {/* Header */}
       {(!!props.title || isCollapsible) && (
         <Box
+          aria-expanded={isExpanded}
           onClick={isCollapsible ? toggleExpanded : undefined}
           role={isCollapsible ? 'button' : undefined}
           sx={headerSx}
         >
-          <Box sx={headerTitleSx}>{props.title}</Box>
+          <Box fontSize={smallerContentScaling} sx={headerTitleSx}>{props.title}</Box>
           {isCollapsible && <Checkbox size='md' variant='outlined' color='neutral' checked={isExpanded} />}
         </Box>
       )}

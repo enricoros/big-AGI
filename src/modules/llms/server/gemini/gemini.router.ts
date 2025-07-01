@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { env } from '~/server/env.mjs';
+import * as z from 'zod/v4';
+import { env } from '~/server/env';
 
 import packageJson from '../../../../../package.json';
 
@@ -8,10 +8,9 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
-import { fixupHost } from '~/common/util/urlUtils';
-
 import { ListModelsResponse_schema } from '../llm.server.types';
-import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
+import { geminiDevCheckForParserMisses_DEV, geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
+import { fixupHost } from '~/modules/llms/server/openai/openai.router';
 
 
 // Default hosts
@@ -98,6 +97,8 @@ export const llmGeminiRouter = createTRPCRouter({
       // get the models
       const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath, false);
       const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
+      geminiDevCheckForParserMisses_DEV(wireModels, detailedModels);
+      geminiDevCheckForSuperfluousModels_DEV(detailedModels.map(model => model.name));
 
       // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,
       //       as the List API already all the info on all the models
@@ -112,7 +113,7 @@ export const llmGeminiRouter = createTRPCRouter({
         .sort(geminiSortModels);
 
       return {
-        models: models,
+        models: geminiModelsAddVariants(models),
       };
     }),
 

@@ -2,11 +2,16 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 import { PanelGroup } from 'react-resizable-panels';
 
+import { GlobalDragOverlay } from '~/common/components/dnd-dt/GlobalDragOverlay';
 import { Is } from '~/common/util/pwaUtils';
 import { checkVisibleNav, navItems } from '~/common/app.nav';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
+
+import { ScratchClip } from './scratchclip/ScratchClip';
+import { scratchClipSupported } from './scratchclip/store-scratchclip';
+import { useGlobalClipboardSaver } from './scratchclip/useGlobalClipboardSaver';
 
 import { DesktopDrawer } from './drawer/DesktopDrawer';
 import { DesktopNav } from './nav/DesktopNav';
@@ -49,6 +54,10 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
   const { route } = useRouter();
   const isMobile = useIsMobile();
 
+  // external: clipboard snippet support
+  const supportsClip = scratchClipSupported();
+  useGlobalClipboardSaver(supportsClip);
+
   // derived state
   const currentApp = navItems.apps.find(item => item.route === route);
 
@@ -57,6 +66,8 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     // Preferences & Model dialogs
     { key: ',', ctrl: true, action: optimaOpenPreferences },
     { key: 'm', ctrl: true, shift: true, action: optimaOpenModels },
+    { key: 'g', ctrl: true, shift: true, action: optimaActions().openLogger },
+    { key: 'a', ctrl: true, shift: true, action: optimaActions().openAIXDebugger },
     // Font Scale
     { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
     { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
@@ -94,8 +105,14 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
     </PanelGroup>
 
+    {/* Global Window Overlay */}
+    {Is.Desktop && <GlobalDragOverlay />}
+
     {/* Overlay Modals */}
     <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+
+    {/* Shared Clipboard History */}
+    {supportsClip && <ScratchClip />}
 
   </>;
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Switch, Typography } from '@mui/joy';
+import { Box, Button, Switch, Tooltip, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -13,8 +13,8 @@ import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '~/modules
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
-import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageDocPart, DMessageFragmentId, DVMimeType, isDocPart, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -23,7 +23,29 @@ import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButto
 import { useLiveFileSync } from './livefile-sync/useLiveFileSync';
 
 
-function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
+// configuration
+const FALLBACK_NO_TITLE = 'Untitled Attachment';
+
+
+const _styles = {
+  button: {
+    minWidth: 100,
+  } as const,
+  titleDisabled: {
+    opacity: 0.5,
+  } as const,
+  titleEditable: {
+    cursor: 'pointer',
+    '&:hover': { textDecoration: 'underline' } as const,
+  } as const,
+  titleTextArea: {
+    minWidth: 200,
+    flexGrow: 1,
+  } as const,
+} as const;
+
+
+function _inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
   if (!isDocPart(attachmentFragment.part))
     return false;
   // just use the mime of the doc part
@@ -31,15 +53,9 @@ function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) 
 }
 
 
-const _styles = {
-  button: {
-    minWidth: 100,
-  } as const,
-} as const;
-
-
 export function DocAttachmentFragment(props: {
   fragment: DMessageAttachmentFragment,
+  controlledEditor: boolean,
   editedText?: string,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
   messageRole: DMessageRole,
@@ -47,12 +63,15 @@ export function DocAttachmentFragment(props: {
   isMobile: boolean,
   zenMode: boolean,
   disableMarkdownText: boolean,
-  onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
-  onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
 
   // state
-  const [viewAsCode, setViewAsCode] = React.useState(() => inferInitialViewAsCode(props.fragment));
+  const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+  const [viewAsCode, setViewAsCode] = React.useState(() => _inferInitialViewAsCode(props.fragment));
 
   // external state
   const workspaceId = useContextWorkspaceId();
@@ -60,8 +79,6 @@ export function DocAttachmentFragment(props: {
 
   // derived state
   const { editedText, fragment, onFragmentDelete, onFragmentReplace } = props;
-  const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
-  const [isEditing, setIsEditing] = React.useState(false);
 
 
   const fragmentId = fragment.fId;
@@ -70,26 +87,52 @@ export function DocAttachmentFragment(props: {
   if (!isDocPart(fragmentDocPart))
     throw new Error('Unexpected part type: ' + fragmentDocPart.pt);
 
-  const fragmentTitle = fragmentDocPart.l1Title || fragment.caption;
+  const fragmentTitle = fragmentDocPart.l1Title || fragment.caption; // what's this for?
   const reverseToolbar = props.messageRole === 'assistant';
+
+  const displayTitle = fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref || FALLBACK_NO_TITLE;
+
+  const showDeleteInstead = typeof editedText === 'string' && editedText.length === 0 && !!onFragmentDelete;
 
 
   // hooks
 
   const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
-    // replacement fragment (same fId)
-    const newFragment = updateFragmentWithEditedText(fragment, newText);
+    if (!onFragmentReplace) return;
 
-    // if not replaced, ignore the change
+    // replacement fragment (same fId), and stop if not replaced
+    const newFragment = updateFragmentWithEditedText(fragment, newText);
     if (!newFragment) return;
 
     // Note: this reuses the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
-    onFragmentReplace(fragmentId, newFragment as DMessageAttachmentFragment);
+    onFragmentReplace?.(fragmentId, newFragment as DMessageAttachmentFragment);
   }, [fragment, fragmentId, onFragmentReplace]);
 
   const handleReplaceFragmentLiveFileId = React.useCallback((liveFileId: LiveFileId) => {
-    onFragmentReplace(fragmentId, { ...fragment, liveFileId: liveFileId });
+    onFragmentReplace?.(fragmentId, { ...fragment, liveFileId: liveFileId });
   }, [fragment, fragmentId, onFragmentReplace]);
+
+
+  const handleTitleEditBegin = React.useCallback(() => {
+    if (!onFragmentReplace) return;
+    setIsEditing(false);
+    setIsEditingTitle(true);
+  }, [onFragmentReplace]);
+
+  const handleTitleEditCancel = React.useCallback(() => {
+    setIsEditingTitle(false);
+  }, []);
+
+  const handleTitleEditSave = React.useCallback((newTitle: string) => {
+    setIsEditingTitle(false);
+    if (!newTitle.trim() || newTitle === displayTitle || !onFragmentReplace) return;
+
+    // retitle the fragment, without changing Id
+    const newDocPart: DMessageDocPart = { ...fragmentDocPart, l1Title: newTitle, version: (fragmentDocPart?.version ?? 1) + 1 };
+    const newFragment: DMessageAttachmentFragment = { ...fragment, title: newTitle, part: newDocPart };
+
+    onFragmentReplace(fragment.fId, newFragment);
+  }, [displayTitle, fragment, fragmentDocPart, onFragmentReplace]);
 
 
   // LiveFile sync
@@ -110,7 +153,7 @@ export function DocAttachmentFragment(props: {
   // delete
 
   const handleFragmentDelete = React.useCallback(() => {
-    onFragmentDelete(fragmentId);
+    onFragmentDelete?.(fragmentId);
   }, [fragmentId, onFragmentDelete]);
 
   const handleToggleDeleteArmed = React.useCallback((event: React.MouseEvent) => {
@@ -130,21 +173,30 @@ export function DocAttachmentFragment(props: {
 
   const handleEditApply = React.useCallback(() => {
     setIsDeleteArmed(false);
+
+    if (props.controlledEditor) {
+      setIsEditing(false);
+      setIsEditingTitle(false); // just in case
+      return; // controlled editor, already applied, delete is only allowed via the button
+    }
+
     if (editedText === undefined)
       return;
 
-    if (editedText.length > 0) {
+    if (editedText.length > 0 || !onFragmentDelete) {
       handleReplaceDocFragmentText(editedText);
       setIsEditing(false);
+      setIsEditingTitle(false); // just in case
     } else {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText]);
+  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText, onFragmentDelete, props.controlledEditor]);
 
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
     if (!isEditing) {
+      setIsEditingTitle(false); // cancel title edit
       setIsDeleteArmed(false);
       // setIsLiveFileArmed(false);
       // resetLiveFileState();
@@ -162,6 +214,11 @@ export function DocAttachmentFragment(props: {
 
 
   // memoed components
+
+  const viewAsLabel =
+    !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
+      : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
+        : '';
 
   const headerTooltipContents = React.useMemo(() => (
     <Box sx={enhancedCodePanelTitleTooltipSx}>
@@ -181,51 +238,58 @@ export function DocAttachmentFragment(props: {
       <div>{fragmentId}</div>
       {!!fragment.caption && <div>Att. Caption</div>}
       {!!fragment.caption && <div>{fragment.caption}</div>}
+      <div>view as code</div>
+      <Switch
+        size='sm'
+        variant='solid'
+        color='neutral'
+        checked={viewAsCode}
+        onChange={handleToggleViewAsCode}
+        endDecorator={viewAsLabel}
+      />
     </Box>
-  ), [fragment.caption, fragment.title, fragmentDocPart, fragmentId]);
+  ), [fragment.caption, fragment.title, fragmentDocPart, fragmentId, handleToggleViewAsCode, viewAsCode, viewAsLabel]);
 
 
   const headerRow = React.useMemo(() => {
     const TitleIcon = buttonIconForFragment(fragmentDocPart);
 
-    const titleEndText =
-      !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
-        : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
-          : '';
-
     return <>
-      <TooltipOutlined color='neutral' placement='top-start' slowEnter title={headerTooltipContents}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
+
+        <Tooltip arrow variant='outlined' color='neutral' placement='top-start' title={headerTooltipContents}>
           {TitleIcon && <TitleIcon />}
-          <Typography level='title-sm'>
-            {fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}
+        </Tooltip>
+
+        {(!isEditingTitle || isEditing) ? (
+          <Typography
+            level='title-sm'
+            onClick={isEditing ? undefined : onFragmentReplace ? handleTitleEditBegin : undefined}
+            sx={isEditing ? _styles.titleDisabled : onFragmentReplace ? _styles.titleEditable : undefined}
+            className='agi-ellipsize'
+          >
+            {displayTitle}
           </Typography>
-        </Box>
-      </TooltipOutlined>
+        ) : (
+          <InlineTextarea
+            initialText={displayTitle}
+            placeholder='Document title'
+            onEdit={handleTitleEditSave}
+            onCancel={handleTitleEditCancel}
+            sx={_styles.titleTextArea}
+          />
+        )}
+
+      </Box>
 
       {/* Live File Control button */}
       {!isEditing && liveFileControlButton}
 
-      {/* Text / Code render switch (auto-detected) */}
-      {!props.zenMode && (
-        <Switch
-          size='sm'
-          variant='solid'
-          color='neutral'
-          checked={viewAsCode}
-          onChange={handleToggleViewAsCode}
-          startDecorator={
-            <Typography level='body-xs'>
-              {titleEndText}
-            </Typography>
-          }
-        />
-      )}
     </>;
-  }, [fragmentDocPart, handleToggleViewAsCode, headerTooltipContents, isEditing, liveFileControlButton, props.zenMode, viewAsCode]);
+  }, [displayTitle, fragmentDocPart, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditSave, headerTooltipContents, isEditing, isEditingTitle, liveFileControlButton, onFragmentReplace]);
 
 
-  const toolbarRow = React.useMemo(() => (
+  const toolbarRow = React.useMemo(() => (!onFragmentDelete && !onFragmentReplace) ? null : (
     <Box sx={{
       display: 'flex',
       flexDirection: !reverseToolbar ? 'row' : 'row-reverse',
@@ -235,44 +299,61 @@ export function DocAttachmentFragment(props: {
     }}>
 
       {/* Delete / Confirm */}
-      <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
-        {!isEditing && <Button
-          variant='soft'
-          color={DocSelColor}
-          size='sm'
-          onClick={handleToggleDeleteArmed}
-          startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-          sx={_styles.button}
-        >
-          {isDeleteArmed ? 'Cancel' : 'Delete'}
-        </Button>}
-        {isDeleteArmed && (
-          <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
-            Delete
-          </Button>
-        )}
-      </Box>
+      {!!onFragmentDelete && (
+        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
+          {!isEditing && <Button
+            variant='soft'
+            color={DocSelColor}
+            size='sm'
+            onClick={handleToggleDeleteArmed}
+            startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+            sx={_styles.button}
+          >
+            {isDeleteArmed ? 'Cancel' : 'Delete'}
+          </Button>}
+          {isDeleteArmed && (
+            <Button
+              variant='solid'
+              color='danger'
+              size='sm'
+              onClick={handleFragmentDelete}
+              startDecorator={<DeleteForeverIcon />}
+            >
+              Delete
+            </Button>
+          )}
+        </Box>
+      )}
 
       {/* Edit / Save */}
-      <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
-        <Button
-          variant='soft'
-          color={DocSelColor}
-          size='sm'
-          onClick={handleToggleEdit}
-          startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}
-          sx={_styles.button}
-        >
-          {isEditing ? 'Cancel' : 'Edit'}
-        </Button>
-        {isEditing && (
-          <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={_styles.button}>
-            Save
-          </Button>
-        )}
-      </Box>
+      {!!onFragmentReplace && (
+        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
+          {(!props.controlledEditor || !isEditing) && <Button
+            variant='soft'
+            color={DocSelColor}
+            size='sm'
+            onClick={handleToggleEdit}
+            startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}
+            sx={_styles.button}
+          >
+            {isEditing ? 'Cancel' : 'Edit'}
+          </Button>}
+          {isEditing && (
+            <Button
+              variant={props.controlledEditor ? 'soft' : 'solid'}
+              color={showDeleteInstead ? 'danger' : props.controlledEditor ? undefined : 'success'}
+              onClick={handleEditApply}
+              size='sm'
+              startDecorator={showDeleteInstead ? <DeleteForeverIcon /> : props.controlledEditor ? undefined : <CheckRoundedIcon />}
+              sx={_styles.button}
+            >
+              {!showDeleteInstead ? 'Save' : 'Delete'}
+            </Button>
+          )}
+        </Box>
+      )}
     </Box>
-  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, reverseToolbar]);
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, props.controlledEditor, reverseToolbar, showDeleteInstead]);
 
 
   return (
@@ -292,6 +373,7 @@ export function DocAttachmentFragment(props: {
           initialText={fragmentDocPart.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}
+          controlled={props.controlledEditor}
           editedText={editedText}
           setEditedText={props.setEditedText}
           squareTopBorder

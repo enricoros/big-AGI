@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
+import { useClientLoggerInterception } from '~/common/logger/hooks/useClientLoggerInterception';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
@@ -11,6 +12,9 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
   // external state
   const { route, events } = useRouter();
+
+  // AUTO-LOG events from this scope on; note that we are past the Sherpas
+  useClientLoggerInterception(true, false);
 
   // wire-up the NextJS router to a loading bar to be displayed while routes change
   useNextLoadProgress(route, events);

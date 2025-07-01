@@ -1,15 +1,15 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
-import { fixupHost } from '~/common/util/urlUtils';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { hardcodedAnthropicModels, hardcodedAnthropicVariants } from './anthropic.models';
+import { fixupHost } from '~/modules/llms/server/openai/openai.router';
 
 
 // configuration and defaults
@@ -17,11 +17,21 @@ const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
 const DEFAULT_ANTHROPIC_HEADERS = {
+  // Latest version hasn't changed (as of Feb 2025)
   'anthropic-version': '2023-06-01',
-  // 'anthropic-beta': [].join(','),
+
+  // Enable CORS for browsers - we don't use this
+  // 'anthropic-dangerous-direct-browser-access': 'true',
+
+  // Used for instance by Claude Code - shall we set it
+  // 'x-app': 'big-agi',
 } as const;
 
 const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
+
+  // NOTE: undocumented: I wonder what this is for
+  // 'claude-code-20250219',
+
   // NOTE: disabled for now, as we don't have tested side-effects for this feature yet
   // 'token-efficient-tools-2025-02-19', // https://docs.anthropic.com/en/docs/build-with-claude/tool-use/token-efficient-tool-use
 

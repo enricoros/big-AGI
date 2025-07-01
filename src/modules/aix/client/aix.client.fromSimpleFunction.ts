@@ -1,5 +1,4 @@
-import { ZodSchema } from 'zod';
-import { JsonSchema7ObjectType, zodToJsonSchema } from 'zod-to-json-schema';
+import * as z from 'zod/v4';
 
 import type { AixTools_FunctionCallDefinition } from '../server/api/aix.wiretypes';
 import { DMessageContentFragment, DMessageToolInvocationPart, DMessageVoidFragment, isContentFragment } from '~/common/stores/chat/chat.fragments';
@@ -17,7 +16,7 @@ export type AixClientFunctionCallToolDefinition = {
    * We only accept objects, not arrays - as downstream APIs have spotty implementation for non-object.
    * If the function does not take any inputs, use `Zod.object({})` or Zod.void().
    */
-  inputSchema: ZodSchema<object /*| void*/>;
+  inputSchema: z.ZodObject; // zod-4 object
 }
 
 
@@ -26,7 +25,19 @@ export type AixClientFunctionCallToolDefinition = {
  * @param functionCall
  */
 export function aixFunctionCallTool(functionCall: AixClientFunctionCallToolDefinition): AixTools_FunctionCallDefinition {
-  const { properties, required } = zodToJsonSchema(functionCall.inputSchema, { $refStrategy: 'none' }) as JsonSchema7ObjectType;
+
+  // convert a Zod schema to JSON Schema
+  const { properties, required } = z.toJSONSchema(functionCall.inputSchema, {
+    // config
+    io: 'input', // avoids AdditionalProperties by looking at the Zod schema from the input perspective
+    target: 'draft-2020-12', // (default) newest standard
+    reused: 'inline', // (default) inline reused schemas
+
+    // [DEV] makes sure we specify good tool definitions
+    cycles: 'throw',
+    unrepresentable: 'throw',
+  });
+
   const takesNoInputs = !Object.keys(properties || {}).length;
   return {
     type: 'function_call',
@@ -35,36 +46,13 @@ export function aixFunctionCallTool(functionCall: AixClientFunctionCallToolDefin
       description: functionCall.description,
       ...(!takesNoInputs && {
         input_schema: {
-          properties: _recursiveObjectSchemaCleanup(properties),
-          ...(required && { required }),
+          properties: properties as any, // FIXME: remove the 'as any' after the full migration to zod-4
+          ...(!!required?.length && {
+            required: required,
+          }),
         },
       }),
     },
-  };
-}
-
-
-/* Recursive function to clean up the Schema object, to:
- * - remove extra 'additionalProperties' keys
- * - reorder the keys of object/array description objects to be: ['type', 'description', ..., 'required']
- */
-function _recursiveObjectSchemaCleanup(obj: Record<string, any>, thisKey?: string): Record<string, any> {
-  if (typeof obj !== 'object' || obj === null)
-    return obj; // leaf node
-
-  const { additionalProperties: _, ...rest } = obj;
-
-  // 'properties' are ordered and we don't want to re-sort them
-  if (thisKey === 'properties') {
-    return Object.fromEntries(Object.entries(rest).map(([key, value]) => [key, _recursiveObjectSchemaCleanup(value, key)]));
-  }
-
-  const { type, description, required, ...others } = rest;
-  return {
-    ...(type && { type }),
-    ...(description && { description }),
-    ...Object.fromEntries(Object.entries(others).map(([key, value]) => [key, _recursiveObjectSchemaCleanup(value, key)])),
-    ...(required && { required }),
   };
 }
 

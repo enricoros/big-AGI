@@ -2,19 +2,32 @@ import * as React from 'react';
 import Router from 'next/router';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip } from '@mui/joy';
+import { Divider, Dropdown, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import CodeIcon from '@mui/icons-material/Code';
+import HistoryIcon from '@mui/icons-material/History';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 
+import { blocksRenderHTMLIFrameCss } from '~/modules/blocks/code/code-renderers/RenderCodeHtmlIFrame';
+
+import { BuildInfoCard } from '../../../../apps/news/AppNews';
+
+import { BaseProduct } from '~/common/app.release';
 import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
+import { FeatureBadge } from '~/common/components/FeatureBadge';
+import { GoodModal } from '~/common/components/modals/GoodModal';
+import { PhSquaresFour } from '~/common/components/icons/phosphor/PhSquaresFour';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import { BringTheLove } from './BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
-import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModals } from '../useOptima';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaDrawerPeeking, useOptimaModals } from '../useOptima';
+import { scratchClipSupported, useScratchClipVisibility } from '../scratchclip/store-scratchclip';
 
 
 const desktopNavBarSx: SxProps = {
@@ -34,12 +47,58 @@ const navItemsDividerSx: SxProps = {
 
 export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
+  // state
+  const [releaseNotesShown, setReleaseNotesShown] = React.useState(false);
+
+  /**
+   * NOTE: shall we fall back to the 'standard' release notes when not available on the tenant?
+   * - prob not because this could be a per-company deployment, and we don't know the tenant's release notes
+   */
+  const releaseNotesUrl = BaseProduct.ReleaseNotes;
+
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
+  const isDrawerPeeking = useOptimaDrawerPeeking();
+  const { showPromisedOverlay } = useOverlayComponents();
   const { showModels, showPreferences } = useOptimaModals();
+  const { peekDrawerEnter, peekDrawerLeave } = optimaActions();
+  const { isVisible: isScratchClipVisible, toggleVisibility: toggleScratchClipVisibility } = useScratchClipVisibility();
 
   // derived state
   const noLLMs = !useHasLLMs();
+
+
+  // handlers
+
+  const handleShowReleaseNotes = React.useCallback(async () => {
+    if (!releaseNotesUrl) return;
+    setReleaseNotesShown(true);
+    return await showPromisedOverlay('app-recent-changes', { rejectWithValue: false }, ({ onUserReject }) =>
+      <GoodModal
+        open
+        onClose={onUserReject}
+        noTitleBar
+        themedColor='neutral'
+        unfilterBackdrop
+        sx={{ minWidth: { xs: 400, sm: 580, md: 780, lg: 890 } }}
+      >
+        <iframe
+          src={releaseNotesUrl}
+          style={{ ...blocksRenderHTMLIFrameCss, height: '70svh' }}
+          title='Release Notes Embed'
+          loading='lazy' // do not load until visible in the viewport
+        />
+      </GoodModal>,
+    );
+  }, [releaseNotesUrl, showPromisedOverlay]);
+
+  const handleShowTechnologies = React.useCallback(async () => {
+    return await showPromisedOverlay<boolean>('app-recent-changes', { rejectWithValue: false }, ({ onUserReject }) =>
+      <GoodModal open onClose={onUserReject} noTitleBar unfilterBackdrop>
+        <BuildInfoCard noMargin />
+      </GoodModal>,
+    );
+  }, [showPromisedOverlay]);
 
 
   // show/hide the pane when clicking on the logo
@@ -65,7 +124,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       }
     });
 
-    // Application buttons (and group sepearator)
+    // Application buttons (and group separator)
     const components: React.JSX.Element[] = visibleApps.map((app, appIdx) => {
       const isActive = app === props.currentApp;
       const isDrawerable = isActive && !app.hideDrawer;
@@ -80,43 +139,94 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
             variant={isActive ? 'solid' : undefined}
             onPointerDown={isDrawerable ? optimaToggleDrawer : () => Router.push(app.landingRoute || app.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''} ${app.isDev ? navItemClasses.dev : ''}`}
+            sx={appIdx !== 0 ? undefined : { '--Icon-fontSize': '1.375rem!important' /* temp patch for the first icon, to go at 22px rather than 1.25rem (20px) */ }}
           >
-            {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
-            <app.icon />
+            {(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}
+            {/*<app.icon />*/}
           </DesktopNavIcon>
         </Tooltip>
       );
     });
 
-    // Overflow dropdown menu
-    if (overflowApps.length) {
-      components.push(
-        <Dropdown key='n-app-overflow'>
-          <Tooltip disableInteractive enterDelay={600} title='More Apps'>
-            <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
-              <MoreHorizIcon />
-            </MenuButton>
-          </Tooltip>
-          <Menu
-            variant='outlined'
-            placement='right-start'
-            popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [0, -2] } }] }}
-            sx={{ minWidth: 220 }}
-          >
-            {overflowApps.map((app, appIdx) =>
-              <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)}>
-                <ListItemDecorator>
-                  <app.icon />
-                </ListItemDecorator>
-                {app.name + (app.isDev ? ' [DEV]' : '')}
-              </MenuItem>,
-            )}
-          </Menu>
-        </Dropdown>,
-      );
-    }
+    components.push(
+      <Dropdown key='nav-quick-menu'>
+
+        <Tooltip disableInteractive enterDelay={600} title='Apps & Tools'>
+          <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
+            <PhSquaresFour />
+          </MenuButton>
+        </Tooltip>
+
+        <Menu
+          variant="outlined"
+          placement="right-start"
+          popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [0, -2] } }] }}
+          sx={{ minWidth: 260 }}
+        >
+
+          {/* APPS Section */}
+          {overflowApps.length > 0 && (
+            <>
+              <ListItem>
+                <Typography level="body-xs" sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
+                  Apps
+                </Typography>
+              </ListItem>
+              {overflowApps.map((app, appIdx) =>
+                <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)}>
+                  <ListItemDecorator>
+                    <app.icon />
+                  </ListItemDecorator>
+                  {app.name + (app.isDev ? ' [DEV]' : '')}
+                </MenuItem>,
+              )}
+              <ListDivider />
+            </>
+          )}
+
+          {/* QUICK TOOLS Section */}
+          <ListItem>
+            <Typography level="body-xs" sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
+              Quick Tools
+            </Typography>
+          </ListItem>
+          <MenuItem disabled={!scratchClipSupported()} onClick={toggleScratchClipVisibility}>
+            <ListItemDecorator><HistoryIcon /></ListItemDecorator>
+            {isScratchClipVisible ? 'Hide ' : ''}Clipboard {scratchClipSupported() ? 'History' : '(not supported)'}
+          </MenuItem>
+          <ListDivider />
+
+          {/* SUPPORT Section */}
+          <ListItem>
+            <Typography level="body-xs" sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
+              Support
+            </Typography>
+          </ListItem>
+          <ListItemButton component="a" href={BaseProduct.SupportForm()} target="_blank">
+            <ListItemDecorator><LightbulbOutlinedIcon /></ListItemDecorator>
+            I Have Feedback
+          </ListItemButton>
+          {!!releaseNotesUrl && (
+            <MenuItem onClick={handleShowReleaseNotes}>
+              <ListItemDecorator>
+                <FeatureBadge featureKey='nav-quick-menu' active={releaseNotesShown}>
+                  <CodeIcon />
+                </FeatureBadge>
+              </ListItemDecorator>
+              Release Notes
+            </MenuItem>
+          )}
+          <MenuItem onClick={handleShowTechnologies}>
+            {/*<ListItemDecorator><BuildCircleOutlinedIcon /></ListItemDecorator>*/}
+            <ListItemDecorator />
+            Build Info
+          </MenuItem>
+
+        </Menu>
+      </Dropdown>);
+
     return components;
-  }, [isDrawerOpen, props.currentApp]);
+  }, [toggleScratchClipVisibility, isScratchClipVisible, releaseNotesUrl, handleShowReleaseNotes, releaseNotesShown, handleShowTechnologies, props.currentApp, isDrawerOpen]);
 
 
   // External link items
@@ -152,8 +262,11 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       // attract the attention to the models configuration when no LLMs are available (a bit hardcoded here)
       const isAttractive = noLLMs && item.overlayId === 'models';
 
+      // skip the models configuration, unless it is required
+      if (item.overlayId === 'models' && !isAttractive) return null;
+
       return (
-        <Tooltip followCursor key={'n-m-' + item.overlayId} title={isAttractive ? 'Add Language Models - REQUIRED' : item.name}>
+        <Tooltip key={'n-m-' + item.overlayId} title={isAttractive ? 'Add Language Models - REQUIRED' : item.name}>
           <DesktopNavIcon
             variant={isActive ? 'soft' : undefined}
             onClick={showModal}
@@ -163,7 +276,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
           </DesktopNavIcon>
         </Tooltip>
       );
-    });
+    }).filter(component => !!component); // filter out null components
   }, [noLLMs, showModels, showPreferences]);
 
 
@@ -173,16 +286,18 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       component={props.component}
       direction='vertical'
       sx={desktopNavBarSx}
+      onMouseEnter={appUsesDrawer ? peekDrawerEnter : undefined}
+      onMouseLeave={peekDrawerLeave}
     >
 
       <InvertedBarCornerItem>
-        <Tooltip disableInteractive title={isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer'}>
+        <Tooltip disableInteractive title={isDrawerPeeking ? 'Pin Drawer' : (isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer')}>
           <DesktopNavIcon
             disabled={!logoButtonTogglesPane}
             onPointerDown={logoButtonTogglesPane ? optimaToggleDrawer : undefined}
             className={navItemClasses.typeMenu}
           >
-            {logoButtonTogglesPane ? <MenuIcon /> : <BigAgiSquircleIcon inverted sx={{ color: 'white' }} />}
+            {logoButtonTogglesPane ? (isDrawerPeeking ? <PushPinOutlinedIcon sx={{ fontSize: 'xl', transform: 'rotate(45deg)' }} /> : <MenuIcon />) : <BigAgiSquircleIcon inverted sx={{ color: 'white' }} />}
           </DesktopNavIcon>
         </Tooltip>
       </InvertedBarCornerItem>

@@ -13,9 +13,12 @@ type UidScope =
   | 'chat-ephemerals-item'
   | 'chat-folders-item'
   | 'chat-pane'
+  | 'clip-history'
   | 'dblob-asset'
   | 'draw-prompt'
+  | 'event-id'
   | 'livefile-item'
+  | 'logger'
   | 'persona-creator-chain'
   | 'persona-simple'
   | 'processing-queue-task'
@@ -29,7 +32,7 @@ type UidScope =
 
 /**
  * Application-wide unique identifier generator
- * @param _scope Does not influcence the ID generation, but is used to index all the IDs in the application
+ * @param _scope Does not influence the ID generation, but is used to index all the IDs in the application
  */
 export function agiUuid(_scope: Exclude<UidScope, 'chat-dfragment'>) {
   return nanoid();

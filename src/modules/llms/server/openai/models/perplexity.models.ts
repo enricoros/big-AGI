@@ -1,65 +1,112 @@
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+
+
+// configuration
+const PERPLEXITY_ENABLE_VARIANTS = false; // enable variants for Perplexity models
+
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
 
-  // Current Perplexity Models
+  // Research Models
   {
-    id: 'sonar-reasoning-pro',
-    label: 'Sonar Reasoning Pro 🌐',
-    description: 'Advanced reasoning model (128k) with 8k max output tokens and search subsystem',
+    id: 'sonar-deep-research',
+    label: 'Sonar Deep Research 🌐',
+    description: 'Expert-level research model for exhaustive searches and comprehensive reports. 128k context.',
     contextWindow: 128000,
-    maxCompletionTokens: 8000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort' }, // REUSE!
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 2,
       output: 8,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Full pricing: $2/1M input, $8/1M output, $2/1M citation, $5/1k searches, $3/1M reasoning tokens
+    },
+  },
+
+  // Reasoning Models
+  {
+    id: 'sonar-reasoning-pro',
+    label: 'Sonar Reasoning Pro 🌐',
+    description: 'Premier reasoning model (DeepSeek R1) with Chain of Thought. 128k context.',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
+    chatPrice: {
+      input: 2,
+      output: 8,
+      // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
     },
   },
   {
     id: 'sonar-reasoning',
     label: 'Sonar Reasoning 🌐',
-    description: 'Advanced reasoning model with 128k context window. Based on DeepSeek R1.',
+    description: 'Fast, real-time reasoning model for quick problem-solving with search. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 1,
       output: 5,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Per-request pricing: $12(High), $8(Medium), $5(Low) per 1k requests
     },
   },
+
+  // Search Models
   {
     id: 'sonar-pro',
     label: 'Sonar Pro 🌐',
-    description: 'Advanced model with enhanced search capabilities and 200k context window',
+    description: 'Advanced search model for complex queries and deep content understanding. 200k context.',
     contextWindow: 200000,
     maxCompletionTokens: 8000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 3,
       output: 15,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
     },
   },
   {
     id: 'sonar',
     label: 'Sonar 🌐',
-    description: 'Base model with 128k context window',
+    description: 'Lightweight, cost-effective search model for quick, grounded answers. 128k context.',
     contextWindow: 128000,
-    maxCompletionTokens: 4000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
+      { paramId: 'llmVndPerplexitySearchMode' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
     chatPrice: {
       input: 1,
       output: 1,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Per-request pricing: $12(High), $8(Medium), $5(Low) per 1k requests
     },
   },
+
+  // Offline Models
   {
     id: 'r1-1776',
     label: 'R1-1776',
-    description: 'Offline chat model with 128k context, does not use search subsystem',
+    description: 'Offline chat model (DeepSeek R1) for uncensored, unbiased, and factual information. 128k context.',
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: {
@@ -69,72 +116,36 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     },
   },
 
-  // Legacy Models (to be deprecated after 2/22/2025)
-  {
-    id: 'llama-3.1-sonar-small-128k-online',
-    label: 'Sonar Small Online (Legacy)',
-    description: 'Llama 3.1 Sonar Small 128k Online (Legacy, deprecated after 2/22/2025)',
-    contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: {
-      input: 0.2,
-      output: 0.2,
-      // Note: also has $5 per 1000 requests cost
-    },
-    hidden: true,
-  },
-  {
-    id: 'llama-3.1-sonar-large-128k-online',
-    label: 'Sonar Large Online (Legacy)',
-    description: 'Llama 3.1 Sonar Large 128k Online (Legacy, deprecated after 2/22/2025)',
-    contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: {
-      input: 1,
-      output: 1,
-      // Note: also has $5 per 1000 requests cost
-    },
-    hidden: true,
-  },
-  {
-    id: 'llama-3.1-sonar-huge-128k-online',
-    label: 'Sonar Huge Online (Legacy)',
-    description: 'Llama 3.1 Sonar Huge 128k Online (Legacy, deprecated after 2/22/2025)',
-    contextWindow: 127000,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: {
-      input: 5,
-      output: 5,
-      // Note: also has $5 per 1000 requests cost
-    },
-    hidden: true,
-  },
 ];
 
-const perplexityAIModelFamilyOrder = [
-  'sonar-reasoning-pro',
-  'sonar-reasoning',
-  'sonar-pro',
-  'sonar',
-  'r1-1776',
-  'llama-3.1-sonar-huge',
-  'llama-3.1-sonar-large',
-  'llama-3.1-sonar-small',
-  '',
-];
+export function perplexityInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
+
+  // Variant: academic deep research
+  if (PERPLEXITY_ENABLE_VARIANTS && model.id === 'sonar-deep-research') {
+    models.push({
+      ...model,
+      idVariant: 'academic',
+      label: 'Sonar Deep Research (Academic) 🌐',
+      description: 'Expert-level research model with academic sources only. Searches scholarly databases, peer-reviewed papers, and academic publications. 128k context.',
+      parameterSpecs: [
+        // Fixed parameters for academic search
+        { paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium', hidden: true },
+        { paramId: 'llmVndPerplexitySearchMode', initialValue: 'academic', hidden: true },
+        { paramId: 'llmForceNoStream', initialValue: true, hidden: true },
+        // Free parameters
+        // { paramId: 'llmVndOaiReasoningEffort', initialValue: 'medium' },
+        { paramId: 'llmVndPerplexityDateFilter' },
+      ],
+    } satisfies ModelDescriptionSchema);
+  }
+
+  // Add the base model
+  models.push(model);
+
+  return models;
+}
 
 export function perplexityAIModelDescriptions() {
   // Returns the list of known Perplexity models
   return _knownPerplexityChatModels;
-}
-
-export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
-  const aPrefixIndex = perplexityAIModelFamilyOrder.findIndex((prefix) => a.id.startsWith(prefix));
-  const bPrefixIndex = perplexityAIModelFamilyOrder.findIndex((prefix) => b.id.startsWith(prefix));
-  // Sort by family order
-  if (aPrefixIndex !== -1 && bPrefixIndex !== -1) {
-    if (aPrefixIndex !== bPrefixIndex) return aPrefixIndex - bPrefixIndex;
-  }
-  // Then sort by label in reverse order
-  return b.label.localeCompare(a.label);
 }

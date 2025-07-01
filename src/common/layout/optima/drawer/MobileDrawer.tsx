@@ -4,6 +4,7 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
+import { MobileNavItems } from '../nav/MobileNavItems';
 import { OPTIMA_DRAWER_BACKGROUND, OPTIMA_DRAWER_MOBILE_RADIUS } from '../optima.config';
 import { optimaCloseDrawer, useOptimaDrawerOpen } from '../useOptima';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
@@ -15,9 +16,16 @@ function DrawerContentPortal() {
     <Box
       ref={drawerPortalRef}
       sx={{
+        // make this compressible
+        overflow: 'hidden',
+        // expand to fix - note: relies on contents being scrollable
         flex: 1,
+        // layout: column
         display: 'flex',
         flexDirection: 'column',
+        // (optional) style: cast shadow to the nav items
+        // zIndex: 1,
+        // boxShadow: '0 2px 4px rgb(var(--joy-palette-neutral-darkChannel) / 14%)',
       }}
     />
   );
@@ -50,7 +58,7 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
       open={isDrawerOpen}
       onClose={optimaCloseDrawer}
       sx={{
-        '--Drawer-horizontalSize': 'clamp(var(--AGI-Drawer-width), 30%, 100%)',
+        '--Drawer-horizontalSize': 'round(clamp(30%, var(--AGI-Mobile-Drawer-width), 100%), 1px)',
         '--Drawer-transitionDuration': '0.2s',
         // '& .MuiDrawer-paper': {
         //   width: 256,
@@ -58,18 +66,28 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
         // },
       }}
       slotProps={{
+        backdrop: {
+          sx: {
+            backdropFilter: 'none',
+          },
+        },
         content: {
           sx: {
             // style: round the right drawer corners
             backgroundColor: OPTIMA_DRAWER_BACKGROUND,
             borderTopRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
             borderBottomRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+            // boxShadow: 'none',
           },
         },
       }}
     >
 
+      {/* Insertion point for the Drawer - expands even if empty */}
       <DrawerContentPortal />
+
+      {/* [Mobile] Nav Items */}
+      <MobileNavItems currentApp={props.currentApp} />
 
     </Drawer>
   );

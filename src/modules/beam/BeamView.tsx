@@ -8,7 +8,7 @@ import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/u
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { useUICounter } from '~/common/state/store-ui';
+import { useUICounter } from '~/common/stores/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
 import { BeamFusionGrid } from './gather/BeamFusionGrid';
@@ -87,9 +87,9 @@ export function BeamView(props: {
     }
   }, [props.beamStore]);
 
-  const handleScatterStart = React.useCallback(() => {
+  const handleScatterStart = React.useCallback((restart: boolean) => {
     setHasAutoMerged(false);
-    startScatteringAll();
+    startScatteringAll(restart);
   }, [startScatteringAll]);
 
 
@@ -141,7 +141,7 @@ export function BeamView(props: {
 
   // intercept ctrl+enter and esc
   useGlobalShortcuts('BeamView', React.useMemo(() => [
-    { key: ShortcutKey.Enter, ctrl: true, action: handleScatterStart, disabled: isScattering, level: 1 },
+    { key: ShortcutKey.Enter, ctrl: true, action: () => handleScatterStart(false), disabled: isScattering, level: 1 },
     ...(isScattering ? [{ key: ShortcutKey.Esc, action: stopScatteringAll, level: 10 + 1 /* becasuse > ChatBarAltBeam */ }] : []),
   ], [handleScatterStart, isScattering, stopScatteringAll]));
 
@@ -158,7 +158,8 @@ export function BeamView(props: {
       // ...props.sx,
 
       // enter animation
-      animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
+      // NOTE: disabled: off-putting/confusing when the beam content is large - things won't combine nicely
+      // animation: `${animationEnterScaleUp} 5s cubic-bezier(.17,.84,.44,1)`,
 
       // config
       '--Pad': { xs: '1rem', md: '1.5rem' },
@@ -190,6 +191,7 @@ export function BeamView(props: {
         showRayAdd={!cardAdd}
         startEnabled={inputReady}
         startBusy={isScattering}
+        startRestart={!props.isMobile && raysReady >= 1 && raysReady < raysCount && !isScattering}
         onStart={handleScatterStart}
         onStop={stopScatteringAll}
         onExplainerShow={explainerShow}

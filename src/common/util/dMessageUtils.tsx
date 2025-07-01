@@ -4,7 +4,6 @@ import TimeAgo from 'react-timeago';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box } from '@mui/joy';
 import Face6Icon from '@mui/icons-material/Face6';
-import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
@@ -17,6 +16,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DMessage, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
 import type { UIComplexityMode } from '~/common/app.theme';
+import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { formatModelsCost } from '~/common/util/costUtils';
 
@@ -74,15 +74,18 @@ const tooltipMetricsGridSx: SxProps = {
   // grid of 2 columns, the first fits the labels, the other expends with the values
   display: 'grid',
   gridTemplateColumns: 'auto 1fr',
-  gap: 0.5,
+  columnGap: 1,
+  rowGap: 0.5,
 };
 
 
 /** Whole message background color, based on the message role and state */
-export function messageBackground(messageRole: DMessageRole | string, wasEdited: boolean, isAssistantIssue: boolean): string {
+export function messageBackground(messageRole: DMessageRole | string, userCommand: 'draw' | 'react' | false, wasEdited: boolean, isAssistantIssue: boolean): string {
   switch (messageRole) {
     case 'user':
-      return 'primary.plainHoverBg'; // was .background.level1
+      return userCommand === 'draw' ? 'warning.softActiveBg'
+        : userCommand === 'react' ? 'success.softHoverBg'
+          : 'primary.plainHoverBg'; // was .background.level1
     case 'assistant':
       return isAssistantIssue ? 'danger.softBg' : 'background.surface';
     case 'system':
@@ -127,7 +130,10 @@ export function makeMessageAvatarIcon(
 
     case 'assistant':
       const isDownload = messageGeneratorName === 'web';
-      const isTextToImage = messageGeneratorName === 'DALL·E' || messageGeneratorName === 'Prodia';
+      const isTextToImage =
+        messageGeneratorName?.startsWith('GPT Image') // sync this with t2i.client.ts
+        || messageGeneratorName?.startsWith('DALL·E')
+        || messageGeneratorName === 'Prodia';
       const isReact = messageGeneratorName?.startsWith('react-');
 
       // Extra appearance
@@ -159,7 +165,7 @@ export function makeMessageAvatarIcon(
 
       // mode: text-to-image
       if (isTextToImage)
-        return <FormatPaintOutlinedIcon sx={!messageIncomplete ? avatarIconSx : {
+        return <PhPaintBrush sx={!messageIncomplete ? avatarIconSx : {
           ...avatarIconSx,
           animation: `${animationColorRainbow} 1s linear infinite`,
         }} />;
@@ -192,8 +198,18 @@ export function useMessageAvatarLabel(
   messageParts: Pick<DMessage, 'generator' | 'pendingIncomplete' | 'created' | 'updated'> | undefined,
   complexity: UIComplexityMode,
 ): { label: React.ReactNode; tooltip: React.ReactNode } {
+
   // we do this for performance reasons, to only limit re-renders to these parts of the message
   const { generator, pendingIncomplete, created, updated } = messageParts || {};
+
+  // OPTIMIZATION - THIS COULD BACKFIRE - THE ICON MAY NOT BE UPDATED AS OFTEN AS WE NEED
+  // -> we will only trigger updates on: updated, pendingIncomplete changes, name changes
+  // generator will change at every step (due to some structuredClone in AIX); we choose to 'lag' behind it and
+  // refresh this when other variables change
+  const laggedGeneratorRef = React.useRef<DMessageGenerator | undefined>(undefined);
+  laggedGeneratorRef.current = generator;
+  const generatorName = generator?.name ?? '';
+
   return React.useMemo(() => {
     if (created === undefined) {
       return {
@@ -201,6 +217,7 @@ export function useMessageAvatarLabel(
         tooltip: null,
       };
     }
+    const generator = laggedGeneratorRef.current;
     if (!generator) {
       return {
         label: 'unk-model',
@@ -209,7 +226,7 @@ export function useMessageAvatarLabel(
     }
 
     // incomplete: just the name
-    const prettyName = prettyShortChatModelName(generator.name);
+    const prettyName = prettyShortChatModelName(generatorName);
     if (pendingIncomplete)
       return {
         label: prettyName,
@@ -231,7 +248,7 @@ export function useMessageAvatarLabel(
     const modelId = generator.aix?.mId ?? null;
     const vendorId = generator.aix?.vId ?? null;
     const VendorIcon = (vendorId && complexity !== 'minimal') ? findModelVendor(vendorId)?.Icon : null;
-    const metrics = generator.metrics ? _prettyMetrics(generator.metrics) : null;
+    const metrics = generator.metrics ? _prettyMetrics(generator.metrics, complexity) : null;
     const stopReason = generator.tokenStopReason ? _prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
 
     // aix tooltip: more details
@@ -247,13 +264,21 @@ export function useMessageAvatarLabel(
         </Box>
       ),
     };
-  }, [complexity, created, generator, pendingIncomplete, updated]);
+  }, [complexity, created, generatorName, pendingIncomplete, updated]);
 }
 
-function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode {
+function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode: UIComplexityMode): React.ReactNode {
   if (!metrics) return null;
+
+  const showWaitingTime = metrics?.dtStart !== undefined && (uiComplexityMode === 'extra' || metrics.dtStart >= 10000);
+  const showSpeedSection = uiComplexityMode !== 'minimal' && (showWaitingTime || metrics?.vTOutInner !== undefined);
+  const showTimeSection = showSpeedSection && !!metrics?.dtAll;
+
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
+
   return <Box sx={tooltipMetricsGridSx}>
+
+    {/* Tokens */}
     {metrics?.TIn !== undefined && <div>Tokens:</div>}
     {metrics?.TIn !== undefined && <div>
       {' '}<b>{metrics.TIn?.toLocaleString() || ''}</b> in
@@ -263,6 +288,18 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode 
       {metrics.TOutR !== undefined && <> (<b>{metrics.TOutR?.toLocaleString() || ''}</b> for reasoning)</>}
       {/*{metrics.TOutA !== undefined && <> (<b>{metrics.TOutA?.toLocaleString() || ''}</b> for audio)</>}*/}
     </div>}
+
+    {/* Timings */}
+    {showSpeedSection && <div>Speed:</div>}
+    {showSpeedSection && <div>
+      {!!metrics.vTOutInner && <>~<b>{(Math.round(metrics.vTOutInner * 10) / 10).toLocaleString() || ''}</b> tok/s</>}
+      {showWaitingTime && (<span style={{ opacity: 0.5 }}>
+        {metrics.vTOutInner !== undefined && ' · '}
+        <span>{(Math.round(metrics.dtStart! / 100) / 10).toLocaleString() || ''}</span>s wait
+      </span>)}
+    </div>}
+
+    {/* Costs */}
     {metrics?.$c !== undefined && <div>Costs:</div>}
     {metrics?.$c !== undefined && <div>
       <b>{formatModelsCost(metrics.$c / 100)}</b>
@@ -274,8 +311,12 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode 
         })</small>
       </>}
     </div>}
-    {costCode && <div />}
+    {costCode && <div>{metrics?.$c !== undefined ? 'Costs:' : ''}</div>}
     {costCode && <div><em>{costCode}</em></div>}
+
+    {/* Time */}
+    {showTimeSection && <div>Time:</div>}
+    {showTimeSection && <div><b>{(Math.round(metrics.dtAll! / 100) / 10).toLocaleString()}</b> s</div>}
   </Box>;
 }
 
@@ -310,6 +351,10 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
 }
 
 
+const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|chatgpt-4o|computer-use-/;
+const geminiRegex = /gemini-|gemma-|learnlm-/;
+
+
 /** Pretty name for a chat model ID - VERY HARDCODED - shall use the Avatar Label-style code instead */
 export function prettyShortChatModelName(model: string | undefined): string {
   if (!model) return '';
@@ -317,31 +362,34 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // TODO: fully reform this function to be using information from the DLLM, rather than this manual mapping
 
   // [OpenAI]
-  if (model.endsWith('-o1')) return 'o1';
-  if (model.includes('o1-')) {
-    if (model.includes('o1-mini')) return 'o1 Mini';
-    if (model.includes('o1-preview')) return 'o1 Preview';
-    return 'o1';
-  }
-  if (model.includes('o3-')) {
-    if (model.includes('o3-mini')) return 'o3 Mini';
-    return 'o3';
-  }
-  if (model.includes('chatgpt-4o-latest')) return 'ChatGPT 4o';
-  if (model.includes('gpt-4')) {
-    if (model.includes('gpt-4o-mini')) return 'GPT-4o mini';
-    if (model.includes('gpt-4o')) return 'GPT-4o';
-    if (model.includes('gpt-4-0125-preview')
-      || model.includes('gpt-4-1106-preview')
-      || model.includes('gpt-4-turbo')
-    ) return 'GPT-4 Turbo';
-    if (model.includes('gpt-4-32k')) return 'GPT-4-32k';
-    return 'GPT-4';
-  }
-  if (model.includes('gpt-3')) {
-    if (model.includes('gpt-3.5-turbo-instruct')) return 'GPT-3.5 Turbo Instruct';
-    if (model.includes('gpt-3.5-turbo')) return 'GPT-3.5 Turbo';
-    if (model.includes('gpt-35-turbo')) return 'GPT-3.5 Turbo';
+  let prefixIndex = model.search(oaiORegex);
+  if (prefixIndex !== -1) {
+    let cutModel = prefixIndex === -1 ? model : model.slice(prefixIndex);
+    // remove version: cut before the '-202..' if present
+    const versionIndex = cutModel.search(/-20\d{2}/);
+    if (versionIndex !== -1) cutModel = cutModel.slice(0, versionIndex);
+    return cutModel
+      .replace('chatgpt-', 'ChatGPT_')
+      .replace('gpt-', 'GPT_')
+      // feature variants
+      .replace('-audio', ' Audio')
+      .replace('-realtime-preview', ' Realtime')
+      .replace('-realtime', ' Realtime')
+      .replace('-search-preview', ' Search')
+      .replace('-search', ' Search')
+      .replace('-tts', ' TTS')
+      .replace('-turbo', ' Turbo')
+      // price variants
+      .replace('-pro', ' Pro')
+      .replace('-preview', ' (preview)')
+      // .replace('-latest', ' latest') // covered by catch-all
+      // size (covered by catch-all)
+      // .replace('-mini', ' mini')
+      // .replace('-micro', ' micro')
+      // .replace('-nano', ' nano')
+      // catch-all
+      .replaceAll('-', ' ')
+      .replaceAll('_', '-');
   }
   // [LocalAI?]
   if (model.endsWith('.bin')) return model.slice(0, -4);
@@ -359,12 +407,34 @@ export function prettyShortChatModelName(model: string | undefined): string {
   const prettyAnthropic = _prettyAnthropicModelName(model);
   if (prettyAnthropic) return prettyAnthropic;
   // [Gemini]
-  if (model.includes('gemini-')) {
-    return model.replaceAll('-', ' ')
+  prefixIndex = model.search(geminiRegex);
+  if (prefixIndex !== -1) {
+    let cutModel = prefixIndex === -1 ? model : model.slice(prefixIndex);
+    // Check for -NN-NN at the end (e.g., -05-15)
+    let datePattern = '';
+    const dateMatch = cutModel.match(/-(\d{2}-\d{2})$/);
+    if (dateMatch) {
+      datePattern = ' ' + dateMatch[1]; // extract '05-15'
+      cutModel = cutModel.slice(0, cutModel.length - dateMatch[0].length); // remove '-05-15'
+    }
+    const geminiName = cutModel
+      .replace('non-thinking', '') // NOTE: this is our variant, injected in gemini.models.ts
+      .replaceAll('-', ' ')
+      // products
       .replace('gemini', 'Gemini')
+      .replace('gemma', 'Gemma')
+      .replace('learnlm', 'LearnLM')
+      // price variants
       .replace('pro', 'Pro')
       .replace('flash', 'Flash')
-      .replace('thinking', 'Thinking');
+      // feature variants
+      .replace('generation', 'Gen')
+      .replace('image', 'Image')
+      .replace('thinking', 'Thinking')
+      .replace('preview', '')
+      .replace('experimental', 'exp')
+      .replace('exp', '(exp)');
+    return geminiName + datePattern;
   }
   // [Deepseek]
   if (model.includes('deepseek-')) {
@@ -384,11 +454,19 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Ollama]
   if (model.includes(':'))
     return model.replace(':latest', '').replaceAll(':', ' ');
+  // [Perplexity]
+  if (model.includes('sonar-')) {
+    // capitalize each component of the name, e.g. 'sonar-pro' -> 'Sonar Pro'
+    return model.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  }
   // [xAI]
   if (model.includes('grok-')) {
-    if (model.includes('grok-3')) return 'Grok 3';
-    if (model.includes('grok-2-vision')) return 'Grok 2 Vision';
-    if (model.includes('grok-2')) return 'Grok 2';
+    if (model.includes('grok-3') || model.includes('grok-2')) {
+      return model
+        .replace('xai-', '')
+        .replace('-beta', '')
+        .split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    }
     if (model.includes('grok-beta')) return 'Grok Beta';
     if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
   }
@@ -402,14 +480,27 @@ export function prettyShortChatModelName(model: string | undefined): string {
 }
 
 function _prettyAnthropicModelName(modelId: string): string | null {
-  const claudeIndex = modelId.indexOf('claude-3');
-  if (claudeIndex === -1) return null;
+  if (modelId.indexOf('claude-') === -1) return null; // not a Claude model
+
+  // must match any known prefix
+  let claudeIndex = -1;
+  const claudePrefixes = ['claude-opus-4', 'claude-sonnet-4', 'claude-haiku-4', 'claude-3', 'claude-2'];
+  for (const prefix of claudePrefixes) {
+    const index = modelId.indexOf(prefix);
+    if (index !== -1) {
+      claudeIndex = index;
+      break;
+    }
+  }
 
   const subStr = modelId.slice(claudeIndex);
   const version =
-    subStr.includes('-3-7-') ? '3.7'
-      : subStr.includes('-3-5-') ? '3.5'
-        : '3';
+    subStr.includes('-5') ? '5'
+      : subStr.includes('-4') ? '4'
+        : subStr.includes('-3-7') ? '3.7'
+          : subStr.includes('-3-5') ? '3.5'
+            : subStr.includes('-3') ? '3'
+              : '?';
 
   if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
   if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;

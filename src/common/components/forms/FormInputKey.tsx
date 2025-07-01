@@ -5,19 +5,25 @@ import KeyIcon from '@mui/icons-material/Key';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import { getIsMobile } from '~/common/components/useMatchMedia';
+
 
 export function FormInputKey(props: {
   autoCompleteId: string, // introduced to avoid clashes
   label?: string, rightLabel?: string | React.JSX.Element,
   description?: string | React.JSX.Element,
   value: string, onChange: (value: string) => void,
-  placeholder?: string, isVisible?: boolean,
+  placeholder?: string,
+  initiallyShowKey?: boolean,
   required: boolean, isError?: boolean,
   noKey?: boolean,
 }) {
 
   // internal state is only whether the text is visible or not - the actual value is stored in the parent
-  const [isVisible, setIsVisible] = React.useState(!!props.isVisible);
+  const [isVisible, setIsVisible] = React.useState(!!props.initiallyShowKey);
+
+  // if mobile, start without autocompletion
+  const disableAutoFocus = getIsMobile();
 
   const handleChange = (e: React.ChangeEvent) => props.onChange((e.target as HTMLInputElement).value);
 
@@ -43,7 +49,7 @@ export function FormInputKey(props: {
         key={acId}
         name={acId}
         autoComplete='off'
-        autoFocus={!props.required ? undefined : props.value ? undefined : true}
+        autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
         // autoComplete={props.noKey ? 'off' : 'new-password'}
         variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
         value={props.value} onChange={handleChange}

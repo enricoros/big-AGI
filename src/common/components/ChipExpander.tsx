@@ -4,7 +4,7 @@ import { Chip, chipClasses } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
-const _chipExpanderSx = {
+export const chipExpanderSx = {
   px: 1.5,
   [`& .${chipClasses.endDecorator}`]: {
     transition: 'transform 0.2s',
@@ -28,7 +28,7 @@ export function ChipExpander(props: {
       onClick={props.onToggleExpanded}
       endDecorator={<KeyboardArrowDownIcon />}
       aria-expanded={props.expanded}
-      sx={_chipExpanderSx}
+      sx={chipExpanderSx}
     >
       {props.text}
     </Chip>

@@ -90,7 +90,8 @@ export function RenderCodePanelFrame(props: {
       // borderBottomRightRadius: 0,
       // layout
       display: 'flex',
-      flexWrap: 'wrap',
+      flexWrap: 'nowrap', // changed on 2025-06-18 to have a single row
+      // flexWrap: 'wrap',
       justifyContent: 'space-between',
       alignItems: 'center',
       gap: 1,

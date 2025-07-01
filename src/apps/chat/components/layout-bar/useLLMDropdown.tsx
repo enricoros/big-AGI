@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Box, IconButton, ListItemButton, ListItemDecorator } from '@mui/joy';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -17,6 +18,7 @@ import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useUIComplexityMode } from '~/common/stores/store-ui';
 
 
 function LLMDropdown(props: {
@@ -29,6 +31,10 @@ function LLMDropdown(props: {
 
   // state
   const [filterString, setfilterString] = React.useState<string | null>(null);
+
+  // external state
+  const uiComplexityMode = useUIComplexityMode();
+  const showSymbols = uiComplexityMode !== 'minimal';
 
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
@@ -46,7 +52,7 @@ function LLMDropdown(props: {
 
 
   // dropdown items - chached
-  const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>();
+  const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>(undefined);
 
   const llmDropdownItems: OptimaDropdownItems = React.useMemo(() => {
     const llmItems: OptimaDropdownItems = {};
@@ -84,6 +90,7 @@ function LLMDropdown(props: {
       // add the model item
       llmItems[llm.id] = {
         title: llm.label,
+        ...(llm.userStarred ? { symbol: '⭐' } : {}),
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };
     }
@@ -155,6 +162,9 @@ function LLMDropdown(props: {
   // }, [chatLlmId]);
 
 
+  // Zero State - no models available
+  const hasDropdownOptions = Object.keys(llmDropdownItems || {}).length > 0;
+
   // "Models Setup" button
   const llmDropdownAppendOptions = React.useMemo(() => <>
 
@@ -168,15 +178,18 @@ function LLMDropdown(props: {
     {/*  </ListItemButton>*/}
     {/*)}*/}
 
-    <ListItemButton key='menu-llms' onClick={optimaOpenModels} sx={{ backgroundColor: 'background.surface' }}>
-      <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
-      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-        Models
-        <KeyStroke variant='outlined' combo='Ctrl + Shift + M' sx={{ ml: 2 }} />
+    <ListItemButton key='menu-llms' onClick={optimaOpenModels} sx={{ backgroundColor: 'background.surface', py: 'calc(2 * var(--ListDivider-gap))' }}>
+      <ListItemDecorator>{!hasDropdownOptions ? '⚠️' : <BuildCircleIcon color='success' />}</ListItemDecorator>
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'center' }}>
+        {!hasDropdownOptions ? 'Add Models' : 'Models'}
+        {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>*/}
+        {/*  <KeyStroke variant='outlined' size='sm' combo='Ctrl + Shift + M' sx={{ ml: 2, bgcolor: 'background.popup' }} />*/}
+        <ArrowForwardRoundedIcon sx={{ ml: 'auto', fontSize: 'xl' }} />
+        {/*</Box>*/}
       </Box>
     </ListItemButton>
 
-  </>, []);
+  </>, [hasDropdownOptions]);
 
 
   return (
@@ -185,10 +198,11 @@ function LLMDropdown(props: {
       items={llmDropdownItems}
       value={chatLlmId}
       onChange={handleChatLLMChange}
-      placeholder={props.placeholder || 'Models …'}
+      placeholder={props.placeholder || '⚠️ Models …'}
       prependOption={llmDropdownPrependOptions}
       appendOption={llmDropdownAppendOptions}
       activeEndDecorator={llmDropdownButton}
+      showSymbols={showSymbols ? 'compact' : false}
     />
   );
 }

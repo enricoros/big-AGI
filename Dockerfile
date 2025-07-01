@@ -35,6 +35,10 @@ ENV NEXT_PUBLIC_BUILD_REF_NAME=${NEXT_PUBLIC_BUILD_REF_NAME}
 ARG NEXT_PUBLIC_GA4_MEASUREMENT_ID
 ENV NEXT_PUBLIC_GA4_MEASUREMENT_ID=${NEXT_PUBLIC_GA4_MEASUREMENT_ID}
 
+# Optional argument to configure PostHog at build time (see: docs/deploy-analytics.md)
+ARG NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+
 # Copy development deps and source
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

@@ -26,6 +26,10 @@ export function useOptimaDrawerOpen() {
   return useLayoutOptimaStore(({ drawerIsOpen }) => drawerIsOpen);
 }
 
+export function useOptimaDrawerPeeking() {
+  return useLayoutOptimaStore(({ drawerIsPeeking }) => drawerIsPeeking);
+}
+
 
 // Panel
 
@@ -44,7 +48,10 @@ export function optimaTogglePanel(event?: React.MouseEvent) {
 }
 
 export function useOptimaPanelOpen(isMobile: boolean, currentApp?: NavItemApp) {
-  const panelIsOpen = useLayoutOptimaStore(state => state.panelIsOpen);
+  const { panelIsOpen, panelIsPeeking } = useLayoutOptimaStore(useShallow(state => ({
+    panelIsOpen: state.panelIsOpen,
+    panelIsPeeking: state.panelIsPeeking,
+  })));
   const panelAsPopup = !isMobile && currentApp?.panelAsMenu === true;
   const panelHasContent = useOptimaPortalHasInputs('optima-portal-panel') || isMobile;
 
@@ -53,6 +60,7 @@ export function useOptimaPanelOpen(isMobile: boolean, currentApp?: NavItemApp) {
     panelAsPopup,
     panelHasContent,
     panelShownAsPanel: panelIsOpen && panelHasContent && !panelAsPopup,
+    panelShownAsPeeking: panelIsPeeking && !panelIsOpen && panelHasContent && !panelAsPopup,
     panelShownAsPopup: panelIsOpen && panelHasContent && panelAsPopup,
   };
 }
@@ -79,7 +87,9 @@ export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
 
 export function useOptimaModals() {
   return useLayoutOptimaStore(useShallow(state => ({
+    showAIXDebugger: state.showAIXDebugger,
     showKeyboardShortcuts: state.showKeyboardShortcuts,
+    showLogger: state.showLogger,
     showModelOptions: state.showModelOptions,
     showModels: state.showModels,
     showPreferences: state.showPreferences,

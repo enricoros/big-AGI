@@ -12,6 +12,12 @@ const _styles = {
   title: {
     textAlign: 'start',
   },
+  textClickable: {
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  },
   accentedTagline: {
     textAlign: 'start',
     mt: 0.75,
@@ -24,7 +30,7 @@ const _styles = {
   divisor: {
     mt: 2.25,
   },
-};
+} as const;
 
 
 export function OptimaAppPageHeading(props: {
@@ -34,6 +40,7 @@ export function OptimaAppPageHeading(props: {
   startDecorator?: React.ReactNode;
   endDecorator?: React.ReactNode;
   noDivider?: boolean;
+  noMarginBottom?: boolean;
   onClick?: (event: React.MouseEvent) => void;
 }) {
 
@@ -41,9 +48,9 @@ export function OptimaAppPageHeading(props: {
   const isMobile = useIsMobile();
 
   return (
-    <Box mb={2.25} onClick={props.onClick}>
+    <Box mb={props.noMarginBottom ? undefined : 2.25}>
       {!!props.title && <Typography level={isMobile ? 'h3' : 'h2'} startDecorator={props.startDecorator} endDecorator={props.endDecorator} sx={_styles.title}>
-        {props.title}
+        {props.onClick ? <Box component='span' sx={_styles.textClickable} onClick={props.onClick}>{props.title}</Box> : props.title}
       </Typography>}
       {!!props.tagline && <Typography level='body-sm' sx={props.accentedTagline ? _styles.accentedTagline : _styles.tagline}>
         {props.tagline}

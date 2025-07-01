@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(cp:*)",
+      "Bash(find:*)",
+      "Bash(git branch:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(rg:*)",
+      "Bash(rm:*)",
+      "Bash(sed:*)",
+      "WebFetch(domain:big-agi.com)",
+      "WebFetch(domain:github.com)"
+    ],
+    "deny": [
+      "Read(node_modules)",
+      "Read(node_modules/**)"
+    ]
+  }
+}

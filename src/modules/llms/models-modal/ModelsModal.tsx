@@ -137,10 +137,7 @@ function ModelsConfiguratorModal(props: {
       animateEnter={!hasLLMs}
       unfilterBackdrop
       startButton={startButton}
-      sx={{
-        // forces some shrinkage of the contents (ModelsList)
-        overflow: 'auto',
-      }}
+      autoOverflow={true /* forces some shrinkage of the contents (ModelsList) */}
     >
 
       {isTabWizard && <Divider />}

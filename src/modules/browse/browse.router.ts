@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
 import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer-core';
@@ -6,7 +6,7 @@ import { default as TurndownService } from 'turndown';
 import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env';
 
 import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
 
@@ -28,7 +28,7 @@ const fetchPageInputSchema = z.object({
     wssEndpoint: z.string().trim().optional(),
   }),
   requests: z.array(z.object({
-    url: z.string().url(),
+    url: z.url(),
     transforms: z.array(pageTransformSchema),
     allowFileDownloads: z.boolean().optional(),
     screenshot: z.object({
@@ -46,7 +46,7 @@ const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
   title: z.string(),
 
-  content: z.record(pageTransformSchema, z.string()).optional(), // either...
+  content: z.partialRecord(pageTransformSchema, z.string()).optional(), // either...
   file: z.object({ // ...or
     mimeType: z.string(),
     encoding: z.literal('base64'),
@@ -81,7 +81,7 @@ export const browseRouter = createTRPCRouter({
 
       yield { type: 'ack-start' as const };
 
-      // start all requests in parallel, intercepting erros too
+      // start all requests in parallel, intercepting errors too
       const results = await Promise.allSettled(requests.map(request =>
         workerPuppeteer(endpoint, request.url, request.transforms, request.allowFileDownloads || false, request.screenshot),
       ));
@@ -92,12 +92,17 @@ export const browseRouter = createTRPCRouter({
           case 'fulfilled':
             return result.value;
           case 'rejected':
+            // server-side log the exception
+            console.warn('[DEV] browse.worker: fetchPagesStreaming error:', result.reason);
             return {
               url: requests[index].url,
               title: '',
               content: undefined,
               file: undefined,
-              error: result.reason?.message || 'Unknown fetch error',
+              error: typeof result.reason === 'string' ? result.reason
+                : result.reason instanceof Error ? result.reason.message
+                  : result.reason ? JSON.stringify(result.reason)
+                    : 'Unknown fetch error',
               stopReason: 'error',
               screenshot: undefined,
             } satisfies FetchPageWorkerOutputSchema;

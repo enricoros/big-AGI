@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessageText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
@@ -24,7 +24,7 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
 
   const num_suggestions = 3;
 
-  const inputSchema = z.object({
+  const inputSchema = z.object({ // zod-4
     attachments_analysis: z.array(
       z.object({
         name: z.string().describe('Identifier of the file.'),

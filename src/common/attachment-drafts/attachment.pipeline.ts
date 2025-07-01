@@ -4,9 +4,10 @@ import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
+import type { CommonImageMimeTypes } from '~/common/util/imageUtils';
 import { Is } from '~/common/util/pwaUtils';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
-import { base64ToArrayBuffer } from '~/common/util/urlUtils';
+import { convert_Base64DataURL_To_Base64WithMimeType, convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
@@ -21,7 +22,7 @@ import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs'
 
 
 // configuration
-export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
+export const DEFAULT_ADRAFT_IMAGE_MIMETYPE: CommonImageMimeTypes = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
 export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
@@ -73,7 +74,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       // [YouTube] user is attaching a link to a video: try to download this as a transcript rather than a webpage
       const asYoutubeVideoId = extractYoutubeVideoIDFromURL(source.refUrl);
       if (asYoutubeVideoId) {
-        const videoData = await youTubeGetVideoData(asYoutubeVideoId).catch(() => null);
+        const videoData = await youTubeGetVideoData(asYoutubeVideoId).catch(console.warn);
         if (videoData?.videoTitle && videoData?.transcript) {
           edit({
             label: videoData.videoTitle,
@@ -99,7 +100,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
 
       try {
         // fetch the web page
-        const { title, content, file, screenshot } = await callBrowseFetchPageOrThrow(
+        const { title, content, file: urlFile, screenshot } = await callBrowseFetchPageOrThrow(
           source.url, ['text', 'markdown', 'html'], { width: 512, height: 512, quality: 98 }, true,
         );
         if (content) {
@@ -124,17 +125,21 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
             });
           else
             edit({ inputError: 'No content found at this link' });
-        } else if (file) {
-          const data = base64ToArrayBuffer(file.data);
-          edit({
-            label: file.fileName || source.refUrl,
-            // ref: source.refUrl,
-            input: {
-              mimeType: file.mimeType,
-              data: data,
-              dataSize: data.byteLength,
-            },
-          });
+        } else if (urlFile) {
+          try {
+            const urlBlob = await convert_Base64WithMimeType_To_Blob(urlFile.data, urlFile.mimeType, 'attachment-draft-load-input');
+            edit({
+              label: urlFile.fileName || source.refUrl,
+              // ref: source.refUrl,
+              input: {
+                mimeType: urlFile.mimeType,
+                data: urlBlob,
+                dataSize: urlBlob.size,
+              },
+            });
+          } catch (error: any) {
+            edit({ inputError: `Issue downloading web file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
+          }
         } else
           edit({ inputError: 'No content or file found at this link' });
       } catch (error: any) {
@@ -170,12 +175,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       // await new Promise(resolve => setTimeout(resolve, 50));
 
       try {
-        const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
         edit({
           input: {
             mimeType: fileMime,
-            data: fileArrayBuffer,
-            dataSize: fileArrayBuffer.byteLength,
+            data: source.fileWithHandle, // FileWithHandle extends File extends Blob
+            dataSize: source.fileWithHandle.size,
           },
         });
       } catch (error: any) {
@@ -267,8 +271,8 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
 
       // p3: Html
       if (textOriginHtml) {
-        converters.push({ id: 'rich-text', name: 'HTML' });
-        converters.push({ id: 'rich-text-cleaner', name: 'Clean HTML' });
+        converters.push({ id: 'rich-text-cleaner', name: 'Cleaner HTML' });
+        converters.push({ id: 'rich-text', name: 'HTML · Heavy' });
       }
       break;
 
@@ -460,7 +464,7 @@ export async function attachmentPerformConversion(
   attachment: Readonly<AttachmentDraft>,
   edit: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void, /* AttachmentsDraftsStore['_editAttachment'] */
   replaceOutputFragments: AttachmentsDraftsStore['_replaceAttachmentOutputFragments'],
-) {
+): Promise<void> {
 
   // clear outputs
   // NOTE: disabled, to keep the old conversions while converting to the new - keeps the UI less 'flashing'
@@ -489,7 +493,8 @@ export async function attachmentPerformConversion(
       // text as-is
       case 'text':
         const possibleLiveFileId = await attachmentGetLiveFileId(source);
-        const textualInlineData = createDMessageDataInlineText(_inputDataToString(input.data), input.mimeType);
+        const textContent = await _inputDataToString(input.data, 'text');
+        const textualInlineData = createDMessageDataInlineText(textContent, input.mimeType);
         newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, DOCPART_DEFAULT_VERSION, docMeta, possibleLiveFileId));
         break;
 
@@ -522,7 +527,8 @@ export async function attachmentPerformConversion(
           tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
         } catch (error) {
           // fallback to text/plain
-          tableData = createDMessageDataInlineText(_inputDataToString(input.data), input.mimeType);
+          const fallbackText = await _inputDataToString(input.data, 'rich-text-table');
+          tableData = createDMessageDataInlineText(fallbackText, input.mimeType);
         }
         newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? DVMimeType.TextPlain : DVMimeType.TextPlain, tableData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
@@ -530,10 +536,7 @@ export async function attachmentPerformConversion(
 
       // image resized (default mime/quality, openai-high-res)
       case 'image-resized-high':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
-          return null;
-        }
+        if (!_expectBlob(input.data, 'image-resized')) return;
         const imageHighF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-high-res');
         if (imageHighF)
           newFragments.push(imageHighF);
@@ -541,10 +544,7 @@ export async function attachmentPerformConversion(
 
       // image resized (default mime/quality, openai-low-res)
       case 'image-resized-low':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
-          return null;
-        }
+        if (!_expectBlob(input.data, 'image-resized')) return;
         const imageLowF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-low-res');
         if (imageLowF)
           newFragments.push(imageLowF);
@@ -552,10 +552,7 @@ export async function attachmentPerformConversion(
 
       // image as-is
       case 'image-original':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for image-original, got:', typeof input.data);
-          return null;
-        }
+        if (!_expectBlob(input.data, 'image-original')) return;
         const imageOrigF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, false);
         if (imageOrigF)
           newFragments.push(imageOrigF);
@@ -563,10 +560,7 @@ export async function attachmentPerformConversion(
 
       // image converted (potentially unsupported mime)
       case 'image-to-default':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for image-to-default, got:', typeof input.data);
-          return null;
-        }
+        if (!_expectBlob(input.data, 'image-to-default')) return;
         const imageCastF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
         if (imageCastF)
           newFragments.push(imageCastF);
@@ -574,15 +568,11 @@ export async function attachmentPerformConversion(
 
       // image to text
       case 'image-ocr':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for Image OCR converter, got:', typeof input.data);
-          break;
-        }
+        if (!_expectBlob(input.data, 'Image OCR converter')) break;
         try {
           let lastProgress = -1;
           const { recognize } = await import('tesseract.js');
-          const buffer = Buffer.from(input.data);
-          const result = await recognize(buffer, undefined, {
+          const result = await recognize(input.data, undefined, {
             errorHandler: e => console.error(e),
             logger: (message) => {
               if (message.status === 'recognizing text') {
@@ -603,13 +593,9 @@ export async function attachmentPerformConversion(
 
       // pdf to text
       case 'pdf-text':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for PDF text converter, got:', typeof input.data);
-          break;
-        }
-        // duplicate the ArrayBuffer to avoid mutation
-        const pdfData = new Uint8Array(input.data.slice(0)).buffer;
-        const pdfText = await pdfToText(pdfData, (progress: number) => {
+        if (!_expectBlob(input.data, 'PDF text converter')) break;
+        // Convert Blob to ArrayBuffer for PDF.js
+        const pdfText = await pdfToText(await input.data.arrayBuffer(), (progress: number) => {
           edit(attachment.id, { outputsConversionProgress: progress });
         });
         if (pdfText.trim().length < 2) {
@@ -621,14 +607,10 @@ export async function attachmentPerformConversion(
 
       // pdf to images
       case 'pdf-images':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for PDF images converter, got:', typeof input.data);
-          break;
-        }
-        // duplicate the ArrayBuffer to avoid mutation
-        const pdfData2 = new Uint8Array(input.data.slice(0)).buffer;
+        if (!_expectBlob(input.data, 'PDF images converter')) break;
+        // Convert Blob to ArrayBuffer for PDF.js
         try {
-          const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+          const imageDataURLs = await pdfToImageDataURLs(await input.data.arrayBuffer(), DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress });
           });
           for (const pdfPageImage of imageDataURLs) {
@@ -643,14 +625,16 @@ export async function attachmentPerformConversion(
 
       // pdf to text and images
       case 'pdf-text-and-images':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for PDF text and images converter, got:', typeof input.data);
-          break;
-        }
+        if (!_expectBlob(input.data, 'PDF text and images converter')) break;
         try {
+          // Convert Blob to ArrayBuffer for PDF.js - create separate ArrayBuffers to avoid mutation
+          // historical context: when we used ArrayBuffer, we had a "new Uint8Array(input.data.slice(0)).buffer" to avoid mutation
+          const pdfArrayBufferForImages = await input.data.arrayBuffer();
+          const pdfArrayBufferForText = await input.data.arrayBuffer();
+
           // duplicated from 'pdf-images' (different progress update)
           const imageFragments: DMessageAttachmentFragment[] = [];
-          const imageDataURLs = await pdfToImageDataURLs(new Uint8Array(input.data.slice(0)).buffer, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+          const imageDataURLs = await pdfToImageDataURLs(pdfArrayBufferForImages, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress / 2 }); // Update progress (0% to 50%)
           });
           for (const pdfPageImage of imageDataURLs) {
@@ -660,7 +644,7 @@ export async function attachmentPerformConversion(
           }
 
           // duplicated from 'pdf-text'
-          const pdfText = await pdfToText(new Uint8Array(input.data.slice(0)).buffer, (progress: number) => {
+          const pdfText = await pdfToText(pdfArrayBufferForText, (progress: number) => {
             edit(attachment.id, { outputsConversionProgress: 0.5 + progress / 2 }); // Update progress (50% to 100%)
           });
           if (pdfText.trim().length < 2) {
@@ -680,13 +664,10 @@ export async function attachmentPerformConversion(
 
       // docx to html
       case 'docx-to-html':
-        if (!(input.data instanceof ArrayBuffer)) {
-          console.log('Expected ArrayBuffer for DOCX converter, got:', typeof input.data);
-          break;
-        }
+        if (!_expectBlob(input.data, 'DOCX converter')) break;
         try {
           const { convertDocxToHTML } = await import('./file-converters/DocxToMarkdown');
-          const { html } = await convertDocxToHTML(input.data);
+          const { html } = await convertDocxToHTML(await input.data.arrayBuffer());
           newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, createDMessageDataInlineText(html, 'text/html'), refString, DOCPART_DEFAULT_VERSION, docMeta));
         } catch (error) {
           console.error('Error in DOCX to Markdown conversion:', error);
@@ -738,8 +719,7 @@ export async function attachmentPerformConversion(
         try {
           // get the data
           const { mimeType, imgDataUrl } = input.urlImage;
-          const dataIndex = imgDataUrl.indexOf(',');
-          const base64Data = imgDataUrl.slice(dataIndex + 1);
+          const { base64Data } = convert_Base64DataURL_To_Base64WithMimeType(imgDataUrl, 'attachment-url-page-image');
           // do not convert, as we're in the optimal webp already
           // do not resize, as the 512x512 is optimal for most LLM Vendors, an a great tradeoff of quality/size/cost
           const screenshotImageF = await imageDataToImageAttachmentFragmentViaDBlob(mimeType, base64Data, source, `Screenshot of ${title}`, caption, false, false);
@@ -804,12 +784,33 @@ export async function attachmentPerformConversion(
 }
 
 
-function _inputDataToString(data: AttachmentDraftInput['data']): string {
+/**
+ * Helper function to validate that input data is a Blob and log an error if not
+ */
+function _expectBlob(data: unknown, debugLocation: string): data is Blob {
+  if (!(data instanceof Blob)) {
+    console.warn(`[DEV] Expected Blob for ${debugLocation}, got:`, typeof data);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Converts the input data of an AttachmentDraft to a string, or log as an error if not possible
+ */
+async function _inputDataToString(data: AttachmentDraftInput['data'], debugLocation: string): Promise<string> {
   if (typeof data === 'string')
     return data;
-  if (data instanceof ArrayBuffer)
-    return new TextDecoder('utf-8', { fatal: false }).decode(data);
-  console.log('attachment._inputDataToString: expected string or ArrayBuffer, got:', typeof data);
+  if (data instanceof Blob) {
+    // Convert Blob to text - this is expected for text files uploaded as blobs
+    try {
+      return await data.text();
+    } catch (error) {
+      console.warn('Failed to convert Blob to text:', error);
+      return '[Failed to read file content]';
+    }
+  }
+  console.warn(`[DEV] Expected string or Blob for input data at ${debugLocation}, got:`, typeof data);
   return '';
 }
 

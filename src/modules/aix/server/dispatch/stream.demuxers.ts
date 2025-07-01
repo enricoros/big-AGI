@@ -1,85 +1,60 @@
-import { createParser as createEventsourceParser, type EventSourceMessage, ParseError } from 'eventsource-parser';
-
-/**
- * The format of the stream: 'sse' or 'json-nl'
- * - 'sse' is the default format, and is used by all vendors except Ollama
- * - 'json-nl' is used by Ollama
- */
-export type StreamDemuxerFormat = 'sse' | 'json-nl' | null;
+import { createFastEventSourceDemuxer } from './stream.demuxer.fastsse';
 
 
-/**
- * Creates a demuxer for a stream of events.
- * The demuxer is stateful and accumulates data until a full event is available.
- */
-export function createStreamDemuxer(format: StreamDemuxerFormat): StreamDemuxer {
-  switch (format) {
-    case 'sse':
-      return _createEventSourceDemuxer();
-    case 'json-nl':
-      return _createJsonNlDemuxer();
-    case null:
-      return _nullStreamDemuxerWarn;
+export namespace AixDemuxers {
+
+  /**
+   * The format of the stream: 'sse' or 'json-nl'
+   * - 'fast-sse' is our own parser, optimized for performance. to be preferred when possible over 'sse' (check for full compatibility with the upstream)
+   * - 'json-nl' is used by Ollama
+   */
+  export type StreamDemuxerFormat = 'fast-sse' | 'json-nl' | null;
+
+
+  /**
+   * Creates a demuxer for a stream of events.
+   * The demuxer is stateful and accumulates data until a full event is available.
+   */
+  export function createStreamDemuxer(format: StreamDemuxerFormat): StreamDemuxer {
+    switch (format) {
+      case 'fast-sse':
+        return createFastEventSourceDemuxer();
+      case 'json-nl':
+        return _createJsonNlDemuxer();
+      case null:
+        return _nullStreamDemuxerWarn;
+    }
   }
-}
 
 
-export type DemuxedEvent = {
-  type: 'event' | 'reconnect-interval';
-  name?: string;
-  data: string;
-};
-
-type StreamDemuxer = {
-  demux: (chunk: string) => DemuxedEvent[];
-  remaining: () => string;
-};
-
-
-/**
- * Creates a parser for an EventSource stream (e.g. OpenAI's format).
- * Uses the renowned `eventsource-parser` library.
- *
- * Note that we only use the 'feed' function and not 'reset', as we recreate the object per-call.
- */
-function _createEventSourceDemuxer(): StreamDemuxer {
-  let buffer: DemuxedEvent[] = [];
-  const parser = createEventsourceParser({
-    onEvent: (event: EventSourceMessage) => {
-      buffer.push({ type: 'event', name: event.event || undefined, data: event.data });
-    },
-    onRetry: (interval: number) => {
-      buffer.push({ type: 'reconnect-interval', data: '' + interval });
-    },
-    onError: (error: ParseError) => {
-      console.warn(`stream.demuxers: parser error (${error.type}):`, error.field, error.value, error.line);
-    },
-    onComment: (comment: string) => {
-      if (process.env.NODE_ENV === 'development')
-        console.log('[DEV] stream.demuxers: parser comment (safe to ignore):', comment);
-    },
-  });
-
-  return {
-    demux: (chunk: string) => {
-      parser.feed(chunk);
-      const bufferCopy = buffer;
-      buffer = [];
-      return bufferCopy;
-    },
-    remaining: () => '',
+  export type DemuxedEvent = {
+    type: 'event' | 'reconnect-interval';
+    name?: string;
+    data: string; // in case of 'reconnect-interval' this is the string representation of the number (in milliseconds)
+    // eventId?: string; // unused
   };
+
+  export type StreamDemuxer = {
+    demux: (chunk: string) => DemuxedEvent[];
+    remaining: () => string;
+
+    // unused, but may be provided by some demuxers
+    lastEventId?: () => string | undefined; // not used for now - SSE defines it for the stream
+    reconnectInterval?: () => number | undefined; // not used for now - SSE announces it
+  };
+
 }
+
 
 /**
  * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
  * Ollama is the only vendor that uses this format.
  */
-function _createJsonNlDemuxer(): StreamDemuxer {
+function _createJsonNlDemuxer(): AixDemuxers.StreamDemuxer {
   let buffer = '';
 
   return {
-    demux: (chunk: string): DemuxedEvent[] => {
+    demux: (chunk: string): AixDemuxers.DemuxedEvent[] => {
       buffer += chunk;
       if (!buffer.endsWith('\n')) return [];
 
@@ -97,7 +72,7 @@ function _createJsonNlDemuxer(): StreamDemuxer {
 }
 
 
-const _nullStreamDemuxerWarn: StreamDemuxer = {
+const _nullStreamDemuxerWarn: AixDemuxers.StreamDemuxer = {
   demux: () => {
     console.warn('Null demuxer called - shall not happen, as it is only created in non-streaming');
     return [];

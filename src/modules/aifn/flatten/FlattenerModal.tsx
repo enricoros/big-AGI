@@ -52,7 +52,7 @@ function FlatteningProgress(props: { llmLabel: string, partialText: string | nul
     <Box sx={{ mx: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
       <CircularProgress />
       <Typography>
-        {props.partialText?.length ? `${props.partialText.length} characters` : 'Flattening'}...
+        {props.partialText?.length ? `${props.partialText.length} characters` : 'Compacting'}...
       </Typography>
       <Typography level='body-sm'>
         This may take up to a minute.
@@ -159,7 +159,7 @@ export function FlattenerModal(props: {
   return (
     <GoodModal
       open={!!props.conversationId} dividers
-      title={!selectedStyle ? 'Compression' : 'Flattening...'}
+      title={!selectedStyle ? 'Compact' : 'Compacting...'}
       onClose={props.onClose}
     >
 
@@ -208,7 +208,7 @@ export function FlattenerModal(props: {
         )}
 
         {/* Review or Edit Text */}
-        {isSuccess && <InlineTextarea initialText={flattenedText} onEdit={setText} />}
+        {isSuccess && <InlineTextarea initialText={flattenedText} selectAllOnFocus={false} onEdit={setText} />}
 
       </Box>}
 
@@ -220,7 +220,7 @@ export function FlattenerModal(props: {
       {/* [confirmation] Overwrite Conversation */}
       {confirmOverwrite && <ConfirmationModal
         open onClose={() => setConfirmOverwrite(false)} onPositive={() => handleReplaceConversation(false)}
-        confirmationText='Are you sure you want to overwrite the conversation with the flattened text?'
+        confirmationText='Are you sure you want to overwrite the conversation with the compacted text?'
         positiveActionText='Replace conversation'
       />}
 

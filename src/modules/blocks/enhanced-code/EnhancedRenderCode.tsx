@@ -127,7 +127,7 @@ export function EnhancedRenderCode(props: {
     return <>
       {/* Icon and Title */}
       <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
           <Icon
             aria-hidden
             onClick={handleToggleCodeCollapse}
@@ -137,7 +137,7 @@ export function EnhancedRenderCode(props: {
               cursor: 'pointer',
             }}
           />
-          <Typography level={'title-sm'}>
+          <Typography level={'title-sm'} className='agi-ellipsize'>
             {props.title || 'Code'}
           </Typography>
         </Box>
@@ -209,6 +209,7 @@ export function EnhancedRenderCode(props: {
           noCopyButton={props.noCopyButton}
           optimizeLightweight={props.optimizeLightweight}
           onReplaceInCode={props.onReplaceInCode}
+          renderHideTitle={true /* because we show it already, outside */}
           sx={patchCodeSx}
         />
       </ExpanderControlledBox>

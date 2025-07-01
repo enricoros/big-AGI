@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { LLMS_ALL_INTERFACES } from '~/common/stores/llms/llms.types';
 
@@ -74,13 +74,22 @@ const ModelParameterSpec_schema = z.object({
    */
   paramId: z.enum([
     'llmTopP',
+    'llmForceNoStream',
     'llmVndAntThinkingBudget',
     'llmVndGeminiShowThoughts',
+    'llmVndGeminiThinkingBudget',
     'llmVndOaiReasoningEffort',
     'llmVndOaiRestoreMarkdown',
+    'llmVndOaiWebSearchContext',
+    'llmVndOaiWebSearchGeolocation',
+    'llmVndPerplexityDateFilter',
+    'llmVndPerplexitySearchMode',
   ]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
+  initialValue: z.number().or(z.string()).or(z.boolean()).nullable().optional(),
+  // special params
+  rangeOverride: z.tuple([z.number(), z.number()]).optional(), // [min, max]
 });
 
 export const ModelDescription_schema = z.object({

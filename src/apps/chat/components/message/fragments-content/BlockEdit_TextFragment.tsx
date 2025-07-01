@@ -4,17 +4,22 @@ import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { Is } from '~/common/util/pwaUtils';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 
 // configuration
 
 /**
- * Note: this will disable the galobal 'shift+enter' shortcut (and the status message) for this component as well.
- * - #760. set to 'undefined' to follow the user preference
+ * Note: this will disable the global 'shift+enter' shortcut (and the status message) for this component as well.
+ * - #760. Edit Mode not respecting Enter to Send
+ * - #770. inconsistent return / shift + return
+ * - #771. PR which was not merged (overly complex regex)
+ * set to 'undefined' to follow the user preference
+ * set to 'true' to force 'enter' to be a newline, which is best for mobile devices where 'shift+enter' is not possible
  */
-const FORCE_ENTER_IS_NEWLINE = true;
+const FORCE_ENTER_IS_NEWLINE = !Is.Desktop ? true : undefined;
 
 
 const _textAreaSlotPropsEnter = {
@@ -62,6 +67,7 @@ export function BlockEdit_TextFragment(props: {
   squareTopBorder?: boolean,
 
   // edited value
+  controlled?: boolean, // if true, the editor will assume enter is new line, and not emit onSubmit
   editedText?: string,
   setEditedText: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onSubmit: (withControl: boolean) => void,
@@ -77,7 +83,8 @@ export function BlockEdit_TextFragment(props: {
   //
   // NOTE2: as per #https://github.com/enricoros/big-AGI/issues/760, this is a UX break of behavior.
   //        adding a configuration option to quickly
-  const enterIsNewline = useUIPreferencesStore(state => FORCE_ENTER_IS_NEWLINE !== undefined ? FORCE_ENTER_IS_NEWLINE : state.enterIsNewline);
+  const isControlled = !!props.controlled;
+  const enterIsNewline = useUIPreferencesStore(state => isControlled ? true : FORCE_ENTER_IS_NEWLINE !== undefined ? FORCE_ENTER_IS_NEWLINE : state.enterIsNewline);
 
   // derived state
   const { fragmentId, setEditedText, onSubmit, onEscapePressed } = props;
@@ -92,7 +99,7 @@ export function BlockEdit_TextFragment(props: {
       const withControl = e.ctrlKey;
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         e.preventDefault();
-        if (!withControl || props.enableRestart)
+        if (!isControlled && (!withControl || props.enableRestart))
           onSubmit(withControl);
       } // [Beam] eat up pure Ctrl+Enter, to not restart beams
       else if (e.ctrlKey) {
@@ -102,31 +109,31 @@ export function BlockEdit_TextFragment(props: {
       e.preventDefault();
       onEscapePressed();
     }
-  }, [enterIsNewline, props.enableRestart, onSubmit, onEscapePressed]);
+  }, [enterIsNewline, isControlled, onEscapePressed, onSubmit, props.enableRestart]);
 
   // shortcuts
   const isEdited = props.editedText !== undefined;
-  useGlobalShortcuts('TextFragmentEditor', React.useMemo(() => !isFocused ? [] : [
+  useGlobalShortcuts('TextFragmentEditor', React.useMemo(() => (isControlled || !isFocused) ? [] : [
     ...(!FORCE_ENTER_IS_NEWLINE ? [] : [{ key: ShortcutKey.Enter, shift: true, description: 'Save', disabled: !isEdited && props.enableRestart !== true, level: 3, action: () => null }]),
     ...props.enableRestart ? [{ key: ShortcutKey.Enter, ctrl: true, shift: true, description: 'Save & Retry', disabled: !isEdited, level: 3, action: () => onSubmit(true) }] : [],
     { key: ShortcutKey.Esc, description: 'Cancel', level: 3, action: onEscapePressed },
-  ], [isEdited, isFocused, props.enableRestart, onEscapePressed, onSubmit]));
+  ], [isControlled, isEdited, isFocused, onEscapePressed, onSubmit, props.enableRestart]));
 
   return (
     <BlocksTextarea
       variant={/*props.invertedColors ? 'plain' :*/ 'soft'}
-      color={/*props.decolor ? undefined : props.invertedColors ? 'primary' :*/ 'warning'}
+      color={/*props.uncolor ? undefined : props.invertedColors ? 'primary' :*/ 'warning'}
       autoFocus
       size={props.contentScaling !== 'md' ? 'sm' : undefined}
-      value={(props.editedText !== undefined)
+      value={(!isControlled && props.editedText !== undefined) /* if Controlled, ignore any edited text overlay */
         ? props.editedText /* self-text */
         : props.initialText /* DMessageTextPart text */
       }
       startDecorator={props.inputLabel ? <small>{props.inputLabel}</small> : undefined}
       placeholder={'Edit the message...'}
       minRows={1.5} // unintuitive
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
+      onFocus={isControlled ? undefined : () => setIsFocused(true)}
+      onBlur={isControlled ? undefined : () => setIsFocused(false)}
       // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}

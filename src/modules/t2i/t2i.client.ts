@@ -1,27 +1,29 @@
 import * as React from 'react';
 
-import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
+import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
-import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
+
+import { addDBImageAsset, DBlobDBScopeId } from '~/common/stores/blob/dblobs-portability';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { T2iCreateImageOutput } from './t2i.server';
-import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
+import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
 import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
 import { useProdiaStore } from './prodia/store-module-prodia';
 import { useTextToImageStore } from './store-module-t2i';
 
 
 // configuration
-// Note: LocalAI t2i integration is experimental
-const T2I_ENABLE_LOCALAI = false;
+const T2I_ENABLE_LOCAL_AI = false; // Note: LocalAI t2i integration is experimental
 
 
 // Capabilities API - used by Settings, and whomever wants to check if this is available
@@ -31,9 +33,10 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   // external state
 
   const activeProviderId = useTextToImageStore(state => state.activeProviderId);
-  const setActiveProviderId = useTextToImageStore.getState().setActiveProviderId;
 
-  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>();
+  const dalleModelId = useDalleStore(state => state.dalleModelId);
+
+  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>(undefined);
   const llmsModelServices = useModelsStore(({ llms, sources }) => {
     const next = getLlmsModelServices(llms, sources);
     const prev = stableLlmsModelServices.current;
@@ -44,32 +47,41 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     return stableLlmsModelServices.current = next;
   });
 
-  const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
+  const hasProdiaModels = useProdiaStore(state => !!state.modelId);
 
 
-  // derived state
+  // memo
 
-  const providers = React.useMemo(() => {
-    return getTextToImageProviders(llmsModelServices, hasProdiaModels);
-  }, [hasProdiaModels, llmsModelServices]);
+  const { mayWork, mayEdit, providers, activeProvider } = React.useMemo(() => {
+    const providers = getTextToImageProviders(llmsModelServices, hasProdiaModels);
+    const activeProvider = !activeProviderId ? undefined : providers.find(p => p.providerId === activeProviderId);
+    const mayWork = providers.some(p => p.configured);
+    const mayEdit = activeProvider?.vendor === 'openai' && dalleModelId === 'gpt-image-1';
+    return {
+      mayWork,
+      mayEdit,
+      providers,
+      activeProvider,
+    };
+  }, [activeProviderId, dalleModelId, hasProdiaModels, llmsModelServices]);
 
 
   // [Effect] Auto-select the first correctly configured provider
+  const isConfigured = !!activeProvider;
   React.useEffect(() => {
-    const providedIDs = providers.map(p => p.providerId);
-    if (activeProviderId && providedIDs.includes(activeProviderId))
-      return;
+    if (isConfigured) return;
     const autoSelectProvider = providers.find(p => p.configured);
     if (autoSelectProvider)
-      setActiveProviderId(autoSelectProvider.providerId);
-  }, [activeProviderId, providers, setActiveProviderId]);
+      useTextToImageStore.getState().setActiveProviderId(autoSelectProvider.providerId);
+  }, [isConfigured, providers]);
 
 
   return {
-    mayWork: providers.some(p => p.configured),
+    mayWork,
+    mayEdit,
     providers,
     activeProviderId,
-    setActiveProviderId,
+    setActiveProviderId: useTextToImageStore.getState().setActiveProviderId,
   };
 }
 
@@ -86,7 +98,7 @@ export function getActiveTextToImageProviderOrThrow() {
   // [immediate] get all providers
   const { llms, sources: modelsServices } = llmsStoreState();
   const openAIModelsServiceIDs = getLlmsModelServices(llms, modelsServices);
-  const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().prodiaModelId);
+  const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().modelId);
 
   // find the active provider
   const activeProvider = providers.find(p => p.providerId === activeProviderId);
@@ -96,7 +108,7 @@ export function getActiveTextToImageProviderOrThrow() {
   return activeProvider;
 }
 
-async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
+async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number): Promise<T2iCreateImageOutput[]> {
   switch (vendor) {
 
     case 'localai':
@@ -108,13 +120,15 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
     case 'openai':
       if (!providerId)
         throw new Error('No OpenAI Model Service configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(providerId, prompt, count);
+      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count);
 
     case 'prodia':
       const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
-      const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
+      const hasProdiaClientModels = !!useProdiaStore.getState().modelId;
       if (!hasProdiaServer && !hasProdiaClientModels)
         throw new Error('No Prodia configuration found for TextToImage');
+      if (aixInlineImageParts?.length)
+        throw new Error('Prodia image editing is not yet available');
       return await prodiaGenerateImages(prompt, count);
 
   }
@@ -125,8 +139,11 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
  * If t2iprovider is null, the active provider will be used
  */
 export async function t2iGenerateImageContentFragments(
-  t2iProvider: TextToImageProvider | null, prompt: string, count: number,
-  contextId: DBlobDBContextId, scopeId: DBlobDBScopeId,
+  t2iProvider: TextToImageProvider | null,
+  prompt: string,
+  aixInlineImageParts: AixParts_InlineImagePart[],
+  count: number,
+  scopeId: DBlobDBScopeId,
 ): Promise<DMessageContentFragment[]> {
 
   // T2I: Use the active provider if null
@@ -134,19 +151,27 @@ export async function t2iGenerateImageContentFragments(
     t2iProvider = getActiveTextToImageProviderOrThrow();
 
   // T2I: Generate
-  const generatedImages = await _t2iGenerateImagesOrThrow(t2iProvider, prompt, count);
+  const generatedImages = await _t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count);
   if (!generatedImages?.length)
     throw new Error('No image generated');
 
   const imageFragments: DMessageContentFragment[] = [];
   for (const _i of generatedImages) {
 
-    // add the image to the DB
-    const dblobAssetId = await addDBImageAsset(contextId, scopeId, {
+    // base64 -> blob conversion
+    const imageBlob = await convert_Base64WithMimeType_To_Blob(_i.base64Data, _i.mimeType, 't2iGenerateImageContentFragments');
+
+    // NOTE: no resize/type conversion, store as-is
+
+    // add the image to the DBlobs DB
+    const dblobAssetId = await addDBImageAsset(scopeId, imageBlob, {
       label: prompt,
-      data: {
-        mimeType: _i.mimeType as any,
-        base64: _i.base64Data,
+      metadata: {
+        width: _i.width || 0,
+        height: _i.height || 0,
+        // description: '',
+        // inputTokens: _i.inputTokens,
+        // outputTokens: _i.outputTokens,
       },
       origin: {
         ot: 'generated',
@@ -156,18 +181,21 @@ export async function t2iGenerateImageContentFragments(
         parameters: _i.parameters,
         generatedAt: _i.generatedAt,
       },
-      metadata: {
-        width: _i.width || 0,
-        height: _i.height || 0,
-        // description: '',
-      },
     });
 
-    // create a data reference for the image
-    const imageAssetDataRef = createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length);
+    // create the DMessage _Content_ Fragment (not attachment)
+    // so this is akin to the model-generated images
+    const imageContentFragment = createImageContentFragment(
+      createDMessageDataRefDBlob( // Data Reference {} for the image
+        dblobAssetId,
+        imageBlob.type,
+        imageBlob.size,
+      ),
+      _i.altText,
+      _i.width,
+      _i.height,
+    );
 
-    // create an Image Content Fragment
-    const imageContentFragment = createImageContentFragment(imageAssetDataRef, _i.altText, _i.width, _i.height);
     imageFragments.push(imageContentFragment);
   }
   return imageFragments;
@@ -184,7 +212,7 @@ interface T2ILlmsModelServices {
 }
 
 function getLlmsModelServices(llms: DLLM[], services: DModelsService[]) {
-  return services.filter(s => (s.vId === 'openai' || (T2I_ENABLE_LOCALAI && s.vId === 'localai'))).map((s): T2ILlmsModelServices => ({
+  return services.filter(s => (s.vId === 'openai' || (T2I_ENABLE_LOCAL_AI && s.vId === 'localai'))).map((s): T2ILlmsModelServices => ({
     label: s.label,
     modelVendorId: s.vId,
     modelServiceId: s.id,
@@ -213,8 +241,9 @@ function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasP
         providers.push({
           providerId: modelServiceId,
           label: label,
-          painter: 'DALL·E',
-          description: 'OpenAI\'s DALL·E models',
+          painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
+          // painter: 'DALL·E',
+          description: 'OpenAI Image generation models',
           configured: hasAnyModels,
           vendor: 'openai',
         });

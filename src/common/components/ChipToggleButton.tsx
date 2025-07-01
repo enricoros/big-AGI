@@ -1,6 +1,8 @@
 import * as React from 'react';
 
+import type { VariantProp } from '@mui/joy/styles/types';
 import { Chip } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
 const _chipTBSx = {
@@ -14,14 +16,19 @@ const _chipTBSx = {
 export function ChipToggleButton(props: {
   text: React.ReactNode,
   active?: boolean,
+  disabled?: boolean,
   size?: 'sm' | 'md' | 'lg',
+  showCollapseCaret?: boolean,
+  variant?: VariantProp,
   onClick?: () => void
 }) {
   return (
     <Chip
-      variant={props.active ? 'solid' : 'outlined'}
+      disabled={props.disabled}
+      variant={props.active ? 'solid' : props.variant || 'outlined'}
       size={props.size}
       onClick={props.onClick}
+      endDecorator={(props.showCollapseCaret && props.active) ? <KeyboardArrowDownIcon /> : undefined}
       aria-checked={props.active}
       sx={_chipTBSx}
     >

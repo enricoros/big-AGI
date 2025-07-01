@@ -1,8 +1,14 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 
 // Image generation output
 
+export type T2ICreateImageAsyncStreamOp =
+  | { p: '❤' } // heart beat
+  | { p: 'state', state: 'started' }
+  | { p: 'createImage', image: T2iCreateImageOutput };
+
+export type T2iCreateImageOutput = z.infer<typeof t2iCreateImageOutputSchema>;
 const t2iCreateImageOutputSchema = z.object({
 
   // separate mime and data instead of the data URL 'data:image/png;base64,...'
@@ -16,15 +22,16 @@ const t2iCreateImageOutputSchema = z.object({
   width: z.number(),
   height: z.number(),
 
+  // costs
+  inputTokens: z.number().optional(),
+  outputTokens: z.number().optional(),
+
   // origin
   generatorName: z.string(),
-  parameters: z.record(z.any()),
+  parameters: z.record(z.string(), z.any()),
   generatedAt: z.string(),
 
 });
-export type T2iCreateImageOutput = z.infer<typeof t2iCreateImageOutputSchema>;
-
-export const t2iCreateImagesOutputSchema = z.array(t2iCreateImageOutputSchema);
 
 
 /**

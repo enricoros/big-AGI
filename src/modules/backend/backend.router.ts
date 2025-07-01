@@ -1,9 +1,9 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { Release } from '~/common/app.release';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 // critical to make sure we `import type` here

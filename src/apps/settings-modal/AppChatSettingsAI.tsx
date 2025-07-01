@@ -10,7 +10,7 @@ import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
-import { useLabsDevMode } from '~/common/state/store-ux-labs';
+import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
@@ -18,14 +18,14 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 
 const _keepThinkingBlocksOptions: FormSelectOption<'all' | 'last-only'>[] = [
   {
-    value: 'all',
-    label: 'All Messages',
-    description: 'Keep all blocks',
+    value: 'last-only',
+    label: 'Most Recent',
+    description: 'Default',
   },
   {
-    value: 'last-only',
-    label: 'Last Message Only',
-    description: 'Only keep last',
+    value: 'all',
+    label: 'Preserve All',
+    description: 'Keep all traces',
   },
 ] as const;
 
@@ -88,7 +88,7 @@ export function AppChatSettingsAI() {
       title={!showModelIcons ? 'Coding model' : <><CodeIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Coding model</>}
       description='Code tasks'
       tooltip={<>
-        Smart <b>code editing</b> model (must support Tool Calls) with great conding skills and not too slow. Used for:
+        Smart <b>code editing</b> model (must support Tool Calls) with great coding skills and not too slow. Used for:
         <ul>
           <li>Diagrams generation</li>
           <li>HTML UI generation</li>
@@ -101,7 +101,7 @@ export function AppChatSettingsAI() {
     <FormControlDomainModel
       domainId='fastUtil'
       title={!showModelIcons ? 'Utility model' : <><EditRoundedIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Utility model</>}
-      description='Fast, misc. tasks'
+      description='Titles, misc tasks'
       tooltip={<>
         Lightweight model (must support Tool Calls) used for &quot;fast&quot;, low-cost operations, such as:
         <ul>
@@ -124,7 +124,7 @@ export function AppChatSettingsAI() {
     )}
 
     <FormSelectControl
-      title='Reasoning blocks'
+      title='Reasoning traces'
       tooltip='Controls how AI thinking/reasoning blocks are kept in your chat history. Keeping only in the last message (default) reduces clutter.'
       options={_keepThinkingBlocksOptions}
       value={chatKeepLastThinkingOnly ? 'last-only' : 'all'}

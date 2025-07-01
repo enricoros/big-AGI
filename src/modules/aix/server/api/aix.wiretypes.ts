@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 // Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
@@ -18,6 +18,7 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
 // Export types
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
+export type AixParts_InlineAudioPart = z.infer<typeof AixWire_Parts.InlineAudioPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
 export type AixParts_ModelAuxPart = z.infer<typeof AixWire_Parts.ModelAuxPart_schema>;
 export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
@@ -69,7 +70,7 @@ export namespace OpenAPI_Schema {
     format: z.string().optional(),
 
     // [object] properties (recursively)
-    properties: z.record(z.any() /* could refer to self using z.lazy().... */).optional(),
+    properties: z.record(z.string(), z.any() /* could refer to self using z.lazy().... */).optional(),
     // [object] required properties
     required: z.array(z.string()).optional(),
 
@@ -97,7 +98,22 @@ export namespace AixWire_Parts {
     text: z.string(),
   });
 
-  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than bein referred to
+  export const InlineAudioPart_schema = z.object({
+    pt: z.literal('inline_audio'),
+    /**
+     * Minimal audio format support for browser compatibility:
+     * - audio/wav: Most compatible, converted from Gemini PCM
+     * - audio/mp3: Widely supported, efficient
+     * - audio/ogg: Open format, good compression
+     */
+    mimeType: z.enum(['audio/wav', 'audio/mp3']), // was (['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac'])
+    base64: z.string(),
+    // sampleRate: z.number().optional(), // for PCM formats
+    // channels: z.number().optional(),   // for PCM formats
+    // durationMs: z.number().optional(),
+  });
+
+  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than being referred to
   export const InlineImagePart_schema = z.object({
     pt: z.literal('inline_image'),
     /**
@@ -109,13 +125,6 @@ export namespace AixWire_Parts {
     mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
     base64: z.string(),
   });
-
-  // Disabling inline audio for now, as it's only supported by Gemini
-  // const InlineAudioPart_schema = z.object({
-  //   pt: z.literal('inline_audio'),
-  //   mimeType: z.enum(['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac']),
-  //   base64: z.string(),
-  // });
 
   // The reason of existence of a doc part, is to be encoded differently depending on
   // the target llm (e.g. xml for anthropic, markdown titled block for others, ...)
@@ -246,6 +255,7 @@ export namespace AixWire_Content {
     role: z.literal('user'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      // AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.DocPart_schema,
       AixWire_Parts.MetaCacheControl_schema,
@@ -257,6 +267,7 @@ export namespace AixWire_Content {
     role: z.literal('model'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.ToolInvocationPart_schema,
       AixWire_Parts.ModelAuxPart_schema,
@@ -304,7 +315,7 @@ export namespace AixWire_Tooling {
      */
     input_schema: z.object({
       // type: z.literal('object'), // Note: every protocol adapter adds this in the structure, here's we're just opting to not add it
-      properties: z.record(OpenAPI_Schema.Object_schema),
+      properties: z.record(z.string(), OpenAPI_Schema.Object_schema),
       required: z.array(z.string()).optional(),
     }).optional(),
   });
@@ -387,14 +398,31 @@ export namespace AixWire_API {
 
   export const Model_schema = z.object({
     id: z.string(),
+    acceptsOutputs: z.array(z.enum(['text', 'image', 'audio'])),
     temperature: z.number().min(0).max(2).optional()
       .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
     maxTokens: z.number().min(1).optional(),
     topP: z.number().min(0).max(1).optional(),
+    forceNoStream: z.boolean().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
+    vndGeminiThinkingBudget: z.number().optional(),
+    vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
+    vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
+    vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
+    vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
+    /**
+     * [OpenAI, 2025-03-11] This is the generic version of the `web_search_options.user_location` field
+     * This AIX field mimics on purpose: https://platform.openai.com/docs/api-reference/chat/create
+     */
+    userGeolocation: z.object({
+      city: z.string().optional(),      // free text input for the city of the user, e.g. San Francisco.
+      country: z.string().optional(),   // two-letter ISO country code of the user, e.g. US
+      region: z.string().optional(),    // free text input for the reg. of the user the user, e.g. California
+      timezone: z.string().optional(),  // IANA timezone of the user, e.g. America/Los_Angeles
+    }).optional(),
   });
 
   /// Context
@@ -437,7 +465,8 @@ export namespace AixWire_API {
   /// Connection options
 
   export const ConnectionOptions_schema = z.object({
-    debugDispatchRequestbody: z.boolean().optional(),
+    debugDispatchRequest: z.boolean().optional(),
+    debugProfilePerformance: z.boolean().optional(),
     throttlePartTransmitter: z.number().optional(), // in ms
     // retry: z.number().optional(),
     // retryDelay: z.number().optional(),
@@ -502,7 +531,8 @@ export namespace AixWire_Particles {
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
-    | { cg: '_debugRequest', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
+    | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string } } // may generalize this in the future
+    | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
   export type CGEndReason =     // the reason for the end of the chat generation
     | 'abort-client'            // user aborted before the end of stream
@@ -561,6 +591,7 @@ export namespace AixWire_Particles {
     | { t: string }; // special: incremental text, but with a more optimized/succinct representation compared to { p: 't_', i_t: string }
 
   export type PartParticleOp =
+    | { p: '❤' } // heart beat
     | { p: 'tr_', _t: string, weak?: 'tag' } // reasoning text, incremental; could be a 'weak' detection, e.g. heuristic from '<think>' rather than API-provided
     | { p: 'trs', signature: string } // reasoning signature
     | { p: 'trr_', _data: string } // reasoning raw (or redacted) data
@@ -571,6 +602,9 @@ export namespace AixWire_Particles {
     | { p: 'fci', id: string, name: string, i_args?: string /* never undefined */ }
     | { p: '_fci', _args: string }
     | { p: 'cei', id: string, language: string, code: string, author: 'gemini_auto_inline' }
-    | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline', environment: DMessageToolResponsePart['environment'] };
+    | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline', environment: DMessageToolResponsePart['environment'] }
+    | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
+    | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string } // inline image, complete
+    | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number }; // url citation - pubTs: publication timestamp
 
 }

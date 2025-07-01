@@ -31,17 +31,14 @@ At time of writing, big-AGI has only 2 operations that run on Node.js Functions:
 browsing (fetching web pages) and sharing. They both can exceed 10 seconds, especially
 when fetching large pages or waiting for websites to be completed.
 
-We provide `vercel_PRODUCTION.json` to raise the duration to 25 seconds (from a default of 10), to use it,
-make sure to rename it to `vercel.json` before build.
-
 From the Vercel Project > Settings > General > Build & Development Settings,
 you can for instance set the build command to:
 
 ```bash
-mv vercel_PRODUCTION.json vercel.json; next build
+next build
 ```
 
-### Change the Personas
+### Change the Personas (v1.x only)
 
 Edit the `src/data.ts` file to customize personas. This file houses the default personas. You can add, remove, or modify these to meet your project's needs.
 
@@ -55,6 +52,21 @@ Adapt the UI to match your project's aesthetic, incorporate new features, or exc
 - [ ] Modify `src/common/app.config.tsx` to alter the application's name
 - [ ] Update `src/common/app.nav.tsx` to revise the navigation bar
 
+### Add a Message of the Day
+
+You can display a temporary announcement banner at the top of the app using the `NEXT_PUBLIC_MOTD` environment variable.
+
+- Set this variable in your deployment environment
+- The message supports template variables:
+  - `{{app_build_hash}}`: Current git commit hash
+  - `{{app_build_pkgver}}`: Package version
+  - `{{app_build_time}}`: Build timestamp as date
+  - `{{app_deployment_type}}`: Deployment type (local, docker, vercel, etc.)
+- Users can dismiss the message (until next page refresh)
+- Use it for version announcements, maintenance notices, or feature highlights
+
+Example: `NEXT_PUBLIC_MOTD=🚀 New features available in {{app_build_pkgver}}! Try the improved Beam.`
+
 ## Testing & Deployment
 
 Test your application thoroughly using local development (refer to README.md for local build instructions). Deploy using your preferred hosting service. big-AGI supports deployment on platforms like Vercel, Docker, or any Node.js-compatible service, especially those supporting NextJS's "Edge Runtime."
@@ -65,7 +77,16 @@ Test your application thoroughly using local development (refer to README.md for
 
 ## Debugging
 
-We introduced the `/info/debug` page that provides a detailed overview of the application's environment, including the API keys, environment variables, and other configuration settings.
+The application includes a client-side logging system. You can view recent logs via the UI (Settings > Tools > Logs).
+
+For deeper debugging during development:
+
+1. **Debug Page**: Access the `/info/debug` page for an overview of the application's environment, configuration, API status, and environment variables available to the client.
+2. **Conditional Breakpoints**: To automatically pause execution in your browser's developer tools when critical errors (`error`, `critical`, `DEV` levels) are logged to the console, set the following environment variable in your local `.env.local` file and restart your development server:
+   ```bash
+   NEXT_PUBLIC_DEBUG_BREAKS=true
+   ```
+   This allows you to inspect the application state at the exact moment an important error occurs. This feature only works in development mode (`npm run dev`) and requires the environment variable to be explicitly set to `true`.
 
 <br/>
 

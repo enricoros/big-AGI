@@ -4,7 +4,7 @@ import { Box, Container } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 import { isPwa } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { PageCore } from './PageCore';
 import { useOptimaDrawerOpen, useOptimaPanelOpen } from './useOptima';
@@ -29,12 +29,14 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
     return (
       <Box>
         <Container id='app-page-container' disableGutters maxWidth={false}>
-          <PageCore component={props.component} currentApp={props.currentApp} isMobile={true}>
+          <PageCore component={props.component} currentApp={props.currentApp} isFull isMobile>
             {props.children}
           </PageCore>
         </Container>
       </Box>
     );
+
+  const isFull = amplitude === 'full';
 
   return (
 
@@ -48,7 +50,7 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
         // when the drawer is off, compensate with a negative margin
         // NOTE: this will cause a transition on the container as well, meaning when we
         // resize the window, the contents will wobble slightly
-        marginLeft: !isDrawerOpen
+        marginLeft: !isDrawerOpen // NOTE: we should have `|| isDrawerPeeking`, however it only happens when the drawer is in the closed state (e.g. OR is unnecessary)
           ? 'calc(-1 * var(--AGI-Desktop-Drawer-width))'
           : 0,
         marginRight: !panelShownAsPanel
@@ -62,17 +64,17 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
       <Container
         id='app-page-container'
         disableGutters
-        maxWidth={amplitude === 'full' ? false : amplitude === 'narrow' ? 'md' : 'xl'}
+        maxWidth={isFull ? false : amplitude === 'narrow' ? 'md' : 'xl'}
         sx={{
           boxShadow: {
             xs: 'none',
             md: amplitude === 'narrow' ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
-            xl: amplitude !== 'full' ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
+            xl: !isFull ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
           },
         }}
       >
 
-        <PageCore component={props.component} currentApp={props.currentApp} isMobile={false}>
+        <PageCore component={props.component} currentApp={props.currentApp} isFull={isFull} isMobile={false}>
           {props.children}
         </PageCore>
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { Typography } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -28,7 +28,7 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
   const { oaiHost } = serviceAccess;
 
   // validate if url is a well formed proper url with zod
-  const urlSchema = z.string().url().startsWith('http');
+  const urlSchema = z.url().startsWith('http');
   const { success: isValidHost } = urlSchema.safeParse(oaiHost);
   const shallFetchSucceed = isValidHost;
 

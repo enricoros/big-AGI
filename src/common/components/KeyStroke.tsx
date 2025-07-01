@@ -23,12 +23,13 @@ export function platformAwareKeystrokes(text: string) {
  */
 export function KeyStroke(props: {
   combo: string,
+  size?: 'sm' | 'md' | 'lg',
   variant?: VariantProp,
   sx?: SxProps,
 }) {
   return (
     <Chip
-      size='md'
+      size={props.size ?? 'md'}
       variant={props.variant}
       color='neutral'
       sx={props.sx ? { ...hideOnMobile, ...props.sx } : hideOnMobile}

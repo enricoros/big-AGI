@@ -1,5 +1,4 @@
-import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
-import { gcDBImageAssets } from '~/modules/dblobs/dblobs.images';
+import { DBlobAssetId, gcDBImageAssets } from '~/common/stores/blob/dblobs-portability';
 
 import type { DConversation } from './chat.conversation';
 import { isContentOrAttachmentFragment, isImageRefPart } from './chat.fragments';

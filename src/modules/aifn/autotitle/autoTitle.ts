@@ -29,7 +29,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   const { setAutoTitle, setUserTitle } = useChatStore.getState();
   if (forceReplace) {
     setUserTitle(conversationId, '');
-    setAutoTitle(conversationId, '✨...');
+    setAutoTitle(conversationId, '✏️...');
   }
 
   // first line of the last 5 messages

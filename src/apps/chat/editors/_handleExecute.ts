@@ -4,7 +4,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { createTextContentFragment, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
@@ -85,14 +85,19 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         return false;
       const imagePrompt = firstFragment.part.text;
       cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
-      return await runImageGenerationUpdatingState(cHandler, imagePrompt);
+
+      // use additional image fragments as image inputs
+      const imageInputFragments = lastMessage.fragments.slice(1)
+        .filter(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part));
+
+      return await runImageGenerationUpdatingState(cHandler, imagePrompt, imageInputFragments);
 
     case 'react-content':
       // verify we were called with a single DMessageTextContent
       if (!isTextContentFragment(firstFragment))
         return false;
       const reactPrompt = firstFragment.part.text;
-      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(reactPrompt)), true);
+      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
       return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId, lastMessage.id);
 
     default:

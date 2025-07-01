@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 
 export const wireLocalAIModelsAvailableOutputSchema = z.array(z.object({
@@ -17,9 +17,9 @@ export const wireLocalAIModelsAvailableOutputSchema = z.array(z.object({
   })).optional(),
 })).nullable(); // null if galleries are not served
 
-export const wilreLocalAIModelsApplyOutputSchema = z.object({
-  uuid: z.string().uuid(),
-  status: z.string().url(),
+export const wireLocalAIModelsApplyOutputSchema = z.object({
+  uuid: z.string(),
+  status: z.string(),
 });
 
 export const wireLocalAIModelsListOutputSchema = z.object({

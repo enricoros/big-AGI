@@ -14,6 +14,7 @@ import '~/common/styles/NProgress.css';
 import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
 
+import { ErrorBoundary } from '~/common/components/ErrorBoundary';
 import { Is } from '~/common/util/pwaUtils';
 import { OverlaysInsert } from '~/common/layout/overlays/OverlaysInsert';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
@@ -22,6 +23,7 @@ import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/3rdparty/GoogleAnalytics';
+import { hasPostHogAnalytics, OptionalPostHogAnalytics } from '~/common/components/3rdparty/PostHogAnalytics';
 
 
 const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
@@ -42,11 +44,13 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
       <ProviderSingleTab>
         <ProviderBackendCapabilities>
           {/* ^ Backend capabilities & SSR boundary */}
-          <ProviderBootstrapLogic>
-            <SnackbarInsert />
-            {getLayout(<Component {...pageProps} />)}
-            <OverlaysInsert />
-          </ProviderBootstrapLogic>
+          <ErrorBoundary outer>
+            <ProviderBootstrapLogic>
+              <SnackbarInsert />
+              {getLayout(<Component {...pageProps} />)}
+              <OverlaysInsert />
+            </ProviderBootstrapLogic>
+          </ErrorBoundary>
         </ProviderBackendCapabilities>
       </ProviderSingleTab>
     </ProviderTheming>
@@ -54,6 +58,7 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
     {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
     {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
+    {hasPostHogAnalytics && <OptionalPostHogAnalytics />}
 
   </>;
 };

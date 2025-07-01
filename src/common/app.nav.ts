@@ -12,8 +12,6 @@ import ImageIcon from '@mui/icons-material/Image';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
-import TextsmsIcon from '@mui/icons-material/Textsms';
-import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 // Link icons
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { DiscordIcon } from '~/common/components/icons/3rdparty/DiscordIcon';
@@ -24,6 +22,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { Brand } from '~/common/app.config';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
+import { PhChats } from '~/common/components/icons/phosphor/PhChats';
+import { PhChatsDuotone } from '~/common/components/icons/phosphor/PhChatsDuotone';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-share-link';
 
 
@@ -44,6 +44,7 @@ interface ItemBase {
 
 export interface NavItemApp extends ItemBase {
   type: 'app',
+  mobileName?: string,
   route: string,
   landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
   barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
@@ -56,6 +57,7 @@ export interface NavItemApp extends ItemBase {
   hideNav?: boolean
     | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
+  pageBrighter?: boolean, // set to true to make the page brighter (.surface instead of .level1)
   isDev?: boolean,        // show a 'dev mode' badge
   _delete?: boolean,      // delete from the UI
 }
@@ -86,8 +88,8 @@ export const navItems: {
   apps: [
     {
       name: 'Chat',
-      icon: TextsmsOutlinedIcon,
-      iconActive: TextsmsIcon,
+      icon: PhChats, // was: TextsmsOutlinedIcon
+      iconActive: PhChatsDuotone, // was: TextsmsIcon
       type: 'app',
       route: '/',
     },
@@ -151,6 +153,7 @@ export const navItems: {
     },
     {
       name: 'Create Personas',
+      mobileName: 'Personas',
       icon: Diversity2Icon, // was: Outlined.. but they look the same
       // iconActive: Diversity2Icon,
       type: 'app',
@@ -164,6 +167,7 @@ export const navItems: {
       type: 'app',
       route: '/diff',
       hideDrawer: true,
+      hideOnMobile: true,
     },
     {
       name: 'Tokenize Text',
@@ -172,6 +176,9 @@ export const navItems: {
       type: 'app',
       route: '/tokens',
       hideDrawer: true,
+      hideOnMobile: true,
+      hideIcon: true,
+      isDev: true,
     },
     {
       name: 'Beam',
@@ -212,6 +219,7 @@ export const navItems: {
       route: '/news',
       hideBar: true,
       hideDrawer: true,
+      hideOnMobile: true,
     },
   ],
 

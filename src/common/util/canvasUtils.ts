@@ -34,18 +34,32 @@ export function canvasToDataURLAndMimeType(
 }
 
 /**
- * Creates a Blob object representing the image contained in the canvas
- * @param canvas The canvas element to convert to a Blob.
- * @param imageFormat Browsers are required to support image/png; many will support additional formats including image/jpeg and image/webp.
- * @param imageQuality A Number between 0 and 1 indicating image quality if the requested type is image/jpeg or image/webp.
+ * Creates a Blob object representing the image contained in the canvas, with format validation and fallback
+ * @param canvas The canvas element to convert
+ * @param requestedMimeType Desired MIME type - browsers are required to support image/png; many will support additional formats including image/jpeg and some may support image/webp.
+ * @param imageQuality Quality for lossy formats (0-1) (image/jpeg or image/webp)
+ * @param debugLabel Label for debugging
  */
-export async function asyncCanvasToBlob(
+export async function asyncCanvasToBlobWithValidation(
   canvas: HTMLCanvasElement,
-  imageFormat: 'image/png' | 'image/jpeg',
-  imageQuality?: number
-): Promise<Blob | null> {
-  return new Promise((resolve) => canvas.toBlob(resolve, imageFormat, imageQuality));
+  requestedMimeType: string,
+  imageQuality: undefined | number,
+  debugLabel?: string,
+): Promise<{ blob: Blob; actualMimeType: string }> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob)
+        return reject(new Error(`Failed to convert canvas to blob with format '${requestedMimeType}'`));
+
+      // Warn if the actual MIME type differs from the requested one
+      if (debugLabel && blob.type !== requestedMimeType)
+        console.warn(`[DEV] ${debugLabel}: requested MIME type "${requestedMimeType}" was not used. Actual MIME type is "${blob.type}".`);
+
+      resolve({ blob, actualMimeType: blob.type });
+    }, requestedMimeType, imageQuality);
+  });
 }
+
 
 export function renderVideoFrameToNewCanvas(videoElement: HTMLVideoElement): HTMLCanvasElement {
   // paint the video on a canvas, to save it
