@@ -13,6 +13,7 @@ import type { LogEntry } from './logger.types';
 // configuration
 const DEFAULT_MAX_ENTRIES = 500;
 const DEFAULT_MAX_PERSISTED = 100;
+const DEFAULT_MAX_PERSISTED_DETAILS_LEN = 500;
 const DEBUG_NEW_LOG = Release.IsNodeDevBuild;
 
 
@@ -214,6 +215,16 @@ export const useLoggerStore = create<LoggerState & LoggerActions>()(
           .map(e => {
             // remove any actions
             const { actions, hasPendingActions, ...rest } = e;
+            // Truncate details if too large
+            if (rest.details) {
+              const detailsStr = JSON.stringify(rest.details);
+              if (detailsStr.length > 1000) {
+                rest.details = {
+                  truncated: true,
+                  preview: detailsStr.substring(0, DEFAULT_MAX_PERSISTED_DETAILS_LEN) + '...'
+                };
+              }
+            }
             return rest;
           }),
       }),
