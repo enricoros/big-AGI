@@ -183,7 +183,7 @@ export function ChatMessageList(props: {
   }, [conversationHandler]);
 
   const handleMessageReplaceFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, false);
+    conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, true);
   }, [conversationHandler]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
