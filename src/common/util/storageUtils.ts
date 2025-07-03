@@ -20,7 +20,7 @@ export async function requestPersistentStorageSafe(): Promise<boolean> {
       if (DEBUG_PERSISTENCE || !isGranted) {
         // await navigator.storage.getDirectory()
         const estimate = await estimatePersistentStorageOrThrow();
-        console.warn('Persistent storage granted:', isGranted, 'usageMB:', estimate?.usageMB, 'quotaMB:', estimate?.quotaMB);
+        console.log('Persistent storage granted:', isGranted, 'usageMB:', estimate?.usageMB, 'quotaMB:', estimate?.quotaMB);
       }
       return isGranted;
     }
