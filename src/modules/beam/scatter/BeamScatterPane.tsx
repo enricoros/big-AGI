@@ -124,12 +124,12 @@ export function BeamScatterPane(props: {
                 onClick={() => props.setRayCount(n)}
                 sx={{
                   // backgroundColor: isActive ? 'background.popup' : undefined,
-                  backgroundColor: isActive ? `${SCATTER_COLOR}.softBg` : 'background.popup',
+                  backgroundColor: !isActive ? `${SCATTER_COLOR}.softBg` : 'background.popup',
                   fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
                   width: '3rem',
                 }}
               >
-                {`x${n}`}
+                {n}
               </Button>
             );
           })}
@@ -140,9 +140,11 @@ export function BeamScatterPane(props: {
               onClick={() => props.setRayCount(props.rayCount + 1)}
               sx={{
                 backgroundColor: 'background.popup',
+                fontWeight: 'xl',
                 width: '3rem',
               }}
             >
+              {/*{'+'}*/}
               <PlusOneRoundedIcon />
             </Button>
           )}
