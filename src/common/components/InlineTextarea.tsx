@@ -47,6 +47,7 @@ export function InlineTextarea(props: {
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
+      e.stopPropagation();
       props.onCancel?.();
     }
   };
