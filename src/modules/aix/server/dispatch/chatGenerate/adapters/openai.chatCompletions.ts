@@ -136,9 +136,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
         .map(s => s.trim())
         .filter(s => !!s);
       
-      // only include sources if it's not the default ('web' and 'x')
+      // only omit sources if it's the default ('web' and 'x')
       const isDefaultSources = sources.length === 2 && sources.includes('web') && sources.includes('x');
-      if (!isDefaultSources && sources.length > 0)
+      if (!isDefaultSources)
         search_parameters.sources = sources.map(s => ({ type: s }));
     }
 

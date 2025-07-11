@@ -366,10 +366,41 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {showParam('llmVndXaiSearchSources') && (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, ml: 0 }}>
+        {[
+          { key: 'web', label: 'Web Search', description: 'Search websites' },
+          { key: 'x', label: 'X Posts', description: 'Search X posts' },
+          { key: 'news', label: 'News', description: 'Search news' },
+        ].map(({ key, label, description }) => {
+          const currentSources = llmVndXaiSearchSources?.split(',').map(s => s.trim()).filter(Boolean) || [];
+          const isEnabled = currentSources.includes(key);
+          const searchIsOff = llmVndXaiSearchMode === 'off';
+
+          return (
+            <FormSwitchControl
+              key={key}
+              title={label}
+              description={description}
+              checked={isEnabled}
+              disabled={searchIsOff}
+              onChange={checked => {
+                const newSources = currentSources.filter(s => s !== key);
+                if (checked) newSources.push(key);
+                const newValue = newSources.length > 0 ? newSources.join(',') : undefined;
+                onChangeParameter({ llmVndXaiSearchSources: newValue || 'web,x' });
+              }}
+            />
+          );
+        })}
+      </Box>
+    )}
+
     {showParam('llmVndXaiSearchDateFilter') && (
       <FormSelectControl
         title='Search Period'
-        tooltip='Recency of search results'
+        // tooltip='Recency of search results'
+        disabled={llmVndXaiSearchMode === 'off'}
         value={llmVndXaiSearchDateFilter ?? 'unfiltered'}
         onChange={(value) => {
           if (value === 'unfiltered' || !value)
@@ -379,38 +410,6 @@ export function LLMParametersEditor(props: {
         }}
         options={_xaiDateFilterOptions}
       />
-    )}
-
-    {showParam('llmVndXaiSearchSources') && (
-      // <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      //   <FormLabelStart title='xAI Live Sources' description='Where to search' />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, ml: 0 }}>
-        {[
-          { key: 'web', label: 'Web Search', description: 'Search websites' },
-          { key: 'x', label: 'X Posts', description: 'Search X posts' },
-          { key: 'news', label: 'News', description: 'Search news' },
-          { key: 'rss', label: 'RSS Feeds', description: 'Search feeds' },
-        ].map(({ key, label, description }) => {
-          const currentSources = llmVndXaiSearchSources?.split(',').map(s => s.trim()).filter(Boolean) || [];
-          const isEnabled = currentSources.includes(key);
-
-          return (
-            <FormSwitchControl
-              key={key}
-              title={label}
-              description={description}
-              checked={isEnabled}
-              onChange={checked => {
-                const newSources = currentSources.filter(s => s !== key);
-                if (checked) newSources.push(key);
-                const newValue = newSources.length > 0 ? newSources.join(',') : undefined;
-                onChangeParameter({ llmVndXaiSearchSources: newValue });
-              }}
-            />
-          );
-        })}
-      </Box>
-      // </Box>
     )}
 
   </>;
