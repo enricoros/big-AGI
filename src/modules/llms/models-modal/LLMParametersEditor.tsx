@@ -10,7 +10,6 @@ import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModel
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
-import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
@@ -41,8 +40,8 @@ const _perplexityDateFilterOptions = [
 ] as const;
 
 const _xaiSearchModeOptions = [
-  { value: 'auto', label: 'Auto', description: 'Model decides whether to search' },
-  { value: 'on', label: 'On', description: 'Always perform a search' },
+  { value: 'auto', label: 'Auto', description: 'Model decides (default)' },
+  { value: 'on', label: 'On', description: 'Always search active sources' },
   { value: 'off', label: 'Off', description: 'Never perform a search' },
 ] as const;
 
@@ -359,28 +358,18 @@ export function LLMParametersEditor(props: {
 
     {showParam('llmVndXaiSearchMode') && (
       <FormSelectControl
-        title='xAI Search Mode'
-        tooltip='Controls when to use xAI Live Search'
+        title='Search Mode'
+        tooltip='Controls when to search'
         value={llmVndXaiSearchMode ?? 'auto'}
         onChange={value => onChangeParameter({ llmVndXaiSearchMode: value })}
         options={_xaiSearchModeOptions}
       />
     )}
 
-    {showParam('llmVndXaiSearchSources') && (
-      <FormTextField
-        autoCompleteId='xai-search-sources'
-        title='xAI Search Sources'
-        placeholder='e.g., web,x,news'
-        value={llmVndXaiSearchSources ?? ''}
-        onChange={value => onChangeParameter({ llmVndXaiSearchSources: value || undefined })}
-      />
-    )}
-
     {showParam('llmVndXaiSearchDateFilter') && (
       <FormSelectControl
-        title='xAI Search From'
-        tooltip='Filter xAI search results by publication date'
+        title='Search Period'
+        tooltip='Recency of search results'
         value={llmVndXaiSearchDateFilter ?? 'unfiltered'}
         onChange={(value) => {
           if (value === 'unfiltered' || !value)
@@ -390,6 +379,38 @@ export function LLMParametersEditor(props: {
         }}
         options={_xaiDateFilterOptions}
       />
+    )}
+
+    {showParam('llmVndXaiSearchSources') && (
+      // <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      //   <FormLabelStart title='xAI Live Sources' description='Where to search' />
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, ml: 0 }}>
+        {[
+          { key: 'web', label: 'Web Search', description: 'Search websites' },
+          { key: 'x', label: 'X Posts', description: 'Search X posts' },
+          { key: 'news', label: 'News', description: 'Search news' },
+          { key: 'rss', label: 'RSS Feeds', description: 'Search feeds' },
+        ].map(({ key, label, description }) => {
+          const currentSources = llmVndXaiSearchSources?.split(',').map(s => s.trim()).filter(Boolean) || [];
+          const isEnabled = currentSources.includes(key);
+
+          return (
+            <FormSwitchControl
+              key={key}
+              title={label}
+              description={description}
+              checked={isEnabled}
+              onChange={checked => {
+                const newSources = currentSources.filter(s => s !== key);
+                if (checked) newSources.push(key);
+                const newValue = newSources.length > 0 ? newSources.join(',') : undefined;
+                onChangeParameter({ llmVndXaiSearchSources: newValue });
+              }}
+            />
+          );
+        })}
+      </Box>
+      // </Box>
     )}
 
   </>;
