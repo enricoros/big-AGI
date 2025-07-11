@@ -13,55 +13,59 @@ import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
 const _knownXAIChatModels: ManualMappings = [
 
+  // Grok 4
+  {
+    idPrefix: 'grok-4-0709',
+    label: 'Grok 4 (0709)',
+    description: 'xAI\'s most advanced model, offering state-of-the-art reasoning and problem-solving capabilities over a massive 256k context window. Supports text and image inputs.',
+    contextWindow: 256000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
+    // benchmark unreported
+  },
+
   // Grok 3
   {
-    isPreview: true,
-    idPrefix: 'grok-3-beta',
-    label: 'Grok 3', // (Beta)
+    idPrefix: 'grok-3',
+    label: 'Grok 3',
     description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    trainingDataCutoff: 'Nov 2024', // November 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 3, output: 15 },
-    benchmark: { cbaElo: 1402 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'grok-3-fast-beta',
-    label: 'Grok 3 Fast', // (Beta)
-    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    trainingDataCutoff: 'Nov 2024', // November 17, 2024
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 5, output: 25 },
-    benchmark: { cbaElo: 1402 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'grok-3-mini-beta',
-    label: 'Grok 3 Mini', // (Beta)
-    description: 'A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    trainingDataCutoff: 'Nov 2024', // November 17, 2024
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
-    chatPrice: { input: 0.3, output: 0.5 },
+    chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
     // benchmark unreported
   },
   {
-    isPreview: true,
-    idPrefix: 'grok-3-mini-fast-beta',
-    label: 'Grok 3 Mini Fast', // (Beta)
+    idPrefix: 'grok-3-fast',
+    label: 'Grok 3 Fast',
+    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
+    // benchmark unreported
+  },
+  {
+    idPrefix: 'grok-3-mini',
+    label: 'Grok 3 Mini',
+    description: 'A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
+    // benchmark unreported
+  },
+  {
+    idPrefix: 'grok-3-mini-fast',
+    label: 'Grok 3 Mini Fast',
     description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    trainingDataCutoff: 'Nov 2024', // November 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
-    chatPrice: { input: 0.6, output: 4 },
+    chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
     // benchmark unreported
   },
 
@@ -72,7 +76,6 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'xAI model grok-2-vision-1212 with image and text input capabilities. Supports text generation with a 32,768 token context window.',
     contextWindow: 32768,
     maxCompletionTokens: undefined,
-    trainingDataCutoff: 'Jul 2024', // July 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
@@ -93,7 +96,6 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    trainingDataCutoff: 'Jul 2024', // July 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
@@ -197,10 +199,11 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
 
 // manual sort order
 const _xaiIdStartsWithOrder = [
-  'grok-3-fast-beta',
-  'grok-3-beta',
-  'grok-3-mini-fast-beta',
-  'grok-3-mini-beta',
+  'grok-4-0709',
+  'grok-3-fast',
+  'grok-3',
+  'grok-3-mini-fast',
+  'grok-3-mini',
   'grok-2-vision-1212',
   'grok-2-1212',
   'grok-vision-beta',
