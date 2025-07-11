@@ -121,18 +121,25 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   }
 
   // [xAI] Vendor-specific extensions for Live Search
-  if (openAIDialect === 'xai' && (model.vndXaiSearchMode || model.vndXaiSearchSources || model.vndXaiSearchDateFilter)) {
+  if (openAIDialect === 'xai' && model.vndXaiSearchMode && model.vndXaiSearchMode !== 'off') {
     const search_parameters: any = {
-      mode: model.vndXaiSearchMode || 'auto',
       return_citations: true,
     };
 
+    // mode defaults to 'auto' if not specified, so only include if not 'auto'
+    if (model.vndXaiSearchMode && model.vndXaiSearchMode !== 'auto')
+      search_parameters.mode = model.vndXaiSearchMode;
+
     if (model.vndXaiSearchSources) {
-      search_parameters.sources = model.vndXaiSearchSources
+      const sources = model.vndXaiSearchSources
         .split(',')
         .map(s => s.trim())
-        .filter(s => !!s)
-        .map(s => ({ type: s }));
+        .filter(s => !!s);
+      
+      // only include sources if it's not the default ('web' and 'x')
+      const isDefaultSources = sources.length === 2 && sources.includes('web') && sources.includes('x');
+      if (!isDefaultSources && sources.length > 0)
+        search_parameters.sources = sources.map(s => ({ type: s }));
     }
 
     if (model.vndXaiSearchDateFilter && model.vndXaiSearchDateFilter !== 'unfiltered') {

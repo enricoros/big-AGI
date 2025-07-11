@@ -176,7 +176,7 @@ export const DModelParameterRegistry = {
     label: 'Search Sources',
     type: 'string' as const,
     description: 'Comma-separated sources (web,x,news,rss)',
-    // no initial value, defaults to web,x if search is enabled
+    initialValue: 'web,x', // defaults to web,x as per xAI docs
   } as const,
 
   llmVndXaiSearchDateFilter: {
