@@ -2,7 +2,7 @@ import * as z from 'zod/v4';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMapping, ManualMappings } from './models.data';
@@ -20,14 +20,10 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'xAI\'s most advanced model, offering state-of-the-art reasoning and problem-solving capabilities over a massive 256k context window. Supports text and image inputs.',
     contextWindow: 256000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      { paramId: 'llmVndXaiSearchMode' },
-      { paramId: 'llmVndXaiSearchSources' },
-      { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    // benchmark unreported
+    benchmark: { cbaElo: 1409 + 1 /* still unreported! assuming on top of grok-3 */ },
   },
 
   // Grok 3
@@ -37,14 +33,10 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    parameterSpecs: [
-      { paramId: 'llmVndXaiSearchMode' },
-      { paramId: 'llmVndXaiSearchSources' },
-      { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    // benchmark unreported
+    benchmark: { cbaElo: 1409 /* grok-3-preview-02-24 */},
   },
   {
     idPrefix: 'grok-3-fast',
@@ -52,14 +44,10 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    parameterSpecs: [
-      { paramId: 'llmVndXaiSearchMode' },
-      { paramId: 'llmVndXaiSearchSources' },
-      { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
-    // benchmark unreported
+    benchmark: { cbaElo: 1409 - 1 /* still unreported! assuming below grok-3 just for cost */ },
   },
   {
     idPrefix: 'grok-3-mini',
@@ -67,10 +55,13 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort' },
+      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
+    ],
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
-    // benchmark unreported
+    benchmark: { cbaElo: 1354 /* grok-3-mini-beta */},
   },
   {
     idPrefix: 'grok-3-mini-fast',
@@ -78,10 +69,13 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort' },
+      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
+    ],
     chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
-    // benchmark unreported
+    benchmark: { cbaElo: 1354 - 1 /* still unreported! assuming below grok-3-mini just for cost */ },
   },
 
   // Grok 2
@@ -92,11 +86,6 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 32768,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    parameterSpecs: [
-      { paramId: 'llmVndXaiSearchMode' },
-      { paramId: 'llmVndXaiSearchSources' },
-      { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
@@ -117,11 +106,6 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    parameterSpecs: [
-      { paramId: 'llmVndXaiSearchMode' },
-      { paramId: 'llmVndXaiSearchSources' },
-      { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
@@ -222,7 +206,7 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
   }, [] as ModelDescriptionSchema[]);
 }
 
-// manual sort order
+// manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
   'grok-4-0709',
   'grok-3-fast',
@@ -236,6 +220,19 @@ const _xaiIdStartsWithOrder = [
 ];
 
 export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+  // First try exact matches with the order array
+  const aExact = _xaiIdStartsWithOrder.indexOf(a.id);
+  const bExact = _xaiIdStartsWithOrder.indexOf(b.id);
+  
+  // If both have exact matches, use those positions
+  if (aExact !== -1 && bExact !== -1)
+    return aExact - bExact;
+  
+  // If only one has exact match, prioritize it
+  if (aExact !== -1) return -1;
+  if (bExact !== -1) return 1;
+  
+  // Fall back to prefix matching for unknown models
   const aStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => a.id.startsWith(prefix));
   const bStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => b.id.startsWith(prefix));
 
