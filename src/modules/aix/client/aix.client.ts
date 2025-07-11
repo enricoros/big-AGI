@@ -49,6 +49,7 @@ export function aixCreateModelFromLLMOptions(
     llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort, llmVndOaiRestoreMarkdown, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
+    llmVndXaiSearchMode, llmVndXaiSearchSources, llmVndXaiSearchDateFilter,
   } = {
     ...llmOptions,
     ...llmOptionsOverride,
@@ -106,6 +107,9 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndPerplexityDateFilter ? { vndPerplexityDateFilter: llmVndPerplexityDateFilter } : {}),
     ...(llmVndPerplexitySearchMode ? { vndPerplexitySearchMode: llmVndPerplexitySearchMode } : {}),
     ...(userGeolocation ? { userGeolocation } : {}),
+    ...(llmVndXaiSearchMode ? { vndXaiSearchMode: llmVndXaiSearchMode } : {}),
+    ...(llmVndXaiSearchSources ? { vndXaiSearchSources: llmVndXaiSearchSources } : {}),
+    ...(llmVndXaiSearchDateFilter ? { vndXaiSearchDateFilter: llmVndXaiSearchDateFilter } : {}),
   };
 }
 

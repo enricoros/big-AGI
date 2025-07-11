@@ -413,6 +413,9 @@ export namespace AixWire_API {
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
     vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
     vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
+    vndXaiSearchMode: z.enum(['auto', 'on', 'off']).optional(),
+    vndXaiSearchSources: z.string().optional(),
+    vndXaiSearchDateFilter: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
     /**
      * [OpenAI, 2025-03-11] This is the generic version of the `web_search_options.user_location` field
      * This AIX field mimics on purpose: https://platform.openai.com/docs/api-reference/chat/create

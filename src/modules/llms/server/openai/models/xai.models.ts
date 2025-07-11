@@ -21,6 +21,11 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 256000,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndXaiSearchMode' },
+      { paramId: 'llmVndXaiSearchSources' },
+      { paramId: 'llmVndXaiSearchDateFilter' },
+    ],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
     // benchmark unreported
   },
@@ -33,6 +38,11 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    parameterSpecs: [
+      { paramId: 'llmVndXaiSearchMode' },
+      { paramId: 'llmVndXaiSearchSources' },
+      { paramId: 'llmVndXaiSearchDateFilter' },
+    ],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
     // benchmark unreported
   },
@@ -43,6 +53,11 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    parameterSpecs: [
+      { paramId: 'llmVndXaiSearchMode' },
+      { paramId: 'llmVndXaiSearchSources' },
+      { paramId: 'llmVndXaiSearchDateFilter' },
+    ],
     chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
     // benchmark unreported
   },
@@ -77,6 +92,11 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 32768,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    parameterSpecs: [
+      { paramId: 'llmVndXaiSearchMode' },
+      { paramId: 'llmVndXaiSearchSources' },
+      { paramId: 'llmVndXaiSearchDateFilter' },
+    ],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
@@ -97,6 +117,11 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    parameterSpecs: [
+      { paramId: 'llmVndXaiSearchMode' },
+      { paramId: 'llmVndXaiSearchSources' },
+      { paramId: 'llmVndXaiSearchDateFilter' },
+    ],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },

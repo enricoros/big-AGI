@@ -120,6 +120,30 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       };
   }
 
+  // [xAI] Vendor-specific extensions for Live Search
+  if (openAIDialect === 'xai' && (model.vndXaiSearchMode || model.vndXaiSearchSources || model.vndXaiSearchDateFilter)) {
+    const search_parameters: any = {
+      mode: model.vndXaiSearchMode || 'auto',
+      return_citations: true,
+    };
+
+    if (model.vndXaiSearchSources) {
+      search_parameters.sources = model.vndXaiSearchSources
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => !!s)
+        .map(s => ({ type: s }));
+    }
+
+    if (model.vndXaiSearchDateFilter && model.vndXaiSearchDateFilter !== 'unfiltered') {
+      const fromDate = _convertSimpleDateFilterToISO(model.vndXaiSearchDateFilter);
+      if (fromDate)
+        search_parameters.from_date = fromDate;
+    }
+
+    payload.search_parameters = search_parameters;
+  }
+
   // [Perplexity] Vendor-specific extensions for search models
   if (openAIDialect === 'perplexity') {
     // Reasoning effort (reuses OpenAI parameter)
@@ -639,4 +663,26 @@ function _convertPerplexityDateFilter(filter: string): string {
       console.warn('[DEV] Perplexity date filter not recognized:', filter);
       return '';
   }
+}
+
+function _convertSimpleDateFilterToISO(filter: '1d' | '1w' | '1m' | '6m' | '1y'): string {
+  const now = new Date();
+  switch (filter) {
+    case '1d':
+      now.setDate(now.getDate() - 1);
+      break;
+    case '1w':
+      now.setDate(now.getDate() - 7);
+      break;
+    case '1m':
+      now.setMonth(now.getMonth() - 1);
+      break;
+    case '6m':
+      now.setMonth(now.getMonth() - 6);
+      break;
+    case '1y':
+      now.setFullYear(now.getFullYear() - 1);
+      break;
+  }
+  return now.toISOString().split('T')[0];
 }
