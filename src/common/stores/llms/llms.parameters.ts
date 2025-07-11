@@ -162,6 +162,31 @@ export const DModelParameterRegistry = {
     // requiredFallback: 'default', // or leave unset for "unspecified"
   } as const,
 
+  // xAI-specific parameters
+
+  llmVndXaiSearchMode: {
+    label: 'Search Mode',
+    type: 'enum' as const,
+    description: 'Controls when to use live search',
+    values: ['auto', 'on', 'off'] as const,
+    initialValue: 'auto', // we default to auto for our users, to get them search out of the box
+  } as const,
+
+  llmVndXaiSearchSources: {
+    label: 'Search Sources',
+    type: 'string' as const,
+    description: 'Comma-separated sources (web,x,news,rss)',
+    // no initial value, defaults to web,x if search is enabled
+  } as const,
+
+  llmVndXaiSearchDateFilter: {
+    label: 'Search From Date',
+    type: 'enum' as const,
+    description: 'Filter search results by publication date',
+    values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'] as const,
+    // requiredFallback: 'unfiltered',
+  } as const,
+
 } as const;
 
 

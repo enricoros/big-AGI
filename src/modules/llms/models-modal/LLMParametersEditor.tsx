@@ -10,6 +10,7 @@ import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModel
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
@@ -35,6 +36,21 @@ const _perplexityDateFilterOptions = [
   { value: _UNSPECIFIED, label: 'All Time', description: 'No date restriction' },
   { value: '1m', label: 'Last Month', description: 'Results from last 30 days' },
   { value: '3m', label: 'Last 3 Months', description: 'Results from last 90 days' },
+  { value: '6m', label: 'Last 6 Months', description: 'Results from last 6 months' },
+  { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
+] as const;
+
+const _xaiSearchModeOptions = [
+  { value: 'auto', label: 'Auto', description: 'Model decides whether to search' },
+  { value: 'on', label: 'On', description: 'Always perform a search' },
+  { value: 'off', label: 'Off', description: 'Never perform a search' },
+] as const;
+
+const _xaiDateFilterOptions = [
+  { value: 'unfiltered', label: 'All Time', description: 'No date restriction' },
+  { value: '1d', label: 'Last Day', description: 'Results from last 24 hours' },
+  { value: '1w', label: 'Last Week', description: 'Results from last 7 days' },
+  { value: '1m', label: 'Last Month', description: 'Results from last 30 days' },
   { value: '6m', label: 'Last 6 Months', description: 'Results from last 6 months' },
   { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
 ] as const;
@@ -82,6 +98,9 @@ export function LLMParametersEditor(props: {
     llmVndOaiWebSearchGeolocation,
     llmVndPerplexityDateFilter,
     llmVndPerplexitySearchMode,
+    llmVndXaiSearchMode,
+    llmVndXaiSearchSources,
+    llmVndXaiSearchDateFilter,
   } = allParameters;
 
 
@@ -335,6 +354,41 @@ export function LLMParametersEditor(props: {
           else
             onChangeParameter({ llmForceNoStream: true });
         }}
+      />
+    )}
+
+    {showParam('llmVndXaiSearchMode') && (
+      <FormSelectControl
+        title='xAI Search Mode'
+        tooltip='Controls when to use xAI Live Search'
+        value={llmVndXaiSearchMode ?? 'auto'}
+        onChange={value => onChangeParameter({ llmVndXaiSearchMode: value })}
+        options={_xaiSearchModeOptions}
+      />
+    )}
+
+    {showParam('llmVndXaiSearchSources') && (
+      <FormTextField
+        autoCompleteId='xai-search-sources'
+        title='xAI Search Sources'
+        placeholder='e.g., web,x,news'
+        value={llmVndXaiSearchSources ?? ''}
+        onChange={value => onChangeParameter({ llmVndXaiSearchSources: value || undefined })}
+      />
+    )}
+
+    {showParam('llmVndXaiSearchDateFilter') && (
+      <FormSelectControl
+        title='xAI Search From'
+        tooltip='Filter xAI search results by publication date'
+        value={llmVndXaiSearchDateFilter ?? 'unfiltered'}
+        onChange={(value) => {
+          if (value === 'unfiltered' || !value)
+            onRemoveParameter('llmVndXaiSearchDateFilter');
+          else
+            onChangeParameter({ llmVndXaiSearchDateFilter: value });
+        }}
+        options={_xaiDateFilterOptions}
       />
     )}
 
