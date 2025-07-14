@@ -220,6 +220,17 @@ export const animationEnterModal = keyframes`
     }
 `;
 
+export const animationOpacityPulse = keyframes`
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }`;
+
 export const animationScalePulse = keyframes`
     0%, 100% {
         transform: scale(1);
