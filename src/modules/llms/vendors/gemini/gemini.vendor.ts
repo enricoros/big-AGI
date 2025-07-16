@@ -14,15 +14,15 @@ interface DGeminiServiceSettings {
   minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold;
 }
 
-interface LLMOptionsGemini {
-  llmRef: string;
-  stopSequences: string[];  // up to 5 sequences that will stop generation (optional)
-  candidateCount: number;   // 1...8 number of generated responses to return (optional)
-  maxOutputTokens: number;  // if unset, this will default to outputTokenLimit (optional)
-  temperature: number;      // 0...1 Controls the randomness of the output. (optional)
-  topP: number;             // 0...1 The maximum cumulative probability of tokens to consider when sampling (optional)
-  topK: number;             // 1...100 The maximum number of tokens to consider when sampling (optional)
-}
+// interface LLMOptionsGemini {
+//   llmRef: string;
+//   stopSequences: string[];  // up to 5 sequences that will stop generation (optional)
+//   candidateCount: number;   // 1...8 number of generated responses to return (optional)
+//   maxOutputTokens: number;  // if unset, this will default to outputTokenLimit (optional)
+//   temperature: number;      // 0...1 Controls the randomness of the output. (optional)
+//   topP: number;             // 0...1 The maximum cumulative probability of tokens to consider when sampling (optional)
+//   topK: number;             // 1...100 The maximum number of tokens to consider when sampling (optional)
+// }
 
 
 export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAccessSchema> = {
