@@ -1,4 +1,3 @@
-import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
@@ -30,9 +29,6 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmGemini',
-
-  // components
-  Icon: GeminiIcon,
 
   // functions
   initializeSetup: () => ({

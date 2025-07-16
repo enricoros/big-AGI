@@ -1,5 +1,3 @@
-import { AzureIcon } from '~/common/components/icons/vendors/AzureIcon';
-
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
@@ -37,9 +35,6 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
   location: 'cloud',
   instanceLimit: 2,
   hasServerConfigKey: 'hasLlmAzureOpenAI',
-
-  // components
-  Icon: AzureIcon,
 
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({

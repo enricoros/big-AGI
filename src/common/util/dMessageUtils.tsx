@@ -11,7 +11,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
-import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+import { llmsGetVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DMessage, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
@@ -247,7 +247,7 @@ export function useMessageAvatarLabel(
     // aix generator: details galore
     const modelId = generator.aix?.mId ?? null;
     const vendorId = generator.aix?.vId ?? null;
-    const VendorIcon = (vendorId && complexity !== 'minimal') ? findModelVendor(vendorId)?.Icon : null;
+    const VendorIcon = (vendorId && complexity !== 'minimal') ? llmsGetVendorIcon(vendorId) : null;
     const metrics = generator.metrics ? _prettyMetrics(generator.metrics, complexity) : null;
     const stopReason = generator.tokenStopReason ? _prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
 

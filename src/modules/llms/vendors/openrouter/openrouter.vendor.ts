@@ -1,5 +1,3 @@
-import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
-
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
@@ -34,9 +32,6 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   instanceLimit: 1,
   hasFreeModels: true,
   hasServerConfigKey: 'hasLlmOpenRouter',
-
-  // components
-  Icon: OpenRouterIcon,
 
   // functions
   initializeSetup: (): DOpenRouterServiceSettings => ({

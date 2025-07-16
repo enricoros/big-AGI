@@ -25,7 +25,7 @@ import { XAIServiceSetup } from '../vendors/xai/XAIServiceSetup';
 
 
 /**
- * Hardcoded mapping with the setup components for each vendor.
+ * Add to this map to register a new Vendor Setup Component.
  * NOTE: we do it here to only depend on this file (even lazily) and avoid to import all the Components (UI)
  *       code on vendor definitions (which must be lightweight as it impacts boot time).
  */

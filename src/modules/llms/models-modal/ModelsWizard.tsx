@@ -8,6 +8,7 @@ import { llmsStoreActions, llmsStoreState, useModelsStore } from '~/common/store
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
+import { LLMVendorIcon } from '../components/LLMVendorIcon';
 import { ModelVendorAnthropic } from '../vendors/anthropic/anthropic.vendor';
 import { ModelVendorGemini } from '../vendors/gemini/gemini.vendor';
 import { ModelVendorLMStudio } from '../vendors/lmstudio/lmstudio.vendor';
@@ -123,7 +124,7 @@ function WizardProviderSetup(props: {
   // derived
   const isLocal = providerCat === 'local';
   const valueName = isLocal ? 'server' : 'API Key';
-  const { name: vendorName, Icon: VendorIcon } = providerVendor;
+  const { name: vendorName } = providerVendor;
 
 
   // handlers
@@ -212,7 +213,7 @@ function WizardProviderSetup(props: {
             slotProps={{ badge: { sx: { boxShadow: 'xs', border: 'none' } } }}
           >
             <Avatar sx={{ height: '100%', aspectRatio: 1, backgroundColor: 'transparent' }}>
-              {isLoading ? <CircularProgress color='primary' variant='solid' size='sm' /> : <VendorIcon />}
+              {isLoading ? <CircularProgress color='primary' variant='solid' size='sm' /> : <LLMVendorIcon vendorId={providerVendor.id} />}
             </Avatar>
           </Badge>
         </TooltipOutlined>

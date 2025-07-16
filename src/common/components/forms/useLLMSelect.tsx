@@ -6,6 +6,7 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
@@ -176,9 +177,9 @@ export function useLLMSelect(
           // sx={llm.id === llmId ? { fontWeight: 'md' } : undefined}
           label={llm.label}
         >
-          {(!noIcons && !!vendor?.Icon) && (
+          {!noIcons && (
             <ListItemDecorator>
-              {llm.userStarred ? '⭐ ' : <vendor.Icon />}
+              {llm.userStarred ? '⭐ ' : vendor?.id ? <LLMVendorIcon vendorId={vendor.id} /> : null}
             </ListItemDecorator>
           )}
           {/*<Tooltip title={llm.description}>*/}
@@ -236,7 +237,7 @@ export function useLLMSelect(
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
-    return findModelVendor(llm?.vId)?.Icon;
+    return !llm?.vId ? undefined : llmsGetVendorIcon(llm.vId);
   }, [llm?.vId]);
 
   return [llm, llmSelectComponent, chatLLMVendorIconFC];

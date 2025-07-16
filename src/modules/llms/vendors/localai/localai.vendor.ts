@@ -1,5 +1,3 @@
-import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
-
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
@@ -22,9 +20,6 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
     // this is to show the green mark on the vendor icon in the setup screen
     return backendCapabilities.hasLlmLocalAIHost || backendCapabilities.hasLlmLocalAIKey;
   },
-
-  // components
-  Icon: LocalAIIcon,
 
   // functions
   initializeSetup: () => ({
