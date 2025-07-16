@@ -4,8 +4,6 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
 import type { IModelVendor } from '../IModelVendor';
 
-import { AnthropicServiceSetup } from './AnthropicServiceSetup';
-
 
 // special symbols
 export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length > 1);
@@ -27,7 +25,6 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
 
   // components
   Icon: AnthropicIcon,
-  ServiceSetupComponent: AnthropicServiceSetup,
 
   // functions
   getTransportAccess: (partialSetup): AnthropicAccessSchema => ({

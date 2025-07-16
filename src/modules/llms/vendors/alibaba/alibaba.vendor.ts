@@ -4,8 +4,6 @@ import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { AlibabaServiceSetup } from './AlibabaServiceSetup';
-
 
 interface DAlibabaServiceSettings {
   alibabaOaiKey: string;
@@ -22,7 +20,6 @@ export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAcc
 
   // components
   Icon: AlibabaCloudIcon,
-  ServiceSetupComponent: AlibabaServiceSetup,
 
   // functions
   initializeSetup: () => ({

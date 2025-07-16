@@ -11,28 +11,20 @@ import { useHasLLMs, useModelsServices } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
+import { LLMVendorSetup } from '../components/LLMVendorSetup';
 import { ModelsList } from './ModelsList';
 import { ModelsServiceSelector } from './ModelsServiceSelector';
 import { ModelsWizard } from './ModelsWizard';
-import { findModelVendor } from '../vendors/vendors.registry';
 
 
 // configuration
 const MODELS_WIZARD_ENABLE_INITIALLY = true;
 
 
-function VendorServiceSetup(props: { service: DModelsService }) {
-  const vendor = findModelVendor(props.service.vId);
-  if (!vendor)
-    return 'Configuration issue: Vendor not found for Service ' + props.service.id;
-  return <vendor.ServiceSetupComponent key={props.service.id} serviceId={props.service.id} />;
-}
-
-
 type TabValue = 'wizard' | 'setup' | 'defaults';
 
 /**
- * Note: the reason for this component separation from the parent state, is delayed state intitialization.
+ * Note: the reason for this component separation from the parent state, is delayed state initialization.
  */
 function ModelsConfiguratorModal(props: {
   modelsServices: DModelsService[],
@@ -148,7 +140,7 @@ function ModelsConfiguratorModal(props: {
       {isTabSetup && (
         <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
           {activeService
-            ? <VendorServiceSetup service={activeService} />
+            ? <LLMVendorSetup service={activeService} />
             : <Box sx={{ minHeight: '7.375rem' }} />
           }
         </Box>

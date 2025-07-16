@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { GroqServiceSetup } from './GroqServiceSetup';
-
 
 interface DGroqServiceSettings {
   groqKey: string;
@@ -22,7 +20,6 @@ export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSch
 
   // components
   Icon: GroqIcon,
-  ServiceSetupComponent: GroqServiceSetup,
 
   // functions
   initializeSetup: () => ({

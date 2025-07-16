@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { PerplexityServiceSetup } from './PerplexityServiceSetup';
-
 
 interface DPerpexityServiceSettings {
   perplexityKey: string;
@@ -22,7 +20,6 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
 
   // components
   Icon: PerplexityIcon,
-  ServiceSetupComponent: PerplexityServiceSetup,
 
   // functions
   initializeSetup: () => ({

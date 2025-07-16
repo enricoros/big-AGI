@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { OpenPipeServiceSetup } from './OpenPipeServiceSetup';
-
 
 export interface DOpenPipeServiceSettings {
   openPipeKey: string;
@@ -23,7 +21,6 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
 
   // components
   Icon: OpenPipeIcon,
-  ServiceSetupComponent: OpenPipeServiceSetup,
 
   // functions
   initializeSetup: () => ({
