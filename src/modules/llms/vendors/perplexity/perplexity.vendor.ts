@@ -1,5 +1,3 @@
-import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon';
-
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
@@ -17,9 +15,6 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmPerplexity',
-
-  // components
-  Icon: PerplexityIcon,
 
   // functions
   initializeSetup: () => ({

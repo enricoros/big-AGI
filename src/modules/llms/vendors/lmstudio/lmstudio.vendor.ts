@@ -3,8 +3,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
-
 
 interface DLMStudioServiceSettings {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
@@ -16,9 +14,6 @@ export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIA
   displayRank: 52,
   location: 'local',
   instanceLimit: 1,
-
-  // components
-  Icon: LMStudioIcon,
 
   // functions
   initializeSetup: () => ({

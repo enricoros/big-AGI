@@ -1,4 +1,3 @@
-import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -18,9 +17,6 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   location: 'local',
   instanceLimit: 2,
   hasServerConfigKey: 'hasLlmOllama',
-
-  // components
-  Icon: OllamaIcon,
 
   // functions
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({

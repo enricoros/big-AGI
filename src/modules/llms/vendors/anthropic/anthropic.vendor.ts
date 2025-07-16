@@ -1,4 +1,3 @@
-import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
@@ -22,9 +21,6 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
   brandColor: '#cc785c',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmAnthropic',
-
-  // components
-  Icon: AnthropicIcon,
 
   // functions
   getTransportAccess: (partialSetup): AnthropicAccessSchema => ({

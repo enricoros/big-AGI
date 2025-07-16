@@ -14,6 +14,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
+import { LLMVendorIcon } from '../components/LLMVendorIcon';
 import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
 import { vendorHasBackendCap } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
@@ -30,9 +31,7 @@ const ENABLE_DELETE_LAST = true; // This will fall the menu back to the 'Quick S
 }*/
 
 function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
-  let icon: React.JSX.Element | null = null;
-  if (vendor?.Icon)
-    icon = <vendor.Icon />;
+  const icon = !vendor?.id ? null : <LLMVendorIcon vendorId={vendor.id} />;
   return (greenMark && icon)
     ? <Badge size='sm' badgeContent='' slotProps={{ badge: { sx: { backgroundColor: 'lime', boxShadow: 'none', border: '1px solid gray', p: 0 } } }}>{icon}</Badge>
     : icon;

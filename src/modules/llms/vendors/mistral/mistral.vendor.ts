@@ -1,5 +1,3 @@
-import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
-
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
@@ -20,9 +18,6 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmMistral',
-
-  // components
-  Icon: MistralIcon,
 
   // functions
   initializeSetup: () => ({
