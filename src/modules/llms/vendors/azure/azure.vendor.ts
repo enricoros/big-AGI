@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { AzureServiceSetup } from './AzureServiceSetup';
-
 
 // special symbols
 export const isValidAzureApiKey = (apiKey?: string) => !!apiKey && apiKey.length >= 32;
@@ -42,7 +40,6 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
 
   // components
   Icon: AzureIcon,
-  ServiceSetupComponent: AzureServiceSetup,
 
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({

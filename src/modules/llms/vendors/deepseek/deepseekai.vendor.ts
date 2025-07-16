@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { DeepseekAIServiceSetup } from './DeepseekAIServiceSetup';
-
 
 export interface DDeepseekServiceSettings {
   deepseekKey: string;
@@ -22,7 +20,6 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
 
   // components
   Icon: DeepseekIcon,
-  ServiceSetupComponent: DeepseekAIServiceSetup,
 
   // functions
   initializeSetup: () => ({

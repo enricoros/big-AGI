@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { TogetherAIServiceSetup } from './TogetherAIServiceSetup';
-
 
 interface DTogetherAIServiceSettings {
   togetherKey: string;
@@ -24,7 +22,6 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
 
   // components
   Icon: TogetherIcon,
-  ServiceSetupComponent: TogetherAIServiceSetup,
 
   // functions
   initializeSetup: () => ({

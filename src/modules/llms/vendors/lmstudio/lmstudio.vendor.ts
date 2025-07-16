@@ -3,7 +3,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { LMStudioServiceSetup } from './LMStudioServiceSetup';
 import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
 
 
@@ -20,7 +19,6 @@ export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIA
 
   // components
   Icon: LMStudioIcon,
-  ServiceSetupComponent: LMStudioServiceSetup,
 
   // functions
   initializeSetup: () => ({

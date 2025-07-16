@@ -5,8 +5,6 @@ import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
 import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import type { IModelVendor } from '../IModelVendor';
 
-import { GeminiServiceSetup } from './GeminiServiceSetup';
-
 
 interface DGeminiServiceSettings {
   geminiKey: string;
@@ -35,7 +33,6 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
 
   // components
   Icon: GeminiIcon,
-  ServiceSetupComponent: GeminiServiceSetup,
 
   // functions
   initializeSetup: () => ({

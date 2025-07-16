@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { XAIServiceSetup } from './XAIServiceSetup';
-
 
 export interface DXAIServiceSettings {
   xaiKey: string;
@@ -22,7 +20,6 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
 
   // Components
   Icon: XAIIcon,
-  ServiceSetupComponent: XAIServiceSetup,
 
   // functions
   initializeSetup: () => ({ xaiKey: '' }),

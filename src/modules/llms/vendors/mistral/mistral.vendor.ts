@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { DOpenAIServiceSettings, ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { MistralServiceSetup } from './MistralServiceSetup';
-
 
 // special symbols
 
@@ -25,7 +23,6 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
 
   // components
   Icon: MistralIcon,
-  ServiceSetupComponent: MistralServiceSetup,
 
   // functions
   initializeSetup: () => ({

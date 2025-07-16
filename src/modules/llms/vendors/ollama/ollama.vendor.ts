@@ -4,8 +4,6 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { IModelVendor } from '../IModelVendor';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 
-import { OllamaServiceSetup } from './OllamaServiceSetup';
-
 
 interface DOllamaServiceSettings {
   ollamaHost: string;
@@ -23,7 +21,6 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
 
   // components
   Icon: OllamaIcon,
-  ServiceSetupComponent: OllamaServiceSetup,
 
   // functions
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({

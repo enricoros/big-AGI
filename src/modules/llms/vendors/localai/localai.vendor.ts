@@ -5,8 +5,6 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { LocalAIServiceSetup } from './LocalAIServiceSetup';
-
 
 interface DLocalAIServiceSettings {
   localAIHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
@@ -27,7 +25,6 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
 
   // components
   Icon: LocalAIIcon,
-  ServiceSetupComponent: LocalAIServiceSetup,
 
   // functions
   initializeSetup: () => ({
