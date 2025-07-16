@@ -1,24 +1,21 @@
 import * as React from 'react';
 
-// Modals
-import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
-import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
-
-import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
-
-import { LogViewerDialog } from '~/common/logger/viewer/LoggerViewerDialog';
-
 import { optimaActions, optimaOpenPreferences, useOptimaModals } from './useOptima';
 
+// Modals
+import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
+import { LogViewerDialog } from '~/common/logger/viewer/LoggerViewerDialog';
+import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
 // Lazy-loaded Modals
+const ModelsModalsLazy = React.lazy(() => import('~/modules/llms/models-modal/ModelsModals').then(module => ({ default: module.ModelsModals })));
 const SettingsModalLazy = React.lazy(() => import('../../../apps/settings-modal/SettingsModal').then(module => ({ default: module.SettingsModal })));
 
 
 export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
-  const { preferencesTab, showAIXDebugger, showKeyboardShortcuts, showLogger, showPreferences } = useOptimaModals();
+  const { preferencesTab, showAIXDebugger, showKeyboardShortcuts, showLogger, showPreferences, showModels, showModelOptions } = useOptimaModals();
 
   // derived state
   const { closeAIXDebugger, closeKeyboardShortcuts, closeLogger, closePreferences, openKeyboardShortcuts } = optimaActions();
@@ -39,7 +36,11 @@ export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
     )}
 
     {/* Overlay Models + LLM Options */}
-    <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+    {(showModels || showModelOptions) && (
+      <React.Suspense fallback={null}>
+        <ModelsModalsLazy />
+      </React.Suspense>
+    )}
 
     {/* Logger */}
     {showLogger && <LogViewerDialog onClose={closeLogger} />}
