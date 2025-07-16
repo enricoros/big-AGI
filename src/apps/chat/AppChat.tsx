@@ -5,9 +5,9 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, useTheme } from '@mui/joy';
 
 import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
-import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
-import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
-import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
+
+import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
+import type { TradeConfig } from '~/modules/trade/TradeModal';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
@@ -118,6 +118,12 @@ const composerOpenMobileSx: SxProps = {
 // const composerClosedSx: SxProps = {
 //   display: 'none',
 // };
+
+
+// Lazy-loaded Modals
+const DiagramsModalLazy = React.lazy(() => import('~/modules/aifn/digrams/DiagramsModal').then(module => ({ default: module.DiagramsModal })));
+const FlattenerModalLazy = React.lazy(() => import('~/modules/aifn/flatten/FlattenerModal').then(module => ({ default: module.FlattenerModal })));
+const TradeModalLazy = React.lazy(() => import('~/modules/trade/TradeModal').then(module => ({ default: module.TradeModal })));
 
 
 export function AppChat() {
@@ -777,28 +783,34 @@ export function AppChat() {
 
     {/* Diagrams */}
     {!!diagramConfig && (
-      <DiagramsModal
-        config={diagramConfig}
-        onClose={() => setDiagramConfig(null)}
-      />
+      <React.Suspense fallback={null}>
+        <DiagramsModalLazy
+          config={diagramConfig}
+          onClose={() => setDiagramConfig(null)}
+        />
+      </React.Suspense>
     )}
 
     {/* Flatten */}
     {!!flattenConversationId && (
-      <FlattenerModal
-        conversationId={flattenConversationId}
-        onConversationBranch={handleConversationBranch}
-        onClose={() => setFlattenConversationId(null)}
-      />
+      <React.Suspense fallback={null}>
+        <FlattenerModalLazy
+          conversationId={flattenConversationId}
+          onConversationBranch={handleConversationBranch}
+          onClose={() => setFlattenConversationId(null)}
+        />
+      </React.Suspense>
     )}
 
     {/* Import / Export  */}
     {!!tradeConfig && (
-      <TradeModal
-        config={tradeConfig}
-        onConversationActivate={handleOpenConversationInFocusedPane}
-        onClose={() => setTradeConfig(null)}
-      />
+      <React.Suspense fallback={null}>
+        <TradeModalLazy
+          config={tradeConfig}
+          onConversationActivate={handleOpenConversationInFocusedPane}
+          onClose={() => setTradeConfig(null)}
+        />
+      </React.Suspense>
     )}
 
   </>;
