@@ -25,7 +25,7 @@ import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanel
 import { OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -261,6 +261,10 @@ export function Telephone(props: {
       },
     ).then((status) => {
 
+      // don't add the message to conversation if it was interrupted with no content
+      if (messageWasInterruptedAtStart(status.lastDMessage))
+        return;
+
       // whether status.outcome === 'success' or not, we get a valid DMessage, eventually with Error Fragments inside
       const fullMessage = createDMessageFromFragments('assistant', status.lastDMessage.fragments);
       fullMessage.generator = status.lastDMessage.generator;
@@ -273,8 +277,8 @@ export function Telephone(props: {
     }).catch((err: DOMException) => {
       if (err?.name !== 'AbortError') {
         // create an error message to explain the exception
-        const errorMesage = createDMessageFromFragments('assistant', [createErrorContentFragment(err.message || err.toString())]);
-        setCallMessages(messages => [...messages, errorMesage]); // [state] append assistant:call_response-ERROR
+        const errorMessage = createDMessageFromFragments('assistant', [createErrorContentFragment(err.message || err.toString())]);
+        setCallMessages(messages => [...messages, errorMessage]); // [state] append assistant:call_response-ERROR
       }
     }).finally(() => {
       setPersonaTextInterim(null);
