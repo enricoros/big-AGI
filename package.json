@@ -54,7 +54,7 @@
     "pdfjs-dist": "5.3.31",
     "posthog-js": "^1.257.0",
     "prismjs": "^1.30.0",
-    "puppeteer-core": "^24.13.0",
+    "puppeteer-core": "^24.14.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.60.0",
@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@types/diff": "^7.0.2",
-    "@types/node": "^24.0.14",
+    "@types/node": "^24.0.15",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.5",
     "@types/react": "19.1.8",
