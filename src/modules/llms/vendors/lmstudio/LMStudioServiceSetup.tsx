@@ -44,7 +44,7 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
       expandedVariant='solid'
       startCollapsed
     >
-      <VideoPlayerYouTube width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
+      <VideoPlayerYouTube width='100%' height={360} youTubeVideoId='MqXzxVokMDk' playing={true} />
     </ExpanderAccordion>
 
     <Typography level='body-sm'>
