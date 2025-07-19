@@ -59,7 +59,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.60.0",
     "react-markdown": "^10.1.0",
-    "react-player": "^2.16.1",
+    "react-player": "^3.3.1",
     "react-resizable-panels": "^3.0.3",
     "react-timeago": "^8.2.0",
     "rehype-katex": "^7.0.1",
