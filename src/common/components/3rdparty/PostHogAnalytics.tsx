@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { PostHog } from 'posthog-js';
+import type { PostHog, Properties } from 'posthog-js';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
@@ -21,9 +21,15 @@ export function posthogAnalyticsOptOut() {
 }
 
 // unused yet
-export function posthogCaptureEvent(eventName: string, properties: Record<string, any>) {
+export function posthogCaptureEvent(eventName: string, properties?: Properties) {
   if (isBrowser && hasPostHogAnalytics) {
     _posthog?.capture(eventName, properties);
+  }
+}
+
+export function posthogCaptureException(error: Error | unknown,  additionalProperties?: Properties) {
+  if (isBrowser && hasPostHogAnalytics && _posthog) {
+    _posthog.captureException(error, additionalProperties);
   }
 }
 
@@ -84,6 +90,7 @@ export function OptionalPostHogAnalytics() {
           // capture_pageleave: true, // we used to track goodbyes, now included in 'defaults'
           person_profiles: 'identified_only',
           disable_surveys: true, // disable surveys
+          capture_exceptions: true, // enable error tracking
           loaded: (ph) => {
             if (Release.IsNodeDevBuild) ph.debug();
           },

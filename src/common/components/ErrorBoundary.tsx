@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { logger } from '~/common/logger';
+import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
 
 
 export interface ErrorBoundaryProps {
@@ -56,6 +57,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         componentStack: errorInfo.componentStack,
       },
     );
+
+    // Capture exception in PostHog
+    posthogCaptureException(error, {
+      componentName,
+      componentStack: errorInfo.componentStack,
+    });
 
     // Call the optional onError callback for external reporting
     onError?.(error, errorInfo);
