@@ -115,7 +115,7 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
   nextConfig = withPostHogConfig(nextConfig, {
     personalApiKey: process.env.POSTHOG_API_KEY,
     envId: process.env.POSTHOG_ENV_ID,
-    host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+    host: 'https://us.i.posthog.com', // backtrace upload host
     verbose: false,
     sourcemaps: {
       enabled: process.env.NODE_ENV === 'production',

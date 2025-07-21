@@ -60,6 +60,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     // Capture exception in PostHog
     posthogCaptureException(error, {
+      $exception_source: 'error-boundary',
       componentName,
       componentStack: errorInfo.componentStack,
     });
