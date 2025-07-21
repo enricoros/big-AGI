@@ -83,7 +83,7 @@ export function OptionalPostHogAnalytics() {
 
         // initialize
         _posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || '', {
-          api_host: '/a/ph', // default: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
+          api_host: '/a/ph', // client analytics host - default: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
           ui_host: 'https://us.i.posthog.com',
           defaults: '2025-05-24',
           // capture_pageview: false, // we used to handle this manually, but changed to the 'defaults' option which captures pageviews automatically
