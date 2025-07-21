@@ -75,6 +75,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@posthog/nextjs-config": "^1.0.2",
     "@types/diff": "^7.0.2",
     "@types/node": "^24.0.15",
     "@types/nprogress": "^0.2.3",
