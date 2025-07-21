@@ -27,7 +27,7 @@ export function posthogCaptureEvent(eventName: string, properties?: Properties) 
   }
 }
 
-export function posthogCaptureException(error: Error | unknown,  additionalProperties?: Properties) {
+export function posthogCaptureException(error: Error | unknown, additionalProperties?: Properties) {
   if (isBrowser && hasPostHogAnalytics && _posthog) {
     _posthog.captureException(error, additionalProperties);
   }
@@ -90,7 +90,6 @@ export function OptionalPostHogAnalytics() {
           // capture_pageleave: true, // we used to track goodbyes, now included in 'defaults'
           person_profiles: 'identified_only',
           disable_surveys: true, // disable surveys
-          capture_exceptions: true, // enable error tracking
           loaded: (ph) => {
             if (Release.IsNodeDevBuild) ph.debug();
           },
