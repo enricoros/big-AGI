@@ -108,6 +108,23 @@ let nextConfig: NextConfig = {
 import { verifyBuildTimeVars } from '~/server/env';
 verifyBuildTimeVars();
 
+// PostHog error reporting with source maps for production builds
+import { withPostHogConfig } from '@posthog/nextjs-config';
+if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
+  console.log(' 🧠 \x1b[1mbig-AGI\x1b[0m: building with PostHog error tracking and source maps...');
+  nextConfig = withPostHogConfig(nextConfig, {
+    personalApiKey: process.env.POSTHOG_API_KEY,
+    envId: process.env.POSTHOG_ENV_ID,
+    host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+    sourcemaps: {
+      enabled: process.env.NODE_ENV === 'production',
+      project: 'big-agi',
+      version: process.env.NEXT_PUBLIC_BUILD_HASH,
+      deleteAfterUpload: true,
+    },
+  });
+}
+
 // conditionally enable the nextjs bundle analyzer
 import withBundleAnalyzer from '@next/bundle-analyzer';
 if (process.env.ANALYZE_BUNDLE) {
