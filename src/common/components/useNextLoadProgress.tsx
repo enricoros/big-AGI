@@ -5,9 +5,9 @@ import { default as NProgress } from 'nprogress';
 
 /**
  * Not show the bar for very fast loads (with a delay), and for the same route
- * NOTE: make sure that the applicatio is importing nprogress.css!
+ * NOTE: make sure that the application is importing nprogress.css!
  */
-export function useNextLoadProgress(route: string, events: typeof Router.events, delay = 250) {
+export function useNextLoadProgress(route: string, events: typeof Router.events, delay = 500) {
 
   // this fires both when the page is refreshed, and when the route changes
   React.useEffect(() => {
