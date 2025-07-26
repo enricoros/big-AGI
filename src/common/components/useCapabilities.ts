@@ -45,7 +45,12 @@ export interface TextToImageProvider {
   configured: boolean;
 }
 
-type TextToImageVendor = 'localai' | 'openai';
+type TextToImageVendor =
+  | 'gemini'
+  | 'localai'
+  | 'openai'
+  | 'xai'
+  ;
 
 
 export interface CapabilityTextToImage {
