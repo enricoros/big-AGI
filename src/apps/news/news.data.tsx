@@ -278,7 +278,6 @@ export const NewsItems: NewsItem[] = [
       { text: <><B issue={194}>Text Tools</B> including highlight differences</> },
       { text: <><B href='https://mermaid.js.org/'>Mermaid</B> Diagramming Rendering</> },
       { text: <><B>OpenAI 1106</B> Chat Models</> },
-      { text: <><B>SDXL</B> support with Prodia</> },
       { text: <>Cloudflare OpenAI API Gateway</> },
       { text: <>Helicone for Anthropic</> },
     ],

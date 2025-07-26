@@ -138,7 +138,7 @@ export class ConversationHandler {
 
   /**
    * @param text assistant text
-   * @param generatorName LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
+   * @param generatorName LlmId or string, such as 'GPT Image' | 'DALL·E' | 'react-...' | 'web'
    */
   messageAppendAssistantText(text: string, generatorName: Extract<DMessageGenerator, { mgt: 'named' }>['name']): void {
     const message = createDMessageTextContent('assistant', text);

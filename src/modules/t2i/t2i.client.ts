@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { resolveDalleModelId, useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
 
 import { addDBImageAsset, DBlobDBScopeId } from '~/common/stores/blob/dblobs-portability';
@@ -250,6 +249,9 @@ function _getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[]) {
         break;
     }
   }
+
+  // Insert other services here if needed (non-LLM/Service based)
+  // ... (e.g. we used to have Prodia here)
 
   // Sort providers by vendor priority (then by label for deterministic ordering)
   return providers.sort((a, b) => {
