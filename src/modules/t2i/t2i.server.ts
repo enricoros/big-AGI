@@ -58,7 +58,6 @@ export function getImageInformationFromBytes(arrayBuffer: ArrayBuffer): { width:
 
 /**
  * Low-level function to extract the dimensions of a PNG image from its bytes.
- * Used by Prodia to qualify the generated PNG.
  */
 export function getPngDimensionsFromBytes(arrayBuffer: ArrayBuffer) {
   const dataView = new DataView(arrayBuffer);

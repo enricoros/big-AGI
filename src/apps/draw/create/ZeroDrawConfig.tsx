@@ -20,7 +20,7 @@ export function ZeroDrawConfig() {
       <CardContent>
         <Typography>
           <strong>AI Text-to-Image</strong> does not seem available.<br />
-          Please configure one service, such as an OpenAI LLM service, or the Prodia service.
+          Please configure one service, such as an OpenAI LLM service.
         </Typography>
       </CardContent>
       <CardActions buttonFlex='0'>
