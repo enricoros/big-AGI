@@ -17,8 +17,6 @@ import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
-import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
-import { useProdiaStore } from './prodia/store-module-prodia';
 import { useTextToImageStore } from './store-module-t2i';
 
 
@@ -47,13 +45,12 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     return stableLlmsModelServices.current = next;
   });
 
-  const hasProdiaModels = useProdiaStore(state => !!state.modelId);
 
 
   // memo
 
   const { mayWork, mayEdit, providers, activeProvider } = React.useMemo(() => {
-    const providers = getTextToImageProviders(llmsModelServices, hasProdiaModels);
+    const providers = getTextToImageProviders(llmsModelServices);
     const activeProvider = !activeProviderId ? undefined : providers.find(p => p.providerId === activeProviderId);
     const mayWork = providers.some(p => p.configured);
     const mayEdit = activeProvider?.vendor === 'openai' && dalleModelId === 'gpt-image-1';
@@ -63,17 +60,24 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
       providers,
       activeProvider,
     };
-  }, [activeProviderId, dalleModelId, hasProdiaModels, llmsModelServices]);
+  }, [activeProviderId, dalleModelId, llmsModelServices]);
 
 
-  // [Effect] Auto-select the first correctly configured provider
-  const isConfigured = !!activeProvider;
+  // [Effect] Auto-select the highest priority correctly configured provider
+  const isActiveProviderConfigured = !!activeProvider?.configured;
   React.useEffect(() => {
-    if (isConfigured) return;
+    // Auto-select if no provider is selected, or if the current provider is not configured
+    if (isActiveProviderConfigured) return;
+    
+    // Find the highest priority configured provider (providers are already sorted by priority)
     const autoSelectProvider = providers.find(p => p.configured);
-    if (autoSelectProvider)
+    if (autoSelectProvider) {
       useTextToImageStore.getState().setActiveProviderId(autoSelectProvider.providerId);
-  }, [isConfigured, providers]);
+    } else if (activeProviderId) {
+      // Reset to null if the current provider is no longer configured and no alternatives exist
+      useTextToImageStore.getState().setActiveProviderId(null);
+    }
+  }, [isActiveProviderConfigured, providers, activeProviderId]);
 
 
   return {
@@ -98,7 +102,7 @@ export function getActiveTextToImageProviderOrThrow() {
   // [immediate] get all providers
   const { llms, sources: modelsServices } = llmsStoreState();
   const openAIModelsServiceIDs = getLlmsModelServices(llms, modelsServices);
-  const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().modelId);
+  const providers = getTextToImageProviders(openAIModelsServiceIDs);
 
   // find the active provider
   const activeProvider = providers.find(p => p.providerId === activeProviderId);
@@ -122,14 +126,6 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
         throw new Error('No OpenAI Model Service configured for TextToImage');
       return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count);
 
-    case 'prodia':
-      const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
-      const hasProdiaClientModels = !!useProdiaStore.getState().modelId;
-      if (!hasProdiaServer && !hasProdiaClientModels)
-        throw new Error('No Prodia configuration found for TextToImage');
-      if (aixInlineImageParts?.length)
-        throw new Error('Prodia image editing is not yet available');
-      return await prodiaGenerateImages(prompt, count);
 
   }
 }
@@ -220,23 +216,19 @@ function getLlmsModelServices(llms: DLLM[], services: DModelsService[]) {
   }));
 }
 
-function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasProdiaClientModels: boolean) {
+function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[]) {
   const providers: TextToImageProvider[] = [];
 
-  // add OpenAI and/or LocalAI providers
-  for (const { modelVendorId, modelServiceId, label, hasAnyModels } of llmsModelServices) {
-    switch (modelVendorId) {
-      case 'localai':
-        providers.push({
-          providerId: modelServiceId,
-          label: label,
-          painter: 'LocalAI',
-          description: 'LocalAI\'s models',
-          configured: hasAnyModels,
-          vendor: 'localai',
-        });
-        break;
+  // Sort services to prioritize OpenAI first, then LocalAI
+  const sortedServices = [...llmsModelServices].sort((a, b) => {
+    if (a.modelVendorId === 'openai' && b.modelVendorId !== 'openai') return -1;
+    if (a.modelVendorId !== 'openai' && b.modelVendorId === 'openai') return 1;
+    return 0;
+  });
 
+  // add OpenAI and/or LocalAI providers in priority order
+  for (const { modelVendorId, modelServiceId, label, hasAnyModels } of sortedServices) {
+    switch (modelVendorId) {
       case 'openai':
         providers.push({
           providerId: modelServiceId,
@@ -249,22 +241,22 @@ function getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[], hasP
         });
         break;
 
+      case 'localai':
+        providers.push({
+          providerId: modelServiceId,
+          label: label,
+          painter: 'LocalAI',
+          description: 'LocalAI\'s models',
+          configured: hasAnyModels,
+          vendor: 'localai',
+        });
+        break;
+
       default:
         console.error('Unknown model vendor', modelVendorId);
         break;
     }
   }
-
-  // add Prodia provider
-  const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
-  providers.push({
-    providerId: 'prodia',
-    label: 'Prodia',
-    painter: 'Prodia',
-    description: 'Prodia\'s models',
-    configured: hasProdiaServer || hasProdiaClientModels,
-    vendor: 'prodia',
-  });
 
   return providers;
 }

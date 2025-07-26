@@ -5,7 +5,6 @@ import { Box, Button, Card, CardContent } from '@mui/joy';
 import ConstructionIcon from '@mui/icons-material/Construction';
 
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
-import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
@@ -30,7 +29,7 @@ export function DrawProviderConfigure(props: {
 
   const { ProviderConfig } = React.useMemo(() => {
     const provider = providers.find(provider => provider.providerId === activeProviderId);
-    const ProviderConfig: React.FC | null = provider?.vendor === 'openai' ? DallESettings : provider?.vendor === 'prodia' ? ProdiaSettings : null;
+    const ProviderConfig: React.FC | null = provider?.vendor === 'openai' ? DallESettings : null;
     return {
       ProviderConfig,
     };

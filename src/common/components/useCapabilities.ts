@@ -45,7 +45,7 @@ export interface TextToImageProvider {
   configured: boolean;
 }
 
-type TextToImageVendor = 'localai' | 'openai' | 'prodia';
+type TextToImageVendor = 'localai' | 'openai';
 
 
 export interface CapabilityTextToImage {
