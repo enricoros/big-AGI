@@ -11,6 +11,20 @@ export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this wor
 export type DalleImageSize = DalleSizeGI | DalleSizeD3 | DalleSizeD2;
 
 export type DalleModelId = 'gpt-image-1' | 'dall-e-3' | 'dall-e-2';
+export type DalleModelSelection = DalleModelId | null; // null = auto-select latest
+
+/**
+ * Resolve the actual DALL-E model to use
+ * @param selection - User's selection (null = auto-select latest)
+ * @returns The concrete model ID to use
+ */
+export function resolveDalleModelId(selection: DalleModelSelection): DalleModelId {
+  // Auto-select latest model when null
+  if (selection === null) {
+    return 'gpt-image-1'; // Current latest model
+  }
+  return selection;
+}
 
 export type DalleImageQuality = DalleImageQualityGI | DalleImageQualityD3;
 type DalleImageQualityGI = 'high' | 'medium' | 'low'; // gpt-image-1
@@ -30,8 +44,8 @@ export type DalleSizeD2 = '256x256' | '512x512' | '1024x1024';
 
 interface ModuleDalleStore {
 
-  dalleModelId: DalleModelId,
-  setDalleModelId: (modelId: DalleModelId) => void;
+  dalleModelId: DalleModelSelection, // null = auto-select latest
+  setDalleModelId: (modelId: DalleModelSelection) => void;
 
   dalleNoRewrite: boolean;
   setDalleNoRewrite: (noRewrite: boolean) => void;
@@ -78,7 +92,7 @@ export const useDalleStore = create<ModuleDalleStore>()(
   persist(
     (set) => ({
 
-      dalleModelId: 'gpt-image-1',
+      dalleModelId: null, // auto-select latest
       setDalleModelId: (dalleModelId) => set({ dalleModelId }),
 
       dalleNoRewrite: false,
@@ -123,7 +137,7 @@ export const useDalleStore = create<ModuleDalleStore>()(
     }),
     {
       name: 'app-module-dalle',
-      version: 2,
+      version: 3,
 
       migrate: (state: unknown, fromVersion) => {
 
@@ -132,6 +146,13 @@ export const useDalleStore = create<ModuleDalleStore>()(
           state = {
             ...(state as ModuleDalleStore),
             dalleModelId: 'gpt-image-1',
+          } satisfies ModuleDalleStore;
+
+        // 3: change to auto-select latest (null)
+        if (state && fromVersion < 3)
+          state = {
+            ...(state as ModuleDalleStore),
+            dalleModelId: null, // auto-select latest
           } satisfies ModuleDalleStore;
 
         return state;

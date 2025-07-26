@@ -8,7 +8,7 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { T2iCreateImageOutput } from '../t2i.server';
-import { DalleImageQuality, DalleModelId, DalleSize, useDalleStore } from './store-module-dalle';
+import { DalleImageQuality, DalleModelId, DalleSize, resolveDalleModelId, useDalleStore } from './store-module-dalle';
 
 
 /**
@@ -18,7 +18,7 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
 
   // Use the current settings
   const {
-    dalleModelId,
+    dalleModelId: dalleModelSelection,
     dalleNoRewrite,
     // -- GI
     dalleSizeGI,
@@ -34,6 +34,9 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
     // -- D2
     dalleSizeD2,
   } = useDalleStore.getState();
+
+  // Resolve the actual model to use (null = latest)
+  const dalleModelId = resolveDalleModelId(dalleModelSelection);
 
   // This trick is explained on: https://platform.openai.com/docs/guides/images/usage?context=node
   if (dalleNoRewrite && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
@@ -131,7 +134,8 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
 
 
 export function openAIImageModelsCurrentGeneratorName() {
-  const dalleModelId = useDalleStore.getState().dalleModelId;
+  const dalleModelSelection = useDalleStore.getState().dalleModelId;
+  const dalleModelId = resolveDalleModelId(dalleModelSelection);
   if (dalleModelId === 'gpt-image-1') return 'GPT Image';
   else if (dalleModelId === 'dall-e-3') return 'DALL·E 3';
   else if (dalleModelId === 'dall-e-2') return 'DALL·E 2';

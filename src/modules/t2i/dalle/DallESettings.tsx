@@ -8,7 +8,7 @@ import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { Link } from '~/common/components/Link';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, useDalleStore } from './store-module-dalle';
+import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, DalleModelSelection, resolveDalleModelId, useDalleStore } from './store-module-dalle';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 
@@ -19,7 +19,8 @@ const CONF = {
     { value: 'dall-e-2', label: 'DALL·E 2' },
     { value: 'dall-e-3', label: 'DALL·E 3' },
     { value: 'gpt-image-1', label: 'GPT Image' },
-  ],
+    { value: null, label: 'Auto' },
+  ] as { value: DalleModelSelection; label: string }[],
 
   RES_D2: ['256x256', '512x512', '1024x1024'] as DalleImageSize[],
   RES_D3: ['1024x1024', '1792x1024', '1024x1792'] as DalleImageSize[],
@@ -97,11 +98,11 @@ export function DallESettings() {
     setDalleModerationGI(!event.target.checked ? 'low' : 'auto');
 
 
-  // derived state
-
-  const isGI = dalleModelId === 'gpt-image-1';
-  const isD3 = dalleModelId === 'dall-e-3';
-  const isD2 = dalleModelId === 'dall-e-2';
+  // derived state - resolve the actual model
+  const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
+  const isGI = resolvedDalleModelId === 'gpt-image-1';
+  const isD3 = resolvedDalleModelId === 'dall-e-3';
+  const isD2 = resolvedDalleModelId === 'dall-e-2';
 
   const isD3HD = isD3 && dalleQualityD3 === 'hd';
 
@@ -119,7 +120,7 @@ export function DallESettings() {
     && dalleOutputFormatGI !== 'png'
     && dalleOutputFormatGI !== 'webp';
 
-  const costPerImage = openAIImageModelsPricing(dalleModelId,
+  const costPerImage = openAIImageModelsPricing(resolvedDalleModelId,
     isD3 ? dalleQualityD3 : isGI ? dalleQualityGI : 'standard',
     currentResolution);
 
@@ -128,9 +129,10 @@ export function DallESettings() {
 
     <FormChipControl
       title='Model'
-      description={isGI ? 'Latest' : isD3 ? 'Good' : 'Older'}
-      options={CONF.MODEL_OPTS}
-      value={dalleModelId} onChange={setDalleModelId}
+      description={dalleModelId === null ? `Latest (${resolvedDalleModelId})` : isGI ? 'Latest' : isD3 ? 'Good' : 'Older'}
+      options={CONF.MODEL_OPTS.map(opt => ({ ...opt, value: opt.value || 'auto' }))}
+      value={dalleModelId || 'auto'} 
+      onChange={(value) => setDalleModelId(value === 'auto' ? null : value as DalleModelSelection)}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
