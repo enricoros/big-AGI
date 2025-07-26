@@ -14,7 +14,6 @@ import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
-import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optima';
@@ -286,9 +285,6 @@ export function SettingsModal(props: {
             </Topic>
             <Topic icon='🖍️️' title='OpenAI'>
               <DallESettings />
-            </Topic>
-            <Topic icon='🖍️️' title='Prodia API' startCollapsed>
-              <ProdiaSettings noSkipKey />
             </Topic>
           </Topics>
         </TabPanel>
