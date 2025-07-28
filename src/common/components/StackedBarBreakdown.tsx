@@ -15,7 +15,7 @@ export interface StackedBarBreakdownProps {
   /** Array of segments to display */
   segments: StackedBarSegment[];
   /** Optional title for the chart */
-  title?: string;
+  title?: React.ReactNode;
   /** Whether to show absolute values in the legend (otherwise just percentages) */
   showValues?: boolean;
   /** Function to format values for display and tooltips */
@@ -34,7 +34,11 @@ export function StackedBarBreakdown({ segments, title, showValues = false, value
 
   return (
     <Box>
-      {title && <Typography level='title-md' mb={1}>{title}</Typography>}
+      {title && (
+        typeof title === 'string'
+          ? <Typography level='title-md' mb={1}>{title}</Typography>
+          : title
+      )}
 
       {/* The stacked bar */}
       <Box sx={{
