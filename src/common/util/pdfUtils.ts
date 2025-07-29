@@ -112,6 +112,7 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
 
     await page.render({
       canvasContext: context,
+      canvas,
       viewport,
     }).promise;
 
