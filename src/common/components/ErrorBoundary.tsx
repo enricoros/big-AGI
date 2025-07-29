@@ -49,13 +49,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     const { componentName, onError } = this.props;
 
-    // Log the error using the custom logger
+    // Log the error using the custom logger (skip reporting to PostHog since we handle it directly below)
     logger.error(
       `ErrorBoundary caught an error in ${componentName}`,
       {
         error: { name: error.name, message: error.message, stack: error.stack },
         componentStack: errorInfo.componentStack,
       },
+      'client',
+      { skipReporting: true },
     );
 
     // Capture exception in PostHog
