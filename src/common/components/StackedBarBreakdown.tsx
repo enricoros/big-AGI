@@ -43,9 +43,10 @@ export function StackedBarBreakdown({ segments, title, showValues = false, value
       {/* The stacked bar */}
       <Box sx={{
         display: 'flex',
-        height: 8,
-        borderRadius: 8,
+        height: 10,
+        borderRadius: 'sm',
         overflow: 'hidden',
+        boxShadow: 'xs',
         my: 1,
       }}>
         {nonZeroSegments.map(({ key, value, color }) => {
@@ -57,7 +58,7 @@ export function StackedBarBreakdown({ segments, title, showValues = false, value
               sx={{
                 width: `${percentage}%`,
                 backgroundColor: color,
-                transition: 'width 0.3s ease-in-out',
+                // transition: 'width 0.3s ease-in-out',
               }}
             />
           );
@@ -65,12 +66,15 @@ export function StackedBarBreakdown({ segments, title, showValues = false, value
       </Box>
 
       {/* Legend with colored squares */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {nonZeroSegments.map(({ key, label, value, color }) => {
           const percentage = (value / total) * 100;
           return (
             <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 10, height: 10, backgroundColor: color, borderRadius: 2 }} />
+              <Box sx={{
+                width: 10, height: 10, backgroundColor: color, borderRadius: 'sm',
+                boxShadow: 'xs'
+              }} />
               <Typography level='body-xs'>
                 {label} {showValues
                 ? `${valueFormatter(value)} (${percentage.toFixed(0)}%)`
