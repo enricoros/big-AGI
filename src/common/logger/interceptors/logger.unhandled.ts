@@ -17,7 +17,7 @@ export function setupClientUncaughtErrorsLogging(): () => void {
       filename: event.filename,
       lineno: event.lineno,
       colno: event.colno,
-    }, 'unhandled');
+    }, 'unhandled', { skipReporting: true });
   };
 
   // Handle unhandled promise rejections
@@ -26,7 +26,7 @@ export function setupClientUncaughtErrorsLogging(): () => void {
       reason: event.reason,
       message: event.reason?.message,
       stack: event.reason?.stack,
-    }, 'unhandled');
+    }, 'unhandled', { skipReporting: true });
   };
 
   // install
