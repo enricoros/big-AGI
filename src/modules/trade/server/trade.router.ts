@@ -5,7 +5,6 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
-import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './pastegg';
 import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure, storageUpdateDeletionKeyProcedure } from './link';
 
 
@@ -74,31 +73,5 @@ export const tradeRouter = createTRPCRouter({
    */
   storageUpdateDeletionKey: storageUpdateDeletionKeyProcedure,
 
-  /**
-   * Publish a text file (with title, content, name) to a sharing service
-   * For now only 'paste.gg' is supported
-   */
-  publishTo: publicProcedure
-    .input(publishToInputSchema)
-    .output(publishToOutputSchema)
-    .mutation(async ({ input: { to, title, fileContent, fileName, origin } }) => {
-      if (to !== 'paste.gg' || !title || !fileContent || !fileName)
-        throw new Error('Invalid options');
-
-      const paste = await postToPasteGGOrThrow(title, fileName, fileContent, origin);
-      if (paste?.status !== 'success')
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `${paste?.error || 'Unknown error'}. ${paste?.message || 'Unknown cause'}`.trim(),
-        });
-
-      const result = paste.result;
-      return {
-        url: `https://paste.gg/${result.id}`,
-        expires: result.expires || 'never',
-        deletionKey: result.deletion_key || 'none',
-        created: result.created_at,
-      };
-    }),
 
 });
