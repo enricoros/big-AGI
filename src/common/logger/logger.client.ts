@@ -125,7 +125,7 @@ class LoggerImplementation implements ClientLogger {
       // Only send to PostHog if we have a real Error with stack trace
       if (error) {
         posthogCaptureException(error, {
-          $exception_source: 'logger',
+          $exception_domain: 'client-logger',
           level: level,
           source: finalSource,
           message: message,
