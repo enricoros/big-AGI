@@ -16,7 +16,10 @@ const SKIP_LOADING_IN_DEV = false;
  * @param onProgress A callback function to report the progress of the text extraction
  */
 export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: number) => void): Promise<string> {
-  const { getDocument } = await dynamicImportPdfJs();
+  const { getDocument } = await dynamicImportPdfJs().catch(error => {
+    console.warn('pdfToText: Failed to load pdfjs-dist', error);
+    return { getDocument: null };
+  });
   if (!getDocument) {
     console.log('pdfToText: [dev] pdfjs-dist loading skipped');
     return '';
@@ -84,7 +87,10 @@ interface PdfPageImage {
  * @param onProgress A callback function to report the progress of the image rendering
  */
 export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/, onProgress: (progress: number) => void): Promise<PdfPageImage[]> {
-  const { getDocument } = await dynamicImportPdfJs();
+  const { getDocument } = await dynamicImportPdfJs().catch(error => {
+    console.warn('pdfToImageDataURLs: Failed to load pdfjs-dist', error);
+    return { getDocument: null };
+  });
   if (!getDocument) {
     console.log('pdfToImageDataURLs: [dev] pdfjs-dist loading skipped');
     return [];
