@@ -17,6 +17,7 @@ const handlerNodeRoutes = (req: Request) => fetchRequestHandler({
 
     // -> Capture node errors
     await posthogCaptureServerException(error, {
+      domain: 'trpc-onerror',
       runtime: 'nodejs',
       endpoint: path ?? 'unknown',
       method: req.method,
