@@ -13,7 +13,6 @@ import { getConversation } from '~/common/stores/chat/store-chats';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { FlashBackup } from './BackupRestore';
-import { PublishExport } from './publish/PublishExport';
 import { downloadAllJsonV1B, downloadSingleChat } from './trade.client';
 
 
@@ -114,10 +113,6 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             />
           )}
 
-          <PublishExport
-            conversationId={props.config.conversationId}
-            onClose={props.onClose}
-          />
 
           {/*<Button*/}
           {/*  variant='soft'*/}
