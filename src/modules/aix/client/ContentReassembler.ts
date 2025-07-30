@@ -520,9 +520,9 @@ export class ContentReassembler {
         {
           pt: 'image_ref' as const,
           dataRef: createDMessageDataRefDBlob(dblobAssetId, imageBlob.type, imageBlob.size),
-          altText: safeLabel,
-          width: imageWidth,
-          height: imageHeight,
+          ...(safeLabel ? { altText: safeLabel } : {}),
+          ...(imageWidth ? { width: imageWidth } : {}),
+          ...(imageHeight ? { height: imageHeight } : {}),
         }
       );
 
