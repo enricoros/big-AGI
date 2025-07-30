@@ -82,6 +82,7 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
   ft: TFragment;
   fId: DMessageFragmentId;
   part: TPart;
+  originId?: string;                  // optional, for multi-model, identifies which actor produced this fragment
 }
 
 
@@ -362,6 +363,9 @@ export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[
     : fragments.map(_duplicateFragment).filter(f => f.ft !== 'void');
 }
 
+/**
+ * NOTE: a duplicate fragment gets a new ID, and also loses any originId, if set (not sure why, but it's the way it is now)
+ */
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   switch (fragment.ft) {
     case 'content':
@@ -554,6 +558,16 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 /// Editor Helpers - Fragment Editing
 
+/** Creates a new array of fragments with a specific originId assigned to each. */
+export function fragmentsSetOriginId(fragments: ReadonlyArray<Readonly<DMessageFragment>>, originId: string): Readonly<DMessageFragment>[] {
+
+  // shallow copy if empty or no originId
+  if (!fragments.length || !originId) return [...fragments];
+
+  // shallow-copy + set origin
+  return fragments.map(fragment => ({ ...fragment, originId: originId }));
+}
+
 export function splitFragmentsByType(fragments: DMessageFragment[]) {
   // also see `useFragmentBuckets.ts` which inspired this function
   return fragments.reduce((acc, frag) => {
@@ -596,15 +610,16 @@ export function updateFragmentWithEditedText(
   // }
 
   if (isContentFragment(fragment)) {
-    const { fId, part } = fragment;
+    const { fId, part, originId } = fragment;
+    const preserveId = { fId, ...(originId && { originId }) } as const;
 
     if (isTextPart(part)) {
       // Create a new text content fragment with the same fId and the edited text
       const newFragment = createTextContentFragment(editedText);
-      return { ...newFragment, fId }; // Preserve original fId
+      return { ...newFragment, ...preserveId };
     } else if (part.pt === 'error') {
       const newFragment = createErrorContentFragment(editedText);
-      return { ...newFragment, fId }; // Preserve original fId
+      return { ...newFragment, ...preserveId };
     } else if (part.pt === 'tool_invocation') {
       if (part.invocation.type === 'function_call') {
         // Create a new tool invocation fragment with the edited args
@@ -613,7 +628,7 @@ export function updateFragmentWithEditedText(
           part.invocation.name,
           editedText, // args (if empty, it calls the funciton without params)
         );
-        return { ...newFragment, fId }; // Preserve original fId
+        return { ...newFragment, ...preserveId };
       } else if (part.invocation.type === 'code_execution') {
         const newFragment = create_CodeExecutionInvocation_ContentFragment(
           part.id, // Keep same id
@@ -621,7 +636,7 @@ export function updateFragmentWithEditedText(
           editedText, // code
           part.invocation.author,
         );
-        return { ...newFragment, fId };
+        return { ...newFragment, ...preserveId };
       }
     } else if (part.pt === 'tool_response') {
       if (part.error) {
@@ -642,7 +657,7 @@ export function updateFragmentWithEditedText(
             editedText, // result
             part.environment,
           );
-          return { ...newFragment, fId };
+          return { ...newFragment, ...preserveId };
         } else if (response.type === 'code_execution') {
           const newFragment = create_CodeExecutionResponse_ContentFragment(
             part.id,
@@ -651,12 +666,13 @@ export function updateFragmentWithEditedText(
             response.executor,
             part.environment,
           );
-          return { ...newFragment, fId };
+          return { ...newFragment, ...preserveId };
         }
       }
     }
   } else if (isAttachmentFragment(fragment)) {
-    const { fId, part, title, caption, liveFileId } = fragment;
+    const { fId, part, title, caption, liveFileId, originId } = fragment;
+    const preserveId = { fId, ...(originId && { originId }) } as const;
 
     if (isDocPart(part)) {
       // Create a new doc attachment fragment with the edited text
@@ -674,7 +690,7 @@ export function updateFragmentWithEditedText(
         part.meta,
         liveFileId,
       );
-      return { ...newFragment, fId }; // Preserve original fId
+      return { ...newFragment, ...preserveId };
     }
     // Handle other attachment parts if needed
   }
