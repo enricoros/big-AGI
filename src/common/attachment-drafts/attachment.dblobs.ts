@@ -73,9 +73,9 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
       {
         pt: 'image_ref' as const,
         dataRef: createDMessageDataRefDBlob(dblobAssetId, imageBlob.type, imageBlob.size),
-        altText: title || undefined,
-        width: imageWidth || undefined,
-        height: imageHeight || undefined,
+        ...(title ? { altText: title } : {}),
+        ...(imageWidth ? { width: imageWidth } : {}),
+        ...(imageHeight ? { height: imageHeight } : {}),
       }
     );
   } catch (error) {

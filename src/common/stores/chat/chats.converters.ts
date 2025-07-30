@@ -71,17 +71,13 @@ export namespace V4ToHeadConverters {
       // [ASSET] [MIGRATION] Convert DBlob image references to Asset references - converts legacy image_ref parts with dblob references to the new reference system
       if (isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob') {
         const { dataRef, altText, width, height } = fragment.part;
-        const newReferencePart = createDMessageZyncAssetReferencePart(
-          nanoidToUuidV4(dataRef.dblobAssetId, 'convert-dblob-to-dasset'),
-          'image',
-          {
-            pt: 'image_ref' as const,
-            dataRef: dataRef,
-            altText: altText || undefined,
-            width: width || undefined,
-            height: height || undefined,
-          }
-        );
+        const newReferencePart = createDMessageZyncAssetReferencePart(nanoidToUuidV4(dataRef.dblobAssetId, 'convert-dblob-to-dasset'), 'image', {
+          pt: 'image_ref' as const,
+          dataRef: dataRef,
+          ...(altText ? { altText: altText } : {}),
+          ...(width ? { width: width } : {}),
+          ...(height ? { height: height } : {}),
+        });
         m.fragments[i] = { ...fragment, part: newReferencePart };
       }
 

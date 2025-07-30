@@ -174,9 +174,9 @@ export async function t2iGenerateImageContentFragments(
       {
         pt: 'image_ref' as const,
         dataRef: createDMessageDataRefDBlob(dblobAssetId, imageBlob.type, imageBlob.size),
-        altText: _i.altText,
-        width: _i.width,
-        height: _i.height,
+        ...(_i.altText ? { altText: _i.altText } : {}),
+        ...(_i.width ? { width: _i.width } : {}),
+        ...(_i.height ? { height: _i.height } : {}),
       }
     );
 
