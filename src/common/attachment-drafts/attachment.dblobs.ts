@@ -1,8 +1,9 @@
 import { addDBImageAsset, DBlobDBContextId, DBlobDBScopeId, deleteDBAsset, gcDBAssetsByScope, transferDBAssetContextScope } from '~/common/stores/blob/dblobs-portability';
+import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import { CommonImageMimeTypes, imageBlobTransform, LLMImageResizeMode } from '~/common/util/imageUtils';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, createDMessageDataRefDBlob, createZyncAssetReferenceAttachmentFragment, isImageRefPart, isZyncAssetReferencePart } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraftSource } from './attachment.types';
 
@@ -64,18 +65,18 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
       },
     });
 
-    // return an Image _Attachment_ Fragment
-    return createImageAttachmentFragment(
-      title,
-      caption,
-      createDMessageDataRefDBlob( // Data Reference {} for the image
-        dblobAssetId,
-        imageBlob.type,
-        imageBlob.size,
-      ),
-      undefined,
-      imageWidth || undefined,
-      imageHeight || undefined,
+    // Future-proof: create a Zync Image Asset reference attachment fragment, with the legacy image_ref part for compatibility for the time being
+    return createZyncAssetReferenceAttachmentFragment(
+      title, caption,
+      nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+      'image',
+      {
+        pt: 'image_ref' as const,
+        dataRef: createDMessageDataRefDBlob(dblobAssetId, imageBlob.type, imageBlob.size),
+        altText: title || undefined,
+        width: imageWidth || undefined,
+        height: imageHeight || undefined,
+      }
     );
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
@@ -89,6 +90,9 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
 export async function removeAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment) {
   if (isImageRefPart(part) && part.dataRef.reftype === 'dblob') {
     await deleteDBAsset(part.dataRef.dblobAssetId);
+  } else if (isZyncAssetReferencePart(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob') {
+    // Handle asset references with legacy fallback
+    await deleteDBAsset(part._legacyImageRefPart.dataRef.dblobAssetId);
   }
 }
 
@@ -98,6 +102,9 @@ export async function removeAttachmentOwnedDBAsset({ part }: DMessageAttachmentF
 export async function transferAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
   if (isImageRefPart(part) && part.dataRef.reftype === 'dblob') {
     await transferDBAssetContextScope(part.dataRef.dblobAssetId, contextId, scopeId);
+  } else if (isZyncAssetReferencePart(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob') {
+    // Handle asset references with legacy fallback
+    await transferDBAssetContextScope(part._legacyImageRefPart.dataRef.dblobAssetId, contextId, scopeId);
   }
 }
 

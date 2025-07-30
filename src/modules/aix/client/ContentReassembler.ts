@@ -3,10 +3,11 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
+import { nanoidToUuidV4 } from '~/common/util/idUtils';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
@@ -494,6 +495,7 @@ export class ContentReassembler {
       });
 
       // add the image to the DBlobs DB
+      // FIXME: [ASSET] use the Asset Store
       const dblobAssetId = await addDBImageAsset('app-chat', imageBlob, {
         label: safeLabel,
         metadata: {
@@ -511,20 +513,20 @@ export class ContentReassembler {
         },
       });
 
-      // create the DMessage _Content_ Fragment (not attachment), as this comes from the assistant
-      // so this is akin to the t2i-generated images
-      const imageContentFragment = createImageContentFragment(
-        createDMessageDataRefDBlob( // Data Reference {} for the image
-          dblobAssetId,
-          imageBlob.type,
-          imageBlob.size,
-        ),
-        safeLabel,
-        imageWidth || undefined,
-        imageHeight || undefined,
+      // Create a Zync Image Asset Reference *Content* fragment, as this is image content from the LLM
+      const zyncImageAssetFragmentWithLegacy = createZyncAssetReferenceContentFragment(
+        nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+        'image',
+        {
+          pt: 'image_ref' as const,
+          dataRef: createDMessageDataRefDBlob(dblobAssetId, imageBlob.type, imageBlob.size),
+          altText: safeLabel,
+          width: imageWidth,
+          height: imageHeight,
+        }
       );
 
-      this.accumulator.fragments.push(imageContentFragment);
+      this.accumulator.fragments.push(zyncImageAssetFragmentWithLegacy);
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
     }

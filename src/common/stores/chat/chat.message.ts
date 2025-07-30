@@ -265,27 +265,41 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
     .map(fragment => {
       switch (true) {
         case isContentFragment(fragment):
-          switch (fragment.part.pt) {
+          const cPt = fragment.part.pt;
+          switch (cPt) {
             case 'text':
               return fragment.part.text;
             case 'error':
               return fragment.part.error;
+            case 'reference':
             case 'image_ref':
               return '';
             case 'tool_invocation':
             case 'tool_response':
               // Ignore tools for the text reduction
               return '';
+            case '_pt_sentinel':
+              return '';
+            default:
+              const _exhaustiveCheck: never = cPt;
+              break;
           }
           break;
         case isAttachmentFragment(fragment):
           if (excludeAttachmentFragments)
             return '';
-          switch (fragment.part.pt) {
+          const aPt = fragment.part.pt;
+          switch (aPt) {
             case 'doc':
               return fragment.part.data.text;
+            case 'reference':
             case 'image_ref':
               return '';
+            case '_pt_sentinel':
+              return '';
+            default:
+              const _exhaustiveCheck: never = aPt;
+              break;
           }
           break;
         case isVoidFragment(fragment):

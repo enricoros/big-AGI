@@ -7,6 +7,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 
@@ -24,7 +25,41 @@ const DocUnselColor: ColorPaletteProp = 'primary';
 
 
 export function buttonIconForFragment(part: DMessageAttachmentFragment['part']): React.ComponentType<any> {
-  switch (part.pt) {
+  const pt = part.pt;
+  switch (pt) {
+
+    // Reference Attachment Fragment
+    case 'reference':
+      const rt = part.rt;
+      switch (rt) {
+        case 'zync':
+          const rZType = part.zType;
+          switch (rZType) {
+            case 'asset':
+              const assetType = part.assetType;
+              switch (assetType) {
+                case 'image':
+                  return ImageOutlinedIcon;
+                case 'audio':
+                  return RecordVoiceOverOutlinedIcon;
+                default:
+                  const _exhaustiveCheck: never = assetType;
+                  return TextureIcon; // missing zync asset type
+              }
+            default:
+              const _exhaustiveCheck: never = rZType;
+              return TextureIcon; // missing zync entity type
+          }
+
+        case '_sentinel':
+          return TextureIcon; // nothing to do here - this is a sentinel type
+
+        default:
+          const _exhaustiveCheck: never = rt;
+          return TextureIcon; // case missing
+      }
+
+    // Document Attachment Fragment
     case 'doc':
       switch (part.vdt) {
         case DVMimeType.TextPlain:
@@ -43,12 +78,20 @@ export function buttonIconForFragment(part: DMessageAttachmentFragment['part']):
         // case 'text/markdown':
         //   return CodeIcon;
         default:
-          return TextureIcon;
+          const _exhaustiveCheck: never = part.vdt;
+          return TextureIcon; // unknown doc type
       }
+
+    // [OLD-style] Image Attachment Fragment
     case 'image_ref':
       return ImageOutlinedIcon;
+
     case '_pt_sentinel':
-      return TextureIcon;
+      return TextureIcon; // nothing to do here - this is a sentinel type
+
+    default:
+      const _exhaustiveCheck: never = pt;
+      return TextureIcon; // case missing
   }
 }
 

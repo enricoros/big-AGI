@@ -5,12 +5,13 @@ import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { resolveDalleModelId, useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
 
 import { addDBImageAsset, DBlobDBScopeId } from '~/common/stores/blob/dblobs-portability';
+import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataRefDBlob, createZyncAssetReferenceContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
@@ -146,6 +147,7 @@ export async function t2iGenerateImageContentFragments(
     // NOTE: no resize/type conversion, store as-is
 
     // add the image to the DBlobs DB
+    // FIXME: [ASSET] use the Asset Store
     const dblobAssetId = await addDBImageAsset(scopeId, imageBlob, {
       label: prompt,
       metadata: {
@@ -165,20 +167,20 @@ export async function t2iGenerateImageContentFragments(
       },
     });
 
-    // create the DMessage _Content_ Fragment (not attachment)
-    // so this is akin to the model-generated images
-    const imageContentFragment = createImageContentFragment(
-      createDMessageDataRefDBlob( // Data Reference {} for the image
-        dblobAssetId,
-        imageBlob.type,
-        imageBlob.size,
-      ),
-      _i.altText,
-      _i.width,
-      _i.height,
+    // Create a Zync Image Asset Reference *Content* fragment, as this is image content from the LLM
+    const zyncImageAssetFragmentWithLegacy = createZyncAssetReferenceContentFragment(
+      nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+      'image',
+      {
+        pt: 'image_ref' as const,
+        dataRef: createDMessageDataRefDBlob(dblobAssetId, imageBlob.type, imageBlob.size),
+        altText: _i.altText,
+        width: _i.width,
+        height: _i.height,
+      }
     );
 
-    imageFragments.push(imageContentFragment);
+    imageFragments.push(zyncImageAssetFragmentWithLegacy);
   }
   return imageFragments;
 }

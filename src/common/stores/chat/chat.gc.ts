@@ -1,7 +1,7 @@
 import { DBlobAssetId, gcDBImageAssets } from '~/common/stores/blob/dblobs-portability';
 
 import type { DConversation } from './chat.conversation';
-import { isContentOrAttachmentFragment, isImageRefPart } from './chat.fragments';
+import { isContentOrAttachmentFragment, isImageRefPart, isZyncAssetReferencePart } from './chat.fragments';
 import { useChatStore } from './store-chats';
 
 /**
@@ -17,11 +17,17 @@ export async function gcChatImageAssets(conversations?: DConversation[]) {
   for (const chat of _conversations) {
     for (const message of chat.messages) {
       for (const fragment of message.fragments) {
-        if (!isContentOrAttachmentFragment(fragment) || !isImageRefPart(fragment.part))
-          continue;
-        if (fragment.part.dataRef.reftype !== 'dblob')
-          continue;
-        chatsAssetIDs.add(fragment.part.dataRef.dblobAssetId);
+
+        // only operate on content or attachment fragments
+        if (!isContentOrAttachmentFragment(fragment)) continue;
+
+        // New References to Zync Assets (dblob refs for compatibility/migration)
+        if (isZyncAssetReferencePart(fragment.part) && fragment.part._legacyImageRefPart?.dataRef?.reftype === 'dblob')
+          chatsAssetIDs.add(fragment.part._legacyImageRefPart.dataRef.dblobAssetId);
+
+        // Legacy 'image_ref' parts (direct dblob refs)
+        if (isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob')
+          chatsAssetIDs.add(fragment.part.dataRef.dblobAssetId);
       }
     }
   }
@@ -32,4 +38,8 @@ export async function gcChatImageAssets(conversations?: DConversation[]) {
 
   // perform the GC (set to array)
   await gcDBImageAssets('global', 'app-chat', Array.from(chatsAssetIDs));
+
+  // FIXME: [ASSET] will only be able to GC local assets that haven't been uploaded to the cloud - otherwise they could be used,
+  //        in which case only the cloud can centralized-GC, or user will have to manually delete them
+
 }
