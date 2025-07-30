@@ -1,12 +1,12 @@
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
-import { aixConvertImageRefToInlineImageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import { aixConvertImageRefToInlineImageOrThrow, aixConvertZyncImageAssetRefToInlineImageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { Immutable } from '~/common/types/immutable.types';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { createErrorContentFragment, DMessageFragment, isContentOrAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, createErrorContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetReferencePart, } from '~/common/stores/chat/chat.fragments';
 
 
 // NOTE: also see src/common/stores/chat/chat.gc.ts, which has cleanup code for images create here
@@ -45,14 +45,25 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   const aixInlineImageParts: AixParts_InlineImagePart[] = [];
   if (imageFragments?.length) {
     for (const fragment of imageFragments) {
-      if (!isContentOrAttachmentFragment(fragment) || !isImageRefPart(fragment.part)) {
+      if (!isContentOrAttachmentFragment(fragment)) continue;
+
+      const part = fragment.part;
+      const isZyncImageReference = isZyncAssetReferencePart(part) && part.assetType === 'image' && part._legacyImageRefPart?.dataRef?.reftype === 'dblob';
+      const isLegacyImageRef = isImageRefPart(part);
+
+      if (!isZyncImageReference && !isLegacyImageRef) {
         console.log('[DEV] Invalid image fragment', { fragment });
         continue;
       }
 
       // dereference and ready for transmission - do not resize any input
       try {
-        const aixImageInlinePart = await aixConvertImageRefToInlineImageOrThrow(fragment.part, false);
+        let aixImageInlinePart: AixParts_InlineImagePart | undefined;
+        if (isZyncImageReference)
+          aixImageInlinePart = await aixConvertZyncImageAssetRefToInlineImageOrThrow(part, false);
+        else if (isLegacyImageRef)
+          aixImageInlinePart = await aixConvertImageRefToInlineImageOrThrow(part, false);
+
         if (!aixImageInlinePart) {
           console.log('[DEV] Invalid image fragment', { fragment });
           continue;

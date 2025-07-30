@@ -45,7 +45,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
 
     // LLM-dependent multi-modal enablement
     // TODO: consider also Audio inputs, maybe PDF binary inputs
-    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = chatLLMSupportsImages ? ['image_ref', 'doc'] : ['doc'];
+    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = chatLLMSupportsImages ? ['reference', 'image_ref', 'doc'] : ['doc'];
     const supportedTextTypes: DMessageAttachmentFragment['part']['pt'][] = supportedTypes.filter(pt => pt === 'doc');
 
     // Add LLM-specific properties to each attachment draft

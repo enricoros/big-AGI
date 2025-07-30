@@ -365,7 +365,8 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
   if (src.fragments.length) {
     dest.text = '';
     for (let fragment of src.fragments) {
-      switch (fragment.part.pt) {
+      const pt = fragment.part.pt;
+      switch (pt) {
         case 'text':
           dest.text += fragment.part.text;
           break;
@@ -374,10 +375,16 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
           break;
         case 'tool_invocation':
           throw new Error(`AIX: Unexpected tool invocation ${fragment.part.invocation?.type === 'function_call' ? fragment.part.invocation.name : fragment.part.id} in the Text response.`);
+        case 'annotations': // citations - ignored
+        case 'ma': // model annotations (thinking tokens) - ignored
+        case 'ph': // placeholder - ignored
+        case 'reference': // impossible
         case 'image_ref': // impossible
-        case 'tool_response': // impossible - stopped at the invocation alrady
+        case 'tool_response': // impossible - stopped at the invocation already
         case '_pt_sentinel': // impossible
           break;
+        default:
+          const _exhaustiveCheck: never = pt;
       }
     }
   }

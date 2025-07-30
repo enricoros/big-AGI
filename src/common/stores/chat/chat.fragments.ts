@@ -334,10 +334,6 @@ export function createZyncAssetReferenceContentFragment(assetUuid: ZYNC_Entity.U
   return _createContentFragment(createDMessageZyncAssetReferencePart(assetUuid, assetType, legacyImageRefPart));
 }
 
-export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
-  return _createContentFragment(_create_ImageRef_Part(dataRef, altText, width, height));
-}
-
 export function create_FunctionCallInvocation_ContentFragment(id: string, functionName: string, args: string /*| null*/): DMessageContentFragment {
   return _createContentFragment(_create_FunctionCallInvocation_Part(id, functionName, args));
 }
@@ -367,10 +363,6 @@ export function createZyncAssetReferenceAttachmentFragment(title: string, captio
 
 export function createDocAttachmentFragment(l1Title: string, caption: string, vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, version: number, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
   return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(vdt, data, ref, l1Title, version, meta), liveFileId);
-}
-
-export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, _create_ImageRef_Part(dataRef, imgAltText, width, height), undefined);
 }
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, vdt: DMessageDocMimeType, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {

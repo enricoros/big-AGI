@@ -160,6 +160,51 @@ export function ContentFragments(props: {
             />
           );
 
+        case 'reference':
+          let errorMessage: string;
+          const rt = part.rt;
+          switch (rt) {
+            case 'zync':
+              const zt = part.zType
+              switch (zt) {
+                case 'asset':
+                  // TODO: [ASSET] future: implement rendering for the real Reference to Zync Asset
+                  if (part._legacyImageRefPart?.pt === 'image_ref')
+                    return (
+                      <BlockPartImageRef
+                        key={fId}
+                        imageRefPart={part._legacyImageRefPart}
+                        fragmentId={fId}
+                        contentScaling={props.contentScaling}
+                        onFragmentDelete={props.onFragmentDelete}
+                        onFragmentReplace={props.onFragmentReplace}
+                      />
+                    );
+                  errorMessage = `[DEV] ContentFragment: Asset System not implemented (zync asset ${part.zUuid})`;
+                  break;
+
+                default:
+                  const _exhaustiveCheck: never = zt;
+                  errorMessage = `[DEV] ContentFragment: unsupported zync reference type (${zt})`;
+              }
+              break;
+
+            case '_sentinel':
+              errorMessage = `[DEV] ContentFragment: sentinel reference type (_sentinel)`;
+              break;
+
+            default:
+              const _exhaustiveCheck: never = rt;
+              errorMessage = `[DEV] ContentFragment: unsupported reference type (${rt})`;
+          }
+          return (
+            <BlockPartError
+              key={fId}
+              errorText={errorMessage}
+              messageRole={props.messageRole}
+              contentScaling={props.contentScaling}
+            />
+          );
 
         case 'image_ref':
           return (

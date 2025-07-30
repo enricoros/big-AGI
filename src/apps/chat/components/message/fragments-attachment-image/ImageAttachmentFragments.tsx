@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box } from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 
 import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob';
 
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { DMessageAttachmentFragment, DMessageFragmentId, DMessageImageRefPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragmentId, DMessageImageRefPart, isZyncAssetReferencePart } from '~/common/stores/chat/chat.fragments';
 
 import { ViewImageRefPartModal } from '../fragments-content/ViewImageRefPartModal';
 
@@ -88,35 +88,87 @@ export function ImageAttachmentFragments(props: {
     <Box aria-label={`${props.imageAttachments.length} images`} sx={layoutSxMemo}>
 
       {/* render each image attachment */}
-      {props.imageAttachments.map(attachmentFragment => {
-        // only operate on image_ref
-        if (!isImageRefPart(attachmentFragment.part))
-          throw new Error('Unexpected part type: ' + attachmentFragment.part.pt);
+      {props.imageAttachments.map(({ fId, part, title }) => {
+        let errorMessage: string | undefined;
+        const pt = part?.pt;
+        switch (pt) {
 
-        const { title, part: imageRefPart } = attachmentFragment;
-        const { dataRef /*, altText */ } = imageRefPart;
+          case 'reference':
 
-        // only support rendering DBLob images as cards for now
-        if (dataRef.reftype === 'dblob') {
-          return (
-            <RenderImageRefDBlob
-              key={'att-img-' + attachmentFragment.fId}
-              dataRefDBlobAssetId={dataRef.dblobAssetId}
-              dataRefMimeType={dataRef.mimeType}
-              dataRefBytesSize={dataRef.bytesSize}
-              imageAltText={imageRefPart.altText || title}
-              imageWidth={imageRefPart.width}
-              imageHeight={imageRefPart.height}
-              disabled={props.disabled}
-              onDeleteFragment={!props.onFragmentDelete ? undefined : () => props.onFragmentDelete?.(attachmentFragment.fId)}
-              onViewImage={() => setViewingImageRefPart(imageRefPart)}
-              scaledImageSx={cardStyleSxMemo}
-              variant='attachment-card'
-            />
-          );
+            // only Image Assets for now
+            if (!isZyncAssetReferencePart(part) || part.assetType !== 'image') {
+              errorMessage = `Unsupported reference type: ${part.rt}`;
+              break;
+            }
+
+            // only support legacy image refs for now
+            if (part._legacyImageRefPart?.dataRef?.reftype !== 'dblob') {
+              errorMessage = `Asset ${part.zUuid} not available (Asset system not implemented)`;
+              break;
+            }
+
+            const legacy = part._legacyImageRefPart;
+            return (
+              <RenderImageRefDBlob
+                key={'att-img-legacy-' + fId}
+                dataRefDBlobAssetId={legacy.dataRef.dblobAssetId}
+                dataRefMimeType={legacy.dataRef.mimeType}
+                dataRefBytesSize={legacy.dataRef.bytesSize}
+                imageWidth={legacy.width}
+                imageHeight={legacy.height}
+                imageAltText={legacy.altText || title}
+                disabled={props.disabled}
+                onDeleteFragment={!props.onFragmentDelete ? undefined : () => props.onFragmentDelete?.(fId)}
+                onViewImage={() => setViewingImageRefPart(legacy)}
+                scaledImageSx={cardStyleSxMemo}
+                variant='attachment-card'
+              />
+            );
+
+          case 'image_ref':
+            const imageRefPart = part;
+            const { dataRef /*, altText */ } = imageRefPart;
+
+            // only support rendering DBLob images as cards for now
+            if (dataRef.reftype !== 'dblob') {
+              errorMessage = `Unsupported dataRef type: ${dataRef.reftype}`;
+              break;
+            }
+
+            return (
+              <RenderImageRefDBlob
+                key={'att-img-' + fId}
+                dataRefDBlobAssetId={dataRef.dblobAssetId}
+                dataRefMimeType={dataRef.mimeType}
+                dataRefBytesSize={dataRef.bytesSize}
+                imageAltText={imageRefPart.altText || title}
+                imageWidth={imageRefPart.width}
+                imageHeight={imageRefPart.height}
+                disabled={props.disabled}
+                onDeleteFragment={!props.onFragmentDelete ? undefined : () => props.onFragmentDelete?.(fId)}
+                onViewImage={() => setViewingImageRefPart(imageRefPart)}
+                scaledImageSx={cardStyleSxMemo}
+                variant='attachment-card'
+              />
+            );
+
+          // shall never happen - but just for type checking
+          case 'doc':
+          case '_pt_sentinel':
+            errorMessage = `Unsupported part type: ${pt}`;
+            break;
+
+          default:
+            const _exhaustiveCheck: never = pt;
+            errorMessage = `Unsupported part type: ${pt}`;
+            break;
         }
 
-        throw new Error('Unexpected dataRef type: ' + dataRef.reftype);
+        return (
+          <Typography key={'att-img-err-' + fId} color='danger'>
+            <strong>Image Attachment Error:</strong> {errorMessage || `Unknown error with attachment ${fId}`}
+          </Typography>
+        );
       })}
 
       {/* Image viewer modal */}

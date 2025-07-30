@@ -99,7 +99,7 @@ export function agiUuidV4(_scope: UuidV4Scope): string {
  * - Maintains randomness properties
  * - Produces valid UUID v4 format (8-4-4-4-12 characters)
  */
-export function nanoidToUuidV4(nanoid: string, _scope: 'convert-stored-chat-v1'): string {
+export function nanoidToUuidV4(nanoid: string, _scope: 'convert-stored-chat-v1' | 'convert-dblob-to-dasset'): string {
   // 1. Create a consistent hash from the nanoid
   const hash = new Uint8Array(16);
   for (let i = 0; i < nanoid.length; i++) {

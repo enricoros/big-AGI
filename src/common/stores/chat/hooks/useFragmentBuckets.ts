@@ -1,8 +1,9 @@
 import * as React from 'react';
 
+import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isVoidFragment } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isImageRefPart, isZyncAssetReferencePart } from '../chat.fragments';
 
 
 interface FragmentBuckets {
@@ -15,7 +16,7 @@ interface FragmentBuckets {
 /**
  * Split Fragments into renderable groups, while only recalculating when the input changes, and when content really changes
  */
-export function useFragmentBuckets(messageFragments: DMessageFragment[]): FragmentBuckets {
+export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[]>): FragmentBuckets {
 
   // Refs to store the last stable value for each bucket
   const voidFragmentsRef = React.useRef<DMessageVoidFragment[]>([]);
@@ -32,17 +33,23 @@ export function useFragmentBuckets(messageFragments: DMessageFragment[]): Fragme
     const nonImageAttachments: DMessageAttachmentFragment[] = [];
 
     messageFragments.forEach(fragment => {
-      if (isContentFragment(fragment))
-        contentFragments.push(fragment);
-      else if (isAttachmentFragment(fragment)) {
-        if (isImageRefPart(fragment.part))
-          imageAttachments.push(fragment);
-        else
-          nonImageAttachments.push(fragment);
-      } else if (isVoidFragment(fragment)) {
-        voidFragments.push(fragment);
-      } else
-        console.warn('[DEV] Unexpected fragment type:', { fragment });
+      const ft = fragment.ft;
+      switch (ft) {
+        case 'content':
+          return contentFragments.push(fragment);
+        case 'attachment':
+          if ((isZyncAssetReferencePart(fragment.part) && fragment.part.assetType === 'image') || isImageRefPart(fragment.part))
+            return imageAttachments.push(fragment);
+          else
+            return nonImageAttachments.push(fragment);
+        case 'void':
+          return voidFragments.push(fragment);
+        case '_ft_sentinel':
+          break; // nothing to do here - this is a sentinel type
+        default:
+          const _exhaustiveCheck: never = ft;
+          console.warn('[DEV] Unexpected fragment type:', { fragment });
+      }
     });
 
     // For each bucket, return the new value if it's different, otherwise return the stable ref
