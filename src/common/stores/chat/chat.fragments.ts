@@ -245,6 +245,14 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
   return part.pt === 'error';
 }
 
+export function isToolInvocationPart(part: DMessageContentFragment['part']): part is DMessageToolInvocationPart {
+  return part.pt === 'tool_invocation';
+}
+
+export function isToolResponsePart(part: DMessageContentFragment['part']): part is DMessageToolResponsePart {
+  return part.pt === 'tool_response';
+}
+
 export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']): part is DMessageToolResponsePart & { response: { type: 'function_call' } } {
   return part.pt === 'tool_response' && part.response.type === 'function_call';
 }
