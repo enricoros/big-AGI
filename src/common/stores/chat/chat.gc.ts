@@ -26,7 +26,7 @@ export async function gcChatImageAssets(conversations?: DConversation[]) {
           chatsAssetIDs.add(fragment.part._legacyImageRefPart.dataRef.dblobAssetId);
 
         // Legacy 'image_ref' parts (direct dblob refs)
-        if (isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob')
+        if (isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob')
           chatsAssetIDs.add(fragment.part.dataRef.dblobAssetId);
       }
     }

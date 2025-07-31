@@ -3,7 +3,7 @@ import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import { CommonImageMimeTypes, imageBlobTransform, LLMImageResizeMode } from '~/common/util/imageUtils';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { DMessageAttachmentFragment, createDMessageDataRefDBlob, createZyncAssetReferenceAttachmentFragment, isImageRefPart, isZyncAssetReferencePart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, createDMessageDataRefDBlob, createZyncAssetReferenceAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob, isZyncAssetReferencePart } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraftSource } from './attachment.types';
 
@@ -89,24 +89,20 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
  * Remove the DBlob item associated with the given DMessageAttachmentFragment
  */
 export async function removeAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment) {
-  if (isImageRefPart(part) && part.dataRef.reftype === 'dblob') {
-    await deleteDBAsset(part.dataRef.dblobAssetId);
-  } else if (isZyncAssetReferencePart(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob') {
-    // Handle asset references with legacy fallback
+  if (isZyncAssetImageReferencePartWithLegacyDBlob(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob')
     await deleteDBAsset(part._legacyImageRefPart.dataRef.dblobAssetId);
-  }
+  else if (isImageRefPart(part) && part.dataRef.reftype === 'dblob')
+    await deleteDBAsset(part.dataRef.dblobAssetId);
 }
 
 /**
  * Move the DBlob items associated with the given DMessageAttachmentFragment to a new context and scope
  */
 export async function transferAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
-  if (isImageRefPart(part) && part.dataRef.reftype === 'dblob') {
-    await transferDBAssetContextScope(part.dataRef.dblobAssetId, contextId, scopeId);
-  } else if (isZyncAssetReferencePart(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob') {
-    // Handle asset references with legacy fallback
+  if (isZyncAssetReferencePart(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob')
     await transferDBAssetContextScope(part._legacyImageRefPart.dataRef.dblobAssetId, contextId, scopeId);
-  }
+  else if (isImageRefPart(part) && part.dataRef.reftype === 'dblob')
+    await transferDBAssetContextScope(part.dataRef.dblobAssetId, contextId, scopeId);
 }
 
 /**

@@ -6,7 +6,7 @@ import { aixConvertImageRefToInlineImageOrThrow, aixConvertZyncImageAssetRefToIn
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { Immutable } from '~/common/types/immutable.types';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { DMessageFragment, createErrorContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetReferencePart, } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, createErrorContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 
 
 // NOTE: also see src/common/stores/chat/chat.gc.ts, which has cleanup code for images create here
@@ -48,7 +48,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
       if (!isContentOrAttachmentFragment(fragment)) continue;
 
       const part = fragment.part;
-      const isZyncImageReference = isZyncAssetReferencePart(part) && part.assetType === 'image' && part._legacyImageRefPart?.dataRef?.reftype === 'dblob';
+      const isZyncImageReference = isZyncAssetImageReferencePartWithLegacyDBlob(part);
       const isLegacyImageRef = isImageRefPart(part);
 
       if (!isZyncImageReference && !isLegacyImageRef) {

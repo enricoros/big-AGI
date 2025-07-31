@@ -22,7 +22,7 @@ import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob'
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import { DMessageDataRef, DMessageImageRefPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageDataRef, DMessageImageRefPart, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
@@ -127,15 +127,21 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
   let outputSingleImageRefDBlobs: Extract<DMessageDataRef, { reftype: 'dblob' }>[] = [];
   if (!urlImageData && attachmentDraft.outputFragments.length === 1) {
     const fragment = attachmentDraft.outputFragments[0];
-    if (isImageRefPart(fragment.part) && fragment.part.dataRef && fragment.part.dataRef.reftype === 'dblob')
+    if (isZyncAssetImageReferencePartWithLegacyDBlob(fragment.part))
+      outputSingleImageRefDBlobs = [fragment.part._legacyImageRefPart!.dataRef];
+    else if (isImageRefPart(fragment.part) && fragment.part.dataRef && fragment.part.dataRef.reftype === 'dblob')
       outputSingleImageRefDBlobs = [fragment.part.dataRef];
   }
 
   const handleViewFirstImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (attachmentDraft.outputFragments[0] && isImageRefPart(attachmentDraft.outputFragments[0].part))
-      onViewImageRefPart(attachmentDraft.outputFragments[0].part);
+    const fragment = attachmentDraft.outputFragments[0];
+    if (!fragment) return;
+    if (isZyncAssetImageReferencePartWithLegacyDBlob(fragment.part))
+      onViewImageRefPart(fragment.part._legacyImageRefPart!);
+    else if (isImageRefPart(fragment.part))
+      onViewImageRefPart(fragment.part);
   };
 
   // Whether to render the converters
