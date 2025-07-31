@@ -605,7 +605,7 @@ async function _aixChatGenerateContent_LL(
     /* rest start as undefined (missing in reality) */
   };
 
-  const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, async () => {
+  const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, 'aicChatGenerateContent', async () => {
     /**
      * We want the first update to have actual content.
      * However note that we won't be sending out the model name very fast this way,
@@ -679,10 +679,16 @@ async function _aixChatGenerateContent_LL(
     for await (const particle of particles)
       reassembler.enqueueWireParticle(particle);
 
+    // dispose the deadline decimator before the await, as we're done basically
+    sendContentUpdate?.dispose?.();
+
     // synchronize any pending async tasks
     await reassembler.waitForWireComplete();
 
   } catch (error: any) {
+
+    // dispose the deadline decimator, as we're into error handling mode now
+    sendContentUpdate?.dispose?.();
 
     // something else broke, likely a User Abort, or an Aix server error (e.g. tRPC)
     const isUserAbort = abortSignal.aborted;
@@ -706,7 +712,7 @@ async function _aixChatGenerateContent_LL(
   // and we're done
   reassembler.finalizeAccumulator();
 
-  // final update (could ignore and take the final accumulator)
+  // final update bypasses decimation entirely and contains complete content
   await onGenerateContentUpdate?.(accumulator_LL, true /* Last message, done */);
 
   // return the final accumulated message
