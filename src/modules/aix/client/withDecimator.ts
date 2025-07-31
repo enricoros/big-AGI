@@ -1,12 +1,13 @@
 import type { MaybePromise } from '~/common/types/useful.types';
+import { Is } from '~/common/util/pwaUtils';
 
 // configuration
-// 12 messages per second works well for 60Hz displays (single chat has 1 message every 5 frames, and 24 in 4 chats, see the square root below)
-const DECIMATOR_BASE_FPS = 12;
+// 20/15/12 messages per second works well for 60Hz displays (single chat has 1 message every 3/4/5 frames, and smooth scaling with square root for multiple chats)
+const DECIMATOR_BASE_FPS = Is.Desktop ? 20 : 12; // fewer messages on mobile
 // we keep a space of at least 20ms between calls, to avoid blocking the UI; hopefully this is good for older systems too
 const DECIMATOR_MIN_IDLE_MS = 20;
 // minimum number of un-decimated calls -- IN ADDITION TO THE FIRST ONE (!)
-const DECIMATOR_MIN_FREE_PASSES = 1;
+const DECIMATOR_MIN_FREE_PASSES = 2;
 // enable console logging
 const DEBUG_DECIMATOR = false;
 
@@ -15,7 +16,7 @@ const DEBUG_DECIMATOR = false;
  * Higher-order function that applies decimation to the provided callback.
  * Preserves the same signature as the input function.
  *
- * @param throttleUnits 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
+ * @param throttleUnits 0: disable, 1: default throttle (20Hz desktop/12Hz mobile), 2+ reduce frequency with the square root
  * @param fn The function to be decimated
  * @returns A new function with the same signature that applies decimation
  */
@@ -24,7 +25,7 @@ export function withDecimator<T extends (...args: any[]) => MaybePromise<void>>(
   // pass though
   if (!throttleUnits) return fn;
 
-  // 12 messages per second works well for 60Hz displays (single chat, and 24 in 4 chats, see the square root below)
+  // Dynamic FPS works well for 60Hz displays (desktop: 20 FPS, mobile: 12 FPS, scaling with square root for multiple chats)
   const unitDelayMs = 1000 / DECIMATOR_BASE_FPS;
   const intervalMs = !throttleUnits ? 0
     : throttleUnits > 1 ? Math.round(unitDelayMs * Math.sqrt(throttleUnits))
