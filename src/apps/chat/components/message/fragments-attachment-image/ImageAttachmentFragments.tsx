@@ -116,7 +116,7 @@ export function ImageAttachmentFragments(props: {
                 dataRefBytesSize={legacy.dataRef.bytesSize}
                 imageWidth={legacy.width}
                 imageHeight={legacy.height}
-                imageAltText={legacy.altText || title}
+                imageAltText={part.zRefSummary?.text || legacy.altText || title}
                 disabled={props.disabled}
                 onDeleteFragment={!props.onFragmentDelete ? undefined : () => props.onFragmentDelete?.(fId)}
                 onViewImage={() => setViewingImageRefPart(legacy)}

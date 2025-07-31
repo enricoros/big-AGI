@@ -89,7 +89,7 @@ export function ViewImageRefPartModal(props: {
     }
   }, [dataRef, altText]);
 
-  const title = props.imageRefPart.altText || 'Attachment Image';
+  const title = altText || 'Attachment Image';
   return (
     <GoodModal
       open={true}

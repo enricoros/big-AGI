@@ -69,6 +69,7 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
     return createZyncAssetReferenceAttachmentFragment(
       title, caption,
       nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+      title || (source.media === 'file' ? source.refPath : source.media === 'url' ? source.refUrl : undefined), // use title if available, otherwise use the source refPath or refUrl
       'image',
       {
         pt: 'image_ref' as const,

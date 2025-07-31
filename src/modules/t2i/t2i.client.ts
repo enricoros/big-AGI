@@ -170,6 +170,7 @@ export async function t2iGenerateImageContentFragments(
     // Create a Zync Image Asset Reference *Content* fragment, as this is image content from the LLM
     const zyncImageAssetFragmentWithLegacy = createZyncAssetReferenceContentFragment(
       nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+      _i.altText || prompt, // use altText (revised prompt) if available, otherwise use the prompt
       'image',
       {
         pt: 'image_ref' as const,
