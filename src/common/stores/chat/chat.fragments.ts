@@ -1,5 +1,6 @@
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { agiId } from '~/common/util/idUtils';
+import { ellipsizeMiddle } from '~/common/util/textUtils';
 
 
 /// Fragments - forward compatible ///
@@ -132,14 +133,15 @@ export type DMessageReferencePart =
 type _DMessageReferencePartBase<TRt extends string, TRefSpecificFields = {}> = {
   pt: 'reference';
   rt: TRt;
-  // altText?: string;
 } & TRefSpecificFields;
 
 type _DMessageZyncReferencePart<TZT extends ZYNC.Typename, TZTSpecificFields = {}> = _DMessageReferencePartBase<'zync', {
   zType: TZT;
   zUuid: ZYNC_Entity.UUID;
   // zRelationship: 'live', ...
+  zRefSummary?: DMessageTextPart;  // text summary of the reference for text-only models and accessibility
 } & TZTSpecificFields>;
+const MAX_ZYNC_REFERENCE_SUMMARY_LEN = 512; // max alt text length for Zync Asset Reference Parts
 
 export type DMessageZyncAssetReferencePart = _DMessageZyncReferencePart<'asset', {
   // denorm fields for quick display
@@ -330,8 +332,8 @@ export function createErrorContentFragment(error: string): DMessageContentFragme
   return _createContentFragment(_create_Error_Part(error));
 }
 
-export function createZyncAssetReferenceContentFragment(assetUuid: ZYNC_Entity.UUID, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageContentFragment {
-  return _createContentFragment(createDMessageZyncAssetReferencePart(assetUuid, assetType, legacyImageRefPart));
+export function createZyncAssetReferenceContentFragment(assetUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageContentFragment {
+  return _createContentFragment(createDMessageZyncAssetReferencePart(assetUuid, refSummary, assetType, legacyImageRefPart));
 }
 
 export function create_FunctionCallInvocation_ContentFragment(id: string, functionName: string, args: string /*| null*/): DMessageContentFragment {
@@ -357,8 +359,8 @@ function _createContentFragment(part: DMessageContentFragment['part']): DMessage
 
 /// Attachment Fragments - Creation & Duplication
 
-export function createZyncAssetReferenceAttachmentFragment(title: string, caption: string, assetUuid: ZYNC_Entity.UUID, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, createDMessageZyncAssetReferencePart(assetUuid, assetType, legacyImageRefPart), undefined);
+export function createZyncAssetReferenceAttachmentFragment(title: string, caption: string, assetUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, caption, createDMessageZyncAssetReferencePart(assetUuid, refSummary, assetType, legacyImageRefPart), undefined);
 }
 
 export function createDocAttachmentFragment(l1Title: string, caption: string, vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, version: number, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
@@ -370,7 +372,7 @@ export function specialContentPartToDocAttachmentFragment(title: string, caption
     case isTextPart(contentPart):
       return createDocAttachmentFragment(title, caption, vdt, createDMessageDataInlineText(contentPart.text, 'text/plain'), ref, 2 /* As we attach our messages, we start from 2 */, docMeta);
     case isZyncAssetReferencePart(contentPart):
-      return createZyncAssetReferenceAttachmentFragment(title, caption, contentPart.zUuid, contentPart.assetType, contentPart._legacyImageRefPart);
+      return createZyncAssetReferenceAttachmentFragment(title, caption, contentPart.zUuid, contentPart.zRefSummary?.text, contentPart.assetType, contentPart._legacyImageRefPart);
     default:
       return createDocAttachmentFragment('Error', 'Content to Attachment', vdt, createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`, 'text/plain'), ref, 1 /* error has no version really */, docMeta);
   }
@@ -446,8 +448,16 @@ function _create_Error_Part(error: string): DMessageErrorPart {
   return { pt: 'error', error };
 }
 
-export function createDMessageZyncAssetReferencePart(zUuid: ZYNC_Entity.UUID, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageZyncAssetReferencePart {
-  return { pt: 'reference', rt: 'zync', zType: 'asset', zUuid, assetType, ...(legacyImageRefPart && { _legacyImageRefPart: { ...legacyImageRefPart } }) };
+export function createDMessageZyncAssetReferencePart(zUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageZyncAssetReferencePart {
+  return {
+    pt: 'reference',
+    rt: 'zync',
+    zType: 'asset',
+    zUuid,
+    ...(refSummary && { zRefSummary: { pt: 'text', text: ellipsizeMiddle(refSummary, MAX_ZYNC_REFERENCE_SUMMARY_LEN) } }),
+    assetType,
+    ...(legacyImageRefPart && { _legacyImageRefPart: { ...legacyImageRefPart } }),
+  };
 }
 
 function _create_Doc_Part(vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, version: number, meta?: DMessageDocMeta): DMessageDocPart {
@@ -522,7 +532,7 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
           switch (part.zType) {
             case 'asset':
               // Zync Asset Reference: new fragment, with the exact same reference (and fallback, if still in the migration period)
-              return createDMessageZyncAssetReferencePart(part.zUuid, part.assetType, part._legacyImageRefPart ? { ...part._legacyImageRefPart } : undefined) as TPart;
+              return createDMessageZyncAssetReferencePart(part.zUuid, part.zRefSummary?.text, part.assetType, part._legacyImageRefPart ? { ...part._legacyImageRefPart } : undefined) as TPart;
 
             default:
               const _exhaustiveCheck: never = part.zType;

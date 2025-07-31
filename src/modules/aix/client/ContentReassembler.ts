@@ -516,6 +516,7 @@ export class ContentReassembler {
       // Create a Zync Image Asset Reference *Content* fragment, as this is image content from the LLM
       const zyncImageAssetFragmentWithLegacy = createZyncAssetReferenceContentFragment(
         nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+        prompt || safeLabel, // use prompt if available, otherwise use the label
         'image',
         {
           pt: 'image_ref' as const,
