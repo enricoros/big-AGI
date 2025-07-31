@@ -15,7 +15,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
@@ -351,13 +351,17 @@ export function LLMAttachmentMenu(props: {
                         </Chip>
                       </Typography>
                     );
-                  } else if (isImageRefPart(part)) {
-                    const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'no resolution';
-                    const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
+                  } else if (isZyncAssetImageReferencePartWithLegacyDBlob(part) || isImageRefPart(part)) {
+                    // Unified Image Reference handling (both Zync Asset References with legacy fallback and legacy image_ref)
+                    const legacyImageRefPart = isZyncAssetImageReferencePartWithLegacyDBlob(part) ? part._legacyImageRefPart! : part;
+                    const { dataRef, width, height } = legacyImageRefPart;
+                    const resolution = width && height ? `${width} x ${height}` : 'no resolution';
+                    const mime = dataRef.reftype === 'dblob' ? dataRef.mimeType : 'unknown image';
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
-                        <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? (part.dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
-                        <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
+                        <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {dataRef.reftype === 'dblob' ? (dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
+                        <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='primary' variant='outlined' startDecorator={<VisibilityIcon />}
+                              onClick={(event) => handleViewImageRefPart(event, legacyImageRefPart)}>
                           view
                         </Chip>
                         {isOutputMultiple && <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>

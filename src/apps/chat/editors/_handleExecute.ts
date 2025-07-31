@@ -4,7 +4,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
@@ -88,7 +88,9 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
       // use additional image fragments as image inputs
       const imageInputFragments = lastMessage.fragments.slice(1)
-        .filter(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part));
+        .filter(fragment => isContentOrAttachmentFragment(fragment) && (
+          isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
+        ));
 
       return await runImageGenerationUpdatingState(cHandler, imagePrompt, imageInputFragments);
 

@@ -11,7 +11,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessageUtils';
 
 import { TokenBadgeMemo } from '../composer/tokens/TokenBadge';
@@ -58,6 +58,10 @@ function analyzeMessageFragments(messageFragments: ReadonlyArray<DMessageFragmen
         case 'error':
           result.errorCount++;
           break;
+        case 'reference':
+          if (isZyncAssetImageReferencePart(fragment.part))
+            result.imageCount++;
+          break;
         case 'image_ref':
           if (isImageRefPart(fragment.part)) {
             result.imageCount++;
@@ -71,7 +75,7 @@ function analyzeMessageFragments(messageFragments: ReadonlyArray<DMessageFragmen
           break;
       }
     } else if (isAttachmentFragment(fragment)) {
-      if (isImageRefPart(fragment.part)) {
+      if (isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)) {
         result.imageCount++;
       } else {
         result.attachmentCount++;

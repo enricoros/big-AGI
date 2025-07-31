@@ -1,7 +1,7 @@
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import { createTextContentFragment, DMessageFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 
 import { extractChatCommand, helpPrettyChatCommands } from '../commands/commands.registry';
 import { runImageGenerationUpdatingState } from './image-generate';
@@ -37,7 +37,9 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
 
       // use additional image fragments as image inputs
       const imageInputFragments = lastMessage.fragments.slice(1)
-        .filter(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part));
+        .filter(fragment => isContentOrAttachmentFragment(fragment) && (
+          isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
+        ));
 
       return await runImageGenerationUpdatingState(cHandler, userText!, imageInputFragments);
 

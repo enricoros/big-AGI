@@ -281,6 +281,14 @@ export function isZyncAssetReferencePart(part: DMessageContentFragment['part'] |
   return part.pt === 'reference' && part.rt === 'zync' && part.zType === 'asset';
 }
 
+export function isZyncAssetImageReferencePart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']): part is DMessageZyncAssetReferencePart {
+  return part.pt === 'reference' && part.rt === 'zync' && part.zType === 'asset' && part.assetType === 'image';
+}
+
+export function isZyncAssetImageReferencePartWithLegacyDBlob(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']): part is DMessageZyncAssetReferencePart {
+  return part.pt === 'reference' && part.rt === 'zync' && part.zType === 'asset' && part.assetType === 'image' && part._legacyImageRefPart?.dataRef?.reftype === 'dblob';
+}
+
 export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'doc';
 }

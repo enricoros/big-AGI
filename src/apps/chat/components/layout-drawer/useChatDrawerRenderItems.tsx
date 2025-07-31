@@ -6,7 +6,7 @@ import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { getLocalMidnightInUTCTimestamp, getTimeBucketEn } from '~/common/util/timeUtils';
-import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -48,7 +48,9 @@ function messageHasDocAttachmentFragments(message: DMessage): boolean {
 }
 
 function messageHasImageFragments(message: DMessage): boolean {
-  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) /*&& fragment.part.dataRef.reftype === 'dblob'*/);
+  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && (
+    isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
+  ));
 }
 
 function messageHasStarredFragments(message: DMessage): boolean {
