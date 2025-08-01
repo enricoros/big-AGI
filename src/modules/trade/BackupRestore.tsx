@@ -36,8 +36,8 @@ const INCLUDED_IDB_KEYS: { [dbName: string]: { [storeName: string]: string[]; };
 // Flashing Backup Schema
 // NOTE: ABSOLUTELY NOT CHANGE WITHOUT CHANGING THE saveFlashObjectOrThrow_Streaming TOO (!)
 interface DFlashSchema {
-  _t: 'agi.flash-backup';
-  _v: number;
+  schema: 'agi.flash-backup';
+  schemaVersion: number;
   metadata: {
     version: string;
     timestamp: string;
@@ -628,8 +628,8 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
 
 async function createFlashObject(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, includeSettings: boolean): Promise<DFlashSchema> {
   return {
-    _t: 'agi.flash-backup',
-    _v: BACKUP_FORMAT_VERSION_NUMBER,
+    schema: 'agi.flash-backup',
+    schemaVersion: BACKUP_FORMAT_VERSION_NUMBER,
     metadata: {
       version: BACKUP_FORMAT_VERSION,
       timestamp: new Date().toISOString(),
