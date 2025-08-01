@@ -3,9 +3,12 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { Is } from '~/common/util/pwaUtils';
 
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
+
+export type TokenCountingMethod = 'accurate' | 'approximate';
 
 
 // Chat Settings (Chat AI & Chat UI)
@@ -37,6 +40,9 @@ interface AppChatStore {
 
   chatKeepLastThinkingOnly: boolean,
   setChatKeepLastThinkingOnly: (chatKeepLastThinkingOnly: boolean) => void;
+
+  tokenCountingMethod: TokenCountingMethod;
+  setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => void;
 
   // chat UI
 
@@ -106,6 +112,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     chatKeepLastThinkingOnly: true,
     setChatKeepLastThinkingOnly: (chatKeepLastThinkingOnly: boolean) => _set({ chatKeepLastThinkingOnly }),
+
+    tokenCountingMethod: Is.Desktop ? 'accurate' : 'approximate',
+    setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => _set({ tokenCountingMethod }),
 
     // Chat UI
 
@@ -181,6 +190,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoTitleChat: state.autoTitleChat,
   autoVndAntBreakpoints: state.autoVndAntBreakpoints,
   chatKeepLastThinkingOnly: state.chatKeepLastThinkingOnly,
+  tokenCountingMethod: state.tokenCountingMethod,
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestAttachmentPrompts: state.setAutoSuggestAttachmentPrompts,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
@@ -189,6 +199,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   setAutoTitleChat: state.setAutoTitleChat,
   setAutoVndAntBreakpoints: state.setAutoVndAntBreakpoints,
   setChatKeepLastThinkingOnly: state.setChatKeepLastThinkingOnly,
+  setTokenCountingMethod: state.setTokenCountingMethod,
 })));
 
 export const getChatAutoAI = (): {
@@ -207,6 +218,9 @@ export const useChatAutoSuggestHTMLUI = (): boolean =>
 
 export const useChatAutoSuggestAttachmentPrompts = (): boolean =>
   useAppChatStore(state => state.autoSuggestAttachmentPrompts);
+
+export const getChatTokenCountingMethod = (): TokenCountingMethod =>
+  useAppChatStore.getState().tokenCountingMethod;
 
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);

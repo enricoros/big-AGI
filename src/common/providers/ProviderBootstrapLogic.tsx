@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
+import { getChatTokenCountingMethod } from '../../apps/chat/store-app-chat';
+
 import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
@@ -36,7 +38,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
 
   // decide what to launch
-  const launchPreload = isOnChat && !isRedirectingToNews;
+  const launchPreload = isOnChat && !isRedirectingToNews && getChatTokenCountingMethod() === 'accurate'; // only preload if using TikToken by default
   const launchAutoConf = isOnChat && !isRedirectingToNews;
   const launchStorageGC = true;
 
