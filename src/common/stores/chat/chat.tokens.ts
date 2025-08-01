@@ -1,4 +1,7 @@
+import { getChatTokenCountingMethod } from '../../../apps/chat/store-app-chat';
+
 import type { DLLM } from '~/common/stores/llms/llms.types';
+import { approximateTextTokens } from '~/common/tokens/tokens.approximate';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
@@ -19,7 +22,17 @@ export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragme
 // Text
 
 export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): number {
-  return textTokensForLLM(text, llm, debugFrom) ?? 0;
+  // Approximate path
+  if (getChatTokenCountingMethod() === 'approximate')
+    return approximateTextTokens(text, llm, debugFrom);
+
+  // Default to accurate method (the JS+WASM 'tiktoken' lib)
+  const accurateTokens = textTokensForLLM(text, llm, debugFrom);
+  if (accurateTokens !== null)
+    return accurateTokens;
+
+  // Fallback to approximate if the accurate method is not available
+  return approximateTextTokens(text, llm, debugFrom);
 }
 
 function estimateImageTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM): number {

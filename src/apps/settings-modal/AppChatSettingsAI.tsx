@@ -13,6 +13,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
+import type { TokenCountingMethod } from '../chat/store-app-chat';
 import { useChatAutoAI } from '../chat/store-app-chat';
 
 
@@ -26,6 +27,19 @@ const _keepThinkingBlocksOptions: FormSelectOption<'all' | 'last-only'>[] = [
     value: 'all',
     label: 'Preserve All',
     description: 'Keep all traces',
+  },
+] as const;
+
+const _tokenCountingMethodOptions: FormSelectOption<TokenCountingMethod>[] = [
+  {
+    value: 'approximate',
+    label: 'Fast',
+    description: 'Lightweight: ~90% approximation',
+  },
+  {
+    value: 'accurate',
+    label: 'Precise',
+    description: 'Accurate tokenizer, heavier',
   },
 ] as const;
 
@@ -63,6 +77,7 @@ export function AppChatSettingsAI() {
     // autoSuggestQuestions, setAutoSuggestQuestions,
     autoTitleChat, setAutoTitleChat,
     chatKeepLastThinkingOnly, setChatKeepLastThinkingOnly,
+    tokenCountingMethod, setTokenCountingMethod,
   } = useChatAutoAI();
 
   const labsDevMode = useLabsDevMode();
@@ -122,6 +137,15 @@ export function AppChatSettingsAI() {
         tooltip='The last used chat model, used as default for new conversations. This is a develoment setting used to test out auto-detection of the most fitting initial chat model.'
       />
     )}
+
+    <FormSelectControl
+      title='Token Counting'
+      tooltip='Controls how tokens are counted for context limits and pricing estimates.'
+      options={_tokenCountingMethodOptions}
+      value={tokenCountingMethod}
+      onChange={setTokenCountingMethod}
+      selectSx={{ minWidth: 140 }}
+    />
 
     <FormSelectControl
       title='Reasoning traces'
