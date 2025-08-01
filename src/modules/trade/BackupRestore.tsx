@@ -36,7 +36,7 @@ const INCLUDED_IDB_KEYS: { [dbName: string]: { [storeName: string]: string[]; };
 // Flashing Backup Schema
 // NOTE: ABSOLUTELY NOT CHANGE WITHOUT CHANGING THE saveFlashObjectOrThrow_Streaming TOO (!)
 interface DFlashSchema {
-  schema: 'agi.flash-backup';
+  schema: 'vnd.agi.flash-backup';
   schemaVersion: number;
   metadata: {
     version: string;
@@ -557,8 +557,8 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
 //         try {
 //           // start the JSON object
 //           controller.enqueue(encoder.encode('{\n'));
-//           controller.enqueue(encoder.encode(`  "_t": "agi.flash-backup",\n`));
-//           controller.enqueue(encoder.encode(`  "_v": ${BACKUP_FORMAT_VERSION_NUMBER},\n`));
+//           controller.enqueue(encoder.encode(`  "schema": "vnd.agi.flash-backup",\n`));
+//           controller.enqueue(encoder.encode(`  "schemaVersion": ${BACKUP_FORMAT_VERSION_NUMBER},\n`));
 //           controller.enqueue(encoder.encode(`  "metadata": ${JSON.stringify({
 //             version: BACKUP_FORMAT_VERSION,
 //             timestamp: new Date().toISOString(),
@@ -628,7 +628,7 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
 
 async function createFlashObject(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, includeSettings: boolean): Promise<DFlashSchema> {
   return {
-    schema: 'agi.flash-backup',
+    schema: 'vnd.agi.flash-backup',
     schemaVersion: BACKUP_FORMAT_VERSION_NUMBER,
     metadata: {
       version: BACKUP_FORMAT_VERSION,
