@@ -66,7 +66,7 @@ export namespace V4ToHeadConverters {
 
       // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
       if (isVoidFragment(fragment) && isPlaceholderPart(fragment.part))
-        m.fragments[i] = createErrorContentFragment(`${(fragment.part as any).pText} (did not complete)`);
+        m.fragments[i] = createErrorContentFragment(`${fragment.part.pText || '(did not complete)'}`);
 
       // [ASSET] [MIGRATION] Convert DBlob image references to Asset references - converts legacy image_ref parts with dblob references to the new reference system
       if (isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob') {
