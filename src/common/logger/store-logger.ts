@@ -11,7 +11,7 @@ import type { LogEntry } from './logger.types';
 //
 
 // configuration
-const DEFAULT_MAX_ENTRIES = 500;
+const DEFAULT_MAX_ENTRIES = 200;
 const DEFAULT_MAX_PERSISTED = 100;
 const DEFAULT_MAX_PERSISTED_DETAILS_LEN = 500;
 const DEBUG_NEW_LOG = Release.IsNodeDevBuild;
