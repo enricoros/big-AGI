@@ -242,7 +242,7 @@ export async function convert_Blob_To_UInt8Array(blob: Blob, debugCaller: string
 /// --- UInt8Array -> X --- ///
 
 // Convert a Uint8Array (byte array) to a Blob
-export function convert_UInt8ArrayWithMimeType_To_Blob(bytes: Uint8Array, blobMimeType: string, debugCaller: string): Blob {
+export function convert_UInt8ArrayWithMimeType_To_Blob(bytes: Uint8Array<ArrayBuffer>, blobMimeType: string, debugCaller: string): Blob {
   try {
     if (!((bytes as unknown) instanceof Uint8Array)) {
       // noinspection ExceptionCaughtLocallyJS
