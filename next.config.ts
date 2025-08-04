@@ -32,7 +32,7 @@ let nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
-  ...buildType && {
+  ...(buildType && {
     output: buildType,
     distDir: 'dist',
 
@@ -41,7 +41,7 @@ let nextConfig: NextConfig = {
 
     // Optional: Change links `/me` -> `/me/` and emit `/me.html` -> `/me/index.html`
     // trailingSlash: true,
-  },
+  }),
 
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
   // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
@@ -87,6 +87,10 @@ let nextConfig: NextConfig = {
       {
         source: '/a/ph/decide',
         destination: 'https://us.i.posthog.com/decide',
+      },
+      {
+        source: '/a/ph/flags',
+        destination: 'https://us.i.posthog.com/flags',
       },
     ];
   },
