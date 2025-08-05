@@ -140,6 +140,9 @@ export function FolderListItem(props: {
         userSelect: 'none',
         zIndex: isDragging ? 1 : undefined,
 
+        // we had this before, but it wasn't working properly, so we reduced to a handle (folder icon) on mobile
+        // touchAction: 'none', // DnD prevent scrolling on mobile
+
         // shows the menu icon on hover
         '&:hover .menu-icon': {
           visibility: 'visible',
@@ -159,13 +162,19 @@ export function FolderListItem(props: {
       }
     >
       <ListItemButton
-        {...attributes}
-        {...listeners}
         selected={isActive}
         onClick={handleFolderActivate}
         sx={_styles.itemButton}
       >
-        <ListItemDecorator>
+        {/* Folder icon is the drag handle - only this part is draggable */}
+        <ListItemDecorator
+          {...attributes}
+          {...listeners}
+          sx={{
+            cursor: isDragging ? 'grabbing' : 'grab',
+            touchAction: 'none', // Prevent scrolling on mobile when dragging
+          }}
+        >
           <FolderIcon style={{ color: folderColor || 'inherit' }} />
         </ListItemDecorator>
 
