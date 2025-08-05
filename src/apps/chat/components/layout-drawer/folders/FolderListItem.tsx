@@ -37,12 +37,13 @@ const _styles = {
 
 export function FolderListItem(props: {
   folder: DFolder;
+  chatCount?: number;
   isActive: boolean;
   onFolderSelect: (folderId: string | null) => void;
 }) {
 
   // props
-  const { isActive, onFolderSelect } = props;
+  const { isActive, onFolderSelect, chatCount } = props;
   const { id: folderId, color: folderColor, title: folderTitle } = props.folder;
 
   // state
@@ -188,6 +189,7 @@ export function FolderListItem(props: {
         ) : (
           <ListItemContent onDoubleClick={handleEditTitle}>
             {folderTitle}
+            {chatCount !== undefined && chatCount > 0 && <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: '0.5rem' }}> {chatCount}</span>}
           </ListItemContent>
         )}
 
