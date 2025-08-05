@@ -160,17 +160,17 @@ function ChatDrawer(props: {
     setRenderLimit(prevValue => {
       // Thresholds: 200 --(+200)--> 400 --(+500)--> 900 --(+1000)--> 1900 --> Infinity --> 200 (cycle)
       if (prevValue === 200)
-        return 400;
+        return (filteredChatsCount > 400 ? 400 : Infinity); // if less than 400, show all
       else if (prevValue === 400)
-        return 900;
+        return (filteredChatsCount > 900 ? 900 : Infinity); // if less than 900, show all
       else if (prevValue === 900)
-        return 1900;
+        return (filteredChatsCount > 1900 ? 1900 : Infinity); // if less than 1900, show all
       else if (prevValue === 1900)
         return Infinity; // no limit
       else
         return 200; // go back to optimized view
     });
-  }, []);
+  }, [filteredChatsCount]);
 
   // Reset render limit when search query changes
   React.useEffect(() => {
@@ -410,7 +410,7 @@ function ChatDrawer(props: {
         )}
 
         {/* Load More Button */}
-        {renderNavItems.length > 200 && (
+        {filteredChatsCount > 200 && (
           <ListItem>
             <ListItemButton
               variant='soft'
@@ -419,14 +419,14 @@ function ChatDrawer(props: {
             >
               {renderLimit === Infinity
                 ? 'Show less'
-                : renderLimit === 200
+                : (renderLimit === 200 && filteredChatsCount > 400)
                   ? 'Show 200 more'
-                  : renderLimit === 400
+                  : (renderLimit === 400 && filteredChatsCount > 900)
                     ? 'Show 500 more'
-                    : renderLimit === 900
+                    : (renderLimit === 900 && filteredChatsCount > 1900)
                       ? 'Show 1000 more'
                       : 'Show all'
-              } {renderLimit !== Infinity && `(${renderNavItems.length - renderLimit} hidden)`}
+              } {renderLimit !== Infinity && `(${filteredChatsCount - renderLimit} hidden)`}
             </ListItemButton>
           </ListItem>
         )}
