@@ -82,6 +82,7 @@ function ChatDrawer(props: {
   const [searchDepth, setSearchDepth] = React.useState<ChatSearchDepth>('attachments'); // default: full search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
+  const [renderLimit, setRenderLimit] = React.useState(200); // progressive loading limit
 
   // external state
   const {
@@ -151,6 +152,30 @@ function ChatDrawer(props: {
     // Close the menu
     setFolderChangeRequest(null);
   }, []);
+
+
+  // Render limit - load more items
+
+  const handleRenderLimitIncrease = React.useCallback(() => {
+    setRenderLimit(prevValue => {
+      // Thresholds: 200 --(+200)--> 400 --(+500)--> 900 --(+1000)--> 1900 --> Infinity --> 200 (cycle)
+      if (prevValue === 200)
+        return 400;
+      else if (prevValue === 400)
+        return 900;
+      else if (prevValue === 900)
+        return 1900;
+      else if (prevValue === 1900)
+        return Infinity; // no limit
+      else
+        return 200; // go back to optimized view
+    });
+  }, []);
+
+  // Reset render limit when search query changes
+  React.useEffect(() => {
+    setRenderLimit(200);
+  }, [debouncedSearchQuery]);
 
 
   // memoize the group dropdown
@@ -342,7 +367,7 @@ function ChatDrawer(props: {
 
       {/* Chat Titles List (shrink as half the rate as the Folders List) */}
       <Box sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
-        {renderNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
+        {renderNavItems.slice(0, renderLimit).map((item, idx) => item.type === 'nav-item-chat-data' ? (
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
               item={item}
@@ -382,6 +407,28 @@ function ChatDrawer(props: {
               )}
             </Box>
           ) : null,
+        )}
+
+        {/* Load More Button */}
+        {renderNavItems.length > 200 && (
+          <ListItem>
+            <ListItemButton
+              variant='soft'
+              onClick={handleRenderLimitIncrease}
+              sx={{ justifyContent: 'center', py: 3 }}
+            >
+              {renderLimit === Infinity
+                ? 'Show less'
+                : renderLimit === 200
+                  ? 'Show 200 more'
+                  : renderLimit === 400
+                    ? 'Show 500 more'
+                    : renderLimit === 900
+                      ? 'Show 1000 more'
+                      : 'Show all'
+              } {renderLimit !== Infinity && `(${renderNavItems.length - renderLimit} hidden)`}
+            </ListItemButton>
+          </ListItem>
         )}
       </Box>
 
