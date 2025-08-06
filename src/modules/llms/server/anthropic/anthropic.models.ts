@@ -18,6 +18,7 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
 
   // Claude 4 models with thinking variants
   'claude-opus-4-20250514': {
+    hidden: true, // superseded by 4.1
     idVariant: 'thinking',
     label: 'Claude Opus 4 (Thinking)',
     description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
@@ -68,6 +69,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 4 models
   {
+    hidden: true, // superseded by 4.1
     id: 'claude-opus-4-20250514', // Active
     label: 'Claude Opus 4',
     description: 'Previous flagship model with very high intelligence and capability',
