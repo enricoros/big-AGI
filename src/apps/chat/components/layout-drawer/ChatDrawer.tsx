@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -101,6 +102,16 @@ function ChatDrawer(props: {
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
   const gifMode = uiComplexityMode === 'extra';
+
+  // Calculate chat counts per folder
+  // TODO: restore this, but also check if conversations are active? or move the computation to the renderNavItems hook?
+  // const folderChatCounts = React.useMemo(() => {
+  //   const counts: Record<string, number> = {};
+  //   allFolders.forEach(folder => {
+  //     counts[folder.id] = folder.conversationIds.length;
+  //   });
+  //   return counts;
+  // }, [allFolders]);
 
 
   // New/Activate/Delete Conversation
@@ -212,13 +223,13 @@ function ChatDrawer(props: {
           <ListItem>
             <Typography level='body-sm'>Filter</Typography>
           </ListItem>
-          <MenuItem onClick={toggleFilterIsArchived}>
-            <ListItemDecorator>{filterIsArchived && <CheckRoundedIcon />}</ListItemDecorator>
-            Archived
-          </MenuItem>
           <MenuItem onClick={toggleFilterHasStars}>
             <ListItemDecorator>{filterHasStars && <CheckRoundedIcon />}</ListItemDecorator>
             Starred <StarOutlineRoundedIcon />
+          </MenuItem>
+          <MenuItem onClick={toggleFilterIsArchived}>
+            <ListItemDecorator>{filterIsArchived && <CheckRoundedIcon />}</ListItemDecorator>
+            Archived <ArchiveOutlinedIcon />
           </MenuItem>
           <MenuItem onClick={toggleFilterHasImageAssets}>
             <ListItemDecorator>{filterHasImageAssets && <CheckRoundedIcon />}</ListItemDecorator>
@@ -306,6 +317,7 @@ function ChatDrawer(props: {
     {enableFolders && (
       <ChatFolderList
         folders={allFolders}
+        // folderChatCounts={folderChatCounts}
         contentScaling={contentScaling}
         activeFolderId={props.activeFolderId}
         onFolderSelect={props.setActiveFolderId}
