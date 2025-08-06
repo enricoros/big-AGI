@@ -26,6 +26,7 @@ export function CloseablePopup(props: {
   onClose: () => void,
 
   // looks
+  size?: 'sm' | 'md' | 'lg', // if set, overrides 'dense' and applies to the MenuList
   dense?: boolean,
   bigIcons?: boolean,
 
@@ -80,9 +81,11 @@ export function CloseablePopup(props: {
     ...(props.minWidth !== undefined && { minWidth: props.minWidth }),
 
     // MenuList customizations
-    '--ListItem-minHeight': props.dense
-      ? '2.25rem' /* 2.25 is the default */
-      : '2.5rem', /* we enlarge the default  */
+    ...(!props.size && {
+      '--ListItem-minHeight': props.dense
+        ? '2.25rem' /* 2.25 is the default */
+        : '2.5rem', /* we enlarge the default  */
+    }),
     ...(props.bigIcons && {
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
       // '--ListItemDecorator-size': '2.75rem',
@@ -93,7 +96,7 @@ export function CloseablePopup(props: {
     // inject
     ...(props.sx || {}),
 
-  }), [props.dense, props.bigIcons, props.maxHeightGapPx, props.maxWidth, props.minWidth, props.noBottomPadding, props.noTopPadding, props.sx]);
+  }), [props.maxHeightGapPx, props.maxWidth, props.minWidth, props.size, props.dense, props.bigIcons, props.noBottomPadding, props.noTopPadding, props.sx]);
 
 
   return (
@@ -108,7 +111,7 @@ export function CloseablePopup(props: {
     >
       <ClickAwayListener onClickAway={handleClose}>
         {props.menu ? (
-          <MenuList onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <MenuList size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx}>
             {props.children}
           </MenuList>
         ) : (
