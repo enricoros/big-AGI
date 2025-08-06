@@ -217,7 +217,9 @@ function ChatDrawerItem(props: {
         {hasBeamOpen ? (
           <ChatBeamIcon sx={{ fontSize: 'xl' }} />
         ) : isIncognito ? (
-          <VisibilityOffIcon sx={{ fontSize: 'xl' }} />
+          <Avatar variant='soft' sx={{ backgroundColor: `#9C27B022`, width: '1.5rem', height: '1.5rem' }}>
+            <VisibilityOffIcon sx={{ fontSize: 'md', color: `#9C27B0` }} />
+          </Avatar>
         ) : (beingGenerated && props.showSymbols === 'gif') ? (
           <Avatar
             alt='chat activity'
@@ -330,6 +332,15 @@ function ChatDrawerItem(props: {
         '&:hover > button': {
           opacity: 1, // fade in buttons when hovering, but by default wash them out a bit
         },
+        // NOTE: we experimented with this code to have the actions fade in on hover, but idk about mobile..
+        //       Buttons Row had the "className='chat-actions'"
+        // '& .chat-actions': {
+        //   opacity: 0,
+        //   transition: 'opacity 0.2s ease-in-out',
+        // },
+        // '&:hover .chat-actions': {
+        //   opacity: 1,
+        // },
         ...(isIncognito && {
           backgroundColor: 'background.level2',
           backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
