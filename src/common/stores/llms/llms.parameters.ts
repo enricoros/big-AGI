@@ -116,6 +116,14 @@ export const DModelParameterRegistry = {
     requiredFallback: 'medium',
   } as const,
 
+  llmVndOaiReasoningEffort4: {
+    label: 'Reasoning Effort',
+    type: 'enum' as const,
+    description: 'Constrains effort on reasoning for OpenAI advanced reasoning models',
+    values: ['minimal', 'low', 'medium', 'high'] as const,
+    requiredFallback: 'medium',
+  } as const,
+
   llmVndOaiRestoreMarkdown: {
     label: 'Restore Markdown',
     type: 'boolean' as const,

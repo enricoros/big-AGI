@@ -21,6 +21,13 @@ const _reasoningEffortOptions = [
   { value: 'low', label: 'Low', description: 'Quick, concise responses' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
+const _reasoningEffort4Options = [
+  { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
+  { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
+  { value: 'low', label: 'Low', description: 'Quick, concise responses' } as const,
+  { value: 'minimal', label: 'Minimal', description: 'Fastest, cheapest, least reasoning' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
+] as const;
 const _webSearchContextOptions = [
   { value: 'high', label: 'Comprehensive', description: 'Largest, highest cost, slower' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced context, cost, and speed' } as const,
@@ -92,6 +99,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort,
+    llmVndOaiReasoningEffort4,
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
@@ -323,6 +331,21 @@ export function LLMParametersEditor(props: {
             onChangeParameter({ llmVndOaiReasoningEffort: value });
         }}
         options={_reasoningEffortOptions}
+      />
+    )}
+
+    {showParam('llmVndOaiReasoningEffort4') && (
+      <FormSelectControl
+        title='Reasoning Effort'
+        tooltip='Controls how much effort the model spends on reasoning (4-level scale)'
+        value={llmVndOaiReasoningEffort4 ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiReasoningEffort4');
+          else
+            onChangeParameter({ llmVndOaiReasoningEffort4: value });
+        }}
+        options={_reasoningEffort4Options}
       />
     )}
 
