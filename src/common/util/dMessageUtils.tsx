@@ -351,7 +351,7 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
 }
 
 
-const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|chatgpt-4o|computer-use-/;
+const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|chatgpt-[45]o?|gpt-5-chat|computer-use-/;
 const geminiRegex = /gemini-|gemma-|learnlm-/;
 
 
@@ -370,6 +370,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (versionIndex !== -1) cutModel = cutModel.slice(0, versionIndex);
     return cutModel
       .replace('chatgpt-', 'ChatGPT_')
+      .replace('gpt-5-chat-', 'ChatGPT-5 ')
       .replace('gpt-', 'GPT_')
       // feature variants
       .replace('-audio', ' Audio')
