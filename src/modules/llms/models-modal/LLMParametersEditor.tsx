@@ -145,6 +145,9 @@ export function LLMParametersEditor(props: {
   const gemTBSpec = modelParamSpec['llmVndGeminiThinkingBudget'];
   const gemTBMinMax = gemTBSpec?.rangeOverride || defGemTB.range;
 
+  // Check if web search should be disabled due to minimal reasoning effort
+  const isOaiReasoningEffortMinimal = llmVndOaiReasoningEffort4 === 'minimal';
+
   return <>
 
     {!temperatureHide && <FormSliderControl
@@ -273,7 +276,8 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndOaiWebSearchContext') && (
       <FormSelectControl
         title='Web Search'
-        tooltip='Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI). For GPT-5 models, Default=OFF.'
+        tooltip={isOaiReasoningEffortMinimal ? 'Web search is not compatible with minimal reasoning effort' : 'Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI). For GPT-5 models, Default=OFF.'}
+        disabled={isOaiReasoningEffortMinimal}
         value={llmVndOaiWebSearchContext ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value)
@@ -289,7 +293,8 @@ export function LLMParametersEditor(props: {
       <FormSwitchControl
         title='Add User Location'
         description='Use approximate location for better search results'
-        tooltip='When enabled, uses browser geolocation API to provide approximate location data to improve search results relevance'
+        tooltip={isOaiReasoningEffortMinimal ? 'Web search geolocation is not compatible with minimal reasoning effort' : 'When enabled, uses browser geolocation API to provide approximate location data to improve search results relevance'}
+        disabled={isOaiReasoningEffortMinimal}
         checked={!!llmVndOaiWebSearchGeolocation}
         onChange={checked => {
           if (!checked)
