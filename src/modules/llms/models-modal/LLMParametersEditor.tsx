@@ -264,8 +264,8 @@ export function LLMParametersEditor(props: {
 
     {showParam('llmVndOaiWebSearchContext') && (
       <FormSelectControl
-        title='Search Size'
-        tooltip='Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI)'
+        title='Web Search'
+        tooltip='Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI). For GPT-5 models, Default=OFF.'
         value={llmVndOaiWebSearchContext ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value)
