@@ -13,12 +13,116 @@ import { fromManualMapping, ManualMappings } from './models.data';
 // - "Structured Outputs" is LLM_IF_OAI_Json
 export const _knownOpenAIChatModels: ManualMappings = [
 
+  /// GPT-5 series - Released August 7, 2025
+
+  // GPT-5
+  {
+    isLatest: true,
+    idPrefix: 'gpt-5-2025-08-07',
+    label: 'GPT-5 (2025-08-07)',
+    description: 'The best model for coding and agentic tasks across domains.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiWebSearchContext' }],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    benchmark: { cbaElo: 1481 },
+  },
+  {
+    idPrefix: 'gpt-5',
+    label: 'GPT-5',
+    description: 'The best model for coding and agentic tasks. Points to gpt-5-2025-08-07.',
+    symLink: 'gpt-5-2025-08-07',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiWebSearchContext' }],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    benchmark: { cbaElo: 1481 },
+  },
+
+  // GPT-5 Chat Latest
+  {
+    idPrefix: 'gpt-5-chat-latest',
+    label: 'GPT-5 Chat Latest',
+    description: 'GPT-5 model used in ChatGPT. Points to the GPT-5 snapshot currently used in ChatGPT.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 29, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    // benchmark: { cbaElo: TBD }, // Not yet available
+  },
+
+  // GPT-5 mini
+  {
+    isLatest: true,
+    idPrefix: 'gpt-5-mini-2025-08-07',
+    label: 'GPT-5 Mini (2025-08-07)',
+    description: 'A faster, more cost-efficient version of GPT-5 for well-defined tasks.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'May 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiWebSearchContext' }],
+    chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
+    // benchmark: { cbaElo: TBD }, // Not yet available
+  },
+  {
+    idPrefix: 'gpt-5-mini',
+    label: 'GPT-5 Mini',
+    description: 'Faster, more cost-efficient version of GPT-5. Points to gpt-5-mini-2025-08-07.',
+    symLink: 'gpt-5-mini-2025-08-07',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'May 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiWebSearchContext' }],
+    chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
+    // benchmark: { cbaElo: TBD }, // Not yet available
+  },
+
+  // GPT-5 nano
+  {
+    isLatest: true,
+    idPrefix: 'gpt-5-nano-2025-08-07',
+    label: 'GPT-5 Nano (2025-08-07)',
+    description: 'Fastest, most cost-efficient version of GPT-5 for summarization and classification tasks.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'May 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 0.05, cache: { cType: 'oai-ac', read: 0.005 }, output: 0.4 },
+    // benchmark: { cbaElo: TBD }, // Not yet available
+  },
+  {
+    idPrefix: 'gpt-5-nano',
+    label: 'GPT-5 Nano',
+    description: 'Fastest, cheapest version of GPT-5. Points to gpt-5-nano-2025-08-07.',
+    symLink: 'gpt-5-nano-2025-08-07',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'May 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 0.05, cache: { cType: 'oai-ac', read: 0.005 }, output: 0.4 },
+    // benchmark: { cbaElo: TBD }, // Not yet available
+  },
+
   /// [OpenAI, 2025-03-11] NEW `v1/responses` API MODELS - UNSUPPORTED YET
 
   // Computer Use Preview - INTERNAL MODEL FOR AGENTS - UNSUPPORTED YET
   {
     hidden: true, // UNSUPPORTED YET
-    // isLatest: true, // preview doesn't get highlighted
     idPrefix: 'computer-use-preview-2025-03-11',
     label: 'Computer Use Preview (2025-03-11)',
     description: 'Specialized model for computer use tool. Optimized for computer interaction capabilities.',
@@ -88,7 +192,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   /// o4-mini
   {
-    isLatest: true,
     idPrefix: 'o4-mini-2025-04-16',
     label: 'o4 Mini (2025-04-16)',
     description: 'Latest o4-mini model. Optimized for fast, effective reasoning with exceptionally efficient performance in coding and visual tasks.',
@@ -174,7 +277,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   /// o3
   {
-    isLatest: true,
     idPrefix: 'o3-2025-04-16',
     label: 'o3 (2025-04-16)',
     description: 'A well-rounded and powerful model across domains. Sets a new standard for math, science, coding, and visual reasoning tasks.',
@@ -356,7 +458,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-4.1
   {
-    isLatest: true,
     idPrefix: 'gpt-4.1-2025-04-14',
     label: 'GPT-4.1 (2025-04-14)',
     description: 'Flagship GPT model for complex tasks. Major improvements on coding, instruction following, and long context with 1M token context window.',
@@ -384,7 +485,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-4.1 mini
   {
-    isLatest: true,
     idPrefix: 'gpt-4.1-mini-2025-04-14',
     label: 'GPT-4.1 Mini (2025-04-14)',
     description: 'Balanced for intelligence, speed, and cost. Matches or exceeds GPT-4o in intelligence while reducing latency by nearly half and cost by 83%.',
@@ -412,7 +512,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-4.1 nano
   {
-    isLatest: true,
     idPrefix: 'gpt-4.1-nano-2025-04-14',
     label: 'GPT-4.1 Nano (2025-04-14)',
     description: 'Fastest, most cost-effective GPT 4.1 model. Delivers exceptional performance with low latency, ideal for tasks like classification or autocompletion.',
@@ -535,7 +634,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
-    // isLatest: true, // preview doesn't get highlighted
     idPrefix: 'gpt-4o-search-preview-2025-03-11',
     label: 'GPT-4o Search Preview (2025-03-11) 🌐',
     description: 'Latest snapshot of the GPT-4o model optimized for web search capabilities.',
@@ -761,7 +859,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
   // GPT-4o Mini Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
-    // isLatest: true, // preview doesn't get highlighted
     idPrefix: 'gpt-4o-mini-search-preview-2025-03-11',
     label: 'GPT-4o Mini Search Preview (2025-03-11) 🌐',
     description: 'Latest snapshot of the GPT-4o Mini model optimized for web search capabilities.',
@@ -1036,6 +1133,12 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5
+  'gpt-5-20',
+  'gpt-5-chat-latest',
+  'gpt-5-mini-20',
+  'gpt-5-nano-20',
+  'gpt-5-',
   // Reasoning models
   'o5-20',
   'o5-mini-20',
