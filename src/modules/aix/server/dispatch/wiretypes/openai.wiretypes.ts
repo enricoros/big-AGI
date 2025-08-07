@@ -290,7 +290,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     stream_options: z.object({
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
-    reasoning_effort: z.enum(['low', 'medium', 'high']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
+    reasoning_effort: z.enum(['minimal', 'low', 'medium', 'high']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
     include_reasoning: z.boolean().optional(), // [OpenRouter, 2025-01-24] enables reasoning tokens
     reasoning: z.object({ // [OpenRouter, 2025-06-05] Reasoning parameter for Claude models
       max_tokens: z.number().int().positive(),
@@ -1185,7 +1185,7 @@ export namespace OpenAIWire_API_Responses {
 
     // configure reasoning
     reasoning: z.object({
-      effort: z.enum(['low', 'medium', 'high']).nullish(), // defaults to 'medium'
+      effort: z.enum(['minimal', 'low', 'medium', 'high']).nullish(), // defaults to 'medium'
       summary: z.enum(['auto', 'concise', 'detailed']).nullish(),
     }).nullish(),
 
