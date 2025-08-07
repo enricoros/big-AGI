@@ -94,7 +94,9 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
   }
 
   // Tool: Search: for search models, and deep research models
-  if (hotFixForceSearchTool || model.vndOaiWebSearchContext || model.userGeolocation) {
+  // NOTE: OpenAI doesn't support web search with minimal reasoning effort
+  const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
+  if ((hotFixForceSearchTool || model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning) {
     if (!payload.tools?.length)
       payload.tools = [];
     const webSearchTool: TRequestTool = {
