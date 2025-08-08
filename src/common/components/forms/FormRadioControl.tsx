@@ -18,14 +18,16 @@ export const FormRadioControl = <TValue extends string>(props: {
   title: string | React.JSX.Element,
   description?: string | React.JSX.Element,
   tooltip?: string | React.JSX.Element,
+  size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   options: Immutable<FormRadioOption<TValue>[]>;
   value?: TValue;
   onChange: (value: TValue) => void;
 }) =>
-  <FormControl orientation='horizontal' disabled={props.disabled} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+  <FormControl size={props.size} orientation='horizontal' disabled={props.disabled} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
     {(!!props.title || !!props.description) && <FormLabelStart title={props.title} description={props.description} tooltip={props.tooltip} />}
     <RadioGroup
+      size={props.size}
       orientation='horizontal'
       value={props.value}
       onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.value && props.onChange(event.target.value as TValue)}

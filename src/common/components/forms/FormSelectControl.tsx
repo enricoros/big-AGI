@@ -29,6 +29,7 @@ export type FormSelectOption<T extends string> = {
 export const FormSelectControl = <TValue extends string>(props: {
   title?: React.ReactNode;
   tooltip?: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   options: Readonly<FormSelectOption<TValue>[]>;
   value?: TValue;
@@ -39,7 +40,7 @@ export const FormSelectControl = <TValue extends string>(props: {
   const selectedOption = props.options.find(option => option.value === props.value);
 
   return (
-    <FormControl orientation='horizontal' disabled={props.disabled} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    <FormControl size={props.size} orientation='horizontal' disabled={props.disabled} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       {!!props.title && (
         <FormLabelStart
           title={props.title}
@@ -48,6 +49,7 @@ export const FormSelectControl = <TValue extends string>(props: {
         />
       )}
       <Select
+        size={props.size}
         value={props.value}
         onChange={(_, value) => value && props.onChange(value as TValue)}
         placeholder={props.placeholder}
