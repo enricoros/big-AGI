@@ -24,7 +24,7 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
 export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
 
   // [OpenAI] Vendor-specific model checks
-  const isOpenAIOFamily = ['o1', 'o3', 'o4', 'o5'].some(m => model.id === m || model.id.startsWith(m + '-'));
+  const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
   const isOpenAIO1Pro = model.id === 'o1-pro' || model.id.startsWith('o1-pro-');
   const isOpenAIDeepResearch = model.id.includes('-deep-research');
@@ -110,6 +110,9 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
     payload.tools.push(webSearchTool);
   }
 
+  // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
+  if (model.vndOaiRestoreMarkdown)
+    vndOaiRestoreMarkdown(payload);
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   // this includes stripping 'undefined' fields
@@ -427,5 +430,25 @@ function _toOpenAIResponsesToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TR
       const _exhaustiveCheck: never = itpType;
       throw new Error(`Unsupported tools policy type: ${itpType}`);
   }
+}
+
+/**
+ * Adds GPT-5 specific markdown instructions to Responses API payload.
+ * 
+ * Background: 
+ * GPT-5 benefits from explicit markdown formatting guidance per the GPT-5 prompting guide.
+ * This function adds the recommended markdown instructions to the instructions field.
+ * 
+ * References: 
+ * - GPT-5 prompting guide markdown section
+ */
+export function vndOaiRestoreMarkdown(payload: TRequest) {
+  const MARKDOWN_INSTRUCTION = 'Formatting re-enabled. Use Markdown **only where semantically correct** (e.g., `inline code`, ```code fences```, lists, tables). When using markdown, use backticks to format file, directory, function, and class names. Use \\( and \\) for inline math, \\[ and \\] for block math.';
+  const MARKDOWN_CHECK = 'Use Markdown **only where semantically correct**';
+
+  if (payload.instructions && !payload.instructions.includes(MARKDOWN_CHECK))
+    payload.instructions = MARKDOWN_INSTRUCTION + '\n' + payload.instructions;
+  else if (!payload.instructions)
+    payload.instructions = MARKDOWN_INSTRUCTION;
 }
 
