@@ -39,6 +39,7 @@ interface LlmsRootActions {
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
+  resetLLMUserParameters: (id: DLLMId) => void;
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
   removeService: (id: DModelsServiceId) => void;
@@ -151,6 +152,15 @@ export const useModelsStore = create<LlmsStore>()(persist(
         llms: llms.map((llm: DLLM): DLLM =>
           llm.id === id && llm.userParameters
             ? { ...llm, userParameters: Object.fromEntries(Object.entries(llm.userParameters).filter(([key]) => key !== parameterId)) }
+            : llm,
+        ),
+      })),
+
+    resetLLMUserParameters: (id: DLLMId) =>
+      set(({ llms }) => ({
+        llms: llms.map((llm: DLLM): DLLM =>
+          llm.id === id
+            ? { ...llm, userParameters: {} }
             : llm,
         ),
       })),
