@@ -195,7 +195,7 @@ export async function convert_Blob_To_Base64(blob: Blob, debugCaller: string): P
 }
 
 // Convert a Blob to a base64 data URL string. [Fast] uses the FileReader API
-async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: string): Promise<string> {
+export async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: string): Promise<string> {
   try {
     if (!((blob as unknown) instanceof Blob)) {
       // noinspection ExceptionCaughtLocallyJS
