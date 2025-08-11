@@ -1,0 +1,27 @@
+# Azure OpenAI Configuration Example
+# Copy this to .env.local and update with your values
+
+# Required: Your Azure OpenAI endpoint and key
+AZURE_OPENAI_API_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_API_KEY=your-api-key-here
+
+# Optional: API Configuration (defaults shown)
+# Enable next-generation v1 API for Responses (recommended)
+# AZURE_API_V1=true
+
+# API Version for Responses endpoint
+# Use 'preview' for next-gen v1 API (default and recommended)
+# Use '2025-04-01-preview' for traditional deployment-based API
+# AZURE_RESPONSES_API_VERSION=preview
+
+# API Version for Chat Completions
+# AZURE_CHAT_API_VERSION=2025-02-01-preview
+
+# API Version for listing deployments
+# AZURE_DEPLOYMENTS_API_VERSION=2023-03-15-preview
+
+# Notes:
+# - The default configuration uses next-gen v1 API for Responses
+# - This is Azure's recommended approach for new implementations
+# - Traditional deployment-based API is still used for chat/completions
+# - All paths and query parameters are handled automatically

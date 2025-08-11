@@ -163,7 +163,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [Azure]: use an older 'deployments' API to enumerate the models, and a modified OpenAI id to description mapping
       if (access.dialect === 'azure') {
-        const azureOpenAIDeploymentsResponse = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
+        const azureOpenAIDeploymentsResponse = await openaiGETOrThrow(access, `/openai/deployments?api-version=${AZURE_DEPLOYMENTS_API_VERSION}`);
         const azureOpenAIDeployments = azureParseFromDeploymentsAPI(azureOpenAIDeploymentsResponse);
         models = azureOpenAIDeployments
           .filter(azureDeploymentFilter)
@@ -486,6 +486,12 @@ const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
 
+// Azure API version constants with environment overrides
+const AZURE_API_V1_ENABLED = env.AZURE_API_V1 === 'true';
+const AZURE_RESPONSES_API_VERSION = env.AZURE_RESPONSES_API_VERSION || 'preview'; // 'preview' for v1, '2025-04-01-preview' for traditional
+const AZURE_CHAT_API_VERSION = env.AZURE_CHAT_API_VERSION || '2025-02-01-preview';
+const AZURE_DEPLOYMENTS_API_VERSION = env.AZURE_DEPLOYMENTS_API_VERSION || '2023-03-15-preview';
+
 
 /**
  * Get a random key from a comma-separated list of API keys
@@ -531,19 +537,52 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'azure':
       const azureKey = access.oaiKey || env.AZURE_OPENAI_API_KEY || '';
-      const azureHost = fixupHost(access.oaiHost || env.AZURE_OPENAI_API_ENDPOINT || '', apiPath);
-      if (!azureKey || !azureHost)
+      
+      // Prefer server env over client-provided host for better reliability
+      const azureHostRaw = env.AZURE_OPENAI_API_ENDPOINT || access.oaiHost || '';
+      const azureHostFixed = fixupHost(azureHostRaw, apiPath);
+      
+      // Normalize to origin only (strip any path/query) to prevent malformed URLs
+      let azureBase: string;
+      try {
+        const urlObj = new URL(azureHostFixed);
+        azureBase = urlObj.origin;
+      } catch (e) {
+        throw new Error(`Invalid Azure endpoint URL: ${azureHostFixed}`);
+      }
+      
+      if (!azureKey || !azureBase)
         throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
-      let url = azureHost;
-      if (apiPath.startsWith('/v1/')) {
+      // Determine if we should use next-gen v1 API or traditional deployment-based API
+      const useV1API = AZURE_API_V1_ENABLED || AZURE_RESPONSES_API_VERSION.toLowerCase() === 'preview';
+      
+      let url = azureBase;
+      
+      // Special handling for Responses API which supports both paradigms
+      if (apiPath === '/v1/responses') {
+        if (useV1API) {
+          // Next-gen v1 API: direct endpoint without deployment path
+          url += `/openai/v1/responses?api-version=${AZURE_RESPONSES_API_VERSION}`;
+          console.log('[Azure] Using next-gen v1 API for Responses:', url);
+        } else {
+          // Traditional API: deployment-based endpoint
+          if (!modelRefId)
+            throw new Error('Azure OpenAI API needs a deployment id');
+          url += `/openai/deployments/${modelRefId}/responses?api-version=${AZURE_RESPONSES_API_VERSION}`;
+          console.log('[Azure] Using traditional deployment-based API for Responses:', url);
+        }
+      } else if (apiPath.startsWith('/v1/')) {
+        // Other v1 endpoints use traditional deployment-based routing
         if (!modelRefId)
           throw new Error('Azure OpenAI API needs a deployment id');
-        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2025-02-01-preview`;
-      } else if (apiPath.startsWith('/openai/deployments'))
+        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=${AZURE_CHAT_API_VERSION}`;
+      } else if (apiPath.startsWith('/openai/deployments')) {
+        // Direct deployment paths (e.g., for listing)
         url += apiPath;
-      else
+      } else {
         throw new Error('Azure OpenAI API path not supported: ' + apiPath);
+      }
 
       return {
         headers: {
