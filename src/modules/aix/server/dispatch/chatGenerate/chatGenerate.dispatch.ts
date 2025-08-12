@@ -101,7 +101,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         return {
           request: {
             ...openAIAccess(access, model.id, '/v1/responses'),
-            body: aixToOpenAIResponses(model, chatGenerate, false, streaming),
+            body: aixToOpenAIResponses(access.dialect, model, chatGenerate, false, streaming),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
