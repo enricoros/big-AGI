@@ -113,14 +113,33 @@ Tested with Azure OpenAI endpoint `https://grid4openai.openai.azure.com`:
 3. Add console logging is included to debug which API paradigm is being used
 4. Environment variables provide full control over API versions and paradigms
 
+## Known Limitations
+
+### Azure OpenAI Specific Limitations
+
+1. **Web Search Tool**: Azure OpenAI doesn't currently support the `web_search_preview` tool
+   - The fix automatically disables web search for Azure deployments
+   - Logs when web search is skipped: `[Azure] Skipping web_search_preview tool - not supported on Azure OpenAI`
+   - This affects all Azure models using the Responses API (GPT-5, o-series)
+
+2. **GPT-5 Model Constraints**:
+   - No temperature control (only default value of 1.0 supported)
+   - Must use `max_completion_tokens` instead of `max_tokens`
+   - These constraints are already handled in the existing code
+
+3. **Image Generation**: Multi-turn editing and streaming not yet supported on Azure
+
+4. **File Upload**: Images can't be uploaded as files and referenced as input (coming soon)
+
 ## Benefits
 
 1. **Fixes Issue #828**: Resolves "Resource Not Found" errors for GPT-5 and o3 Pro models
-2. **Future-Proof**: Supports Azure's next-generation v1 API
-3. **Backward Compatible**: Maintains support for existing deployments
-4. **Robust**: Prevents malformed URLs from client misconfigurations
-5. **Configurable**: Full control over API paradigms and versions
-6. **Debuggable**: Includes logging for troubleshooting
+2. **Handles Azure Limitations**: Automatically disables unsupported features like web search
+3. **Future-Proof**: Supports Azure's next-generation v1 API
+4. **Backward Compatible**: Maintains support for existing deployments
+5. **Robust**: Prevents malformed URLs from client misconfigurations
+6. **Configurable**: Full control over API paradigms and versions
+7. **Debuggable**: Includes logging for troubleshooting
 
 ## Technical Details
 
