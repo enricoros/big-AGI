@@ -10,6 +10,7 @@ const _styles = {
     mb: 2.25,
   },
   title: {
+    overflow: 'hidden',
     textAlign: 'start',
   },
   textClickable: {
@@ -48,9 +49,12 @@ export function OptimaAppPageHeading(props: {
   const isMobile = useIsMobile();
 
   return (
-    <Box mb={props.noMarginBottom ? undefined : 2.25}>
+    <Box mb={props.noMarginBottom ? undefined : 2.25} sx={{ overflow: 'hidden', display: 'grid' }}>
       {!!props.title && <Typography level={isMobile ? 'h3' : 'h2'} startDecorator={props.startDecorator} endDecorator={props.endDecorator} sx={_styles.title}>
-        {props.onClick ? <Box component='span' sx={_styles.textClickable} onClick={props.onClick}>{props.title}</Box> : props.title}
+        {props.onClick
+          ? <Box component='span' sx={_styles.textClickable} onClick={props.onClick} className='agi-ellipsize'>{props.title}</Box>
+          : <span className='agi-ellipsize'>{props.title}</span>
+        }
       </Typography>}
       {!!props.tagline && <Typography level='body-sm' sx={props.accentedTagline ? _styles.accentedTagline : _styles.tagline}>
         {props.tagline}
