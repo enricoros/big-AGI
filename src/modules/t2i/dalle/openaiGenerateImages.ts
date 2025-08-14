@@ -1,6 +1,7 @@
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 
 import { apiStream } from '~/common/util/trpc.client';
+import { formatModelsCost } from '~/common/util/costUtils';
 
 import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
 
@@ -9,15 +10,12 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 
 import type { T2iCreateImageOutput } from '../t2i.server';
 import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolveDalleModelId, useDalleStore } from './store-module-dalle';
-import {
-  formatModelsCost
-} from '~/common/util/costUtils';
 
 
 /**
  * Client function to call the OpenAI image generation API.
  */
-export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number): Promise<T2iCreateImageOutput[]> {
+export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number, abortSignal?: AbortSignal): Promise<T2iCreateImageOutput[]> {
 
   // Use the current settings
   const {
@@ -49,8 +47,21 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   if (aixInlineImageParts?.length && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
     throw new Error('Image transformation is not available with this model. Please use GPT Image or GPT Image Mini instead.');
 
+  // helper to check for abort conditions and throw consistent error
+  function throwIfAborted(error?: any) {
+    if (abortSignal?.aborted ||
+      error?.name === 'AbortError' ||
+      error?.message?.includes('aborted') ||
+      error?.message?.includes('BodyStreamBuffer was aborted')) {
+      const abortError = new Error('Image generation was cancelled');
+      abortError.name = 'AbortError';
+      throw abortError;
+    }
+  }
+
   // Function to generate images in batches
   async function generateImagesBatch(imageCount: number): Promise<T2iCreateImageOutput[]> {
+    throwIfAborted(); // Check before starting
 
     // we use an async generator to stream heartbeat events while waiting for the images
     const operations = await apiStream.llmOpenAI.createImages.mutate({
@@ -88,12 +99,21 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
           // maskImage: ...
         },
       }),
+    }, {
+      signal: abortSignal, // aborts the tRPC request
     });
 
     const createdImages: T2iCreateImageOutput[] = [];
-    for await (const op of operations)
-      if (op.p === 'createImage')
-        createdImages.push(op.image);
+    try {
+      for await (const op of operations) {
+        throwIfAborted(); // Check during iteration
+        if (op.p === 'createImage')
+          createdImages.push(op.image);
+      }
+    } catch (error: any) {
+      throwIfAborted(error);
+      throw error; // Re-throw non-abort errors
+    }
 
     return createdImages;
   }
@@ -117,6 +137,15 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   // Throw if ALL promises were rejected
   const allRejected = imageRefsBatchesResults.every(result => result.status === 'rejected');
   if (allRejected) {
+
+    // check if any of the rejections are AbortErrors - if so, preserve the abort nature
+    const firstRejection = imageRefsBatchesResults.find(result => result.status === 'rejected') as PromiseRejectedResult;
+    const firstError = firstRejection?.reason;
+
+    // re-throw the abort error directly to preserve its nature
+    if (firstError?.name === 'AbortError')
+      throw firstError;
+
     const errorMessages = imageRefsBatchesResults
       .map(result => {
         const reason = (result as PromiseRejectedResult).reason as any; // TRPCClientError<TRPCErrorShape>;
