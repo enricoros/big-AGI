@@ -93,7 +93,7 @@ export function getActiveTextToImageProviderOrThrow() {
   return activeProvider;
 }
 
-async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number): Promise<T2iCreateImageOutput[]> {
+async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number, abortSignal?: AbortSignal): Promise<T2iCreateImageOutput[]> {
   switch (vendor) {
 
     case 'gemini':
@@ -108,7 +108,7 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
     case 'openai':
       if (!providerId)
         throw new Error('No OpenAI Model Service configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count);
+      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count, abortSignal);
 
     case 'xai':
       throw new Error('xAI image generation integration coming soon');
@@ -128,6 +128,7 @@ export async function t2iGenerateImageContentFragments(
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
   scopeId: DBlobDBScopeId,
+  abortSignal?: AbortSignal,
 ): Promise<DMessageContentFragment[]> {
 
   // T2I: Use the active provider if null
@@ -135,7 +136,7 @@ export async function t2iGenerateImageContentFragments(
     t2iProvider = getActiveTextToImageProviderOrThrow();
 
   // T2I: Generate
-  const generatedImages = await _t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count);
+  const generatedImages = await _t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count, abortSignal);
   if (!generatedImages?.length)
     throw new Error('No image generated');
 
