@@ -1,11 +1,12 @@
 import * as React from 'react';
 
+import { BaseProduct } from '~/common/app.release';
 import { logger } from '~/common/logger';
 import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
 
 
 export interface ErrorBoundaryProps {
-  /** UNUSED: just marks the fact that this boundary is the outer */
+  /** Just marks the fact that this boundary is the outer */
   outer?: boolean;
   /** Optional: A simple React node to display when an error is caught. */
   fallback?: React.ReactNode;
@@ -107,6 +108,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               <h2 className='heading'>Oops, we hit a snag</h2>
               <div className='message'>
                 <p style={{ fontWeight: 500 }}>Something broke; this shouldn&apos;t happen.{outer ? ' Please try reloading Big-AGI.' : ''}</p>
+                {outer && (
+                  <p style={{ fontWeight: 500 }}>
+                    {' '}If the issue persists, please{' '}
+                    <a href={BaseProduct.SupportForm()} target='_blank' rel='noopener noreferrer' style={{ color: 'inherit', textDecoration: 'underline' }}>
+                      Contact Support
+                    </a>.
+                  </p>
+                )}
                 {/* Dev-only stack trace */}
                 {/*{!Release.IsNodeDevBuild ? (*/}
                 {/*  <div style={{ opacity: 0.5 }}>*/}
