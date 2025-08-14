@@ -30,6 +30,9 @@ export function CloseablePopup(props: {
   dense?: boolean,
   bigIcons?: boolean,
 
+  // behavior changes
+  disableMenuTypeahead?: boolean, // disable alphanumeric typeahead navigation in MenuList
+
   placement?: PopperPlacementType,
   maxHeightGapPx?: number,
   noTopPadding?: boolean,
@@ -59,8 +62,12 @@ export function CloseablePopup(props: {
       if (props.anchorEl)
         props.anchorEl?.focus();
       handleClose(event);
+    } else if (props.disableMenuTypeahead && event.key.length === 1) {
+      // Prevent MenuList's typeahead navigation when disabled
+      event.stopPropagation();
+      // event.preventDefault(); // this is needed.. e.g. typing on input boxes
     }
-  }, [handleClose, props.anchorEl]);
+  }, [handleClose, props.anchorEl, props.disableMenuTypeahead]);
 
 
   // memos
