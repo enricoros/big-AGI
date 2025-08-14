@@ -87,6 +87,9 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
 
   } catch (error: any) {
 
+    // NOTE: if signal?.aborted is true, we also come here, likely with a error?.name = ResponseAborted
+    // since we don't handle this case specially, the same TRPCError will be thrown as for other connection errors.
+
     // [logging - Connection error] candidate for the logging system
     const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
 
