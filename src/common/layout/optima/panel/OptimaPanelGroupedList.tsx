@@ -96,7 +96,7 @@ const groupListSx: SxProps = {
 
 
 export function OptimaPanelGroupedList(props: {
-  title?: string;
+  title?: React.ReactNode;
   endDecorator?: React.ReactNode;
   children?: React.ReactNode;
   persistentCollapsibleId?: string;
