@@ -7,7 +7,7 @@ import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { adjustContentScaling, themeScalingMap, } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIContentScaling } from '~/common/stores/store-ui';
+import { useUIContentScaling, useUIPanelGroupCollapsed, uiSetPanelGroupCollapsed } from '~/common/stores/store-ui';
 
 
 const gutterSx: SxProps = {
@@ -120,6 +120,9 @@ export function OptimaPanelGroupedList(props: {
   const isMobile = useIsMobile();
   const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
   const smallerContentScaling = adjustContentScaling(contentScaling, -1);
+  
+  // persistent collapse state
+  const persistentCollapsed = useUIPanelGroupCollapsed(props.persistentCollapsibleId || null);
 
   // derived state
   const { onToggleExpanded } = props;
@@ -127,14 +130,21 @@ export function OptimaPanelGroupedList(props: {
   const isCollapsible = isControlled || !!props.persistentCollapsibleId;
 
   // use appropriate expanded state based on mode
-  const isExpanded = isControlled ? props.expanded as boolean
-    : (!props.persistentCollapsibleId || internalExpanded);
+  const isExpanded =
+    isControlled ? props.expanded as boolean // external control
+      : !props.persistentCollapsibleId ? internalExpanded // internal control
+        : persistentCollapsed !== undefined ? !persistentCollapsed // persistent collapsible
+          : props.persistentStartExpanded ?? false; // initial state if none of the above
 
   // handlers
   const handleToggle = React.useCallback(() => {
-    if (isControlled) onToggleExpanded?.();
-    else setInternalExpanded(prev => !prev);
-  }, [isControlled, onToggleExpanded]);
+    if (isControlled)
+      onToggleExpanded?.();
+    else if (props.persistentCollapsibleId)
+      uiSetPanelGroupCollapsed(props.persistentCollapsibleId, isExpanded);
+    else
+      setInternalExpanded(prev => !prev);
+  }, [isControlled, onToggleExpanded, props.persistentCollapsibleId, isExpanded]);
 
   return (
     <Box sx={props.marginTopAuto ? { marginTop: 'auto' } : undefined}>
