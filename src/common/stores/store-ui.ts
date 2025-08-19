@@ -67,6 +67,11 @@ interface UIPreferencesStore {
   incrementActionCounter: (key: string) => void;
   resetActionCounter: (key: string) => void;
 
+  // Optima Panel Grouped List Collapse States
+
+  panelGroupCollapseStates: Record<string, boolean>;
+  setPanelGroupCollapsed: (key: string, collapsed: boolean) => void;
+
 }
 
 export const useUIPreferencesStore = create<UIPreferencesStore>()(
@@ -139,6 +144,14 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
           actionCounters: { ...state.actionCounters, [key]: 0 },
         })),
 
+      // Panel Grouped List Collapse States
+
+      panelGroupCollapseStates: {},
+      setPanelGroupCollapsed: (key: string, collapsed: boolean) =>
+        set((state) => ({
+          panelGroupCollapseStates: { ...state.panelGroupCollapseStates, [key]: collapsed },
+        })),
+
     }),
     {
       name: 'app-ui',
@@ -204,6 +217,15 @@ export function useUIIsDismissed(key: string | null): boolean | undefined {
 
 export function uiSetDismissed(key: string): void {
   useUIPreferencesStore.getState().dismiss(key);
+}
+
+
+export function useUIPanelGroupCollapsed(key: string | null): boolean | undefined {
+  return useUIPreferencesStore((state) => !key ? undefined : state.panelGroupCollapseStates[key]);
+}
+
+export function uiSetPanelGroupCollapsed(key: string, collapsed: boolean): void {
+  useUIPreferencesStore.getState().setPanelGroupCollapsed(key, collapsed);
 }
 
 
