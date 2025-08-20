@@ -110,11 +110,11 @@ export function OptimaPanelGroupedList(props: {
 
   // simplified persistent collapsible (as an alternative to the external control)
   persistentCollapsibleId?: string;
-  persistentStartExpanded?: boolean;
+  persistentStartCollapsed?: boolean;
 }) {
 
   // state
-  const [internalExpanded, setInternalExpanded] = React.useState(props.persistentStartExpanded === true);
+  const [internalExpanded, setInternalExpanded] = React.useState(props.persistentStartCollapsed !== true);
 
   // external state
   const isMobile = useIsMobile();
@@ -134,7 +134,7 @@ export function OptimaPanelGroupedList(props: {
     isControlled ? props.expanded as boolean // external control
       : !props.persistentCollapsibleId ? internalExpanded // internal control
         : persistentCollapsed !== undefined ? !persistentCollapsed // persistent collapsible
-          : props.persistentStartExpanded ?? false; // initial state if none of the above
+          : !props.persistentStartCollapsed; // initial state if none of the above
 
   // handlers
   const handleToggle = React.useCallback(() => {
