@@ -1,3 +1,5 @@
+import { TRPCClientError } from '@trpc/client';
+
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
@@ -701,10 +703,39 @@ async function _aixChatGenerateContent_LL(
     } else {
       // NOTE: this code path has also been almost replicated on `ContentReassembler.#processWireBacklog.catch() {...}`
       if (AIX_CLIENT_DEV_ASSERTS)
-        console.error('[DEV] Aix streaming Error:', error);
-      const showAsBold = !!accumulator_LL.fragments.length;
-      const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error').replace('[TRPCClientError]', '');
-      await reassembler.setClientExcepted(`An unexpected error occurred: ${errorText} Please retry.`).catch(console.error /* never */);
+        console.error('[DEV] Aix streaming Error:', { error });
+
+      // Special case: request too large: this is a TRPCClientError, and we can show a user-friendly message
+      let errorHandled = false;
+      if (error instanceof TRPCClientError) {
+        switch (error.cause?.message) {
+          /**
+           * The body of the response was "Request Entity Too Large".
+           * - this caused trpc, in ...stream/jsonl.ts, function createConsumerStream, to throw an error due to parsing the line as JSON
+           *   - "const head = JSON.parse(line);"
+           * - as the error bubbles up to here, and cannot be handled by the superjson transformer either, which happens after this
+           */
+          case `Unexpected token 'R', "Request En"... is not valid JSON`:
+            await reassembler.setClientExcepted(`**Request too large**: Your message or attachments exceed the 4.5MB limit of the Vercel edge network. Tip: use the cleanup button in the right pane to hide messages, remove large attachments or reduce conversation length.`).catch(console.error);
+            errorHandled = true;
+            break;
+
+          /**
+           * This happened many times in the past with captive portals and alike. Jet's just improve the messaging here.
+           */
+          case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`:
+            await reassembler.setClientExcepted(`**Connection issue**: The network returned an HTML page instead of expected data. This can be a Wi‑Fi sign‑in page, a proxy or browser extension, or a temporary gateway error. Please **refresh and try again**, or check your connection and disable blockers. Additional details may be available in the browser console.`).catch(console.error);
+            errorHandled = true;
+            break;
+        }
+      }
+
+      // Only show the generic error if we haven't handled it specifically
+      if (!errorHandled) {
+        const showAsBold = !!accumulator_LL.fragments.length;
+        const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error').replace('[TRPCClientError]', '');
+        await reassembler.setClientExcepted(`An unexpected error occurred: ${errorText} Please retry.`).catch(console.error /* never */);
+      }
     }
 
   }
