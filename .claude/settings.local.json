@@ -7,6 +7,7 @@
       "Bash(git branch:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
+      "Bash(mkdir:*)",
       "Bash(node:*)",
       "Bash(npm install)",
       "Bash(npm install:*)",
