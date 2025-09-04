@@ -25,6 +25,7 @@ export function KeyStroke(props: {
   combo: string,
   size?: 'sm' | 'md' | 'lg',
   variant?: VariantProp,
+  onClick?: (event: React.MouseEvent) => void,
   sx?: SxProps,
 }) {
   return (
@@ -32,6 +33,7 @@ export function KeyStroke(props: {
       size={props.size ?? 'md'}
       variant={props.variant}
       color='neutral'
+      onClick={props.onClick}
       sx={props.sx ? { ...hideOnMobile, ...props.sx } : hideOnMobile}
     >
       {platformAwareKeystrokes(props.combo)}
