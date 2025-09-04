@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps, VariantProp } from '@mui/joy/styles/types';
-import { Chip } from '@mui/joy';
+import { Chip, ColorPaletteProp } from '@mui/joy';
 
 import { Is } from '~/common/util/pwaUtils';
 import { hideOnMobile } from '~/common/app.theme';
@@ -24,6 +24,7 @@ export function platformAwareKeystrokes(text: string) {
 export function KeyStroke(props: {
   combo: string,
   size?: 'sm' | 'md' | 'lg',
+  color?: ColorPaletteProp,
   variant?: VariantProp,
   onClick?: (event: React.MouseEvent) => void,
   sx?: SxProps,
@@ -32,7 +33,7 @@ export function KeyStroke(props: {
     <Chip
       size={props.size ?? 'md'}
       variant={props.variant}
-      color='neutral'
+      color={props.color || 'neutral'}
       onClick={props.onClick}
       sx={props.sx ? { ...hideOnMobile, ...props.sx } : hideOnMobile}
     >
