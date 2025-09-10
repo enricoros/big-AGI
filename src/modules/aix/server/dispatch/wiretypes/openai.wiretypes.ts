@@ -1202,6 +1202,7 @@ export namespace OpenAIWire_API_Responses {
         }),
         // z.object({ type: z.literal('json_object') }), // deprecated
       ]).optional(),
+      verbosity: z.enum(['low', 'medium', 'high']).optional(), // GPT-5 verbosity control
     }).optional(),
 
     // State management (we won't use this for stateless)

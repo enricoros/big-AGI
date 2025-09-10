@@ -410,6 +410,7 @@ export namespace AixWire_API {
     vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
+    vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
     vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
     vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),

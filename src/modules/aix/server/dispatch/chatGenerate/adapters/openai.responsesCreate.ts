@@ -93,6 +93,14 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
     // };
   }
 
+  // GPT-5 Verbosity: Add to existing text config or create new one
+  if (model.vndOaiVerbosity) {
+    payload.text = {
+      ...payload.text,
+      verbosity: model.vndOaiVerbosity,
+    };
+  }
+
   // Tool: Search: for search models, and deep research models
   // NOTE: OpenAI doesn't support web search with minimal reasoning effort
   const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
