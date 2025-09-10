@@ -18,7 +18,8 @@
       "Bash(sed:*)",
       "WebFetch(domain:big-agi.com)",
       "WebFetch(domain:github.com)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebSearch"
     ],
     "deny": [
       "Read(node_modules)",
