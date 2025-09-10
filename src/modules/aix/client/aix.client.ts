@@ -49,7 +49,7 @@ export function aixCreateModelFromLLMOptions(
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
     llmVndAntThinkingBudget,
     llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
-    llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation,
+    llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
     llmVndXaiSearchMode, llmVndXaiSearchSources, llmVndXaiSearchDateFilter,
   } = {
@@ -105,6 +105,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndOaiResponsesAPI ? { vndOaiResponsesAPI: true } : {}),
     ...((llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort) ? { vndOaiReasoningEffort: llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort } : {}),
     ...(llmVndOaiRestoreMarkdown ? { vndOaiRestoreMarkdown: llmVndOaiRestoreMarkdown } : {}),
+    ...(llmVndOaiVerbosity ? { vndOaiVerbosity: llmVndOaiVerbosity } : {}),
     ...(llmVndOaiWebSearchContext ? { vndOaiWebSearchContext: llmVndOaiWebSearchContext } : {}),
     ...(llmVndPerplexityDateFilter ? { vndPerplexityDateFilter: llmVndPerplexityDateFilter } : {}),
     ...(llmVndPerplexitySearchMode ? { vndPerplexitySearchMode: llmVndPerplexitySearchMode } : {}),

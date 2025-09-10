@@ -81,6 +81,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndOaiReasoningEffort',
     'llmVndOaiReasoningEffort4',
     'llmVndOaiRestoreMarkdown',
+    'llmVndOaiVerbosity',
     'llmVndOaiWebSearchContext',
     'llmVndOaiWebSearchGeolocation',
     'llmVndPerplexityDateFilter',

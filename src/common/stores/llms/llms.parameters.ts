@@ -131,6 +131,14 @@ export const DModelParameterRegistry = {
     initialValue: true,
   } as const,
 
+  llmVndOaiVerbosity: {
+    label: 'Verbosity',
+    type: 'enum' as const,
+    description: 'Controls response length and detail level',
+    values: ['low', 'medium', 'high'] as const,
+    requiredFallback: 'medium',
+  } as const,
+
   llmVndOaiWebSearchContext: {
     label: 'Search Context Size',
     type: 'enum' as const,
