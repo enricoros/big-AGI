@@ -28,6 +28,12 @@ const _reasoningEffort4Options = [
   { value: 'minimal', label: 'Minimal', description: 'Fastest, cheapest, least reasoning' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
+const _verbosityOptions = [
+  { value: 'high', label: 'Detailed', description: 'Thorough responses, great for audits' } as const,
+  { value: 'medium', label: 'Balanced', description: 'Standard detail level (default)' } as const,
+  { value: 'low', label: 'Brief', description: 'Concise responses' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
+] as const;
 const _webSearchContextOptions = [
   { value: 'high', label: 'Comprehensive', description: 'Largest, highest cost, slower' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced context, cost, and speed' } as const,
@@ -103,6 +109,7 @@ export function LLMParametersEditor(props: {
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
+    llmVndOaiVerbosity,
     llmVndPerplexityDateFilter,
     llmVndPerplexitySearchMode,
     llmVndXaiSearchMode,
@@ -351,6 +358,21 @@ export function LLMParametersEditor(props: {
             onChangeParameter({ llmVndOaiReasoningEffort4: value });
         }}
         options={_reasoningEffort4Options}
+      />
+    )}
+
+    {showParam('llmVndOaiVerbosity') && (
+      <FormSelectControl
+        title='Verbosity'
+        tooltip='Controls response length and detail level'
+        value={llmVndOaiVerbosity ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiVerbosity');
+          else
+            onChangeParameter({ llmVndOaiVerbosity: value });
+        }}
+        options={_verbosityOptions}
       />
     )}
 
