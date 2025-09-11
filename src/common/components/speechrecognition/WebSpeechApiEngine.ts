@@ -18,6 +18,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
   private inactivityTimeoutId: ReturnType<typeof setTimeout> | null;
   private results: SpeechResult;
   private withinBeginEnd: boolean;
+  private disposed: boolean;
 
 
   constructor(
@@ -36,6 +37,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
     this.inactivityTimeoutId = null;
     this.results = createSpeechRecognitionResults();
     this.withinBeginEnd = false;
+    this.disposed = false;
 
 
     // create the SpeechRecognition instance
@@ -50,14 +52,27 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
     this._api.continuous = true;
 
     // bind event handlers
-    this._api.onaudiostart = () => setState({ hasAudio: true });
-    this._api.onaudioend = () => setState({ hasAudio: false });
+    this._api.onaudiostart = () => {
+      if (this.disposed) return;
+      setState({ hasAudio: true });
+    };
+    this._api.onaudioend = () => {
+      if (this.disposed) return;
+      setState({ hasAudio: false });
+    };
 
-    this._api.onspeechstart = () => setState({ hasSpeech: true });
-    this._api.onspeechend = () => setState({ hasSpeech: false });
+    this._api.onspeechstart = () => {
+      if (this.disposed) return;
+      setState({ hasSpeech: true });
+    };
+    this._api.onspeechend = () => {
+      if (this.disposed) return;
+      setState({ hasSpeech: false });
+    };
 
 
     this._api.onstart = () => {
+      if (this.disposed) return;
       this.withinBeginEnd = true;          // instant
       setState({ isActive: true });   // delayed
 
@@ -71,6 +86,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
     };
 
     this._api.onend = () => {
+      if (this.disposed) return;
       this._clearInactivityTimeout();
 
       this.withinBeginEnd = false;          // instant
@@ -94,6 +110,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
     };
 
     this._api.onerror = (event: any) => {
+      if (this.disposed) return;
       let errorMessage;
       switch (event.error) {
         case 'no-speech':
@@ -131,6 +148,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
     };
 
     this._api.onresult = (event: ISpeechRecognitionEvent) => {
+      if (this.disposed) return;
       if (!event?.results?.length) return;
 
       // coalesce all the final pieces into a cohesive string
@@ -178,6 +196,9 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
   }
 
   dispose() {
+    // Mark as disposed to prevent any future callback execution
+    this.disposed = true;
+
     // Clear any inactivity timeout to prevent it from running after unmount
     this._clearInactivityTimeout();
 
@@ -219,6 +240,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
   private _reloadInactivityTimeout(timeoutMs: number, doneReason: SpeechDoneReason) {
     this._clearInactivityTimeout();
     this.inactivityTimeoutId = setTimeout(() => {
+      if (this.disposed) return;
       this.inactivityTimeoutId = null;
       this.results.doneReason = doneReason;
       this._api.stop();
