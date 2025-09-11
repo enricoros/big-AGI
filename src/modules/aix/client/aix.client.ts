@@ -34,15 +34,16 @@ export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['
 
 export function aixCreateModelFromLLMOptions(
   llmInterfaces: DLLM['interfaces'],
-  llmOptions: DModelParameterValues,
-  _llmOptionsOverride: Omit<DModelParameterValues, 'llmRef'> | undefined,
+  llmOptions: DModelParameterValues, // this must have been already externally computed, usually as the initial values + user/over replacements
+  llmOptionOverrides: Omit<DModelParameterValues, 'llmRef'> | undefined,
   debugLlmId: string,
 ): AixAPI_Model {
 
   // make sure llmRef is removed, if present in the override - excess of caution here
-  const llmOptionsOverride = _llmOptionsOverride ? { ..._llmOptionsOverride } : undefined;
-  if (llmOptionsOverride)
-    delete (llmOptionsOverride as { llmRef?: any }).llmRef;
+  if (llmOptionOverrides) {
+    llmOptionOverrides = { ...llmOptionOverrides };
+    delete (llmOptionOverrides as { llmRef?: any }).llmRef;
+  }
 
   // destructure input with the overrides
   const {
@@ -54,7 +55,7 @@ export function aixCreateModelFromLLMOptions(
     llmVndXaiSearchMode, llmVndXaiSearchSources, llmVndXaiSearchDateFilter,
   } = {
     ...llmOptions,
-    ...llmOptionsOverride,
+    ...llmOptionOverrides,
   };
 
   // llmRef is absolutely required
@@ -137,7 +138,10 @@ type StreamMessageStatus = {
 interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
-  llmOptionsOverride?: Omit<DModelParameterValues, 'llmRef'>; // overrides for the LLM options
+
+  // LLM parameter configuration layers: full replacement of user params and/or overrides of a set of individual params
+  llmUserParametersReplacement?: DModelParameterValues; // can replace the 'global' llm user configuration with an alternate config (e.g. persona, or per-chat)
+  llmOptionsOverride?: Omit<DModelParameterValues, 'llmRef'>; // overrides (sets/replaces) individual LLM parameters
 }
 
 
@@ -256,7 +260,7 @@ export async function aixChatGenerateText_Simple(
   const { transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<object, AixAPI_Access>(llm.sId);
 
   // Aix Model
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
+  const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
   const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmOptionsOverride, llmId);
 
   // Aix ChatGenerate Request
@@ -437,7 +441,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   const { transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
   // Aix Model
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
+  const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
   const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmOptionsOverride, llmId);
 
   // Client-side late stage model HotFixes
@@ -519,8 +523,8 @@ function _llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateCont
 
 function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, debugCostSource: string) {
   // Compute costs
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-  const costs = metricsComputeChatGenerateCostsMd(generator.metrics, llm.pricing?.chat, llmParameters.llmRef || llm.id);
+  const logLlmRefId = getAllModelParameterValues(llm.initialParameters, llm.userParameters).llmRef || llm.id;
+  const costs = metricsComputeChatGenerateCostsMd(generator.metrics, llm.pricing?.chat, logLlmRefId);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices
     return;
