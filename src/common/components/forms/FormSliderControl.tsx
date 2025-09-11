@@ -19,6 +19,32 @@ export function FormSliderControl(props: {
   startAdornment?: React.ReactNode,
   endAdornment?: React.ReactNode,
 }) {
+
+
+  // state
+  const [displayValue, setDisplayValue] = React.useState<number | number[] | null>(props.value);
+
+  // [effect] sync with the outside world
+  React.useEffect(() => {
+    setDisplayValue(props.value);
+  }, [props.value]);
+
+
+  // enable interim + signal-upon-commit behavior
+
+  const { onChange } = props;
+
+  const handleChangeCommitted = React.useCallback((_event: unknown, value: number | number[]) => {
+    setDisplayValue(value);
+    // NOTE: we also support ranges, such in the Gemini Thinking Token settings, but in any case we force types as numbers as that's the common case
+    onChange?.(value as number);
+  }, [onChange]);
+
+  const handleChange = React.useCallback((_event: unknown, value: number | number[]) => {
+    setDisplayValue(value);
+  }, []);
+
+
   return (
     <FormControl size={props.size} disabled={props.disabled} orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title={props.title} description={props.description} />
@@ -30,7 +56,9 @@ export function FormSliderControl(props: {
         size={props.size}
         disabled={props.disabled}
         min={props.min} max={props.max} step={props.step} defaultValue={props.defaultValue}
-        value={props.value === null ? undefined : props.value} onChange={(_event, value) => props.onChange(value as number)}
+        value={displayValue === null ? undefined : displayValue}
+        onChange={handleChange}
+        onChangeCommitted={handleChangeCommitted}
         valueLabelDisplay={props.valueLabelDisplay}
         // sx={{ py: 1, mt: 1.1 }}
       />
