@@ -274,7 +274,11 @@ export function applyModelParameterInitialValues(destValues: DModelParameterValu
 }
 
 
-const _requiredParamId: DModelParameterId[] = ['llmRef', 'llmResponseTokens', 'llmTemperature'] as const;
+const _requiredParamId: DModelParameterId[] = [
+  // 'llmRef', // disabled: we know this can't have a fallback value in the registry
+  'llmResponseTokens', // DModelParameterRegistry.llmResponseTokens.requiredFallback = FALLBACK_LLM_PARAM_RESPONSE_TOKENS
+  'llmTemperature' // DModelParameterRegistry.llmTemperature.requiredFallback = FALLBACK_LLM_PARAM_TEMPERATURE
+] as const;
 
 export function getAllModelParameterValues(initialParameters: undefined | DModelParameterValues, userParameters?: DModelParameterValues): DModelParameterValues {
 
@@ -294,6 +298,9 @@ export function getAllModelParameterValues(initialParameters: undefined | DModel
 }
 
 
+/**
+ * NOTE: this is actually only used for `llmResponseTokens` from the Composer for now (!)
+ */
 export function getModelParameterValueOrThrow<T extends DModelParameterId>(
   paramId: T,
   initialValues: undefined | DModelParameterValues,
