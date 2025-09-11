@@ -63,7 +63,7 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
       return {
         modelAssignments: {
           ...state.modelAssignments,
-          [domainId]: createDModelConfiguration(domainId, llmId),
+          [domainId]: createDModelConfiguration(domainId, llmId, undefined),
         },
       };
     }),
@@ -208,13 +208,13 @@ function _autoModelConfiguration(domainId: DModelDomainId, llms: ReadonlyArray<D
     case 'topVendorTopLlm':
       const topRankedLLMId = _strategyTopQuality(vendors);
       if (topRankedLLMId)
-        return createDModelConfiguration(domainId, topRankedLLMId);
+        return createDModelConfiguration(domainId, topRankedLLMId, undefined);
       break;
 
     case 'topVendorLowestCost':
       const lowCostLLMId = _strategyTopVendorLowestCost(vendors);
       if (lowCostLLMId)
-        return createDModelConfiguration(domainId, lowCostLLMId);
+        return createDModelConfiguration(domainId, lowCostLLMId, undefined);
       break;
 
     default:

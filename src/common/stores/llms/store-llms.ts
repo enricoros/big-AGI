@@ -324,12 +324,12 @@ export const useModelsStore = create<LlmsStore>()(persist(
           const prevState = state as { chatLLMId?: DLLMId, fastLLMId?: DLLMId };
           const existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>> = {};
           if (prevState.chatLLMId) {
-            existingAssignments['primaryChat'] = createDModelConfiguration('primaryChat', prevState.chatLLMId);
-            existingAssignments['codeApply'] = createDModelConfiguration('codeApply', prevState.chatLLMId);
+            existingAssignments['primaryChat'] = createDModelConfiguration('primaryChat', prevState.chatLLMId, undefined);
+            existingAssignments['codeApply'] = createDModelConfiguration('codeApply', prevState.chatLLMId, undefined);
             delete prevState.chatLLMId;
           }
           if (prevState.fastLLMId) {
-            existingAssignments['fastUtil'] = createDModelConfiguration('fastUtil', prevState.fastLLMId);
+            existingAssignments['fastUtil'] = createDModelConfiguration('fastUtil', prevState.fastLLMId, undefined);
             delete prevState.fastLLMId;
           }
 
