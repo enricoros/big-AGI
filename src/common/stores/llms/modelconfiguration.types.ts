@@ -20,7 +20,7 @@ export type DModelConfiguration = {
 
 /// helpers - creation
 
-export function createDModelConfiguration(domainId: DModelDomainId, modelId: DLLMId | null, modelParameters?: DModelParameterValues): DModelConfiguration {
+export function createDModelConfiguration(domainId: DModelDomainId, modelId: DLLMId | null, modelParameters: DModelParameterValues | undefined): DModelConfiguration {
   return {
     mct: 'model-parametric',
     domainId: domainId,
