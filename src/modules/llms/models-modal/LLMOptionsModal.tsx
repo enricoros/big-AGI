@@ -14,6 +14,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 
@@ -70,6 +71,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const [showDetails, setShowDetails] = React.useState(false);
 
   // external state
+  const isMobile = useIsMobile();
   const llm = useLLM(props.id);
   const domainAssignments = useModelDomains();
   const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
@@ -93,24 +95,25 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const visible = isLLMVisible(llm);
 
   const hasUserParameters = llm.userParameters && Object.keys(llm.userParameters).length > 0;
+  const resetButton = !hasUserParameters ? null : (
+    <Link
+      component='button'
+      color='neutral'
+      level='body-xs'
+      onClick={handleResetParameters}
+    >
+      Reset to defaults ...
+    </Link>
+  );
 
   return (
 
     <GoodModal
       title={
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 3 }}>
           <div><b>{llm.label}</b> options</div>
           {/* Reset to default - show only when user has customized parameters */}
-          {hasUserParameters && (
-            <Link
-              component='button'
-              color='neutral'
-              level='body-xs'
-              onClick={handleResetParameters}
-            >
-              Reset to defaults ...
-            </Link>
-          )}
+          {!isMobile && resetButton}
         </Box>
       }
       open={!!props.id} onClose={props.onClose}
@@ -123,6 +126,8 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
         <LLMOptionsGlobal llm={llm} />
+        {/* On Mobile, display the button below the settings */}
+        {isMobile && resetButton}
       </Box>
 
       <Divider />
