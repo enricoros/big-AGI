@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Divider, FormControl, Input, Link, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
@@ -72,7 +72,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   // external state
   const llm = useLLM(props.id);
   const domainAssignments = useModelDomains();
-  const { removeLLM, updateLLM, assignDomainModelId } = llmsStoreActions();
+  const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
+
+  const handleResetParameters = React.useCallback(() => llm?.id && resetLLMUserParameters(llm?.id), [llm?.id, resetLLMUserParameters]);
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
@@ -90,10 +92,27 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   const visible = isLLMVisible(llm);
 
+  const hasUserParameters = llm.userParameters && Object.keys(llm.userParameters).length > 0;
+
   return (
 
     <GoodModal
-      title={<><b>{llm.label}</b> options</>}
+      title={
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3 }}>
+          <div><b>{llm.label}</b> options</div>
+          {/* Reset to default - show only when user has customized parameters */}
+          {hasUserParameters && (
+            <Link
+              component='button'
+              color='neutral'
+              level='body-xs'
+              onClick={handleResetParameters}
+            >
+              Reset to defaults ...
+            </Link>
+          )}
+        </Box>
+      }
       open={!!props.id} onClose={props.onClose}
       startButton={
         <Button variant='plain' color='neutral' onClick={handleLlmDelete} startDecorator={<DeleteOutlineIcon />}>
