@@ -710,49 +710,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     isPreview: true,
   },
 
-  // GPT-4o Realtime Preview
-  {
-    hidden: true, // UNSUPPORTED yet - REALTIME API
-    idPrefix: 'gpt-4o-realtime-preview-2025-06-03',
-    label: 'GPT-4o Realtime Preview (2025-06-03)',
-    description: 'Latest snapshot for the Realtime API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to realtime models
-    isPreview: true,
-  },
-  {
-    hidden: true, // UNSUPPORTED yet - REALTIME API
-    idPrefix: 'gpt-4o-realtime-preview-2024-12-17',
-    label: 'GPT-4o Realtime Preview (2024-12-17)',
-    description: 'Snapshot for the Realtime API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to realtime models
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-realtime-preview',
-    label: 'GPT-4o Realtime Preview',
-    description: 'Preview release for the Realtime API. Points to: gpt-4o-realtime-preview-2024-12-17.',
-    symLink: 'gpt-4o-realtime-preview-2024-12-17',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to realtime models
-    isPreview: true,
-  },
-
   // GPT-4o mini
   {
     idPrefix: 'gpt-4o-mini-2024-07-18',
@@ -805,34 +762,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_Outputs_Audio],
     chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
     // benchmarks don't apply to audio models
-    isPreview: true,
-  },
-  {
-    hidden: true, // UNSUPPORTED yet - REALTIME API
-    idPrefix: 'gpt-4o-mini-realtime-preview-2024-12-17',
-    label: 'GPT-4o Mini Realtime Preview (2024-12-17)',
-    description: 'Snapshot for the Realtime API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 0.6, cache: { cType: 'oai-ac', read: 0.3 }, output: 2.4 },
-    // benchmarks don't apply to realtime api models
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-mini-realtime-preview',
-    label: 'GPT-4o Mini Realtime Preview',
-    description: 'Preview release for the Realtime API. Points to: gpt-4o-mini-realtime-preview-2024-12-17.',
-    symLink: 'gpt-4o-mini-realtime-preview-2024-12-17',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 0.6, cache: { cType: 'oai-ac', read: 0.3 }, output: 2.4 },
-    // benchmarks don't apply to realtime api models
     isPreview: true,
   },
   // GPT-4o Mini Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
