@@ -4,6 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import SdCardOutlinedIcon from '@mui/icons-material/SdCardOutlined';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import StarIcon from '@mui/icons-material/Star';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
@@ -24,6 +26,8 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { findModelVendor } from '../vendors/vendors.registry';
 
+import { ENABLE_STARRING_ICON } from './LLMOptionsModal';
+
 
 // configuration
 const SHOW_LLM_INTERFACES = false;
@@ -42,6 +46,17 @@ const styles = {
       xs: 0.5,
       md: 1,
     } as const,
+
+    // agi-star
+    ['& .agi-star']: {
+      opacity: 0.4,
+      fontSize: 'md',
+    },
+    ['& .agi-star[aria-checked="true"]']: {
+      opacity: 1,
+      color: '#fad857',
+      fontSize: 'xl2',
+    },
   } as const,
   modelText: {
     flex: 1,
@@ -97,7 +112,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
 }) {
 
   // derived
-  const { llm, domains, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
+  const { llm, domains, onModelClicked, onModelSetHidden, onModelSetStarred } = props;
 
   const seemsFree = isLLMChatFree_cached(llm);
   const isHidden = isLLMHidden(llm);
@@ -129,10 +144,10 @@ export const ModelItem = React.memo(function ModelItem(props: {
     onModelSetHidden?.(llm.id, false);
   }, [llm.id, onModelSetHidden]);
 
-  // const handleLLMToggleStar = React.useCallback((event: React.MouseEvent) => {
-  //   event.stopPropagation();
-  //   onModelSetStarred(llm.id, !llm.userStarred);
-  // }, [llm.id, llm.userStarred, onModelSetStarred]);
+  const handleLLMToggleStar = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    onModelSetStarred(llm.id, !llm.userStarred);
+  }, [llm.id, llm.userStarred, onModelSetStarred]);
 
 
   // label will be of the form "Model Name (Date)" - here we extract the date
@@ -206,18 +221,25 @@ export const ModelItem = React.memo(function ModelItem(props: {
         sx={styles.liButton}
       >
 
+        {/* Star Toggle */}
+        {(ENABLE_STARRING_ICON || llm.userStarred) && <IconButton size='sm' onClick={handleLLMToggleStar} sx={absorbListPadding}>
+          {llm.userStarred ? <StarIcon aria-checked={true} className='agi-star' /> : <StarBorderIcon aria-checked={false} className='agi-star' />}
+        </IconButton>}
+
         {/* Model Name */}
         {SHOW_LLM_TOOLTIPS ? (
           <GoodTooltip title={tooltip}>
             <Box sx={isHidden ? styles.modelHiddenText : isCustomized ? styles.modelCustomizedText : styles.modelText} className='agi-ellipsize'>
-              {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llmLabel}` : llmLabel}
+              {(llm.userStarred && !ENABLE_STARRING_ICON) ? `${STAR_EMOJI} ${llmLabel}` : llmLabel}
+              {/*{llm.label}*/}
               {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isHidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
               {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
             </Box>
           </GoodTooltip>
         ) : (
           <Box sx={isHidden ? styles.modelHiddenText : isCustomized ? styles.modelCustomizedText : styles.modelText} className='agi-ellipsize'>
-            {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llmLabel}` : llmLabel}
+            {(llm.userStarred && !ENABLE_STARRING_ICON) ? `${STAR_EMOJI} ${llmLabel}` : llmLabel}
+            {/*{llm.label}*/}
             {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isHidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
             {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
           </Box>
@@ -260,18 +282,20 @@ export const ModelItem = React.memo(function ModelItem(props: {
           {/*  </IconButton>*/}
           {/*</GoodTooltip>}*/}
 
-          {!props.isMobile && !!onModelSetHidden && <GoodTooltip title={isHidden ? 'Hidden' : 'Shown in Chat'}>
+          {/*{!props.isMobile && !!onModelSetHidden && <GoodTooltip title={isHidden ? 'Hidden' : 'Shown in Chat'}>*/}
+          {!props.isMobile && (
             <IconButton aria-label={isHidden ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={isHidden ? handleLLMUnhide : handleLLMHide} sx={absorbListPadding}>
               {isHidden ? <VisibilityOffOutlinedIcon sx={{ opacity: 0.5, fontSize: 'md' }} /> : <VisibilityOutlinedIcon />}
             </IconButton>
-          </GoodTooltip>}
+          )}
+          {/*</GoodTooltip>}*/}
 
           {/* mobile: the whole row opens the options, the gear would only repeat it */}
-          {!props.isMobile && <GoodTooltip title='Options'>
-            <IconButton aria-label='Configure LLM' size='sm' sx={absorbListPadding} onClick={handleLLMConfigure}>
-              <PhGearSixIcon />
-            </IconButton>
-          </GoodTooltip>}
+          {/*<GoodTooltip title='Options'>*/}
+          {!props.isMobile && <IconButton aria-label='Configure LLM' size='sm' onClick={handleLLMConfigure} sx={absorbListPadding}>
+            <PhGearSixIcon />
+          </IconButton>}
+          {/*</GoodTooltip>*/}
 
         </Box>
 
