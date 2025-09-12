@@ -40,7 +40,7 @@ export type OpenAIDialects = z.infer<typeof openAIDialects>;
 export const openAIAccessSchema = z.object({
   dialect: openAIDialects,
   oaiKey: z.string().trim(),
-  oaiOrg: z.string().trim(), // [OpenPipe] we have a hack here, where we put the tags stringinfied JSON in here - cleanup in the future
+  oaiOrg: z.string().trim(), // [OpenPipe] we have a hack here, where we put the tags stringified JSON in here - cleanup in the future
   oaiHost: z.string().trim(),
   heliKey: z.string().trim(),
   moderationCheck: z.boolean(),
@@ -65,6 +65,8 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 
 /** Add https if missing, and remove trailing slash if present and the path starts with a slash. */
 export function fixupHost(host: string, apiPath: string): string {
+  if (!host)
+    return '';
   if (!host.startsWith('http'))
     host = `https://${host}`;
   if (host.endsWith('/') && apiPath.startsWith('/'))
@@ -190,7 +192,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       if (access.dialect === 'togetherai')
         return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
 
-      let openAIModels = openAIWireModelsResponse.data || [];
+      let openAIModels = openAIWireModelsResponse?.data || [];
 
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
       const preCount = openAIModels.length;
