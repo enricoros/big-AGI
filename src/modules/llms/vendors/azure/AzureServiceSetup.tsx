@@ -64,7 +64,7 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='azure-endpoint'
       title='Azure Endpoint'
       description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>configuration</Link>}
-      placeholder='https://your-resource-name.openai.azure.com/'
+      placeholder='https://your-resource.openai.azure.com'
       isError={hostError}
       value={azureEndpoint}
       onChange={text => updateSettings({ azureEndpoint: text })}
