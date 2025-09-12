@@ -396,12 +396,12 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1350 },
   },
 
-  // o1-preview (deprecated)
+  // o1-preview (deprecated - shutdown 2025-07-28)
   {
-    hidden: true, // OUTDATED
+    hidden: true, // DEPRECATED - shutdown 2025-07-28
     idPrefix: 'o1-preview-2024-09-12',
     label: 'o1 Preview (2024-09-12)', // ⏱️
-    description: 'Latest o1 preview model snapshot. This model takes longer to run and does not support streaming. New reasoning model for complex tasks that require broad general knowledge.',
+    description: 'DEPRECATED: Will be shut down on 2025-07-28. Latest o1 preview model snapshot. This model takes longer to run and does not support streaming. New reasoning model for complex tasks that require broad general knowledge.',
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
@@ -414,7 +414,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'o1-preview',
     label: 'o1 Preview',
-    description: 'Points to the most recent snapshot of the o1 preview model: o1-preview-2024-09-12',
+    description: 'DEPRECATED: Will be shut down on 2025-07-28. Points to the most recent snapshot of the o1 preview model: o1-preview-2024-09-12',
     symLink: 'o1-preview-2024-09-12',
     hidden: true, // prefer versioned
     // copied from symlinked
@@ -428,12 +428,12 @@ export const _knownOpenAIChatModels: ManualMappings = [
     isLegacy: true,
   },
 
-  // o1-mini (deprecated)
+  // o1-mini (deprecated - shutdown 2025-10-27)
   {
-    hidden: true, // DEPRECATED
+    hidden: true, // DEPRECATED - shutdown 2025-10-27
     idPrefix: 'o1-mini-2024-09-12',
     label: 'o1 Mini (2024-09-12)', // ⏱️
-    description: 'Deprecated. Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
+    description: 'DEPRECATED: Will be shut down on 2025-10-27. Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
@@ -445,7 +445,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'o1-mini',
     label: 'o1 Mini',
-    description: 'Deprecated. A small model alternative to o1. Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
+    description: 'DEPRECATED: Will be shut down on 2025-10-27. A small model alternative to o1. Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
     symLink: 'o1-mini-2024-09-12',
     hidden: true, // prefer versioned
     // copied from symlinked
@@ -695,19 +695,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     isPreview: true,
   },
   {
-    idPrefix: 'gpt-4o-audio-preview-2024-10-01',
-    label: 'GPT-4o Audio Preview (2024-10-01)',
-    hidden: true, // previous version
-    description: 'Snapshot for the Audio API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
-    chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED IS 40/80 */ },
-    // benchmarks don't apply to audio models
-    isPreview: true,
-  },
-  {
     idPrefix: 'gpt-4o-audio-preview',
     label: 'GPT-4o Audio Preview',
     description: 'Preview release for audio inputs in chat completions.',
@@ -741,19 +728,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true, // UNSUPPORTED yet - REALTIME API
     idPrefix: 'gpt-4o-realtime-preview-2024-12-17',
     label: 'GPT-4o Realtime Preview (2024-12-17)',
-    description: 'Snapshot for the Realtime API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to realtime models
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-realtime-preview-2024-10-01',
-    label: 'GPT-4o Realtime Preview (2024-10-01)',
-    hidden: true, // previous version
     description: 'Snapshot for the Realtime API model.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
