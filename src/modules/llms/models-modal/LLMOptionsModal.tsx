@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, ButtonGroup, Divider, FormControl, Input, Link, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Divider, FormControl, Grid, IconButton, Input, Link, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
@@ -13,12 +13,18 @@ import { DLLMId, getLLMContextTokens, isLLMVisible } from '~/common/stores/llms/
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsGlobal } from './LLMOptionsGlobal';
+
+
+// configuration
+export const ENABLE_STARRING_ICON = true;
+const ENABLE_HIDING_ICON = false;
 
 
 function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): React.ReactNode {
@@ -99,7 +105,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     <Link
       component='button'
       color='neutral'
-      level='body-xs'
+      level='body-sm'
       onClick={handleResetParameters}
     >
       Reset to defaults ...
@@ -109,10 +115,27 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   return (
 
     <GoodModal
+      autoOverflow
+      // strongerTitle
       title={
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 3 }}>
-          <div><b>{llm.label}</b> options</div>
-          {/* Reset to default - show only when user has customized parameters */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 1, md: 3 } }}>
+
+          {/* Star + Model Name */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, md: 1 } }}>
+            {ENABLE_STARRING_ICON && <TooltipOutlined title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
+              <IconButton size='sm' onClick={handleLlmStarredToggle} sx={{ ml: -0.5 }}>
+                {llm.userStarred ? <StarIcon sx={{ color: '#fad857', fontSize: 'xl2' }} /> : <StarBorderIcon />}
+              </IconButton>
+            </TooltipOutlined>}
+            {ENABLE_HIDING_ICON && <TooltipOutlined title={visible ? 'Show this model in the app' : 'Hide this model from the app'}>
+              <IconButton size='sm' onClick={handleLlmVisibilityToggle} sx={{ ml: -0.5 }}>
+                {visible ? <VisibilityIcon sx={{ fontSize: 'xl' }} /> : <VisibilityOffIcon />}
+              </IconButton>
+            </TooltipOutlined>}
+            <span><b>{llm.label}</b> options</span>
+          </Box>
+
+          {/* [Desktop] Reset to default - show only when user has customized parameters */}
           {!isMobile && resetButton}
         </Box>
       }
@@ -132,10 +155,27 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
       <Divider />
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabelStart title='Name' sx={{ minWidth: 80 }} />
-        <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
-      </FormControl>
+      <Grid container spacing={2} alignItems='center'>
+
+        <Grid xs={12} md={8}>
+          <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            <FormLabelStart title='Name' sx={{ minWidth: 80 }} />
+            <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} md={4}>
+          {!ENABLE_HIDING_ICON && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
+            <Tooltip title={visible ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
+              <Switch checked={visible} onChange={handleLlmVisibilityToggle}
+                      endDecorator={visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                      slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+            </Tooltip>
+          </FormControl>}
+        </Grid>
+
+      </Grid>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabelStart title='Assignment' description='Default model' sx={{ minWidth: 80 }} />
@@ -154,7 +194,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
         </ButtonGroup>
       </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+      {!ENABLE_STARRING_ICON && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabelStart title='Starred' sx={{ minWidth: 80 }} />
         <Tooltip title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
           <Switch checked={!!llm.userStarred} onChange={handleLlmStarredToggle}
@@ -162,16 +202,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
                   slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
           />
         </Tooltip>
-      </FormControl>
-
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
-        <Tooltip title={visible ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
-          <Switch checked={visible} onChange={handleLlmVisibilityToggle}
-                  endDecorator={visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-        </Tooltip>
-      </FormControl>
+      </FormControl>}
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />
