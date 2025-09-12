@@ -1070,6 +1070,12 @@ export const _knownOpenAIChatModels: ManualMappings = [
 ];
 
 const openAIModelsDenyList: string[] = [
+  // [OpenAI, 2025-08-28] FIXME: NOT YET SUPPORTED - "REALTIME API"
+  // 'gpt-realtime', // leave this just for kicks, but it's hidden by default and won't work if unhidden
+  // '-realtime-',
+  '4o-realtime',
+  '4o-mini-realtime',
+
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
 
