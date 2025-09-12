@@ -13,7 +13,7 @@ import { Brand } from '~/common/app.config';
 
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
+import { ListModelsResponse_schema, ModelDescriptionSchema, RequestAccessValues } from '../llm.server.types';
 import { alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './models/chutesai.models';
@@ -513,7 +513,7 @@ function getRandomKeyFromMultiKey(multiKeyString: string): string {
   return multiKeys[Math.floor(Math.random() * multiKeys.length)];
 }
 
-export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
+export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): RequestAccessValues {
   switch (access.dialect) {
 
     case 'alibaba':

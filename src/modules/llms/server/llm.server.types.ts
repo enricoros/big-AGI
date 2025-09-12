@@ -3,6 +3,8 @@ import * as z from 'zod/v4';
 import { LLMS_ALL_INTERFACES } from '~/common/stores/llms/llms.types';
 
 
+export type RequestAccessValues = { headers: HeadersInit; url: string; };
+
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
 
 // export namespace AixWire_API_ListModels {
