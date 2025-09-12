@@ -291,7 +291,7 @@ export function ModelsList(props: {
   const isMobile = useIsMobile();
   const showModelsFn = useUIPreferencesStore(state => state.showModelsFn);
   const domainAssignments = useModelDomains();
-  const llms = useLLMsByService(props.filterServiceId === null ? false : props.filterServiceId);
+  const llms = useLLMsByService(props.filterServiceId === null ? false : props.filterServiceId, true);
 
   const { onOpenLLMOptions } = props;
 

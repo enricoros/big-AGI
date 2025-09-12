@@ -26,9 +26,12 @@ function _sortStarredFirstComparator(a: { userStarred?: boolean }, b: { userStar
   return 0;
 }
 
-export function useLLMsByService(serviceId: false | DModelsServiceId): DLLM[] {
+export function useLLMsByService(serviceId: false | DModelsServiceId, starredFirst: boolean): DLLM[] {
   return useModelsStore(useShallow(
-    state => !serviceId ? state.llms : state.llms.filter(llm => llm.sId === serviceId),
+    ({ llms }) => {
+      const filteredCopy = !serviceId ? llms.slice() : llms.filter(llm => llm.sId === serviceId);
+      return !starredFirst ? filteredCopy : filteredCopy.sort(_sortStarredFirstComparator);
+    },
   ));
 }
 
