@@ -66,7 +66,6 @@ export type DModelInterfaceV1 =
   | 'oai-prompt-caching'
   | 'oai-realtime'
   | 'oai-responses'
-  | 'oai-needs-audio'
   | 'gem-code-execution'
   | 'outputs-audio'            // TEMP: ui flag - supports audio output (e.g., text-to-speech)
   | 'outputs-image'            // TEMP: ui flag - supports image output (image generation)
@@ -96,7 +95,6 @@ export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
 export const LLM_IF_OAI_PromptCaching: DModelInterfaceV1 = 'oai-prompt-caching';
 export const LLM_IF_OAI_Realtime: DModelInterfaceV1 = 'oai-realtime';
 export const LLM_IF_OAI_Responses: DModelInterfaceV1 = 'oai-responses';
-export const LLM_IF_OAI_NeedsAudio: DModelInterfaceV1 = 'oai-needs-audio';
 export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
 export const LLM_IF_HOTFIX_NoStream: DModelInterfaceV1 = 'hotfix-no-stream';
 export const LLM_IF_HOTFIX_NoTemperature: DModelInterfaceV1 = 'hotfix-no-temperature';
@@ -132,7 +130,6 @@ export const LLMS_ALL_INTERFACES = [
   LLM_IF_HOTFIX_Sys0ToUsr0,   // downgrade system to user messages for this model (e.g. o1-mini-2024-09-12)
   // old/unused
   LLM_IF_OAI_Complete,        // UNUSED - older text completion, pre-chats
-  LLM_IF_OAI_NeedsAudio,      // audio input processing
 ] as const;
 
 // Future changes?
