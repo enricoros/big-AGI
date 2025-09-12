@@ -70,6 +70,13 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     if (_forwardOpenRouterDataError(chunkData, pt))
       return;
 
+    // [OpenAI] Obfuscation message with no data -> skip
+    if (!chunkData?.['choices'] && chunkData?.['obfuscation']) {
+      // NOTE: these sort of messages have no useful data and would break the parser here
+      // console.log('AIX: OpenAI-dispatch: missing-choices chunk skipped', chunkData);
+      return;
+    }
+
     const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(chunkData);
 
     // -> Model
