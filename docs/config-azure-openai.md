@@ -14,7 +14,7 @@ If you have an `API Endpoint` and `API Key`, you can configure big-AGI as follow
 1. Launch the `big-AGI` application
 2. Go to the **Models** settings
 3. Add a Vendor and select **Azure OpenAI**
-    - Enter the Endpoint (e.g., 'https://your-openai-api-1234.openai.azure.com/')
+    - Enter the Endpoint (e.g., 'https://your-resource-name.openai.azure.com')
     - Enter the API Key (e.g., 'fd5...........................ba')
 
 The deployed models are now available in the application. If you don't have a configured
@@ -22,6 +22,25 @@ Azure OpenAI service instance, continue with the next section.
 
 In addition to using the UI, configuration can also be done using
 [environment variables](environment-variables.md).
+
+## Azure OpenAI API Versions
+
+Azure OpenAI supports both traditional deployment-based API and the next-generation v1 API:
+
+### Next-Generation v1 API (Default)
+- **Enabled by default** for GPT-5-like models (GPT-5, GPT-6, o3, o4, etc.)
+- Uses direct `/openai/v1/responses` endpoint without deployment IDs
+- Optimized for advanced reasoning models and new features
+- Can be disabled by setting `AZURE_OPENAI_DISABLE_V1=true`
+
+### Traditional Deployment-Based API
+- Uses `/openai/deployments/{deployment-name}/...` endpoints
+- Required for older models and when v1 API is disabled
+- Needs deployment ID for all API calls
+
+### Known Limitations
+- **Web Search Tool**: Azure OpenAI does not support the `web_search_preview` tool that's available in OpenAI's API
+- Models with web search capabilities will have this feature automatically disabled on Azure
 
 ## Setting Up Azure
 
