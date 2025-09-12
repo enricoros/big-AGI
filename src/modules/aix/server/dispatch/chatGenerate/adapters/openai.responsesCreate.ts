@@ -25,11 +25,12 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
 
   // [OpenAI] Vendor-specific model checks
   const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+  const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
   const isOpenAIO1Pro = model.id === 'o1-pro' || model.id.startsWith('o1-pro-');
   const isOpenAIDeepResearch = model.id.includes('-deep-research');
 
-  const hotFixNoTemperature = isOpenAIOFamily;
+  const hotFixNoTemperature = isOpenAIOFamily && !isOpenAIChatGPT;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
   const hotFixForceSearchTool = isOpenAIDeepResearch;
 
