@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -676,7 +676,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
+    interfaces: [LLM_IF_Outputs_Audio],
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
@@ -689,7 +689,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
+    interfaces: [LLM_IF_Outputs_Audio],
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
@@ -704,7 +704,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
+    interfaces: [LLM_IF_Outputs_Audio],
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
@@ -787,7 +787,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
+    interfaces: [LLM_IF_Outputs_Audio],
     chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
@@ -802,7 +802,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
+    interfaces: [LLM_IF_Outputs_Audio],
     chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
