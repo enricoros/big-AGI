@@ -100,6 +100,10 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
   // Tool: Web Search: for search and deep research models
   const requestWebSearchTool = hotFixForceWebSearchTool || !!model.vndOaiWebSearchContext || !!model.userGeolocation;
   if (requestWebSearchTool) {
+    /**
+     * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search_preview' is not supported with gpt-5-mini-2025-08-07"
+     *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
+     */
     if (isDialectAzure) {
       // Azure OpenAI doesn't support web search tool yet (as of Aug 2025)
       console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
