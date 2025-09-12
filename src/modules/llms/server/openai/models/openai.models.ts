@@ -52,7 +52,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   // GPT-5 Chat Latest
   {
     idPrefix: 'gpt-5-chat-latest',
-    label: 'GPT-5 Chat Latest',
+    label: 'GPT-5 ChatGPT (Non-Thinking)',
     description: 'GPT-5 model used in ChatGPT. Points to the GPT-5 snapshot currently used in ChatGPT.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
@@ -1139,9 +1139,9 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 const _manualOrderingIdPrefixes = [
   // GPT-5
   'gpt-5-20',
-  'gpt-5-chat-latest',
   'gpt-5-mini-20',
   'gpt-5-nano-20',
+  'gpt-5-chat-latest',
   'gpt-5-',
   // Reasoning models
   'o5-20',
