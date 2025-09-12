@@ -94,6 +94,26 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     payload.top_p = model.topP;
   }
 
+  // [OpenAI] Vendor-specific output modalities configuration
+  const outputsText = model.acceptsOutputs.includes('text');
+  const outputsAudio = model.acceptsOutputs.includes('audio');
+  const outputsImages = model.acceptsOutputs.includes('image');
+  if (openAIDialect === 'openai' && (outputsAudio || outputsImages)) {
+    // set output modalities
+    const modalities = new Set(payload.modalities || []);
+    if (outputsText) modalities.add('text');
+    if (outputsAudio) modalities.add('audio');
+    // if (outputsImages) modalities.add('image');
+    payload.modalities = Array.from(modalities);
+
+    // configure audio output
+    if (outputsAudio)
+      payload.audio = {
+        voice: 'alloy', // FIXME: have the voice be selectable
+        format: 'pcm16', // only supported value for streaming
+      };
+  }
+
   // [OpenAI] Vendor-specific reasoning effort, for o1 models only as of 2024-12-24
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;

@@ -280,6 +280,7 @@ export namespace OpenAIWire_API_Chat_Completions {
       voice: z.enum([
         'ash', 'ballad', 'coral', 'sage', 'verse', // recommended
         'alloy', 'echo', 'shimmer', // discouraged
+        'marin', // new
       ]),
       format: z.enum(['wav', 'mp3', 'flac', 'opus', 'pcm16']),
     }).optional(),
