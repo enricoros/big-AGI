@@ -215,7 +215,7 @@ export function AppChat() {
   });
 
   // Composer Auto-hiding
-  const forceComposerHide = !!beamOpenStoreInFocusedPane;
+  const forceComposerHide = !!beamOpenStoreInFocusedPane /* || !focusedPaneConversationId */; // auto-hide when no chat (the 'please select a conversation...' state) doesn't feel good
   const composerAutoHide = useComposerAutoHide(forceComposerHide, composerHasContent);
 
   // Window actions
