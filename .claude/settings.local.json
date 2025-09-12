@@ -17,6 +17,7 @@
       "Bash(sed:*)",
       "WebFetch(domain:big-agi.com)",
       "WebFetch(domain:github.com)",
+      "WebSearch",
       "mcp__ide__getDiagnostics"
     ],
     "deny": [
