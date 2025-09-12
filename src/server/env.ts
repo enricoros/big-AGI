@@ -29,6 +29,10 @@ export const env = createEnv({
     // LLM: Azure OpenAI
     AZURE_OPENAI_API_ENDPOINT: z.url().optional(),
     AZURE_OPENAI_API_KEY: z.string().optional(),
+    // The following do not need to be set
+    AZURE_OPENAI_DISABLE_V1: z.string().optional(), // next-gen API is active by default, default: false
+    AZURE_OPENAI_API_VERSION: z.string().optional(), // traditional API still used for non-response models, default: '2025-04-01-preview'
+    AZURE_DEPLOYMENTS_API_VERSION: z.string().optional(), // default: '2023-03-15-preview'
 
     // LLM: Anthropic
     ANTHROPIC_API_KEY: z.string().optional(),

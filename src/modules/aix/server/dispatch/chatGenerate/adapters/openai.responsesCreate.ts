@@ -1,8 +1,10 @@
+import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
+import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
 import { approxDocPart_To_String } from './anthropic.messageCreate';
-import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from '~/modules/aix/server/dispatch/chatGenerate/adapters/openai.chatCompletions';
 
 
 // configuration
@@ -21,7 +23,7 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
  * - much side functionality is not implemented yet
  * - testing with o3-pro only for now
  */
-export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
 
   // [OpenAI] Vendor-specific model checks
   const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
@@ -32,7 +34,9 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
 
   const hotFixNoTemperature = isOpenAIOFamily && !isOpenAIChatGPT;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
-  const hotFixForceSearchTool = isOpenAIDeepResearch;
+  const hotFixForceWebSearchTool = isOpenAIDeepResearch;
+
+  const isDialectAzure = openAIDialect === 'azure';
 
   // ---
   // construct the request payload
@@ -102,21 +106,32 @@ export function aixToOpenAIResponses(model: AixAPI_Model, chatGenerate: AixAPICh
     };
   }
 
-  // Tool: Search: for search models, and deep research models
-  // NOTE: OpenAI doesn't support web search with minimal reasoning effort
-  const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
-  if ((hotFixForceSearchTool || model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning) {
-    if (!payload.tools?.length)
-      payload.tools = [];
-    const webSearchTool: TRequestTool = {
-      type: 'web_search_preview',
-      search_context_size: model.vndOaiWebSearchContext ?? undefined,
-      user_location: model.userGeolocation && {
-        type: 'approximate',
-        ...model.userGeolocation, // .city, .country, .region, .timezone
-      },
-    };
-    payload.tools.push(webSearchTool);
+  // Tool: Web Search: for search and deep research models
+  const requestWebSearchTool = hotFixForceWebSearchTool || !!model.vndOaiWebSearchContext || !!model.userGeolocation;
+  if (requestWebSearchTool) {
+    /**
+     * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search_preview' is not supported with gpt-5-mini-2025-08-07"
+     *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
+     */
+    if (isDialectAzure) {
+      // Azure OpenAI doesn't support web search tool yet (as of Aug 2025)
+      console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
+    } else if (payload.reasoning?.effort === 'minimal') {
+      // Web search is not supported when the reasoning effort is 'minimal'
+      // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
+    } else {
+      if (!payload.tools?.length)
+        payload.tools = [];
+      const webSearchTool: TRequestTool = {
+        type: 'web_search_preview',
+        search_context_size: model.vndOaiWebSearchContext ?? undefined,
+        user_location: model.userGeolocation && {
+          type: 'approximate',
+          ...model.userGeolocation, // .city, .country, .region, .timezone
+        },
+      };
+      payload.tools.push(webSearchTool);
+    }
   }
 
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
