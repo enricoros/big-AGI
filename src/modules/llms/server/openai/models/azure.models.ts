@@ -14,6 +14,14 @@ import { fromManualMapping, ManualMappings } from './models.data';
 import { _knownOpenAIChatModels } from './openai.models';
 
 
+// configuration
+/**
+ * Azure OpenAI does not support the web_search_preview tool as of 2025-09-12
+ * as such we remove model parameters that enable search.
+ */
+const FORCE_DISABLE_WEB_SEARCH_TOOL = true;
+
+
 // [Azure]
 const _knownAzureChatModels: ManualMappings = [
   // ... if you have your own models, map them here ...
@@ -119,6 +127,10 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
   // if the user has set a custom name, show it in the label in addition to the generic OpenAI model name
   const preciseLabel = (deploymentName !== likelyTheOpenAIModel) ?
     `${label} (${deploymentName})` : label;
+
+  // Apply web search tool disabling if flag is set
+  if (FORCE_DISABLE_WEB_SEARCH_TOOL && restOfModelDescription.parameterSpecs?.length)
+    restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiWebSearchContext');
 
   return {
     id: deploymentName,
