@@ -1,9 +1,10 @@
+import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
+import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
 import { approxDocPart_To_String } from './anthropic.messageCreate';
-import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from '~/modules/aix/server/dispatch/chatGenerate/adapters/openai.chatCompletions';
-import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
 
 // configuration
@@ -22,7 +23,7 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
  * - much side functionality is not implemented yet
  * - testing with o3-pro only for now
  */
-export function aixToOpenAIResponses(openAIDialect: OpenAIDialects | null, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
 
   // [OpenAI] Vendor-specific model checks
   const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
@@ -32,7 +33,9 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects | null, model
 
   const hotFixNoTemperature = isOpenAIOFamily;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
-  const hotFixForceSearchTool = isOpenAIDeepResearch;
+  const hotFixForceWebSearchTool = isOpenAIDeepResearch;
+
+  const isDialectAzure = openAIDialect === 'azure';
 
   // ---
   // construct the request payload
@@ -94,29 +97,28 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects | null, model
     // };
   }
 
-  // Tool: Search: for search models, and deep research models
-  // NOTE: OpenAI doesn't support web search with minimal reasoning effort
-  // NOTE: Azure OpenAI doesn't support web search tool yet (as of Aug 2025)
-  const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
-  const skipWebSearchDueToAzure = openAIDialect === 'azure';
-  
-  // Log when web search is being skipped for Azure
-  if ((hotFixForceSearchTool || model.vndOaiWebSearchContext || model.userGeolocation) && skipWebSearchDueToAzure) {
-    console.log('[Azure] Skipping web_search_preview tool - not supported on Azure OpenAI');
-  }
-  
-  if ((hotFixForceSearchTool || model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning && !skipWebSearchDueToAzure) {
-    if (!payload.tools?.length)
-      payload.tools = [];
-    const webSearchTool: TRequestTool = {
-      type: 'web_search_preview',
-      search_context_size: model.vndOaiWebSearchContext ?? undefined,
-      user_location: model.userGeolocation && {
-        type: 'approximate',
-        ...model.userGeolocation, // .city, .country, .region, .timezone
-      },
-    };
-    payload.tools.push(webSearchTool);
+  // Tool: Web Search: for search and deep research models
+  const requestWebSearchTool = hotFixForceWebSearchTool || !!model.vndOaiWebSearchContext || !!model.userGeolocation;
+  if (requestWebSearchTool) {
+    if (isDialectAzure) {
+      // Azure OpenAI doesn't support web search tool yet (as of Aug 2025)
+      console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
+    } else if (payload.reasoning?.effort === 'minimal') {
+      // Web search is not supported when the reasoning effort is 'minimal'
+      // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
+    } else {
+      if (!payload.tools?.length)
+        payload.tools = [];
+      const webSearchTool: TRequestTool = {
+        type: 'web_search_preview',
+        search_context_size: model.vndOaiWebSearchContext ?? undefined,
+        user_location: model.userGeolocation && {
+          type: 'approximate',
+          ...model.userGeolocation, // .city, .country, .region, .timezone
+        },
+      };
+      payload.tools.push(webSearchTool);
+    }
   }
 
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
