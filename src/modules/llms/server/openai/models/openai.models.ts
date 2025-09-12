@@ -572,6 +572,63 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
+  /// GPT-Audio series - General availability audio models
+
+  // gpt-audio
+  {
+    idPrefix: 'gpt-audio-2025-08-28',
+    label: 'GPT Audio (2025-08-28)',
+    description: 'First generally available audio model. Accepts audio inputs and outputs, and can be used in the Chat Completions REST API.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Outputs_Audio, LLM_IF_HOTFIX_NoStream],
+    chatPrice: { input: 2.5, output: 10 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-audio',
+    label: 'GPT Audio',
+    description: 'First generally available audio model. Points to gpt-audio-2025-08-28.',
+    symLink: 'gpt-audio-2025-08-28',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Outputs_Audio, LLM_IF_HOTFIX_NoStream],
+    chatPrice: { input: 2.5, output: 10 },
+    // benchmark: TBD
+  },
+
+
+  /// GPT-Realtime series - General availability realtime models
+
+  // gpt-realtime
+  {
+    hidden: true, // unsupported Realtime API
+    idPrefix: 'gpt-realtime-2025-08-28',
+    label: 'GPT Realtime (2025-08-28)',
+    description: 'First general-availability realtime model, capable of responding to audio and text inputs in realtime over WebRTC, WebSocket, or SIP connections.',
+    contextWindow: 32000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Realtime],
+    chatPrice: { input: 4, cache: { cType: 'oai-ac', read: 0.4 }, output: 16 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-realtime',
+    label: 'GPT Realtime',
+    description: 'First general-availability realtime model. Points to gpt-realtime-2025-08-28.',
+    symLink: 'gpt-realtime-2025-08-28',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 32000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Realtime],
+    chatPrice: { input: 4, cache: { cType: 'oai-ac', read: 0.4 }, output: 16 },
+    // benchmark: TBD
+  },
+
+
   /// GPT-4/4o series
 
   // GPT-4o
