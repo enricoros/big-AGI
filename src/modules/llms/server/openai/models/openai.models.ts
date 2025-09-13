@@ -6,6 +6,10 @@ import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
 
 
+// configuration
+const DEV_DEBUG_OPENAI_MODELS = false; // set to true to check superfluous and missing models
+
+
 // [OpenAI] Known Chat Models
 // https://platform.openai.com/docs/models
 // https://platform.openai.com/docs/pricing
@@ -1106,4 +1110,61 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
 
   // due to using by-label, sorting doesn't require special cases anymore
   return remapReleaseDate(b.label).localeCompare(remapReleaseDate(a.label));
+}
+
+
+/**
+ * Checks for both superfluous and missing models in OpenAI API.
+ * 
+ * Combines the functionality of checking for models in our editorial definitions
+ * that aren't present in the API response (superfluous) and checking for models
+ * in the API that we don't have definitions for (missing).
+ * 
+ * @param wireModels is the raw API response from OpenAI, containing the .data[] array
+ * @param parsedModels is the parsed models array, which should match the wireModels
+ */
+export function openaiDevCheckForModelsOverlap_DEV(wireModels: unknown, parsedModels: object[]): void {
+
+  if (DEV_DEBUG_OPENAI_MODELS) {
+
+    // Check if wireModels has .data array
+    if (!wireModels || !Array.isArray((wireModels as any)?.data)) {
+      console.warn('[DEV] OpenAI: wireModels.data is not an array', wireModels);
+      return;
+    }
+
+    const apiModels = (wireModels as any).data;
+    const apiModelIds = apiModels.map((model: any) => model.id);
+
+    // 1. Check for superfluous models (in our definitions but not in API)
+    const expectedModelIds = _knownOpenAIChatModels
+      .filter(model => model.idPrefix && model.idPrefix !== '') // exclude fallback model
+      .map(model => model.idPrefix);
+
+    const superfluousModels = expectedModelIds.filter(id => !apiModelIds.includes(id));
+    if (superfluousModels.length > 0)
+      console.warn(`[DEV] OpenAI: superfluous model definitions: [\n  - ${superfluousModels.join('\n  - ')}\n]`);
+
+    // 2. Check for missing models (in API but not in our definitions)
+    const parsedModelIds = parsedModels.map((model: any) => model.id);
+    const missingModelIds = apiModelIds.filter((id: string) => !parsedModelIds.includes(id));
+    
+    if (missingModelIds.length > 0) {
+      // Split missing models: filtered out vs truly missing
+      const filteredOutModels = missingModelIds.filter((id: string) => 
+        openAIModelsDenyList.some(deny => id.includes(deny))
+      );
+      const trulyMissingModels = missingModelIds.filter((id: string) =>
+        !openAIModelsDenyList.some(deny => id.includes(deny))
+      );
+
+      if (filteredOutModels.length > 0)
+        console.warn(`[DEV] OpenAI: filtered out models: [\n  - ${filteredOutModels.join('\n  - ')}\n]`);
+      
+      if (trulyMissingModels.length > 0)
+        console.warn(`[DEV] OpenAI: truly missing model definitions[\n  - ${trulyMissingModels.join('\n  - ')}\n]`);
+    }
+
+  }
+
 }
