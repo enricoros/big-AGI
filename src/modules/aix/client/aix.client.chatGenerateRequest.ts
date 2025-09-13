@@ -18,6 +18,7 @@ import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_
 const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
 const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 const IGNORE_CGR_NO_IMAGE_DEREFERENCE = true; // set to false to raise an exception, otherwise the CGR will continue skipping the part
+const AUTO_SYSTEM_IMAGES_INDEX = true; // set to false to disable the small index of images (in system instruction)
 
 
 // AIX <> Simple Text API helpers
@@ -79,6 +80,9 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
     parts: [],
   };
 
+  // collect image description texts during conversion
+  const imageDescriptionTexts: string[] = [];
+
   // process fragments of the system instruction
   for (const sFragment of systemInstruction.fragments) {
     switch (sFragment.ft) {
@@ -133,6 +137,54 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
                         const resizeMode = false; // keep the image as-is, do not diminish quality; as any resize was done at the Persona edit time
                         try {
                           sm.parts.push(await aixConvertZyncImageAssetRefToInlineImageOrThrow(refPart, resizeMode));
+
+                          // NOTE: we SHALL make this more generic, but it's okay for the time being
+                          if (AUTO_SYSTEM_IMAGES_INDEX) {
+                            // Generate description text using pure function
+                            const title = sFragment?.ft === 'attachment' ? sFragment.title : undefined;
+                            const caption = sFragment?.ft === 'attachment' ? sFragment.caption : undefined;
+                            const altText = refPart.zRefSummary?.text || refPart._legacyImageRefPart?.altText;
+                            let width = refPart._legacyImageRefPart?.width;
+                            let height = refPart._legacyImageRefPart?.height;
+                            let prompt: string | undefined;
+                            let author: string | undefined;
+
+                            // Try to get additional metadata from the image asset
+                            try {
+                              if (refPart._legacyImageRefPart) {
+                                const dataRef = refPart._legacyImageRefPart.dataRef;
+                                if (dataRef.reftype === 'dblob' && 'dblobAssetId' in dataRef) {
+                                  const imageAsset = await getImageAsset(dataRef.dblobAssetId);
+                                  if (imageAsset) {
+                                    width = imageAsset.metadata.width;
+                                    height = imageAsset.metadata.height;
+                                    author = imageAsset.metadata.author;
+                                    // Extract info from origin
+                                    if (imageAsset.origin.ot === 'generated') {
+                                      prompt = imageAsset.origin.prompt;
+                                      author = imageAsset.origin.generatorName;
+                                    }
+                                  }
+                                }
+                              }
+                            } catch {
+                              // Continue without additional metadata if asset fetch fails
+                            }
+
+                            // Build description text inline
+                            const parts: string[] = [];
+                            parts.push(title || 'Image');
+                            if (width && height) parts.push(`(${width}×${height})`);
+                            if (altText && altText !== title) parts.push(`- ${altText}`);
+                            if (prompt) {
+                              parts.push(`- Generated from: "${prompt}"`);
+                              if (author) parts.push(`by ${author}`);
+                            } else if (author) parts.push(`- Author: ${author}`);
+                            if (caption && caption !== altText) parts.push(`- ${caption}`);
+                            const descriptionText = parts.join(' ');
+                            imageDescriptionTexts.push(descriptionText);
+                          }
+
                         } catch (error: any) {
                           if (IGNORE_CGR_NO_IMAGE_DEREFERENCE)
                             console.warn(`Zync asset reference from the system instruction missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
@@ -179,6 +231,20 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
       case '_ft_sentinel':
         console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Fragment type', { sFragment });
         break;
+    }
+  }
+
+  // Add rich image descriptions if there are images that will be spilled over
+  if (AUTO_SYSTEM_IMAGES_INDEX && imageDescriptionTexts.length > 0) {
+    const firstImageIndex = sm.parts.findIndex(part => part.pt === 'inline_image');
+    if (firstImageIndex >= 0) {
+      const enHeading = imageDescriptionTexts.length === 1
+        ? 'Note: There is 1 image attached to this system instruction that will appear in the following user message:'
+        : `Note: There are ${imageDescriptionTexts.length} images attached to this system instruction that will appear in the following user message:`;
+      const indexText = [enHeading, ...imageDescriptionTexts].join('\n - ');
+
+      // Insert the descriptive text before the first image
+      sm.parts.splice(firstImageIndex, 0, { pt: 'text', text: indexText });
     }
   }
 
