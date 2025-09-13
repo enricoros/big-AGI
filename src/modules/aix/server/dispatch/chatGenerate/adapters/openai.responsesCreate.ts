@@ -4,7 +4,7 @@ import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixM
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { approxDocPart_To_String } from './anthropic.messageCreate';
+import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -23,7 +23,10 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
  * - much side functionality is not implemented yet
  * - testing with o3-pro only for now
  */
-export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+
+  // Pre-process CGR - approximate spill of System to User message
+  const chatGenerate = aixSpillSystemToUser(_chatGenerate);
 
   // [OpenAI] Vendor-specific model checks
   const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
@@ -168,6 +171,10 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
         instructionsParts.push(aixDocPart_to_OpenAITextContent(part).text);
         break;
 
+      case 'inline_image':
+        // we have already removed image parts from the system message
+        throw new Error('OpenAI Responses: images have to be in user messages, not in system message');
+
       case 'meta_cache_control':
         // ignore this breakpoint hint - Anthropic only
         break;
@@ -187,10 +194,11 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   type FunctionCallMessage = OpenAIWire_Responses_Items.OutputFunctionCallItem;
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
 
+  let allowUserAppend = true;
   function userMessage() {
     // Ensure the last message is a user message, or create a new one
     let lastMessage = chatMessages.length ? chatMessages[chatMessages.length - 1] : undefined;
-    if (lastMessage && lastMessage.type === 'message' && lastMessage.role === 'user')
+    if (allowUserAppend && lastMessage && lastMessage.type === 'message' && lastMessage.role === 'user')
       return lastMessage;
     const newMessage: UserMessage = {
       type: 'message',
@@ -198,6 +206,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
       content: [],
     };
     chatMessages.push(newMessage);
+    allowUserAppend = true;
     return newMessage;
   }
 
@@ -245,7 +254,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
    * - assistant messages to the old Input Message format (which doesn't need IDs)
    *
    */
-  for (const { role: messageRole, parts: messageParts } of chatSequence) {
+  for (const aixMessage of chatSequence) {
+    const { role: messageRole, parts: messageParts } = aixMessage;
 
     switch (messageRole) {
       case 'user':
@@ -295,6 +305,9 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               throw new Error(`Unsupported part type in User message: ${uPt}`);
           }
         }
+
+        // If this message shall be flushed, disallow append once next
+        allowUserAppend = !aixSpillShallFlush(aixMessage);
         break;
 
       case 'model':
