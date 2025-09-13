@@ -5,7 +5,7 @@ import { approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './ant
 
 
 // configuration
-const hotFixImagePartsFirst = true;
+const hotFixImagePartsFirst = true; // https://ai.google.dev/gemini-api/docs/image-understanding#tips-best-practices
 const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 
@@ -147,6 +147,8 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
     const parts: GeminiWire_ContentParts.ContentPart[] = [];
 
     if (hotFixImagePartsFirst) {
+      // https://ai.google.dev/gemini-api/docs/image-understanding#tips-best-practices
+      // "When using a single image with text, place the text prompt after the image part in the contents array."
       message.parts.sort((a, b) => {
         if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
         if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
