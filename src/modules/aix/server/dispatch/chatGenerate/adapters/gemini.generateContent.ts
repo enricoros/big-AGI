@@ -1,7 +1,7 @@
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
-import { approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './anthropic.messageCreate';
+import { aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
 
 
 // configuration
@@ -9,9 +9,12 @@ const hotFixImagePartsFirst = true; // https://ai.google.dev/gemini-api/docs/ima
 const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 
-export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
+export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
   // Note: the streaming setting is ignored as it only belongs in the path
+
+  // Pre-process CGR - approximate spill of System to User message - note: no need to flush as every message is not batched
+  const chatGenerate = aixSpillSystemToUser(_chatGenerate);
 
   // System Instructions
   let systemInstruction: TRequest['systemInstruction'] = undefined;
@@ -26,6 +29,10 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
         case 'doc':
           acc.parts.push(GeminiWire_ContentParts.TextPart(approxDocPart_To_String(part)));
           break;
+
+        case 'inline_image':
+          // we have already removed image parts from the system message
+          throw new Error('Gemini: images have to be in user messages, not in system message');
 
         case 'meta_cache_control':
           // ignore this breakpoint hint - Anthropic only
