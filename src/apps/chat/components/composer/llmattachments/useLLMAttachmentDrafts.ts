@@ -11,6 +11,7 @@ export interface LLMAttachmentDraftsCollection {
   canAttachAllFragments: boolean;
   canInlineSomeFragments: boolean;
   llmTokenCountApprox: number | null;
+  hasImageFragments: boolean;
 }
 
 
@@ -19,6 +20,7 @@ export interface LLMAttachmentDraft {
   llmSupportsAllFragments: boolean;
   llmSupportsTextFragments: boolean;
   llmTokenCountApprox: number | null;
+  hasImageFragments: boolean;
 }
 
 
@@ -45,7 +47,9 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
 
     // LLM-dependent multi-modal enablement
     // TODO: consider also Audio inputs, maybe PDF binary inputs
-    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = chatLLMSupportsImages ? ['reference', 'image_ref', 'doc'] : ['doc'];
+    // FIXME: reference fragments could refer to non-image as well
+    const imageTypes: DMessageAttachmentFragment['part']['pt'][] = ['reference', 'image_ref'];
+    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = chatLLMSupportsImages ? [...imageTypes, 'doc'] : ['doc'];
     const supportedTextTypes: DMessageAttachmentFragment['part']['pt'][] = supportedTypes.filter(pt => pt === 'doc');
 
     // Add LLM-specific properties to each attachment draft
@@ -67,6 +71,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
         llmTokenCountApprox: chatLLM
           ? estimateTokensForFragments(chatLLM, 'user', a.outputFragments, true, 'useLLMAttachmentDrafts')
           : null,
+        hasImageFragments: !a.outputFragments ? false : a.outputFragments.some(op => imageTypes.includes(op.part.pt)),
       };
     });
 
@@ -76,6 +81,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
     const llmTokenCountApprox = chatLLM
       ? llmAttachmentDrafts.reduce((acc, a) => acc + (a.llmTokenCountApprox || 0), 0)
       : null;
+    const hasImageFragments = llmAttachmentDrafts.some(a => a.hasImageFragments);
 
     // [Optimization] Update the ref with the new state
     prevStateRef.current = { llmAttachmentDrafts, chatLLM };
@@ -85,6 +91,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
       canAttachAllFragments,
       canInlineSomeFragments,
       llmTokenCountApprox,
+      hasImageFragments,
     };
 
   }, [attachmentDrafts, chatLLM, chatLLMSupportsImages]); // Dependencies for the outer useMemo
