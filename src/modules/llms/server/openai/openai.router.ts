@@ -23,7 +23,7 @@ import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './mo
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
 import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
 import { mistralModels } from './models/mistral.models';
-import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
+import { openAIModelFilter, openAIModelToModelDescription, openaiDevCheckForModelsOverlap_DEV, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityInjectVariants } from './models/perplexity.models';
@@ -264,6 +264,9 @@ export const llmOpenAIRouter = createTRPCRouter({
 
             // custom OpenAI sort
             .sort(openAISortModels);
+
+          // [DEV] check for superfluous and missing models
+          openaiDevCheckForModelsOverlap_DEV(openAIWireModelsResponse, models);
           break;
 
         case 'openpipe':
