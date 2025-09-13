@@ -245,6 +245,7 @@ export namespace AixWire_Content {
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
       AixWire_Parts.DocPart_schema, // Jan 10, 2025: added support for Docs in AIX system
+      AixWire_Parts.InlineImagePart_schema, // Sept 12, 2025: added support for Inline Images in AIX system
       AixWire_Parts.MetaCacheControl_schema,
     ])),
   });

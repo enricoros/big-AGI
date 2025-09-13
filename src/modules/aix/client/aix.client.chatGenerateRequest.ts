@@ -3,7 +3,7 @@ import { getImageAsset } from '~/common/stores/blob/dblobs-portability';
 
 import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isTextContentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, isContentOrAttachmentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
 import { imageBlobResizeIfNeeded, LLMImageResizeMode } from '~/common/util/imageUtils';
@@ -80,15 +80,105 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
   };
 
   // process fragments of the system instruction
-  for (const fragment of systemInstruction.fragments) {
-    if (isTextContentFragment(fragment)) {
-      sm.parts.push(fragment.part);
-    } else if (isAttachmentFragment(fragment) && isDocPart(fragment.part)) {
-      sm.parts.push(fragment.part);
-    } else {
-      if (process.env.NODE_ENV === 'development')
-        throw new Error('[DEV] aixCGR_systemMessageFromInstruction: unexpected system fragment');
-      console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected system fragment:', fragment);
+  for (const sFragment of systemInstruction.fragments) {
+    switch (sFragment.ft) {
+
+      // Content Fragments - system has [ Text: the good old system instruction ]
+      case 'content':
+        switch (sFragment.part.pt) {
+          // text parts are copied as-is
+          case 'text':
+            sm.parts.push(sFragment.part);
+            break;
+
+          default:
+            const _exhaustiveCheck: never = sFragment.part;
+          // noinspection FallThroughInSwitchStatementJS
+          case 'reference':
+          case 'image_ref':
+          case 'tool_invocation':
+          case 'tool_response':
+          case 'error':
+          case '_pt_sentinel':
+            console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Content fragment', { sFragment });
+            break;
+        }
+        break;
+
+      // Attachment Fragments - system has [ Doc: document attachments, such as files, etf., Reference: to Zync parts, including Image which is the only one supported, ... ]
+      case 'attachment':
+        switch (sFragment.part.pt) {
+          // doc parts are copied as-is
+          case 'doc':
+            sm.parts.push(sFragment.part);
+            break;
+
+          // reference: image parts are supported
+          case 'reference':
+            const refPart = sFragment.part;
+            const refPartRt = refPart.rt;
+            switch (refPartRt) {
+              case 'zync':
+                const zt = refPart.zType;
+                switch (zt) {
+                  case 'asset':
+                    const at = refPart.assetType;
+                    switch (at) {
+                      case 'audio':
+                        // dereference the Zync Audio Asset, converting it to an inline buffer
+                        throw '[DEV] audio assets from the user are not supported yet';
+
+                      case 'image':
+                        // dereference the Zync Image Asset, converting it to an inline image
+                        const resizeMode = false; // keep the image as-is, do not diminish quality; as any resize was done at the Persona edit time
+                        try {
+                          sm.parts.push(await aixConvertZyncImageAssetRefToInlineImageOrThrow(refPart, resizeMode));
+                        } catch (error: any) {
+                          if (IGNORE_CGR_NO_IMAGE_DEREFERENCE)
+                            console.warn(`Zync asset reference from the system instruction missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
+                          else throw error;
+                        }
+                        break;
+
+                      default:
+                        const _exhaustiveCheck: never = at;
+                        console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Reference fragment Asset type', at);
+                        break;
+                    }
+                    break;
+
+                  default:
+                    const _exhaustiveCheck: never = zt;
+                    break;
+                }
+                break;
+
+              default:
+                const _exhaustiveCheck: never = refPartRt;
+              // noinspection FallThroughInSwitchStatementJS
+              case '_sentinel':
+                console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Reference fragment', { sFragment });
+                break;
+            }
+            break;
+
+          default:
+            const _exhaustiveCheck: never = sFragment.part;
+          // noinspection FallThroughInSwitchStatementJS
+          case 'image_ref':
+          case '_pt_sentinel':
+            console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Attachment fragment', { sFragment });
+            break;
+        }
+        break;
+
+      default:
+        const _exhaustiveCheck: never = sFragment;
+      // noinspection FallThroughInSwitchStatementJS
+      case 'void':
+      case '_ft_sentinel':
+        console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Fragment type', { sFragment });
+        break;
     }
   }
 
