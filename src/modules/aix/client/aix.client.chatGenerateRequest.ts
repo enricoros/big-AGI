@@ -142,7 +142,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
                           if (AUTO_SYSTEM_IMAGES_INDEX) {
                             // Generate description text using pure function
                             const title = sFragment?.ft === 'attachment' ? sFragment.title : undefined;
-                            const caption = sFragment?.ft === 'attachment' ? sFragment.caption : undefined;
+                            // const caption = sFragment?.ft === 'attachment' ? sFragment.caption : undefined;
                             const altText = refPart.zRefSummary?.text || refPart._legacyImageRefPart?.altText;
                             let width = refPart._legacyImageRefPart?.width;
                             let height = refPart._legacyImageRefPart?.height;
@@ -180,7 +180,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
                               parts.push(`- Generated from: "${prompt}"`);
                               if (author) parts.push(`by ${author}`);
                             } else if (author) parts.push(`- Author: ${author}`);
-                            if (caption && caption !== altText) parts.push(`- ${caption}`);
+                            // if (caption && caption !== altText) parts.push(`- ${caption}`);
                             const descriptionText = parts.join(' ');
                             imageDescriptionTexts.push(descriptionText);
                           }
