@@ -396,37 +396,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1350 },
   },
 
-  // o1-preview (deprecated - shutdown 2025-07-28)
-  {
-    hidden: true, // DEPRECATED - shutdown 2025-07-28
-    idPrefix: 'o1-preview-2024-09-12',
-    label: 'o1 Preview (2024-09-12)', // ⏱️
-    description: 'DEPRECATED: Will be shut down on 2025-07-28. Latest o1 preview model snapshot. This model takes longer to run and does not support streaming. New reasoning model for complex tasks that require broad general knowledge.',
-    contextWindow: 128000,
-    maxCompletionTokens: 32768,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
-    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1335 },
-    isPreview: true,
-    isLegacy: true,
-  },
-  {
-    idPrefix: 'o1-preview',
-    label: 'o1 Preview',
-    description: 'DEPRECATED: Will be shut down on 2025-07-28. Points to the most recent snapshot of the o1 preview model: o1-preview-2024-09-12',
-    symLink: 'o1-preview-2024-09-12',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 32768,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
-    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1335 },
-    isPreview: true,
-    isLegacy: true,
-  },
 
   // o1-mini (deprecated - shutdown 2025-10-27)
   {
@@ -541,35 +510,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     // benchmarks: will be available soon, hopefully
   },
 
-  // GPT-4.5-Preview - will be removed soon, inferior to 4.1
-  {
-    hidden: true, // OBSOLETE
-    idPrefix: 'gpt-4.5-preview-2025-02-27',
-    label: 'GPT-4.5 Preview (2025-02-27)', //  [deprecated]
-    description: 'Will be shut down on 2025-07-14. Research preview of GPT-4.5, our largest and most capable GPT model yet. Deep world knowledge and better understanding of user intent makes it good at creative tasks and agentic planning.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
-    chatPrice: { input: 75, cache: { cType: 'oai-ac', read: 37.5 }, output: 150 },
-    benchmark: { cbaElo: 1398 },
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4.5-preview',
-    label: 'GPT-4.5 Preview', //  [deprecated]
-    description: 'Largest GPT model, good for creative tasks and agentic planning. Currently points to gpt-4.5-preview-2025-02-27.',
-    symLink: 'gpt-4.5-preview-2025-02-27',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
-    chatPrice: { input: 75, cache: { cType: 'oai-ac', read: 37.5 }, output: 150 },
-    benchmark: { cbaElo: 1398 },
-    isPreview: true,
-  },
 
 
   /// GPT-Audio series - General availability audio models
@@ -919,45 +859,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1245 },
   },
 
-  // GPT4-32k's
-  {
-    idPrefix: 'gpt-4-32k-0613',
-    label: 'GPT-4 32k (0613)',
-    hidden: true, // OLD
-    description: 'Snapshot of gpt-4-32k from June 13th 2023 with improved function calling support. This model was never rolled out widely in favor of GPT-4 Turbo.',
-    contextWindow: 32768,
-    trainingDataCutoff: 'Sep 2021',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 60, output: 120 },
-    // benchmarks never came out of these older models
-    isLegacy: true,
-  },
-  {
-    idPrefix: 'gpt-4-32k-0314',
-    label: 'GPT-4 32k (0314)',
-    hidden: true, // OLD
-    description: 'Snapshot of gpt-4-32k from March 14th 2023. Will be deprecated on June 13th 2024 at the earliest.',
-    contextWindow: 32768,
-    trainingDataCutoff: 'Sep 2021',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 60, output: 120 },
-    // benchmarks never came out of these older models
-    isLegacy: true,
-  },
-  {
-    idPrefix: 'gpt-4-32k',
-    label: 'GPT-4 32k',
-    description: 'Currently points to gpt-4-32k-0613. This model was never rolled out widely in favor of GPT-4 Turbo.',
-    symLink: 'gpt-4-32k-0613',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 32768,
-    trainingDataCutoff: 'Sep 2021',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 60, output: 120 },
-    // benchmarks never came out of these older models
-    isLegacy: true,
-  },
   // GPT4's
   {
     idPrefix: 'gpt-4-0613',
@@ -1064,6 +965,11 @@ const openAIModelsDenyList: string[] = [
 
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
+
+  // [OpenAI Deprecations] Explicitly deny shut-down model IDs that we removed
+  // 'gpt-4.5-preview',
+  // 'o1-preview',
+  // 'gpt-4-32k',
 
   // Legacy GPT models
   'gpt-3.5-turbo-0301',
