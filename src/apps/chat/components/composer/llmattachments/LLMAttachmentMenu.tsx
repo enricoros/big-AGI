@@ -18,6 +18,7 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -156,6 +157,7 @@ export function LLMAttachmentMenu(props: {
       minWidth={260}
       noTopPadding
       placement='top'
+      zIndex={themeZIndexOverMobileDrawer /* was not set, but the Attachment Menu can be used from the Personas Modal */}
     >
 
       {/* Move Arrows */}
