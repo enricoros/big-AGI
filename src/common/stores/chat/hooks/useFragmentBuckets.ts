@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isImageRefPart, isZyncAssetReferencePart } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isImageRefPart, isZyncAssetImageReferencePart } from '../chat.fragments';
 
 
 interface FragmentBuckets {
@@ -38,7 +38,7 @@ export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[
         case 'content':
           return contentFragments.push(fragment);
         case 'attachment':
-          if ((isZyncAssetReferencePart(fragment.part) && fragment.part.assetType === 'image') || isImageRefPart(fragment.part))
+          if (isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part))
             return imageAttachments.push(fragment);
           else
             return nonImageAttachments.push(fragment);
