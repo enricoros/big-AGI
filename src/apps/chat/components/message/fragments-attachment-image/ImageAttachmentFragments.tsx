@@ -64,6 +64,7 @@ export function ImageAttachmentFragments(props: {
   imageAttachments: DMessageAttachmentFragment[],
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
+  renderVariant?: 'chat-message' | 'data-editor',
   disabled?: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
@@ -74,8 +75,8 @@ export function ImageAttachmentFragments(props: {
 
   const layoutSxMemo = React.useMemo((): SxProps => ({
     ...layoutSx,
-    justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
-  }), [props.messageRole]);
+    justifyContent: (props.messageRole === 'assistant' || props.renderVariant === 'data-editor') ? 'flex-start' : 'flex-end',
+  }), [props.messageRole, props.renderVariant]);
 
   const cardStyleSxMemo = React.useMemo((): SxProps => ({
     fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
