@@ -11,6 +11,7 @@ import type { Immutable } from '~/common/types/immutable.types';
 import { AvatarDomainFavicon } from '~/common/components/AvatarDomainFavicon';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { adjustContentScaling } from '~/common/app.theme';
 import { urlExtractDomain, urlPrettyHref } from '~/common/util/urlUtils';
 
 
@@ -19,7 +20,7 @@ const MAX_ICONS = 6;
 const COLOR = 'neutral';
 
 
-const styles = {
+const _styles = {
 
   iconRowButton: {
     minHeight: '2.25rem',
@@ -92,13 +93,28 @@ export function BlockPartModelAnnotations(props: {
   const [expanded, setExpanded] = React.useState(false);
 
   // external state
-  const scaledTypographySx = useScaledTypographySx(props.contentScaling, false, false);
+  const adjustedScaling = adjustContentScaling(props.contentScaling, -1);
+  const scaledTypographySx = useScaledTypographySx(adjustedScaling, false, false);
 
   // derived
   const annotationsCount = props.annotations.length;
   const moreIcons = annotationsCount - MAX_ICONS;
 
   const handleToggleExpanded = React.useCallback(() => setExpanded(on => !on), []);
+
+  // memo styles
+  const scaledStyles = React.useMemo(() => ({
+    iconRowButton: {
+      ..._styles.iconRowButton,
+      ...scaledTypographySx,
+      // since we 'soft' on not expanded, inset it too
+      ...(!expanded && { boxShadow: 'inset 1px 1px 4px -2px rgba(0, 0, 0, 0.2)' }),
+    },
+    citationsList: {
+      ..._styles.citationsList,
+      ...scaledTypographySx,
+    }
+  }), [expanded, scaledTypographySx]);
 
   if (!annotationsCount)
     return null;
@@ -109,12 +125,12 @@ export function BlockPartModelAnnotations(props: {
       {/* Row of favicons */}
       <Button
         size='sm'
-        variant={expanded ? 'plain' : 'plain'}
+        variant={!expanded ? 'soft' : 'plain'}
         color={COLOR}
         fullWidth
         aria-expanded={expanded}
         onClick={handleToggleExpanded}
-        sx={styles.iconRowButton}
+        sx={scaledStyles.iconRowButton}
       >
         <span>{annotationsCount} {props.itemsName || 'citation'}{annotationsCount > 1 ? 's' : ''}</span>
 
@@ -122,13 +138,13 @@ export function BlockPartModelAnnotations(props: {
         {!expanded && props.annotations.slice(0, MAX_ICONS).map((citation, index) => (
           <TooltipOutlined key={index} title={citation.title || urlExtractDomain(citation.url)}>
             <div>
-              <AvatarDomainFavicon key={index} url={citation.url} size={24} iconRes={48} noHover noShadow />
+              <AvatarDomainFavicon key={index} url={citation.url} size={18} iconRes={48} noHover noShadow />
             </div>
           </TooltipOutlined>
         ))}
 
         {/* +X symbol */}
-        {(moreIcons >= 1 && !expanded) && '+' + moreIcons}
+        <span style={{ opacity: 0.5 }}>{(moreIcons >= 1 && !expanded) && '+' + moreIcons}</span>
 
         {/* Expand/Collapse button */}
         <ExpandMoreIcon
@@ -143,7 +159,7 @@ export function BlockPartModelAnnotations(props: {
       {/* Expanded citations list */}
       <ExpanderControlledBox expanded={expanded}>
 
-        <List sx={{ ...styles.citationsList, ...scaledTypographySx }}>
+        <List sx={scaledStyles.citationsList}>
           {props.annotations.map((citation, index) => {
             const domain = urlExtractDomain(citation.url);
 
@@ -154,19 +170,19 @@ export function BlockPartModelAnnotations(props: {
                   href={citation.url}
                   target='_blank'
                   rel='noopener noreferrer'
-                  sx={index < annotationsCount - 1 ? styles.citationItem : styles.citationItemLast}
+                  sx={index < annotationsCount - 1 ? _styles.citationItem : _styles.citationItemLast}
                 >
-                  <Box sx={styles.citationNumber}>
+                  <Box sx={_styles.citationNumber}>
                     {citation.refNumber ? `[${citation.refNumber}]` : index + 1}
                   </Box>
 
-                  <Box sx={styles.line}>
-                    <AvatarDomainFavicon url={!expanded ? '' : citation.url} size={32} iconRes={64} />
-                    <Box sx={styles.lineContent}>
+                  <Box sx={_styles.line}>
+                    <AvatarDomainFavicon url={!expanded ? '' : citation.url} size={24} iconRes={64} />
+                    <Box sx={_styles.lineContent}>
                       <Box className='agi-ellipsize'>
                         {citation.title || domain}
                       </Box>
-                      <Box sx={styles.lineLink} className='agi-ellipsize'>
+                      <Box sx={_styles.lineLink} className='agi-ellipsize'>
                         {urlPrettyHref(citation.url, true, true)}
                         {citation.pubTs && (
                           <span style={{ marginLeft: '0.5em' }}>
