@@ -38,7 +38,7 @@ const _webSearchContextOptions = [
   { value: 'high', label: 'Comprehensive', description: 'Largest, highest cost, slower' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced context, cost, and speed' } as const,
   { value: 'low', label: 'Low', description: 'Smallest, cheapest, fastest' } as const,
-  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
+  { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' } as const,
 ] as const;
 const _perplexitySearchModeOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'General web sources' },
