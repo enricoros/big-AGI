@@ -1,7 +1,9 @@
 import * as React from 'react';
 
-import { Box, Button, List, ListItem, ListItemButton } from '@mui/joy';
+import { Box, Button, Chip, List, ListItem, ListItemButton } from '@mui/joy';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TableViewRoundedIcon from '@mui/icons-material/TableView';
 
 import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
@@ -12,6 +14,7 @@ import { AvatarDomainFavicon } from '~/common/components/AvatarDomainFavicon';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling } from '~/common/app.theme';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { urlExtractDomain, urlPrettyHref } from '~/common/util/urlUtils';
 
 
@@ -102,6 +105,44 @@ export function BlockPartModelAnnotations(props: {
 
   const handleToggleExpanded = React.useCallback(() => setExpanded(on => !on), []);
 
+  // useRef to keep current annotations for copy handlers
+  const annotationsRef = React.useRef(props.annotations);
+  annotationsRef.current = props.annotations;
+
+
+  // copy handlers
+
+  const handleCopyText = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    const citationsText = annotationsRef.current
+      .map((citation, index) => {
+        const domain = urlExtractDomain(citation.url);
+        const refNumber = citation.refNumber ? `[${citation.refNumber}]` : `${index + 1}`;
+        const title = citation.title || domain;
+        const date = citation.pubTs ? ` (${new Date(citation.pubTs).toLocaleDateString()})` : '';
+        return `${refNumber} ${title}${date}\n${citation.url}`;
+      })
+      .join('\n\n');
+    copyToClipboard(citationsText, 'Citations');
+  }, []);
+
+  const handleCopyMarkdown = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    const markdownTable = [
+      '| # | Title | URL | Date |',
+      '|---|-------|-----|------|',
+      ...annotationsRef.current.map((citation, index) => {
+        const domain = urlExtractDomain(citation.url);
+        const refNumber = citation.refNumber ? citation.refNumber : index + 1;
+        const title = (citation.title || domain).replace(/\|/g, '\\|');
+        const url = citation.url.replace(/\|/g, '\\|');
+        const date = citation.pubTs ? new Date(citation.pubTs).toLocaleDateString() : '';
+        return `| ${refNumber} | ${title} | ${url} | ${date} |`;
+      })
+    ].join('\n');
+    copyToClipboard(markdownTable, 'Citations Table');
+  }, []);
+
   // memo styles
   const scaledStyles = React.useMemo(() => ({
     iconRowButton: {
@@ -147,13 +188,47 @@ export function BlockPartModelAnnotations(props: {
         <span style={{ opacity: 0.5 }}>{(moreIcons >= 1 && !expanded) && '+' + moreIcons}</span>
 
         {/* Expand/Collapse button */}
-        <ExpandMoreIcon
-          sx={{
-            ml: 'auto',
-            transition: 'transform 0.14s ease',
-            transform: expanded ? 'rotate(180deg)' : 'none',
-          }}
-        />
+        <Box sx={{
+          ml: 'auto',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}>
+
+          {/* Copy buttons - only show when expanded */}
+          {expanded && (
+            <Chip
+              size='sm'
+              color={COLOR}
+              variant='soft'
+              onClick={handleCopyText}
+              startDecorator={<ContentCopyIcon />}
+              sx={{ px: 1.5 }}
+            >
+              Copy
+            </Chip>
+          )}
+          {expanded && (
+            <Chip
+              size='sm'
+              color={COLOR}
+              variant='soft'
+              onClick={handleCopyMarkdown}
+              startDecorator={<TableViewRoundedIcon />}
+              sx={{ px: 1.5 }}
+            >
+              Table
+            </Chip>
+          )}
+
+          <ExpandMoreIcon
+            sx={{
+              ml: 'auto',
+              transition: 'transform 0.14s ease',
+              transform: expanded ? 'rotate(180deg)' : 'none',
+            }}
+          />
+        </Box>
       </Button>
 
       {/* Expanded citations list */}
