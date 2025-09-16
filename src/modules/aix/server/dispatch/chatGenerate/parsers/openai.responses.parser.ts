@@ -434,6 +434,27 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // -> Actual web_search_call results are handled in response.output_item.done
         break;
 
+      // 4.5 - Text Annotations (inline citations)
+      // IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
+      // used in generating the response. Different from bulk web search sources (20+ results).
+
+      case 'response.output_text.annotation.added': // NEW, CORRECT
+      case 'response.output_text_annotation.added': // OLD, for backwards compatibility
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        const annotation = event.annotation;
+        if (annotation?.type === 'url_citation') {
+          // These are the curated, high-quality citations that should be displayed
+          pt.appendUrlCitation(
+            annotation.title || annotation.url || '',
+            annotation.url,
+            event.annotation_index,
+            annotation.start_index,
+            annotation.end_index,
+            annotation.text
+          );
+        }
+        break;
+
       // 1.5 - Error
 
       case 'error':
