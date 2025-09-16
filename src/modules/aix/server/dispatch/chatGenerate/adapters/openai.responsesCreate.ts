@@ -146,8 +146,8 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     }
   }
 
-  // Tool: Image Generation: for testing (enable for all compatible models)
-  const requestImageGenerationTool = false // TODO: make this configurable
+  // Tool: Image Generation: configurable per model
+  const requestImageGenerationTool = !!model.vndOaiImageGeneration;
   if (requestImageGenerationTool) {
     if (isDialectAzure) {
       // Azure OpenAI may not support image generation tool yet
