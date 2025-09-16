@@ -22,16 +22,16 @@ const _knownMistralModelDetails: Record<string, {
 }> = {
 
   // Premier models
-  'mistral-medium-2505': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1369 } },
-  'mistral-medium-latest': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1369 } },
+  'mistral-medium-2505': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1383 } }, // mistral-medium-2505
+  'mistral-medium-latest': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1383 } }, // Same as 2505
   'mistral-medium': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1165 } },
 
   'magistral-medium-2506': { chatPrice: { input: 2, output: 5 } },
   'magistral-medium-latest': { chatPrice: { input: 2, output: 5 } },
 
-  'mistral-large-2411': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1266 } },
-  'mistral-large-2407': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1269 } },
-  'mistral-large-latest': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1266 } },
+  'mistral-large-2411': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1305 } }, // mistral-large-2411
+  'mistral-large-2407': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1314 } }, // mistral-large-2407
+  'mistral-large-latest': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1305 } }, // Same as 2411
 
   'pixtral-large-2411': { chatPrice: { input: 2, output: 6 } },
   'pixtral-large-latest': { chatPrice: { input: 2, output: 6 } },
@@ -42,15 +42,15 @@ const _knownMistralModelDetails: Record<string, {
   'codestral-2501': { chatPrice: { input: 0.3, output: 0.9 } },
   'codestral-latest': { chatPrice: { input: 0.3, output: 0.9 } },
 
-  'ministral-8b-2410': { chatPrice: { input: 0.1, output: 0.1 }, benchmark: { cbaElo: 1200 } },
-  'ministral-8b-latest': { chatPrice: { input: 0.1, output: 0.1 }, benchmark: { cbaElo: 1200 } },
+  'ministral-8b-2410': { chatPrice: { input: 0.1, output: 0.1 }, benchmark: { cbaElo: 1240 } }, // ministral-8b-2410
+  'ministral-8b-latest': { chatPrice: { input: 0.1, output: 0.1 }, benchmark: { cbaElo: 1240 } }, // Same as 2410
 
   'ministral-3b-2410': { chatPrice: { input: 0.04, output: 0.04 } },
   'ministral-3b-latest': { chatPrice: { input: 0.04, output: 0.04 } },
 
   // Open models
   'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 } },
-  'mistral-small-2503': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1271 } },
+  'mistral-small-2503': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1298 } }, // mistral-small-3.1-24b-instruct-2503
   'mistral-small-2501': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1235 } },
   'mistral-small-2409': { chatPrice: { input: 0.1, output: 0.3 } },
   'mistral-small-latest': { chatPrice: { input: 0.1, output: 0.3 } },

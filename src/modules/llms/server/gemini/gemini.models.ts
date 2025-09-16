@@ -149,7 +149,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ }],
-    benchmark: { cbaElo: 1470 }, // Same as preview-06-05 since it's the stable version
+    benchmark: { cbaElo: 1455 }, // gemini-2.5-pro (updated from CSV)
   },
   {
     id: 'models/gemini-2.5-pro-preview-06-05',
@@ -201,7 +201,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini25FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
-    benchmark: { cbaElo: 1424 }, // Same as preview-05-20 since it's the stable version
+    benchmark: { cbaElo: 1407 }, // gemini-2.5-flash (updated from CSV)
   },
   {
     id: 'models/gemini-2.5-flash-preview-05-20',
@@ -415,7 +415,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1312 },
+    benchmark: { cbaElo: 1352 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-preview',
@@ -424,7 +424,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1311 },
+    benchmark: { cbaElo: 1352 },
   },
 
 
@@ -445,14 +445,14 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-1.5-flash-002',
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1271 },
+    benchmark: { cbaElo: 1312 },
     hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-flash-002', // new stable version
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1271 },
+    benchmark: { cbaElo: 1312 },
     hidden: true,
   },
 
@@ -470,14 +470,14 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-1.5-flash-8b-001',
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1212 },
+    benchmark: { cbaElo: 1262 },
     hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-flash-8b-001',
     chatPrice: gemini15Flash8BPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1212 },
+    benchmark: { cbaElo: 1262 },
     hidden: true,
   },
 
@@ -494,14 +494,14 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-1.5-pro-002',
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1302 },
+    benchmark: { cbaElo: 1350 },
     hidden: true, // old model, SNR
   },
   {
     id: 'models/gemini-1.5-pro-002',
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1302 },
+    benchmark: { cbaElo: 1350 },
     hidden: true,
   },
 
