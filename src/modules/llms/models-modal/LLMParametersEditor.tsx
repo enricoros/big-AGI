@@ -58,6 +58,14 @@ const _xaiSearchModeOptions = [
   { value: 'off', label: 'Off', description: 'Never perform a search' },
 ] as const;
 
+const _imageGenerationOptions = [
+  { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
+  { value: 'mq', label: 'Standard', description: 'Quick gen' },
+  { value: 'hq', label: 'High Quality', description: 'Best looks' },
+  { value: 'hq_edit', label: 'Precise Edits', description: 'Controlled' },
+  // { value: 'hq_png', label: 'HD PNG', description: 'Uncompressed' }, // TODO: re-enable when uncompressed PNG saving is implemented
+] as const;
+
 const _xaiDateFilterOptions = [
   { value: 'unfiltered', label: 'All Time', description: 'No date restriction' },
   { value: '1d', label: 'Last Day', description: 'Results from last 24 hours' },
@@ -377,6 +385,21 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {showParam('llmVndOaiImageGeneration') && (
+      <FormSelectControl
+        title='Image Generation'
+        tooltip='Configure image generation mode and quality'
+        value={llmVndOaiImageGeneration ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiImageGeneration');
+          else
+            onChangeParameter({ llmVndOaiImageGeneration: value });
+        }}
+        options={_imageGenerationOptions}
+      />
+    )}
+
     {showParam('llmVndOaiRestoreMarkdown') && (
       <FormSwitchControl
         title='Restore Markdown'
@@ -388,19 +411,6 @@ export function LLMParametersEditor(props: {
             onChangeParameter({ llmVndOaiRestoreMarkdown: false });
           else
             onChangeParameter({ llmVndOaiRestoreMarkdown: true });
-        }}
-      />
-    )}
-
-    {showParam('llmVndOaiImageGeneration') && (
-      <FormSwitchControl
-        title='Image Generation'
-        description='Enable image generation'
-        tooltip='Allow the model to generate images when appropriate'
-        checked={!!llmVndOaiImageGeneration}
-        onChange={checked => {
-          if (!checked) onRemoveParameter('llmVndOaiImageGeneration');
-          else onChangeParameter({ llmVndOaiImageGeneration: true });
         }}
       />
     )}

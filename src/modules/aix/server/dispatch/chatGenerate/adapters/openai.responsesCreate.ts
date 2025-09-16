@@ -156,16 +156,16 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
       // Add the image generation tool to the request
       if (!payload.tools?.length)
         payload.tools = [];
-      const imageGenerationTool: TRequestTool = {
+
+      // Map enum values to tool configuration
+      const imageMode = model.vndOaiImageGeneration;
+      const imageGenerationTool: Extract<TRequestTool, { type: 'image_generation' }> = {
         type: 'image_generation',
-        // Use defaults for all optional parameters
-        // size: 'auto',
-        // quality: 'auto',
-        // partial_images: 3, // Enable partial image streaming for better UX
-        // input_fidelity: 'high',
+        ...(imageMode === 'mq' ? { quality: 'medium' } : { /* quality: 'high' -- auto */ }),
+        // ...(imageMode === 'hq' ? ... auto ... ),
+        ...(imageMode === 'hq_edit' && { input_fidelity: 'high' }),
+        ...(imageMode !== 'hq_png' && { output_format: 'webp' }),
         moderation: 'low',
-        output_format: 'webp',
-        // background: 'auto',
       };
       payload.tools.push(imageGenerationTool);
     }
