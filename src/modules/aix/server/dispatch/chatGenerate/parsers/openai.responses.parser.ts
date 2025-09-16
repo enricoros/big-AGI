@@ -327,26 +327,26 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
                 // - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
                 // - citations: High-quality links (2-3) via response.output_text.annotation.added events
                 if (action.query && action.sources && Array.isArray(action.sources)) {
-                  pt.sendVoidPlaceholder('web_search', `${action.query}: ${action.sources.length} results...`);
+                  pt.sendVoidPlaceholder('search-web', `${action.query}: ${action.sources.length} results...`);
                 } else if (action.query)
-                  pt.sendVoidPlaceholder('web_search', `${action.query}: completed`);
+                  pt.sendVoidPlaceholder('search-web', `${action.query}: completed`);
                 break;
 
               case 'open_page':
                 // Action: opening/visiting a specific web page
                 const sanitizedUrl = sanitizeUrlForDisplay(action.url);
-                pt.sendVoidPlaceholder('web_search', `Opening ${action.url ? sanitizedUrl : 'Opening page...'}`);
+                pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'Opening page...'}`);
                 break;
 
               case 'find_in_page':
                 // Action: searching for a pattern within an opened page
                 const sanitizedPageUrl = sanitizeUrlForDisplay(action.url);
                 if (action.pattern && action.url)
-                  pt.sendVoidPlaceholder('web_search', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
+                  pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
                 else if (action.pattern)
-                  pt.sendVoidPlaceholder('web_search', `Searching for "${action.pattern}"`);
+                  pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}"`);
                 else
-                  pt.sendVoidPlaceholder('web_search', 'Searching in page...');
+                  pt.sendVoidPlaceholder('search-web', 'Searching in page...');
                 break;
 
               default:
@@ -506,18 +506,18 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.sendVoidPlaceholder('web_search', 'Searching the web...');
+        pt.sendVoidPlaceholder('search-web', 'Searching the web...');
         break;
 
       case 'response.web_search_call.searching':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
         // Update placeholder for ongoing search (can happen multiple times)
-        // pt.sendVoidPlaceholder('web_search', 'Searching...');
+        // pt.sendVoidPlaceholder('search-web', 'Searching...');
         break;
 
       case 'response.web_search_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.sendVoidPlaceholder('web_search', 'Search completed');
+        pt.sendVoidPlaceholder('search-web', 'Search completed');
         // -> Actual web_search_call results are handled in response.output_item.done
         break;
 
@@ -527,23 +527,25 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('image_generation', 'Starting image generation...');
+        pt.sendVoidPlaceholder('gen-image', 'Starting image generation...');
         break;
 
       case 'response.image_generation_call.generating':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('image_generation', 'Generating image...');
+        pt.sendVoidPlaceholder('gen-image', 'Generating image...');
         break;
 
       case 'response.image_generation_call.partial_image':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
         // SKIP partial images to avoid duplicates - only use final result
+        // const { partial_image_index: piIndex } = event;
+        // console.log('[DEV] AIX: OpenAI Responses: skipping partial_image event to avoid duplicates:', { piIndex });
         // The final image will be handled in response.output_item.done
         break;
 
       case 'response.image_generation_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('image_generation', 'Image generation completed');
+        pt.sendVoidPlaceholder('gen-image', 'Image generation completed');
         // -> Final image result is handled in response.output_item.done
         break;
 

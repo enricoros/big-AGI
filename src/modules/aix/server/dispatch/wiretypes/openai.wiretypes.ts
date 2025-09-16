@@ -1210,7 +1210,7 @@ export namespace OpenAIWire_Responses_Tools {
       file_id: z.string().optional(), // File ID for the mask image
       image_url: z.string().optional(), // Base64-encoded mask image
     }).optional(),
-    /** 'gpt-image-1' (default) */
+    /** 'gpt-image-1' (default), leaks suggest also 'gpt-image-0721-mini-alpha' */
     model: z.string().optional(),
     /** Note: 'low' is unconfirmed here. Defaults to 'auto' */
     moderation: z.enum(['low', 'auto']).optional(),

@@ -227,8 +227,8 @@ export type DVoidModelAuxPart = {
 type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up' /* 2025-02-23: added for non-pure-text placeholders */, modelOp?: DVoidPlaceholderModelOp };
 
 export type DVoidPlaceholderModelOp = {
-  mot: 'web_search' | 'image_generation',
-  cts: number,
+  mot: 'search-web' | 'gen-image',
+  cts: number, // client-based timestamp
 };
 
 type _SentinelPart = { pt: '_pt_sentinel' };

@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -578,7 +578,10 @@ export class ContentReassembler {
   }
 
   private onVoidPlaceholder(vp: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
-    const { text } = vp;
+    const { text, mot } = vp;
+
+    // update the model op
+    const modelOp: DVoidPlaceholderModelOp = { mot, cts: Date.now() };
 
     // Only reuse placeholder if it's at index 0
     if (this.accumulator.fragments.length > 0) {
@@ -586,12 +589,13 @@ export class ContentReassembler {
       if (firstFragment.ft === 'void' && firstFragment.part.pt === 'ph') {
         // Update existing placeholder at index 0
         firstFragment.part.pText = text;
+        firstFragment.part.modelOp = modelOp;
         return;
       }
     }
 
     // Create new placeholder at the beginning (will be index 0)
-    const placeholderFragment = createPlaceholderVoidFragment(text);
+    const placeholderFragment = createPlaceholderVoidFragment(text, undefined, modelOp);
     this.accumulator.fragments.unshift(placeholderFragment); // Add to beginning
 
     // Placeholders don't affect text fragment indexing
