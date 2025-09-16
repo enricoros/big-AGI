@@ -253,6 +253,17 @@ export const animationEnterScaleUp = keyframes`
         //rotate: 0;
     }`;
 
+export const animationSpinHalfPause = keyframes`
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    66% {
+        transform: rotate(180deg) scale(1);
+    }
+    100% {
+        transform: rotate(180deg);
+    }`;
+
 
 // Box/Text Shadow
 
