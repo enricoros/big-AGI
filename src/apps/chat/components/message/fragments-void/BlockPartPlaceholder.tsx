@@ -1,10 +1,13 @@
 import * as React from 'react';
 
+import { Typography } from '@mui/joy';
+
+import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
-import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { DVoidPlaceholderModelOp } from '~/common/stores/chat/chat.fragments';
+import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DataStreamViz } from '~/common/components/DataStreamViz';
 
 
@@ -44,6 +47,23 @@ export function BlockPartPlaceholder(props: {
   // Alternative placeholder visualization
   if (shouldShowViz && showVisualization)
     return <DataStreamViz height={1 + 8 * 4} />;
+
+  // Model operation placeholder
+  if (isModelOperation)
+    return (
+      <BlocksContainer>
+        <Typography
+          sx={{
+            fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+            lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+            fontStyle: 'italic',
+            color: 'text.tertiary',
+          }}
+        >
+          {props.placeholderText}
+        </Typography>
+      </BlocksContainer>
+    );
 
   return (
     <ScaledTextBlockRenderer
