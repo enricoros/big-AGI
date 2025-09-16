@@ -1483,12 +1483,12 @@ export namespace OpenAIWire_API_Responses {
   });
 
   const OutputRefusalDeltaEvent_schema = _PartIndexedEvent_schema.extend({
-    type: z.literal('response.output_refusal.delta'),
+    type: z.literal('response.refusal.delta'),
     delta: z.string(),
   });
 
   const OutputRefusalDoneEvent_schema = _PartIndexedEvent_schema.extend({
-    type: z.literal('response.output_refusal.done'),
+    type: z.literal('response.refusal.done'),
     refusal: z.string(),
   });
 
