@@ -319,6 +319,14 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           default:
             const _exhaustiveCheck: never = doneItemType;
+          // noinspection FallThroughInSwitchStatementJS
+          // case 'custom_tool_call':
+          // case 'image_generation_call':
+          // case 'code_interpreter_call':
+          // case 'file_search_call': // OpenAI vector store - not implemented
+          // case 'mcp_call':
+            // TODO: Implement these when types are properly integrated
+            console.log(`[DEV] Output item type: ${doneItemType} (TODO: implement)`, doneItem);
             break;
         }
 
@@ -373,6 +381,41 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // .text: ignore finalized content, we already transmitted all partials
         break;
 
+      case 'response.output_text.annotation.added': // NEW, CORRECT
+      case 'response.output_text_annotation.added': // OLD, for backwards compatibility
+        // IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
+        // used in generating the response. Different from bulk web search sources (20+ results).
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        const annotation = event.annotation;
+        if (annotation?.type === 'url_citation') {
+          // These are the curated, high-quality citations that should be displayed
+          pt.appendUrlCitation(
+            annotation.title || annotation.url || '',
+            annotation.url,
+            event.annotation_index,
+            annotation.start_index,
+            annotation.end_index,
+            annotation.text
+          );
+        }
+        break;
+
+      // The following 2 are speculative implementations
+
+      case 'response.reasoning_text.delta':
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        // FIXME: implement this, if it shows up
+        console.log(`[DEV] AIX: OpenAI Responses: ignoring reasoning_text.delta event:`, event);
+        // pt.appendReasoningText(event.delta);
+        break;
+
+      case 'response.reasoning_text.done':
+        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        // Text already sent incrementally
+        // FIXME: implement this, if it shows up
+        console.log(`[DEV] AIX: OpenAI Responses: ignoring reasoning_text.done event:`, event);
+        break;
+
       case 'response.output_refusal.delta':
       case 'response.output_refusal.done':
         R.contentPartVisit(eventType, event.output_index, event.content_index);
@@ -394,15 +437,6 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         R.summaryPartVisit(eventType, event.output_index, event.summary_index);
         // .text: ignore finalized content, we already transmitted all partials
         break;
-
-      // case 'response.reasoning.delta':
-      //   break;
-      // case 'response.reasoning.done':
-      //   break;
-      // case 'response.reasoning_summary.delta':
-      //   break;
-      // case 'response.reasoning_summary.done':
-      //   break;
 
       // 4.3 - Function Calls
 
@@ -434,26 +468,6 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // -> Actual web_search_call results are handled in response.output_item.done
         break;
 
-      // 4.5 - Text Annotations (inline citations)
-      // IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
-      // used in generating the response. Different from bulk web search sources (20+ results).
-
-      case 'response.output_text.annotation.added': // NEW, CORRECT
-      case 'response.output_text_annotation.added': // OLD, for backwards compatibility
-        R.contentPartVisit(eventType, event.output_index, event.content_index);
-        const annotation = event.annotation;
-        if (annotation?.type === 'url_citation') {
-          // These are the curated, high-quality citations that should be displayed
-          pt.appendUrlCitation(
-            annotation.title || annotation.url || '',
-            annotation.url,
-            event.annotation_index,
-            annotation.start_index,
-            annotation.end_index,
-            annotation.text
-          );
-        }
-        break;
 
       // 1.5 - Error
 
@@ -470,7 +484,27 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         break;
 
       default:
-        // const _exhaustiveCheck: never = eventType;
+        const _exhaustiveCheck: never = eventType;
+      // noinspection FallThroughInSwitchStatementJS
+      // case 'response.file_search_call.in_progress': // OpenAI vector store - not implemented
+      // case 'response.file_search_call.searching': // OpenAI vector store - not implemented
+      // case 'response.file_search_call.completed': // OpenAI vector store - not implemented
+      // case 'response.code_interpreter_call.in_progress':
+      // case 'response.code_interpreter_call.interpreting':
+      // case 'response.code_interpreter_call.completed':
+      // case 'response.code_interpreter_call_code.delta':
+      // case 'response.code_interpreter_call_code.done':
+      // case 'response.mcp_call.in_progress':
+      // case 'response.mcp_call.completed':
+      // case 'response.mcp_call.failed':
+      // case 'response.mcp_call_arguments.delta':
+      // case 'response.mcp_call_arguments.done':
+      // case 'response.mcp_list_tools.in_progress':
+      // case 'response.mcp_list_tools.completed':
+      // case 'response.mcp_list_tools.failed':
+      // case 'response.custom_tool_call_input.delta':
+      // case 'response.custom_tool_call_input.done':
+      // case 'response.queued':
         // FIXME: if we're here, we prob needed to implement the part
         console.warn('[DEV] AIX: OpenAI Responses: unexpected event type:', eventType);
         break;
@@ -667,7 +701,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         default:
           const _exhaustiveCheck: never = oItemType;
-          console.warn('[DEV] AIX: OpenAI-Response-NS unexpected output item type:', oItemType);
+          console.log(`[DEV] Final Response output item type: ${oItemType} (TODO: implement)`);
           break;
       }
 
