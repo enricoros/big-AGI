@@ -355,11 +355,26 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             }
             break;
 
+          case 'image_generation_call':
+            // -> IGC: process completed image generation using 'ii' particle for inline images
+            const { result: igResult, revised_prompt: igRevisedPrompt } = doneItem;
+            // Create inline image with base64 data
+            if (igResult)
+              pt.appendImageInline(
+                'image/png', // default mime type
+                igResult,
+                igRevisedPrompt || 'Generated image',
+                'gpt-image-1', // generator
+                igRevisedPrompt || '' // prompt used
+              );
+            else
+              console.warn('[DEV] AIX: OpenAI Responses: image_generation_call done without result:', doneItem);
+            break;
+
           default:
             const _exhaustiveCheck: never = doneItemType;
           // noinspection FallThroughInSwitchStatementJS
           // case 'custom_tool_call':
-          // case 'image_generation_call':
           // case 'code_interpreter_call':
           // case 'file_search_call': // OpenAI vector store - not implemented
           // case 'mcp_call':
@@ -504,6 +519,32 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
         pt.sendVoidPlaceholder('web_search', 'Search completed');
         // -> Actual web_search_call results are handled in response.output_item.done
+        break;
+
+      // Image Generation Call Events
+      // Flow: in_progress -> generating -> [partial_image]* -> completed
+      // NOTE: We use placeholder signals for progress, final image handled in output_item.done
+
+      case 'response.image_generation_call.in_progress':
+        R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
+        pt.sendVoidPlaceholder('image_generation', 'Starting image generation...');
+        break;
+
+      case 'response.image_generation_call.generating':
+        R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
+        pt.sendVoidPlaceholder('image_generation', 'Generating image...');
+        break;
+
+      case 'response.image_generation_call.partial_image':
+        R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
+        // SKIP partial images to avoid duplicates - only use final result
+        // The final image will be handled in response.output_item.done
+        break;
+
+      case 'response.image_generation_call.completed':
+        R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
+        pt.sendVoidPlaceholder('image_generation', 'Image generation completed');
+        // -> Final image result is handled in response.output_item.done
         break;
 
 
@@ -735,6 +776,23 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
         case 'web_search_call':
           // -> WSC: TODO
           console.warn('[DEV] notImplemented: OpenAI Responses: web_search_call', { oItem });
+          break;
+
+        case 'image_generation_call':
+          // -> IGC: process completed image generation using 'ii' particle for inline images
+          const { result: igResult, revised_prompt: igRevisedPrompt } = oItem;
+          // Create inline image with base64 data
+          if (igResult)
+            pt.appendImageInline(
+              'image/png', // default mime type
+              igResult,
+              igRevisedPrompt || 'Generated image',
+              'gpt-image-1', // generator
+              igRevisedPrompt || '' // prompt used
+            );
+          else
+            console.warn('[DEV] AIX: OpenAI Responses: image_generation_call done without result:', oItem);
+          pt.endMessagePart();
           break;
 
         default:

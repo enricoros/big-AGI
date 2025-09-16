@@ -146,6 +146,31 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     }
   }
 
+  // Tool: Image Generation: for testing (enable for all compatible models)
+  const requestImageGenerationTool = false // TODO: make this configurable
+  if (requestImageGenerationTool) {
+    if (isDialectAzure) {
+      // Azure OpenAI may not support image generation tool yet
+      console.log('[DEV] Azure OpenAI Responses: skipping image generation tool due to Azure limitations');
+    } else {
+      // Add the image generation tool to the request
+      if (!payload.tools?.length)
+        payload.tools = [];
+      const imageGenerationTool: TRequestTool = {
+        type: 'image_generation',
+        // Use defaults for all optional parameters
+        // size: 'auto',
+        // quality: 'auto',
+        // partial_images: 3, // Enable partial image streaming for better UX
+        // input_fidelity: 'high',
+        moderation: 'low',
+        output_format: 'webp',
+        // background: 'auto',
+      };
+      payload.tools.push(imageGenerationTool);
+    }
+  }
+
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
   if (model.vndOaiRestoreMarkdown)
     vndOaiRestoreMarkdown(payload);

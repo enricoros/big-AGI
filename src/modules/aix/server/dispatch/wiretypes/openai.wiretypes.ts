@@ -1007,12 +1007,12 @@ export namespace OpenAIWire_Responses_Items {
     ]).optional(),
   });
 
-  // const OutputImageGenerationCallItem_schema = _OutputItemBase_schema.extend({
-  //   type: z.literal('image_generation_call'),
-  //   id: z.string(), // unique ID of the image generation call (output item ID)
-  //   result: z.string().optional(), // base64 image data when completed
-  //   prompt: z.string().optional(), // the prompt used for generation
-  // });
+  const OutputImageGenerationCallItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('image_generation_call'),
+    id: z.string(), // unique ID of the image generation call (output item ID)
+    result: z.string().optional(), // base64 image data when completed
+    revised_prompt: z.string().optional(), // the revised prompt used for generation
+  });
 
   // const OutputCodeInterpreterCallItem_schema = _OutputItemBase_schema.extend({
   //   type: z.literal('code_interpreter_call'),
@@ -1053,7 +1053,7 @@ export namespace OpenAIWire_Responses_Items {
     OutputFunctionCallItem_schema,
     // OutputCustomToolCallItem_schema, // plain text custom tool output
     OutputWebSearchCallItem_schema,
-    // OutputImageGenerationCallItem_schema,
+    OutputImageGenerationCallItem_schema,
     // OutputCodeInterpreterCallItem_schema,
     // OutputFileSearchCallItem_schema,
     // OutputMCPCallItem_schema,
@@ -1198,22 +1198,32 @@ export namespace OpenAIWire_Responses_Tools {
     }).optional(),
   });
 
-  // const ImageGenerationTool_schema = z.object({
-  //   type: z.literal('image_generation'),
-  //   background: z.enum(['transparent', 'opaque', 'auto']).optional(), // defaults to 'auto'
-  //   input_fidelity: z.enum(['high', 'low']).optional(), // defaults to 'low'
-  //   input_image_mask: z.object({
-  //     image_url: z.string().optional(),
-  //     file_id: z.string().optional(),
-  //   }).optional(),
-  //   model: z.string().optional(), // defaults to 'gpt-image-1'
-  //   moderation: z.enum(['low', 'auto']).optional(), // defaults to 'auto'
-  //   output_compression: z.number().int().min(0).max(100).optional(), // defaults to 100
-  //   output_format: z.enum(['png', 'webp', 'jpeg']).optional(), // defaults to 'png'
-  //   partial_images: z.number().int().min(0).max(3).optional(), // defaults to 0
-  //   quality: z.enum(['low', 'medium', 'high', 'auto']).optional(), // defaults to 'auto'
-  //   size: z.enum(['1024x1024', '1024x1536', '1536x1024', 'auto']).optional(), // defaults to 'auto'
-  // });
+  const ImageGenerationTool_schema = z.object({
+    type: z.literal('image_generation'),
+    background: z.enum(['transparent', 'opaque', 'auto']).optional(), // defaults to 'auto'
+    /**
+     * Control how much effort the model will exert to match the style and features, especially facial features, of input images.
+     * Defaults to 'low'.
+     */
+    input_fidelity: z.enum(['high', 'low']).optional(),
+    input_image_mask: z.object({
+      file_id: z.string().optional(), // File ID for the mask image
+      image_url: z.string().optional(), // Base64-encoded mask image
+    }).optional(),
+    /** 'gpt-image-1' (default) */
+    model: z.string().optional(),
+    /** Note: 'low' is unconfirmed here. Defaults to 'auto' */
+    moderation: z.enum(['low', 'auto']).optional(),
+    output_compression: z.number().min(0).max(100).int().optional(), // defaults to 100
+    /** One of [png, webp, or jpeg]. Default: png. */
+    output_format: z.enum(['png', 'webp', 'jpeg']).optional(),
+    /** Number of partial images to generate in streaming mode, from 0 (default) to 3. */
+    partial_images: z.number().int().min(0).max(3).optional(),
+    /** Quality of the generated image. Defaults to 'auto' */
+    quality: z.enum(['low', 'medium', 'high', 'auto']).optional(),
+    /** The size of the generated image. One of 1024x1024, 1024x1536, 1536x1024, or auto. Default: auto. */
+    size: z.enum(['1024x1024', '1024x1536', '1536x1024', 'auto']).optional(),
+  });
 
   // const CodeInterpreterTool_schema = z.object({
   //   type: z.literal('code_interpreter'),
@@ -1239,7 +1249,7 @@ export namespace OpenAIWire_Responses_Tools {
     // CustomTool_schema,
     // hosted tools
     WebSearchTool_schema,
-    // ImageGenerationTool_schema,
+    ImageGenerationTool_schema,
     // CodeInterpreterTool_schema,
     // FileSearchTool_schema, // OpenAI vector store - not implemented
     // MCPTool_schema,
@@ -1263,10 +1273,10 @@ export namespace OpenAIWire_Responses_Tools {
       type: z.enum([
         // 'file_search',
         'web_search_preview', 'web_search_preview_2025_03_11',
+        'image_generation',
         // 'computer_use_preview',
         // 'code_interpreter',
         // 'mcp',
-        // 'image_generation',
         // 'local_shell' ?
       ]),
     }),
@@ -1574,23 +1584,23 @@ export namespace OpenAIWire_API_Responses {
 
   // Streaming > Tool invoke > Image generation events
 
-  // const OutputImageGenerationCallInProgressEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.image_generation_call.in_progress'),
-  // });
+  const OutputImageGenerationCallInProgressEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.image_generation_call.in_progress'),
+  });
 
-  // const OutputImageGenerationCallGeneratingEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.image_generation_call.generating'),
-  // });
+  const OutputImageGenerationCallGeneratingEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.image_generation_call.generating'),
+  });
 
-  // const OutputImageGenerationCallPartialImageEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.image_generation_call.partial_image'),
-  //   partial_image_b64: z.string(), // base64 partial image
-  //   partial_image_index: z.number(), // 0-based index
-  // });
+  const OutputImageGenerationCallPartialImageEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.image_generation_call.partial_image'),
+    partial_image_b64: z.string(), // base64 partial image
+    partial_image_index: z.number(), // 0-based index
+  });
 
-  // const OutputImageGenerationCallCompletedEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.image_generation_call.completed'),
-  // });
+  const OutputImageGenerationCallCompletedEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.image_generation_call.completed'),
+  });
 
   // Streaming > Tool invoke > File search events (OpenAI vector store - not implemented)
 
@@ -1737,10 +1747,10 @@ export namespace OpenAIWire_API_Responses {
     OutputWebSearchCallCompleted_schema,
 
     // Tool invoke > Image generation events
-    // OutputImageGenerationCallInProgressEvent_schema,
-    // OutputImageGenerationCallGeneratingEvent_schema,
-    // OutputImageGenerationCallPartialImageEvent_schema,
-    // OutputImageGenerationCallCompletedEvent_schema,
+    OutputImageGenerationCallInProgressEvent_schema,
+    OutputImageGenerationCallGeneratingEvent_schema,
+    OutputImageGenerationCallPartialImageEvent_schema,
+    OutputImageGenerationCallCompletedEvent_schema,
 
     // Tool invoke > File Search events
     // OutputFileSearchCallInProgressEvent_schema, // OpenAI vector store - not implemented
