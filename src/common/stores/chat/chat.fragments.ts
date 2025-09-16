@@ -224,7 +224,12 @@ export type DVoidModelAuxPart = {
   redactedData?: readonly string[],
 };
 
-type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up', /* 2025-02-23: added for non-pure-text placeholders */ };
+type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up' /* 2025-02-23: added for non-pure-text placeholders */, modelOp?: DVoidPlaceholderModelOp };
+
+export type DVoidPlaceholderModelOp = {
+  mot: 'web_search' | 'image_generation',
+  cts: number,
+};
 
 type _SentinelPart = { pt: '_pt_sentinel' };
 
@@ -401,8 +406,8 @@ export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aT
   return _createVoidFragment(_create_ModelAux_Part(aType, aText, textSignature, redactedData));
 }
 
-export function createPlaceholderVoidFragment(placeholderText: string, placeholderType?: DVoidPlaceholderPart['pType']): DMessageVoidFragment {
-  return _createVoidFragment(_create_Placeholder_Part(placeholderText, placeholderType));
+export function createPlaceholderVoidFragment(placeholderText: string, placeholderType?: DVoidPlaceholderPart['pType'], modelOp?: DVoidPlaceholderModelOp): DMessageVoidFragment {
+  return _createVoidFragment(_create_Placeholder_Part(placeholderText, placeholderType, modelOp));
 }
 
 function _createVoidFragment(part: DMessageVoidFragment['part']): DMessageVoidFragment {
@@ -515,8 +520,8 @@ function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string,
   };
 }
 
-function _create_Placeholder_Part(placeholderText: string, pType?: DVoidPlaceholderPart['pType']): DVoidPlaceholderPart {
-  return { pt: 'ph', pText: placeholderText, ...(pType ? { pType } : undefined) };
+function _create_Placeholder_Part(placeholderText: string, pType?: DVoidPlaceholderPart['pType'], modelOp?: DVoidPlaceholderModelOp): DVoidPlaceholderPart {
+  return { pt: 'ph', pText: placeholderText, ...(pType ? { pType } : undefined), ...(modelOp ? { modelOp: { ...modelOp } } : undefined) };
 }
 
 function _create_Sentinel_Part(): _SentinelPart {
@@ -571,7 +576,7 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
       return _create_ModelAux_Part(part.aType, part.aText, part.textSignature, part.redactedData) as TPart;
 
     case 'ph':
-      return _create_Placeholder_Part(part.pText, part.pType) as TPart;
+      return _create_Placeholder_Part(part.pText, part.pType, part.modelOp) as TPart;
 
     case 'text':
       return _create_Text_Part(part.text) as TPart;
