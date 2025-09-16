@@ -109,6 +109,7 @@ export function LLMParametersEditor(props: {
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
+    llmVndOaiImageGeneration,
     llmVndOaiVerbosity,
     llmVndPerplexityDateFilter,
     llmVndPerplexitySearchMode,
@@ -387,6 +388,19 @@ export function LLMParametersEditor(props: {
             onChangeParameter({ llmVndOaiRestoreMarkdown: false });
           else
             onChangeParameter({ llmVndOaiRestoreMarkdown: true });
+        }}
+      />
+    )}
+
+    {showParam('llmVndOaiImageGeneration') && (
+      <FormSwitchControl
+        title='Image Generation'
+        description='Enable image generation'
+        tooltip='Allow the model to generate images when appropriate'
+        checked={!!llmVndOaiImageGeneration}
+        onChange={checked => {
+          if (!checked) onRemoveParameter('llmVndOaiImageGeneration');
+          else onChangeParameter({ llmVndOaiImageGeneration: true });
         }}
       />
     )}
