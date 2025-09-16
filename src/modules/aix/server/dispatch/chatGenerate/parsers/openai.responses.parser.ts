@@ -337,7 +337,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       // level 3: Output Items have multiple Parts
 
-      // 3.1. Message Items: 'output_text' and 'output_refusal' parts
+      // 3.1. Message Items: 'output_text' and 'refusal' parts
 
       case 'response.content_part.added':
         R.contentPartEnter(eventType, event.output_index, event.content_index);
@@ -416,13 +416,13 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         console.log(`[DEV] AIX: OpenAI Responses: ignoring reasoning_text.done event:`, event);
         break;
 
-      case 'response.output_refusal.delta':
-      case 'response.output_refusal.done':
+      case 'response.refusal.delta':
+      case 'response.refusal.done':
         R.contentPartVisit(eventType, event.output_index, event.content_index);
         // .delta: ignore refusal string piece for now
         // .refusal: ignore finalized refusal, we already transmitted all partials
         // FIXME: implement this, if it shows up
-        console.log(`[DEV] AIX: OpenAI Responses: ignoring output_refusal event: ${eventType}`, event);
+        console.log(`[DEV] AIX: OpenAI Responses: ignoring refusal event: ${eventType}`, event);
         break;
 
       // 4.2 - Reasoning Items
