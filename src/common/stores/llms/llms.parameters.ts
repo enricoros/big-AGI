@@ -160,9 +160,10 @@ export const DModelParameterRegistry = {
 
   llmVndOaiImageGeneration: {
     label: 'Image Generation',
-    type: 'boolean' as const,
-    description: 'Enable image generation capabilities',
-    // No initialValue - defaults to undefined/false (off)
+    type: 'enum' as const,
+    description: 'Image generation mode and quality',
+    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */] as const,
+    // No initialValue - defaults to undefined (off)
     // No requiredFallback - this is optional
   } as const,
 

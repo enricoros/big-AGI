@@ -413,7 +413,7 @@ export namespace AixWire_API {
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
-    vndOaiImageGeneration: z.boolean().optional(),
+    vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
     vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
     vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
     vndXaiSearchMode: z.enum(['auto', 'on', 'off']).optional(),
