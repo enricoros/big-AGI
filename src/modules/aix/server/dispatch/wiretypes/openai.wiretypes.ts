@@ -1404,8 +1404,8 @@ export namespace OpenAIWire_API_Responses {
 
   const OutputTextAnnotationAddedEvent_schema = _PartIndexedEvent_schema.extend({
     type: z.enum([
-      'response.output_text_annotation.added', // from the spec
-      'response.output_text.annotation.added', // from unsing web_search_call
+      'response.output_text.annotation.added', // from unsing web_search_call, and in the spec now
+      'response.output_text_annotation.added', // OLDER/BUGGED spec - bug report here: https://github.com/openai/openai-node/issues/1515
     ]),
     annotation_index: z.number(),
     annotation: z.any(), // TODO will spec later
