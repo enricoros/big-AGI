@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -190,6 +190,11 @@ export class ContentReassembler {
   /// Particle Reassembly ///
 
   async #reassembleParticle(op: AixWire_Particles.ChatGenerateOp): Promise<void> {
+
+    // remove placeholder if any other content except heartbeat or void-placeholder
+    if (!('p' in op) || !(op.p === '❤' || op.p === 'vp'))
+      this.removePlaceholderIfAtIndex0();
+
     switch (true) {
 
       // TextParticleOp
@@ -232,6 +237,9 @@ export class ContentReassembler {
             break;
           case 'urlc':
             this.onAddUrlCitation(op);
+            break;
+          case 'vp':
+            this.onVoidPlaceholder(op);
             break;
           default:
             // noinspection JSUnusedLocalSymbols
@@ -567,6 +575,36 @@ export class ContentReassembler {
 
     // Important: Don't reset currentTextFragmentIndex to allow text to continue
     // This ensures we don't interrupt the text flow
+  }
+
+  private onVoidPlaceholder(vp: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
+    const { text } = vp;
+
+    // Only reuse placeholder if it's at index 0
+    if (this.accumulator.fragments.length > 0) {
+      const firstFragment = this.accumulator.fragments[0];
+      if (firstFragment.ft === 'void' && firstFragment.part.pt === 'ph') {
+        // Update existing placeholder at index 0
+        firstFragment.part.pText = text;
+        return;
+      }
+    }
+
+    // Create new placeholder at the beginning (will be index 0)
+    const placeholderFragment = createPlaceholderVoidFragment(text);
+    this.accumulator.fragments.unshift(placeholderFragment); // Add to beginning
+
+    // Placeholders don't affect text fragment indexing
+  }
+
+  // Helper to remove placeholder when real content arrives
+  private removePlaceholderIfAtIndex0(): void {
+    if (this.accumulator.fragments.length > 0) {
+      const firstFragment = this.accumulator.fragments[0];
+      if (firstFragment.ft === 'void' && firstFragment.part.pt === 'ph') {
+        this.accumulator.fragments.shift(); // Remove placeholder at index 0
+      }
+    }
   }
 
 

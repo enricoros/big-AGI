@@ -405,6 +405,16 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>);
   }
 
+  /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
+  sendVoidPlaceholder(id: string, text: string) {
+    // Don't end message part - placeholders should not interfere with content flow
+    this.transmissionQueue.push({
+      p: 'vp',
+      id,
+      text,
+    } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>);
+  }
+
   /** Communicates the model name to the client */
   setModelName(modelName: string) {
     this.transmissionQueue.push({
