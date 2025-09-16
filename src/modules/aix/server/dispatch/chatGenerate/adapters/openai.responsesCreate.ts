@@ -81,6 +81,7 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     stream: streaming,
     // background: false, // response if unset: false
     truncation: !hotFixNoTruncateAuto ? OPENAI_RESPONSES_DEFAULT_TRUNCATION : 'auto',
+    // include: [], // we incrementally build this below, on-demand
     // user: undefined,
 
   };
@@ -123,6 +124,8 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
       // Web search is not supported when the reasoning effort is 'minimal'
       // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
     } else {
+
+      // Add the web search tool to the request
       if (!payload.tools?.length)
         payload.tools = [];
       const webSearchTool: TRequestTool = {
@@ -134,6 +137,12 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
         },
       };
       payload.tools.push(webSearchTool);
+
+      // Include all sources (web search list of URLs, but not high quality links at all) in the response ('web_search_call.action.sources')
+      const extendedInclude = new Set(payload.include);
+      extendedInclude.add('web_search_call.action.sources');
+      payload.include = Array.from(extendedInclude);
+
     }
   }
 

@@ -963,7 +963,33 @@ export namespace OpenAIWire_Responses_Items {
   const OutputWebSearchCallItem_schema = _OutputItemBase_schema.extend({
     type: z.literal('web_search_call'),
     id: z.string(), // unique ID of the output item
-    action: z.any().optional(), // TODO: expand this later
+
+    // action may be present with `include: ['web_search_call.action.sources']`
+    action: z.union([
+      // This comes from looking at the payload, and taking inspiration from other messages
+      z.object({
+        // known action type: 'search': lists all the search results of a web search, once done
+        type: z.literal('search'),
+        query: z.string().optional(), // query might not always be present in done event
+        sources: z.array(z.object({
+          type: z.literal('url').optional(), // source type
+          url: z.string(),
+          title: z.string().optional(),
+          snippet: z.string().optional(),
+          start_index: z.number().optional(),
+          end_index: z.number().optional(),
+        })).optional(),
+      }),
+      // Future-proof: any other action type with flexible structure
+      z.any(),
+    ]).optional(),
+  });
+
+  const OutputImageGenerationCallItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('image_generation_call'),
+    id: z.string(), // unique ID of the image generation call (output item ID)
+    result: z.string().optional(), // base64 image data when completed
+    prompt: z.string().optional(), // the prompt used for generation
   });
 
   // const ImageGenerationCallOutput_schema = z.object({
@@ -1150,7 +1176,7 @@ export namespace OpenAIWire_Responses_Tools {
     z.object({ // hosted tool
       type: z.enum([
         // 'file_search',
-        'web_search_preview',
+        'web_search_preview', 'web_search_preview_2025_03_11',
         // 'computer_use_preview',
         // 'code_interpreter',
         // 'mcp',
@@ -1214,10 +1240,17 @@ export namespace OpenAIWire_API_Responses {
     stream: z.boolean().nullish(),
     background: z.boolean().nullish(),
     truncation: z.enum(['auto', 'disabled']).nullish(), // defaults to 'disabled', 'auto' drops input items in the middle of the conversation.
+    include: z.array(z.enum([
+      'web_search_call.action.sources', // get web search citations
+      // 'file_search_call.results',
+      // 'message.input_image.image_url',
+      // 'computer_call_output.output.image_url',
+      // 'reasoning.encrypted_content',
+      // 'code_interpreter_call.outputs'
+    ])).optional(), // additional output to include in the response
     user: z.string().optional(), // stable identifier for your end-users
 
     // Unused
-    // include: z.array(z.string()).nullish(), // additional output to include in the response: 'file_search_call.results', 'message.input_image.image_url', 'computer_call_output.output.image_url', 'reasoning.encrypted_content', 'code_interpreter_call.outputs'
     // metadata: z.record(z.string(), z.any()).optional(), // set of 16 key-value pairs that can be attached to an object
     // service_tier: z.enum(['auto', 'default', 'flex', 'priority']).nullish(),
     // prompt: z.object({
@@ -1478,13 +1511,18 @@ export namespace OpenAIWire_API_Responses {
   // Combined streaming event
   export type StreamingEvent = z.infer<typeof StreamingEvent_schema>;
   export const StreamingEvent_schema = z.discriminatedUnion('type', [
+    // Core lifecycle events
     ResponseCreatedEvent_schema,
     ResponseInProgress_schema,
     ResponseCompletedEvent_schema,
     ResponseFailedEvent_schema,
     ResponseIncompleteEvent_schema,
+
+    // Output item events
     OutputItemAddedEvent_schema,
     OutputItemDoneEvent_schema,
+
+    // Content part events
     ContentPartAddedEvent_schema,
     ContentPartDoneEvent_schema,
     OutputTextDeltaEvent_schema,
@@ -1492,6 +1530,8 @@ export namespace OpenAIWire_API_Responses {
     OutputRefusalDeltaEvent_schema,
     OutputRefusalDoneEvent_schema,
     OutputTextAnnotationAddedEvent_schema,
+
+    // Reasoning events
     OutputResponseReasoningDeltaEvent_schema,
     OutputResponseReasoningDoneEvent_schema,
     OutputReasoningSummaryDeltaEvent_schema,
@@ -1500,11 +1540,17 @@ export namespace OpenAIWire_API_Responses {
     OutputReasoningSummaryPartDoneEvent_schema,
     OutputReasoningSummaryTextDeltaEvent_schema,
     OutputReasoningSummaryTextDoneEvent_schema,
+
+    // Function call events
     FunctionCallArgumentsDeltaEvent_schema,
     FunctionCallArgumentsDoneEvent_schema,
+
+    // Web search events
     OutputWebSearchCallInProgress_schema,
     OutputWebSearchCallSearching_schema,
     OutputWebSearchCallCompleted_schema,
+
+    // Error events
     ErrorEvent_schema,
   ]);
 
