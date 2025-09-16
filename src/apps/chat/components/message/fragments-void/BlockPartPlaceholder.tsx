@@ -4,6 +4,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DVoidPlaceholderModelOp } from '~/common/stores/chat/chat.fragments';
 import { DataStreamViz } from '~/common/components/DataStreamViz';
 
 
@@ -13,6 +14,7 @@ const DATASTREAM_VISUALIZATION_DELAY = Math.round(2 * Math.PI * 1000);
 
 export function BlockPartPlaceholder(props: {
   placeholderText: string,
+  placeholderModelOp?: DVoidPlaceholderModelOp,
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
   showAsItalic?: boolean,
@@ -22,21 +24,25 @@ export function BlockPartPlaceholder(props: {
   // state
   const [showVisualization, setShowVisualization] = React.useState(false);
 
+  // derived state
+  const isModelOperation = !!props.placeholderModelOp;
+  const shouldShowViz = props.showAsDataStreamViz && !isModelOperation;
+
 
   React.useEffect(() => {
     let timerId: ReturnType<typeof setTimeout> | undefined;
 
-    if (props.showAsDataStreamViz)
+    if (shouldShowViz)
       timerId = setTimeout(() => setShowVisualization(true), DATASTREAM_VISUALIZATION_DELAY);
     else
       setShowVisualization(false);
 
     return () => timerId && clearTimeout(timerId);
-  }, [props.showAsDataStreamViz]);
+  }, [shouldShowViz]);
 
 
   // Alternative placeholder visualization
-  if (props.showAsDataStreamViz && showVisualization)
+  if (shouldShowViz && showVisualization)
     return <DataStreamViz height={1 + 8 * 4} />;
 
   return (
