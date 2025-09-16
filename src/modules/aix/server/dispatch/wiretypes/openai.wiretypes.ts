@@ -973,9 +973,9 @@ export namespace OpenAIWire_Responses_Items {
 
     // action may be present with `include: ['web_search_call.action.sources']`
     action: z.union([
-      // This comes from looking at the payload, and taking inspiration from other messages
+
+      // Action type: 'search' - lists all the search results of a web search, once done
       z.object({
-        // known action type: 'search': lists all the search results of a web search, once done
         type: z.literal('search'),
         query: z.string().optional(), // query might not always be present in done event
         sources: z.array(z.object({
@@ -987,8 +987,23 @@ export namespace OpenAIWire_Responses_Items {
           end_index: z.number().optional(),
         })).optional(),
       }),
+
+      // Action type: 'open_page' - opens/visits a specific web page
+      z.object({
+        type: z.literal('open_page'),
+        url: z.string().nullable(), // URL to open (can be null in some cases)
+      }),
+
+      // Action type: 'find_in_page' - searches for a pattern within an opened page
+      z.object({
+        type: z.literal('find_in_page'),
+        pattern: z.string(), // text pattern to search for
+        url: z.string(), // URL of the page being searched
+      }),
+
       // Future-proof: any other action type with flexible structure
       z.any(),
+
     ]).optional(),
   });
 

@@ -13,6 +13,27 @@ const OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence
 const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n'; // true: shows the sequence of events
 
 
+/**
+ * Safely sanitizes a URL for display in placeholders by removing query parameters and paths
+ * to prevent leaking sensitive information while keeping the domain recognizable.
+ */
+function sanitizeUrlForDisplay(url: string | null): string {
+  if (!url) return 'unknown';
+  try {
+    const urlObj = new URL(url);
+    // Return just the protocol and hostname (e.g., "https://example.com")
+    return `${urlObj.protocol}//${urlObj.hostname}`;
+  } catch (error) {
+    // If URL parsing fails, try to extract just the domain part manually
+    const match = url.match(/^https?:\/\/([^/?#]+)/);
+    if (match)
+      return `${url.split('://')[0]}://${match[1]}`;
+    // Fallback: return a generic indicator
+    return 'website';
+  }
+}
+
+
 type TResponse = OpenAIWire_API_Responses.Response;
 type TOutputItem = OpenAIWire_API_Responses.Response['output'][number];
 type TEventType = OpenAIWire_API_Responses.StreamingEvent['type'];
@@ -311,8 +332,25 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
                   pt.sendVoidPlaceholder('web_search', `${action.query}: completed`);
                 break;
 
+              case 'open_page':
+                // Action: opening/visiting a specific web page
+                const sanitizedUrl = sanitizeUrlForDisplay(action.url);
+                pt.sendVoidPlaceholder('web_search', `Opening ${action.url ? sanitizedUrl : 'Opening page...'}`);
+                break;
+
+              case 'find_in_page':
+                // Action: searching for a pattern within an opened page
+                const sanitizedPageUrl = sanitizeUrlForDisplay(action.url);
+                if (action.pattern && action.url)
+                  pt.sendVoidPlaceholder('web_search', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
+                else if (action.pattern)
+                  pt.sendVoidPlaceholder('web_search', `Searching for "${action.pattern}"`);
+                else
+                  pt.sendVoidPlaceholder('web_search', 'Searching in page...');
+                break;
+
               default:
-                console.log(`[DEV] AIX: Unknown web_search_call action type: ${action.type}`, { action });
+                console.log(`[DEV] AIX: Unknown web_search_call action type: ${action?.type}`, { action });
                 break;
             }
             break;
