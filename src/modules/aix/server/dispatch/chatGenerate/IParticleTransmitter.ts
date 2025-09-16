@@ -59,6 +59,9 @@ export interface IParticleTransmitter {
   /** Adds a URL citation part */
   appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number): void;
 
+  /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
+  sendVoidPlaceholder(id: string, text: string): void;
+
   // Non-parts data //
 
   /** Communicates the model name to the client */
