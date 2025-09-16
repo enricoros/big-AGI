@@ -23,7 +23,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1409 + 1 /* still unreported! assuming on top of grok-3 */ },
+    benchmark: { cbaElo: 1422 }, // grok-4-0709
   },
 
   // Grok 3
@@ -36,7 +36,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1409 /* grok-3-preview-02-24 */},
+    benchmark: { cbaElo: 1409 }, // grok-3-preview-02-24
   },
   {
     idPrefix: 'grok-3-fast',
@@ -47,7 +47,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
-    benchmark: { cbaElo: 1409 - 1 /* still unreported! assuming below grok-3 just for cost */ },
+    benchmark: { cbaElo: 1408 }, // grok-3-fast (slight adjustment for cost model)
   },
   {
     idPrefix: 'grok-3-mini',
@@ -61,7 +61,7 @@ const _knownXAIChatModels: ManualMappings = [
       { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
     ],
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
-    benchmark: { cbaElo: 1354 /* grok-3-mini-beta */},
+    benchmark: { cbaElo: 1358 }, // grok-3-mini-beta (updated from CSV)
   },
   {
     idPrefix: 'grok-3-mini-fast',
@@ -75,7 +75,7 @@ const _knownXAIChatModels: ManualMappings = [
       { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
     ],
     chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
-    benchmark: { cbaElo: 1354 - 1 /* still unreported! assuming below grok-3-mini just for cost */ },
+    benchmark: { cbaElo: 1357 }, // grok-3-mini-fast (slight adjustment for cost model)
   },
 
   // Grok 2
