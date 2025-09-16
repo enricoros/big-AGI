@@ -300,24 +300,20 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             const action = doneItem.action;
 
             // Handle known action types
-            if (action?.type === 'search') {
-              // IMPORTANT: Web search sources vs citations distinction:
-              // - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
-              // - citations: High-quality links (2-3) via response.output_text.annotation.added events
+            switch (action?.type) {
+              case 'search':
+                // IMPORTANT: Web search sources vs citations distinction:
+                // - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
+                // - citations: High-quality links (2-3) via response.output_text.annotation.added events
+                if (action.query && action.sources && Array.isArray(action.sources)) {
+                  pt.sendVoidPlaceholder('web_search', `${action.query}: ${action.sources.length} results...`);
+                } else if (action.query)
+                  pt.sendVoidPlaceholder('web_search', `${action.query}: completed`);
+                break;
 
-              // TODO: Create web search result fragment instead of text
-              // This should create a special fragment type that contains:
-              // - query: action.query
-              // - sources: action.sources (all URLs explored)
-              // - This is separate from high-quality citations
-              if (action.query && action.sources && Array.isArray(action.sources)) {
-                console.log(`[DEV] Web search completed: "${action.query}" - found ${action.sources.length} sources`);
-                // TODO: pt.appendWebSearchFragment(action.query, action.sources);
-                // For now, we create no text output to avoid cluttering
-              }
-            } else if (action?.type) {
-              // Future action types - log and handle gracefully
-              console.log(`[DEV] AIX: Unknown web_search_call action type: ${action.type}`, { action });
+              default:
+                console.log(`[DEV] AIX: Unknown web_search_call action type: ${action.type}`, { action });
+                break;
             }
             break;
 
@@ -415,6 +411,27 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         R.outputItemVisit(eventType, event.output_index, 'function_call');
         // .delta: we parse this at the end
         // .done: we parse this at the end
+        break;
+
+      // 4.4 - Web Search Call Events
+      // Flow: in_progress (unique start) -> searching (can be multiple) -> completed
+      // NOTE: We use placeholder signals instead of text to avoid cluttering the response
+
+      case 'response.web_search_call.in_progress':
+        R.outputItemVisit(eventType, event.output_index, 'web_search_call');
+        pt.sendVoidPlaceholder('web_search', 'Searching the web...');
+        break;
+
+      case 'response.web_search_call.searching':
+        R.outputItemVisit(eventType, event.output_index, 'web_search_call');
+        // Update placeholder for ongoing search (can happen multiple times)
+        // pt.sendVoidPlaceholder('web_search', 'Searching...');
+        break;
+
+      case 'response.web_search_call.completed':
+        R.outputItemVisit(eventType, event.output_index, 'web_search_call');
+        pt.sendVoidPlaceholder('web_search', 'Search completed');
+        // -> Actual web_search_call results are handled in response.output_item.done
         break;
 
       // 1.5 - Error
