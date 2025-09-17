@@ -42,6 +42,7 @@ export function ModelsServiceSelector(props: {
   modelsServices: DModelsService[],
   selectedServiceId: DModelsServiceId | null,
   setSelectedServiceId: (serviceId: DModelsServiceId | null) => void,
+  onSwitchToWizard: () => void,
 }) {
 
   // state
@@ -51,7 +52,12 @@ export function ModelsServiceSelector(props: {
   // external state
   const isMobile = useIsMobile();
 
-  const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);
+  const { onSwitchToWizard } = props;
+
+  const handleShowVendors = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    if (event.shiftKey) onSwitchToWizard();
+    else setVendorsMenuAnchor(event.currentTarget);
+  }, [onSwitchToWizard]);
 
   const closeVendorsMenu = () => setVendorsMenuAnchor(null);
 
