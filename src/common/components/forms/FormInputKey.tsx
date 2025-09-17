@@ -29,7 +29,7 @@ export function FormInputKey(props: {
 
   const endDecorator = React.useMemo(() => !!props.value && !props.noKey && (
     <IconButton onClick={() => setIsVisible(!isVisible)}>
-      {isVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+      {isVisible ? <VisibilityIcon sx={{ fontSize: 'lg'}} /> : <VisibilityOffIcon sx={{ fontSize: 'md' }} />}
     </IconButton>
   ), [props.value, props.noKey, isVisible]);
 
@@ -55,7 +55,7 @@ export function FormInputKey(props: {
         placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
         type={(isVisible || !!props.noKey) ? 'text' : 'password'}
         error={props.isError}
-        startDecorator={!props.noKey && <KeyIcon />}
+        startDecorator={!props.noKey && <KeyIcon sx={{ fontSize: 'lg' }} />}
         endDecorator={endDecorator}
       />
 
