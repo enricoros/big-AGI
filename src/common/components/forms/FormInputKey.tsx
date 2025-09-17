@@ -6,11 +6,13 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { getIsMobile } from '~/common/components/useMatchMedia';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 
 export function FormInputKey(props: {
   autoCompleteId: string, // introduced to avoid clashes
   label?: string, rightLabel?: string | React.JSX.Element,
+  tooltip?: string,
   description?: string | React.JSX.Element,
   value: string, onChange: (value: string) => void,
   placeholder?: string,
@@ -40,7 +42,13 @@ export function FormInputKey(props: {
     <FormControl id={acId}>
 
       {!!props.label && <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-        <FormLabel>{props.label}</FormLabel>
+        {props.tooltip ? (
+          <TooltipOutlined title={props.tooltip}>
+            <FormLabel>{props.label}</FormLabel>
+          </TooltipOutlined>
+        ) : (
+          <FormLabel>{props.label}</FormLabel>
+        )}
         {!!props.rightLabel && <FormHelperText sx={{ display: 'block' }}>
           {props.rightLabel}
         </FormHelperText>}
