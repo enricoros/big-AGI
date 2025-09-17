@@ -34,6 +34,7 @@ export function FormInputKey(props: {
   ), [props.value, props.noKey, isVisible]);
 
   const acId = (props.noKey ? 'input-text-' : 'input-key-') + props.autoCompleteId;
+  const ghostUsername = props.noKey ? null : props.autoCompleteId.replace('-key', '').replace('-', ' ');
 
   return (
     <FormControl id={acId}>
@@ -45,19 +46,25 @@ export function FormInputKey(props: {
         </FormHelperText>}
       </Box>}
 
-      <Input
-        key={acId}
-        name={acId}
-        autoComplete={props.noKey ? 'on' /* e.g. host names */ : 'new-password' /* tells password managers this is a 'new password' entry */}
-        autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
-        variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
-        value={props.value} onChange={handleChange}
-        placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
-        type={(isVisible || !!props.noKey) ? 'text' : 'password'}
-        error={props.isError}
-        startDecorator={!props.noKey && <KeyIcon sx={{ fontSize: 'lg' }} />}
-        endDecorator={endDecorator}
-      />
+      <>
+        {/* Hidden username field to help password managers distinguish between services */}
+        {!!ghostUsername && (
+          <input type='text' autoComplete='username' value={ghostUsername} readOnly tabIndex={-1} style={{ display: 'none' }} />
+        )}
+        <Input
+          key={acId}
+          name={acId}
+          autoComplete={props.noKey ? 'on' /* e.g. host names */ : 'new-password' /* tells password managers this is a 'new password' entry */}
+          autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
+          variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
+          value={props.value} onChange={handleChange}
+          placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
+          type={(isVisible || !!props.noKey) ? 'text' : 'password'}
+          error={props.isError}
+          startDecorator={!props.noKey && <KeyIcon sx={{ fontSize: 'lg' }} />}
+          endDecorator={endDecorator}
+        />
+      </>
 
       {props.description && <FormHelperText sx={{ display: 'block' }}>{props.description}</FormHelperText>}
 
