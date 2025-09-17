@@ -48,9 +48,8 @@ export function FormInputKey(props: {
       <Input
         key={acId}
         name={acId}
-        autoComplete='off'
+        autoComplete={props.noKey ? 'on' /* e.g. host names */ : 'new-password' /* tells password managers this is a 'new password' entry */}
         autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
-        // autoComplete={props.noKey ? 'off' : 'new-password'}
         variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
         value={props.value} onChange={handleChange}
         placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
