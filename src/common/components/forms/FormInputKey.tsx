@@ -1,12 +1,21 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, IconButton, Input } from '@mui/joy';
+import { Box, FormControl, FormHelperText, FormLabel, IconButton, Input, InputSlotsAndSlotProps } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+
+
+const slotPropsInputSx: InputSlotsAndSlotProps['slotProps'] = {
+  input: {
+    sx: {
+      width: '100%',
+    }
+  }
+} as const;
 
 
 export function FormInputKey(props: {
@@ -71,6 +80,7 @@ export function FormInputKey(props: {
           error={props.isError}
           startDecorator={!props.noKey && <KeyIcon sx={{ fontSize: 'lg' }} />}
           endDecorator={endDecorator}
+          slotProps={slotPropsInputSx}
         />
       </>
 
