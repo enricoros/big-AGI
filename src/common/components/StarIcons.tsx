@@ -8,6 +8,7 @@ import StarIcon from '@mui/icons-material/Star';
 // configuration
 const STAR_COLOR = '#fad857'; // gold/yellow
 const STAR_COLOR_HOVER = '#f3c623';
+export const STAR_EMOJI = '⭐';
 
 const starIconStyles = {
   starred: {
