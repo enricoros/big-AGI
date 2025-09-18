@@ -11,6 +11,7 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
+import { STAR_EMOJI, StarredToggle, starredToggleStyle } from '~/common/components/StarIcons';
 import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useLLMsByService } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -164,7 +165,7 @@ function ModelItem(props: {
         {/* Model Name */}
         <GoodTooltip title={tooltip}>
           <Box sx={llm.hidden ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
-            {(/*props.isMobile &&*/ llm.userStarred) ? `⭐ ${llm.label}` : llm.label}
+            {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
             {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: llm.hidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
             {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
           </Box>
