@@ -14,6 +14,9 @@ const starIconStyles = {
     color: STAR_COLOR,
     fontSize: 'xl2'
   } as const,
+  starredNoXl2: {
+    color: STAR_COLOR,
+  } as const,
   // unStarred: undefined,
 } as const satisfies Record<string, SxProps | undefined>;
 
@@ -22,6 +25,10 @@ const starIconStyles = {
 
 export const Starred = React.memo(function Starred() {
   return <StarIcon sx={starIconStyles.starred} />;
+});
+
+export const StarredNoXL2 = React.memo(function StarredNoXL2() {
+  return <StarIcon sx={starIconStyles.starredNoXl2} />;
 });
 
 export const UnStarred = React.memo(function UnStarred() {
