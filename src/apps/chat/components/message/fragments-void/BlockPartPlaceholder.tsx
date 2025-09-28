@@ -44,6 +44,7 @@ const _styles = {
     // minWidth: 200, // would work on mobile, but no clear advantage
     // fontWeight: 500,
     minHeight: '2rem',
+    mx: 1.5, // example: RenderPlainText has _styles.typography.mx = 1.5
     pl: 1.5,
     pr: 1.75,
     borderRadius: 'sm',
