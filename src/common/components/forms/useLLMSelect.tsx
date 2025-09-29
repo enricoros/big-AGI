@@ -12,9 +12,10 @@ import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMV
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
@@ -46,6 +47,13 @@ const _styles = {
   },
   chips: {
     ml: 'auto',
+    backgroundColor: 'background.popup',
+    boxShadow: 'xs',
+  },
+  configButton: {
+    ml: 'auto',
+    my: -0.5,
+    // mr: -0.25,
     backgroundColor: 'background.popup',
     boxShadow: 'xs',
   },
@@ -187,6 +195,8 @@ export function useLLMSelect(
           features += '🖼️ '; // can draw images
       }
 
+      const showModelOptions = llm.id === llmId && !optimizeToSingleVisibleId;
+
       // the option component
       acc.push(
         <Option
@@ -206,7 +216,25 @@ export function useLLMSelect(
           <div className='agi-ellipsize'>{llm.label}</div>
 
           {/* Features Chips - sync with `ModelsList.tsx` */}
-          {!!features && <Chip size='sm' color={seemsFree ? 'success' : undefined} variant='plain' sx={_styles.chips}>{features.trim().replace(' ', ' ')}</Chip>}
+          {!!features && !showModelOptions && <Chip size='sm' color={seemsFree ? 'success' : undefined} variant='plain' sx={_styles.chips}>{features.trim().replace(' ', ' ')}</Chip>}
+
+          {/* Settings button on active model (only when not optimized) */}
+          {showModelOptions && (
+            <TooltipOutlined title='Model Settings'>
+              <IconButton
+                size='sm'
+                // color='neutral'
+                // variant='outlined'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  optimaActions().openModelOptions(llm.id);
+                }}
+                sx={_styles.configButton}
+              >
+                <PhGearSixIcon />
+              </IconButton>
+            </TooltipOutlined>
+          )}
 
           {/*</Tooltip>*/}
           {/*{llm.gen === 'sdxl' && <Chip size='sm' variant='outlined'>XL</Chip>} {llm.label}*/}
@@ -215,7 +243,7 @@ export function useLLMSelect(
 
       return acc;
     }, [] as React.JSX.Element[]);
-  }, [_filteredLLMs, noIcons, optimizeToSingleVisibleId]);
+  }, [_filteredLLMs, llmId, noIcons, optimizeToSingleVisibleId]);
 
 
   const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => {
