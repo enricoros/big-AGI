@@ -180,15 +180,15 @@ export const llmAnthropicRouter = createTRPCRouter({
           if (!hardcodedModel.created && model.created_at)
             hardcodedModel.created = roundTime(model.created_at);
 
-          // add the base model
-          acc.push(hardcodedModel);
-
-          // add a thinking variant, if defined
+          // add FIRST a thinking variant, if defined
           if (hardcodedAnthropicVariants[model.id])
             acc.push({
               ...hardcodedModel,
               ...hardcodedAnthropicVariants[model.id],
             });
+
+          // add the base model
+          acc.push(hardcodedModel);
 
         } else {
 
