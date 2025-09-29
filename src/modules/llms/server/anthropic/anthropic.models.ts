@@ -5,6 +5,17 @@ import type { ModelDescriptionSchema } from '../llm.server.types';
 
 export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
 
+  // Claude 4.5 models with thinking variants
+  'claude-sonnet-4-5-20250929': {
+    idVariant: 'thinking',
+    label: 'Claude Sonnet 4.5 (Thinking)',
+    description: 'Claude Sonnet 4.5 with extended thinking mode enabled for complex reasoning',
+    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    maxCompletionTokens: 64000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
+    benchmark: { cbaElo: 1451 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805-thinking-16k + 1
+  },
+
   // Claude 4.1 models with thinking variants
   'claude-opus-4-1-20250805': {
     idVariant: 'thinking',
@@ -54,14 +65,27 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
 
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
 
+  // Claude 4.5 models
+  {
+    id: 'claude-sonnet-4-5-20250929', // Active
+    label: 'Claude Sonnet 4.5', // 🌟
+    description: 'Best model for complex agents and coding, with the highest intelligence across most tasks',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    trainingDataCutoff: 'Jul 2025',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
+    benchmark: { cbaElo: 1438 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805 + 1
+  },
+
   // Claude 4.1 models
   {
     id: 'claude-opus-4-1-20250805', // Active
     label: 'Claude Opus 4.1', // 🌟
-    description: 'Most capable and intelligent model yet. Sets new standards in complex reasoning and advanced coding',
+    description: 'Exceptional model for specialized complex tasks requiring advanced reasoning',
     contextWindow: 200000,
     maxCompletionTokens: 32000,
-    trainingDataCutoff: 'Aug 2025',
+    trainingDataCutoff: 'Mar 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1438 }, // claude-opus-4-1-20250805
@@ -72,7 +96,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     hidden: true, // superseded by 4.1
     id: 'claude-opus-4-20250514', // Active
     label: 'Claude Opus 4',
-    description: 'Previous flagship model with very high intelligence and capability',
+    description: 'Previous flagship model',
     contextWindow: 200000,
     maxCompletionTokens: 32000,
     trainingDataCutoff: 'Mar 2025',
@@ -83,7 +107,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   {
     id: 'claude-sonnet-4-20250514', // Active
     label: 'Claude Sonnet 4', // 🌟
-    description: 'High-performance model with exceptional reasoning and efficiency',
+    description: 'High-performance model',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Mar 2025',
@@ -99,7 +123,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     description: 'High-performance model with early extended thinking',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
-    trainingDataCutoff: 'Oct 2024',
+    trainingDataCutoff: 'Nov 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1369 }, // claude-3-7-sonnet-20250219
@@ -107,20 +131,22 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 3.5 models
   {
-    id: 'claude-3-5-sonnet-20241022', // Active | Guaranteed Until: October 2025
-    label: 'Claude Sonnet 3.5',
-    description: 'High level of intelligence and capability',
+    id: 'claude-3-5-sonnet-20241022', // Deprecated | Deprecated: August 13, 2025 | Retiring: October 22, 2025
+    label: 'Claude Sonnet 3.5 [Deprecated]',
+    description: 'High level of intelligence and capability. Deprecated August 13, 2025, retiring October 22, 2025.',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
-    trainingDataCutoff: 'Apr 2024',
+    trainingDataCutoff: 'Jul 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1368, cbaMmlu: 88.7 }, // Claude 3.5 Sonnet (10/22)
+    hidden: true, // deprecated
+    isLegacy: true,
   },
   {
-    id: 'claude-3-5-sonnet-20240620', // Active | Guaranteed Until: June 2025
-    label: 'Claude Sonnet 3.5 (previous)',
-    description: 'Previous version of Claude Sonnet 3.5',
+    id: 'claude-3-5-sonnet-20240620', // Deprecated | Deprecated: August 13, 2025 | Retiring: October 22, 2025
+    label: 'Claude Sonnet 3.5 (previous) [Deprecated]',
+    description: 'Previous version of Claude Sonnet 3.5. Deprecated August 13, 2025, retiring October 22, 2025.',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
@@ -128,6 +154,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1340, cbaMmlu: 88.6 },
     hidden: true,
+    isLegacy: true,
   },
   {
     id: 'claude-3-5-haiku-20241022', // Active | Guaranteed Until: October 2025
@@ -156,9 +183,9 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     isLegacy: true,
   },
   {
-    id: 'claude-3-haiku-20240307', // Active | Guaranteed Until: March 2025
+    id: 'claude-3-haiku-20240307', // Active
     label: 'Claude Haiku 3',
-    description: 'Quick and accurate targeted performance',
+    description: 'Fast and compact model for near-instant responsiveness',
     contextWindow: 200000,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Aug 2023',
