@@ -67,6 +67,24 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1430 }, // gpt-5-chat
   },
 
+  // GPT-5 Codex
+  {
+    idPrefix: 'gpt-5-codex',
+    label: 'GPT-5 Codex',
+    description: 'A version of GPT-5 optimized for agentic coding in Codex.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort' }, // works
+      { paramId: 'llmVndOaiWebSearchContext' }, // works, although is not triggered often
+      // { paramId: 'llmVndOaiRestoreMarkdown', initialValue: false }, // since this is for code, let the prompt dictate markdown usage rather than us injecting
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    // benchmark: TBD
+  },
+
   // GPT-5 mini
   {
     isLatest: true,
@@ -1020,6 +1038,7 @@ const _manualOrderingIdPrefixes = [
   'gpt-5-mini-20',
   'gpt-5-nano-20',
   'gpt-5-chat-latest',
+  'gpt-5-codex',
   'gpt-5-',
   // Reasoning models
   'o5-20',
