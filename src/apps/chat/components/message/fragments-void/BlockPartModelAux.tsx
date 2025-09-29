@@ -5,6 +5,7 @@ import { Box, Chip, Typography } from '@mui/joy';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 
+import { RenderMarkdown } from '~/modules/blocks/markdown/RenderMarkdown';
 import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
@@ -15,6 +16,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 
 
 // configuration
+const ENABLE_MARKDOWN_DETECTION = false;
 // const REASONING_COLOR = '#ca74b8'; // '#f22a85' (folder-aligned), '#ca74b8' (emoji-aligned)
 const REASONING_COLOR: ColorPaletteProp = 'success';
 const ANTHROPIC_REDACTED_EXPLAINER = //  https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#example-streaming-with-redacted-thinking
@@ -75,6 +77,16 @@ const _styles = {
 
 } as const;
 
+
+/** Detect if content is potentially markdown based on common markdown patterns */
+function _maybeMarkdownReasoning(trimmed: string): boolean {
+  // const trimmed = text.trimStart();
+  return trimmed.startsWith('**')
+    || trimmed.startsWith('# ')
+    || /^#{2,6}\s/.test(trimmed);
+}
+
+
 export function BlockPartModelAux(props: {
   fragmentId: DMessageFragmentId,
   auxType: 'reasoning' | string,
@@ -96,6 +108,7 @@ export function BlockPartModelAux(props: {
   // memo
   const scaledTypographySx = useScaledTypographySx(adjustContentScaling(props.contentScaling, -1), false, false);
   const textSx = React.useMemo(() => ({ ..._styles.text, ...scaledTypographySx }), [scaledTypographySx]);
+  const maybeMarkdown = React.useMemo(() => !ENABLE_MARKDOWN_DETECTION || neverExpanded ? false : _maybeMarkdownReasoning(props.auxText), [neverExpanded, props.auxText]);
 
   let typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
@@ -166,12 +179,19 @@ export function BlockPartModelAux(props: {
     <ExpanderControlledBox expanded={expanded}>
 
       {!neverExpanded && (
-        <Typography sx={textSx}>
-          <span>
-            {props.auxText}
+        (ENABLE_MARKDOWN_DETECTION && maybeMarkdown) ? (
+          <Box sx={textSx}>
+            <RenderMarkdown content={props.auxText} sx={{ ...scaledTypographySx, marginInline: '0!important' /* to override what's default in this component */ }} />
             {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
-          </span>
-        </Typography>
+          </Box>
+        ) : (
+          <Typography sx={textSx}>
+            <span>
+              {props.auxText}
+              {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
+            </span>
+          </Typography>
+        )
       )}
 
     </ExpanderControlledBox>
