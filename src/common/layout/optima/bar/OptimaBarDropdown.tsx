@@ -21,6 +21,10 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
       '&.agi-gone': {
         display: 'none',
       } as const,
+      // fade when the 'agi-faded' class is set
+      '&.agi-faded button': {
+        opacity: 0.667,
+      } as const,
     } as const,
   } as const,
 
@@ -33,6 +37,7 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
     } as const,
   } as const,
 
+  // this is the down-arrow icon half faded
   indicator: {
     sx: {
       // additive white 50%
@@ -132,6 +137,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
   placeholder?: string,
   showSymbols?: boolean | 'compact',
   showGone?: boolean,
+  showFaded?: boolean,
 }, ref: React.Ref<OptimaBarControlMethods>) {
 
   // state
@@ -172,7 +178,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
       onListboxOpenChange={handleOnOpenChange}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={optimaSelectSlotProps}
-      className={props.showGone ? 'agi-gone' : ''}
+      className={props.showGone ? 'agi-gone' : props.showFaded ? 'agi-faded' : ''}
     >
 
       {/* Prepender */}
