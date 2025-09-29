@@ -22,6 +22,11 @@ const filterUnallowedNames = ['Legacy'];
 //   'predictLongRunning', // e.g. removes "models/veo-2.0-generate-001" (appeared on 2025-04-10)
 // ];
 const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
+  // new symlinks that are too vague and high risk; let the user pick the correct model
+  'models/gemini-pro-latest',
+  'models/gemini-flash-latest',
+  'models/gemini-flash-lite-latest',
+
   // 2025-02-27: verified, old model is no more
   'models/gemini-2.0-flash-exp', // verified, replaced by gemini-2.0-flash, which is non-free anymore
 
@@ -38,7 +43,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
    - Latest stable     version  gemini-1.0-pro  <model>-<generation>-<variation>
    - Stable versions   gemini-1.0-pro-001       <model>-<generation>-<variation>-<version>
 
-   Gemini capabilities chart (updated 2025-06-05):
+   Gemini capabilities chart (updated 2025-09-29):
    - [table stakes] System instructions
    - JSON Mode, with optional JSON Schema
    - Adjustable Safety Settings
