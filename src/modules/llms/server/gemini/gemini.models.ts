@@ -427,89 +427,19 @@ const _knownGeminiModels: ({
 
   /// Generation 1.5
 
-  // Gemini 1.5 Flash Models - DEPRECATED September 2025
-  {
-    id: 'models/gemini-1.5-flash-latest', // updated regularly and might be a preview version
-    isPreview: true,
-    chatPrice: gemini15FlashPricing,
-    // symLink: '-002 or newer',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    deprecated: 'September 2025',
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-flash',
-    // Defaults to version 002 on Oct 8, 2024
-    symLink: 'models/gemini-1.5-flash-002',
-    chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1312 },
-    deprecated: 'September 2025',
-    hidden: true, // old model, SNR
-  },
-  {
-    id: 'models/gemini-1.5-flash-002', // new stable version
-    chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1312 },
-    deprecated: 'September 2025',
-    hidden: true,
-  },
-
-  // Gemini 1.5 Flash-8B Models - DEPRECATED September 2025
-  {
-    id: 'models/gemini-1.5-flash-8b-latest',
-    isPreview: false,
-    chatPrice: gemini15Flash8BPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1212 },
-    deprecated: 'September 2025',
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-flash-8b',
-    symLink: 'models/gemini-1.5-flash-8b-001',
-    chatPrice: gemini15Flash8BPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1262 },
-    deprecated: 'September 2025',
-    hidden: true, // old model, SNR
-  },
-  {
-    id: 'models/gemini-1.5-flash-8b-001',
-    chatPrice: gemini15Flash8BPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1262 },
-    deprecated: 'September 2025',
-    hidden: true,
-  },
-
-  // Gemini 1.5 Pro Models - DEPRECATED September 2025
-  {
-    id: 'models/gemini-1.5-pro-latest', // updated to latest stable version
-    chatPrice: gemini15ProPricing,
-    // symLink: '-002 or newer',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    deprecated: 'September 2025',
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-pro',
-    symLink: 'models/gemini-1.5-pro-002',
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1350 },
-    deprecated: 'September 2025',
-    hidden: true, // old model, SNR
-  },
-  {
-    id: 'models/gemini-1.5-pro-002',
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1350 },
-    deprecated: 'September 2025',
-    hidden: true,
-  },
+  // REMOVED MODELS (no longer returned by API as of Sept 29, 2025):
+  // - Gemini 1.5 Flash Models - DEPRECATED September 2025
+  //   - models/gemini-1.5-flash-latest
+  //   - models/gemini-1.5-flash
+  //   - models/gemini-1.5-flash-002
+  // - Gemini 1.5 Flash-8B Models - DEPRECATED September 2025
+  //   - models/gemini-1.5-flash-8b-latest
+  //   - models/gemini-1.5-flash-8b
+  //   - models/gemini-1.5-flash-8b-001
+  // - Gemini 1.5 Pro Models - DEPRECATED September 2025
+  //   - models/gemini-1.5-pro-latest
+  //   - models/gemini-1.5-pro
+  //   - models/gemini-1.5-pro-002
 
 
   /// Generation 1.0
@@ -517,7 +447,6 @@ const _knownGeminiModels: ({
   // REMOVED MODELS (no longer returned by API as of Sept 16, 2025):
   // - models/gemini-1.0-pro-vision-latest (deprecated, confusing naming)
   // - models/gemini-pro-vision (deprecated, was symlink to gemini-1.0-pro-vision)
-
 
 
   /// Other Experimental Models
