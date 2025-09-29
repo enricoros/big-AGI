@@ -48,6 +48,12 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 export interface DMessageMetadata {
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
   entangled?: DMessageEntangled; // entangled messages info
+  /**
+   * Initially intended recipients of this message.
+   * Defaults to `undefined` i.e. the current persona for the active operation (chat, beam, etc).
+   * If set, has to be honored by the UI and the sending operation.
+   */
+  initialRecipients?: DMessageRecipientPersona[];
   // NOTE: if adding fields, manually update `duplicateDMessageMetadata`
 }
 
@@ -64,6 +70,12 @@ export interface DMessageEntangled {
   id: string;           // entanglement group ID
   color: string;        // hex color for visual connection
   count: number;        // total number of chats this was sent to
+}
+
+/** Recipient of a message - currently persona-based but extensible for future recipient types. */
+export interface DMessageRecipientPersona {
+  rt: 'persona'; // recipient type discriminant
+  personaUid: string | null; // null = explicit "no persona"
 }
 
 
@@ -185,6 +197,9 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
     } : {}),
     ...(metadata.entangled ? {
       entangled: { ...metadata.entangled },
+    } : {}),
+    ...(metadata.initialRecipients?.length ? {
+      initialRecipients: metadata.initialRecipients.map(recipient => ({ ...recipient })),
     } : {}),
   };
 }
