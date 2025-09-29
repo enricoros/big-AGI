@@ -653,7 +653,7 @@ export class ContentReassembler {
       const currentTextFragment = this.currentTextFragmentIndex === null ? null
         : this.accumulator.fragments[this.currentTextFragmentIndex];
       if (currentTextFragment && isTextContentFragment(currentTextFragment)) {
-        currentTextFragment.part.text += ' ' + issueText;
+        currentTextFragment.part.text += (currentTextFragment.part.text ? '\n' : ' ') + issueText;
         return;
       }
     }
