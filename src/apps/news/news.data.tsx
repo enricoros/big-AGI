@@ -103,7 +103,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.7: Gpt-4o <B>2024-08-06</B></> },
       { text: <>1.16.8: <B>ChatGPT-4o</B> latest</> },
       { text: <>1.16.9: <B>Gemini</B> fixes</> },
-      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
+      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI 2. <B href='https://form.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
     ],
   },
   {
