@@ -99,12 +99,12 @@ export function AixDebuggerFrame(props: {
         </Typography>
         <Divider />
         <Box sx={_styles.requestCardText}>
-          {frame.body || 'No headers data available'}
+          {frame.body || 'Waiting for the body data available'}
         </Box>
       </Card>
 
       {/* Performance Profiler */}
-      <Card variant='soft' color='success' sx={_styles.requestCard}>
+      {!!frame.profilerMeasurements?.length && <Card variant='soft' color='success' sx={_styles.requestCard}>
         <Typography color='success' variant='soft' level='title-sm' startDecorator={<TimelapseIcon />}>
           Internal Profiler:
         </Typography>
@@ -113,7 +113,7 @@ export function AixDebuggerFrame(props: {
         ) : (
           'No profiler measurements available. Note: profiling is not available in production.'
         )}
-      </Card>
+      </Card>}
 
       {/* Particles List */}
       <Box mb={showParticles ? -2 : undefined} sx={_styles.particleNorminal}>
