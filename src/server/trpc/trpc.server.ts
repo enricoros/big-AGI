@@ -11,6 +11,13 @@ import * as z from 'zod/v4';
 import { initTRPC } from '@trpc/server';
 import { transformer } from '~/server/trpc/trpc.transformer';
 
+
+/**
+ * Type of the Context object passed to procedures/resolvers, to avoid circular dependencies.
+ */
+export type ChatGenerateContentContext = Awaited<ReturnType<typeof createTRPCFetchContext>>;
+
+
 /**
  * 1. CONTEXT
  *
