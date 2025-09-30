@@ -627,7 +627,7 @@ async function _aixChatGenerateContent_LL(
 
   /**
    * DEBUG note: early we were filtering (aixContext.name === 'conversation'), but with the new debugger we don't
-   * - 'sudo' mode is enabled by the UX Labs, and activates debug
+   * - AIX inspector is now independent from sudo mode
    * - every request thereafter both sends back the Aix server-side dispatch packet, and appends all the particles received by the client side
    */
   const requestServerDebugging = getLabsDevMode();
@@ -668,7 +668,8 @@ async function _aixChatGenerateContent_LL(
           debugDispatchRequest: true,
           /**
            * Request profiling data for a successful call (only streaming for now).
-           * Note: the server-side won't enable profiling on non-production builds.
+           * Requires debugDispatchRequest to be true as well.
+           * Note: the server-side won't enable profiling on production builds.
            */
           debugProfilePerformance: true,
         },

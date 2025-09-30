@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixDemuxers } from '../dispatch/stream.demuxers';
-import { AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
+import { AixAPI_Context_ChatGenerate, AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { PerformanceProfiler } from '../dispatch/PerformanceProfiler';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
@@ -20,6 +20,19 @@ import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
  *  4. onComment on SSE streams
  */
 export const AIX_SECURITY_ONLY_IN_DEV_BUILDS = process.env.NODE_ENV === 'development';
+
+/**
+ * Production-allowed contexts for AIX inspector.
+ * These are the only contexts that can be captured in production builds for security.
+ */
+const AIX_INSPECTOR_ALLOWED_CONTEXTS: (AixAPI_Context_ChatGenerate['name'] | string)[] = [
+  'beam-followup',
+  'beam-gather',
+  'beam-scatter',
+  'chat-react-turn',
+  'conversation',
+  'scratch-chat',
+] as const;
 
 
 export const aixRouter = createTRPCRouter({
@@ -54,8 +67,11 @@ export const aixRouter = createTRPCRouter({
       const chatGenerateTx = new ChatGenerateTransmitter(prettyDialect, connectionOptions?.throttlePartTransmitter);
 
 
-      // Profiler, if requested by the caller
-      const _profiler = (input.connectionOptions?.debugProfilePerformance && AIX_SECURITY_ONLY_IN_DEV_BUILDS)
+      // Request Echo, if allowed
+      const echoDispatchRequest = !!input.connectionOptions?.debugDispatchRequest && (AIX_SECURITY_ONLY_IN_DEV_BUILDS || AIX_INSPECTOR_ALLOWED_CONTEXTS.includes(input.context.name));
+
+      // Profiler, if allowed
+      const _profiler = (AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoDispatchRequest && !!input.connectionOptions?.debugProfilePerformance)
         ? new PerformanceProfiler() : null;
 
       const _profilerCompleted = !_profiler ? null : () => {
@@ -86,8 +102,8 @@ export const aixRouter = createTRPCRouter({
       try {
 
         // [DEV] Debugging the request without requiring a server restart
-        if (input.connectionOptions?.debugDispatchRequest) {
-          chatGenerateTx.addDebugRequestInDev(dispatch.request.url, dispatch.request.headers, dispatch.request.body);
+        if (echoDispatchRequest) {
+          chatGenerateTx.addDebugRequest(!AIX_SECURITY_ONLY_IN_DEV_BUILDS, dispatch.request.url, dispatch.request.headers, dispatch.request.body);
           yield* chatGenerateTx.emitParticles();
         }
 
