@@ -1012,6 +1012,16 @@ export namespace OpenAIWire_Responses_Items {
     id: z.string(), // unique ID of the image generation call (output item ID)
     result: z.string().optional(), // base64 image data when completed
     revised_prompt: z.string().optional(), // the revised prompt used for generation
+    // BREAKING CHANGE from OpenAI - 2025-09-30
+    // redefining the following because we need 'generating' too here
+    status: z.enum([
+      'generating', // 2025-09-30: seen on OpenAI for `image_generation_call` items
+      'in_progress', 'completed', 'incomplete',
+    ]).optional(),
+    // NOTE: we also see the following in the image_generation_call item
+    // background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
+    // output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
+    // quality: z.enum(['auto', 'high', 'medium', 'low']).optional(),
   });
 
   // const OutputCodeInterpreterCallItem_schema = _OutputItemBase_schema.extend({
