@@ -5,13 +5,18 @@
 import { PostHog } from 'posthog-node';
 
 
+export const hasPostHogServer = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
+
+
+// --- Singleton instance ---
+
 // Singleton instance - PostHog client handles batching internally
 let _posthogServer: PostHog | null = null;
 
-function _getPosthogServer(): PostHog | null {
-  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return null;
+function _posthogServerSingleton(): PostHog | null {
+  if (!hasPostHogServer) return null;
   if (_posthogServer) return _posthogServer;
-  return _posthogServer = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+  return _posthogServer = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
     host: 'https://us.i.posthog.com', // server exceptions host
     // enableExceptionAutocapture: true, // untested, so disabled for now
     // for server-side, we want immediate flushing
@@ -21,34 +26,63 @@ function _getPosthogServer(): PostHog | null {
 }
 
 
-// Note: captureServerEvent functionality may be added in the future
-// For now, we focus on error tracking only
-
+// --- Server-Side Event and Exception Capture ---
 
 /**
- * Captures an exception to PostHog from server-side code
+ * Send server-side custom events to PostHog
  * The posthog-node library automatically uses the right implementation for Edge vs Node.js
  */
-export async function posthogCaptureServerException(
-  error: Error | unknown,
-  context: {
-    domain: string; // e.g. 'trpc', which will become 'server-trpc'
-    runtime: 'edge' | 'nodejs';
-    endpoint: string;
-    method?: string;
-    url?: string;
-    distinctId?: string;
-    additionalProperties?: Record<string, any>;
-  },
-): Promise<void> {
-  const client = _getPosthogServer();
+export async function posthogServerSendEvent(eventName: string, distinctId: string, properties?: {
+  runtime?: 'edge' | 'nodejs';
+  [key: string]: any;
+}): Promise<void> {
+
+  const client = _posthogServerSingleton();
   if (!client) return;
 
   try {
-    const distinctId = context.distinctId || `server_${context.runtime}_${Date.now()}`;
 
-    // Use the immediate variant for better performance in serverless environments
-    await client.captureExceptionImmediate(error, distinctId, {
+    // immediate variant for serverless environments
+    await client.captureImmediate({
+      distinctId,
+      event: eventName,
+      properties: {
+        runtime: properties?.runtime || 'nodejs',
+        ...properties,
+      },
+    });
+
+  } catch (captureError) {
+    // log the product analytics error
+    console.warn('[PostHog] Error capturing event:', captureError);
+  }
+}
+
+
+/**
+ * Send server-side exceptions to PostHog
+ * The posthog-node library automatically uses the right implementation for Edge vs Node.js
+ */
+export async function posthogServerSendException(error: Error | unknown, distinctId: string | undefined, context: {
+  runtime: 'edge' | 'nodejs';
+  domain: string; // e.g. 'trpc-onerror', which will become `server-trpc-onerror` in $exception_domain
+  endpoint: string;
+  method?: string;
+  url?: string;
+  additionalProperties?: Record<string, any>;
+}): Promise<void> {
+
+  const client = _posthogServerSingleton();
+  if (!client) return;
+
+  try {
+
+    // For server exceptions, use a consistent distinctId when no user is provided
+    // This groups exceptions by runtime type for better error pattern analysis
+    const effectiveDistinctId = distinctId || `server_${context.runtime}_errors`;
+
+    // immediate variant for serverless environments
+    await client.captureExceptionImmediate(error, effectiveDistinctId, {
       agi_domain: `server-${context.domain}`,
       agi_runtime: context.runtime,
       // Context properties
@@ -60,7 +94,19 @@ export async function posthogCaptureServerException(
     });
 
   } catch (captureError) {
-    // Don't throw errors from error tracking itself
-    console.error('[PostHog] Error capturing exception:', captureError);
+    // log the error analytics error
+    console.warn('[PostHog] Error capturing exception:', captureError);
+  }
+}
+
+
+/** Flush any pending events to PostHog */
+export async function posthogServerShutdown(shutdownTimeoutMs: number = 1000): Promise<void> {
+  const client = _posthogServerSingleton();
+  if (!client) return;
+  try {
+    await client.shutdown(shutdownTimeoutMs);
+  } catch (flushError) {
+    console.warn('[PostHog] Error flushing events:', flushError);
   }
 }

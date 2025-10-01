@@ -2,7 +2,7 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouterCloud } from '~/server/trpc/trpc.router-cloud';
 import { createTRPCFetchContext } from '~/server/trpc/trpc.server';
-import { posthogCaptureServerException } from '~/server/posthog/posthog.server';
+import { posthogServerSendException } from '~/server/posthog/posthog.server';
 
 const handlerNodeRoutes = (req: Request) => fetchRequestHandler({
   endpoint: '/api/cloud',
@@ -16,7 +16,7 @@ const handlerNodeRoutes = (req: Request) => fetchRequestHandler({
       console.error(`❌ tRPC-cloud failed on ${path ?? 'unk-path'}: ${error.message}`);
 
     // -> Capture node errors
-    await posthogCaptureServerException(error, {
+    await posthogServerSendException(error, undefined, {
       domain: 'trpc-onerror',
       runtime: 'nodejs',
       endpoint: path ?? 'unknown',
