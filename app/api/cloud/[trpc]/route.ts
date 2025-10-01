@@ -23,8 +23,8 @@ const handlerNodeRoutes = (req: Request) => fetchRequestHandler({
       method: req.method,
       url: req.url,
       additionalProperties: {
-        errorCode: error.code,
-        errorType: type,
+        error_code: error.code,
+        error_type: type,
       },
     });
   },
