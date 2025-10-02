@@ -4,6 +4,16 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
 
 
+export const darkerBackdropSlotProps = {
+  backdrop: {
+    sx: {
+      backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel, 11 13 14) / 0.5)',
+      // backdropFilter: 'none',
+      // backdropFilter: 'blur(2px)',
+    },
+  },
+};
+
 export const noBackdropSlotProps = {
   backdrop: {
     sx: {
@@ -25,6 +35,7 @@ export function GoodModal(props: {
   themedColor?: ColorPaletteProp,
   closeText?: string, // defaults to 'Close'
   animateEnter?: boolean,
+  darkerBackdrop?: boolean,
   unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
   /** if true, if true, forces contents to stay within the screen viewport, inner scrollable (not outer) */
   autoOverflow?: boolean,
@@ -66,8 +77,8 @@ export function GoodModal(props: {
           backdropFilter: props.unfilterBackdrop ? 'none' : 'blur(32px)',
         },
       },
-    } : props.unfilterBackdrop ? noBackdropSlotProps : undefined;
-  }, [props.themedColor, props.unfilterBackdrop]);
+    } : props.darkerBackdrop ? darkerBackdropSlotProps : props.unfilterBackdrop ? noBackdropSlotProps : undefined;
+  }, [props.darkerBackdrop, props.themedColor, props.unfilterBackdrop]);
 
 
   // Fix the issue where the backdrop will fire on clicks that initiated on the dialog
