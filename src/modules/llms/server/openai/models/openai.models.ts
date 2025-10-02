@@ -6,6 +6,29 @@ import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
 
 
+// OpenAI Model Variants
+export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
+
+  // GPT-5 with web search enabled by default
+  // 'gpt-5-2025-08-07': {
+  //   idVariant: 'search',
+  //   label: 'GPT-5 + Search',
+  //   description: 'GPT-5 with web search enabled by default for up-to-date information and research.',
+  //   parameterSpecs: [
+  //     // customize this param
+  //     { paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium', hidden: true }, // Search enabled by default
+  //     // copy other params
+  //     { paramId: 'llmVndOaiReasoningEffort4' },
+  //     { paramId: 'llmVndOaiRestoreMarkdown' },
+  //     { paramId: 'llmVndOaiVerbosity' },
+  //     { paramId: 'llmVndOaiImageGeneration' },
+  //   ],
+  //   benchmark: { cbaElo: 1442 + 1 }, // +1 from base GPT-5
+  // },
+
+} as const;
+
+
 // configuration
 const DEV_DEBUG_OPENAI_MODELS = false; // set to true to check superfluous and missing models
 
@@ -1135,6 +1158,27 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
 
 
 /**
+ * Inject model variants into the models array.
+ * Similar to how Anthropic handles variants (e.g., thinking variants),
+ * this allows creating specialized versions of models with different defaults.
+ */
+export function openAIInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
+
+  // Add variant first (if defined), then the base model
+  if (hardcodedOpenAIVariants[model.id])
+    models.push({
+      ...model,
+      ...hardcodedOpenAIVariants[model.id],
+    });
+
+  // Add the base model
+  models.push(model);
+
+  return models;
+}
+
+
+/**
  * Checks for both superfluous and missing models in OpenAI API.
  * 
  * Combines the functionality of checking for models in our editorial definitions
@@ -1169,10 +1213,10 @@ export function openaiDevCheckForModelsOverlap_DEV(wireModels: unknown, parsedMo
     // 2. Check for missing models (in API but not in our definitions)
     const parsedModelIds = parsedModels.map((model: any) => model.id);
     const missingModelIds = apiModelIds.filter((id: string) => !parsedModelIds.includes(id));
-    
+
     if (missingModelIds.length > 0) {
       // Split missing models: filtered out vs truly missing
-      const filteredOutModels = missingModelIds.filter((id: string) => 
+      const filteredOutModels = missingModelIds.filter((id: string) =>
         openAIModelsDenyList.some(deny => id.includes(deny))
       );
       const trulyMissingModels = missingModelIds.filter((id: string) =>
@@ -1181,7 +1225,7 @@ export function openaiDevCheckForModelsOverlap_DEV(wireModels: unknown, parsedMo
 
       if (filteredOutModels.length > 0)
         console.warn(`[DEV] OpenAI: filtered out models: [\n  - ${filteredOutModels.join('\n  - ')}\n]`);
-      
+
       if (trulyMissingModels.length > 0)
         console.warn(`[DEV] OpenAI: truly missing model definitions[\n  - ${trulyMissingModels.join('\n  - ')}\n]`);
     }
