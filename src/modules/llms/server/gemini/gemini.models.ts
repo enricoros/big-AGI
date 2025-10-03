@@ -3,10 +3,11 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 
 // dev options
-const DEV_DEBUG_GEMINI_MODELS = true;
+const DEV_DEBUG_GEMINI_MODELS = (Release.TenantSlug as any) === 'staging' || Release.IsNodeDevBuild;
 
 
 // supported interfaces
