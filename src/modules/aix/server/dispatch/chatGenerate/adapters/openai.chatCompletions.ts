@@ -39,7 +39,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
-  const hotFixThrowCannotFC = openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
+  const hotFixThrowCannotFC =
+    // [OpenRouter] 2025-10-02: do not throw, rather let it fail if upstream has issues
+    // openAIDialect === 'openrouter' || /* OpenRouter FC support is not good (as of 2024-07-15) */
+    openAIDialect === 'perplexity';
   const hotFixVndORIncludeReasoning = openAIDialect === 'openrouter'; // [OpenRouter, 2025-01-24] has a special `include_reasoning` field to show the chain of thought
 
   // Model incompatibilities -> Hotfixes
