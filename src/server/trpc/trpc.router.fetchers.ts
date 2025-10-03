@@ -125,7 +125,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       payload = await responseCloneIfJsonFails.text().catch(() => null);
 
     // [logging - HTTP error] candidate for the logging system
-    console.error(`[${method}] ${moduleName} error (upstream): ${response.status} (${response.statusText}):`, safeErrorString(payload));
+    const payloadString = safeErrorString(payload);
+    console.error(`[${method}] ${moduleName} error (upstream): ${response.status} (${response.statusText}):`, payloadString);
 
     // HTTP 400
     throw new TRPCError({
@@ -133,15 +134,17 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       message: (throwWithoutName ? '' : `[${moduleName} issue]: `)
         + (response.statusText || '')
         + (payload
-          ? ` - ${safeErrorString(payload)}` : '')
+          ? ` - ${payloadString}` : '')
         + (payload?.error?.failed_generation // [Groq]
           ? ` - failed_generation: ${payload.error.failed_generation}` : '')
+        + (response.status === 403 && moduleName === 'Gemini' && payloadString?.includes('Requests from referer')
+          ? ' - Check API key restrictions in Google Cloud Console' : '')
         + (response.status === 403 && !url.includes('app.openpipe.ai' /* [OpenPipe] 403 when the model is associated to the project  */)
           ? ` - is "${url}" accessible by the server?` : '')
         + (response.status === 404 && !url.includes('app.openpipe.ai' /* [OpenPipe] 404 when the model is not found - don't add error details */)
           ? ` - "${url}" cannot be found by the server` : '')
-        + (response.status === 502 ?
-          ` - is "${url}" not available?` : ''),
+        + (response.status === 502
+          ? ` - is "${url}" not available?` : ''),
     });
   }
 
