@@ -1,6 +1,7 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -30,7 +31,7 @@ export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescript
 
 
 // configuration
-const DEV_DEBUG_OPENAI_MODELS = false; // set to true to check superfluous and missing models
+const DEV_DEBUG_OPENAI_MODELS = (Release.TenantSlug as any) === 'staging' || Release.IsNodeDevBuild;
 
 
 // [OpenAI] Known Chat Models
@@ -1216,15 +1217,15 @@ export function openaiDevCheckForModelsOverlap_DEV(wireModels: unknown, parsedMo
 
     if (missingModelIds.length > 0) {
       // Split missing models: filtered out vs truly missing
-      const filteredOutModels = missingModelIds.filter((id: string) =>
-        openAIModelsDenyList.some(deny => id.includes(deny))
-      );
+      // const filteredOutModels = missingModelIds.filter((id: string) =>
+      //   openAIModelsDenyList.some(deny => id.includes(deny))
+      // );
       const trulyMissingModels = missingModelIds.filter((id: string) =>
         !openAIModelsDenyList.some(deny => id.includes(deny))
       );
 
-      if (filteredOutModels.length > 0)
-        console.warn(`[DEV] OpenAI: filtered out models: [\n  - ${filteredOutModels.join('\n  - ')}\n]`);
+      // if (filteredOutModels.length > 0)
+      //   console.warn(`[DEV] OpenAI: filtered out models: [\n  - ${filteredOutModels.join('\n  - ')}\n]`);
 
       if (trulyMissingModels.length > 0)
         console.warn(`[DEV] OpenAI: truly missing model definitions[\n  - ${trulyMissingModels.join('\n  - ')}\n]`);
