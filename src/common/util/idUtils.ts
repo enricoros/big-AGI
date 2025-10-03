@@ -83,6 +83,19 @@ export function isValidUuidFast(value: string): boolean {
 }
 
 /**
+ * Removes a legacy prefix (e.g., 'conv_', 'persona_') from a UUID-like string.
+ * Returns the UUID if valid after prefix removal, otherwise returns false.
+ */
+export function stripLegacyUuidPrefix(value: string): string | false {
+  if (!value) return false;
+
+  const uIdx = value.indexOf('_');
+  const candidate = uIdx > 0 ? value.slice(uIdx + 1) : value;
+
+  return isValidUuidFast(candidate) ? candidate : false;
+}
+
+/**
  * Generates a UUID v4 using the Web Crypto API
  * @returns A standard UUID v4 string (e.g., '123e4567-e89b-12d3-a456-426614174000')
  */
