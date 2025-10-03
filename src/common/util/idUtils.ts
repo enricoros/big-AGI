@@ -69,6 +69,20 @@ type UuidV4Scope =
 
 
 /**
+ * Validates a UUID string as-is (no normalization)
+ */
+export function isValidUuidFast(value: string): boolean {
+  // safety check
+  if (!value || typeof (value as unknown) !== 'string')
+    return false;
+
+  // simple fast validation:
+  // - UUID format: 8-4-4-4-12 hexadecimal characters separated by hyphens
+  // - Example: "123e4567-e89b-12d3-a456-426614174000"
+  return value.length === 36 && value[8] === '-' && value[13] === '-' && value[18] === '-' && value[23] === '-';
+}
+
+/**
  * Generates a UUID v4 using the Web Crypto API
  * @returns A standard UUID v4 string (e.g., '123e4567-e89b-12d3-a456-426614174000')
  */
