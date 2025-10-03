@@ -517,6 +517,13 @@ export namespace GeminiWire_API_Generate_Content {
       thinkingBudget: z.number().optional(),
     }).optional(),
 
+    // Image generation configuration
+    imageConfig: z.object({
+      /** Controls the aspect ratio of generated images */
+      // [GEMINI] 2025-10-02: Undocumented yet
+      aspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']).optional(),
+    }).optional(),
+
     // Added on 2025-01-10 - Low-level - not requested/used yet but added
     presencePenalty: z.number().optional(),     // A positive penalty incresases the vocabulary of the response
     frequencyPenalty: z.number().optional(),    // A positive penalty incresases the vocabulary of the response

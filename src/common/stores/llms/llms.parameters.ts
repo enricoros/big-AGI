@@ -88,6 +88,14 @@ export const DModelParameterRegistry = {
     } as const,
   } as const,
 
+  llmVndGeminiAspectRatio: {
+    label: 'Aspect Ratio',
+    type: 'enum' as const,
+    description: 'Controls the aspect ratio of generated images',
+    values: ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'] as const,
+    // No initial value - when undefined, the model decides the aspect ratio
+  } as const,
+
   llmVndGeminiShowThoughts: {
     label: 'Show Thoughts',
     type: 'boolean' as const,

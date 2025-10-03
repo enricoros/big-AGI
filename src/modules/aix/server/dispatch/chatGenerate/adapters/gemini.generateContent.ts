@@ -96,6 +96,13 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     payload.generationConfig!.thinkingConfig = thinkingConfig;
   }
 
+  // [Gemini, 2025-10-02] Image generation: aspect ratio configuration
+  if (model.vndGeminiAspectRatio) {
+    payload.generationConfig!.imageConfig = {
+      aspectRatio: model.vndGeminiAspectRatio,
+    };
+  }
+
   // [Gemini, 2025-05-20] Experimental Audio generation (TTS - audio only, no text): Request
   const noTextOutput = !model.acceptsOutputs.includes('text');
   if (model.acceptsOutputs.includes('audio')) {

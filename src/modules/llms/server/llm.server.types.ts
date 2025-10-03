@@ -78,6 +78,7 @@ const ModelParameterSpec_schema = z.object({
     'llmTopP',
     'llmForceNoStream',
     'llmVndAntThinkingBudget',
+    'llmVndGeminiAspectRatio',
     'llmVndGeminiShowThoughts',
     'llmVndGeminiThinkingBudget',
     'llmVndOaiReasoningEffort',
