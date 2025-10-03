@@ -246,7 +246,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Nano Banana',
     chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
-    /// TODO: parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' /*  */ }],
+    parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' }],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
   // 2.5 Flash Image Preview
