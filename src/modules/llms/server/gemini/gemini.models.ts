@@ -242,12 +242,20 @@ const _knownGeminiModels: ({
 
   // 2.5 Flash Image Preview
   {
-    id: 'models/gemini-2.5-flash-image-preview',
-    // labelOverride: 'Nano Banana',
+    id: 'models/gemini-2.5-flash-image',
     labelOverride: 'Nano Banana',
-    // labelOverride: 'Gemini 2.5 Flash Image Preview',
+    chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
+    /// TODO: parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' /*  */ }],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+  // 2.5 Flash Image Preview
+  {
+    hidden: true, // superseded by 'models/gemini-2.5-flash-image'
+    id: 'models/gemini-2.5-flash-image-preview',
+    labelOverride: 'Gemini 2.5 Flash Image Preview', // default is Nano Banana
     isPreview: true,
-    chatPrice: { input: 0.30, output: 0.039 }, // Per pricing page: $0.30 text/image input, $0.039 per image output
+    chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
@@ -644,6 +652,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-2.5-flash-preview-09',
   'models/gemini-2.5-flash',
   'models/gemini-2.5-flash-image',
+  'models/gemini-2.5-flash-image-preview',
   'models/gemini-2.5-flash-preview',
   'models/gemini-2.5-flash-',
   'models/gemini-2.5-flash-preview-tts',
