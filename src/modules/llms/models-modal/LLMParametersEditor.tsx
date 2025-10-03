@@ -52,6 +52,20 @@ const _perplexityDateFilterOptions = [
   { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
 ] as const;
 
+const _geminiAspectRatioOptions = [
+  { value: _UNSPECIFIED, label: 'Auto', description: 'Model decides' },
+  { value: '1:1', label: '1:1', description: 'Square' },
+  { value: '2:3', label: '2:3', description: 'Portrait' },
+  { value: '3:2', label: '3:2', description: 'Landscape' },
+  { value: '3:4', label: '3:4', description: 'Portrait' },
+  { value: '4:3', label: '4:3', description: 'Landscape' },
+  { value: '4:5', label: '4:5', description: 'Portrait' },
+  { value: '5:4', label: '5:4', description: 'Landscape' },
+  { value: '9:16', label: '9:16', description: 'Tall portrait' },
+  { value: '16:9', label: '16:9', description: 'Wide landscape' },
+  { value: '21:9', label: '21:9', description: 'Ultra wide' },
+] as const;
+
 const _xaiSearchModeOptions = [
   { value: 'auto', label: 'Auto', description: 'Model decides (default)' },
   { value: 'on', label: 'On', description: 'Always search active sources' },
@@ -110,6 +124,7 @@ export function LLMParametersEditor(props: {
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
     llmVndAntThinkingBudget,
+    llmVndGeminiAspectRatio,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort,
@@ -225,6 +240,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndGeminiAspectRatio') && (
+      <FormSelectControl
+        title='Aspect Ratio'
+        tooltip='Controls the aspect ratio of generated images'
+        value={llmVndGeminiAspectRatio ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiAspectRatio');
+          else onChangeParameter({ llmVndGeminiAspectRatio: value });
+        }}
+        options={_geminiAspectRatioOptions}
       />
     )}
 
