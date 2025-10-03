@@ -115,7 +115,7 @@ verifyBuildTimeVars();
 // PostHog error reporting with source maps for production builds
 import { withPostHogConfig } from '@posthog/nextjs-config';
 if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
-  console.log(' 🧠 \x1b[1mbig-AGI\x1b[0m: building with PostHog error tracking and source maps...');
+  console.log(' 🧠 \x1b[1mbig-AGI\x1b[0m: building with PostHog issue reporting and source maps...');
   nextConfig = withPostHogConfig(nextConfig, {
     personalApiKey: process.env.POSTHOG_API_KEY,
     envId: process.env.POSTHOG_ENV_ID,
