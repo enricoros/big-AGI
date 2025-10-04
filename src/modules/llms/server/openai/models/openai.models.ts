@@ -31,7 +31,7 @@ export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescript
 
 
 // configuration
-const DEV_DEBUG_OPENAI_MODELS = (Release.TenantSlug as any) === 'staging' || Release.IsNodeDevBuild;
+const DEV_DEBUG_OPENAI_MODELS = /* (Release.TenantSlug as any) === 'staging' || */ Release.IsNodeDevBuild;
 
 
 // [OpenAI] Known Chat Models
