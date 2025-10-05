@@ -97,7 +97,13 @@ export function openRouterInjectVariants(models: ModelDescriptionSchema[], model
   models.push(model);
 
   // inject thinking variants for Anthropic thinking models
-  const antThinkingModels = ['anthropic/claude-opus-4', 'anthropic/claude-sonnet-4', 'anthropic/claude-3-7-sonnet'];
+  const antThinkingModels = [
+    'anthropic/claude-opus-4.1',
+    'anthropic/claude-opus-4',
+    'anthropic/claude-sonnet-4.5',
+    'anthropic/claude-sonnet-4',
+    'anthropic/claude-3-7-sonnet'
+  ];
   if (antThinkingModels.includes(model.id)) {
 
     // create a thinking variant for the model, by setting 'idVariant' and modifying the label/description
