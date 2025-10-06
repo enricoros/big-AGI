@@ -78,6 +78,35 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1442 },
   },
 
+  // GPT-5 Pro
+  {
+    idPrefix: 'gpt-5-pro-2025-10-06',
+    label: 'GPT-5 Pro (2025-10-06)',
+    description: 'Version of GPT-5 that uses more compute to produce smarter and more precise responses. Designed for tough problems.',
+    contextWindow: 400000,
+    maxCompletionTokens: 272000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
+    // parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 15, output: 120 },
+    // benchmark: has not been measured yet
+  },
+  {
+    idPrefix: 'gpt-5-pro',
+    label: 'GPT-5 Pro',
+    description: 'Version of GPT-5 with more compute for better responses. Points to gpt-5-pro-2025-10-06.',
+    symLink: 'gpt-5-pro-2025-10-06',
+    hidden: true, // prefer versioned
+    // copied from symlinked
+    contextWindow: 400000,
+    maxCompletionTokens: 272000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    // parameterSpecs: [{ paramId: 'llmForceNoStream' }, { paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 15, output: 120 },
+    // benchmark: has not been measured yet
+  },
+
   // GPT-5 Chat Latest
   {
     idPrefix: 'gpt-5-chat-latest',
@@ -1059,6 +1088,8 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 const _manualOrderingIdPrefixes = [
   // GPT-5
   'gpt-5-20',
+  'gpt-5-pro-20',
+  'gpt-5-pro',
   'gpt-5-mini-20',
   'gpt-5-nano-20',
   'gpt-5-chat-latest',
