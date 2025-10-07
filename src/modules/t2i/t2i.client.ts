@@ -54,6 +54,9 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     const activeProvider = _resolveActiveT2IProvider(userProviderId, providers);
     const mayWork = providers.some(p => p.configured);
     const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
+    // const family = getImageModelFamily(resolvedDalleModelId);
+    // const mayEdit = activeProvider?.vendor === 'openai' && family === 'gpt-image';
+    // NOTE: the gpt-image-1-mini model does not allow editing/inpainting yet
     const mayEdit = activeProvider?.vendor === 'openai' && resolvedDalleModelId === 'gpt-image-1';
     return {
       mayWork,

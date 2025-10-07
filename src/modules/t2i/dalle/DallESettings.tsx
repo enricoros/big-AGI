@@ -3,24 +3,26 @@ import * as React from 'react';
 import { FormControl, Option, Select, Slider, Switch, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
+import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { Link } from '~/common/components/Link';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, DalleModelSelection, resolveDalleModelId, useDalleStore } from './store-module-dalle';
+import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, DalleModelSelection, getImageModelFamily, resolveDalleModelId, useDalleStore } from './store-module-dalle';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
-import { FormChipControl } from '~/common/components/forms/FormChipControl';
 
 
 const CONF = {
 
   MODEL_OPTS: [
+    { value: 'gpt-image-1', label: 'GPT Image' },
+    { value: 'gpt-image-1-mini', label: 'GPT Image Mini' },
     { value: 'dall-e-2', label: 'DALL·E 2' },
     { value: 'dall-e-3', label: 'DALL·E 3' },
-    { value: 'gpt-image-1', label: 'GPT Image' },
     { value: null, label: 'Auto' },
-  ] as { value: DalleModelSelection; label: string }[],
+  ] as { value: DalleModelSelection; label: string, description?: string }[],
 
   RES_D2: ['256x256', '512x512', '1024x1024'] as DalleImageSize[],
   RES_D3: ['1024x1024', '1792x1024', '1024x1792'] as DalleImageSize[],
@@ -98,11 +100,12 @@ export function DallESettings() {
     setDalleModerationGI(!event.target.checked ? 'low' : 'auto');
 
 
-  // derived state - resolve the actual model
+  // derived state - resolve the actual model and family
   const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
-  const isGI = resolvedDalleModelId === 'gpt-image-1';
-  const isD3 = resolvedDalleModelId === 'dall-e-3';
-  const isD2 = resolvedDalleModelId === 'dall-e-2';
+  const family = getImageModelFamily(resolvedDalleModelId);
+  const isGI = family === 'gpt-image';
+  const isD3 = family === 'dall-e-3';
+  const isD2 = family === 'dall-e-2';
 
   const isD3HD = isD3 && dalleQualityD3 === 'hd';
 
@@ -127,11 +130,11 @@ export function DallESettings() {
 
   return <>
 
-    <FormChipControl
+    <FormSelectControl
       title='Model'
-      description={dalleModelId === null ? `Latest (${resolvedDalleModelId})` : isGI ? 'Latest' : isD3 ? 'Good' : 'Older'}
-      options={CONF.MODEL_OPTS.map(opt => ({ ...opt, value: opt.value || 'auto' }))}
-      value={dalleModelId || 'auto'} 
+      // description={dalleModelId === null ? `Latest (${resolvedDalleModelId})` : isGI ? 'Latest' : isD3 ? 'Good' : 'Older'}
+      options={CONF.MODEL_OPTS.map(opt => ({ ...opt, value: opt.value || 'auto', description: opt.description ?? '' }))}
+      value={dalleModelId || 'auto'}
       onChange={(value) => setDalleModelId(value === 'auto' ? null : value as DalleModelSelection)}
     />
 
@@ -259,9 +262,10 @@ export function DallESettings() {
     {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Cost per Image'
                       tooltip={!isGI ? undefined : 'OpenAI gpt-image-1 and similar models will also be charged for the input text tokens'}
-        // description={<Link href='https://platform.openai.com/docs/pricing' target='_blank' noLinkStyle sx={{ textDecoration: 'none' }}>OpenAI Pricing </Link>}
+                      // description={<Link href='https://platform.openai.com/docs/models/gpt-image-1-mini' target='_blank' noLinkStyle sx={{ textDecoration: 'none' }}>OpenAI Pricing </Link>}
       />
-      <Typography>$ {costPerImage}</Typography>
+      <Typography>{costPerImage}</Typography>
+      {/*<Link href='https://platform.openai.com/docs/models/gpt-image-1-mini' target='_blank' typography='body-sm'>OpenAI Pricing </Link>*/}
     </FormControl>}
 
 
