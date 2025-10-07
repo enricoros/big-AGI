@@ -53,7 +53,7 @@ interface NewsItem {
 export const NewsItems: NewsItem[] = [
   {
     versionCode: '2.0',
-    versionName: 'A new beginning',
+    versionName: 'Big-AGI',
     versionDate: new Date('2025-10-06T00:00:00Z'),
     // text: <>Big-AGI 2.0 is now available at <B href='https://app.big-agi.com'>app.big-agi.com</B></>,
     items: [

@@ -128,7 +128,7 @@ export function AppNews() {
 
         <Container disableGutters maxWidth='sm'>
           {news?.map((ni, idx) => {
-            // const firstCard = idx === 0;
+            const firstCard = idx === 0;
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
@@ -147,7 +147,7 @@ export function AppNews() {
               )}
 
               {/* News Item */}
-              <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+              <Card color={firstCard ? 'primary' : undefined} key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
                 <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography level='title-sm' component='div'>
@@ -181,7 +181,7 @@ export function AppNews() {
                     </ul>
                   )}
 
-                  {idx === 0 && <Box sx={{ mt: 2 }}>
+                  {firstCard && <Box sx={{ mt: 2 }}>
                     <Card variant='soft' color='primary' invertedColors>
                       <CardContent>
                         <Typography level='title-sm' sx={{ lineHeight: 'lg' }}>
