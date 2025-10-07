@@ -497,9 +497,9 @@ function _prettyAnthropicModelName(modelId: string): string | null {
 
   const subStr = modelId.slice(claudeIndex);
   const version =
-    subStr.includes('-3-5') ? '3.5' // fixes the -5
-      : subStr.includes('-5') ? '5'
-        : subStr.includes('-4-5') ? '4.5'
+    subStr.includes('-4-5') ? '4.5' // fixes the -5
+      : subStr.includes('-3-5') ? '3.5' // fixes the -5
+        : subStr.includes('-5') ? '5'
           : subStr.includes('-4-1') ? '4.1'
             : subStr.includes('-4') ? '4'
               : subStr.includes('-3-7') ? '3.7'
