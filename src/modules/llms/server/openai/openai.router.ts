@@ -302,10 +302,11 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { access, generationConfig: config, editConfig } = input;
 
       // Determine if this is an edit request
-      const isEdit = !!editConfig?.inputImages?.length && config.model === 'gpt-image-1';
+      const isGptImageFamily = config.model === 'gpt-image-1' || config.model === 'gpt-image-1-mini';
+      const isEdit = !!editConfig?.inputImages?.length && isGptImageFamily;
 
       // validate input
-      if (isEdit && config.model !== 'gpt-image-1')
+      if (isEdit && !isGptImageFamily)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `Image editing is only supported for GPT Image models` });
       if (config.model === 'dall-e-3' && config.count > 1)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
