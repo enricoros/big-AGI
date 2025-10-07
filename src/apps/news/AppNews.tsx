@@ -5,6 +5,8 @@ import TimeAgo from 'react-timeago';
 import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
@@ -14,7 +16,9 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
-import { bigAgi2NewsCallout } from './bigAgi2.data';
+import { bigAgi2NewsCallout, bigAgi2Url } from './bigAgi2.data';
+
+import { downloadAllConversationsJson } from '~/modules/trade/trade.client';
 
 
 // number of news items to show by default, before the expander
@@ -65,6 +69,8 @@ export function AppNews() {
   // show expander
   const canExpand = news.length < NewsItems.length;
 
+  const currentVer = '1.6.9'; // firstNews?.versionCode;
+
   return (
 
     <Box sx={{
@@ -79,25 +85,40 @@ export function AppNews() {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}>
 
-        <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
+        <Typography level='h1' sx={{ fontSize: '2.7rem', mb: 4 }}>
+          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{currentVer}</Box>!
         </Typography>
 
-        <Typography sx={{ mb: 2 }} level='title-sm'>
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode}
+        <Typography level='title-sm' sx={{ mb: 2, textAlign: 'center', lineHeight: 'lg' }} >
+          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {currentVer}.<br/>
+          <b>And a whole-new 2.0 is waiting!</b>
         </Typography>
 
-        <Box sx={{ mb: 5 }}>
+        <Box sx={{ mb: 5, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
           <Button
-            variant='solid' color='primary' size='lg'
+            variant='solid' color='neutral' size='lg'
             component={Link} href={ROUTE_INDEX} noLinkStyle
-            endDecorator='✨'
+            endDecorator={<ArrowForwardRoundedIcon />}
+            // endDecorator='✨'
             sx={{
-              boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+              // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
               minWidth: 180,
             }}
           >
             Continue
+          </Button>
+          <Button
+            variant='solid' color='primary' size='lg'
+            component={Link} href={bigAgi2Url} noLinkStyle
+            endDecorator={<><ArrowOutwardRoundedIcon /></>}
+            // endDecorator='✨'
+            sx={{
+              boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+              minWidth: 180,
+              transform: 'translateY(-1px)',
+            }}
+          >
+            Big-AGI 2 ✨
           </Button>
         </Box>
 
@@ -159,6 +180,27 @@ export function AppNews() {
                       ))}
                     </ul>
                   )}
+
+                  {idx === 0 && <Box sx={{ mt: 2 }}>
+                    <Card variant='soft' color='primary' invertedColors>
+                      <CardContent>
+                        <Typography level='title-sm' sx={{ lineHeight: 'lg' }}>
+                          <b>Migrate your chats:</b> you can download all your conversations at any time by clicking
+                          on &quot;Export&quot; &gt; &quot;Download All&quot; or the button below. Then open Big-AGI 2 and
+                          import the conversation by clicking &quot;Organize&quot; &gt; &quot;Import&quot;.
+                        </Typography>
+                        <Button
+                          size='sm'
+                          variant='soft'
+                          color='primary'
+                          sx={{ mt: 1 }}
+                          onClick={downloadAllConversationsJson}
+                        >
+                          Download All Conversations
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Box>}
 
                 </CardContent>
 

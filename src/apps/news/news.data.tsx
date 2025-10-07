@@ -51,6 +51,19 @@ interface NewsItem {
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
+  {
+    versionCode: '2.0',
+    versionName: 'A new beginning',
+    versionDate: new Date('2025-10-06T00:00:00Z'),
+    // text: <>Big-AGI 2.0 is now available at <B href='https://app.big-agi.com'>app.big-agi.com</B></>,
+    items: [
+      { text: <>Big-AGI 2.0 is ready with top-notch AI models support and more productive and faster than ever, including:</> },
+      { text: <><B href='https://app.big-agi.com' wow>Beam 2</B>: multi-modal, program-based, follow-ups, save presets</>, icon: ChatBeamIcon },
+      { text: <><B wow>Personas</B>: craft your perfect AI assistants with data support</> },
+      { text: <><B wow>Cloud Sync</B>: never lose your data</> },
+      { text: <>Built for the future, madly optimized</> },
+    ],
+  },
   /*{
     versionCode: '1.17.0',
     items: [

@@ -3,38 +3,50 @@ import * as React from 'react';
 import { Button, Card, CardContent, Grid, Typography } from '@mui/joy';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LaunchIcon from '@mui/icons-material/Launch';
+import RocketLaunchRounded from '@mui/icons-material/RocketLaunchRounded';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 
 import { Link } from '~/common/components/Link';
+import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
-const bigAgi2SurveyUrl = 'https://form.typeform.com/to/ZSADpr5u?utm_source=gh-stable&utm_medium=news&utm_campaign=ea2';
+export const bigAgi2Url = 'https://app.big-agi.com' + clientUtmSource('upgrade');
+const bigAgiSupport = 'https://form.typeform.com/to/nLf8gFmx?utm_source=big-agi-1&utm_medium=app&utm_campaign=support';
+
 
 export const bigAgi2NewsCallout =
-  <Card variant='solid' invertedColors>
+  <Card variant='solid' color='primary' invertedColors>
     <CardContent sx={{ gap: 2 }}>
+
       <Typography level='title-lg'>
-        Big-AGI 2.0 - In Development
+        Big-AGI 2.0 ✨ - Now Live
       </Typography>
-      <Typography level='body-sm'>
-        We&apos;re building the next version of Big-AGI with your needs in mind. New features, better performance, enhanced AI interactions. Help us shape it.
+
+      <Typography level='title-sm' sx={{ lineHeight: 'xl' }}>
+        Experience the <b>next generation of Big-AGI</b> with <b>Beam 2</b>, <b>Personas</b>, and <b>Cloud Sync</b> to never lose data.
       </Typography>
+
       <Grid container spacing={1}>
         <Grid xs={12} sm={7}>
           <Button
-            fullWidth variant='soft' color='primary' endDecorator={<LaunchIcon />}
-            component={Link} href={bigAgi2SurveyUrl} noLinkStyle target='_blank'
+            size='lg'
+            fullWidth variant='solid' color='neutral' endDecorator={<RocketLaunchRounded />}
+            component={Link} href={bigAgi2Url} noLinkStyle target='_blank'
           >
-            Apply for Early Access
+            Big-AGI 2.0
           </Button>
         </Grid>
+
         <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
           <Button
-            fullWidth variant='outlined' color='primary' startDecorator={<AccessTimeIcon />}
-            disabled
+            fullWidth variant='soft' color='primary' endDecorator={<SupportAgentIcon />}
+            component={Link} href={bigAgiSupport} noLinkStyle target='_blank'
+            // disabled
           >
-            Coming Fall 2024
+            Support
           </Button>
         </Grid>
+
       </Grid>
     </CardContent>
   </Card>;
