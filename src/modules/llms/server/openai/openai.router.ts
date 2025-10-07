@@ -88,9 +88,9 @@ const _createImageConfigBase = z.object({
   user: z.string().optional(),
 });
 
-// GPT Image
+// GPT Image family (gpt-image-1, gpt-image-1-mini share all parameters)
 const createImageConfigGI = _createImageConfigBase.extend({
-  model: z.literal('gpt-image-1'),
+  model: z.enum(['gpt-image-1', 'gpt-image-1-mini']),
   prompt: z.string().max(32000),
   size: z.enum([/*'auto',*/ '1024x1024', '1536x1024', '1024x1536']),
   quality: z.enum(['high', 'medium', 'low']).optional(),
@@ -124,7 +124,7 @@ const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
   generationConfig: z.discriminatedUnion('model', [
-    createImageConfigGI,
+    createImageConfigGI, // handles both gpt-image-1 and gpt-image-1-mini
     createImageConfigD3,
     createImageConfigD2,
   ]),
