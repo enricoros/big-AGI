@@ -1,7 +1,9 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ColorPaletteProp, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Divider, IconButton, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 
 export const darkerBackdropSlotProps = {
@@ -45,7 +47,7 @@ export function GoodModal(props: {
   /**
    * Show as fullscreen, ideal for mobile with large contents.
    */
-  fullscreen?: boolean,
+  fullscreen?: boolean | 'button', // 'button' adds a button to toggle maximized (when uncontrolled)
   open: boolean,
   onClose?: ((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => void) | undefined,
   disableBackdropClose?: boolean, // if true, the backdrop will not close the modal on click
@@ -58,16 +60,26 @@ export function GoodModal(props: {
   children: React.ReactNode,
 }) {
 
+  // state
+  const [isFullscreen, setIsFullscreen] = React.useState(props.fullscreen === true);
+
   const { onClose } = props;
   const showBottomClose = !!onClose && props.hideBottomClose !== true;
 
+  // fullscreen logic
+  const hasFullscreenButton = props.fullscreen === 'button';
+  const showFullscreen = hasFullscreenButton ? isFullscreen : props.fullscreen === true;
+
+  const toggleFullscreen = React.useCallback(() => setIsFullscreen(prev => !prev), []);
+
+
   const dialogSx: SxProps = React.useMemo(() => ({
     borderRadius: 'xl',
-    ...(!props.fullscreen ? {
+    ...(!showFullscreen ? {
       // Centered styling
       boxShadow: props.themedColor ? 'none' : undefined,
       minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
-      maxWidth: { xs: '95vw', sm: '90vw', md: 700 }, // maxWidth note: "display: flex" fills to maxWidth rather than maxWidth which created overflow in smaller screens
+      maxWidth: { xs: '95vw', sm: '90vw', md: 700 }, // maxWidth note: 'display: flex' fills to maxWidth rather than maxWidth which created overflow in smaller screens
     } : {
       // Fullscreen styling: no changes over the layout='fullscreen' defaults
       boxShadow: 'none', // removes the shadow in fullscreen
@@ -81,7 +93,11 @@ export function GoodModal(props: {
       overflow: 'auto',
     } : {}),
     ...props.sx,
-  }), [props.autoOverflow, props.fullscreen, props.sx, props.themedColor]);
+    // reset any maxWidth set above when in fullscreen
+    ...showFullscreen && {
+      maxWidth: undefined,
+    },
+  }), [props.autoOverflow, showFullscreen, props.sx, props.themedColor]);
 
   const modalProps = React.useMemo(() => {
     return props.themedColor ? {
@@ -123,7 +139,7 @@ export function GoodModal(props: {
         <ModalDialog
           color={props.themedColor}
           variant={props.themedColor ? 'soft' : 'plain' /* switched from bordered (undefined) to borderless (plain) */}
-          layout={props.fullscreen ? 'fullscreen' : 'center'}
+          layout={showFullscreen ? 'fullscreen' : 'center'}
           invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
           onMouseDown={handleMouseDownWithinDialog /* to fix the Backdrop drag-closes issue */}
@@ -131,10 +147,26 @@ export function GoodModal(props: {
         >
 
           {!props.noTitleBar && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography component='h1' level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator}>
+
+            {/* title string or component (wrapped in h1) */}
+            <Typography component='h3' level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator} className='agi-ellipsize'>
               {props.title || ''}
             </Typography>
-            {!!props.onClose && <ModalClose aria-label='Close Dialog' sx={{ position: 'static', my: -1, mr: -0.5 }} />}
+
+            {/* buttons */}
+            {(hasFullscreenButton || !!props.onClose) && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: -0.5 }}>
+                {/* optional fullscreen button */}
+                {hasFullscreenButton && (
+                  <IconButton aria-label={showFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'} size='sm' onClick={toggleFullscreen} sx={{ my: -1 }}>
+                    {showFullscreen ? <CloseFullscreenIcon /> : <OpenInFullIcon sx={{ fontSize: 'md' }} />}
+                  </IconButton>
+                )}
+                {/* optional close button */}
+                {!!props.onClose && <ModalClose aria-label='Close Dialog' sx={{ position: 'static', my: -1 }} />}
+              </Box>
+            )}
+
           </Box>}
 
           {props.dividers === true && <Divider />}
