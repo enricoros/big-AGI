@@ -37,8 +37,15 @@ export function GoodModal(props: {
   animateEnter?: boolean,
   darkerBackdrop?: boolean,
   unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
-  /** if true, if true, forces contents to stay within the screen viewport, inner scrollable (not outer) */
+  /**
+   * Intended to enable scrolling of individual scrollable child components.
+   * Has the side effects of making the full dialog scrollable below minimum contents height (withing the rounded corners basically).
+   */
   autoOverflow?: boolean,
+  /**
+   * Show as fullscreen, ideal for mobile with large contents.
+   */
+  fullscreen?: boolean,
   open: boolean,
   onClose?: ((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => void) | undefined,
   disableBackdropClose?: boolean, // if true, the backdrop will not close the modal on click
@@ -56,10 +63,17 @@ export function GoodModal(props: {
 
   const dialogSx: SxProps = React.useMemo(() => ({
     borderRadius: 'xl',
-    boxShadow: props.themedColor ? 'none' : undefined,
-    minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
-    maxWidth: 700,
-    display: 'grid',
+    ...(!props.fullscreen ? {
+      // Centered styling
+      boxShadow: props.themedColor ? 'none' : undefined,
+      minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
+      maxWidth: { xs: '95vw', sm: '90vw', md: 700 }, // maxWidth note: "display: flex" fills to maxWidth rather than maxWidth which created overflow in smaller screens
+    } : {
+      // Fullscreen styling: no changes over the layout='fullscreen' defaults
+      boxShadow: 'none', // removes the shadow in fullscreen
+    }),
+    // NOTE: we are disabling this which was introduced for #401 to keep the content withing bounds, while the issue was the larger maxWidth being filled by flex
+    // display: 'grid', // default: 'flex', flexDirection: 'column'
     gap: 'var(--Card-padding)',
     // apply autoOverflow if set, otherwise leave the default behavior
     ...(props.autoOverflow ? {
@@ -67,9 +81,9 @@ export function GoodModal(props: {
       overflow: 'auto',
     } : {}),
     ...props.sx,
-  }), [props.autoOverflow, props.sx, props.themedColor]);
+  }), [props.autoOverflow, props.fullscreen, props.sx, props.themedColor]);
 
-  const backdropSx = React.useMemo(() => {
+  const modalProps = React.useMemo(() => {
     return props.themedColor ? {
       backdrop: {
         sx: {
@@ -103,12 +117,13 @@ export function GoodModal(props: {
       open={props.open}
       onClose={!onClose ? undefined : handleOnClose}
       disableEscapeKeyDown={props.disableEscapeKeyClose}
-      slotProps={backdropSx}
+      slotProps={modalProps}
     >
-      <ModalOverflow sx={{ p: 1 }}>
+      <ModalOverflow>
         <ModalDialog
           color={props.themedColor}
           variant={props.themedColor ? 'soft' : 'plain' /* switched from bordered (undefined) to borderless (plain) */}
+          layout={props.fullscreen ? 'fullscreen' : 'center'}
           invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
           onMouseDown={handleMouseDownWithinDialog /* to fix the Backdrop drag-closes issue */}
