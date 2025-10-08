@@ -214,6 +214,7 @@ export function SettingsModal(props: {
         </AppBreadcrumbs>
       }
       open={props.open} onClose={props.onClose}
+      fullscreen={isMobile}
       startButton={
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           {!isToolsTab && <DarkModeToggleButton hasText />}

@@ -128,6 +128,7 @@ export function ModelsConfiguratorModal(props: {
       unfilterBackdrop
       startButton={startButton}
       autoOverflow={true /* forces some shrinkage of the contents (ModelsList) */}
+      fullscreen={isMobile}
     >
 
       {isTabWizard && <Divider />}
