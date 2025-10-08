@@ -5,6 +5,7 @@ import { Box, Button, Divider, FormControl, FormLabel, Option, Select, Typograph
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AixDebuggerFrame } from './AixDebuggerFrame';
 import { aixClientDebuggerActions, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
@@ -15,6 +16,7 @@ export function AixDebuggerDialog(props: {
 }) {
 
   // external state - we subscribe to Any update - it's a temp debugger anyway
+  const isMobile = useIsMobile();
   const { frames, activeFrameId, maxFrames } = useAixClientDebuggerStore(useShallow((state) => ({
     frames: state.frames,
     activeFrameId: state.activeFrameId,
@@ -41,7 +43,9 @@ export function AixDebuggerDialog(props: {
       open
       onClose={props.onClose}
       title='AIX API Debugger'
-      sx={{ maxWidth: undefined }}
+      autoOverflow
+      fullscreen={isMobile}
+      // sx={{ maxWidth: undefined }}
     >
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
