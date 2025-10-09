@@ -33,7 +33,7 @@ Detailed guides to configure your big-AGI interface and models.
 
 ## Deployment
 
-System integrators, administrators, whitelabelers: instead of using the public big-AGI instance on get.big-agi.com, you can deploy your own instance.
+System integrators, administrators, whitelabelers: instead of using the public big-AGI instance on app.big-agi.com, you can deploy your own instance.
 
 Step-by-step deployment and system configuration instructions.
 
@@ -53,7 +53,7 @@ Step-by-step deployment and system configuration instructions.
 Join our community or get support:
 
 - Visit our [GitHub repository](https://github.com/enricoros/big-AGI) for source code and issue tracking
-- Check the latest updates and features on [Changelog](changelog.md) or the in-app [News](https://get.big-agi.com/news)
+- Check the latest updates and features on [Changelog](changelog.md) or the in-app [News](https://app.big-agi.com/news)
 - Connect with us and other users on [Discord](https://discord.gg/MkH4qj2Jp9) for discussions, help, and sharing your experiences with big-AGI
 
 Thank you for choosing big-AGI. We're excited to see what you'll build.
