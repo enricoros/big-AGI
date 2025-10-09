@@ -12,9 +12,8 @@ body:
       label: Environment
       description: (required) Where are you experiencing this issue?
       options:
-        - big-agi.com (production website)
-        - GitHub v2-dev branch
-        - GitHub other branch (specify in description)
+        - Big-AGI Pro (big-agi.com)
+        - Self-deployed from GitHub
         - Docker container (specify in description)
         - Local development
         - Other
