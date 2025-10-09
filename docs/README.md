@@ -1,6 +1,8 @@
-# big-AGI Documentation
+# big-AGI v1 Documentation (Legacy)
 
-Find all the information you need to get started, configure, and effectively use big-AGI.
+> **Note:** This is documentation for the **v1 legacy branch**. For the latest Big-AGI, see the [main branch](https://github.com/enricoros/big-AGI/tree/main) or visit [big-agi.com](https://big-agi.com).
+
+Find all the information you need to get started, configure, and effectively use big-AGI v1.
 
 [//]: # (## Quick Start)
 
@@ -53,7 +55,7 @@ Step-by-step deployment and system configuration instructions.
 Join our community or get support:
 
 - Visit our [GitHub repository](https://github.com/enricoros/big-AGI) for source code and issue tracking
-- Check the latest updates and features on [Changelog](changelog.md) or the in-app [News](https://app.big-agi.com/news)
+- Check the latest updates and features on [Changelog](changelog.md) or the in-app [News](https://big-agi.com/news)
 - Connect with us and other users on [Discord](https://discord.gg/MkH4qj2Jp9) for discussions, help, and sharing your experiences with big-AGI
 
 Thank you for choosing big-AGI. We're excited to see what you'll build.

@@ -1,4 +1,8 @@
-# Deploying `big-AGI` with Docker
+# Deploying `big-AGI` with Docker (v1 Legacy)
+
+> **Note:** This documentation is for the **v1 legacy branch**. For the latest Big-AGI, use Docker tags `:latest`, `:stable`, or `:development` which point to the [main branch](https://github.com/enricoros/big-AGI/tree/main).
+>
+> To use v1 legacy specifically, use Docker tags `:v1` or `:v1-stable`.
 
 Utilize Docker containers to deploy the big-AGI application for an efficient and automated deployment process.
 Docker ensures faster development cycles, easier collaboration, and seamless environment management.

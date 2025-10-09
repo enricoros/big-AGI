@@ -1,16 +1,12 @@
-## Changelog
+## Changelog (v1 Legacy Branch)
 
-This is a high-level changelog. Calls out some of the high level features batched
-by release.
+This is a high-level changelog for the v1 legacy branch. For the latest Big-AGI, see the [main branch](https://github.com/enricoros/big-AGI).
 
-- For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
+### 1.16.11 · October 2025 (Final Release)
 
-### 1.17.0 - Jun 2024
+Final v1 legacy release. Branch reaches end-of-life.
 
-- milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
-- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
-
-### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
+### What's New in 1.16.1...1.16.10 · 2024-2025 (patch releases)
 
 - 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
 - 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
