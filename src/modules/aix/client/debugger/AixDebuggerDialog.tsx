@@ -45,7 +45,7 @@ export function AixDebuggerDialog(props: {
       title='AIX API Debugger'
       autoOverflow
       fullscreen={isMobile}
-      // sx={{ maxWidth: undefined }}
+      sx={{ maxWidth: undefined }}
     >
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
@@ -128,7 +128,7 @@ export function AixDebuggerDialog(props: {
 
       {/* Frame viewer */}
       {!!activeFrame && (
-        <Box sx={{ overflow: 'hidden' }}>
+        <Box sx={{ overflow: 'auto' }}>
           <AixDebuggerFrame frame={activeFrame} />
         </Box>
       )}
