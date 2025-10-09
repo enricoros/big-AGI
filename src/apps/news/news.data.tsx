@@ -57,7 +57,7 @@ export const NewsItems: NewsItem[] = [
     versionName: Release.App.versionName,
     versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
-      { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI V2. This version is used by developers to implement long-term breaking features.</> },
+      { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI. This version is used by developers to implement long-term breaking features.</> },
       { text: <>This branch previews experimental features that are subject to change and may break without notice.</> },
       { text: <>Please report screenshots of breakages and console error messages.</> },
       { text: <>Please note that this is not the official release.</> },
