@@ -1,6 +1,6 @@
 # Very simple docker-compose file to run the app on http://localhost:3000 (or http://127.0.0.1:3000).
 #
-# For more examples, such runnin big-AGI alongside a web browsing service, see the `docs/docker` folder.
+# For more examples, such running big-AGI alongside a web browsing service, see the `docs/docker` folder.
 
 version: '3.9'
 
