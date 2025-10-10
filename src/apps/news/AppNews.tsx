@@ -101,13 +101,13 @@ function NewsCard(props: {
   idx: number;
   addPadding: boolean;
   color?: ColorPaletteProp,
-  variant?: VariantProp,
+  variant?: Exclude<VariantProp, 'outlined'>,
 }) {
 
   const { addPadding, idx, newsItem: ni } = props;
 
   return (
-    <Card key={'news-' + idx} color={props.color} variant={props.variant} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+    <Card color={props.color} variant={props.variant ?? 'plain'} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
       <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography level='title-sm' component='div'>
@@ -149,7 +149,7 @@ function NewsCard(props: {
 
       {!!ni.versionCoverImage && (
         <CardOverflow sx={{
-          m: '0 calc(var(--CardOverflow-offset) - 1px) calc(var(--CardOverflow-offset) - 1px)',
+          m: '0 var(--CardOverflow-offset) var(--CardOverflow-offset)',
         }}>
           <AspectRatio ratio='2'>
             <NextImage
@@ -265,7 +265,7 @@ export function AppNews() {
               )}
 
               {/* News Item */}
-              <NewsCard newsItem={ni} idx={idx} addPadding={addPadding} />
+              <NewsCard key={'news-' + idx} newsItem={ni} idx={idx} addPadding={addPadding} />
 
               {/* Inject the roadmap item here*/}
               {idx === 3 && (
