@@ -50,31 +50,33 @@ interface NewsItem {
   }[];
 }
 
+
+const _frontendBuild = Release.buildInfo('frontend');
+const _frontendPkgVersion = _frontendBuild.pkgVersion ?? 'open/main';
+export const newsFrontendTimestamp = _frontendBuild.timestamp;
+
+export const DevNewsItem: NewsItem = {
+  versionCode: _frontendPkgVersion,
+  versionName: 'Dev',
+  versionDate: undefined,
+  items: [
+    { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open {_frontendPkgVersion}</> },
+    { text: <>This branch carries breaking features that are subject to change</> },
+    { text: <>Please report screenshots of breakages and console error messages</> },
+    { text: <>Do not use, no cloud backups</> },
+    { text: <ExternalLink href='https://big-agi.com'>Back to the official version</ExternalLink> },
+  ],
+} as const;
+
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
-  /* {
-    versionCode: ...,
-    versionName: ...,
-    versionDate: new Date('2024-10-15T01:00:00Z'),
-    items: [
-      { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI. This version is used by developers to implement long-term breaking features.</> },
-      { text: <>This branch previews experimental features that are subject to change and may break without notice.</> },
-      { text: <>Please report screenshots of breakages and console error messages.</> },
-      { text: <>Please note that this is not the official release.</> },
-      { text: <>For stable releases: <ExternalLink href='https://big-agi.com'>big-agi.com</ExternalLink>.</> },
-    ],
-  }, */
   {
-    versionCode: Release.buildInfo('frontend').pkgVersion ?? 'opensource/main',
+    versionCode: '2.0.0',
     versionName: 'Open',
-    versionDate: new Date('2024-10-15T01:00:00Z'),
+    versionDate: new Date('2025-10-06T15:00:00Z'),
     items: [
-      { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open. This branch carries breaking features that are subject to change and may break.</> },
-      { text: <><B>dev-branch:</B> LFS, Apply, MM-reAct, fu-Chart, fu-UI, fu-Diagram, C-fixes</> },
       { text: <><B>big-agi-2:</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567'>here</ExternalLink></> },
-      { text: <>Please report screenshots of breakages and console error messages.</> },
-      { text: <>2,000+ changes, 60,000+ lines of code changed vs. 1.16</> },
-      { text: <>Do not use, no cloud backups, <ExternalLink href='https://big-agi.com'>stable version here</ExternalLink>.</> },
+      { text: <></> },
     ],
   },
   {
@@ -321,7 +323,7 @@ export const NewsItems: NewsItem[] = [
       { text: <Box sx={{ display: 'flex', alignItems: 'center' }}>Labs: experiments</Box> }, // ⚗️🧬🔬🥼 🥽🧪 <ScienceIcon sx={{ fontSize: 24, opacity: 0.5 }} />
     ],
   },
-];
+] as const;
 
 
 function B(props: {
