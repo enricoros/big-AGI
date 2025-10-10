@@ -5,17 +5,17 @@ This is the open-source foundation for **Big-AGI**.
 Big-AGI is the multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
 It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 
-*What makes Big-AGI different:*
-- **Intelligence** - [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5
-- **Control** - Personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in*
-- **Speed** - Local-first, over-powered, zero-latency, madly optimized web app
+**What makes Big-AGI different:**  
+**Intelligence**, with [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5;
+**Control**, with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in*;
+and **Speed** with a local-first, over-powered, zero-latency, madly optimized web app.
 
-*Who uses Big-AGI:*  
+**Who uses Big-AGI:**  
 Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
 
 Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
 
-### Get Started
+## Get Started
 
 **Most users: [big-agi.com](https://big-agi.com)** (fastest, zero setup, support the project)  
 Free tier with all core features and more, Pro tier with Cloud Sync.
@@ -24,10 +24,10 @@ Free tier with all core features and more, Pro tier with Cloud Sync.
   <img width="210" height="68" alt="image" src="https://github.com/user-attachments/assets/b2f8a7b8-415f-4c92-b228-4f5a54fe2bdd" />
 </a>  
 
-**Self-host this open-source version** (full control)  
-Self-host with Docker, Cloudflare, or develop locally – [guide](docs/installation.md)
+**Self-host and developers** (full control)  
+Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
 
-Or fork & run on Vercel
+Or fork & run on Vercel:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
@@ -41,9 +41,7 @@ Or fork & run on Vercel
 
 ### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
----
-
-### 5,000 Commits Milestone · Jan 2025
+### 5,000 Commits Milestone
 
 Hit 5k commits last week. That's a lot of code.
 
