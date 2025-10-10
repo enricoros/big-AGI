@@ -494,6 +494,7 @@ export namespace AixWire_API {
   export const ConnectionOptions_schema = z.object({
     debugDispatchRequest: z.boolean().optional(),
     debugProfilePerformance: z.boolean().optional(),
+    enableResumability: z.boolean().optional(), // enable response storage for resumability (first found in the OpenAI Responses API)
     throttlePartTransmitter: z.number().optional(), // in ms
     // retry: z.number().optional(),
     // retryDelay: z.number().optional(),
