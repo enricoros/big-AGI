@@ -6,8 +6,8 @@ Big-AGI is the multi-model AI workspace for experts who need to think broader, d
 It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 
 **What makes Big-AGI different:**  
-**Intelligence**, with [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5;
-**Control**, with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in*;
+**Intelligence**, with [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5 - 
+**Control** with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
 and **Speed** with a local-first, over-powered, zero-latency, madly optimized web app.
 
 **Who uses Big-AGI:**  
