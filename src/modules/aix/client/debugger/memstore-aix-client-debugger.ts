@@ -22,6 +22,7 @@ export namespace AixClientDebugger {
     url: string;
     headers: string;
     body: string;
+    bodySize: number;
     isComplete: boolean;
     // upstream profiler measurements
     profilerMeasurements?: Measurements;
@@ -56,6 +57,7 @@ function _createAixClientDebuggerFrame(frameContext: AixClientDebugger.Context):
     url: '',
     headers: '',
     body: '',
+    bodySize: 0,
     particles: [],
     isComplete: false,
     context: {
@@ -77,7 +79,7 @@ interface AixClientDebuggerState {
 interface AixClientDebuggerActions {
   // frames
   createFrame: (initialContext: AixClientDebugger.Context) => AixFrameId;
-  setRequest: (fId: AixFrameId, updates: Pick<AixClientDebugger.Frame, 'url' | 'headers' | 'body'>) => void;
+  setRequest: (fId: AixFrameId, updates: Pick<AixClientDebugger.Frame, 'url' | 'headers' | 'body' | 'bodySize'>) => void;
   setProfilerMeasurements: (fId: AixFrameId, measurements: AixClientDebugger.Measurements) => void;
   addParticle: (fId: AixFrameId, particle: AixClientDebugger.Particle, isAborted?: boolean) => void;
   completeFrame: (fId: AixFrameId) => void;

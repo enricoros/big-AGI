@@ -146,6 +146,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
         url: url,
         headers: hideSensitiveData ? '(hidden sensitive data)' : JSON.stringify(headers, null, 2),
         body: processedBody,
+        bodySize: JSON.stringify(body).length, // actual size, without pretty-printing or truncation
       },
     });
   }
