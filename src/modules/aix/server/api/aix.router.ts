@@ -93,7 +93,7 @@ export async function* chatGenerateContentImpl(
   // Prepare the dispatch requests
   let dispatch: ReturnType<typeof createChatGenerateDispatch>;
   try {
-    dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
+    dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming, !!connectionOptions?.enableResumability);
   } catch (error: any) {
     chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
     yield* chatGenerateTx.flushParticles();

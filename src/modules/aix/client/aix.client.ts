@@ -635,6 +635,13 @@ async function _aixChatGenerateContent_LL(
   const debugContext = !requestServerDebugging ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
 
   /**
+   * TODO: implement client selection of resumability.
+   * For now we turn it on for Responses API for select kinds of request.
+   */
+  const requestResumability = (false as boolean) && !!aixModel.vndOaiResponsesAPI &&
+    (['conversation', 'beam-scatter', 'beam-gather'] satisfies (AixAPI_Context_ChatGenerate['name'] | string)[]).includes(aixContext.name);
+
+  /**
    * Particles Reassembler.
    * - uses this accumulator
    * - calls a partial update callback with built-in decimation
@@ -657,22 +664,26 @@ async function _aixChatGenerateContent_LL(
       chatGenerate: aixChatGenerate,
       context: aixContext,
       streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
-      /**
-       * Debugging/Profiling is only active when the "Debug Mode" is on.
-       */
-      ...(requestServerDebugging && {
+      ...((requestResumability || requestServerDebugging) && {
         connectionOptions: {
-          /**
-           * Request a round-trip of the upstream AIX dispatch request.
-           * Note: the server-side will only send the Body of the call on production builds, while headers will be shown on "Dev Builds".
-           */
-          debugDispatchRequest: true,
-          /**
-           * Request profiling data for a successful call (only streaming for now).
-           * Requires debugDispatchRequest to be true as well.
-           * Note: the server-side won't enable profiling on production builds.
-           */
-          debugProfilePerformance: true,
+          ...requestResumability && {
+            /**
+             * Request a resumable connection, if the model/service supports it.
+             */
+            enableResumability: true,
+          },
+          ...requestServerDebugging && {
+            /**
+             * Request an echo of the upstream AIX dispatch request.
+             * Fulfillment is decided by the server, and 'production' builds will NOT include 'headers', just the 'body'.
+             */
+            debugDispatchRequest: true,
+            /**
+             * Request profiling data for a streaming call: time spent preparing, connecting, waiting, receiving, etc.
+             * Fulfillment is decided by the server, and won't be available on 'production' builds.
+             */
+            debugProfilePerformance: true,
+          },
         },
       }),
     }, {

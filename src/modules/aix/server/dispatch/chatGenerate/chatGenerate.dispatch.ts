@@ -29,7 +29,7 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
 /**
  * Specializes to the correct vendor a request for chat generation
  */
-export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {
+export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
   demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
