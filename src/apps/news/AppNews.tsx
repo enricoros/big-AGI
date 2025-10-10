@@ -3,6 +3,8 @@ import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
 import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, ColorPaletteProp, Container, Grid, Sheet, Typography, VariantProp } from '@mui/joy';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -15,6 +17,7 @@ import { Release } from '~/common/app.release';
 import { animationColorBlues, animationColorRainbow } from '~/common/util/animUtils';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
+import { BigAgiProNewsCallout, bigAgiProUrl } from './bigAgiPro.data';
 import { DevNewsItem, newsFrontendTimestamp, NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
 
@@ -194,27 +197,42 @@ export function AppNews() {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}>
 
-        <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
+        <Typography level='h1' sx={{ fontSize: '2.7rem', mb: 4 }}>
           Welcome to <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>Big-AGI Open</Box>!
         </Typography>
 
         <Typography sx={{ mb: 2, textAlign: 'center', lineHeight: 'lg' }} level='title-sm'>
-          You are running version {firstNews?.versionCode}<br/>
-          {!!newsFrontendTimestamp && <span style={{ opacity: 0.5 }}>Updated <TimeAgo date={newsFrontendTimestamp} /></span>}
+          Big-AGI has been updated to version {firstNews?.versionCode}<br/>
+          {/*You are running version {firstNews?.versionCode}<br/>*/}
+          {/*{!!newsFrontendTimestamp && <span style={{ opacity: 0.5 }}>Updated <TimeAgo date={newsFrontendTimestamp} /></span>}*/}
         </Typography>
 
-        <Box sx={{ mb: 5 }}>
+        <Box sx={{ mb: 5, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
           <Button
-            variant='solid' color='primary' size='lg'
+            variant='solid' color='neutral' size='lg'
             component={Link} href={ROUTE_INDEX} noLinkStyle
-            // endDecorator='✨'
+            endDecorator={<ArrowForwardRoundedIcon />}
             sx={{
-              boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+              // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
               minWidth: 180,
             }}
           >
             Continue
           </Button>
+          {!Release.IsNodeDevBuild && (
+            <Button
+              variant='solid' color='primary' size='lg'
+              component={Link} href={bigAgiProUrl} noLinkStyle
+              endDecorator={<><ArrowOutwardRoundedIcon /></>}
+              sx={{
+                boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+                minWidth: 180,
+                // transform: 'translateY(-1px)',
+              }}
+            >
+              Big-AGI Pro ✨
+            </Button>
+          )}
         </Box>
 
         {/*<Typography level='title-sm' sx={{ mb: 1, placeSelf: 'start', ml: 1 }}>*/}
@@ -232,9 +250,9 @@ export function AppNews() {
             return <React.Fragment key={idx}>
 
               {/* Inject the callout item here*/}
-              {/*{idx === 1 && (*/}
+              {/*{idx === 0 && (*/}
               {/*  <Box sx={{ mb: 3 }}>*/}
-              {/*    {bigAgi2NewsCallout}*/}
+              {/*    <BigAgiProNewsCallout />*/}
               {/*  </Box>*/}
               {/*)}*/}
 

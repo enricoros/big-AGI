@@ -57,7 +57,7 @@ export const newsFrontendTimestamp = _frontendBuild.timestamp;
 
 export const DevNewsItem: NewsItem = {
   versionCode: _frontendPkgVersion,
-  versionName: 'Dev',
+  versionName: 'Development Build',
   versionDate: undefined,
   items: [
     { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open {_frontendPkgVersion}</> },
