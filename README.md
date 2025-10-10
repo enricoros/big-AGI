@@ -39,18 +39,7 @@ Or fork & run on Vercel:
 
 ---
 
-Also, we have a wondeful mascot:
-
-<img width="1792" height="1024" alt="capy-typy" src="https://github.com/user-attachments/assets/f8c7d22c-9612-489f-8998-986dde0403fd" />
-
----
-
-### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
-
-<details>
-<summary>What's New in 2.0.0 · October 6, 2025 · Open</summary>
-
-## What's New in 2.0.0 · October 6, 2025 · Open
+## What's New in 2.0 · Oct 6, 2025 · Open
 
 - **Big-AGI Open** is ready and more productive and faster than ever, with:
 - **Beam 2**: multi-modal, program-based, follow-ups, save presets
@@ -58,10 +47,10 @@ Also, we have a wondeful mascot:
 - **Image Generation** and editing with Nano Banana and gpt-image-1
 - **Web Search** with citations for supported models
 - **UI** & Mobile UI overhaul with peeking and side panels
-- And many more [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617)
+- And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
 - Built for the future, madly optimized
 
-</details>
+### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
 <details>
 <summary>5,000 Commits Milestone</summary>
