@@ -39,6 +39,12 @@ Or fork & run on Vercel:
 
 ---
 
+Also, we have a wondeful mascot:
+
+<img width="1792" height="1024" alt="capy-typy" src="https://github.com/user-attachments/assets/f8c7d22c-9612-489f-8998-986dde0403fd" />
+
+---
+
 ### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
 ### 5,000 Commits Milestone
