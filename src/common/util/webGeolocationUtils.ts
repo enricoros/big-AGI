@@ -131,7 +131,7 @@ async function _enhanceWithLocationData(data: WebGeolocation): Promise<WebGeoloc
     const response = await frontendSideFetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&accept-language=${navigator.language || 'en'}`, {
       headers: {
         // required by Nominatim
-        'User-Agent': `Big-AGI/${Release.App.versionCode}`,
+        'User-Agent': `Big-AGI/${Release.buildInfo('frontend').pkgVersion}`,
       },
     });
 
