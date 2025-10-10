@@ -23,7 +23,14 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
  * - much side functionality is not implemented yet
  * - testing with o3-pro only for now
  */
-export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIResponses(
+  openAIDialect: OpenAIDialects,
+  model: AixAPI_Model,
+  _chatGenerate: AixAPIChatGenerate_Request,
+  jsonOutput: boolean,
+  streaming: boolean,
+  enableResumability: boolean,
+): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -74,7 +81,8 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     // text: ... below
 
     // API state management
-    store: false, // default would be 'true'
+    /** Default for resumability is true, however we set it to false unless explicitly requested. */
+    store: enableResumability ?? false, // enable storage for resumability if requested
     // previous_response_id: undefined,
 
     // API options
@@ -510,12 +518,12 @@ function _toOpenAIResponsesToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TR
 
 /**
  * Adds GPT-5 specific markdown instructions to Responses API payload.
- * 
- * Background: 
+ *
+ * Background:
  * GPT-5 benefits from explicit markdown formatting guidance per the GPT-5 prompting guide.
  * This function adds the recommended markdown instructions to the instructions field.
- * 
- * References: 
+ *
+ * References:
  * - GPT-5 prompting guide markdown section
  */
 export function vndOaiRestoreMarkdown(payload: TRequest) {

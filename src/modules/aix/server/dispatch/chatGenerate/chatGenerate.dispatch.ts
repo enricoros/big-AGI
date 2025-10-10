@@ -17,7 +17,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
-import { createOpenAIResponsesEventParser, createOpenAIResponseParserNS, } from './parsers/openai.responses.parser';
+import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 
 
 /**
@@ -101,7 +101,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         return {
           request: {
             ...openAIAccess(access, model.id, '/v1/responses'),
-            body: aixToOpenAIResponses(access.dialect, model, chatGenerate, false, streaming),
+            body: aixToOpenAIResponses(access.dialect, model, chatGenerate, false, streaming, enableResumability),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),

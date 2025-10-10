@@ -254,6 +254,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // -> Model
         pt.setModelName(event.response.model);
 
+        // -> Upstream Handle (for remote control: resume, cancel, delete)
+        // Implementation NOTE: we won't uproll sequence numbers for partial resumes - we'll just download the full response
+        if (event.response.store && event.response.id)
+          pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
+
         // -> TODO: Generation Details:
         //    .created_at, .truncation, .temperature, .top_p, .tool_choice, tool count, text output type
         break;
@@ -628,6 +633,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
     // -> Model
     if (response.model)
       pt.setModelName(response.model);
+
+    // -> Upstream Handle (for remote control: resume, cancel, delete)
+    // NOTE: we don't do it for full responses, because they're supposed to be 'complete' - i.e. no 'background' execution
 
     // -> Usage
     if (response.usage) {

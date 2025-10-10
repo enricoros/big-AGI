@@ -1360,7 +1360,7 @@ export namespace OpenAIWire_API_Responses {
     // Unused
     // metadata: z.record(z.string(), z.any()).optional(), // set of 16 key-value pairs that can be attached to an object
     // service_tier: z.enum(['auto', 'default', 'flex', 'priority']).nullish(),
-    // prompt: z.object({
+    // prompt: z.object({ // reference to a prompt template and its variables
     //   id: z.string(),
     //   version: z.string().optional(),
     //   variables: z.record(z.string(), z.any()).optional(),
@@ -1397,23 +1397,29 @@ export namespace OpenAIWire_API_Responses {
       total_tokens: z.number(),
     }).nullish(),
 
+    // Echo State management & API options (with defaults)
+    background: z.boolean().optional(), // (false)
+    store: z.boolean().optional(), // (true)
+
     // NOTE: the following fields seem an exact echo of what's in the request - let's ignore these for now
-    // background: ... (false)
-    // instructions: ...
-    // max_output_tokens: ...
-    // metadata: ...
-    // parallel_tool_calls: ...
-    // previous_response_id: ... (null)
-    // prompt: ...
-    // reasoning: ...
-    // service_tier: ...
-    // temperature: ...
-    // text: ...
-    // tool_choice: ...
-    // tools: ...
-    // top_p: ...
-    // truncation: ...
-    // user: ...
+    // instructions: z.string().nullable(), // null
+    // max_output_tokens: z.number(),
+    // max_tool_calls: z.number().nullable(), // null
+    // metadata: ... (optional)
+    // parallel_tool_calls: z.boolean(), // true
+    // previous_response_id: z.string().nullable(), // null
+    // prompt_cache_key: z.string().nullable(), // (optional)
+    // prompt: ... // (optional)
+    // reasoning: ... // { ... }
+    // service_tier: ... // 'auto'
+    // temperature: ... // 1
+    // text: ... // { .. }
+    // tool_choice: ... // 'auto'
+    // tools: ... // e.g. [{ type: 'web_search_preview', search_context_size: 'medium', ... }]
+    // top_logprobs: ... // 0
+    // top_p: ... // 1
+    // truncation: ... // 'disabled'
+    // user: ... // null
 
   });
 
