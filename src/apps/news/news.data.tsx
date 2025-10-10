@@ -65,8 +65,8 @@ export const NewsItems: NewsItem[] = [
     ],
   }, */
   {
-    versionCode: Release.App.versionCode,
-    versionName: Release.App.versionName,
+    versionCode: Release.buildInfo('frontend').pkgVersion ?? 'opensource/main',
+    versionName: 'Open',
     versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
       { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open. This branch carries breaking features that are subject to change and may break.</> },
