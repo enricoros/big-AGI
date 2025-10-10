@@ -22,6 +22,9 @@ import { beamBlogUrl } from './beam.data';
 
 
 // Cover Images
+// A capybara created from the intersection of two perfect spheres, creating a unique geometric form. Made of frosted glass with black sunglasses. Sitting on a platform where two squares overlap - their intersection glows softly. The overlapping area contains the word "OPEN" in clean sans-serif. White background with geometric shadows.
+// - rewritten: A geometric sculpture that resembles a capybara, formed through the intersection of two perfect spheres. The form appears to be made of frosted glass and dons black sunglasses. It is situated on a platform where two squares intersect, creating a softly glowing area. Inscribed in this overlap is the word 'OPEN' in a clean sans-serif font. The entire scene is set against a white backdrop and includes geometric shadows, providing a modern and abstract feel.
+import coverV200 from '../../../public/images/covers/release-cover-v2.0.0.png';
 // A landscape image of a capybara made entirely of clear, translucent crystal, wearing oversized black sunglasses, sitting at a sleek, minimalist desk. The desk is bathed in a soft, ethereal light emanating from within the capybara, symbolizing clarity and transparency. The capybara is typing on a futuristic, holographic keyboard, with floating code snippets and diagrams surrounding it, illustrating an improved developer experience and Auto-Diagrams feature. The background is a clean, white space with subtle, geometric patterns. Close-up photography style with a bokeh effect.
 import coverV116 from '../../../public/images/covers/release-cover-v1.16.0.png';
 // (not exactly) Imagine a futuristic, holographically bounded space. Inside this space, four capybaras stand. Three of them are in various stages of materialization, their forms made up of thousands of tiny, vibrant particles of electric blues, purples, and greens. These particles represent the merging of different intelligent inputs, symbolizing the concept of 'Beaming'. Positioned slightly towards the center and ahead of the others, the fourth capybara is fully materialized and composed of shimmering golden cotton candy, representing the optimal solution the 'Beam' feature seeks to achieve. The golden capybara gazes forward confidently, embodying a target achieved. Illuminated grid lines softly glow on the floor and walls of the setting, amplifying the futuristic aspect. In front of the golden capybara, floating, holographic interfaces depict complex networks of points and lines symbolizing the solution space 'Beaming' explores. The capybara interacts with these interfaces, implying the user's ability to control and navigate towards the best outcomes.
@@ -74,6 +77,7 @@ export const NewsItems: NewsItem[] = [
     versionCode: '2.0.0',
     versionName: 'Open',
     versionDate: new Date('2025-10-06T15:00:00Z'),
+    versionCoverImage: coverV200,
     items: [
       { text: <><B>big-agi-2:</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567'>here</ExternalLink></> },
       { text: <></> },
