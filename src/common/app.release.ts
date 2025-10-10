@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Enrico Ros
+ * Copyright (c)2024-2025 Enrico Ros
  *
  * This file is include by both the frontend and backend, however depending on the time
  * of the build, the values may be different.
