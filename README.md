@@ -47,7 +47,24 @@ Also, we have a wondeful mascot:
 
 ### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
-### 5,000 Commits Milestone
+<details>
+<summary>What's New in 2.0.0 · October 6, 2025 · Open</summary>
+
+## What's New in 2.0.0 · October 6, 2025 · Open
+
+- **Big-AGI Open** is ready and more productive and faster than ever, with:
+- **Beam 2**: multi-modal, program-based, follow-ups, save presets
+- Top-notch AI models support including **agentic models** and **reasoning models**
+- **Image Generation** and editing with Nano Banana and gpt-image-1
+- **Web Search** with citations for supported models
+- **UI** & Mobile UI overhaul with peeking and side panels
+- And many more [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617)
+- Built for the future, madly optimized
+
+</details>
+
+<details>
+<summary>5,000 Commits Milestone</summary>
 
 Hit 5k commits last week. That's a lot of code.
 
@@ -61,7 +78,10 @@ The new architecture is solid and the speed improvements are real.
 
 ![5000e-830px](https://github.com/user-attachments/assets/42f7420b-9331-421b-9a18-2e653aaa7d9b)
 
-### What's New in 1.16.1...1.16.10 · 2024-2025 (patch releases)
+</details>
+
+<details>
+<summary>What's New in 1.16.1...1.16.10 · 2024-2025 (patch releases)</summary>
 
 - 1.16.10: OpenRouter models support
 - 1.16.9: Docker Gemini fix, R1 models support
@@ -78,7 +98,10 @@ The new architecture is solid and the speed improvements are real.
 - 1.16.2: Updates to Beam
 - 1.16.1: Support for the new OpenAI GPT-4o 2024-05-13 model
 
-### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
+</details>
+
+<details>
+<summary>What's New in 1.16.0 · May 9, 2024 · Crystal Clear</summary>
 
 - [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
 - Chat cost estimation 💰 (enable it in Labs / hover the token counter)
@@ -89,14 +112,20 @@ The new architecture is solid and the speed improvements are real.
 - Models update: **Anthropic**, **Groq**, **Ollama**, **OpenAI**, **OpenRouter**, **Perplexity**
 - Code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, and more [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
 
-#### 3,000 Commits Milestone · April 7, 2024
+</details>
+
+<details>
+<summary>3,000 Commits Milestone · April 7, 2024</summary>
 
 ![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
 
 - 🥇 Today we <b>celebrate commit 3000</b> in just over one year, and going stronger 🚀
 - 📢️ Thanks everyone for your support and words of love for Big-AGI, we are committed to creating the best AI experiences for everyone.
 
-### What's New in 1.15.0 · April 1, 2024 · Beam
+</details>
+
+<details>
+<summary>What's New in 1.15.0 · April 1, 2024 · Beam</summary>
 
 - ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
 - Managed Deployments **Auto-Configuration**: simplify the UI models setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
@@ -105,6 +134,8 @@ The new architecture is solid and the speed improvements are real.
 - Fixes to Gemini models and SVGs, improvements to UI and icons
 - 1.15.1: Support for Gemini Pro 1.5 and OpenAI Turbo models
 - Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
+
+</details>
 
 <details>
 <summary>What's New in 1.14.1 · March 7, 2024 · Modelmorphic</summary>
@@ -188,14 +219,14 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 You can easily configure 100s of AI models in big-AGI:
 
-| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                            |
-|:--------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                    |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                                                                                              |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                            |
-| Language services   | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 
-| Image services      | OpenAI, ...                                                                                                                                                                                                                                                                                    | 
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                | 
+| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                               |
+|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                       |
+| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                                                                                                                 |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                               |
+| Language services   | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
+| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                            |
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                   | 
 
 Add extra functionality with these integrations:
 
@@ -204,7 +235,6 @@ Add extra functionality with these integrations:
 | Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
 | Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
 | Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
- 
 | Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
 
 [//]: # (- [x] **Flow-state UX** for uncompromised productivity)
