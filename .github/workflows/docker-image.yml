@@ -67,7 +67,7 @@ jobs:
             type=semver,pattern={{version}}
           labels: |
             org.opencontainers.image.title=Big-AGI Open
-            org.opencontainers.image.description=Big-AGI Open - Generative AI suite with support for latest models (o3, GPT-5 Pro, Gemini 2.0, DeepSeek R1) and modern architecture
+            org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.documentation=https://big-agi.com
 
