@@ -13,11 +13,6 @@ export const Release = {
   // CHANGE ME - this is the tenant ID, 'dev' reserved for development only, 'open' reserved for GitHub
   TenantSlug: 'open',
 
-  App: {
-    versionCode: '2.0.0-open-rc3',       // 1.92.0 sequentially...
-    versionName: 'Big-AGI 2',
-  },
-
   // Future compatibility
   Features: {
     // ...
