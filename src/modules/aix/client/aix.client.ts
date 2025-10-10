@@ -10,7 +10,8 @@ import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatG
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
-import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/stores/store-ux-labs';
+import { getAixInspector } from '~/common/stores/store-ui';
+import { getLabsDevNoStreaming } from '~/common/stores/store-ux-labs';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
@@ -631,7 +632,7 @@ async function _aixChatGenerateContent_LL(
    * - AIX inspector is now independent from sudo mode
    * - every request thereafter both sends back the Aix server-side dispatch packet, and appends all the particles received by the client side
    */
-  const requestServerDebugging = getLabsDevMode();
+  const requestServerDebugging = getAixInspector();
   const debugContext = !requestServerDebugging ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
 
   /**
