@@ -13,6 +13,8 @@ and **Speed** with a local-first, over-powered, zero-latency, madly optimized we
 **Who uses Big-AGI:**  
 Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
 
+<img width="830" height="370" alt="image" src="https://github.com/user-attachments/assets/513c4f77-0970-4a56-b23b-1416c8246174" />
+
 Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
 
 ## Get Started
@@ -50,7 +52,9 @@ Or fork & run on Vercel:
 - And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
 - Built for the future, madly optimized
 
-### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
+<img width="830" height="385" alt="image" src="https://github.com/user-attachments/assets/ad52761d-7e3f-44d8-b41e-947ce8b4faa1" />
+
+### Open links: 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
 
 <details>
 <summary>5,000 Commits Milestone</summary>
