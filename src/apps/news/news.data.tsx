@@ -53,8 +53,8 @@ interface NewsItem {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /* {
-    versionCode: Release.App.versionCode,
-    versionName: Release.App.versionName,
+    versionCode: ...,
+    versionName: ...,
     versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
       { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI. This version is used by developers to implement long-term breaking features.</> },
@@ -69,7 +69,7 @@ export const NewsItems: NewsItem[] = [
     versionName: Release.App.versionName,
     versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
-      { text: <>You&apos;re running an unsupported <B>develpers build</B> of Big-AGI 2. This branch carries breaking features that are subject to change and may break.</> },
+      { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open. This branch carries breaking features that are subject to change and may break.</> },
       { text: <><B>dev-branch:</B> LFS, Apply, MM-reAct, fu-Chart, fu-UI, fu-Diagram, C-fixes</> },
       { text: <><B>big-agi-2:</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567'>here</ExternalLink></> },
       { text: <>Please report screenshots of breakages and console error messages.</> },
@@ -103,7 +103,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.7: Gpt-4o <B>2024-08-06</B></> },
       { text: <>1.16.8: <B>ChatGPT-4o</B> latest</> },
       { text: <>1.16.9: <B>Gemini</B> fixes</> },
-      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI 2. <B href='https://form.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
+      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI Open. <B href='https://form.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
     ],
   },
   {
