@@ -816,7 +816,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
 
     {/* Confirmation Dialog */}
     <GoodModal
-      title={`Confirm ${Release.App.versionName} Restore`}
+      title={`Confirm Restore`}
       strongerTitle
       dividers
       hideBottomClose
