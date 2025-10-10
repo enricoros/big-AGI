@@ -79,8 +79,10 @@ export const NewsItems: NewsItem[] = [
     versionDate: new Date('2025-10-06T15:00:00Z'),
     versionCoverImage: coverV200,
     items: [
-      { text: <><B>big-agi-2:</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567'>here</ExternalLink></> },
-      { text: <></> },
+      { text: <><B wow>Big-AGI Open</B> is ready with top-notch AI models support and more productive and faster than ever, including:</> },
+      { text: <><B>Big AGI 2</B> partial list of changes <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617'>here</ExternalLink></> },
+      { text: <><B>Beam 2</B>: multi-modal, program-based, follow-ups, save presets</> },
+      { text: <>Built for the future, madly optimized</> },
     ],
   },
   {
