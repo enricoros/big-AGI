@@ -12,8 +12,9 @@ by release.
 
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 
-- 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
-- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
+- 1.16.10: OpenRouter models support
+- 1.16.9: Docker Gemini fix, R1 models support
+- 1.16.8: OpenAI ChatGPT-4o Latest, o1 models support
 - 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
