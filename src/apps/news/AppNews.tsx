@@ -1,7 +1,8 @@
 import * as React from 'react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Sheet, Typography } from '@mui/joy';
+
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, ColorPaletteProp, Container, Grid, Sheet, Typography, VariantProp } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -12,10 +13,9 @@ import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { Release } from '~/common/app.release';
 import { animationColorBlues, animationColorRainbow } from '~/common/util/animUtils';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
-import { NewsItems } from './news.data';
+import { DevNewsItem, newsFrontendTimestamp, NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
 
 
@@ -23,8 +23,6 @@ import { beamNewsCallout } from './beam.data';
 const NEWS_INITIAL_COUNT = 3;
 const NEWS_LOAD_STEP = 2;
 
-
-const _frontendBuild = Release.buildInfo('frontend');
 
 export const newsRoadmapCallout =
   <Card variant='solid' invertedColors>
@@ -99,12 +97,14 @@ function NewsCard(props: {
   newsItem: typeof NewsItems[number];
   idx: number;
   addPadding: boolean;
+  color?: ColorPaletteProp,
+  variant?: VariantProp,
 }) {
 
   const { addPadding, idx, newsItem: ni } = props;
 
   return (
-    <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+    <Card key={'news-' + idx} color={props.color} variant={props.variant} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
       <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography level='title-sm' component='div'>
@@ -121,8 +121,8 @@ function NewsCard(props: {
             </Box>
           </Typography>
           <Typography level='body-sm' sx={{ ml: 'auto' }}>
-            {idx === 0 && _frontendBuild.timestamp
-              ? <TimeAgo date={_frontendBuild.timestamp} />
+            {idx === 0 && !ni.versionDate && newsFrontendTimestamp
+              ? <TimeAgo date={newsFrontendTimestamp} />
               : !!ni.versionDate && <TimeAgo date={ni.versionDate} />}
           </Typography>
         </Box>
@@ -195,11 +195,12 @@ export function AppNews() {
       }}>
 
         <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
+          Welcome to <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>Big-AGI Open</Box>!
         </Typography>
 
-        <Typography sx={{ mb: 2 }} level='title-sm'>
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode}
+        <Typography sx={{ mb: 2, textAlign: 'center', lineHeight: 'lg' }} level='title-sm'>
+          You are running version {firstNews?.versionCode}<br/>
+          {!!newsFrontendTimestamp && <span style={{ opacity: 0.5 }}>Updated <TimeAgo date={newsFrontendTimestamp} /></span>}
         </Typography>
 
         <Box sx={{ mb: 5 }}>
@@ -221,6 +222,10 @@ export function AppNews() {
         {/*</Typography>*/}
 
         <Container disableGutters maxWidth='sm'>
+
+          {/* Development Notices */}
+          {Release.TenantSlug === 'open' && <NewsCard variant='soft' color='warning' newsItem={DevNewsItem} idx={0} addPadding={false} />}
+
           {news?.map((ni, idx) => {
             // const firstCard = idx === 0;
             const addPadding = false; //!firstCard; // || showExpander;
