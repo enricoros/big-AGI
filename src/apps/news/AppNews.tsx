@@ -94,6 +94,78 @@ function BuildInfoSheet() {
   );
 }
 
+
+function NewsCard(props: {
+  newsItem: typeof NewsItems[number];
+  idx: number;
+  addPadding: boolean;
+}) {
+
+  const { addPadding, idx, newsItem: ni } = props;
+
+  return (
+    <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+      <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography level='title-sm' component='div'>
+            {ni.text ? ni.text : ni.versionName ? <><b>{ni.versionCode}</b> · </> : `Version ${ni.versionCode}:`}
+            <Box
+              component='span'
+              sx={idx ? {} : {
+                animation: `${animationColorRainbow} 5s infinite`,
+                fontWeight: 'lg',
+                zIndex: 1, /* perf-opt */
+              }}
+            >
+              {ni.versionName}
+            </Box>
+          </Typography>
+          <Typography level='body-sm' sx={{ ml: 'auto' }}>
+            {idx === 0 && _frontendBuild.timestamp
+              ? <TimeAgo date={_frontendBuild.timestamp} />
+              : !!ni.versionDate && <TimeAgo date={ni.versionDate} />}
+          </Typography>
+        </Box>
+
+        {!!ni.items && (ni.items.length > 0) && (
+          <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem', listStyleType: '"-  "' }}>
+            {ni.items.filter(item => item.dev !== true).map((item, idx) => (
+              <li key={idx} style={{ listStyle: (item.icon || item.noBullet) ? '" "' : '"-  "', marginLeft: item.icon ? '-1.125rem' : undefined }}>
+                <Typography component='div' sx={{ fontSize: 'sm' }}>
+                  {item.icon && <item.icon sx={{ fontSize: 'xs', mr: 0.75 }} />}
+                  {item.text}
+                </Typography>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/*{idx === 0 && <BuildInfoSheet />}*/}
+
+      </CardContent>
+
+      {!!ni.versionCoverImage && (
+        <CardOverflow sx={{
+          m: '0 calc(var(--CardOverflow-offset) - 1px) calc(var(--CardOverflow-offset) - 1px)',
+        }}>
+          <AspectRatio ratio='2'>
+            <NextImage
+              src={ni.versionCoverImage}
+              alt={`Cover image for ${ni.versionCode}`}
+              // commented: we scale the images to 600px wide (>300 px tall)
+              // sizes='(max-width: 1200px) 100vw, 50vw'
+              priority={idx === 0}
+              quality={90}
+            />
+          </AspectRatio>
+        </CardOverflow>
+      )}
+
+    </Card>
+  )
+}
+
+
 export function AppNews() {
   // state
   const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(NEWS_INITIAL_COUNT - 1);
@@ -169,64 +241,7 @@ export function AppNews() {
               )}
 
               {/* News Item */}
-              <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
-                <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography level='title-sm' component='div'>
-                      {ni.text ? ni.text : ni.versionName ? <><b>{ni.versionCode}</b> · </> : `Version ${ni.versionCode}:`}
-                      <Box
-                        component='span'
-                        sx={idx ? {} : {
-                          animation: `${animationColorRainbow} 5s infinite`,
-                          fontWeight: 'lg',
-                          zIndex: 1, /* perf-opt */
-                        }}
-                      >
-                        {ni.versionName}
-                      </Box>
-                    </Typography>
-                    <Typography level='body-sm' sx={{ ml: 'auto' }}>
-                      {idx === 0 && _frontendBuild.timestamp
-                        ? <TimeAgo date={_frontendBuild.timestamp} />
-                        : !!ni.versionDate && <TimeAgo date={ni.versionDate} />}
-                    </Typography>
-                  </Box>
-
-                  {!!ni.items && (ni.items.length > 0) && (
-                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem', listStyleType: '"-  "' }}>
-                      {ni.items.filter(item => item.dev !== true).map((item, idx) => (
-                        <li key={idx} style={{ listStyle: (item.icon || item.noBullet) ? '" "' : '"-  "', marginLeft: item.icon ? '-1.125rem' : undefined }}>
-                          <Typography component='div' sx={{ fontSize: 'sm' }}>
-                            {item.icon && <item.icon sx={{ fontSize: 'xs', mr: 0.75 }} />}
-                            {item.text}
-                          </Typography>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {/*{idx === 0 && <BuildInfoSheet />}*/}
-
-                </CardContent>
-
-                {!!ni.versionCoverImage && (
-                  <CardOverflow sx={{
-                    m: '0 calc(var(--CardOverflow-offset) - 1px) calc(var(--CardOverflow-offset) - 1px)',
-                  }}>
-                    <AspectRatio ratio='2'>
-                      <NextImage
-                        src={ni.versionCoverImage}
-                        alt={`Cover image for ${ni.versionCode}`}
-                        // commented: we scale the images to 600px wide (>300 px tall)
-                        // sizes='(max-width: 1200px) 100vw, 50vw'
-                        priority={idx === 0}
-                        quality={90}
-                      />
-                    </AspectRatio>
-                  </CardOverflow>
-                )}
-
-              </Card>
+              <NewsCard newsItem={ni} idx={idx} addPadding={addPadding} />
 
               {/* Inject the roadmap item here*/}
               {idx === 3 && (
