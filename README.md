@@ -1,57 +1,67 @@
-# BIG-AGI 🧠
+# Big-AGI Open 🧠
 
-Welcome to big-AGI, the AI suite for professionals that need function, form,
-simplicity, and speed. Powered by the latest models from 15 vendors and
-open-source servers, `big-AGI` offers best-in-class Chats,
-[Beams](https://github.com/enricoros/big-AGI/issues/470),
-and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
-visualizations, coding, drawing, side-by-side chatting, and more -- all wrapped in a polished UX.
+This is the open-source foundation for **Big-AGI**.
 
-Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
+Big-AGI is the multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
+It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 
-[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
+*What makes Big-AGI different:*
+- **Intelligence** - [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5
+- **Control** - Personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in*
+- **Speed** - Local-first, over-powered, zero-latency, madly optimized web app
 
-> 🚀 Big-AGI 2 is launching soon.
+*Who uses Big-AGI:*  
+Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
+
+Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
+
+### Get Started
+
+**Most users: [big-agi.com](https://big-agi.com)** (fastest, zero setup, support the project)  
+Free tier with all core features and more, Pro tier with Cloud Sync.
+
+<a href="https://big-agi.com">
+  <img width="210" height="68" alt="image" src="https://github.com/user-attachments/assets/b2f8a7b8-415f-4c92-b228-4f5a54fe2bdd" />
+</a>  
+
+**Self-host this open-source version** (full control)  
+Self-host with Docker, Cloudflare, or develop locally – [guide](docs/installation.md)
 
 Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
-### New Version
+[//]: # (**For the latest Big-AGI:**)
 
-This repository contains two main versions:
+[//]: # (- [**Big-AGI Open**]&#40;https://github.com/enricoros/big-AGI/tree/main&#41; - Open Source, latest models and features &#40;main branch&#41;)
 
-- Big-AGI 2: next-generation, bringing the most advanced AI experience
-  - `v2-dev`: V2 development branch, the exciting one, future default (this branch)
-- Big-AGI Stable: as deployed on big-agi.com
-  - `v1-stable`: Current stable version, and currently the Docker 'latest' tagged images
+[//]: # (- [**Big-AGI Pro**]&#40;https://big-agi.com&#41; - Hosted with Cloud Sync)
 
-Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and `v1-stable` will reach EOL.
+---
 
-### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
+### Open links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
 ---
 
 ### 5,000 Commits Milestone · Jan 2025
 
-Hit 5k commits last week. That's a lot of code, and it's the [foundation for what's coming](https://big-agi.com/blog/big-agi-2-is-almost-ready).
+Hit 5k commits last week. That's a lot of code.
 
 Recent work has been intense:
 - Chain of thought reasoning across multiple LLMs: **OpenAI o3** and o1, **DeepSeek R1**, **Gemini 2.0 Flash Thinking**, and more
-- Beam is real - ~35% of our free users run it daily to compare models
+- Beam is real - ~35% of our users run it daily to compare models
 - New AIX framework lets us scale features we couldn't before
 - UI is faster than ever. Like, terminal-fast
 
-Big-AGI 2 is weeks away. Yes, we're late, but we're making it right. The new architecture is solid and the speed improvements are real.
-
-Stay tuned. This is going to be good.
+The new architecture is solid and the speed improvements are real.
 
 ![5000e-830px](https://github.com/user-attachments/assets/42f7420b-9331-421b-9a18-2e653aaa7d9b)
 
-### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
+### What's New in 1.16.1...1.16.10 · 2024-2025 (patch releases)
 
-- 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
-- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
+- 1.16.10: OpenRouter models support
+- 1.16.9: Docker Gemini fix, R1 models support
+- 1.16.8: OpenAI ChatGPT-4o Latest, o1 models support
 - 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
@@ -257,4 +267,4 @@ the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
 
 ---
 
-2023-2024 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
+2023-2025 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
