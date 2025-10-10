@@ -48,7 +48,9 @@ const _styles = {
     // paddingRight: 'calc(1.5 * var(--Card-padding))',
     // background: 'linear-gradient(135deg, var(--joy-palette-primary-500), var(--joy-palette-primary-700))',
     // background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
-    display: 'grid',
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
     gap: 'calc(0.75 * var(--Card-padding))',
   } as const,
 
