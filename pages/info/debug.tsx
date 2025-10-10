@@ -109,7 +109,6 @@ function AppDebug() {
       reloads: usageCount,
     },
     release: {
-      app: Release.App,
       build: frontendBuild,
     },
   };
