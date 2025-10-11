@@ -220,6 +220,7 @@ export function ChatMessage(props: {
     voidFragments,          // Model-Aux, Placeholders
     contentFragments,       // Text (Markdown + Code + ... blocks), Errors, (large) Images
     nonImageAttachments,    // Document Attachments, likely the User dropped them in
+    lastFragmentIsError,
   } = useFragmentBuckets(messageFragments);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);

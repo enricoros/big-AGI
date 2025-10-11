@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isImageRefPart, isZyncAssetImageReferencePart } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isContentFragment, isErrorPart, isImageRefPart, isZyncAssetImageReferencePart } from '../chat.fragments';
 
 
 interface FragmentBuckets {
@@ -11,6 +11,7 @@ interface FragmentBuckets {
   contentFragments: DMessageContentFragment[];
   imageAttachments: DMessageAttachmentFragment[];
   nonImageAttachments: DMessageAttachmentFragment[];
+  lastFragmentIsError: boolean;
 }
 
 /**
@@ -65,11 +66,14 @@ export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[
     if (!shallowEquals(nonImageAttachments, nonImageAttachmentsRef.current))
       nonImageAttachmentsRef.current = nonImageAttachments;
 
+    const lastFragment: DMessageFragment | undefined = messageFragments.at(-1);
+
     return {
       voidFragments: voidFragmentsRef.current,
       contentFragments: contentFragmentsRef.current,
       imageAttachments: imageAttachmentsRef.current,
       nonImageAttachments: nonImageAttachmentsRef.current,
+      lastFragmentIsError: !!lastFragment && isContentFragment(lastFragment) && isErrorPart(lastFragment.part),
     };
   }, [messageFragments]);
 }
