@@ -22,7 +22,7 @@ import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or JPEG to save IndexedDB space
 const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
 const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
-const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
+const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = false; // 2025-10-10: put errors in the dedicated part
 
 
 /**
