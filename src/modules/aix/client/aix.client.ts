@@ -749,10 +749,17 @@ async function _aixChatGenerateContent_LL(
            * This happened many times in the past with captive portals and alike. Jet's just improve the messaging here.
            */
           case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`:
-            await reassembler.setClientExcepted(`**Connection issue**: The network returned an HTML page instead of expected data. This can be a Wi‑Fi sign‑in page, a proxy or browser extension, or a temporary gateway error. Please **refresh and try again**, or check your connection and disable blockers. Additional details may be available in the browser console.`).catch(console.error);
+            await reassembler.setClientExcepted(`**Network issue**: The network returned an HTML page instead of expected data. This can be a Wi‑Fi sign‑in page, a proxy or browser extension, or a temporary gateway error. Please **refresh and try again**, or check your connection and disable blockers. Additional details may be available in the browser console.`).catch(console.error);
             errorHandled = true;
             break;
         }
+      }
+
+      // Special case: network error (TypeError) - when the client is disconnected (Vercel 5min timeout, Mobile timeout / disconnect, etc)
+      if (!errorHandled && (error instanceof TypeError) && error.message === 'network error') {
+        // await reassembler.setClientExcepted(`Network error: **connection interrupted**.`).catch(console.error);
+        await reassembler.setClientExcepted('An unexpected issue occurred: **network error**.').catch(console.error);
+        errorHandled = true;
       }
 
       // Only show the generic error if we haven't handled it specifically
