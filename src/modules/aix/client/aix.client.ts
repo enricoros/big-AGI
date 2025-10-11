@@ -127,6 +127,7 @@ export function aixCreateModelFromLLMOptions(
  */
 export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'> {
   fragments: (DMessageContentFragment | DMessageVoidFragment)[];
+  // Since 'aixChatGenerateContent_DMessage_FromConversation' starts from named (before replacement from LL), we can't Extract
   generator: DMessageGenerator; // Extract<DMessageGenerator, { mgt: 'aix' }>;
   pendingIncomplete: boolean;
 }
@@ -363,13 +364,11 @@ export async function aixChatGenerateText_Simple(
  * - tool -> throw: the LL will catch it and add the error text. However when done outside the LL (secondary usage) this will throw freely
  */
 function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Simple) {
-  // copy over Generator's
-  if (src.genMetricsLg)
-    dest.generator.metrics = metricsChatGenerateLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
-  if (src.genModelName)
-    dest.generator.name = src.genModelName;
-  if (src.genTokenStopReason)
-    dest.generator.tokenStopReason = src.genTokenStopReason;
+  // copy over just the generator by using the accumulator -> DMessage-like copier
+  _llToDMessage(src, {
+    generator: dest.generator, // target our dest's object
+    fragments: [], pendingIncomplete: false, // unused, mocked
+  });
 
   // transform the fragments to plain text
   if (src.fragments.length) {
