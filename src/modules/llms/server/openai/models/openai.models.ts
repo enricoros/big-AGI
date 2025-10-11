@@ -1072,6 +1072,9 @@ const openAIModelsDenyList: string[] = [
   // Image models: /v1/images/generations
   'gpt-image-1', 'gpt-image-1-mini', 'dall-e-3', 'dall-e-2',
 
+  // Video models: /v1/videos
+  'sora-2-pro', 'sora-2',
+
   // Moderation models
   'omni-moderation-latest', 'omni-moderation-2024-09-26', 'text-moderation-latest',
 ];
