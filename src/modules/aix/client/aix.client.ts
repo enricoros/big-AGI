@@ -513,12 +513,16 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
 }
 
 function _llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateContent_DMessage) {
+  // replace the fragments if we have any
   if (src.fragments.length)
     dest.fragments = src.fragments; // Note: this gets replaced once, and then it's the same from that point on
+  // replace the generator pieces
   if (src.genMetricsLg)
     dest.generator.metrics = metricsChatGenerateLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
   if (src.genModelName)
     dest.generator.name = src.genModelName;
+  if (src.genUpstreamHandle)
+    dest.generator.upstreamHandle = src.genUpstreamHandle;
   if (src.genTokenStopReason)
     dest.generator.tokenStopReason = src.genTokenStopReason;
 }
@@ -556,6 +560,7 @@ export interface AixChatGenerateContent_LL {
   // pieces of generator
   genMetricsLg?: DMetricsChatGenerate_Lg;
   genModelName?: string;
+  genUpstreamHandle?: DMessageGenerator['upstreamHandle'];
   genTokenStopReason?: DMessageGenerator['tokenStopReason'];
 }
 
