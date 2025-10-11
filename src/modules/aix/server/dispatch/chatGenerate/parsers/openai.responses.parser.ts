@@ -342,7 +342,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
               case 'open_page':
                 // Action: opening/visiting a specific web page
                 const sanitizedUrl = sanitizeUrlForDisplay(action.url);
-                pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'Opening page...'}`);
+                pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'page...'}`);
                 break;
 
               case 'find_in_page':
