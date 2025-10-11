@@ -270,6 +270,9 @@ export class ContentReassembler {
           case 'set-model':
             this.onModelName(op);
             break;
+          case 'set-upstream-handle':
+            this.onResponseHandle(op);
+            break;
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
@@ -669,6 +672,16 @@ export class ContentReassembler {
 
   private onModelName({ name }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-model' }>): void {
     this.accumulator.genModelName = name;
+  }
+
+  private onResponseHandle({ handle }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-upstream-handle' }>): void {
+    // validate the handle
+    if (handle?.uht !== 'vnd.oai.responses' || !handle?.responseId || handle?.expiresAt === undefined) {
+      this._appendReassemblyDevError(`Invalid response handle received: ${JSON.stringify(handle)}`);
+      return;
+    }
+    // type check point for AixWire_Particles.ChatControlOp('set-upstream-handle') -> DUpstreamResponseHandle
+    this.accumulator.genUpstreamHandle = handle;
   }
 
 

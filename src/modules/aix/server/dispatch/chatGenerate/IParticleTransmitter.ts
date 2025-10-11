@@ -67,6 +67,9 @@ export interface IParticleTransmitter {
   /** Communicates the model name to the client */
   setModelName(modelName: string): void;
 
+  /** Communicates the upstream response handle, for remote control/resumability */
+  setUpstreamHandle(handle: string, type: 'oai-responses'): void;
+
   /** Communicates the finish reason to the client */
   setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
 

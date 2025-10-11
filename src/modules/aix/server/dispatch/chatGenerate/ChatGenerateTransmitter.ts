@@ -438,6 +438,23 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       this._queueParticleS();
   }
 
+  /** Communicates the upstream response handle, for remote control/resumability */
+  setUpstreamHandle(handle: string, _type: 'oai-responses' /* the only one for now, used for type safety */) {
+    if (SERVER_DEBUG_WIRE)
+      console.log('|response-handle|', handle);
+    // NOTE: if needed, we could store the handle locally for server-side resumability, but we just implement client-side (correction, manual) for now
+    this.transmissionQueue.push({
+      cg: 'set-upstream-handle',
+      handle: {
+        uht: 'vnd.oai.responses',
+        responseId: handle,
+        expiresAt: Date.now() + 30 * 24 * 3600 * 1000, // default: 30 days expiry
+      },
+    });
+    // send it right away, in case the connection closes soon
+    this._queueParticleS();
+  }
+
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
   updateMetrics(update: Partial<AixWire_Particles.CGSelectMetrics>) {
     if (!this.accMetrics)
