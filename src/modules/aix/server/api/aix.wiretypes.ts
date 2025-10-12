@@ -392,8 +392,8 @@ export namespace AixWire_Tooling {
   /**
    * Policy for tools that the model can use:
    * - auto: can use a tool or not (default, same as not specifying a policy)
-   * - any: must use one tool at least
-   * - function_call: must use a specific Function Tool
+   * - any: MUST use one tool at least
+   * - function_call: MUST use a specific Function Tool
    * - none: same as not giving the model any tool [REMOVED - just give no tools]
    */
   export const ToolsPolicy_schema = z.discriminatedUnion('type', [
