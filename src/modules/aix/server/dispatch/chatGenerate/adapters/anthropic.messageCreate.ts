@@ -7,6 +7,7 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, appr
 // configuration
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
+const hotFixDisableThinkingWhenToolsForced = true; // "Thinking may not be enabled when tool_choice forces tool use."
 
 // former fixes, now removed
 // const hackyHotFixStartWithUser = false; // 2024-10-22: no longer required
@@ -125,7 +126,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
   // [Anthropic] Thinking Budget
-  if (model.vndAntThinkingBudget !== undefined) {
+  const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
+  const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
+  if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
     payload.thinking = model.vndAntThinkingBudget !== null ? {
       type: 'enabled',
       budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
