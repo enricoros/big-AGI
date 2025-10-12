@@ -25,7 +25,7 @@ const DEBUG_DECIMATOR = false;
  * @param fn The function to be decimated
  * @returns A new function with the same signature that applies decimation
  */
-export function withDecimator<T extends (...args: any[]) => MaybePromise<void>>(throttleUnits: number, debugErrorPrefix: string, fn: T): T & { dispose?: () => void } {
+export function withDecimator<T extends (...args: any[]) => MaybePromise<void>>(throttleUnits: number, debugErrorPrefix: string, fn: T): T & { stop?: () => void } {
 
   // no decimation if throttle is disabled
   if (!throttleUnits) return fn;
@@ -142,12 +142,19 @@ export function withDecimator<T extends (...args: any[]) => MaybePromise<void>>(
 
     return Promise.resolve();
 
-  }) as T & { dispose?: () => void };
+  }) as T & { stop?: () => void };
 
-  // attach cleanup method
-  decimatedFn.dispose = () => {
+  /**
+   * Stops any pending decimated updates to prevent out-of-order callbacks.
+   *
+   * Call before sending the final manual update to ensure the decimated
+   * setTimeout doesn't fire after your final call completes.
+   *
+   * Safe to call multiple times.
+   */
+  decimatedFn.stop = () => {
     if (DEBUG_DECIMATOR && !isDisposed)
-      console.log(deadlineTimer ? ` - !decimate: DISPOSED, deadline scheduled for ${deadlineUntil - Date.now()} ms` : ' - decimate: DISPOSED, no deadline scheduled');
+      console.log(deadlineTimer ? ` - !decimate: STOPPED, deadline scheduled for ${deadlineUntil - Date.now()} ms` : ' - decimate: STOPPED, no deadline scheduled');
     isDisposed = true;
     clearDeadline();
   };
