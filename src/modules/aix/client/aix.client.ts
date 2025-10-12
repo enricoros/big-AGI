@@ -664,7 +664,7 @@ async function _aixChatGenerateContent_LL(
   try {
 
     // tRPC Aix Chat Generation (streaming) API - inside the try block for deployment path errors
-    const particles = await apiStream.aix.chatGenerateContent.mutate({
+    const particleStream = await apiStream.aix.chatGenerateContent.mutate({
       access: aixAccess,
       model: aixModel,
       chatGenerate: aixChatGenerate,
@@ -703,19 +703,19 @@ async function _aixChatGenerateContent_LL(
      * Workaround: we cannot use Asyncs insie the 'for...await' loop, as we'd get
      * a 'closed connection' exception thrown when looping and a slow operation.
      */
-    for await (const particle of particles)
+    for await (const particle of particleStream)
       reassembler.enqueueWireParticle(particle);
 
-    // dispose the deadline decimator before the await, as we're done basically
-    sendContentUpdate?.dispose?.();
+    // stop the deadline decimator before the await, as we're done basically
+    sendContentUpdate?.stop?.();
 
     // synchronize any pending async tasks
     await reassembler.waitForWireComplete();
 
   } catch (error: any) {
 
-    // dispose the deadline decimator, as we're into error handling mode now
-    sendContentUpdate?.dispose?.();
+    // stop the deadline decimator, as we're into error handling mode now
+    sendContentUpdate?.stop?.();
 
     // something else broke, likely a User Abort, or an Aix server error (e.g. tRPC)
     const isUserAbort = abortSignal.aborted;
