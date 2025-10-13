@@ -646,8 +646,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
     // -> Status
 
-    // say it's okay for now
-    pt.setTokenStopReason('ok');
+    // Determine stop reason based on output content and response status
+    const hasFunctionCalls = response.output.some(item => item.type === 'function_call');
+    let tokenStopReason: AixWire_Particles.GCTokenStopReason = hasFunctionCalls ? 'ok-tool_invocations' : 'ok';
 
     switch (response.status) {
       case 'completed':
@@ -657,6 +658,10 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
       case 'incomplete':
         // pedantic check (.incomplete_details)
         if (response.incomplete_details && typeof response.incomplete_details === 'object') {
+
+          // override stop reason for max_output_tokens
+          if (response.incomplete_details.reason === 'max_output_tokens')
+            tokenStopReason = 'out-of-tokens';
 
           // append the incomplete details as text
           pt.appendText(`**Incomplete response**: the response was incomplete because ${response.incomplete_details?.reason || 'unknown reason'}\n`);
@@ -687,6 +692,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
         console.warn('[DEV] AIX: OpenAI-Response-NS unexpected response status:', { status: response.status });
         break;
     }
+
+    // Set the determined stop reason
+    pt.setTokenStopReason(tokenStopReason);
 
     // -> Output[]
     for (const oItem of response.output) {
