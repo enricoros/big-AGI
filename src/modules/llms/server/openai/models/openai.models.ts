@@ -4,7 +4,7 @@ import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_Stri
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, KnownModel, ManualMappings } from './models.data';
 
 
 // OpenAI Model Variants
@@ -45,7 +45,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-5
   {
-    isLatest: true,
     idPrefix: 'gpt-5-2025-08-07',
     label: 'GPT-5 (2025-08-07)',
     description: 'The best model for coding and agentic tasks across domains.',
@@ -140,7 +139,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-5 mini
   {
-    isLatest: true,
     idPrefix: 'gpt-5-mini-2025-08-07',
     label: 'GPT-5 Mini (2025-08-07)',
     description: 'A faster, more cost-efficient version of GPT-5 for well-defined tasks.',
@@ -170,7 +168,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-5 nano
   {
-    isLatest: true,
     idPrefix: 'gpt-5-nano-2025-08-07',
     label: 'GPT-5 Nano (2025-08-07)',
     description: 'Fastest, most cost-efficient version of GPT-5 for summarization and classification tasks.',
@@ -585,7 +582,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 0.1, cache: { cType: 'oai-ac', read: 0.025 }, output: 0.4 },
     benchmark: { cbaElo: 1320 },
   },
-
 
 
   /// GPT-Audio series - General availability audio models
@@ -1019,19 +1015,18 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1106 },
   },
 
-
-  // Fallback - unknown
-  {
-    idPrefix: '',
-    label: '?',
-    description: 'Unknown, please let us know the ID. Assuming a context window of 128k tokens, and a maximum output of 4k tokens.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat],
-    // hidden: true,
-  },
-
 ];
+
+export const _fallbackOpenAIModel: KnownModel = {
+  idPrefix: '',
+  label: '?',
+  description: 'Unknown, please let us know the ID. Assuming a context window of 128k tokens, and a maximum output of 4k tokens.',
+  contextWindow: 128000,
+  maxCompletionTokens: 4096,
+  interfaces: [LLM_IF_OAI_Chat],
+  // hidden: true,
+};
+
 
 const openAIModelsDenyList: string[] = [
   // [OpenAI, 2025-08-28] FIXME: NOT YET SUPPORTED - "REALTIME API"
@@ -1084,7 +1079,7 @@ export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
 }
 
 export function openAIModelToModelDescription(modelId: string, modelCreated: number | undefined, modelUpdated?: number): ModelDescriptionSchema {
-  return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated);
+  return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated, _fallbackOpenAIModel);
 }
 
 
@@ -1215,11 +1210,11 @@ export function openAIInjectVariants(models: ModelDescriptionSchema[], model: Mo
 
 /**
  * Checks for both superfluous and missing models in OpenAI API.
- * 
+ *
  * Combines the functionality of checking for models in our editorial definitions
  * that aren't present in the API response (superfluous) and checking for models
  * in the API that we don't have definitions for (missing).
- * 
+ *
  * @param wireModels is the raw API response from OpenAI, containing the .data[] array
  * @param parsedModels is the parsed models array, which should match the wireModels
  */
@@ -1255,7 +1250,7 @@ export function openaiDevCheckForModelsOverlap_DEV(wireModels: unknown, parsedMo
       //   openAIModelsDenyList.some(deny => id.includes(deny))
       // );
       const trulyMissingModels = missingModelIds.filter((id: string) =>
-        !openAIModelsDenyList.some(deny => id.includes(deny))
+        !openAIModelsDenyList.some(deny => id.includes(deny)),
       );
 
       // if (filteredOutModels.length > 0)
