@@ -154,7 +154,10 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Pro',
     chatPrice: gemini25ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1455 }, // gemini-2.5-pro (updated from CSV)
   },
   {
@@ -208,7 +211,10 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25FlashPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1424 + 1 }, // FALLBACK-UNTIL-AVAILABLE: models/gemini-2.5-flash-preview-05-20 + 1
   },
   {
@@ -217,7 +223,10 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Flash',
     chatPrice: gemini25FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1407 }, // gemini-2.5-flash (updated from CSV)
   },
   {
@@ -295,7 +304,10 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25FlashLitePreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1310 + 1 }, // FALLBACK-UNTIL-AVAILABLE: models/gemini-2.5-flash-lite-preview-06-17 + 1
   },
   // 2.5 Flash-Lite (Stable) - Released July 2025
@@ -305,7 +317,10 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Flash-Lite',
     chatPrice: gemini25FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1310 }, // Based on 2.0 Flash-Lite performance
   },
   // 2.5 Flash-Lite Preview (oldest version, superseded)
@@ -432,6 +447,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-001',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
     benchmark: { cbaElo: 1355 },
   },
   {
@@ -440,6 +456,7 @@ const _knownGeminiModels: ({
     // copied from symlink
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
     benchmark: { cbaElo: 1354 },
   },
 
