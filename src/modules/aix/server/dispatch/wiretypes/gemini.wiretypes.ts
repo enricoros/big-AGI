@@ -520,8 +520,7 @@ export namespace GeminiWire_API_Generate_Content {
     // Image generation configuration
     imageConfig: z.object({
       /** Controls the aspect ratio of generated images */
-      // [GEMINI] 2025-10-02: Undocumented yet
-      aspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']).optional(),
+      aspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
     }).optional(),
 
     // Added on 2025-01-10 - Low-level - not requested/used yet but added

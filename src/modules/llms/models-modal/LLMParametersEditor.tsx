@@ -59,8 +59,6 @@ const _geminiAspectRatioOptions = [
   { value: '3:2', label: '3:2', description: 'Landscape' },
   { value: '3:4', label: '3:4', description: 'Portrait' },
   { value: '4:3', label: '4:3', description: 'Landscape' },
-  { value: '4:5', label: '4:5', description: 'Portrait' },
-  { value: '5:4', label: '5:4', description: 'Landscape' },
   { value: '9:16', label: '9:16', description: 'Tall portrait' },
   { value: '16:9', label: '16:9', description: 'Wide landscape' },
   { value: '21:9', label: '21:9', description: 'Ultra wide' },
