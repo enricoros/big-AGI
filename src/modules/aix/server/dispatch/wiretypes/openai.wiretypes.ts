@@ -1378,7 +1378,9 @@ export namespace OpenAIWire_API_Responses {
     id: z.string(), // unique ID for this response
     created_at: z.number(), // unix timestamp (in seconds)
     status: z.enum(['completed', 'failed', 'in_progress', 'cancelled', 'queued', 'incomplete']),
-    incomplete_details: z.object({ reason: z.string() }).nullish(), // why the response is incomplete
+    incomplete_details: z.object({
+      reason: z.union([z.enum(['max_output_tokens']), z.string()]),
+    }).nullish(), // why the response is incomplete
     error: z.object({ code: z.string(), message: z.string() }).nullish(), // (null)
 
     model: z.string(), // model used for the response
