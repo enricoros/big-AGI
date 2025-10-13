@@ -135,6 +135,17 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     delete payload.temperature;
   }
 
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  // const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  // const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  // const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
+  // Hosted tools
+  // ...
+
+
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);
   if (!validated.success) {
