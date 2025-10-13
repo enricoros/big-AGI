@@ -42,6 +42,14 @@ const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
    */
   'prompt-caching-2024-07-31',
 
+  /**
+   * Enables model_context_window_exceeded stop reason for models earlier than Sonnet 4.5
+   * (Sonnet 4.5+ have this by default). This allows requesting max tokens without calculating
+   * input size, and the API will return as much as possible within the context window.
+   * https://docs.claude.com/en/api/handling-stop-reasons#model-context-window-exceeded
+   */
+  // 'model-context-window-exceeded-2025-08-26',
+
   // now default
   // 'messages-2023-12-15'
 ] as const;
