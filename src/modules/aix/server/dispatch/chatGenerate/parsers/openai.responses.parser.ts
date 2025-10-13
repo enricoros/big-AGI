@@ -68,6 +68,9 @@ class ResponseParserStateMachine {
   #summaryIndex: number | undefined; // within 'reasoning' output items
   #summaryAddSpacer: boolean = false; // whether we need to inject a spacer in the summary part
 
+  // streaming state tracking
+  #hasFunctionCalls: boolean = false; // tracks if we've seen function_call output items
+
 
   // Validations
 
@@ -202,6 +205,17 @@ class ResponseParserStateMachine {
     return true;
   }
 
+
+  // State tracking
+
+  markHasFunctionCalls() {
+    this.#hasFunctionCalls = true;
+  }
+
+  get hasFunctionCalls() {
+    return this.#hasFunctionCalls;
+  }
+
 }
 
 
@@ -272,8 +286,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // CHANGE of { status, output, usage } expected
         R.setResponse(eventType, event.response, ['status', 'output', 'usage']);
 
-        // -> Status
-        // TODO: set the terminating reason?
+        // -> Status: determine stop reason based on streamed content
+        pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
 
         // -> Output
         // TODO: verify that we correctly captured all the outputs?
@@ -287,10 +301,27 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         break;
 
       case 'response.failed':
+        R.setResponse(eventType, event.response);
+        pt.setTokenStopReason('cg-issue'); // generic issue?
+        console.warn(`[DEV] AIX: FIXME: OpenAI Failed Response ${eventType}:`, event.response);
+        // TODO: extract and forward error details
+        break;
+
       case 'response.incomplete':
         // TODO: We haven't seen one of those events yet; we need to see what happens and parse it!
-        console.warn(`[DEV] AIX: FIXME: we got a Response ${eventType}:`);
         R.setResponse(eventType, event.response);
+
+        // -> Status: handle incomplete response
+        if (event.response.incomplete_details?.reason === 'max_output_tokens')
+          pt.setTokenStopReason('out-of-tokens');
+        else
+          pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
+
+        // NOTE: disable notification for now, but server-side log it to detect more stop reasons
+        if (event.response.incomplete_details?.reason !== 'max_output_tokens') {
+          // pt.appendText(`**Incomplete response**: the response was incomplete because ${event.response.incomplete_details.reason || 'unknown reason'}\n`);
+          console.warn('[DEV] AIX: OpenAI Responses Incomplete:', { incomplete_details: event.response.incomplete_details });
+        }
         break;
 
 
@@ -326,6 +357,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
               name: fcName,
             } = doneItem;
             pt.startFunctionCallInvocation(fcCallId, fcName, 'incr_str', fcArguments);
+            R.markHasFunctionCalls();
             break;
 
           case 'web_search_call':
