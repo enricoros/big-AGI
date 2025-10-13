@@ -64,6 +64,16 @@ const _geminiAspectRatioOptions = [
   { value: '21:9', label: '21:9', description: 'Ultra wide' },
 ] as const;
 
+const _geminiGoogleSearchOptions = [
+  { value: 'unfiltered', label: 'On', description: 'Web Search' },
+  { value: '1d', label: 'Last Day', description: 'Last 24 hours' },
+  { value: '1w', label: 'Last Week', description: 'Recent results' },
+  { value: '1m', label: 'Last Month', description: 'Results from last month' },
+  { value: '1y', label: 'Last Year', description: 'Results since last year' },
+  // { value: '6m', label: 'Last 6 Months', description: 'Results from last 6 months' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
+] as const;
+
 const _xaiSearchModeOptions = [
   { value: 'auto', label: 'Auto', description: 'Model decides (default)' },
   { value: 'on', label: 'On', description: 'Always search active sources' },
@@ -123,6 +133,7 @@ export function LLMParametersEditor(props: {
     llmForceNoStream,
     llmVndAntThinkingBudget,
     llmVndGeminiAspectRatio,
+    llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort,
@@ -297,6 +308,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndGeminiGoogleSearch') && (
+      <FormSelectControl
+        title='Google Search'
+        // tooltip='Enable Google Search grounding to ground responses in real-time web content. Optionally filter results by publication date.'
+        value={llmVndGeminiGoogleSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiGoogleSearch');
+          else onChangeParameter({ llmVndGeminiGoogleSearch: value });
+        }}
+        options={_geminiGoogleSearchOptions}
       />
     )}
 

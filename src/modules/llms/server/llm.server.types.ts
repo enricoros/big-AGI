@@ -79,6 +79,7 @@ const ModelParameterSpec_schema = z.object({
     'llmForceNoStream',
     'llmVndAntThinkingBudget',
     'llmVndGeminiAspectRatio',
+    'llmVndGeminiGoogleSearch',
     'llmVndGeminiShowThoughts',
     'llmVndGeminiThinkingBudget',
     'llmVndOaiReasoningEffort',

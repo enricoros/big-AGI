@@ -96,6 +96,14 @@ export const DModelParameterRegistry = {
     // No initial value - when undefined, the model decides the aspect ratio
   } as const,
 
+  llmVndGeminiGoogleSearch: {
+    label: 'Google Search',
+    type: 'enum' as const,
+    description: 'Enable Google Search grounding with optional time filter',
+    values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'] as const,
+    // No initialValue - undefined means off
+  } as const,
+
   llmVndGeminiShowThoughts: {
     label: 'Show Thoughts',
     type: 'boolean' as const,
