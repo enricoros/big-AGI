@@ -296,7 +296,13 @@ export namespace GeminiWire_ToolDeclarations {
   });
 
   const GoogleSearch_schema = z.object({
-    // Empty object in the API definition
+    // Optional time range filter for Google Search results
+    timeRangeFilter: z.object({
+      /** Start time in ISO 8601 format (e.g., "2024-01-01T00:00:00Z") */
+      startTime: z.string(),
+      /** End time in ISO 8601 format (e.g., "2024-12-31T23:59:59Z") */
+      endTime: z.string(),
+    }).optional(),
   });
 
   // 2025-03-14: Gemini has de-facto phased out GoogleSearchRetrieval, there's no more
@@ -636,7 +642,7 @@ export namespace GeminiWire_API_Generate_Content {
     /** List of grounding support: segment + arrays of chunks + arrays of probs  */
     groundingSupports: z.array(z.object({
       groundingChunkIndices: z.array(z.number().int()), // citations associated with the claim, indices into ../groundingChunks[]
-      confidenceScores: z.array(z.number()),            // 0..1
+      confidenceScores: z.array(z.number()).optional(), // 0..1 - optional: not always returned by Gemini API
       segment: groundingMetadata_Segment_schema,
     })).optional(),
 
