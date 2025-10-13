@@ -621,6 +621,7 @@ export class ContentReassembler {
       // normal stop
       case 'ok':                    // content
       case 'ok-tool_invocations':   // content + tool invocation
+      case 'ok-pause_continue':     // [Anthropic] server tools (e.g. web search) - successful pause, requires continuation
         break;
 
       case 'client-abort-signal':
@@ -637,6 +638,7 @@ export class ContentReassembler {
 
       case 'filter-content':        // inline text message shall have been added
       case 'filter-recitation':     // inline text message shall have been added
+      case 'filter-refusal':        // [Anthropic] model refused due to safety (same semantic as filtering)
         this.accumulator.genTokenStopReason = 'filter';
         break;
 
