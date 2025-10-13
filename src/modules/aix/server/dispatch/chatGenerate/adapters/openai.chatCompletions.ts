@@ -124,10 +124,6 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
   }
-  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
-  if (model.vndOaiRestoreMarkdown) {
-    _fixVndOaiRestoreMarkdown_Inline(payload);
-  }
 
   // --- Tools ---
 
@@ -152,6 +148,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       };
   }
 
+
+  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
+  const skipMarkdownDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  if (model.vndOaiRestoreMarkdown && !skipMarkdownDueToCustomTools)
+    _fixVndOaiRestoreMarkdown_Inline(payload);
+
+
   // [xAI] Vendor-specific extensions for Live Search
   if (openAIDialect === 'xai' && model.vndXaiSearchMode && model.vndXaiSearchMode !== 'off') {
     const search_parameters: any = {
@@ -167,7 +170,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
         .split(',')
         .map(s => s.trim())
         .filter(s => !!s);
-      
+
       // only omit sources if it's the default ('web' and 'x')
       const isDefaultSources = sources.length === 2 && sources.includes('web') && sources.includes('x');
       if (!isDefaultSources)

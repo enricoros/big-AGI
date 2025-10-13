@@ -188,7 +188,8 @@ export function aixToOpenAIResponses(
 
 
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
-  if (model.vndOaiRestoreMarkdown)
+  const skipMarkdownDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  if (model.vndOaiRestoreMarkdown && !skipMarkdownDueToCustomTools)
     vndOaiRestoreMarkdown(payload);
 
 
