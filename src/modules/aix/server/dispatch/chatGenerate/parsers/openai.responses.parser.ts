@@ -303,7 +303,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
       case 'response.failed':
         R.setResponse(eventType, event.response);
         pt.setTokenStopReason('cg-issue'); // generic issue?
-        console.warn(`[DEV] AIX: FIXME: OpenAI Failed Response ${eventType}:`, event.response);
+        console.warn(`[DEV] AIX: FIXME: OpenAI-Response failed ${eventType}:`, event.response);
         // TODO: extract and forward error details
         break;
 
@@ -320,7 +320,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // NOTE: disable notification for now, but server-side log it to detect more stop reasons
         if (event.response.incomplete_details?.reason !== 'max_output_tokens') {
           // pt.appendText(`**Incomplete response**: the response was incomplete because ${event.response.incomplete_details.reason || 'unknown reason'}\n`);
-          console.warn('[DEV] AIX: OpenAI Responses Incomplete:', { incomplete_details: event.response.incomplete_details });
+          console.warn('[DEV] AIX: FIXME: OpenAI-Response Incomplete:', { incomplete_details: event.response.incomplete_details });
         }
         break;
 
@@ -362,41 +362,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'web_search_call':
             // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
-            const action = doneItem.action;
-
-            // Handle known action types
-            switch (action?.type) {
-              case 'search':
-                // IMPORTANT: Web search sources vs citations distinction:
-                // - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
-                // - citations: High-quality links (2-3) via response.output_text.annotation.added events
-                if (action.query && action.sources && Array.isArray(action.sources)) {
-                  pt.sendVoidPlaceholder('search-web', `${action.query}: ${action.sources.length} results...`);
-                } else if (action.query)
-                  pt.sendVoidPlaceholder('search-web', `${action.query}: completed`);
-                break;
-
-              case 'open_page':
-                // Action: opening/visiting a specific web page
-                const sanitizedUrl = sanitizeUrlForDisplay(action.url);
-                pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'page...'}`);
-                break;
-
-              case 'find_in_page':
-                // Action: searching for a pattern within an opened page
-                const sanitizedPageUrl = sanitizeUrlForDisplay(action.url);
-                if (action.pattern && action.url)
-                  pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
-                else if (action.pattern)
-                  pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}"`);
-                else
-                  pt.sendVoidPlaceholder('search-web', 'Searching in page...');
-                break;
-
-              default:
-                console.log(`[DEV] AIX: Unknown web_search_call action type: ${action?.type}`, { action });
-                break;
-            }
+            _forwardWebSearchCallItem(pt, doneItem);
             break;
 
           case 'image_generation_call':
@@ -480,21 +446,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.output_text.annotation.added': // NEW, CORRECT
       case 'response.output_text_annotation.added': // OLD, for backwards compatibility
-        // IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
-        // used in generating the response. Different from bulk web search sources (20+ results).
         R.contentPartVisit(eventType, event.output_index, event.content_index);
-        const annotation = event.annotation;
-        if (annotation?.type === 'url_citation') {
-          // These are the curated, high-quality citations that should be displayed
-          pt.appendUrlCitation(
-            annotation.title || annotation.url || '',
-            annotation.url,
-            event.annotation_index,
-            annotation.start_index,
-            annotation.end_index,
-            annotation.text
-          );
-        }
+        _forwardTextAnnotation(pt, event.annotation, event.annotation_index);
         break;
 
       // The following 2 are speculative implementations
@@ -715,8 +668,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
         break;
 
       case 'failed':
-        // TODO: check the full response for the error
-        console.log('[DEV] AIX: OpenAI-Response-NS response failed:', { response });
+        tokenStopReason = 'cg-issue';
+        console.warn('[DEV] AIX: OpenAI-Response-NS response failed:', { response });
+        // TODO: extract and forward specific error details from response.error if present
         break;
 
       default:
@@ -796,6 +750,10 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
             switch (contentType) {
               case 'output_text':
                 pt.appendText(content.text || '');
+
+                // -> URL Citations: Parse annotations if present
+                if (content.annotations && Array.isArray(content.annotations))
+                  content.annotations.forEach((annotation, annotationIndex) => _forwardTextAnnotation(pt, annotation, annotationIndex));
                 break;
 
               case 'refusal':
@@ -831,8 +789,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
           break;
 
         case 'web_search_call':
-          // -> WSC: TODO
-          console.warn('[DEV] notImplemented: OpenAI Responses: web_search_call', { oItem });
+          // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
+          _forwardWebSearchCallItem(pt, oItem);
+          pt.endMessagePart();
           break;
 
         case 'image_generation_call':
@@ -845,7 +804,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
               igResult,
               igRevisedPrompt || 'Generated image',
               'gpt-image-1', // generator
-              igRevisedPrompt || '' // prompt used
+              igRevisedPrompt || '', // prompt used
             );
           else
             console.warn('[DEV] AIX: OpenAI Responses: image_generation_call done without result:', oItem);
@@ -941,6 +900,75 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic);
   return true;
+}
+
+/**
+ * Processes annotation and sends it to the particle transmitter.
+ * Currently handles 'url_citation' type annotations.
+ *
+ * IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
+ * used in generating the response. Different from bulk web search sources (20+ results).
+ */
+function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Extract<Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'message' }>['content'][number], { type: 'output_text' }>['annotations'], undefined>[number], annotationIndex: number): void {
+  switch (annotation?.type) {
+    case 'url_citation':
+      pt.appendUrlCitation(
+        annotation.title || annotation.url || '',
+        annotation.url,
+        annotationIndex,
+        annotation.start_index,
+        annotation.end_index,
+        (annotation as any)?.text || undefined,
+      );
+      break;
+
+    default:
+      // Unknown annotation type - log for future implementation
+      if (annotation)
+        console.log(`[DEV] AIX: Unknown annotation type: ${annotation.type}`, { annotation });
+      break;
+  }
+}
+
+/**
+ * Processes web search call actions and sends appropriate placeholders.
+ * Handles search, open_page, and find_in_page action types.
+ *
+ * IMPORTANT: Web search sources vs citations distinction:
+ * - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
+ * - citations: High-quality links (2-3) via annotations in message content
+ */
+function _forwardWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>): void {
+  const { action } = webSearchCall;
+  switch (action?.type) {
+    case 'search':
+      if (action.query && action.sources && Array.isArray(action.sources)) {
+        pt.sendVoidPlaceholder('search-web', `${action.query}: ${action.sources.length} results...`);
+      } else if (action.query)
+        pt.sendVoidPlaceholder('search-web', `${action.query}: completed`);
+      break;
+
+    case 'open_page':
+      // Action: opening/visiting a specific web page
+      const sanitizedUrl = sanitizeUrlForDisplay(action.url);
+      pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'page...'}`);
+      break;
+
+    case 'find_in_page':
+      // Action: searching for a pattern within an opened page
+      const sanitizedPageUrl = sanitizeUrlForDisplay(action.url);
+      if (action.pattern && action.url)
+        pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
+      else if (action.pattern)
+        pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}"`);
+      else
+        pt.sendVoidPlaceholder('search-web', 'Searching in page...');
+      break;
+
+    default:
+      console.log(`[DEV] AIX: Unknown web_search_call action type: ${action?.type}`, { action });
+      break;
+  }
 }
 
 
