@@ -582,11 +582,13 @@ export namespace AixWire_Particles {
   export type GCTokenStopReason =
     | 'ok'                      // clean, including reaching 'stop sequences'
     | 'ok-tool_invocations'     // clean & tool invocations
+    | 'ok-pause_continue'       // clean, but paused (e.g. Anthropic server tools like web search) - requires continuation
     // premature:
-    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId)
+    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
     | 'client-abort-signal'     // the client aborted - likely a user/auto initiation
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
+    | 'filter-refusal'          // safety refusal filter (e.g. Anthropic safety concerns)
     | 'out-of-tokens';          // got out of tokens
 
   /**
