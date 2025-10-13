@@ -132,6 +132,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
   const skipWebSearchDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
+  // Hosted tools
   // [OpenAI] Vendor-specific web search context and/or geolocation
   // NOTE: OpenAI doesn't support web search with minimal reasoning effort
   const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
@@ -226,6 +227,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   if (hotFixRemoveStreamOptions)
     payload = _fixRemoveStreamOptions(payload);
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);

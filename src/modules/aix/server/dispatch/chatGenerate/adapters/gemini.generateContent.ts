@@ -56,8 +56,6 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   // Construct the request payload
   const payload: TRequest = {
     contents,
-    tools: chatGenerate.tools && _toGeminiTools(chatGenerate.tools),
-    toolConfig: chatGenerate.toolsPolicy && _toGeminiToolConfig(chatGenerate.toolsPolicy),
     safetySettings: _toGeminiSafetySettings(geminiSafetyThreshold),
     systemInstruction,
     generationConfig: {
@@ -131,11 +129,20 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
   }
 
-  // TODO: Google Search Grounding: for the models that support it, it shall be declared and runtime toggleable
-  // it then becomes just a metter of:
-  // - payload.tools = [...payload.tools, { googleSearch: {} }]; -- for most models
-  // - emitting the missing particles, parsing, rendering
-  // - working around the limitations and idiosyncrasies of the Search API
+
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
+  // Custom tools
+  if (chatGenerate.tools) {
+    payload.tools = _toGeminiTools(chatGenerate.tools);
+    if (chatGenerate.toolsPolicy)
+      payload.toolConfig = _toGeminiToolConfig(chatGenerate.toolsPolicy);
+  }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
