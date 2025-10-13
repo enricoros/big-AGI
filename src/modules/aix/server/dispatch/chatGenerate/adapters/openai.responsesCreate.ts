@@ -118,9 +118,16 @@ export function aixToOpenAIResponses(
     };
   }
 
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
   // Tool: Web Search: for search and deep research models
   const requestWebSearchTool = hotFixForceWebSearchTool || !!model.vndOaiWebSearchContext || !!model.userGeolocation;
-  if (requestWebSearchTool) {
+  if (requestWebSearchTool && !skipHostedToolsDueToCustomTools) {
     /**
      * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search_preview' is not supported with gpt-5-mini-2025-08-07"
      *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
@@ -156,7 +163,7 @@ export function aixToOpenAIResponses(
 
   // Tool: Image Generation: configurable per model
   const requestImageGenerationTool = !!model.vndOaiImageGeneration;
-  if (requestImageGenerationTool) {
+  if (requestImageGenerationTool && !skipHostedToolsDueToCustomTools) {
     if (isDialectAzure) {
       // Azure OpenAI may not support image generation tool yet
       console.log('[DEV] Azure OpenAI Responses: skipping image generation tool due to Azure limitations');
@@ -179,9 +186,11 @@ export function aixToOpenAIResponses(
     }
   }
 
+
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
   if (model.vndOaiRestoreMarkdown)
     vndOaiRestoreMarkdown(payload);
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   // this includes stripping 'undefined' fields
@@ -237,6 +246,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
 
   let allowUserAppend = true;
+
   function userMessage() {
     // Ensure the last message is a user message, or create a new one
     let lastMessage = chatMessages.length ? chatMessages[chatMessages.length - 1] : undefined;

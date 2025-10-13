@@ -128,10 +128,18 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiRestoreMarkdown) {
     _fixVndOaiRestoreMarkdown_Inline(payload);
   }
+
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipWebSearchDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
   // [OpenAI] Vendor-specific web search context and/or geolocation
   // NOTE: OpenAI doesn't support web search with minimal reasoning effort
   const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
-  if ((model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning) {
+  if ((model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning && !skipWebSearchDueToCustomTools) {
     payload.web_search_options = {};
     if (model.vndOaiWebSearchContext)
       payload.web_search_options.search_context_size = model.vndOaiWebSearchContext;
