@@ -347,6 +347,9 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
       return complexity === 'extra' ? 'Error' : '';
     case 'out-of-tokens':
       return 'Out of Tokens';
+    default:
+      const _exhaustiveCheck: never = reason;
+      return null;
   }
 }
 
