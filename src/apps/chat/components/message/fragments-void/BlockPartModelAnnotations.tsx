@@ -21,6 +21,15 @@ import { urlExtractDomain, urlPrettyHref } from '~/common/util/urlUtils';
 // configuration
 const MAX_ICONS = 6;
 const COLOR = 'neutral';
+const ENABLE_FAVICON_FIX_FOR_VERTEX = true; // Gemini returns links to VertexAiSearchCloud.com
+
+
+function fixCitationUrl(url: string, title: string | undefined): string {
+  if (!url) return '';
+  if (ENABLE_FAVICON_FIX_FOR_VERTEX && url.startsWith('https://vertexaisearch') && title)
+    return title;
+  return url;
+}
 
 
 const _styles = {
@@ -166,6 +175,8 @@ export function BlockPartModelAnnotations(props: {
       {/* Row of favicons */}
       <Button
         size='sm'
+        component='div'
+        role='button'
         variant={!expanded ? 'soft' : 'plain'}
         color={COLOR}
         fullWidth
@@ -176,13 +187,16 @@ export function BlockPartModelAnnotations(props: {
         <span>{annotationsCount} {props.itemsName || 'citation'}{annotationsCount > 1 ? 's' : ''}</span>
 
         {/* Icons */}
-        {!expanded && props.annotations.slice(0, MAX_ICONS).map((citation, index) => (
-          <TooltipOutlined key={index} title={citation.title || urlExtractDomain(citation.url)}>
-            <div>
-              <AvatarDomainFavicon key={index} url={citation.url} size={18} iconRes={48} noHover noShadow />
-            </div>
-          </TooltipOutlined>
-        ))}
+        {!expanded && props.annotations.slice(0, MAX_ICONS).map((citation, index) => {
+          const citationUrl = fixCitationUrl(citation.url, citation.title);
+          return (
+            <TooltipOutlined key={index} title={citation.title || urlExtractDomain(citationUrl)}>
+              <div>
+                <AvatarDomainFavicon key={index} url={citationUrl} size={18} iconRes={48} noHover noShadow />
+              </div>
+            </TooltipOutlined>
+          );
+        })}
 
         {/* +X symbol */}
         <span style={{ opacity: 0.5 }}>{(moreIcons >= 1 && !expanded) && '+' + moreIcons}</span>
@@ -252,7 +266,7 @@ export function BlockPartModelAnnotations(props: {
                   </Box>
 
                   <Box sx={_styles.line}>
-                    <AvatarDomainFavicon url={!expanded ? '' : citation.url} size={24} iconRes={64} />
+                    <AvatarDomainFavicon url={!expanded ? '' : fixCitationUrl(citation.url, citation.title)} size={24} iconRes={64} />
                     <Box sx={_styles.lineContent}>
                       <Box className='agi-ellipsize'>
                         {citation.title || domain}
