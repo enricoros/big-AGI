@@ -238,6 +238,28 @@ export namespace AnthropicWire_Tools {
 //
 export namespace AnthropicWire_API_Message_Create {
 
+  /// Shared Schemas
+
+  /**
+   * Stop reason values that indicate why Claude stopped generating.
+   * - 'end_turn': the model reached a natural stopping point
+   * - 'max_tokens': exceeded the requested max_tokens limit
+   * - 'stop_sequence': one of the custom stop_sequences was generated
+   * - 'tool_use': the model wants to use a tool
+   * - 'pause_turn': paused for server tools (e.g. web search)
+   * - 'refusal': Claude refused due to safety concerns
+   * - 'model_context_window_exceeded': hit the model's context window limit
+   */
+  const StopReason_schema = z.enum([
+    'end_turn',
+    'max_tokens',
+    'stop_sequence',
+    'tool_use',
+    'pause_turn',
+    'refusal',
+    'model_context_window_exceeded',
+  ]);
+
   /// Request
 
   export type Request = z.infer<typeof Request_schema>;
@@ -366,16 +388,10 @@ export namespace AnthropicWire_API_Message_Create {
     content: z.array(AnthropicWire_Messages.ContentBlockOutput_schema),
 
     /**
-     * This may be one the following values:
-     *
-     * "end_turn": the model reached a natural stopping point
-     * "max_tokens": we exceeded the requested max_tokens or the model's maximum
-     * "stop_sequence": one of your provided custom stop_sequences was generated
-     * Note that these values are different than those in /v1/complete, where end_turn and stop_sequence were not differentiated.
-     *
+     * The reason why Claude stopped generating.
      * In non-streaming mode this value is always non-null. In streaming mode, it is null in the message_start event and non-null otherwise.
      */
-    stop_reason: z.enum(['end_turn', 'max_tokens', 'stop_sequence', 'tool_use']).nullable(),
+    stop_reason: StopReason_schema.nullable(),
     // Which custom stop sequence was generated, if any.
     stop_sequence: z.string().nullable(),
 
@@ -403,7 +419,7 @@ export namespace AnthropicWire_API_Message_Create {
     type: z.literal('message_delta'),
     // MessageDelta
     delta: z.object({
-      stop_reason: z.enum(['end_turn', 'max_tokens', 'stop_sequence', 'tool_use']).nullable(),
+      stop_reason: StopReason_schema.nullable(),
       stop_sequence: z.string().nullable(),
     }),
     // MessageDeltaUsage

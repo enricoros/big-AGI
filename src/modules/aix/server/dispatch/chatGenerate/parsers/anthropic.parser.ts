@@ -329,8 +329,21 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
     case 'tool_use':
       return 'ok-tool_invocations';
 
+    /**
+     * https://docs.claude.com/en/api/handling-stop-reasons#pause-turn
+     * Used with server tools like web search when Claude needs to pause a long-running operation.
+     */
+    case 'pause_turn':
+      return 'ok-pause_continue';
+
     case 'max_tokens':
       return 'out-of-tokens';
+
+    case 'model_context_window_exceeded':
+      return 'out-of-tokens'; // Best practice: Allows requesting maximum tokens without calculating input size
+
+    case 'refusal':
+      return 'filter-refusal'; // Safety concerns - refusal to answer
 
     default:
       console.warn(`_fromAnthropicStopReason: unknown stop reason: ${stopReason}`);
