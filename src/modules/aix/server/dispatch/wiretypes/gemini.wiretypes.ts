@@ -605,6 +605,25 @@ export namespace GeminiWire_API_Generate_Content {
     text: z.string(),
   });
 
+  const UrlRetrievalStatus_enum = z.enum([
+    'URL_RETRIEVAL_STATUS_UNSPECIFIED',
+    'URL_RETRIEVAL_STATUS_SUCCESS',
+    'URL_RETRIEVAL_STATUS_ERROR',
+    'URL_RETRIEVAL_STATUS_PAYWALL',
+    'URL_RETRIEVAL_STATUS_UNSAFE',
+  ]);
+
+  const UrlMetadata_schema = z.object({
+    /** Retrieved url by the tool. */
+    retrievedUrl: z.string(),
+    /** Status of the url retrieval. */
+    urlRetrievalStatus: UrlRetrievalStatus_enum,
+  });
+
+  const UrlContextMetadata_schema = z.object({
+    urlMetadata: z.array(UrlMetadata_schema),
+  });
+
   const GroundingMetadata_schema = z.object({
     /** supporting references retrieved from specified grounding source */
     groundingChunks: z.array(/*z.union([*/z.object({
@@ -691,6 +710,18 @@ export namespace GeminiWire_API_Generate_Content {
      * - tools = [{googleSearchRetrieval: {}}]
      */
     groundingMetadata: GroundingMetadata_schema.optional(),
+
+    /**
+     * Metadata related to url context retrieval tool.
+     * This field is populated when URL context retrieval is used.
+     */
+    urlContextMetadata: UrlContextMetadata_schema.optional(),
+
+    /**
+     * Details the reason why the model stopped generating tokens.
+     * This is populated only when finishReason is set.
+     */
+    finishMessage: z.string().optional(),
 
     // We choose to ignore the following and save the parsing time (we do not use or support logProbs):
     // avgLogprobs: z.number().optional(),

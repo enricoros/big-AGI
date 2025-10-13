@@ -181,13 +181,28 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
          * - follow up Google Search queries (.webSearchQueries)
          * - include the 'renderedContent' from .searchEntryPoint
          */
-        for (const { web } of candidate0.groundingMetadata.groundingChunks) {
+        for (const { web } of candidate0.groundingMetadata.groundingChunks)
           pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
+      }
+
+      // -> Candidates[0] -> URL Context Metadata
+      if (candidate0.urlContextMetadata?.urlMetadata?.length) {
+        for (const urlMeta of candidate0.urlContextMetadata.urlMetadata) {
+          // Only add URLs that were successfully retrieved
+          if (urlMeta.urlRetrievalStatus === 'URL_RETRIEVAL_STATUS_SUCCESS')
+            pt.appendUrlCitation('', urlMeta.retrievedUrl, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
+          else if (urlMeta.urlRetrievalStatus !== 'URL_RETRIEVAL_STATUS_UNSPECIFIED')
+            console.warn(`[Gemini] URL retrieval ${urlMeta.urlRetrievalStatus}: ${urlMeta.retrievedUrl}`); // log for debugging
         }
       }
 
       // -> Candidates[0] -> Token Stop Reason
       if (candidate0.finishReason) {
+        // Helper to append finishMessage if available
+        // NOTE: unused for now, hasn't been tested
+        // const withFinishMessage = (baseMessage: string) =>
+        //   candidate0.finishMessage ? `${baseMessage}: ${candidate0.finishMessage}` : baseMessage;
+
         switch (candidate0.finishReason) {
           case 'STOP':
             // this is expected for every fragment up to the end, when it may switch to one of the reasons below in the last packet
