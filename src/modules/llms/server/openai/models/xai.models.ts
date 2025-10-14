@@ -5,7 +5,7 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, KnownModel, ManualMappings } from './models.data';
 import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 
@@ -58,7 +58,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' },
-      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
+      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' },
     ],
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
     benchmark: { cbaElo: 1358 }, // grok-3-mini-beta (updated from CSV)
@@ -72,7 +72,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' },
-      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
+      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' },
     ],
     chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
     benchmark: { cbaElo: 1357 }, // grok-3-mini-fast (slight adjustment for cost model)
@@ -149,7 +149,7 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
   return xaiModels.models.reduce((acc, xm) => {
 
     // Fallback for unknown models
-    const unknownModelFallback: ManualMapping = {
+    const unknownModelFallback: KnownModel = {
       idPrefix: xm.id,
       label: _xaiFormatNewModelLabel(xm.id),
       description: `xAI model ${xm.id}`,
@@ -223,15 +223,15 @@ export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchem
   // First try exact matches with the order array
   const aExact = _xaiIdStartsWithOrder.indexOf(a.id);
   const bExact = _xaiIdStartsWithOrder.indexOf(b.id);
-  
+
   // If both have exact matches, use those positions
   if (aExact !== -1 && bExact !== -1)
     return aExact - bExact;
-  
+
   // If only one has exact match, prioritize it
   if (aExact !== -1) return -1;
   if (bExact !== -1) return 1;
-  
+
   // Fall back to prefix matching for unknown models
   const aStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => a.id.startsWith(prefix));
   const bStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => b.id.startsWith(prefix));

@@ -88,71 +88,119 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 
 // Helpers
 
-export type ManualMapping = ({
+export type ManualMappings = (KnownModel | KnownLink)[];
+
+/**
+ * Server-side default model description to complement the APIs usually just returning the model ID
+ */
+export type KnownModel = {
   idPrefix: string,
-  isLatest?: boolean,
   isPreview?: boolean,
   isLegacy?: boolean,
-  symLink?: string
-} & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
+} & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>;
 
-export type ManualMappings = ManualMapping[];
+/**
+ * Symlink -> KnownModel; all properties except overrides are inherited from the target model.
+ */
+type KnownLink = {
+  idPrefix: string;
+  label: string;        // Forcing the label, otherwise we'll just use the target's, which is wrong
+  symLink: string;      // -> KnownModel.idPrefix
+} & Partial<Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>>;
 
-export function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping, disableSymLink?: boolean): ModelDescriptionSchema {
 
-  // find the closest known model, or fall back, or take the last
-  const known = mappings.find(base => id === base.idPrefix)
-    || mappings.find(base => id.startsWith(base.idPrefix))
-    || fallback
-    || mappings[mappings.length - 1];
+export function fromManualMapping(mappings: (KnownModel | KnownLink)[], upstreamModelId: string, created: undefined | number, updated: undefined | number, fallback: KnownModel, disableSymlinkLooks?: boolean): ModelDescriptionSchema {
 
-  // label for symlinks
-  let label = known.label;
-  if (!disableSymLink && known.symLink && id === known.idPrefix)
-    label = `🔗 ${known.label} → ${known.symLink/*.replace(known.idPrefix, '')*/}`;
+  // model resolution outputs
+  let m: KnownModel;
+  let symlinkTarget: string | undefined;
+  let resolution: 'exact' | 'super' | 'fallback' = 'exact';
+
+  // just scope this to avoid leaking
+  {
+    // find a perfect match first
+    let known = mappings.find(base => upstreamModelId === base.idPrefix);
+    if (!known) {
+      // find the longest prefix match
+      const prefixMatches = mappings.filter(base => upstreamModelId.startsWith(base.idPrefix));
+      if (prefixMatches.length) {
+        known = prefixMatches.sort((a, b) => b.idPrefix.length - a.idPrefix.length)[0];
+        resolution = 'super';
+      } else {
+        // fallback last
+        // console.warn(`[fromManualMapping] Unknown model: ${upstreamModelId}, falling back to ${fallback.idPrefix}`);
+        known = fallback;
+        resolution = 'fallback';
+      }
+    }
+
+    // dereference symlink
+    if ('symLink' in known) {
+      const l = known;
+      symlinkTarget = l.symLink;
+      const lM = mappings.find(m => m.idPrefix === l.symLink);
+      if (lM && !('symLink' in lM)) {
+        // merge target + link overrides (symlinks are hidden by default)
+        const { idPrefix, symLink, hidden = undefined, ...overrides } = l;
+        m = {
+          ...lM,
+          ...overrides,
+          idPrefix, // NOTE: we use the 'base' for broader variant extraction below
+          hidden: hidden ?? true, // by default hide symlinks, unless overridden
+        };
+      } else {
+        // WARNING: we found a symlink, but the target is missing or another symlink - hence we fallback, but this is a warning situation
+        console.warn(!lM
+          ? `[fromManualMapping] Symlink target not found: ${l.idPrefix} -> ${l.symLink}`
+          : `[fromManualMapping] Symlink chain detected: ${l.idPrefix} -> ${l.symLink} (not supported)`,
+        );
+        m = fallback;
+        resolution = 'fallback';
+      }
+    } else {
+      m = known;
+    }
+  }
 
   // check whether this is a partial map, which indicates an unknown/new variant
-  const suffix = id.slice(known.idPrefix.length).trim();
+  const variant = upstreamModelId.slice(m.idPrefix.length).replaceAll('-', ' ').trim();
 
-  // full label
-  label = label
-    + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : '')
-    // + (known.isLatest ? ' 🌟' : '') // DISABLED: annoying emoji
-    + (known.isLegacy ? /*' 💩'*/ ' [legacy]' : '');
+  // build label (a bit tricky)
+  let label = m.label;
+  let description = m.description || '';
+  if (variant)
+    label += ` [${variant}]`;
+  if (resolution === 'super') {
+    label = `[?] ${label}`;
+    delete m.hidden;
+  } else if (!disableSymlinkLooks && symlinkTarget) {
+    // add a symlink icon to the label
+    label = `🔗 ${label} → ${symlinkTarget/*.replace(known.idPrefix, '')*/}`;
 
-  // set the date in YYYY-MM-DD format if available and requested
-  // if (label.indexOf('{{Created}}') !== -1) {
-  //   const targetDate = updated || created;
-  //   if (targetDate)
-  //     label = label.replace('{{Created}}', `(${new Date(targetDate * 1000).toISOString().slice(0, 10)})`);
-  //   else
-  //     label = label.replace('{{Created}}', '');
-  // }
+    // add an automated 'points to...' to the description, lifted from the base model
+    if (!description.includes('Points to '))
+      description += ` Points to ${symlinkTarget}.`;
+  }
+  // if (m.isLegacy) label += /*' 💩'*/ ' [legacy]'; // Disabled: visual noise
 
-  // create the model description
+  // create ModelDescription
   const md: ModelDescriptionSchema = {
-    id,
+    id: upstreamModelId,
     label,
     created: created || 0,
     updated: updated || created || 0,
-    description: known.description,
-    contextWindow: known.contextWindow,
-    interfaces: known.interfaces,
+    description,
+    contextWindow: m.contextWindow,
+    interfaces: m.interfaces,
   };
 
   // apply optional fields
-  if (known.maxCompletionTokens)
-    md.maxCompletionTokens = known.maxCompletionTokens;
-  if (known.trainingDataCutoff)
-    md.trainingDataCutoff = known.trainingDataCutoff;
-  if (known.parameterSpecs)
-    md.parameterSpecs = known.parameterSpecs;
-  if (known.benchmark)
-    md.benchmark = known.benchmark;
-  if (known.chatPrice)
-    md.chatPrice = known.chatPrice;
-  if (known.hidden)
-    md.hidden = true;
+  if (m.parameterSpecs) md.parameterSpecs = m.parameterSpecs;
+  if (m.maxCompletionTokens) md.maxCompletionTokens = m.maxCompletionTokens;
+  if (m.trainingDataCutoff) md.trainingDataCutoff = m.trainingDataCutoff;
+  if (m.benchmark) md.benchmark = m.benchmark;
+  if (m.chatPrice) md.chatPrice = m.chatPrice;
+  if (m.hidden) md.hidden = true;
 
   return md;
 }
