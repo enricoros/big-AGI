@@ -261,7 +261,6 @@ export function ChatMessage(props: {
   // derived state
   const {
     id: messageId,
-    text: messageText,
     sender: messageSender,
     avatar: messageAvatar,
     typing: messageTyping,
@@ -278,6 +277,26 @@ export function ChatMessage(props: {
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const wasEdited = !!messageUpdated;
+
+  // #840 - downgrade of V2 to V1
+  let messageText = props.message.text;
+  const isDowngradeV2toV1 = (!!(props.message as any)?.fragments) && messageText === undefined;
+  if (isDowngradeV2toV1) {
+    // try to salvage something: manual reduce the fragments to text
+    const fragments: unknown = (props.message as any)?.fragments;
+    if (fragments && Array.isArray(fragments) && fragments.length) {
+      messageText = '';
+      for (const frag of fragments) {
+        if (frag && typeof frag === 'object' && 'ft' in frag && frag.ft === 'content' && 'part' in frag && typeof frag.part === 'object' && 'pt' in frag.part && frag.part.pt === 'text' && 'text' in frag.part && typeof frag.part.text === 'string') {
+          if (messageText)
+            messageText += '\n\n';
+          messageText += frag.part.text;
+        }
+      }
+    }
+    if (!messageText)
+      messageText = '[Cannot downgrade to Big-AGI 1.x]';
+  }
 
   const textSel = selText ? selText : messageText;
   // WARNING: if you get an issue here, you're downgrading from the new Big-AGI 2 data format to 1.x.
