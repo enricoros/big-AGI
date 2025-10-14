@@ -1,4 +1,4 @@
-interface AudioFormat {
+export interface AudioFormat {
   channels: number;
   sampleRate: number;
   bitsPerSample: number;
@@ -78,7 +78,7 @@ function parseGeminiAudioMimeType(mimeType: string): AudioFormat {
 /**
  * Create WAV file from raw PCM data
  */
-function createWAVFromPCM(pcmData: Buffer, format: AudioFormat): Buffer {
+export function createWAVFromPCM(pcmData: Buffer, format: AudioFormat): Buffer {
   const { channels, sampleRate, bitsPerSample } = format;
 
   const byteRate = sampleRate * channels * bitsPerSample / 8;
@@ -111,7 +111,7 @@ function createWAVFromPCM(pcmData: Buffer, format: AudioFormat): Buffer {
 }
 
 /** Calculate audio duration in milliseconds */
-function calculateDurationMs(dataSize: number, format: AudioFormat): number {
+export function calculateDurationMs(dataSize: number, format: AudioFormat): number {
   const { channels, sampleRate, bitsPerSample } = format;
   const bytesPerSample = bitsPerSample / 8;
   const totalSamples = dataSize / (channels * bytesPerSample);
