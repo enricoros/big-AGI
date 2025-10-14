@@ -56,6 +56,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
         // make the [Account, Preferences, Portal] stack scrollable
         height: '100%',
         overflowY: 'auto',
+        pb: OPTIMA_PANEL_GROUPS_SPACING,
       }}>
 
         <Box sx={{ py: 0.25, mb: OPTIMA_PANEL_GROUPS_SPACING }}>
