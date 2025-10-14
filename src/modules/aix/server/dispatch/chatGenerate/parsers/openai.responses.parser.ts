@@ -772,18 +772,12 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         case 'function_call':
           const {
-            id: fcId,
-            call_id: fcCallId,
-            arguments: fcArguments,
-            name: fcName,
+            // id: fcId, // id of the output item, e.g. fc_019c99e62a11ec6b0168ee0346d24c819c89e4552b8400a7d9
+            call_id: fcCallId, // important - e.g. call_Blezq5bnKl27mki3GJ3vIsKE
+            arguments: fcArguments, // '{"name":"John", ...}'
+            name: fcName, // e.g. propose_user_actions_for_attachments
           } = oItem;
-
-          // pedantic check (fcId = fcCallId)
-          if (fcId !== fcCallId) {
-            console.warn('[DEV] AIX: OpenAI-Response-NS unexpected function call ID mismatch:', { fcId, fcCallId });
-            break;
-          }
-
+          // -> FC: full function call
           pt.startFunctionCallInvocation(fcCallId, fcName, 'incr_str', fcArguments);
           pt.endMessagePart();
           break;
