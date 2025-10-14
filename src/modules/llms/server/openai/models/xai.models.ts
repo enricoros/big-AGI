@@ -15,29 +15,40 @@ const _knownXAIChatModels: ManualMappings = [
 
   // Grok 4
   {
+    idPrefix: 'grok-4-fast-reasoning',
+    label: 'Grok 4 Fast Reasoning',
+    description: 'Cost-efficient reasoning model with a 2M token context window. Optimized for fast reasoning in agentic workflows. 98% cost reduction vs Grok 4 with comparable performance.',
+    contextWindow: 2000000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 0.2, output: 0.5, cache: { cType: 'oai-ac', read: 0.05 } }, // Price increases for >128K tokens: input $0.40, output $1.00
+    benchmark: { cbaElo: 1420 }, // Similar to grok-4-0709, slight adjustment for cost model
+  },
+  {
+    idPrefix: 'grok-4-fast-non-reasoning',
+    label: 'Grok 4 Fast', // 'Grok 4 Fast Non-Reasoning'
+    description: 'Cost-efficient non-reasoning model with a 2M token context window. Same weights as grok-4-fast-reasoning but constrained by non-reasoning system prompt for quick responses.',
+    contextWindow: 2000000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 0.2, output: 0.5, cache: { cType: 'oai-ac', read: 0.05 } }, // Price increases for >128K tokens: input $0.40, output $1.00
+    benchmark: { cbaElo: 1420 - 2 }, // slightly lower than reasoning variant
+  },
+  {
     idPrefix: 'grok-4-0709',
     label: 'Grok 4 (0709)',
     description: 'xAI\'s most advanced model, offering state-of-the-art reasoning and problem-solving capabilities over a massive 256k context window. Supports text and image inputs.',
     contextWindow: 256000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1422 }, // grok-4-0709
+    benchmark: { cbaElo: 1415 }, // grok-4-0709
   },
 
   // Grok 3
-  {
-    idPrefix: 'grok-3',
-    label: 'Grok 3',
-    description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
-    chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1409 }, // grok-3-preview-02-24
-  },
   {
     idPrefix: 'grok-3-fast',
     label: 'Grok 3 Fast',
@@ -50,9 +61,20 @@ const _knownXAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1408 }, // grok-3-fast (slight adjustment for cost model)
   },
   {
+    idPrefix: 'grok-3',
+    label: 'Grok 3',
+    description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
+    benchmark: { cbaElo: 1409 }, // grok-3-preview-02-24
+  },
+  {
     idPrefix: 'grok-3-mini',
     label: 'Grok 3 Mini',
-    description: 'A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.',
+    description: 'A lightweight model that is fast and smart for logic-based tasks. Supports function calling and structured outputs.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
@@ -76,6 +98,19 @@ const _knownXAIChatModels: ManualMappings = [
     ],
     chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
     benchmark: { cbaElo: 1357 }, // grok-3-mini-fast (slight adjustment for cost model)
+  },
+
+  // Grok Code
+  {
+    idPrefix: 'grok-code-fast-1',
+    label: 'Grok Code Fast 1',
+    description: 'Specialized reasoning model for agentic coding workflows. Fast, economical, and optimized for code generation, debugging, and software development tasks.',
+    contextWindow: 256000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 0.2, output: 1.5, cache: { cType: 'oai-ac', read: 0.02 } },
+    benchmark: { cbaElo: 1380 }, // Estimated for coding-specialized model
   },
 
   // Grok 2
@@ -208,6 +243,9 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
 
 // manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
+  'grok-code-fast-1',
+  'grok-4-fast-reasoning',
+  'grok-4-fast-non-reasoning',
   'grok-4-0709',
   'grok-3-fast',
   'grok-3',
