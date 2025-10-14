@@ -466,10 +466,11 @@ export function prettyShortChatModelName(model: string | undefined): string {
   }
   // [xAI]
   if (model.includes('grok-')) {
-    if (model.includes('grok-3') || model.includes('grok-2')) {
+    if (['grok-code', 'grok-4', 'grok-3', 'grok-2'].some(m => model.includes(m))) {
       return model
         .replace('xai-', '')
         .replace('-beta', '')
+        .replace('-non-reasoning', '')
         .split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
     }
     if (model.includes('grok-beta')) return 'Grok Beta';
