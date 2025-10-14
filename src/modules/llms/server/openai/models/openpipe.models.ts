@@ -2,7 +2,7 @@ import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.ty
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { _knownOpenAIChatModels } from '~/modules/llms/server/openai/models/openai.models';
 import { wireOpenPipeModelOutputSchema } from '~/modules/llms/server/openai/openpipe.wiretypes';
-import { fromManualMapping, ManualMapping } from '~/modules/llms/server/openai/models/models.data';
+import { fromManualMapping, KnownModel } from '~/modules/llms/server/openai/models/models.data';
 
 const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
 
@@ -166,7 +166,7 @@ export function openPipeModelToModelDescriptions(wireModel: object): ModelDescri
   description += `\n\nUUID: ${model.id}`;
 
 
-  const manualMapping: ManualMapping = {
+  const manualMapping: KnownModel = {
     idPrefix: namedId,
     label,
     description,
