@@ -280,7 +280,7 @@ export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n', excludeAttachmentFragments?: boolean): string {
 
   // quick path for empty fragments
-  if (!fragments.length)
+  if (!fragments?.length)
     return '';
 
   return fragments
