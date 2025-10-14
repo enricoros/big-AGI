@@ -456,8 +456,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     audio: z.object({
       id: z.string(),
       data: z.string(), // Base64 encoded audio data
-      expires_at: z.number(), // Unix timestamp
       transcript: z.string().optional(),
+      expires_at: z.number(), // Unix timestamp
     }).nullable().optional(),
 
   });
@@ -574,6 +574,16 @@ export namespace OpenAIWire_API_Chat_Completions {
      * not documented yet in the API guide; shall improve this once defined
      */
     annotations: z.array(OpenAIWire_ContentParts.OpenAI_AnnotationObject_schema).optional(),
+    /**
+     * [OpenAI, 2024-10-17] Audio streaming
+     * NOTE: this has been observed from the stream on 2025-10-13 - seems the same as the NS version
+     */
+    audio: z.object({
+      id: z.string().optional(), // omitted in subsequent chunks
+      data: z.string().optional(), // incremental base64 audio data
+      transcript: z.string().optional(), // incremental transcript
+      expires_at: z.number().optional(), // seems to be only in the last chunk
+    }).optional(),
   });
 
   const ChunkChoice_schema = z.object({

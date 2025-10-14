@@ -428,7 +428,7 @@ export class ContentReassembler {
       });
 
       // TEMP: show a label instead of adding the model part
-      this.accumulator.fragments.push(createTextContentFragment(`Playing ${safeLabel}${durationMs ? ` (${Math.round(durationMs / 10) / 100}s)` : ''}`));
+      this.accumulator.fragments.push(createTextContentFragment(`Generated audio ▶ \`${safeLabel}\`${durationMs ? ` (${Math.round(durationMs / 10) / 100}s)` : ''}`));
 
       // Add the audio to the DBlobs DB
       // const dblobAssetId = await addDBAudioAsset('global', 'app-chat', {
@@ -527,7 +527,7 @@ export class ContentReassembler {
           ...(safeLabel ? { altText: safeLabel } : {}),
           ...(imageWidth ? { width: imageWidth } : {}),
           ...(imageHeight ? { height: imageHeight } : {}),
-        }
+        },
       );
 
       this.accumulator.fragments.push(zyncImageAssetFragmentWithLegacy);
