@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
@@ -32,6 +32,10 @@ export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescript
 
 // configuration
 const DEV_DEBUG_OPENAI_MODELS = /* (Release.TenantSlug as any) === 'staging' || */ Release.IsNodeDevBuild;
+
+
+// Per-family interfaces
+const GPT_AUDIO_IFS: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_Outputs_Audio] as const;
 
 
 // [OpenAI] Known Chat Models
@@ -588,59 +592,37 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // gpt-audio
   {
-    hidden: true, // [2025-09-15] the server is still responding with errors to text input/mixed outputs
     idPrefix: 'gpt-audio-2025-08-28',
     label: 'GPT Audio (2025-08-28)',
     description: 'First generally available audio model. Accepts audio inputs and outputs, and can be used in the Chat Completions REST API.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Outputs_Audio, LLM_IF_HOTFIX_NoStream],
+    interfaces: GPT_AUDIO_IFS,
     chatPrice: { input: 2.5, output: 10 },
     // benchmark: TBD
   },
   {
     idPrefix: 'gpt-audio',
     label: 'GPT Audio',
-    description: 'First generally available audio model. Points to gpt-audio-2025-08-28.',
     symLink: 'gpt-audio-2025-08-28',
-    hidden: true, // prefer versioned
-    // copied from symlinked
+  },
+  {
+    idPrefix: 'gpt-audio-mini-2025-10-06',
+    label: 'GPT Audio Mini (2025-10-06)',
+    description: '',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Outputs_Audio, LLM_IF_HOTFIX_NoStream],
-    chatPrice: { input: 2.5, output: 10 },
-    // benchmark: TBD
-  },
-
-
-  /// GPT-Realtime series - General availability realtime models
-
-  // gpt-realtime
-  {
-    hidden: true, // unsupported Realtime API
-    idPrefix: 'gpt-realtime-2025-08-28',
-    label: 'GPT Realtime (2025-08-28)',
-    description: 'First general-availability realtime model, capable of responding to audio and text inputs in realtime over WebRTC, WebSocket, or SIP connections.',
-    contextWindow: 32000,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 4, cache: { cType: 'oai-ac', read: 0.4 }, output: 16 },
-    // benchmark: TBD
+    interfaces: GPT_AUDIO_IFS,
+    chatPrice: { input: 0.6, output: 2.4 },
   },
   {
-    idPrefix: 'gpt-realtime',
-    label: 'GPT Realtime',
-    description: 'First general-availability realtime model. Points to gpt-realtime-2025-08-28.',
-    symLink: 'gpt-realtime-2025-08-28',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 32000,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 4, cache: { cType: 'oai-ac', read: 0.4 }, output: 16 },
-    // benchmark: TBD
+    idPrefix: 'gpt-audio-mini',
+    label: 'GPT Audio Mini',
+    symLink: 'gpt-audio-mini-2025-10-06',
   },
 
+
+  /// GPT-Realtime series - REMOVED
 
   /// GPT-4/4o series
 
@@ -708,8 +690,9 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
+    hidden: true, // old
     idPrefix: 'gpt-4o-search-preview-2025-03-11',
-    label: 'GPT-4o Search Preview (2025-03-11) 🌐',
+    label: 'GPT-4o Search Preview (2025-03-11)',
     description: 'Latest snapshot of the GPT-4o model optimized for web search capabilities.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
@@ -722,44 +705,46 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-4o-search-preview',
-    label: 'GPT-4o Search Preview 🌐',
-    description: 'GPT model for web search in Chat Completions. Currently points to gpt-4o-search-preview-2025-03-11.',
+    label: 'GPT-4o Search Preview',
     symLink: 'gpt-4o-search-preview-2025-03-11',
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature, LLM_IF_Tools_WebSearch], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
-    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
-    chatPrice: { input: 2.5, output: 10 },
-    // benchmarks don't apply to search models
-    isPreview: true,
   },
 
   // GPT-4o Audio Preview
   {
-    hidden: true, // UNSUPPORTED yet (audio output model)
+    hidden: true, // old
     idPrefix: 'gpt-4o-audio-preview-2025-06-03',
     label: 'GPT-4o Audio Preview (2025-06-03)',
     description: 'Latest snapshot for the Audio API model.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_Outputs_Audio],
+    interfaces: GPT_AUDIO_IFS,
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
   },
   {
-    hidden: true, // UNSUPPORTED yet (audio output model)
+    hidden: true, // old
     idPrefix: 'gpt-4o-audio-preview-2024-12-17',
     label: 'GPT-4o Audio Preview (2024-12-17)',
     description: 'Snapshot for the Audio API model.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_Outputs_Audio],
+    interfaces: GPT_AUDIO_IFS,
+    chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
+    // benchmarks don't apply to audio models
+    isPreview: true,
+  },
+  {
+    hidden: true, // old
+    idPrefix: 'gpt-4o-audio-preview-2024-10-01',
+    label: 'GPT-4o Audio Preview (2024-10-01)',
+    description: 'Snapshot for the Audio API model.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: GPT_AUDIO_IFS,
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
@@ -767,17 +752,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'gpt-4o-audio-preview',
     label: 'GPT-4o Audio Preview',
-    description: 'Preview release for audio inputs in chat completions.',
-    symLink: 'gpt-4o-audio-preview-2024-12-17', // still points to 12-17 as of 2025-06-11
-    hidden: true, // prefer versioned
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_Outputs_Audio],
-    chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to audio models
-    isPreview: true,
+    symLink: 'gpt-4o-audio-preview-2025-06-03',
   },
 
   // GPT-4o mini
@@ -814,7 +789,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_Outputs_Audio],
+    interfaces: GPT_AUDIO_IFS,
     chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
@@ -829,15 +804,16 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_Outputs_Audio],
+    interfaces: GPT_AUDIO_IFS,
     chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
     // benchmarks don't apply to audio models
     isPreview: true,
   },
   // GPT-4o Mini Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
+    hidden: true, // old
     idPrefix: 'gpt-4o-mini-search-preview-2025-03-11',
-    label: 'GPT-4o Mini Search Preview (2025-03-11) 🌐',
+    label: 'GPT-4o Mini Search Preview (2025-03-11)',
     description: 'Latest snapshot of the GPT-4o Mini model optimized for web search capabilities.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
@@ -850,7 +826,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-4o-mini-search-preview',
-    label: 'GPT-4o Mini Search Preview 🌐',
+    label: 'GPT-4o Mini Search Preview',
     description: 'Fast, affordable small model for web search. Currently points to gpt-4o-mini-search-preview-2025-03-11.',
     symLink: 'gpt-4o-mini-search-preview-2025-03-11',
     hidden: true, // prefer versioned
@@ -1034,6 +1010,7 @@ const openAIModelsDenyList: string[] = [
   // '-realtime-',
   '4o-realtime',
   '4o-mini-realtime',
+  'gpt-realtime',
 
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
@@ -1128,6 +1105,13 @@ const _manualOrderingIdPrefixes = [
   'gpt-4.1-nano-20',
   'gpt-4.1-nano',
   'gpt-4.1',
+  // 4o-derived?
+  'gpt-audio-2',
+  'gpt-4o-audio-preview',
+  'gpt-audio-mini-',
+  'gpt-audio-mini',
+  'gpt-4o-mini-audio-preview',
+  'gpt-audio',
   // Preferred models
   'gpt-4o-20',
   'gpt-4o-search-20',
