@@ -13,8 +13,64 @@ import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/
 
 // JSON fetcher
 export async function fetchJsonOrTRPCThrow<TOut extends object = object, TBody extends object | undefined | FormData = undefined>(config: RequestConfig<TBody>): Promise<TOut> {
-  return _fetchFromTRPC<TBody, TOut>(config, async (response) => await response.json(), 'json');
+  return _fetchFromTRPC<TBody, TOut>(config, _jsonRequestParserOrThrow, 'json');
 }
+
+async function _jsonRequestParserOrThrow(response: Response) {
+  let text = '';
+  try {
+    text = await response.text();
+    return JSON.parse(text) as any;
+  } catch (error) {
+
+    // Errors: Cannot Parse
+    if (error instanceof SyntaxError) {
+
+      // Improve messaging of Empty or Incomplete JSON
+      if (error.message === 'Unexpected end of JSON input')
+        throw new TRPCError({
+          code: 'PARSE_ERROR',
+          message: !text?.length ? 'Empty response while expecting JSON' : 'Incomplete JSON response',
+          cause: error,
+        });
+
+      // Improve messaging of a real parsing error where we expected JSON and got something else
+      if (error.message.startsWith('Unexpected token')) {
+        const lcText = text.trim().toLowerCase();
+        let inferredType = 'unknown';
+
+        if (['<html', '<!doctype'].some(tag => lcText.startsWith(tag)))
+          inferredType = 'HTML';
+        else if (['<?xml', '<rss', '<feed', '<xml'].some(tag => lcText.startsWith(tag)))
+          inferredType = 'XML';
+        else if (['<div', '<span', '<p', '<script', '<br', '<body', '<head', '<title'].some(tag => lcText.startsWith(tag)))
+          inferredType = 'HTML-like';
+        else if (lcText.startsWith('{') || lcText.startsWith('['))
+          inferredType = 'malformed JSON';
+
+        throw new TRPCError({
+          code: 'PARSE_ERROR',
+          message: `Expected JSON data but received ${inferredType ? inferredType + ', likely an error page' : 'NON-JSON content'}: \n\n"${text.length > 200 ? text.slice(0, 200) + '...' : text}"`,
+          cause: error,
+        });
+      }
+
+      throw new TRPCError({
+        code: 'PARSE_ERROR',
+        message: `Error parsing JSON data: ${safeErrorString(error) || 'unknown error'}`,
+      });
+
+    }
+
+    // Other errors: AbortError (request aborted), TypeError (body locked, decoding error for instance due to Content-Encoding mismatch), etc..
+    throw new TRPCError({
+      code: 'PARSE_ERROR',
+      message: `Error reading JSON data: ${safeErrorString(error) || 'unknown error'}`,
+    });
+  }
+  // unreachable
+}
+
 
 // Text fetcher
 export async function fetchTextOrTRPCThrow<TBody extends object | undefined = undefined>(config: RequestConfig<TBody>): Promise<string> {
