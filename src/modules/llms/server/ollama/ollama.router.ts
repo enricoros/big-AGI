@@ -139,7 +139,7 @@ export const llmOllamaRouter = createTRPCRouter({
           label: capitalizeFirstLetter(model_id),
           tag: 'latest',
           tags: model.tags?.length ? model.tags : [],
-          description: model.description,
+          description: '', // model.description, // REMOVED description - bloated and not used by nobody
           pulls: model.pulls,
           isNew: !!model.added && model.added > OLLAMA_PREV_UPDATE,
         })),
@@ -205,7 +205,7 @@ export const llmOllamaRouter = createTRPCRouter({
           // pretty label and description
           const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` (${modelTag})` : '');
           const baseModel = OLLAMA_BASE_MODELS[modelName] ?? {};
-          let description = baseModel.description || 'Model unknown';
+          let description = ''; // baseModel.description || 'Model unknown'; // REMOVED description - bloated and not used by nobody
 
           // prepend the parameters count and quantization level
           if (model.details?.quantization_level || model.details?.format || model.details?.parameter_size) {
