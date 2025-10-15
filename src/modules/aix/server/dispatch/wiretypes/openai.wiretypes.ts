@@ -560,7 +560,15 @@ export namespace OpenAIWire_API_Chat_Completions {
     role: z.literal('assistant').optional()
       .nullable(), // [Deepseek] added .nullable()
     // delta-text content
-    content: z.string().nullable().optional(),
+    content: z.string().nullish()
+      // [Mistral, 2025-10-15] Mistral SPEC-BREAKING thinking fragments
+      .or(z.array(z.object({
+        type: z.string(), // 'thinking', but relaxed
+        thinking: z.array(z.object({
+          type: z.string(),
+          text: z.string(),
+        })).optional(),
+      }))),
     // delta-reasoning content
     reasoning_content: z.string().nullable().optional(), // [Deepseek, 2025-01-20]
     reasoning: z.string().optional() // [OpenRouter, 2025-01-24]
