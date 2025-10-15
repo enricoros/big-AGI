@@ -14,7 +14,7 @@ import { Brand } from '~/common/app.config';
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema, RequestAccessValues } from '../llm.server.types';
-import { alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
+import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureOpenAIAccess, azureParseFromDeploymentsAPI } from './models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './models/chutesai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
@@ -197,6 +197,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         case 'alibaba':
           models = openAIModels
+            .filter(({ id }) => alibabaModelFilter(id))
             .map(({ id, created }) => alibabaModelToModelDescription(id, created))
             .sort(alibabaModelSort);
           break;
