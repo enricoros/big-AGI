@@ -111,6 +111,16 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   const { url, method = 'GET', headers: configHeaders, name: moduleName, signal, throwWithoutName = false } = config;
   const body = 'body' in config ? config.body : undefined;
 
+  // Cleaner url without query
+  let debugCleanUrl;
+  try {
+    const { origin, pathname } = new URL(url);
+    debugCleanUrl = decodeURIComponent(origin + pathname);
+  } catch {
+    // ...ignore
+  }
+
+
   // 1. Fetch a Response object
   let response: Response;
   try {
@@ -153,20 +163,31 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       });
 
     // [logging - Connection error] candidate for the logging system
-    const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
+    const errorCause: any | undefined = error ? error?.cause ?? undefined : undefined;
 
     // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
     //       Consider we're also throwing the same, so there will likely be further logging.
     if (SERVER_DEBUG_WIRE)
-      console.warn(`[${method}] ${moduleName} error (network):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
+      console.warn(`[${method}] ${moduleName} error (network issue):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
 
-    // Handle Connection errors - HTTP 400
+    // Show server-access warning for common connection issues
+    const showAccessWarning = [
+      'ECONNREFUSED',
+      'ENOTFOUND',
+      'ETIMEDOUT',
+      'DNS_ERROR',
+      'ECONNRESET',
+      'ENETUNREACH', // example an IP is unreachable
+      'Connect Timeout Error', // example using some random ip
+    ].includes(errorCause?.code);
+
+    // Handle (NON) CONNECTION errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
-        + (safeErrorString(error) || 'unknown fetch error')
-        + (errorCause ? ` - ${safeErrorString(errorCause)}` : '')
-        + (errorCause && (errorCause as any)?.code === 'ECONNREFUSED' ? ` - is "${url}" accessible by the server?` : ''),
+        + `Upstream unreachable: ${(safeErrorString(error) || 'unknown fetch error')}`
+        + (errorCause ? ` \nTechnical Details: ${safeErrorString(errorCause)}` : '')
+        + (showAccessWarning ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
       cause: errorCause,
     });
   }
@@ -176,33 +197,39 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   //  - 400 when requesting an invalid size to Dall-E-3, etc..
   //  - 403 when requesting a localhost URL from a public server, etc..
   if (!response.ok) {
+
     // try to parse a json or text payload, which frequently contains the error, if present
-    const responseCloneIfJsonFails = response.clone();
-    let payload: any | null = await response.json().catch(() => null);
-    if (payload === null)
-      payload = await responseCloneIfJsonFails.text().catch(() => null);
+    let payload: any | null = await response.text().catch(() => null);
+    try {
+      if (payload)
+        payload = JSON.parse(payload) as string;
+    } catch {
+      // ...ignore
+    }
 
     // [logging - HTTP error] candidate for the logging system
-    const payloadString = safeErrorString(payload);
-    console.error(`[${method}] ${moduleName} error (upstream): ${response.status} (${response.statusText}):`, payloadString);
+    const status = response.status;
+    let payloadString = safeErrorString(payload);
+    if (payloadString) {
+      if (payloadString.length > 200)
+        payloadString = payloadString.slice(0, 200) + '...';
+      const lcPayload = payloadString.trim().toLowerCase();
+      if (['<!doctype', '<html', '<head', '<body', '<script', '<title'].some(tag => lcPayload.startsWith(tag)))
+        payloadString = 'The data looks like HTML, likely an error page: \n\n"' + payloadString + '"';
+    }
 
-    // HTTP 400
+    // Handle HTTP Response errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: (throwWithoutName ? '' : `[${moduleName} issue]: `)
-        + (response.statusText || '')
-        + (payload
-          ? ` - ${payloadString}` : '')
-        + (payload?.error?.failed_generation // [Groq]
-          ? ` - failed_generation: ${payload.error.failed_generation}` : '')
-        + (response.status === 403 && moduleName === 'Gemini' && payloadString?.includes('Requests from referer')
-          ? ' - Check API key restrictions in Google Cloud Console' : '')
-        + (response.status === 403 && !url.includes('app.openpipe.ai' /* [OpenPipe] 403 when the model is associated to the project  */)
-          ? ` - is "${url}" accessible by the server?` : '')
-        + (response.status === 404 && !url.includes('app.openpipe.ai' /* [OpenPipe] 404 when the model is not found - don't add error details */)
-          ? ` - "${url}" cannot be found by the server` : '')
-        + (response.status === 502
-          ? ` - is "${url}" not available?` : ''),
+        + `Upstream responded with HTTP ${status} ${response.statusText}`
+        + (payloadString ? ` - \n${payloadString}` : '')
+        + (payload?.error?.failed_generation && url.includes('api.groq.com') // [Groq]
+          ? ` \n\nGroq: failed_generation: ${payload.error.failed_generation}` : '')
+        + (status === 403 && moduleName === 'Gemini' && payloadString?.includes('Requests from referer')
+          ? ' \n\nGemini: Check API key restrictions in Google Cloud Console' : '')
+        + ((status === 404 || status === 403 || status === 502) && !url.includes('app.openpipe.ai') // [OpenPipe] 403 when the model is associated to the project, 404 when not found
+          ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
     });
   }
 
@@ -211,10 +238,21 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   try {
     value = await responseParser(response);
   } catch (error: any) {
-    // [logging - Parsing error] candidate for the logging system
-    console.error(`[${method}] ${moduleName} error (parse, ${parserName}):`, error);
 
-    // HTTP 422
+    // [logging - Parsing error] candidate for the logging system
+    console.warn(`[${method}] ${moduleName} error (parse, ${parserName}):`, error);
+
+    // Forward already processed Parsing error -> 422
+    if (error instanceof TRPCError)
+      throw new TRPCError({
+        code: 'UNPROCESSABLE_CONTENT',
+        message: (!throwWithoutName ? `[${moduleName}]: ` : '')
+          + error.message
+          + ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}`,
+        cause: error.cause,
+      });
+
+    // Handle PARSING Errors -> HTTP 422
     throw new TRPCError({
       code: 'UNPROCESSABLE_CONTENT',
       message: (throwWithoutName ? `cannot parse ${parserName}: ` : `[${moduleName} parsing issue]: `)
