@@ -212,6 +212,26 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         pt.appendAutoText_weak(delta.content);
 
       }
+
+      // [Mistral, 2025-10-15] SPEC-VIOLATION Text (array format from Mistral thinking models)
+      else if (Array.isArray(delta.content)) {
+        for (const contentBlock of delta.content)
+          if (contentBlock.type === 'thinking' && Array.isArray(contentBlock.thinking)) {
+            // Extract text from thinking blocks and send as reasoning
+            for (const thinkingPart of contentBlock.thinking)
+              if (thinkingPart.type === 'text' && typeof (thinkingPart.text as unknown) === 'string') {
+                pt.appendReasoningText(thinkingPart.text);
+                deltaHasReasoning = true;
+              } else {
+                // Handle other thinking part types if necessary
+                console.log('AIX: OpenAI-dispatch: unexpected thinking part type from Mistral:', thinkingPart);
+              }
+          } else {
+            // Handle other content types if necessary
+            console.log('AIX: OpenAI-dispatch: unexpected content block type from Mistral:', contentBlock);
+          }
+      }
+
       // 2025-03-26: we don't have the full concurrency combinations of content/reasoning/reasoning_content yet
       // if (delta.content !== undefined && delta.content !== null)
       //   throw new Error(`unexpected delta content type: ${typeof delta.content}`);
