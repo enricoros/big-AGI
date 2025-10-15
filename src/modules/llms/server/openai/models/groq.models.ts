@@ -9,6 +9,7 @@ import { wireGroqModelsListOutputSchema } from '../groq.wiretypes';
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
+ * - updated: 2025-01-15
  */
 const _knownGroqModels: ManualMappings = [
 
@@ -35,68 +36,93 @@ const _knownGroqModels: ManualMappings = [
   },
   {
     isPreview: true,
-    idPrefix: 'deepseek-r1-distill-llama-70b',
-    label: 'DeepSeek R1 Distill Llama 70B (Preview)',
-    description: 'DeepSeek R1 Distill Llama 70B with a context window of 128K tokens. Preview model.',
+    idPrefix: 'qwen/qwen3-32b',
+    label: 'Qwen 3 · 32B (Preview)',
+    description: 'Qwen3 32B developed by Alibaba Cloud with a 131K token context window. Preview model.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.75, output: 0.99 },
+    chatPrice: { input: 0.29, output: 0.59 },
   },
   {
     isPreview: true,
-    idPrefix: 'qwen-qwq-32b',
-    label: 'Qwen QwQ 32B (Preview)',
-    description: 'Qwen QwQ 32B developed by Alibaba Cloud with a context window of 128K tokens. Preview model.',
+    idPrefix: 'moonshotai/kimi-k2-instruct-0905',
+    label: 'Kimi K2 Instruct 0905 (Preview)',
+    description: 'Kimi K2 Instruct 0905 1T model with a 262K token context window, up to 16,384 completion tokens. Preview model.',
+    contextWindow: 262144,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 1.00, output: 3.00 },
+  },
+  {
+    idPrefix: 'moonshotai/kimi-k2-instruct',
+    label: 'Kimi K2 Instruct (Deprecated)',
+    description: 'Kimi K2 Instruct 1T model with a 131K token context window, up to 16,384 completion tokens. Deprecated - redirects to 0905 version. Production model.',
     contextWindow: 131072,
+    maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.29, output: 0.39 },
+    chatPrice: { input: 1.00, output: 3.00 },
+    hidden: true, // Deprecated
+  },
+
+
+  // Production Models - Compound Systems
+  {
+    idPrefix: 'groq/compound',
+    label: 'Compound (Production System)',
+    description: 'Groq\'s agentic system with web search and code execution capabilities. 131,072 token context window, up to 8,192 completion tokens. Production system.',
+    contextWindow: 131072,
+    maxCompletionTokens: 8192,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true, // Pricing unknown
   },
   {
-    isPreview: true,
-    idPrefix: 'mistral-saba-24b',
-    label: 'Mistral Saba 24B (Preview)',
-    description: 'Mistral Saba 24B with a context window of 32K tokens. Preview model.',
-    contextWindow: 32768,
+    idPrefix: 'groq/compound-mini',
+    label: 'Compound Mini (Production System)',
+    description: 'Lighter version of Groq\'s agentic system with web search and code execution capabilities. 131,072 token context window, up to 8,192 completion tokens. Production system.',
+    contextWindow: 131072,
+    maxCompletionTokens: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.79, output: 0.79 },
+    hidden: true, // Pricing unknown
+  },
+
+  // Production Models - OpenAI
+  {
+    idPrefix: 'openai/gpt-oss-120b',
+    label: 'GPT OSS 120B',
+    description: 'OpenAI GPT-OSS 120B with reasoning, browser search, and code execution capabilities. 131,072 token context window, up to 65,536 completion tokens. Production model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.15, output: 0.75 },
   },
   {
-    isPreview: true,
+    idPrefix: 'openai/gpt-oss-20b',
+    label: 'GPT OSS 20B',
+    description: 'OpenAI GPT-OSS 20B with a 131,072 token context window and up to 65,536 completion tokens. Production model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.10, output: 0.50 },
+  },
+
+  // Production Models - SDAIA
+  {
     idPrefix: 'allam-2-7b',
-    label: 'ALLaM 2 7B (Preview)',
-    description: 'ALLaM 2 7B developed by Saudi Data and AI Authority (SDAIA) with a context window of 4,096 tokens. Preview model.',
+    label: 'ALLaM 2 · 7B',
+    description: 'ALLaM 2 7B bilingual Arabic-English model developed by SDAIA with a 4,096 token context window. Production model.',
     contextWindow: 4096,
+    maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    hidden: true, // Pricing unknown
-  },
-  {
-    isPreview: true,
-    idPrefix: 'compound-beta',
-    label: 'Compound Beta (Preview System)',
-    description: 'Groq\'s agentic system with web search and code execution capabilities. Preview system with a context window of 128K tokens, up to 8,192 completion tokens.',
-    contextWindow: 8192,
-    // maxCompletionTokens: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    hidden: true, // Pricing unknown
-  },
-  {
-    isPreview: true,
-    idPrefix: 'compound-beta-mini',
-    label: 'Compound Beta Mini (Preview System)',
-    description: 'Lighter version of Groq\'s agentic system with web search and code execution capabilities. Preview system with a context window of 128K tokens, up to 8,192 completion tokens.',
-    contextWindow: 8192,
-    // maxCompletionTokens: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    hidden: true, // Pricing unknown
+    hidden: true, // Pricing pending
   },
 
-
-  // Production Models
+  // Production Models - Meta
   {
-    idPrefix: 'gemma2-9b-it',
-    label: 'Gemma 2 · 9B Instruct',
-    description: 'Gemma 2 9B developed by Google with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
+    idPrefix: 'meta-llama/llama-guard-4-12b',
+    label: 'Llama Guard 4 · 12B',
+    description: 'LLaMA Guard 4 12B developed by Meta with a 128K token context window, up to 1,024 completion tokens. Production model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 1024,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.20, output: 0.20 },
   },
@@ -112,33 +138,9 @@ const _knownGroqModels: ManualMappings = [
   {
     idPrefix: 'llama-3.1-8b-instant',
     label: 'Llama 3.1 · 8B Instant',
-    description: 'LLaMA 3.1 8B developed by Meta with a context window of 128K tokens, up to 8,192 completion tokens. Production model.',
+    description: 'LLaMA 3.1 8B developed by Meta with a context window of 128K tokens, up to 131,072 completion tokens. Production model.',
     contextWindow: 131072,
     maxCompletionTokens: 131072,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.05, output: 0.08 },
-  },
-  {
-    idPrefix: 'llama-guard-3-8b',
-    label: 'Llama Guard 3 · 8B',
-    description: 'LLaMA Guard 3 8B developed by Meta with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.20, output: 0.20 },
-  },
-  {
-    idPrefix: 'llama3-70b-8192',
-    label: 'Llama 3 · 70B',
-    description: 'LLaMA 3 70B developed by Meta with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.59, output: 0.79 },
-  },
-  {
-    idPrefix: 'llama3-8b-8192',
-    label: 'Llama 3 · 8B',
-    description: 'LLaMA 3 8B developed by Meta with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.05, output: 0.08 },
   },
@@ -150,6 +152,7 @@ const groqDenyList: string[] = [
   'whisper-',
   'playai-tts',
   'distil-whisper',
+  'llama-prompt-guard', // Text classification models
 ];
 
 export function groqModelFilter(model: { id: string }): boolean {
