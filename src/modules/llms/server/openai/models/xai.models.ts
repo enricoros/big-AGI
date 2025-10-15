@@ -11,6 +11,7 @@ import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
+// Verified: 2025-10-15
 const _knownXAIChatModels: ManualMappings = [
 
   // Grok 4
@@ -50,9 +51,11 @@ const _knownXAIChatModels: ManualMappings = [
 
   // Grok 3
   {
+    isLegacy: true,
+    hidden: true,
     idPrefix: 'grok-3-fast',
     label: 'Grok 3 Fast',
-    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
+    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications. (Not available as of October 2025)',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
@@ -86,9 +89,11 @@ const _knownXAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1358 }, // grok-3-mini-beta (updated from CSV)
   },
   {
+    isLegacy: true,
+    hidden: true,
     idPrefix: 'grok-3-mini-fast',
     label: 'Grok 3 Mini Fast',
-    description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
+    description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications. (Not available as of October 2025)',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
