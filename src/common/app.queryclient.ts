@@ -11,6 +11,7 @@ export function reactQueryClientSingleton(): QueryClient {
           retry: false,
           // call functions even when the network is disconnected; this makes 127.0.0.1 work, while probably not causing other issues
           networkMode: 'always',
+          refetchOnReconnect: false, // implied by networkMode: always
           refetchOnWindowFocus: false,
         },
         mutations: {
