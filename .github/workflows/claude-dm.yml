@@ -50,5 +50,5 @@ jobs:
           # claude_args: '--allowed-tools Bash(gh pr:*)'
           claude_args: |
             --model claude-opus-4-1-20250805
-            --max-turns 30
-            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*)"
+            --max-turns 35
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"
