@@ -3,11 +3,16 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Typography } from '@mui/joy';
 
+const _style = {
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word', // for long-word errors to not overflow-x on mobil
+} satisfies SxProps;
+
 export function InlineError(props: { error: Error | React.JSX.Element | null | any, severity?: 'warning' | 'danger' | 'info', sx?: SxProps }) {
   const color = props.severity === 'info' ? 'primary' : props.severity || 'warning';
   return (
     <Alert variant='soft' color={color} sx={{ mt: 1, ...props.sx }}>
-      <Typography level='body-sm' color={color} sx={{ wordBreak: 'break-word' /* for long-word errors to not overflow-x on mobile */}}>
+      <Typography level='body-sm' color={color} sx={_style}>
         {props.error?.message || props.error || 'Unknown error'}
       </Typography>
     </Alert>
