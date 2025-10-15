@@ -25,7 +25,8 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     chatPrice: {
       input: 2,
       output: 8,
-      // Full pricing: $2/1M input, $8/1M output, $2/1M citation, $5/1k searches, $3/1M reasoning tokens
+      // Full pricing: $2/1M input, $8/1M output, $5/1k searches, $3/1M reasoning tokens
+      // Note: Citation tokens no longer charged (removed April 2025)
     },
   },
 
@@ -102,19 +103,18 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     },
   },
 
-  // Offline Models
-  {
-    id: 'r1-1776',
-    label: 'R1-1776',
-    description: 'Offline chat model (DeepSeek R1) for uncensored, unbiased, and factual information. 128k context.',
-    contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: {
-      input: 2,
-      output: 8,
-      // No search cost
-    },
-  },
+  // Deprecated Models (removed August 2025)
+  // {
+  //   id: 'r1-1776',
+  //   label: 'R1-1776',
+  //   description: 'DEPRECATED: Removed August 2025. Use Sonar Reasoning Pro instead.',
+  //   contextWindow: 128000,
+  //   interfaces: [LLM_IF_OAI_Chat],
+  //   chatPrice: {
+  //     input: 2,
+  //     output: 8,
+  //   },
+  // },
 
 ];
 
