@@ -82,13 +82,19 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       signal,
     };
 
-    // upstream fetch
+    // upstream FETCH
     response = await fetch(url, request);
 
   } catch (error: any) {
 
-    // NOTE: if signal?.aborted is true, we also come here, likely with a error?.name = ResponseAborted
+    // NOTE: if signal?.aborted is true, we also come here, likely with a error?.name = ResponseAborted (Next.js) or AbortError (standard from signal)
     // since we don't handle this case specially, the same TRPCError will be thrown as for other connection errors.
+    if (error?.name === 'AbortError')
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: (!throwWithoutName ? `[${moduleName} cancelled]: ` : '') + (error?.message || 'This operation was aborted.'),
+        cause: error,
+      });
 
     // [logging - Connection error] candidate for the logging system
     const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
@@ -101,14 +107,10 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     // Handle Connection errors - HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: (throwWithoutName ? '' : `[${moduleName} network issue]: `)
+      message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
         + (safeErrorString(error) || 'unknown fetch error')
-        + (errorCause
-          ? ` - ${safeErrorString(errorCause)}`
-          : '')
-        + ((errorCause && (errorCause as any)?.code === 'ECONNREFUSED')
-          ? ` - is "${url}" accessible by the server?`
-          : ''),
+        + (errorCause ? ` - ${safeErrorString(errorCause)}` : '')
+        + (errorCause && (errorCause as any)?.code === 'ECONNREFUSED' ? ` - is "${url}" accessible by the server?` : ''),
       cause: errorCause,
     });
   }
