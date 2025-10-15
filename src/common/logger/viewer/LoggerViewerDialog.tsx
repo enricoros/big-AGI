@@ -102,8 +102,8 @@ export function LogViewerDialog(props: {
       unfilterBackdrop
       // themedColor='neutral'
       autoOverflow
-      fullscreen={isMobile}
-      // sx={{ maxWidth: undefined, overflow: 'hidden' }}
+      fullscreen={isMobile || 'button'}
+      sx={{ maxWidth: undefined }}
     >
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 1 }}>
 

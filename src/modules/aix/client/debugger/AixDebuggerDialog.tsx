@@ -54,7 +54,7 @@ export function AixDebuggerDialog(props: {
         />
       }
       autoOverflow
-      fullscreen={isMobile}
+      fullscreen={isMobile || 'button'}
       sx={{ maxWidth: undefined }}
     >
 
