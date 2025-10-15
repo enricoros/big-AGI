@@ -18,7 +18,7 @@ Internal documentation for Big-AGI architecture and systems, for use by AI agent
 ### Systems Documentation
 
 #### Core Platform Systems
-- **[routing-architecture.md](systems/routing-architecture.md)** - Next.js routing, provider stack, and display state hierarchy
+- **[app-routing.md](systems/app-routing.md)** - Next.js routing, provider stack, and display state hierarchy
 - **[LLM-parameters-system.md](systems/LLM-parameters-system.md)** - Language model parameter flow across the system
 
 ## Guidelines

@@ -80,6 +80,8 @@ _app.tsx (Root)
 | **ErrorBoundary** | Error handling | Catches and displays errors gracefully |
 | **ProviderBootstrapLogic** | App initialization | • Tiktoken preload<br>• Model auto-config<br>• Storage cleanup<br>• News redirect logic |
 
+For detailed initialization sequence and provider functions, see [app-startup-sequence.md](app-startup-sequence.md), if present.
+
 ## Application Routes
 
 ### Primary Apps
