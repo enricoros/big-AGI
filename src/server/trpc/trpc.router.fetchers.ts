@@ -26,11 +26,14 @@ async function _jsonRequestParserOrThrow(response: Response) {
     // Errors: Cannot Parse
     if (error instanceof SyntaxError) {
 
+      const contentType = response.headers?.get('content-type')?.toLowerCase() || '';
+      const contentTypeInfo = contentType && !contentType.includes('application/json') ? ` (Content-Type: ${contentType})` : '';
+
       // Improve messaging of Empty or Incomplete JSON
       if (error.message === 'Unexpected end of JSON input')
         throw new TRPCError({
           code: 'PARSE_ERROR',
-          message: !text?.length ? 'Empty response while expecting JSON' : 'Incomplete JSON response',
+          message: (!text?.length ? 'Empty response while expecting JSON' : 'Incomplete JSON response') + contentTypeInfo,
           cause: error,
         });
 
@@ -50,14 +53,14 @@ async function _jsonRequestParserOrThrow(response: Response) {
 
         throw new TRPCError({
           code: 'PARSE_ERROR',
-          message: `Expected JSON data but received ${inferredType ? inferredType + ', likely an error page' : 'NON-JSON content'}: \n\n"${text.length > 200 ? text.slice(0, 200) + '...' : text}"`,
+          message: `Expected JSON data but received ${inferredType ? inferredType + ', likely an error page' : 'NON-JSON content'}${contentTypeInfo}: \n\n"${text.length > 200 ? text.slice(0, 200) + '...' : text}"`,
           cause: error,
         });
       }
 
       throw new TRPCError({
         code: 'PARSE_ERROR',
-        message: `Error parsing JSON data: ${safeErrorString(error) || 'unknown error'}`,
+        message: `Error parsing JSON data${contentTypeInfo}: ${safeErrorString(error) || 'unknown error'}`,
       });
 
     }
