@@ -16,6 +16,15 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     benchmark: { cbaElo: 1451 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805-thinking-16k + 1
   },
 
+  'claude-haiku-4-5-20251001': {
+    idVariant: 'thinking',
+    label: 'Claude Haiku 4.5 (Thinking)',
+    description: 'Claude Haiku 4.5 with extended thinking mode - first Haiku model with reasoning capabilities',
+    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    maxCompletionTokens: 64000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
+  },
+
   // Claude 4.1 models with thinking variants
   'claude-opus-4-1-20250805': {
     idVariant: 'thinking',
@@ -74,8 +83,19 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Jul 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50. Using lower tier as base.
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1438 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805 + 1
+  },
+  {
+    id: 'claude-haiku-4-5-20251001', // Active
+    label: 'Claude Haiku 4.5', // 🌟
+    description: 'Fastest model with exceptional speed and performance',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    trainingDataCutoff: 'Jul 2025',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
   },
 
   // Claude 4.1 models
