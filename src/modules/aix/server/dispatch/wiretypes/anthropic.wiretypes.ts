@@ -223,11 +223,25 @@ export namespace AnthropicWire_Tools {
     name: z.literal('str_replace_editor'),
   });
 
+  const _WebSearch_20250305_schema = _ToolDefinitionBase_schema.extend({
+    type: z.enum(['web_search_20250305']),
+    name: z.literal('web_search'),
+    max_uses: z.number().int().min(1).max(10).optional(), // default 5
+  });
+
+  const _WebFetch_20250910_schema = _ToolDefinitionBase_schema.extend({
+    type: z.enum(['web_fetch_20250910']),
+    name: z.literal('web_fetch'),
+    citations: z.object({ enabled: z.boolean() }).optional(), // default true
+  });
+
   export const ToolDefinition_schema = z.discriminatedUnion('type', [
     _CustomToolDefinition_schema,
     _ComputerUseTool_20241022_schema,
     _BashTool_20241022_schema,
     _TextEditor_20241022_schema,
+    _WebSearch_20250305_schema,
+    _WebFetch_20250910_schema,
   ]);
 
 }

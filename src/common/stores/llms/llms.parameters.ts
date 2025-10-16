@@ -88,6 +88,14 @@ export const DModelParameterRegistry = {
     } as const,
   } as const,
 
+  llmVndAntWebTools: {
+    label: 'Web Tools',
+    type: 'enum' as const,
+    description: 'Enable web search and/or web fetch tools',
+    values: ['off', 'search', 'fetch', 'search+fetch'] as const,
+    initialValue: 'off',
+  } as const,
+
   llmVndGeminiAspectRatio: {
     label: 'Aspect Ratio',
     type: 'enum' as const,

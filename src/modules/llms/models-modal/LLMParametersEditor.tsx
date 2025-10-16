@@ -97,6 +97,13 @@ const _xaiDateFilterOptions = [
   { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
 ] as const;
 
+const _antWebToolsOptions = [
+  { value: 'off', label: 'Off', description: 'Web tools disabled' },
+  { value: 'search', label: 'Search Only', description: 'Web search enabled' },
+  { value: 'fetch', label: 'Fetch Only', description: 'Web fetch enabled' },
+  { value: 'search+fetch', label: 'Search + Fetch', description: 'Both tools enabled' },
+] as const;
+
 export function LLMParametersEditor(props: {
   // constants
   maxOutputTokens: number | null,
@@ -132,6 +139,7 @@ export function LLMParametersEditor(props: {
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
     llmVndAntThinkingBudget,
+    llmVndAntWebTools,
     llmVndGeminiAspectRatio,
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
@@ -249,6 +257,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndAntWebTools') && (
+      <FormSelectControl
+        title='Web Tools'
+        tooltip='Enable web search and/or web fetch tools for real-time information retrieval'
+        value={llmVndAntWebTools ?? 'off'}
+        onChange={(value) => {
+          if (value === 'off' || !value) onRemoveParameter('llmVndAntWebTools');
+          else onChangeParameter({ llmVndAntWebTools: value });
+        }}
+        options={_antWebToolsOptions}
       />
     )}
 

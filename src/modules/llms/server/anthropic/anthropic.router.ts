@@ -78,7 +78,7 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
   ] as const,
 } as const;
 
-function _anthropicHeaders(modelId?: string): HeadersInit {
+function _anthropicHeaders(modelId?: string, webFetchEnabled?: boolean): HeadersInit {
 
   // accumulate the beta features
   const betaFeatures = [...DEFAULT_ANTHROPIC_BETA_FEATURES];
@@ -87,6 +87,11 @@ function _anthropicHeaders(modelId?: string): HeadersInit {
     for (const [key, value] of Object.entries(PER_MODEL_BETA_FEATURES))
       if (key.includes(modelId))
         betaFeatures.push(...value);
+  }
+
+  // Add web-fetch beta header if enabled
+  if (webFetchEnabled) {
+    betaFeatures.push('web-fetch-2025-09-10');
   }
 
   return {
@@ -99,7 +104,7 @@ function _anthropicHeaders(modelId?: string): HeadersInit {
 // Mappers
 
 async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, antModelIdForBetaFeatures: undefined | string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = anthropicAccess(access, antModelIdForBetaFeatures, apiPath);
+  const { headers, url } = anthropicAccess(access, antModelIdForBetaFeatures, apiPath, false);
   return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic' });
 }
 
@@ -108,7 +113,7 @@ async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessS
 //   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Anthropic' });
 // }
 
-export function anthropicAccess(access: AnthropicAccessSchema, antModelIdForBetaFeatures: undefined | string, apiPath: string): { headers: HeadersInit, url: string } {
+export function anthropicAccess(access: AnthropicAccessSchema, antModelIdForBetaFeatures: undefined | string, apiPath: string, webFetchEnabled?: boolean): { headers: HeadersInit, url: string } {
   // API key
   const anthropicKey = access.anthropicKey || env.ANTHROPIC_API_KEY || '';
 
@@ -135,7 +140,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, antModelIdForBeta
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      ..._anthropicHeaders(antModelIdForBetaFeatures),
+      ..._anthropicHeaders(antModelIdForBetaFeatures, webFetchEnabled),
       'X-API-Key': anthropicKey,
       ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
     },

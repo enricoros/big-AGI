@@ -37,9 +37,11 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
 
   switch (access.dialect) {
     case 'anthropic':
+      // Check if web_fetch tool is enabled
+      const webFetchEnabled = model.vndAntWebTools === 'fetch' || model.vndAntWebTools === 'search+fetch';
       return {
         request: {
-          ...anthropicAccess(access, model.id, '/v1/messages'),
+          ...anthropicAccess(access, model.id, '/v1/messages', webFetchEnabled),
           body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
