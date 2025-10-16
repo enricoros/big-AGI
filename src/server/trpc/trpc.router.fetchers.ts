@@ -174,21 +174,27 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       console.warn(`[${method}] ${moduleName} error (network issue):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
 
     // Show server-access warning for common connection issues
-    const showAccessWarning = [
+    let showAccessWarning = [
       'ECONNREFUSED',
       'ENOTFOUND',
       'ETIMEDOUT',
       'DNS_ERROR',
       'ECONNRESET',
       'ENETUNREACH', // example an IP is unreachable
-      'Connect Timeout Error', // example using some random ip
     ].includes(errorCause?.code);
+
+    // check also if we have a 'Network Connection Lost' message
+    const errorString = safeErrorString(error) || 'unknown fetch error';
+    showAccessWarning = showAccessWarning || [
+      'network connection lost',
+      'connect timeout error',
+    ].includes(errorString.toLowerCase());
 
     // Handle (NON) CONNECTION errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
-        + `Upstream unreachable: ${(safeErrorString(error) || 'unknown fetch error')}`
+        + `Upstream unreachable: ${errorString}`
         + (errorCause ? ` \nTechnical Details: ${safeErrorString(errorCause)}` : '')
         + (showAccessWarning ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
       cause: errorCause,
