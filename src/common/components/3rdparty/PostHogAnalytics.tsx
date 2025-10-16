@@ -100,7 +100,7 @@ export function OptionalPostHogAnalytics() {
           app_tenant: Release.TenantSlug,
           app_build_hash: fBuild.gitSha || 'unknown',
           app_pkg_version: fBuild.pkgVersion || 'unknown',
-          app_deployment_type: fBuild.deploymentType || 'unknown',
+          // app_deployment_type: fBuild.deploymentType || 'unknown', // unneeded
         });
 
         // trigger router hooks
