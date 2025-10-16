@@ -189,6 +189,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       'network connection lost',
       'connect timeout error',
     ].includes(errorString.toLowerCase());
+    console.warn(`[${method}] ${moduleName} error (network issue):`, { error, errorCause });
 
     // Handle (NON) CONNECTION errors -> HTTP 400
     throw new TRPCError({
