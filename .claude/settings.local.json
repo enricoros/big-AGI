@@ -16,9 +16,11 @@
       "Bash(rg:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
+      "WebFetch",
       "WebFetch(domain:big-agi.com)",
-      "WebFetch(domain:github.com)",
       "WebSearch",
+      "mcp__chrome-devtools",
+      "mcp__github",
       "mcp__ide__getDiagnostics"
     ],
     "deny": [
