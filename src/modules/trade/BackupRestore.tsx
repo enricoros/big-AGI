@@ -1,5 +1,3 @@
-// noinspection ExceptionCaughtLocallyJS
-
 import * as React from 'react';
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
@@ -695,14 +693,28 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       try {
         data = JSON.parse(content);
       } catch (error) {
-        throw new Error(`Restore failed: Invalid JSON in Flash file: ${_getErrorText(error)}`);
+        // User selected invalid JSON - this is expected, not a system error
+        setRestoreState('error');
+        setErrorMessage(`Invalid JSON in Flash file: ${_getErrorText(error)}`);
+        logger.warn('User selected non-JSON file for restore', { error }, undefined, { skipReporting: true });
+        return;
       }
 
       // validations
-      if (!isValidBackup(data))
-        throw new Error(`Invalid Flash file format. This does not appear to be a valid ${BACKUP_FILE_FORMAT}.`);
-      if (data.metadata.application !== 'Big-AGI' || !data.storage.indexedDB || !data.storage.localStorage)
-        throw new Error(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
+      if (!isValidBackup(data)) {
+        // User selected wrong file format - this is expected, not a system error
+        setRestoreState('error');
+        setErrorMessage(`Invalid Flash file format. This does not appear to be a valid ${BACKUP_FILE_FORMAT}.`);
+        logger.warn('User selected invalid backup file format', { data: { hasMetadata: !!data?.metadata, hasStorage: !!data?.storage } }, undefined, { skipReporting: true });
+        return;
+      }
+      if (data.metadata.application !== 'Big-AGI' || !data.storage.indexedDB || !data.storage.localStorage) {
+        // User selected incompatible file - this is expected, not a system error
+        setRestoreState('error');
+        setErrorMessage(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
+        logger.warn('User selected incompatible backup file', { application: data.metadata.application }, undefined, { skipReporting: true });
+        return;
+      }
 
       // load data purely into state, and ready for confirmation
       setBackupDataForRestore(data);
@@ -711,7 +723,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       setRestoreLocalStorageEnabled(false);
       setRestoreIndexedDBEnabled(false);
     } catch (error: any) {
-      logger.error('Restore preparation failed:', error);
+      // Unexpected system errors only
+      logger.error('Unexpected error during restore preparation:', error);
       setRestoreState('error');
       setErrorMessage(`Restore failed: ${_getErrorText(error)}`);
     }
