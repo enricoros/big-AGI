@@ -48,19 +48,22 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
-            
+
             Please review this pull request and provide feedback on:
             - Potential bugs or issues
             - Adherence to Big-AGI architecture and design patterns
             - Code quality and best practices, including TypeScript types, error handling, and edge cases
             - Performance considerations: bundle size, React patterns, streaming efficiency
             - Security concerns if applicable
-            
+
             Use the repository's CLAUDE.md for guidance on style and conventions.
-            
+
             Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
             Use `gh pr review comment` for inline suggestions on specific lines.
-            
+
+            IMPORTANT: After completing your review, always add the 'claude-review' label to the PR to indicate it was reviewed by Claude:
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "claude-review"
+
             Be constructive, helpful, no-BS, and specific with file:line references.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md

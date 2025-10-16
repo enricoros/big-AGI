@@ -35,9 +35,9 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE NUMBER: #${{ github.event.issue.number }}
-            
+
             A user has reported an issue. Please help them by:
-            
+
             1. Deep think about the issue:
                **Understand the problem**: Analyze the issue description and any error messages
                **Search for context**:
@@ -52,6 +52,7 @@ jobs:
             2. Apply appropriate labels:
                - Type: bug, enhancement, question, documentation
                - Component: AIX, Zync, Beam, UI, UX, local-models, openai-models, etc. (based on CLAUDE.md)
+               - IMPORTANT: Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
             3. Comment with:
                - Very brief thank you note, if applicable
                - Initial assessment
