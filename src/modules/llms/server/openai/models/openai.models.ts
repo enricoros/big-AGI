@@ -124,6 +124,25 @@ export const _knownOpenAIChatModels: ManualMappings = [
     // benchmark: TBD
   },
 
+  // GPT-5 Search API
+  {
+    idPrefix: 'gpt-5-search-api-2025-10-14',
+    label: 'GPT-5 Search API (2025-10-14)',
+    description: 'Updated web search model in Chat Completions API. 60% cheaper with domain filtering support.',
+    contextWindow: 400000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [...IFS_CHAT_MIN, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium' }], // Search enabled by default
+    chatPrice: { input: 1.25, output: 10 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5-search-api',
+    label: 'GPT-5 Search API',
+    symLink: 'gpt-5-search-api-2025-10-14',
+  },
+
   // GPT-5 mini
   {
     idPrefix: 'gpt-5-mini-2025-08-07',
