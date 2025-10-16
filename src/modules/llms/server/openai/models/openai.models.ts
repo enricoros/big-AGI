@@ -64,6 +64,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmVndOaiRestoreMarkdown' }, // activate markdown restoration (true as initial value)
       { paramId: 'llmVndOaiVerbosity' }, // gpt-5-class nets have verbosity control
       { paramId: 'llmVndOaiImageGeneration' }, // image generation capability
+      { paramId: 'llmForceNoStream' }, // Added for Org ID streaming issues
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     benchmark: { cbaElo: 1442 }, // gpt-5-high
@@ -83,7 +84,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 272000,
     trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    // parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }], // Enabled for Org ID streaming issues
     chatPrice: { input: 15, output: 120 },
     // benchmark: has not been measured yet
   },
@@ -119,6 +120,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmVndOaiReasoningEffort' }, // works
       { paramId: 'llmVndOaiWebSearchContext' }, // works, although is not triggered often
       // { paramId: 'llmVndOaiRestoreMarkdown', initialValue: false }, // since this is for code, let the prompt dictate markdown usage rather than us injecting
+      { paramId: 'llmForceNoStream' }, // Added for Org ID streaming issues
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     // benchmark: TBD
@@ -152,7 +154,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 128000,
     trainingDataCutoff: 'May 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiRestoreMarkdown' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiRestoreMarkdown' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }], // Added llmForceNoStream for Org ID streaming issues
     chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
     benchmark: { cbaElo: 1388 }, // gpt-5-mini-high
   },
