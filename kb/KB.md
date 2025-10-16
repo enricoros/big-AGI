@@ -13,7 +13,6 @@ Internal documentation for Big-AGI architecture and systems, for use by AI agent
 #### AIX - AI Communication Framework
 - **[AIX.md](modules/AIX.md)** - AIX streaming architecture documentation
 - **[AIX-callers-analysis.md](modules/AIX-callers-analysis.md)** - Analysis of AIX entry points, call chains, common and different rendering, error handling, etc.
-- **[AIX-adapters.md](modules/AIX-adapters.md)** - Instructions for upgrading to the latest upstream APIs
 
 ### Systems Documentation
 
