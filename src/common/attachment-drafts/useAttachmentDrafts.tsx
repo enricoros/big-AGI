@@ -5,6 +5,7 @@ import type { FileWithHandle } from 'browser-fs-access';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
+import { getFileWithPermission } from '~/common/util/fileSystemPermissions';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
@@ -161,7 +162,17 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
           // attach file with handle
           case 'file':
-            const fileWithHandle = await fileSystemHandle.getFile() as FileWithHandle;
+            const fileResult = await getFileWithPermission(fileSystemHandle);
+            if (!fileResult.file) {
+              // Permission denied - notify user
+              addSnackbar({
+                key: 'file-permission-denied',
+                message: fileResult.error || 'Permission denied. Please re-select the file.',
+                type: 'issue',
+              });
+              break;
+            }
+            const fileWithHandle = fileResult.file as FileWithHandle;
             fileWithHandle.handle = fileSystemHandle;
             await attachAppendFile(method, fileWithHandle, overrideFileNames[fIdx]);
             break;

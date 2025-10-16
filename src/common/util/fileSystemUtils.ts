@@ -1,5 +1,7 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
+import { getFileWithPermission } from './fileSystemPermissions';
+
 
 /**
  * Extending the `FileSystemDirectoryHandle` with a `values` method to iterate over the directory contents.
@@ -29,7 +31,15 @@ export async function getAllFilesFromDirectoryRecursively(directoryHandle: FileS
         const relativePath = path ? `${path}${separator}${handle.name}` : handle.name;
 
         if (handle.kind === 'file') {
-          const fileWithHandle = await handle.getFile() as FileWithHandle;
+          // Use permission-aware file access, but don't prompt for each file (too disruptive)
+          const fileResult = await getFileWithPermission(handle, false);
+          if (!fileResult.file) {
+            // Log but don't fail the entire directory operation for one file
+            console.warn(`Skipping file due to permission issue: ${relativePath}`, fileResult.error);
+            continue;
+          }
+
+          const fileWithHandle = fileResult.file as FileWithHandle;
           fileWithHandle.handle = handle;
           list.push({
             fileWithHandle: fileWithHandle,

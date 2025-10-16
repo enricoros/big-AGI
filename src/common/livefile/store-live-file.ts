@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { agiUuid } from '~/common/util/idUtils';
+import { getFileWithPermission, createWritableWithPermission } from '~/common/util/fileSystemPermissions';
 
 // import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 import { Is } from '~/common/util/pwaUtils';
@@ -60,7 +61,11 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }
 
       // Check for size limit: we're supposed to support medium-sized text files
-      const file = await fileSystemFileHandle.getFile();
+      const fileResult = await getFileWithPermission(fileSystemFileHandle);
+      if (!fileResult.file)
+        throw new Error(fileResult.error || 'Failed to access file');
+
+      const file = fileResult.file;
       if (file.size > MAX_PER_TEXT_FILE_SIZE)
         throw new Error(`Text file too large: ${file.size} bytes. Unsupported.`);
 
@@ -163,7 +168,24 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }));
 
       try {
-        const file = await liveFile.fsHandle.getFile();
+        const fileResult = await getFileWithPermission(liveFile.fsHandle);
+        if (!fileResult.file) {
+          // Permission error - provide user-friendly message
+          _set((state) => ({
+            liveFiles: {
+              ...state.liveFiles,
+              [fileId]: {
+                ...liveFile,
+                content: null,
+                isLoading: false,
+                error: fileResult.error || 'Permission denied. Please re-pair this file to grant access.',
+              },
+            },
+          }));
+          return null;
+        }
+
+        const file = fileResult.file;
         const fileContent = await file.text();
 
         _set((state) => ({
@@ -207,8 +229,23 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }));
 
       try {
-        // Perform the write
-        const writable = await liveFile.fsHandle.createWritable();
+        // Perform the write with permission check
+        const writableResult = await createWritableWithPermission(liveFile.fsHandle);
+        if (!writableResult.writable) {
+          _set((state) => ({
+            liveFiles: {
+              ...state.liveFiles,
+              [fileId]: {
+                ...liveFile,
+                isSaving: false,
+                error: writableResult.error || 'Write permission denied. Please re-pair this file to grant access.',
+              },
+            },
+          }));
+          return false;
+        }
+
+        const writable = writableResult.writable;
         await writable.write(newContent);
         await writable.close();
 
