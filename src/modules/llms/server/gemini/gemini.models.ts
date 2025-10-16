@@ -614,7 +614,7 @@ export function geminiDevCheckForSuperfluousModels_DEV(apiModelIds: string[]): v
     // find editorial models which aren't present in the API response anymore
     const missingModels = expectedModelIds.filter(id => !apiModelIds.includes(id));
     if (missingModels.length > 0)
-      console.warn(`Gemini: superfluous model definitions: [ ${missingModels.join(', ')} ]`);
+      console.log(`[DEV] Gemini: superfluous model definitions: [ ${missingModels.join(', ')} ]`);
 
   }
 
@@ -634,7 +634,7 @@ export function geminiDevCheckForParserMisses_DEV(wireModels: unknown, parsedMod
 
     // ensure wireModels has .models array
     if (!wireModels || !Array.isArray((wireModels as any)?.models)) {
-      console.warn('[DEV] Gemini: wireModels.models is not an array', wireModels);
+      console.log('[DEV] Gemini: wireModels.models is not an array', wireModels);
       return;
     }
 
@@ -642,7 +642,7 @@ export function geminiDevCheckForParserMisses_DEV(wireModels: unknown, parsedMod
     const wireModelsJson = JSON.stringify((wireModels as any).models);
     const parsedModelsJson = JSON.stringify(parsedModels);
     if (wireModelsJson !== parsedModelsJson)
-      console.warn('[DEV] Gemini: wireModels and parsedModels do not match!', wireModelsJson, parsedModelsJson);
+      console.log('[DEV] Gemini: wireModels and parsedModels do not match!', wireModelsJson, parsedModelsJson);
 
   }
 
@@ -752,7 +752,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   const hasChatInterfaces = supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
   if (!hasChatInterfaces) {
     if (DEV_DEBUG_GEMINI_MODELS)
-      console.warn(`geminiModelToModelDescription: no chat interfaces (${supportedGenerationMethods.join(', ')}) for model ${modelId} (${displayName}) - skipping.`);
+      console.log(`[DEV] geminiModelToModelDescription: no chat interfaces (${supportedGenerationMethods.join(', ')}) for model ${modelId} (${displayName}) - skipping.`);
     return null; // skip models without chat interfaces
   }
 
@@ -760,7 +760,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   // find known manual mapping
   const knownModel = _knownGeminiModels.find(m => m.id === modelId);
   if (!knownModel && DEV_DEBUG_GEMINI_MODELS)
-    console.warn('geminiModelToModelDescription: unknown model', modelId, geminiModel);
+    console.log('[DEV] geminiModelToModelDescription: unknown model', modelId, geminiModel);
 
   // _delete logic removed - models are now physically removed from the list
   // if (knownModel?._delete)
