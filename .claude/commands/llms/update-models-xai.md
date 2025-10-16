@@ -13,7 +13,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Fallbacks if blocked:**
 - Search "xai grok latest pricing", "xai latest models", "xai api models", or search GitHub for latest model prices and context windows
-- Random sites? LangDB: https://langdb.ai/app/providers/xai/ (browse by model)
+- Random sites? https://the-rogue-marketing.github.io/grok-api-latest-llms-pricing-october-2025/ (find a newer version), https://langdb.ai/app/providers/xai/ (browse by model, limited coverage)
 - As last resort: Use Chrome DevTools MCP to access docs.x.ai
 
 **Important:**

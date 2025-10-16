@@ -8,7 +8,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Primary Sources:**
 - Base Models: https://docs.openpipe.ai/base-models
-- Pricing: https://openpipe.ai/pricing
+- Pricing: https://docs.openpipe.ai/pricing/pricing
 
 **Fallbacks if blocked:** Search "openpipe models latest pricing", "openpipe latest models", "openpipe base models", or search GitHub for latest model prices and context windows
 

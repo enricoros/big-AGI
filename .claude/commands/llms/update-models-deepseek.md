@@ -9,7 +9,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 **Primary Sources:**
 - Pricing: https://api-docs.deepseek.com/quick_start/pricing
 - Model List: https://api-docs.deepseek.com/api/list-models
-- Release Notes: https://api-docs.deepseek.com/news/ (check for version updates like V3.2-Exp)
+- Release Notes: https://api-docs.deepseek.com/updates (check for version updates like V3.2-Exp)
 
 **Note:** DeepSeek frequently releases new versions with significant pricing changes. Always check release notes first.
 
