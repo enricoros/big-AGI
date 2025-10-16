@@ -238,7 +238,11 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     for (const clipboardItem of clipboardItems) {
 
       // https://github.com/enricoros/big-AGI/issues/286
-      const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
+      const textHtml = clipboardItem.types.includes('text/html')
+        ? await clipboardItem.getType('text/html')
+            .then(blob => blob?.text() ?? '')
+            .catch(() => '')
+        : '';
       const heuristicBypassImage = textHtml.startsWith('<table ');
 
       if (ATTACHMENTS_DEBUG_INTAKE)
@@ -269,7 +273,11 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       }
 
       // get the Plain text
-      const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
+      const textPlain = clipboardItem.types.includes('text/plain')
+        ? await clipboardItem.getType('text/plain')
+            .then(blob => blob?.text() ?? '')
+            .catch(() => '')
+        : '';
 
       // attach as URL
       if (textPlain && enableLoadURLsOnPaste) {
