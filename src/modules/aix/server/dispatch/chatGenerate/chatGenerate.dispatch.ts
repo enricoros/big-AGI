@@ -37,10 +37,34 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
 
   switch (access.dialect) {
     case 'anthropic':
+      const anthropicBody = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
+      const anthropicBase = anthropicAccess(access, model.id, '/v1/messages');
+
+      // Check if web tools are being used and add appropriate beta headers
+      const betaHeaders: string[] = [];
+      if (chatGenerate.tools?.some(tool => tool.type === 'vnd.ant.tools.web_search_20250305')) {
+        betaHeaders.push('web-search-2025-03-05');
+      }
+      if (chatGenerate.tools?.some(tool => tool.type === 'vnd.ant.tools.web_fetch_20250910')) {
+        betaHeaders.push('web-fetch-2025-09-10');
+      }
+
+      // Merge additional beta headers if needed
+      let headers = anthropicBase.headers;
+      if (betaHeaders.length > 0) {
+        const existingBeta = (anthropicBase.headers as any)['anthropic-beta'] || '';
+        const allBetas = existingBeta ? [...existingBeta.split(','), ...betaHeaders] : betaHeaders;
+        headers = {
+          ...anthropicBase.headers,
+          'anthropic-beta': allBetas.join(','),
+        };
+      }
+
       return {
         request: {
-          ...anthropicAccess(access, model.id, '/v1/messages'),
-          body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
+          url: anthropicBase.url,
+          headers,
+          body: anthropicBody,
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),

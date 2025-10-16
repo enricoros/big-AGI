@@ -15,6 +15,13 @@ import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
 
 const _UNSPECIFIED = '_UNSPECIFIED' as const;
+const _antWebToolsOptions = [
+  { value: 'search+fetch', label: 'Search + Fetch', description: 'Both tools enabled' } as const,
+  { value: 'search', label: 'Search Only', description: 'Web search enabled' } as const,
+  { value: 'fetch', label: 'Fetch Only', description: 'Web fetch enabled' } as const,
+  { value: 'off', label: 'Off', description: 'Web tools disabled' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (off)' } as const,
+] as const;
 const _reasoningEffortOptions = [
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
@@ -132,6 +139,7 @@ export function LLMParametersEditor(props: {
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
     llmVndAntThinkingBudget,
+    llmVndAntWebTools,
     llmVndGeminiAspectRatio,
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
@@ -249,6 +257,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndAntWebTools') && (
+      <FormSelectControl
+        title='Web Tools'
+        tooltip='Enable web search and/or web fetch tools for Anthropic models'
+        value={llmVndAntWebTools ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndAntWebTools');
+          else onChangeParameter({ llmVndAntWebTools: value });
+        }}
+        options={_antWebToolsOptions}
       />
     )}
 

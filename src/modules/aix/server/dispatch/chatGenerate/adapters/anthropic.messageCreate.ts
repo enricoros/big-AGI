@@ -141,12 +141,43 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // --- Tools ---
 
   // Allow/deny auto-adding hosted tools when custom tools are present
-  // const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  // const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
-  // const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  const hasCustomTools = chatGenerate.tools?.some((t: AixTools_ToolDefinition) => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
-  // Hosted tools
-  // ...
+  // Anthropic web tools injection based on model parameter
+  if (model.vndAntWebTools && model.vndAntWebTools !== 'off' && !skipHostedToolsDueToCustomTools) {
+    const webTools: AixTools_ToolDefinition[] = [];
+
+    if (model.vndAntWebTools === 'search' || model.vndAntWebTools === 'search+fetch') {
+      webTools.push({
+        type: 'vnd.ant.tools.web_search_20250305',
+        max_uses: 5,
+      });
+    }
+
+    if (model.vndAntWebTools === 'fetch' || model.vndAntWebTools === 'search+fetch') {
+      webTools.push({
+        type: 'vnd.ant.tools.web_fetch_20250910',
+        citations: { enabled: true },
+      });
+    }
+
+    if (webTools.length > 0) {
+      // Add web tools to the existing tools array or create a new one
+      if (!chatGenerate.tools) {
+        chatGenerate.tools = webTools;
+      } else {
+        // Add web tools to existing tools (avoid duplicates)
+        const existingTypes = new Set(chatGenerate.tools.map((t: AixTools_ToolDefinition) => t.type));
+        for (const tool of webTools) {
+          if (!existingTypes.has(tool.type)) {
+            chatGenerate.tools.push(tool);
+          }
+        }
+      }
+    }
+  }
 
 
   // Preemptive error detection with server-side payload validation before sending it upstream
@@ -338,6 +369,27 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TReques
         return {
           type: 'bash_20241022',
           name: 'bash',
+        };
+
+      case 'vnd.ant.tools.web_search_20250305':
+        return {
+          type: 'web_search_20250305',
+          name: 'web_search',
+          ...(itd.max_uses !== undefined && { max_uses: itd.max_uses }),
+          ...(itd.allowed_domains !== undefined && { allowed_domains: itd.allowed_domains }),
+          ...(itd.blocked_domains !== undefined && { blocked_domains: itd.blocked_domains }),
+          ...(itd.user_location !== undefined && { user_location: itd.user_location }),
+        };
+
+      case 'vnd.ant.tools.web_fetch_20250910':
+        return {
+          type: 'web_fetch_20250910',
+          name: 'web_fetch',
+          ...(itd.max_uses !== undefined && { max_uses: itd.max_uses }),
+          ...(itd.allowed_domains !== undefined && { allowed_domains: itd.allowed_domains }),
+          ...(itd.blocked_domains !== undefined && { blocked_domains: itd.blocked_domains }),
+          ...(itd.citations !== undefined && { citations: itd.citations }),
+          ...(itd.max_content_tokens !== undefined && { max_content_tokens: itd.max_content_tokens }),
         };
 
     }

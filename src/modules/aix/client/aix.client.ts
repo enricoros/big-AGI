@@ -49,7 +49,7 @@ export function aixCreateModelFromLLMOptions(
   // destructure input with the overrides
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
-    llmVndAntThinkingBudget,
+    llmVndAntThinkingBudget, llmVndAntWebTools,
     llmVndGeminiAspectRatio, llmVndGeminiGoogleSearch, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
@@ -102,6 +102,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmTopP !== undefined ? { topP: llmTopP } : {}),
     ...(llmForceNoStream ? { forceNoStream: llmForceNoStream } : {}),
     ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget } : {}),
+    ...(llmVndAntWebTools ? { vndAntWebTools: llmVndAntWebTools } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
     ...(llmVndGeminiGoogleSearch ? { vndGeminiGoogleSearch: llmVndGeminiGoogleSearch } : {}),
     ...(llmVndGeminiShowThoughts ? { vndGeminiShowThoughts: llmVndGeminiShowThoughts } : {}),

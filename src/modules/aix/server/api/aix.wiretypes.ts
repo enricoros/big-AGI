@@ -355,6 +355,29 @@ export namespace AixWire_Tooling {
     type: z.literal('vnd.ant.tools.bash_20241022'),
   });
 
+  const _VndAntWebSearch20250305 = z.object({
+    type: z.literal('vnd.ant.tools.web_search_20250305'),
+    max_uses: z.number().min(1).max(10).optional(),
+    allowed_domains: z.array(z.string()).optional(),
+    blocked_domains: z.array(z.string()).optional(),
+    user_location: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      country: z.string().optional(),
+      city: z.string().optional(),
+      region: z.string().optional(),
+    }).optional(),
+  });
+
+  const _VndAntWebFetch20250910 = z.object({
+    type: z.literal('vnd.ant.tools.web_fetch_20250910'),
+    max_uses: z.number().min(1).max(10).optional(),
+    allowed_domains: z.array(z.string()).optional(),
+    blocked_domains: z.array(z.string()).optional(),
+    citations: z.object({ enabled: z.boolean() }).optional(),
+    max_content_tokens: z.number().optional(),
+  });
+
   /// Tool Definition
 
   /**
@@ -385,6 +408,8 @@ export namespace AixWire_Tooling {
     _VndAntComputer20241022,
     _VndAntTextEditor20241022,
     _VndAntBash20241022,
+    _VndAntWebSearch20250305,
+    _VndAntWebFetch20250910,
   ]);
 
   /// Tools Policy
@@ -426,6 +451,7 @@ export namespace AixWire_API {
     topP: z.number().min(0).max(1).optional(),
     forceNoStream: z.boolean().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
+    vndAntWebTools: z.enum(['off', 'search', 'fetch', 'search+fetch']).optional(),
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
     vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
     vndGeminiShowThoughts: z.boolean().optional(),

@@ -223,11 +223,38 @@ export namespace AnthropicWire_Tools {
     name: z.literal('str_replace_editor'),
   });
 
+  const _WebSearch_20250305_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('web_search_20250305'),
+    name: z.literal('web_search'),
+    max_uses: z.number().min(1).max(10).optional(),
+    allowed_domains: z.array(z.string()).optional(),
+    blocked_domains: z.array(z.string()).optional(),
+    user_location: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      country: z.string().optional(),
+      city: z.string().optional(),
+      region: z.string().optional(),
+    }).optional(),
+  });
+
+  const _WebFetch_20250910_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('web_fetch_20250910'),
+    name: z.literal('web_fetch'),
+    max_uses: z.number().min(1).max(10).optional(),
+    allowed_domains: z.array(z.string()).optional(),
+    blocked_domains: z.array(z.string()).optional(),
+    citations: z.object({ enabled: z.boolean() }).optional(),
+    max_content_tokens: z.number().optional(),
+  });
+
   export const ToolDefinition_schema = z.discriminatedUnion('type', [
     _CustomToolDefinition_schema,
     _ComputerUseTool_20241022_schema,
     _BashTool_20241022_schema,
     _TextEditor_20241022_schema,
+    _WebSearch_20250305_schema,
+    _WebFetch_20250910_schema,
   ]);
 
 }
