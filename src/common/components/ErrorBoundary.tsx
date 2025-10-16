@@ -63,9 +63,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     // Capture exception in PostHog
     posthogCaptureException(error, {
-      $exception_domain: 'client-error-boundary',
-      componentName,
-      componentStack: errorInfo.componentStack,
+      agi_domain: 'client-error-boundary',
+      agi_runtime: 'browser',
+      component: componentName,
+      component_stack: errorInfo.componentStack,
     });
 
     // Call the optional onError callback for external reporting

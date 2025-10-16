@@ -49,11 +49,9 @@ export async function posthogCaptureServerException(
 
     // Use the immediate variant for better performance in serverless environments
     await client.captureExceptionImmediate(error, distinctId, {
-      // Error source identification
-      $exception_domain: `server-${context.domain}`,
-      $exception_runtime: context.runtime,
+      agi_domain: `server-${context.domain}`,
+      agi_runtime: context.runtime,
       // Context properties
-      runtime: context.runtime,
       endpoint: context.endpoint,
       method: context.method,
       url: context.url,
