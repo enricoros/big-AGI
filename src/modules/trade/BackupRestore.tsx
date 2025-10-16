@@ -19,7 +19,7 @@ import { downloadBlob } from '~/common/util/downloadUtils';
 const BACKUP_FILE_FORMAT = 'Big-AGI Flash File';
 const BACKUP_FORMAT_VERSION = '1.2';
 const BACKUP_FORMAT_VERSION_NUMBER = 102000;
-const WINDOW_RELOAD_DELAY = 200;
+const WINDOW_RELOAD_DELAY = 300;
 const EXCLUDED_LOCAL_STORAGE_KEYS = [
   'agi-logger-log', // the log cannot be restored as it's in-mem and being persisted while this is running
 ];
@@ -768,19 +768,23 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       if (!restoreLocalStorageEnabled && !restoreIndexedDBEnabled)
         throw new Error('No data was selected for restore. Please select at least one option.');
 
+      // 3. Close the modal cleanly first to prevent React DOM errors during unmount
+      // Set state to idle and clear backup data to trigger modal close
       setRestoreState('success');
 
-      // 3. Alert and reload
+      // 3. Alert and reload - Close modal first, then wait for storage flush and DOM cleanup
+      setBackupDataForRestore(null);
+
+      // 4. Wait for React to complete the modal unmount and storage to flush
       setTimeout(() => {
         alert('Backup restored successfully.\n\nThe application will now reload to apply the changes.');
         window.location.reload();
-      }, WINDOW_RELOAD_DELAY);
+      }, WINDOW_RELOAD_DELAY); // 300ms allows modal to unmount and storage to flush
 
     } catch (error: any) {
       logger.error('Restore operation failed:', error);
       setRestoreState('error');
       setErrorMessage(`Restore failed: ${_getErrorText(error)}`);
-    } finally {
       setBackupDataForRestore(null);
     }
   }, [backupDataForRestore, restoreIndexedDBEnabled, restoreLocalStorageEnabled]);
