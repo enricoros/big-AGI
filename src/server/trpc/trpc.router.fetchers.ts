@@ -3,6 +3,10 @@ import { TRPCError } from '@trpc/server';
 import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/server/wire';
 
 
+// configuration
+const SERVER_LOG_FETCHERS_ERRORS = true; // log all fetcher errors to the console
+
+
 //
 // NOTE: This file is used in the server-side code, and not in the client-side code.
 //
@@ -167,35 +171,31 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
 
     // [logging - Connection error] candidate for the logging system
     const errorCause: any | undefined = error ? error?.cause ?? undefined : undefined;
-
-    // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
-    //       Consider we're also throwing the same, so there will likely be further logging.
-    if (SERVER_DEBUG_WIRE)
-      console.warn(`[${method}] ${moduleName} error (network issue):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
+    const errorString = safeErrorString(error) || 'unknown fetch error';
 
     // Show server-access warning for common connection issues
-    let showAccessWarning = [
+    const showAccessWarning = [
       'ECONNREFUSED',
       'ENOTFOUND',
       'ETIMEDOUT',
       'DNS_ERROR',
       'ECONNRESET',
       'ENETUNREACH', // example an IP is unreachable
-    ].includes(errorCause?.code);
-
-    // check also if we have a 'Network Connection Lost' message
-    const errorString = safeErrorString(error) || 'unknown fetch error';
-    showAccessWarning = showAccessWarning || [
-      'network connection lost',
+    ].includes(errorCause?.code) || [
+      'network connection lost.',
       'connect timeout error',
     ].includes(errorString.toLowerCase());
-    console.warn(`[${method}] ${moduleName} error (network issue):`, { error, errorCause });
+
+    // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
+    //       Consider we're also throwing the same, so there will likely be further logging.
+    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
+      console.log(`[${method}] [${moduleName} network issue]: ${errorString}`, { error, errorCause, debugCleanUrl, urlShown: showAccessWarning });
 
     // Handle (NON) CONNECTION errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
-        + `Upstream unreachable: ${errorString}`
+        + `Could not connect: ${errorString}`
         + (errorCause ? ` \nTechnical Details: ${safeErrorString(errorCause)}` : '')
         + (showAccessWarning ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
       cause: errorCause,
@@ -228,6 +228,9 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
         payloadString = 'The data looks like HTML, likely an error page: \n\n"' + payloadString + '"';
     }
 
+    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
+      console.warn(`[${method}] [${moduleName} issue] (http ${status}, ${response.statusText}):`, { parserName, payloadString });
+
     // Handle HTTP Response errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -250,7 +253,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   } catch (error: any) {
 
     // [logging - Parsing error] candidate for the logging system
-    console.warn(`[${method}] ${moduleName} error (parse, ${parserName}):`, error);
+    if (SERVER_LOG_FETCHERS_ERRORS)
+      console.warn(`[${method}] [${moduleName}]: (${parserName} parsing error): ${error?.name}`, { error,  url });
 
     // Forward already processed Parsing error -> 422
     if (error instanceof TRPCError)
