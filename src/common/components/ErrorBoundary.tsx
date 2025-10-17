@@ -50,6 +50,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     const { componentName, onError } = this.props;
 
+    // Check for benign DOM errors and handle silently
+    if (error.name === 'NotFoundError' && error.message?.includes('removeChild')) {
+      console.warn(`Benign DOM error in ${componentName}: ${error.message}`);
+      this.setState({ hasError: false, error: null });
+      return;
+    }
+
     // Log the error using the custom logger (skip reporting to PostHog since we handle it directly below)
     logger.error(
       `ErrorBoundary caught an error in ${componentName}`,
