@@ -29,12 +29,18 @@ export async function getAllFilesFromDirectoryRecursively(directoryHandle: FileS
         const relativePath = path ? `${path}${separator}${handle.name}` : handle.name;
 
         if (handle.kind === 'file') {
-          const fileWithHandle = await handle.getFile() as FileWithHandle;
-          fileWithHandle.handle = handle;
-          list.push({
-            fileWithHandle: fileWithHandle,
-            relativeName: relativePath,
-          });
+          try {
+            const fileWithHandle = await handle.getFile() as FileWithHandle;
+            fileWithHandle.handle = handle;
+            list.push({
+              fileWithHandle: fileWithHandle,
+              relativeName: relativePath,
+            });
+          } catch (error: any) {
+            // #845 - Handle NotAllowedError from Edge 141+ and other browsers with strict file permissions
+            console.warn(error?.name === 'NotAllowedError' ? '[FileSystem] File access denied, skipping:' : '[FileSystem] Error accessing file:', relativePath, error);
+            // #845 - Skip this file and continue directory traversal
+          }
         } else if (handle.kind === 'directory') {
           await traverseDirectory(handle, relativePath);
         }
