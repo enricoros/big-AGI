@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 import { getChatTokenCountingMethod } from '../../apps/chat/store-app-chat';
 
+import { logger } from '~/common/logger/logger.client';
 import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
@@ -47,7 +48,14 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!launchPreload) return;
 
-    void preloadTiktokenLibrary(); // fire/forget (large WASM payload)
+    void preloadTiktokenLibrary() // fire/forget (large WASM payload)
+      .catch(err => {
+        // Suppress WebAssembly loading errors - app will fall back to approximate counting
+        // These commonly occur when users navigate away or have slow connections
+        logger.debug('Tiktoken preload failed (expected on slow/interrupted loads)', err, 'client', {
+          skipReporting: true, // Don't send to PostHog - this is a benign error
+        });
+      });
 
   }, [launchPreload]);
 

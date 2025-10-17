@@ -29,7 +29,8 @@ export function preloadTiktokenLibrary(): Promise<void> {
           console.warn('countModelTokens: Library loaded successfully');
       })
       .catch(error => {
-        console.error('countModelTokens: Failed to load Tiktoken library:', error);
+        // Log locally for debugging
+        console.debug('countModelTokens: Failed to load Tiktoken library (will use approximate counting):', error.message);
         preloadPromise = null; // Allow retrying if the import fails
         throw error; // Re-throw the error to inform the caller
       });
