@@ -94,6 +94,13 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
         betaFeatures.push(...value);
   }
 
+  // Add beta feature for web-fetch if enabled
+  // Note: web-fetch-2025-09-10 is documented in official API docs but not yet in TypeScript SDK types
+  if (options?.vndAntWebFetch)
+    betaFeatures.push('web-fetch-2025-09-10');
+
+  // Note: web-search is now GA and no longer requires a beta header
+
   return {
     ...DEFAULT_ANTHROPIC_HEADERS,
     'anthropic-beta': betaFeatures.join(','),

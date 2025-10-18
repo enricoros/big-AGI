@@ -37,17 +37,10 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
 
   switch (access.dialect) {
     case 'anthropic': {
-      const anthropicRequest = anthropicAccess(access, model.id, '/v1/messages');
-
-      // Add web fetch beta header if enabled
-      if (model.vndAntWebFetch === 'auto') {
-        const currentBeta = anthropicRequest.headers['anthropic-beta'] as string || '';
-        const betaFeatures = currentBeta ? currentBeta.split(',') : [];
-        if (!betaFeatures.includes('web-fetch-2025-09-10')) {
-          betaFeatures.push('web-fetch-2025-09-10');
-          anthropicRequest.headers['anthropic-beta'] = betaFeatures.join(',');
-        }
-      }
+      const anthropicRequest = anthropicAccess(access, '/v1/messages', {
+        modelIdForBetaFeatures: model.id,
+        vndAntWebFetch: model.vndAntWebFetch === 'auto',
+      });
 
       return {
         request: {
