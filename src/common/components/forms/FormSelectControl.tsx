@@ -35,7 +35,7 @@ export const FormSelectControl = <TValue extends string>(props: {
   value?: TValue;
   onChange: (value: TValue) => void;
   placeholder?: React.ReactNode;
-  selectSx?: SxProps;
+  selectSx?: SxProps; // overrides the minimum button width, if 'maxWidth' is set
 }) => {
   const selectedOption = props.options.find(option => option.value === props.value);
 
@@ -53,7 +53,7 @@ export const FormSelectControl = <TValue extends string>(props: {
         value={props.value}
         onChange={(_, value) => value && props.onChange(value as TValue)}
         placeholder={props.placeholder}
-        slotProps={_selectSlotProps}
+        slotProps={!(props.selectSx as any)?.['minWidth'] ? _selectSlotProps : undefined}
         sx={props.selectSx}
       >
         {props.options.map((option, idx) => (
