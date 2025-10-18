@@ -36,15 +36,28 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
 } {
 
   switch (access.dialect) {
-    case 'anthropic':
+    case 'anthropic': {
+      const anthropicRequest = anthropicAccess(access, model.id, '/v1/messages');
+
+      // Add web fetch beta header if enabled
+      if (model.vndAntWebFetch === 'auto') {
+        const currentBeta = anthropicRequest.headers['anthropic-beta'] as string || '';
+        const betaFeatures = currentBeta ? currentBeta.split(',') : [];
+        if (!betaFeatures.includes('web-fetch-2025-09-10')) {
+          betaFeatures.push('web-fetch-2025-09-10');
+          anthropicRequest.headers['anthropic-beta'] = betaFeatures.join(',');
+        }
+      }
+
       return {
         request: {
-          ...anthropicAccess(access, model.id, '/v1/messages'),
+          ...anthropicRequest,
           body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
+    }
 
     case 'gemini':
       /**
