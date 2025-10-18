@@ -28,11 +28,13 @@ import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wire
  * - 'signature_delta': Signature for thinking blocks.
  *
  * Client Tools vs Server Tools
- * 
+ *
  * Client Tools: Traditional function calling where the model returns a `tool_use` block, the client
  *               executes the function, and returns results via `tool_result` in the next message.
  *
  * FIXME: we haven't decided yet at the AIX and DMessage/DMessageFragment level how to handle Server-side tools, Server/Client mixed tools, or even Client tools, incl client-driven MCP
+ *        so for now we have a TEMPORARY IMPLEMENTATION: Server tools are currently handled with void placeholders rather than creating particles to build execution graphs.
+ *
  * Server Tools: Tools executed by Anthropic's infrastructure. The model emits `server_tool_use`
  *               blocks and the server executes them internally, returning specialized result blocks
  *               like `web_search_tool_result` or `web_fetch_tool_result`. No client execution required.
@@ -141,10 +143,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
           case 'server_tool_use':
             // Server-side tool execution (e.g., web_search, web_fetch)
-            // Initialize like tool_use - will receive input_json_delta events
+            // NOTE: We don't create tool invocations for server tools - just show placeholders
             if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
               content_block.input = null;
-            
+
             // Show placeholder for known server tools
             switch (content_block.name) {
               case 'web_search':
@@ -156,15 +158,17 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               default:
                 throw new Error(`Unknown server tool name: ${content_block.name}`);
             }
-            
-            // Track the server tool invocation (important for proper message flow)
-            pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
+
+            // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
+            // pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
             break;
 
           case 'web_search_tool_result':
             // Web search results arrive fully formed (no deltas)
+            // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
             if (Array.isArray(content_block.content)) {
               // Success - array of search results
+              pt.sendVoidPlaceholder('search-web', `Search completed: ${content_block.content.length} results`);
               for (let i = 0; i < content_block.content.length; i++) {
                 const result = content_block.content[i];
                 pt.appendUrlCitation(
@@ -179,21 +183,31 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               }
             } else if (content_block.content.type === 'web_search_tool_result_error') {
               // Error during web search
-              pt.appendText(`\n[Web Search Error: ${content_block.content.error_code}]\n`);
+              pt.sendVoidPlaceholder('search-web', `Search error: ${content_block.content.error_code}`);
             }
             break;
 
           case 'web_fetch_tool_result':
             // Web fetch results arrive fully formed (no deltas)
+            // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
             if (content_block.content.type === 'web_fetch_result') {
               // Success - fetched a URL
-              pt.appendText(`\n[Retrieved: ${content_block.content.url}]\n`);
-              // Note: content_block.content.content is a DocumentBlock with the fetched content
-              // For now, we just indicate the URL was fetched
-              // TODO: Could process content_block.content.content.source to display the document
+              pt.sendVoidPlaceholder('search-web', `Retrieved ${content_block.content.url}`);
+
+              // Add citation for the fetched content
+              const fetchedContent = content_block.content.content;
+              pt.appendUrlCitation(
+                fetchedContent?.title || 'Web Content',
+                content_block.content.url,
+                undefined, // citationNumber
+                undefined, // startIndex
+                undefined, // endIndex
+                undefined, // textSnippet
+                content_block.content.retrieved_at ? Date.parse(content_block.content.retrieved_at) : undefined
+              );
             } else if (content_block.content.type === 'web_fetch_tool_result_error') {
               // Error during web fetch
-              pt.appendText(`\n[Web Fetch Error: ${content_block.content.error_code}]\n`);
+              pt.sendVoidPlaceholder('search-web', `Fetch error: ${content_block.content.error_code}`);
             }
             break;
 
@@ -248,9 +262,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             } else if (contentBlock.type === 'server_tool_use') {
               // Server tools also receive input_json_delta for their inputs
               contentBlock.input += delta.partial_json;
-              // Also forward to client so they can see what's being searched/fetched
-              // FIXME: decide at the AIX level and also DMessage level how do we handle Server Tools / Server-declared-client-executed / Hybrid tools?
-              pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
+              // TODO: Stream server tool args when we add executedBy:'server' support to DMessage tool_response parts
+              // pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
             } else
               throw new Error('Unexpected input_json_delta');
             break;
@@ -384,25 +397,25 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
         case 'server_tool_use':
           // Server tool use in non-streaming mode
-          // Show placeholder for known server tools
+          // NOTE: We don't create tool invocations for server tools - just show placeholders
           if (contentBlock.name === 'web_search') {
             pt.sendVoidPlaceholder('search-web', 'Searching the web...');
           } else if (contentBlock.name === 'web_fetch') {
             pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
           }
-          // Track the server tool invocation
-          pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
-          pt.endMessagePart();
+          // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
+          // pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
+          // pt.endMessagePart();
           break;
 
         case 'web_search_tool_result':
           // Web search results in non-streaming mode
+          // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
           if (Array.isArray(contentBlock.content)) {
             // Success - array of search results
-            pt.appendText('### Web Search Results\n\n');
+            pt.sendVoidPlaceholder('search-web', `Search completed: ${contentBlock.content.length} results`);
             for (let i = 0; i < contentBlock.content.length; i++) {
               const result = contentBlock.content[i];
-              pt.appendText(`${i + 1}. [${result.title}](${result.url})\n`);
               pt.appendUrlCitation(
                 result.title,
                 result.url,
@@ -413,51 +426,36 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
                 result.page_age ? Date.parse(result.page_age) : undefined
               );
             }
-            pt.appendText('\n');
           } else if (contentBlock.content.type === 'web_search_tool_result_error') {
             // Error during web search
-            pt.appendText(`⚠️ Web Search Error: ${contentBlock.content.error_code}\n`);
+            pt.sendVoidPlaceholder('search-web', `Search error: ${contentBlock.content.error_code}`);
           }
-          pt.endMessagePart();
+          // pt.endMessagePart(); // Not needed for placeholders
           break;
 
         case 'web_fetch_tool_result':
           // Web fetch results in non-streaming mode
+          // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
           if (contentBlock.content.type === 'web_fetch_result') {
-            // Success
+            // Success - fetched a URL
+            pt.sendVoidPlaceholder('search-web', `Retrieved ${contentBlock.content.url}`);
+
+            // Add citation for the fetched content
             const fetchedContent = contentBlock.content.content;
-            pt.appendText(`### Fetched Content from ${contentBlock.content.url}\n\n`);
-            
-            // Extract and display the document content if it's plain text
-            if (fetchedContent && fetchedContent.source) {
-              if (fetchedContent.source.type === 'text' && fetchedContent.source.data) {
-                const textContent = fetchedContent.source.data;
-                const snippet = textContent.length > 500 
-                  ? textContent.substring(0, 500) + '...' 
-                  : textContent;
-                pt.appendText(`${snippet}\n\n`);
-              } else if (fetchedContent.source.type === 'base64' && fetchedContent.source.media_type === 'application/pdf') {
-                pt.appendText(`[PDF Document - ${fetchedContent.title || 'Untitled'}]\n\n`);
-              } else {
-                pt.appendText(`[Document retrieved - ${fetchedContent.title || 'Untitled'}]\n\n`);
-              }
-            }
-            
-            // Add citation
             pt.appendUrlCitation(
-              fetchedContent.title || 'Web Content',
+              fetchedContent?.title || 'Web Content',
               contentBlock.content.url,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
+              undefined, // citationNumber
+              undefined, // startIndex
+              undefined, // endIndex
+              undefined, // textSnippet
               contentBlock.content.retrieved_at ? Date.parse(contentBlock.content.retrieved_at) : undefined
             );
           } else if (contentBlock.content.type === 'web_fetch_tool_result_error') {
-            // Error
-            pt.appendText(`\n[Web Fetch Error: ${contentBlock.content.error_code}]\n`);
+            // Error during web fetch
+            pt.sendVoidPlaceholder('search-web', `Fetch error: ${contentBlock.content.error_code}`);
           }
-          pt.endMessagePart();
+          // pt.endMessagePart(); // Not needed for placeholders
           break;
 
         case 'code_execution_tool_result':
