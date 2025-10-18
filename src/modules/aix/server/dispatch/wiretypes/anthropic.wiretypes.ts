@@ -3,7 +3,10 @@ import * as z from 'zod/v4';
 
 /**
  * See the latest Anthropic Typescript definitions on:
- * https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages.ts
+ * - https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages/messages.ts
+ * For the latest Beta flags:
+ * - https://raw.githubusercontent.com/anthropics/anthropic-sdk-typescript/refs/heads/main/src/resources/beta/beta.ts
+ * - or blame: https://github.com/anthropics/anthropic-sdk-python/blame/main/src/anthropic/types/anthropic_beta_param.py
  *
  * ## Updates
  *
@@ -207,6 +210,10 @@ export namespace AnthropicWire_Blocks {
 
   /// Server Tool Result Blocks (used in both input and output)
 
+  /**
+   * ServerToolUseBlock - Server-side tool invocation
+   * Note: Beta headers may be required for some tools - check AnthropicBetaParam for current requirements
+   */
   export const ServerToolUseBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('server_tool_use'),
     id: z.string(),
@@ -230,7 +237,10 @@ export namespace AnthropicWire_Blocks {
       })),
       z.object({
         type: z.literal('web_search_tool_result_error'),
-        error_code: z.string(),
+        error_code: z.union([
+          z.enum(['invalid_tool_input', 'unavailable', 'max_uses_exceeded', 'too_many_requests', 'query_too_long']),
+          z.string(), // forward-compatibility
+        ]),
       }),
     ]),
   });
@@ -247,7 +257,10 @@ export namespace AnthropicWire_Blocks {
       }),
       z.object({
         type: z.literal('web_fetch_tool_result_error'),
-        error_code: z.string(),
+        error_code: z.union([
+          z.enum(['invalid_tool_input', 'url_too_long', 'url_not_allowed', 'url_not_accessible', 'unsupported_content_type', 'too_many_requests', 'max_uses_exceeded', 'unavailable']),
+          z.string(), // forward-compatibility
+        ]),
       }),
     ]),
   });
@@ -498,7 +511,7 @@ export namespace AnthropicWire_Tools {
   // Latest Tool Versions (sorted alphabetically by tool name)
   // Deprecated versions (removed):
   // - bash_20241022 -> bash_20250124
-  // - code_execution_20250522 -> code_execution_20250825
+  // - code_execution_20250522 (legacy, python only) -> code_execution_20250825 (bash and many programming languages)
   // - computer_20241022 -> computer_20250124
   // - text_editor_20241022, text_editor_20250124, text_editor_20250429 -> text_editor_20250728
 
@@ -507,11 +520,13 @@ export namespace AnthropicWire_Tools {
     name: z.literal('bash'),
   });
 
+  /** Current (No support for the legacy code_execution_20250522): Supports Bash commands, file operations, and multiple languages. Requires beta header: "code-execution-2025-08-25" */
   const _CodeExecutionTool_20250825_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('code_execution_20250825'),
     name: z.literal('code_execution'),
   });
 
+  /** Requires beta header: "computer-use-2025-01-24" */
   const _ComputerUseTool_20250124_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('computer_20250124'),
     name: z.literal('computer'),
