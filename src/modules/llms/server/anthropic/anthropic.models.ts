@@ -10,7 +10,11 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Sonnet 4.5 (Thinking)',
     description: 'Claude Sonnet 4.5 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     maxCompletionTokens: 64000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1451 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805-thinking-16k + 1
@@ -20,7 +24,11 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Haiku 4.5 (Thinking)',
     description: 'Claude Haiku 4.5 with extended thinking mode - first Haiku model with reasoning capabilities',
-    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     maxCompletionTokens: 64000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
   },
@@ -30,7 +38,11 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Opus 4.1 (Thinking)',
     description: 'Claude Opus 4.1 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     maxCompletionTokens: 32000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1451 }, // claude-opus-4-1-20250805-thinking-16k
@@ -42,7 +54,11 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Opus 4 (Thinking)',
     description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     maxCompletionTokens: 32000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1420 }, // claude-opus-4-20250514-thinking-16k
@@ -52,7 +68,11 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Sonnet 4 (Thinking)',
     description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     maxCompletionTokens: 64000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1400 }, // claude-sonnet-4-20250514-thinking-32k
@@ -63,7 +83,11 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Sonnet 3.7 (Thinking)',
     description: 'Claude 3.7 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     maxCompletionTokens: 64000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1385 }, // claude-3-7-sonnet-20250219-thinking-32k
@@ -83,6 +107,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Jul 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50. Using lower tier as base.
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1438 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805 + 1
@@ -95,6 +123,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Jul 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
   },
 
@@ -107,6 +139,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 32000,
     trainingDataCutoff: 'Mar 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1438 }, // claude-opus-4-1-20250805
   },
@@ -121,6 +157,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 32000,
     trainingDataCutoff: 'Mar 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1411 }, // claude-opus-4-20250514
   },
@@ -132,6 +172,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Mar 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1386 }, // claude-sonnet-4-20250514
   },
@@ -145,6 +189,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Nov 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1369 }, // claude-3-7-sonnet-20250219
   },
@@ -184,6 +232,10 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Jul 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: [
+      { paramId: 'llmVndAntWebSearch' },
+      { paramId: 'llmVndAntWebFetch' },
+    ],
     chatPrice: { input: 0.80, output: 4.00, cache: { cType: 'ant-bp', read: 0.08, write: 1.00, duration: 300 } },
     benchmark: { cbaElo: 1319, cbaMmlu: 75.2 }, // claude-3-5-haiku-20241022
   },

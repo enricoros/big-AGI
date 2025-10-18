@@ -141,12 +141,38 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // --- Tools ---
 
   // Allow/deny auto-adding hosted tools when custom tools are present
-  // const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  // const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
-  // const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
   // Hosted tools
-  // ...
+  if (!skipHostedToolsDueToCustomTools) {
+    const hostedTools: NonNullable<TRequest['tools']> = [];
+
+    // Web Search Tool
+    if (model.vndAntWebSearch === 'auto') {
+      hostedTools.push({
+        type: 'web_search_20250305',
+        name: 'web_search',
+        max_uses: 5, // Allow up to 5 progressive searches
+      });
+    }
+
+    // Web Fetch Tool
+    if (model.vndAntWebFetch === 'auto') {
+      hostedTools.push({
+        type: 'web_fetch_20250910',
+        name: 'web_fetch',
+        max_uses: 5, // Allow up to 5 fetches
+        citations: { enabled: true }, // Enable citations
+      });
+    }
+
+    // Merge hosted tools with custom tools
+    if (hostedTools.length > 0) {
+      payload.tools = payload.tools ? [...payload.tools, ...hostedTools] : hostedTools;
+    }
+  }
 
 
   // Preemptive error detection with server-side payload validation before sending it upstream
