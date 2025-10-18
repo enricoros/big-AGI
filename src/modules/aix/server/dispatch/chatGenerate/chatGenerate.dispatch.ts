@@ -36,15 +36,22 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
 } {
 
   switch (access.dialect) {
-    case 'anthropic':
+    case 'anthropic': {
+      // Add web-fetch beta header if web fetch is enabled
+      const additionalBetaFeatures: string[] = [];
+      if (model.vndAntWebTools === 'fetch' || model.vndAntWebTools === 'search+fetch') {
+        additionalBetaFeatures.push('web-fetch-2025-09-10');
+      }
+
       return {
         request: {
-          ...anthropicAccess(access, model.id, '/v1/messages'),
+          ...anthropicAccess(access, model.id, '/v1/messages', additionalBetaFeatures),
           body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
+    }
 
     case 'gemini':
       /**

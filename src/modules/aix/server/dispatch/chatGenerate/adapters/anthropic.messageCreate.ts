@@ -141,12 +141,37 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // --- Tools ---
 
   // Allow/deny auto-adding hosted tools when custom tools are present
-  // const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  // const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
-  // const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
-  // Hosted tools
-  // ...
+  // Hosted tools: Web Search and Web Fetch
+  if (model.vndAntWebTools && !skipHostedToolsDueToCustomTools) {
+    const tools = payload.tools || [];
+
+    // Add web search tool
+    if (model.vndAntWebTools === 'search' || model.vndAntWebTools === 'search+fetch') {
+      tools.push({
+        type: 'web_search_20250305',
+        name: 'web_search',
+        max_uses: 5, // reasonable default
+        // Could add more configuration based on future parameters
+      } as any);
+    }
+
+    // Add web fetch tool
+    if (model.vndAntWebTools === 'fetch' || model.vndAntWebTools === 'search+fetch') {
+      tools.push({
+        type: 'web_fetch_20250910',
+        name: 'web_fetch',
+        max_uses: 5, // reasonable default
+        citations: { enabled: true }, // enable citations by default
+        // Could add more configuration based on future parameters
+      } as any);
+    }
+
+    payload.tools = tools.length > 0 ? tools : undefined;
+  }
 
 
   // Preemptive error detection with server-side payload validation before sending it upstream
