@@ -42,7 +42,7 @@ export namespace AnthropicWire_Blocks {
   });
 
   /** Citations schema used in both input and output. Output includes a file_id field for document citations, which input will omit. */
-  const _TextBlockCitations_schema = z.discriminatedUnion('type', [
+  export const _TextBlockCitations_schema = z.discriminatedUnion('type', [
     // PDF citation (page location)
     z.object({
       type: z.literal('page_location'),
@@ -73,7 +73,7 @@ export namespace AnthropicWire_Blocks {
       end_block_index: z.number(),
       file_id: z.string().nullish(), // Present in response only
     }),
-    // Web search result citation
+    // Web search result citation - produced by the hosted web_search tool
     z.object({
       type: z.literal('web_search_result_location'),
       cited_text: z.string(),
@@ -847,6 +847,11 @@ export namespace AnthropicWire_API_Message_Create {
       z.object({
         type: z.literal('signature_delta'),
         signature: z.string(),
+      }),
+      z.object({
+        // created by the hosted web_search tool, at least, in which case the citation is: Extract<typeof _TextBlockCitations_schema, { type: 'web_search_result_location' }>
+        type: z.literal('citations_delta'),
+        citation: AnthropicWire_Blocks._TextBlockCitations_schema,
       }),
     ]),
   });

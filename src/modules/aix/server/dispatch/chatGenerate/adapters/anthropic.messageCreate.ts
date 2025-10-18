@@ -154,7 +154,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       hostedTools.push({
         type: 'web_search_20250305',
         name: 'web_search',
-        max_uses: 5, // Allow up to 5 progressive searches
+        max_uses: 10, // Allow up to 10 progressive searches // FIXME: HARDCODED
       });
     }
 
