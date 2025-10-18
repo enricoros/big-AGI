@@ -26,6 +26,7 @@ import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wire
  * - 'input_json_delta': Partial JSON strings for tool_use and server_tool_use inputs.
  * - 'thinking_delta': Incremental thinking content updates.
  * - 'signature_delta': Signature for thinking blocks.
+ * - 'citations_delta': Citations that stream incrementally for text blocks.
  *
  * Client Tools vs Server Tools
  *
@@ -122,6 +123,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         switch (content_block.type) {
           case 'text':
             pt.appendText(content_block.text);
+            // Note: In streaming mode, citations arrive via citations_delta events, not on content_block_start
             break;
 
           case 'thinking':
@@ -274,6 +276,27 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               throw new Error('Unexpected signature delta');
             break;
 
+          case 'citations_delta':
+            // Citations arrive incrementally during streaming - add to current text block
+            if (contentBlock.type === 'text') {
+              const citation = delta.citation;
+              if (citation.type === 'web_search_result_location') {
+                // Web search citation from server-side search
+                pt.appendUrlCitation(
+                  citation.title || citation.url,
+                  citation.url,
+                  undefined, // citationNumber
+                  undefined, // startIndex
+                  undefined, // endIndex
+                  citation.cited_text, // textSnippet
+                  undefined // pubTs
+                );
+              }
+              // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
+            } else
+              throw new Error('Unexpected citations_delta on non-text block');
+            break;
+
           // note: redacted_thinking doesn't have deltas, only start (with payload) and stop
 
           default:
@@ -368,6 +391,23 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       switch (contentBlock.type) {
         case 'text':
           pt.appendText(contentBlock.text);
+          // Handle citations if present (non-streaming mode has all citations attached)
+          if (contentBlock.citations && Array.isArray(contentBlock.citations)) {
+            for (const citation of contentBlock.citations) {
+              if (citation.type === 'web_search_result_location') {
+                pt.appendUrlCitation(
+                  citation.title || citation.url,
+                  citation.url,
+                  undefined, // citationNumber
+                  undefined, // startIndex
+                  undefined, // endIndex
+                  citation.cited_text, // textSnippet
+                  undefined // pubTs
+                );
+              }
+              // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
+            }
+          }
           break;
 
         case 'thinking':
