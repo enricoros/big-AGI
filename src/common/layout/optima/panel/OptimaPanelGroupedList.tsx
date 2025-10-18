@@ -99,8 +99,10 @@ export function OptimaPanelGroupedList(props: {
   title?: React.ReactNode;
   endDecorator?: React.ReactNode;
   children?: React.ReactNode;
+  marginTopAuto?: boolean;
   persistentCollapsibleId?: string;
   startExpanded?: boolean;
+  onCheckboxClicked?: (checked: boolean) => void;
 }) {
 
   // state
@@ -124,7 +126,7 @@ export function OptimaPanelGroupedList(props: {
 
 
   return (
-    <Box>
+    <Box sx={props.marginTopAuto ? { marginTop: 'auto' } : undefined}>
 
       {/* Header */}
       {(!!props.title || isCollapsible) && (
@@ -135,7 +137,13 @@ export function OptimaPanelGroupedList(props: {
           sx={headerSx}
         >
           <Box fontSize={smallerContentScaling} sx={headerTitleSx}>{props.title}</Box>
-          {isCollapsible && <Checkbox size='md' variant='outlined' color='neutral' checked={isExpanded} />}
+          {(isCollapsible || !!props.onCheckboxClicked) && (
+            <Checkbox
+              size='md' variant='outlined' color='neutral'
+              checked={isExpanded}
+              onChange={(event) => props.onCheckboxClicked?.(event.target.checked)}
+            />
+          )}
         </Box>
       )}
 
