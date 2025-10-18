@@ -82,13 +82,11 @@ const _xaiSearchModeOptions = [
 
 const _antWebSearchOptions = [
   { value: 'auto', label: 'On', description: 'Enable web search for real-time information' },
-  { value: 'off', label: 'Off', description: 'Disabled (default)' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
 const _antWebFetchOptions = [
   { value: 'auto', label: 'On', description: 'Enable fetching web content and PDFs' },
-  { value: 'off', label: 'Off', description: 'Disabled (default)' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
