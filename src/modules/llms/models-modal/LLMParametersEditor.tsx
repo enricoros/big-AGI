@@ -80,6 +80,18 @@ const _xaiSearchModeOptions = [
   { value: 'off', label: 'Off', description: 'Never perform a search' },
 ] as const;
 
+const _antWebSearchOptions = [
+  { value: 'auto', label: 'On', description: 'Enable web search for real-time information' },
+  { value: 'off', label: 'Off', description: 'Disabled (default)' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
+const _antWebFetchOptions = [
+  { value: 'auto', label: 'On', description: 'Enable fetching web content and PDFs' },
+  { value: 'off', label: 'Off', description: 'Disabled (default)' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 const _imageGenerationOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
   { value: 'mq', label: 'Standard', description: 'Quick gen' },
@@ -132,6 +144,8 @@ export function LLMParametersEditor(props: {
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
     llmVndAntThinkingBudget,
+    llmVndAntWebSearch,
+    llmVndAntWebFetch,
     llmVndGeminiAspectRatio,
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
@@ -249,6 +263,32 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndAntWebSearch') && (
+      <FormSelectControl
+        title='Web Search'
+        tooltip='Enable web search for real-time information retrieval'
+        value={llmVndAntWebSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value || value === 'off') onRemoveParameter('llmVndAntWebSearch');
+          else onChangeParameter({ llmVndAntWebSearch: value });
+        }}
+        options={_antWebSearchOptions}
+      />
+    )}
+
+    {showParam('llmVndAntWebFetch') && (
+      <FormSelectControl
+        title='Web Fetch'
+        tooltip='Enable fetching full content from web pages and PDF documents'
+        value={llmVndAntWebFetch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value || value === 'off') onRemoveParameter('llmVndAntWebFetch');
+          else onChangeParameter({ llmVndAntWebFetch: value });
+        }}
+        options={_antWebFetchOptions}
       />
     )}
 
