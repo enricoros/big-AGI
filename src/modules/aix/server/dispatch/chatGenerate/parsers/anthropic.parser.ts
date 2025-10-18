@@ -168,19 +168,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
             if (Array.isArray(content_block.content)) {
               // Success - array of search results
+              // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
+              //       Only high-quality citations that appear in text annotations should be shown
               pt.sendVoidPlaceholder('search-web', `Search completed: ${content_block.content.length} results`);
-              for (let i = 0; i < content_block.content.length; i++) {
-                const result = content_block.content[i];
-                pt.appendUrlCitation(
-                  result.title,
-                  result.url,
-                  i + 1, // citationNumber
-                  undefined, // startIndex
-                  undefined, // endIndex
-                  undefined, // textSnippet
-                  result.page_age ? Date.parse(result.page_age) : undefined // pubTs - parse if page_age exists
-                );
-              }
             } else if (content_block.content.type === 'web_search_tool_result_error') {
               // Error during web search
               pt.sendVoidPlaceholder('search-web', `Search error: ${content_block.content.error_code}`);
@@ -413,19 +403,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
           if (Array.isArray(contentBlock.content)) {
             // Success - array of search results
+            // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
+            //       Only high-quality citations that appear in text annotations should be shown
             pt.sendVoidPlaceholder('search-web', `Search completed: ${contentBlock.content.length} results`);
-            for (let i = 0; i < contentBlock.content.length; i++) {
-              const result = contentBlock.content[i];
-              pt.appendUrlCitation(
-                result.title,
-                result.url,
-                i + 1,
-                undefined,
-                undefined,
-                undefined,
-                result.page_age ? Date.parse(result.page_age) : undefined
-              );
-            }
           } else if (contentBlock.content.type === 'web_search_tool_result_error') {
             // Error during web search
             pt.sendVoidPlaceholder('search-web', `Search error: ${contentBlock.content.error_code}`);
