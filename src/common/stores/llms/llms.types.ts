@@ -26,7 +26,7 @@ export interface DLLM {
   created: number | 0;
   updated?: number | 0;
   description: string;
-  hidden: boolean;                  // hidden from UI selectors
+  hidden: boolean;                  // default hidden state (can change underlying between refreshes)
 
   // hard properties (overwritten on update)
   contextTokens: number | null;     // null: must assume it's unknown
@@ -60,7 +60,11 @@ export interface DLLM {
  * for models they haven't explicitly shown/hidden.
  */
 export function isLLMHidden(llm: DLLM): boolean {
-  return llm.userHidden ?? llm.hidden;
+  return llm.userHidden ?? llm.hidden ?? false;
+}
+
+export function isLLMVisible(llm: DLLM): boolean {
+  return !(llm.userHidden ?? llm.hidden ?? false);
 }
 
 
