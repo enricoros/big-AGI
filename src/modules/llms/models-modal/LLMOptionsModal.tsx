@@ -12,6 +12,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { isLLMHidden } from '~/common/stores/llms/llms.types';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
@@ -79,7 +80,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   const handleLlmLabelSet = (event: React.ChangeEvent<HTMLInputElement>) => updateLLM(llm.id, { label: event.target.value || '' });
 
-  const handleLlmVisibilityToggle = () => updateLLM(llm.id, { hidden: !llm.hidden });
+  const handleLlmVisibilityToggle = () => updateLLM(llm.id, { userHidden: !isLLMHidden(llm) });
 
   const handleLlmStarredToggle = () => updateLLM(llm.id, { userStarred: !llm.userStarred });
 
@@ -140,9 +141,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
-        <Tooltip title={!llm.hidden ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
-          <Switch checked={!llm.hidden} onChange={handleLlmVisibilityToggle}
-                  endDecorator={!llm.hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
+        <Tooltip title={!isLLMHidden(llm) ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
+          <Switch checked={!isLLMHidden(llm)} onChange={handleLlmVisibilityToggle}
+                  endDecorator={!isLLMHidden(llm) ? <VisibilityIcon /> : <VisibilityOffIcon />}
                   slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
         </Tooltip>
       </FormControl>

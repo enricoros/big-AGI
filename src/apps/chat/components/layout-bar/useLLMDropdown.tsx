@@ -11,6 +11,7 @@ import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { isLLMHidden } from '~/common/stores/llms/llms.types';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
@@ -39,7 +40,7 @@ function LLMDropdown(props: {
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
 
-  const llmsCount = llms.filter(llm => !llm.hidden).length;
+  const llmsCount = llms.filter(llm => !isLLMHidden(llm)).length;
   const showFilter = llmsCount >= 50;
 
   const handleChatLLMChange = React.useCallback((value: DLLMId | null) => {
@@ -69,7 +70,7 @@ function LLMDropdown(props: {
         return false;
 
       // filter-out hidden models from the dropdown
-      return lcFilterString ? true : !llm.hidden;
+      return lcFilterString ? true : !isLLMHidden(llm);
     });
 
     for (const llm of filteredLLMs) {

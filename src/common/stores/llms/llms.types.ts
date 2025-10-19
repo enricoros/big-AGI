@@ -51,6 +51,18 @@ export interface DLLM {
   userParameters?: DModelParameterValues; // user has set these parameters
 }
 
+/**
+ * Computes the effective visibility of a model, respecting user overrides.
+ * Returns true if the model should be hidden from UI selectors.
+ *
+ * Logic: userHidden takes precedence if set, otherwise falls back to the vendor's hidden value.
+ * This allows users to override vendor defaults while still adopting new vendor visibility changes
+ * for models they haven't explicitly shown/hidden.
+ */
+export function isLLMHidden(llm: DLLM): boolean {
+  return llm.userHidden ?? llm.hidden;
+}
+
 
 /// Interfaces ///
 
