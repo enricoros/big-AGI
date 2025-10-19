@@ -52,10 +52,8 @@ jobs:
                - If you can fix it in code, propose the fix
                  - If possible also suggest fixes or workarounds for immediate relief
                - Reference specific files and line numbers
-            2. Apply appropriate labels:
-               - Type: bug, enhancement, question, documentation
-               - Component: AIX, Zync, Beam, UI, UX, local-models, openai-models, etc. (based on CLAUDE.md)
-               - IMPORTANT: Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
+               - Test selectively and even npm install and run build if needed to verify the solution
+            2. Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
             3. Comment with:
                - Very brief thank you note, if applicable
                - Initial assessment
