@@ -63,7 +63,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     const { updateLLM } = llmsStoreActions();
     llms
       .filter(llm => llm.sId === props.serviceId)
-      .forEach(llm => updateLLM(llm.id, { hidden: !visible }));
+      .forEach(llm => updateLLM(llm.id, { userHidden: !visible }));
   }, [props.serviceId]);
 
   return <>

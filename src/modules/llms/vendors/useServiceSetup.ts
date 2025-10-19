@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { isLLMHidden } from '~/common/stores/llms/llms.types';
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
@@ -48,7 +49,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
 
       serviceHasCloudTenantConfig: vendorHasBackendCap(vendor),
       serviceHasLLMs: !!serviceLLms.length,
-      serviceHasVisibleLLMs: !!serviceLLms.find(llm => !llm.hidden),
+      serviceHasVisibleLLMs: !!serviceLLms.find(llm => !isLLMHidden(llm)),
       serviceSetupValid: serviceSetupValid,
 
       partialSettings: service?.setup ?? null, // NOTE: do not use - prefer ACCESS; only used in 1 edge case now
