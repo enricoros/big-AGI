@@ -4,7 +4,7 @@ import * as z from 'zod/v4';
 
 
 // Helper to make some variables required only in production
-const isProd = process.env.VERCEL_ENV === 'production';
+const isProd = process.env.NODE_ENV === 'production';
 const requireOnProd = isProd ? z.string() : z.string().optional();
 
 
