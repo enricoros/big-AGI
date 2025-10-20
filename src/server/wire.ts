@@ -1,3 +1,5 @@
+import * as z from 'zod/v4';
+
 /// set this to true to see the tRPC and fetch requests made by the server
 export const SERVER_DEBUG_WIRE = false; //
 
@@ -55,6 +57,10 @@ export function safeErrorString(error: any): string | null {
     const errors = error.errors.map(e => safeErrorString(e)).filter(Boolean);
     return `AggregateError: ${errors.join('; ')}`;
   }
+
+  // handle zod v4 errors
+  if (error instanceof z.ZodError)
+    return z.prettifyError(error);
 
   // descend into an 'error' object
   if (error.error)
