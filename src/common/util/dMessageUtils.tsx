@@ -311,7 +311,13 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode:
         })</small>
       </>}
     </div>}
-    {costCode && <div>{metrics?.$c !== undefined ? 'Costs:' : ''}</div>}
+    {/* Add the 'reported' costs underneath, if defined */}
+    {metrics?.$cReported !== undefined && <div>{metrics?.$c !== undefined ? '' : 'Costs:'}</div>}
+    {metrics?.$cReported !== undefined && <div>
+      <small>reported: <b>{formatModelsCost(metrics.$cReported / 100)}</b></small>
+    </div>}
+    {/* Add the cost 'code' underneath, if any */}
+    {costCode && <div>{(metrics?.$c !== undefined || metrics?.$cReported !== undefined) ? '' : 'Costs:'}</div>}
     {costCode && <div><em>{costCode}</em></div>}
 
     {/* Time */}

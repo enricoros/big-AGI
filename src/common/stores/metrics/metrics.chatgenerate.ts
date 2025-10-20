@@ -56,6 +56,7 @@ type MetricsChatGenerateTime = {
 export type MetricsChatGenerateCost_Md = {
   // $c = Cents of USD - NOTE: we chose to use cents to reduce floating point errors
   $c?: number,
+  $cReported?: number,  // Total cost in cents as reported by provider (e.g. Perplexity usage.cost.total_cost)
   $cdCache?: number,
   $code?:
     | 'free'            // generated for free
@@ -121,7 +122,7 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
 
 export function metricsChatGenerateLgToMd(metrics: DMetricsChatGenerate_Lg): DMetricsChatGenerate_Md {
   const allOptionalKeys: (keyof DMetricsChatGenerate_Md)[] = [
-    '$c', '$cdCache', '$code', // select costs
+    '$c', '$cReported', '$cdCache', '$code', // select costs
     'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', // select token counts
     'dtAll', 'dtStart', 'vTOutInner', // select token timings/velocities
     'TsR', // stop reason
