@@ -621,8 +621,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     object: z.enum([
       'chat.completion.chunk',
       'chat.completion', // [Perplexity] sent an email on 2024-07-14 to inform them about the misnomer
+      /**
+       * [Perplexity, 2025-10-20] Undocumented full-response-like message type
+       * - it's a .chunk, delta with delta='', and finish_reason set (to 'stop') and 'usage.costs' set
+       */
+      'chat.completion.done',
       '', // [Azure] bad response: the first packet communicates 'prompt_filter_results'
     ])
+      // .or(z.string()) // [Perplexity, 2025-10-20] future resiliency post perplexity still breaking the openai compatibility
       .optional(), // [FastAPI, 2025-04-24] the FastAPI dialect sadly misses the 'chat.completion.chunk' type
     id: z.string(),
 
