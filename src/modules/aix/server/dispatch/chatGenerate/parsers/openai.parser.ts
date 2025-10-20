@@ -574,6 +574,12 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
 
   // TODO: Output breakdown: Audio
 
+  // Upstream Cost Reporting
+
+  // [Perplexity, 2025-10-20]
+  if (!!usage.cost && typeof usage.cost === 'object' && 'total_cost' in usage.cost && typeof usage.cost.total_cost === 'number')
+    metricsUpdate.$cReported = Math.round(usage.cost.total_cost * 100 * 10000) / 10000;
+
   // Time Metrics
 
   if (timeToFirstEvent !== undefined)

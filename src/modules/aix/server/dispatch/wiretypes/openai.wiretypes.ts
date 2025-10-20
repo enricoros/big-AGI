@@ -426,6 +426,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [DeepSeek, 2024-08-02] context caching on disk
     prompt_cache_hit_tokens: z.number().optional(),
     prompt_cache_miss_tokens: z.number().optional(),
+
+    // [Perplexity, 2025-10-20] cost breakdown
+    cost: z.looseObject({
+      input_tokens_cost: z.number().optional(),
+      output_tokens_cost: z.number().optional(),
+      request_cost: z.number().optional(),
+      total_cost: z.number().optional(),
+    }).nullish(),
   }).nullable();
 
   /**

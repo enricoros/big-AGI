@@ -597,6 +597,9 @@ export namespace AixWire_Particles {
 
     // v = Tokens/s
     vTOutInner?: number,  // TOut / dtInner
+
+    // $c = Cents of USD
+    $cReported?: number,  // Total cost in cents as reported by provider (e.g. Perplexity usage.cost.total_cost)
   };
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts
