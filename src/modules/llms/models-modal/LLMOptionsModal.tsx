@@ -9,7 +9,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
-import { DLLMId, getLLMContextTokens, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, isLLMVisible } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
@@ -92,6 +92,20 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const handleLlmVisibilityToggle = () => updateLLM(llm.id, { userHidden: isLLMVisible(llm) });
 
   const handleLlmStarredToggle = () => updateLLM(llm.id, { userStarred: !llm.userStarred });
+
+  const handleContextTokensChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    updateLLM(llm.id, { userContextTokens: value ? parseInt(value, 10) : undefined });
+  };
+
+  const handleContextTokensReset = () => updateLLM(llm.id, { userContextTokens: undefined });
+
+  const handleMaxOutputTokensChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    updateLLM(llm.id, { userMaxOutputTokens: value ? parseInt(value, 10) : undefined });
+  };
+
+  const handleMaxOutputTokensReset = () => updateLLM(llm.id, { userMaxOutputTokens: undefined });
 
   const handleLlmDelete = () => {
     removeLLM(llm.id);
@@ -204,19 +218,31 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
         </Tooltip>
       </FormControl>}
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
-        <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap', gap: 1 }}>
+
+        <Link
+          component='button'
+          color='neutral'
+          level='title-sm'
+          onClick={() => setShowDetails(!showDetails)}
+          sx={{ color: 'text.primary', whiteSpace: 'nowrap', mb: 'auto', textDecoration: 'underline' }}
+        >
+          {showDetails ? 'Details:' : 'Details...'}
+        </Link>
+
         {showDetails && <Box sx={{ display: 'flex', flexDirection: 'column', wordBreak: 'break-word', gap: 1 }}>
-          {!!llm.description && <Typography level='body-sm'>
+          {!!llm.description && <Typography level='title-sm'>
             {llm.description}
           </Typography>}
+
           {!!llm.pricing?.chat?._isFree && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
+
           <Typography level='body-xs'>
             llm id: {llm.id}<br />
             context tokens: <b>{getLLMContextTokens(llm)?.toLocaleString() ?? 'not provided'}</b>{` · `}
-            max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br />
+            max output tokens: <b>{getLLMMaxOutputTokens(llm)?.toLocaleString() ?? 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
             {!!llm.pricing?.chat && prettyPricingComponent(llm.pricing.chat)}
@@ -225,6 +251,52 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             {Object.keys(llm.initialParameters || {}).length > 0 && <>initial parameters: {JSON.stringify(llm.initialParameters, null, 2)}<br /></>}
             {Object.keys(llm.userParameters || {}).length > 0 && <>user parameters: {JSON.stringify(llm.userParameters, null, 2)}<br /></>}
           </Typography>
+
+          {/* Advanced: Token Overrides */}
+          <Grid container spacing={2} alignItems='center' sx={{ mt: 0.5 }}>
+            <Grid xs={12} md={6}>
+              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                <FormLabelStart title='Context Window' description='Tokens Override' sx={{ minWidth: 120 }} />
+                <Input
+                  type='number'
+                  variant='outlined'
+                  placeholder={
+                    // NOTE: direct access to the underlying, instead of via getLLMContextTokens
+                    llm.contextTokens?.toLocaleString() ?? 'default'
+                  }
+                  value={llm.userContextTokens ?? ''}
+                  onChange={handleContextTokensChange}
+                  endDecorator={llm.userContextTokens !== undefined && (
+                    <Button size='sm' variant='plain' onClick={handleContextTokensReset}>Reset</Button>
+                  )}
+                  slotProps={{ input: { min: 1 } }}
+                  sx={{ flex: 1 }}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid xs={12} md={6}>
+              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                <FormLabelStart title='Max Output' description='Tokens Override' sx={{ minWidth: 120 }} />
+                <Input
+                  type='number'
+                  variant='outlined'
+                  placeholder={
+                    // NOTE: direct access to the underlying, instead of via getLLMMaxOutputTokens
+                    llm.maxOutputTokens?.toLocaleString() ?? 'default'
+                  }
+                  value={llm.userMaxOutputTokens ?? ''}
+                  onChange={handleMaxOutputTokensChange}
+                  slotProps={{ input: { min: 1 } }}
+                  endDecorator={llm.userMaxOutputTokens !== undefined && (
+                    <Button size='sm' variant='plain' onClick={handleMaxOutputTokensReset}>Reset</Button>
+                  )}
+                  sx={{ flex: 1 }}
+                />
+              </FormControl>
+            </Grid>
+          </Grid>
+
         </Box>}
       </FormControl>
 

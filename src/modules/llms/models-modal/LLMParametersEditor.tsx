@@ -6,6 +6,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
+import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
@@ -109,7 +110,7 @@ const _xaiDateFilterOptions = [
 
 export function LLMParametersEditor(props: {
   // constants
-  maxOutputTokens: number | null,
+  maxOutputTokens: DLLMMaxOutputTokens,
   parameterSpecs: DModelParameterSpec<DModelParameterId>[],
   parameterOmitTemperature?: boolean,
   baselineParameters: DModelParameterValues,
