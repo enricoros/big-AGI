@@ -104,6 +104,13 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (same as 'off')
   } as const,
 
+  llmVndAnt1MContext: {
+    label: '1M Context Window (Beta)',
+    type: 'boolean' as const,
+    description: 'Enable 1M token context window with premium pricing for >200K input tokens',
+    // No initialValue - undefined means off (e.g. default 200K context window)
+  } as const,
+
   llmVndGeminiAspectRatio: {
     label: 'Aspect Ratio',
     type: 'enum' as const,

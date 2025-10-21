@@ -144,6 +144,7 @@ export function LLMParametersEditor(props: {
     llmVndAntThinkingBudget,
     llmVndAntWebSearch,
     llmVndAntWebFetch,
+    llmVndAnt1MContext,
     llmVndGeminiAspectRatio,
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
@@ -287,6 +288,19 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndAntWebFetch: value });
         }}
         options={_antWebFetchOptions}
+      />
+    )}
+
+    {showParam('llmVndAnt1MContext') && (
+      <FormSwitchControl
+        title='1M Context Window (Beta)'
+        description='Enable 1M token context'
+        tooltip='Enables the 1M token context window with premium pricing for &gt;200K input tokens. - https://docs.claude.com/en/docs/build-with-claude/context-windows#1m-token-context-window'
+        checked={!!llmVndAnt1MContext}
+        onChange={checked => {
+          if (!checked) onRemoveParameter('llmVndAnt1MContext');
+          else onChangeParameter({ llmVndAnt1MContext: true });
+        }}
       />
     )}
 

@@ -40,6 +40,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       const anthropicRequest = anthropicAccess(access, '/v1/messages', {
         modelIdForBetaFeatures: model.id,
         vndAntWebFetch: model.vndAntWebFetch === 'auto',
+        vndAnt1MContext: model.vndAnt1MContext === true,
       });
 
       return {

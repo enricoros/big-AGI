@@ -77,6 +77,7 @@ const ModelParameterSpec_schema = z.object({
   paramId: z.enum([
     'llmTopP',
     'llmForceNoStream',
+    'llmVndAnt1MContext',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',
     'llmVndAntWebSearch',
