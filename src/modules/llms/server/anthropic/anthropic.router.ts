@@ -81,6 +81,7 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
 type AnthropicHeaderOptions = {
   modelIdForBetaFeatures?: string;
   vndAntWebFetch?: boolean;
+  vndAnt1MContext?: boolean;
 };
 
 function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, string> {
@@ -98,6 +99,10 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   // Note: web-fetch-2025-09-10 is documented in official API docs but not yet in TypeScript SDK types
   if (options?.vndAntWebFetch)
     betaFeatures.push('web-fetch-2025-09-10');
+
+  // Add beta feature for 1M context window if enabled
+  if (options?.vndAnt1MContext)
+    betaFeatures.push('context-1m-2025-08-07');
 
   // Note: web-search is now GA and no longer requires a beta header
 

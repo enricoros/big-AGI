@@ -16,12 +16,14 @@ const ANT_PAR_WEB_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
 
 export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
 
+  // NOTE: what's not redefined below is inherited from the underlying model definition
+
   // Claude 4.5 models with thinking variants
   'claude-sonnet-4-5-20250929': {
     idVariant: 'thinking',
     label: 'Claude Sonnet 4.5 (Thinking)',
     description: 'Claude Sonnet 4.5 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: ANT_PAR_WEB_THINKING,
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }],
     maxCompletionTokens: 64000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1451 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805-thinking-16k + 1
@@ -63,7 +65,7 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Sonnet 4 (Thinking)',
     description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
-    parameterSpecs: ANT_PAR_WEB_THINKING,
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }],
     maxCompletionTokens: 64000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1400 }, // claude-sonnet-4-20250514-thinking-32k
@@ -94,9 +96,13 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Jul 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
-    parameterSpecs: ANT_PAR_WEB,
-    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50. Using lower tier as base.
-    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
+    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    chatPrice: {
+      input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
+      output: [{ upTo: 200000, price: 15 }, { upTo: null, price: 22.50 }],
+      cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 },
+    },
     benchmark: { cbaElo: 1438 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805 + 1
   },
   {
@@ -147,8 +153,13 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Mar 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
-    parameterSpecs: ANT_PAR_WEB,
-    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
+    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    chatPrice: {
+      input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
+      output: [{ upTo: 200000, price: 15 }, { upTo: null, price: 22.50 }],
+      cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 },
+    },
     benchmark: { cbaElo: 1386 }, // claude-sonnet-4-20250514
   },
 
