@@ -13,6 +13,7 @@ export function PopupPanel(props: { anchorEl: HTMLElement | null }) {
       anchorEl={props.anchorEl} onClose={optimaClosePanel}
       maxHeightGapPx={56 + 24}
       minWidth={280}
+      noAutoFocus={true /* preserves the current behavior, we're not sure where this is used now */}
       placement='bottom-end'
     >
 
