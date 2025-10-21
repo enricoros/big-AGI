@@ -84,6 +84,8 @@ export const useModelsStore = create<LlmsStore>()(persist(
               ...(existing.userHidden !== undefined ? { userHidden: existing.userHidden } : {}),
               ...(existing.userStarred !== undefined ? { userStarred: existing.userStarred } : {}),
               ...(existing.userParameters !== undefined ? { userParameters: { ...existing.userParameters } } : {}),
+              ...(existing.userContextTokens !== undefined ? { userContextTokens: existing.userContextTokens } : {}),
+              ...(existing.userMaxOutputTokens !== undefined ? { userMaxOutputTokens: existing.userMaxOutputTokens } : {}),
             };
           });
         }
@@ -158,12 +160,13 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
     resetLLMUserParameters: (id: DLLMId) =>
       set(({ llms }) => ({
-        llms: llms.map((llm: DLLM): DLLM =>
-          llm.id === id
-            ? { ...llm, userParameters: {} }
-            : llm,
-        ),
-      })),
+        llms: llms.map((llm: DLLM): DLLM => {
+          if (llm.id !== id) return llm;
+          // strip away just the user parameters
+          const { userParameters /*, userContextTokens, userMaxOutputTokens*/, ...rest } = llm;
+          return rest;
+        }),
+    })),
 
     createModelsService: (vendor: IModelVendor): DModelsService => {
 
@@ -259,7 +262,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
       // 0 -> 1: add 'maxOutputTokens' where missing
       if (fromVersion < 1)
         for (const llm of state.llms)
-          if (llm.maxOutputTokens === undefined)
+          if (llm.maxOutputTokens === undefined) // direct access ok
             llm.maxOutputTokens = llm.contextTokens ? Math.round(llm.contextTokens / 2) : null;
 
       // 1 -> 2: large changes
