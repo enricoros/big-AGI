@@ -98,10 +98,16 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
       input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
       output: [{ upTo: 200000, price: 15 }, { upTo: null, price: 22.50 }],
-      cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 },
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }],
+        write: [{ upTo: 200000, price: 3.75 }, { upTo: null, price: 7.50 }],
+        duration: 300
+      },
     },
     benchmark: { cbaElo: 1438 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805 + 1
   },
@@ -155,10 +161,16 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
       input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
       output: [{ upTo: 200000, price: 15 }, { upTo: null, price: 22.50 }],
-      cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 },
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }],
+        write: [{ upTo: 200000, price: 3.75 }, { upTo: null, price: 7.50 }],
+        duration: 300
+      },
     },
     benchmark: { cbaElo: 1386 }, // claude-sonnet-4-20250514
   },
