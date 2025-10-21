@@ -21,7 +21,7 @@ const Popup = styled(Popper)({
  *  - ...
  */
 export function CloseablePopup(props: {
-  menu?: boolean, // whether to render as a MenuList (or as a Box otherwise)
+  menu?: true, // whether to render as a MenuList (or as a Box otherwise)
   anchorEl: HTMLElement | null,
   onClose: () => void,
 
