@@ -6,6 +6,7 @@ import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { getLLMContextTokens } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
@@ -217,8 +218,9 @@ function _initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): C
   const llm = findLLMOrThrow(llmId);
 
   const overrideResponseTokens = llm.maxOutputTokens;
-  const safeInputLength = (llm.contextTokens && overrideResponseTokens)
-    ? Math.floor((llm.contextTokens - overrideResponseTokens) * 2)
+  const llmContextTokens = getLLMContextTokens(llm);
+  const safeInputLength = (llmContextTokens && overrideResponseTokens)
+    ? Math.floor((llmContextTokens - overrideResponseTokens) * 2)
     : null;
 
   return {

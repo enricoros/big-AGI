@@ -9,7 +9,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
-import { DLLMId, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { DLLMId, getLLMContextTokens, isLLMVisible } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
@@ -160,7 +160,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
           </Typography>}
           <Typography level='body-xs'>
             llm id: {llm.id}<br />
-            context tokens: <b>{llm.contextTokens ? llm.contextTokens.toLocaleString() : 'not provided'}</b>{` · `}
+            context tokens: <b>{getLLMContextTokens(llm)?.toLocaleString() ?? 'not provided'}</b>{` · `}
             max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}

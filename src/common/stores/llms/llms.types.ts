@@ -67,6 +67,25 @@ export function isLLMVisible(llm: DLLM): boolean {
   return !(llm.userHidden ?? llm.hidden ?? false);
 }
 
+/**
+ * Returns the effective context token limit for a model.
+ * For Anthropic models with the 1M context parameter enabled, returns 1,000,000.
+ * Otherwise returns the model's standard contextTokens value.
+ */
+export function getLLMContextTokens(llm: DLLM | null): number | null | undefined {
+  if (!llm)
+    return undefined; // undefined if no model
+
+  // [Anthropic, 1M] Check if this is an Anthropic model with 1M context enabled
+  if (llm.vId === 'anthropic') {
+    const vndAnt1MContext = llm.userParameters?.llmVndAnt1MContext ?? llm.initialParameters?.llmVndAnt1MContext;
+    if (vndAnt1MContext === true)
+      return 1_000_000;
+  }
+
+  return llm.contextTokens; // null if unknown
+}
+
 
 /// Interfaces ///
 
