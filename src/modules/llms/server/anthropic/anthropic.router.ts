@@ -194,8 +194,29 @@ export const llmAnthropicRouter = createTRPCRouter({
       const wireModels = await anthropicGETOrThrow(access, undefined, '/v1/models?limit=1000');
       const { data: availableModels } = AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
 
+      // sort by: family (desc) > class (desc) > date (desc) -- Future NOTE: -5- will match -4-5- and -3-5-.. figure something else out
+      const familyPrecedence = ['-4-7-', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
+      const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
+
+      const getFamilyIdx = (id: string) => familyPrecedence.findIndex(f => id.includes(f));
+      const getClassIdx = (id: string) => classPrecedence.findIndex(c => id.includes(c));
+
       // cast the models to the common schema
-      const models = availableModels.reduce((acc, model) => {
+      const models = availableModels
+        .sort((a, b) => {
+          const familyA = getFamilyIdx(a.id);
+          const familyB = getFamilyIdx(b.id);
+          const classA = getClassIdx(a.id);
+          const classB = getClassIdx(b.id);
+
+          // family desc (lower index = better, -1 = unknown goes last)
+          if (familyA !== familyB) return (familyA === -1 ? 999 : familyA) - (familyB === -1 ? 999 : familyB);
+          // class desc
+          if (classA !== classB) return (classA === -1 ? 999 : classA) - (classB === -1 ? 999 : classB);
+          // date desc (newer first) - string comparison works since format is YYYYMMDD
+          return b.id.localeCompare(a.id);
+        })
+        .reduce((acc, model) => {
 
         // find the model description
         const hardcodedModel = hardcodedAnthropicModels.find(m => m.id === model.id);
