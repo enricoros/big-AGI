@@ -314,6 +314,7 @@ export function Telephone(props: {
   const isMicEnabled = recognitionState.isAvailable;
   const isTTSEnabled = true;
   const isEnabled = isMicEnabled && isTTSEnabled;
+  const micErrorMessage = recognitionState.errorMessage;
 
 
   return <>
@@ -350,7 +351,7 @@ export function Telephone(props: {
       callerName={isConnected ? undefined : personaName}
       statusText={isRinging ? '' /*'is calling you'*/ : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
       regardingText={chatTitle}
-      micError={!isMicEnabled} speakError={!isTTSEnabled}
+      micError={!isMicEnabled} micErrorMessage={micErrorMessage} speakError={!isTTSEnabled}
     />
 
     {/* Live Transcript, w/ streaming messages, audio indication, etc. */}
