@@ -418,6 +418,7 @@ export namespace OpenAIWire_API_Chat_Completions {
       reasoning_tokens: z.number().optional(), // [Discord, 2024-04-10] reported missing
       // text_tokens: z.number().optional(), // [Discord, 2024-04-10] revealed as present on custom OpenAI endpoint - not using it here yet
       audio_tokens: z.number().optional(), // [OpenAI, 2024-10-01] audio tokens used in the completion (charged at a different rate)
+      // image_tokens: z.number().optional(), // [OpenRouter, 2025-10-22] first seen.. sounds likely?
       accepted_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
       rejected_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
     }).optional() // not present in other APIs yet
@@ -427,13 +428,25 @@ export namespace OpenAIWire_API_Chat_Completions {
     prompt_cache_hit_tokens: z.number().optional(),
     prompt_cache_miss_tokens: z.number().optional(),
 
-    // [Perplexity, 2025-10-20] cost breakdown
-    cost: z.looseObject({
-      input_tokens_cost: z.number().optional(),
-      output_tokens_cost: z.number().optional(),
-      request_cost: z.number().optional(),
-      total_cost: z.number().optional(),
-    }).nullish(),
+    // [Perplexity, 2025-10-20] cost breakdown (object format)
+    // [OpenRouter, 2025-01-22] cost as direct number
+    cost: z.union([
+      z.number(), // OpenRouter sends cost as a number directly
+      z.looseObject({
+        input_tokens_cost: z.number().optional(),
+        output_tokens_cost: z.number().optional(),
+        request_cost: z.number().optional(),
+        total_cost: z.number().optional(),
+      }),
+    ]).nullish(),
+
+    // [OpenRouter, 2025-10-22] additional usage fields when used with Chutes
+    // is_byok: z.boolean().optional(), // Bring Your Own Key indicator
+    // cost_details: z.object({
+    //   upstream_inference_cost: z.number().optional(),
+    //   upstream_inference_prompt_cost: z.number().optional(),
+    //   upstream_inference_completions_cost: z.number().optional(),
+    // }).optional(),
   }).nullable();
 
   /**
