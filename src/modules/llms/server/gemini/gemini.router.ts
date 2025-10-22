@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 import { env } from '~/server/env';
 
 import packageJson from '../../../../../package.json';
@@ -36,7 +37,7 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
   // update model-dependent paths
   if (apiPath.includes('{model=models/*}')) {
     if (!modelRefId)
-      throw new Error(`geminiAccess: modelRefId is required for ${apiPath}`);
+      throw new TRPCError({ code: 'BAD_REQUEST', message: `geminiAccess: modelRefId is required for ${apiPath}` });
     apiPath = apiPath.replace('{model=models/*}', modelRefId);
   }
 
