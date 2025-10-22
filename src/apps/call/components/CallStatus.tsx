@@ -16,7 +16,7 @@ export function CallStatus(props: {
   callerName?: string,
   statusText: string,
   regardingText: string | null,
-  micError: boolean, speakError: boolean,
+  micError: boolean, micErrorMessage: string | null, speakError: boolean,
   // llmComponent?: React.JSX.Element,
 }) {
   return (
@@ -37,7 +37,7 @@ export function CallStatus(props: {
       </Typography>}
 
       {props.micError && <InlineError
-        severity='danger' error='Looks like this Browser may not support speech recognition. You can try Chrome on Windows or Android instead.' />}
+        severity='danger' error={props.micErrorMessage || 'Looks like this Browser may not support speech recognition. You can try Chrome on Windows or Android instead.'} />}
 
       {props.speakError && <InlineError
         severity='danger' error='Text-to-speech does not appear to be configured. Please set it up in Preferences > Voice.' />}
