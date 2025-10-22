@@ -38,14 +38,26 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let groundingIndexNumber = 0;
 
   // this can throw, it's caught by the caller
-  return function(pt: IParticleTransmitter, eventData: string): void {
+  return function(pt: IParticleTransmitter, rawEventData: string): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // Throws on malformed event data
-    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+    const eventData = JSON.parse(rawEventData);
+
+    // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message
+    if (eventData?.candidates?.length === 1) {
+      const candidate = eventData.candidates[0];
+      if (typeof candidate.finishReason === 'string' && candidate.finishReason.includes('503 Service Unavailable') /*candidate.finishReason.startsWith('Proxy error')*/) {
+        // pt.setTokenStopReason('cg-issue');
+        return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${candidate.finishReason}`, null);
+      }
+    }
+
+    // Validate schema and parse
+    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(eventData);
 
     // -> Model
     if (generationChunk.modelVersion && !sentActualModelName) {
