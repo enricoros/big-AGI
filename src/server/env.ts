@@ -2,6 +2,12 @@
 import { createEnv } from '../modules/3rdparty/t3-env';
 import * as z from 'zod/v4';
 
+
+// Helper to make some variables required only in production
+const isProd = process.env.NODE_ENV === 'production';
+const requireOnProd = isProd ? z.string() : z.string().optional();
+
+
 export const env = createEnv({
 
   /*

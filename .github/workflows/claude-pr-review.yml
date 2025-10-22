@@ -1,0 +1,77 @@
+name: Claude Code PR Review
+
+on:
+  pull_request:
+    types: [ opened, synchronize, ready_for_review ]
+
+    # Limit branches
+    branches: [ main, dev, v1 ]
+
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "src/**/*.ts"
+    #   - "src/**/*.tsx"
+
+jobs:
+  claude-pr-review:
+    # Skip draft PRs
+    # Optional: filter authors: github.event.pull_request.user.login != 'enricoros'
+    if: |
+      github.event.pull_request.draft == false
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: read # Required for Claude to read CI results on PRs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run PR Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Security: Allow any user to trigger reviews (read-only PR analysis is safe)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: '*'
+          # track_progress: true # Enables tracking comments
+
+          # This setting allows Claude to read CI results on PRs
+          additional_permissions: |
+            actions: read
+
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Please review this pull request and provide feedback on:
+            - Potential bugs or issues
+            - Adherence to Big-AGI architecture and design patterns
+            - Code quality and best practices, including TypeScript types, error handling, and edge cases
+            - Performance considerations: bundle size, React patterns, streaming efficiency
+            - Security concerns if applicable
+
+            Use the repository's CLAUDE.md for guidance on style and conventions.
+
+            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            Use `gh pr review comment` for inline suggestions on specific lines.
+
+            IMPORTANT: After completing your review, always add the 'claude-review' label to the PR to indicate it was reviewed by Claude:
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "claude-review"
+
+            Be constructive, helpful, no-BS, and specific with file:line references.
+
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
+          claude_args: |
+            --model claude-sonnet-4-5-20250929
+            --max-turns 100
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools"

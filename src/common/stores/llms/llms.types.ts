@@ -26,7 +26,7 @@ export interface DLLM {
   created: number | 0;
   updated?: number | 0;
   description: string;
-  hidden: boolean;                  // hidden from UI selectors
+  hidden: boolean;                  // default hidden state (can change underlying between refreshes)
 
   // hard properties (overwritten on update)
   contextTokens: number | null;     // null: must assume it's unknown
@@ -49,6 +49,41 @@ export interface DLLM {
   userHidden?: boolean;
   userStarred?: boolean;
   userParameters?: DModelParameterValues; // user has set these parameters
+}
+
+/**
+ * Computes the effective visibility of a model, respecting user overrides.
+ * Returns true if the model should be hidden from UI selectors.
+ *
+ * Logic: userHidden takes precedence if set, otherwise falls back to the vendor's hidden value.
+ * This allows users to override vendor defaults while still adopting new vendor visibility changes
+ * for models they haven't explicitly shown/hidden.
+ */
+export function isLLMHidden(llm: DLLM): boolean {
+  return llm.userHidden ?? llm.hidden ?? false;
+}
+
+export function isLLMVisible(llm: DLLM): boolean {
+  return !(llm.userHidden ?? llm.hidden ?? false);
+}
+
+/**
+ * Returns the effective context token limit for a model.
+ * For Anthropic models with the 1M context parameter enabled, returns 1,000,000.
+ * Otherwise returns the model's standard contextTokens value.
+ */
+export function getLLMContextTokens(llm: DLLM | null): number | null | undefined {
+  if (!llm)
+    return undefined; // undefined if no model
+
+  // [Anthropic, 1M] Check if this is an Anthropic model with 1M context enabled
+  if (llm.vId === 'anthropic') {
+    const vndAnt1MContext = llm.userParameters?.llmVndAnt1MContext ?? llm.initialParameters?.llmVndAnt1MContext;
+    if (vndAnt1MContext === true)
+      return 1_000_000;
+  }
+
+  return llm.contextTokens; // null if unknown
 }
 
 

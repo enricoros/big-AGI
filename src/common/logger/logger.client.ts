@@ -102,7 +102,7 @@ class LoggerImplementation implements ClientLogger {
 
     // Send error/critical logs to PostHog for monitoring
     if ((level === 'error' || level === 'critical') && !finalOptions.skipReporting)
-      this.#sendToPostHog(level, message, originalDetails, finalSource);
+      this.#sendToPostHogIfError(level, message, originalDetails, finalSource);
 
     return this._actions._addEntry({
       level,
@@ -113,7 +113,7 @@ class LoggerImplementation implements ClientLogger {
     });
   }
 
-  #sendToPostHog(level: LogLevel, message: string, originalDetails: any, finalSource: LogSource): void {
+  #sendToPostHogIfError(level: LogLevel, message: string, originalDetails: any, finalSource: LogSource): void {
     try {
       // Find actual Error objects in original details (before serialization)
       let error: Error | undefined;
@@ -121,15 +121,19 @@ class LoggerImplementation implements ClientLogger {
         error = originalDetails;
       else if (originalDetails?.error instanceof Error)
         error = originalDetails.error;
+      // If no Error object, create one with the log message so PostHog has something to track
+      // else
+      //   error = new Error(message);
 
       // Only send to PostHog if we have a real Error with stack trace
       if (error) {
         posthogCaptureException(error, {
-          $exception_domain: 'client-logger',
-          level: level,
-          source: finalSource,
-          message: message,
-          ...(originalDetails && typeof originalDetails === 'object' && !(originalDetails instanceof Error) ? originalDetails : {})
+          agi_domain: 'client-logger',
+          agi_runtime: 'browser',
+          component: finalSource,
+          severity: level,
+          log_message: message,
+          ...(originalDetails && typeof originalDetails === 'object' && !(originalDetails instanceof Error) ? originalDetails : {}),
         });
       }
     } catch (phError) {

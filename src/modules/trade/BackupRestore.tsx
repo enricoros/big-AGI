@@ -1,5 +1,3 @@
-// noinspection ExceptionCaughtLocallyJS
-
 import * as React from 'react';
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
@@ -21,7 +19,7 @@ import { downloadBlob } from '~/common/util/downloadUtils';
 const BACKUP_FILE_FORMAT = 'Big-AGI Flash File';
 const BACKUP_FORMAT_VERSION = '1.2';
 const BACKUP_FORMAT_VERSION_NUMBER = 102000;
-const WINDOW_RELOAD_DELAY = 200;
+const WINDOW_RELOAD_DELAY = 300;
 const EXCLUDED_LOCAL_STORAGE_KEYS = [
   'agi-logger-log', // the log cannot be restored as it's in-mem and being persisted while this is running
 ];
@@ -269,7 +267,7 @@ async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
 }
 
 async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
-  // expected local DBs to restore over, from the latest `v2-dev` (2025-05-14)
+  // expected local DBs to restore over, from the latest `main` (was: `v2-dev`, 2025-05-14)
   const dbTargetVersions: { [dbName: string]: number } = {
     'keyval-store': 1,
     'Big-AGI': 10, // Dexie multiplied the version (1) by 10 (https://github.com/dexie/Dexie.js/issues/59)
@@ -695,14 +693,28 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       try {
         data = JSON.parse(content);
       } catch (error) {
-        throw new Error(`Restore failed: Invalid JSON in Flash file: ${_getErrorText(error)}`);
+        // User selected invalid JSON - this is expected, not a system error
+        setRestoreState('error');
+        setErrorMessage(`Invalid JSON in Flash file: ${_getErrorText(error)}`);
+        logger.warn('User selected non-JSON file for restore', { error }, undefined, { skipReporting: true });
+        return;
       }
 
       // validations
-      if (!isValidBackup(data))
-        throw new Error(`Invalid Flash file format. This does not appear to be a valid ${BACKUP_FILE_FORMAT}.`);
-      if (data.metadata.application !== 'Big-AGI' || !data.storage.indexedDB || !data.storage.localStorage)
-        throw new Error(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
+      if (!isValidBackup(data)) {
+        // User selected wrong file format - this is expected, not a system error
+        setRestoreState('error');
+        setErrorMessage(`Invalid Flash file format. This does not appear to be a valid ${BACKUP_FILE_FORMAT}.`);
+        logger.warn('User selected invalid backup file format', { data: { hasMetadata: !!data?.metadata, hasStorage: !!data?.storage } }, undefined, { skipReporting: true });
+        return;
+      }
+      if (data.metadata.application !== 'Big-AGI' || !data.storage.indexedDB || !data.storage.localStorage) {
+        // User selected incompatible file - this is expected, not a system error
+        setRestoreState('error');
+        setErrorMessage(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
+        logger.warn('User selected incompatible backup file', { application: data.metadata.application }, undefined, { skipReporting: true });
+        return;
+      }
 
       // load data purely into state, and ready for confirmation
       setBackupDataForRestore(data);
@@ -711,7 +723,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       setRestoreLocalStorageEnabled(false);
       setRestoreIndexedDBEnabled(false);
     } catch (error: any) {
-      logger.error('Restore preparation failed:', error);
+      // Unexpected system errors only
+      logger.error('Unexpected error during restore preparation:', error);
       setRestoreState('error');
       setErrorMessage(`Restore failed: ${_getErrorText(error)}`);
     }
@@ -755,19 +768,23 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       if (!restoreLocalStorageEnabled && !restoreIndexedDBEnabled)
         throw new Error('No data was selected for restore. Please select at least one option.');
 
+      // 3. Close the modal cleanly first to prevent React DOM errors during unmount
+      // Set state to idle and clear backup data to trigger modal close
       setRestoreState('success');
 
-      // 3. Alert and reload
+      // 3. Alert and reload - Close modal first, then wait for storage flush and DOM cleanup
+      setBackupDataForRestore(null);
+
+      // 4. Wait for React to complete the modal unmount and storage to flush
       setTimeout(() => {
         alert('Backup restored successfully.\n\nThe application will now reload to apply the changes.');
         window.location.reload();
-      }, WINDOW_RELOAD_DELAY);
+      }, WINDOW_RELOAD_DELAY); // 300ms allows modal to unmount and storage to flush
 
     } catch (error: any) {
       logger.error('Restore operation failed:', error);
       setRestoreState('error');
       setErrorMessage(`Restore failed: ${_getErrorText(error)}`);
-    } finally {
       setBackupDataForRestore(null);
     }
   }, [backupDataForRestore, restoreIndexedDBEnabled, restoreLocalStorageEnabled]);
@@ -816,7 +833,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
 
     {/* Confirmation Dialog */}
     <GoodModal
-      title={`Confirm ${Release.App.versionName} Restore`}
+      title={`Confirm Restore`}
       strongerTitle
       dividers
       hideBottomClose

@@ -107,6 +107,7 @@ export function BlockEdit_TextFragment(props: {
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
+      e.stopPropagation(); // prevents the global shortcut, e.g. closing beam after this
       onEscapePressed();
     }
   }, [enterIsNewline, isControlled, onEscapePressed, onSubmit, props.enableRestart]);

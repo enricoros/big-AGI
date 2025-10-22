@@ -12,10 +12,9 @@ name: Create and publish Docker images
 on:
   push:
     branches:
-      - v2-dev
-      #- v1-stable  # Disabled as the v* tag is used for stable releases
+      - main          # Primary branch (Big-AGI Open)
     tags:
-      - 'v*'  # Trigger on version tags (e.g., v1.7.0)
+      - 'v2.*'        # Stable releases (v2.0.0, v2.1.0, etc.)
 
 env:
   REGISTRY: ghcr.io
@@ -54,14 +53,21 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=development,enable=${{ github.ref == 'refs/heads/v2-dev' }} # For v2-dev branch
-            type=raw,value=stable,enable=${{ github.ref == 'refs/heads/v1-stable' }}
-            type=ref,event=tag  # Use the tag name as a tag for tag builds
-            type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
-            type=sha,format=short,prefix=sha- # Just in case none of the above applies
+            # Development: main branch
+            type=raw,value=development,enable=${{ github.ref == 'refs/heads/main' }}
+
+            # Latest: v2.x releases (safe default)
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v2.') }}
+
+            # Stable: v2.x releases (alias)
+            type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/v2.') }}
+
+            # Version tags (v2.0.0, 2.0.0)
+            type=ref,event=tag
+            type=semver,pattern={{version}}
           labels: |
-            org.opencontainers.image.title=Big-AGI
-            org.opencontainers.image.description=Generative AI suite powered by state-of-the-art models
+            org.opencontainers.image.title=Big-AGI Open
+            org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.documentation=https://big-agi.com
 

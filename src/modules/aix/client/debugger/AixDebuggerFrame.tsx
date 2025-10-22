@@ -94,8 +94,9 @@ export function AixDebuggerFrame(props: {
 
       {/* Body */}
       <Card variant='soft' color='primary' sx={_styles.requestCard}>
-        <Typography color='primary' variant='soft' level='title-sm'>
-          -&gt; Body
+        <Typography color='primary' variant='soft' level='title-sm' sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>-&gt; Body</span>
+          {frame.bodySize > 0 && <span>{frame.bodySize.toLocaleString()} bytes</span>}
         </Typography>
         <Divider />
         <Box sx={_styles.requestCardText}>

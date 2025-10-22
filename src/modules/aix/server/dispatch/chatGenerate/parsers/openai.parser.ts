@@ -7,6 +7,7 @@ import type { IParticleTransmitter } from '../IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
+import { calculateDurationMs, createWAVFromPCM } from './gemini.audioutils';
 
 
 /**
@@ -51,9 +52,15 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         arguments: string | null;
       };
     }[];
+    audio: null | {
+      id: string | null;
+      data: string; // accumulated base64 audio data
+      transcript: string;
+    };
   } = {
     content: null,
     tool_calls: [],
+    audio: null,
   };
 
   return function(pt: IParticleTransmitter, eventData: string) {
@@ -205,6 +212,26 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         pt.appendAutoText_weak(delta.content);
 
       }
+
+      // [Mistral, 2025-10-15] SPEC-VIOLATION Text (array format from Mistral thinking models)
+      else if (Array.isArray(delta.content)) {
+        for (const contentBlock of delta.content)
+          if (contentBlock.type === 'thinking' && Array.isArray(contentBlock.thinking)) {
+            // Extract text from thinking blocks and send as reasoning
+            for (const thinkingPart of contentBlock.thinking)
+              if (thinkingPart.type === 'text' && typeof (thinkingPart.text as unknown) === 'string') {
+                pt.appendReasoningText(thinkingPart.text);
+                deltaHasReasoning = true;
+              } else {
+                // Handle other thinking part types if necessary
+                console.log('AIX: OpenAI-dispatch: unexpected thinking part type from Mistral:', thinkingPart);
+              }
+          } else {
+            // Handle other content types if necessary
+            console.log('AIX: OpenAI-dispatch: unexpected content block type from Mistral:', contentBlock);
+          }
+      }
+
       // 2025-03-26: we don't have the full concurrency combinations of content/reasoning/reasoning_content yet
       // if (delta.content !== undefined && delta.content !== null)
       //   throw new Error(`unexpected delta content type: ${typeof delta.content}`);
@@ -262,6 +289,45 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
           console.log('AIX: OpenAI-dispatch: unexpected annotations:', delta.annotations);
         }
 
+      }
+
+      // [OpenAI, 2024-10-17] delta: Audio (streaming)
+      if (delta.audio) {
+
+        // NOTE: this is a bit convoluted because the presence/absence of fields indicates 'begin/middle/end'
+        if (delta.audio.id && !delta.audio.data) {
+          // First chunk: id + maybe data
+          if (accumulator.audio?.data.length)
+            console.warn('[OpenAI] Starting new audio stream while previous stream has data');
+          accumulator.audio = {
+            id: delta.audio.id,
+            data: delta.audio.data || '',
+            transcript: '',
+          };
+        }
+
+        // Middle chunks
+        if (accumulator.audio) {
+          const acc = accumulator.audio;
+          if (delta.audio.data) acc.data += delta.audio.data;
+          if (delta.audio.transcript) acc.transcript += delta.audio.transcript;
+
+          // Ending chunk
+          if (delta.audio.expires_at) {
+            if (acc.data?.length) {
+              try {
+                // OpenAI sends PCM16 audio data that needs to be converted to WAV
+                const a = openaiConvertPCM16ToWAV(acc.data);
+                pt.appendAudioInline(a.mimeType, a.base64Data, acc.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
+              } catch (error) {
+                console.warn('[OpenAI] Failed to process streaming audio:', error);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+              }
+            } else
+              console.warn('[OpenAI] Ignoring audio expires_at without a valid audio stream');
+
+          }
+        }
       }
 
       // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
@@ -373,6 +439,18 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           console.log('AIX: OpenAI-dispatch-NS unexpected annotations:', message.annotations);
         }
 
+      }
+
+      // [OpenAI, 2024-10-17] message: Audio output (non-streaming only)
+      if (message.audio && typeof message.audio === 'object' && 'data' in message.audio) {
+        try {
+          // OpenAI sends PCM16 audio data that needs to be converted to WAV
+          const a = openaiConvertPCM16ToWAV(message.audio.data);
+          pt.appendAudioInline(a.mimeType, a.base64Data, message.audio.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
+        } catch (error) {
+          console.warn('[OpenAI] Failed to process audio:', error);
+          pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+        }
       }
 
     } // .choices[]
@@ -496,6 +574,12 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
 
   // TODO: Output breakdown: Audio
 
+  // Upstream Cost Reporting
+
+  // [Perplexity, 2025-10-20]
+  if (!!usage.cost && typeof usage.cost === 'object' && 'total_cost' in usage.cost && typeof usage.cost.total_cost === 'number')
+    metricsUpdate.$cReported = Math.round(usage.cost.total_cost * 100 * 10000) / 10000;
+
   // Time Metrics
 
   if (timeToFirstEvent !== undefined)
@@ -534,4 +618,30 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic);
   return true;
+}
+
+
+/** Convert OpenAI PCM16 audio to WAV format - 24kHz sample rate, 1 channel (mono), 16 bits per sample */
+function openaiConvertPCM16ToWAV(base64PCMData: string): {
+  mimeType: string;
+  base64Data: string;
+  durationMs: number;
+} {
+  // OpenAI 'pcm16' audio format: PCM16, 24kHz, mono
+  const format = {
+    sampleRate: 24000,
+    channels: 1,
+    bitsPerSample: 16,
+  };
+
+  const pcmBuffer = Buffer.from(base64PCMData, 'base64');
+
+  const wavBuffer = createWAVFromPCM(pcmBuffer, format);
+  const durationMs = calculateDurationMs(pcmBuffer.length, format);
+
+  return {
+    mimeType: 'audio/wav',
+    base64Data: wavBuffer.toString('base64'),
+    durationMs,
+  };
 }

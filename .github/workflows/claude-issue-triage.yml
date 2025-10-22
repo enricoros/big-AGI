@@ -1,0 +1,71 @@
+name: Claude Code Auto-Triage Issues
+
+on:
+  issues:
+    types: [ opened, assigned ]
+
+jobs:
+  claude-issue-triage:
+    # Optional: Skip for bot users and direct mentions in the body (handled by claude-dm.yml)
+    if: |
+      github.event.issue.user.type != 'Bot' &&
+      !contains(github.event.issue.body, '@claude')
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Analyze issue and provide help
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Security: Allow any user to trigger triage (automated issue help is safe)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: '*'
+          # track_progress: true # Enables tracking comments
+
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE NUMBER: #${{ github.event.issue.number }}
+
+            A user has reported an issue. Please help them by:
+
+            1. Deep think about the issue:
+               **Understand the problem**: Analyze the issue description and any error messages
+               **Search for context**:
+               - Use the repository's CLAUDE.md for high level guidance and especially kb/ documentation
+               - Look in relevant code files, including kb/ documentation
+               **Use web search**: When potentially outside Big-AGI (e.g. user configuration), search the web for similar errors or related issues
+               **Provide a solution**:
+               - Provide multiple solutions if uncertain, and say so
+               - If you can fix it in code, propose the fix
+                 - If possible also suggest fixes or workarounds for immediate relief
+               - Reference specific files and line numbers
+               - Test selectively and even npm install and run build if needed to verify the solution
+            2. Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
+            3. Comment with:
+               - Very brief thank you note, if applicable
+               - Initial assessment
+               - Next steps or clarification needed
+               - Link duplicates if found
+            
+            If you're uncertain, say so and suggest next steps.
+            Be welcoming, helpful, professional, solution-focused and no-BS.
+
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
+          claude_args: |
+            --model claude-sonnet-4-5-20250929
+            --max-turns 60
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"

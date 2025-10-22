@@ -3,10 +3,11 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 
 // dev options
-const DEV_DEBUG_GEMINI_MODELS = true;
+const DEV_DEBUG_GEMINI_MODELS = (Release.TenantSlug as any) === 'staging' || Release.IsNodeDevBuild;
 
 
 // supported interfaces
@@ -153,7 +154,10 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Pro',
     chatPrice: gemini25ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1455 }, // gemini-2.5-pro (updated from CSV)
   },
   {
@@ -207,7 +211,10 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25FlashPreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1424 + 1 }, // FALLBACK-UNTIL-AVAILABLE: models/gemini-2.5-flash-preview-05-20 + 1
   },
   {
@@ -216,7 +223,10 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Flash',
     chatPrice: gemini25FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1407 }, // gemini-2.5-flash (updated from CSV)
   },
   {
@@ -242,12 +252,20 @@ const _knownGeminiModels: ({
 
   // 2.5 Flash Image Preview
   {
-    id: 'models/gemini-2.5-flash-image-preview',
-    // labelOverride: 'Nano Banana',
+    id: 'models/gemini-2.5-flash-image',
     labelOverride: 'Nano Banana',
-    // labelOverride: 'Gemini 2.5 Flash Image Preview',
+    chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
+    parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' }],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+  // 2.5 Flash Image Preview
+  {
+    hidden: true, // superseded by 'models/gemini-2.5-flash-image'
+    id: 'models/gemini-2.5-flash-image-preview',
+    labelOverride: 'Gemini 2.5 Flash Image Preview', // default is Nano Banana
     isPreview: true,
-    chatPrice: { input: 0.30, output: 0.039 }, // Per pricing page: $0.30 text/image input, $0.039 per image output
+    chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
@@ -286,7 +304,10 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25FlashLitePreviewPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1310 + 1 }, // FALLBACK-UNTIL-AVAILABLE: models/gemini-2.5-flash-lite-preview-06-17 + 1
   },
   // 2.5 Flash-Lite (Stable) - Released July 2025
@@ -296,7 +317,10 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Flash-Lite',
     chatPrice: gemini25FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
     benchmark: { cbaElo: 1310 }, // Based on 2.0 Flash-Lite performance
   },
   // 2.5 Flash-Lite Preview (oldest version, superseded)
@@ -423,6 +447,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-001',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
     benchmark: { cbaElo: 1355 },
   },
   {
@@ -431,6 +456,7 @@ const _knownGeminiModels: ({
     // copied from symlink
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
     benchmark: { cbaElo: 1354 },
   },
 
@@ -588,7 +614,7 @@ export function geminiDevCheckForSuperfluousModels_DEV(apiModelIds: string[]): v
     // find editorial models which aren't present in the API response anymore
     const missingModels = expectedModelIds.filter(id => !apiModelIds.includes(id));
     if (missingModels.length > 0)
-      console.warn(`Gemini: superfluous model definitions: [ ${missingModels.join(', ')} ]`);
+      console.log(`[DEV] Gemini: superfluous model definitions: [ ${missingModels.join(', ')} ]`);
 
   }
 
@@ -608,7 +634,7 @@ export function geminiDevCheckForParserMisses_DEV(wireModels: unknown, parsedMod
 
     // ensure wireModels has .models array
     if (!wireModels || !Array.isArray((wireModels as any)?.models)) {
-      console.warn('[DEV] Gemini: wireModels.models is not an array', wireModels);
+      console.log('[DEV] Gemini: wireModels.models is not an array', wireModels);
       return;
     }
 
@@ -616,7 +642,7 @@ export function geminiDevCheckForParserMisses_DEV(wireModels: unknown, parsedMod
     const wireModelsJson = JSON.stringify((wireModels as any).models);
     const parsedModelsJson = JSON.stringify(parsedModels);
     if (wireModelsJson !== parsedModelsJson)
-      console.warn('[DEV] Gemini: wireModels and parsedModels do not match!', wireModelsJson, parsedModelsJson);
+      console.log('[DEV] Gemini: wireModels and parsedModels do not match!', wireModelsJson, parsedModelsJson);
 
   }
 
@@ -644,6 +670,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-2.5-flash-preview-09',
   'models/gemini-2.5-flash',
   'models/gemini-2.5-flash-image',
+  'models/gemini-2.5-flash-image-preview',
   'models/gemini-2.5-flash-preview',
   'models/gemini-2.5-flash-',
   'models/gemini-2.5-flash-preview-tts',
@@ -725,7 +752,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   const hasChatInterfaces = supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
   if (!hasChatInterfaces) {
     if (DEV_DEBUG_GEMINI_MODELS)
-      console.warn(`geminiModelToModelDescription: no chat interfaces (${supportedGenerationMethods.join(', ')}) for model ${modelId} (${displayName}) - skipping.`);
+      console.log(`[DEV] geminiModelToModelDescription: no chat interfaces (${supportedGenerationMethods.join(', ')}) for model ${modelId} (${displayName}) - skipping.`);
     return null; // skip models without chat interfaces
   }
 
@@ -733,7 +760,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   // find known manual mapping
   const knownModel = _knownGeminiModels.find(m => m.id === modelId);
   if (!knownModel && DEV_DEBUG_GEMINI_MODELS)
-    console.warn('geminiModelToModelDescription: unknown model', modelId, geminiModel);
+    console.log('[DEV] geminiModelToModelDescription: unknown model', modelId, geminiModel);
 
   // _delete logic removed - models are now physically removed from the list
   // if (knownModel?._delete)

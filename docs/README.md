@@ -65,7 +65,6 @@ For deploying a custom big-AGI instance:
 ## Community & Support
 
 - Visit our [GitHub repository](https://github.com/enricoros/big-AGI) for source code and issue tracking
-- Check the latest updates in the [Changelog](changelog.md) or in-app [News](https://get.big-agi.com/news)
 - Join our [Discord](https://discord.gg/MkH4qj2Jp9) for discussions and help
 
 Let's build something great.

@@ -7,12 +7,13 @@ export function aixClientDebugger_init(contextInfo: AixClientDebugger.Context): 
 
 export function aixClientDebugger_setRequest(
   frameId: AixFrameId,
-  request: { url: string, headers: string, body: string },
+  request: { url: string, headers: string, body: string, bodySize: number },
 ): void {
   useAixClientDebuggerStore.getState().setRequest(frameId, {
     url: request.url,
     headers: request.headers,
     body: request.body,
+    bodySize: request.bodySize,
   });
 }
 

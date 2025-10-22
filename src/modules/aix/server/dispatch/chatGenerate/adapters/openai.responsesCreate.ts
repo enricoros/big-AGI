@@ -23,7 +23,14 @@ type TRequestTool = OpenAIWire_Responses_Tools.Tool;
  * - much side functionality is not implemented yet
  * - testing with o3-pro only for now
  */
-export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIResponses(
+  openAIDialect: OpenAIDialects,
+  model: AixAPI_Model,
+  _chatGenerate: AixAPIChatGenerate_Request,
+  jsonOutput: boolean,
+  streaming: boolean,
+  enableResumability: boolean,
+): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -74,7 +81,8 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     // text: ... below
 
     // API state management
-    store: false, // default would be 'true'
+    /** Default for resumability is true, however we set it to false unless explicitly requested. */
+    store: enableResumability ?? false, // enable storage for resumability if requested
     // previous_response_id: undefined,
 
     // API options
@@ -110,9 +118,16 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     };
   }
 
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
   // Tool: Web Search: for search and deep research models
   const requestWebSearchTool = hotFixForceWebSearchTool || !!model.vndOaiWebSearchContext || !!model.userGeolocation;
-  if (requestWebSearchTool) {
+  if (requestWebSearchTool && !skipHostedToolsDueToCustomTools) {
     /**
      * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search_preview' is not supported with gpt-5-mini-2025-08-07"
      *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
@@ -148,7 +163,7 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
 
   // Tool: Image Generation: configurable per model
   const requestImageGenerationTool = !!model.vndOaiImageGeneration;
-  if (requestImageGenerationTool) {
+  if (requestImageGenerationTool && !skipHostedToolsDueToCustomTools) {
     if (isDialectAzure) {
       // Azure OpenAI may not support image generation tool yet
       console.log('[DEV] Azure OpenAI Responses: skipping image generation tool due to Azure limitations');
@@ -171,9 +186,12 @@ export function aixToOpenAIResponses(openAIDialect: OpenAIDialects, model: AixAP
     }
   }
 
+
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
-  if (model.vndOaiRestoreMarkdown)
+  const skipMarkdownDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  if (model.vndOaiRestoreMarkdown && !skipMarkdownDueToCustomTools)
     vndOaiRestoreMarkdown(payload);
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   // this includes stripping 'undefined' fields
@@ -229,6 +247,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
 
   let allowUserAppend = true;
+
   function userMessage() {
     // Ensure the last message is a user message, or create a new one
     let lastMessage = chatMessages.length ? chatMessages[chatMessages.length - 1] : undefined;
@@ -479,11 +498,6 @@ function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[]): NonNullable<T
       case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
 
-      case 'vnd.ant.tools.bash_20241022':
-      case 'vnd.ant.tools.computer_20241022':
-      case 'vnd.ant.tools.text_editor_20241022':
-        throw new Error('Different Vendor Tools are not supported by OpenAI');
-
       default:
         // const _exhaustiveCheck: never = itdType;
         throw new Error(`OpenAI (Responses API) unsupported tool: ${itdType}`);
@@ -510,12 +524,12 @@ function _toOpenAIResponsesToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TR
 
 /**
  * Adds GPT-5 specific markdown instructions to Responses API payload.
- * 
- * Background: 
+ *
+ * Background:
  * GPT-5 benefits from explicit markdown formatting guidance per the GPT-5 prompting guide.
  * This function adds the recommended markdown instructions to the instructions field.
- * 
- * References: 
+ *
+ * References:
  * - GPT-5 prompting guide markdown section
  */
 export function vndOaiRestoreMarkdown(payload: TRequest) {

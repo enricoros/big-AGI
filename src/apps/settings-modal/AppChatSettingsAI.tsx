@@ -144,7 +144,6 @@ export function AppChatSettingsAI() {
       options={_tokenCountingMethodOptions}
       value={tokenCountingMethod}
       onChange={setTokenCountingMethod}
-      selectSx={{ minWidth: 140 }}
     />
 
     <FormSelectControl
@@ -153,7 +152,6 @@ export function AppChatSettingsAI() {
       options={_keepThinkingBlocksOptions}
       value={chatKeepLastThinkingOnly ? 'last-only' : 'all'}
       onChange={(value) => setChatKeepLastThinkingOnly(value === 'last-only')}
-      selectSx={{ minWidth: 140 }}
     />
 
     <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>

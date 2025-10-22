@@ -1,7 +1,10 @@
 import * as React from 'react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Sheet, Typography } from '@mui/joy';
+
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, ColorPaletteProp, Container, Grid, Sheet, Typography, VariantProp } from '@mui/joy';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -12,10 +15,10 @@ import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { Release } from '~/common/app.release';
 import { animationColorBlues, animationColorRainbow } from '~/common/util/animUtils';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
-import { NewsItems } from './news.data';
+import { BigAgiProNewsCallout, bigAgiProUrl } from './bigAgiPro.data';
+import { DevNewsItem, newsFrontendTimestamp, NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
 
 
@@ -23,8 +26,6 @@ import { beamNewsCallout } from './beam.data';
 const NEWS_INITIAL_COUNT = 3;
 const NEWS_LOAD_STEP = 2;
 
-
-const _frontendBuild = Release.buildInfo('frontend');
 
 export const newsRoadmapCallout =
   <Card variant='solid' invertedColors>
@@ -94,6 +95,80 @@ function BuildInfoSheet() {
   );
 }
 
+
+function NewsCard(props: {
+  newsItem: typeof NewsItems[number];
+  idx: number;
+  addPadding: boolean;
+  color?: ColorPaletteProp,
+  variant?: Exclude<VariantProp, 'outlined'>,
+}) {
+
+  const { addPadding, idx, newsItem: ni } = props;
+
+  return (
+    <Card color={props.color} variant={props.variant ?? 'plain'} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+      <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography level='title-sm' component='div'>
+            {ni.text ? ni.text : ni.versionName ? <><b>{ni.versionCode}</b> · </> : `Version ${ni.versionCode}:`}
+            <Box
+              component='span'
+              sx={idx ? {} : {
+                animation: `${animationColorRainbow} 5s infinite`,
+                fontWeight: 'lg',
+                zIndex: 1, /* perf-opt */
+              }}
+            >
+              {ni.versionName}
+            </Box>
+          </Typography>
+          <Typography level='body-sm' sx={{ ml: 'auto' }}>
+            {idx === 0 && !ni.versionDate && newsFrontendTimestamp
+              ? <TimeAgo date={newsFrontendTimestamp} />
+              : !!ni.versionDate && <TimeAgo date={ni.versionDate} />}
+          </Typography>
+        </Box>
+
+        {!!ni.items && (ni.items.length > 0) && (
+          <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem', listStyleType: '"-  "' }}>
+            {ni.items.filter(item => item.dev !== true).map((item, idx) => (
+              <li key={idx} style={{ listStyle: (item.icon || item.noBullet) ? '" "' : '"-  "', marginLeft: item.icon ? '-1.125rem' : undefined }}>
+                <Typography component='div' sx={{ fontSize: 'sm' }}>
+                  {item.icon && <item.icon sx={{ fontSize: 'xs', mr: 0.75 }} />}
+                  {item.text}
+                </Typography>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/*{idx === 0 && <BuildInfoSheet />}*/}
+
+      </CardContent>
+
+      {!!ni.versionCoverImage && (
+        <CardOverflow sx={{
+          m: '0 var(--CardOverflow-offset) var(--CardOverflow-offset)',
+        }}>
+          <AspectRatio ratio='2'>
+            <NextImage
+              src={ni.versionCoverImage}
+              alt={`Cover image for ${ni.versionCode}`}
+              // commented: we scale the images to 600px wide (>300 px tall)
+              // sizes='(max-width: 1200px) 100vw, 50vw'
+              priority={idx === 0}
+              quality={90}
+            />
+          </AspectRatio>
+        </CardOverflow>
+      )}
+
+    </Card>
+  )
+}
+
+
 export function AppNews() {
   // state
   const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(NEWS_INITIAL_COUNT - 1);
@@ -122,26 +197,43 @@ export function AppNews() {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}>
 
-        <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
+        <Typography level='h1' sx={{ fontSize: '2.7rem', mb: 4 }}>
+          Welcome to <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>Big-AGI Open</Box>!
         </Typography>
 
-        <Typography sx={{ mb: 2 }} level='title-sm'>
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode}
+        <Typography sx={{ mb: 2, textAlign: 'center', lineHeight: 'lg' }} level='title-sm'>
+          Big-AGI has been updated to version {firstNews?.versionCode}<br/>
+          {/*You are running version {firstNews?.versionCode}<br/>*/}
+          {/*{!!newsFrontendTimestamp && <span style={{ opacity: 0.5 }}>Updated <TimeAgo date={newsFrontendTimestamp} /></span>}*/}
         </Typography>
 
-        <Box sx={{ mb: 5 }}>
+        <Box sx={{ mb: 5, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
           <Button
-            variant='solid' color='primary' size='lg'
+            variant='solid' color='neutral' size='lg'
             component={Link} href={ROUTE_INDEX} noLinkStyle
-            // endDecorator='✨'
+            endDecorator={<ArrowForwardRoundedIcon />}
             sx={{
-              boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+              // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
               minWidth: 180,
             }}
           >
             Continue
           </Button>
+          {!Release.IsNodeDevBuild && (
+            <Button
+              variant='solid' color='primary' size='lg'
+              component={Link} href={bigAgiProUrl} target='_blank' noLinkStyle
+              endDecorator={<><ArrowOutwardRoundedIcon /></>}
+              sx={{
+                boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+                minWidth: 180,
+                // transform: 'translateY(-1px)',
+              }}
+            >
+              Big-AGI Pro
+              {/*✨*/}
+            </Button>
+          )}
         </Box>
 
         {/*<Typography level='title-sm' sx={{ mb: 1, placeSelf: 'start', ml: 1 }}>*/}
@@ -149,15 +241,19 @@ export function AppNews() {
         {/*</Typography>*/}
 
         <Container disableGutters maxWidth='sm'>
+
+          {/* Development Notices */}
+          {Release.TenantSlug === 'open' && <NewsCard variant='soft' color='warning' newsItem={DevNewsItem} idx={0} addPadding={false} />}
+
           {news?.map((ni, idx) => {
             // const firstCard = idx === 0;
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
-              {/* Inject the Big-AGI 2.0 item here*/}
-              {/*{idx === 1 && (*/}
+              {/* Inject the callout item here*/}
+              {/*{idx === 0 && (*/}
               {/*  <Box sx={{ mb: 3 }}>*/}
-              {/*    {bigAgi2NewsCallout}*/}
+              {/*    <BigAgiProNewsCallout />*/}
               {/*  </Box>*/}
               {/*)}*/}
 
@@ -169,64 +265,7 @@ export function AppNews() {
               )}
 
               {/* News Item */}
-              <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
-                <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography level='title-sm' component='div'>
-                      {ni.text ? ni.text : ni.versionName ? <><b>{ni.versionCode}</b> · </> : `Version ${ni.versionCode}:`}
-                      <Box
-                        component='span'
-                        sx={idx ? {} : {
-                          animation: `${animationColorRainbow} 5s infinite`,
-                          fontWeight: 'lg',
-                          zIndex: 1, /* perf-opt */
-                        }}
-                      >
-                        {ni.versionName}
-                      </Box>
-                    </Typography>
-                    <Typography level='body-sm' sx={{ ml: 'auto' }}>
-                      {idx === 0 && _frontendBuild.timestamp
-                        ? <TimeAgo date={_frontendBuild.timestamp} />
-                        : !!ni.versionDate && <TimeAgo date={ni.versionDate} />}
-                    </Typography>
-                  </Box>
-
-                  {!!ni.items && (ni.items.length > 0) && (
-                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem', listStyleType: '"-  "' }}>
-                      {ni.items.filter(item => item.dev !== true).map((item, idx) => (
-                        <li key={idx} style={{ listStyle: (item.icon || item.noBullet) ? '" "' : '"-  "', marginLeft: item.icon ? '-1.125rem' : undefined }}>
-                          <Typography component='div' sx={{ fontSize: 'sm' }}>
-                            {item.icon && <item.icon sx={{ fontSize: 'xs', mr: 0.75 }} />}
-                            {item.text}
-                          </Typography>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {/*{idx === 0 && <BuildInfoSheet />}*/}
-
-                </CardContent>
-
-                {!!ni.versionCoverImage && (
-                  <CardOverflow sx={{
-                    m: '0 calc(var(--CardOverflow-offset) - 1px) calc(var(--CardOverflow-offset) - 1px)',
-                  }}>
-                    <AspectRatio ratio='2'>
-                      <NextImage
-                        src={ni.versionCoverImage}
-                        alt={`Cover image for ${ni.versionCode}`}
-                        // commented: we scale the images to 600px wide (>300 px tall)
-                        // sizes='(max-width: 1200px) 100vw, 50vw'
-                        priority={idx === 0}
-                        quality={90}
-                      />
-                    </AspectRatio>
-                  </CardOverflow>
-                )}
-
-              </Card>
+              <NewsCard key={'news-' + idx} newsItem={ni} idx={idx} addPadding={addPadding} />
 
               {/* Inject the roadmap item here*/}
               {idx === 3 && (

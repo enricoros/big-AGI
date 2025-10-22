@@ -338,23 +338,6 @@ export namespace AixWire_Tooling {
     variant: z.enum(['gemini_auto_inline']),
   });
 
-  /// [Anthropic] Vendor-specific Tooling
-
-  const _VndAntComputer20241022 = z.object({
-    type: z.literal('vnd.ant.tools.computer_20241022'),
-    display_width: z.number().int(),
-    display_height: z.number().int(),
-    display_number: z.number().int().optional(),
-  });
-
-  const _VndAntTextEditor20241022 = z.object({
-    type: z.literal('vnd.ant.tools.text_editor_20241022'),
-  });
-
-  const _VndAntBash20241022 = z.object({
-    type: z.literal('vnd.ant.tools.bash_20241022'),
-  });
-
   /// Tool Definition
 
   /**
@@ -382,9 +365,6 @@ export namespace AixWire_Tooling {
   export const Tool_schema = z.discriminatedUnion('type', [
     _FunctionCallTool_schema,
     _CodeExecutionTool_schema,
-    _VndAntComputer20241022,
-    _VndAntTextEditor20241022,
-    _VndAntBash20241022,
   ]);
 
   /// Tools Policy
@@ -392,8 +372,8 @@ export namespace AixWire_Tooling {
   /**
    * Policy for tools that the model can use:
    * - auto: can use a tool or not (default, same as not specifying a policy)
-   * - any: must use one tool at least
-   * - function_call: must use a specific Function Tool
+   * - any: MUST use one tool at least
+   * - function_call: MUST use a specific Function Tool
    * - none: same as not giving the model any tool [REMOVED - just give no tools]
    */
   export const ToolsPolicy_schema = z.discriminatedUnion('type', [
@@ -426,6 +406,11 @@ export namespace AixWire_API {
     topP: z.number().min(0).max(1).optional(),
     forceNoStream: z.boolean().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
+    vndAntWebSearch: z.enum(['auto']).optional(),
+    vndAntWebFetch: z.enum(['auto']).optional(),
+    vndAnt1MContext: z.boolean().optional(),
+    vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+    vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(),
     vndOaiResponsesAPI: z.boolean().optional(),
@@ -493,6 +478,7 @@ export namespace AixWire_API {
   export const ConnectionOptions_schema = z.object({
     debugDispatchRequest: z.boolean().optional(),
     debugProfilePerformance: z.boolean().optional(),
+    enableResumability: z.boolean().optional(), // enable response storage for resumability (first found in the OpenAI Responses API)
     throttlePartTransmitter: z.number().optional(), // in ms
     // retry: z.number().optional(),
     // retryDelay: z.number().optional(),
@@ -557,7 +543,8 @@ export namespace AixWire_Particles {
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
-    | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string } } // may generalize this in the future
+    | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses', responseId: string, expiresAt: number | null } }
+    | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
   export type CGEndReason =     // the reason for the end of the chat generation
@@ -579,11 +566,13 @@ export namespace AixWire_Particles {
   export type GCTokenStopReason =
     | 'ok'                      // clean, including reaching 'stop sequences'
     | 'ok-tool_invocations'     // clean & tool invocations
+    | 'ok-pause_continue'       // clean, but paused (e.g. Anthropic server tools like web search) - requires continuation
     // premature:
-    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId)
+    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
     | 'client-abort-signal'     // the client aborted - likely a user/auto initiation
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
+    | 'filter-refusal'          // safety refusal filter (e.g. Anthropic safety concerns)
     | 'out-of-tokens';          // got out of tokens
 
   /**
@@ -609,6 +598,9 @@ export namespace AixWire_Particles {
 
     // v = Tokens/s
     vTOutInner?: number,  // TOut / dtInner
+
+    // $c = Cents of USD
+    $cReported?: number,  // Total cost in cents as reported by provider (e.g. Perplexity usage.cost.total_cost)
   };
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts

@@ -426,6 +426,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [DeepSeek, 2024-08-02] context caching on disk
     prompt_cache_hit_tokens: z.number().optional(),
     prompt_cache_miss_tokens: z.number().optional(),
+
+    // [Perplexity, 2025-10-20] cost breakdown
+    cost: z.looseObject({
+      input_tokens_cost: z.number().optional(),
+      output_tokens_cost: z.number().optional(),
+      request_cost: z.number().optional(),
+      total_cost: z.number().optional(),
+    }).nullish(),
   }).nullable();
 
   /**
@@ -456,8 +464,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     audio: z.object({
       id: z.string(),
       data: z.string(), // Base64 encoded audio data
-      expires_at: z.number(), // Unix timestamp
       transcript: z.string().optional(),
+      expires_at: z.number(), // Unix timestamp
     }).nullable().optional(),
 
   });
@@ -560,7 +568,15 @@ export namespace OpenAIWire_API_Chat_Completions {
     role: z.literal('assistant').optional()
       .nullable(), // [Deepseek] added .nullable()
     // delta-text content
-    content: z.string().nullable().optional(),
+    content: z.string().nullish()
+      // [Mistral, 2025-10-15] Mistral SPEC-BREAKING thinking fragments
+      .or(z.array(z.object({
+        type: z.string(), // 'thinking', but relaxed
+        thinking: z.array(z.object({
+          type: z.string(),
+          text: z.string(),
+        })).optional(),
+      }))),
     // delta-reasoning content
     reasoning_content: z.string().nullable().optional(), // [Deepseek, 2025-01-20]
     reasoning: z.string().optional() // [OpenRouter, 2025-01-24]
@@ -574,6 +590,16 @@ export namespace OpenAIWire_API_Chat_Completions {
      * not documented yet in the API guide; shall improve this once defined
      */
     annotations: z.array(OpenAIWire_ContentParts.OpenAI_AnnotationObject_schema).optional(),
+    /**
+     * [OpenAI, 2024-10-17] Audio streaming
+     * NOTE: this has been observed from the stream on 2025-10-13 - seems the same as the NS version
+     */
+    audio: z.object({
+      id: z.string().optional(), // omitted in subsequent chunks
+      data: z.string().optional(), // incremental base64 audio data
+      transcript: z.string().optional(), // incremental transcript
+      expires_at: z.number().optional(), // seems to be only in the last chunk
+    }).optional(),
   });
 
   const ChunkChoice_schema = z.object({
@@ -595,8 +621,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     object: z.enum([
       'chat.completion.chunk',
       'chat.completion', // [Perplexity] sent an email on 2024-07-14 to inform them about the misnomer
+      /**
+       * [Perplexity, 2025-10-20] Undocumented full-response-like message type
+       * - it's a .chunk, delta with delta='', and finish_reason set (to 'stop') and 'usage.costs' set
+       */
+      'chat.completion.done',
       '', // [Azure] bad response: the first packet communicates 'prompt_filter_results'
     ])
+      // .or(z.string()) // [Perplexity, 2025-10-20] future resiliency post perplexity still breaking the openai compatibility
       .optional(), // [FastAPI, 2025-04-24] the FastAPI dialect sadly misses the 'chat.completion.chunk' type
     id: z.string(),
 
@@ -657,11 +689,12 @@ export namespace OpenAIWire_API_Images_Generations {
   export type Request = z.infer<typeof Request_schema>;
   const Request_schema = z.object({
 
-    // 32,000 for gpt-image-1, 4,000 for dall-e-3, 1,000 for dall-e-2
+    // 32,000 for gpt-image-1/gpt-image-1-mini, 4,000 for dall-e-3, 1,000 for dall-e-2
     prompt: z.string().max(32000),
 
     model: z.enum([
       'gpt-image-1',
+      'gpt-image-1-mini',
       'dall-e-3',
       'dall-e-2', // default
     ]).optional(),
@@ -672,12 +705,12 @@ export namespace OpenAIWire_API_Images_Generations {
     // Image quality
     quality: z.enum([
       'auto',                   // default
-      'high', 'medium', 'low',  // gpt-image-1
+      'high', 'medium', 'low',  // gpt-image-1, gpt-image-1-mini
       'hd', 'standard',         // dall-e-3: hd | standard, dall-e-2: only standard
     ]).optional(),
 
     // The format in which generated images with dall-e-2 and dall-e-3 are returned.
-    //`gpt-image-1` will always return base64-encoded images and does NOT support this parameter.
+    // GPT Image models will always return base64-encoded images and do NOT support this parameter.
     response_format: z.enum(['url', 'b64_json']).optional(),
 
     // size of the generated images
@@ -698,18 +731,18 @@ export namespace OpenAIWire_API_Images_Generations {
     user: z.string().optional(),
 
 
-    // -- GPT Image 1 Specific Parameters --
+    // -- GPT Image Family Specific Parameters (gpt-image-1, gpt-image-1-mini) --
 
     // Allows to set transparency (in that case, format = png or webp)
     background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
 
-    // Control the content-moderation level for images generated by gpt-image-1.
+    // Control the content-moderation level for images generated by GPT Image models.
     moderation: z.enum(['low', 'auto' /* default */]).optional(),
 
     // The format in which the generated images are returned
     output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
 
-    // WEBP/JPEG compression level for gpt-image-1
+    // WEBP/JPEG compression level for GPT Image models
     output_compression: z.number().min(0).max(100).int().optional(),
 
 
@@ -729,7 +762,7 @@ export namespace OpenAIWire_API_Images_Generations {
       url: z.url().optional(), // if the response_format is 'url' - DEPRECATED
     })),
 
-    // gpt-image-1 only
+    // GPT Image models only (gpt-image-1, gpt-image-1-mini)
     usage: z.object({
       total_tokens: z.number(),
       input_tokens: z.number(), // images + text tokens in the input prompt
@@ -755,14 +788,14 @@ export namespace OpenAIWire_API_Images_Edits {
    */
   export const Request_schema = z.object({
 
-    // 32,000 for gpt-image-1, 1,000 for dall-e-2
+    // 32,000 for gpt-image-1/gpt-image-1-mini, 1,000 for dall-e-2
     prompt: z.string().max(32000),
 
     // image: file | file[] - REQUIRED - Handled as file uploads in FormData ('image' field)
 
     // mask: file - OPTIONAL - Handled as file upload in FormData ('mask' field)
 
-    model: z.enum(['gpt-image-1', 'dall-e-2']).optional(),
+    model: z.enum(['gpt-image-1', 'gpt-image-1-mini', 'dall-e-2']).optional(),
 
     // Number of images to generate, between 1 and 10
     n: z.number().min(1).max(10).nullable().optional(),
@@ -770,11 +803,11 @@ export namespace OpenAIWire_API_Images_Edits {
     // Image quality
     quality: z.enum([
       'auto',                   // default
-      'high', 'medium', 'low',  // gpt-image-1
+      'high', 'medium', 'low',  // gpt-image-1, gpt-image-1-mini
       'standard',               // dall-e-2: only standard
     ]).optional(),
 
-    // response_format: string - OPTIONAL - Defaults to 'url'. Only for DALL-E 2. gpt-image-1 always returns b64_json.
+    // response_format: string - OPTIONAL - Defaults to 'url'. Only for DALL-E 2. GPT Image models always return b64_json.
     // OMITTED here as we'll enforce b64_json or handle it based on model if DALL-E 2 edit were supported.
 
     // size of the generated images
@@ -1012,6 +1045,16 @@ export namespace OpenAIWire_Responses_Items {
     id: z.string(), // unique ID of the image generation call (output item ID)
     result: z.string().optional(), // base64 image data when completed
     revised_prompt: z.string().optional(), // the revised prompt used for generation
+    // BREAKING CHANGE from OpenAI - 2025-09-30
+    // redefining the following because we need 'generating' too here
+    status: z.enum([
+      'generating', // 2025-09-30: seen on OpenAI for `image_generation_call` items
+      'in_progress', 'completed', 'incomplete',
+    ]).optional(),
+    // NOTE: we also see the following in the image_generation_call item
+    // background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
+    // output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
+    // quality: z.enum(['auto', 'high', 'medium', 'low']).optional(),
   });
 
   // const OutputCodeInterpreterCallItem_schema = _OutputItemBase_schema.extend({
@@ -1349,7 +1392,7 @@ export namespace OpenAIWire_API_Responses {
     // Unused
     // metadata: z.record(z.string(), z.any()).optional(), // set of 16 key-value pairs that can be attached to an object
     // service_tier: z.enum(['auto', 'default', 'flex', 'priority']).nullish(),
-    // prompt: z.object({
+    // prompt: z.object({ // reference to a prompt template and its variables
     //   id: z.string(),
     //   version: z.string().optional(),
     //   variables: z.record(z.string(), z.any()).optional(),
@@ -1367,7 +1410,9 @@ export namespace OpenAIWire_API_Responses {
     id: z.string(), // unique ID for this response
     created_at: z.number(), // unix timestamp (in seconds)
     status: z.enum(['completed', 'failed', 'in_progress', 'cancelled', 'queued', 'incomplete']),
-    incomplete_details: z.object({ reason: z.string() }).nullish(), // why the response is incomplete
+    incomplete_details: z.object({
+      reason: z.union([z.enum(['max_output_tokens']), z.string()]),
+    }).nullish(), // why the response is incomplete
     error: z.object({ code: z.string(), message: z.string() }).nullish(), // (null)
 
     model: z.string(), // model used for the response
@@ -1386,23 +1431,29 @@ export namespace OpenAIWire_API_Responses {
       total_tokens: z.number(),
     }).nullish(),
 
+    // Echo State management & API options (with defaults)
+    background: z.boolean().optional(), // (false)
+    store: z.boolean().optional(), // (true)
+
     // NOTE: the following fields seem an exact echo of what's in the request - let's ignore these for now
-    // background: ... (false)
-    // instructions: ...
-    // max_output_tokens: ...
-    // metadata: ...
-    // parallel_tool_calls: ...
-    // previous_response_id: ... (null)
-    // prompt: ...
-    // reasoning: ...
-    // service_tier: ...
-    // temperature: ...
-    // text: ...
-    // tool_choice: ...
-    // tools: ...
-    // top_p: ...
-    // truncation: ...
-    // user: ...
+    // instructions: z.string().nullable(), // null
+    // max_output_tokens: z.number(),
+    // max_tool_calls: z.number().nullable(), // null
+    // metadata: ... (optional)
+    // parallel_tool_calls: z.boolean(), // true
+    // previous_response_id: z.string().nullable(), // null
+    // prompt_cache_key: z.string().nullable(), // (optional)
+    // prompt: ... // (optional)
+    // reasoning: ... // { ... }
+    // service_tier: ... // 'auto'
+    // temperature: ... // 1
+    // text: ... // { .. }
+    // tool_choice: ... // 'auto'
+    // tools: ... // e.g. [{ type: 'web_search_preview', search_context_size: 'medium', ... }]
+    // top_logprobs: ... // 0
+    // top_p: ... // 1
+    // truncation: ... // 'disabled'
+    // user: ... // null
 
   });
 

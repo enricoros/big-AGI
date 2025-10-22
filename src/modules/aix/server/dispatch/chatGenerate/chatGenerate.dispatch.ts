@@ -17,7 +17,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
-import { createOpenAIResponsesEventParser, createOpenAIResponseParserNS, } from './parsers/openai.responses.parser';
+import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 
 
 /**
@@ -29,22 +29,29 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
 /**
  * Specializes to the correct vendor a request for chat generation
  */
-export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {
+export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
   demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
 } {
 
   switch (access.dialect) {
-    case 'anthropic':
+    case 'anthropic': {
+      const anthropicRequest = anthropicAccess(access, '/v1/messages', {
+        modelIdForBetaFeatures: model.id,
+        vndAntWebFetch: model.vndAntWebFetch === 'auto',
+        vndAnt1MContext: model.vndAnt1MContext === true,
+      });
+
       return {
         request: {
-          ...anthropicAccess(access, model.id, '/v1/messages'),
+          ...anthropicRequest,
           body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
+    }
 
     case 'gemini':
       /**
@@ -101,7 +108,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         return {
           request: {
             ...openAIAccess(access, model.id, '/v1/responses'),
-            body: aixToOpenAIResponses(access.dialect, model, chatGenerate, false, streaming),
+            body: aixToOpenAIResponses(access.dialect, model, chatGenerate, false, streaming, enableResumability),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),

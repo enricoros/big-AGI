@@ -93,7 +93,7 @@ export async function* chatGenerateContentImpl(
   // Prepare the dispatch requests
   let dispatch: ReturnType<typeof createChatGenerateDispatch>;
   try {
-    dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
+    dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming, !!connectionOptions?.enableResumability);
   } catch (error: any) {
     chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
     yield* chatGenerateTx.flushParticles();
@@ -197,6 +197,7 @@ export async function* chatGenerateContentImpl(
       _profiler?.measureEnd('decode');
     } catch (error: any) {
       // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
+      // TODO: check if 'AbortError' is also a cause. Seems like ResponseAborted is NextJS vs signal driven.
       if (error && error?.name === 'ResponseAborted') {
         chatGenerateTx.setEnded('done-dispatch-aborted');
         break; // outer do {}

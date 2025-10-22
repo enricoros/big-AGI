@@ -2,8 +2,8 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DLLM, DLLMId } from './llms.types';
 import type { DModelDomainId } from './model.domains.types';
+import { DLLM, DLLMId, isLLMHidden, isLLMVisible } from './llms.types';
 import { LlmsRootState, useModelsStore } from './store-llms';
 import { ModelDomainsList, ModelDomainsRegistry } from './model.domains.registry';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
@@ -83,7 +83,7 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
         if (llm) {
           if (!ifNotVisible)
             return; // present and maybe visible: nothing to do
-          if (!llm.hidden)
+          if (isLLMVisible(llm))
             return; // present and visible: nothing to do
         }
       }
@@ -270,7 +270,7 @@ function _strategyTopVendorLowestCost(vendors: PreferredRankedVendors, requireEl
 function _groupLlmsByVendorRankedByElo(llms: ReadonlyArray<DLLM>): PreferredRankedVendors {
   // group all LLMs by vendor
   const grouped = llms.reduce((acc, llm) => {
-    if (llm.hidden) return acc;
+    if (isLLMHidden(llm)) return acc;
     const group = acc.find(v => v.vendorId === llm.vId);
     const eloCostItem = {
       id: llm.id,

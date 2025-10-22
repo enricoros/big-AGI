@@ -3,6 +3,10 @@ import { TRPCError } from '@trpc/server';
 import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/server/wire';
 
 
+// configuration
+const SERVER_LOG_FETCHERS_ERRORS = true; // log all fetcher errors to the console
+
+
 //
 // NOTE: This file is used in the server-side code, and not in the client-side code.
 //
@@ -13,8 +17,67 @@ import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/
 
 // JSON fetcher
 export async function fetchJsonOrTRPCThrow<TOut extends object = object, TBody extends object | undefined | FormData = undefined>(config: RequestConfig<TBody>): Promise<TOut> {
-  return _fetchFromTRPC<TBody, TOut>(config, async (response) => await response.json(), 'json');
+  return _fetchFromTRPC<TBody, TOut>(config, _jsonRequestParserOrThrow, 'json');
 }
+
+async function _jsonRequestParserOrThrow(response: Response) {
+  let text = '';
+  try {
+    text = await response.text();
+    return JSON.parse(text) as any;
+  } catch (error) {
+
+    // Errors: Cannot Parse
+    if (error instanceof SyntaxError) {
+
+      const contentType = response.headers?.get('content-type')?.toLowerCase() || '';
+      const contentTypeInfo = contentType && !contentType.includes('application/json') ? ` (Content-Type: ${contentType})` : '';
+
+      // Improve messaging of Empty or Incomplete JSON
+      if (error.message === 'Unexpected end of JSON input')
+        throw new TRPCError({
+          code: 'PARSE_ERROR',
+          message: (!text?.length ? 'Empty response while expecting JSON' : 'Incomplete JSON response') + contentTypeInfo,
+          cause: error,
+        });
+
+      // Improve messaging of a real parsing error where we expected JSON and got something else
+      if (error.message.startsWith('Unexpected token')) {
+        const lcText = text.trim().toLowerCase();
+        let inferredType = 'unknown';
+
+        if (['<html', '<!doctype'].some(tag => lcText.startsWith(tag)))
+          inferredType = 'HTML';
+        else if (['<?xml', '<rss', '<feed', '<xml'].some(tag => lcText.startsWith(tag)))
+          inferredType = 'XML';
+        else if (['<div', '<span', '<p', '<script', '<br', '<body', '<head', '<title'].some(tag => lcText.startsWith(tag)))
+          inferredType = 'HTML-like';
+        else if (lcText.startsWith('{') || lcText.startsWith('['))
+          inferredType = 'malformed JSON';
+
+        throw new TRPCError({
+          code: 'PARSE_ERROR',
+          message: `Expected JSON data but received ${inferredType ? inferredType + ', likely an error page' : 'NON-JSON content'}${contentTypeInfo}: \n\n"${text.length > 200 ? text.slice(0, 200) + '...' : text}"`,
+          cause: error,
+        });
+      }
+
+      throw new TRPCError({
+        code: 'PARSE_ERROR',
+        message: `Error parsing JSON data${contentTypeInfo}: ${safeErrorString(error) || 'unknown error'}`,
+      });
+
+    }
+
+    // Other errors: AbortError (request aborted), TypeError (body locked, decoding error for instance due to Content-Encoding mismatch), etc..
+    throw new TRPCError({
+      code: 'PARSE_ERROR',
+      message: `Error reading JSON data: ${safeErrorString(error) || 'unknown error'}`,
+    });
+  }
+  // unreachable
+}
+
 
 // Text fetcher
 export async function fetchTextOrTRPCThrow<TBody extends object | undefined = undefined>(config: RequestConfig<TBody>): Promise<string> {
@@ -55,6 +118,16 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   const { url, method = 'GET', headers: configHeaders, name: moduleName, signal, throwWithoutName = false } = config;
   const body = 'body' in config ? config.body : undefined;
 
+  // Cleaner url without query
+  let debugCleanUrl;
+  try {
+    const { origin, pathname } = new URL(url);
+    debugCleanUrl = decodeURIComponent(origin + pathname);
+  } catch {
+    // ...ignore
+  }
+
+
   // 1. Fetch a Response object
   let response: Response;
   try {
@@ -82,33 +155,49 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       signal,
     };
 
-    // upstream fetch
+    // upstream FETCH
     response = await fetch(url, request);
 
   } catch (error: any) {
 
-    // NOTE: if signal?.aborted is true, we also come here, likely with a error?.name = ResponseAborted
+    // NOTE: if signal?.aborted is true, we also come here, likely with a error?.name = ResponseAborted (Next.js) or AbortError (standard from signal)
     // since we don't handle this case specially, the same TRPCError will be thrown as for other connection errors.
+    if (error?.name === 'AbortError')
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: (!throwWithoutName ? `[${moduleName} cancelled]: ` : '') + (error?.message || 'This operation was aborted.'),
+        cause: error,
+      });
 
     // [logging - Connection error] candidate for the logging system
-    const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
+    const errorCause: any | undefined = error ? error?.cause ?? undefined : undefined;
+    const errorString = safeErrorString(error) || 'unknown fetch error';
+
+    // Show server-access warning for common connection issues
+    const showAccessWarning = [
+      'ECONNREFUSED',
+      'ENOTFOUND',
+      'ETIMEDOUT',
+      'DNS_ERROR',
+      'ECONNRESET',
+      'ENETUNREACH', // example an IP is unreachable
+    ].includes(errorCause?.code) || [
+      'network connection lost.',
+      'connect timeout error',
+    ].includes(errorString.toLowerCase());
 
     // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
     //       Consider we're also throwing the same, so there will likely be further logging.
-    if (SERVER_DEBUG_WIRE)
-      console.warn(`[${method}] ${moduleName} error (network):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
+    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
+      console.log(`[${method}] [${moduleName} network issue]: ${errorString}`, { error, errorCause, debugCleanUrl, urlShown: showAccessWarning });
 
-    // Handle Connection errors - HTTP 400
+    // Handle (NON) CONNECTION errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: (throwWithoutName ? '' : `[${moduleName} network issue]: `)
-        + (safeErrorString(error) || 'unknown fetch error')
-        + (errorCause
-          ? ` - ${safeErrorString(errorCause)}`
-          : '')
-        + ((errorCause && (errorCause as any)?.code === 'ECONNREFUSED')
-          ? ` - is "${url}" accessible by the server?`
-          : ''),
+      message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
+        + `Could not connect: ${errorString}`
+        + (errorCause ? ` \nTechnical Details: ${safeErrorString(errorCause)}` : '')
+        + (showAccessWarning ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
       cause: errorCause,
     });
   }
@@ -118,30 +207,42 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   //  - 400 when requesting an invalid size to Dall-E-3, etc..
   //  - 403 when requesting a localhost URL from a public server, etc..
   if (!response.ok) {
+
     // try to parse a json or text payload, which frequently contains the error, if present
-    const responseCloneIfJsonFails = response.clone();
-    let payload: any | null = await response.json().catch(() => null);
-    if (payload === null)
-      payload = await responseCloneIfJsonFails.text().catch(() => null);
+    let payload: any | null = await response.text().catch(() => null);
+    try {
+      if (payload)
+        payload = JSON.parse(payload) as string;
+    } catch {
+      // ...ignore
+    }
 
     // [logging - HTTP error] candidate for the logging system
-    console.error(`[${method}] ${moduleName} error (upstream): ${response.status} (${response.statusText}):`, safeErrorString(payload));
+    const status = response.status;
+    let payloadString = safeErrorString(payload);
+    if (payloadString) {
+      if (payloadString.length > 200)
+        payloadString = payloadString.slice(0, 200) + '...';
+      const lcPayload = payloadString.trim().toLowerCase();
+      if (['<!doctype', '<html', '<head', '<body', '<script', '<title'].some(tag => lcPayload.startsWith(tag)))
+        payloadString = 'The data looks like HTML, likely an error page: \n\n"' + payloadString + '"';
+    }
 
-    // HTTP 400
+    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
+      console.warn(`[${method}] [${moduleName} issue] (http ${status}, ${response.statusText}):`, { parserName, payloadString });
+
+    // Handle HTTP Response errors -> HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: (throwWithoutName ? '' : `[${moduleName} issue]: `)
-        + (response.statusText || '')
-        + (payload
-          ? ` - ${safeErrorString(payload)}` : '')
-        + (payload?.error?.failed_generation // [Groq]
-          ? ` - failed_generation: ${payload.error.failed_generation}` : '')
-        + (response.status === 403 && !url.includes('app.openpipe.ai' /* [OpenPipe] 403 when the model is associated to the project  */)
-          ? ` - is "${url}" accessible by the server?` : '')
-        + (response.status === 404 && !url.includes('app.openpipe.ai' /* [OpenPipe] 404 when the model is not found - don't add error details */)
-          ? ` - "${url}" cannot be found by the server` : '')
-        + (response.status === 502 ?
-          ` - is "${url}" not available?` : ''),
+        + `Upstream responded with HTTP ${status} ${response.statusText}`
+        + (payloadString ? ` - \n${payloadString}` : '')
+        + (payload?.error?.failed_generation && url.includes('api.groq.com') // [Groq]
+          ? ` \n\nGroq: failed_generation: ${payload.error.failed_generation}` : '')
+        + (status === 403 && moduleName === 'Gemini' && payloadString?.includes('Requests from referer')
+          ? ' \n\nGemini: Check API key restrictions in Google Cloud Console' : '')
+        + ((status === 404 || status === 403 || status === 502) && !url.includes('app.openpipe.ai') // [OpenPipe] 403 when the model is associated to the project, 404 when not found
+          ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
     });
   }
 
@@ -150,10 +251,22 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   try {
     value = await responseParser(response);
   } catch (error: any) {
-    // [logging - Parsing error] candidate for the logging system
-    console.error(`[${method}] ${moduleName} error (parse, ${parserName}):`, error);
 
-    // HTTP 422
+    // [logging - Parsing error] candidate for the logging system
+    if (SERVER_LOG_FETCHERS_ERRORS)
+      console.warn(`[${method}] [${moduleName}]: (${parserName} parsing error): ${error?.name}`, { error,  url });
+
+    // Forward already processed Parsing error -> 422
+    if (error instanceof TRPCError)
+      throw new TRPCError({
+        code: 'UNPROCESSABLE_CONTENT',
+        message: (!throwWithoutName ? `[${moduleName}]: ` : '')
+          + error.message
+          + ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}`,
+        cause: error.cause,
+      });
+
+    // Handle PARSING Errors -> HTTP 422
     throw new TRPCError({
       code: 'UNPROCESSABLE_CONTENT',
       message: (throwWithoutName ? `cannot parse ${parserName}: ` : `[${moduleName} parsing issue]: `)

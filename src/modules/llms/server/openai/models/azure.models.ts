@@ -11,7 +11,7 @@ import type { OpenAIAccessSchema } from '../openai.router';
 import { fixupHost } from '../openai.router';
 
 import { fromManualMapping, ManualMappings } from './models.data';
-import { _knownOpenAIChatModels } from './openai.models';
+import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
 
 
 // configuration
@@ -120,7 +120,7 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
     isNameAKnownOpenAIModel ? deploymentName : likelyTheOpenAIModel,
     modelCreated,
     modelUpdated,
-    undefined,
+    _fallbackOpenAIModel,
     true,
   );
 

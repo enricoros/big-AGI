@@ -10,6 +10,7 @@ import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { BlockPartImageRef } from './BlockPartImageRef';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
@@ -43,6 +44,9 @@ export function ViewImageRefPartModal(props: {
   // state
   const [downloading, setDownloading] = React.useState(false);
   // const [copying, setCopying] = React.useState(false);
+
+  // external state
+  const isMobile = useIsMobile();
 
   // derived state
   const { dataRef, altText } = props.imageRefPart;
@@ -101,6 +105,7 @@ export function ViewImageRefPartModal(props: {
       }
       // themedColor='neutral'
       unfilterBackdrop
+      fullscreen={isMobile ? undefined : 'button'}
       startButton={isDBlob ? (
         <Box sx={{ display: 'flex', gap: 1 }}>
           {/*<Button*/}

@@ -26,7 +26,7 @@ export const DEFAULT_ADRAFT_IMAGE_MIMETYPE: CommonImageMimeTypes = !Is.Browser.S
 export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
-const ENABLE_TEXT_AND_IMAGES = false; // 2.0
+const ENABLE_TEXT_AND_IMAGES = false; // [PROD] ?
 const DOCPART_DEFAULT_VERSION = 1;
 
 

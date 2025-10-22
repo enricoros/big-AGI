@@ -1,57 +1,84 @@
-# BIG-AGI 🧠
+# Big-AGI Open 🧠
 
-Welcome to big-AGI, the AI suite for professionals that need function, form,
-simplicity, and speed. Powered by the latest models from 15 vendors and
-open-source servers, `big-AGI` offers best-in-class Chats,
-[Beams](https://github.com/enricoros/big-AGI/issues/470),
-and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
-visualizations, coding, drawing, side-by-side chatting, and more -- all wrapped in a polished UX.
+This is the open-source foundation for **Big-AGI**.
 
-Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
+Big-AGI is the multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
+It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 
-[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
+**What makes Big-AGI different:**  
+**Intelligence**, with [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5 - 
+**Control** with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
+and **Speed** with a local-first, over-powered, zero-latency, madly optimized web app.
 
-> 🚀 Big-AGI 2 is launching soon.
+**Who uses Big-AGI:**  
+Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
 
-Or fork & run on Vercel
+<img width="830" height="370" alt="image" src="https://github.com/user-attachments/assets/513c4f77-0970-4a56-b23b-1416c8246174" />
+
+Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
+
+## Get Started
+
+**Most users: [big-agi.com](https://big-agi.com)** (fastest, zero setup, support the project)  
+Free tier with all core features and more, Pro tier with Cloud Sync.
+
+<a href="https://big-agi.com">
+  <img width="210" height="68" alt="image" src="https://github.com/user-attachments/assets/b2f8a7b8-415f-4c92-b228-4f5a54fe2bdd" />
+</a>  
+
+**Self-host and developers** (full control)  
+Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
+
+Or fork & run on Vercel:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
-### New Version
+[//]: # (**For the latest Big-AGI:**)
 
-This repository contains two main versions:
+[//]: # (- [**Big-AGI Open**]&#40;https://github.com/enricoros/big-AGI/tree/main&#41; - Open Source, latest models and features &#40;main branch&#41;)
 
-- Big-AGI 2: next-generation, bringing the most advanced AI experience
-  - `v2-dev`: V2 development branch, the exciting one, future default (this branch)
-- Big-AGI Stable: as deployed on big-agi.com
-  - `v1-stable`: Current stable version, and currently the Docker 'latest' tagged images
-
-Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and `v1-stable` will reach EOL.
-
-### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
+[//]: # (- [**Big-AGI Pro**]&#40;https://big-agi.com&#41; - Hosted with Cloud Sync)
 
 ---
 
-### 5,000 Commits Milestone · Jan 2025
+## What's New in 2.0 · Oct 6, 2025 · Open
 
-Hit 5k commits last week. That's a lot of code, and it's the [foundation for what's coming](https://big-agi.com/blog/big-agi-2-is-almost-ready).
+- **Big-AGI Open** is ready and more productive and faster than ever, with:
+- **Beam 2**: multi-modal, program-based, follow-ups, save presets
+- Top-notch AI models support including **agentic models** and **reasoning models**
+- **Image Generation** and editing with Nano Banana and gpt-image-1
+- **Web Search** with citations for supported models
+- **UI** & Mobile UI overhaul with peeking and side panels
+- And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
+- Built for the future, madly optimized
+
+<img width="830" height="385" alt="image" src="https://github.com/user-attachments/assets/ad52761d-7e3f-44d8-b41e-947ce8b4faa1" />
+
+### Open links: 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
+
+<details>
+<summary>5,000 Commits Milestone</summary>
+
+Hit 5k commits last week. That's a lot of code.
 
 Recent work has been intense:
 - Chain of thought reasoning across multiple LLMs: **OpenAI o3** and o1, **DeepSeek R1**, **Gemini 2.0 Flash Thinking**, and more
-- Beam is real - ~35% of our free users run it daily to compare models
+- Beam is real - ~35% of our users run it daily to compare models
 - New AIX framework lets us scale features we couldn't before
 - UI is faster than ever. Like, terminal-fast
 
-Big-AGI 2 is weeks away. Yes, we're late, but we're making it right. The new architecture is solid and the speed improvements are real.
-
-Stay tuned. This is going to be good.
+The new architecture is solid and the speed improvements are real.
 
 ![5000e-830px](https://github.com/user-attachments/assets/42f7420b-9331-421b-9a18-2e653aaa7d9b)
 
-### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
+</details>
 
-- 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
-- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
+<details>
+<summary>What's New in 1.16.1...1.16.10 · 2024-2025 (patch releases)</summary>
+
+- 1.16.10: OpenRouter models support
+- 1.16.9: Docker Gemini fix, R1 models support
+- 1.16.8: OpenAI ChatGPT-4o Latest, o1 models support
 - 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
@@ -64,7 +91,10 @@ Stay tuned. This is going to be good.
 - 1.16.2: Updates to Beam
 - 1.16.1: Support for the new OpenAI GPT-4o 2024-05-13 model
 
-### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
+</details>
+
+<details>
+<summary>What's New in 1.16.0 · May 9, 2024 · Crystal Clear</summary>
 
 - [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
 - Chat cost estimation 💰 (enable it in Labs / hover the token counter)
@@ -75,14 +105,20 @@ Stay tuned. This is going to be good.
 - Models update: **Anthropic**, **Groq**, **Ollama**, **OpenAI**, **OpenRouter**, **Perplexity**
 - Code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, and more [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
 
-#### 3,000 Commits Milestone · April 7, 2024
+</details>
+
+<details>
+<summary>3,000 Commits Milestone · April 7, 2024</summary>
 
 ![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
 
 - 🥇 Today we <b>celebrate commit 3000</b> in just over one year, and going stronger 🚀
 - 📢️ Thanks everyone for your support and words of love for Big-AGI, we are committed to creating the best AI experiences for everyone.
 
-### What's New in 1.15.0 · April 1, 2024 · Beam
+</details>
+
+<details>
+<summary>What's New in 1.15.0 · April 1, 2024 · Beam</summary>
 
 - ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
 - Managed Deployments **Auto-Configuration**: simplify the UI models setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
@@ -91,6 +127,8 @@ Stay tuned. This is going to be good.
 - Fixes to Gemini models and SVGs, improvements to UI and icons
 - 1.15.1: Support for Gemini Pro 1.5 and OpenAI Turbo models
 - Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
+
+</details>
 
 <details>
 <summary>What's New in 1.14.1 · March 7, 2024 · Modelmorphic</summary>
@@ -174,14 +212,14 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 You can easily configure 100s of AI models in big-AGI:
 
-| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                            |
-|:--------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                    |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                                                                                              |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                            |
-| Language services   | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 
-| Image services      | OpenAI, ...                                                                                                                                                                                                                                                                                    | 
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                | 
+| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                               |
+|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                       |
+| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                                                                                                                 |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                               |
+| Language services   | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
+| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                            |
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                   | 
 
 Add extra functionality with these integrations:
 
@@ -190,7 +228,6 @@ Add extra functionality with these integrations:
 | Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
 | Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
 | Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
- 
 | Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
 
 [//]: # (- [x] **Flow-state UX** for uncompromised productivity)
@@ -257,4 +294,4 @@ the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
 
 ---
 
-2023-2024 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
+2023-2025 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐

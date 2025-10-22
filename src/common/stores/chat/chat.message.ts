@@ -115,6 +115,11 @@ export type DMessageGenerator = ({
   },
 }) & {
   metrics?: DMetricsChatGenerate_Md;   // medium-sized metrics stored in the message
+  upstreamHandle?: {
+    uht: 'vnd.oai.responses',
+    responseId: string,
+    expiresAt: number | null,         // null = never expires
+  },
   tokenStopReason?:
     | 'client-abort'                  // if the generator stopped due to a client abort signal
     | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter
@@ -212,6 +217,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         name: generator.name,
         // ...(generator.xeOpCode ? { xeOpCode: generator.xeOpCode } : {}),
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
+        ...(generator.upstreamHandle ? { upstreamHandle: { ...generator.upstreamHandle } } : {}),
         ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
       };
     case 'aix':
@@ -220,6 +226,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         name: generator.name,
         aix: { ...generator.aix },
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
+        ...(generator.upstreamHandle ? { upstreamHandle: { ...generator.upstreamHandle } } : {}),
         ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
       };
   }
@@ -273,7 +280,7 @@ export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n', excludeAttachmentFragments?: boolean): string {
 
   // quick path for empty fragments
-  if (!fragments.length)
+  if (!fragments?.length)
     return '';
 
   return fragments

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
-import { resolveDalleModelId, useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
+import { getImageModelFamily, resolveDalleModelId, useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
 
 import { addDBImageAsset, DBlobDBScopeId } from '~/common/stores/blob/dblobs-portability';
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
@@ -54,7 +54,8 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     const activeProvider = _resolveActiveT2IProvider(userProviderId, providers);
     const mayWork = providers.some(p => p.configured);
     const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
-    const mayEdit = activeProvider?.vendor === 'openai' && resolvedDalleModelId === 'gpt-image-1';
+    const family = getImageModelFamily(resolvedDalleModelId);
+    const mayEdit = activeProvider?.vendor === 'openai' && family === 'gpt-image';
     return {
       mayWork,
       mayEdit,

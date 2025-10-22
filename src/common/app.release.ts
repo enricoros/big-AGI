@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Enrico Ros
+ * Copyright (c)2024-2025 Enrico Ros
  *
  * This file is include by both the frontend and backend, however depending on the time
  * of the build, the values may be different.
@@ -13,11 +13,6 @@ export const Release = {
   // CHANGE ME - this is the tenant ID, 'dev' reserved for development only, 'open' reserved for GitHub
   TenantSlug: 'open',
 
-  App: {
-    versionCode: '2.0.0-open-rc3',       // 1.92.0 sequentially...
-    versionName: 'Big-AGI 2',
-  },
-
   // Future compatibility
   Features: {
     // ...
@@ -28,7 +23,7 @@ export const Release = {
 
   // this is here to trigger revalidation of data, e.g. models refresh
   Monotonics: {
-    Aix: 29,
+    Aix: 36,
     NewsVersion: 192,
   },
 

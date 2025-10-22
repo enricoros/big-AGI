@@ -2,6 +2,7 @@ import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage,
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
 import { aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
+import { OPS } from 'pdfjs-dist';
 
 
 // configuration
@@ -56,8 +57,6 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   // Construct the request payload
   const payload: TRequest = {
     contents,
-    tools: chatGenerate.tools && _toGeminiTools(chatGenerate.tools),
-    toolConfig: chatGenerate.toolsPolicy && _toGeminiToolConfig(chatGenerate.toolsPolicy),
     safetySettings: _toGeminiSafetySettings(geminiSafetyThreshold),
     systemInstruction,
     generationConfig: {
@@ -96,6 +95,13 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     payload.generationConfig!.thinkingConfig = thinkingConfig;
   }
 
+  // [Gemini, 2025-10-02] Image generation: aspect ratio configuration
+  if (model.vndGeminiAspectRatio) {
+    payload.generationConfig!.imageConfig = {
+      aspectRatio: model.vndGeminiAspectRatio,
+    };
+  }
+
   // [Gemini, 2025-05-20] Experimental Audio generation (TTS - audio only, no text): Request
   const noTextOutput = !model.acceptsOutputs.includes('text');
   if (model.acceptsOutputs.includes('audio')) {
@@ -124,11 +130,37 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
   }
 
-  // TODO: Google Search Grounding: for the models that support it, it shall be declared and runtime toggleable
-  // it then becomes just a metter of:
-  // - payload.tools = [...payload.tools, { googleSearch: {} }]; -- for most models
-  // - emitting the missing particles, parsing, rendering
-  // - working around the limitations and idiosyncrasies of the Search API
+
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
+  // Custom tools
+  if (chatGenerate.tools) {
+    payload.tools = _toGeminiTools(chatGenerate.tools);
+    if (chatGenerate.toolsPolicy)
+      payload.toolConfig = _toGeminiToolConfig(chatGenerate.toolsPolicy);
+  }
+
+  // Hosted tools
+  // [Gemini, 2025-10-13] Google Search Grounding: add tool when enabled
+  if (model.vndGeminiGoogleSearch && !skipHostedToolsDueToCustomTools) {
+    // Initialize tools array if not present
+    if (!payload.tools)
+      payload.tools = [];
+
+    // Build the Google Search tool configuration
+    const googleSearchTool: NonNullable<TRequest['tools']>[number] = {
+      googleSearch: _buildGoogleSearchConfig(model.vndGeminiGoogleSearch),
+    };
+
+    // Add to tools array
+    payload.tools.push(googleSearchTool);
+  }
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
@@ -335,9 +367,6 @@ function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
         });
         break;
 
-      case 'vnd.ant.tools.bash_20241022':
-      case 'vnd.ant.tools.computer_20241022':
-      case 'vnd.ant.tools.text_editor_20241022':
       default: // Note: Gemini's tool function doesn't break on unknown tools, so we need the default case here
         throw new Error('Tool ${itd.type} is not supported by Gemini');
 
@@ -379,4 +408,44 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
 function _toApproximateGeminiDocPart(aixPartsDocPart: AixParts_DocPart): GeminiWire_ContentParts.ContentPart {
   // NOTE: we keep this function because we could use Gemini's different way to represent documents in the future...
   return GeminiWire_ContentParts.TextPart(approxDocPart_To_String(aixPartsDocPart));
+}
+
+function _buildGoogleSearchConfig(searchGrounding: AixAPI_Model['vndGeminiGoogleSearch']): NonNullable<NonNullable<TRequest['tools']>[number]['googleSearch']> {
+
+  // enabled: any time interval
+  if (searchGrounding === 'unfiltered')
+    return {};
+
+  // calculate the time range based on the filter value
+  const until = new Date();
+  const startTime = new Date(until);
+  switch (searchGrounding) {
+    case '1d':
+      startTime.setDate(until.getDate() - 1);
+      // Fix "Invalid time range: end_time must be 24 hours after start_time."
+      until.setHours(until.getHours() + 1);
+      break;
+    case '1w':
+      startTime.setDate(until.getDate() - 7);
+      break;
+    case '1m':
+      startTime.setMonth(until.getMonth() - 1);
+      break;
+    case '6m':
+      startTime.setMonth(until.getMonth() - 6);
+      break;
+    case '1y':
+      startTime.setFullYear(until.getFullYear() - 1);
+      break;
+    default:
+      console.warn(`Unknown Google Search grounding value: ${searchGrounding}`);
+      return {};
+  }
+  // format timestamps: https://ai.google.dev/api/caching#Interval
+  return {
+    timeRangeFilter: {
+      startTime: startTime.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+      endTime: until.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    },
+  };
 }

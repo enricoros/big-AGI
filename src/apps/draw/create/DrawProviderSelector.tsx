@@ -62,7 +62,7 @@ export function DrawProviderSelector(props: {
         // sx={{ minWidth: '12rem' /* doesn't work anymore with SlotProps */ }}
       >
         {providerOptions.map(option => (
-          <Option key={option.value} value={option.value} disabled={!option.configured}>
+          <Option key={option.value} value={option.value} disabled={!option.configured} label={option.label}>
             <ListItemDecorator>
               {!!option.Icon && <option.Icon />}
             </ListItemDecorator>

@@ -2,11 +2,12 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Checkbox, MenuList } from '@mui/joy';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { adjustContentScaling, themeScalingMap, } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIContentScaling } from '~/common/stores/store-ui';
+import { useUIContentScaling, useUIPanelGroupCollapsed, uiSetPanelGroupCollapsed } from '~/common/stores/store-ui';
 
 
 const gutterSx: SxProps = {
@@ -70,6 +71,7 @@ const headerSx: SxProps = {
 };
 
 const headerTitleSx: SxProps = {
+  flexGrow: 1,
   color: 'text.tertiary',
   // fontSize: 'xs',
   fontWeight: 'lg',
@@ -97,45 +99,74 @@ const groupListSx: SxProps = {
 
 export function OptimaPanelGroupedList(props: {
   title?: React.ReactNode;
-  endDecorator?: React.ReactNode;
+  startDecorator?: React.ReactNode;
   children?: React.ReactNode;
+  marginTopAuto?: boolean;
+  hideExpandedCheckbox?: boolean;
+
+  // external control
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+
+  // simplified persistent collapsible (as an alternative to the external control)
   persistentCollapsibleId?: string;
-  startExpanded?: boolean;
+  persistentStartCollapsed?: boolean;
 }) {
 
   // state
-  // TODO: persist by id
-  const [_expanded, setExpanded] = React.useState(props.startExpanded === true);
+  const [internalExpanded, setInternalExpanded] = React.useState(props.persistentStartCollapsed !== true);
 
   // external state
   const isMobile = useIsMobile();
   const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
   const smallerContentScaling = adjustContentScaling(contentScaling, -1);
+  
+  // persistent collapse state
+  const persistentCollapsed = useUIPanelGroupCollapsed(props.persistentCollapsibleId || null);
 
   // derived state
-  const isCollapsible = !!props.persistentCollapsibleId;
-  const isExpanded = !isCollapsible || _expanded;
+  const { onToggleExpanded } = props;
+  const isControlled = props.expanded !== undefined;
+  const isCollapsible = isControlled || !!props.persistentCollapsibleId;
+
+  // use appropriate expanded state based on mode
+  const isExpanded =
+    isControlled ? props.expanded as boolean // external control
+      : !props.persistentCollapsibleId ? internalExpanded // internal control
+        : persistentCollapsed !== undefined ? !persistentCollapsed // persistent collapsible
+          : !props.persistentStartCollapsed; // initial state if none of the above
 
   // handlers
-
-  const toggleExpanded = React.useCallback(() => {
-    setExpanded(expanded => !expanded);
-  }, []);
-
+  const handleToggle = React.useCallback(() => {
+    if (isControlled)
+      onToggleExpanded?.();
+    else if (props.persistentCollapsibleId)
+      uiSetPanelGroupCollapsed(props.persistentCollapsibleId, isExpanded);
+    else
+      setInternalExpanded(prev => !prev);
+  }, [isControlled, onToggleExpanded, props.persistentCollapsibleId, isExpanded]);
 
   return (
-    <Box>
+    <Box sx={props.marginTopAuto ? { marginTop: 'auto' } : undefined}>
 
       {/* Header */}
       {(!!props.title || isCollapsible) && (
         <Box
           aria-expanded={isExpanded}
-          onClick={isCollapsible ? toggleExpanded : undefined}
+          onClick={isCollapsible ? handleToggle : undefined}
           role={isCollapsible ? 'button' : undefined}
           sx={headerSx}
         >
+          {props.startDecorator}
           <Box fontSize={smallerContentScaling} sx={headerTitleSx}>{props.title}</Box>
-          {isCollapsible && <Checkbox size='md' variant='outlined' color='neutral' checked={isExpanded} />}
+          {isCollapsible && props.hideExpandedCheckbox && !isExpanded && <UnfoldMoreIcon sx={{ mr: 0, color: 'neutral.softColor', fontSize: 'md' }} />}
+          {isCollapsible && !props.hideExpandedCheckbox && (
+            <Checkbox
+              size='md' variant='outlined' color='neutral'
+              checked={isExpanded}
+              readOnly
+            />
+          )}
         </Box>
       )}
 

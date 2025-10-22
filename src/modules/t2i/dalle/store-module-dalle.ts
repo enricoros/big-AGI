@@ -10,7 +10,7 @@ import { persist } from 'zustand/middleware';
 export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this works in all
 export type DalleImageSize = DalleSizeGI | DalleSizeD3 | DalleSizeD2;
 
-export type DalleModelId = 'gpt-image-1' | 'dall-e-3' | 'dall-e-2';
+export type DalleModelId = 'gpt-image-1' | 'gpt-image-1-mini' | 'dall-e-3' | 'dall-e-2';
 export type DalleModelSelection = DalleModelId | null; // null = auto-select latest
 
 /**
@@ -21,9 +21,29 @@ export type DalleModelSelection = DalleModelId | null; // null = auto-select lat
 export function resolveDalleModelId(selection: DalleModelSelection): DalleModelId {
   // Auto-select latest model when null
   if (selection === null) {
-    return 'gpt-image-1'; // Current latest model
+    return 'gpt-image-1'; // Current latest model (prefer full model over mini)
   }
   return selection;
+}
+
+/**
+ * Get the model family for a given image model.
+ * Models in the same family share settings, capabilities, and UI.
+ *
+ * @param modelId - The specific model ID
+ * @returns The model family identifier
+ *
+ * Future: When adding Google Imagen, xAI, or big-agi hosted models:
+ * - Add new return types: 'google-imagen' | 'xai-grok-image' | 'bigagi-hosted'
+ * - Update all family-based checks to handle new families
+ * - Each family can have its own settings/pricing structure
+ */
+export function getImageModelFamily(modelId: DalleModelId): 'gpt-image' | 'dall-e-3' | 'dall-e-2' {
+  if (modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini')
+    return 'gpt-image';
+  if (modelId === 'dall-e-3')
+    return 'dall-e-3';
+  return 'dall-e-2';
 }
 
 export type DalleImageQuality = DalleImageQualityGI | DalleImageQualityD3;

@@ -21,7 +21,7 @@ const Popup = styled(Popper)({
  *  - ...
  */
 export function CloseablePopup(props: {
-  menu?: boolean, // whether to render as a MenuList (or as a Box otherwise)
+  menu?: true, // whether to render as a MenuList (or as a Box otherwise)
   anchorEl: HTMLElement | null,
   onClose: () => void,
 
@@ -33,6 +33,7 @@ export function CloseablePopup(props: {
 
   // behavior changes
   disableMenuTypeahead?: boolean, // disable alphanumeric typeahead navigation in MenuList
+  noAutoFocus?: boolean, // if true, does not auto-focus on mount
 
   placement?: PopperPlacementType,
   maxHeightGapPx?: number,
@@ -51,6 +52,15 @@ export function CloseablePopup(props: {
 
   const { onClose } = props;
 
+  /**
+   * Callback ref for focus management - called upon mount, to transfer focus.
+   * Note: needs menuItems in there for full and good navigation of a list, as the menu expects to land focus on those items.
+   */
+  const autoFocusOnMount = React.useCallback((element: HTMLElement | null) => {
+    if (element && props.anchorEl)
+      requestAnimationFrame(() => element.focus());
+  }, [props.anchorEl]);
+
   const handleClose = React.useCallback((event: MouseEvent | TouchEvent | React.KeyboardEvent) => {
     event.stopPropagation();
     onClose();
@@ -58,17 +68,21 @@ export function CloseablePopup(props: {
 
   const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
-      handleClose(event);
+      // NOTE: the following is not needed since we fixed 'tab'
+      // Close menu on Tab - this prevents focus from escaping the popup
+      // while keeping the popup simple (no full focus trap implementation)
+      if (props.noAutoFocus)
+        handleClose(event);
     } else if (event.key === 'Escape') {
-      if (props.anchorEl)
-        props.anchorEl?.focus();
       handleClose(event);
+      if (props.anchorEl)
+        props.anchorEl.focus();
     } else if (props.disableMenuTypeahead && event.key.length === 1) {
       // Prevent MenuList's typeahead navigation when disabled
       event.stopPropagation();
       // event.preventDefault(); // this is needed.. e.g. typing on input boxes
     }
-  }, [handleClose, props.anchorEl, props.disableMenuTypeahead]);
+  }, [handleClose, props.anchorEl, props.disableMenuTypeahead, props.noAutoFocus]);
 
 
   // memos
@@ -119,11 +133,11 @@ export function CloseablePopup(props: {
     >
       <ClickAwayListener onClickAway={handleClose}>
         {props.menu ? (
-          <MenuList size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <MenuList ref={props.noAutoFocus ? undefined : autoFocusOnMount} size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx}>
             {props.children}
           </MenuList>
         ) : (
-          <Box onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <Box ref={props.noAutoFocus ? undefined : autoFocusOnMount} onKeyDown={handleKeyDown} sx={styleMemoSx}>
             {props.children}
           </Box>
         )}

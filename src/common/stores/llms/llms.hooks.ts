@@ -1,6 +1,6 @@
 import { useShallow } from 'zustand/react/shallow';
 
-import type { DLLM, DLLMId } from './llms.types';
+import { DLLM, DLLMId, isLLMVisible } from './llms.types';
 import type { DModelsServiceId } from './llms.service.types';
 import { useModelsStore } from './store-llms';
 
@@ -23,7 +23,7 @@ export function useLLMsByService(serviceId: false | DModelsServiceId): DLLM[] {
 
 export function useVisibleLLMs(includeLlmId: undefined | DLLMId | null): ReadonlyArray<DLLM> {
   return useModelsStore(useShallow(
-    ({ llms }) => llms.filter(llm => !llm.hidden || (includeLlmId && llm.id === includeLlmId)),
+    ({ llms }) => llms.filter(llm => isLLMVisible(llm) || (includeLlmId && llm.id === includeLlmId)),
   ));
 }
 

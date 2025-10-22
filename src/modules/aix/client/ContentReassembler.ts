@@ -22,7 +22,7 @@ import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or JPEG to save IndexedDB space
 const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
 const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
-const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
+const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = false; // 2025-10-10: put errors in the dedicated part
 
 
 /**
@@ -270,6 +270,9 @@ export class ContentReassembler {
           case 'set-model':
             this.onModelName(op);
             break;
+          case 'set-upstream-handle':
+            this.onResponseHandle(op);
+            break;
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
@@ -425,7 +428,7 @@ export class ContentReassembler {
       });
 
       // TEMP: show a label instead of adding the model part
-      this.accumulator.fragments.push(createTextContentFragment(`Playing ${safeLabel}${durationMs ? ` (${Math.round(durationMs / 10) / 100}s)` : ''}`));
+      this.accumulator.fragments.push(createTextContentFragment(`Generated audio ▶ \`${safeLabel}\`${durationMs ? ` (${Math.round(durationMs / 10) / 100}s)` : ''}`));
 
       // Add the audio to the DBlobs DB
       // const dblobAssetId = await addDBAudioAsset('global', 'app-chat', {
@@ -524,7 +527,7 @@ export class ContentReassembler {
           ...(safeLabel ? { altText: safeLabel } : {}),
           ...(imageWidth ? { width: imageWidth } : {}),
           ...(imageHeight ? { height: imageHeight } : {}),
-        }
+        },
       );
 
       this.accumulator.fragments.push(zyncImageAssetFragmentWithLegacy);
@@ -618,6 +621,7 @@ export class ContentReassembler {
       // normal stop
       case 'ok':                    // content
       case 'ok-tool_invocations':   // content + tool invocation
+      case 'ok-pause_continue':     // [Anthropic] server tools (e.g. web search) - successful pause, requires continuation
         break;
 
       case 'client-abort-signal':
@@ -634,6 +638,7 @@ export class ContentReassembler {
 
       case 'filter-content':        // inline text message shall have been added
       case 'filter-recitation':     // inline text message shall have been added
+      case 'filter-refusal':        // [Anthropic] model refused due to safety (same semantic as filtering)
         this.accumulator.genTokenStopReason = 'filter';
         break;
 
@@ -669,6 +674,16 @@ export class ContentReassembler {
 
   private onModelName({ name }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-model' }>): void {
     this.accumulator.genModelName = name;
+  }
+
+  private onResponseHandle({ handle }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-upstream-handle' }>): void {
+    // validate the handle
+    if (handle?.uht !== 'vnd.oai.responses' || !handle?.responseId || handle?.expiresAt === undefined) {
+      this._appendReassemblyDevError(`Invalid response handle received: ${JSON.stringify(handle)}`);
+      return;
+    }
+    // type check point for AixWire_Particles.ChatControlOp('set-upstream-handle') -> DUpstreamResponseHandle
+    this.accumulator.genUpstreamHandle = handle;
   }
 
 

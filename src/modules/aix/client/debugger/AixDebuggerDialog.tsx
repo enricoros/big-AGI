@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Divider, FormControl, FormLabel, Option, Select, Typography } from '@mui/joy';
+import { Box, Button, Divider, FormControl, FormLabel, Link, Option, Select, Switch, Typography } from '@mui/joy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { AixDebuggerFrame } from './AixDebuggerFrame';
 import { aixClientDebuggerActions, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
@@ -14,7 +16,10 @@ export function AixDebuggerDialog(props: {
   onClose: () => void;
 }) {
 
-  // external state - we subscribe to Any update - it's a temp debugger anyway
+  // external state
+  const isMobile = useIsMobile();
+  const aixInspector = useUIPreferencesStore(state => state.aixInspector);
+  // NOTE: we subscribe to Any update - which can be ultra noisy
   const { frames, activeFrameId, maxFrames } = useAixClientDebuggerStore(useShallow((state) => ({
     frames: state.frames,
     activeFrameId: state.activeFrameId,
@@ -40,7 +45,16 @@ export function AixDebuggerDialog(props: {
     <GoodModal
       open
       onClose={props.onClose}
-      title='AIX API Debugger'
+      title='AI Request Inspector'
+      titleStartDecorator={
+        <Switch
+          checked={aixInspector}
+          onChange={useUIPreferencesStore.getState().toggleAixInspector}
+          sx={{ mr: 1 }}
+        />
+      }
+      autoOverflow
+      fullscreen={isMobile || 'button'}
       sx={{ maxWidth: undefined }}
     >
 
@@ -70,7 +84,7 @@ export function AixDebuggerDialog(props: {
           </Select>
         </FormControl>
 
-        {/* History Size Preferenes */}
+        {/* History Size Preferences */}
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
           <FormControl>
             <FormLabel>History Size</FormLabel>
@@ -107,11 +121,20 @@ export function AixDebuggerDialog(props: {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
           {!frames.length && <>
             <Typography level='title-lg'>
-              No AIX API requests recorded yet
+              {aixInspector ? 'Ready to capture' : 'AI Request Inspector'}
             </Typography>
-            <Typography level='body-sm' sx={{ mt: 2, maxWidth: 468 }}>
-              Ensure AIX debugging is active (Settings -&gt; Labs -&gt; Developer Mode)
-              and you are running your own localhost:3000 installation.
+            <Typography level='body-sm' sx={{ mt: 2, maxWidth: 468, textAlign: 'center' }}>
+              {aixInspector
+                ? 'Your next AI request will be captured here.'
+                : <>
+                    <Link
+                      component='button'
+                      level='body-sm'
+                      onClick={useUIPreferencesStore.getState().toggleAixInspector}
+                    >
+                      Turn on inspector
+                    </Link> to see the exact requests to AI models.
+                  </>}
             </Typography>
           </>}
           {!activeFrame && !!frames.length && (
@@ -124,7 +147,7 @@ export function AixDebuggerDialog(props: {
 
       {/* Frame viewer */}
       {!!activeFrame && (
-        <Box sx={{ overflow: 'hidden' }}>
+        <Box sx={{ overflow: 'auto' }}>
           <AixDebuggerFrame frame={activeFrame} />
         </Box>
       )}

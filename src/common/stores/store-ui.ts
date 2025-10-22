@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import { BrowserLang } from '~/common/util/pwaUtils';
+import { Release } from '~/common/app.release';
 
 
 // UI Preferences
@@ -44,8 +45,16 @@ interface UIPreferencesStore {
   showPersonaFinder: boolean;
   setShowPersonaFinder: (showPersonaFinder: boolean) => void;
 
+  showModelsHidden: boolean;
+  setShowModelsHidden: (showModelsHidden: boolean) => void;
+
   composerQuickButton: 'off' | 'call' | 'beam';
   setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => void;
+
+  // Advanced features
+
+  aixInspector: boolean;
+  toggleAixInspector: () => void;
 
   // UI Dismissals
 
@@ -57,6 +66,11 @@ interface UIPreferencesStore {
   actionCounters: Record<string, number>;
   incrementActionCounter: (key: string) => void;
   resetActionCounter: (key: string) => void;
+
+  // Optima Panel Grouped List Collapse States
+
+  panelGroupCollapseStates: Record<string, boolean>;
+  setPanelGroupCollapsed: (key: string, collapsed: boolean) => void;
 
 }
 
@@ -100,8 +114,16 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       showPersonaFinder: false,
       setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
 
+      showModelsHidden: false,
+      setShowModelsHidden: (showModelsHidden: boolean) => set({ showModelsHidden }),
+
       composerQuickButton: 'beam',
       setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => set({ composerQuickButton }),
+
+      // Advanced features
+
+      aixInspector: false,
+      toggleAixInspector: () => set((state) => ({ aixInspector: !state.aixInspector })),
 
       // UI Dismissals
 
@@ -122,6 +144,14 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
           actionCounters: { ...state.actionCounters, [key]: 0 },
         })),
 
+      // Panel Grouped List Collapse States
+
+      panelGroupCollapseStates: {},
+      setPanelGroupCollapsed: (key: string, collapsed: boolean) =>
+        set((state) => ({
+          panelGroupCollapseStates: { ...state.panelGroupCollapseStates, [key]: collapsed },
+        })),
+
     }),
     {
       name: 'app-ui',
@@ -132,6 +162,13 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
        * 3: centerMode: 'full' is the new default
        */
       version: 3,
+
+      partialize: (state) => {
+        if (Release.IsNodeDevBuild) return state; // in dev, persist everything
+        // In production, exclude aixInspector from persistence
+        const { aixInspector, ...rest } = state;
+        return rest;
+      },
 
       migrate: (state: any, fromVersion: number): UIPreferencesStore => {
 
@@ -169,6 +206,10 @@ export function useUIContentScaling(): ContentScaling {
   return useUIPreferencesStore((state) => state.contentScaling);
 }
 
+export function getAixInspector(): boolean {
+  return useUIPreferencesStore.getState().aixInspector;
+}
+
 
 export function useUIIsDismissed(key: string | null): boolean | undefined {
   return useUIPreferencesStore((state) => !key ? undefined : Boolean(state.dismissals[key]));
@@ -176,6 +217,15 @@ export function useUIIsDismissed(key: string | null): boolean | undefined {
 
 export function uiSetDismissed(key: string): void {
   useUIPreferencesStore.getState().dismiss(key);
+}
+
+
+export function useUIPanelGroupCollapsed(key: string | null): boolean | undefined {
+  return useUIPreferencesStore((state) => !key ? undefined : state.panelGroupCollapseStates[key]);
+}
+
+export function uiSetPanelGroupCollapsed(key: string, collapsed: boolean): void {
+  useUIPreferencesStore.getState().setPanelGroupCollapsed(key, collapsed);
 }
 
 

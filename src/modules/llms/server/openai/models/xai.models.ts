@@ -5,28 +5,64 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, KnownModel, ManualMappings } from './models.data';
 import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
+// Verified: 2025-10-15
 const _knownXAIChatModels: ManualMappings = [
 
   // Grok 4
+  {
+    idPrefix: 'grok-4-fast-reasoning',
+    label: 'Grok 4 Fast Reasoning',
+    description: 'Cost-efficient reasoning model with a 2M token context window. Optimized for fast reasoning in agentic workflows. 98% cost reduction vs Grok 4 with comparable performance.',
+    contextWindow: 2000000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 0.2, output: 0.5, cache: { cType: 'oai-ac', read: 0.05 } }, // Price increases for >128K tokens: input $0.40, output $1.00
+    benchmark: { cbaElo: 1420 }, // Similar to grok-4-0709, slight adjustment for cost model
+  },
+  {
+    idPrefix: 'grok-4-fast-non-reasoning',
+    label: 'Grok 4 Fast', // 'Grok 4 Fast Non-Reasoning'
+    description: 'Cost-efficient non-reasoning model with a 2M token context window. Same weights as grok-4-fast-reasoning but constrained by non-reasoning system prompt for quick responses.',
+    contextWindow: 2000000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 0.2, output: 0.5, cache: { cType: 'oai-ac', read: 0.05 } }, // Price increases for >128K tokens: input $0.40, output $1.00
+    benchmark: { cbaElo: 1420 - 2 }, // slightly lower than reasoning variant
+  },
   {
     idPrefix: 'grok-4-0709',
     label: 'Grok 4 (0709)',
     description: 'xAI\'s most advanced model, offering state-of-the-art reasoning and problem-solving capabilities over a massive 256k context window. Supports text and image inputs.',
     contextWindow: 256000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1422 }, // grok-4-0709
+    benchmark: { cbaElo: 1415 }, // grok-4-0709
   },
 
   // Grok 3
+  {
+    isLegacy: true,
+    hidden: true,
+    idPrefix: 'grok-3-fast',
+    label: 'Grok 3 Fast',
+    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications. (Not available as of October 2025)',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
+    benchmark: { cbaElo: 1408 }, // grok-3-fast (slight adjustment for cost model)
+  },
   {
     idPrefix: 'grok-3',
     label: 'Grok 3',
@@ -39,43 +75,47 @@ const _knownXAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1409 }, // grok-3-preview-02-24
   },
   {
-    idPrefix: 'grok-3-fast',
-    label: 'Grok 3 Fast',
-    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
-    chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
-    benchmark: { cbaElo: 1408 }, // grok-3-fast (slight adjustment for cost model)
-  },
-  {
     idPrefix: 'grok-3-mini',
     label: 'Grok 3 Mini',
-    description: 'A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.',
+    description: 'A lightweight model that is fast and smart for logic-based tasks. Supports function calling and structured outputs.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' },
-      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
+      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' },
     ],
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
     benchmark: { cbaElo: 1358 }, // grok-3-mini-beta (updated from CSV)
   },
   {
+    isLegacy: true,
+    hidden: true,
     idPrefix: 'grok-3-mini-fast',
     label: 'Grok 3 Mini Fast',
-    description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
+    description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications. (Not available as of October 2025)',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' },
-      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }
+      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' },
     ],
     chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
     benchmark: { cbaElo: 1357 }, // grok-3-mini-fast (slight adjustment for cost model)
+  },
+
+  // Grok Code
+  {
+    idPrefix: 'grok-code-fast-1',
+    label: 'Grok Code Fast 1',
+    description: 'Specialized reasoning model for agentic coding workflows. Fast, economical, and optimized for code generation, debugging, and software development tasks.',
+    contextWindow: 256000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: { input: 0.2, output: 1.5, cache: { cType: 'oai-ac', read: 0.02 } },
+    benchmark: { cbaElo: 1380 }, // Estimated for coding-specialized model
   },
 
   // Grok 2
@@ -149,7 +189,7 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
   return xaiModels.models.reduce((acc, xm) => {
 
     // Fallback for unknown models
-    const unknownModelFallback: ManualMapping = {
+    const unknownModelFallback: KnownModel = {
       idPrefix: xm.id,
       label: _xaiFormatNewModelLabel(xm.id),
       description: `xAI model ${xm.id}`,
@@ -208,6 +248,9 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
 
 // manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
+  'grok-code-fast-1',
+  'grok-4-fast-reasoning',
+  'grok-4-fast-non-reasoning',
   'grok-4-0709',
   'grok-3-fast',
   'grok-3',
@@ -223,15 +266,15 @@ export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchem
   // First try exact matches with the order array
   const aExact = _xaiIdStartsWithOrder.indexOf(a.id);
   const bExact = _xaiIdStartsWithOrder.indexOf(b.id);
-  
+
   // If both have exact matches, use those positions
   if (aExact !== -1 && bExact !== -1)
     return aExact - bExact;
-  
+
   // If only one has exact match, prioritize it
   if (aExact !== -1) return -1;
   if (bExact !== -1) return 1;
-  
+
   // Fall back to prefix matching for unknown models
   const aStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => a.id.startsWith(prefix));
   const bStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => b.id.startsWith(prefix));

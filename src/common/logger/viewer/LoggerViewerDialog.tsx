@@ -16,6 +16,7 @@ import type { LogEntry, LogLevel, LogSource } from '../logger.types';
 import { useLoggerStore } from '../store-logger';
 
 import { LogEntryDetails } from './LogEntryDetails';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 function _getLogLevelIcon(level: LogLevel) {
@@ -61,6 +62,7 @@ export function LogViewerDialog(props: {
   const [selectedLogId, setSelectedLogId] = React.useState<LogEntry['id'] | null>(null);
 
   // external state
+  const isMobile = useIsMobile();
   const entries = useLoggerStore(state => state.entries);
 
 
@@ -99,7 +101,9 @@ export function LogViewerDialog(props: {
       title='Client Logs'
       unfilterBackdrop
       // themedColor='neutral'
-      sx={{ maxWidth: undefined, overflow: 'hidden' }}
+      autoOverflow
+      fullscreen={isMobile || 'button'}
+      sx={{ maxWidth: undefined }}
     >
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 1 }}>
 

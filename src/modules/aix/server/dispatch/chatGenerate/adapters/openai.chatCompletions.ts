@@ -39,7 +39,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
-  const hotFixThrowCannotFC = openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
+  const hotFixThrowCannotFC =
+    // [OpenRouter] 2025-10-02: do not throw, rather let it fail if upstream has issues
+    // openAIDialect === 'openrouter' || /* OpenRouter FC support is not good (as of 2024-07-15) */
+    openAIDialect === 'perplexity';
   const hotFixVndORIncludeReasoning = openAIDialect === 'openrouter'; // [OpenRouter, 2025-01-24] has a special `include_reasoning` field to show the chain of thought
 
   // Model incompatibilities -> Hotfixes
@@ -121,14 +124,19 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
   }
-  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
-  if (model.vndOaiRestoreMarkdown) {
-    _fixVndOaiRestoreMarkdown_Inline(payload);
-  }
+
+  // --- Tools ---
+
+  // Allow/deny auto-adding hosted tools when custom tools are present
+  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const skipWebSearchDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
+  // Hosted tools
   // [OpenAI] Vendor-specific web search context and/or geolocation
   // NOTE: OpenAI doesn't support web search with minimal reasoning effort
   const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
-  if ((model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning) {
+  if ((model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning && !skipWebSearchDueToCustomTools) {
     payload.web_search_options = {};
     if (model.vndOaiWebSearchContext)
       payload.web_search_options.search_context_size = model.vndOaiWebSearchContext;
@@ -140,6 +148,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
         },
       };
   }
+
+
+  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
+  const skipMarkdownDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  if (model.vndOaiRestoreMarkdown && !skipMarkdownDueToCustomTools)
+    _fixVndOaiRestoreMarkdown_Inline(payload);
+
 
   // [xAI] Vendor-specific extensions for Live Search
   if (openAIDialect === 'xai' && model.vndXaiSearchMode && model.vndXaiSearchMode !== 'off') {
@@ -156,7 +171,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
         .split(',')
         .map(s => s.trim())
         .filter(s => !!s);
-      
+
       // only omit sources if it's the default ('web' and 'x')
       const isDefaultSources = sources.length === 2 && sources.includes('web') && sources.includes('x');
       if (!isDefaultSources)
@@ -212,6 +227,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   if (hotFixRemoveStreamOptions)
     payload = _fixRemoveStreamOptions(payload);
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);
@@ -601,11 +617,6 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
 
       case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
-
-      case 'vnd.ant.tools.bash_20241022':
-      case 'vnd.ant.tools.computer_20241022':
-      case 'vnd.ant.tools.text_editor_20241022':
-        throw new Error('Different Vendor Tools are not supported by OpenAI');
 
       default:
         // const _exhaustiveCheck: never = itdType;
