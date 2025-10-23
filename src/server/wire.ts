@@ -53,8 +53,8 @@ export function safeErrorString(error: any): string | null {
     return null;
 
   // handle AggregateError
-  if (error instanceof AggregateError) {
-    const errors = error.errors.map(e => safeErrorString(e)).filter(Boolean);
+  if ((error instanceof AggregateError || error?.name === 'AggregateError') && Array.isArray(error.errors)) {
+    const errors = error.errors?.map((e: any) => safeErrorString(e)).filter(Boolean);
     return `AggregateError: ${errors.join('; ')}`;
   }
 
@@ -74,6 +74,15 @@ export function safeErrorString(error: any): string | null {
   }
   if (typeof error === 'string')
     return error;
+
+  // for real 'Error' objects, use the normal toString, as the JSON stringify may ignore fields for some reason
+  try {
+    if (error instanceof Error && 'toString' in error && typeof error.toString === 'function')
+      return error.toString();
+  } catch (e) {
+    // ignore
+  }
+
   if (typeof error === 'object') {
     try {
       return JSON.stringify(error, null, 2).slice(1, -1);
