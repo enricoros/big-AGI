@@ -116,14 +116,14 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
 
 // Mappers
 
-async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, antModelIdForBetaFeatures: undefined | string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = anthropicAccess(access, apiPath, { modelIdForBetaFeatures: antModelIdForBetaFeatures });
-  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic' });
+async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHeaderOptions, signal?: AbortSignal): Promise<TOut> {
+  const { headers, url } = anthropicAccess(access, apiPath, options);
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic', signal });
 }
 
-// async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-//   const { headers, url } = anthropicAccess(access, apiPath);
-//   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Anthropic' });
+// async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, apiPath: string, body: TPostBody, options?: AnthropicHeaderOptions, signal?: AbortSignal): Promise<TOut> {
+//   const { headers, url } = anthropicAccess(access, apiPath, options);
+//   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Anthropic', signal });
 // }
 
 export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHeaderOptions): { headers: HeadersInit, url: string } {
@@ -209,7 +209,7 @@ export const llmAnthropicRouter = createTRPCRouter({
     .query(async ({ input: { access } }) => {
 
       // get the models
-      const wireModels = await anthropicGETOrThrow(access, undefined, '/v1/models?limit=1000');
+      const wireModels = await anthropicGETOrThrow(access, '/v1/models?limit=1000');
       const { data: availableModels } = AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
 
       // sort by: family (desc) > class (desc) > date (desc) -- Future NOTE: -5- will match -4-5- and -3-5-.. figure something else out
