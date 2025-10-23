@@ -77,6 +77,20 @@ export const DModelParameterRegistry = {
     // initialValue: false, // we don't need the initial value here, will be assumed off
   } as const,
 
+  llmVndAnt1MContext: {
+    label: '1M Context Window (Beta)',
+    type: 'boolean' as const,
+    description: 'Enable 1M token context window with premium pricing for >200K input tokens',
+    // No initialValue - undefined means off (e.g. default 200K context window)
+  } as const,
+
+  llmVndAntSkills: {
+    label: 'Document Skills',
+    type: 'string' as const,
+    description: 'Comma-separated skills (xlsx,pptx,pdf,docx)',
+    initialValue: '', // empty string = disabled
+  } as const,
+
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer' as const,
@@ -88,14 +102,6 @@ export const DModelParameterRegistry = {
     } as const,
   } as const,
 
-  llmVndAntWebSearch: {
-    label: 'Web Search',
-    type: 'enum' as const,
-    description: 'Enable web search for real-time information',
-    values: ['auto', 'off'] as const,
-    // No initialValue - undefined means off (same as 'off')
-  } as const,
-
   llmVndAntWebFetch: {
     label: 'Web Fetch',
     type: 'enum' as const,
@@ -104,11 +110,12 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (same as 'off')
   } as const,
 
-  llmVndAnt1MContext: {
-    label: '1M Context Window (Beta)',
-    type: 'boolean' as const,
-    description: 'Enable 1M token context window with premium pricing for >200K input tokens',
-    // No initialValue - undefined means off (e.g. default 200K context window)
+  llmVndAntWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable web search for real-time information',
+    values: ['auto', 'off'] as const,
+    // No initialValue - undefined means off (same as 'off')
   } as const,
 
   llmVndGeminiAspectRatio: {
