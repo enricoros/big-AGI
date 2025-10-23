@@ -51,7 +51,7 @@ export function AnthropicSkillsConfig({ smaller, llmVndAntSkills, onChangeParame
           const isSelected = skillsArray.includes(skill.id);
           return (
             <Chip
-              size='md'
+              size={smaller ? 'sm' : 'md'}
               key={skill.id}
               variant={isSelected ? 'solid' : 'outlined'}
               color={isSelected ? 'primary' : 'neutral'}
