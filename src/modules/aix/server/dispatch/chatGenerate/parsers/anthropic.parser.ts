@@ -8,6 +8,10 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
 
 
+// configuration
+const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
+
+
 /**
  * Anthropic Streaming Completions - Messages Architecture
  *
@@ -70,6 +74,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
     switch (eventName) {
       // Ignore pings
       case 'ping':
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant ping');
         break;
 
       // M1. Initialize the message content for a new message
@@ -123,6 +128,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           }
           pt.updateMetrics(metricsUpdate);
         }
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: model=${responseMessage.model}, TIn=${chatInTokens || 0}, container=${responseMessage.container?.id || 'none'}`);
         break;
 
       // M2. Initialize content block if needed
@@ -134,6 +141,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (responseMessage.content[index] !== undefined)
           throw new Error(`Unexpected content block start location (${index})`);
         responseMessage.content[index] = content_block;
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
+          const debugInfo = content_block.type === 'tool_use' ? `tool=${content_block.name}`
+            : content_block.type === 'server_tool_use' ? `server_tool=${content_block.name}`
+              : content_block.type === 'text' ? `text_len=${content_block.text.length}`
+                : content_block.type === 'thinking' ? `thinking_len=${content_block.thinking.length}`
+                  : content_block.type === 'container_upload' ? `file_id=${content_block.file_id}`
+                    : content_block.type;
+          console.log(`ant content_block_start[${index}]: type=${content_block.type}, ${debugInfo}`);
+        }
 
         switch (content_block.type) {
           case 'text':
@@ -218,7 +235,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 undefined, // startIndex
                 undefined, // endIndex
                 undefined, // textSnippet
-                content_block.content.retrieved_at ? Date.parse(content_block.content.retrieved_at) : undefined
+                content_block.content.retrieved_at ? Date.parse(content_block.content.retrieved_at) : undefined,
               );
             } else if (content_block.content.type === 'web_fetch_tool_result_error') {
               // Error during web fetch
@@ -342,6 +359,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (contentBlock === undefined)
           throw new Error(`Unexpected content block delta location (${index})`);
 
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
+          const debugInfo = delta.type === 'text_delta' ? `len=${delta.text.length}`
+            : delta.type === 'input_json_delta' ? `json_len=${delta.partial_json.length}`
+              : delta.type === 'thinking_delta' ? `len=${delta.thinking.length}`
+                : delta.type === 'signature_delta' ? `sig=${delta.signature}`
+                  : delta.type === 'citations_delta' ? `citation_type=${delta.citation.type}`
+                    : (delta as any)?.type;
+          console.log(`ant content_block_delta[${index}]: type=${delta.type}, ${debugInfo}`);
+        }
+
         switch (delta.type) {
           case 'text_delta':
             if (contentBlock.type === 'text') {
@@ -393,7 +420,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                   undefined, // startIndex
                   undefined, // endIndex
                   citation.cited_text, // textSnippet
-                  undefined // pubTs
+                  undefined, // pubTs
                 );
               }
               // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
@@ -418,43 +445,48 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (responseMessage.content[index] === undefined)
           throw new Error(`Unexpected content block stop location (${index})`);
 
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant content_block_stop[${index}]: type=${responseMessage.content[index].type}`);
+
         // Signal that the tool is ready? (if it is...)
         pt.endMessagePart();
         break;
       }
 
       // Optionally handle top-level message changes. Example: updating stop_reason
-      case 'message_delta':
-        if (responseMessage) {
-          const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
+      case 'message_delta': {
+        if (!responseMessage) throw new Error('Unexpected message_delta');
 
-          Object.assign(responseMessage, delta);
+        const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
 
-          // -> Token Stop Reason
-          const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
-          if (tokenStopReason !== null)
-            pt.setTokenStopReason(tokenStopReason);
+        Object.assign(responseMessage, delta);
 
-          if (usage?.output_tokens && messageStartTime) {
-            const elapsedTimeMilliseconds = Date.now() - messageStartTime;
-            const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
-            const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-            pt.updateMetrics({
-              TIn: chatInTokens !== undefined ? chatInTokens : -1,
-              TOut: usage.output_tokens,
-              vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-              dtStart: timeToFirstEvent,
-              dtInner: elapsedTimeMilliseconds,
-              dtAll: Date.now() - parserCreationTimestamp,
-            });
-          }
-        } else
-          throw new Error('Unexpected message_delta');
+        // -> Token Stop Reason
+        const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
+        if (tokenStopReason !== null)
+          pt.setTokenStopReason(tokenStopReason);
+
+        if (usage?.output_tokens && messageStartTime) {
+          const elapsedTimeMilliseconds = Date.now() - messageStartTime;
+          const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
+          const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+          pt.updateMetrics({
+            TIn: chatInTokens !== undefined ? chatInTokens : -1,
+            TOut: usage.output_tokens,
+            vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+            dtStart: timeToFirstEvent,
+            dtInner: elapsedTimeMilliseconds,
+            dtAll: Date.now() - parserCreationTimestamp,
+          });
+        }
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_delta: stop_reason=${delta.stop_reason || 'none'}, TOut=${usage?.output_tokens || 'none'}`);
         break;
+      }
 
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
         return pt.setEnded('done-dialect');
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -462,9 +494,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant error: ${errorText}`);
         return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
 
       default:
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);
         throw new Error(`Unexpected event name: ${eventName}`);
     }
   };
@@ -506,7 +540,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
                   undefined, // startIndex
                   undefined, // endIndex
                   citation.cited_text, // textSnippet
-                  undefined // pubTs
+                  undefined, // pubTs
                 );
               }
               // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
@@ -573,7 +607,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               undefined, // startIndex
               undefined, // endIndex
               undefined, // textSnippet
-              contentBlock.content.retrieved_at ? Date.parse(contentBlock.content.retrieved_at) : undefined
+              contentBlock.content.retrieved_at ? Date.parse(contentBlock.content.retrieved_at) : undefined,
             );
           } else if (contentBlock.content.type === 'web_fetch_tool_result_error') {
             // Error during web fetch
