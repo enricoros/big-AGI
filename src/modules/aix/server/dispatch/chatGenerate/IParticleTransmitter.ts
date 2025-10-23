@@ -60,7 +60,7 @@ export interface IParticleTransmitter {
   appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number): void;
 
   /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
-  sendVoidPlaceholder(mot: 'search-web' | 'gen-image', text: string): void;
+  sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string): void;
 
   // Non-parts data //
 
