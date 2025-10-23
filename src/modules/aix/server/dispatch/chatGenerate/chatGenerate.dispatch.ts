@@ -26,6 +26,8 @@ import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from '
 export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string) => void;
 
 
+// -- Specialized Implementations -- Core of Server-side AI Vendors abstraction --
+
 /**
  * Specializes to the correct vendor a request for chat generation
  */
@@ -71,9 +73,9 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       };
 
     /**
-     * Ollama has now an OpenAI compability layer for `chatGenerate` API, but still its own protocol for models listing.
+     * Ollama has now an OpenAI compatibility layer for `chatGenerate` API, but still its own protocol for models listing.
      * - as such, we 'cast' here to the dispatch to an OpenAI dispatch, while using Ollama access
-     * - we still use the ollama.router for the models listing and aministration APIs
+     * - we still use the ollama.router for the models listing and administration APIs
      *
      * For reference we show the old code for body/demuxerFormat/chatGenerateParse also below
      */

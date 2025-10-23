@@ -206,7 +206,7 @@ export function useUIContentScaling(): ContentScaling {
   return useUIPreferencesStore((state) => state.contentScaling);
 }
 
-export function getAixInspector(): boolean {
+export function getAixInspectorEnabled(): boolean {
   return useUIPreferencesStore.getState().aixInspector;
 }
 

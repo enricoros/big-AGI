@@ -60,7 +60,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   private freshMetrics: boolean = false;
 
 
-  constructor(private readonly prettyDialect: string, _throttleTimeMs: number | undefined) {
+  constructor(private readonly prettyDialect: string /*, _throttleTimeMs: number | undefined */) {
     // TODO: implement throttling on a particle basis
 
     // Not really used for now
@@ -127,8 +127,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.setEnded('issue-rpc');
   }
 
-  addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body: object) {
-    const bodyStr = JSON.stringify(body, null, 2);
+  addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body?: object) {
+    const bodyStr = body === undefined ? '' : JSON.stringify(body, null, 2);
 
     // ellipsize large bodies (e.g., many base64 images) to avoid huge debug packets
     let processedBody = bodyStr;
@@ -146,7 +146,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
         url: url,
         headers: hideSensitiveData ? '(hidden sensitive data)' : JSON.stringify(headers, null, 2),
         body: processedBody,
-        bodySize: JSON.stringify(body).length, // actual size, without pretty-printing or truncation
+        bodySize: body === undefined ? 0 : JSON.stringify(body).length, // actual size, without pretty-printing or truncation
       },
     });
   }

@@ -352,7 +352,7 @@ export namespace AixWire_Tooling {
    *       of DMessageToolCallPart messages.
    *
    * __Code Execution Tools__
-   * Models of the Gemini family will emit a code exeuction Tool Call, then execute
+   * Models of the Gemini family will emit a code execution Tool Call, then execute
    * the code into a sandboxed code interpreter, then emit a Tool Response with the
    * generated code and then resume execution of the code, inline.
    *
@@ -551,7 +551,7 @@ export namespace AixWire_Particles {
 
   export type CGEndReason =     // the reason for the end of the chat generation
     | 'abort-client'            // user aborted before the end of stream
-    | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sensds the 'message_stop' event
+    | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sends the 'message_stop' event
     | 'done-dispatch-aborted'   // this shall never see the light of day, as it was a reaction to the intake being aborted first
     | 'done-dispatch-closed'    // dispatch connection closed
     | 'issue-dialect'           // [1] ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
@@ -578,7 +578,7 @@ export namespace AixWire_Particles {
     | 'out-of-tokens';          // got out of tokens
 
   /**
-   * NOTE: break compatbility with this D-stored-type only when we'll
+   * NOTE: break compatibility with this D-stored-type only when we'll
    * start to need backwards-incompatible Particle->Reassembler flexibility,
    * which can't be just extended in the D-stored-type.
    *
