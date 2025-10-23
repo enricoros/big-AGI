@@ -1,24 +1,25 @@
-import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
-import { wireOpenrouterModelsListOutputSchema } from '~/modules/llms/server/openai/openrouter.wiretypes';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
-import { fromManualMapping } from '~/modules/llms/server/openai/models/models.data';
+
+import type { ModelDescriptionSchema } from '../../llm.server.types';
+import { fromManualMapping } from './models.data';
+import { wireOpenrouterModelsListOutputSchema } from '../openrouter.wiretypes';
 
 
 // [OpenRouter] - enough API info to auto-detect models, we only decide what to show here
 // - models: https://openrouter.ai/models
 // - models list API: https://openrouter.ai/docs/models
 
-const orOldModelIDs = [
-  // Older OpenAI models
-  'openai/gpt-3.5-turbo-0301', 'openai/gpt-3.5-turbo-0613', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
-  // Older Anthropic models
-  'anthropic/claude-1', 'anthropic/claude-1.2', 'anthropic/claude-instant-1.0', 'anthropic/claude-instant-1.1',
-  'anthropic/claude-2', 'anthropic/claude-2:beta', 'anthropic/claude-2.0', 'anthropic/claude-2.1', 'anthropic/claude-2.0:beta',
-  // Older Google models
-  'google/palm-2-',
-  // Older Meta models
-  'meta-llama/llama-3-', 'meta-llama/llama-2-',
-];
+
+// [EDITORIAL] - OpenRouter Anthropic thinking models - add a "reasoning" variant for these models
+const antThinkingModels: string[] = [
+  'anthropic/claude-opus-4.1',
+  'anthropic/claude-opus-4',
+  'anthropic/claude-sonnet-4.5',
+  'anthropic/claude-sonnet-4',
+  'anthropic/claude-haiku-4.5',
+  'anthropic/claude-3-7-sonnet',
+] as const;
+
 
 const orModelFamilyOrder = [
   // Leading models/organizations (based on capabilities and popularity)
@@ -31,7 +32,20 @@ const orModelFamilyOrder = [
   'nvidia/', 'microsoft/', 'nousresearch/', 'openchat/', // 'huggingfaceh4/',
   // Community/other providers
   // 'gryphe/', 'thedrummer/', 'undi95/', 'cognitivecomputations/', 'sao10k/',
-];
+] as const;
+
+const orOldModelIDs = [
+  // Older OpenAI models
+  'openai/gpt-3.5-turbo-0301', 'openai/gpt-3.5-turbo-0613', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
+  // Older Anthropic models
+  'anthropic/claude-1', 'anthropic/claude-1.2', 'anthropic/claude-instant-1.0', 'anthropic/claude-instant-1.1',
+  'anthropic/claude-2', 'anthropic/claude-2:beta', 'anthropic/claude-2.0', 'anthropic/claude-2.1', 'anthropic/claude-2.0:beta',
+  // Older Google models
+  'google/palm-2-',
+  // Older Meta models
+  'meta-llama/llama-3-', 'meta-llama/llama-2-',
+] as const;
+
 
 export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {
   const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
@@ -100,13 +114,6 @@ export function openRouterInjectVariants(models: ModelDescriptionSchema[], model
   models.push(model);
 
   // inject thinking variants for Anthropic thinking models
-  const antThinkingModels = [
-    'anthropic/claude-opus-4.1',
-    'anthropic/claude-opus-4',
-    'anthropic/claude-sonnet-4.5',
-    'anthropic/claude-sonnet-4',
-    'anthropic/claude-3-7-sonnet'
-  ];
   if (antThinkingModels.includes(model.id)) {
 
     // create a thinking variant for the model, by setting 'idVariant' and modifying the label/description
