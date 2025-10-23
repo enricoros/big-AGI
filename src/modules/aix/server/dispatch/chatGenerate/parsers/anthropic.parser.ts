@@ -258,15 +258,18 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 }
               }
 
+              // Build text message describing execution result
+              let resultText = '\n\n⚡ Code executed by Skill';
               if (fileIds.length > 0) {
-                // Display each generated file
+                resultText += '\n';
                 for (const fileId of fileIds) {
-                  pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+                  resultText += `\n📎 File: \`${fileId}\``;
                 }
               } else {
-                // No files generated, just show execution completed
-                pt.sendVoidPlaceholder('search-web', '⚡ Code executed by Skill');
+                resultText += ' (no files generated)';
               }
+              resultText += '\n';
+              pt.appendText(resultText);
 
               // Log for debugging
               console.log('[Anthropic] Code execution result:', {
@@ -276,7 +279,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               });
             } else if (content_block.content.type === 'code_execution_tool_result_error') {
               // Error during code execution
-              pt.sendVoidPlaceholder('search-web', `⚠️ Skill execution error: ${content_block.content.error_code}`);
+              pt.appendText(`\n\n⚠️ Skill execution error: ${content_block.content.error_code}\n`);
             }
             break;
 
@@ -293,15 +296,18 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 }
               }
 
+              // Build text message describing execution result
+              let resultText = '\n\n⚡ Bash executed by Skill';
               if (fileIds.length > 0) {
-                // Display each generated file
+                resultText += '\n';
                 for (const fileId of fileIds) {
-                  pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+                  resultText += `\n📎 File: \`${fileId}\``;
                 }
               } else {
-                // No files generated, just show execution completed
-                pt.sendVoidPlaceholder('search-web', '⚡ Bash code executed by Skill');
+                resultText += ' (no files generated)';
               }
+              resultText += '\n';
+              pt.appendText(resultText);
 
               // Log for debugging
               console.log('[Anthropic] Bash code execution result:', {
@@ -311,7 +317,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               });
             } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
               // Error during bash execution
-              pt.sendVoidPlaceholder('search-web', `⚠️ Bash execution error: ${content_block.content.error_code}`);
+              pt.appendText(`\n\n⚠️ Bash execution error: ${content_block.content.error_code}\n`);
             }
             break;
 
@@ -644,15 +650,18 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               }
             }
 
+            // Build text message describing execution result
+            let resultText = '\n\n⚡ Code executed by Skill';
             if (fileIds.length > 0) {
-              // Display each generated file
+              resultText += '\n';
               for (const fileId of fileIds) {
-                pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+                resultText += `\n📎 File: \`${fileId}\``;
               }
             } else {
-              // No files generated, just show execution completed
-              pt.sendVoidPlaceholder('search-web', '⚡ Code executed by Skill');
+              resultText += ' (no files generated)';
             }
+            resultText += '\n';
+            pt.appendText(resultText);
 
             // Log for debugging
             console.log('[Anthropic] Code execution result (non-streaming):', {
@@ -662,7 +671,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
             });
           } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
             // Error during code execution
-            pt.sendVoidPlaceholder('search-web', `⚠️ Skill execution error: ${contentBlock.content.error_code}`);
+            pt.appendText(`\n\n⚠️ Skill execution error: ${contentBlock.content.error_code}\n`);
           }
           break;
 
@@ -679,15 +688,18 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               }
             }
 
+            // Build text message describing execution result
+            let resultText = '\n\n⚡ Bash executed by Skill';
             if (fileIds.length > 0) {
-              // Display each generated file
+              resultText += '\n';
               for (const fileId of fileIds) {
-                pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+                resultText += `\n📎 File: \`${fileId}\``;
               }
             } else {
-              // No files generated, just show execution completed
-              pt.sendVoidPlaceholder('search-web', '⚡ Bash code executed by Skill');
+              resultText += ' (no files generated)';
             }
+            resultText += '\n';
+            pt.appendText(resultText);
 
             // Log for debugging
             console.log('[Anthropic] Bash code execution result (non-streaming):', {
@@ -697,7 +709,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
             });
           } else if (contentBlock.content.type === 'bash_code_execution_tool_result_error') {
             // Error during bash execution
-            pt.sendVoidPlaceholder('search-web', `⚠️ Bash execution error: ${contentBlock.content.error_code}`);
+            pt.appendText(`\n\n⚠️ Bash execution error: ${contentBlock.content.error_code}\n`);
           }
           break;
 
