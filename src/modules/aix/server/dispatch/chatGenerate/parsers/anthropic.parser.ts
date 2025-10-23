@@ -190,8 +190,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
                 break;
               // Skills API tools (server-side execution)
+              case 'bash_code_execution':
+                pt.sendVoidPlaceholder('search-web', '⚡ Running bash script...');
+                break;
               case 'text_editor_code_execution':
-              case 'skill_code_execution':
                 pt.sendVoidPlaceholder('search-web', '⚡ Executing code...');
                 break;
               default:
@@ -566,10 +568,23 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         case 'server_tool_use':
           // Server tool use in non-streaming mode
           // NOTE: We don't create tool invocations for server tools - just show placeholders
-          if (contentBlock.name === 'web_search') {
-            pt.sendVoidPlaceholder('search-web', 'Searching the web...');
-          } else if (contentBlock.name === 'web_fetch') {
-            pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
+          switch (contentBlock.name) {
+            case 'web_search':
+              pt.sendVoidPlaceholder('search-web', 'Searching the web...');
+              break;
+            case 'web_fetch':
+              pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
+              break;
+            case 'bash_code_execution':
+              pt.sendVoidPlaceholder('search-web', '⚡ Running bash script...');
+              break;
+            case 'text_editor_code_execution':
+              pt.sendVoidPlaceholder('search-web', '⚡ Executing code...');
+              break;
+            default:
+              console.warn(`[Anthropic Parser] Unknown server tool (non-streaming): ${contentBlock.name}`);
+              pt.sendVoidPlaceholder('search-web', `⚡ Using ${contentBlock.name}...`);
+              break;
           }
           // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
           // pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
