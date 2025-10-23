@@ -353,6 +353,16 @@ export namespace OpenAIWire_API_Chat_Completions {
       }).nullable().optional(),
     }).optional(),
 
+    // -- Vendor-specific extensions to the request --
+
+    // [OpenRouter, 2025-10-22] OpenRouter-specific plugins parameter for web search and other hosted tools
+    plugins: z.array(z.object({
+      id: z.literal('web'), // plugin identifier, e.g., 'web
+      engine: z.enum(['native', 'exa']).optional(), // search engine: 'native', 'exa', or undefined (auto)
+      max_results: z.number().int().positive().optional(), // defaults to 5
+      search_prompt: z.string().optional(), // custom search prompt
+    })).optional(),
+
     // [Perplexity, 2025-06-23] Perplexity-specific search parameters
     search_mode: z.enum(['academic']).optional(), // Academic filter for scholarly sources
     search_after_date_filter: z.string().optional(), // Date filter in MM/DD/YYYY format
