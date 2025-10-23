@@ -7,12 +7,12 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
-import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
+import { useUIComplexityMode } from '~/common/stores/store-ui';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
 import { AnthropicSkillsConfig } from './AnthropicSkillsConfig';
@@ -116,6 +116,7 @@ const _xaiDateFilterOptions = [
   { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
 ] as const;
 
+
 export function LLMParametersEditor(props: {
   // constants
   maxOutputTokens: DLLMMaxOutputTokens,
@@ -131,6 +132,10 @@ export function LLMParametersEditor(props: {
   // rendering options
   simplified?: boolean,
 }) {
+
+  // external state
+  const isExtra = useUIComplexityMode() === 'extra';
+
 
   // registry (const) values
   const defAntTB = DModelParameterRegistry['llmVndAntThinkingBudget'];
@@ -315,7 +320,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndAntSkills') && (
+    {isExtra && showParam('llmVndAntSkills') && (
       <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
     )}
 
