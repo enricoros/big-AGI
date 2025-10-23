@@ -4,11 +4,11 @@ import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
+import { AixAPI_Access, AixAPI_Context_ChatGenerate, AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { AixDemuxers } from '../dispatch/stream.demuxers';
-import { AixAPI_Context_ChatGenerate, AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
+import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction, createChatGenerateDispatch, createChatGenerateResumeDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { PerformanceProfiler } from '../dispatch/PerformanceProfiler';
-import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
 
 
@@ -35,155 +35,123 @@ const AIX_INSPECTOR_ALLOWED_CONTEXTS: (AixAPI_Context_ChatGenerate['name'] | str
 ] as const;
 
 
-const chatGenerateContentInputSchema = z.object({
-  access: AixWire_API.Access_schema,
-  model: AixWire_API.Model_schema,
-  chatGenerate: AixWire_API_ChatContentGenerate.Request_schema,
-  context: AixWire_API.ContextChatGenerate_schema,
-  streaming: z.boolean(),
-  connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
-});
-
+// --- Connection, Non-Streaming and Streaming Consumers ---
 
 /**
- * Chat content generation implementation.
- * Extracted for reusability and composability while maintaining full type inference.
- *
- * Can be called directly from server-side code or wrapped in retry logic, batching, etc.
+ * Connects to the AI service dispatch endpoint.
+ * Handles request echo debugging, fetch with heartbeats, and error handling.
+ * Returns null if connection fails (error already handled and yielded).
  */
-export async function* chatGenerateContentImpl(
-  input: z.infer<typeof chatGenerateContentInputSchema>,
-  ctx: { reqSignal: AbortSignal }, // ChatGenerateContentContext
-): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
-
-  // Intake derived state
-  const intakeAbortSignal = ctx.reqSignal;
-  const { access, model, chatGenerate, streaming: aixStreaming, connectionOptions } = input;
-  const accessDialect = access.dialect;
-  const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
-
-  // Applies per-model streaming suppression; added for o3 without verification
-  const streaming = model.forceNoStream ? false : aixStreaming;
-
-
-  // Intake Transmitters
-  const chatGenerateTx = new ChatGenerateTransmitter(prettyDialect, connectionOptions?.throttlePartTransmitter);
-
-
-  // Request Echo, if allowed
-  const echoDispatchRequest = !!input.connectionOptions?.debugDispatchRequest && (AIX_SECURITY_ONLY_IN_DEV_BUILDS || AIX_INSPECTOR_ALLOWED_CONTEXTS.includes(input.context.name));
-
-  // Profiler, if allowed
-  const _profiler = (AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoDispatchRequest && !!input.connectionOptions?.debugProfilePerformance)
-    ? new PerformanceProfiler() : null;
-
-  const _profilerCompleted = !_profiler ? null : () => {
-    // append to the response, if requested by the client
-    if (input.connectionOptions?.debugProfilePerformance)
-      chatGenerateTx.addDebugProfilererData(_profiler?.getResultsData());
-
-    // [DEV] uncomment this line to see the profiler table in the server-side console
-    // performanceProfilerLog('AIX Router Performance', _profiler?.getResultsData());
-
-    // clear the profiler for the next call, for resident lambdas (the profiling framework is global)
-    _profiler?.clearMeasurements();
-  };
-
-
-  // Prepare the dispatch requests
-  let dispatch: ReturnType<typeof createChatGenerateDispatch>;
-  try {
-    dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming, !!connectionOptions?.enableResumability);
-  } catch (error: any) {
-    chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
-    yield* chatGenerateTx.flushParticles();
-    return; // exit
-  }
-
-  // Connect to the dispatch
-  let dispatchResponse: Response;
+async function* _connectToDispatch(
+  request: ChatGenerateDispatchRequest,
+  intakeAbortSignal: AbortSignal,
+  chatGenerateTx: ChatGenerateTransmitter,
+  _d: DebugObject,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, Response | null> {
   try {
 
     // [DEV] Debugging the request without requiring a server restart
-    if (echoDispatchRequest) {
-      chatGenerateTx.addDebugRequest(!AIX_SECURITY_ONLY_IN_DEV_BUILDS, dispatch.request.url, dispatch.request.headers, dispatch.request.body);
+    if (_d.echoRequest) {
+      chatGenerateTx.addDebugRequest(!AIX_SECURITY_ONLY_IN_DEV_BUILDS, request.url, request.headers, 'body' in request ? request.body : undefined);
       yield* chatGenerateTx.emitParticles();
     }
 
-    // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthriopic requests (>25s on Vercel)
-    _profiler?.measureStart('connect');
-    dispatchResponse = yield* heartbeatsWhileAwaiting(fetchResponseOrTRPCThrow({
-      url: dispatch.request.url,
-      method: 'POST',
-      headers: dispatch.request.headers,
-      body: dispatch.request.body,
+    // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthropic requests (>25s on large requests for Opus 3 models)
+    _d.profiler?.measureStart('connect');
+    const chatGenerateResponsePromise = fetchResponseOrTRPCThrow({
+      ...request,
       signal: intakeAbortSignal,
-      name: `Aix.${prettyDialect}`,
+      name: `Aix.${_d.prettyDialect}`,
       throwWithoutName: true,
-    }));
-    _profiler?.measureEnd('connect');
+    });
+    const dispatchResponse = yield* heartbeatsWhileAwaiting(chatGenerateResponsePromise);
+    _d.profiler?.measureEnd('connect');
+
+    // Continue with the successful Fetch response (errors are caught below)
+    return dispatchResponse;
 
   } catch (error: any) {
     // Handle expected dispatch abortion while the first fetch hasn't even completed
     if (error && error?.name === 'TRPCError' && intakeAbortSignal.aborted) {
       chatGenerateTx.setEnded('done-dispatch-aborted');
       yield* chatGenerateTx.flushParticles();
-      return; // exit
+      return null; // signal caller to exit
     }
 
     // Handle AI Service connection error
     const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-    const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${dispatch.request.url}]` : '';
+    const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${request.url}]` : '';
 
-    const showOnConsoleForNonCustomServers = access.dialect !== 'openai' || !access.oaiHost;
-    chatGenerateTx.setRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
+    chatGenerateTx.setRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, _d.consoleLogErrors);
     yield* chatGenerateTx.flushParticles();
-    return; // exit
+    return null; // signal caller to exit
   }
+}
 
+/**
+ * [NON-STREAMING] Consumes a unified (non-streaming) dispatch response
+ * Reads entire body, parses once, emits particles.
+ */
+async function* _consumeDispatchUnified(
+  dispatchResponse: Response,
+  dispatchParserNS: ChatGenerateParseFunction,
+  chatGenerateTx: ChatGenerateTransmitter,
+  _d: DebugObject,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
+  let dispatchBody: string | undefined = undefined;
+  try {
 
-  // [NON-STREAMING] Read the full response and send operations down the intake
-  const serverDebugIncomingPackets = createServerDebugWireEvents();
-  if (!streaming) {
-    let dispatchBody: string | undefined = undefined;
-    try {
-      // Read the full response body with heartbeats
-      _profiler?.measureStart('read-full');
-      dispatchBody = yield* heartbeatsWhileAwaiting(dispatchResponse.text());
-      _profiler?.measureEnd('read-full');
-      serverDebugIncomingPackets?.onMessage(dispatchBody);
+    // Read the full response body with heartbeats
+    _d.profiler?.measureStart('read-full');
+    const fullBodyReadPromise = dispatchResponse.text();
+    dispatchBody = yield* heartbeatsWhileAwaiting(fullBodyReadPromise);
+    _d.profiler?.measureEnd('read-full');
+    _d.wire?.onMessage(dispatchBody);
 
-      // Parse the response in full
-      dispatch.chatGenerateParse(chatGenerateTx, dispatchBody);
-      chatGenerateTx.setEnded('done-dispatch-closed');
+    // Parse the response in full
+    _d.profiler?.measureStart('parse-full');
+    dispatchParserNS(chatGenerateTx, dispatchBody);
+    _d.profiler?.measureEnd('parse-full');
 
-    } catch (error: any) {
-      if (dispatchBody === undefined)
-        chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
-      else
-        chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket on GitHub.`, true);
-    }
-    _profilerCompleted?.();
-    yield* chatGenerateTx.flushParticles();
-    return; // exit
+    // Normal termination with no more data
+    chatGenerateTx.setEnded('done-dispatch-closed');
+
+  } catch (error: any) {
+    if (dispatchBody === undefined)
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
+    else
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket on GitHub.`, true);
   }
+}
 
+/**
+ * [STREAMING] Consumes a streaming dispatch response with demuxing.
+ * Reads chunks, demuxes events, parses each, emits particles.
+ */
+async function* _consumeDispatchStream(
+  dispatchResponse: Response,
+  dispatchDemuxerFormat: AixDemuxers.StreamDemuxerFormat,
+  dispatchParser: ChatGenerateParseFunction,
+  chatGenerateTx: ChatGenerateTransmitter,
+  _d: DebugObject,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
-  // STREAM the response to the client
   const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
-  const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> “ ” (U+FFFD) */ });
-  const dispatchDemuxer = AixDemuxers.createStreamDemuxer(dispatch.demuxerFormat);
-  const dispatchParser = dispatch.chatGenerateParse;
+  const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> " " (U+FFFD) */ });
+  const dispatchDemuxer = AixDemuxers.createStreamDemuxer(dispatchDemuxerFormat);
 
-  // Data pump: AI Service -- (dispatch) --> Server -- (intake) --> Client
+  // Data pump loop - for each chunk read from the dispatch stream
   do {
 
-    // Read AI Service chunk
-    let dispatchChunk: string;
+    // Stream... -> Events[] (& yield heartbeats)
+    let demuxedEvents: AixDemuxers.DemuxedEvent[] = [];
     try {
-      _profiler?.measureStart('read');
-      const { done, value } = yield* heartbeatsWhileAwaiting(dispatchReader.read());
-      _profiler?.measureEnd('read');
+
+      // 1. Blocking read with heartbeats
+      _d.profiler?.measureStart('read');
+      const chunkReadPromise = dispatchReader.read();
+      const { done, value } = yield* heartbeatsWhileAwaiting(chunkReadPromise);
+      _d.profiler?.measureEnd('read');
 
       // Handle normal dispatch stream closure (no more data, AI Service closed the stream)
       if (done) {
@@ -191,10 +159,16 @@ export async function* chatGenerateContentImpl(
         break; // outer do {}
       }
 
-      // Decode the chunk - does Not throw (see the constructor for why)
-      _profiler?.measureStart('decode');
-      dispatchChunk = dispatchDecoder.decode(value, { stream: true });
-      _profiler?.measureEnd('decode');
+      // 2. Decode the chunk - does Not throw (see the constructor for why)
+      _d.profiler?.measureStart('decode');
+      const chunk = dispatchDecoder.decode(value, { stream: true });
+      _d.profiler?.measureEnd('decode');
+
+      // 3. Demux the chunk into 0 or more events
+      _d.profiler?.measureStart('demux');
+      demuxedEvents = dispatchDemuxer.demux(chunk);
+      _d.profiler?.measureEnd('demux');
+
     } catch (error: any) {
       // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
       // TODO: check if 'AbortError' is also a cause. Seems like ResponseAborted is NextJS vs signal driven.
@@ -204,29 +178,26 @@ export async function* chatGenerateContentImpl(
       }
 
       // Handle abnormal stream termination
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
       break; // outer do {}
     }
 
-
-    // Demux the chunk into 0 or more events
-    _profiler?.measureStart('demux');
-    const demuxedEvents = dispatchDemuxer.demux(dispatchChunk);
-    _profiler?.measureEnd('demux');
-
+    // ...Events[] -> parse() -> Particles* -> yield
     for (const demuxedItem of demuxedEvents) {
-      serverDebugIncomingPackets?.onMessage(demuxedItem);
+      _d.wire?.onMessage(demuxedItem);
 
       // ignore events post termination
       if (chatGenerateTx.isEnded) {
         // DEV-only message to fix dispatch protocol parsing -- warning on, because this is important and a sign of a bug
         console.warn('[chatGenerateContent] Received event after termination:', demuxedItem);
-        break; // inner for {}
+        break; // inner for {}, will break outer
       }
 
-      // ignore superfluos stream events
-      if (demuxedItem.type !== 'event')
+      // ignore unknown stream events
+      if (demuxedItem.type !== 'event') {
+        // console.log(`[chatGenerateContent] Ignoring non-event stream item of type "${demuxedItem.type}" with data:`, demuxedItem.data);
         continue; // inner for {}
+      }
 
       // [OpenAI] Special: stream termination marker
       if (demuxedItem.data === '[DONE]') {
@@ -235,28 +206,96 @@ export async function* chatGenerateContentImpl(
       }
 
       try {
-        _profiler?.measureStart('parse');
+
+        // 4. Parse the event into particles queued for transmission
+        _d.profiler?.measureStart('parse');
         dispatchParser(chatGenerateTx, demuxedItem.data, demuxedItem.name);
-        _profiler?.measureEnd('parse');
+        _d.profiler?.measureEnd('parse');
+
+        // 5. Emit any queued particles
         if (!chatGenerateTx.isEnded)
           yield* chatGenerateTx.emitParticles();
+
       } catch (error: any) {
         // Handle parsing issue (likely a schema break); print it to the console as well
-        chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket on GitHub.`, false);
+        chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket on GitHub.`, false);
         break; // inner for {}, then outer do
       }
     }
 
   } while (!chatGenerateTx.isEnded);
+}
 
-  _profilerCompleted?.();
+
+// --- ChatGenerate Core procedure ---
+
+/**
+ * Chat content generation implementation - unified for both chat and resume.
+ * Accepts a dispatch creator function to handle both POST (chatGenerate) and GET (resume) requests.
+ *
+ * Can be called directly from server-side code or wrapped in retry logic, batching, etc.
+ */
+export async function* executeChatGenerate(
+  dispatchCreatorFn: () => ChatGenerateDispatch,
+  streaming: boolean,
+  intakeAbortSignal: AbortSignal,
+  _d: DebugObject,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
+
+  // AIX ChatGenerate Particles - Intake Transmitter
+  const chatGenerateTx = new ChatGenerateTransmitter(_d.prettyDialect);
+
+  // Create dispatch with error handling
+  let dispatch: ChatGenerateDispatch;
+  try {
+    dispatch = dispatchCreatorFn();
+  } catch (error: any) {
+    chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
+    yield* chatGenerateTx.flushParticles();
+    return; // exit
+  }
+
+  // Connect to the dispatch
+  const dispatchResponse = yield* _connectToDispatch(dispatch.request, intakeAbortSignal, chatGenerateTx, _d);
+  if (!dispatchResponse)
+    return; // exit: error already handled
+
+  // Consume dispatch response
+  if (!streaming)
+    yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d);
+  else
+    yield* _consumeDispatchStream(dispatchResponse, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d);
+
+  // Tack profiling particles if generated
+  if (_d.profiler) {
+    chatGenerateTx.addDebugProfilererData(_d.profiler.getResultsData());
+    // performanceProfilerLog('AIX Router Performance', profiler?.getResultsData()); // uncomment to log to server console
+    _d.profiler.clearMeasurements();
+  }
 
   // Flush everything that's left; if we're here we have encountered a clean end condition,
   // or an error that has already been queued up for this last flush
   yield* chatGenerateTx.flushParticles();
-
 }
 
+
+// -- Utilities ---
+
+function _createDebugConfig(access: AixAPI_Access, options: undefined | { debugDispatchRequest?: boolean, debugProfilePerformance?: boolean }, chatGenerateContextName: string) {
+  const echoRequest = !!options?.debugDispatchRequest && (AIX_SECURITY_ONLY_IN_DEV_BUILDS || AIX_INSPECTOR_ALLOWED_CONTEXTS.includes(chatGenerateContextName));
+  return {
+    prettyDialect: serverCapitalizeFirstLetter(access.dialect), // string
+    echoRequest: echoRequest, // boolean
+    profiler: AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoRequest && !!options?.debugProfilePerformance ? new PerformanceProfiler() : undefined, // PerformanceProfiler | undefined
+    wire: createServerDebugWireEvents() ?? undefined, // ServerDebugWireEvents | undefined
+    consoleLogErrors: !(access.dialect === 'openai' && access.oaiHost), // Exclude OpenAI Custom hosts (often self-hosted and buggy) from server-side console error logging
+  };
+}
+
+type DebugObject = ReturnType<typeof _createDebugConfig>;
+
+
+// --- AIX tRPC Router ---
 
 export const aixRouter = createTRPCRouter({
 
@@ -265,12 +304,38 @@ export const aixRouter = createTRPCRouter({
    * Architecture: Client <-- (intake) --> Server <-- (dispatch) --> AI Service
    */
   chatGenerateContent: publicProcedure
-    .input(chatGenerateContentInputSchema)
+    .input(z.object({
+      access: AixWire_API.Access_schema,
+      model: AixWire_API.Model_schema,
+      chatGenerate: AixWire_API_ChatContentGenerate.Request_schema,
+      context: AixWire_API.ContextChatGenerate_schema,
+      streaming: z.boolean(),
+      connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.optional(), // debugDispatchRequest, debugProfilePerformance, enableResumability
+    }))
     .mutation(async function* ({ input, ctx }) {
+      const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
+      const chatGenerateDispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
 
-      // thin wrapper for future retry logic, etc.
-      yield* chatGenerateContentImpl(input, { reqSignal: ctx.reqSignal });
+      yield* executeChatGenerate(chatGenerateDispatchCreator, input.streaming, ctx.reqSignal, _d);
+    }),
 
+  /**
+   * Chat content generation RESUME, streaming only.
+   * Reconnects to an in-progress response by its ID - OpenAI Responses API only.
+   */
+  chatGenerateContentResume: publicProcedure
+    .input(z.object({
+      access: AixWire_API.Access_schema,
+      resumeHandle: AixWire_API.ResumeHandle_schema, // resume has a handle instead of 'model + chatGenerate'
+      context: AixWire_API.ContextChatGenerate_schema,
+      streaming: z.literal(true), // resume is always streaming
+      connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.pick({ debugDispatchRequest: true }).optional(), // debugDispatchRequest
+    }))
+    .mutation(async function* ({ input, ctx }) {
+      const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
+      const resumeDispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.resumeHandle, input.streaming);
+
+      yield* executeChatGenerate(resumeDispatchCreator, input.streaming, ctx.reqSignal, _d);
     }),
 
 });

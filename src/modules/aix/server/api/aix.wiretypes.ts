@@ -37,6 +37,8 @@ export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_sc
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
 export type AixAPI_Context_ChatGenerate = z.infer<typeof AixWire_API.ContextChatGenerate_schema>;
 export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
+export type AixAPI_ResumeHandle = z.infer<typeof AixWire_API.ResumeHandle_schema>;
+export type AixAPI_ConnectionOptions_ChatGenerate = z.infer<typeof AixWire_API.ConnectionOptionsChatGenerate_schema>;
 export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatContentGenerate.Request_schema>;
 
 
@@ -438,6 +440,17 @@ export namespace AixWire_API {
     }).optional(),
   });
 
+  /// Resume Handle
+
+  /**
+   * TEMP - Not well defined yet - OpenAI Responses-only implementation
+   * [OpenAI Responses API] Allows reconnecting to an in-progress response by its ID.
+   */
+  export const ResumeHandle_schema = z.object({
+    responseId: z.string(),
+    startingAfter: z.number().optional(), // the sequence number of event after which to start streaming
+  });
+
   /// Context
 
   export const ContextChatGenerate_schema = z.object({
@@ -477,13 +490,28 @@ export namespace AixWire_API {
 
   /// Connection options
 
-  export const ConnectionOptions_schema = z.object({
+  export const ConnectionOptionsChatGenerate_schema = z.object({
+
+    /**
+     * Request an echo of the upstream AIX dispatch request. Fulfillment is decided by the server, and 'production' builds will NOT include 'headers', just the 'body'.
+     */
     debugDispatchRequest: z.boolean().optional(),
+
+    /**
+     * Request profiling data for a streaming call: time spent preparing, connecting, waiting, receiving, etc. Fulfillment is decided by the server, and won't be available on 'production' builds.
+     */
     debugProfilePerformance: z.boolean().optional(),
-    enableResumability: z.boolean().optional(), // enable response storage for resumability (first found in the OpenAI Responses API)
-    throttlePartTransmitter: z.number().optional(), // in ms
-    // retry: z.number().optional(),
-    // retryDelay: z.number().optional(),
+
+    /**
+     * Request a resumable connection, if the model/service supports it.
+     * - enables response storage for resumability (first found in the OpenAI Responses API)
+     */
+    enableResumability: z.boolean().optional(),
+
+    // Old ideas:
+    // throttleParticleTransmitter: z.number().optional(), // in ms
+    // retry: z.number().optional(), // retry upstream
+
   });
 
 }
