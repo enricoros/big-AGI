@@ -227,7 +227,7 @@ export type DVoidModelAuxPart = {
 type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up' /* 2025-02-23: added for non-pure-text placeholders */, modelOp?: DVoidPlaceholderModelOp };
 
 export type DVoidPlaceholderModelOp = {
-  mot: 'search-web' | 'gen-image',
+  mot: 'search-web' | 'gen-image' | 'code-exec',
   cts: number, // client-based timestamp
 };
 

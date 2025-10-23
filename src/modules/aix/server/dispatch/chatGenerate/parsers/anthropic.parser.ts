@@ -191,15 +191,15 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 break;
               // Skills API tools (server-side execution)
               case 'bash_code_execution':
-                pt.sendVoidPlaceholder('search-web', '⚡ Running bash script...');
+                pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
                 break;
               case 'text_editor_code_execution':
-                pt.sendVoidPlaceholder('search-web', '⚡ Executing code...');
+                pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
                 break;
               default:
                 // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
                 console.warn(`[Anthropic Parser] Unknown server tool: ${content_block.name}`);
-                pt.sendVoidPlaceholder('search-web', `⚡ Using ${content_block.name}...`);
+                pt.sendVoidPlaceholder('code-exec', `⚡ Using ${content_block.name}...`);
                 break;
             }
 
@@ -323,7 +323,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
           case 'text_editor_code_execution_tool_result':
             // Text editor code execution result from Skills container
-            pt.sendVoidPlaceholder('search-web', '⚡ Text editor code executed by Skill');
+            pt.sendVoidPlaceholder('code-exec', '⚡ Text editor code executed by Skill');
 
             // Log for debugging
             console.log('[Anthropic] Text editor code execution result from Skills');
@@ -338,7 +338,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           case 'container_upload':
             // Container upload - this is when a Skill has generated a file
             // The file_id can be used with the Files API to download the file
-            pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${content_block.file_id})`);
+            pt.sendVoidPlaceholder('code-exec', `📎 File generated (ID: ${content_block.file_id})`);
 
             // Log for debugging
             console.log('[Anthropic] Container upload:', {
@@ -582,14 +582,14 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
               break;
             case 'bash_code_execution':
-              pt.sendVoidPlaceholder('search-web', '⚡ Running bash script...');
+              pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
               break;
             case 'text_editor_code_execution':
-              pt.sendVoidPlaceholder('search-web', '⚡ Executing code...');
+              pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
               break;
             default:
               console.warn(`[Anthropic Parser] Unknown server tool (non-streaming): ${contentBlock.name}`);
-              pt.sendVoidPlaceholder('search-web', `⚡ Using ${contentBlock.name}...`);
+              pt.sendVoidPlaceholder('code-exec', `⚡ Using ${contentBlock.name}...`);
               break;
           }
           // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
@@ -715,7 +715,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
         case 'text_editor_code_execution_tool_result':
           // Text editor code execution result from Skills container (non-streaming)
-          pt.sendVoidPlaceholder('search-web', '⚡ Text editor code executed by Skill');
+          pt.sendVoidPlaceholder('code-exec', '⚡ Text editor code executed by Skill');
           console.log('[Anthropic] Text editor code execution result from Skills (non-streaming)');
           break;
 
@@ -727,7 +727,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
         case 'container_upload':
           // Container upload - this is when a Skill has generated a file
-          pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${contentBlock.file_id})`);
+          pt.sendVoidPlaceholder('code-exec', `📎 File generated (ID: ${contentBlock.file_id})`);
 
           // Log for debugging
           console.log('[Anthropic] Container upload (non-streaming):', {
