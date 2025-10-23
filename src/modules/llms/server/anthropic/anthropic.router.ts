@@ -83,6 +83,8 @@ type AnthropicHeaderOptions = {
   modelIdForBetaFeatures?: string;
   vndAntWebFetch?: boolean;
   vndAnt1MContext?: boolean;
+  enableSkills?: boolean;
+  enableCodeExecution?: boolean;
 };
 
 function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, string> {
@@ -104,6 +106,17 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   // Add beta feature for 1M context window if enabled
   if (options?.vndAnt1MContext)
     betaFeatures.push('context-1m-2025-08-07');
+
+  // Add beta features for Skills API
+  if (options?.enableSkills) {
+    betaFeatures.push('skills-2025-10-02');
+    betaFeatures.push('files-api-2025-04-14'); // For file downloads
+  }
+
+  // Add beta feature for code execution (required for Skills)
+  if (options?.enableCodeExecution || options?.enableSkills) {
+    betaFeatures.push('code-execution-2025-08-25');
+  }
 
   // Note: web-search is now GA and no longer requires a beta header
 
