@@ -19,9 +19,11 @@ const DEFAULT_SKILLS = [
 ] as const;
 
 
-export function AnthropicSkillsConfig({ llmVndAntSkills, onChangeParameter }: {
+export function AnthropicSkillsConfig({ smaller, llmVndAntSkills, onChangeParameter, onRemoveParameter }: {
+  smaller?: boolean;
   llmVndAntSkills: string | undefined;
   onChangeParameter: (params: { llmVndAntSkills: string | undefined }) => void;
+  onRemoveParameter: (paramId: 'llmVndAntSkills') => void;
 }) {
 
   if (!ENABLE_ANTHROPIC_SKILLS_CONFIG) return null;
@@ -33,17 +35,18 @@ export function AnthropicSkillsConfig({ llmVndAntSkills, onChangeParameter }: {
       ? skillsArray.filter(id => id !== skillId)
       : [...skillsArray, skillId];
     const newValue = newSkills.length > 0 ? newSkills.join(',') : undefined;
-    onChangeParameter({ llmVndAntSkills: newValue });
+    if (!newValue) onRemoveParameter('llmVndAntSkills');
+    else onChangeParameter({ llmVndAntSkills: newValue });
   };
 
   return (
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <FormControl orientation='horizontal' sx={{ flexWrap: smaller ? 'nowrap' : 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2, width: '100%' }}>
       <FormLabelStart
-        title='Anthropic Skills (Alpha)'
-        description='Server-side'
+        title={smaller ? 'Skills' : 'Anthropic Skills (Alpha)'}
+        description={smaller ? undefined : 'Server-side'}
         // tooltip='Select which document types Claude can create using server-side Skills API. Skills run on Anthropic servers and may incur additional costs.'
       />
-      <Box sx={{ display: 'flex', gap: 1, py: 1, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 1, py: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         {DEFAULT_SKILLS.map((skill) => {
           const isSelected = skillsArray.includes(skill.id);
           return (
@@ -53,6 +56,7 @@ export function AnthropicSkillsConfig({ llmVndAntSkills, onChangeParameter }: {
               variant={isSelected ? 'solid' : 'outlined'}
               color={isSelected ? 'primary' : 'neutral'}
               onClick={() => handleSkillToggle(skill.id)}
+              sx={{ borderRadius: 'sm' }}
             >
               {skill.label}
             </Chip>
