@@ -41,7 +41,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         modelIdForBetaFeatures: model.id,
         vndAntWebFetch: model.vndAntWebFetch === 'auto',
         vndAnt1MContext: model.vndAnt1MContext === true,
-        enableSkills: model.vndAntSkills === true,
+        enableSkills: !!model.vndAntSkills,
         // enableCodeExecution: ...
       });
 
