@@ -119,7 +119,6 @@ const _xaiDateFilterOptions = [
 export function LLMParametersEditor(props: {
   // constants
   maxOutputTokens: DLLMMaxOutputTokens,
-  vendorSpec: ModelVendorId,
   parameterSpecs: DModelParameterSpec<DModelParameterId>[],
   parameterOmitTemperature?: boolean,
   baselineParameters: DModelParameterValues,
@@ -199,11 +198,6 @@ export function LLMParametersEditor(props: {
   // semantics
   function showParam(paramId: DModelParameterId): boolean {
     return paramId in modelParamSpec && !modelParamSpec[paramId].hidden;
-  }
-
-  /** discouraged: only used where we know a vendor supports a parameter on EACH model - and does NOT add the parameter Spec (dangerous) */
-  function showAllParamsFromVendor(vendorId: ModelVendorId): boolean {
-    return props.vendorSpec === vendorId;
   }
 
   const temperatureHide = showParam('llmVndAntThinkingBudget');
