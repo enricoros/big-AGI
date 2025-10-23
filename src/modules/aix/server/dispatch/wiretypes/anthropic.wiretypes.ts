@@ -173,7 +173,7 @@ export namespace AnthropicWire_Blocks {
         type: z.literal('content'),
         content: z.union([
           z.string(),
-          z.array(z.union([z.lazy(() => TextBlock_schema), z.lazy(() => ImageBlock_I_schema)]))
+          z.array(z.union([z.lazy(() => TextBlock_schema), z.lazy(() => ImageBlock_I_schema)])),
         ]),
       }),
       z.object({
@@ -216,9 +216,15 @@ export namespace AnthropicWire_Blocks {
    */
   export const ServerToolUseBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('server_tool_use'),
-    id: z.string(),
+    id: z.string(), // .regex(/^srvtoolu_[a-zA-Z0-9_]+$/),
     name: z.union([
-      z.enum(['web_search', 'web_fetch', 'code_execution', 'bash_code_execution', 'text_editor_code_execution']),
+      z.enum([
+        'web_search',
+        'web_fetch',
+        'code_execution',
+        'bash_code_execution', // sub-tool of 'code_execution'
+        'text_editor_code_execution', // sub-tool of 'code_execution'
+      ]),
       z.string(), // forward-compatibility parsing
     ]),
     input: z.any(),
@@ -471,6 +477,37 @@ export namespace AnthropicWire_Messages {
   ]);
 }
 
+export namespace AnthropicWire_Skills {
+
+  // Container parameters for request
+  export const ContainerParams_schema = z.object({
+    /**
+     * Optional. Container ID to reuse existing container
+     */
+    id: z.string().nullish(),
+    skills: z.array(z.object({
+      skill_id: z.string(), // max 64 chars - not enforced here
+      type: z.enum(['anthropic', 'custom']),
+      version: z.literal('latest').or(z.string()).optional(),
+    })).nullish(), // max 8 skills - we don't enforce this here
+  });
+
+  // Container information in response
+  export const Container_schema = z.object({
+    /** Container identifier */
+    id: z.string(),
+    /** ISO 8601 timestamp when the container will expire */
+    expires_at: z.string(),
+    /** Skills that were loaded in the container */
+    skills: z.array(z.object({
+      skill_id: z.string(),
+      type: z.enum(['anthropic', 'custom']),
+      version: z.string(), // loaded version
+    })).nullish(),
+  });
+
+}
+
 export namespace AnthropicWire_Tools {
 
   const _ToolDefinitionBase_schema = z.object({
@@ -520,7 +557,13 @@ export namespace AnthropicWire_Tools {
     name: z.literal('bash'),
   });
 
-  /** Current (No support for the legacy code_execution_20250522): Supports Bash commands, file operations, and multiple languages. Requires beta header: "code-execution-2025-08-25" */
+  /**
+   * Current (No support for the legacy code_execution_20250522): Supports Bash commands, file operations, and multiple languages. Requires beta header: "code-execution-2025-08-25"
+   *
+   * When this tool is provided, Claude automatically gains access to two sub-tools:
+   * - 'bash_code_execution': Run shell commands
+   * - 'text_editor_code_execution': View, create, and edit files, including writing code
+   */
   const _CodeExecutionTool_20250825_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('code_execution_20250825'),
     name: z.literal('code_execution'),
@@ -623,16 +666,21 @@ export namespace AnthropicWire_API_Message_Create {
      */
     model: z.string(),
 
+    /**
+     * Container configuration for code execution tools.
+     * Can be a container ID string to reuse, or a ContainerParams object to configure.
+     */
     container: z.union([
-      z.string().nullable(),
-      z.object({
-        id: z.string().nullish(),
-        skills: z.array(z.any()).optional(),
-      }),
-    ]).optional(),
+      z.string(),
+      AnthropicWire_Skills.ContainerParams_schema,
+    ]).nullish(),
 
+    /**
+     * Context management configuration.
+     * Controls how Claude manages context across requests (e.g., clearing tool results).
+     */
     context_management: z.object({
-      edits: z.array(z.any()).optional(),
+      edits: z.array(z.any()).optional(), // ClearToolUses20250919 and future edit types
     }).nullish(),
 
     mcp_servers: z.array(z.object({
@@ -767,7 +815,10 @@ export namespace AnthropicWire_API_Message_Create {
     // Which custom stop sequence was generated, if any.
     stop_sequence: z.string().nullable(),
 
-    // Billing and rate-limit usage.
+    /**
+     * Billing and rate-limit usage.
+     * Token counts represent the underlying cost to Anthropic's systems.
+     */
     usage: z.object({
       input_tokens: z.number(),
       output_tokens: z.number(),
@@ -784,15 +835,23 @@ export namespace AnthropicWire_API_Message_Create {
       service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
     }),
 
+    /**
+     * Context management response.
+     * Information about context management strategies applied during the request.
+     */
     context_management: z.object({
-      applied_edits: z.array(z.any()),
+      applied_edits: z.array(z.object({
+        type: z.string(), // e.g., 'clear_tool_uses_20250919'
+        cleared_tool_uses: z.number().optional(),
+        cleared_input_tokens: z.number().optional(),
+      })).optional(),
     }).nullish(),
 
-    container: z.object({
-      id: z.string(),
-      expires_at: z.string(), // ISO 8601 timestamp
-      skills: z.array(z.any()).nullish(),
-    }).nullish(),
+    /**
+     * Container information.
+     * Non-null if a container tool (e.g., code execution) was used.
+     */
+    container: AnthropicWire_Skills.Container_schema.nullish(),
   });
 
   /// Streaming Response
