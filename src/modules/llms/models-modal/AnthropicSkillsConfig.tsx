@@ -3,11 +3,6 @@ import * as React from 'react';
 import { Box, Chip, FormControl } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { Release } from '~/common/app.release';
-
-
-// configuration
-const ENABLE_ANTHROPIC_SKILLS_CONFIG = Release.IsNodeDevBuild; // FIXME: enable on non-dev builds too
 
 
 // [EDITORIAL] Anthropic Default Skills
@@ -25,8 +20,6 @@ export function AnthropicSkillsConfig({ smaller, llmVndAntSkills, onChangeParame
   onChangeParameter: (params: { llmVndAntSkills: string | undefined }) => void;
   onRemoveParameter: (paramId: 'llmVndAntSkills') => void;
 }) {
-
-  if (!ENABLE_ANTHROPIC_SKILLS_CONFIG) return null;
 
   const skillsArray = llmVndAntSkills ? llmVndAntSkills.split(',').map(s => s.trim()).filter(Boolean) : [];
 
