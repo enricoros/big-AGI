@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip } from '@mui/joy';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
-import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
+import CodeIcon from '@mui/icons-material/Code';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 
@@ -62,7 +62,7 @@ const _styles = {
 const modelOperationConfig = {
   'search-web': { Icon: SearchRoundedIcon, color: 'neutral' },
   'gen-image': { Icon: BrushRoundedIcon, color: 'success' },
-  'code-exec': { Icon: CodeRoundedIcon, color: 'primary' },
+  'code-exec': { Icon: CodeIcon, color: 'primary' },
 } as const;
 
 
