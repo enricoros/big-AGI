@@ -14,6 +14,8 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
+import { AnthropicSkillsConfig } from './AnthropicSkillsConfig';
+
 
 const _UNSPECIFIED = '_UNSPECIFIED' as const;
 const _reasoningEffortOptions = [
@@ -142,10 +144,11 @@ export function LLMParametersEditor(props: {
     llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, // fallback for undefined, result is number | null
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
-    llmVndAntThinkingBudget,
-    llmVndAntWebSearch,
-    llmVndAntWebFetch,
     llmVndAnt1MContext,
+    llmVndAntSkills,
+    llmVndAntThinkingBudget,
+    llmVndAntWebFetch,
+    llmVndAntWebSearch,
     llmVndGeminiAspectRatio,
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
@@ -304,6 +307,11 @@ export function LLMParametersEditor(props: {
         }}
       />
     )}
+
+    {showParam('llmVndAntSkills') && (
+      <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} />
+    )}
+
 
     {showParam('llmVndGeminiAspectRatio') && (
       <FormSelectControl
