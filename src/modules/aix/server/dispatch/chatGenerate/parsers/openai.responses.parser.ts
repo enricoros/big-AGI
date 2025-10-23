@@ -273,6 +273,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         if (event.response.store && event.response.id)
           pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
 
+        // TODO: [FUTURE] Accumulate in DMessage.sessionMetadata:
+        //   pt.setSessionMetadata('openai.response.id', response.id)
+        //   pt.setSessionMetadata('openai.response.expiresAt', response.expires_at)
+        // Request builder will find latest values and enable reconnection/continuation.
+
         // -> TODO: Generation Details:
         //    .created_at, .truncation, .temperature, .top_p, .tool_choice, tool count, text output type
         break;
