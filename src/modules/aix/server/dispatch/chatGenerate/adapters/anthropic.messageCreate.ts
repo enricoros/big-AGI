@@ -174,6 +174,34 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     }
   }
 
+  // --- Skills Container ---
+
+  // Add Skills container if enabled (non-empty string)
+  if (model.vndAntSkills) {
+
+    // Parse comma-separated string and convert to Anthropic format
+    const skillIds = model.vndAntSkills.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+
+    if (skillIds.length > 0) {
+
+      // request a container with those selected skills
+      payload.container = {
+        skills: skillIds.map((skillId: string) => ({
+          type: 'anthropic' as const,
+          skill_id: skillId,
+          version: 'latest',
+        })),
+      };
+
+      // also require the code_execution tool (required by Skills)
+      if (!payload.tools?.length)
+        payload.tools = [];
+
+      if (!payload.tools.some(t => t.type === 'code_execution_20250825'))
+        payload.tools.push({ type: 'code_execution_20250825', name: 'code_execution' });
+    }
+  }
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);

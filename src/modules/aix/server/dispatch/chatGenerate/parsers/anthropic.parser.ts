@@ -93,6 +93,20 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         // -> Model
         if (isFirstMessage)
           pt.setModelName(responseMessage.model);
+
+        // -> Container metadata (for Skills)
+        if (responseMessage.container) {
+          // Store container metadata for potential use in file downloads
+          // TODO: When IParticleTransmitter supports container metadata, call:
+          // pt.setContainerMetadata(responseMessage.container);
+
+          console.log('[Anthropic] Container active:', {
+            id: responseMessage.container.id,
+            expires_at: responseMessage.container.expires_at,
+            skills: responseMessage.container.skills,
+          });
+        }
+
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
           const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
@@ -144,7 +158,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             break;
 
           case 'server_tool_use':
-            // Server-side tool execution (e.g., web_search, web_fetch)
+            // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
             // NOTE: We don't create tool invocations for server tools - just show placeholders
             if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
               content_block.input = null;
@@ -157,8 +171,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               case 'web_fetch':
                 pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
                 break;
+              // Skills API tools (server-side execution)
+              case 'text_editor_code_execution':
+              case 'skill_code_execution':
+                pt.sendVoidPlaceholder('search-web', '⚡ Executing code...');
+                break;
               default:
-                throw new Error(`Unknown server tool name: ${content_block.name}`);
+                // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
+                console.warn(`[Anthropic Parser] Unknown server tool: ${content_block.name}`);
+                pt.sendVoidPlaceholder('search-web', `⚡ Using ${content_block.name}...`);
+                break;
             }
 
             // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
@@ -204,13 +226,82 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             break;
 
           case 'code_execution_tool_result':
-            throw new Error(`Server tool type 'code_execution_tool_result' is not yet implemented. Please report this to request support.`);
+            // Code execution result from Skills container - extract file IDs from output
+            if (content_block.content.type === 'code_execution_result') {
+              // Success - check for generated files in content array
+              const fileIds: string[] = [];
+              if (Array.isArray(content_block.content.content)) {
+                for (const outputBlock of content_block.content.content) {
+                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+                    fileIds.push(outputBlock.file_id);
+                  }
+                }
+              }
+
+              if (fileIds.length > 0) {
+                // Display each generated file
+                for (const fileId of fileIds) {
+                  pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+                }
+              } else {
+                // No files generated, just show execution completed
+                pt.sendVoidPlaceholder('search-web', '⚡ Code executed by Skill');
+              }
+
+              // Log for debugging
+              console.log('[Anthropic] Code execution result:', {
+                return_code: content_block.content.return_code,
+                file_count: fileIds.length,
+                file_ids: fileIds,
+              });
+            } else if (content_block.content.type === 'code_execution_tool_result_error') {
+              // Error during code execution
+              pt.sendVoidPlaceholder('search-web', `⚠️ Skill execution error: ${content_block.content.error_code}`);
+            }
+            break;
 
           case 'bash_code_execution_tool_result':
-            throw new Error(`Server tool type 'bash_code_execution_tool_result' is not yet implemented. Please report this to request support.`);
+            // Bash code execution result from Skills container - extract file IDs from output
+            if (content_block.content.type === 'bash_code_execution_result') {
+              // Success - check for generated files in content array
+              const fileIds: string[] = [];
+              if (Array.isArray(content_block.content.content)) {
+                for (const outputBlock of content_block.content.content) {
+                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+                    fileIds.push(outputBlock.file_id);
+                  }
+                }
+              }
+
+              if (fileIds.length > 0) {
+                // Display each generated file
+                for (const fileId of fileIds) {
+                  pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+                }
+              } else {
+                // No files generated, just show execution completed
+                pt.sendVoidPlaceholder('search-web', '⚡ Bash code executed by Skill');
+              }
+
+              // Log for debugging
+              console.log('[Anthropic] Bash code execution result:', {
+                return_code: content_block.content.return_code,
+                file_count: fileIds.length,
+                file_ids: fileIds,
+              });
+            } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
+              // Error during bash execution
+              pt.sendVoidPlaceholder('search-web', `⚠️ Bash execution error: ${content_block.content.error_code}`);
+            }
+            break;
 
           case 'text_editor_code_execution_tool_result':
-            throw new Error(`Server tool type 'text_editor_code_execution_tool_result' is not yet implemented. Please report this to request support.`);
+            // Text editor code execution result from Skills container
+            pt.sendVoidPlaceholder('search-web', '⚡ Text editor code executed by Skill');
+
+            // Log for debugging
+            console.log('[Anthropic] Text editor code execution result from Skills');
+            break;
 
           case 'mcp_tool_use':
             throw new Error(`Server tool type 'mcp_tool_use' is not yet implemented. Please report this to request support.`);
@@ -219,7 +310,19 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             throw new Error(`Server tool type 'mcp_tool_result' is not yet implemented. Please report this to request support.`);
 
           case 'container_upload':
-            throw new Error(`Server tool type 'container_upload' is not yet implemented. Please report this to request support.`);
+            // Container upload - this is when a Skill has generated a file
+            // The file_id can be used with the Files API to download the file
+            pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${content_block.file_id})`);
+
+            // Log for debugging
+            console.log('[Anthropic] Container upload:', {
+              file_id: content_block.file_id,
+              container: responseMessage.container?.id,
+            });
+
+            // TODO: Future enhancement - could trigger automatic file download here
+            // using the Files API with content_block.file_id
+            break;
 
           default:
             const _exhaustiveCheck: never = content_block;
@@ -479,13 +582,80 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           break;
 
         case 'code_execution_tool_result':
-          throw new Error(`Server tool 'code_execution_tool_result' is not yet implemented. Please report this issue to request support.`);
+          // Code execution result from Skills container (non-streaming)
+          if (contentBlock.content.type === 'code_execution_result') {
+            // Success - check for generated files in content array
+            const fileIds: string[] = [];
+            if (Array.isArray(contentBlock.content.content)) {
+              for (const outputBlock of contentBlock.content.content) {
+                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+                  fileIds.push(outputBlock.file_id);
+                }
+              }
+            }
+
+            if (fileIds.length > 0) {
+              // Display each generated file
+              for (const fileId of fileIds) {
+                pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+              }
+            } else {
+              // No files generated, just show execution completed
+              pt.sendVoidPlaceholder('search-web', '⚡ Code executed by Skill');
+            }
+
+            // Log for debugging
+            console.log('[Anthropic] Code execution result (non-streaming):', {
+              return_code: contentBlock.content.return_code,
+              file_count: fileIds.length,
+              file_ids: fileIds,
+            });
+          } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
+            // Error during code execution
+            pt.sendVoidPlaceholder('search-web', `⚠️ Skill execution error: ${contentBlock.content.error_code}`);
+          }
+          break;
 
         case 'bash_code_execution_tool_result':
-          throw new Error(`Server tool 'bash_code_execution_tool_result' is not yet implemented. Please report this issue to request support.`);
+          // Bash code execution result from Skills container (non-streaming)
+          if (contentBlock.content.type === 'bash_code_execution_result') {
+            // Success - check for generated files in content array
+            const fileIds: string[] = [];
+            if (Array.isArray(contentBlock.content.content)) {
+              for (const outputBlock of contentBlock.content.content) {
+                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+                  fileIds.push(outputBlock.file_id);
+                }
+              }
+            }
+
+            if (fileIds.length > 0) {
+              // Display each generated file
+              for (const fileId of fileIds) {
+                pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${fileId})`);
+              }
+            } else {
+              // No files generated, just show execution completed
+              pt.sendVoidPlaceholder('search-web', '⚡ Bash code executed by Skill');
+            }
+
+            // Log for debugging
+            console.log('[Anthropic] Bash code execution result (non-streaming):', {
+              return_code: contentBlock.content.return_code,
+              file_count: fileIds.length,
+              file_ids: fileIds,
+            });
+          } else if (contentBlock.content.type === 'bash_code_execution_tool_result_error') {
+            // Error during bash execution
+            pt.sendVoidPlaceholder('search-web', `⚠️ Bash execution error: ${contentBlock.content.error_code}`);
+          }
+          break;
 
         case 'text_editor_code_execution_tool_result':
-          throw new Error(`Server tool 'text_editor_code_execution_tool_result' is not yet implemented. Please report this issue to request support.`);
+          // Text editor code execution result from Skills container (non-streaming)
+          pt.sendVoidPlaceholder('search-web', '⚡ Text editor code executed by Skill');
+          console.log('[Anthropic] Text editor code execution result from Skills (non-streaming)');
+          break;
 
         case 'mcp_tool_use':
           throw new Error(`Server tool 'mcp_tool_use' is not yet implemented. Please report this issue to request support.`);
@@ -494,7 +664,14 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           throw new Error(`Server tool 'mcp_tool_result' is not yet implemented. Please report this issue to request support.`);
 
         case 'container_upload':
-          throw new Error(`Server tool 'container_upload' is not yet implemented. Please report this issue to request support.`);
+          // Container upload - this is when a Skill has generated a file
+          pt.sendVoidPlaceholder('search-web', `📎 File generated (ID: ${contentBlock.file_id})`);
+
+          // Log for debugging
+          console.log('[Anthropic] Container upload (non-streaming):', {
+            file_id: contentBlock.file_id,
+          });
+          break;
 
         default:
           const _exhaustiveCheck: never = contentBlock;

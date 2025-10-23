@@ -49,7 +49,7 @@ export function aixCreateModelFromLLMOptions(
   // destructure input with the overrides
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
-    llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAnt1MContext,
+    llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch,
     llmVndGeminiAspectRatio, llmVndGeminiGoogleSearch, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
@@ -102,9 +102,10 @@ export function aixCreateModelFromLLMOptions(
     ...(llmTopP !== undefined ? { topP: llmTopP } : {}),
     ...(llmForceNoStream ? { forceNoStream: llmForceNoStream } : {}),
     ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget } : {}),
+    ...(llmVndAnt1MContext ? { vndAnt1MContext: llmVndAnt1MContext } : {}),
+    ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
-    ...(llmVndAnt1MContext ? { vndAnt1MContext: llmVndAnt1MContext } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
     ...(llmVndGeminiGoogleSearch ? { vndGeminiGoogleSearch: llmVndGeminiGoogleSearch } : {}),
     ...(llmVndGeminiShowThoughts ? { vndGeminiShowThoughts: llmVndGeminiShowThoughts } : {}),
