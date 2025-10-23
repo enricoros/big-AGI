@@ -1,71 +1,127 @@
+import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
+
+
+// configuration
+const RETRY_PROFILES = {
+  network: { baseDelay: 500, maxDelay: 8000, jitter: 0.25 },    // Network interruptions
+  server: { baseDelay: 1000, maxDelay: 30000, jitter: 0.5 },    // Server overload: 429, 503, 502
+  transient: { baseDelay: 200, maxDelay: 2000, jitter: 0.1 },   // Quick transient errors: other 5xx
+} as const;
+
+
 // internal types
-type AixRetryDecision = false | { strategy: AixRetryStrategy; delayMs: number; attemptNumber: number };
-type AixRetryStrategy = 'resume' | 'reconnect';
-type AixAbortableDelayResult = 'completed' | 'aborted';
+type RetryDecision = false | { strategy: RetryStrategy; delayMs: number; attemptNumber: number };
+type RetryStrategy = 'resume' | 'reconnect';
+type StepResult = 'completed' | 'aborted';
+
+type _ResumeHandle = DMessageGenerator['upstreamHandle'];
 
 
 /**
- * Minimal retry logic for AIX _aixChatGenerateContent_LL.
- * - supports 'reconnect', for instance to loop while servers are busy
- * - supports 'resume', for instance to recover a network breakage while a responses is still being generated
+ * Retry/resume logic for AIX _aixChatGenerateContent_LL.
+ * - supports 'reconnect' for server busy/overload scenarios with intelligent backoff
+ * - supports 'resume' for network interruptions with upstream handle management
  */
 export class AixStreamRetry {
-  private attempts = 0;
+
+  private mAttempts = 0;
+  private mResumeHandle: _ResumeHandle;
 
   constructor(
-    private readonly maxResumeAttempts = 4,
-    private readonly maxReconnectAttempts = 0, // disabled by default
-  ) {}
+    private readonly maxReconnectAttempts = 0,
+    private readonly maxResumeAttempts = 0,
+  ) {
+  }
 
-  /** Determines if error is retryable and returns strategy + delay. */
-  shallRetry(errorType: 'client-aborted' | 'net-disconnected' | 'request-exceeded' | 'response-captive' | 'net-unknown', hasUpstreamHandle: boolean): AixRetryDecision {
+  // resume handle management
 
-    // only retry supported errors
-    const supportedErrors = [
-      'net-disconnected',
-      // 'net-unknown', // NOTE: we only support a hard disconnect for now, for safety
-      // 'client-aborted', 'request-exceeded', 'response-captive' // absolutely not retryable
-    ];
-    if (!supportedErrors.includes(errorType))
-      return false;
+  get resumeHandle() {
+    return this.mResumeHandle;
+  }
 
-    // determine strategy
-    const strategy: AixRetryStrategy = hasUpstreamHandle ? 'resume' : 'reconnect';
+  set resumeHandle(handle: _ResumeHandle | undefined) {
+    if (!handle) return;
+    this.mResumeHandle = handle;
+  }
+
+  /**
+   * Determines if error is retryable and returns strategy + delay
+   */
+  shallRetry(errorType: 'client-aborted' | 'net-disconnected' | 'request-exceeded' | 'response-captive' | 'net-unknown', maybeStatusCode?: number): RetryDecision {
+
+    // determine strategy - based on availability of resume handle
+    const strategy: RetryStrategy = this.mResumeHandle ? 'resume' : 'reconnect';
     const maxAttempts = strategy === 'resume' ? this.maxResumeAttempts : this.maxReconnectAttempts;
 
+    // check if we've exceeded max attempts
+    if (this.mAttempts >= maxAttempts)
+      return false;
+
+
+    // retry profile selection
+    let profile;
+    switch (errorType) {
+
+      // never retry these
+      case 'client-aborted':
+      case 'request-exceeded':
+      case 'response-captive':
+        return false;
+
+      case 'net-disconnected':
+        profile = RETRY_PROFILES.network; // Network disconnections are always retryable
+        break;
+
+      case 'net-unknown':
+        if (typeof maybeStatusCode !== 'number')
+          return false;
+
+        // unknown errors: check status code (if any) to determine if retryable
+        if (maybeStatusCode === 429 || maybeStatusCode === 503 || maybeStatusCode === 502)
+          profile = RETRY_PROFILES.server;  // Server overload/unavailable - use longer backoff
+        else if (maybeStatusCode >= 500)
+          profile = RETRY_PROFILES.transient; // Other 5xx errors - quick retry with transient profile
+        else
+          return false;
+        break;
+
+      default:
+        const _exhaustiveCheck: never = errorType;
+        console.warn(`[DEV] AixStreamRetry.shallRetry: unhandled errorType '${errorType}'`);
+        return false;
+    }
+
+    // calculate delay with exponential backoff and jitter
+    let delayMs = Math.min(profile.baseDelay * Math.pow(2, this.mAttempts), profile.maxDelay);
+
+    // add jitter to prevent thundering herd
+    if (profile.jitter > 0) {
+      const jitterAmount = delayMs * profile.jitter * (Math.random() * 2 - 1);
+      delayMs = Math.max(Math.round(delayMs + jitterAmount), 1);
+    }
+
     // returns the strategy if below max attempts
-    return this.attempts >= maxAttempts ? false : {
+    return {
       strategy,
-      delayMs: 500 * Math.pow(2, this.attempts), // exponential backoff: 500ms, 1s, 2s, 4s
-      attemptNumber: this.attempts + 1, // 1-based for external use
+      delayMs,
+      attemptNumber: this.mAttempts + 1, // 1-based for external use
     };
   }
 
-  recordAttempt(): void {
-    this.attempts++;
-  }
-
-  // isRetrying(): boolean {
-  //   return this.attempts > 0;
-  // }
-
-  // getCurrentAttempt(): number {
-  //   return this.attempts;
-  // }
-
   /**
-   * Abort-aware delay helper: waits for the specified delay or until abort signal fires.
-   * @returns 'completed' if delay finished, 'aborted' if cancelled
+   * Performs a delayed step with abort support.
    */
-  static async abortableDelay(delayMs: number, abortSignal: AbortSignal): Promise<AixAbortableDelayResult> {
+  async delayedStep(delayMs: number, abortSignal: AbortSignal): Promise<StepResult> {
     if (abortSignal.aborted || delayMs <= 0) return delayMs === 0 ? 'completed' : 'aborted';
-    return await new Promise<AixAbortableDelayResult>((resolve) => {
+    return await new Promise<StepResult>((resolve) => {
       const onAbort = () => {
         clearTimeout(timer);
         resolve('aborted');
       };
       const timer = setTimeout(() => {
         abortSignal.removeEventListener('abort', onAbort);
+        // record the attempt only after successful delay completion
+        this.mAttempts++;
         resolve('completed');
       }, delayMs);
       abortSignal.addEventListener('abort', onAbort, { once: true });

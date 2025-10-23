@@ -323,7 +323,7 @@ export const aixRouter = createTRPCRouter({
    * Chat content generation RESUME, streaming only.
    * Reconnects to an in-progress response by its ID - OpenAI Responses API only.
    */
-  chatGenerateContentResume: publicProcedure
+  reattachContent: publicProcedure
     .input(z.object({
       access: AixWire_API.Access_schema,
       resumeHandle: AixWire_API.ResumeHandle_schema, // resume has a handle instead of 'model + chatGenerate'

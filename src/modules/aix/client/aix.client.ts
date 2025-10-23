@@ -6,6 +6,7 @@ import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiStream } from '~/common/util/trpc.client';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
@@ -643,9 +644,7 @@ async function _aixChatGenerateContent_LL(
 
 
   // Retry/Reconnect - low-level state machine
-  const retry = new AixStreamRetry(0, 0);
-  let upstreamHandle: DMessageGenerator['upstreamHandle'];
-
+  const rsm = new AixStreamRetry(0, 0);
 
   while (true) {
 
@@ -677,21 +676,24 @@ async function _aixChatGenerateContent_LL(
 
     try {
 
-      // tRPC Aix Chat Generation (streaming) API - inside the try block for deployment path errors
-      const particleStream = upstreamHandle ?
-        await apiStream.aix.chatGenerateContentResume.mutate({
-          access: aixAccess,
-          resumeHandle: upstreamHandle,
-          context: aixContext,
-          streaming: true,
-          connectionOptions: aixConnectionOptions,
-        }, { signal: abortSignal }) :
+      const particleStream = !rsm.resumeHandle ?
+
+        // AIX tRPC Streaming Generation from Chat input
         await apiStream.aix.chatGenerateContent.mutate({
           access: aixAccess,
           model: aixModel,
           chatGenerate: aixChatGenerate,
           context: aixContext,
           streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
+          connectionOptions: aixConnectionOptions,
+        }, { signal: abortSignal }) :
+
+        // AIX tRPC Streaming re-attachment from handle - for low-level auto-resume
+        await apiStream.aix.reattachContent.mutate({
+          access: aixAccess,
+          resumeHandle: rsm.resumeHandle,
+          context: aixContext,
+          streaming: true,
           connectionOptions: aixConnectionOptions,
         }, { signal: abortSignal });
 
@@ -721,12 +723,15 @@ async function _aixChatGenerateContent_LL(
       // stop the deadline decimator, as we're into error handling mode now
       sendContentUpdate?.stop?.();
 
+      // store the resume handle, if got one
+      if (accumulator_LL.genUpstreamHandle) rsm.resumeHandle = accumulator_LL.genUpstreamHandle;
+
       // classify error
       const { errorType, errorMessage } = aixClassifyStreamingError(error, abortSignal.aborted, !!accumulator_LL.fragments.length);
+      const maybeErrorStatusCode = error?.status || error?.response?.status || undefined;
 
-      // retry decision - check for handle from either current iteration or previous
-      const hasUpstreamHandler = !!accumulator_LL.genUpstreamHandle || !!upstreamHandle;
-      const shallRetry = retry.shallRetry(errorType, hasUpstreamHandler);
+      // retry decision
+      const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode);
       if (!shallRetry) {
 
         // NOT retryable: e.g. client-abort, or missing handle
@@ -740,19 +745,16 @@ async function _aixChatGenerateContent_LL(
 
         // fragment-notify of our ongoing retry attempt
         try {
-          await reassembler.setClientExcepted(`**Retrying** (${shallRetry.attemptNumber}) because: ${errorMessage}`);
+          await reassembler.setClientExcepted(`**${capitalizeFirstLetter(shallRetry.strategy)}** (attempt ${shallRetry.attemptNumber}) in ${Math.round(shallRetry.delayMs / 1000)}s: ${errorMessage}`);
           await onGenerateContentUpdate?.(accumulator_LL, false /* partial */);
         } catch (e) {
           // .. ignore the notification error
         }
 
         // delay then RETRY
-        const delayResult = await AixStreamRetry.abortableDelay(shallRetry.delayMs, abortSignal);
-        if (delayResult === 'completed') {
-          if (accumulator_LL.genUpstreamHandle) upstreamHandle = accumulator_LL.genUpstreamHandle; // update only if fresher
-          retry.recordAttempt();
+        const stepResult = await rsm.delayedStep(shallRetry.delayMs, abortSignal);
+        if (stepResult === 'completed')
           continue; // -> Loop
-        }
 
         // user-aborted during retry-backoff
         await reassembler.setClientAborted().catch(console.error);
