@@ -96,9 +96,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         // -> Container metadata (for Skills)
         if (responseMessage.container) {
-          // Store container metadata for potential use in file downloads
-          // TODO: When IParticleTransmitter supports container metadata, call:
-          // pt.setContainerMetadata(responseMessage.container);
+          // TODO: [PRIORITY] Accumulate in DMessage.sessionMetadata:
+          //   pt.setSessionMetadata('anthropic.container.id', container.id)
+          //   pt.setSessionMetadata('anthropic.container.expiresAt', Date.parse(container.expires_at))
+          // Request builder will find latest values and reuse container across turns for file access.
 
           console.log('[Anthropic] Container active:', {
             id: responseMessage.container.id,
