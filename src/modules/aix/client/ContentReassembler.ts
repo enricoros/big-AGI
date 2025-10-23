@@ -46,12 +46,12 @@ export class ContentReassembler {
   constructor(
     private readonly accumulator: AixChatGenerateContent_LL,
     private readonly onAccumulatorUpdated?: () => MaybePromise<void>,
-    enableDebugContext?: AixClientDebugger.Context,
+    inspectorContext?: AixClientDebugger.Context,
     private readonly wireAbortSignal?: AbortSignal,
   ) {
 
     // [SUDO] Debugging the request, last-write-wins for the global (displayed in the UI)
-    this.debuggerFrameId = !enableDebugContext ? null : aixClientDebugger_init(enableDebugContext);
+    this.debuggerFrameId = !inspectorContext ? null : aixClientDebugger_init(inspectorContext);
 
   }
 
