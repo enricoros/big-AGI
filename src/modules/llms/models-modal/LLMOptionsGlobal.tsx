@@ -31,6 +31,7 @@ export function LLMOptionsGlobal(props: { llm: DLLM }) {
   return (
     <LLMParametersEditor
       maxOutputTokens={getLLMMaxOutputTokens(llm) ?? null}
+      vendorSpec={llm.vId}
       parameterSpecs={llm.parameterSpecs}
       parameterOmitTemperature={llm.interfaces.includes(LLM_IF_HOTFIX_NoTemperature)}
       baselineParameters={llm.initialParameters}
