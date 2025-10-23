@@ -94,6 +94,11 @@ const _antWebFetchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
+const _ortWebSearchOptions = [
+  { value: 'auto', label: 'On', description: 'Enable web search (native for OpenAI/Anthropic, Exa for others)' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 const _imageGenerationOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
   { value: 'mq', label: 'Standard', description: 'Quick gen' },
@@ -162,6 +167,7 @@ export function LLMParametersEditor(props: {
     llmVndOaiWebSearchGeolocation,
     llmVndOaiImageGeneration,
     llmVndOaiVerbosity,
+    llmVndOrtWebSearch,
     llmVndPerplexityDateFilter,
     llmVndPerplexitySearchMode,
     llmVndXaiSearchMode,
@@ -547,6 +553,21 @@ export function LLMParametersEditor(props: {
         }}
       />
     )}
+
+
+    {showParam('llmVndOrtWebSearch') && (
+      <FormSelectControl
+        title='Web Search'
+        tooltip='Enable OpenRouter web search plugin. Uses native search for OpenAI/Anthropic models, Exa for others. Adds web citations to responses.'
+        value={llmVndOrtWebSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOrtWebSearch');
+          else onChangeParameter({ llmVndOrtWebSearch: value });
+        }}
+        options={_ortWebSearchOptions}
+      />
+    )}
+
 
     {showParam('llmVndXaiSearchMode') && (
       <FormSelectControl

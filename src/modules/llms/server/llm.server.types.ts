@@ -93,6 +93,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndOaiWebSearchContext',
     'llmVndOaiWebSearchGeolocation',
     'llmVndOaiImageGeneration',
+    'llmVndOrtWebSearch',
     'llmVndPerplexityDateFilter',
     'llmVndPerplexitySearchMode',
     'llmVndXaiSearchMode',

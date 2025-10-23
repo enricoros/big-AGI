@@ -225,6 +225,14 @@ export const DModelParameterRegistry = {
     // requiredFallback: 'unfiltered',
   } as const,
 
+  llmVndOrtWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable OpenRouter web search (uses native search for OpenAI/Anthropic, Exa for others)',
+    values: ['auto'] as const,
+    // No initialValue - undefined means off
+  } as const,
+
   llmVndPerplexitySearchMode: {
     label: 'Search Mode',
     type: 'enum' as const,

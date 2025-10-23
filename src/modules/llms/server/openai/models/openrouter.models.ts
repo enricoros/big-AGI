@@ -89,6 +89,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     // benchmark: ...
     chatPrice,
     hidden,
+    parameterSpecs: [
+      { paramId: 'llmVndOrtWebSearch' }, // [OpenRouter, 2025-10-22] OpenRouter web search is available for all models
+    ],
   });
 }
 
