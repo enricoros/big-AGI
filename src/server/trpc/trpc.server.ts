@@ -48,10 +48,14 @@ const t = initTRPC.context<typeof createTRPCFetchContext>().create({
   // server transformer - serialize: -> client, deserialize: <- client
   transformer: transformer,
   errorFormatter({ shape, error }) {
+
+    // Important: remove the 'stack' from the error data to avoid leaking internals and shorten the payload
+    const { stack, ...nonStackData } = shape.data;
+
     return {
       ...shape,
       data: {
-        ...shape.data,
+        ...nonStackData,
         zodError:
           error.cause instanceof z.ZodError ? z.treeifyError(error.cause) : null,
       },
