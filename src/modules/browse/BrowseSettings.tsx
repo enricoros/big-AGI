@@ -41,9 +41,7 @@ export function BrowseSettings() {
   return <>
 
     <Typography level='body-sm'>
-      Enables downloading of web pages. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.<br />
-      <b>Web Search</b> is configured separately and requires a Google API key.
-      {/*Web Browser lets the AI visit and analyze web pages in real-time. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more about setup</ExternalLink>.*/}
+      Download and process web pages for analysis. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
     </Typography>
 
     <FormInputKey
