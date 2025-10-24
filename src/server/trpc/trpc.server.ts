@@ -9,7 +9,8 @@
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import * as z from 'zod/v4';
 import { initTRPC } from '@trpc/server';
-import { transformer } from '~/server/trpc/trpc.transformer';
+import { transformer } from './trpc.transformer';
+import { TRPCFetcherError } from './trpc.router.fetchers';
 
 
 /**
@@ -52,10 +53,18 @@ const t = initTRPC.context<typeof createTRPCFetchContext>().create({
     // Important: remove the 'stack' from the error data to avoid leaking internals and shorten the payload
     const { stack, ...nonStackData } = shape.data;
 
+    // Enable client-side decisions: communicate fetcher/network error details downstream
+    const fetcherError = error instanceof TRPCFetcherError ? {
+      aixFCategory: error.category,
+      aixFHttpStatus: error.httpStatus ?? null,
+      aixFNetError: error.connErrorName ?? null,
+    } : {};
+
     return {
       ...shape,
       data: {
         ...nonStackData,
+        ...fetcherError,
         zodError:
           error.cause instanceof z.ZodError ? z.treeifyError(error.cause) : null,
       },
