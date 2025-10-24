@@ -110,7 +110,7 @@ const composerOpenSx: SxProps = {
 
 const composerOpenMobileSx: SxProps = {
   zIndex: 21, // allocates the surface, possibly enables shadow if we like
-  pt: 0.5, // have some breathing room
+  py: 0.5, // have some breathing room
   // boxShadow: '0px -1px 8px -2px rgba(0, 0, 0, 0.4)',
   ...composerOpenSx,
 } as const;
