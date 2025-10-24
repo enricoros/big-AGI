@@ -73,8 +73,8 @@ export class TRPCFetcherError extends TRPCError {
     connErrorName?: string,
     httpStatus?: number,
     // -> TRPCError fields (code, cause)
-    // code?: TRPCError['code'],
-    cause?: unknown,
+    // code?: TRPCError['code'], // removed because we decide it based on category
+    // cause?: unknown, // removed for security / anti-leakage reasons
     // -> Error fields (message)
     message: string,
   }) {
@@ -82,7 +82,7 @@ export class TRPCFetcherError extends TRPCError {
       opts.category === 'parse' ? 'UNPROCESSABLE_CONTENT'
         : opts.category === 'abort' ? 'CLIENT_CLOSED_REQUEST'
           : 'BAD_REQUEST';
-    super({ code, message: opts.message, cause: opts.cause });
+    super({ code, message: opts.message });
 
     this.category = opts.category;
     this.connErrorName = opts.connErrorName;
