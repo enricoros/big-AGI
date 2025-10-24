@@ -3,7 +3,7 @@ import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
-import type { IParticleTransmitter } from './IParticleTransmitter';
+import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 
 
 // configuration
