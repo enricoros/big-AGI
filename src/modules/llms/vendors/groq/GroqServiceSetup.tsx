@@ -54,11 +54,6 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <Typography level='body-sm'>
-      <Link href='https://console.groq.com/docs/quickstart'>Groq</Link> offers inference
-      as a service for a variety of models. See the <Link href='https://www.groq.com/' target='_blank'>Groq</Link> website for more information.
-    </Typography>
-
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
