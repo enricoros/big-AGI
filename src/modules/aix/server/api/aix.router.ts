@@ -48,13 +48,18 @@ async function* _connectToDispatch(
   chatGenerateTx: ChatGenerateTransmitter,
   _d: DebugObject,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, Response | null> {
-  try {
 
-    // [DEV] Debugging the request without requiring a server restart
-    if (_d.echoRequest) {
+  // [DEV] Debugging the request without requiring a server restart
+  if (_d.echoRequest) {
+    try {
       chatGenerateTx.addDebugRequest(!AIX_SECURITY_ONLY_IN_DEV_BUILDS, request.url, request.headers, 'body' in request ? request.body : undefined);
       yield* chatGenerateTx.emitParticles();
+    } catch (error: any) {
+      // ...
     }
+  }
+
+  try {
 
     // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthropic requests (>25s on large requests for Opus 3 models)
     _d.profiler?.measureStart('connect');
