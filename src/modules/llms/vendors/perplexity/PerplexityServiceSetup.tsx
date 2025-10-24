@@ -57,7 +57,6 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
     <Typography level='body-sm'>
       The <Link href='https://docs.perplexity.ai/docs/getting-started'>Perplexity API</Link> offers inference
       as a service for a variety of models. See the <Link href='https://www.perplexity.ai/' target='_blank'>Perplexity AI</Link> website for more information.
-      🌐 Online models are quite unique as they can make use of internet data.
     </Typography>
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />

@@ -77,8 +77,7 @@ export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <Typography level='body-sm'>
       <ExternalLink href='https://openpipe.ai/'>OpenPipe</ExternalLink> allows you to <strong>record your chats</strong>,
-      and <strong>fine-tune</strong> and deploy custom models that outperform GPT-4 at a
-      fraction of the cost.
+      and <strong>fine-tune</strong> and deploy custom models cost-effectively for specific tasks.
     </Typography>
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />

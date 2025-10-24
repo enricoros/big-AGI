@@ -60,12 +60,6 @@ export function TogetherAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <Typography level='body-sm'>
-      The Together Inference platform allows you to run recent machine learning models with good speed and low
-      cost. See the <Link href='https://www.together.ai/' target='_blank'>Together AI</Link> website for more
-      information.
-    </Typography>
-
     {advanced.on && <FormSwitchControl
       title='Rate Limiter' on='Enabled' off='Disabled'
       description={partialSettings?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
