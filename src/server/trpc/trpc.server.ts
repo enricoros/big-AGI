@@ -97,6 +97,17 @@ export const createTRPCRouter = t.router;
  */
 export const publicProcedure = t.procedure;
 
+/**
+ * Edge procedures for the AI inference Edge network:
+ * - AIX streaming endpoints
+ * - specific endpoints: Anthropic, Gemini, Ollama, OpenAI
+ *
+ * Open for now, as these are pass-through with service keys inside the request usually.
+ * May be closed in the future if key material is on the server-side procedure, in which case
+ * authentication will be required.
+ */
+export const edgeProcedure = t.procedure;
+
 // /**
 //  * Create a server-side caller
 //  * @link https://trpc.io/docs/v11/server/server-side-calls
