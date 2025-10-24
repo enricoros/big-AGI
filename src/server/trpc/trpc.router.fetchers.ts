@@ -52,14 +52,26 @@ type _RequestConfig<TBody extends object | undefined | FormData> = {
 /**
  * Error class for all _fetchFromTRPC failures, easy to pattern-match and retry.
  *
- * Is-a TRPCError: { code: 'BAD_REQUEST'; message?: string; cause?: unknown; }
+ * Is-a TRPCError: { code: 'BAD_REQUEST' | 'UNPROCESSABLE_CONTENT' | 'CLIENT_CLOSED_REQUEST'; message?: string; cause?: unknown; }
  *
- * Retry Decision Matrix:
- * - HTTP 503/429/502 → Retry with exponential backoff (1-30s)
- * - Connection errors (ECONNREFUSED, ETIMEDOUT) → Retry with network profile
- * - HTTP 4xx (except 429) → Don't retry (client error)
- * - Abort → Don't retry (user initiated)
- * - Parse → Don't retry (upstream bug)
+ * This error gets thrown from all fetcher functions in this file (fetchJsonOrTRPCThrow, fetchTextOrTRPCThrow, fetchResponseOrTRPCThrow).
+ *
+ * TWO PATHS:
+ * 1. UNHANDLED: If not caught, tRPC router automatically serializes and sends to client
+ *    - see trpc.server.ts for error transformation, which adds the 3 extra fields below to the client
+ * 2. HANDLED: If caught in server code (e.g., aix.router.ts), the structured fields can be used for decision-making:
+ *    - category: 'abort' | 'connection' | 'http' | 'parse'
+ *    - connErrorName: System error code (ECONNREFUSED, ETIMEDOUT, ENOTFOUND) for connection errors
+ *    - httpStatus: HTTP status code (503, 429, 502, etc.) for upstream HTTP errors
+ *
+ * RETRY PATTERN MATCHING:
+ * - HTTP 503/429/502 (category='http', httpStatus present) → Retry with server profile (1-30s)
+ * - Connection errors (category='connection', connErrorName present) → Retry with network profile (0.5-8s)
+ * - Abort/Parse (category='abort'/'parse') → Don't retry
+ *
+ * SECURITY NOTE:
+ * - No `cause` field: Prevents leaking sensitive Error objects (stack traces, internal state) to client
+ * - Error messages are sanitized via safeErrorString() before inclusion
  */
 export class TRPCFetcherError extends TRPCError {
   public override readonly name = 'TRPCFetcherError';
