@@ -22,7 +22,7 @@ export function ZeroGenerations() {
       {/*</Typography>*/}
       <Typography level='title-sm' sx={{ whiteSpace: 'balance' }}>
         Generate stunning images from text.
-        Simply type in an image, drawing, or photo description, and the AI will bring your vision to life.
+        Enter an image, drawing, or photo description, and the AI will create your vision.
         {/*To get started enter your prompt and hit &quot;<b>Draw</b>&quot;.*/}
       </Typography>
     </Card>

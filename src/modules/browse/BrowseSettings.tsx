@@ -87,7 +87,7 @@ export function BrowseSettings() {
 
     <FormControl disabled>
       <Checkbox size='sm' label='Personas browsing tool' checked={false} onChange={(event) => setEnablePersonaTool(event.target.checked)} />
-      <FormHelperText sx={_styleHelperText}>Coming soon</FormHelperText>
+      <FormHelperText sx={_styleHelperText}>Available in a future release</FormHelperText>
       {/*<FormHelperText sx={_styleHelperText}>Enable loading URLs by Personas</FormHelperText>*/}
     </FormControl>
 

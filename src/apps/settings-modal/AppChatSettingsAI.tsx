@@ -134,7 +134,7 @@ export function AppChatSettingsAI() {
         domainId='primaryChat'
         title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Last used model</>}
         description='Chat fallback model'
-        tooltip='The last used chat model, used as default for new conversations. This is a develoment setting used to test out auto-detection of the most fitting initial chat model.'
+        tooltip='The last used chat model, used as default for new conversations. This is a development setting used to test out auto-detection of the most fitting initial chat model.'
       />
     )}
 
