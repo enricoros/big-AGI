@@ -243,6 +243,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'NO_IMAGE': // The model was expected to generate an image, but none was generated
           case 'UNEXPECTED_TOOL_CALL': // Model generated a tool call but no tools were enabled in the request
           case 'TOO_MANY_TOOL_CALLS': // Model called too many tools consecutively, execution limit exceeded
+          case 'FINISH_REASON_UNSPECIFIED':
             const reasonMap: Record<typeof candidate0.finishReason, [AixWire_Particles.GCTokenStopReason, string, string | null]> = {
               'SAFETY': ['filter-content', `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null],
               'RECITATION': ['filter-recitation', 'Generation stopped due to RECITATION', IssueSymbols.Recitation],
@@ -259,6 +260,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
               'NO_IMAGE': ['cg-issue', 'Image generation failed: no image generated', null],
               'UNEXPECTED_TOOL_CALL': ['cg-issue', 'Generation stopped: tool call made but no tools enabled', null],
               'TOO_MANY_TOOL_CALLS': ['cg-issue', 'Generation stopped: too many consecutive tool calls', null],
+              'FINISH_REASON_UNSPECIFIED': ['cg-issue', 'Generation stopped and no reason was given', null],
             } as const;
             const reason = reasonMap[candidate0.finishReason];
             pt.setTokenStopReason(reason[0]);
@@ -266,6 +268,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
           default:
             // Exhaustiveness check - if we get here, Gemini added a new finishReason
+            const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
             pt.setTokenStopReason('cg-issue');
             return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null);
         }
