@@ -115,7 +115,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <div className='vivided'>
               <h2 className='heading'>Oops, we hit a snag</h2>
               <div className='message'>
-                <p style={{ fontWeight: 500 }}>Something broke; this shouldn&apos;t happen.{outer ? ' Please try reloading Big-AGI.' : ''}</p>
+                <p style={{ fontWeight: 500 }}>An unexpected error occurred.{outer ? ' Please try reloading Big-AGI.' : ''}</p>
                 {outer && (
                   <p style={{ fontWeight: 500 }}>
                     {' '}If the issue persists, please{' '}

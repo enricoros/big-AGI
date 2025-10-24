@@ -31,7 +31,7 @@ export async function executeUserInputChecklistInstruction(
 
     // if no options, there's an error
     if (options.length < 2) {
-      reject(new Error('Oops! It looks like we had trouble understanding the Model. Could you please try again?'));
+      reject(new Error('Unable to parse model output. Please try again with a different prompt or model.'));
       return;
     }
 
