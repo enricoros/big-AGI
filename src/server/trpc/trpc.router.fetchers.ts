@@ -197,7 +197,12 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       // not verified, but likely:
       'ETIMEDOUT',                // connection timed out
       'ECONNRESET',               // connection reset by peer
-    ].includes(connErrorName);
+    ].includes(connErrorName) || [
+      // Vercel: _cause is always null, need to match the message text
+      'network connection lost.',
+      'connect timeout error',
+      'internal error',           // very obscure and generic Vercel edge Error.message
+    ].includes(errorString.toLowerCase());
 
     // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
     //       Consider we're also throwing the same, so there will likely be further logging.
@@ -209,8 +214,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       category: 'connection',
       connErrorName: connErrorName,
       message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
-        + `Could not connect: ${errorString}.`
-        + (causeMessage ? ` \nTechnical cause: ${causeMessage}.` : '')
+        + `Could not connect: ${_period(errorString)}`
+        + (causeMessage ? ` \nTechnical cause: ${_period(causeMessage)}` : '')
         + (prettyShowUrl ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
       // cause: _cause,
     });
@@ -358,6 +363,10 @@ async function _jsonResponseParserOrThrow(response: Response) {
 
   }
   // unreachable
+}
+
+function _period(s: string) {
+  return s?.trimEnd().endsWith?.('.') ? s : s + '.';
 }
 
 function _inferTextPayloadType(payload?: string) {
