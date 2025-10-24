@@ -50,12 +50,11 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
   const handleRemoveNonFreeLLMs = () => {
     // A bit of a hack
     const { llms } = llmsStoreState();
-    const { removeLLM } = llmsStoreActions();
+    const { updateLLM } = llmsStoreActions();
     llms
       .filter(llm => llm.sId === props.serviceId)
       .filter(llm => llm.pricing?.chat?._isFree === false)
-      // .forEach(llm => updateLLM(llm.id, { hidden: true }));
-      .forEach(llm => removeLLM(llm.id));
+      .forEach(llm => updateLLM(llm.id, { userHidden: true }));
   };
 
   const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
