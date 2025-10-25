@@ -7,6 +7,7 @@ import { AixWire_Particles } from '../../api/aix.wiretypes';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
+import { createRetryablePromise } from './chatGenerate.retrier';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
 
@@ -90,12 +91,13 @@ async function* _connectToDispatch(
 
     // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthropic requests (>25s on large requests for Opus 3 models)
     _d.profiler?.measureStart('connect');
-    const chatGenerateResponsePromise = fetchResponseOrTRPCThrow({
+    const connectionOperation = () => fetchResponseOrTRPCThrow({
       ...request,
       signal: intakeAbortSignal,
       name: `Aix.${_d.prettyDialect}`,
       throwWithoutName: true,
     });
+    const chatGenerateResponsePromise = createRetryablePromise(connectionOperation, intakeAbortSignal);
     const dispatchResponse = yield* heartbeatsWhileAwaiting(chatGenerateResponsePromise);
     _d.profiler?.measureEnd('connect');
 
