@@ -263,7 +263,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     }
 
     if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
-      console.warn(`[${method}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { parserName, payloadString });
+      console.warn(`[${method}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { parserName, payloadMessage: payloadString });
 
     // -> throw HTTP error: will be a 400 (BAD_REQUEST), with preserved status
     throw new TRPCFetcherError({
