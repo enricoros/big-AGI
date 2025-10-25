@@ -9,14 +9,14 @@ const RETRY_PROFILES = {
     baseDelayMs: 500,
     maxDelayMs: 8000,
     jitterFactor: 0.25,
-    maxAttempts: 4,      // 4 attempts total: immediate, then retry at ~0.5s, ~1s, ~2s
+    maxAttempts: 3,      // 4 attempts total: immediate, then retry at ~0.5s, ~1s, ~2s
   },
   // server overload (connected, but server busy) -> slower retry
   server: {
     baseDelayMs: 1000,
     maxDelayMs: 10000,
     jitterFactor: 0.5,    // 50% randomization
-    maxAttempts: 4,      // 4 attempts total: immediate, then retry at ~1s, ~2s, ~4s
+    maxAttempts: 3,      // 4 attempts total: immediate, then retry at ~1s, ~2s, ~4s
   },
 } as const;
 
