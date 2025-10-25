@@ -1,6 +1,8 @@
 import { TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 
+const AIX_DEBUG_SERVER_RETRY = true;
+
 const RETRY_PROFILES = {
   // network/DNS failures (never connected) -> fast retry
   network: {
@@ -69,6 +71,8 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
 
         // normal attempt, expecting success and setting the promise value
         const result = await operationFn();
+        if (AIX_DEBUG_SERVER_RETRY && attemptNumber > 1)
+          console.log(`[chatGenerate.retrier] ✅ Success after ${attemptNumber} attempts`);
         resolve(result);
         return;
 
@@ -76,17 +80,43 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
 
         // aborted: forward the error immediately
         if (abortSignal.aborted) {
+          if (AIX_DEBUG_SERVER_RETRY)
+            console.log(`[chatGenerate.retrier] ⛔ User aborted at attempt ${attemptNumber}`);
           reject(error);
           return;
         }
 
         // check if error is retryable
         const rp = selectRetryProfile(error);
-        if (!rp || attemptNumber >= rp.maxAttempts) {
+
+        // not retryable
+        if (!rp) {
+          if (AIX_DEBUG_SERVER_RETRY) {
+            const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+            console.log(`[chatGenerate.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
+          }
           reject(error);
           return;
         }
 
+        // exhausted attempts
+        if (attemptNumber >= rp.maxAttempts) {
+          if (AIX_DEBUG_SERVER_RETRY) {
+            const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+            console.warn(`[chatGenerate.retrier] ⚠️ All ${rp.maxAttempts} retry attempts exhausted ${errorInfo}`);
+          }
+          reject(error);
+          return;
+        }
+
+        // log retry decision with error details
+        if (AIX_DEBUG_SERVER_RETRY) {
+          const errorInfo = error instanceof TRPCFetcherError
+            ? `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`
+            : '';
+          const profileType = rp === RETRY_PROFILES.network ? 'network' : 'server';
+          console.log(`[chatGenerate.retrier] 🔄 Retryable error ${errorInfo} - using ${profileType} profile: ${error?.message || error}`);
+        }
 
         // calculate exponential backoff with jitter
         const exponentialDelay = rp.baseDelayMs * Math.pow(2, attemptNumber - 1);
@@ -100,6 +130,8 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
         }
 
         attemptNumber++;
+        if (AIX_DEBUG_SERVER_RETRY)
+          console.log(`[chatGenerate.retrier] 🔄 Retrying attempt ${attemptNumber}/${rp.maxAttempts} after ${delayMs}ms delay`);
 
         // abortable wait
         await new Promise<void>((resolveDelay) => {
