@@ -263,7 +263,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     }
 
     if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
-      console.warn(`[${method}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { parserName, payloadMessage: payloadString });
+      console.log(`[${method}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { parserName, payloadMessage: payloadString });
 
     // -> throw HTTP error: will be a 400 (BAD_REQUEST), with preserved status
     throw new TRPCFetcherError({
@@ -287,8 +287,10 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   } catch (error: any) {
 
     // [logging - Parsing error] candidate for the logging system
-    if (SERVER_LOG_FETCHERS_ERRORS)
+    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS) {
+      // WARN because we want to understand if something is wrong with the upstream APIs, otherwise HTTP errors are expected and simply logged
       console.warn(`[${method}] [${moduleName}]: (${parserName} parsing error): ${error?.name}`, { error, url });
+    }
 
     // Forward already processed Parsing error, adding the module name if required
     if (error instanceof TRPCFetcherError)

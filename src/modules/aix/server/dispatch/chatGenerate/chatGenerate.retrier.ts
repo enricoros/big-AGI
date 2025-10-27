@@ -9,14 +9,14 @@ const RETRY_PROFILES = {
     baseDelayMs: 500,
     maxDelayMs: 8000,
     jitterFactor: 0.25,
-    maxAttempts: 3,      // 4 attempts total: immediate, then retry at ~0.5s, ~1s, ~2s
+    maxAttempts: 3,      // 3 attempts total: immediate, then retry at ~0.5s, ~1s
   },
   // server overload (connected, but server busy) -> slower retry
   server: {
     baseDelayMs: 1000,
     maxDelayMs: 10000,
     jitterFactor: 0.5,    // 50% randomization
-    maxAttempts: 3,      // 4 attempts total: immediate, then retry at ~1s, ~2s, ~4s
+    maxAttempts: 4,      // 4 attempts total: immediate, then retry at ~1s, ~2s, ~4s
   },
 } as const;
 
@@ -93,7 +93,8 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
         if (!rp) {
           if (AIX_DEBUG_SERVER_RETRY) {
             const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
-            console.log(`[chatGenerate.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
+            console.log(`[chatGenerate.retrier] ❌ Not retryable ${errorInfo}}`); // removing the duplicate error message
+            // console.log(`[chatGenerate.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
           }
           reject(error);
           return;
@@ -103,7 +104,7 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
         if (attemptNumber >= rp.maxAttempts) {
           if (AIX_DEBUG_SERVER_RETRY) {
             const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
-            console.warn(`[chatGenerate.retrier] ⚠️ All ${rp.maxAttempts} retry attempts exhausted ${errorInfo}`);
+            console.warn(`[chatGenerate.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
           }
           reject(error);
           return;
@@ -115,7 +116,8 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
             ? `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`
             : '';
           const profileType = rp === RETRY_PROFILES.network ? 'network' : 'server';
-          console.log(`[chatGenerate.retrier] 🔄 Retryable error ${errorInfo} - using ${profileType} profile: ${error?.message || error}`);
+          console.log(`[chatGenerate.retrier] 🔄 Retryable error ${errorInfo} - using '${profileType}' profile`);
+          // console.log(`[chatGenerate.retrier] 🔄 Retryable error ${errorInfo} - using ${profileType} profile: ${error?.message || error}`);
         }
 
         // calculate exponential backoff with jitter
@@ -131,7 +133,7 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
 
         attemptNumber++;
         if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[chatGenerate.retrier] 🔄 Retrying attempt ${attemptNumber}/${rp.maxAttempts} after ${delayMs}ms delay`);
+          console.log(`[chatGenerate.retrier] 🔄 Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
 
         // abortable wait
         await new Promise<void>((resolveDelay) => {
