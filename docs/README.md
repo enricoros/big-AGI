@@ -2,6 +2,8 @@
 
 Information you need to get started, configure, and use big-AGI productively.
 
+👉 **[Changelog](https://big-agi.com/changes)** - See what's new
+
 ## Getting Started
 
 Essential guides:
@@ -64,6 +66,7 @@ For deploying a custom big-AGI instance:
 
 ## Community & Support
 
+- Check the [changelog](https://big-agi.com/changes) for the latest updates
 - Visit our [GitHub repository](https://github.com/enricoros/big-AGI) for source code and issue tracking
 - Join our [Discord](https://discord.gg/MkH4qj2Jp9) for discussions and help
 
