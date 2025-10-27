@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
  */
 export function presentErrorToHumans(error: any, mdBold: boolean = false, devWarnError: boolean = false): string {
   if (devWarnError)
-    console.error('presentErrorToHumans', { error });
+    console.error('presentErrorToHumans', { errorType: typeof error, error: error });
 
   // Handle Error objects
   if (error instanceof Error) {
