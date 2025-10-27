@@ -318,8 +318,10 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
   private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
-    if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE)
-      console.warn(`Aix.${this.prettyDialect} (${issueId}): ${issueText}`);
+    if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
+      const logLevel = issueId === 'dispatch-fetch' ? 'log' : 'warn';
+      console[logLevel](`Aix.${this.prettyDialect} ${issueId}: ${issueText}`);
+    }
 
     // queue the issue
     this.endMessagePart();
