@@ -125,7 +125,7 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
       enabled: process.env.NODE_ENV === 'production',
       project: 'big-agi',
       version: process.env.NEXT_PUBLIC_BUILD_HASH,
-      deleteAfterUpload: true,
+      deleteAfterUpload: false, // false: leave them in the tree, which would also help debugging of open-source installs
     },
   });
 }
