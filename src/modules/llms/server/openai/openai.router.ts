@@ -157,14 +157,17 @@ export const llmOpenAIRouter = createTRPCRouter({
 
   /* [OpenAI] List the Models available */
   listModels: publicProcedure
-    // tRPC middleware: log errors for this procedure - as we don't have proper try/catch blocks yet
-    .use(async ({ next, path, signal, type }) => {
-      const result = await next();
-      if (!result.ok && result.error) console.warn(`[${path} ${type}]:${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
-      return result;
-    })
     .input(listModelsInputSchema)
     .output(ListModelsResponse_schema)
+
+    // tRPC middleware: log errors for this procedure - as we don't have proper try/catch blocks yet
+    .use(async ({ next, path, signal, type, input }) => {
+      const result = await next();
+      if (!result.ok && result.error)
+        console.warn(`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
+      return result;
+    })
+
     .query(async ({ input: { access }, signal }): Promise<{ models: ModelDescriptionSchema[] }> => {
 
       let models: ModelDescriptionSchema[];
