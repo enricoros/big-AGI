@@ -38,6 +38,11 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (error instanceof TypeError && error.message === 'network error')
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' };
 
+  // tRPC <= 11.5.1 - Vercel Edge network disconnects are thrown form tRPC as 'Stream closed'
+  // NOTE The behavior changed in 11.6+ for which we have an open upstream ticket: #6989
+  if (error instanceof Error && error.message === 'Stream closed')
+    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' };
+
   // tRPC-level protocol errors (wrapped by tRPC client)
   // Initial connection failures, HTTP errors, or text responses that blow up tRPC's JSON parser
   if (error instanceof TRPCClientError) {
