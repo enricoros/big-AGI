@@ -3,6 +3,7 @@
 This is a high-level changelog. Calls out some of the high level features batched
 by release.
 
+- For the live changelog, see [big-agi.com/changes](https://big-agi.com/changes)
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
 ### 1.17.0 - Jun 2024

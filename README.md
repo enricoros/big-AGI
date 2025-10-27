@@ -43,6 +43,8 @@ Or fork & run on Vercel:
 
 ## What's New in 2.0 · Oct 6, 2025 · Open
 
+👉 **[See the full changelog](https://big-agi.com/changes)**
+
 - **Big-AGI Open** is ready and more productive and faster than ever, with:
 - **Beam 2**: multi-modal, program-based, follow-ups, save presets
 - Top-notch AI models support including **agentic models** and **reasoning models**
@@ -54,7 +56,7 @@ Or fork & run on Vercel:
 
 <img width="830" height="385" alt="image" src="https://github.com/user-attachments/assets/ad52761d-7e3f-44d8-b41e-947ce8b4faa1" />
 
-### Open links: 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
+### Open links: 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [changelog](https://big-agi.com/changes) 👉 [documentation](docs/README.md)
 
 <details>
 <summary>5,000 Commits Milestone</summary>
