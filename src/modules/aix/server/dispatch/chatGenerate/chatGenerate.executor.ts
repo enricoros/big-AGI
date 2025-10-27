@@ -1,4 +1,5 @@
 import { createEmptyReadableStream, safeErrorString } from '~/server/wire';
+import { createRetryablePromise } from '~/server/trpc/trpc.fetchers.retrier';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AIX_SECURITY_ONLY_IN_DEV_BUILDS, AixDebugObject } from '../../api/aix.router';
@@ -7,7 +8,6 @@ import { AixWire_Particles } from '../../api/aix.wiretypes';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
-import { createRetryablePromise } from './chatGenerate.retrier';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
 
