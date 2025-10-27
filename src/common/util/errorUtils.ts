@@ -39,7 +39,7 @@ export function presentErrorToHumans(error: any, mdBold: boolean = false, devWar
     return safeObjectToString(error);
 
   // Handle other types
-  return `Unknown Error: ${String(error)}`;
+  return `Unknown Error: ${String(error)} (type: ${typeof error})`;
 }
 
 function safeObjectToString(obj: object): string {
