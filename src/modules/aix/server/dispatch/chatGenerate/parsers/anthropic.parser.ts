@@ -6,6 +6,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { RequestRetryError } from '../chatGenerate.retrier';
 
 
 // configuration
@@ -61,7 +62,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
 
-  return function(pt: IParticleTransmitter, eventData: string, eventName?: string): void {
+  return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
@@ -503,6 +504,12 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant error: ${errorText}`);
+
+        // Throw retryable error for overload/timeout conditions (only if retries available)
+        if (error.type === 'overloaded_error' && context?.retriesAvailable)
+          throw new RequestRetryError(`Anthropic: ${errorText}`);
+
+        // Non-retryable errors (or no retries left): show to user
         return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
 
       default:
@@ -516,7 +523,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
 
-  return function(pt: IParticleTransmitter, fullData: string): void {
+  return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
