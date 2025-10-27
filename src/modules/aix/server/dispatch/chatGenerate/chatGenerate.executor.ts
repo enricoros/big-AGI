@@ -8,6 +8,7 @@ import { AixWire_Particles } from '../../api/aix.wiretypes';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
+import { RequestRetryError } from './chatGenerate.retrier';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
 
@@ -24,6 +25,7 @@ export async function* executeChatGenerate(
   streaming: boolean,
   intakeAbortSignal: AbortSignal,
   _d: AixDebugObject,
+  parseContext?: { retriesAvailable: boolean },
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   // AIX ChatGenerate Particles - Intake Transmitter
@@ -46,9 +48,9 @@ export async function* executeChatGenerate(
 
   // Consume dispatch response
   if (!streaming)
-    yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d);
+    yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
   else
-    yield* _consumeDispatchStream(dispatchResponse, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d);
+    yield* _consumeDispatchStream(dispatchResponse, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
 
   // Tack profiling particles if generated
   if (_d.profiler) {
@@ -131,6 +133,7 @@ async function* _consumeDispatchUnified(
   dispatchParserNS: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
+  parseContext?: { retriesAvailable: boolean },
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
   let dispatchBody: string | undefined = undefined;
   try {
@@ -144,7 +147,7 @@ async function* _consumeDispatchUnified(
 
     // Parse the response in full
     _d.profiler?.measureStart('parse-full');
-    dispatchParserNS(chatGenerateTx, dispatchBody);
+    dispatchParserNS(chatGenerateTx, dispatchBody, undefined, parseContext);
     _d.profiler?.measureEnd('parse-full');
 
     // Normal termination with no more data
@@ -168,6 +171,7 @@ async function* _consumeDispatchStream(
   dispatchParser: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
+  parseContext?: { retriesAvailable: boolean },
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
@@ -243,7 +247,7 @@ async function* _consumeDispatchStream(
 
         // 4. Parse the event into particles queued for transmission
         _d.profiler?.measureStart('parse');
-        dispatchParser(chatGenerateTx, demuxedItem.data, demuxedItem.name);
+        dispatchParser(chatGenerateTx, demuxedItem.data, demuxedItem.name, parseContext);
         _d.profiler?.measureEnd('parse');
 
         // 5. Emit any queued particles
@@ -251,6 +255,9 @@ async function* _consumeDispatchStream(
           yield* chatGenerateTx.emitParticles();
 
       } catch (error: any) {
+        // special: pass-through ONLY our retriable errors, for full operation-level retry - these are thrown by Parsers to remand reconnection
+        if (error instanceof RequestRetryError) throw error;
+
         // Handle parsing issue (likely a schema break); print it to the console as well
         chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket on GitHub.`, false);
         break; // inner for {}, then outer do
