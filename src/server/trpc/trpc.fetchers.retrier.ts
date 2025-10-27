@@ -1,4 +1,5 @@
 import { TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
+import { abortableDelay } from '~/server/wire';
 
 
 const AIX_DEBUG_SERVER_RETRY = true;
@@ -138,24 +139,7 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
           console.log(`[fetchers.retrier] 🔄 Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
 
         // abortable wait
-        await new Promise<void>((resolveDelay) => {
-          if (abortSignal.aborted || delayMs <= 0) {
-            resolveDelay();
-            return;
-          }
-
-          const timer = setTimeout(resolveDelay, delayMs);
-
-          const onAbort = () => {
-            clearTimeout(timer);
-            resolveDelay();
-          };
-
-          abortSignal.addEventListener('abort', onAbort, { once: true });
-        });
-
-        // check if the wait was aborted
-        if (abortSignal.aborted) {
+        if (await abortableDelay(delayMs, abortSignal)) {
           reject(error);
           return;
         }
