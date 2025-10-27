@@ -78,8 +78,9 @@ export async function* executeChatGenerateWithRetry(
 
       attemptNumber++;
 
-      if (await abortableDelay(delayMs, abortSignal))
-        throw error; // user aborted during delay
+      // If aborted during delay, let next attempt detect it and create proper terminating particle
+      // (throwing here would bypass executor's particle-based messaging contract)
+      await abortableDelay(delayMs, abortSignal);
 
       // -> loop continues for next attempt
     }
