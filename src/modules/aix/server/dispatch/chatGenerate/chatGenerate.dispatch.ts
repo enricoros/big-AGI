@@ -32,7 +32,11 @@ export type ChatGenerateDispatchRequest =
   | { url: string, headers: HeadersInit, method: 'POST', body: object }
   | { url: string, headers: HeadersInit, method: 'GET' };
 
-export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string) => void;
+export type ChatGenerateParseContext = {
+  retriesAvailable: boolean;
+};
+
+export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void;
 
 
 // -- Specialized Implementations -- Core of Server-side AI Vendors abstraction --
