@@ -60,5 +60,5 @@ export const Release = {
 
 export const BaseProduct = {
   ReleaseNotes: '',
-  SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-agi/issues',
+  SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-AGI/issues/new',
 } as const;

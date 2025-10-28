@@ -3,6 +3,7 @@ import Router from 'next/router';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Divider, Dropdown, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import CodeIcon from '@mui/icons-material/Code';
 import HistoryIcon from '@mui/icons-material/History';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
@@ -20,6 +21,7 @@ import { FeatureBadge } from '~/common/components/FeatureBadge';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhSquaresFour } from '~/common/components/icons/phosphor/PhSquaresFour';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
+import { clientUtmSource } from '~/common/util/pwaUtils';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -29,6 +31,9 @@ import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNav
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaDrawerPeeking, useOptimaModals } from '../useOptima';
 import { scratchClipSupported, useScratchClipVisibility } from '../scratchclip/store-scratchclip';
+
+
+export const bigAgiProUrl = 'https://big-agi.com' + clientUtmSource('upgrade-apps');
 
 
 const desktopNavBarSx: SxProps = {
@@ -165,6 +170,16 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
           sx={{ minWidth: 260 }}
         >
 
+          <MenuItem component='a' variant='solid' color='primary' href={bigAgiProUrl} target='_blank' sx={{ minHeight: 40 }}>
+            {/*<ListItemDecorator>New</ListItemDecorator>*/}
+            {/*<ListItemDecorator><RocketLaunchRounded /></ListItemDecorator>*/}
+            Big-AGI Pro
+            {/*✨*/}
+            <ArrowOutwardRoundedIcon sx={{ ml: 'auto' }}/>
+          </MenuItem>
+
+          <ListDivider />
+
           {/* APPS Section */}
           {overflowApps.length > 0 && (
             <>
@@ -207,10 +222,10 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
               Support
             </Typography>
           </ListItem>
-          <ListItemButton component="a" href={BaseProduct.SupportForm()} target="_blank">
+          <MenuItem component="a" href={BaseProduct.SupportForm()} target="_blank">
             <ListItemDecorator><LightbulbOutlinedIcon /></ListItemDecorator>
             I Have Feedback
-          </ListItemButton>
+          </MenuItem>
           {!!releaseNotesUrl && (
             <MenuItem onClick={handleShowReleaseNotes}>
               <ListItemDecorator>
