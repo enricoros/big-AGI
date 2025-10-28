@@ -6,11 +6,6 @@ by release.
 - For the live changelog, see [big-agi.com/changes](https://big-agi.com/changes)
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.17.0 - Jun 2024
-
-- milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
-- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
-
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 
 - 1.16.10: OpenRouter models support
