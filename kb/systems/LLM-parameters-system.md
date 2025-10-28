@@ -60,7 +60,7 @@ Shows only parameters that are:
 
 The AIX client transforms DLLM parameters to wire protocol format. This layer handles parameter precedence rules and name transformations:
 
-```typescript
+```
 // Parameter precedence: newer 4-value version takes priority over 3-value
 ...((llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort) ?
   { vndOaiReasoningEffort: llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort } : {})
