@@ -233,30 +233,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Legacy/Retired models
   // retired: 'claude-3-sonnet-20240229'
-  {
-    id: 'claude-2.1', // Retired | Retired: July 21, 2025
-    label: 'Claude 2.1 [Retired]',
-    description: 'Updated version of Claude 2 with improved accuracy. Retired July 21, 2025.',
-    contextWindow: 200000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Early 2023',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 8, output: 24 },
-    benchmark: { cbaElo: 1118 },
-    hidden: true,
-    isLegacy: true,
-  },
-  {
-    id: 'claude-2.0', // Retired | Retired: July 21, 2025
-    label: 'Claude 2 [Retired]',
-    description: 'Predecessor to Claude 3, offering strong all-round performance. Retired July 21, 2025.',
-    contextWindow: 100000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Early 2023',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 8, output: 24 },
-    benchmark: { cbaElo: 1132, cbaMmlu: 78.5 },
-    hidden: true,
-    isLegacy: true,
-  },
+  // retired: 'claude-2.1'
+  // retired: 'claude-2.0'
 ];
