@@ -8,7 +8,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
 
   /* OpenPipe models - by default it's OpenAI models, through the proxy service. */
 
-  // OpenAI models: these work
+  // OpenAI models: pass-through at standard OpenAI rates
   {
     id: 'gpt-4o-mini-2024-07-18',
     label: '💾➜ GPT-4o Mini (2024-07-18)',
@@ -21,26 +21,15 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     benchmark: { cbaMmlu: 82.0 },
   },
   {
-    id: 'gpt-4o-2024-05-13',
-    label: '💾➜ GPT-4o (2024-05-13)',
+    id: 'gpt-4o-2024-08-06',
+    label: '💾➜ GPT-4o (2024-08-06)',
     description: 'Advanced, multimodal flagship model that\'s cheaper and faster than GPT-4 Turbo.',
     contextWindow: 128000,
-    maxCompletionTokens: 4096,
+    maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4o-2024-05-13')?.chatPrice,
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4o-2024-08-06')?.chatPrice,
     benchmark: { cbaElo: 1287 },
-  },
-  {
-    id: 'gpt-3.5-turbo-1106',
-    label: '💾➜ GPT-3.5 Turbo (1106)',
-    description: 'GPT-3.5 Turbo model from November 2023',
-    contextWindow: 16385,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Sep 2021',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-3.5-turbo-1106')?.chatPrice,
-    benchmark: { cbaElo: 1072 },
   },
   {
     id: 'gpt-3.5-turbo-0125',
@@ -54,43 +43,51 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     benchmark: { cbaElo: 1105 },
   },
 
-  // Default finetune, not available at the onset
-  // {
-  //   id: 'mistral-ft-optimized-1227',
-  //   label: 'OpenPipe · Mistral FT Optimized',
-  //   description: 'OpenPipe optimized Mistral fine-tuned model',
-  //   contextWindow: 32768, // Assuming similar to Mixtral, as it's Mistral-based
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn], // Assuming similar to Mixtral
-  // },
+  // Google Gemini models: pass-through at standard Google rates
+  {
+    id: 'gemini-1.0-pro-001',
+    label: '💾➜ Gemini 1.0 Pro',
+    description: 'Google\'s Gemini 1.0 Pro model',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    id: 'gemini-1.5-flash-001',
+    label: '💾➜ Gemini 1.5 Flash',
+    description: 'Google\'s Gemini 1.5 Flash model - fast and efficient',
+    contextWindow: 1000000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
+  },
 
-  // Finetune-able models, but not present
-  // {
-  //   id: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-  //   label: 'Meta-Llama 3.1 · 8B Instruct',
-  //   description: 'Meta-Llama 3.1 8B Instruct model',
-  //   contextWindow: 128000, // Inferred from Llama 3 models in the original code
-  //   maxCompletionTokens: 4096, // Inferred from Llama 3 models in the original code
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json], // Inferred from Llama 3 models
-  // },
-  // {
-  //   id: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
-  //   label: 'Meta-Llama 3.1 · 70B Instruct',
-  //   description: 'Meta-Llama 3.1 70B Instruct model',
-  //   contextWindow: 128000, // Inferred from Llama 3 models in the original code
-  //   maxCompletionTokens: 4096, // Inferred from Llama 3 models in the original code
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json], // Inferred from Llama 3 models
-  // },
-  // {
-  //   id: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
-  //   label: 'Mixtral · 8x7B Instruct v0.1',
-  //   description: 'Mixtral 8x7B Instruct v0.1 model',
-  //   contextWindow: 32768, // Inferred from Mixtral model in the original code
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn], // Inferred from Mixtral model
-  // },
+  // Hosted inference models with OpenPipe pricing
+  {
+    id: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
+    label: '💾 Llama 3.1 · 8B Instruct',
+    description: 'Meta Llama 3.1 8B Instruct - hosted inference with per-token pricing',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.30, output: 0.45 },
+  },
+  {
+    id: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+    label: '💾 Llama 3.1 · 70B Instruct',
+    description: 'Meta Llama 3.1 70B Instruct - hosted inference with per-token pricing',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 1.80, output: 2.00 },
+  },
+  {
+    id: 'Qwen/Qwen2.5-7B-Instruct',
+    label: '💾 Qwen 2.5 · 7B Instruct',
+    description: 'Alibaba Qwen 2.5 7B Instruct - hosted inference with per-token pricing',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 1.00, output: 1.50 },
+  },
 
 ];
 const openPipeModelFamilyOrder = [
-  'gpt-4o', 'gpt-3.5-turbo', 'mistral-ft', 'meta-llama', 'mistralai', '',
+  'gpt-4o', 'gpt-3.5-turbo', 'gemini', 'meta-llama', 'Qwen', 'mistralai', '',
 ];
 
 export function openPipeModelDescriptions() {
