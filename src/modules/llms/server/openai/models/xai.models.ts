@@ -11,7 +11,7 @@ import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2025-10-15
+// Verified: 2025-10-28
 const _knownXAIChatModels: ManualMappings = [
 
   // Grok 4
@@ -140,9 +140,10 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [],
   },
   {
+    hidden: true, // Not listed in official docs as of 2025-10-28
     idPrefix: 'grok-2-1212',
     label: 'Grok 2 (1212)',
-    description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window.',
+    description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window. (Not available as of October 2025)',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
