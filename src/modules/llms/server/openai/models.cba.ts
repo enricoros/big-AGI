@@ -2,7 +2,6 @@
 // const modelIdToPrefixMap: { [key: string]: string } = {
 //   // Anthropic models
 //   'Claude 3 Opus': 'claude-3-opus-20240229',
-//   'Claude 3 Sonnet': 'claude-3-sonnet-20240229',
 //   'Claude 3 Haiku': 'claude-3-haiku-20240307',
 //   'Claude-2.1': 'claude-2.1',
 //   'Claude-2.0': 'claude-2.0',

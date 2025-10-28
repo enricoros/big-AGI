@@ -232,19 +232,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
 
   // Legacy/Retired models
-  {
-    id: 'claude-3-sonnet-20240229', // Retired | Retired: July 21, 2025
-    label: 'Claude Sonnet 3 [Retired]',
-    description: 'Balance of intelligence and speed. Retired July 21, 2025.',
-    contextWindow: 200000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Aug 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 3, output: 15 },
-    benchmark: { cbaElo: 1283, cbaMmlu: 79 },
-    hidden: true,
-    isLegacy: true,
-  },
+  // retired: 'claude-3-sonnet-20240229'
   {
     id: 'claude-2.1', // Retired | Retired: July 21, 2025
     label: 'Claude 2.1 [Retired]',
