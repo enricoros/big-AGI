@@ -94,7 +94,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     description: 'Best model for complex agents and coding, with the highest intelligence across most tasks',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
-    trainingDataCutoff: 'Jul 2025',
+    trainingDataCutoff: 'Jan 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
@@ -117,7 +117,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     description: 'Fastest model with exceptional speed and performance',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
-    trainingDataCutoff: 'Jul 2025',
+    trainingDataCutoff: 'Feb 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntSkills' }],
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
@@ -130,7 +130,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     description: 'Exceptional model for specialized complex tasks requiring advanced reasoning',
     contextWindow: 200000,
     maxCompletionTokens: 32000,
-    trainingDataCutoff: 'Mar 2025',
+    trainingDataCutoff: 'Jan 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
@@ -177,9 +177,9 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 3.7 models
   {
-    id: 'claude-3-7-sonnet-20250219', // Active | Guaranteed Until: February 2026
-    label: 'Claude Sonnet 3.7',
-    description: 'High-performance model with early extended thinking',
+    id: 'claude-3-7-sonnet-20250219', // Deprecated | Deprecated: October 28, 2025 | Retiring: February 19, 2026
+    label: 'Claude Sonnet 3.7 [Deprecated]',
+    description: 'High-performance model with early extended thinking. Deprecated October 28, 2025, retiring February 19, 2026.',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Nov 2024',
@@ -187,6 +187,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1369 }, // claude-3-7-sonnet-20250219
+    hidden: true, // deprecated
+    isLegacy: true,
   },
 
   // Claude 3.5 models
@@ -220,6 +222,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     isLegacy: true,
   },
   {
+    hidden: true, // yield to successors
     id: 'claude-3-haiku-20240307', // Active
     label: 'Claude Haiku 3',
     description: 'Fast and compact model for near-instant responsiveness',
