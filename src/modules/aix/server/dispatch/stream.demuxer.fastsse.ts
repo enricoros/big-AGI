@@ -141,7 +141,8 @@ export function createFastEventSourceDemuxer(): AixDemuxers.StreamDemuxer {
         // if the line starts with a colon, ignore
         const colonIndex = line.indexOf(':');
         if (colonIndex === 0) {
-          if (AIX_SECURITY_ONLY_IN_DEV_BUILDS)
+          // [OpenRouter, 2025-10-28] sends many processing strings that we may ignore here
+          if (AIX_SECURITY_ONLY_IN_DEV_BUILDS && line !== ': OPENROUTER PROCESSING')
             console.log('[DEV] fast-sse-demuxer: SSE Comment (may ignore):', line.slice(line.startsWith(': ') ? 2 : 1));
           continue;
         }
