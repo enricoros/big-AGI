@@ -68,18 +68,6 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
     'computer-use-2025-01-24',
 
   ] as const,
-  'claude-3-5-sonnet-20241022': [
-
-    /** computer Tools for Sonnet 3.5 v2 [computer_20241022, text_editor_20241022, bash_20241022] */
-    'computer-use-2024-10-22',
-
-  ] as const,
-  'claude-3-5-sonnet-20240620': [
-
-    /** to use the 8192 tokens limit for the FIRST 3.5 Sonnet model */
-    'max-tokens-3-5-sonnet-2024-07-15',
-
-  ] as const,
 } as const;
 
 type AnthropicHeaderOptions = {

@@ -54,18 +54,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     benchmark: { cbaElo: 1105 },
   },
 
-  // Not supported yet "We don't support streaming responses for chat completions with Anthropic yet. Please email us at support@openpipe.ai if this is a feature you need!"
-  // {
-  //   id: 'claude-3-5-sonnet-20240620',
-  //   label: '💾➜ Claude 3.5 Sonnet',
-  //   description: 'The most intelligent Claude model',
-  //   contextWindow: 200000, // Characters
-  //   maxCompletionTokens: 8192,
-  //   trainingDataCutoff: 'Apr 2024',
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-  //   pricing: { input: 3, output: 15 },
-  // },
-
   // Default finetune, not available at the onset
   // {
   //   id: 'mistral-ft-optimized-1227',
