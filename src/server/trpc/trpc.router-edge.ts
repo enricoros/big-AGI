@@ -11,7 +11,9 @@ import { llmOpenAIRouter } from '~/modules/llms/server/openai/openai.router';
 import { youtubeRouter } from '~/modules/youtube/youtube.router';
 
 /**
- * Primary rooter, and will be sitting on an Edge Runtime.
+ * Primary router, originally designed for Edge Runtime.
+ * NOTE: Currently configured to run on Node.js runtime (see app/api/edge/[trpc]/route.ts)
+ * to avoid Vercel's 5-minute Edge timeout affecting slower models like GPT-5 Pro.
  */
 export const appRouterEdge = createTRPCRouter({
   aix: aixRouter,
