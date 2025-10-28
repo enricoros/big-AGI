@@ -35,10 +35,21 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
     return RETRY_PROFILES.network; // DNS, TCP, timeouts, ... doesn't connect
 
   if (error.category === 'http' && error.httpStatus) {
+    // 429 Too Many Requests: distinguish quota errors (don't retry) from rate limits (retry)
+    if (error.httpStatus === 429) {
+      const isQuotaError = /quota|billing/i.test(error.message);
+      if (isQuotaError) {
+        if (AIX_DEBUG_SERVER_RETRY)
+          console.log(`[fetchers.retrier] Detected quota/billing error - will not retry`);
+        return null; // Don't retry quota/billing errors - user needs to upgrade plan
+      }
+      return RETRY_PROFILES.server; // Retry temporary rate limits
+    }
+
+    // retriable server errors
     const retryCodes = [
-      429, // Too Many Requests
+      503, // Service Unavailable <- main one to retry
       502, // Bad Gateway
-      503, // Service Unavailable
     ];
     if (retryCodes.includes(error.httpStatus))
       return RETRY_PROFILES.server;
