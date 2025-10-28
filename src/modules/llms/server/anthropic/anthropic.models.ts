@@ -190,32 +190,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
 
   // Claude 3.5 models
-  {
-    id: 'claude-3-5-sonnet-20241022', // Deprecated | Deprecated: August 13, 2025 | Retiring: October 22, 2025
-    label: 'Claude Sonnet 3.5 [Deprecated]',
-    description: 'High level of intelligence and capability. Deprecated August 13, 2025, retiring October 22, 2025.',
-    contextWindow: 200000,
-    maxCompletionTokens: 8192,
-    trainingDataCutoff: 'Jul 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
-    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1368, cbaMmlu: 88.7 }, // Claude 3.5 Sonnet (10/22)
-    hidden: true, // deprecated
-    isLegacy: true,
-  },
-  {
-    id: 'claude-3-5-sonnet-20240620', // Deprecated | Deprecated: August 13, 2025 | Retiring: October 22, 2025
-    label: 'Claude Sonnet 3.5 (previous) [Deprecated]',
-    description: 'Previous version of Claude Sonnet 3.5. Deprecated August 13, 2025, retiring October 22, 2025.',
-    contextWindow: 200000,
-    maxCompletionTokens: 8192,
-    trainingDataCutoff: 'Apr 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
-    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1340, cbaMmlu: 88.6 },
-    hidden: true,
-    isLegacy: true,
-  },
+  // retired: 'claude-3-5-sonnet-20241022'
+  // retired: 'claude-3-5-sonnet-20240620'
   {
     id: 'claude-3-5-haiku-20241022', // Active | Guaranteed Until: October 2025
     label: 'Claude Haiku 3.5',
