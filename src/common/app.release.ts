@@ -29,7 +29,7 @@ export const Release = {
 
   // Frontend: pretty features
   TechLevels: {
-    AIX: '1.1', Apply: '0.8', Beam: '2.0', LFS: '0.5', /*Precog: '0.1',*/ React: '1.5',
+    AIX: '2', Apply: '0.8', Beam: '2', LFS: '0.9', /*Precog: '0.1',*/ React: '1.6',
   },
   AiFunctions: [
     // from `ContextChatGenerate_schema`
