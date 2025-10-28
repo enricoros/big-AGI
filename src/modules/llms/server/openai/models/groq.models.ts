@@ -9,7 +9,7 @@ import { wireGroqModelsListOutputSchema } from '../groq.wiretypes';
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2025-01-15
+ * - updated: 2025-10-28
  */
 const _knownGroqModels: ManualMappings = [
 
@@ -93,7 +93,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.15, output: 0.75 },
+    chatPrice: { input: 0.15, output: 0.60 },
   },
   {
     idPrefix: 'openai/gpt-oss-20b',
@@ -102,7 +102,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.10, output: 0.50 },
+    chatPrice: { input: 0.075, output: 0.30 },
   },
 
   // Production Models - SDAIA
