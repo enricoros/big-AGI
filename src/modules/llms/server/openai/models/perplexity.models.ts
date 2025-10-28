@@ -25,8 +25,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     chatPrice: {
       input: 2,
       output: 8,
-      // Full pricing: $2/1M input, $8/1M output, $5/1k searches, $3/1M reasoning tokens
-      // Note: Citation tokens no longer charged (removed April 2025)
+      // Full pricing: $2/1M input, $8/1M output, $2/1M citations, $5/1k searches, $3/1M reasoning tokens
     },
   },
 
