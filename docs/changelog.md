@@ -6,6 +6,20 @@ by release.
 - For the live changelog, see [big-agi.com/changes](https://big-agi.com/changes)
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
+> NOTE: with the release of 2.0.0 we switching to [big-agi.com/changes](https://big-agi.com/changes) for the
+> continuously updated changelog.
+
+### What's New in 2 · Oct 31, 2025 · Open
+
+- **Big-AGI Open** is ready and more productive and faster than ever, with:
+- **Beam 2**: multi-modal, program-based, follow-ups, save presets
+- Top-notch AI models support including **agentic models** and **reasoning models**
+- **Image Generation** and editing with Nano Banana and gpt-image-1
+- **Web Search** with citations for supported models
+- **UI** & Mobile UI overhaul with peeking and side panels
+- And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
+- Built for the future, madly optimized
+
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 
 - 1.16.10: OpenRouter models support
