@@ -29,6 +29,7 @@ The parser outputs: `modelName|pulls|capabilities|sizes`
 
 **Important:**
 - Skip models below 50,000 pulls (parser does this automatically)
+- Skip embedding models (parser does not do this automatically)
 - Sort them in the EXACT same order as the source (featured models)
 - Extract tags: 'tools' → hasTools, 'vision' → hasVision, 'embedding' → isEmbeddings (note the 's'), 'thinking' → tags only
 - Extract 'b' tags (1.5b, 7b, 32b) to tags field
