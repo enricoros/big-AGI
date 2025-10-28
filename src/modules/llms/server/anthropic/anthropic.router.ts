@@ -6,6 +6,7 @@ import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 
@@ -16,6 +17,8 @@ import { fixupHost } from '~/modules/llms/server/openai/openai.router';
 // configuration and defaults
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
+
+const DEV_DEBUG_ANTHROPIC_MODELS = Release.IsNodeDevBuild;
 
 const DEFAULT_ANTHROPIC_HEADERS = {
   // Latest version hasn't changed (as of Feb 2025)
@@ -271,6 +274,7 @@ export const llmAnthropicRouter = createTRPCRouter({
 
             // for day-0 support of new models, create a placeholder model using sensible defaults
             const novelModel = _createPlaceholderModel(model);
+            // if (DEV_DEBUG_ANTHROPIC_MODELS) // kind of important...
             console.log('[DEV] anthropic.router: new model found, please configure it:', novelModel.id);
             acc.push(novelModel);
 
@@ -281,10 +285,13 @@ export const llmAnthropicRouter = createTRPCRouter({
         .map(_injectWebSearchInterface);
 
       // developers warning for obsoleted models (we have them, but they are not in the API response anymore)
-      const apiModelIds = new Set(availableModels.map(m => m.id));
-      const additionalModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
-      if (additionalModels.length > 0)
-        console.log('[DEV] anthropic.router: obsoleted models:', additionalModels.map(m => m.id).join(', '));
+      if (DEV_DEBUG_ANTHROPIC_MODELS) {
+        const apiModelIds = new Set(availableModels.map(m => m.id));
+        const additionalModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
+        if (additionalModels.length > 0)
+          console.log('[DEV] anthropic.router: obsoleted models:', additionalModels.map(m => m.id).join(', '));
+      }
+
       // additionalModels.forEach(m => {
       //   m.label += ' (Removed)';
       //   m.isLegacy = true;
