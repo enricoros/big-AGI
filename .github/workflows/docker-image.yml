@@ -23,6 +23,7 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
+    timeout-minutes: 60  # Max 1 hour (expected: ~25min)
     permissions:
       contents: read
       packages: write
