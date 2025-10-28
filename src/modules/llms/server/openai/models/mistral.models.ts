@@ -11,7 +11,7 @@ const MISTRAL_DEV_SHOW_GAPS = Release.IsNodeDevBuild;
 
 
 // [Mistral]
-// Updated 2025-10-15
+// Updated 2025-10-28
 // - models on: https://docs.mistral.ai/getting-started/models/models_overview/
 // - pricing on: https://mistral.ai/pricing#api-pricing
 // - benchmark elo on CBA
@@ -64,7 +64,8 @@ const _knownMistralModelDetails: Record<string, {
   'mistral-small-latest': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
   'mistral-small': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
 
-  'magistral-small-2506': { chatPrice: { input: 0.5, output: 1.5 } },
+  'magistral-small-2509': { chatPrice: { input: 0.5, output: 1.5 } }, // v25.09
+  'magistral-small-2506': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // older version
   'magistral-small-latest': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // symlink
 
   'devstral-small-2507': { chatPrice: { input: 0.1, output: 0.3 } }, // v25.07
