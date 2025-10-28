@@ -2,7 +2,7 @@ import * as React from 'react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, ColorPaletteProp, Container, Grid, Sheet, Typography, VariantProp } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, ColorPaletteProp, Container, Divider, Grid, ListDivider, Sheet, Typography, VariantProp } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -107,7 +107,10 @@ function NewsCard(props: {
   const { addPadding, idx, newsItem: ni } = props;
 
   return (
-    <Card color={props.color} variant={props.variant ?? 'plain'} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+    <Card color={props.color} variant={props.variant ?? 'plain'} sx={{
+      mb: 3, minHeight: 32, gap: 1,
+      boxShadow: !idx ? 'md' : undefined,
+    }}>
       <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography level='title-sm' component='div'>
@@ -190,6 +193,7 @@ export function AppNews() {
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },
+      // backgroundColor: 'background.level2'
     }}>
 
       <Box sx={{
@@ -231,7 +235,7 @@ export function AppNews() {
               }}
             >
               Big-AGI Pro
-              {/*✨*/}
+              ✨
             </Button>
           )}
         </Box>
@@ -242,8 +246,13 @@ export function AppNews() {
 
         <Container disableGutters maxWidth='sm'>
 
+          {/* Inject the callout item here*/}
+          {/*<Box sx={{ mb: 3 }}>*/}
+          {/*  <BigAgiProNewsCallout />*/}
+          {/*</Box>*/}
+
           {/* Development Notices */}
-          {Release.TenantSlug === 'open' && <NewsCard variant='soft' color='warning' newsItem={DevNewsItem} idx={0} addPadding={false} />}
+          {Release.TenantSlug === 'open' && Release.IsNodeDevBuild && <NewsCard variant='soft' color='warning' newsItem={DevNewsItem} idx={0} addPadding={false} />}
 
           {news?.map((ni, idx) => {
             // const firstCard = idx === 0;
@@ -273,6 +282,8 @@ export function AppNews() {
                   {newsRoadmapCallout}
                 </Box>
               )}
+
+              {idx === 0 && <Divider sx={{ my: 6, mx: 6 }}/>}
 
             </React.Fragment>;
           })}

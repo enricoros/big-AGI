@@ -59,14 +59,12 @@ const _frontendPkgVersion = _frontendBuild.pkgVersion ?? 'open/main';
 export const newsFrontendTimestamp = _frontendBuild.timestamp;
 
 export const DevNewsItem: NewsItem = {
-  versionCode: _frontendPkgVersion,
+  versionCode: 'DEV',
   versionName: 'Development Build',
   versionDate: undefined,
   items: [
     { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open {_frontendPkgVersion}</> },
-    { text: <>This branch carries breaking features that are subject to change</> },
     { text: <>Please report screenshots of breakages and console error messages</> },
-    { text: <>Do not use, no cloud backups</> },
     { text: <ExternalLink href='https://big-agi.com'>Back to the official version</ExternalLink> },
   ],
 } as const;
@@ -76,7 +74,7 @@ export const NewsItems: NewsItem[] = [
   {
     versionCode: '2.0.0',
     versionName: 'Open',
-    versionDate: new Date('2025-10-06T15:00:00Z'),
+    versionDate: new Date('2025-10-31T15:00:00Z'),
     versionCoverImage: coverV200,
     items: [
       { text: <><B wow>Big-AGI Open</B> is ready and more productive and faster than ever, with:</> },
