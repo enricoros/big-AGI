@@ -1,14 +1,17 @@
 # Big-AGI Open 🧠
 
-This is the open-source foundation for **Big-AGI**.
+This is the open-source foundation of **Big-AGI**, ___the multi-model AI workspace for experts___.
 
-Big-AGI is the multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
+Big-AGI is the multi-model AI workspace for experts: Engineers architecting systems. Founders making decisions. Researchers validating hypotheses.
+You need to think broader, decide faster, and build with confidence, then you need Big-AGI.
+
 It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
+**As an independent, non-VC-funded project, Pro subscriptions at $10.99/mo fund development for everyone, including the free and open-source tiers.**
 
 **What makes Big-AGI different:**  
-**Intelligence**, with [Beam](https://big-agi.com/beam) & Merge for multi-model reasoning and bleeding-edge AI models like Nano Banana, GPT-5 Pro, Sonnet 4.5 - 
-**Control** with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
-and **Speed** with a local-first, over-powered, zero-latency, madly optimized web app.
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, or GPT-5 Pro - 
+**Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
+and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
 **Who uses Big-AGI:**  
 Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
@@ -19,17 +22,22 @@ Choose Big-AGI because you don't need another clone or slop - you need an AI too
 
 ## Get Started
 
-**Most users: [big-agi.com](https://big-agi.com)** (fastest, zero setup, support the project)  
-Free tier with all core features and more, Pro tier with Cloud Sync.
+| Tier                                                 | Best For          | What You Get                                                  | Setup       |
+|------------------------------------------------------|-------------------|---------------------------------------------------------------|-------------|
+| Big-AGI Open (self-host)                             | **IT**            | First to get new models support. Maximum control and privacy. | 5-30 min    |
+| [big-agi.com](https://big-agi.com) Free              | **Everyone**      | Full core experience, improved Beam, new Personas, best UX.   | **2 min**\* |
+| **[big-agi.com](https://big-agi.com) Pro** $10.99/mo | **Professionals** | Everything + **Sync** across unlimited devices + 1GB storage  | **2 min**\* |
+
+\*: **Configuration requires your API keys**. *Big-AGI does not charge for model usage or limit your access*.  
+**Why Pro?** As an independent project, Pro subscriptions fund all development. Early subscribers shape the roadmap directly.    
 
 <a href="https://big-agi.com">
   <img width="210" height="68" alt="image" src="https://github.com/user-attachments/assets/b2f8a7b8-415f-4c92-b228-4f5a54fe2bdd" />
 </a>  
 
 **Self-host and developers** (full control)  
-Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
-
-Or fork & run on Vercel:
+- Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
+- Or fork & run on Vercel:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
@@ -41,7 +49,18 @@ Or fork & run on Vercel:
 
 ---
 
-## What's New in 2.0 · Oct 6, 2025 · Open
+## Our Philosophy
+
+We're an independent, non-VC-funded project with a simple belief: **AI should elevate you, not replace you**.
+
+This is why we built Big-AGI to be **local-first**, madly optimized to 0-latency, launched multi-model first to
+defeat hallucinations, designed Beam around the **humans in the loop**, re-wrote frameworks and abstractions
+so you **are not vendor locked-in**, and obsessed over a powerful UI that works, just works.
+
+NOTE: this is a powerful tool - if you need a toy UI or clone, this ain't it.
+
+
+## What's New in 2.0 · Oct 31, 2025 · Open
 
 👉 **[See the full changelog](https://big-agi.com/changes)**
 
@@ -56,7 +75,9 @@ Or fork & run on Vercel:
 
 <img width="830" height="385" alt="image" src="https://github.com/user-attachments/assets/ad52761d-7e3f-44d8-b41e-947ce8b4faa1" />
 
-### Open links: 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [changelog](https://big-agi.com/changes) 👉 [documentation](docs/README.md)
+### Open links: 👉 [changelog](https://big-agi.com/changes) 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
+
+**For teams and institutions:** Need shared prompts, SSO, or managed deployments? Reach out at enrico@big-agi.com. We're actively collecting requirements from research groups and IT departments.
 
 <details>
 <summary>5,000 Commits Milestone</summary>
@@ -202,7 +223,7 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 </details>
 
-For full details and former releases, check out the [changelog](docs/changelog.md).
+For full details and former releases, check out the [archived versions changelog](docs/changelog.md).
 
 ## 👉 Key Features
 
