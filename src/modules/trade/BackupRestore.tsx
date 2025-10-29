@@ -14,6 +14,8 @@ import { Release } from '~/common/app.release';
 import { createModuleLogger } from '~/common/logger';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
+import { tradeFileVariant } from './trade.client';
+
 
 // configuration
 const BACKUP_FILE_FORMAT = 'Big-AGI Flash File';
@@ -765,8 +767,10 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       }
 
       // Check if nothing was selected
-      if (!restoreLocalStorageEnabled && !restoreIndexedDBEnabled)
+      if (!restoreLocalStorageEnabled && !restoreIndexedDBEnabled) {
+        // noinspection ExceptionCaughtLocallyJS
         throw new Error('No data was selected for restore. Please select at least one option.');
+      }
 
       // 3. Close the modal cleanly first to prevent React DOM errors during unmount
       // Set state to idle and clear backup data to trigger modal close
@@ -943,7 +947,7 @@ export function FlashBackup(props: {
         event.ctrlKey, // control forces a traditional browser download - default: fileSave
         includeImages,
         includeSettings,
-        `Big-AGI-flash${includeImages ? '+images' : ''}${includeSettings ? '' : '-nosets'}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
+        `Big-AGI-${tradeFileVariant()}-flash${includeImages ? '+images' : ''}${includeSettings ? '' : '-nosets'}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
       );
       setBackupState(success ? 'success' : 'idle');
     } catch (error: any) {
