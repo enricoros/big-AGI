@@ -47,7 +47,7 @@ interface DFlashSchema {
   };
   storage: {
     localStorage: Record<string, any>;
-    indexedDB: Record<string, any>; // DBName -> StoreName -> { key: any, value: any }[]
+    indexedDB?: Record<string, any>; // DBName -> StoreName -> { key: any, value: any }[] - optional for settings-only backups
   };
 }
 
@@ -666,7 +666,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   const isUnlocked = !!props.unlockRestore;
   const isBusy = restoreState === 'processing';
   const hasLocalStorageData = backupDataForRestore ? Object.keys(backupDataForRestore.storage.localStorage).length > 0 : false;
-  const hasIndexedDBData = backupDataForRestore ? Object.keys(backupDataForRestore.storage.indexedDB).length > 0 : false;
+  const hasIndexedDBData = backupDataForRestore ? Object.keys(backupDataForRestore.storage.indexedDB || {}).length > 0 : false;
 
 
   // handlers
@@ -783,7 +783,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
         logger.info('localStorage restore complete');
       }
       if (restoreIndexedDBEnabled) {
-        await restoreIndexedDB(backupDataForRestore.storage.indexedDB);
+        await restoreIndexedDB(backupDataForRestore.storage.indexedDB || {});
         logger.info('indexedDB restore complete');
       }
 
@@ -882,7 +882,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
           Schema Version: {backupDataForRestore.schemaVersion || 'unknown'}<br />
           Tenant: {backupDataForRestore.tenantSlug || 'unknown'}<br />
           <Divider sx={{ my: 1 }} />
-          Full Databases: {Object.keys(backupDataForRestore.storage.indexedDB).length}<br />
+          Full Databases: {Object.keys(backupDataForRestore.storage.indexedDB || {}).length}<br />
           Setting Groups: {Object.keys(backupDataForRestore.storage.localStorage).length}<br />
         </Box>
       )}
