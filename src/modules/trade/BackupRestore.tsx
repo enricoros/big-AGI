@@ -731,12 +731,13 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       const backupSchemaVersion = data.schemaVersion || 0;
       if (backupSchemaVersion > currentSchemaVersion)
         setSchemaVersionWarning(`WARNING: You are restoring from an newer Big-AGI version to this one. This is a DOWNGRADE and may cause data loss or application errors.`);
-
-      // Check for tenant slug mismatch
-      const currentTenantSlug = Release.TenantSlug;
-      const backupTenantSlug = data.tenantSlug || 'unknown';
-      if (backupTenantSlug !== currentTenantSlug)
-        setTenantSlugWarning(`WARNING: Backup was not performed from this installation (${capitalizeFirstLetter(currentTenantSlug)}". This may cause compatibility issues.`);
+      else {
+        // Check for tenant slug mismatch
+        const currentTenantSlug = Release.TenantSlug;
+        const backupTenantSlug = data.tenantSlug || 'unknown';
+        if (backupTenantSlug !== currentTenantSlug)
+          setTenantSlugWarning(`WARNING: Backup was not performed from this installation (${capitalizeFirstLetter(currentTenantSlug)}). This may cause compatibility issues.`);
+      }
 
       // load data purely into state, and ready for confirmation
       setBackupDataForRestore(data);
