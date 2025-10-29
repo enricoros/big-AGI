@@ -38,6 +38,7 @@ const INCLUDED_IDB_KEYS: { [dbName: string]: { [storeName: string]: string[]; };
 interface DFlashSchema {
   schema: 'vnd.agi.flash-backup';
   schemaVersion: number;
+  tenantSlug: string; // mirrors Release.TenantSlug
   metadata: {
     version: string;
     timestamp: string;
@@ -630,6 +631,7 @@ async function createFlashObject(backupType: 'full' | 'auto-before-restore', ign
   return {
     schema: 'vnd.agi.flash-backup',
     schemaVersion: BACKUP_FORMAT_VERSION_NUMBER,
+    tenantSlug: Release.TenantSlug,
     metadata: {
       version: BACKUP_FORMAT_VERSION,
       timestamp: new Date().toISOString(),
@@ -656,6 +658,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   const [backupDataForRestore, setBackupDataForRestore] = React.useState<DFlashSchema | null>(null);
   const [restoreLocalStorageEnabled, setRestoreLocalStorageEnabled] = React.useState(false);
   const [restoreIndexedDBEnabled, setRestoreIndexedDBEnabled] = React.useState(false);
+  const [schemaVersionWarning, setSchemaVersionWarning] = React.useState<string | null>(null);
+  const [tenantSlugWarning, setTenantSlugWarning] = React.useState<string | null>(null);
 
   // derived state
   const isUnlocked = !!props.unlockRestore;
@@ -670,6 +674,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
     setBackupDataForRestore(null);
     setRestoreState('idle');
     setErrorMessage(null);
+    setSchemaVersionWarning(null);
+    setTenantSlugWarning(null);
 
     // user selects a file
     let file: FileWithHandle;
@@ -716,6 +722,20 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
         setErrorMessage(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
         logger.warn('User selected incompatible backup file', { application: data.metadata.application }, undefined, { skipReporting: true });
         return;
+      }
+
+      // Check for schema version downgrade
+      const currentSchemaVersion = BACKUP_FORMAT_VERSION_NUMBER;
+      const backupSchemaVersion = data.schemaVersion || 0;
+      if (backupSchemaVersion < currentSchemaVersion) {
+        setSchemaVersionWarning(`WARNING: You are restoring from an older schema version (${backupSchemaVersion}) to a newer one (${currentSchemaVersion}). This is a DOWNGRADE and may cause data loss or application errors.`);
+      }
+
+      // Check for tenant slug mismatch
+      const currentTenantSlug = Release.TenantSlug;
+      const backupTenantSlug = data.tenantSlug || 'unknown';
+      if (backupTenantSlug !== currentTenantSlug) {
+        setTenantSlugWarning(`WARNING: Tenant mismatch! Backup is from "${backupTenantSlug}" but current installation is "${currentTenantSlug}". This may cause compatibility issues.`);
       }
 
       // load data purely into state, and ready for confirmation
@@ -858,9 +878,27 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
           Created: {new Date(backupDataForRestore.metadata.timestamp).toLocaleString()}<br />
           Backup Type: {backupDataForRestore.metadata.backupType}<br />
           Version: {backupDataForRestore.metadata.version}<br />
+          Schema Version: {backupDataForRestore.schemaVersion || 'unknown'}<br />
+          Tenant: {backupDataForRestore.tenantSlug || 'unknown'}<br />
           <Divider sx={{ my: 1 }} />
           Full Databases: {Object.keys(backupDataForRestore.storage.indexedDB).length}<br />
           Setting Groups: {Object.keys(backupDataForRestore.storage.localStorage).length}<br />
+        </Box>
+      )}
+      {/* Schema Version Warning */}
+      {schemaVersionWarning && (
+        <Box sx={{ mt: 2, p: 1.5, bgcolor: 'danger.softBg', borderRadius: 'sm', border: '2px solid', borderColor: 'danger.outlinedBorder' }}>
+          <Typography level='body-sm' color='danger' fontWeight='lg' startDecorator={<WarningRoundedIcon />}>
+            {schemaVersionWarning}
+          </Typography>
+        </Box>
+      )}
+      {/* Tenant Slug Warning */}
+      {tenantSlugWarning && (
+        <Box sx={{ mt: 2, p: 1.5, bgcolor: 'danger.softBg', borderRadius: 'sm', border: '2px solid', borderColor: 'danger.outlinedBorder' }}>
+          <Typography level='body-sm' color='danger' fontWeight='lg' startDecorator={<WarningRoundedIcon />}>
+            {tenantSlugWarning}
+          </Typography>
         </Box>
       )}
       <Box sx={{ mt: 2 }}>
