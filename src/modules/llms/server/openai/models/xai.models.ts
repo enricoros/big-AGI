@@ -46,7 +46,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1415 }, // grok-4-0709
+    benchmark: { cbaElo: 1415 + 6 }, // grok-4-0709 (+6 to stay on top of the fast)
   },
 
   // Grok 3
