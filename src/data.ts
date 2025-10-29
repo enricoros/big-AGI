@@ -14,7 +14,11 @@ export type SystemPurposeData = {
   examples?: SystemPurposeExample[];
   highlighted?: boolean;
   call?: { starters?: string[] };
-  voices?: { elevenLabs?: { voiceId: string } };
+  voices?: {
+    tts?: { voiceId?: string };
+    // Legacy support for existing configs
+    elevenLabs?: { voiceId: string };
+  };
 };
 
 export type SystemPurposeExample = string | { prompt: string, action?: 'require-data-attachment' };
