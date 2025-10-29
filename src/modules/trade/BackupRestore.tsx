@@ -15,6 +15,7 @@ import { createModuleLogger } from '~/common/logger';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { tradeFileVariant } from './trade.client';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 
 // configuration
@@ -728,16 +729,14 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       // Check for schema version downgrade
       const currentSchemaVersion = BACKUP_FORMAT_VERSION_NUMBER;
       const backupSchemaVersion = data.schemaVersion || 0;
-      if (backupSchemaVersion < currentSchemaVersion) {
-        setSchemaVersionWarning(`WARNING: You are restoring from an older schema version (${backupSchemaVersion}) to a newer one (${currentSchemaVersion}). This is a DOWNGRADE and may cause data loss or application errors.`);
-      }
+      if (backupSchemaVersion > currentSchemaVersion)
+        setSchemaVersionWarning(`WARNING: You are restoring from an newer Big-AGI version to this one. This is a DOWNGRADE and may cause data loss or application errors.`);
 
       // Check for tenant slug mismatch
       const currentTenantSlug = Release.TenantSlug;
       const backupTenantSlug = data.tenantSlug || 'unknown';
-      if (backupTenantSlug !== currentTenantSlug) {
-        setTenantSlugWarning(`WARNING: Tenant mismatch! Backup is from "${backupTenantSlug}" but current installation is "${currentTenantSlug}". This may cause compatibility issues.`);
-      }
+      if (backupTenantSlug !== currentTenantSlug)
+        setTenantSlugWarning(`WARNING: Backup was not performed from this installation (${capitalizeFirstLetter(currentTenantSlug)}". This may cause compatibility issues.`);
 
       // load data purely into state, and ready for confirmation
       setBackupDataForRestore(data);
