@@ -506,11 +506,11 @@ function isValidBackup(data: any): data is DFlashSchema {
 /**
  * Creates a backup object and optionally saves it to a file
  */
-async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore', forceDownloadOverFileSave: boolean, ignoreExclusions: boolean, includeSettings: boolean, saveToFileName: string) {
+async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore', forceDownloadOverFileSave: boolean, ignoreExclusions: boolean, includeSettings: boolean, includeIndexedDB: boolean, saveToFileName: string) {
 
   // for mobile, try with the download link approach - we keep getting truncated JSON save-files in other paths, streaming or not
   if (forceDownloadOverFileSave || !Is.Desktop)
-    return createFlashObject(backupType, ignoreExclusions, includeSettings)
+    return createFlashObject(backupType, ignoreExclusions, includeSettings, includeIndexedDB)
       .then(JSON.stringify)
       .then((flashString) => {
         logger.info(`Expected flash file size: ${flashString.length.toLocaleString()} bytes`);
@@ -525,7 +525,7 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
   // run after the file picker has confirmed a file
   const flashBlobPromise = new Promise<Blob>(async (resolve) => {
     // create the backup object (heavy operation)
-    const flashObject = await createFlashObject(backupType, ignoreExclusions, includeSettings);
+    const flashObject = await createFlashObject(backupType, ignoreExclusions, includeSettings, includeIndexedDB);
 
     // WARNING: on Mobile, the JSON serialization could fail silently - we disable pretty-print to conserve space
     const flashString = !Is.Desktop ? JSON.stringify(flashObject)
@@ -627,7 +627,7 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
 //   });
 // }
 
-async function createFlashObject(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, includeSettings: boolean): Promise<DFlashSchema> {
+async function createFlashObject(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, includeSettings: boolean, includeIndexedDB: boolean): Promise<DFlashSchema> {
   return {
     schema: 'vnd.agi.flash-backup',
     schemaVersion: BACKUP_FORMAT_VERSION_NUMBER,
@@ -640,7 +640,7 @@ async function createFlashObject(backupType: 'full' | 'auto-before-restore', ign
     },
     storage: {
       localStorage: includeSettings ? await getAllLocalStorageKeyValues() : {},
-      indexedDB: await getAllIndexedDBData(ignoreExclusions),
+      indexedDB: includeIndexedDB ? await getAllIndexedDBData(ignoreExclusions) : {},
     },
   };
 }
@@ -985,6 +985,7 @@ export function FlashBackup(props: {
         event.ctrlKey, // control forces a traditional browser download - default: fileSave
         includeImages,
         includeSettings,
+        true, // includeIndexedDB - full backup includes everything
         `Big-AGI-${tradeFileVariant()}-flash${includeImages ? '+images' : ''}${includeSettings ? '' : '-nosets'}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
       );
       setBackupState(success ? 'success' : 'idle');
