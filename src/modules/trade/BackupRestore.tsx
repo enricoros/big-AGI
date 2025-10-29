@@ -499,7 +499,8 @@ function isValidBackup(data: any): data is DFlashSchema {
     data.storage &&
     typeof data.storage === 'object' &&
     typeof data.storage.localStorage === 'object' &&
-    typeof data.storage.indexedDB === 'object'
+    // indexedDB is optional (can be empty {} for settings-only backups)
+    (data.storage.indexedDB === undefined || typeof data.storage.indexedDB === 'object')
   );
 }
 
@@ -716,7 +717,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
         logger.warn('User selected invalid backup file format', { data: { hasMetadata: !!data?.metadata, hasStorage: !!data?.storage } }, undefined, { skipReporting: true });
         return;
       }
-      if (data.metadata.application !== 'Big-AGI' || !data.storage.indexedDB || !data.storage.localStorage) {
+      if (data.metadata.application !== 'Big-AGI') {
         // User selected incompatible file - this is expected, not a system error
         setRestoreState('error');
         setErrorMessage(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
