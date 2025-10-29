@@ -66,6 +66,7 @@ function ChatDrawer(props: {
   activeFolderId: string | null,
   chatPanesConversationIds: DConversationId[],
   disableNewButton: boolean,
+  focusedChatBeamOpen: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
   onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
@@ -456,7 +457,7 @@ function ChatDrawer(props: {
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
         </ListItemButton>
 
-        <ListItemButton disabled={filteredChatsAreEmpty} onClick={handleConversationsExport} sx={{ flex: 1 }}>
+        <ListItemButton disabled={filteredChatsAreEmpty || props.focusedChatBeamOpen} onClick={handleConversationsExport} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadOutlinedIcon />
           </ListItemDecorator>
