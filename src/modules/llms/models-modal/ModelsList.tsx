@@ -8,7 +8,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DLLM, DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { STAR_EMOJI, StarredToggle, starredToggleStyle } from '~/common/components/StarIcons';
@@ -81,7 +81,7 @@ function ModelItem(props: {
   // derived
   const { llm, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
 
-  const seemsFree = !!llm.pricing?.chat?._isFree;
+  const seemsFree = !!getLLMPricing(llm)?.chat?._isFree;
   const isNotSymlink = !llm.label.startsWith('🔗');
 
 

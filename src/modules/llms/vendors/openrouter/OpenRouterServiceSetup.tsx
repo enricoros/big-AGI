@@ -7,6 +7,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { getLLMPricing } from '~/common/stores/llms/llms.types';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
@@ -53,7 +54,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     const { updateLLM } = llmsStoreActions();
     llms
       .filter(llm => llm.sId === props.serviceId)
-      .filter(llm => llm.pricing?.chat?._isFree === false)
+      .filter(llm => getLLMPricing(llm)?.chat?._isFree === false)
       .forEach(llm => updateLLM(llm.id, { userHidden: true }));
   };
 

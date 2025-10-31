@@ -9,7 +9,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
-import { DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
@@ -106,6 +106,60 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   };
 
   const handleMaxOutputTokensReset = () => updateLLM(llm.id, { userMaxOutputTokens: undefined });
+
+  const handleInputPriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    const numValue = value ? parseFloat(value) : undefined;
+    updateLLM(llm.id, {
+      userPricing: {
+        chat: {
+          ...llm.userPricing?.chat,
+          input: numValue,
+          output: llm.userPricing?.chat?.output,
+        },
+      },
+    });
+  };
+
+  const handleInputPriceReset = () => {
+    const newPricing = { ...llm.userPricing };
+    if (newPricing.chat) {
+      delete newPricing.chat.input;
+      // If no other pricing fields are set, clear userPricing entirely
+      if (!newPricing.chat.output && !newPricing.chat.cache) {
+        updateLLM(llm.id, { userPricing: undefined });
+      } else {
+        updateLLM(llm.id, { userPricing: newPricing });
+      }
+    }
+  };
+
+  const handleOutputPriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    const numValue = value ? parseFloat(value) : undefined;
+    updateLLM(llm.id, {
+      userPricing: {
+        chat: {
+          ...llm.userPricing?.chat,
+          input: llm.userPricing?.chat?.input,
+          output: numValue,
+        },
+      },
+    });
+  };
+
+  const handleOutputPriceReset = () => {
+    const newPricing = { ...llm.userPricing };
+    if (newPricing.chat) {
+      delete newPricing.chat.output;
+      // If no other pricing fields are set, clear userPricing entirely
+      if (!newPricing.chat.input && !newPricing.chat.cache) {
+        updateLLM(llm.id, { userPricing: undefined });
+      } else {
+        updateLLM(llm.id, { userPricing: newPricing });
+      }
+    }
+  };
 
   const handleLlmDelete = () => {
     removeLLM(llm.id);
@@ -235,7 +289,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             {llm.description}
           </Typography>}
 
-          {!!llm.pricing?.chat?._isFree && <Typography level='body-xs'>
+          {!!getLLMPricing(llm)?.chat?._isFree && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
 
@@ -245,7 +299,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             max output tokens: <b>{getLLMMaxOutputTokens(llm)?.toLocaleString() ?? 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
-            {!!llm.pricing?.chat && prettyPricingComponent(llm.pricing.chat)}
+            {!!getLLMPricing(llm)?.chat && prettyPricingComponent(getLLMPricing(llm)!.chat!)}
             {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
             {llm.parameterSpecs?.length > 0 && <>options: {llm.parameterSpecs.map(ps => ps.paramId).join(', ')}<br /></>}
             {Object.keys(llm.initialParameters || {}).length > 0 && <>initial parameters: {JSON.stringify(llm.initialParameters, null, 2)}<br /></>}
@@ -290,6 +344,57 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
                   slotProps={{ input: { min: 1 } }}
                   endDecorator={llm.userMaxOutputTokens !== undefined && (
                     <Button size='sm' variant='plain' onClick={handleMaxOutputTokensReset}>Reset</Button>
+                  )}
+                  sx={{ flex: 1 }}
+                />
+              </FormControl>
+            </Grid>
+          </Grid>
+
+          {/* Advanced: Pricing Overrides */}
+          <Grid container spacing={2} alignItems='center' sx={{ mt: 1 }}>
+            <Grid xs={12}>
+              <Typography level='title-sm'>
+                Pricing Override (for hypothetical cost tracking)
+              </Typography>
+            </Grid>
+
+            <Grid xs={12} md={6}>
+              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                <FormLabelStart title='Input Price' description='$/Million Tokens' sx={{ minWidth: 120 }} />
+                <Input
+                  type='number'
+                  variant='outlined'
+                  placeholder={
+                    // NOTE: direct access to the underlying, instead of via getLLMPricing
+                    typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
+                  }
+                  value={llm.userPricing?.chat?.input ?? ''}
+                  onChange={handleInputPriceChange}
+                  endDecorator={llm.userPricing?.chat?.input !== undefined && (
+                    <Button size='sm' variant='plain' onClick={handleInputPriceReset}>Reset</Button>
+                  )}
+                  slotProps={{ input: { min: 0, step: 0.01 } }}
+                  sx={{ flex: 1 }}
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid xs={12} md={6}>
+              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                <FormLabelStart title='Output Price' description='$/Million Tokens' sx={{ minWidth: 120 }} />
+                <Input
+                  type='number'
+                  variant='outlined'
+                  placeholder={
+                    // NOTE: direct access to the underlying, instead of via getLLMPricing
+                    typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
+                  }
+                  value={llm.userPricing?.chat?.output ?? ''}
+                  onChange={handleOutputPriceChange}
+                  slotProps={{ input: { min: 0, step: 0.01 } }}
+                  endDecorator={llm.userPricing?.chat?.output !== undefined && (
+                    <Button size='sm' variant='plain' onClick={handleOutputPriceReset}>Reset</Button>
                   )}
                   sx={{ flex: 1 }}
                 />

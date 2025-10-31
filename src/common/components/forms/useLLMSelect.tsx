@@ -11,7 +11,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
-import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMPricing, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { StarredNoXL2 } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -182,7 +182,7 @@ export function useLLMSelect(
 
       let features = '';
       const isNotSymlink = !llm.label.startsWith('🔗');
-      const seemsFree = !!llm.pricing?.chat?._isFree;
+      const seemsFree = !!getLLMPricing(llm)?.chat?._isFree;
       if (isNotSymlink) {
         // check features
         if (seemsFree) features += 'free ';

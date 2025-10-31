@@ -86,6 +86,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
               ...(existing.userParameters !== undefined ? { userParameters: { ...existing.userParameters } } : {}),
               ...(existing.userContextTokens !== undefined ? { userContextTokens: existing.userContextTokens } : {}),
               ...(existing.userMaxOutputTokens !== undefined ? { userMaxOutputTokens: existing.userMaxOutputTokens } : {}),
+              ...(existing.userPricing !== undefined ? { userPricing: existing.userPricing } : {}),
             };
           });
         }
