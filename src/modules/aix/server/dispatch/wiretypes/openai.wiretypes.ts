@@ -1253,7 +1253,7 @@ export namespace OpenAIWire_Responses_Tools {
   // Hosted tools definitions
 
   const WebSearchTool_schema = z.object({
-    type: z.enum(['web_search_preview', 'web_search_preview_2025_03_11']),
+    type: z.enum(['web_search', 'web_search_preview', 'web_search_preview_2025_03_11']),
     search_context_size: z.enum(['low', 'medium', 'high']).optional(),
     user_location: z.object({
       type: z.literal('approximate'),
@@ -1262,6 +1262,7 @@ export namespace OpenAIWire_Responses_Tools {
       region: z.string().optional(),
       timezone: z.string().optional(),
     }).optional(),
+    external_web_access: z.boolean().optional(),
   });
 
   const ImageGenerationTool_schema = z.object({
@@ -1338,7 +1339,7 @@ export namespace OpenAIWire_Responses_Tools {
     z.object({ // hosted tool
       type: z.enum([
         // 'file_search',
-        'web_search_preview', 'web_search_preview_2025_03_11',
+        'web_search', 'web_search_preview', 'web_search_preview_2025_03_11',
         'image_generation',
         // 'computer_use_preview',
         // 'code_interpreter',
