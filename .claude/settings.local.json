@@ -21,7 +21,7 @@
       "Bash(rg:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
       "WebFetch",
       "WebFetch(domain:big-agi.com)",
       "WebSearch",
