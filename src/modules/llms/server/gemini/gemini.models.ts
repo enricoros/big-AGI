@@ -44,7 +44,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
    - Latest stable     version  gemini-1.0-pro  <model>-<generation>-<variation>
    - Stable versions   gemini-1.0-pro-001       <model>-<generation>-<variation>-<version>
 
-   Gemini capabilities chart (updated 2025-09-29):
+   Gemini capabilities chart (updated 2025-11-01):
    - [table stakes] System instructions
    - JSON Mode, with optional JSON Schema
    - Adjustable Safety Settings
@@ -65,7 +65,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Sept 29, 2025)
+// Pricing based on https://ai.google.dev/pricing (Nov 1, 2025)
 
 const gemini25ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
@@ -237,6 +237,21 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
     benchmark: { cbaElo: 1424 },
+  },
+
+  // 2.5 Pro-Based: Gemini Computer Use Preview - Released October 7, 2025
+  {
+    id: 'models/gemini-2.5-computer-use-preview-10-2025',
+    labelOverride: 'Gemini 2.5 Computer Use Preview 10-2025',
+    isPreview: true,
+    chatPrice: gemini25ProPricing, // Uses same pricing as 2.5 Pro (pricing page doesn't list separately)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiThinkingBudget' },
+      { paramId: 'llmVndGeminiComputerUse' },
+    ],
+    benchmark: undefined, // Computer use model, not benchmarkable on standard tests
+    hidden: true, // Specialized browser automation model - show when needed for specific use cases
   },
 
   // 2.5 Flash-Based: Gemini Robotics-ER 1.5 Preview - Released September 25, 2025

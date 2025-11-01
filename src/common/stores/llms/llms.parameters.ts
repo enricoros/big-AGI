@@ -159,7 +159,8 @@ export const DModelParameterRegistry = {
     type: 'enum' as const,
     description: 'Environment type for Computer Use tool (required for Computer Use model)',
     values: ['browser'] as const,
-    requiredFallback: 'browser',
+    initialValue: 'browser',
+    // requiredFallback: 'browser', // See `const _requiredParamId: DModelParameterId[]` in llms.parameters.ts for why custom params don't have required values at AIX invocation...
     hidden: true,
   } as const,
 
