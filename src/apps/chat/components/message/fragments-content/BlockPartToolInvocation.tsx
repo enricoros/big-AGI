@@ -16,10 +16,10 @@ import { humanReadableFunctionName } from './BlockPartToolInvocation.utils';
 
 
 const keyValueGridSx = {
-  border: '1px solid',
-  borderRadius: 'sm',
-  boxShadow: 'inset 2px 0 4px -2px rgba(0, 0, 0, 0.2)',
-  p: 1.5,
+  // border: '1px solid',
+  // borderRadius: 'sm',
+  // boxShadow: 'inset 2px 0 4px -2px rgba(0, 0, 0, 0.2)',
+  // p: 1.5,
 
   // Grid layout with 2 columns
   display: 'grid',
@@ -153,6 +153,11 @@ export function BlockPartToolInvocation(props: {
           lineHeight,
           display: 'flex',
           flexDirection: 'column',
+          ...(expanded ? {
+            border: '1px solid',
+            borderColor: 'primary.outlinedBorder',
+            boxShadow: 'inset 2px 0 4px -2px rgba(0, 0, 0, 0.2)',
+          } : {}),
         }}
       >
 
