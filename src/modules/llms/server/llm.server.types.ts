@@ -83,6 +83,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndAntWebFetch',
     'llmVndAntWebSearch',
     'llmVndGeminiAspectRatio',
+    'llmVndGeminiComputerUse',
     'llmVndGeminiGoogleSearch',
     'llmVndGeminiShowThoughts',
     'llmVndGeminiThinkingBudget',
