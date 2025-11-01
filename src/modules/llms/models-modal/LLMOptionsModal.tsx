@@ -73,12 +73,14 @@ function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): Reac
 
 export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
-  // state
-  const [showDetails, setShowDetails] = React.useState(false);
-
   // external state
   const isMobile = useIsMobile();
   const llm = useLLM(props.id);
+
+  // state - auto-open details if user has customized pricing or token limits
+  const [showDetails, setShowDetails] = React.useState(
+    !!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined
+  );
   const domainAssignments = useModelDomains();
   const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
 
