@@ -93,6 +93,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   const handleLlmStarredToggle = () => updateLLM(llm.id, { userStarred: !llm.userStarred });
 
+
+  // Advanced > user Context/MaxOutput
+
   const handleContextTokensChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     updateLLM(llm.id, { userContextTokens: value ? parseInt(value, 10) : undefined });
@@ -107,6 +110,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   const handleMaxOutputTokensReset = () => updateLLM(llm.id, { userMaxOutputTokens: undefined });
 
+
+  // Advanced > user Pricing
+
   const handleInputPriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     const numValue = value ? parseFloat(value) : undefined;
@@ -115,7 +121,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
         chat: {
           ...llm.userPricing?.chat,
           input: numValue,
-          output: llm.userPricing?.chat?.output,
+          // output: llm.userPricing?.chat?.output,
         },
       },
     });
@@ -141,7 +147,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       userPricing: {
         chat: {
           ...llm.userPricing?.chat,
-          input: llm.userPricing?.chat?.input,
+          // input: llm.userPricing?.chat?.input,
           output: numValue,
         },
       },
@@ -161,10 +167,12 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     }
   };
 
+
   const handleLlmDelete = () => {
     removeLLM(llm.id);
     props.onClose();
   };
+
 
   const visible = isLLMVisible(llm);
 
@@ -369,7 +377,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
                     // NOTE: direct access to the underlying, instead of via getLLMPricing
                     typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
                   }
-                  value={llm.userPricing?.chat?.input ?? ''}
+                  value={
+                    typeof llm.userPricing?.chat?.input === 'number' ? llm.userPricing.chat.input ?? '' : ''
+                  }
                   onChange={handleInputPriceChange}
                   endDecorator={llm.userPricing?.chat?.input !== undefined && (
                     <Button size='sm' variant='plain' onClick={handleInputPriceReset}>Reset</Button>
@@ -390,7 +400,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
                     // NOTE: direct access to the underlying, instead of via getLLMPricing
                     typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
                   }
-                  value={llm.userPricing?.chat?.output ?? ''}
+                  value={
+                    typeof llm.userPricing?.chat?.output === 'number' ? llm.userPricing.chat.output ?? '' : ''
+                  }
                   onChange={handleOutputPriceChange}
                   slotProps={{ input: { min: 0, step: 0.01 } }}
                   endDecorator={llm.userPricing?.chat?.output !== undefined && (

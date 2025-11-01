@@ -71,7 +71,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     trainingDataCutoff: d.trainingDataCutoff,
     interfaces: d.interfaces?.length ? d.interfaces : _fallbackInterfaces,
     benchmark: d.benchmark,
-    // pricing: undefined, // set below, since it needs some adaptation
+    // pricing?: ..., // set below, since it needs some adaptation
 
     // parameters system (spec and initial values)
     parameterSpecs: d.parameterSpecs?.length ? d.parameterSpecs : [],
@@ -87,13 +87,13 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
 
     // user edited properties: not set
     // userLabel: undefined,
-    // userHidden: undefined,
+    // userHidden: undefined
+    // userStarred: undefined,
     // userParameters: undefined,
+    // userContextTokens: undefined,
+    // userMaxOutputTokens: undefined,
+    // userPricing: undefined,
   };
-
-  // set other params from spec
-  if (dllm.parameterSpecs?.length)
-    applyModelParameterInitialValues(dllm.initialParameters, dllm.parameterSpecs, false);
 
   // set the pricing
   if (d.chatPrice && typeof d.chatPrice === 'object') {
@@ -105,6 +105,10 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
       },
     };
   }
+
+  // set other params from spec's initialValues
+  if (dllm.parameterSpecs?.length)
+    applyModelParameterInitialValues(dllm.initialParameters, dllm.parameterSpecs, false);
 
   return dllm;
 }
