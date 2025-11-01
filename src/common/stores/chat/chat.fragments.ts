@@ -166,6 +166,7 @@ namespace ZYNC_Entity { export type UUID = string; }
 
 export type DMessageToolInvocationPart = {
   pt: 'tool_invocation',
+  /** Matches the corresponding tool_response's id for pairing - set by the LLM, unique per message, at least */
   id: string,
   invocation: {
     type: 'function_call'
@@ -184,6 +185,7 @@ export type DMessageToolInvocationPart = {
 
 export type DMessageToolResponsePart = {
   pt: 'tool_response',
+  /** Set by the response (or upstream server hosted response), matches the corresponding tool_invocation's id for pairing */
   id: string,
   error: boolean | string,
   response: {

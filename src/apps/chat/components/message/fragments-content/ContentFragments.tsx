@@ -16,6 +16,7 @@ import { BlockPartImageRef } from './BlockPartImageRef';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
+import { humanReadableFunctionName } from './BlockPartToolInvocation.utils';
 
 
 const _editLayoutSx: SxProps = {
@@ -118,15 +119,19 @@ export function ContentFragments(props: {
       else if (part.pt === 'tool_invocation') {
         if (part.invocation.type === 'function_call') {
           editText = part.invocation.args /* string | null */ || '';
-          editLabel = `[Invocation] Function Call: \`${part.invocation.name}\``;
+          const humanName = humanReadableFunctionName(part.invocation.name, 'function_call');
+          editLabel = `[Invocation] ${humanName} · \`${part.invocation.name}\``;
         } else {
           editText = part.invocation.code;
-          editLabel = `[Invocation] Code Execution: \`${part.invocation.language}\``;
+          const humanName = humanReadableFunctionName('code_execution', 'code_execution');
+          editLabel = `[Invocation] ${humanName} · \`${part.invocation.language}\``;
         }
       } else if (part.pt === 'tool_response') {
         if (!part.error) {
           editText = part.response.result;
-          editLabel = `[Response]: ${part.response.type === 'function_call' ? 'Function Call' : 'Code Execution'}: \`${part.id}\``;
+          const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
+          const humanName = humanReadableFunctionName(responseName, part.response.type);
+          editLabel = `[Response] ${humanName} · \`${part.id}\``;
         }
       }
 
