@@ -413,6 +413,7 @@ export namespace AixWire_API {
     vndAntWebFetch: z.enum(['auto']).optional(),
     vndAntWebSearch: z.enum(['auto']).optional(),
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+    vndGeminiComputerUse: z.enum(['browser']).optional(),
     vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(),

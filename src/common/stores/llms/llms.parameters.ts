@@ -154,6 +154,15 @@ export const DModelParameterRegistry = {
     description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
   } as const,
 
+  llmVndGeminiComputerUse: {
+    label: 'Computer Use Environment',
+    type: 'enum' as const,
+    description: 'Environment type for Computer Use tool (required for Computer Use model)',
+    values: ['browser'] as const,
+    requiredFallback: 'browser',
+    hidden: true,
+  } as const,
+
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,

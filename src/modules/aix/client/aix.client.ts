@@ -49,7 +49,7 @@ export function aixCreateModelFromLLMOptions(
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP,
     llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch,
-    llmVndGeminiAspectRatio, llmVndGeminiGoogleSearch, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
+    llmVndGeminiAspectRatio, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
     llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
     llmVndOrtWebSearch,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
@@ -106,6 +106,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
+    ...(llmVndGeminiComputerUse ? { vndGeminiComputerUse: llmVndGeminiComputerUse } : {}),
     ...(llmVndGeminiGoogleSearch ? { vndGeminiGoogleSearch: llmVndGeminiGoogleSearch } : {}),
     ...(llmVndGeminiShowThoughts ? { vndGeminiShowThoughts: llmVndGeminiShowThoughts } : {}),
     ...(llmVndGeminiThinkingBudget !== undefined ? { vndGeminiThinkingBudget: llmVndGeminiThinkingBudget } : {}),
