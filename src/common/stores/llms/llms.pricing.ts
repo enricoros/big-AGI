@@ -84,6 +84,7 @@ interface Was_DModelPricingV2 {
 }
 
 export function portModelPricingV2toV3(llm: DLLM): void {
+  // NOTE: direct .pricing access instead of getLLMPricing, because there was no user pricing in this generation
   if (!llm.pricing) return;
   if (typeof llm.pricing !== 'object') return;
 
