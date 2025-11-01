@@ -100,6 +100,11 @@ export function BlockPartToolResponse(props: {
           lineHeight,
           display: 'flex',
           flexDirection: 'column',
+          ...(expanded ? {
+            border: '1px solid',
+            borderColor: 'primary.outlinedBorder',
+            boxShadow: 'inset 2px 0 4px -2px rgba(0, 0, 0, 0.2)',
+          } : {}),
         }}
       >
 
