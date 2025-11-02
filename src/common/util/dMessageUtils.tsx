@@ -300,7 +300,7 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode:
     </div>}
 
     {/* Costs */}
-    {metrics?.$c !== undefined && <div>Costs:</div>}
+    {metrics?.$c !== undefined && <div>Message cost:</div>}
     {metrics?.$c !== undefined && <div>
       <b>{formatModelsCost(metrics.$c / 100)}</b>
       {metrics.$cdCache !== undefined && <>
@@ -312,12 +312,12 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode:
       </>}
     </div>}
     {/* Add the 'reported' costs underneath, if defined */}
-    {metrics?.$cReported !== undefined && <div>{metrics?.$c !== undefined ? '' : 'Costs:'}</div>}
+    {metrics?.$cReported !== undefined && <div>{metrics?.$c !== undefined ? '' : 'Message cost:'}</div>}
     {metrics?.$cReported !== undefined && <div>
       <small>reported: <b>{formatModelsCost(metrics.$cReported / 100)}</b></small>
     </div>}
     {/* Add the cost 'code' underneath, if any */}
-    {costCode && <div>{(metrics?.$c !== undefined || metrics?.$cReported !== undefined) ? '' : 'Costs:'}</div>}
+    {costCode && <div>{(metrics?.$c !== undefined || metrics?.$cReported !== undefined) ? '' : 'Message cost:'}</div>}
     {costCode && <div><em>{costCode}</em></div>}
 
     {/* Time */}

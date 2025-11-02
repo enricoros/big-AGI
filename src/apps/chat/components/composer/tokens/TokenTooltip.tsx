@@ -77,7 +77,8 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
         if (costMax !== undefined) {
           message += '\n' +
             ` < Max message cost: <span>${formatModelsCost(costMax).padStart(8)}</span>\n` +
-            '   (depends on assistant response)';
+            '   (depends on assistant response)\n' +
+            '   (costs: ¢ when < $1, $ when ≥ $1)';
         }
 
         // if (hack_lastMessageCosts)
