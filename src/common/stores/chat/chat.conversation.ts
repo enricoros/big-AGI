@@ -3,6 +3,7 @@ import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
+import { DConversationMetrics } from './chat.metrics';
 
 
 /// Conversation
@@ -32,6 +33,9 @@ export interface DConversation {
 
   // TODO: @deprecated - should be a view-related cache
   tokenCount: number;                 // f(messages, llmId)
+
+  // Extensible cost metrics (accumulates costs and usage across operations)
+  metrics?: DConversationMetrics;     // optional, monotonic accumulator
 
   // Not persisted, used while in-memory, or temporarily by the UI
   // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
@@ -99,6 +103,9 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
 
     systemPurposeId: conversation.systemPurposeId,
     tokenCount: conversation.tokenCount,
+
+    // NOTE: metrics are NOT copied - branched conversations start with fresh metrics
+    // metrics: undefined,
 
     created: conversation.created,
     updated: Date.now(),

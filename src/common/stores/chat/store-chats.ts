@@ -19,6 +19,7 @@ import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
+import { accumulateConversationMetrics, DChargeMetrics } from './chat.metrics';
 
 
 /// Conversations Store
@@ -56,6 +57,9 @@ export interface ChatActions {
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
   setArchived: (cId: DConversationId, isArchived: boolean) => void;
   title: (cId: DConversationId) => string | undefined;
+
+  // metrics
+  accumulateMetrics: (cId: DConversationId, opType: string, llmId: DLLMId, charge: DChargeMetrics) => void;
 
   // utility function
   _editConversation: (cId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -450,6 +454,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             isArchived: isArchived,
             // updated: Date.now(), // don't update this - the 'entity state' shall update, but not this soft time
           }),
+
+      accumulateMetrics: (conversationId: DConversationId, opType: string, llmId: DLLMId, charge: DChargeMetrics) =>
+        _get()._editConversation(conversationId, conversation => ({
+          metrics: accumulateConversationMetrics(conversation.metrics, opType, llmId, charge),
+        })),
 
     }),
     {

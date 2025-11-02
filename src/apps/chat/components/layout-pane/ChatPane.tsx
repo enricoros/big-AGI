@@ -23,6 +23,7 @@ import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
 import { useLabsDevMode } from '~/common/stores/store-ux-labs';
+import { formatModelsCost } from '~/common/util/costUtils';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
@@ -57,11 +58,12 @@ export function ChatPane(props: {
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
 
-  const { isArchived, setArchived } = useChatStore(useShallow((state) => {
+  const { isArchived, setArchived, metrics } = useChatStore(useShallow((state) => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       isArchived: !conversation ? undefined : !!conversation.isArchived,
       setArchived: state.setArchived,
+      metrics: conversation?.metrics,
     };
   }));
 
@@ -212,6 +214,56 @@ export function ChatPane(props: {
         {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
       </ListItemButton>
     </OptimaPanelGroupedList>
+
+    {/* Costs */}
+    {!!metrics && (
+      <OptimaPanelGroupedList title='Costs'>
+        {/* Total cost */}
+        {metrics.$c !== undefined && (
+          <ListItem>
+            <Box sx={{ width: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1 }}>
+              <div>Total:</div>
+              <div style={{ textAlign: 'right' }}><b>{formatModelsCost(metrics.$c / 100)}</b></div>
+            </Box>
+          </ListItem>
+        )}
+
+        {/* Token summary */}
+        {(metrics.tIn !== undefined || metrics.tOut !== undefined) && (
+          <ListItem>
+            <Box sx={{ width: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1 }}>
+              <div>Tokens:</div>
+              <div style={{ textAlign: 'right' }}>
+                {metrics.tIn !== undefined && <>{metrics.tIn.toLocaleString()} in</>}
+                {metrics.tIn !== undefined && metrics.tOut !== undefined && <>, </>}
+                {metrics.tOut !== undefined && <>{metrics.tOut.toLocaleString()} out</>}
+              </div>
+            </Box>
+          </ListItem>
+        )}
+
+        {/* Operation breakdown (if available) */}
+        {metrics.ops && Object.keys(metrics.ops).length > 0 && (
+          <>
+            {Object.entries(metrics.ops).map(([opType, opMetrics]) => (
+              opMetrics.$c !== undefined && (
+                <ListItem key={opType}>
+                  <Box sx={{ width: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, opacity: 0.75 }}>
+                    <div style={{ textTransform: 'capitalize' }}>{opType}:</div>
+                    <div style={{ textAlign: 'right' }}>
+                      {formatModelsCost(opMetrics.$c / 100)}
+                      {opMetrics.n !== undefined && opMetrics.n > 1 && (
+                        <small style={{ opacity: 0.7 }}> (×{opMetrics.n})</small>
+                      )}
+                    </div>
+                  </Box>
+                </ListItem>
+              )
+            ))}
+          </>
+        )}
+      </OptimaPanelGroupedList>
+    )}
 
     {/* [DEV] Development */}
     {labsDevMode && (
