@@ -7,6 +7,7 @@
       "Bash(find:*)",
       "Bash(git branch:*)",
       "Bash(git describe:*)",
+      "Bash(git grep:*)",
       "Bash(git log:*)",
       "Bash(git log:*)",
       "Bash(git show:*)",
