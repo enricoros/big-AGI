@@ -7,6 +7,28 @@ import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 
 /// Conversation
 
+/**
+ * Per-conversation cost and token metrics accumulator.
+ * Tree-like structure: root totals + optional model breakdown.
+ * Monotonic (only increases), forward-compatible, compact JSON.
+ */
+export interface DChatMetrics {
+  // Root-level totals (sum of all operations)
+  $c: number;        // total costs in cents
+  tIn: number;       // total input tokens
+  tOut: number;      // total output tokens
+
+  // Optional breakdown by model (compact for JSON size)
+  m?: {
+    [llmId: string]: {
+      $c: number;      // model total cost in cents
+      tIn: number;     // model input tokens
+      tOut: number;    // model output tokens
+      n: number;       // usage count
+    }
+  };
+}
+
 export interface DConversation {
   id: DConversationId;                // unique identifier for this conversation
 
@@ -32,6 +54,9 @@ export interface DConversation {
 
   // TODO: @deprecated - should be a view-related cache
   tokenCount: number;                 // f(messages, llmId)
+
+  // Per-conversation cost accumulation (monotonic, not reset)
+  metrics?: DChatMetrics;             // accumulated costs and token usage
 
   // Not persisted, used while in-memory, or temporarily by the UI
   // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
@@ -154,4 +179,62 @@ export function excludeSystemMessages(messages: Readonly<DMessage[]>, showAll?: 
 
 export function remapMessagesSysToUsr(messages: Readonly<DMessage[]> | null): DMessage[] {
   return (messages || []).map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m); // (MUST: [0] is the system message of the original chat) cast system chat messages to the user role
+}
+
+
+// helpers - Metrics Accumulation
+
+/**
+ * Accumulates message metrics into conversation totals.
+ * Creates metrics if needed, updates root totals and optional model breakdown.
+ * Monotonic accumulator (only increases).
+ */
+export function accumulateConversationMetrics(
+  conversation: DConversation,
+  messageCostCents: number | undefined,
+  inputTokens: number | undefined,
+  outputTokens: number | undefined,
+  llmId: string | null,
+): void {
+  // Skip if no meaningful data to accumulate
+  if (!messageCostCents && !inputTokens && !outputTokens)
+    return;
+
+  const costCents = messageCostCents || 0;
+  const tIn = inputTokens || 0;
+  const tOut = outputTokens || 0;
+
+  // Initialize metrics if first time
+  if (!conversation.metrics) {
+    conversation.metrics = {
+      $c: 0,
+      tIn: 0,
+      tOut: 0,
+    };
+  }
+
+  // Update root totals (monotonic)
+  conversation.metrics.$c += costCents;
+  conversation.metrics.tIn += tIn;
+  conversation.metrics.tOut += tOut;
+
+  // Update model breakdown if llmId provided
+  if (llmId) {
+    if (!conversation.metrics.m)
+      conversation.metrics.m = {};
+
+    if (!conversation.metrics.m[llmId]) {
+      conversation.metrics.m[llmId] = {
+        $c: 0,
+        tIn: 0,
+        tOut: 0,
+        n: 0,
+      };
+    }
+
+    conversation.metrics.m[llmId].$c += costCents;
+    conversation.metrics.m[llmId].tIn += tIn;
+    conversation.metrics.m[llmId].tOut += tOut;
+    conversation.metrics.m[llmId].n += 1;
+  }
 }

@@ -300,7 +300,7 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode:
     </div>}
 
     {/* Costs */}
-    {metrics?.$c !== undefined && <div>Costs:</div>}
+    {metrics?.$c !== undefined && <div>Reply cost:</div>}
     {metrics?.$c !== undefined && <div>
       <b>{formatModelsCost(metrics.$c / 100)}</b>
       {metrics.$cdCache !== undefined && <>
@@ -312,7 +312,7 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode:
       </>}
     </div>}
     {/* Add the 'reported' costs underneath, if defined */}
-    {metrics?.$cReported !== undefined && <div>{metrics?.$c !== undefined ? '' : 'Costs:'}</div>}
+    {metrics?.$cReported !== undefined && <div>{metrics?.$c !== undefined ? '' : 'Reply cost:'}</div>}
     {metrics?.$cReported !== undefined && <div>
       <small>reported: <b>{formatModelsCost(metrics.$cReported / 100)}</b></small>
     </div>}

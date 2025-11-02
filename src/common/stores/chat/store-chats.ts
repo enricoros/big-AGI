@@ -16,7 +16,7 @@ import { workspaceForConversationIdentity } from '~/common/stores/workspace/work
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
-import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
+import { accumulateConversationMetrics, conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 
@@ -301,6 +301,19 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           if (!message.pendingIncomplete)
             updateMessagesTokenCounts([message], true, 'appendMessage');
 
+          // [metrics] Accumulate costs for complete messages with metrics
+          if (!message.pendingIncomplete && message.generator?.metrics) {
+            const metrics = message.generator.metrics;
+            const llmId = message.generator.mgt === 'aix' ? message.generator.aix?.mId : null;
+            accumulateConversationMetrics(
+              conversation,
+              metrics.$c,
+              metrics.TIn,
+              metrics.TOut,
+              llmId,
+            );
+          }
+
           const messages = [...conversation.messages, message];
 
           return {
@@ -343,6 +356,19 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
             if (!updatedMessage.pendingIncomplete)
               updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(incomplete=false)');
+
+            // [metrics] Accumulate costs when message is completed
+            if (removePendingState && updatedMessage.generator?.metrics) {
+              const metrics = updatedMessage.generator.metrics;
+              const llmId = updatedMessage.generator.mgt === 'aix' ? updatedMessage.generator.aix?.mId : null;
+              accumulateConversationMetrics(
+                conversation,
+                metrics.$c,
+                metrics.TIn,
+                metrics.TOut,
+                llmId,
+              );
+            }
 
             return updatedMessage;
           });
