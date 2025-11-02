@@ -480,7 +480,7 @@ export function AppChat() {
   );
 
 
-  // Disabled by default, as it lags the opening of the drawer and immediatly vanishes during the closing animation
+  // Disabled by default, as it lags the opening of the drawer and immediately vanishes during the closing animation
   const isDrawerOpen = true; // useOptimaDrawerOpen();
 
   const drawerContent = React.useMemo(() => !isDrawerOpen ? null :
@@ -525,7 +525,7 @@ export function AppChat() {
   React.useEffect(() => {
     // Debug: open a null chat
     if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
-      openConversationInFocusedPane(null! /* for debugging purporse */);
+      openConversationInFocusedPane(null! /* for debugging purpose */);
     // Open the initial conversation if set
     else if (intent.initialConversationId)
       openConversationInFocusedPane(intent.initialConversationId);
@@ -653,7 +653,7 @@ export function AppChat() {
               setFocusedPaneIndex(idx);
             }}
             onCollapse={() => {
-              // NOTE: despite the delay to try to let the draggin settle, there seems to be an issue with the Pane locking the screen
+              // NOTE: despite the delay to try to let the dragging settle, there seems to be an issue with the Pane locking the screen
               // setTimeout(() => removePane(idx), 50);
               // more than 2 will result in an assertion from the framework
               if (chatPanes.length === 2) removePane(idx);
@@ -680,7 +680,7 @@ export function AppChat() {
                 // NOTE: this is a workaround for the 'stuck-after-collapse-close' issue. We will collapse the 'other' pane, which
                 // will get it removed (onCollapse), and somehow this pane will be stuck with a pointerEvents: 'none' style, which de-facto
                 // disables further interaction with the chat. This is a workaround to re-enable the pointer events.
-                // The root cause seems to be a Dragstate not being reset properly, however the pointerEvents has been set since 0.0.56 while
+                // The root cause seems to be a Drag state not being reset properly, however the pointerEvents has been set since 0.0.56 while
                 // it was optional before: https://github.com/bvaughn/react-resizable-panels/issues/241
                 pointerEvents: 'auto',
               }),
