@@ -15,7 +15,7 @@ import { createDMessageDataRefDBlob, createZyncAssetReferenceContentFragment, DM
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import type { T2iCreateImageOutput } from './t2i.server';
+import type { T2iCreateImageOutput, T2iGenerateOptions } from './t2i.server';
 import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
 import { useTextToImageStore } from './store-module-t2i';
 
@@ -44,7 +44,6 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   const userProviderId = useTextToImageStore(state => state.selectedT2IProviderId);
 
   const dalleModelId = useDalleStore(state => state.dalleModelId);
-
 
 
   // memo
@@ -93,7 +92,24 @@ export function getActiveTextToImageProviderOrThrow() {
   return activeProvider;
 }
 
-async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number, abortSignal?: AbortSignal): Promise<T2iCreateImageOutput[]> {
+/**
+ * Low-level T2I generation that returns raw image outputs (base64 + metadata)
+ * - NOTE: MINIMIZE - the app wants to use the other version, instead, which creates the DBlob/Assets directly
+ */
+export async function t2iGenerateImagesOrThrow(
+  provider: TextToImageProvider | null, // null: auto-detect active provider
+  prompt: string,
+  aixInlineImageParts: AixParts_InlineImagePart[],
+  count: number,
+  options?: T2iGenerateOptions,
+): Promise<T2iCreateImageOutput[]> {
+
+  // use the active provider if null
+  if (!provider)
+    provider = getActiveTextToImageProviderOrThrow();
+
+  const { providerId, vendor } = provider;
+
   switch (vendor) {
 
     case 'gemini':
@@ -108,7 +124,7 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
     case 'openai':
       if (!providerId)
         throw new Error('No OpenAI Model Service configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count, abortSignal);
+      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count, options);
 
     case 'xai':
       throw new Error('xAI image generation integration coming soon');
@@ -131,12 +147,8 @@ export async function t2iGenerateImageContentFragments(
   abortSignal?: AbortSignal,
 ): Promise<DMessageContentFragment[]> {
 
-  // T2I: Use the active provider if null
-  if (!t2iProvider)
-    t2iProvider = getActiveTextToImageProviderOrThrow();
-
-  // T2I: Generate
-  const generatedImages = await _t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count, abortSignal);
+  // T2I: Generate using low-level function
+  const generatedImages = await t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count, { abortSignal });
   if (!generatedImages?.length)
     throw new Error('No image generated');
 
@@ -180,7 +192,7 @@ export async function t2iGenerateImageContentFragments(
         ...(_i.altText ? { altText: _i.altText } : {}),
         ...(_i.width ? { width: _i.width } : {}),
         ...(_i.height ? { height: _i.height } : {}),
-      }
+      },
     );
 
     imageFragments.push(zyncImageAssetFragmentWithLegacy);
