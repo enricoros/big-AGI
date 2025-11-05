@@ -1,24 +1,29 @@
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { apiStream } from '~/common/util/trpc.client';
 import { formatModelsCost } from '~/common/util/costUtils';
 
-import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
-
-import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import type { T2iCreateImageOutput } from '../t2i.server';
+import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
 import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolveDalleModelId, useDalleStore } from './store-module-dalle';
 
 
 /**
  * Client function to call the OpenAI image generation API.
  */
-export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number, abortSignal?: AbortSignal): Promise<T2iCreateImageOutput[]> {
+export async function openAIGenerateImagesOrThrow(
+  modelServiceId: DModelsServiceId,
+  prompt: string,
+  aixInlineImageParts: AixParts_InlineImagePart[],
+  count: number,
+  { agiProfilePic, abortSignal }: T2iGenerateOptions = {},
+): Promise<T2iCreateImageOutput[]> {
 
   // Use the current settings
-  const {
+  let {
     dalleModelId: dalleModelSelection,
     dalleNoRewrite,
     // -- GI
@@ -37,7 +42,14 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   } = useDalleStore.getState();
 
   // Resolve the actual model to use (null = latest)
-  const dalleModelId = resolveDalleModelId(dalleModelSelection);
+  let dalleModelId = resolveDalleModelId(dalleModelSelection);
+
+  // [special] Profile pic generation mode: force gpt-image-1-mini, square, low resolution, low quality
+  if (agiProfilePic) {
+    dalleModelId = 'gpt-image-1-mini';
+    dalleSizeGI = '1024x1024'; // square
+    dalleQualityGI = 'medium'; // we're rescaling to 256x256 anyway - low is $0.005, medium is $0.011 (2x)
+  }
 
   // This trick is explained on: https://platform.openai.com/docs/guides/images/usage?context=node
   if (dalleNoRewrite && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
