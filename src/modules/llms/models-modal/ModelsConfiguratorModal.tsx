@@ -112,6 +112,32 @@ export function ModelsConfiguratorModal(props: {
   }, [handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
 
 
+  // custom done button for wizard mode (combines start and close buttons)
+
+  const wizardButtons = React.useMemo(() => {
+    if (!isTabWizard) return undefined;
+
+    return (
+      <Box sx={{ display: 'flex', width: '100%', gap: 1, justifyContent: 'space-between' }}>
+        {startButton}
+        <TooltipOutlined
+          title={!hasLLMs ? 'Please save at least one API key to continue' : ''}
+          placement='top'
+        >
+          <Button
+            color='neutral'
+            disabled={!hasLLMs}
+            onClick={optimaActions().closeModels}
+            sx={{ ml: 'auto', minWidth: 100 }}
+          >
+            Close
+          </Button>
+        </TooltipOutlined>
+      </Box>
+    );
+  }, [isTabWizard, startButton, hasLLMs]);
+
+
   // Explainer section
   const isMissingModels = useModelsZeroState();
   const { novel: isFirstVisit, touch: markVisited } = useUICounter('models-setup-first-visit', 1);
@@ -203,10 +229,11 @@ export function ModelsConfiguratorModal(props: {
       )}
       open onClose={optimaActions().closeModels}
       darkBottomClose={!isTabWizard}
+      hideBottomClose={isTabWizard}
+      startButton={isTabWizard ? wizardButtons : startButton}
       closeText={isTabWizard ? 'Done' : undefined}
       animateEnter={!hasLLMs}
       unfilterBackdrop
-      startButton={startButton}
       autoOverflow={true /* forces some shrinkage of the contents (ModelsList) */}
       fullscreen={isMobile ? 'button' : undefined} // NOTE: was disabled because on mobile there's one screen with a stretch issue - but can't reproduce
     >
