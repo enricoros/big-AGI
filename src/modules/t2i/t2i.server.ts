@@ -1,6 +1,15 @@
 import * as z from 'zod/v4';
 
 
+// Image generation options
+
+export interface T2iGenerateOptions {
+  /** When true, optimize for profile picture generation (lower cost, quality, smaller size) */
+  agiProfilePic?: true;
+  /** Abort signal for cancellation */
+  abortSignal?: AbortSignal;
+}
+
 // Image generation output
 
 export type T2ICreateImageAsyncStreamOp =
