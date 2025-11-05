@@ -136,7 +136,7 @@ export type AttachmentDraftConverter = {
 
 export type AttachmentDraftConverterType =
   | 'text' | 'rich-text' | 'rich-text-cleaner' | 'rich-text-table'
-  | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-default'
+  | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-caption' | 'image-to-default'
   | 'pdf-text' | 'pdf-images' | 'pdf-text-and-images'
   | 'docx-to-html'
   | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-null' | 'url-page-image'

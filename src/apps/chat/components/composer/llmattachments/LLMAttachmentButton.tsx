@@ -98,6 +98,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
   'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
   'image-to-default': ImageOutlinedIcon,
+  'image-caption': AbcIcon,
   'image-ocr': AbcIcon,
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PermMediaOutlinedIcon,

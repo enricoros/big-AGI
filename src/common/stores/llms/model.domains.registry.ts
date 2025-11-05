@@ -19,7 +19,7 @@ type ModelDomainSpec = {
 };
 
 
-export const ModelDomainsList: DModelDomainId[] = ['primaryChat', 'codeApply', 'fastUtil'] as const;
+export const ModelDomainsList: DModelDomainId[] = ['primaryChat', 'codeApply', 'fastUtil', 'imageCaption'] as const;
 
 export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
   primaryChat: {
@@ -47,6 +47,15 @@ export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
     description: 'Quick response model for simple tasks',
     autoStrategy: 'topVendorLowestCost',
     requiredInterfaces: [LLM_IF_OAI_Fn], // NOTE: we do enforce this already, although this may not be correctly set for all vendors
+  },
+  imageCaption: {
+    label: 'Image Captioning',
+    confLabel: 'Vision',
+    confTooltip: 'Vision model for image captioning',
+    description: 'Describes images as text',
+    recommended: 'Qwen VL',
+    autoStrategy: 'topVendorTopLlm',
+    fallbackDomain: 'primaryChat',
   },
 };
 

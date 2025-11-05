@@ -79,7 +79,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   // state - auto-open details if user has customized pricing or token limits
   const [showDetails, setShowDetails] = React.useState(
-    !!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined
+    !!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined,
   );
   const domainAssignments = useModelDomains();
   const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
@@ -258,7 +258,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabelStart title='Assignment' description='Default model' sx={{ minWidth: 80 }} />
         <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
-          {ModelDomainsList.map(domainId => {
+          {ModelDomainsList.filter(dId => !['imageCaption'].includes(dId)).map(domainId => {
             const domainSpec = ModelDomainsRegistry[domainId];
             const domainModelId = domainAssignments[domainId]?.modelId;
             const isActive = domainModelId === llm.id;

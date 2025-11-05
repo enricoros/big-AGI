@@ -119,7 +119,7 @@ type DMessageDocMeta = {
   codeLanguage?: string;
   srcFileName?: string;
   srcFileSize?: number;
-  srcOcrFrom?: 'image' | 'pdf';
+  srcOcrFrom?: 'image' | 'pdf' | 'image-caption';
 }
 
 

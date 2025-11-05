@@ -471,6 +471,7 @@ export namespace AixWire_API {
       // streaming AI operations
       'ai-diagram',               // making a diagram - messageId
       'ai-flattener',             // flattening a thread - messageId of the first message
+      'aifn-image-caption',       // generating image captions - attachmentId
       'beam-gather',              // fusing beam rays - fusionId
       'beam-scatter',             // scattering beam rays - rayId
       'call',                     // having a phone conversation - messageId of the first message
