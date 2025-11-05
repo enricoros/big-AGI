@@ -129,6 +129,13 @@ export function AppChatSettingsAI() {
       </>}
     />
 
+    <FormControlDomainModel
+      domainId='imageCaption'
+      title='Vision model'
+      description='Image captioning'
+      tooltip='Vision model used to generate text descriptions of images when the Caption (Text) attachment option is selected.'
+    />
+
     {labsDevMode && (
       <FormControlDomainModel
         domainId='primaryChat'
