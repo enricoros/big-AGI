@@ -40,6 +40,7 @@ export function ModelsConfiguratorModal(props: {
   // state
   // const [showAllServices, setShowAllServices] = React.useState<boolean>(false);
   const [tab, setTab] = React.useState<TabValue>(MODELS_WIZARD_ENABLE_INITIALLY && !modelsServices.length ? 'wizard' : 'setup');
+  const [unsavedWizardProviders, setUnsavedWizardProviders] = React.useState<Set<string>>(new Set());
   const showAllServices = false;
 
   // external state
@@ -83,6 +84,17 @@ export function ModelsConfiguratorModal(props: {
   const handleShowWizard = React.useCallback(() => setTab('wizard'), []);
   // const handleToggleDefaults = React.useCallback(() => setTab(tab => tab === 'defaults' ? 'setup' : 'defaults'), []);
 
+  // callback for wizard to report unsaved provider changes
+  const handleWizardProviderUnsavedChange = React.useCallback((providerId: string, hasUnsaved: boolean) => {
+    setUnsavedWizardProviders(prev => {
+      const next = new Set(prev);
+      if (hasUnsaved) next.add(providerId);
+      else next.delete(providerId);
+      // only update if actually changed
+      return next.size !== prev.size || (hasUnsaved && !prev.has(providerId)) ? next : prev;
+    });
+  }, []);
+
 
   // start button
   const startButton = React.useMemo(() => {
@@ -117,25 +129,35 @@ export function ModelsConfiguratorModal(props: {
   const wizardButtons = React.useMemo(() => {
     if (!isTabWizard) return undefined;
 
+    const hasUnsavedChanges = unsavedWizardProviders.size > 0;
+    // const tooltipTitle = !hasLLMs ? 'Please save at least one API key to continue'
+    //   : hasUnsavedChanges ? 'You have unsaved changes - click Save first'
+    //     : '';
+
     return (
-      <Box sx={{ display: 'flex', width: '100%', gap: 1, justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', width: '100%', gap: 1, justifyContent: 'space-between', alignItems: 'center' }}>
         {startButton}
-        <TooltipOutlined
-          title={!hasLLMs ? 'Please save at least one API key to continue' : ''}
-          placement='top'
+
+        {/* unsaved warning */}
+        {hasUnsavedChanges && (
+          <Typography color='warning' level='body-sm' ml='auto'>
+            {isMobile ? 'Unsaved' : `You have ${unsavedWizardProviders.size} unsaved change${ unsavedWizardProviders.size > 1 ? 's' : '' }`}
+          </Typography>
+        )}
+
+        {/* "Done" button */}
+        <Button
+          variant='solid'
+          color='neutral'
+          disabled={!hasLLMs || hasUnsavedChanges}
+          onClick={optimaActions().closeModels}
+          sx={{ ml: 'auto', minWidth: 100 }}
         >
-          <Button
-            color='neutral'
-            disabled={!hasLLMs}
-            onClick={optimaActions().closeModels}
-            sx={{ ml: 'auto', minWidth: 100 }}
-          >
-            Close
-          </Button>
-        </TooltipOutlined>
+          Done
+        </Button>
       </Box>
     );
-  }, [isTabWizard, startButton, hasLLMs]);
+  }, [hasLLMs, unsavedWizardProviders, isMobile, isTabWizard, startButton]);
 
 
   // Explainer section
@@ -239,7 +261,15 @@ export function ModelsConfiguratorModal(props: {
     >
 
       {isTabWizard && <Divider />}
-      {isTabWizard && <ModelsWizard isMobile={isMobile} onSkip={optimaActions().closeModels} onSwitchToAdvanced={handleShowAdvanced} onSwitchToWhy={handleShowExplainerAgain} />}
+      {isTabWizard && (
+        <ModelsWizard
+          isMobile={isMobile}
+          onSkip={optimaActions().closeModels}
+          onSwitchToAdvanced={handleShowAdvanced}
+          onSwitchToWhy={handleShowExplainerAgain}
+          onProviderUnsavedChange={handleWizardProviderUnsavedChange}
+        />
+      )}
 
       {isTabSetup && <ModelsServiceSelector modelsServices={modelsServices} selectedServiceId={activeServiceId} setSelectedServiceId={setConfServiceId} onSwitchToWizard={handleShowWizard} />}
       {isTabSetup && <Divider sx={activeService ? undefined : { visibility: 'hidden' }} />}

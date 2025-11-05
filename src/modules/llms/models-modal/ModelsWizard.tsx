@@ -90,6 +90,7 @@ function WizardProviderSetup(props: {
   provider: WizardProvider,
   isFirst: boolean,
   isHidden: boolean,
+  onUnsavedChange: (providerId: string, hasUnsaved: boolean) => void,
 }) {
 
   const { cat: providerCat, vendor: providerVendor, settingsKey: providerSettingsKey, omit: providerOmit } = props.provider;
@@ -134,6 +135,22 @@ function WizardProviderSetup(props: {
   const autoCompleteId = isLocal ? `${providerVendor.id}-host` : `${providerVendor.id}-key`;
 
 
+  // wrapped setter that notifies parent of unsaved state
+
+  const { onUnsavedChange } = props;
+
+  const handleLocalValueChange = React.useCallback((newValue: string) => {
+    // set locally
+    setLocalValue(newValue);
+
+    // notify parent of unsaved state
+    if (providerOmit || !onUnsavedChange) return;
+    const hasUnsaved = newValue !== (serviceKeyValue || '');
+    const hasValue = !!newValue.trim();
+    onUnsavedChange(providerVendor.id, hasUnsaved && hasValue);
+  }, [onUnsavedChange, providerOmit, providerVendor.id, serviceKeyValue]);
+
+
   // handlers
 
 
@@ -148,6 +165,10 @@ function WizardProviderSetup(props: {
     // set the key
     const newKey = localValue?.trim() ?? '';
     updateServiceSettings(vendorServiceId, { [providerSettingsKey]: newKey });
+
+    // notify parent that changes are now saved
+    if (!providerOmit)
+      onUnsavedChange(providerVendor.id, false);
 
     // if the key is empty, remove the models
     if (!newKey) {
@@ -170,7 +191,7 @@ function WizardProviderSetup(props: {
     }
     setIsLoading(false);
 
-  }, [localValue, providerSettingsKey, providerVendor, valueName]);
+  }, [localValue, onUnsavedChange, providerOmit, providerSettingsKey, providerVendor, valueName]);
 
 
   // memoed components
@@ -232,7 +253,7 @@ function WizardProviderSetup(props: {
               autoCompleteId={autoCompleteId}
               value={localValue ?? ''}
               placeholder={`${vendorName} ${valueName}`}
-              onChange={setLocalValue}
+              onChange={handleLocalValueChange}
               required={false}
             />
           </Box>
@@ -262,6 +283,7 @@ export function ModelsWizard(props: {
   onSkip?: () => void,
   onSwitchToAdvanced?: () => void,
   onSwitchToWhy?: () => void,
+  onProviderUnsavedChange: (providerId: string, hasUnsaved: boolean) => void,
 }) {
 
   // state
@@ -296,6 +318,7 @@ export function ModelsWizard(props: {
           provider={provider}
           isFirst={!index}
           isHidden={provider.cat !== activeCategory}
+          onUnsavedChange={props.onProviderUnsavedChange}
         />
       ))}
 
