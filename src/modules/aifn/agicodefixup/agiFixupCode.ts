@@ -1,7 +1,7 @@
 import * as z from 'zod/v4';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
-import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 import { aixCGR_FromSimpleText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
@@ -62,7 +62,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
   };
 
   // Invoke the AI model
-  const { fragments } = await aixChatGenerateContent_DMessage(
+  const { fragments } = await aixChatGenerateContent_DMessage_orThrow(
     llmId,
     aixRequest,
     aixCreateChatGenerateContext('fixup-code', '_DEV_'),

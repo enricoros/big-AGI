@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixClientFunctionCallToolDefinition, aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessageText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -187,7 +187,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
     ]);
 
     // Strict call to a function
-    aixChatGenerateContent_DMessage(
+    aixChatGenerateContent_DMessage_orThrow(
       codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(diagramsTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-diagram', conversationId),
@@ -238,7 +238,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
     ]);
 
     // Strict call to a function
-    aixChatGenerateContent_DMessage(
+    aixChatGenerateContent_DMessage_orThrow(
       codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(uiTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-htmlui', conversationId),

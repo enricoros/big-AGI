@@ -190,7 +190,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
 
-    await aixChatGenerateContent_DMessage(
+    await aixChatGenerateContent_DMessage_orThrow(
       llmId,
       aixChatContentGenerateRequest,
       aixCreateChatGenerateContext(aixContextName, aixContextRef),
@@ -433,7 +433,7 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
  *
  * @returns Promise<AixChatGenerateContent_DMessageGuts> - The final DMessage-compatible object
  */
-export async function aixChatGenerateContent_DMessage<TServiceSettings extends object = {}, TAccess extends AixAPI_Access = AixAPI_Access>(
+export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings extends object = {}, TAccess extends AixAPI_Access = AixAPI_Access>(
   // llm Id input -> access & model
   llmId: DLLMId,
   // aix inputs
