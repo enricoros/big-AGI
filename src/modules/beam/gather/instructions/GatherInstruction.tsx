@@ -4,7 +4,7 @@ import { Typography } from '@mui/joy';
 
 import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessage';
 
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
@@ -64,7 +64,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
   ];
 
   // update the UI
-  const onMessageUpdated = (update: AixChatGenerateContent_DMessage, completed: boolean) => {
+  const onMessageUpdated = (update: AixChatGenerateContent_DMessageGuts, completed: boolean) => {
     // in-place update of the intermediate message
     const { fragments: incrementalFragments, ...incrementalRest } = update;
     Object.assign(inputs.intermediateDMessage, incrementalRest);

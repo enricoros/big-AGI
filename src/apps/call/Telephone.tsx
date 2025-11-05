@@ -15,7 +15,7 @@ import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
@@ -254,7 +254,7 @@ export function Telephone(props: {
       'call',
       callMessages[0].id,
       { abortSignal: responseAbortController.current.signal },
-      (update: AixChatGenerateContent_DMessage, _isDone: boolean) => {
+      (update: AixChatGenerateContent_DMessageGuts, _isDone: boolean) => {
         const updatedText = messageFragmentsReduceText(update.fragments).trim();
         if (updatedText)
           setPersonaTextInterim(finalText = updatedText);

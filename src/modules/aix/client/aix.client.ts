@@ -131,8 +131,8 @@ export function aixCreateModelFromLLMOptions(
  * Accumulator for ChatGenerate output data, as it is being streamed.
  * The object is modified in-place from the lower layers and passed to the callback for efficiency.
  */
-export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'> {
-  fragments: (DMessageContentFragment | DMessageVoidFragment)[];
+export interface AixChatGenerateContent_DMessageGuts extends Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'> {
+  fragments: (DMessageContentFragment | DMessageVoidFragment /* no AttachmentFragments */)[];
   // Since 'aixChatGenerateContent_DMessage_FromConversation' starts from named (before replacement from LL), we can't Extract
   generator: DMessageGenerator; // Extract<DMessageGenerator, { mgt: 'aix' }>;
   pendingIncomplete: boolean;
@@ -140,7 +140,7 @@ export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragmen
 
 type StreamMessageStatus = {
   outcome: 'success' | 'aborted' | 'errored',
-  lastDMessage: AixChatGenerateContent_DMessage,
+  lastDMessage: AixChatGenerateContent_DMessageGuts,
   errorMessage?: string
 };
 
@@ -168,12 +168,12 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
   aixContextRef: AixAPI_Context_ChatGenerate['ref'],
   // others
   clientOptions: AixClientOptions,
-  onStreamingUpdate: (update: AixChatGenerateContent_DMessage, isDone: boolean) => MaybePromise<void>,
+  onStreamingUpdate: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
 ): Promise<StreamMessageStatus> {
 
   let errorMessage: string | undefined;
 
-  let lastDMessage: AixChatGenerateContent_DMessage = {
+  let lastDMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
     generator: {
       mgt: 'named',
@@ -196,7 +196,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       aixCreateChatGenerateContext(aixContextName, aixContextRef),
       true,
       clientOptions,
-      async (update: AixChatGenerateContent_DMessage, isDone: boolean) => {
+      async (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => {
         lastDMessage = update;
         await onStreamingUpdate(lastDMessage, isDone);
       },
@@ -207,13 +207,14 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
     // this can only be a large, user-visible error, such as LLM not found
     console.warn('[DEV] aixChatGenerateContentStreaming error:', { error });
 
+    // > error fragment
     errorMessage = error.message || (typeof error === 'string' ? error : 'Chat stopped.');
     lastDMessage.fragments.push(createErrorContentFragment(`Issue: ${errorMessage}`));
-    lastDMessage.generator = {
-      ...lastDMessage.generator,
-      tokenStopReason: 'issue',
-    };
+
+    // .generator: 'issue', no pendingIncomplete
+    lastDMessage.generator = { ...lastDMessage.generator, tokenStopReason: 'issue' };
     lastDMessage.pendingIncomplete = false;
+
   }
 
   // TODO: check something beyond this return status (as exceptions almost never happen here)
@@ -371,7 +372,7 @@ export async function aixChatGenerateText_Simple(
  */
 function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Simple) {
   // copy over just the generator by using the accumulator -> DMessage-like copier
-  _llToDMessage(src, {
+  _llToDMessageGuts(src, {
     generator: dest.generator, // target our dest's object
     fragments: [], pendingIncomplete: false, // unused, mocked
   });
@@ -430,7 +431,7 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
  * @param clientOptions - Client options for the operation
  * @param onStreamingUpdate - Optional callback for streaming updates
  *
- * @returns Promise<AixChatGenerateContent_DMessage> - The final DMessage-compatible object
+ * @returns Promise<AixChatGenerateContent_DMessageGuts> - The final DMessage-compatible object
  */
 export async function aixChatGenerateContent_DMessage<TServiceSettings extends object = {}, TAccess extends AixAPI_Access = AixAPI_Access>(
   // llm Id input -> access & model
@@ -441,8 +442,8 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   aixStreaming: boolean,
   // others
   clientOptions: AixClientOptions,
-  onStreamingUpdate?: (update: AixChatGenerateContent_DMessage, isDone: boolean) => MaybePromise<void>,
-): Promise<AixChatGenerateContent_DMessage> {
+  onStreamingUpdate?: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
+): Promise<AixChatGenerateContent_DMessageGuts> {
 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
@@ -466,7 +467,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   // }
 
   // Aix Low-Level Chat Generation
-  const dMessage: AixChatGenerateContent_DMessage = {
+  const dMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
     generator: {
       mgt: 'aix',
@@ -499,7 +500,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
     async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
-        _llToDMessage(ll, dMessage);
+        _llToDMessageGuts(ll, dMessage);
         await onStreamingUpdate(dMessage, false);
       }
     },
@@ -509,7 +510,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   dMessage.pendingIncomplete = false;
 
   // LLM Cost computation & Aggregations
-  _llToDMessage(llAccumulator, dMessage);
+  _llToDMessageGuts(llAccumulator, dMessage);
   _updateGeneratorCostsInPlace(dMessage.generator, llm, `aix_chatgenerate_content-${aixContext.name}`);
 
   // final update (could ignore and take the dMessage)
@@ -518,7 +519,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   return dMessage;
 }
 
-function _llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateContent_DMessage) {
+function _llToDMessageGuts(src: AixChatGenerateContent_LL, dest: AixChatGenerateContent_DMessageGuts) {
   // replace the fragments if we have any
   if (src.fragments.length)
     dest.fragments = src.fragments; // Note: this gets replaced once, and then it's the same from that point on
