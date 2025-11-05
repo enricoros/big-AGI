@@ -7,6 +7,7 @@ export namespace AudioGenerator {
   interface SoundOptions {
     volume?: number;
     roomSize?: 'small' | 'large';
+    filter?: 'underwater' | null;
   }
 
   // Advanced Sounds (with room acoustics)
@@ -399,9 +400,37 @@ export namespace AudioGenerator {
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + (index + 1) * noteDuration);
 
       oscillator.connect(gainNode); // .connect(agMasterGain);
-      applyRoomAcoustics(ctx, gainNode, options.roomSize || 'small');
+      applyRoomAcoustics(ctx, gainNode, options.roomSize || 'small', options.filter);
       oscillator.start(now + index * noteDuration);
       oscillator.stop(now + (index + 2) * noteDuration);
+    });
+  }
+
+  /** Play an error notification sound when the assistant's response fails */
+  export function chatNotifyError(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const volume = options.volume ?? 0.15;
+    const noteDuration = 0.16;
+
+    // Descending tone with triangle wave: G4 → D4 (subtle roughness for error)
+    [392.00, 293.66].forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle'; // Less smooth than sine
+      osc.frequency.setValueAtTime(freq, now + index * noteDuration);
+
+      gain.gain.setValueAtTime(0, now + index * noteDuration);
+      gain.gain.linearRampToValueAtTime(volume, now + index * noteDuration + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (index + 1) * noteDuration);
+
+      osc.connect(gain);
+      applyRoomAcoustics(ctx, gain, options.roomSize || 'small', options.filter);
+      osc.start(now + index * noteDuration);
+      osc.stop(now + (index + 2) * noteDuration);
     });
   }
 
@@ -575,7 +604,26 @@ export namespace AudioGenerator {
 
 /// Utility Functions ///
 
-function applyRoomAcoustics(ctx: AudioContext, source: AudioNode, roomSize: 'small' | 'large' = 'small'): void {
+function applyRoomAcoustics(ctx: AudioContext, source: AudioNode, roomSize: 'small' | 'large' = 'small', filter?: 'underwater' | null): void {
+  // If underwater, apply muffled + echo
+  if (filter === 'underwater') {
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 250;
+
+    const delay = ctx.createDelay();
+    delay.delayTime.value = 0.08;
+
+    const echo = ctx.createGain();
+    echo.gain.value = 0.3;
+
+    source.connect(lowpass);
+    lowpass.connect(agMasterGain);
+    lowpass.connect(delay).connect(echo).connect(agMasterGain);
+    return;
+  }
+
+  // Apply room reverb (normal case)
   const convolver = ctx.createConvolver();
   const reverbTime = roomSize === 'large' ? 2 : 0.5;
   const decayRate = roomSize === 'large' ? 0.5 : 2;
