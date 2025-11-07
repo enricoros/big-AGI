@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { hasKeys } from '~/common/util/objectUtils';
+
 import type { ShortcutObject } from './useGlobalShortcuts';
 
 
@@ -32,7 +34,7 @@ export const useGlobalShortcutsStore = create<ShortcutsStore>((set, get) => ({
       const { [groupId]: _, ...rest } = state.shortcutGroups;
       return {
         shortcutGroups: rest,
-        hasShortcuts: Object.keys(rest).length > 0,
+        hasShortcuts: hasKeys(rest),
       };
     }),
 
