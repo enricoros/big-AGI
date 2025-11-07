@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env';
-import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
@@ -163,8 +163,11 @@ export const llmOpenAIRouter = createTRPCRouter({
     // tRPC middleware: log errors for this procedure - as we don't have proper try/catch blocks yet
     .use(async ({ next, path, signal, type, input }) => {
       const result = await next();
-      if (!result.ok && result.error)
-        console.warn(`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
+      if (!result.ok && result.error) {
+        // '401 unauthorized' is expected with wrong/missing API keys - log instead of warn
+        const is401 = result.error instanceof TRPCFetcherError && result.error.httpStatus === 401;
+        console[is401 ? 'log' : 'warn'](`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
+      }
       return result;
     })
 
