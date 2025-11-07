@@ -522,7 +522,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         // Throw retryable error to instruct the correct ancestor to restart (only if retries available
         if (isRetryableError) {
           if (context?.retriesAvailable) {
-            console.log(`[Aix.Anthropic] 🔄 Can retry error '${errorText}'`);
+            console.log(`[Aix.Anthropic] Can retry error '${errorText}'`);
             throw new RequestRetryError(`Anthropic: ${errorText}`);
           } else
             console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
