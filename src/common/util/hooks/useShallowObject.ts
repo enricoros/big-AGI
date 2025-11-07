@@ -4,7 +4,7 @@ import * as React from 'react';
  * Shallow compare two objects for equality.
  * Returns true if the objects have the same properties and values.
  */
-export function shallowEquals<T>(objA: T, objB: T) {
+export function shallowEquals<T>(objA: T, objB: T): boolean {
 
   // like '===' but handles two corner cases differently:
   // - +0 and -0 are different
@@ -45,18 +45,30 @@ export function shallowEquals<T>(objA: T, objB: T) {
     return true;
   }
 
+  // count keys in objB without allocation (optimized: avoids Object.keys(objB))
+  let countB = 0;
+  for (const _ in objB)
+    if (Object.hasOwn(objB, _)) countB++;
+
   // Object  shallow compare (key and value equality)
   const keysA = Object.keys(objA) as (keyof T)[];
-  if (keysA.length !== Object.keys(objB).length)
+  if (keysA.length !== countB)
     return false;
   for (const keyA of keysA)
-    if (!Object.hasOwn(objB, keyA as string) || !Object.is(objA[keyA], objB[keyA]))
+    if (!Object.hasOwn(objB, keyA) || !Object.is(objA[keyA], objB[keyA]))
       return false;
   return true;
 }
 
 
-type StableType<T> = T extends any[] ? T : T extends object ? T : never;
+/**
+ * Marks a reference the hooks below keep identity-stable across renders while
+ * shallow-equal. Identity on T: the `object | null` constraint is the whole
+ * contract - primitives are identity-stable already, null is a legit 'absent'
+ * value, undefined is reserved as the refs' 'unset' sentinel.
+ */
+type _StableType<T extends _NullableObject> = T;
+type _NullableObject = object | null;
 
 /**
  * Returns a stable object reference when the value has not 'shallow' changed.
@@ -66,7 +78,7 @@ type StableType<T> = T extends any[] ? T : T extends object ? T : never;
  * In case of b = { ...a }, b will be the same object reference as a when
  * the properties are the same.
  */
-export function useShallowStable<T>(value: T): StableType<T> {
+export function useShallowStable<T extends _NullableObject>(value: T): _StableType<T> {
   /*
    * Ref to store the last value, so we can compare it with the new value, and
    * return the same object reference when the properties are 'shallow' equal.
@@ -74,10 +86,10 @@ export function useShallowStable<T>(value: T): StableType<T> {
   const ref = React.useRef<T>(value);
 
   return React.useMemo(() => {
-    if (!shallowEquals<T>(ref.current, value))
+    if (!shallowEquals(ref.current, value))
       ref.current = value;
     return ref.current;
-  }, [value]) as StableType<T>;
+  }, [value]);
 }
 
 
@@ -96,20 +108,20 @@ export function useShallowStable<T>(value: T): StableType<T> {
  *     count: items.length,
  *   }), [items]);
  */
-export function useMemoShallowStable<T>(factory: () => T, deps: React.DependencyList): StableType<T> {
+export function useMemoShallowStable<T extends _NullableObject>(factory: () => T, deps: React.DependencyList): _StableType<T> {
 
   // holds the last returned value, to preserve identity when shallow-equal
   const ref = React.useRef<T | undefined>(undefined);
 
   return React.useMemo(() => {
     const next = factory();
-    if (ref.current === undefined || !shallowEquals<T>(ref.current, next))
+    if (ref.current === undefined || !shallowEquals(ref.current, next))
       ref.current = next;
     return ref.current;
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     deps
-  ) as StableType<T>;
+  );
 }
 
 
@@ -124,12 +136,12 @@ export function useMemoShallowStable<T>(factory: () => T, deps: React.Dependency
  *   const printer = stabilizePrinter({...printerValue});
  *   ...
  */
-export function useShallowStabilizer<T>(): (value: T) => T {
-  const ref = React.useRef<T | null>(null);
+export function useShallowStabilizer<T extends _NullableObject>(): (value: T) => _StableType<T> {
+  const ref = React.useRef<T | undefined>(undefined);
 
-  return React.useCallback((value: T) => {
-    if (ref.current === null || !shallowEquals<T>(ref.current, value))
-      ref.current = value;
+  return React.useCallback((next: T) => {
+    if (ref.current === undefined || !shallowEquals(ref.current, next))
+      ref.current = next;
     return ref.current;
   }, []);
 }

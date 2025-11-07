@@ -15,7 +15,7 @@ const stableNoLlms: DLLM[] = [];
 /**
  * Service-specific read/write - great time saver
  */
-export function useServiceSetup<TServiceSettings extends object, TAccess>(serviceId: DModelsServiceId, vendor: IModelVendor<TServiceSettings, TAccess>): {
+export function useServiceSetup<TServiceSettings extends object, TAccess extends object>(serviceId: DModelsServiceId, vendor: IModelVendor<TServiceSettings, TAccess>): {
   service: DModelsService<TServiceSettings> | null;
   serviceAccess: TAccess;
 
