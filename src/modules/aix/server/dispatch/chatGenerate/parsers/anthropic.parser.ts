@@ -505,9 +505,28 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant error: ${errorText}`);
 
-        // Throw retryable error for overload/timeout conditions (only if retries available)
-        if (error.type === 'overloaded_error' && context?.retriesAvailable)
-          throw new RequestRetryError(`Anthropic: ${errorText}`);
+        // Errors documented by Anthropic - these follow a 200 HTTP response, so they're sent as JSON
+        // https://docs.claude.com/en/api/errors
+        //
+        // 400 - invalid_request_error (bad input)
+        // 401 - authentication_error (api key issue)
+        // 403 - permission_error (api key lacks permissions)
+        // 404 - not_found_error
+        // 413 - request_too_large (> 32MB for standard streaming)
+        // 429* - rate_limit_error (account hit limits)
+        // 500* - api_error (anthropic systems internal unexpected error)
+        // 529* - overloaded_error: The API is temporarily overloaded.
+        // *: retryable errors
+        const isRetryableError = ['overloaded_error', 'rate_limit_error', 'api_error'].includes(error.type);
+
+        // Throw retryable error to instruct the correct ancestor to restart (only if retries available
+        if (isRetryableError) {
+          if (context?.retriesAvailable) {
+            console.log(`[Aix.Anthropic] 🔄 Can retry error '${errorText}'`);
+            throw new RequestRetryError(`Anthropic: ${errorText}`);
+          } else
+            console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
+        }
 
         // Non-retryable errors (or no retries left): show to user
         return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
