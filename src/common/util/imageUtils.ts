@@ -19,6 +19,7 @@ const IMAGE_DIMENSIONS = {
   THUMBNAIL_128: 128,
   THUMBNAIL_256: 256,
 } as const;
+const HQ_SMOOTHING = true;
 
 
 export type CommonImageMimeTypes = 'image/png' | 'image/jpeg' | 'image/webp';
@@ -252,6 +253,12 @@ export async function imageBlobConvertType(imageBlob: Blob, toMimeType: CommonIm
       const ctx = canvas.getContext('2d');
       if (!ctx)
         return reject(new Error('Failed to get canvas context for conversion'));
+
+      if (HQ_SMOOTHING) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+      }
+
       ctx.drawImage(image, 0, 0);
 
       // Convert canvas to Blob with validation
@@ -401,17 +408,41 @@ export async function imageBlobResizeIfNeeded(imageBlob: Blob, resizeMode: LLMIm
         return;
       }
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx)
-        return reject(new Error('Failed to get canvas context for resizing'));
+      // multi-pass downscaling for better quality on large downscales (>2x)
+      // progressively downscale by at most 2x per pass to reduce aliasing
+      const scaleRatio = Math.max(originalWidth / newWidth, originalHeight / newHeight);
+      const passes = (HQ_SMOOTHING && scaleRatio > 2) ? Math.min(4, Math.ceil(Math.log2(scaleRatio))) : 1;
 
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-      ctx.drawImage(image, 0, 0, newWidth, newHeight);
+      let currentDest: HTMLImageElement | HTMLCanvasElement = image;
+      let currentWidth = originalWidth;
+      let currentHeight = originalHeight;
+
+      for (let pass = 0; pass < passes; pass++) {
+        const isLastPass = pass === passes - 1;
+        const targetWidth = isLastPass ? newWidth : Math.max(newWidth, Math.round(currentWidth / 2));
+        const targetHeight = isLastPass ? newHeight : Math.max(newHeight, Math.round(currentHeight / 2));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx)
+          return reject(new Error('Failed to get canvas context for resizing'));
+
+        if (HQ_SMOOTHING) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+        }
+        ctx.drawImage(currentDest, 0, 0, targetWidth, targetHeight);
+
+        currentDest = canvas;
+        currentWidth = targetWidth;
+        currentHeight = targetHeight;
+      }
+      const finalCanvas = currentDest as HTMLCanvasElement;
 
       // Convert canvas to Blob with validation
-      asyncCanvasToBlobWithValidation(canvas, toMimeType, toLossyQuality, 'imageBlobResizeIfNeeded')
+      asyncCanvasToBlobWithValidation(finalCanvas, toMimeType, toLossyQuality, 'imageBlobResizeIfNeeded')
         .then(({ blob }) => resolve({ blob, width: newWidth, height: newHeight }))
         .catch((reason) => reject(new Error(`Failed to resize image to '${resizeMode}' as '${toMimeType}': ${reason instanceof Error ? reason.message : String(reason)}`)));
     };
