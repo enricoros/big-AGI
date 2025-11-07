@@ -9,6 +9,8 @@ import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrout
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import { hasKeys } from '~/common/util/objectUtils';
+
 import type { DModelDomainId } from './model.domains.types';
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
@@ -181,7 +183,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
           const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
           return rest;
         }),
-    })),
+      })),
 
     createModelsService: (vendor: IModelVendor): DModelsService => {
 
@@ -336,7 +338,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
       // Select the best LLMs automatically, if not set
       try {
         //  auto-detect assignments, or re-import them from the old format
-        if (!state.modelAssignments || !Object.keys(state.modelAssignments).length) {
+        if (!hasKeys(state.modelAssignments)) {
 
           // reimport the former chatLLMId and fastLLMId if set
           const prevState = state as { chatLLMId?: DLLMId, fastLLMId?: DLLMId };

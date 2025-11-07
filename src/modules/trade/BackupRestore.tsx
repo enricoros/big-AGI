@@ -9,6 +9,7 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { hasKeys } from '~/common/util/objectUtils';
 import { Is } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
 import { createModuleLogger } from '~/common/logger';
@@ -250,8 +251,7 @@ function getIndexedDBContent(dbName: string): Promise<Record<string, { key: any;
 async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
   try {
     // Skip restoration if backup contains no localStorage data
-    const hasData = Object.keys(data).length > 0;
-    if (!hasData) {
+    if (!hasKeys(data)) {
       logger.info('Skipping localStorage restore - backup contains no localStorage data');
       return;
     }
@@ -666,8 +666,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   // derived state
   const isUnlocked = !!props.unlockRestore;
   const isBusy = restoreState === 'processing';
-  const hasLocalStorageData = backupDataForRestore ? Object.keys(backupDataForRestore.storage.localStorage).length > 0 : false;
-  const hasIndexedDBData = backupDataForRestore ? Object.keys(backupDataForRestore.storage.indexedDB || {}).length > 0 : false;
+  const hasLocalStorageData = backupDataForRestore ? hasKeys(backupDataForRestore.storage.localStorage) : false;
+  const hasIndexedDBData = backupDataForRestore ? hasKeys(backupDataForRestore.storage.indexedDB) : false;
 
 
   // handlers

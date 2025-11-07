@@ -1,5 +1,7 @@
 import { safeErrorString } from '~/server/wire';
 
+import { hasKeys } from '~/common/util/objectUtils';
+
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
@@ -1009,5 +1011,5 @@ function _warnIfObjectPropertiesDiffer(
     }
   }
 
-  return Object.keys(diff).length > 0 ? diff : null;
+  return hasKeys(diff) ? diff : null;
 }
