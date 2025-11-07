@@ -256,6 +256,9 @@ export class ContentReassembler {
           case 'issue':
             this.onCGIssue(op);
             break;
+          case 'retry-reset':
+            this.onRetryReset(op);
+            break;
           case 'set-metrics':
             this.onMetrics(op);
             break;
@@ -656,6 +659,23 @@ export class ContentReassembler {
     }
     this.accumulator.fragments.push(createErrorContentFragment(issueText));
     this.currentTextFragmentIndex = null;
+  }
+
+  private onRetryReset({ attempt, maxAttempts, delayMs, reason, shallClear }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'retry-reset' }>): void {
+    // operation-level retry likely requires a wipe
+    if (shallClear) {
+      this.currentTextFragmentIndex = null;
+      this.accumulator.fragments = [];
+      delete this.accumulator.genTokenStopReason;
+      // keep metrics/model/handle intact - may be useful for debugging retries
+
+      // discard any pending particles from the failed attempt
+      this.wireParticlesBacklog.length = 0;
+    }
+
+    // -> ph: show operation-level retry status
+    const retryMessage = `Retrying [${attempt}/${maxAttempts}] in ${Math.round(delayMs / 1000)}s - ${reason}`;
+    this.accumulator.fragments.push(createPlaceholderVoidFragment(retryMessage, 'ec-retry-srv-op'));
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {

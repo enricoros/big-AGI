@@ -573,6 +573,7 @@ export namespace AixWire_Particles {
   // | { cg: 'start' } // not really used for now
     | { cg: 'end', reason: CGEndReason, tokenStopReason: GCTokenStopReason }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
+    | { cg: 'retry-reset', attempt: number, maxAttempts: number, delayMs: number, reason: string, shallClear: boolean }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
     | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses', responseId: string, expiresAt: number | null } }

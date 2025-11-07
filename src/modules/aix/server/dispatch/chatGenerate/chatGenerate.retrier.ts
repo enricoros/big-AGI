@@ -19,6 +19,7 @@ const AIX_DEBUG_OPERATION_RETRY = true; // prints the execution retries
  */
 export class RequestRetryError extends Error {
   override readonly name = 'RequestRetryError';
+
   constructor(message: string) {
     super(message);
     Object.setPrototypeOf(this, RequestRetryError.prototype);
@@ -64,7 +65,7 @@ export async function* executeChatGenerateWithRetry(
         throw error; // unexpected
       }
 
-      // sanity: exhausted attempts - must be a Parser error
+      // sanity: exhausted attempts - must be a Parser error - as it shall have not thrown in this case
       if (attemptNumber >= maxAttempts) {
         if (AIX_DEBUG_OPERATION_RETRY)
           console.warn(`[operation.retrier] ⚠️ Retry error on final attempt (parser bug?) - ${error?.message || error}`);
@@ -77,6 +78,9 @@ export async function* executeChatGenerateWithRetry(
         console.log(`[operation.retrier] 🔄 Retrying after ${delayMs}ms (attempt ${attemptNumber}/${maxAttempts - 1}): ${error?.message || error}`);
 
       attemptNumber++;
+
+      // Emit retry-reset particle to signal client to clear accumulator and show placeholder
+      yield { cg: 'retry-reset', attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs, reason: error?.message || 'Unknown retry error', shallClear: true };
 
       // If aborted during delay, let next attempt detect it and create proper terminating particle
       // (throwing here would bypass executor's particle-based messaging contract)
