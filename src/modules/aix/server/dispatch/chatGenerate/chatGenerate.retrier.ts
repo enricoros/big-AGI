@@ -7,7 +7,7 @@ import { executeChatGenerate } from './chatGenerate.executor';
 
 
 // configuration
-const AIX_DISABLE_OPERATION_RETRY = true; // still validating
+const AIX_DISABLE_OPERATION_RETRY = false;
 const AIX_DEBUG_OPERATION_RETRY = true; // prints the execution retries
 
 
