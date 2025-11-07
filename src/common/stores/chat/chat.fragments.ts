@@ -226,7 +226,14 @@ export type DVoidModelAuxPart = {
   redactedData?: readonly string[],
 };
 
-type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up' /* 2025-02-23: added for non-pure-text placeholders */, modelOp?: DVoidPlaceholderModelOp };
+export type DVoidPlaceholderPart = {
+  pt: 'ph',
+  pText: string,
+  pType?:
+    | 'chat-gen-follow-up' // a follow-up is being generated
+    | 'ec-retry-srv-op', // ec = error correction: server operation-level retry (future: ec-retry-client, ec-retry-srv-dispatch)
+  modelOp?: DVoidPlaceholderModelOp
+};
 
 export type DVoidPlaceholderModelOp = {
   mot: 'search-web' | 'gen-image' | 'code-exec',
