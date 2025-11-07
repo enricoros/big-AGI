@@ -49,11 +49,28 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
     // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message
     if (eventData?.candidates?.length === 1) {
-      const candidate = eventData.candidates[0];
-      if (typeof candidate.finishReason === 'string' && candidate.finishReason.includes('503 Service Unavailable') /*candidate.finishReason.startsWith('Proxy error')*/) {
-        // pt.setTokenStopReason('cg-issue');
-        return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${candidate.finishReason}`, null);
-      }
+      const finishReason = eventData.candidates[0]?.finishReason;
+      if (typeof finishReason === 'string')
+        switch (true) {
+          case finishReason.includes('503 Service Unavailable'):
+            // pt.setTokenStopReason('cg-issue');
+            // TODO: tell the client about a classification code?
+            //       E.g. send a TRPCFetcherError-compatible `error` downstream, or also send
+            //       the equivalent of .aixFCategory/.aixFHttpStatus/.aixFNetError (see trpc.server.ts)
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null);
+
+          case finishReason.startsWith('Proxy queue error'):
+            // pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Queue Error detected: ${finishReason}`, null);
+
+          case finishReason.startsWith('Proxy error'):
+            // pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null);
+
+          default:
+            // NOTE: the 'GOOD' default values shall be GeminiWire_API_Generate_Content.FinishReason_enum, e.g. STOP, MAX_TOKENS, SAFETY, .. TOO_MANY_TOOL_CALLS, etc.
+            break;
+        }
     }
 
     // Validate schema and parse
