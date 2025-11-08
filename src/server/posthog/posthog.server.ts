@@ -4,6 +4,8 @@
  */
 import { PostHog } from 'posthog-node';
 
+import { Release } from '~/common/app.release';
+
 
 export const hasPostHogServer = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
@@ -42,6 +44,8 @@ export async function posthogServerSendEvent(eventName: string, distinctId: stri
 
   try {
 
+    const build = Release.buildInfo('backend');
+
     // immediate variant for serverless environments
     await client.captureImmediate({
       distinctId,
@@ -49,6 +53,10 @@ export async function posthogServerSendEvent(eventName: string, distinctId: stri
       properties: {
         runtime: properties?.runtime || 'nodejs',
         ...properties,
+        // Tenant and build context - added to all server events - matches client-side properties
+        app_tenant: Release.TenantSlug,
+        app_build_hash: build.gitSha || 'unknown',
+        app_pkg_version: build.pkgVersion || 'unknown',
       },
     });
 
@@ -77,6 +85,8 @@ export async function posthogServerSendException(error: Error | unknown, distinc
 
   try {
 
+    const build = Release.buildInfo('backend');
+
     // For server exceptions, use a consistent distinctId when no user is provided
     // This groups exceptions by runtime type for better error pattern analysis
     const effectiveDistinctId = distinctId || `server_${context.runtime}_errors`;
@@ -89,6 +99,10 @@ export async function posthogServerSendException(error: Error | unknown, distinc
       endpoint: context.endpoint,
       method: context.method,
       url: context.url,
+      // Tenant and build context (added to all server exceptions)
+      app_tenant: Release.TenantSlug,
+      app_build_hash: build.gitSha || 'unknown',
+      app_pkg_version: build.pkgVersion || 'unknown',
       // Any additional properties
       ...context.additionalProperties,
     });
