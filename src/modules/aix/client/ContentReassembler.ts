@@ -109,6 +109,19 @@ export class ContentReassembler {
     await this.#reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
   }
 
+  async setClientRetrying(strategy: 'reconnect' | 'resume', errorMessage: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string) {
+    if (DEBUG_PARTICLES)
+      console.log(`-> aix.p: client-retry (${strategy})`, { errorMessage, attempt, maxAttempts, delayMs, causeHttp, causeConn });
+
+    // process as retry-reset with cli-ll scope
+    this.onRetryReset({
+      cg: 'retry-reset', rScope: 'cli-ll',
+      rShallClear: false, // TODO: check if this is correct; we shall clear, but at the same time we haven't tried to see
+      reason: strategy === 'resume' ? `Resuming - ${errorMessage}` : `Reconnecting - ${errorMessage}`,
+      attempt, maxAttempts, delayMs, causeHttp, causeConn,
+    });
+  }
+
 
   // processing - internal
 

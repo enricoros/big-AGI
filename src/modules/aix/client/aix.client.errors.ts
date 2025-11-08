@@ -33,6 +33,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
 
   if (AIX_CLIENT_DEV_ASSERTS) console.error('[DEV] Aix streaming Error:', { error });
 
+
   // Browser-level network connection drops (TypeError, happens below tRPC error wrapping layer)
   // Network errors - when the client is disconnected (Vercel 5min timeout, Mobile timeout / disconnect, etc) - they show up as TypeErrors
   if (error instanceof TypeError && error.message === 'network error')
@@ -42,6 +43,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   // NOTE The behavior changed in 11.6+ for which we have an open upstream ticket: #6989
   if (error instanceof Error && error.message === 'Stream closed')
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' };
+
 
   // tRPC-level protocol errors (wrapped by tRPC client)
   // Initial connection failures, HTTP errors, or text responses that blow up tRPC's JSON parser
