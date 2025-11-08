@@ -21,9 +21,10 @@ export function posthogAnalyticsOptOut() {
 }
 
 // unused yet
-export function posthogCaptureEvent(eventName: string, properties?: Properties) {
+export function posthogCaptureEvent(eventName: string, properties?: Properties, options?: { sendInstantly?: boolean }) {
   if (isBrowser && hasPostHogAnalytics) {
-    _posthog?.capture(eventName, properties);
+    // For events before navigation (e.g., login button clicks), send immediately
+    _posthog?.capture(eventName, properties, options?.sendInstantly ? { send_instantly: true } : undefined);
   }
 }
 
