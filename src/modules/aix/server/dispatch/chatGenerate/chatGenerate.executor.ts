@@ -1,5 +1,5 @@
 import { createEmptyReadableStream, safeErrorString } from '~/server/wire';
-import { createRetryablePromise } from '~/server/trpc/trpc.fetchers.retrier';
+import { createRetryablePromise, RetryAttempt } from '~/server/trpc/trpc.fetchers.retrier';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AIX_SECURITY_ONLY_IN_DEV_BUILDS, AixDebugObject } from '../../api/aix.router';
@@ -54,7 +54,7 @@ export async function* executeChatGenerate(
 
   // Tack profiling particles if generated
   if (_d.profiler) {
-    chatGenerateTx.addDebugProfilererData(_d.profiler.getResultsData());
+    chatGenerateTx.addDebugProfilerData(_d.profiler.getResultsData());
     // performanceProfilerLog('AIX Router Performance', profiler?.getResultsData()); // uncomment to log to server console
     _d.profiler.clearMeasurements();
   }
@@ -93,13 +93,17 @@ async function* _connectToDispatch(
 
     // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthropic requests (>25s on large requests for Opus 3 models)
     _d.profiler?.measureStart('connect');
-    const connectionOperation = () => fetchResponseOrTRPCThrow({
+    const connectionOperationCreator = () => fetchResponseOrTRPCThrow({
       ...request,
       signal: intakeAbortSignal,
       name: `Aix.${_d.prettyDialect}`,
       throwWithoutName: true,
     });
-    const chatGenerateResponsePromise = createRetryablePromise(connectionOperation, intakeAbortSignal);
+    const onRetryAttempt = (info: RetryAttempt) => {
+      // -> retry-server-dispatch
+      chatGenerateTx.sendControl({ cg: 'retry-reset', rScope: 'srv-dispatch', rShallClear: false, reason: 'retrying initial connection', ...info });
+    };
+    const chatGenerateResponsePromise = createRetryablePromise(connectionOperationCreator, intakeAbortSignal, onRetryAttempt);
     const dispatchResponse = yield* heartbeatsWhileAwaiting(chatGenerateResponsePromise);
     _d.profiler?.measureEnd('connect');
 
