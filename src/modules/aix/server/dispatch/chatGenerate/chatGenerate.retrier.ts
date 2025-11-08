@@ -20,8 +20,15 @@ const AIX_DEBUG_OPERATION_RETRY = true; // prints the execution retries
 export class RequestRetryError extends Error {
   override readonly name = 'RequestRetryError';
 
-  constructor(message: string) {
-    super(message);
+  readonly reason: string;
+  readonly causeHttp?: number;
+  readonly causeConn?: string;
+
+  constructor(reason: string, options?: { causeHttp?: number; causeConn?: string }) {
+    super(reason); // keep message as reason for Error compatibility
+    this.reason = reason;
+    this.causeHttp = options?.causeHttp;
+    this.causeConn = options?.causeConn;
     Object.setPrototypeOf(this, RequestRetryError.prototype);
   }
 }
@@ -79,8 +86,15 @@ export async function* executeChatGenerateWithRetry(
 
       attemptNumber++;
 
-      // Emit retry-reset particle to signal client to clear accumulator and show placeholder
-      yield { cg: 'retry-reset', attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs, reason: error?.message || 'Unknown retry error', shallClear: true };
+      // -> retry-server-operation - parent loop of retry-server-dispatch
+      yield {
+        cg: 'retry-reset', rScope: 'srv-op',
+        rShallClear: true, // requesting a reassembler reset, however there are likely low/no particles yet
+        reason: error.reason || error.message || 'retrying operation',
+        attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs,
+        ...(error.causeHttp ? { causeHttp: error.causeHttp } : undefined),
+        ...(error.causeConn ? { causeConn: error.causeConn } : undefined),
+      };
 
       // If aborted during delay, let next attempt detect it and create proper terminating particle
       // (throwing here would bypass executor's particle-based messaging contract)
