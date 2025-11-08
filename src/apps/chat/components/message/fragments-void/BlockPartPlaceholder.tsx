@@ -120,6 +120,7 @@ export function BlockPartPlaceholder(props: {
   placeholderText: string,
   placeholderType?: DVoidPlaceholderPart['pType'],
   placeholderModelOp?: DVoidPlaceholderModelOp,
+  placeholderAixControl?: DVoidPlaceholderPart['aixControl'],
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
   showAsItalic?: boolean,
@@ -164,19 +165,33 @@ export function BlockPartPlaceholder(props: {
     </Chip>
   );
 
-  const isRetry = props.placeholderType === 'ec-retry-srv-op';
-  if (isRetry)
+  // AIX Control renderer (e.g., error correction retry)
+  if (props.placeholderAixControl?.ctl === 'ec-retry') {
+    const { rScope, rCauseHttp, rCauseConn } = props.placeholderAixControl;
+    const color = rScope === 'srv-dispatch' ? 'primary' : rScope === 'srv-op' ? 'warning' : 'danger';
     return (
       <Chip
-        color='primary'
+        // size='sm'
+        color={color}
         variant='soft'
-        size='sm'
-        sx={_styles.followUpChip}
-        startDecorator={<RepeatIcon sx={_styles.followUpChipIcon} />}
+        startDecorator={<div style={{ opacity: 0.75 }}>{rCauseHttp || rCauseConn || rScope}</div>}
+        endDecorator={<RepeatIcon style={{ opacity: 0.5 }} />}
+        onClick={() => console.log({ props })}
+        sx={{
+          gap: 1.5,
+          px: 1.5,
+          py: 0.375,
+          my: '1px', // to not crop the outline on mobile, or on beam
+          boxShadow: `1px 2px 4px -3px var(--joy-palette-${color}-solidBg)`,
+          // wrap text if needed - introduced for retry error messages
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+        }}
       >
         {props.placeholderText}
       </Chip>
     );
+  }
 
   // Model operation renderer
   if (props.placeholderModelOp)
