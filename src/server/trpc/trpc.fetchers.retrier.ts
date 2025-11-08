@@ -60,6 +60,18 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
 
 
 /**
+ * Describes a retry attempt.
+ */
+export type RetryAttempt = {
+  attempt: number; // 2, 3, ...maxAttempts
+  maxAttempts: number;
+  delayMs: number;
+  causeHttp?: number;
+  causeConn?: string;
+};
+
+
+/**
  * Creates a retryable promise that attempts the operation with exponential backoff.
  *
  * This returns a single promise that internally handles all retry attempts,
@@ -72,9 +84,10 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
  *
  * @param operationFn The operation to retry (must be repeatable/idempotent)
  * @param abortSignal Signal to cancel retries
+ * @param onRetry Optional callback invoked before each retry attempt
  * @returns Promise that resolves with the successful result or rejects with the final error
  */
-export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal): Promise<T> {
+export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
   return new Promise<T>(async (resolve, reject) => {
     let attemptNumber = 1;
 
@@ -148,6 +161,15 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
         attemptNumber++;
         if (AIX_DEBUG_SERVER_RETRY)
           console.log(`[fetchers.retrier] 🔄 Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
+
+        // let the caller know about the retry attempt
+        onRetry?.({
+          attempt: attemptNumber,
+          maxAttempts: rp.maxAttempts,
+          delayMs,
+          causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined,
+          causeConn: error instanceof TRPCFetcherError ? error.category : undefined,
+        });
 
         // abortable wait
         if (await abortableDelay(delayMs, abortSignal)) {
