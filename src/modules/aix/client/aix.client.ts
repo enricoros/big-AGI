@@ -6,7 +6,6 @@ import { DLLM, DLLMId, getLLMPricing, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Re
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiStream } from '~/common/util/trpc.client';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
@@ -646,7 +645,9 @@ async function _aixChatGenerateContent_LL(
 
 
   // Retry/Reconnect - low-level state machine
-  const rsm = new AixStreamRetry(0, 0);
+  // - reconnect: for server overload/busy (429, 503, 502) and transient errors
+  // - resume: for network disconnects with OpenAI Responses API handle
+  const rsm = new AixStreamRetry(0, 0); // sensible: 3, 2
 
   while (true) {
 
@@ -747,7 +748,7 @@ async function _aixChatGenerateContent_LL(
 
         // fragment-notify of our ongoing retry attempt
         try {
-          await reassembler.setClientExcepted(`**${capitalizeFirstLetter(shallRetry.strategy)}** (attempt ${shallRetry.attemptNumber}) in ${Math.round(shallRetry.delayMs / 1000)}s: ${errorMessage}`);
+          await reassembler.setClientRetrying(shallRetry.strategy, errorMessage, shallRetry.attemptNumber, 0, shallRetry.delayMs, typeof maybeErrorStatusCode === 'number' ? maybeErrorStatusCode : undefined, errorType);
           await onGenerateContentUpdate?.(accumulator_LL, false /* partial */);
         } catch (e) {
           // .. ignore the notification error
