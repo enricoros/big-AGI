@@ -5,8 +5,7 @@ import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { imageCaptionFromImageOrThrow } from '~/modules/aifn/image-caption/imageCaptionFromImage';
 import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
-import type { CommonImageMimeTypes } from '~/common/util/imageUtils';
-import { Is } from '~/common/util/pwaUtils';
+import { PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 import { convert_Base64DataURL_To_Base64WithMimeType, convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { getDomainModelConfiguration } from '~/common/stores/llms/hooks/useModelDomain';
@@ -23,9 +22,6 @@ import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, 
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
 
 
-// configuration
-export const DEFAULT_ADRAFT_IMAGE_MIMETYPE: CommonImageMimeTypes = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
-export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
 const ENABLE_TEXT_AND_IMAGES = false; // [PROD] ?
@@ -286,7 +282,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       converters.push({ id: 'image-resized-low', name: 'Image (low detail)', disabled: !inputImageMimeSupported });
       converters.push({ id: 'image-original', name: 'Image (original quality)', disabled: !inputImageMimeSupported });
       if (!inputImageMimeSupported)
-        converters.push({ id: 'image-to-default', name: `As Image (${DEFAULT_ADRAFT_IMAGE_MIMETYPE})` });
+        converters.push({ id: 'image-to-default', name: `As Image (${PLATFORM_IMAGE_MIMETYPE})` });
       converters.push({ id: 'image-caption', name: 'Caption (Text)', disabled: visionModelMissing });
       converters.push({ id: 'unhandled', name: 'No Image' });
       converters.push({ id: 'image-ocr', name: 'Add Text (OCR)', isCheckbox: true });
@@ -565,7 +561,7 @@ export async function attachmentPerformConversion(
       // image converted (potentially unsupported mime)
       case 'image-to-default':
         if (!_expectBlob(input.data, 'image-to-default')) return;
-        const imageCastF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
+        const imageCastF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, PLATFORM_IMAGE_MIMETYPE, false);
         if (imageCastF)
           newFragments.push(imageCastF);
         break;
@@ -643,7 +639,7 @@ export async function attachmentPerformConversion(
         if (!_expectBlob(input.data, 'PDF images converter')) break;
         // Convert Blob to ArrayBuffer for PDF.js
         try {
-          const imageDataURLs = await pdfToImageDataURLs(await input.data.arrayBuffer(), DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+          const imageDataURLs = await pdfToImageDataURLs(await input.data.arrayBuffer(), PLATFORM_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress });
           });
           for (const pdfPageImage of imageDataURLs) {
@@ -667,7 +663,7 @@ export async function attachmentPerformConversion(
 
           // duplicated from 'pdf-images' (different progress update)
           const imageFragments: DMessageAttachmentFragment[] = [];
-          const imageDataURLs = await pdfToImageDataURLs(pdfArrayBufferForImages, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+          const imageDataURLs = await pdfToImageDataURLs(pdfArrayBufferForImages, PLATFORM_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress / 2 }); // Update progress (0% to 50%)
           });
           for (const pdfPageImage of imageDataURLs) {

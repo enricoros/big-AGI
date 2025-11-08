@@ -1,11 +1,10 @@
 import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 
 import type { MaybePromise } from '~/common/types/useful.types';
-import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
-import { imageBlobTransform } from '~/common/util/imageUtils';
+import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
@@ -499,7 +498,7 @@ export class ContentReassembler {
       // perform resize/type conversion if desired, and find the image dimensions
       const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && inputType === 'image/png';
       const { blob: imageBlob, height: imageHeight, width: imageWidth } = await imageBlobTransform(inputImage, {
-        convertToMimeType: shallConvert ? DEFAULT_ADRAFT_IMAGE_MIMETYPE : undefined,
+        convertToMimeType: shallConvert ? PLATFORM_IMAGE_MIMETYPE : undefined,
         convertToLossyQuality: GENERATED_IMAGES_COMPRESSION_QUALITY,
         throwOnTypeConversionError: true,
         debugConversionLabel: `ContentReassembler(ii)`,
