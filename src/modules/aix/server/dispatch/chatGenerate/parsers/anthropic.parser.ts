@@ -523,7 +523,17 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (isRetryableError) {
           if (context?.retriesAvailable) {
             console.log(`[Aix.Anthropic] Can retry error '${errorText}'`);
-            throw new RequestRetryError(`Anthropic: ${errorText}`);
+            // map error types to HTTP status codes for diagnostics
+            const errorTypeToHttpStatus: Record<string, number> = {
+              'rate_limit_error': 429,
+              'api_error': 500,
+              'overloaded_error': 529,
+            };
+            // request a retry by unwinding to the retrier
+            throw new RequestRetryError(`retrying Anthropic: ${errorText}`, {
+              causeHttp: errorTypeToHttpStatus[error.type],
+              causeConn: error.type,
+            });
           } else
             console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
         }
