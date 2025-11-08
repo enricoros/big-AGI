@@ -5,11 +5,17 @@
  * Also see videoUtils.ts for more image-related functions.
  */
 
-import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from '../attachment-drafts/attachment.pipeline';
-
+import { Is } from './pwaUtils';
 import { asyncCanvasToBlobWithValidation } from './canvasUtils';
 
+
+// important platform values
+export const PLATFORM_IMAGE_MIMETYPE: CommonImageMimeTypes = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
+
+
 // configuration
+const HQ_SMOOTHING = true;
+const DEFAULT_LOSSY_QUALITY = 0.96;
 const IMAGE_DIMENSIONS = {
   ANTHROPIC_MAX_SIDE: 1568,
   GOOGLE_MAX_SIDE: 3072,
@@ -19,7 +25,6 @@ const IMAGE_DIMENSIONS = {
   THUMBNAIL_128: 128,
   THUMBNAIL_256: 256,
 } as const;
-const HQ_SMOOTHING = true;
 
 
 export type CommonImageMimeTypes = 'image/png' | 'image/jpeg' | 'image/webp';
@@ -89,7 +94,7 @@ export async function renderSVGToPNGBlob(svgCode: string, transparentBackground:
 interface ImageTransformOptions {
   /** Resize mode for the image, if specified. */
   resizeMode?: LLMImageResizeMode,
-  /** If unspecified, we'll use the DEFAULT_ADRAFT_IMAGE_MIMETYPE (webp for chrome/firefox, jpeg for safari which doesn't encode webp) */
+  /** If unspecified, we'll use the PLATFORM_IMAGE_MIMETYPE (webp for chrome/firefox, jpeg for safari which doesn't encode webp) */
   convertToMimeType?: 'image/png' | 'image/jpeg' | 'image/webp',
   /** If specified, we'll use the DEFAULT_ADRAFT_IMAGE_QUALITY */
   convertToLossyQuality?: number, // 0-1, only used if convertToMimeType is lossy (jpeg or webp)
@@ -138,8 +143,8 @@ export async function imageBlobTransform(inputImage: Blob, options: ImageTransfo
   // 1. Resize & Format-convert image if requested
   let hasResized = false;
   let hasTypeConverted = false;
-  const toMimeType = options.convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE;
-  const toLossyQuality = options.convertToLossyQuality ?? DEFAULT_ADRAFT_IMAGE_QUALITY;
+  const toMimeType = options.convertToMimeType || PLATFORM_IMAGE_MIMETYPE;
+  const toLossyQuality = options.convertToLossyQuality ?? DEFAULT_LOSSY_QUALITY;
   if (options.resizeMode) {
 
     // if null, resizing was not needed or possible (size could not be a fit)
