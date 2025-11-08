@@ -661,9 +661,9 @@ export class ContentReassembler {
     this.currentTextFragmentIndex = null;
   }
 
-  private onRetryReset({ attempt, maxAttempts, delayMs, reason, shallClear }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'retry-reset' }>): void {
+  private onRetryReset({ rScope, rShallClear, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'retry-reset' }>): void {
     // operation-level retry likely requires a wipe
-    if (shallClear) {
+    if (rShallClear) {
       this.currentTextFragmentIndex = null;
       this.accumulator.fragments = [];
       delete this.accumulator.genTokenStopReason;
@@ -673,9 +673,15 @@ export class ContentReassembler {
       this.wireParticlesBacklog.length = 0;
     }
 
-    // -> ph: show operation-level retry status
+    // -> ph: show retry status
     const retryMessage = `Retrying [${attempt}/${maxAttempts}] in ${Math.round(delayMs / 1000)}s - ${reason}`;
-    this.accumulator.fragments.push(createPlaceholderVoidFragment(retryMessage, 'ec-retry-srv-op'));
+    this.accumulator.fragments.push(createPlaceholderVoidFragment(retryMessage, undefined, undefined, {
+      ctl: 'ec-retry',
+      rScope: rScope,
+      rAttempt: attempt,
+      ...(causeHttp ? { rCauseHttp: causeHttp } : undefined),
+      ...(causeConn ? { rCauseConn: causeConn } : undefined),
+    }));
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {

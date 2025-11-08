@@ -59,6 +59,11 @@ export interface IParticleTransmitter {
   /** Adds a URL citation part */
   appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number): void;
 
+  // Special //
+
+  /** Sends control particles right away, such as retry-reset control particles */
+  sendControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue?: boolean): void;
+
   /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
   sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string): void;
 
