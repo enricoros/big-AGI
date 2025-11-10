@@ -7,6 +7,7 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { formatModelsCost } from '~/common/util/costUtils';
 import { useCostMetricsForLLMService } from '~/common/stores/metrics/store-metrics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIComplexityMode } from '~/common/stores/store-ui';
 
 
 const _styles = {
@@ -58,13 +59,14 @@ export function ApproximateCosts(props: {
 
   // external state
   const isMobile = useIsMobile();
+  const isExtra = useUIComplexityMode() === 'extra';
   const { totalCosts, totalSavings, totalInputTokens, totalOutputTokens, firstUsageDate, usageCount, partialMessageUsages } =
     useCostMetricsForLLMService(props.serviceId);
 
   const hasSaved = totalSavings && totalSavings > 0;
 
   return React.useMemo(() => {
-    if (!totalCosts)
+    if (!isExtra || !totalCosts)
       return !props.children ? undefined
         : <Box sx={_styles.box}>{props.children}</Box>;
 
@@ -114,5 +116,5 @@ export function ApproximateCosts(props: {
         )}
       </Box>
     );
-  }, [expanded, firstUsageDate, hasSaved, isMobile, partialMessageUsages, props.children, props.whoSaved, totalCosts, totalInputTokens, totalOutputTokens, totalSavings, usageCount]);
+  }, [expanded, firstUsageDate, hasSaved, isExtra, isMobile, partialMessageUsages, props.children, props.whoSaved, totalCosts, totalInputTokens, totalOutputTokens, totalSavings, usageCount]);
 }
