@@ -3,7 +3,7 @@ import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
-import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
+import type { IParticleTransmitter, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
 
 
 // configuration
@@ -122,8 +122,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     return !!this.terminationReason;
   }
 
-  setRpcTerminatingIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
-    this._addIssue(issueId, issueText, forceLogWarn);
+  setRpcTerminatingIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
+    this._addIssue(issueId, issueText, serverLog);
     this.setEnded('issue-rpc');
   }
 
@@ -174,9 +174,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.tokenStopReason = reason;
   }
 
-  /** End the current part and flush it */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null) {
-    this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, false);
+  /**
+   * End the current part and flush it
+   * - note the default is to NOT log to server, as those are user-facing and not server issues
+   */
+  setDialectTerminatingIssue(dialectText: string, symbol: string | null, _serverLog: ParticleServerLogLevel = false) {
+    this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, _serverLog);
     this.setEnded('issue-dialect');
   }
 
@@ -316,10 +319,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
 
-  /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
-  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
-    if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
-      const logLevel = issueId === 'dispatch-fetch' ? 'log' : 'warn';
+  /**
+   * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead
+   */
+  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
+    if (serverLog || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
+      const logLevel = serverLog === 'srv-warn' ? 'warn' as const : 'log' as const;
       console[logLevel](`Aix.${this.prettyDialect} ${issueId}: ${issueText}`);
     }
 
