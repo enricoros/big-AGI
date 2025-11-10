@@ -23,6 +23,7 @@ import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './mo
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
 import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
 import { mistralModels } from './models/mistral.models';
+import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './models/moonshot.models';
 import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openaiDevCheckForModelsOverlap_DEV, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
@@ -33,7 +34,7 @@ import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
 
 
 const openAIDialects = z.enum([
-  'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'openai', 'openpipe', 'openrouter', 'perplexity', 'togetherai', 'xai',
+  'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'moonshot', 'openai', 'openpipe', 'openrouter', 'perplexity', 'togetherai', 'xai',
 ]);
 export type OpenAIDialects = z.infer<typeof openAIDialects>;
 
@@ -250,6 +251,13 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         case 'mistral':
           models = mistralModels(openAIModels);
+          break;
+
+        case 'moonshot':
+          models = openAIModels
+            .filter(moonshotModelFilter)
+            .map(moonshotModelToModelDescription)
+            .sort(moonshotModelSortFn);
           break;
 
         // [OpenAI]: chat-only models, custom sort, manual mapping
@@ -515,6 +523,7 @@ const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
+const DEFAULT_MOONSHOT_HOST = 'https://api.moonshot.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENPIPE_HOST = 'https://app.openpipe.ai/api';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
@@ -689,6 +698,25 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${mistralKey}`,
         },
         url: mistralHost + apiPath,
+      };
+
+    case 'moonshot':
+      // https://platform.moonshot.ai/docs/api/chat
+      let moonshotKey = access.oaiKey || env.MOONSHOT_API_KEY || '';
+      const moonshotHost = fixupHost(access.oaiHost || DEFAULT_MOONSHOT_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      moonshotKey = getRandomKeyFromMultiKey(moonshotKey);
+
+      if (!moonshotKey || !moonshotHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Moonshot API Key or Host. Add it on the UI or server side.' });
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${moonshotKey}`,
+        },
+        url: moonshotHost + apiPath,
       };
 
 

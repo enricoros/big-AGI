@@ -15,6 +15,7 @@ import { GroqServiceSetup } from '../vendors/groq/GroqServiceSetup';
 import { LMStudioServiceSetup } from '../vendors/lmstudio/LMStudioServiceSetup';
 import { LocalAIServiceSetup } from '../vendors/localai/LocalAIServiceSetup';
 import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
+import { MoonshotServiceSetup } from '../vendors/moonshot/MoonshotServiceSetup';
 import { OllamaServiceSetup } from '../vendors/ollama/OllamaServiceSetup';
 import { OpenAIServiceSetup } from '../vendors/openai/OpenAIServiceSetup';
 import { OpenPipeServiceSetup } from '../vendors/openpipe/OpenPipeServiceSetup';
@@ -39,6 +40,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   lmstudio: LMStudioServiceSetup,
   localai: LocalAIServiceSetup,
   mistral: MistralServiceSetup,
+  moonshot: MoonshotServiceSetup,
   ollama: OllamaServiceSetup,
   openai: OpenAIServiceSetup,
   openpipe: OpenPipeServiceSetup,
