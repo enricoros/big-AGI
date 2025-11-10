@@ -589,7 +589,7 @@ export function ChatMessage(props: {
 
   const listItemSx: SxProps = React.useMemo(() => ({
     // vars
-    '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0,
+    // '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0, // disabled - looks worse
 
     // style
     backgroundColor: backgroundColor,
