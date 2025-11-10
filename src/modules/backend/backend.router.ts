@@ -57,6 +57,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmLocalAIHost: !!env.LOCALAI_API_HOST,
         hasLlmLocalAIKey: !!env.LOCALAI_API_KEY,
         hasLlmMistral: !!env.MISTRAL_API_KEY,
+        hasLlmMoonshot: !!env.MOONSHOT_API_KEY,
         hasLlmOllama: !!env.OLLAMA_API_HOST,
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
         hasLlmOpenPipe: !!env.OPENPIPE_API_KEY,

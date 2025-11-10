@@ -18,6 +18,7 @@ import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
+import { MoonshotIcon } from '~/common/components/icons/vendors/MoonshotIcon';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { OpenPipeIcon } from '~/common/components/icons/vendors/OpenPipeIcon';
@@ -42,6 +43,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   lmstudio: LMStudioIcon,
   localai: LocalAIIcon,
   mistral: MistralIcon,
+  moonshot: MoonshotIcon,
   ollama: OllamaIcon,
   openai: OpenAIIcon,
   openpipe: OpenPipeIcon,
