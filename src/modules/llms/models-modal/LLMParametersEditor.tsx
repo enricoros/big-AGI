@@ -94,6 +94,11 @@ const _antWebFetchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
+// const _moonshotWebSearchOptions = [
+//   { value: 'auto', label: 'On', description: 'Enable Kimi $web_search ($0.005 per search)' },
+//   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+// ] as const;
+
 const _ortWebSearchOptions = [
   { value: 'auto', label: 'On', description: 'Enable web search (native for OpenAI/Anthropic, Exa for others)' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -164,6 +169,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
+    // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort,
     llmVndOaiReasoningEffort4,
     llmVndOaiRestoreMarkdown,
@@ -396,6 +402,20 @@ export function LLMParametersEditor(props: {
         options={_geminiGoogleSearchOptions}
       />
     )}
+
+
+    {/*{showParam('llmVndMoonshotWebSearch') && (*/}
+    {/*  <FormSelectControl*/}
+    {/*    title='Web Search'*/}
+    {/*    tooltip='Enable Kimi $web_search builtin function for real-time web search. Costs $0.005 per search. Use kimi-k2-turbo-preview for dynamic context handling.'*/}
+    {/*    value={llmVndMoonshotWebSearch ?? _UNSPECIFIED}*/}
+    {/*    onChange={(value) => {*/}
+    {/*      if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndMoonshotWebSearch');*/}
+    {/*      else onChangeParameter({ llmVndMoonshotWebSearch: value });*/}
+    {/*    }}*/}
+    {/*    options={_moonshotWebSearchOptions}*/}
+    {/*  />*/}
+    {/*)}*/}
 
     {showParam('llmVndPerplexitySearchMode') && (
       <FormSelectControl
