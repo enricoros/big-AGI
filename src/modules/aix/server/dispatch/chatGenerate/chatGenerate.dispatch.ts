@@ -46,7 +46,8 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
  */
 export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): ChatGenerateDispatch {
 
-  switch (access.dialect) {
+  const { dialect } = access;
+  switch (dialect) {
     case 'anthropic': {
       const anthropicRequest = anthropicAccess(access, '/v1/messages', {
         modelIdForBetaFeatures: model.id,
@@ -104,6 +105,9 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
 
+    default:
+      const _exhaustiveCheck: never = dialect;
+    // fallthrough
     case 'alibaba':
     case 'azure':
     case 'deepseek':
@@ -111,6 +115,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
     case 'lmstudio':
     case 'localai':
     case 'mistral':
+    case 'moonshot':
     case 'openai':
     case 'openpipe':
     case 'openrouter':
@@ -125,7 +130,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           request: {
             ...openAIAccess(access, model.id, '/v1/responses'),
             method: 'POST',
-            body: aixToOpenAIResponses(access.dialect, model, chatGenerate, false, streaming, enableResumability),
+            body: aixToOpenAIResponses(dialect, model, chatGenerate, false, streaming, enableResumability),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
@@ -136,11 +141,12 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         request: {
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           method: 'POST',
-          body: aixToOpenAIChatCompletions(access.dialect, model, chatGenerate, false, streaming),
+          body: aixToOpenAIChatCompletions(dialect, model, chatGenerate, false, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
+
   }
 }
 
@@ -151,7 +157,8 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
  */
 export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHandle: AixAPI_ResumeHandle, streaming: boolean): ChatGenerateDispatch {
 
-  switch (access.dialect) {
+  const { dialect } = access;
+  switch (dialect) {
     case 'azure':
     case 'openai':
     case 'openrouter':
@@ -170,6 +177,9 @@ export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHa
         chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
       };
 
+    default:
+      const _exhaustiveCheck: never = dialect;
+    // fallthrough
     case 'alibaba':
     case 'anthropic':
     case 'deepseek':
@@ -178,13 +188,14 @@ export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHa
     case 'lmstudio':
     case 'localai':
     case 'mistral':
+    case 'moonshot':
     case 'ollama':
     case 'openpipe':
     case 'perplexity':
     case 'togetherai':
     case 'xai':
       // Throw on unsupported protocols (Azure and OpenRouter are speculatively supported)
-      throw new Error(`Resume not supported for dialect: ${access.dialect}`);
+      throw new Error(`Resume not supported for dialect: ${dialect}`);
 
   }
 }
