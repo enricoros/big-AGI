@@ -388,11 +388,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           default:
             const _exhaustiveCheck: never = doneItemType;
-          // noinspection FallThroughInSwitchStatementJS
-          // case 'custom_tool_call':
-          // case 'code_interpreter_call':
-          // case 'file_search_call': // OpenAI vector store - not implemented
-          // case 'mcp_call':
+            // noinspection FallThroughInSwitchStatementJS
+            // case 'custom_tool_call':
+            // case 'code_interpreter_call':
+            // case 'file_search_call': // OpenAI vector store - not implemented
+            // case 'mcp_call':
             // TODO: Implement these when types are properly integrated
             console.log(`[DEV] Output item type: ${doneItemType} (TODO: implement)`, doneItem);
             break;
@@ -563,7 +563,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
 
         // Transmit the error as text - note: throw if you want to transmit as 'error'
-        pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic);
+        // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+        pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
         break;
 
       default:
@@ -897,7 +898,8 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic);
+  // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
   return true;
 }
 

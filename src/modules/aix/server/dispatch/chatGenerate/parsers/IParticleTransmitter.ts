@@ -11,7 +11,7 @@ export interface IParticleTransmitter {
   setEnded(reason: Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>): void;
 
   /** End the current part and flush it */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog?: ParticleServerLogLevel /* default: false - not expected to log; user-errors */): void;
+  setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
 
 
   // Parts data //

@@ -94,7 +94,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error) {
-      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic);
+      // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
     }
 
     // [OpenAI] if there's a warning, log it once
@@ -321,7 +322,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
                 pt.appendAudioInline(a.mimeType, a.base64Data, acc.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
               } catch (error) {
                 console.warn('[OpenAI] Failed to process streaming audio:', error);
-                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
               }
             } else
               console.warn('[OpenAI] Ignoring audio expires_at without a valid audio stream');
@@ -449,7 +450,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           pt.appendAudioInline(a.mimeType, a.base64Data, message.audio.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
         } catch (error) {
           console.warn('[OpenAI] Failed to process audio:', error);
-          pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+          pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
         }
       }
 
@@ -624,7 +625,8 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic);
+  // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, 'srv-warn');
   return true;
 }
 
