@@ -539,7 +539,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         }
 
         // Non-retryable errors (or no retries left): show to user
-        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
+        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic, 'srv-warn');
 
       default:
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);

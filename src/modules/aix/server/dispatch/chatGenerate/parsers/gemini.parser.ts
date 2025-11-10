@@ -51,21 +51,25 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     if (eventData?.candidates?.length === 1) {
       const finishReason = eventData.candidates[0]?.finishReason;
       if (typeof finishReason === 'string')
+
+        // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+        //        in case of transient errors (502, 503, proxy queue, etc.) - not for good codes.
+
         switch (true) {
           case finishReason.includes('503 Service Unavailable'):
             // pt.setTokenStopReason('cg-issue');
             // TODO: tell the client about a classification code?
             //       E.g. send a TRPCFetcherError-compatible `error` downstream, or also send
             //       the equivalent of .aixFCategory/.aixFHttpStatus/.aixFNetError (see trpc.server.ts)
-            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null);
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
 
           case finishReason.startsWith('Proxy queue error'):
             // pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Queue Error detected: ${finishReason}`, null);
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Queue Error detected: ${finishReason}`, null, 'srv-warn');
 
           case finishReason.startsWith('Proxy error'):
             // pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null);
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
 
           default:
             // NOTE: the 'GOOD' default values shall be GeminiWire_API_Generate_Content.FinishReason_enum, e.g. STOP, MAX_TOKENS, SAFETY, .. TOO_MANY_TOOL_CALLS, etc.
@@ -89,7 +93,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
+      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked, false);
     }
 
     // candidates may be an optional field (started happening on 2024-09-27)
@@ -142,10 +146,10 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 );
               } catch (error) {
                 console.warn('[Gemini] Failed to convert audio:', error);
-                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
               }
             } else
-              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null);
+              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null, 'srv-warn');
             break;
 
           // <- FunctionCallPart
@@ -281,13 +285,13 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             } as const;
             const reason = reasonMap[candidate0.finishReason];
             pt.setTokenStopReason(reason[0]);
-            return pt.setDialectTerminatingIssue(reason[1], reason[2]);
+            return pt.setDialectTerminatingIssue(reason[1], reason[2], false);
 
           default:
             // Exhaustiveness check - if we get here, Gemini added a new finishReason
             const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
             pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null);
+            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null, 'srv-warn');
         }
       }
     } /* end of .candidates */
