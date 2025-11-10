@@ -164,6 +164,18 @@ export const DModelParameterRegistry = {
     hidden: true,
   } as const,
 
+  // Moonshot-specific parameters
+
+  llmVndMoonshotWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable Kimi\'s $web_search builtin function for real-time web search ($0.005 per search)',
+    values: ['auto'] as const,
+    // No initialValue - undefined means off
+  } as const,
+
+  // OpenAI-specific parameters
+
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,
