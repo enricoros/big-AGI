@@ -72,7 +72,10 @@ export namespace OpenAIWire_ContentParts {
      * .optional: for Mistral non-streaming generation - this is fairly weak, and does not let the discriminator work;
      *            please remove this hack asap.
      */
-    type: z.literal('function').optional(),
+    type: z.enum([
+      'function',
+      'builtin_function', // [Moonshot, 2025-11-09] (NS-parse) Support Moonshot-over-OpenAI builtin tools (builtin_function)
+    ]).optional(),
     id: z.string(),
     function: z.object({
       name: z.string(),
@@ -230,6 +233,14 @@ export namespace OpenAIWire_Tools {
     z.object({
       type: z.literal('function'),
       function: FunctionDefinition_schema,
+    }),
+    // [Moonshot, 2025-11-09] (definition) Support Moonshot-over-OpenAI - builtin_function for Kimi's $web_search
+    z.object({
+      type: z.literal('builtin_function'),
+      function: z.object({
+        name: z.string(), // Allows names like $web_search
+        description: z.string().optional(),
+      }),
     }),
   ]);
 
@@ -575,7 +586,10 @@ export namespace OpenAIWire_API_Chat_Completions {
     index: z.number() // index is not present in non-streaming calls
       .optional(), // [Mistral] not present
 
-    type: z.literal('function').optional(), // currently (2024-10-01) only 'function' is supported
+    type: z.enum([
+      'function',
+      'builtin_function', // [Moonshot, 2025-11-09] (S-parse) Support Moonshot-over-OpenAI builtin tools (builtin_function)
+    ]).optional(),
 
     id: z.string().optional(), // id of the tool call - set likely only in the first chunk
 
