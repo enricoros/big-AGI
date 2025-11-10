@@ -432,7 +432,8 @@ export namespace GeminiWire_Safety {
     /** Optional. If set, the prompt was blocked and no candidates are returned. */
     blockReason: BlockReason_enum.optional(),
     /** At most one rating per category. */
-    safetyRatings: z.array(SafetyRating_schema),
+    safetyRatings: z.array(SafetyRating_schema)
+      .optional(), // [Gemini, 2025-11-09] Optional because PROHIBITED_CONTENT blocks omit safetyRatings
   });
 
 }
