@@ -472,7 +472,16 @@ export namespace OpenAIWire_API_Chat_Completions {
     // role: z.string(),
 
     // .optional: when parsing a non-streaming message with just a FC, the content can be missing
-    content: z.string().nullable().optional(),
+    content: z.string().nullable().optional()
+      // [Mistral, 2025-10-15] Mistral SPEC-BREAKING thinking fragments (non-streaming)
+      .or(z.array(z.object({
+        type: z.string(), // 'thinking' or 'text', but relaxed
+        thinking: z.array(z.object({
+          type: z.string(),
+          text: z.string(),
+        })).optional(),
+        text: z.string().optional(), // for type: 'text' blocks
+      }))),
 
     /**
      * [OpenAI, 2025-03-11] Annotations

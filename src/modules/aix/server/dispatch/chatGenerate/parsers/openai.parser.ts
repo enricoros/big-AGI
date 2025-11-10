@@ -401,6 +401,25 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           // we will return the EXACT content for non-streaming calls, hence we don't call `appendAutoText_weak` here
           pt.appendText(message.content);
         }
+      }
+      // [Mistral, 2025-10-15] SPEC-VIOLATION Text (array format from Mistral thinking models - non-streaming)
+      else if (Array.isArray(message.content)) {
+        for (const contentBlock of message.content) {
+          // handle thinking blocks
+          if (contentBlock.type === 'thinking' && Array.isArray(contentBlock.thinking)) {
+            for (const thinkingPart of contentBlock.thinking) {
+              if (thinkingPart.type === 'text' && typeof (thinkingPart.text as unknown) === 'string')
+                pt.appendReasoningText(thinkingPart.text);
+              else
+                console.warn('AIX: OpenAI-dispatch-NS: unexpected thinking part type:', thinkingPart); // back to the future
+            }
+          }
+          // text blocks
+          else if (contentBlock.type === 'text' && typeof contentBlock.text === 'string')
+            pt.appendText(contentBlock.text);
+          else
+            console.warn('AIX: OpenAI-dispatch-NS: unexpected content block type:', contentBlock); // back to the future
+        }
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 
