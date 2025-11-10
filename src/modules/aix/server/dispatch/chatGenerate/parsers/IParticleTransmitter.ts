@@ -1,6 +1,8 @@
 import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 
 
+export type ParticleServerLogLevel = false | 'srv-log' | 'srv-warn';
+
 export interface IParticleTransmitter {
 
   // Parser-initiated Control //
@@ -9,7 +11,7 @@ export interface IParticleTransmitter {
   setEnded(reason: Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>): void;
 
   /** End the current part and flush it */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null): void;
+  setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog?: ParticleServerLogLevel /* default: false - not expected to log; user-errors */): void;
 
 
   // Parts data //

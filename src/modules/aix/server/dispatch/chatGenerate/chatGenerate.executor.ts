@@ -36,7 +36,8 @@ export async function* executeChatGenerate(
   try {
     dispatch = dispatchCreatorFn();
   } catch (error: any) {
-    chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
+    // log but don't warn on the server console, this is typically a service configuration issue (e.g. a missing password will throw here)
+    chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, 'srv-log');
     yield* chatGenerateTx.flushParticles();
     return; // exit
   }
@@ -159,9 +160,9 @@ async function* _consumeDispatchUnified(
 
   } catch (error: any) {
     if (dispatchBody === undefined)
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
     else
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket on GitHub.`, true);
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket on GitHub.`, 'srv-warn');
   }
 }
 
@@ -219,8 +220,8 @@ async function* _consumeDispatchStream(
         break; // outer do {}
       }
 
-      // Handle abnormal stream termination
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
+      // Handle abnormal stream termination; print to the server console as well (important to debug)
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
       break; // outer do {}
     }
 
@@ -262,8 +263,8 @@ async function* _consumeDispatchStream(
         // special: pass-through ONLY our retriable errors, for full operation-level retry - these are thrown by Parsers to remand reconnection
         if (error instanceof RequestRetryError) throw error;
 
-        // Handle parsing issue (likely a schema break); print it to the console as well
-        chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket on GitHub.`, false);
+        // Handle parsing issue (likely a schema break); print it to the server console as well
+        chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket on GitHub.`, 'srv-warn');
         break; // inner for {}, then outer do
       }
     }

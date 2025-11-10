@@ -37,12 +37,15 @@ const AIX_INSPECTOR_ALLOWED_CONTEXTS: (AixAPI_Context_ChatGenerate['name'] | str
 
 function _createDebugConfig(access: AixAPI_Access, options: undefined | { debugDispatchRequest?: boolean, debugProfilePerformance?: boolean }, chatGenerateContextName: string) {
   const echoRequest = !!options?.debugDispatchRequest && (AIX_SECURITY_ONLY_IN_DEV_BUILDS || AIX_INSPECTOR_ALLOWED_CONTEXTS.includes(chatGenerateContextName));
+  const consoleLogErrors =
+    (access.dialect === 'openai' && access.oaiHost) ? false as const // do not server-log OpenAI Custom hosts (often self-hosted and buggy) from server-side console error logging
+      : 'srv-warn' as const; // keeping the highest level of server-side logging for 'fetching' issues (usually however we see the messages of the TRPC retrier `createRetryablePromise` already)
   return {
     prettyDialect: serverCapitalizeFirstLetter(access.dialect), // string
     echoRequest: echoRequest, // boolean
     profiler: AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoRequest && !!options?.debugProfilePerformance ? new PerformanceProfiler() : undefined, // PerformanceProfiler | undefined
     wire: createServerDebugWireEvents() ?? undefined, // ServerDebugWireEvents | undefined
-    consoleLogErrors: !(access.dialect === 'openai' && access.oaiHost), // Exclude OpenAI Custom hosts (often self-hosted and buggy) from server-side console error logging
+    consoleLogErrors,
   };
 }
 
