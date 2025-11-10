@@ -241,7 +241,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       for (const deltaToolCall of (delta.tool_calls || [])) {
 
         // validation
-        if (deltaToolCall.type !== undefined && deltaToolCall.type !== 'function')
+        if (deltaToolCall.type !== undefined && deltaToolCall.type !== 'function'
+          && deltaToolCall.type !== 'builtin_function' // [Moonshot, 2025-11-09] Support Moonshot-over-OpenAI builtin tools
+        )
           throw new Error(`unexpected tool_call type: ${deltaToolCall.type}`);
 
         // Creation -  Ensure the tool call exists in our accumulated structure
@@ -434,7 +436,9 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         // Note that we relaxed the
         const mayBeMistral = toolCall.type === undefined;
 
-        if (toolCall.type !== 'function' && !mayBeMistral)
+        if (toolCall.type !== 'function' && !mayBeMistral
+          && toolCall.type !== 'builtin_function' // [Moonshot, 2025-11-09] Support Moonshot-over-OpenAI builtin tools
+        )
           throw new Error(`unexpected tool_call type: ${toolCall.type}`);
         pt.startFunctionCallInvocation(toolCall.id, toolCall.function.name, 'incr_str', toolCall.function.arguments);
         pt.endMessagePart();

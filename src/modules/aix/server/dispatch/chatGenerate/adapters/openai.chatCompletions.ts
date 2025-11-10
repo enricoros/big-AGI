@@ -196,6 +196,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     payload.search_parameters = search_parameters;
   }
 
+  // [Moonshot] Kimi's $web_search builtin function
+  if (openAIDialect === 'moonshot' && model.vndMoonshotWebSearch === 'auto' && !skipWebSearchDueToCustomTools)
+    payload.tools = [...(payload.tools || []), {
+      type: 'builtin_function',
+      function: {
+        name: '$web_search',
+      },
+    }];
+
   // [Perplexity] Vendor-specific extensions for search models
   if (openAIDialect === 'perplexity') {
     // Reasoning effort (reuses OpenAI parameter)
