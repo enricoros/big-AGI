@@ -318,7 +318,3 @@ the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
 ---
 
 2023-2025 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
-
----
-
-Last updated: 2025-11-11

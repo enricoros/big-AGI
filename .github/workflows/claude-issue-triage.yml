@@ -15,9 +15,9 @@ jobs:
     timeout-minutes: 30
 
     permissions:
-      contents: write
+      contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
       id-token: write
 
     steps:
@@ -69,4 +69,4 @@ jobs:
           claude_args: |
             --model claude-sonnet-4-5-20250929
             --max-turns 75
-            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),Bash(git branch:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(npx tsc:*),mcp__chrome-devtools,SlashCommand"
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"
