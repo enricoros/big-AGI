@@ -14,22 +14,34 @@ export function parseTextToChecklist(text: string, relaxMatch: boolean): UserChe
 
   // Use while loop to iterate over all matches
   while ((matches = regex.exec(text)) !== null) {
-    // matches[1] contains the space or 'x', indicating if the option is selected
-    const selected = matches[1].toLowerCase() === 'x';
-    const label = matches[2]; // The actual label of the option
-
-    options.push({
-      id: `option-${options.length}`,
-      label: label,
-      selected: selected,
-    });
+    if (relaxMatch) {
+      // for relaxed matching, matches[1] is the label, default to not selected
+      const label = matches[1];
+      options.push({
+        id: `option-${options.length}`,
+        label: label,
+        selected: false,
+      });
+    } else {
+      // for strict matching, matches[1] is the checkbox state, matches[2] is the label
+      const selected = matches[1].toLowerCase() === 'x';
+      const label = matches[2];
+      options.push({
+        id: `option-${options.length}`,
+        label: label,
+        selected: selected,
+      });
+    }
   }
 
   return options;
 }
 
 
-function parseMarkdownBold(text: string) {
+function parseMarkdownBold(text: string | undefined) {
+  // safety check: handle undefined or null text
+  if (!text) return '';
+
   // Split the text by the markdown bold syntax
   const parts = text.split(/(\*\*.*?\*\*)/g);
 
