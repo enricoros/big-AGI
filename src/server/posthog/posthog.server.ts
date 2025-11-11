@@ -36,6 +36,9 @@ function _posthogServerSingleton(): PostHog | null {
  */
 export async function posthogServerSendEvent(eventName: string, distinctId: string, properties?: {
   runtime?: 'edge' | 'nodejs';
+  $ip?: string; // PostHog property
+  $pathname?: string; // PostHog property, URL path for the event
+  //$useragent: PostHog user agent string, not needed - keep anonymous
   [key: string]: any;
 }): Promise<void> {
 
