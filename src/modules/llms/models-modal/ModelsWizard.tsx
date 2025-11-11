@@ -16,6 +16,7 @@ import { ModelVendorLMStudio } from '../vendors/lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from '../vendors/localai/localai.vendor';
 import { ModelVendorOllama } from '../vendors/ollama/ollama.vendor';
 import { ModelVendorOpenAI } from '../vendors/openai/openai.vendor';
+import { ModelVendorOpenRouter } from '../vendors/openrouter/openrouter.vendor';
 import { llmsUpdateModelsForServiceOrThrow } from '../llm.client';
 
 
@@ -24,10 +25,10 @@ const WizardProviders: ReadonlyArray<WizardProvider> = [
   { cat: 'popular', vendor: ModelVendorOpenAI, settingsKey: 'oaiKey' } as const,
   { cat: 'popular', vendor: ModelVendorAnthropic, settingsKey: 'anthropicKey' } as const,
   { cat: 'popular', vendor: ModelVendorGemini, settingsKey: 'geminiKey' } as const,
+  { cat: 'popular', vendor: ModelVendorOpenRouter, settingsKey: 'oaiKey' } as const,
   { cat: 'local', vendor: ModelVendorLocalAI, settingsKey: 'localAIHost' } as const,
   { cat: 'local', vendor: ModelVendorOllama, settingsKey: 'ollamaHost' } as const,
   { cat: 'local', vendor: ModelVendorLMStudio, settingsKey: 'oaiHost', omit: true } as const,
-  // { vendor: ModelVendorOpenRouter, settingsKey: 'oaiKey' } as const,
 ] as const;
 
 type VendorCategory = 'popular' | 'local';
