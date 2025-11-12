@@ -129,7 +129,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
             color='neutral' variant='outlined' size='sm'
             onClick={handleHIdeNonFreeLLMs}
           >
-            Only Free 🎁
+            Only Free <PhGift sx={{ ml: 1 }} />
           </Button>
           <Button
             color='neutral' variant='outlined' size='sm'
