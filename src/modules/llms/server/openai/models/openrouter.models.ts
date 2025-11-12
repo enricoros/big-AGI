@@ -7,6 +7,10 @@ import { fromManualMapping } from './models.data';
 import { wireOpenrouterModelsListOutputSchema } from '../openrouter.wiretypes';
 
 
+// configuration
+const FIXUP_MAX_OUTPUT = true;
+
+
 // [OpenRouter] - enough API info to auto-detect models, we only decide what to show here
 // - models: https://openrouter.ai/models
 // - models list API: https://openrouter.ai/docs/models
@@ -99,6 +103,16 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     label += ' · 🎁'; // Free? Discounted?
 
 
+  // -- Context windows --
+  const contextWindow = model.context_length || 4096;
+  let maxCompletionTokens = model.top_provider.max_completion_tokens || undefined;
+
+  // sometimes maxCompletionTokens is equal to the context window somehow - if we detect it's > 50%, we set it to undefined
+  if (FIXUP_MAX_OUTPUT && maxCompletionTokens && (maxCompletionTokens > contextWindow * 0.5)) {
+    // console.log(`[FIXUP] openRouterModelToModelDescription: ignoring maxCompletionTokens=${maxCompletionTokens} for model ${model.id} with contextWindow=${contextWindow}`);
+    maxCompletionTokens = undefined;
+  }
+
   // -- Interfaces --
   const interfaces = [LLM_IF_OAI_Chat];
 
@@ -156,8 +170,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     // latest: ...
     label,
     description: model.description?.length > 280 ? model.description.slice(0, 277) + '...' : model.description,
-    contextWindow: model.context_length || 4096,
-    maxCompletionTokens: model.top_provider.max_completion_tokens || undefined,
+    contextWindow,
+    maxCompletionTokens,
     // trainingDataCutoff: ...
     interfaces,
     // benchmark: ...
