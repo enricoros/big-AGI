@@ -48,22 +48,23 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     // ...bye / see you soon at the callback location...
   };
 
-  const handleRemoveNonFreeLLMs = () => {
-    // A bit of a hack
+  const handleHIdeNonFreeLLMs = () => {
     const { llms } = llmsStoreState();
-    const { updateLLM } = llmsStoreActions();
-    llms
+    const { updateLLMs } = llmsStoreActions();
+    const updates = llms
       .filter(llm => llm.sId === props.serviceId)
       .filter(llm => getLLMPricing(llm)?.chat?._isFree === false)
-      .forEach(llm => updateLLM(llm.id, { userHidden: true }));
+      .map(llm => ({ id: llm.id, partial: { userHidden: true } }));
+    updateLLMs(updates);
   };
 
   const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
     const { llms } = llmsStoreState();
-    const { updateLLM } = llmsStoreActions();
-    llms
+    const { updateLLMs } = llmsStoreActions();
+    const updates = llms
       .filter(llm => llm.sId === props.serviceId)
-      .forEach(llm => updateLLM(llm.id, { userHidden: !visible }));
+      .map(llm => ({ id: llm.id, partial: { userHidden: !visible } }));
+    updateLLMs(updates);
   }, [props.serviceId]);
 
   return <>
@@ -112,7 +113,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
           </Button>
           <Button
             color='neutral' variant='outlined' size='sm'
-            onClick={handleRemoveNonFreeLLMs}
+            onClick={handleHIdeNonFreeLLMs}
           >
             Only Free 🎁
           </Button>
