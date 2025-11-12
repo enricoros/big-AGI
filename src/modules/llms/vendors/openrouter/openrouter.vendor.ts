@@ -30,6 +30,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   id: 'openrouter',
   name: 'OpenRouter',
   displayRank: 40,
+  displayGroup: 'popular',
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,

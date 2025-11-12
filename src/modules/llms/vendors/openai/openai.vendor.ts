@@ -19,6 +19,7 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   id: 'openai',
   name: 'OpenAI',
   displayRank: 10,
+  displayGroup: 'popular',
   location: 'cloud',
   instanceLimit: 5,
   hasServerConfigKey: 'hasLlmOpenAI',
