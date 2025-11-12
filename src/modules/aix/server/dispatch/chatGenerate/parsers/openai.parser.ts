@@ -196,11 +196,27 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         deltaHasReasoning = true;
 
       }
-      // delta: Reasoning [OpenRouter, 2025-01-24]
-      else if (typeof delta.reasoning === 'string') {
+      // delta: Reasoning Details (Structured) [OpenRouter, 2025-11-11]
+      else if (Array.isArray(delta.reasoning_details)) {
 
-        pt.appendReasoningText(delta.reasoning);
-        deltaHasReasoning = true;
+        for (const reasoningDetail of delta.reasoning_details) {
+          // Extract text from reasoning blocks based on type
+          if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
+            pt.appendReasoningText(reasoningDetail.text);
+            deltaHasReasoning = true;
+          }
+          // Summaries can also be shown as reasoning
+          else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
+            pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+            deltaHasReasoning = true;
+          }
+          // 'encrypted' type - reasoning happened but not returned, skip
+          else if (reasoningDetail.type === 'reasoning.encrypted') {
+            // NOTE: Anthropic supports this, and we do too, but.. not now
+            // reasoning happened but not returned, skip
+          } else
+            console.log('AIX: OpenAI-dispatch: unexpected reasoning detail type:', reasoningDetail);
+        }
 
       }
 
@@ -425,9 +441,19 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 
-      // [OpenRouter, 2025-06-05] Handle reasoning field from OpenRouter
-      if (typeof message.reasoning === 'string')
-        pt.appendReasoningText(message.reasoning);
+      // [OpenRouter, 2025-11-11] Handle structured reasoning_details
+      if (Array.isArray(message.reasoning_details)) {
+        for (const reasoningDetail of message.reasoning_details) {
+          if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
+            pt.appendReasoningText(reasoningDetail.text);
+          } else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
+            pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+          } else if (reasoningDetail.type === 'reasoning.encrypted') {
+            // reasoning happened but not returned, skip
+          } else
+            console.log('AIX: OpenAI-dispatch-NS: unexpected reasoning detail type:', reasoningDetail);
+        }
+      }
 
       // message: Tool Calls
       for (const toolCall of (message.tool_calls || [])) {
