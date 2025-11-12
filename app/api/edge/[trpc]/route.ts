@@ -10,7 +10,7 @@ const handlerEdgeRoutes = (req: Request) => fetchRequestHandler({
   createContext: createTRPCFetchContext,
   onError:
     process.env.NODE_ENV === 'development'
-      ? ({ path, error }) => console.error(`❌ tRPC-edge failed on ${path ?? 'unk-path'}: ${error.message}`)
+      ? ({ path, error }) => console.error(`\n❌ tRPC-edge failed on ${path ?? 'unk-path'}: ${error.message}`)
       : undefined,
 });
 
