@@ -386,7 +386,16 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       console.log('AIX: OpenAI-dispatch-NS warning:', completeData.warning);
 
     // Parse the complete response
-    const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(completeData);
+
+    // [Fixup, 2025-11-11] Some OpenAI-compatible APIs omit the 'object' field - inject it if needed
+    let json: OpenAIWire_API_Chat_Completions.Response;
+    const parseResult = OpenAIWire_API_Chat_Completions.Response_schema.safeParse(completeData);
+    if (!parseResult.success) {
+      // Attempt recovery by injecting missing 'object' field
+      const recoveredData = { object: 'chat.completion', ...completeData };
+      json = OpenAIWire_API_Chat_Completions.Response_schema.parse(recoveredData);
+    } else
+      json = parseResult.data;
 
     // -> Model
     if (json.model)
