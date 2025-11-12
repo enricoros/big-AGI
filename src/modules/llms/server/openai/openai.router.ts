@@ -164,12 +164,17 @@ export const llmOpenAIRouter = createTRPCRouter({
     // tRPC middleware: log errors for this procedure - as we don't have proper try/catch blocks yet
     .use(async ({ next, path, signal, type, input }) => {
       const result = await next();
+
+      // [PROD] log/warn listModel errors
       if (!result.ok && result.error) {
         // '401 unauthorized' is expected with wrong/missing API keys - log instead of warn
         const is401 = result.error instanceof TRPCFetcherError && result.error.httpStatus === 401;
         const isLocalAI = input.access?.dialect === 'localai';
         console[(is401 || isLocalAI) ? 'log' : 'warn'](`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
       }
+
+      // [DEV] NOTE: the trpc onError will also log next when in development mode, @see handlerEdgeRoutes
+
       return result;
     })
 

@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env';
@@ -176,7 +177,7 @@ export const llmOllamaRouter = createTRPCRouter({
       const { headers, url } = ollamaAccess(input.access, '/api/delete');
       const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, body: { 'name': input.name }, name: 'Ollama::delete' });
       if (deleteOutput?.length && deleteOutput !== 'null')
-        throw new Error('Ollama delete issue: ' + deleteOutput);
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ollama delete issue: ' + deleteOutput });
     }),
 
 
