@@ -72,7 +72,7 @@ export function VoidFragments(props: {
 
   return <Box aria-label='message void' sx={showDataStreamViz ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
 
-    {props.voidFragments.map(({ fId, part }) => {
+    {props.voidFragments.map(({ fId, part }, index) => {
       switch (part.pt) {
 
         case 'annotations':
@@ -95,6 +95,7 @@ export function VoidFragments(props: {
               auxRedactedDataCount={part.redactedData?.length ?? 0}
               zenMode={props.uiComplexityMode === 'minimal'}
               contentScaling={props.contentScaling}
+              isLastVoid={index === props.voidFragments.length - 1}
               onFragmentReplace={props.onFragmentReplace}
             />
           );
