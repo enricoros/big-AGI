@@ -110,6 +110,51 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1430 }, // gpt-5-chat
   },
 
+  // GPT-5.1
+  {
+    idPrefix: 'gpt-5.1-2025-11-12',
+    label: 'GPT-5.1 Thinking (2025-11-12)',
+    description: 'GPT-5.1 with adaptive reasoning. Adapts thinking time precisely to each question.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Oct 31, 2024',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiRestoreMarkdown' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 }, // TODO: Update with official pricing when available
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.1',
+    label: 'GPT-5.1 Thinking',
+    symLink: 'gpt-5.1-2025-11-12',
+  },
+
+  // GPT-5.1 Chat Latest
+  {
+    idPrefix: 'gpt-5.1-chat-latest',
+    label: 'GPT-5.1 Instant',
+    description: 'GPT-5.1 Instant with adaptive reasoning. More conversational with improved instruction following.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Oct 31, 2024',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiRestoreMarkdown' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 }, // TODO: Update with official pricing when available
+    // benchmark: TBD
+  },
+
   // GPT-5 Codex
   {
     idPrefix: 'gpt-5-codex',
@@ -852,6 +897,9 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 const _manualOrderingIdPrefixes = [
   // GPT-5
   'gpt-5-20',
+  'gpt-5.1-20',
+  'gpt-5.1-chat-latest',
+  'gpt-5.1',
   'gpt-5-pro-20',
   'gpt-5-pro',
   'gpt-5-mini-20',
