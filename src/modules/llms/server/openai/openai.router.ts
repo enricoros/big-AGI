@@ -24,7 +24,7 @@ import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from '.
 import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
 import { mistralModels } from './models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './models/moonshot.models';
-import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openaiDevCheckForModelsOverlap_DEV, openAISortModels } from './models/openai.models';
+import { openaiDevCheckForModelsOverlap_DEV, openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityInjectVariants } from './models/perplexity.models';
@@ -167,7 +167,8 @@ export const llmOpenAIRouter = createTRPCRouter({
       if (!result.ok && result.error) {
         // '401 unauthorized' is expected with wrong/missing API keys - log instead of warn
         const is401 = result.error instanceof TRPCFetcherError && result.error.httpStatus === 401;
-        console[is401 ? 'log' : 'warn'](`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
+        const isLocalAI = input.access?.dialect === 'localai';
+        console[(is401 || isLocalAI) ? 'log' : 'warn'](`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
       }
       return result;
     })
@@ -405,18 +406,18 @@ export const llmOpenAIRouter = createTRPCRouter({
           isEdit ? '/v1/images/edits' : '/v1/images/generations',
           signal, // wire the signal from the input
         )
-        .catch((error: any) => {
-          // if aborted, ignore the error, or else we'll throw an error
-          if (signal?.aborted)
-            return null; // de-facto ignores the error, and the connection is already gone
+          .catch((error: any) => {
+            // if aborted, ignore the error, or else we'll throw an error
+            if (signal?.aborted)
+              return null; // de-facto ignores the error, and the connection is already gone
 
-          // otherwise, re-throw the error
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `Error: ${error?.message || error?.toString() || 'Unknown error'}`,
-            cause: error,
-          });
-        }),
+            // otherwise, re-throw the error
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `Error: ${error?.message || error?.toString() || 'Unknown error'}`,
+              cause: error,
+            });
+          }),
       );
 
       // null: there was an error
