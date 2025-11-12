@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env';
 
@@ -167,11 +168,11 @@ export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string
   try {
     azureBase = new URL(azureHostFixed).origin;
   } catch (e) {
-    throw new Error(`Azure OpenAI API Host is invalid: ${azureHostFixed || 'missing'}`);
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `Azure OpenAI API Host is invalid: ${azureHostFixed || 'missing'}` });
   }
 
   if (!azureKey || !azureBase)
-    throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
 
   /**
    * Azure OpenAI API Routing: Convert OpenAI standard paths to Azure-specific paths
@@ -205,14 +206,14 @@ export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string
 
       // require the model Id for traditional deployment-based routing
       if (!modelRefId)
-        throw new Error('Azure OpenAI API needs a deployment id');
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API needs a deployment id' });
 
       const functionName = apiPath.replace('/v1/', ''); // e.g. 'chat/completions'
       apiPath = `/openai/deployments/${modelRefId}/${functionName}?api-version=${server.versionAzureOpenAI}`;
       break;
 
     default:
-      throw new Error('Azure OpenAI API path not supported: ' + apiPath);
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API path not supported: ' + apiPath });
   }
 
   return {
