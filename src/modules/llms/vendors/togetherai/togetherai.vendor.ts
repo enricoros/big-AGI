@@ -14,6 +14,7 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
   id: 'togetherai',
   name: 'Together AI',
   displayRank: 34,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmTogetherAI',

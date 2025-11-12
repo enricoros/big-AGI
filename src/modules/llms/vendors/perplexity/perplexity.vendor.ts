@@ -12,6 +12,7 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
   id: 'perplexity',
   name: 'Perplexity',
   displayRank: 20,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmPerplexity',

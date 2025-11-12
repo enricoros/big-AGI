@@ -14,6 +14,7 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   id: 'ollama',
   name: 'Ollama',
   displayRank: 54,
+  displayGroup: 'local',
   location: 'local',
   instanceLimit: 2,
   hasServerConfigKey: 'hasLlmOllama',

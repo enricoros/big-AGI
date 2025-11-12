@@ -32,6 +32,7 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
   id: 'azure',
   name: 'Azure OpenAI',
   displayRank: 30,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 2,
   hasServerConfigKey: 'hasLlmAzureOpenAI',

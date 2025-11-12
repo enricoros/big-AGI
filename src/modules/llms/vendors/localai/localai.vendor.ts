@@ -13,6 +13,7 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
   id: 'localai',
   name: 'LocalAI',
   displayRank: 50,
+  displayGroup: 'local',
   location: 'local',
   instanceLimit: 4,
   hasServerConfigKey: 'hasLlmLocalAIHost',

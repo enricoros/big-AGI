@@ -26,6 +26,7 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   id: 'googleai',
   name: 'Gemini',
   displayRank: 14,
+  displayGroup: 'popular',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmGemini',
