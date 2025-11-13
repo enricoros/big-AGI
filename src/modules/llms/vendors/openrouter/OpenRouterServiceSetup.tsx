@@ -83,9 +83,10 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       </Typography>
 
       <Typography level='body-sm' startDecorator={
-        <Chip component='span' size='md' color='success' variant='plain' sx={{ borderRadius: 'sm', boxShadow: 'md', border: '1px solid', borderColor: 'success.outlinedBorder', mr: 0.5 }} startDecorator={<PhGift />}>
-          free
-        </Chip>
+        <PhGift sx={{ color: 'success.solidBg' }} />
+        // <Chip component='span' size='sm' color='success' variant='soft' sx={{ borderRadius: 'sm', boxShadow: 'none', border: '1px solid', borderColor: 'success.outlinedBorder', mr: 0.5 }} startDecorator={<PhGift />}>
+        //   free
+        // </Chip>
       }>
         <span>
           A <Link href='https://openrouter.ai/models?q=%3Afree&order=newest' target='_blank'>selection</Link> of
@@ -99,13 +100,13 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       onClick={handleOpenRouterLogin}
       // endDecorator={needsLink ? <LaunchIcon /> /*<PhKey />*/ /*'🎁'*/ : undefined}
       endDecorator={<LaunchIcon /> /*<PhKey />*/ /*'🎁'*/}
-      sx={{ mx: 'auto' }}
+      sx={{ mx: 'auto', boxShadow: 'md' }}
     >
       {needsLink ? 'Link' : 'Change'} OpenRouter Key
     </Button>
 
     <FormInputKey
-      autoCompleteId='openrouter-key' label='OpenRouter API Key'
+      autoCompleteId='openrouter-key' label='API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <Link level='body-sm' href='https://openrouter.ai/keys' target='_blank'>your keys</Link>
         : <AlreadySet />
