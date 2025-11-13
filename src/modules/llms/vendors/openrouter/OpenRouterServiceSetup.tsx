@@ -56,8 +56,10 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     const { updateLLMs } = llmsStoreActions();
     const updates = llms
       .filter(llm => llm.sId === props.serviceId)
-      .filter(llm => getLLMPricing(llm)?.chat?._isFree === false)
-      .map(llm => ({ id: llm.id, partial: { userHidden: true } }));
+      .map(llm => {
+        const isFree = getLLMPricing(llm)?.chat?._isFree === true;
+        return { id: llm.id, partial: { userHidden: !isFree } };
+      });
     updateLLMs(updates);
   };
 
@@ -82,15 +84,15 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
         Docs</Link>.
       </Typography>
 
-      <Typography level='body-sm' startDecorator={
-        <PhGift sx={{ color: 'success.solidBg' }} />
+      <Typography level='body-sm' endDecorator={
+        <PhGift sx={{ color: 'success.softColor' }} />
         // <Chip component='span' size='sm' color='success' variant='soft' sx={{ borderRadius: 'sm', boxShadow: 'none', border: '1px solid', borderColor: 'success.outlinedBorder', mr: 0.5 }} startDecorator={<PhGift />}>
         //   free
         // </Chip>
       }>
         <span>
-          A <Link href='https://openrouter.ai/models?q=%3Afree&order=newest' target='_blank'>selection</Link> of
-          OpenRouter models is made available free of charge.
+          {/*A <Link href='https://openrouter.ai/models?q=%3Afree&order=newest' target='_blank'>selection</Link> of*/}
+          A selection of OpenRouter models is made available free of charge.
         </span>
       </Typography>
     </Box>
@@ -100,9 +102,9 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       onClick={handleOpenRouterLogin}
       // endDecorator={needsLink ? <LaunchIcon /> /*<PhKey />*/ /*'🎁'*/ : undefined}
       endDecorator={<LaunchIcon /> /*<PhKey />*/ /*'🎁'*/}
-      sx={{ mx: 'auto', boxShadow: 'md' }}
+      sx={{ mx: 'auto', boxShadow: needsLink ? 'md' : undefined }}
     >
-      {needsLink ? 'Link' : 'Change'} OpenRouter Key
+      {needsLink ? 'Link OpenRouter Key' : 'Create New Key'}
     </Button>
 
     <FormInputKey
@@ -130,7 +132,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
             color='neutral' variant='outlined' size='sm'
             onClick={handleHIdeNonFreeLLMs}
           >
-            Only Free <PhGift sx={{ ml: 1 }} />
+            Only Free <PhGift sx={{ ml: 1, color: 'success.softColor' }} />
           </Button>
           <Button
             color='neutral' variant='outlined' size='sm'
