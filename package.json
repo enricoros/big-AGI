@@ -52,7 +52,7 @@
     "next": "~15.1.8",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "5.4.54",
-    "posthog-js": "^1.290.0",
+    "posthog-js": "^1.292.0",
     "posthog-node": "^5.11.2",
     "prismjs": "^1.30.0",
     "puppeteer-core": "^24.29.1",
