@@ -1,8 +1,8 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { DLLM, DLLMId, getLLMPricing, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { DMessage, DMessageGenerator, messageSetGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiStream } from '~/common/util/trpc.client';
@@ -176,10 +176,8 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
 
   let lastDMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
-    generator: {
-      mgt: 'named',
-      name: llmId as any,
-    },
+    // NOTE: short-lived, immediately updated in the first callback. Note that we don't have the vendorId yet, otherwise we'd initialize this as 'aix' here
+    generator: { mgt: 'named', name: llmId },
     pendingIncomplete: true,
   };
 
@@ -297,16 +295,10 @@ export async function aixChatGenerateText_Simple(
   // Variable to store the final text
   const state: AixChatGenerateText_Simple = {
     text: null,
-    generator: {
-      mgt: 'aix',
-      name: llmId,
-      aix: {
-        vId: llm.vId,
-        mId: llm.id,
-      },
-    },
+    generator: { mgt: 'named', name: 'replace-me-ll' },
     isDone: false,
   };
+  messageSetGeneratorAIX_AutoLabel(state, llm.vId, llm.id);
 
   // NO streaming initial notification - only notified past the first real characters
   // await onTextStreamUpdate?.(dText.text, false);
@@ -470,18 +462,13 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   // Aix Low-Level Chat Generation
   const dMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
-    generator: {
-      mgt: 'aix',
-      name: llmId,
-      aix: {
-        vId: llm.vId,
-        mId: llm.id, // NOTE: using llm.id instead of aixModel.id (the ref) so we can re-select them in the UI (Beam)
-      },
-      // metrics: undefined,
-      // tokenStopReason: undefined,
-    },
+    generator: { mgt: 'named', name: 'replace-me-ll' /* metrics: undefined, tokenStopReason: undefined */ },
     pendingIncomplete: true,
   };
+  // Note on the Generator. Besides the simple set below:
+  // - it will get replaced once, and then it's the same from that point on
+  // - using llm.id instead of aixModel.id (the ref) so we can re-select them in the UI (Beam)
+  messageSetGeneratorAIX_AutoLabel(dMessage, llm.vId, llm.id);
 
   // streaming initial notification, for UI updates
   await onStreamingUpdate?.(dMessage, false);
