@@ -51,16 +51,16 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // - "Structured Outputs" is LLM_IF_OAI_Json
 export const _knownOpenAIChatModels: ManualMappings = [
 
-  /// GPT-5.1 series - Announced November 12, 2025 - support will be added later that week.
+  /// GPT-5.1 series - Released November 13, 2025
 
   // GPT-5.1
   {
-    idPrefix: 'gpt-5.1-2025-11-12',
-    label: 'GPT-5.1 Thinking (2025-11-12)',
-    description: 'GPT-5.1 with adaptive reasoning. Adapts thinking time precisely to each question.',
+    idPrefix: 'gpt-5.1-2025-11-13',
+    label: 'GPT-5.1 (2025-11-13)',
+    description: 'The best model for coding and agentic tasks with configurable reasoning effort.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    // trainingDataCutoff: 'Oct 31, 2024',
+    // trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
@@ -69,13 +69,13 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 }, // TODO: Update with official pricing when available - this is `gpt-5-2025-08-07` pricing
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     // benchmark: TBD
   },
   {
     idPrefix: 'gpt-5.1',
-    label: 'GPT-5.1 Thinking',
-    symLink: 'gpt-5.1-2025-11-12',
+    label: 'GPT-5.1',
+    symLink: 'gpt-5.1-2025-11-13',
   },
 
   // GPT-5.1 Chat Latest
@@ -98,6 +98,40 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 }, // TODO: Update with official pricing when available - this is `gpt-5-chat-latest` pricing
     // benchmark: TBD
   },
+
+  // GPT-5.1 Codex
+  {
+    idPrefix: 'gpt-5.1-codex',
+    label: 'GPT-5.1 Codex',
+    description: 'A version of GPT-5.1 optimized for agentic coding tasks in Codex or similar environments.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort4' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    // benchmark: TBD
+  },
+  // GPT-5.1 Codex Mini
+  {
+    idPrefix: 'gpt-5.1-codex-mini',
+    label: 'GPT-5.1 Codex Mini',
+    description: 'Smaller, faster version of GPT-5.1 Codex for efficient coding tasks.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort4' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
+    // benchmark: TBD
+  },
+
 
 
   /// GPT-5 series - Released August 7, 2025
@@ -188,7 +222,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [...IFS_CHAT_MIN, LLM_IF_Tools_WebSearch],
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium' }], // Search enabled by default
-    chatPrice: { input: 1.25, output: 10 },
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     // benchmark: TBD
   },
   {
@@ -899,10 +933,13 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 
 
 const _manualOrderingIdPrefixes = [
-  // GPT-5
+  // GPT-5.1
   'gpt-5.1-20',
   'gpt-5.1-chat-latest',
+  'gpt-5.1-codex',
+  'gpt-5.1-codex-mini',
   'gpt-5.1',
+  // GPT-5
   'gpt-5-20',
   'gpt-5-pro-20',
   'gpt-5-pro',
