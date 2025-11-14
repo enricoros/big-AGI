@@ -9,6 +9,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
 import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -81,6 +82,16 @@ const _styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addSubButton: {
+    px: 1,
+    py: 0.5,
+    outline: '1px solid',
+    outlineColor: 'primary.outlinedBorder',
+    minWidth: 'auto',
+    minHeight: 'auto',
+    fontSize: 'xs',
+    mr: -0.25,
+  },
 } as const satisfies Record<string, SxProps>;
 
 
@@ -115,13 +126,16 @@ function _renderSectionHeader(title: string, isFirst: boolean = false) {
   );
 }
 
-function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemData, isMobile: boolean, onAddServiceForVendor: (vendor: IModelVendor) => void) {
-  // noinspection PointlessBooleanExpressionJS
+function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemData, isMobile: boolean, onAddServiceForVendor: (vendor: IModelVendor, forceAdd?: boolean) => void) {
+
+  const isMultiInstance = (vendor.instanceLimit ?? 1) > 1;
+  const hasInstances = vendorInstancesCount > 0;
+
   return (
     <MenuItem
       key={vendor.id}
-      variant={vendorInstancesCount ? 'soft' : 'soft'}
-      color={canAdd ? 'primary' : /*vendor.hasFreeModels ? 'success' :*/ 'neutral'}
+      variant='soft'
+      color={hasInstances ? 'neutral' : canAdd ? 'primary' : /*vendor.hasFreeModels ? 'success' :*/ 'neutral'}
       // disabled={!canAdd}
       onClick={() => onAddServiceForVendor(vendor)}
       sx={_styles.vendorItem}
@@ -151,11 +165,11 @@ function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemD
         whiteSpace: 'nowrap',
       }}>
         {vendor.name}
-        {(vendor.instanceLimit ?? 1) > 1 && !!vendorInstancesCount && canAdd && <span style={{ fontSize: 'smaller' }}>
-          &nbsp; (#{vendorInstancesCount + 1})
-          {/*&nbsp; +{vendorInstancesCount}*/}
-          {/*&nbsp; #{vendorInstancesCount + 1}*/}
-        </span>}
+        {/*{(vendor.instanceLimit ?? 1) > 1 && !!vendorInstancesCount && canAdd && <span style={{ fontSize: 'smaller' }}>*/}
+        {/*  &nbsp; (#{vendorInstancesCount + 1})*/}
+        {/*  /!*&nbsp; +{vendorInstancesCount}*!/*/}
+        {/*  /!*&nbsp; #{vendorInstancesCount + 1}*!/*/}
+        {/*</span>}*/}
       </Box>
 
       {/* Free tier badge */}
@@ -187,6 +201,26 @@ function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemD
       {/*#{vendorInstancesCount + 1}*/}
       {/*</Typography>*/}
       {/*)}*/}
+
+      {/* Add IconButton for adding additional instances */}
+      {isMultiInstance && hasInstances && canAdd && (
+        <GoodTooltip title={`Add another ${vendor.name.replace('OpenAI', 'OpenAI-compatible')} service`} placement='top' arrow>
+          <IconButton
+            size='sm'
+            color='primary'
+            variant='soft'
+            tabIndex={0}
+            aria-label={`Add another ${vendor.name} service`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddServiceForVendor(vendor, true);
+            }}
+            sx={_styles.addSubButton}
+          >
+            Add
+          </IconButton>
+        </GoodTooltip>
+      )}
     </MenuItem>
   );
 }
@@ -220,15 +254,15 @@ export function ModelsServiceSelector(props: {
 
   const { modelsServices, setSelectedServiceId } = props;
 
-  const handleAddServiceForVendor = React.useCallback((vendor: IModelVendor) => {
+  const handleAddServiceForVendor = React.useCallback((vendor: IModelVendor, forceNewInstance?: boolean) => {
     closeVendorsMenu();
 
     // check if we can add more instances of this vendor
     const vendorInstancesCount = modelsServices.filter(s => s.vId === vendor.id).length;
     const canAdd = (vendor.instanceLimit ?? 1) > vendorInstancesCount;
 
-    // if at limit, switch to the first existing service of this vendor
-    if (!canAdd) {
+    // if at limit, or newInstance is not forced, switch to the first existing service of this vendor
+    if (!canAdd || (!forceNewInstance && vendorInstancesCount > 0)) {
       const existingService = modelsServices.find(s => s.vId === vendor.id);
       if (existingService) {
         setSelectedServiceId(existingService.id);
