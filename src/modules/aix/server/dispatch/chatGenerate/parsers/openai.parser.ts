@@ -207,7 +207,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
           }
           // Summaries can also be shown as reasoning
           else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
-            pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+            // pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+            pt.appendReasoningText(reasoningDetail.summary);
             deltaHasReasoning = true;
           }
           // 'encrypted' type - reasoning happened but not returned, skip
