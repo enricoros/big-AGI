@@ -13,6 +13,9 @@
 [![GHCR Pulls](https://img.shields.io/badge/ghcr.io-767k_dl-12b76a?style=for-the-badge&logo=Xdocker&logoColor=white&labelColor=000&color=A8E6CF)](https://github.com/enricoros/big-AGI/pkgs/container/big-agi)
 [![Contributors](https://img.shields.io/github/contributors/enricoros/big-agi?style=for-the-badge&x=2&logo=Xgithub&logoColor=white&label=cooks&labelColor=000&color=A8E6CF)](https://github.com/enricoros/big-AGI/graphs/contributors)
 [![License: MIT](https://img.shields.io/badge/License-MIT-A8E6CF?style=for-the-badge&labelColor=000)](https://opensource.org/licenses/MIT)
+<br/>
+
+[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new)
 
 [//]: # ([![Uptime Robot ratio &#40;30 days&#41;]&#40;https://img.shields.io/uptimerobot/ratio/m801796948-868b22ed7ceaa0acac4dc765?style=for-the-badge&labelColor=000&color=green&#41;]&#40;https://stats.uptimerobot.com/59MXcnmjrM&#41;)
 [//]: # ([![Open Version]&#40;https://img.shields.io/github/v/release/enricoros/big-AGI?label=Open+Release&style=flat-square&logo=github&logoColor=white&labelColor=000&#41;]&#40;https://github.com/enricoros/big-AGI/releases/latest&#41;)
@@ -332,67 +335,50 @@ Configure 100s of AI models from 18+ providers:
 | Web Browse    | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
 | Web Search    | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
 | Code Editors  | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
-| Observability | [Helicone](https://www.helicone.ai)                                                                            | 
-
-[//]: # (- [x] **Flow-state UX** for uncompromised productivity)
-
-[//]: # (- [x] **AI Personas**: Tailor your AI interactions with customizable personas)
-
-[//]: # (- [x] **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface)
-
-[//]: # (- [x] **Efficient Interaction**: Voice commands, OCR, and drag-and-drop file uploads)
-
-[//]: # (- [x] **Privacy First**: Self-host and use your own API keys for full control)
-
-[//]: # (- [x] **Advanced Tools**: Execute code, import PDFs, and summarize documents)
-
-[//]: # (- [x] **Seamless Integrations**: Enhance functionality with various third-party services)
-
-[//]: # (- [x] **Open Roadmap**: Contribute to the progress of big-AGI)
-
-<br/>
-
-## 🚀 Installation
-
-To get started with big-AGI, follow our comprehensive [Installation Guide](docs/installation.md).
-The guide covers various installation options, whether you're spinning it up on
-your local computer, deploying on Vercel, on Cloudflare, or rolling it out
-through Docker.
-
-Whether you're a developer, system integrator, or enterprise user, you'll find step-by-step instructions
-to set up big-AGI quickly and easily.
-
-[![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
-
-Or bring your API keys and jump straight into our free instance on [big-AGI.com](https://big-agi.com).
-
-<br/>
-
-# 🌟 Get Involved!
-
-[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
-[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
-
-- [ ] 📢️ [**Chat with us** on Discord](https://discord.gg/MkH4qj2Jp9)
-- [ ] ⭐ **Give us a star** on GitHub 👆
-- [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
-- [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
-- [ ] ✨ [Deploy](docs/installation.md) your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
-
-> ### Made with 💚 by: 
-> <a href="https://github.com/enricoros/big-agi/graphs/contributors">
->   <img src="https://contrib.rocks/image?repo=enricoros/big-agi&max=48&columns=12" />
-> </a>
-
-<br/>
-
-## 📜 Licensing
-
-Big-AGI incorporates third-party software components that are subject
-to separate license terms. For detailed information about these
-components and their respective licenses, please refer to
-the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
+| Observability | [Helicone](https://www.helicone.ai)                                                                            |
 
 ---
 
-2023-2025 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
+## 🚀 Installation
+
+Self-host with Docker, deploy on Vercel, or develop locally. Full setup guide:
+
+[![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
+
+Or use the hosted version at [big-agi.com](https://big-agi.com) with your API keys.
+
+---
+
+## 👋 Community & Contributing
+
+### Connect
+
+[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
+
+⭐ [Star the repo](https://github.com/enricoros/big-agi) if Big-AGI is useful to you
+
+### Contribute
+
+**🤖 AI-Powered Issue Assistance**
+
+When you open an issue, our custom AI triage system (powered by [Claude Code](https://github.com/anthropics/claude-code-action) with Big-AGI architecture documentation) analyzes it, searches the codebase, and provides solutions - typically within 30 minutes. We've trained the system on our modules and subsystems so it handles most issues effectively. Your feedback drives development!
+
+[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new)
+
+[![Good First Issues](https://img.shields.io/badge/Good_First_Issues-Start-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/users/enricoros/projects/4/views/4)
+[![Customization](https://img.shields.io/badge/Fork_&_Customize-Your_Own-purple?style=for-the-badge&logo=git&logoColor=white)](docs/customizations.md)
+[![Roadmap](https://img.shields.io/badge/Open_Roadmap-View-0366d6?style=for-the-badge&logo=github&logoColor=white)](https://github.com/users/enricoros/projects/4/views/2)
+
+#### Contributors
+
+<a href="https://github.com/enricoros/big-agi/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=enricoros/big-agi&max=48&columns=12" />
+</a>
+
+---
+
+## License
+
+MIT License · [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md)
+
+**2023-2025** · Enrico Ros × [Big-AGI](https://big-agi.com)
