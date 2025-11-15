@@ -5,7 +5,7 @@
 <h1><a href="https://big-agi.com">Big-AGI</a></h1>
 
 [![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
-[![Deploy on Docker](https://img.shields.io/badge/Self--Host-Docker-blue?style=for-the-badge&logo=docker&logoColor=white&labelColor=000)](https://hub.docker.com/r/enricoros/big-agi)
+[![Deploy on Docker](https://img.shields.io/badge/Self--Host-Docker-blue?style=for-the-badge&logo=docker&logoColor=white&labelColor=000)](https://github.com/enricoros/big-AGI/pkgs/container/big-agi)
 [![Deploy on Vercel](https://img.shields.io/badge/Vercel-Deploy-blue?style=for-the-badge&logo=vercel&logoColor=white&labelColor=000)](https://vercel.com/new/clone?repository-url=https://github.com/enricoros/big-agi)
 [![Discord](https://img.shields.io/discord/1098796266906980422?style=for-the-badge&label=Discord&logo=discord&logoColor=white&labelColor=000000&color=purple)](https://discord.gg/MkH4qj2Jp9)
 <br/>
