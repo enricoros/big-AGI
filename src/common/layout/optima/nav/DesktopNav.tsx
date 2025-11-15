@@ -225,8 +225,8 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
           <MenuItem component='a' href={BaseProduct.SupportForm()} target='_blank'>
             <ListItemDecorator>🔥</ListItemDecorator>
             <div>
-              AI Please Fix
-              <FormHelperText>Opens GitHub issue</FormHelperText>
+              Improve Big-AGI
+              <FormHelperText>AI fixes what you report</FormHelperText>
             </div>
             <ArrowOutwardRoundedIcon sx={{ ml: 'auto' }} />
           </MenuItem>
