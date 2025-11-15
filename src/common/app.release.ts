@@ -60,5 +60,5 @@ export const Release = {
 
 export const BaseProduct = {
   ReleaseNotes: '',
-  SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-AGI/issues/new',
+  SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-AGI/issues/new?template=ai-triage.yml',
 } as const;
