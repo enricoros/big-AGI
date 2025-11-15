@@ -1,25 +1,25 @@
-name: 🔥 Get AI Help
-description: Bug, question, or feedback - our AI triage system will help within 30 minutes
+name: 🔥 Make AI Fix This
+description: Bug, question, or feedback - AI analyzes and provides solutions
 labels: [ 'claude-triage' ]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for opening an issue! Our AI triage system will analyze your issue and provide solutions.
+        Thanks for opening an issue! Our AI will analyze it and provide solutions.
 
         **What happens next:**
         - AI searches the codebase and documentation
-        - You get a response typically within 30 minutes
-        - The issue gets labeled and routed appropriately
+        - You get a response, typically within 30 minutes
+        - Ticket gets follow-up and community votes
 
   - type: textarea
     attributes:
       label: What's happening?
-      description: Describe the issue, question, or feedback. Be as detailed as you can.
+      description: Describe the bug, feature request, or question. Be as detailed as you can.
       placeholder: |
-        Example: "When I try to use Beam with Anthropic models, the rays don't appear..."
-        Example: "How do I configure multiple API keys for the same provider?"
-        Example: "The chat export feature could be improved by..."
+        Bug example: "In Beam, Anthropic models seem to have search off..."
+        Model request: "Add Claude Opus 4.5 out today, see https://..."
+        Feature example: "Add the option to to save frequent prompt templates for reuse..."
     validations:
       required: true
 
