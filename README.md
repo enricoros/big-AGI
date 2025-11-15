@@ -65,8 +65,8 @@ and **Speed**: with a local-first, over-powered, zero-latency, madly optimized w
 <tr>
 <td align="center" valign="top">
 Beam & Merge<br/>
-De-hallucination<br/>
-No context junk
+No context junk<br/>
+Purest AI outputs
 </td>
 <td align="center" valign="top">
 Flow-state interface<br/>
