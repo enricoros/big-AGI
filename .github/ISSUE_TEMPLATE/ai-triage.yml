@@ -1,0 +1,70 @@
+name: 🔥 Get AI Help
+description: Bug, question, or feedback - our AI triage system will help within 30 minutes
+labels: [ 'claude-triage' ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for opening an issue! Our AI triage system will analyze your issue and provide solutions.
+
+        **What happens next:**
+        - AI searches the codebase and documentation
+        - You get a response typically within 30 minutes
+        - The issue gets labeled and routed appropriately
+
+  - type: textarea
+    attributes:
+      label: What's happening?
+      description: Describe the issue, question, or feedback. Be as detailed as you can.
+      placeholder: |
+        Example: "When I try to use Beam with Anthropic models, the rays don't appear..."
+        Example: "How do I configure multiple API keys for the same provider?"
+        Example: "The chat export feature could be improved by..."
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Where does this happen?
+      description: If this is a bug or issue, where are you experiencing it?
+      options:
+        - Big-AGI Pro (big-agi.com)
+        - Self-deployed from GitHub
+        - Docker deployment
+        - Local development
+        - Not applicable (question/feedback)
+        - Other
+    validations:
+      required: false
+
+  - type: dropdown
+    attributes:
+      label: Impact on your workflow
+      description: How does this affect your use of Big-AGI?
+      options:
+        - Blocking - Can't use Big-AGI
+        - High - Major feature broken
+        - Medium - Workaround exists
+        - Low - Minor inconvenience
+        - None - Just a question/suggestion
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Environment (if applicable)
+      description: Device, OS, browser - only if reporting a bug
+      placeholder: |
+        Device: Macbook Pro M3
+        OS: macOS 15.2
+        Browser: Chrome 131
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Screenshots, error messages, or anything else that helps
+      placeholder: Paste screenshots or error messages here
+    validations:
+      required: false
