@@ -5,6 +5,7 @@ import { Box, Button, Divider, FormControl, FormLabel, Link, Option, Select, Swi
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
@@ -45,7 +46,12 @@ export function AixDebuggerDialog(props: {
     <GoodModal
       open
       onClose={props.onClose}
-      title='AI Request Inspector'
+      title={isMobile ? 'AI Inspector' :
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          AI Request Inspector
+          <KeyStroke size='sm' variant='soft' combo='Ctrl + Shift + A' />
+        </Box>
+      }
       titleStartDecorator={
         <Switch
           checked={aixInspector}
