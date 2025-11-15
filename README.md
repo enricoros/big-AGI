@@ -50,6 +50,11 @@ Loved by engineers, founders, researchers, self-hosters, and IT departments for 
 
 Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
 
+### Show me a screenshot:
+Sure - here is real-world screeengrab as I'm writing this, while running a Beam to extract SVG from an image with Sonnet 4.5, Opus 4.1, GPT 5.1, Gemini 2.5 Pro, Nano Banana, etc.
+<img width="3902" height="2624" alt="image" src="https://github.com/user-attachments/assets/853f4160-27cb-4ac9-826b-402f1e63d4af" />
+
+
 ## Get Started
 
 | Tier                                                 | Best For          | What You Get                                                  | Setup       |
