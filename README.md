@@ -1,3 +1,29 @@
+<div align="center">
+
+<img width="256" height="256" alt="Big-AGI Logo" src="https://big-agi.com/assets/logo-bright-github.svg" />
+
+<h1><a href="https://big-agi.com">Big-AGI</a></h1>
+
+[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
+[![Deploy on Docker](https://img.shields.io/badge/Self--Host-Docker-blue?style=for-the-badge&logo=docker&logoColor=white&labelColor=000)](https://hub.docker.com/r/enricoros/big-agi)
+[![Deploy on Vercel](https://img.shields.io/badge/Vercel-Deploy-blue?style=for-the-badge&logo=vercel&logoColor=white&labelColor=000)](https://vercel.com/new/clone?repository-url=https://github.com/enricoros/big-agi)
+[![Discord](https://img.shields.io/discord/1098796266906980422?style=for-the-badge&label=Discord&logo=discord&logoColor=white&labelColor=000000&color=purple)](https://discord.gg/MkH4qj2Jp9)
+<br/>
+[![GitHub Monthly Commits](https://img.shields.io/github/commit-activity/m/enricoros/big-agi?style=for-the-badge&x=3&logo=github&logoColor=white&label=commits&labelColor=000&color=green)](https://github.com/enricoros/big-agi/commits)
+[![GHCR Pulls](https://img.shields.io/badge/ghcr.io-767k_dl-12b76a?style=for-the-badge&logo=Xdocker&logoColor=white&labelColor=000&color=A8E6CF)](https://github.com/enricoros/big-AGI/pkgs/container/big-agi)
+[![Contributors](https://img.shields.io/github/contributors/enricoros/big-agi?style=for-the-badge&x=2&logo=Xgithub&logoColor=white&label=cooks&labelColor=000&color=A8E6CF)](https://github.com/enricoros/big-AGI/graphs/contributors)
+[![License: MIT](https://img.shields.io/badge/License-MIT-A8E6CF?style=for-the-badge&labelColor=000)](https://opensource.org/licenses/MIT)
+
+[//]: # ([![Uptime Robot ratio &#40;30 days&#41;]&#40;https://img.shields.io/uptimerobot/ratio/m801796948-868b22ed7ceaa0acac4dc765?style=for-the-badge&labelColor=000&color=green&#41;]&#40;https://stats.uptimerobot.com/59MXcnmjrM&#41;)
+[//]: # ([![Open Version]&#40;https://img.shields.io/github/v/release/enricoros/big-AGI?label=Open+Release&style=flat-square&logo=github&logoColor=white&labelColor=000&#41;]&#40;https://github.com/enricoros/big-AGI/releases/latest&#41;)
+[//]: # (![GitHub Stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi?style=flat-square&logo=github&logoColor=white&labelColor=000&color=yellow&#41;)
+[//]: # ([![GitHub Forks]&#40;https://img.shields.io/github/forks/enricoros/big-agi?style=flat-square&logo=github&logoColor=white&labelColor=000&#41;]&#40;#&#41;)
+[//]: # ([![Follow on X]&#40;https://img.shields.io/twitter/follow/enricoros?style=flat-square&logo=X&logoColor=white&labelColor=000&color=000&#41;]&#40;https://x.com/enricoros&#41;)
+
+</div>
+
+<br/>
+
 # Big-AGI Open 🧠
 
 This is the open-source foundation of **Big-AGI**, ___the multi-model AI workspace for experts___.
@@ -8,12 +34,16 @@ You need to think broader, decide faster, and build with confidence, then you ne
 It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 **As an independent, non-VC-funded project, Pro subscriptions at $10.99/mo fund development for everyone, including the free and open-source tiers.**
 
-**What makes Big-AGI different:**  
+![LLM Vendors](https://img.shields.io/badge/18+_LLM_Services-500+_Models-black?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=purple)&nbsp;
+[![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/beam)&nbsp;
+[![Feature Beam](https://img.shields.io/badge/Expert_Mode-AI_Inspector-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/beam)
+
+### What makes Big-AGI different:
 **Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, or GPT-5 Pro - 
 **Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
-**Who uses Big-AGI:**  
+### Who uses Big-AGI:  
 Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
 
 <img width="830" height="370" alt="image" src="https://github.com/user-attachments/assets/513c4f77-0970-4a56-b23b-1416c8246174" />
@@ -38,7 +68,6 @@ Choose Big-AGI because you don't need another clone or slop - you need an AI too
 **Self-host and developers** (full control)  
 - Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
 - Or fork & run on Vercel:
-
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
 [//]: # (**For the latest Big-AGI:**)
@@ -227,6 +256,10 @@ For full details and former releases, check out the [archived versions changelog
 
 ## 👉 Key Features
 
+Delightful UX with latest models exclusive features like Beam for **multi-model AI validation**.
+> ![LLM Vendors](https://img.shields.io/badge/18_LLM_Services-500+_Models-black?style=for-the-badge&logo=openai&logoColor=white&labelColor=purple)&nbsp;
+> [![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&logo=anthropic&labelColor=purple)](https://big-agi.com/beam)
+
 | ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
 | **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
@@ -298,15 +331,12 @@ Or bring your API keys and jump straight into our free instance on [big-AGI.com]
 - [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - [ ] ✨ [Deploy](docs/installation.md) your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
 
+> ### Made with 💚 by: 
+> <a href="https://github.com/enricoros/big-agi/graphs/contributors">
+>   <img src="https://contrib.rocks/image?repo=enricoros/big-agi&max=48&columns=12" />
+> </a>
+
 <br/>
-
-[//]: # ([![GitHub stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/stargazers&#41;)
-
-[//]: # ([![GitHub forks]&#40;https://img.shields.io/github/forks/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/network&#41;)
-
-[//]: # ([![GitHub pull requests]&#40;https://img.shields.io/github/issues-pr/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/pulls&#41;)
-
-[//]: # ([![License]&#40;https://img.shields.io/github/license/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/LICENSE&#41;)
 
 ## 📜 Licensing
 
