@@ -61,14 +61,12 @@ Choose Big-AGI because you don't need another clone or slop - you need an AI too
 \*: **Configuration requires your API keys**. *Big-AGI does not charge for model usage or limit your access*.  
 **Why Pro?** As an independent project, Pro subscriptions fund all development. Early subscribers shape the roadmap directly.    
 
-<a href="https://big-agi.com">
-  <img width="210" height="68" alt="image" src="https://github.com/user-attachments/assets/b2f8a7b8-415f-4c92-b228-4f5a54fe2bdd" />
-</a>  
+[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
 
 **Self-host and developers** (full control)  
 - Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
-- Or fork & run on Vercel:
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
+- Or fork & run on Vercel:  
+  [![Deploy on Vercel](https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=vercel&logoColor=white&labelColor=000)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
 [//]: # (**For the latest Big-AGI:**)
 
