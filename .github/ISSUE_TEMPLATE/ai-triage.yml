@@ -1,11 +1,11 @@
 name: 🔥 Make AI Fix This
-description: Bug, question, or feedback - AI analyzes and provides solutions
+description: Bug, question, or feedback - AI analyzes and changes Big-AGI appropriately
 labels: [ 'claude-triage' ]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for opening an issue! Our AI will analyze it and provide solutions.
+        Thanks for opening an issue! Our AI will analyze it and change Big-AGI appropriately.
 
         **What happens next:**
         - AI searches the codebase and documentation
