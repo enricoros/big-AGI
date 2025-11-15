@@ -36,12 +36,55 @@ It comes packed with **world-class features** like Beam, and is praised for its 
 
 ![LLM Vendors](https://img.shields.io/badge/18+_LLM_Services-500+_Models-black?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=purple)&nbsp;
 [![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/beam)&nbsp;
-[![Feature Beam](https://img.shields.io/badge/Expert_Mode-AI_Inspector-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/beam)
+[![Feature Inspector](https://img.shields.io/badge/Expert_Mode-AI_Inspector-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/inspector)
 
 ### What makes Big-AGI different:
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, or GPT-5 Pro - 
-**Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, Kimi K2 Thinking or GPT 5.1 -
+**Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
+
+<table>
+<tr>
+<td align="center" width="25%">
+<b>🧠 Intelligence</b><br/>
+<img src="https://img.shields.io/badge/Multi--Model-Validation-4285F4?style=for-the-badge" alt="Multi-Model"/>
+</td>
+<td align="center" width="25%">
+<b>✨ Experience</b><br/>
+<img src="https://img.shields.io/badge/Clean-UX-34A853?style=for-the-badge" alt="Clean UX"/>
+</td>
+<td align="center" width="25%">
+<b>⚡ Performance</b><br/>
+<img src="https://img.shields.io/badge/Zero-Latency-EA4335?style=for-the-badge" alt="Zero Latency"/>
+</td>
+<td align="center" width="25%">
+<b>🔒 Control</b><br/>
+<img src="https://img.shields.io/badge/No-Lock--in-FBBC04?style=for-the-badge" alt="No Lock-in"/>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top">
+Beam & Merge<br/>
+De-hallucination<br/>
+No context junk
+</td>
+<td align="center" valign="top">
+Flow-state interface<br/>
+Higly customizable<br/>
+Best-in-class UX
+</td>
+<td align="center" valign="top">
+Local-first<br/>
+Highly parallel<br/>
+Madly optimized
+</td>
+<td align="center" valign="top">
+No vendor lock-in<br/>
+Your API keys<br/>
+AI Inspector
+</td>
+</tr>
+</table>
 
 ### Who uses Big-AGI:  
 Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
@@ -51,8 +94,8 @@ Loved by engineers, founders, researchers, self-hosters, and IT departments for 
 Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
 
 ### Show me a screenshot:
-Sure - here is real-world screeengrab as I'm writing this, while running a Beam to extract SVG from an image with Sonnet 4.5, Opus 4.1, GPT 5.1, Gemini 2.5 Pro, Nano Banana, etc.
-<img width="3902" height="2624" alt="image" src="https://github.com/user-attachments/assets/853f4160-27cb-4ac9-826b-402f1e63d4af" />
+Sure - here is real-world screeengrab as I'm writing this, while running a Beam to extract SVG from an image with Sonnet 4.5, Opus 4.1, GPT 5.1, Gemini 2.5 Pro, Nano Banana, etc.  
+<img alt="Real-world screen capture as of Nov 15 2025, 2am" src="https://github.com/user-attachments/assets/853f4160-27cb-4ac9-826b-402f1e63d4af" />
 
 
 ## Get Started
@@ -257,37 +300,39 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 For full details and former releases, check out the [archived versions changelog](docs/changelog.md).
 
-## 👉 Key Features
+## 👉 Supported Models & Integrations
 
 Delightful UX with latest models exclusive features like Beam for **multi-model AI validation**.
 > ![LLM Vendors](https://img.shields.io/badge/18_LLM_Services-500+_Models-black?style=for-the-badge&logo=openai&logoColor=white&labelColor=purple)&nbsp;
 > [![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&logo=anthropic&labelColor=purple)](https://big-agi.com/beam)
 
-| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
+| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![500+ AI Models](https://img.shields.io/badge/500%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
 | **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
 
 ![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
-You can easily configure 100s of AI models in big-AGI:
+### AI Models & Vendors
 
-| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                               |
-|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                       |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                                                                                                                 |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                               |
-| Language services   | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
-| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                            |
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                   | 
+Configure 100s of AI models from 18+ providers:
 
-Add extra functionality with these integrations:
+| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                                                                                                             |
+|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.io/) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                                                                                                                  |
+| Local Servers       | [LM Studio](https://lmstudio.ai/) (non-open)                                                                                                                                                                                                                                                                                                                                                    |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                                                                             |
+| LLM services        | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [Moonshot](https://www.moonshot.cn/) · [OpenPipe](https://openpipe.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
+| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                                                                                                          |
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                                                                                                 |
 
-| **More**     | _integrations_                                                                                                 |
-|:-------------|:---------------------------------------------------------------------------------------------------------------| 
-| Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
-| Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
-| Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
-| Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
+### Additional Integrations
+
+| **More**      | _integrations_                                                                                                 |
+|:--------------|:---------------------------------------------------------------------------------------------------------------| 
+| Web Browse    | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
+| Web Search    | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
+| Code Editors  | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
+| Observability | [Helicone](https://www.helicone.ai)                                                                            | 
 
 [//]: # (- [x] **Flow-state UX** for uncompromised productivity)
 
