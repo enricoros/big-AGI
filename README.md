@@ -47,7 +47,7 @@ and **Speed**: with a local-first, over-powered, zero-latency, madly optimized w
 <tr>
 <td align="center" width="25%">
 <b>🧠 Intelligence</b><br/>
-<img src="https://img.shields.io/badge/Multi--Model-Validation-4285F4?style=for-the-badge" alt="Multi-Model"/>
+<img src="https://img.shields.io/badge/Multi--Model-Trust-4285F4?style=for-the-badge" alt="Multi-Model"/>
 </td>
 <td align="center" width="25%">
 <b>✨ Experience</b><br/>
