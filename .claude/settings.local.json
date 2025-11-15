@@ -23,6 +23,7 @@
       "Bash(rg:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
+      "Bash(tree:*)",
       "Read(//tmp/**)",
       "WebFetch",
       "WebFetch(domain:big-agi.com)",
