@@ -15,7 +15,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-A8E6CF?style=for-the-badge&labelColor=000)](https://opensource.org/licenses/MIT)
 <br/>
 
-[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new)
+[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new?template=ai-triage.yml)
 
 [//]: # ([![Uptime Robot ratio &#40;30 days&#41;]&#40;https://img.shields.io/uptimerobot/ratio/m801796948-868b22ed7ceaa0acac4dc765?style=for-the-badge&labelColor=000&color=green&#41;]&#40;https://stats.uptimerobot.com/59MXcnmjrM&#41;)
 [//]: # ([![Open Version]&#40;https://img.shields.io/github/v/release/enricoros/big-AGI?label=Open+Release&style=flat-square&logo=github&logoColor=white&labelColor=000&#41;]&#40;https://github.com/enricoros/big-AGI/releases/latest&#41;)
@@ -363,7 +363,8 @@ Or use the hosted version at [big-agi.com](https://big-agi.com) with your API ke
 
 When you open an issue, our custom AI triage system (powered by [Claude Code](https://github.com/anthropics/claude-code-action) with Big-AGI architecture documentation) analyzes it, searches the codebase, and provides solutions - typically within 30 minutes. We've trained the system on our modules and subsystems so it handles most issues effectively. Your feedback drives development!
 
-[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new)
+[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new?template=ai-triage.yml)
+[![Request Feature](https://img.shields.io/badge/Request_Feature-Roadmap_Idea-orange?style=for-the-badge&logo=lightbulb&logoColor=white)](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 
 [![Good First Issues](https://img.shields.io/badge/Good_First_Issues-Start-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/users/enricoros/projects/4/views/4)
 [![Customization](https://img.shields.io/badge/Fork_&_Customize-Your_Own-purple?style=for-the-badge&logo=git&logoColor=white)](docs/customizations.md)
