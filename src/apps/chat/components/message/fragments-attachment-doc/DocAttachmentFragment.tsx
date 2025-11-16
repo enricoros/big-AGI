@@ -53,7 +53,7 @@ function _inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment)
 }
 
 
-export function DocAttachmentFragment(props: {
+export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragment(props: {
   fragment: DMessageAttachmentFragment,
   controlledEditor: boolean,
   editedText?: string,
@@ -400,4 +400,4 @@ export function DocAttachmentFragment(props: {
 
     </RenderCodePanelFrame>
   );
-}
+});

@@ -15,7 +15,7 @@ import { DocAttachmentFragment } from './DocAttachmentFragment';
  * When one is active, there is a content part just right under (with the collapse mechanism in case it's a user role).
  * If one is clicked the content part (use ContentPartText) is displayed.
  */
-export function DocumentAttachmentFragments(props: {
+export const DocumentAttachmentFragments = React.memo(function DocumentAttachmentFragments(props: {
   attachmentFragments: DMessageAttachmentFragment[],
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
@@ -144,4 +144,4 @@ export function DocumentAttachmentFragments(props: {
 
     </Box>
   );
-}
+});
