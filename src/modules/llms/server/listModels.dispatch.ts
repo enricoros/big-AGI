@@ -317,7 +317,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           // de-duplicate by ids (can happen for local servers.. upstream bugs)
           const preCount = maybeModels.length;
           maybeModels = maybeModels.filter((model, index) => maybeModels.findIndex(m => m.id === model.id) === index);
-          if (preCount !== maybeModels.length)
+          if (preCount !== maybeModels.length && dialect !== 'mistral' /* [Mistral, 2025-11-17] Mistral has 2 duplicate models */)
             console.warn(`openai.router.listModels: removed ${preCount - maybeModels.length} duplicate models for dialect ${dialect}`);
 
           // sort by id
