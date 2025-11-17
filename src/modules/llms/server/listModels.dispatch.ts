@@ -64,7 +64,7 @@ function createDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<
 
 // -- Specialized Implementations -- Core of Server-side LLM Model Listing abstraction --
 
-export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal) {
+export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
   return dispatch.convertToDescriptions(wireModels);
