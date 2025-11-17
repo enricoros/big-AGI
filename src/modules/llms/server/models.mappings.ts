@@ -1,4 +1,4 @@
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { ModelDescriptionSchema } from './llm.server.types';
 
 
 // -- Manual model mappings: types and helper --

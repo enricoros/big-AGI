@@ -1,6 +1,13 @@
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import * as z from 'zod/v4';
+
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
+
+
+// configuration
+export const DEV_DEBUG_ANTHROPIC_MODELS = Release.IsNodeDevBuild;
 
 
 const ANT_PAR_WEB: ModelDescriptionSchema['parameterSpecs'] = [
@@ -239,3 +246,78 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // retired: 'claude-2.1'
   // retired: 'claude-2.0'
 ];
+
+
+// -- Wire Types --
+
+/**
+ * Namespace for the Anthropic API Models List response schema.
+ * NOTE: not merged into AIX because of possible circular dependency issues - future work.
+ */
+export namespace AnthropicWire_API_Models_List {
+
+  export type ModelObject = z.infer<typeof ModelObject_schema>;
+  const ModelObject_schema = z.object({
+    type: z.literal('model'),
+    id: z.string(),
+    display_name: z.string(),
+    created_at: z.string(),
+  });
+
+  export const Response_schema = z.object({
+    data: z.array(ModelObject_schema),
+    has_more: z.boolean(),
+    first_id: z.string().nullable(),
+    last_id: z.string().nullable(),
+  });
+
+}
+
+
+// -- Helper Functions --
+
+/**
+ * DEV: Checks for obsoleted models that are defined in hardcodedAnthropicModels but no longer present in the API.
+ * Similar to Gemini's geminiDevCheckForSuperfluousModels_DEV.
+ */
+export function llmsAntDevCheckForObsoletedModels_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
+  if (DEV_DEBUG_ANTHROPIC_MODELS) {
+    const apiModelIds = new Set(availableModels.map(m => m.id));
+    const obsoletedModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
+    if (obsoletedModels.length > 0)
+      console.log(`[DEV] Anthropic: obsoleted model definitions: [ ${obsoletedModels.map(m => m.id).join(', ')} ]`);
+  }
+}
+
+/**
+ * Create a placeholder ModelDescriptionSchema for Anthropic models not in the hardcoded list.
+ * Uses sensible defaults with the newest available interfaces for day-0 support.
+ */
+export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
+  return {
+    id: model.id,
+    label: model.display_name,
+    created: Math.round(new Date(model.created_at).getTime() / 1000),
+    description: 'Newest model, description not available yet.',
+    contextWindow: 200000,
+    maxCompletionTokens: 8192,
+    trainingDataCutoff: 'Latest',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    // chatPrice: ...
+    // benchmark: ...
+  };
+}
+
+/**
+ * Injects the LLM_IF_Tools_WebSearch interface for models that have web search/fetch parameters.
+ * This allows the UI to show the web search indicator automatically based on model capabilities.
+ */
+export function llmsAntInjectWebSearchInterface(model: ModelDescriptionSchema): ModelDescriptionSchema {
+  const hasWebParams = model.parameterSpecs?.some(spec =>
+    spec.paramId === 'llmVndAntWebSearch' || spec.paramId === 'llmVndAntWebFetch',
+  );
+  return (hasWebParams && !model.interfaces?.includes(LLM_IF_Tools_WebSearch)) ? {
+    ...model,
+    interfaces: [...model.interfaces, LLM_IF_Tools_WebSearch],
+  } : model;
+}

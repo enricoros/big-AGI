@@ -4,7 +4,7 @@ description: Update Anthropic model definitions with latest pricing and capabili
 
 Update `src/modules/llms/server/anthropic/anthropic.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Models: https://docs.claude.com/en/docs/about-claude/models/overview

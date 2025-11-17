@@ -11,7 +11,7 @@ import type { ModelDescriptionSchema, RequestAccessValues } from '../../llm.serv
 import type { OpenAIAccessSchema } from '../openai.router';
 import { fixupHost } from '../openai.router';
 
-import { fromManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
 import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
 
 

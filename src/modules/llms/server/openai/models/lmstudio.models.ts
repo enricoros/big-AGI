@@ -1,7 +1,7 @@
 import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping } from './models.data';
+import { fromManualMapping } from '../../models.mappings';
 
 
 export function lmStudioModelToModelDescription(modelId: string): ModelDescriptionSchema {

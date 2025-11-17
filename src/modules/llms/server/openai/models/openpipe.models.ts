@@ -1,8 +1,8 @@
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { _knownOpenAIChatModels } from '~/modules/llms/server/openai/models/openai.models';
-import { wireOpenPipeModelOutputSchema } from '~/modules/llms/server/openai/openpipe.wiretypes';
-import { fromManualMapping, KnownModel } from '~/modules/llms/server/openai/models/models.data';
+import { wireOpenPipeModelOutputSchema } from '~/modules/llms/server/openai/wiretypes/openpipe.wiretypes';
+import { fromManualMapping, KnownModel } from '~/modules/llms/server/models.mappings';
 
 const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
 

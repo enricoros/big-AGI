@@ -1,8 +1,9 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
+
+import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, type ManualMappings } from './models.data';
+import { fromManualMapping, type ManualMappings } from '../../models.mappings';
 
 
 // [LocalAI]
@@ -37,7 +38,7 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
     .replace(' Q4_K_M', ' (Q4_K_M)')
     .replace(' F16', ' (F16)')
     .split(' ')
-    .map(capitalizeFirstLetter)
+    .map(serverCapitalizeFirstLetter)
     .join(' ');
 
   const description = `LocalAI model. File: ${modelId}`;

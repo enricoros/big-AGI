@@ -4,7 +4,7 @@ description: Update Perplexity model definitions with latest pricing and capabil
 
 Update `src/modules/llms/server/openai/models/perplexity.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Models: https://docs.perplexity.ai/getting-started/models

@@ -2,7 +2,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stor
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 // - Models & Pricing: https://www.alibabacloud.com/help/en/model-studio/models
 // - Billing Guide: https://www.alibabacloud.com/help/en/model-studio/billing-for-model-studio

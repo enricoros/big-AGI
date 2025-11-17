@@ -1,8 +1,8 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from './models.data';
-import { wireTogetherAIListOutputSchema } from '../togetherai.wiretypes';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { wireTogetherAIListOutputSchema } from '../wiretypes/togetherai.wiretypes';
 
 
 // Note: 2025-01-28 - we used to have harcoded models here, but now we have a dynamic
