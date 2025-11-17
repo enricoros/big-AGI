@@ -1,0 +1,35 @@
+{
+  "openai": {
+    "dialect": "openai",
+    "oaiKey": "sk-...",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "anthropic": {
+    "dialect": "anthropic",
+    "anthropicKey": "sk-ant-...",
+    "anthropicHost": null,
+    "heliconeKey": null
+  },
+  "gemini": {
+    "dialect": "gemini",
+    "geminiKey": "...",
+    "geminiHost": "",
+    "minSafetyLevel": "BLOCK_NONE"
+  },
+  "ollama": {
+    "dialect": "ollama",
+    "ollamaHost": "http://127.0.0.1:11434",
+    "ollamaJson": false
+  },
+  "groq": {
+    "dialect": "groq",
+    "oaiKey": "gsk_...",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  }
+}
