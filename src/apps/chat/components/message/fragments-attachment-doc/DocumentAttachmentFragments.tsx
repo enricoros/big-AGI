@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box } from '@mui/joy';
+import { Box, Button } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -30,6 +30,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
   // state
   const [_activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
   const [editState, setEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
+  const [showAllAttachments, setShowAllAttachments] = React.useState<boolean>(false);
 
 
   // derived state
@@ -92,6 +93,20 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
   }, []);
 
 
+  // pagination logic
+  const SHOW_LIMIT = 49;
+  const totalAttachments = props.attachmentFragments.length;
+  const hasMoreThanLimit = totalAttachments > SHOW_LIMIT + 1; // +1 to account for "show more" button
+  const visibleAttachments = hasMoreThanLimit && !showAllAttachments
+    ? props.attachmentFragments.slice(0, SHOW_LIMIT)
+    : props.attachmentFragments;
+  const remainingCount = totalAttachments - SHOW_LIMIT;
+
+  const handleToggleShowAll = React.useCallback(() => {
+    setShowAllAttachments(prev => !prev);
+  }, []);
+
+
   // memos
   const buttonsSx = React.useMemo(() => ({
     // layout
@@ -112,7 +127,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
 
       {/* Document buttons */}
       <Box sx={buttonsSx}>
-        {props.attachmentFragments.map((attachmentFragment) =>
+        {visibleAttachments.map((attachmentFragment) =>
           <DocAttachmentFragmentButton
             key={attachmentFragment.fId}
             fragment={attachmentFragment}
@@ -121,6 +136,22 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
             isSelectable={props.allowSelection}
             toggleSelected={handleToggleSelectedId}
           />,
+        )}
+
+        {/* Show more/less button */}
+        {hasMoreThanLimit && (
+          <Button
+            size={props.contentScaling === 'md' ? 'md' : 'sm'}
+            variant='soft'
+            onClick={handleToggleShowAll}
+            sx={{
+              minHeight: props.contentScaling === 'md' ? 40 : props.contentScaling === 'sm' ? 38 : 36,
+              minWidth: '64px',
+              fontWeight: 'md',
+            }}
+          >
+            {showAllAttachments ? `Show fewer docs...` : `Show ${remainingCount} more...`}
+          </Button>
         )}
       </Box>
 
