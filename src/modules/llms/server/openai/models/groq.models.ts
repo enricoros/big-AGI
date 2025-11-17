@@ -1,8 +1,8 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from './models.data';
-import { wireGroqModelsListOutputSchema } from '../groq.wiretypes';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { wireGroqModelsListOutputSchema } from '../wiretypes/groq.wiretypes';
 
 
 /**

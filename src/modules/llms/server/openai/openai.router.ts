@@ -7,31 +7,15 @@ import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.route
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
+import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
 
 import { Brand } from '~/common/app.config';
 
-import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-
 import { ListModelsResponse_schema, ModelDescriptionSchema, RequestAccessValues } from '../llm.server.types';
-import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
-import { azureDeploymentFilter, azureDeploymentToModelDescription, azureOpenAIAccess, azureParseFromDeploymentsAPI } from './models/azure.models';
-import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './models/chutesai.models';
-import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
-import { fastAPIHeuristic, fastAPIModels } from './models/fastapi.models';
-import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
-import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
-import { lmStudioModelToModelDescription } from './models/lmstudio.models';
-import { localAIModelSortFn, localAIModelToModelDescription } from './models/localai.models';
-import { mistralModels } from './models/mistral.models';
-import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './models/moonshot.models';
-import { openaiDevCheckForModelsOverlap_DEV, openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
-import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
-import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
-import { perplexityAIModelDescriptions, perplexityInjectVariants } from './models/perplexity.models';
-import { togetherAIModelsToModelDescriptions } from './models/together.models';
-import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
-import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
+import { azureOpenAIAccess } from './models/azure.models';
+import { listModelsRunDispatch } from '../listModels.dispatch';
+import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './wiretypes/localai.wiretypes';
 
 
 const openAIDialects = z.enum([
@@ -181,142 +165,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
     .query(async ({ input: { access }, signal }): Promise<{ models: ModelDescriptionSchema[] }> => {
 
-      let models: ModelDescriptionSchema[];
-
-      // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/guides/model-cards)
-      if (access.dialect === 'perplexity') {
-        models = perplexityAIModelDescriptions()
-          .reduce(perplexityInjectVariants, [] as ModelDescriptionSchema[]);
-        return { models };
-      }
-
-      // [xAI]: custom models listing
-      if (access.dialect === 'xai')
-        return { models: (await xaiModelDescriptions(access)).sort(xaiModelSort) };
-
-      // [OpenAI-dialects]: fetch openAI-style for all but Azure (will be then used in each dialect)
-      const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire_API_Models_List.Response>(access, '/v1/models', signal);
-
-      // [Together] missing the .data property
-      if (access.dialect === 'togetherai')
-        return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
-
-      let openAIModels = openAIWireModelsResponse?.data || [];
-
-      // de-duplicate by ids (can happen for local servers.. upstream bugs)
-      const preCount = openAIModels.length;
-      openAIModels = openAIModels.filter((model, index) => openAIModels.findIndex(m => m.id === model.id) === index);
-      if (preCount !== openAIModels.length)
-        console.warn(`openai.router.listModels: removed ${preCount - openAIModels.length} duplicate models for dialect ${access.dialect}`);
-
-      // sort by id
-      openAIModels.sort((a, b) => a.id.localeCompare(b.id));
-
-      // every dialect has a different way to enumerate models - we execute the mapping on the server side
-      switch (access.dialect) {
-
-        case 'alibaba':
-          models = openAIModels
-            .filter(({ id }) => alibabaModelFilter(id))
-            .map(({ id, created }) => alibabaModelToModelDescription(id, created))
-            .sort(alibabaModelSort);
-          break;
-
-        case 'azure':
-          const azureOpenAIDeployments = azureParseFromDeploymentsAPI(openAIModels);
-          models = azureOpenAIDeployments
-            .filter(azureDeploymentFilter)
-            .map(azureDeploymentToModelDescription)
-            .sort(openAISortModels);
-          break;
-
-        case 'deepseek':
-          models = openAIModels
-            .filter(({ id }) => deepseekModelFilter(id))
-            .map(({ id }) => deepseekModelToModelDescription(id))
-            .sort(deepseekModelSort);
-          break;
-
-        case 'groq':
-          models = openAIModels
-            .filter(groqModelFilter)
-            .map(groqModelToModelDescription)
-            .sort(groqModelSortFn);
-          break;
-
-        case 'lmstudio':
-          models = openAIModels
-            .map(({ id }) => lmStudioModelToModelDescription(id));
-          break;
-
-        // [LocalAI]: map id to label
-        case 'localai':
-          models = openAIModels
-            .map(({ id }) => localAIModelToModelDescription(id))
-            .sort(localAIModelSortFn);
-          break;
-
-        case 'mistral':
-          models = mistralModels(openAIModels);
-          break;
-
-        case 'moonshot':
-          models = openAIModels
-            .filter(moonshotModelFilter)
-            .map(moonshotModelToModelDescription)
-            .sort(moonshotModelSortFn);
-          break;
-
-        // [OpenAI]: chat-only models, custom sort, manual mapping
-        case 'openai':
-
-          // [ChutesAI] special case for model enumeration
-          if (chutesAIHeuristic(access.oaiHost))
-            return { models: chutesAIModelsToModelDescriptions(openAIModels) };
-
-          // [FireworksAI] special case for model enumeration
-          if (fireworksAIHeuristic(access.oaiHost))
-            return { models: fireworksAIModelsToModelDescriptions(openAIModels) };
-
-          // [FastChat] make the best of the little info
-          if (fastAPIHeuristic(openAIModels))
-            return { models: fastAPIModels(openAIModels) };
-
-          models = openAIModels
-
-            // limit to only 'gpt' and 'non instruct' models
-            .filter(openAIModelFilter)
-
-            // to model description
-            .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
-
-            // inject variants
-            .reduce(openAIInjectVariants, [] as ModelDescriptionSchema[])
-
-            // custom OpenAI sort
-            .sort(openAISortModels);
-
-          // [DEV] check for superfluous and missing models
-          openaiDevCheckForModelsOverlap_DEV(openAIWireModelsResponse, models);
-          break;
-
-        case 'openpipe':
-          models = [
-            ...openAIModels.map(openPipeModelToModelDescriptions),
-            ...openPipeModelDescriptions().sort(openPipeModelSort),
-          ];
-          break;
-
-        case 'openrouter':
-          // openRouterStatTokenizers(openAIModels);
-          models = openAIModels
-            .sort(openRouterModelFamilySortFn)
-            .map(openRouterModelToModelDescription)
-            .filter(desc => !!desc)
-            .reduce(openRouterInjectVariants, [] as ModelDescriptionSchema[]);
-          break;
-
-      }
+      const models = await listModelsRunDispatch(access, signal);
 
       return { models };
     }),

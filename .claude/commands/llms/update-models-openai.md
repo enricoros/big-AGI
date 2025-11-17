@@ -4,7 +4,7 @@ description: Update OpenAI model definitions with latest pricing and capabilitie
 
 Update `src/modules/llms/server/openai/models/openai.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Manual hint:** For pricing page, expand all tables before copying content.
 

@@ -5,7 +5,7 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, KnownModel, ManualMappings } from './models.data';
+import { fromManualMapping, KnownModel, ManualMappings } from '../../models.mappings';
 import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 
@@ -179,7 +179,7 @@ const _knownXAIChatModels: ManualMappings = [
 
 
 // xAI Model Descriptions
-export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
+export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
 
   // List models
   const { headers, url } = openAIAccess(access, null, '/v1/language-models');

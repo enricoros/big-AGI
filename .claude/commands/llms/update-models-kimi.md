@@ -4,7 +4,7 @@ description: Update Kimi model definitions with latest pricing and capabilities
 
 Update `src/modules/llms/server/openai/models/moonshot.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Pricing: https://platform.moonshot.ai/docs/pricing/chat

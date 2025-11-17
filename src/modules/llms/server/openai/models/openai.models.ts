@@ -4,7 +4,7 @@ import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImag
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, KnownModel, ManualMappings } from './models.data';
+import { fromManualMapping, KnownModel, ManualMappings } from '../../models.mappings';
 
 
 // OpenAI Model Variants

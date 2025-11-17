@@ -144,7 +144,7 @@ export function perplexityInjectVariants(models: ModelDescriptionSchema[], model
   return models;
 }
 
-export function perplexityAIModelDescriptions() {
+export function perplexityHardcodedModelDescriptions() {
   // Returns the list of known Perplexity models
   return _knownPerplexityChatModels;
 }

@@ -5,20 +5,14 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
-import { Release } from '~/common/app.release';
-
-import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
-
-import { hardcodedAnthropicModels, hardcodedAnthropicVariants } from './anthropic.models';
-import { fixupHost } from '~/modules/llms/server/openai/openai.router';
+import { ListModelsResponse_schema } from '../llm.server.types';
+import { fixupHost } from '../openai/openai.router';
+import { listModelsRunDispatch } from '../listModels.dispatch';
 
 
 // configuration and defaults
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
-
-const DEV_DEBUG_ANTHROPIC_MODELS = Release.IsNodeDevBuild;
 
 const DEFAULT_ANTHROPIC_HEADERS = {
   // Latest version hasn't changed (as of Feb 2025)
@@ -165,10 +159,6 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
   };
 }
 
-function roundTime(date: string) {
-  return Math.round(new Date(date).getTime() / 1000);
-}
-
 
 // Input Schemas
 
@@ -185,23 +175,6 @@ const listModelsInputSchema = z.object({
 });
 
 
-// Helpers
-
-/**
- * Injects the LLM_IF_Tools_WebSearch interface for models that have web search/fetch parameters.
- * This allows the UI to show the web search indicator automatically based on model capabilities.
- */
-function _injectWebSearchInterface(model: ModelDescriptionSchema): ModelDescriptionSchema {
-  const hasWebParams = model.parameterSpecs?.some(spec =>
-    spec.paramId === 'llmVndAntWebSearch' || spec.paramId === 'llmVndAntWebFetch'
-  );
-  return (hasWebParams && !model.interfaces?.includes(LLM_IF_Tools_WebSearch)) ? {
-    ...model,
-    interfaces: [...model.interfaces, LLM_IF_Tools_WebSearch],
-  } : model;
-}
-
-
 // Router
 
 export const llmAnthropicRouter = createTRPCRouter({
@@ -210,81 +183,9 @@ export const llmAnthropicRouter = createTRPCRouter({
   listModels: publicProcedure
     .input(listModelsInputSchema)
     .output(ListModelsResponse_schema)
-    .query(async ({ input: { access } }) => {
+    .query(async ({ input: { access }, signal }) => {
 
-      // get the models
-      const wireModels = await anthropicGETOrThrow(access, '/v1/models?limit=1000');
-      const { data: availableModels } = AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
-
-      // sort by: family (desc) > class (desc) > date (desc) -- Future NOTE: -5- will match -4-5- and -3-5-.. figure something else out
-      const familyPrecedence = ['-4-7-', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
-      const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
-
-      const getFamilyIdx = (id: string) => familyPrecedence.findIndex(f => id.includes(f));
-      const getClassIdx = (id: string) => classPrecedence.findIndex(c => id.includes(c));
-
-      // cast the models to the common schema
-      const models = availableModels
-        .sort((a, b) => {
-          const familyA = getFamilyIdx(a.id);
-          const familyB = getFamilyIdx(b.id);
-          const classA = getClassIdx(a.id);
-          const classB = getClassIdx(b.id);
-
-          // family desc (lower index = better, -1 = unknown goes last)
-          if (familyA !== familyB) return (familyA === -1 ? 999 : familyA) - (familyB === -1 ? 999 : familyB);
-          // class desc
-          if (classA !== classB) return (classA === -1 ? 999 : classA) - (classB === -1 ? 999 : classB);
-          // date desc (newer first) - string comparison works since format is YYYYMMDD
-          return b.id.localeCompare(a.id);
-        })
-        .reduce((acc, model) => {
-
-          // find the model description
-          const hardcodedModel = hardcodedAnthropicModels.find(m => m.id === model.id);
-          if (hardcodedModel) {
-
-            // update creation date
-            if (!hardcodedModel.created && model.created_at)
-              hardcodedModel.created = roundTime(model.created_at);
-
-            // add FIRST a thinking variant, if defined
-            if (hardcodedAnthropicVariants[model.id])
-              acc.push({
-                ...hardcodedModel,
-                ...hardcodedAnthropicVariants[model.id],
-              });
-
-            // add the base model
-            acc.push(hardcodedModel);
-
-          } else {
-
-            // for day-0 support of new models, create a placeholder model using sensible defaults
-            const novelModel = _createPlaceholderModel(model);
-            // if (DEV_DEBUG_ANTHROPIC_MODELS) // kind of important...
-            console.log('[DEV] anthropic.router: new model found, please configure it:', novelModel.id);
-            acc.push(novelModel);
-
-          }
-
-          return acc;
-        }, [] as ModelDescriptionSchema[])
-        .map(_injectWebSearchInterface);
-
-      // developers warning for obsoleted models (we have them, but they are not in the API response anymore)
-      if (DEV_DEBUG_ANTHROPIC_MODELS) {
-        const apiModelIds = new Set(availableModels.map(m => m.id));
-        const additionalModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
-        if (additionalModels.length > 0)
-          console.log('[DEV] anthropic.router: obsoleted models:', additionalModels.map(m => m.id).join(', '));
-      }
-
-      // additionalModels.forEach(m => {
-      //   m.label += ' (Removed)';
-      //   m.isLegacy = true;
-      // });
-      // models.push(...additionalModels);
+      const models = await listModelsRunDispatch(access, signal);
 
       return { models };
     }),
@@ -328,47 +229,3 @@ export const llmAnthropicRouter = createTRPCRouter({
     }),
 
 });
-
-
-/**
- * Create a placeholder ModelDescriptionSchema for models not in the hardcoded list,
- * using sensible defaults with the newest available interfaces.
- */
-function _createPlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
-  return {
-    id: model.id,
-    label: model.display_name,
-    created: Math.round(new Date(model.created_at).getTime() / 1000),
-    description: 'Newest model, description not available yet.',
-    contextWindow: 200000,
-    maxCompletionTokens: 8192,
-    trainingDataCutoff: 'Latest',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
-    // chatPrice: ...
-    // benchmark: ...
-  };
-}
-
-/**
- * Namespace for the Anthropic API Models List response schema.
- * NOTE: not merged into AIX because of possible circular dependency issues - future work.
- */
-namespace AnthropicWire_API_Models_List {
-
-  export type ModelObject = z.infer<typeof ModelObject_schema>;
-  const ModelObject_schema = z.object({
-    type: z.literal('model'),
-    id: z.string(),
-    display_name: z.string(),
-    created_at: z.string(),
-  });
-
-  export type Response = z.infer<typeof Response_schema>;
-  export const Response_schema = z.object({
-    data: z.array(ModelObject_schema),
-    has_more: z.boolean(),
-    first_id: z.string().nullable(),
-    last_id: z.string().nullable(),
-  });
-
-}
