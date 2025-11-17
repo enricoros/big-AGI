@@ -21,7 +21,8 @@ import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription
 import { fastAPIHeuristic, fastAPIModels } from './models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
-import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
+import { lmStudioModelToModelDescription } from './models/lmstudio.models';
+import { localAIModelSortFn, localAIModelToModelDescription } from './models/localai.models';
 import { mistralModels } from './models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './models/moonshot.models';
 import { openaiDevCheckForModelsOverlap_DEV, openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
