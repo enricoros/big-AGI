@@ -7,7 +7,7 @@ import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart, updateFragme
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { DocAttachmentFragmentButton } from './DocAttachmentFragmentButton';
-import { DocAttachmentFragment } from './DocAttachmentFragment';
+import { DocAttachmentFragmentPane } from './DocAttachmentFragmentPane';
 
 
 /**
@@ -126,7 +126,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
 
       {/* Document Viewer & Editor */}
       {!!selectedFragment && isDocPart(selectedFragment.part) && (
-        <DocAttachmentFragment
+        <DocAttachmentFragmentPane
           key={selectedFragment.fId /* this is here for the useLiveFile hook which otherwise would migrate state across fragments */}
           fragment={selectedFragment}
           controlledEditor={controlledEditor}
