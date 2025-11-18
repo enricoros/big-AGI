@@ -40,11 +40,9 @@ export function aixToOpenAIResponses(
   const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
   const isOpenAIO1Pro = model.id === 'o1-pro' || model.id.startsWith('o1-pro-');
-  const isOpenAIDeepResearch = model.id.includes('-deep-research');
 
   const hotFixNoTemperature = isOpenAIOFamily && !isOpenAIChatGPT;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
-  const hotFixForceWebSearchTool = isOpenAIDeepResearch;
 
   const isDialectAzure = openAIDialect === 'azure';
 
@@ -126,10 +124,10 @@ export function aixToOpenAIResponses(
   const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
   // Tool: Web Search: for search and deep research models
-  const requestWebSearchTool = hotFixForceWebSearchTool || !!model.vndOaiWebSearchContext || !!model.userGeolocation;
+  const requestWebSearchTool = !!model.vndOaiWebSearchContext || !!model.userGeolocation;
   if (requestWebSearchTool && !skipHostedToolsDueToCustomTools) {
     /**
-     * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search_preview' is not supported with gpt-5-mini-2025-08-07"
+     * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search' is not supported with gpt-5-mini-2025-08-07"
      *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
      */
     if (isDialectAzure) {
@@ -144,12 +142,13 @@ export function aixToOpenAIResponses(
       if (!payload.tools?.length)
         payload.tools = [];
       const webSearchTool: TRequestTool = {
-        type: 'web_search_preview',
+        type: 'web_search',
         search_context_size: model.vndOaiWebSearchContext ?? undefined,
         user_location: model.userGeolocation && {
           type: 'approximate',
           ...model.userGeolocation, // .city, .country, .region, .timezone
         },
+        external_web_access: true, // true: live internet access, false: cache-only
       };
       payload.tools.push(webSearchTool);
 

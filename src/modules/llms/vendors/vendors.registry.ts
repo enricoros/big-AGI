@@ -7,6 +7,7 @@ import { ModelVendorGroq } from './groq/groq.vendor';
 import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
+import { ModelVendorMoonshot } from './moonshot/moonshot.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenPipe } from './openpipe/openpipe.vendor';
@@ -28,6 +29,7 @@ export type ModelVendorId =
   | 'lmstudio'
   | 'localai'
   | 'mistral'
+  | 'moonshot'
   | 'ollama'
   | 'openai'
   | 'openpipe'
@@ -48,6 +50,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   lmstudio: ModelVendorLMStudio,
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,
+  moonshot: ModelVendorMoonshot,
   ollama: ModelVendorOllama,
   openai: ModelVendorOpenAI,
   openpipe: ModelVendorOpenPipe,

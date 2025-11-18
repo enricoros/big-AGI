@@ -53,8 +53,8 @@ export function safeErrorString(error: any): string | null {
     return null;
 
   // handle AggregateError
-  if (error instanceof AggregateError) {
-    const errors = error.errors.map(e => safeErrorString(e)).filter(Boolean);
+  if ((error instanceof AggregateError || error?.name === 'AggregateError') && Array.isArray(error.errors)) {
+    const errors = error.errors?.map((e: any) => safeErrorString(e)).filter(Boolean);
     return `AggregateError: ${errors.join('; ')}`;
   }
 
@@ -74,6 +74,15 @@ export function safeErrorString(error: any): string | null {
   }
   if (typeof error === 'string')
     return error;
+
+  // for real 'Error' objects, use the normal toString, as the JSON stringify may ignore fields for some reason
+  try {
+    if (error instanceof Error && 'toString' in error && typeof error.toString === 'function')
+      return error.toString();
+  } catch (e) {
+    // ignore
+  }
+
   if (typeof error === 'object') {
     try {
       return JSON.stringify(error, null, 2).slice(1, -1);
@@ -121,6 +130,30 @@ export function debugGenerateCurlCommand(method: 'GET' | 'POST' | 'DELETE' | 'PU
 export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
   return new ReadableStream({
     start: (controller) => controller.close(),
+  });
+}
+
+
+/**
+ * Used in retry logic to wait between attempts while respecting abort signals.
+ * @returns True if aborted, false if completed normally
+ */
+export function abortableDelay(delayMs: number, abortSignal: AbortSignal): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    // pre-check: already aborted or invalid delay
+    if (abortSignal.aborted || delayMs <= 0) {
+      resolve(abortSignal.aborted);
+      return;
+    }
+
+    const timer = setTimeout(() => resolve(false), delayMs);
+
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+
+    abortSignal.addEventListener('abort', onAbort, { once: true });
   });
 }
 

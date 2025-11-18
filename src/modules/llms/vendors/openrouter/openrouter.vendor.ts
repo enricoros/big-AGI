@@ -1,6 +1,8 @@
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
+import { getLLMPricing } from '~/common/stores/llms/llms.types';
+
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 
@@ -28,6 +30,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   id: 'openrouter',
   name: 'OpenRouter',
   displayRank: 40,
+  displayGroup: 'popular',
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
@@ -51,7 +54,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   rateLimitChatGenerate: async (llm) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
-    const wait = llm.pricing?.chat?._isFree
+    const wait = getLLMPricing(llm)?.chat?._isFree
       ? 5000 + 100 /* 5 seconds for free call, plus some safety margin */
       : 100;
 

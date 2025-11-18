@@ -1,0 +1,120 @@
+{
+  "_comment": "LLM Registry Sync - Service Configuration Template",
+  "_instructions": "1. Copy this file to 'services.json' 2. Fill in API keys for vendors you want to track 3. Remove or comment out services you don't use",
+  "openai": {
+    "dialect": "openai",
+    "oaiKey": "YOUR_OPENAI_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "anthropic": {
+    "dialect": "anthropic",
+    "anthropicKey": "YOUR_ANTHROPIC_API_KEY_HERE",
+    "anthropicHost": null,
+    "heliconeKey": null
+  },
+  "gemini": {
+    "dialect": "gemini",
+    "geminiKey": "YOUR_GEMINI_API_KEY_HERE",
+    "geminiHost": "",
+    "minSafetyLevel": "BLOCK_NONE"
+  },
+  "groq": {
+    "dialect": "groq",
+    "oaiKey": "YOUR_GROQ_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "deepseek": {
+    "dialect": "deepseek",
+    "oaiKey": "YOUR_DEEPSEEK_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "mistral": {
+    "dialect": "mistral",
+    "oaiKey": "YOUR_MISTRAL_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "perplexity": {
+    "dialect": "perplexity",
+    "oaiKey": "YOUR_PERPLEXITY_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "xai": {
+    "dialect": "xai",
+    "oaiKey": "YOUR_XAI_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "openrouter": {
+    "dialect": "openrouter",
+    "oaiKey": "YOUR_OPENROUTER_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "togetherai": {
+    "dialect": "togetherai",
+    "oaiKey": "YOUR_TOGETHERAI_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "alibaba": {
+    "dialect": "alibaba",
+    "oaiKey": "YOUR_ALIBABA_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "moonshot": {
+    "dialect": "moonshot",
+    "oaiKey": "YOUR_MOONSHOT_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "ollama": {
+    "_comment": "Local Ollama instance - no API key needed",
+    "dialect": "ollama",
+    "ollamaHost": "http://127.0.0.1:11434",
+    "ollamaJson": false
+  },
+  "lmstudio": {
+    "_comment": "Local LM Studio instance - no API key needed",
+    "dialect": "lmstudio",
+    "oaiKey": "",
+    "oaiOrg": "",
+    "oaiHost": "http://127.0.0.1:1234",
+    "heliKey": "",
+    "moderationCheck": false
+  },
+  "localai": {
+    "_comment": "Local LocalAI instance - no API key needed",
+    "dialect": "localai",
+    "oaiKey": "",
+    "oaiOrg": "",
+    "oaiHost": "http://127.0.0.1:8080",
+    "heliKey": "",
+    "moderationCheck": false
+  }
+}

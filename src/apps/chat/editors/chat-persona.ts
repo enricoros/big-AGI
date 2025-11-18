@@ -1,4 +1,4 @@
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
@@ -19,7 +19,7 @@ export const CHATGENERATE_RESPONSE_PLACEHOLDER = '...'; // 💫 ..., 🖊️ ...
 
 
 export interface PersonaProcessorInterface {
-  handleMessage(accumulatedMessage: AixChatGenerateContent_DMessage, messageComplete: boolean): void;
+  handleMessage(accumulatedMessage: AixChatGenerateContent_DMessageGuts, messageComplete: boolean): void;
 }
 
 
@@ -72,7 +72,7 @@ export async function runPersonaOnConversationHead(
     'conversation',
     conversationId,
     { abortSignal: abortController.signal, throttleParallelThreads: parallelViewCount },
-    (messageOverwrite: AixChatGenerateContent_DMessage, messageComplete: boolean) => {
+    (messageOverwrite: AixChatGenerateContent_DMessageGuts, messageComplete: boolean) => {
 
       // Note: there was an abort check here, but it removed the last packet, which contained the cause and final text.
       // if (abortController.signal.aborted)

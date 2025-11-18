@@ -9,6 +9,7 @@ import type { SystemPurposeExample } from '../../../data';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
+import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
 import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
@@ -40,7 +41,7 @@ export function ChatMessageList(props: {
   conversationHandler: ConversationHandler | null,
   capabilityHasT2I: boolean,
   chatLLMAntPromptCaching: boolean,
-  chatLLMContextTokens: number | null,
+  chatLLMContextTokens: DLLMContextTokens,
   chatLLMSupportsImages: boolean,
   fitScreen: boolean,
   isMobile: boolean,

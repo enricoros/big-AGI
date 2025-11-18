@@ -2,10 +2,15 @@ import { safeErrorString } from '~/server/wire';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from '../IParticleTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { RequestRetryError } from '../chatGenerate.retrier';
+
+
+// configuration
+const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
 
 
 /**
@@ -57,7 +62,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
 
-  return function(pt: IParticleTransmitter, eventData: string, eventName?: string): void {
+  return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
@@ -70,6 +75,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
     switch (eventName) {
       // Ignore pings
       case 'ping':
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant ping');
         break;
 
       // M1. Initialize the message content for a new message
@@ -93,6 +99,21 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         // -> Model
         if (isFirstMessage)
           pt.setModelName(responseMessage.model);
+
+        // -> Container metadata (for Skills)
+        if (responseMessage.container) {
+          // TODO: [PRIORITY] Accumulate in DMessage.sessionMetadata:
+          //   pt.setSessionMetadata('anthropic.container.id', container.id)
+          //   pt.setSessionMetadata('anthropic.container.expiresAt', Date.parse(container.expires_at))
+          // Request builder will find latest values and reuse container across turns for file access.
+
+          console.log('[Anthropic] Container active:', {
+            id: responseMessage.container.id,
+            expires_at: responseMessage.container.expires_at,
+            skills: responseMessage.container.skills,
+          });
+        }
+
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
           const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
@@ -108,6 +129,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           }
           pt.updateMetrics(metricsUpdate);
         }
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: model=${responseMessage.model}, TIn=${chatInTokens || 0}, container=${responseMessage.container?.id || 'none'}`);
         break;
 
       // M2. Initialize content block if needed
@@ -119,6 +142,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (responseMessage.content[index] !== undefined)
           throw new Error(`Unexpected content block start location (${index})`);
         responseMessage.content[index] = content_block;
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
+          const debugInfo = content_block.type === 'tool_use' ? `tool=${content_block.name}`
+            : content_block.type === 'server_tool_use' ? `server_tool=${content_block.name}`
+              : content_block.type === 'text' ? `text_len=${content_block.text.length}`
+                : content_block.type === 'thinking' ? `thinking_len=${content_block.thinking.length}`
+                  : content_block.type === 'container_upload' ? `file_id=${content_block.file_id}`
+                    : content_block.type;
+          console.log(`ant content_block_start[${index}]: type=${content_block.type}, ${debugInfo}`);
+        }
 
         switch (content_block.type) {
           case 'text':
@@ -144,7 +177,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             break;
 
           case 'server_tool_use':
-            // Server-side tool execution (e.g., web_search, web_fetch)
+            // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
             // NOTE: We don't create tool invocations for server tools - just show placeholders
             if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
               content_block.input = null;
@@ -157,8 +190,18 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               case 'web_fetch':
                 pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
                 break;
+              // Skills API tools (server-side execution)
+              case 'bash_code_execution':
+                pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
+                break;
+              case 'text_editor_code_execution':
+                pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+                break;
               default:
-                throw new Error(`Unknown server tool name: ${content_block.name}`);
+                // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
+                console.warn(`[Anthropic Parser] Unknown server tool: ${content_block.name}`);
+                pt.sendVoidPlaceholder('code-exec', `⚡ Using ${content_block.name}...`);
+                break;
             }
 
             // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
@@ -195,7 +238,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 undefined, // startIndex
                 undefined, // endIndex
                 undefined, // textSnippet
-                content_block.content.retrieved_at ? Date.parse(content_block.content.retrieved_at) : undefined
+                content_block.content.retrieved_at ? Date.parse(content_block.content.retrieved_at) : undefined,
               );
             } else if (content_block.content.type === 'web_fetch_tool_result_error') {
               // Error during web fetch
@@ -204,13 +247,88 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             break;
 
           case 'code_execution_tool_result':
-            throw new Error(`Server tool type 'code_execution_tool_result' is not yet implemented. Please report this to request support.`);
+            // Code execution result from Skills container - extract file IDs from output
+            if (content_block.content.type === 'code_execution_result') {
+              // Success - check for generated files in content array
+              const fileIds: string[] = [];
+              if (Array.isArray(content_block.content.content)) {
+                for (const outputBlock of content_block.content.content) {
+                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+                    fileIds.push(outputBlock.file_id);
+                  }
+                }
+              }
+
+              // Build text message describing execution result
+              let resultText = '\n\n⚡ Code executed by Skill';
+              if (fileIds.length > 0) {
+                resultText += '\n';
+                for (const fileId of fileIds) {
+                  resultText += `\n📎 File: \`${fileId}\``;
+                }
+              } else {
+                resultText += ' (no files generated)';
+              }
+              resultText += '\n';
+              pt.appendText(resultText);
+
+              // Log for debugging
+              console.log('[Anthropic] Code execution result:', {
+                return_code: content_block.content.return_code,
+                file_count: fileIds.length,
+                file_ids: fileIds,
+              });
+            } else if (content_block.content.type === 'code_execution_tool_result_error') {
+              // Error during code execution
+              pt.appendText(`\n\n⚠️ Skill execution error: ${content_block.content.error_code}\n`);
+            }
+            break;
 
           case 'bash_code_execution_tool_result':
-            throw new Error(`Server tool type 'bash_code_execution_tool_result' is not yet implemented. Please report this to request support.`);
+            // Bash code execution result from Skills container - extract file IDs from output
+            if (content_block.content.type === 'bash_code_execution_result') {
+              // Success - check for generated files in content array
+              const fileIds: string[] = [];
+              if (Array.isArray(content_block.content.content)) {
+                for (const outputBlock of content_block.content.content) {
+                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+                    fileIds.push(outputBlock.file_id);
+                  }
+                }
+              }
+
+              // Build text message describing execution result
+              let resultText = '\n\n⚡ Bash executed by Skill';
+              if (fileIds.length > 0) {
+                resultText += '\n';
+                for (const fileId of fileIds) {
+                  resultText += `\n📎 File: \`${fileId}\``;
+                }
+              } else {
+                resultText += ' (no files generated)';
+              }
+              resultText += '\n';
+              pt.appendText(resultText);
+
+              // Log for debugging
+              console.log('[Anthropic] Bash code execution result:', {
+                return_code: content_block.content.return_code,
+                file_count: fileIds.length,
+                file_ids: fileIds,
+              });
+            } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
+              // Error during bash execution
+              pt.appendText(`\n\n⚠️ Bash execution error: ${content_block.content.error_code}\n`);
+            }
+            break;
 
           case 'text_editor_code_execution_tool_result':
-            throw new Error(`Server tool type 'text_editor_code_execution_tool_result' is not yet implemented. Please report this to request support.`);
+            // Text editor code execution result from Skills container
+            pt.sendVoidPlaceholder('code-exec', '⚡ Text editor code executed by Skill');
+
+            // Log for debugging
+            console.log('[Anthropic] Text editor code execution result from Skills');
+            break;
 
           case 'mcp_tool_use':
             throw new Error(`Server tool type 'mcp_tool_use' is not yet implemented. Please report this to request support.`);
@@ -219,7 +337,19 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             throw new Error(`Server tool type 'mcp_tool_result' is not yet implemented. Please report this to request support.`);
 
           case 'container_upload':
-            throw new Error(`Server tool type 'container_upload' is not yet implemented. Please report this to request support.`);
+            // Container upload - this is when a Skill has generated a file
+            // The file_id can be used with the Files API to download the file
+            pt.sendVoidPlaceholder('code-exec', `📎 File generated (ID: ${content_block.file_id})`);
+
+            // Log for debugging
+            console.log('[Anthropic] Container upload:', {
+              file_id: content_block.file_id,
+              container: responseMessage.container?.id,
+            });
+
+            // TODO: Future enhancement - could trigger automatic file download here
+            // using the Files API with content_block.file_id
+            break;
 
           default:
             const _exhaustiveCheck: never = content_block;
@@ -237,6 +367,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         const contentBlock = responseMessage.content[index];
         if (contentBlock === undefined)
           throw new Error(`Unexpected content block delta location (${index})`);
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
+          const debugInfo = delta.type === 'text_delta' ? `len=${delta.text.length}`
+            : delta.type === 'input_json_delta' ? `json_len=${delta.partial_json.length}`
+              : delta.type === 'thinking_delta' ? `len=${delta.thinking.length}`
+                : delta.type === 'signature_delta' ? `sig=${delta.signature}`
+                  : delta.type === 'citations_delta' ? `citation_type=${delta.citation.type}`
+                    : (delta as any)?.type;
+          console.log(`ant content_block_delta[${index}]: type=${delta.type}, ${debugInfo}`);
+        }
 
         switch (delta.type) {
           case 'text_delta':
@@ -289,7 +429,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                   undefined, // startIndex
                   undefined, // endIndex
                   citation.cited_text, // textSnippet
-                  undefined // pubTs
+                  undefined, // pubTs
                 );
               }
               // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
@@ -314,43 +454,48 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (responseMessage.content[index] === undefined)
           throw new Error(`Unexpected content block stop location (${index})`);
 
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant content_block_stop[${index}]: type=${responseMessage.content[index].type}`);
+
         // Signal that the tool is ready? (if it is...)
         pt.endMessagePart();
         break;
       }
 
       // Optionally handle top-level message changes. Example: updating stop_reason
-      case 'message_delta':
-        if (responseMessage) {
-          const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
+      case 'message_delta': {
+        if (!responseMessage) throw new Error('Unexpected message_delta');
 
-          Object.assign(responseMessage, delta);
+        const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
 
-          // -> Token Stop Reason
-          const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
-          if (tokenStopReason !== null)
-            pt.setTokenStopReason(tokenStopReason);
+        Object.assign(responseMessage, delta);
 
-          if (usage?.output_tokens && messageStartTime) {
-            const elapsedTimeMilliseconds = Date.now() - messageStartTime;
-            const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
-            const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-            pt.updateMetrics({
-              TIn: chatInTokens !== undefined ? chatInTokens : -1,
-              TOut: usage.output_tokens,
-              vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-              dtStart: timeToFirstEvent,
-              dtInner: elapsedTimeMilliseconds,
-              dtAll: Date.now() - parserCreationTimestamp,
-            });
-          }
-        } else
-          throw new Error('Unexpected message_delta');
+        // -> Token Stop Reason
+        const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
+        if (tokenStopReason !== null)
+          pt.setTokenStopReason(tokenStopReason);
+
+        if (usage?.output_tokens && messageStartTime) {
+          const elapsedTimeMilliseconds = Date.now() - messageStartTime;
+          const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
+          const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+          pt.updateMetrics({
+            TIn: chatInTokens !== undefined ? chatInTokens : -1,
+            TOut: usage.output_tokens,
+            vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+            dtStart: timeToFirstEvent,
+            dtInner: elapsedTimeMilliseconds,
+            dtAll: Date.now() - parserCreationTimestamp,
+          });
+        }
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_delta: stop_reason=${delta.stop_reason || 'none'}, TOut=${usage?.output_tokens || 'none'}`);
         break;
+      }
 
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
         return pt.setEnded('done-dialect');
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -358,9 +503,46 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant error: ${errorText}`);
+
+        // Errors documented by Anthropic - these follow a 200 HTTP response, so they're sent as JSON
+        // https://docs.claude.com/en/api/errors
+        //
+        // 400 - invalid_request_error (bad input)
+        // 401 - authentication_error (api key issue)
+        // 403 - permission_error (api key lacks permissions)
+        // 404 - not_found_error
+        // 413 - request_too_large (> 32MB for standard streaming)
+        // 429* - rate_limit_error (account hit limits)
+        // 500* - api_error (anthropic systems internal unexpected error)
+        // 529* - overloaded_error: The API is temporarily overloaded.
+        // *: retryable errors
+        const isRetryableError = ['overloaded_error', 'rate_limit_error', 'api_error'].includes(error.type);
+
+        // Throw retryable error to instruct the correct ancestor to restart (only if retries available
+        if (isRetryableError) {
+          if (context?.retriesAvailable) {
+            console.log(`[Aix.Anthropic] Can retry error '${errorText}'`);
+            // map error types to HTTP status codes for diagnostics
+            const errorTypeToHttpStatus: Record<string, number> = {
+              'rate_limit_error': 429,
+              'api_error': 500,
+              'overloaded_error': 529,
+            };
+            // request a retry by unwinding to the retrier
+            throw new RequestRetryError(`retrying Anthropic: ${errorText}`, {
+              causeHttp: errorTypeToHttpStatus[error.type],
+              causeConn: error.type,
+            });
+          } else
+            console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
+        }
+
+        // Non-retryable errors (or no retries left): show to user
+        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic, 'srv-warn');
 
       default:
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);
         throw new Error(`Unexpected event name: ${eventName}`);
     }
   };
@@ -370,7 +552,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
 
-  return function(pt: IParticleTransmitter, fullData: string): void {
+  return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
@@ -402,7 +584,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
                   undefined, // startIndex
                   undefined, // endIndex
                   citation.cited_text, // textSnippet
-                  undefined // pubTs
+                  undefined, // pubTs
                 );
               }
               // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
@@ -428,10 +610,23 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         case 'server_tool_use':
           // Server tool use in non-streaming mode
           // NOTE: We don't create tool invocations for server tools - just show placeholders
-          if (contentBlock.name === 'web_search') {
-            pt.sendVoidPlaceholder('search-web', 'Searching the web...');
-          } else if (contentBlock.name === 'web_fetch') {
-            pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
+          switch (contentBlock.name) {
+            case 'web_search':
+              pt.sendVoidPlaceholder('search-web', 'Searching the web...');
+              break;
+            case 'web_fetch':
+              pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
+              break;
+            case 'bash_code_execution':
+              pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
+              break;
+            case 'text_editor_code_execution':
+              pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+              break;
+            default:
+              console.warn(`[Anthropic Parser] Unknown server tool (non-streaming): ${contentBlock.name}`);
+              pt.sendVoidPlaceholder('code-exec', `⚡ Using ${contentBlock.name}...`);
+              break;
           }
           // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
           // pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
@@ -469,7 +664,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               undefined, // startIndex
               undefined, // endIndex
               undefined, // textSnippet
-              contentBlock.content.retrieved_at ? Date.parse(contentBlock.content.retrieved_at) : undefined
+              contentBlock.content.retrieved_at ? Date.parse(contentBlock.content.retrieved_at) : undefined,
             );
           } else if (contentBlock.content.type === 'web_fetch_tool_result_error') {
             // Error during web fetch
@@ -479,13 +674,86 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           break;
 
         case 'code_execution_tool_result':
-          throw new Error(`Server tool 'code_execution_tool_result' is not yet implemented. Please report this issue to request support.`);
+          // Code execution result from Skills container (non-streaming)
+          if (contentBlock.content.type === 'code_execution_result') {
+            // Success - check for generated files in content array
+            const fileIds: string[] = [];
+            if (Array.isArray(contentBlock.content.content)) {
+              for (const outputBlock of contentBlock.content.content) {
+                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+                  fileIds.push(outputBlock.file_id);
+                }
+              }
+            }
+
+            // Build text message describing execution result
+            let resultText = '\n\n⚡ Code executed by Skill';
+            if (fileIds.length > 0) {
+              resultText += '\n';
+              for (const fileId of fileIds) {
+                resultText += `\n📎 File: \`${fileId}\``;
+              }
+            } else {
+              resultText += ' (no files generated)';
+            }
+            resultText += '\n';
+            pt.appendText(resultText);
+
+            // Log for debugging
+            console.log('[Anthropic] Code execution result (non-streaming):', {
+              return_code: contentBlock.content.return_code,
+              file_count: fileIds.length,
+              file_ids: fileIds,
+            });
+          } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
+            // Error during code execution
+            pt.appendText(`\n\n⚠️ Skill execution error: ${contentBlock.content.error_code}\n`);
+          }
+          break;
 
         case 'bash_code_execution_tool_result':
-          throw new Error(`Server tool 'bash_code_execution_tool_result' is not yet implemented. Please report this issue to request support.`);
+          // Bash code execution result from Skills container (non-streaming)
+          if (contentBlock.content.type === 'bash_code_execution_result') {
+            // Success - check for generated files in content array
+            const fileIds: string[] = [];
+            if (Array.isArray(contentBlock.content.content)) {
+              for (const outputBlock of contentBlock.content.content) {
+                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+                  fileIds.push(outputBlock.file_id);
+                }
+              }
+            }
+
+            // Build text message describing execution result
+            let resultText = '\n\n⚡ Bash executed by Skill';
+            if (fileIds.length > 0) {
+              resultText += '\n';
+              for (const fileId of fileIds) {
+                resultText += `\n📎 File: \`${fileId}\``;
+              }
+            } else {
+              resultText += ' (no files generated)';
+            }
+            resultText += '\n';
+            pt.appendText(resultText);
+
+            // Log for debugging
+            console.log('[Anthropic] Bash code execution result (non-streaming):', {
+              return_code: contentBlock.content.return_code,
+              file_count: fileIds.length,
+              file_ids: fileIds,
+            });
+          } else if (contentBlock.content.type === 'bash_code_execution_tool_result_error') {
+            // Error during bash execution
+            pt.appendText(`\n\n⚠️ Bash execution error: ${contentBlock.content.error_code}\n`);
+          }
+          break;
 
         case 'text_editor_code_execution_tool_result':
-          throw new Error(`Server tool 'text_editor_code_execution_tool_result' is not yet implemented. Please report this issue to request support.`);
+          // Text editor code execution result from Skills container (non-streaming)
+          pt.sendVoidPlaceholder('code-exec', '⚡ Text editor code executed by Skill');
+          console.log('[Anthropic] Text editor code execution result from Skills (non-streaming)');
+          break;
 
         case 'mcp_tool_use':
           throw new Error(`Server tool 'mcp_tool_use' is not yet implemented. Please report this issue to request support.`);
@@ -494,7 +762,14 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           throw new Error(`Server tool 'mcp_tool_result' is not yet implemented. Please report this issue to request support.`);
 
         case 'container_upload':
-          throw new Error(`Server tool 'container_upload' is not yet implemented. Please report this issue to request support.`);
+          // Container upload - this is when a Skill has generated a file
+          pt.sendVoidPlaceholder('code-exec', `📎 File generated (ID: ${contentBlock.file_id})`);
+
+          // Log for debugging
+          console.log('[Anthropic] Container upload (non-streaming):', {
+            file_id: contentBlock.file_id,
+          });
+          break;
 
         default:
           const _exhaustiveCheck: never = contentBlock;

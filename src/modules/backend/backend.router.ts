@@ -57,6 +57,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmLocalAIHost: !!env.LOCALAI_API_HOST,
         hasLlmLocalAIKey: !!env.LOCALAI_API_KEY,
         hasLlmMistral: !!env.MISTRAL_API_KEY,
+        hasLlmMoonshot: !!env.MOONSHOT_API_KEY,
         hasLlmOllama: !!env.OLLAMA_API_HOST,
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
         hasLlmOpenPipe: !!env.OPENPIPE_API_KEY,
@@ -80,7 +81,8 @@ export const backendRouter = createTRPCRouter({
   // The following are used for various OAuth integrations
 
   /**
-   * Exchange the OpenrRouter 'code' (from PKCS) for an OpenRouter API Key
+   * Exchange the OpenRouter authorization code for an OpenRouter API Key
+   * Reference: https://openrouter.ai/docs/quickstart#oauth
    */
   exchangeOpenRouterKey: publicProcedure
     .input(z.object({ code: z.string() }))
@@ -89,6 +91,7 @@ export const backendRouter = createTRPCRouter({
       return await fetchJsonOrTRPCThrow<{ key: string }, { code: string }>({
         url: 'https://openrouter.ai/api/v1/auth/keys',
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, // important to fix 400 error
         body: { code: input.code },
         name: 'Backend.exchangeOpenRouterKey',
       });

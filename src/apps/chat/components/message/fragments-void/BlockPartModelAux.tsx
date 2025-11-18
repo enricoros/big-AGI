@@ -38,6 +38,12 @@ const _styles = {
     boxShadow: `1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
   } as const,
 
+  chipDisabled: {
+    px: 1.5,
+    py: 0.375,
+    my: '1px', // to not crop the outline on mobile
+  } as const,
+
   chipIcon: {
     fontSize: '1rem',
     mr: 0.5,
@@ -95,6 +101,7 @@ export function BlockPartModelAux(props: {
   auxRedactedDataCount: number,
   zenMode: boolean,
   contentScaling: ContentScaling,
+  isLastVoid: boolean,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
 
@@ -149,11 +156,11 @@ export function BlockPartModelAux(props: {
     {/* Chip to expand/collapse */}
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
-        color={REASONING_COLOR}
+        color={props.isLastVoid ? REASONING_COLOR : 'neutral'}
         variant={expanded ? 'solid' : 'soft'}
         size='sm'
         onClick={handleToggleExpanded}
-        sx={expanded ? _styles.chipExpanded : _styles.chip}
+        sx={expanded ? _styles.chipExpanded : props.isLastVoid ? _styles.chip : _styles.chipDisabled}
         startDecorator={<AllInclusiveIcon sx={_styles.chipIcon}  /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */ />}
         // startDecorator='🧠'
       >

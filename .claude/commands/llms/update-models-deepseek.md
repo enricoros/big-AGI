@@ -4,7 +4,7 @@ description: Update DeepSeek model definitions with latest pricing and capabilit
 
 Update `src/modules/llms/server/openai/models/deepseek.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Pricing: https://api-docs.deepseek.com/quick_start/pricing

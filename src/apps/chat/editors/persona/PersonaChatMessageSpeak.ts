@@ -2,7 +2,7 @@ import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { AixChatGenerateContent_DMessage } from '~/modules/aix/client/aix.client';
+import type { AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
 
 import type { PersonaProcessorInterface } from '../chat-persona';
 
@@ -16,7 +16,7 @@ export class PersonaChatMessageSpeak implements PersonaProcessorInterface {
   constructor(private autoSpeakType: AutoSpeakType) {
   }
 
-  handleMessage(accumulatedMessage: Partial<AixChatGenerateContent_DMessage>, messageComplete: boolean) {
+  handleMessage(accumulatedMessage: Partial<AixChatGenerateContent_DMessageGuts>, messageComplete: boolean) {
     if (this.autoSpeakType === 'off' || this.spokenLine) return;
 
     // Require a Content.Text first fragment

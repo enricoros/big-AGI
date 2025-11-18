@@ -4,8 +4,8 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from './models.data';
-import { wireFireworksAIListOutputSchema } from '../fireworksai.wiretypes';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { wireFireworksAIListOutputSchema } from '../wiretypes/fireworksai.wiretypes';
 
 
 export function fireworksAIHeuristic(hostname: string) {

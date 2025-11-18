@@ -9,6 +9,8 @@ import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrout
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import { hasKeys } from '~/common/util/objectUtils';
+
 import type { DModelDomainId } from './model.domains.types';
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
@@ -37,6 +39,7 @@ interface LlmsRootActions {
   removeLLM: (id: DLLMId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
+  updateLLMs: (updates: Array<{ id: DLLMId; partial: Partial<DLLM> }>) => void;
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
   resetLLMUserParameters: (id: DLLMId) => void;
@@ -84,6 +87,9 @@ export const useModelsStore = create<LlmsStore>()(persist(
               ...(existing.userHidden !== undefined ? { userHidden: existing.userHidden } : {}),
               ...(existing.userStarred !== undefined ? { userStarred: existing.userStarred } : {}),
               ...(existing.userParameters !== undefined ? { userParameters: { ...existing.userParameters } } : {}),
+              ...(existing.userContextTokens !== undefined ? { userContextTokens: existing.userContextTokens } : {}),
+              ...(existing.userMaxOutputTokens !== undefined ? { userMaxOutputTokens: existing.userMaxOutputTokens } : {}),
+              ...(existing.userPricing !== undefined ? { userPricing: existing.userPricing } : {}),
             };
           });
         }
@@ -138,6 +144,19 @@ export const useModelsStore = create<LlmsStore>()(persist(
         ),
       })),
 
+    updateLLMs: (updates: Array<{ id: DLLMId; partial: Partial<DLLM> }>) =>
+      set(state => {
+        // Create a map of updates for efficient lookup
+        const updatesMap = new Map(updates.map(u => [u.id, u.partial]));
+
+        return {
+          llms: state.llms.map((llm: DLLM): DLLM => {
+            const partial = updatesMap.get(llm.id);
+            return partial ? { ...llm, ...partial } : llm;
+          }),
+        };
+      }),
+
     updateLLMUserParameters: (id: DLLMId, partialUserParameters: Partial<DModelParameterValues>) =>
       set(({ llms }) => ({
         llms: llms.map((llm: DLLM): DLLM =>
@@ -158,11 +177,12 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
     resetLLMUserParameters: (id: DLLMId) =>
       set(({ llms }) => ({
-        llms: llms.map((llm: DLLM): DLLM =>
-          llm.id === id
-            ? { ...llm, userParameters: {} }
-            : llm,
-        ),
+        llms: llms.map((llm: DLLM): DLLM => {
+          if (llm.id !== id) return llm;
+          // strip away just the user parameters
+          const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
+          return rest;
+        }),
       })),
 
     createModelsService: (vendor: IModelVendor): DModelsService => {
@@ -248,7 +268,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
      *  2: large changes on all LLMs, and reset chat/fast/func LLMs
      *  3: big-AGI v2.x upgrade
      *  4: migrate .options to .initialParameters/.userParameters
-     *  4B: we changed from .chatLLMId/.fastLLMId to modelAssignments: {}, without expicit migration (done on rehydrate, and for no particular reason)
+     *  4B: we changed from .chatLLMId/.fastLLMId to modelAssignments: {}, without explicit migration (done on rehydrate, and for no particular reason)
      */
     version: 4,
     migrate: (_state: any, fromVersion: number): LlmsStore => {
@@ -259,7 +279,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
       // 0 -> 1: add 'maxOutputTokens' where missing
       if (fromVersion < 1)
         for (const llm of state.llms)
-          if (llm.maxOutputTokens === undefined)
+          if (llm.maxOutputTokens === undefined) // direct access ok
             llm.maxOutputTokens = llm.contextTokens ? Math.round(llm.contextTokens / 2) : null;
 
       // 1 -> 2: large changes
@@ -318,7 +338,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
       // Select the best LLMs automatically, if not set
       try {
         //  auto-detect assignments, or re-import them from the old format
-        if (!state.modelAssignments || !Object.keys(state.modelAssignments).length) {
+        if (!hasKeys(state.modelAssignments)) {
 
           // reimport the former chatLLMId and fastLLMId if set
           const prevState = state as { chatLLMId?: DLLMId, fastLLMId?: DLLMId };

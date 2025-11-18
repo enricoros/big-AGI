@@ -8,6 +8,11 @@ import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs
 import { reconfigureBackendModels } from './reconfigureBackendModels';
 
 
+// configuration
+const DEBUG_SUCCESS_STORAGE_STATS = false;
+
+
+
 // Sherpa State: navigation thought the app, remembers the counters for progressive disclosure of complex features
 
 interface SherpaStore {
@@ -87,8 +92,8 @@ export async function sherpaStorageMaintenanceNoChats_delayed() {
     try {
       const usage = await estimatePersistentStorageOrThrow();
       if (!usage)
-        console.warn('Issue requesting persistent storage');
-      else
+        console.log('Issue requesting persistent storage');
+      else if (DEBUG_SUCCESS_STORAGE_STATS)
         console.log('Persistent storage statistics:', usage);
     } catch (error) {
       console.error('Error estimating persistent storage:', error);

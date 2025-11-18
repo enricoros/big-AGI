@@ -1,15 +1,15 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from './models.data';
-import { wireGroqModelsListOutputSchema } from '../groq.wiretypes';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { wireGroqModelsListOutputSchema } from '../wiretypes/groq.wiretypes';
 
 
 /**
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2025-01-15
+ * - updated: 2025-11-17
  */
 const _knownGroqModels: ManualMappings = [
 
@@ -93,7 +93,16 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.15, output: 0.75 },
+    chatPrice: { input: 0.15, output: 0.60 },
+  },
+  {
+    idPrefix: 'openai/gpt-oss-safeguard-20b',
+    label: 'GPT OSS Safeguard 20B',
+    description: 'OpenAI GPT-OSS-Safeguard 20B specialized for safety classification and content moderation with reasoning, tool use, and browser search. 131,072 token context window, up to 65,536 completion tokens. Production model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.075, output: 0.30 },
   },
   {
     idPrefix: 'openai/gpt-oss-20b',
@@ -102,7 +111,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.10, output: 0.50 },
+    chatPrice: { input: 0.075, output: 0.30 },
   },
 
   // Production Models - SDAIA
@@ -120,7 +129,7 @@ const _knownGroqModels: ManualMappings = [
   {
     idPrefix: 'meta-llama/llama-guard-4-12b',
     label: 'Llama Guard 4 · 12B',
-    description: 'LLaMA Guard 4 12B developed by Meta with a 128K token context window, up to 1,024 completion tokens. Production model.',
+    description: 'Llama Guard 4 12B developed by Meta with a 131K token context window, up to 1,024 completion tokens. Natively multimodal safeguard for content moderation. Production model.',
     contextWindow: 131072,
     maxCompletionTokens: 1024,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
@@ -129,7 +138,7 @@ const _knownGroqModels: ManualMappings = [
   {
     idPrefix: 'llama-3.3-70b-versatile',
     label: 'Llama 3.3 · 70B Versatile',
-    description: 'LLaMA 3.3 70B developed by Meta with a context window of 128K tokens, up to 32,768 completion tokens. Production model.',
+    description: 'Llama 3.3 70B developed by Meta with a 131K token context window, up to 32,768 completion tokens. Production model.',
     contextWindow: 131072,
     maxCompletionTokens: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
@@ -138,7 +147,7 @@ const _knownGroqModels: ManualMappings = [
   {
     idPrefix: 'llama-3.1-8b-instant',
     label: 'Llama 3.1 · 8B Instant',
-    description: 'LLaMA 3.1 8B developed by Meta with a context window of 128K tokens, up to 131,072 completion tokens. Production model.',
+    description: 'Llama 3.1 8B developed by Meta with a 131K token context window, up to 131,072 completion tokens. Production model.',
     contextWindow: 131072,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],

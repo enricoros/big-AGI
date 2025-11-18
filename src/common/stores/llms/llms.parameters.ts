@@ -77,6 +77,20 @@ export const DModelParameterRegistry = {
     // initialValue: false, // we don't need the initial value here, will be assumed off
   } as const,
 
+  llmVndAnt1MContext: {
+    label: '1M Context Window (Beta)',
+    type: 'boolean' as const,
+    description: 'Enable 1M token context window with premium pricing for >200K input tokens',
+    // No initialValue - undefined means off (e.g. default 200K context window)
+  } as const,
+
+  llmVndAntSkills: {
+    label: 'Document Skills',
+    type: 'string' as const,
+    description: 'Comma-separated skills (xlsx,pptx,pdf,docx)',
+    initialValue: '', // empty string = disabled
+  } as const,
+
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer' as const,
@@ -88,14 +102,6 @@ export const DModelParameterRegistry = {
     } as const,
   } as const,
 
-  llmVndAntWebSearch: {
-    label: 'Web Search',
-    type: 'enum' as const,
-    description: 'Enable web search for real-time information',
-    values: ['auto', 'off'] as const,
-    // No initialValue - undefined means off (same as 'off')
-  } as const,
-
   llmVndAntWebFetch: {
     label: 'Web Fetch',
     type: 'enum' as const,
@@ -104,11 +110,12 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (same as 'off')
   } as const,
 
-  llmVndAnt1MContext: {
-    label: '1M Context Window (Beta)',
-    type: 'boolean' as const,
-    description: 'Enable 1M token context window with premium pricing for >200K input tokens',
-    // No initialValue - undefined means off (e.g. default 200K context window)
+  llmVndAntWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable web search for real-time information',
+    values: ['auto', 'off'] as const,
+    // No initialValue - undefined means off (same as 'off')
   } as const,
 
   llmVndGeminiAspectRatio: {
@@ -146,6 +153,28 @@ export const DModelParameterRegistry = {
     // initialValue: unset, // auto-budgeting
     description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
   } as const,
+
+  llmVndGeminiComputerUse: {
+    label: 'Computer Use Environment',
+    type: 'enum' as const,
+    description: 'Environment type for Computer Use tool (required for Computer Use model)',
+    values: ['browser'] as const,
+    initialValue: 'browser',
+    // requiredFallback: 'browser', // See `const _requiredParamId: DModelParameterId[]` in llms.parameters.ts for why custom params don't have required values at AIX invocation...
+    hidden: true,
+  } as const,
+
+  // Moonshot-specific parameters
+
+  llmVndMoonshotWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable Kimi\'s $web_search builtin function for real-time web search ($0.005 per search)',
+    values: ['auto'] as const,
+    // No initialValue - undefined means off
+  } as const,
+
+  // OpenAI-specific parameters
 
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
@@ -216,6 +245,14 @@ export const DModelParameterRegistry = {
     description: 'Filter results by publication date',
     values: ['unfiltered', '1m', '3m', '6m', '1y'] as const,
     // requiredFallback: 'unfiltered',
+  } as const,
+
+  llmVndOrtWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable OpenRouter web search (uses native search for OpenAI/Anthropic, Exa for others)',
+    values: ['auto'] as const,
+    // No initialValue - undefined means off
   } as const,
 
   llmVndPerplexitySearchMode: {

@@ -6,7 +6,7 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 
 export function chutesAIHeuristic(hostname: string) {

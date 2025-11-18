@@ -10,6 +10,7 @@ export interface IModelVendor<TServiceSettings extends Record<string, any> = {},
   readonly id: ModelVendorId;
   readonly name: string;
   readonly displayRank: number; // [10...] Foundation Models, [30...] 3rd party Clouds, [40...] Aggregators, [50...] Local Models
+  readonly displayGroup: 'popular' | 'cloud' | 'local';
   readonly location: 'local' | 'cloud';
   readonly brandColor?: string;
   readonly instanceLimit?: number;

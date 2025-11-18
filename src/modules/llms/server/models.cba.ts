@@ -1,12 +1,8 @@
 // here for reference only - for future mapping of CBA scores to the model IDs
 // const modelIdToPrefixMap: { [key: string]: string } = {
 //   // Anthropic models
-//   'Claude 3.5 Sonnet': 'claude-3-5-sonnet-20240620',
 //   'Claude 3 Opus': 'claude-3-opus-20240229',
-//   'Claude 3 Sonnet': 'claude-3-sonnet-20240229',
 //   'Claude 3 Haiku': 'claude-3-haiku-20240307',
-//   'Claude-2.1': 'claude-2.1',
-//   'Claude-2.0': 'claude-2.0',
 //   'Claude-1': '', // No exact match
 //   'Claude-Instant-1': 'claude-instant-1.2', // Closest match
 //

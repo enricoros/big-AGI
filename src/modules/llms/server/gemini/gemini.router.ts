@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 import { env } from '~/server/env';
 
 import packageJson from '../../../../../package.json';
@@ -6,11 +7,11 @@ import packageJson from '../../../../../package.json';
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+import { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
-import { geminiDevCheckForParserMisses_DEV, geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
-import { fixupHost } from '~/modules/llms/server/openai/openai.router';
+import { fixupHost } from '../openai/openai.router';
+import { listModelsRunDispatch } from '../listModels.dispatch';
 
 
 // Default hosts
@@ -36,7 +37,7 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
   // update model-dependent paths
   if (apiPath.includes('{model=models/*}')) {
     if (!modelRefId)
-      throw new Error(`geminiAccess: modelRefId is required for ${apiPath}`);
+      throw new TRPCError({ code: 'BAD_REQUEST', message: `geminiAccess: modelRefId is required for ${apiPath}` });
     apiPath = apiPath.replace('{model=models/*}', modelRefId);
   }
 
@@ -92,29 +93,11 @@ export const llmGeminiRouter = createTRPCRouter({
   listModels: publicProcedure
     .input(accessOnlySchema)
     .output(ListModelsResponse_schema)
-    .query(async ({ input }) => {
+    .query(async ({ input, signal }) => {
 
-      // get the models
-      const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath, false);
-      const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
-      geminiDevCheckForParserMisses_DEV(wireModels, detailedModels);
-      geminiDevCheckForSuperfluousModels_DEV(detailedModels.map(model => model.name));
+      const models = await listModelsRunDispatch(input.access, signal);
 
-      // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,
-      //       as the List API already all the info on all the models
-
-      // first filter from the original list
-      const filteredModels = detailedModels.filter(geminiFilterModels);
-
-      // map to our output schema
-      const models = filteredModels
-        .map(geminiModelToModelDescription)
-        .filter(model => !!model)
-        .sort(geminiSortModels);
-
-      return {
-        models: geminiModelsAddVariants(models),
-      };
+      return { models };
     }),
 
 });

@@ -12,6 +12,7 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
   id: 'deepseek',
   name: 'Deepseek',
   displayRank: 16,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmDeepseek',

@@ -1,8 +1,10 @@
 import { safeErrorString } from '~/server/wire';
 
+import { hasKeys } from '~/common/util/objectUtils';
+
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from '../IParticleTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { OpenAIWire_API_Responses } from '../../wiretypes/openai.wiretypes';
@@ -273,6 +275,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         if (event.response.store && event.response.id)
           pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
 
+        // TODO: [FUTURE] Accumulate in DMessage.sessionMetadata:
+        //   pt.setSessionMetadata('openai.response.id', response.id)
+        //   pt.setSessionMetadata('openai.response.expiresAt', response.expires_at)
+        // Request builder will find latest values and enable reconnection/continuation.
+
         // -> TODO: Generation Details:
         //    .created_at, .truncation, .temperature, .top_p, .tool_choice, tool count, text output type
         break;
@@ -383,11 +390,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           default:
             const _exhaustiveCheck: never = doneItemType;
-          // noinspection FallThroughInSwitchStatementJS
-          // case 'custom_tool_call':
-          // case 'code_interpreter_call':
-          // case 'file_search_call': // OpenAI vector store - not implemented
-          // case 'mcp_call':
+            // noinspection FallThroughInSwitchStatementJS
+            // case 'custom_tool_call':
+            // case 'code_interpreter_call':
+            // case 'file_search_call': // OpenAI vector store - not implemented
+            // case 'mcp_call':
             // TODO: Implement these when types are properly integrated
             console.log(`[DEV] Output item type: ${doneItemType} (TODO: implement)`, doneItem);
             break;
@@ -558,7 +565,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
 
         // Transmit the error as text - note: throw if you want to transmit as 'error'
-        pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic);
+        // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+        pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
         break;
 
       default:
@@ -892,7 +900,8 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic);
+  // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
   return true;
 }
 
@@ -1002,5 +1011,5 @@ function _warnIfObjectPropertiesDiffer(
     }
   }
 
-  return Object.keys(diff).length > 0 ? diff : null;
+  return hasKeys(diff) ? diff : null;
 }

@@ -4,6 +4,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
+import { Release } from '~/common/app.release';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
@@ -14,6 +15,11 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
 import type { ImportedOutcome } from './ImportOutcomeModal';
+
+
+export function tradeFileVariant() {
+  return `${capitalizeFirstLetter(Release.TenantSlug)}`
+}
 
 
 /// IMPORT ///

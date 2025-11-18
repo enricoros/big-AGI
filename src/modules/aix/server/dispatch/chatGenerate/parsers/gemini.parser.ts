@@ -1,6 +1,6 @@
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from '../IParticleTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
@@ -38,14 +38,47 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let groundingIndexNumber = 0;
 
   // this can throw, it's caught by the caller
-  return function(pt: IParticleTransmitter, eventData: string): void {
+  return function(pt: IParticleTransmitter, rawEventData: string): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // Throws on malformed event data
-    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+    const eventData = JSON.parse(rawEventData);
+
+    // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message
+    if (eventData?.candidates?.length === 1) {
+      const finishReason = eventData.candidates[0]?.finishReason;
+      if (typeof finishReason === 'string')
+
+        // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+        //        in case of transient errors (502, 503, proxy queue, etc.) - not for good codes.
+
+        switch (true) {
+          case finishReason.includes('503 Service Unavailable'):
+            // pt.setTokenStopReason('cg-issue');
+            // TODO: tell the client about a classification code?
+            //       E.g. send a TRPCFetcherError-compatible `error` downstream, or also send
+            //       the equivalent of .aixFCategory/.aixFHttpStatus/.aixFNetError (see trpc.server.ts)
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
+
+          case finishReason.startsWith('Proxy queue error'):
+            // pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Queue Error detected: ${finishReason}`, null, 'srv-warn');
+
+          case finishReason.startsWith('Proxy error'):
+            // pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
+
+          default:
+            // NOTE: the 'GOOD' default values shall be GeminiWire_API_Generate_Content.FinishReason_enum, e.g. STOP, MAX_TOKENS, SAFETY, .. TOO_MANY_TOOL_CALLS, etc.
+            break;
+        }
+    }
+
+    // Validate schema and parse
+    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(eventData);
 
     // -> Model
     if (generationChunk.modelVersion && !sentActualModelName) {
@@ -60,7 +93,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
+      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked, false);
     }
 
     // candidates may be an optional field (started happening on 2024-09-27)
@@ -113,10 +146,10 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 );
               } catch (error) {
                 console.warn('[Gemini] Failed to convert audio:', error);
-                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
               }
             } else
-              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null);
+              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null, 'srv-warn');
             break;
 
           // <- FunctionCallPart
@@ -215,71 +248,50 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
             return pt.setEnded('issue-dialect');
 
+          // will set both TokenStop and TerminatingIssue
           case 'SAFETY':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null);
-
           case 'RECITATION':
-            pt.setTokenStopReason('filter-recitation');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
-
           case 'LANGUAGE':
-            pt.setTokenStopReason('filter-refusal');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to unsupported LANGUAGE`, IssueSymbols.Language);
-
           case 'OTHER':
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to 'OTHER' (unknown reason)`, null);
-
           case 'BLOCKLIST': // Token generation stopped because the content contains forbidden terms
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped: content contains forbidden terms`, null);
-
           case 'PROHIBITED_CONTENT': // Token generation stopped for potentially containing prohibited content
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped: potentially prohibited content`, null);
-
           case 'SPII': // Token generation stopped because the content potentially contains Sensitive Personally Identifiable Information
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped: potentially contains Sensitive PII (SPII)`, null);
-
           case 'MALFORMED_FUNCTION_CALL': // The function call generated by the model is invalid
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Generation stopped: invalid function call generated by model`, null);
-
           case 'IMAGE_SAFETY': // Token generation stopped because generated images contain safety violations
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Image generation stopped: safety violations`, null);
-
           case 'IMAGE_PROHIBITED_CONTENT': // Image generation stopped because generated images have prohibited content
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Image generation stopped: prohibited content`, null);
-
           case 'IMAGE_RECITATION': // Image generation stopped due to recitation
-            pt.setTokenStopReason('filter-recitation');
-            return pt.setDialectTerminatingIssue(`Image generation stopped: recitation detected`, IssueSymbols.Recitation);
-
           case 'IMAGE_OTHER': // Image generation stopped because of other miscellaneous issue
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Image generation stopped: miscellaneous issue`, null);
-
           case 'NO_IMAGE': // The model was expected to generate an image, but none was generated
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Image generation failed: no image generated`, null);
-
           case 'UNEXPECTED_TOOL_CALL': // Model generated a tool call but no tools were enabled in the request
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Generation stopped: tool call made but no tools enabled`, null);
-
           case 'TOO_MANY_TOOL_CALLS': // Model called too many tools consecutively, execution limit exceeded
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Generation stopped: too many consecutive tool calls`, null);
+          case 'FINISH_REASON_UNSPECIFIED':
+            const reasonMap: Record<typeof candidate0.finishReason, [AixWire_Particles.GCTokenStopReason, string, string | null]> = {
+              'SAFETY': ['filter-content', `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null],
+              'RECITATION': ['filter-recitation', 'Generation stopped due to RECITATION', IssueSymbols.Recitation],
+              'LANGUAGE': ['filter-refusal', 'Generation stopped due to unsupported LANGUAGE', IssueSymbols.Language],
+              'OTHER': ['cg-issue', `Generation stopped due to 'OTHER' (unknown reason)`, null],
+              'BLOCKLIST': ['filter-content', 'Generation stopped: content contains forbidden terms', null],
+              'PROHIBITED_CONTENT': ['filter-content', 'Generation stopped: potentially prohibited content', null],
+              'SPII': ['filter-content', 'Generation stopped: potentially contains Sensitive PII (SPII)', null],
+              'MALFORMED_FUNCTION_CALL': ['cg-issue', 'Generation stopped: invalid function call generated by model', null],
+              'IMAGE_SAFETY': ['filter-content', 'Image generation stopped: safety violations', null],
+              'IMAGE_PROHIBITED_CONTENT': ['filter-content', 'Image generation stopped: prohibited content', null],
+              'IMAGE_RECITATION': ['filter-recitation', 'Image generation stopped: recitation detected', IssueSymbols.Recitation],
+              'IMAGE_OTHER': ['cg-issue', 'Image generation stopped: miscellaneous issue', null],
+              'NO_IMAGE': ['cg-issue', 'Image generation failed: no image generated', null],
+              'UNEXPECTED_TOOL_CALL': ['cg-issue', 'Generation stopped: tool call made but no tools enabled', null],
+              'TOO_MANY_TOOL_CALLS': ['cg-issue', 'Generation stopped: too many consecutive tool calls', null],
+              'FINISH_REASON_UNSPECIFIED': ['cg-issue', 'Generation stopped and no reason was given', null],
+            } as const;
+            const reason = reasonMap[candidate0.finishReason];
+            pt.setTokenStopReason(reason[0]);
+            return pt.setDialectTerminatingIssue(reason[1], reason[2], false);
 
-          // case 'FINISH_REASON_UNSPECIFIED': // this shall be never received
           default:
             // Exhaustiveness check - if we get here, Gemini added a new finishReason
+            const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
             pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null);
+            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null, 'srv-warn');
         }
       }
     } /* end of .candidates */

@@ -4,7 +4,7 @@ description: Update Mistral model definitions with latest pricing and capabiliti
 
 Update `src/modules/llms/server/openai/models/mistral.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Models: https://docs.mistral.ai/getting-started/models/models_overview/

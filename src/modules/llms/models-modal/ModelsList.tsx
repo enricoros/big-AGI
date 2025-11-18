@@ -8,7 +8,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DLLM, DLLMId, getLLMContextTokens, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { STAR_EMOJI, StarredToggle, starredToggleStyle } from '~/common/components/StarIcons';
@@ -23,6 +23,7 @@ import { findModelVendor } from '../vendors/vendors.registry';
 
 // configuration
 const SHOW_LLM_INTERFACES = false;
+const SHOW_LLM_TOOLTIPS = false;
 
 
 const absorbListPadding: SxProps = { my: 'calc(var(--ListItem-paddingY) / -2)' };
@@ -81,7 +82,7 @@ function ModelItem(props: {
   // derived
   const { llm, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
 
-  const seemsFree = !!llm.pricing?.chat?._isFree;
+  const seemsFree = !!getLLMPricing(llm)?.chat?._isFree;
   const isNotSymlink = !llm.label.startsWith('🔗');
 
 
@@ -116,18 +117,22 @@ function ModelItem(props: {
   // const labelWithoutDate = dateMatch ? dateMatch[1].trim() : _label;
   // const labelDate = dateMatch ? dateMatch[2] : '';
 
-  let tooltip = props.serviceLabel;
-  if (llm.description)
-    tooltip += ' · ' + llm.description;
-  const llmContextTokens = getLLMContextTokens(llm);
-  if (llmContextTokens) {
-    tooltip += '\n\n' + llmContextTokens.toLocaleString() + ' tokens';
-    if (llm.maxOutputTokens)
-      tooltip += ' / ' + llm.maxOutputTokens.toLocaleString() + ' max output tokens';
-  } else
-    tooltip += ' · token count not provided';
-  if (seemsFree)
-    tooltip += '\n\n🎁 Free model - refresh to check for pricing updates';
+  let tooltip = '';
+  if (SHOW_LLM_TOOLTIPS) {
+    tooltip = props.serviceLabel;
+    if (llm.description)
+      tooltip += ' · ' + llm.description;
+    const llmContextTokens = getLLMContextTokens(llm);
+    const llmMaxOutputTokens = getLLMMaxOutputTokens(llm);
+    if (llmContextTokens) {
+      tooltip += '\n\n' + llmContextTokens.toLocaleString() + ' tokens';
+      if (llmMaxOutputTokens)
+        tooltip += ' / ' + llmMaxOutputTokens.toLocaleString() + ' max output tokens';
+    } else
+      tooltip += ' · token count not provided';
+    if (seemsFree)
+      tooltip += '\n\n🎁 Free model - refresh to check for pricing updates';
+  }
 
   const chipsComponentsMemo = React.useMemo(() => {
     if (!SHOW_LLM_INTERFACES)
@@ -164,13 +169,21 @@ function ModelItem(props: {
       >
 
         {/* Model Name */}
-        <GoodTooltip title={tooltip}>
+        {SHOW_LLM_TOOLTIPS ? (
+          <GoodTooltip title={tooltip}>
+            <Box sx={isLLMHidden(llm) ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
+              {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
+              {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isLLMHidden(llm) ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
+              {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
+            </Box>
+          </GoodTooltip>
+        ) : (
           <Box sx={isLLMHidden(llm) ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
             {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
             {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isLLMHidden(llm) ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
             {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
           </Box>
-        </GoodTooltip>
+        )}
 
         {/* Preferred Chips */}
         {SHOW_LLM_INTERFACES ? (chipsComponentsMemo && (

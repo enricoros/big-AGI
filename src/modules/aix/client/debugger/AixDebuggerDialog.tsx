@@ -1,15 +1,70 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Divider, FormControl, FormLabel, Link, Option, Select, Switch, Typography } from '@mui/joy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { AixDebuggerFrame } from './AixDebuggerFrame';
 import { aixClientDebuggerActions, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
+
+
+// configuration
+const DEBUGGER_DEBOUNCE_MS = 1000 / 5; // 5Hz
+
+
+function _getStoreSnapshot() {
+  const state = useAixClientDebuggerStore.getState();
+  return {
+    frames: state.frames,
+    activeFrameId: state.activeFrameId,
+    maxFrames: state.maxFrames,
+  }
+}
+
+
+/**
+ * Prevent UI performance issues from high-frequency updates.
+ */
+function useDebouncedAixDebuggerStore() {
+
+  // state with initial value from store
+  const [debouncedState, setDebouncedState] = React.useState(_getStoreSnapshot);
+
+  React.useEffect(() => {
+    let lastUpdate = Date.now();
+    let updateTimerId: ReturnType<typeof setTimeout> | null = null;
+
+    function performUpdate() {
+      setDebouncedState(_getStoreSnapshot);
+      updateTimerId = null;
+      lastUpdate = Date.now();
+    }
+
+    // subscribe to store changes
+    const unsubscribe = useAixClientDebuggerStore.subscribe(() => {
+      if (!updateTimerId) {
+        const elapsedSinceLastUpdate = Date.now() - lastUpdate;
+        const delayMs = Math.max(0, DEBUGGER_DEBOUNCE_MS - elapsedSinceLastUpdate);
+        if (delayMs === 0)
+          performUpdate();
+        else
+          updateTimerId = setTimeout(performUpdate, delayMs);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (updateTimerId)
+        clearTimeout(updateTimerId);
+    };
+  }, []); // no dependencies - subscription handles all changes
+
+  return debouncedState;
+}
 
 
 export function AixDebuggerDialog(props: {
@@ -19,12 +74,7 @@ export function AixDebuggerDialog(props: {
   // external state
   const isMobile = useIsMobile();
   const aixInspector = useUIPreferencesStore(state => state.aixInspector);
-  // NOTE: we subscribe to Any update - which can be ultra noisy
-  const { frames, activeFrameId, maxFrames } = useAixClientDebuggerStore(useShallow((state) => ({
-    frames: state.frames,
-    activeFrameId: state.activeFrameId,
-    maxFrames: state.maxFrames,
-  })));
+  const { frames, activeFrameId, maxFrames } = useDebouncedAixDebuggerStore();
 
   // derived state
   const activeFrame = frames.find(f => f.id === activeFrameId) ?? null;
@@ -45,7 +95,12 @@ export function AixDebuggerDialog(props: {
     <GoodModal
       open
       onClose={props.onClose}
-      title='AI Request Inspector'
+      title={isMobile ? 'AI Inspector' :
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          AI Request Inspector
+          <KeyStroke size='sm' variant='soft' combo='Ctrl + Shift + A' />
+        </Box>
+      }
       titleStartDecorator={
         <Switch
           checked={aixInspector}

@@ -3,7 +3,7 @@ import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from '../IParticleTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
@@ -94,7 +94,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error) {
-      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic);
+      // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
     }
 
     // [OpenAI] if there's a warning, log it once
@@ -195,11 +196,28 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         deltaHasReasoning = true;
 
       }
-      // delta: Reasoning [OpenRouter, 2025-01-24]
-      else if (typeof delta.reasoning === 'string') {
+      // delta: Reasoning Details (Structured) [OpenRouter, 2025-11-11]
+      else if (Array.isArray(delta.reasoning_details)) {
 
-        pt.appendReasoningText(delta.reasoning);
-        deltaHasReasoning = true;
+        for (const reasoningDetail of delta.reasoning_details) {
+          // Extract text from reasoning blocks based on type
+          if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
+            pt.appendReasoningText(reasoningDetail.text);
+            deltaHasReasoning = true;
+          }
+          // Summaries can also be shown as reasoning
+          else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
+            // pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+            pt.appendReasoningText(reasoningDetail.summary);
+            deltaHasReasoning = true;
+          }
+          // 'encrypted' type - reasoning happened but not returned, skip
+          else if (reasoningDetail.type === 'reasoning.encrypted') {
+            // NOTE: Anthropic supports this, and we do too, but.. not now
+            // reasoning happened but not returned, skip
+          } else
+            console.log('AIX: OpenAI-dispatch: unexpected reasoning detail type:', reasoningDetail);
+        }
 
       }
 
@@ -240,7 +258,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       for (const deltaToolCall of (delta.tool_calls || [])) {
 
         // validation
-        if (deltaToolCall.type !== undefined && deltaToolCall.type !== 'function')
+        if (deltaToolCall.type !== undefined && deltaToolCall.type !== 'function'
+          && deltaToolCall.type !== 'builtin_function' // [Moonshot, 2025-11-09] Support Moonshot-over-OpenAI builtin tools
+        )
           throw new Error(`unexpected tool_call type: ${deltaToolCall.type}`);
 
         // Creation -  Ensure the tool call exists in our accumulated structure
@@ -321,7 +341,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
                 pt.appendAudioInline(a.mimeType, a.base64Data, acc.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
               } catch (error) {
                 console.warn('[OpenAI] Failed to process streaming audio:', error);
-                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
               }
             } else
               console.warn('[OpenAI] Ignoring audio expires_at without a valid audio stream');
@@ -367,7 +387,16 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       console.log('AIX: OpenAI-dispatch-NS warning:', completeData.warning);
 
     // Parse the complete response
-    const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(completeData);
+
+    // [Fixup, 2025-11-11] Some OpenAI-compatible APIs omit the 'object' field - inject it if needed
+    let json: OpenAIWire_API_Chat_Completions.Response;
+    const parseResult = OpenAIWire_API_Chat_Completions.Response_schema.safeParse(completeData);
+    if (!parseResult.success) {
+      // Attempt recovery by injecting missing 'object' field
+      const recoveredData = { object: 'chat.completion', ...completeData };
+      json = OpenAIWire_API_Chat_Completions.Response_schema.parse(recoveredData);
+    } else
+      json = parseResult.data;
 
     // -> Model
     if (json.model)
@@ -400,12 +429,41 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           // we will return the EXACT content for non-streaming calls, hence we don't call `appendAutoText_weak` here
           pt.appendText(message.content);
         }
+      }
+      // [Mistral, 2025-10-15] SPEC-VIOLATION Text (array format from Mistral thinking models - non-streaming)
+      else if (Array.isArray(message.content)) {
+        for (const contentBlock of message.content) {
+          // handle thinking blocks
+          if (contentBlock.type === 'thinking' && Array.isArray(contentBlock.thinking)) {
+            for (const thinkingPart of contentBlock.thinking) {
+              if (thinkingPart.type === 'text' && typeof (thinkingPart.text as unknown) === 'string')
+                pt.appendReasoningText(thinkingPart.text);
+              else
+                console.warn('AIX: OpenAI-dispatch-NS: unexpected thinking part type:', thinkingPart); // back to the future
+            }
+          }
+          // text blocks
+          else if (contentBlock.type === 'text' && typeof contentBlock.text === 'string')
+            pt.appendText(contentBlock.text);
+          else
+            console.warn('AIX: OpenAI-dispatch-NS: unexpected content block type:', contentBlock); // back to the future
+        }
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 
-      // [OpenRouter, 2025-06-05] Handle reasoning field from OpenRouter
-      if (typeof message.reasoning === 'string')
-        pt.appendReasoningText(message.reasoning);
+      // [OpenRouter, 2025-11-11] Handle structured reasoning_details
+      if (Array.isArray(message.reasoning_details)) {
+        for (const reasoningDetail of message.reasoning_details) {
+          if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
+            pt.appendReasoningText(reasoningDetail.text);
+          } else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
+            pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+          } else if (reasoningDetail.type === 'reasoning.encrypted') {
+            // reasoning happened but not returned, skip
+          } else
+            console.log('AIX: OpenAI-dispatch-NS: unexpected reasoning detail type:', reasoningDetail);
+        }
+      }
 
       // message: Tool Calls
       for (const toolCall of (message.tool_calls || [])) {
@@ -414,7 +472,9 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         // Note that we relaxed the
         const mayBeMistral = toolCall.type === undefined;
 
-        if (toolCall.type !== 'function' && !mayBeMistral)
+        if (toolCall.type !== 'function' && !mayBeMistral
+          && toolCall.type !== 'builtin_function' // [Moonshot, 2025-11-09] Support Moonshot-over-OpenAI builtin tools
+        )
           throw new Error(`unexpected tool_call type: ${toolCall.type}`);
         pt.startFunctionCallInvocation(toolCall.id, toolCall.function.name, 'incr_str', toolCall.function.arguments);
         pt.endMessagePart();
@@ -449,7 +509,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           pt.appendAudioInline(a.mimeType, a.base64Data, message.audio.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
         } catch (error) {
           console.warn('[OpenAI] Failed to process audio:', error);
-          pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null);
+          pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
         }
       }
 
@@ -576,9 +636,17 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
 
   // Upstream Cost Reporting
 
-  // [Perplexity, 2025-10-20]
-  if (!!usage.cost && typeof usage.cost === 'object' && 'total_cost' in usage.cost && typeof usage.cost.total_cost === 'number')
-    metricsUpdate.$cReported = Math.round(usage.cost.total_cost * 100 * 10000) / 10000;
+  // [Perplexity, 2025-10-20] - cost as object with total_cost
+  // [OpenRouter, 2025-10-22] - cost as direct number
+  if (usage.cost !== null && usage.cost !== undefined) {
+    if (typeof usage.cost === 'number') {
+      // OpenRouter sends cost directly as a number
+      metricsUpdate.$cReported = Math.round(usage.cost * 100 * 10000) / 10000;
+    } else if (typeof usage.cost === 'object' && 'total_cost' in usage.cost && typeof usage.cost.total_cost === 'number') {
+      // Perplexity sends cost as an object with total_cost
+      metricsUpdate.$cReported = Math.round(usage.cost.total_cost * 100 * 10000) / 10000;
+    }
+  }
 
   // Time Metrics
 
@@ -616,7 +684,8 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic);
+  // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, 'srv-warn');
   return true;
 }
 

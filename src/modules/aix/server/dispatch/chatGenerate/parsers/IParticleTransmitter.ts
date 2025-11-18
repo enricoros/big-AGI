@@ -1,6 +1,8 @@
 import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 
 
+export type ParticleServerLogLevel = false | 'srv-log' | 'srv-warn';
+
 export interface IParticleTransmitter {
 
   // Parser-initiated Control //
@@ -9,7 +11,7 @@ export interface IParticleTransmitter {
   setEnded(reason: Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>): void;
 
   /** End the current part and flush it */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null): void;
+  setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
 
 
   // Parts data //
@@ -59,8 +61,13 @@ export interface IParticleTransmitter {
   /** Adds a URL citation part */
   appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number): void;
 
+  // Special //
+
+  /** Sends control particles right away, such as retry-reset control particles */
+  sendControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue?: boolean): void;
+
   /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
-  sendVoidPlaceholder(mot: 'search-web' | 'gen-image', text: string): void;
+  sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string): void;
 
   // Non-parts data //
 

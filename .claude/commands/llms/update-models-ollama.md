@@ -4,7 +4,7 @@ description: Update Ollama model definitions with latest featured models
 
 Update `src/modules/llms/server/ollama/ollama.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Automated Workflow:**
 ```bash
@@ -29,6 +29,7 @@ The parser outputs: `modelName|pulls|capabilities|sizes`
 
 **Important:**
 - Skip models below 50,000 pulls (parser does this automatically)
+- Skip embedding models (parser does not do this automatically)
 - Sort them in the EXACT same order as the source (featured models)
 - Extract tags: 'tools' → hasTools, 'vision' → hasVision, 'embedding' → isEmbeddings (note the 's'), 'thinking' → tags only
 - Extract 'b' tags (1.5b, 7b, 32b) to tags field

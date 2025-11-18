@@ -5,13 +5,13 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, KnownModel, ManualMappings } from './models.data';
+import { fromManualMapping, KnownModel, ManualMappings } from '../../models.mappings';
 import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2025-10-15
+// Verified: 2025-10-28
 const _knownXAIChatModels: ManualMappings = [
 
   // Grok 4
@@ -46,7 +46,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1415 }, // grok-4-0709
+    benchmark: { cbaElo: 1415 + 6 }, // grok-4-0709 (+6 to stay on top of the fast)
   },
 
   // Grok 3
@@ -140,9 +140,10 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [],
   },
   {
+    hidden: true, // Not listed in official docs as of 2025-10-28
     idPrefix: 'grok-2-1212',
     label: 'Grok 2 (1212)',
-    description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window.',
+    description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window. (Not available as of October 2025)',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
@@ -178,7 +179,7 @@ const _knownXAIChatModels: ManualMappings = [
 
 
 // xAI Model Descriptions
-export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
+export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
 
   // List models
   const { headers, url } = openAIAccess(access, null, '/v1/language-models');

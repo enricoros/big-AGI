@@ -15,7 +15,7 @@ import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
@@ -254,7 +254,7 @@ export function Telephone(props: {
       'call',
       callMessages[0].id,
       { abortSignal: responseAbortController.current.signal },
-      (update: AixChatGenerateContent_DMessage, _isDone: boolean) => {
+      (update: AixChatGenerateContent_DMessageGuts, _isDone: boolean) => {
         const updatedText = messageFragmentsReduceText(update.fragments).trim();
         if (updatedText)
           setPersonaTextInterim(finalText = updatedText);
@@ -314,6 +314,7 @@ export function Telephone(props: {
   const isMicEnabled = recognitionState.isAvailable;
   const isTTSEnabled = true;
   const isEnabled = isMicEnabled && isTTSEnabled;
+  const micErrorMessage = recognitionState.errorMessage;
 
 
   return <>
@@ -350,7 +351,7 @@ export function Telephone(props: {
       callerName={isConnected ? undefined : personaName}
       statusText={isRinging ? '' /*'is calling you'*/ : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
       regardingText={chatTitle}
-      micError={!isMicEnabled} speakError={!isTTSEnabled}
+      micError={!isMicEnabled} micErrorMessage={micErrorMessage} speakError={!isTTSEnabled}
     />
 
     {/* Live Transcript, w/ streaming messages, audio indication, etc. */}

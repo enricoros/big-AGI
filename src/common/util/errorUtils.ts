@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
  */
 export function presentErrorToHumans(error: any, mdBold: boolean = false, devWarnError: boolean = false): string {
   if (devWarnError)
-    console.error('presentErrorToHumans', { error });
+    console.error('presentErrorToHumans', { errorType: typeof error, isError: error instanceof Error, error: error });
 
   // Handle Error objects
   if (error instanceof Error) {
@@ -39,7 +39,7 @@ export function presentErrorToHumans(error: any, mdBold: boolean = false, devWar
     return safeObjectToString(error);
 
   // Handle other types
-  return `Unknown Error: ${String(error)}`;
+  return `Unknown Error: ${String(error)} (type: ${typeof error})`;
 }
 
 function safeObjectToString(obj: object): string {

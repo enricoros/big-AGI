@@ -6,12 +6,16 @@ import ClearIcon from '@mui/icons-material/Clear';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
+import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
+import { useUIComplexityMode } from '~/common/stores/store-ui';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
+
+import { AnthropicSkillsConfig } from './AnthropicSkillsConfig';
 
 
 const _UNSPECIFIED = '_UNSPECIFIED' as const;
@@ -103,6 +107,16 @@ const _antWebFetchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
+// const _moonshotWebSearchOptions = [
+//   { value: 'auto', label: 'On', description: 'Enable Kimi $web_search ($0.005 per search)' },
+//   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+// ] as const;
+
+const _ortWebSearchOptions = [
+  { value: 'auto', label: 'On', description: 'Enable web search (native for OpenAI/Anthropic, Exa for others)' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 const _imageGenerationOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
   { value: 'mq', label: 'Standard', description: 'Quick gen' },
@@ -120,9 +134,10 @@ const _xaiDateFilterOptions = [
   { value: '1y', label: 'Last Year', description: 'Results from last 12 months' },
 ] as const;
 
+
 export function LLMParametersEditor(props: {
   // constants
-  maxOutputTokens: number | null,
+  maxOutputTokens: DLLMMaxOutputTokens,
   parameterSpecs: DModelParameterSpec<DModelParameterId>[],
   parameterOmitTemperature?: boolean,
   baselineParameters: DModelParameterValues,
@@ -135,6 +150,10 @@ export function LLMParametersEditor(props: {
   // rendering options
   simplified?: boolean,
 }) {
+
+  // external state
+  const isExtra = useUIComplexityMode() === 'extra';
+
 
   // registry (const) values
   const defAntTB = DModelParameterRegistry['llmVndAntThinkingBudget'];
@@ -154,14 +173,16 @@ export function LLMParametersEditor(props: {
     llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, // fallback for undefined, result is number | null
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
-    llmVndAntThinkingBudget,
-    llmVndAntWebSearch,
-    llmVndAntWebFetch,
     llmVndAnt1MContext,
+    llmVndAntSkills,
+    llmVndAntThinkingBudget,
+    llmVndAntWebFetch,
+    llmVndAntWebSearch,
     llmVndGeminiAspectRatio,
     llmVndGeminiGoogleSearch,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
+    // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort,
     llmVndOaiReasoningEffort4,
     llmVndOaiRestoreMarkdown,
@@ -169,6 +190,7 @@ export function LLMParametersEditor(props: {
     llmVndOaiWebSearchGeolocation,
     llmVndOaiImageGeneration,
     llmVndOaiVerbosity,
+    llmVndOrtWebSearch,
     llmVndPerplexityDateFilter,
     llmVndPerplexitySearchMode,
     llmVndXaiSearchMode,
@@ -317,6 +339,11 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {isExtra && showParam('llmVndAntSkills') && (
+      <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
+    )}
+
+
     {showParam('llmVndGeminiAspectRatio') && (
       <FormSelectControl
         title='Aspect Ratio'
@@ -388,6 +415,20 @@ export function LLMParametersEditor(props: {
         options={_geminiGoogleSearchOptions}
       />
     )}
+
+
+    {/*{showParam('llmVndMoonshotWebSearch') && (*/}
+    {/*  <FormSelectControl*/}
+    {/*    title='Web Search'*/}
+    {/*    tooltip='Enable Kimi $web_search builtin function for real-time web search. Costs $0.005 per search. Use kimi-k2-turbo-preview for dynamic context handling.'*/}
+    {/*    value={llmVndMoonshotWebSearch ?? _UNSPECIFIED}*/}
+    {/*    onChange={(value) => {*/}
+    {/*      if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndMoonshotWebSearch');*/}
+    {/*      else onChangeParameter({ llmVndMoonshotWebSearch: value });*/}
+    {/*    }}*/}
+    {/*    options={_moonshotWebSearchOptions}*/}
+    {/*  />*/}
+    {/*)}*/}
 
     {showParam('llmVndPerplexitySearchMode') && (
       <FormSelectControl
@@ -544,6 +585,21 @@ export function LLMParametersEditor(props: {
         }}
       />
     )}
+
+
+    {showParam('llmVndOrtWebSearch') && (
+      <FormSelectControl
+        title='Web Search'
+        tooltip='Enable OpenRouter web search plugin. Uses native search for OpenAI/Anthropic models, Exa for others. Adds web citations to responses.'
+        value={llmVndOrtWebSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOrtWebSearch');
+          else onChangeParameter({ llmVndOrtWebSearch: value });
+        }}
+        options={_ortWebSearchOptions}
+      />
+    )}
+
 
     {showParam('llmVndXaiSearchMode') && (
       <FormSelectControl
