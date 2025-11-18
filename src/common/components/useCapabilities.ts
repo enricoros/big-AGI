@@ -9,6 +9,9 @@
  *  - tba
  */
 
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+
 
 /// Speech Recognition (browser)
 
@@ -37,7 +40,9 @@ export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/e
 
 export interface TextToImageProvider {
   providerId: string;                 // unique ID of this provider, used for selecting in a list (e.g. 'openai-2' or 'localai')
+  modelServiceId?: DModelsServiceId;  // if auto-created from a model service, the service ID
   vendor: TextToImageVendor;
+  priority: number; // lower is higher priority
   // UI attributes
   label: string;              // e.g. 'OpenAI #2'
   painter: string;            // e.g. 'GPT Image', 'DALL·E', 'Grok', ...
@@ -45,13 +50,7 @@ export interface TextToImageProvider {
   configured: boolean;
 }
 
-type TextToImageVendor =
-  | 'gemini'
-  | 'localai'
-  | 'openai'
-  | 'xai'
-  ;
-
+type TextToImageVendor = Extract<ModelVendorId, 'azure' | 'openai' | 'localai' | 'googleai' | 'xai'>;
 
 export interface CapabilityTextToImage {
   mayWork: boolean;

@@ -30,7 +30,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // external state
 
-  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>(undefined);
+  const stableLlmsModelServices = React.useRef<T2ILlmsModelService[]>(undefined);
   const llmsModelServices = useModelsStore(({ llms, sources }) => {
     const next = _findLlmsT2IServices(llms, sources);
     const prev = stableLlmsModelServices.current;
@@ -108,28 +108,24 @@ export async function t2iGenerateImagesOrThrow(
   if (!provider)
     provider = getActiveTextToImageProviderOrThrow();
 
-  const { providerId, vendor } = provider;
+  const { vendor, modelServiceId } = provider;
 
   switch (vendor) {
-
-    case 'gemini':
-      throw new Error('Gemini Imagen integration coming soon');
-
+    case 'azure':
     case 'localai':
-      // if (!provider.providerId)
-      //   throw new Error('No LocalAI Model service configured for TextToImage');
-      // return await localaiGenerateImages(provider.id, prompt, count);
-      throw new Error('LocalAI t2i integration is not yet available');
-
     case 'openai':
-      if (!providerId)
-        throw new Error('No OpenAI Model Service configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count, options);
+      if (!modelServiceId)
+        throw new Error(`No ${vendor} Model service configured for TextToImage`);
+      return await openAIGenerateImagesOrThrow(modelServiceId, prompt, aixInlineImageParts, count, options);
+
+    case 'googleai':
+      throw new Error('Gemini Imagen integration coming soon');
 
     case 'xai':
       throw new Error('xAI image generation integration coming soon');
 
     default:
+      const _exhaustiveCheck: never = vendor;
       throw new Error(`Unknown T2I vendor: ${vendor}`);
   }
 }
@@ -203,7 +199,7 @@ export async function t2iGenerateImageContentFragments(
 
 /// Private
 
-interface T2ILlmsModelServices {
+interface T2ILlmsModelService {
   label: string;
   modelVendorId: ModelVendorId;
   modelServiceId: DModelsServiceId;
@@ -212,8 +208,8 @@ interface T2ILlmsModelServices {
 
 function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray<DModelsService>) {
   return services
-    .filter(s => (s.vId === 'openai' || (T2I_ENABLE_LOCAL_AI && s.vId === 'localai')))
-    .map((s): T2ILlmsModelServices => ({
+    .filter(s => (s.vId === 'openai' || s.vId === 'azure' || (T2I_ENABLE_LOCAL_AI && s.vId === 'localai')))
+    .map((s): T2ILlmsModelService => ({
       label: s.label,
       modelVendorId: s.vId,
       modelServiceId: s.id,
@@ -222,42 +218,49 @@ function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray
 }
 
 
-// Vendor priority system for auto-selection (lower number = higher priority)
-const T2I_VENDOR_PRIORITIES = {
-  openai: 1,    // highest priority (mature, reliable)
-  gemini: 2,    // second (Google Imagen - future)
-  xai: 3,       // third (Grok vision - future reference)
-  localai: 9,   // lowest (experimental)
-} as const;
-
-
-function _getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[]) {
+function _getTextToImageProviders(llmsModelServices: T2ILlmsModelService[]) {
   const providers: TextToImageProvider[] = [];
 
   // add providers from model services
   for (const { modelVendorId, modelServiceId, label, hasAnyModels } of llmsModelServices) {
     switch (modelVendorId) {
 
+      case 'azure':
+        providers.push({
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'azure',
+          priority: 30 - 2, // assuming custom Azure OpenAI configs are preferred over OpenAI
+          label,
+          painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
+          description: 'Azure OpenAI Image generation models',
+          configured: hasAnyModels,
+        });
+        break;
+
       case 'openai':
         providers.push({
-          providerId: modelServiceId,
-          label: label,
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'openai',
+          priority: 30,
+          label,
           painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
-          // painter: 'DALL·E',
           description: 'OpenAI Image generation models',
           configured: hasAnyModels,
-          vendor: 'openai',
         });
         break;
 
       case 'localai':
         providers.push({
-          providerId: modelServiceId,
-          label: label,
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'localai',
+          priority: 20, // LocalAI preferred over cloud services, if configured
+          label,
           painter: 'LocalAI',
           description: 'LocalAI\'s models',
           configured: hasAnyModels,
-          vendor: 'localai',
         });
         break;
 
@@ -272,8 +275,8 @@ function _getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[]) {
 
   // Sort providers by vendor priority (then by label for deterministic ordering)
   return providers.sort((a, b) => {
-    const priorityA = T2I_VENDOR_PRIORITIES[a.vendor] ?? 999;
-    const priorityB = T2I_VENDOR_PRIORITIES[b.vendor] ?? 999;
+    const priorityA = a.priority ?? 999;
+    const priorityB = b.priority ?? 999;
     if (priorityA !== priorityB) return priorityA - priorityB;
     return a.label.localeCompare(b.label);
   });
@@ -286,7 +289,7 @@ function _resolveActiveT2IProvider(userSelectedId: string | null, prioritizedPro
     const chosen = prioritizedProviders.find(p => p.providerId === userSelectedId && p.configured);
     if (chosen) return chosen;
   }
-  
+
   // Auto-select: find highest priority configured provider (providers are already sorted)
   return prioritizedProviders.find(p => p.configured) || null;
 }
