@@ -131,7 +131,8 @@ export function aixToOpenAIResponses(
      *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
      */
     if (isDialectAzure) {
-      // Azure OpenAI doesn't support web search tool yet (as of Aug 2025)
+      // [2025-11-18] Azure OpenAI still doesn't support web search tool yet - confirmed
+      // [2025-09-12] Azure OpenAI doesn't support web search tool yet, and we also remove the "parameter" so we shall not come here
       console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
     } else if (payload.reasoning?.effort === 'minimal') {
       // Web search is not supported when the reasoning effort is 'minimal'
@@ -163,26 +164,30 @@ export function aixToOpenAIResponses(
   // Tool: Image Generation: configurable per model
   const requestImageGenerationTool = !!model.vndOaiImageGeneration;
   if (requestImageGenerationTool && !skipHostedToolsDueToCustomTools) {
-    if (isDialectAzure) {
-      // Azure OpenAI may not support image generation tool yet
-      console.log('[DEV] Azure OpenAI Responses: skipping image generation tool due to Azure limitations');
-    } else {
-      // Add the image generation tool to the request
-      if (!payload.tools?.length)
-        payload.tools = [];
+    /**
+     * [2025-11-18] Azure OpenAI Image Generation limitations:
+     * - does not support image generation tool at all ({"type":"error","error":{"type":"invalid_request_error","code":null,"message":"There was an issue with your request. Please check your inputs and try again","param":null}})
+     * - does not support WebP output format
+     */
+    const azureImageWorkarounds = isDialectAzure;
+    if (azureImageWorkarounds)
+      console.warn('[DEV] Azure OpenAI Responses: trying image generation tool despite Azure limitations');
 
-      // Map enum values to tool configuration
-      const imageMode = model.vndOaiImageGeneration;
-      const imageGenerationTool: Extract<TRequestTool, { type: 'image_generation' }> = {
-        type: 'image_generation',
-        ...(imageMode === 'mq' ? { quality: 'medium' } : { /* quality: 'high' -- auto */ }),
-        // ...(imageMode === 'hq' ? ... auto ... ),
-        ...(imageMode === 'hq_edit' && { input_fidelity: 'high' }),
-        ...(imageMode !== 'hq_png' && { output_format: 'webp' }),
-        moderation: 'low',
-      };
-      payload.tools.push(imageGenerationTool);
-    }
+    // Add the image generation tool to the request
+    if (!payload.tools?.length)
+      payload.tools = [];
+
+    // Map enum values to tool configuration
+    const imageMode = model.vndOaiImageGeneration;
+    const imageGenerationTool: Extract<TRequestTool, { type: 'image_generation' }> = {
+      type: 'image_generation',
+      ...(imageMode === 'mq' ? { quality: 'medium' } : { /* quality: 'high' -- auto */ }),
+      // ...(imageMode === 'hq' ? ... auto ... ),
+      ...(imageMode === 'hq_edit' && { input_fidelity: 'high' }),
+      ...(imageMode !== 'hq_png' && !azureImageWorkarounds && { output_format: 'webp' }),
+      moderation: 'low',
+    };
+    payload.tools.push(imageGenerationTool);
   }
 
 
