@@ -106,6 +106,15 @@ const createImageConfigD2 = _createImageConfigBase.extend({
   response_format: z.enum([/*'url',*/ 'b64_json']).optional(),
 });
 
+// [LocalAI] simple default configuration
+const createImageConfigLocalAI = _createImageConfigBase.extend({
+  model: z.literal('stablediffusion'),
+  prompt: z.string(),
+  size: z.enum(['256x256', '512x512', '1024x1024']),
+  response_format: z.enum(['url', 'b64_json']).optional(), // defaults to URL
+});
+
+
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
@@ -113,6 +122,7 @@ const createImagesInputSchema = z.object({
     createImageConfigGI, // handles both gpt-image-1 and gpt-image-1-mini
     createImageConfigD3,
     createImageConfigD2,
+    createImageConfigLocalAI,
   ]),
   editConfig: z.object({
     /**
@@ -199,16 +209,13 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       if (!isEdit) {
 
-        const { count, ...restConfig } = config;
+        const { model, count, ...restConfig } = config;
         requestBody = {
           ...restConfig, // includes response_format for dall-e-3 and dall-e-2 models
+          model: model as any, // [LocalAI] Fix: LocalAI wants 'stablediffusion' as model name
           n: count,
           user: config.user || 'Big-AGI',
         };
-
-        // [LocalAI] Fix: LocalAI does not want the 'response_format' field
-        if (access.dialect === 'localai' && 'response_format' in requestBody)
-          delete requestBody['response_format'];
 
         // auto-selects the output image mime type - or defaults to the first one
         if (requestBody.output_format === 'jpeg')
@@ -292,8 +299,10 @@ export const llmOpenAIRouter = createTRPCRouter({
       // parse the response and emit all images in the response
       const { data: images, usage: tokens } = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput);
       for (const image of images) {
-        if (!('b64_json' in image))
+        if (!('b64_json' in image)) {
+          console.error(`openai.router.createImages: expected b64_json`, { image });
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
+        }
 
         // -> createImage
         yield {

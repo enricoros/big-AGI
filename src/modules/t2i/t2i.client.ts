@@ -20,10 +20,6 @@ import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } fr
 import { useTextToImageStore } from './store-module-t2i';
 
 
-// configuration
-const T2I_ENABLE_LOCAL_AI = false; // Note: LocalAI t2i integration is experimental
-
-
 // Capabilities API - used by Settings, and whomever wants to check if this is available
 
 export function useCapabilityTextToImage(): CapabilityTextToImage {
@@ -208,7 +204,7 @@ interface T2ILlmsModelService {
 
 function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray<DModelsService>) {
   return services
-    .filter(s => (s.vId === 'openai' || s.vId === 'azure' || (T2I_ENABLE_LOCAL_AI && s.vId === 'localai')))
+    .filter(s => ['azure', 'openai', 'localai'].includes(s.vId))
     .map((s): T2ILlmsModelService => ({
       label: s.label,
       modelVendorId: s.vId,
