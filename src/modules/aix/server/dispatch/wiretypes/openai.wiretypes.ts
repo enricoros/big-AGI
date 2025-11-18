@@ -824,8 +824,10 @@ export namespace OpenAIWire_API_Images_Generations {
     // GPT Image models only (gpt-image-1, gpt-image-1-mini)
     usage: z.object({
       total_tokens: z.number(),
-      input_tokens: z.number(), // images + text tokens in the input prompt
-      output_tokens: z.number(), // image tokens in the output image
+      input_tokens: z.number() // images + text tokens in the input prompt
+        .optional(), // [LocalAI, 2025-11-18] made optional
+      output_tokens: z.number() // image tokens in the output image
+        .optional(), // [LocalAI, 2025-11-18] made optional
       input_tokens_details: z.object({
         text_tokens: z.number(),
         image_tokens: z.number().optional(), // present if editing
