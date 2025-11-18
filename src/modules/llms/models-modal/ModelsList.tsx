@@ -297,7 +297,7 @@ export function ModelsList(props: {
       const vendor = findModelVendor(llm.vId);
       !!vendor && items.push(
         <ModelItem
-          key={'llm-' + llm.id}
+          key={llm.userStarred ? llm.id + '_starred' : llm.id}
           llm={llm}
           serviceLabel={serviceLabel}
           vendor={vendor}
