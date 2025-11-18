@@ -108,9 +108,19 @@ const createImageConfigD2 = _createImageConfigBase.extend({
 
 // [LocalAI] simple default configuration
 const createImageConfigLocalAI = _createImageConfigBase.extend({
-  model: z.literal('stablediffusion'),
+  model: z.enum([
+    'stablediffusion', // default, mapped to 'gpt-image-1'
+    'dreamshaper', // mapped to 'high', mapped to 'gpt-image-1-mini'
+    'sd-3.5-large-ggml', // mapped to 'medium', mapped to 'dall-e-3'
+    'sd-3.5-medium-ggml', // mapped to 'medium', mapped to 'dall-e-2'
+  ]),
   prompt: z.string(),
-  size: z.enum(['256x256', '512x512', '1024x1024']),
+  size: z.enum([
+    // 'auto',
+    '256x256', '512x512',
+    '1024x1024', '1536x1024', '1024x1536',
+  ]),
+  // stepCount: z.number().min(1).max(150).int().optional(), // unused for now, works when assigned to .step
   response_format: z.enum(['url', 'b64_json']).optional(), // defaults to URL
 });
 

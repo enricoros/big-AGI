@@ -85,10 +85,17 @@ export async function openAIGenerateImagesOrThrow(
       access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceIdForAccess).transportAccess,
       // [LocalAI, 2025-11-18] LocalAI uses the default model 'stablediffusion' and we don't have any dynamic model selection yet
       generationConfig: modelVendor === 'localai' ? {
-        model: 'stablediffusion',
+        model: dalleModelId === 'gpt-image-1' ? 'stablediffusion'
+          : dalleModelId === 'gpt-image-1-mini' ? 'dreamshaper'
+            : dalleModelId === 'dall-e-3' ? 'sd-3.5-large-ggml'
+              : dalleModelId === 'dall-e-2' ? 'sd-3.5-medium-ggml'
+                : 'dreamshaper',
         prompt,
         count: imageCount,
-        size: '256x256',
+        // [LocalAI] size mapping - FIXME! - TEMP CODE
+        size: dalleSizeGI === '1024x1024' ? '512x512'
+          : dalleSizeGI === '1024x1536' ? '256x256'
+            : '1024x1024',
         response_format: 'b64_json',
       } : getImageModelFamily(dalleModelId) === 'gpt-image' ? {
         model: dalleModelId as 'gpt-image-1' | 'gpt-image-1-mini', // gpt-image-1 or gpt-image-1-mini
