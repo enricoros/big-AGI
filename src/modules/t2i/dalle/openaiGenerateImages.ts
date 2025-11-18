@@ -16,6 +16,7 @@ import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolv
  */
 export async function openAIGenerateImagesOrThrow(
   modelServiceIdForAccess: DModelsServiceId,
+  modelVendor: 'azure' | 'localai' | 'openai',
   prompt: string,
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
@@ -50,6 +51,10 @@ export async function openAIGenerateImagesOrThrow(
     dalleSizeGI = '1024x1024'; // square
     dalleQualityGI = 'medium'; // we're rescaling to 256x256 anyway - low is $0.005, medium is $0.011 (2x)
   }
+
+  // [Azure, 2025-11-18] WebP is not supported
+  if (modelVendor === 'azure' && dalleOutputFormatGI === 'webp')
+    dalleOutputFormatGI = 'png';
 
   // This trick is explained on: https://platform.openai.com/docs/guides/images/usage?context=node
   if (dalleNoRewrite && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
