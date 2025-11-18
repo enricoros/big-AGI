@@ -15,7 +15,7 @@ import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolv
  * Client function to call the OpenAI image generation API.
  */
 export async function openAIGenerateImagesOrThrow(
-  modelServiceId: DModelsServiceId,
+  modelServiceIdForAccess: DModelsServiceId,
   prompt: string,
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
@@ -77,7 +77,7 @@ export async function openAIGenerateImagesOrThrow(
 
     // we use an async generator to stream heartbeat events while waiting for the images
     const operations = await apiStream.llmOpenAI.createImages.mutate({
-      access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceId).transportAccess,
+      access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceIdForAccess).transportAccess,
       generationConfig: getImageModelFamily(dalleModelId) === 'gpt-image' ? {
         model: dalleModelId as 'gpt-image-1' | 'gpt-image-1-mini', // gpt-image-1 or gpt-image-1-mini
         prompt: prompt.slice(0, 32000 - 1), // GPT Image family accepts much longer prompts
