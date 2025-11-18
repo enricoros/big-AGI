@@ -66,7 +66,7 @@ const styles = {
 } as const;
 
 
-function ModelItem(props: {
+export const ModelItem = React.memo(function ModelItem(props: {
   llm: DLLM,
   serviceLabel: string,
   vendor: IModelVendor,
@@ -236,7 +236,7 @@ function ModelItem(props: {
       </ListItemButton>
     </ListItem>
   );
-}
+});
 
 export function ModelsList(props: {
   filterServiceId: DModelsServiceId | null,
