@@ -17,10 +17,15 @@ import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
 
 // configuration
 /**
- * Azure OpenAI does not support the web_search_preview tool as of 2025-09-12
+ * Azure OpenAI does not support the web_search_preview tool as of 2025-11-18 and since 2025-09-12
  * as such we remove model parameters that enable search.
  */
 const AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL = true;
+/**
+ * Azure OpenAI does not support the image_generation tool as of 2025-11-18 - however we let this through
+ * to enable future no-code image generation support once Azure enables it.
+ */
+const AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL = false;
 
 
 // [Azure]
@@ -129,9 +134,15 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
   const preciseLabel = (deploymentName !== likelyTheOpenAIModel) ?
     `${label} (${deploymentName})` : label;
 
-  // Apply web search tool disabling if flag is set
+
+  // Azure hotfix: remove web search tool if flag is set
   if (AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL && restOfModelDescription.parameterSpecs?.length)
     restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiWebSearchContext');
+
+  // Azure hotfix: remove image generation tool disabling if flag is set
+  if (AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL && restOfModelDescription.parameterSpecs?.length)
+    restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiImageGeneration');
+
 
   return {
     id: deploymentName,
@@ -151,7 +162,7 @@ function _azureServerSideVars() {
     versionAzureOpenAI: env.AZURE_OPENAI_API_VERSION || '2025-04-01-preview',
     // old-school API used to list deployments - still needed for listing models, as even /v1/models would list any model available on azure and not just the deployed ones
     versionDeployments: env.AZURE_DEPLOYMENTS_API_VERSION || '2023-03-15-preview',
-  }
+  };
 }
 
 export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): RequestAccessValues {
