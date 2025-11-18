@@ -307,6 +307,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
 export function ModelsList(props: {
   filterServiceId: DModelsServiceId | null,
   showHiddenModels: boolean,
+  starredOnTop: boolean,
   onOpenLLMOptions: (id: DLLMId) => void,
   sx?: SxProps,
 }) {
@@ -315,7 +316,7 @@ export function ModelsList(props: {
   const isMobile = useIsMobile();
   const showModelsFn = useUIPreferencesStore(state => state.showModelsFn);
   const domainAssignments = useModelDomains();
-  const llms = useLLMsByService(props.filterServiceId === null ? false : props.filterServiceId, true);
+  const llms = useLLMsByService(props.filterServiceId === null ? false : props.filterServiceId, props.starredOnTop);
 
   const { onOpenLLMOptions } = props;
 

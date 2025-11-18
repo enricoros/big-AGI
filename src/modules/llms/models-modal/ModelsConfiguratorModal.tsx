@@ -604,6 +604,7 @@ export function ModelsConfiguratorModal(props: {
         <ModelsList
           filterServiceId={showAllServices ? null : activeServiceId}
           showHiddenModels={showModelsHidden}
+          starredOnTop={starredOnTop}
           onOpenLLMOptions={optimaActions().openModelOptions}
           sx={{
             // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
