@@ -116,7 +116,7 @@ export async function t2iGenerateImagesOrThrow(
     case 'openai':
       if (!modelServiceId)
         throw new Error(`No ${vendor} Model service configured for TextToImage`);
-      return await openAIGenerateImagesOrThrow(modelServiceId, prompt, aixInlineImageParts, count, options);
+      return await openAIGenerateImagesOrThrow(modelServiceId, vendor, prompt, aixInlineImageParts, count, options);
 
     case 'googleai':
       throw new Error('Gemini Imagen integration coming soon');
