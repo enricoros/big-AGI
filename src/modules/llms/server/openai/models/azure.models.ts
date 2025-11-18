@@ -20,7 +20,7 @@ import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
  * Azure OpenAI does not support the web_search_preview tool as of 2025-09-12
  * as such we remove model parameters that enable search.
  */
-const FORCE_DISABLE_WEB_SEARCH_TOOL = true;
+const AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL = true;
 
 
 // [Azure]
@@ -130,7 +130,7 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
     `${label} (${deploymentName})` : label;
 
   // Apply web search tool disabling if flag is set
-  if (FORCE_DISABLE_WEB_SEARCH_TOOL && restOfModelDescription.parameterSpecs?.length)
+  if (AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL && restOfModelDescription.parameterSpecs?.length)
     restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiWebSearchContext');
 
   return {
