@@ -165,6 +165,7 @@ export function abortableDelay(delayMs: number, abortSignal: AbortSignal): Promi
 export class ServerDebugWireEvents {
   private sequenceNumber: number = 0;
   private lastMs: number | null = null;
+  private distinct: string = Date.now().toString(36).slice(-3);
 
   onMessage(message: any) {
     this.sequenceNumber++;
@@ -172,7 +173,7 @@ export class ServerDebugWireEvents {
       const nowMs = Date.now();
       const elapsedMs = this.lastMs ? nowMs - this.lastMs : 0;
       this.lastMs = nowMs;
-      console.log(`<- SSE (${this.sequenceNumber}, ${elapsedMs} ms):`, message);
+      console.log(`<- SSE (${this.distinct}, ${this.sequenceNumber}, ${elapsedMs} ms):`, message);
     }
   }
 }
