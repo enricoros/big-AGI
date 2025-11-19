@@ -1077,20 +1077,19 @@ export function openAIInjectVariants(models: ModelDescriptionSchema[], model: Mo
  * that aren't present in the API response (superfluous) and checking for models
  * in the API that we don't have definitions for (missing).
  *
- * @param wireModels is the raw API response from OpenAI, containing the .data[] array
+ * @param apiModels is the raw API response from OpenAI, the .data[] array
  * @param parsedModels is the parsed models array, which should match the wireModels
  */
-export function openaiDevCheckForModelsOverlap_DEV(wireModels: unknown, parsedModels: object[]): void {
+export function openaiDevCheckForModelsOverlap_DEV(apiModels: unknown, parsedModels: object[]): void {
 
   if (DEV_DEBUG_OPENAI_MODELS) {
 
     // Check if wireModels has .data array
-    if (!wireModels || !Array.isArray((wireModels as any)?.data)) {
-      console.warn('[DEV] OpenAI: wireModels.data is not an array', wireModels);
+    if (!apiModels || !Array.isArray(apiModels)) {
+      console.warn('[DEV] OpenAI: wireModels is not an array', apiModels);
       return;
     }
 
-    const apiModels = (wireModels as any).data;
     const apiModelIds = apiModels.map((model: any) => model.id);
 
     // 1. Check for superfluous models (in our definitions but not in API)
