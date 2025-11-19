@@ -148,7 +148,7 @@ async function workerPuppeteer(
     // Add default options for better stability
     // defaultViewport: { width: 1024, height: 768 },
     // acceptInsecureCerts: true,
-    protocolTimeout: WORKER_TIMEOUT,
+    protocolTimeout: WORKER_TIMEOUT + 2000, // 2s extra for taking the screenshot?
   });
 
   // for local testing, open an incognito context, to separate cookies
