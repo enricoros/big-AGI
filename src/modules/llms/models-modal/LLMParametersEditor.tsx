@@ -94,7 +94,7 @@ const _geminiThinkingLevelOptions = [
   { value: 'high', label: 'High', description: 'Maximum reasoning depth' },
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning' },
   { value: 'low', label: 'Low', description: 'Quick responses (default when unset)' },
-  { value: _UNSPECIFIED, label: 'Dynamic', description: 'Model decides automatically (default)' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Model decides automatically (default)' },
 ] as const;
 
 const _xaiSearchModeOptions = [
@@ -412,19 +412,6 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndGeminiCodeExecution') && (
-      <FormSelectControl
-        title='Code Execution'
-        tooltip='Enable automatic Python code generation and execution by the model'
-        value={llmVndGeminiCodeExecution ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiCodeExecution');
-          else onChangeParameter({ llmVndGeminiCodeExecution: value });
-        }}
-        options={_geminiCodeExecutionOptions}
-      />
-    )}
-
     {showParam('llmVndGeminiGoogleSearch') && (
       <FormSelectControl
         title='Google Search'
@@ -438,19 +425,6 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndGeminiMediaResolution') && (
-      <FormSelectControl
-        title='Media Resolution'
-        tooltip='Controls vision processing quality for multimodal inputs. Higher resolution improves text reading and detail identification but increases token usage.'
-        value={llmVndGeminiMediaResolution ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiMediaResolution');
-          else onChangeParameter({ llmVndGeminiMediaResolution: value });
-        }}
-        options={_geminiMediaResolutionOptions}
-      />
-    )}
-
     {showParam('llmVndGeminiThinkingLevel') && (
       <FormSelectControl
         title='Thinking Level'
@@ -461,6 +435,32 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndGeminiThinkingLevel: value });
         }}
         options={_geminiThinkingLevelOptions}
+      />
+    )}
+
+    {showParam('llmVndGeminiCodeExecution') && (
+      <FormSelectControl
+        title='Code Execution'
+        tooltip='Enable automatic Python code generation and execution by the model'
+        value={llmVndGeminiCodeExecution ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiCodeExecution');
+          else onChangeParameter({ llmVndGeminiCodeExecution: value });
+        }}
+        options={_geminiCodeExecutionOptions}
+      />
+    )}
+
+    {showParam('llmVndGeminiMediaResolution') && (
+      <FormSelectControl
+        title='Media Resolution'
+        tooltip='Controls vision processing quality for multimodal inputs. Higher resolution improves text reading and detail identification but increases token usage.'
+        value={llmVndGeminiMediaResolution ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiMediaResolution');
+          else onChangeParameter({ llmVndGeminiMediaResolution: value });
+        }}
+        options={_geminiMediaResolutionOptions}
       />
     )}
 
