@@ -33,6 +33,7 @@
     "@next/bundle-analyzer": "~15.1.8",
     "@prisma/client": "~5.22.0",
     "@tanstack/react-query": "5.90.3",
+    "@tanstack/react-virtual": "^3.13.12",
     "@trpc/client": "11.5.1",
     "@trpc/next": "11.5.1",
     "@trpc/react-query": "11.5.1",
