@@ -9,6 +9,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
@@ -124,6 +125,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   // state
   // const [isHovering, setIsHovering] = React.useState(false);
   const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
+  const [htmlReloadKey, setHtmlReloadKey] = React.useState(0);
   const [showHTML, setShowHTML] = React.useState(props.initialShowHTML === true);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
@@ -280,7 +282,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         */}
         <Box component='span' sx={!isFullscreen ? undefined : { flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} isFullscreen={isFullscreen} />
+          {renderHTML ? <RenderCodeHtmlIFrame key={htmlReloadKey} htmlCode={code} isFullscreen={isFullscreen} />
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
               : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                 : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
@@ -300,11 +302,18 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           {/* [row 1] */}
           <Box sx={overlayFirstRowSx}>
 
-            {/* Show HTML */}
+            {/* Show HTML + Reload */}
             {isHTMLCode && (
-              <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' smShadow onClick={() => setShowHTML(!showHTML)}>
-                <HtmlIcon sx={{ fontSize: 'xl2' }} />
-              </OverlayButton>
+              <ButtonGroup aria-label='HTML options' sx={overlayGroupWithShadowSx}>
+                <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+                  <HtmlIcon sx={{ fontSize: 'xl2' }} />
+                </OverlayButton>
+                {renderHTML && (
+                  <OverlayButton tooltip={noTooltips ? null : 'Reload'} variant='outlined' color='danger' onClick={() => setHtmlReloadKey(k => k + 1)}>
+                    <ReplayRoundedIcon />
+                  </OverlayButton>
+                )}
+              </ButtonGroup>
             )}
 
             {/* SVG, Mermaid, PlantUML -- including a max-out button */}
