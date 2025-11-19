@@ -12,6 +12,7 @@ import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { ApproximateCosts } from '../ApproximateCosts';
@@ -99,8 +100,8 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
       leftButton={
-        <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)}>
-          Gallery Admin
+        <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)} startDecorator={<LocalAIIcon />}>
+          Install Models
         </Button>
       }
     />
