@@ -362,7 +362,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     .input(listModelsInputSchema)
     .query(async ({ input: { access } }) => {
       const wireLocalAIModelsAvailable = await openaiGETOrThrow(access, '/models/available');
-      return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable);
+      return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable).filter(model => !!model.name);
     }),
 
   /* [LocalAI] Download a model from a Model Gallery */
