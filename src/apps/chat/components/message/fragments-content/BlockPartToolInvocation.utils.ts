@@ -34,9 +34,9 @@ const KNOWN_TOOL_TRANSLATIONS: Record<string, string> = {
  *
  * First checks for known hosted tools, then applies heuristics for function names
  */
-export function humanReadableFunctionName(name: string, invocationType: 'function_call' | 'code_execution'): string {
+export function humanReadableFunctionName(name: string, invocationType: 'function_call' | 'code_execution', phase: 'invocation' | 'response'): string {
   if (invocationType === 'code_execution')
-    return 'Code Execution';
+    return phase === 'invocation' ? 'Generated code' : 'Executed code';
 
   // check for known hosted tools
   if (KNOWN_TOOL_TRANSLATIONS[name])
