@@ -117,6 +117,7 @@ Located in `/src/common/layout/optima/`
    - `store-chats`: Conversations and messages
    - `store-llms`: Model configurations
    - `store-ux-labs`: UI preferences and labs features
+   - **Zustand pattern**: Always wrap multi-property selectors with `useShallow` from `zustand/react/shallow` to prevent re-renders on reference changes
 
 2. **Per-Instance Stores** (Vanilla Zustand)
    - `store-beam_vanilla`: Beam scatter/gather state
