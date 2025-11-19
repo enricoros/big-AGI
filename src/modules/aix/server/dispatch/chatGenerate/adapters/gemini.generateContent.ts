@@ -2,7 +2,6 @@ import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage,
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
 import { aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
-import { OPS } from 'pdfjs-dist';
 
 
 // configuration
@@ -78,21 +77,36 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // Thinking models: thinking budget and show thoughts
-  if (model.vndGeminiShowThoughts === true || model.vndGeminiThinkingBudget !== undefined) {
+  if (model.vndGeminiShowThoughts === true || model.vndGeminiThinkingBudget !== undefined || model.vndGeminiThinkingLevel) {
     const thinkingConfig: Exclude<TRequest['generationConfig'], undefined>['thinkingConfig'] = {};
 
     // This seems deprecated keep it in case Gemini turns it on again
     if (model.vndGeminiShowThoughts)
       thinkingConfig.includeThoughts = true;
 
-    // 0 disables thinking explicitly
-    if (model.vndGeminiThinkingBudget !== undefined) {
+    // [Gemini 3, 2025-11-18] Thinking Level (replaces thinkingBudget for Gemini 3)
+    // CRITICAL: Cannot use both thinkingLevel and thinkingBudget (400 error)
+    if (model.vndGeminiThinkingLevel) {
+      thinkingConfig.thinkingLevel = model.vndGeminiThinkingLevel;
+    }
+    // [Gemini 2.x] Thinking Budget (0 disables thinking explicitly)
+    else if (model.vndGeminiThinkingBudget !== undefined) {
       if (model.vndGeminiThinkingBudget > 0)
         thinkingConfig.includeThoughts = true;
       thinkingConfig.thinkingBudget = model.vndGeminiThinkingBudget;
     }
 
     payload.generationConfig!.thinkingConfig = thinkingConfig;
+  }
+
+  // [Gemini, 2025-11-18] Media Resolution: controls vision processing quality
+  if (model.vndGeminiMediaResolution) {
+    const mediaResolutionValuesMap = {
+      'mr_low': 'MEDIA_RESOLUTION_LOW',
+      'mr_medium': 'MEDIA_RESOLUTION_MEDIUM',
+      'mr_high': 'MEDIA_RESOLUTION_HIGH',
+    } as const;
+    payload.generationConfig!.mediaResolution = mediaResolutionValuesMap[model.vndGeminiMediaResolution];
   }
 
   // [Gemini, 2025-10-02] Image generation: aspect ratio configuration
@@ -136,9 +150,9 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   // Allow/deny auto-adding hosted tools when custom tools are present
   const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
   const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
-  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy; // FIXME: re-evaluate in the future whether this shall be on higher information levels (callers)
 
-  // Custom tools
+  // Function Calls (Custom Tools)
   if (chatGenerate.tools) {
     payload.tools = _toGeminiTools(chatGenerate.tools);
     if (chatGenerate.toolsPolicy)
@@ -146,11 +160,23 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // Hosted tools
+
+  // [Gemini, 2025-11-18] Code Execution: add tool when enabled
+  if (model.vndGeminiCodeExecution === 'auto' && !skipHostedToolsDueToCustomTools) {
+    if (!payload.tools) payload.tools = [];
+
+    // Build the Code Execution tool configuration (empty object)
+    const codeExecutionTool: NonNullable<TRequest['tools']>[number] = {
+      codeExecution: {},
+    };
+
+    // Add to tools array
+    payload.tools.push(codeExecutionTool);
+  }
+
   // [Gemini, 2025-11-01] Computer Use: add tool when environment is specified
   if (model.vndGeminiComputerUse && !skipHostedToolsDueToCustomTools) {
-    // Initialize tools array if not present
-    if (!payload.tools)
-      payload.tools = [];
+    if (!payload.tools) payload.tools = [];
 
     // Build the Computer Use tool configuration
     const computerUseTool: NonNullable<TRequest['tools']>[number] = {
@@ -165,9 +191,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // [Gemini, 2025-10-13] Google Search Grounding: add tool when enabled
   if (model.vndGeminiGoogleSearch && !skipHostedToolsDueToCustomTools) {
-    // Initialize tools array if not present
-    if (!payload.tools)
-      payload.tools = [];
+    if (!payload.tools) payload.tools = [];
 
     // Build the Google Search tool configuration
     const googleSearchTool: NonNullable<TRequest['tools']>[number] = {
@@ -178,6 +202,19 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     payload.tools.push(googleSearchTool);
   }
 
+  // [Gemini, 2025-08-18] URL Context: add tool when enabled
+  // Auto-enable with Google Search for backwards compatibility and ease of use
+  if ((model.vndGeminiUrlContext === 'auto' || model.vndGeminiGoogleSearch) && !skipHostedToolsDueToCustomTools) {
+    if (!payload.tools) payload.tools = [];
+
+    // Build the URL Context tool configuration (empty object)
+    const urlContextTool: NonNullable<TRequest['tools']>[number] = {
+      urlContext: {},
+    };
+
+    // Add to tools array
+    payload.tools.push(urlContextTool);
+  }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);

@@ -413,10 +413,14 @@ export namespace AixWire_API {
     vndAntWebFetch: z.enum(['auto']).optional(),
     vndAntWebSearch: z.enum(['auto']).optional(),
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+    vndGeminiCodeExecution: z.enum(['auto']).optional(),
     vndGeminiComputerUse: z.enum(['browser']).optional(),
     vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
+    vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
-    vndGeminiThinkingBudget: z.number().optional(),
+    vndGeminiThinkingBudget: z.number().optional(), // old param
+    vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low']).optional(), // new param
+    vndGeminiUrlContext: z.enum(['auto']).optional(),
     vndMoonshotWebSearch: z.enum(['auto']).optional(),
     vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
