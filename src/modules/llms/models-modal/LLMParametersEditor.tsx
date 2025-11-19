@@ -68,6 +68,11 @@ const _geminiAspectRatioOptions = [
   { value: '21:9', label: '21:9', description: 'Ultra wide' },
 ] as const;
 
+const _geminiCodeExecutionOptions = [
+  { value: 'auto', label: 'On', description: 'Enable code generation and execution' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 const _geminiGoogleSearchOptions = [
   { value: 'unfiltered', label: 'On', description: 'Web Search' },
   { value: '1d', label: 'Last Day', description: 'Last 24 hours' },
@@ -76,6 +81,20 @@ const _geminiGoogleSearchOptions = [
   { value: '1y', label: 'Last Year', description: 'Results since last year' },
   // { value: '6m', label: 'Last 6 Months', description: 'Results from last 6 months' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
+] as const;
+
+const _geminiMediaResolutionOptions = [
+  { value: 'mr_high', label: 'High', description: 'Best quality, higher token usage' },
+  { value: 'mr_medium', label: 'Medium', description: 'Balanced quality and cost' },
+  { value: 'mr_low', label: 'Low', description: 'Faster, lower cost' },
+  { value: _UNSPECIFIED, label: 'Auto', description: 'Model optimizes based on media type (default)' },
+] as const;
+
+const _geminiThinkingLevelOptions = [
+  { value: 'high', label: 'High', description: 'Maximum reasoning depth' },
+  { value: 'medium', label: 'Medium', description: 'Balanced reasoning' },
+  { value: 'low', label: 'Low', description: 'Quick responses (default when unset)' },
+  { value: _UNSPECIFIED, label: 'Dynamic', description: 'Model decides automatically (default)' },
 ] as const;
 
 const _xaiSearchModeOptions = [
@@ -166,9 +185,12 @@ export function LLMParametersEditor(props: {
     llmVndAntWebFetch,
     llmVndAntWebSearch,
     llmVndGeminiAspectRatio,
+    llmVndGeminiCodeExecution,
     llmVndGeminiGoogleSearch,
+    llmVndGeminiMediaResolution,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
+    llmVndGeminiThinkingLevel,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort,
     llmVndOaiReasoningEffort4,
@@ -390,6 +412,19 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {showParam('llmVndGeminiCodeExecution') && (
+      <FormSelectControl
+        title='Code Execution'
+        tooltip='Enable automatic Python code generation and execution by the model'
+        value={llmVndGeminiCodeExecution ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiCodeExecution');
+          else onChangeParameter({ llmVndGeminiCodeExecution: value });
+        }}
+        options={_geminiCodeExecutionOptions}
+      />
+    )}
+
     {showParam('llmVndGeminiGoogleSearch') && (
       <FormSelectControl
         title='Google Search'
@@ -400,6 +435,32 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndGeminiGoogleSearch: value });
         }}
         options={_geminiGoogleSearchOptions}
+      />
+    )}
+
+    {showParam('llmVndGeminiMediaResolution') && (
+      <FormSelectControl
+        title='Media Resolution'
+        tooltip='Controls vision processing quality for multimodal inputs. Higher resolution improves text reading and detail identification but increases token usage.'
+        value={llmVndGeminiMediaResolution ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiMediaResolution');
+          else onChangeParameter({ llmVndGeminiMediaResolution: value });
+        }}
+        options={_geminiMediaResolutionOptions}
+      />
+    )}
+
+    {showParam('llmVndGeminiThinkingLevel') && (
+      <FormSelectControl
+        title='Thinking Level'
+        tooltip='Controls internal reasoning depth. Replaces thinking_budget for Gemini 3 models. When unset, the model decides dynamically.'
+        value={llmVndGeminiThinkingLevel ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiThinkingLevel');
+          else onChangeParameter({ llmVndGeminiThinkingLevel: value });
+        }}
+        options={_geminiThinkingLevelOptions}
       />
     )}
 
