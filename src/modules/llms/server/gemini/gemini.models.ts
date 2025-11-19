@@ -167,6 +167,7 @@ const _knownGeminiModels: ({
     parameterSpecs: [
       { paramId: 'llmVndGeminiThinkingLevel' /* replaces thinking_budget for Gemini 3 */ },
       { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
     benchmark: { cbaElo: 1501 }, // First model to exceed 1500 Elo on LMArena
