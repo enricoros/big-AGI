@@ -102,7 +102,7 @@ export function BlockPartToolInvocation(props: {
   const { humanName, originalName } = React.useMemo(() => {
     const invocationType = invocation.type;
     const originalName = invocationType === 'function_call' ? invocation.name : 'code_execution';
-    const humanName = humanReadableFunctionName(originalName, invocationType);
+    const humanName = humanReadableFunctionName(originalName, invocationType, 'invocation');
     return { humanName, originalName };
   }, [invocation]);
 
@@ -138,7 +138,7 @@ export function BlockPartToolInvocation(props: {
 
 
   return (
-    <BlocksContainer onDoubleClick={props.onDoubleClick}><Box sx={{ px: 1.5 }}>
+    <BlocksContainer onDoubleClick={props.onDoubleClick}><Box /*sx={{ px: 1.5 }}*/>
 
       <Sheet
         variant='soft'

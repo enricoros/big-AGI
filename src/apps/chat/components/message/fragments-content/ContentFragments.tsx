@@ -119,18 +119,18 @@ export function ContentFragments(props: {
       else if (part.pt === 'tool_invocation') {
         if (part.invocation.type === 'function_call') {
           editText = part.invocation.args /* string | null */ || '';
-          const humanName = humanReadableFunctionName(part.invocation.name, 'function_call');
+          const humanName = humanReadableFunctionName(part.invocation.name, 'function_call', 'invocation');
           editLabel = `[Invocation] ${humanName} · \`${part.invocation.name}\``;
         } else {
           editText = part.invocation.code;
-          const humanName = humanReadableFunctionName('code_execution', 'code_execution');
+          const humanName = humanReadableFunctionName('code_execution', 'code_execution', 'invocation');
           editLabel = `[Invocation] ${humanName} · \`${part.invocation.language}\``;
         }
       } else if (part.pt === 'tool_response') {
         if (!part.error) {
           editText = part.response.result;
           const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
-          const humanName = humanReadableFunctionName(responseName, part.response.type);
+          const humanName = humanReadableFunctionName(responseName, part.response.type, 'response');
           editLabel = `[Response] ${humanName} · \`${part.id}\``;
         }
       }
@@ -170,7 +170,7 @@ export function ContentFragments(props: {
           const rt = part.rt;
           switch (rt) {
             case 'zync':
-              const zt = part.zType
+              const zt = part.zType;
               switch (zt) {
                 case 'asset':
                   // TODO: [ASSET] future: implement rendering for the real Reference to Zync Asset
