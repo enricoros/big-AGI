@@ -204,7 +204,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // [Gemini, 2025-08-18] URL Context: add tool when enabled
   // Auto-enable with Google Search for backwards compatibility and ease of use
-  if ((model.vndGeminiUrlContext === 'auto' || model.vndGeminiGoogleSearch) && !skipHostedToolsDueToCustomTools) {
+  if (model.vndGeminiUrlContext === 'auto' && !skipHostedToolsDueToCustomTools) {
     if (!payload.tools) payload.tools = [];
 
     // Build the URL Context tool configuration (empty object)

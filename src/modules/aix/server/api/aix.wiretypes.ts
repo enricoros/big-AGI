@@ -407,11 +407,13 @@ export namespace AixWire_API {
     maxTokens: z.number().min(1).optional(),
     topP: z.number().min(0).max(1).optional(),
     forceNoStream: z.boolean().optional(),
+    // Anthropic
     vndAnt1MContext: z.boolean().optional(),
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
     vndAntWebFetch: z.enum(['auto']).optional(),
     vndAntWebSearch: z.enum(['auto']).optional(),
+    // Gemini
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
     vndGeminiCodeExecution: z.enum(['auto']).optional(),
     vndGeminiComputerUse: z.enum(['browser']).optional(),
@@ -421,16 +423,21 @@ export namespace AixWire_API {
     vndGeminiThinkingBudget: z.number().optional(), // old param
     vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low']).optional(), // new param
     vndGeminiUrlContext: z.enum(['auto']).optional(),
+    // Moonshot
     vndMoonshotWebSearch: z.enum(['auto']).optional(),
+    // OpenAI
     vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
+    // OpenRouter
     vndOrtWebSearch: z.enum(['auto']).optional(),
+    // Perplexity
     vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
     vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
+    // xAI
     vndXaiSearchMode: z.enum(['auto', 'on', 'off']).optional(),
     vndXaiSearchSources: z.string().optional(),
     vndXaiSearchDateFilter: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),

@@ -48,7 +48,7 @@ export function aixCreateModelFromLLMOptions(
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP,
     llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch,
-    llmVndGeminiAspectRatio, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget,
+    llmVndGeminiAspectRatio, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget, llmVndGeminiThinkingLevel,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
     llmVndOrtWebSearch,
@@ -106,10 +106,17 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
+    ...(llmVndGeminiCodeExecution === 'auto' ? { vndGeminiCodeExecution: llmVndGeminiCodeExecution } : {}),
     ...(llmVndGeminiComputerUse ? { vndGeminiComputerUse: llmVndGeminiComputerUse } : {}),
-    ...(llmVndGeminiGoogleSearch ? { vndGeminiGoogleSearch: llmVndGeminiGoogleSearch } : {}),
+    ...(llmVndGeminiGoogleSearch ? {
+      vndGeminiGoogleSearch: llmVndGeminiGoogleSearch,
+      vndGeminiUrlContext: 'auto', // NOTE: we are now driving both from the client side, search and fetch, without a dedicated setting, for UX simplicity
+    } : {}),
+    ...(llmVndGeminiMediaResolution ? { vndGeminiMediaResolution: llmVndGeminiMediaResolution } : {}),
     ...(llmVndGeminiShowThoughts ? { vndGeminiShowThoughts: llmVndGeminiShowThoughts } : {}),
     ...(llmVndGeminiThinkingBudget !== undefined ? { vndGeminiThinkingBudget: llmVndGeminiThinkingBudget } : {}),
+    ...(llmVndGeminiThinkingLevel ? { vndGeminiThinkingLevel: llmVndGeminiThinkingLevel } : {}),
+    // ...(llmVndGeminiUrlContext === 'auto' ? { vndGeminiUrlContext: llmVndGeminiUrlContext } : {}),
     // ...(llmVndMoonshotWebSearch === 'auto' ? { vndMoonshotWebSearch: 'auto' } : {}),
     ...(llmVndOaiResponsesAPI ? { vndOaiResponsesAPI: true } : {}),
     ...((llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort) ? { vndOaiReasoningEffort: llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort } : {}),
