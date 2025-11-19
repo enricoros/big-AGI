@@ -57,11 +57,34 @@ export namespace GeminiWire_ContentParts {
     'DOCUMENT', // e.g. PDF
   ]);
 
+  /** Media resolution for the input media. */
+  export const mediaResolution_enum = z.enum([
+    'MEDIA_RESOLUTION_UNSPECIFIED', // Media resolution has not been set
+    'MEDIA_RESOLUTION_LOW',         // Images: 280 tokens | Video: 70 tokens per frame
+    'MEDIA_RESOLUTION_MEDIUM',      // Images: 560 tokens | Video: 70 tokens per frame (same as low)
+    'MEDIA_RESOLUTION_HIGH',        // Images: 1120 tokens | Video: 280 tokens per frame
+  ]);
+
+
   /// Content parts - Input
+
+  const _ContentPart_fields_schema = z.object({
+    thought: z.boolean().optional(), // (Text) [Gemini, 2025-01-23] CoT support
+    /**
+     * [Gemini 3, 2025-11-18] Encrypted signature preserving reasoning context across multi-turn function calling, base64-encoded.
+     * - Required for Gemini 3 Pro function calling (strict validation)
+     * - Sequential calls: Each function call includes its signature
+     * - Parallel calls: Only first function call has signature
+     * - Bypass: Use "context_engineering_is_the_way_to_go" for migrated conversations
+     */
+    thoughtSignature: z.string().optional(),
+    // partMetadata: z.looseObject({}).optional(),
+    mediaResolution: mediaResolution_enum.optional(), // [Gemini, 2025-11-18] Media resolution for the input media
+  });
+
 
   export const TextPart_schema = z.object({
     text: z.string(),
-    thought: z.boolean().optional(), // [Gemini, 2025-01-23] CoT support
   });
 
   const InlineDataPart_schema = z.object({
@@ -78,14 +101,6 @@ export namespace GeminiWire_ContentParts {
       /** The function parameters and values in JSON object format. */
       args: z.json().optional(), // FC args
     }),
-    /**
-     * [Gemini 3, 2025-11-18] Encrypted signature preserving reasoning context across multi-turn function calling.
-     * - Required for Gemini 3 Pro function calling (strict validation)
-     * - Sequential calls: Each function call includes its signature
-     * - Parallel calls: Only first function call has signature
-     * - Bypass: Use "context_engineering_is_the_way_to_go" for migrated conversations
-     */
-    thoughtSignature: z.string().optional(),
   });
 
   /**
@@ -173,27 +188,39 @@ export namespace GeminiWire_ContentParts {
 
   /// Content Parts (union of) - (input) request.contents[number].parts
 
-  export type ContentPart = z.infer<typeof ContentPart_schema>;
-  export const ContentPart_schema = z.union([
+  const _ContentPartData_Input_schema = z.union([
     TextPart_schema,
     InlineDataPart_schema,
     FunctionCallPart_schema,
-    FunctionResponsePart_schema,
-    FileDataPart_schema,
+    FunctionResponsePart_schema, // Input only
+    FileDataPart_schema, // Input only
     ExecutableCodePart_schema,
     CodeExecutionResultPart_schema,
   ]);
+
+  export type ContentPart = z.infer<typeof ContentPart_Input_schema>;
+  export const ContentPart_Input_schema = z.intersection(
+    _ContentPart_fields_schema,
+    _ContentPartData_Input_schema,
+  );
 
 
   /// Content Parts (union of) - (model output) response.candidates[number].content.parts
 
-  export const ModelContentPart_schema = z.union([
+  const _ContentPartData_Output_schema = z.union([
     TextPart_schema,
     InlineDataPart_schema,
     FunctionCallPart_schema,
+    // FunctionResponsePart_schema,
+    // FileDataPart_schema,
     ExecutableCodePart_schema,
     CodeExecutionResultPart_schema,
   ]);
+
+  export const ContentPart_Output_schema = z.intersection(
+    _ContentPart_fields_schema,
+    _ContentPartData_Output_schema,
+  );
 
 
   /// Content Parts - Factories
@@ -240,7 +267,7 @@ export namespace GeminiWire_Messages {
     // Must be either 'user' or 'model'. Optional but must be set if there are multiple "Content" objects in the parent array.
     role: z.enum(['user', 'model']).optional(),
     // Ordered Parts that constitute a single message. Parts may have different MIME types.
-    parts: z.array(GeminiWire_ContentParts.ContentPart_schema),
+    parts: z.array(GeminiWire_ContentParts.ContentPart_Input_schema),
   });
 
   // Model Content - response.candidates[number].content
@@ -250,7 +277,7 @@ export namespace GeminiWire_Messages {
       .or(z.literal('MODEL')) // [Gemini]: 2024-10-29: code execution seems to return .role='MODEL' instead of 'model' when .parts=[codeExecutionResult]
       .optional(), // 2025-01-10: added because sometimes gemini sends the empty `{"candidates": [{"content": {}, ...` just for the finishreason
     // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
-    parts: z.array(GeminiWire_ContentParts.ModelContentPart_schema)
+    parts: z.array(GeminiWire_ContentParts.ContentPart_Output_schema)
       .optional(), // 2025-01-10: added because sometimes gemini sends the empty `{"candidates": [{"content": {}, ...` just for the finishreason
   });
 
@@ -477,13 +504,6 @@ export namespace GeminiWire_API_Generate_Content {
     'AUDIO', // model should return audio
   ]);
 
-  const mediaResolution_enum = z.enum([
-    'MEDIA_RESOLUTION_UNSPECIFIED', // Media resolution has not been set
-    'MEDIA_RESOLUTION_LOW',         // Images: 280 tokens | Video: 70 tokens per frame
-    'MEDIA_RESOLUTION_MEDIUM',      // Images: 560 tokens | Video: 70 tokens per frame (same as low)
-    'MEDIA_RESOLUTION_HIGH',        // Images: 1120 tokens | Video: 280 tokens per frame
-  ]);
-
   const SpeechConfig_schema = z.object({
     /** The configuration for the speaker to use. */
     voiceConfig: z.object({
@@ -526,7 +546,7 @@ export namespace GeminiWire_API_Generate_Content {
     /** Optional. The speech generation config. Still in preview (allowlist, 2025-03-14) */
     speechConfig: SpeechConfig_schema.optional(), // TODO
     /** Optional. The media resolution for the response. */
-    mediaResolution: mediaResolution_enum.optional(), // TODO
+    mediaResolution: GeminiWire_ContentParts.mediaResolution_enum.optional(), // [Gemini, 2025-11-18] This is also on the 'Part' object now.. not sure which has precedence, but we do not use this one
 
     candidateCount: z.number().int().optional(), // currently can only be set to 1
     maxOutputTokens: z.number().int().optional(),
@@ -564,8 +584,8 @@ export namespace GeminiWire_API_Generate_Content {
     }).optional(),
 
     // Added on 2025-01-10 - Low-level - not requested/used yet but added
-    presencePenalty: z.number().optional(),     // A positive penalty incresases the vocabulary of the response
-    frequencyPenalty: z.number().optional(),    // A positive penalty incresases the vocabulary of the response
+    presencePenalty: z.number().optional(),     // A positive penalty increases the vocabulary of the response
+    frequencyPenalty: z.number().optional(),    // A positive penalty increases the vocabulary of the response
     responseLogprobs: z.boolean().optional(),   // if true, exports the logprobs
     logprobs: z.number().int().optional(),      // number of top logprobs to return
   });
@@ -673,7 +693,7 @@ export namespace GeminiWire_API_Generate_Content {
       }),
     })).optional(),
 
-    /** List of grounding support: segment + arrays of chunks + arrays of probs  */
+    /** List of grounding support: segment + arrays of chunks + arrays of probabilities  */
     groundingSupports: z.array(z.object({
       groundingChunkIndices: z.array(z.number().int()), // citations associated with the claim, indices into ../groundingChunks[]
       confidenceScores: z.array(z.number()).optional(), // 0..1 - optional: not always returned by Gemini API
@@ -810,7 +830,7 @@ export namespace GeminiWire_API_Generate_Content {
     /**
      * Metadata on the generation requests' token usage.
      * Note: seems to be present on all packets now,
-     *       BUT we keep .optional() for proxy error cases where infra errors are sent as message look-alikes
+     *       BUT we keep .optional() for proxy error cases where infra errors are sent as message lookalikes
      *       (initially it was commented out)
      */
     usageMetadata: UsageMetadata_schema

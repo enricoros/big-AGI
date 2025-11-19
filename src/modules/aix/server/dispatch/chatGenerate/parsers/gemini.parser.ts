@@ -112,6 +112,12 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
           // <- TextPart
           case 'text' in mPart:
+            // [Gemini 3, 2025-11-18] Log thought signatures for debugging
+            // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thought_signatures
+            if ('thoughtSignature' in mPart && mPart.thoughtSignature?.length) {
+              console.log(`[Gemini] Text part with thought signature (length: ${mPart.thoughtSignature.length})`);
+              // TODO: Store signature for echo-back in next request
+            }
             // [Gemini, 2025-01-23] CoT support
             if (mPart.thought)
               pt.appendReasoningText(mPart.text || '');
@@ -156,7 +162,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'functionCall' in mPart:
             let { id: fcId, name: fcName, args: fcArgs } = mPart.functionCall;
             // [Gemini 3, 2025-11-18] Log thought signatures for debugging
-            if ('thoughtSignature' in mPart && mPart.thoughtSignature) {
+            if ('thoughtSignature' in mPart && mPart.thoughtSignature?.length) {
               console.log(`[Gemini] Function call with thought signature: ${fcName} (signature length: ${mPart.thoughtSignature.length})`);
               // TODO: Store signature for echo-back in next request (pending tool execution graph rebuild)
             }
