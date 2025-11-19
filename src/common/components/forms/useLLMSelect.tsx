@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Chip, ColorPaletteProp, FormControl, IconButton, ListDivider, ListItemDecorator, Option, optionClasses, Select, SelectSlotsAndSlotProps, SvgIconProps, VariantProp } from '@mui/joy';
+import { Box, Chip, ColorPaletteProp, FormControl, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Option, Select, SelectSlotsAndSlotProps, SvgIconProps, VariantProp, optionClasses } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
@@ -13,10 +13,11 @@ import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMV
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { DLLM, DLLMId, getLLMPricing, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
-import { StarredNoXL2 } from '~/common/components/StarIcons';
+import { StarIconUnstyled, StarredNoXL2 } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
@@ -57,6 +58,16 @@ const _styles = {
     // mr: -0.25,
     backgroundColor: 'background.popup',
     boxShadow: 'xs',
+  },
+  listFooter: {
+    // '--ListItem-minHeight': '2.25rem',
+    borderTop: '1px solid',
+    borderTopColor: 'divider',
+    // pb: 0,
+    position: 'sticky',
+    bottom: 0,
+    backgroundColor: 'background.surface',
+    zIndex: 1,
   },
   listVendor: {
     // see OptimaBarDropdown's _styles.separator
@@ -130,6 +141,7 @@ interface LLMSelectOptions {
   isHorizontal?: boolean;
   autoRefreshDomain?: DModelDomainId;
   appendConfigureModels?: boolean; // appends a bottom option to open the Models panel
+  showStarFilter?: boolean; // show a button to filter starred models only
 }
 
 /**
@@ -145,14 +157,18 @@ export function useLLMSelect(
   options: LLMSelectOptions,
 ): [DLLM | null, React.JSX.Element | null, React.FunctionComponent<SvgIconProps> | undefined] {
 
+  // options
+  const { label, larger = false, disabled = false, placeholder = LLM_TEXT_PLACEHOLDER, isHorizontal = false, autoRefreshDomain, appendConfigureModels = false, showStarFilter = false } = options;
+
   // state
   const [controlledOpen, setControlledOpen] = React.useState(false);
 
   // external state
-  const _filteredLLMs = useVisibleLLMs(llmId);
+  const starredOnly = useUIPreferencesStore(state => showStarFilter && state.showModelsStarredOnly);
+  // const modelsStarredOnTop = useUIPreferencesStore(state => state.modelsStarredOnTop); // unsupported, this creates some issues with groups I believe
+  const { llms: _filteredLLMs, hasStarred } = useVisibleLLMs(llmId, starredOnly, false);
 
   // derived state
-  const { label, larger = false, disabled = false, placeholder = LLM_TEXT_PLACEHOLDER, isHorizontal = false, autoRefreshDomain, appendConfigureModels = false } = options;
   const noIcons = false; //smaller;
   const llm = !llmId ? null : _filteredLLMs.find(llm => llm.id === llmId) ?? null;
   const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
@@ -209,7 +225,7 @@ export function useLLMSelect(
         >
           {!noIcons && (
             <ListItemDecorator>
-              {llm.userStarred ? <StarredNoXL2 /> : vendor?.id ? <LLMVendorIcon vendorId={vendor.id} /> : null}
+              {(llm.userStarred && !starredOnly) ? <StarredNoXL2 /> : vendor?.id ? <LLMVendorIcon vendorId={vendor.id} /> : null}
             </ListItemDecorator>
           )}
           {/*<Tooltip title={llm.description}>*/}
@@ -244,7 +260,7 @@ export function useLLMSelect(
 
       return acc;
     }, [] as React.JSX.Element[]);
-  }, [_filteredLLMs, llmId, noIcons, optimizeToSingleVisibleId]);
+  }, [_filteredLLMs, llmId, noIcons, optimizeToSingleVisibleId, starredOnly]);
 
 
   const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => {
@@ -297,10 +313,26 @@ export function useLLMSelect(
           </Option>
         )}
 
+        {/* Star Filter Toggle - shown at the top of the list only if visible */}
+        {showStarFilter && hasStarred && !optimizeToSingleVisibleId && (
+          <ListItem key='star-filter-toggle' sx={_styles.listFooter}>
+            <ListItemButton
+              variant={starredOnly ? 'soft' : 'plain'}
+              onClick={useUIPreferencesStore.getState().toggleShowModelsStarredOnly}
+              // sx={{ backgroundColor: 'background.surface', position: 'sticky', top: 0, zIndex: 1 }}
+            >
+              <ListItemDecorator>
+                <StarIconUnstyled isStarred={starredOnly} />
+              </ListItemDecorator>
+              {starredOnly ? 'Showing: Starred' : 'Showing: All'}
+            </ListItemButton>
+          </ListItem>
+        )}
+
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [appendConfigureModels, autoRefreshDomain, controlledOpen, disabled, hasNoModels, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, optimizeToSingleVisibleId, options.color, options.sx, options.variant, optionsArray, placeholder, showNoOptions]);
+  ), [appendConfigureModels, autoRefreshDomain, controlledOpen, disabled, hasNoModels, hasStarred, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, optimizeToSingleVisibleId, options.color, options.sx, options.variant, optionsArray, placeholder, showNoOptions, showStarFilter, starredOnly]);
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
