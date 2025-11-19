@@ -86,6 +86,7 @@ export function BeamGatherPane(props: {
   const [llmOrNull, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(currentGatherLlmId, setCurrentGatherLlmId, {
     label: props.isMobile ? '' : 'Merge Model',
     disabled: disableUnlessAutoStart,
+    showStarFilter: true,
   });
 
   // derived state
