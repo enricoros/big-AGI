@@ -32,12 +32,17 @@ export const StarredNoXL2 = React.memo(function StarredNoXL2() {
   return <StarIcon sx={starIconStyles.starredNoXl2} />;
 });
 
-export const UnStarred = React.memo(function UnStarred() {
+const UnStarredNoXL2 = React.memo(function UnStarred() {
   return <StarBorderIcon />;
 })
 
 export const StarredState = React.memo(function StarredState({ isStarred }: { isStarred: boolean }) {
-  return isStarred ? <Starred /> : <UnStarred />;
+  return isStarred ? <Starred /> : <UnStarredNoXL2 />;
+});
+
+// have an unstyled that just returns StarIcon or StarBorderIcon and we can use with our own styles and props {...}
+export const StarIconUnstyled = React.memo(function StarIconUnstyled({ isStarred }: { isStarred: boolean }) {
+  return isStarred ? <StarIcon /> : <StarBorderIcon />;
 });
 
 
