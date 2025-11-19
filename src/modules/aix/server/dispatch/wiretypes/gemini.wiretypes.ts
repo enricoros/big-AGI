@@ -78,6 +78,14 @@ export namespace GeminiWire_ContentParts {
       /** The function parameters and values in JSON object format. */
       args: z.json().optional(), // FC args
     }),
+    /**
+     * [Gemini 3, 2025-11-18] Encrypted signature preserving reasoning context across multi-turn function calling.
+     * - Required for Gemini 3 Pro function calling (strict validation)
+     * - Sequential calls: Each function call includes its signature
+     * - Parallel calls: Only first function call has signature
+     * - Bypass: Use "context_engineering_is_the_way_to_go" for migrated conversations
+     */
+    thoughtSignature: z.string().optional(),
   });
 
   /**
@@ -313,6 +321,12 @@ export namespace GeminiWire_ToolDeclarations {
     excludedPredefinedFunctions: z.array(z.string()).optional(),
   });
 
+  // [Gemini, 2025-08-18] URL Context tool for fetching and analyzing web page content (GA)
+  const Tool_UrlContext_schema = z.object({
+    // This type has no fields - URLs are provided directly in the prompt text
+    // Supports up to 20 URLs per request, maximum 34MB per URL
+  });
+
   // 2025-03-14: Gemini has de-facto phased out GoogleSearchRetrieval, there's no more
   // const GoogleSearchRetrieval_schema = z.object({
   //   dynamicRetrievalConfig: z.object({
@@ -328,6 +342,7 @@ export namespace GeminiWire_ToolDeclarations {
     computerUse: Tool_ComputerUse_schema.optional(),
     functionDeclarations: z.array(FunctionDeclaration_schema).optional(),
     googleSearch: Tool_GoogleSearch_schema.optional(),
+    urlContext: Tool_UrlContext_schema.optional(),
     // 2025-03-14: disabled as it's gone for all models
     // googleSearchRetrieval: GoogleSearchRetrieval_schema.optional(),
   });
@@ -463,10 +478,10 @@ export namespace GeminiWire_API_Generate_Content {
   ]);
 
   const mediaResolution_enum = z.enum([
-    'MEDIA_RESOLUTION_UNSPECIFIED',
-    'MEDIA_RESOLUTION_LOW',     // 64 tokens
-    'MEDIA_RESOLUTION_MEDIUM',  //	256 tokens
-    'MEDIA_RESOLUTION_HIGH',    //	zoomed reframing with 256 tokens
+    'MEDIA_RESOLUTION_UNSPECIFIED', // Media resolution has not been set
+    'MEDIA_RESOLUTION_LOW',         // Images: 280 tokens | Video: 70 tokens per frame
+    'MEDIA_RESOLUTION_MEDIUM',      // Images: 560 tokens | Video: 70 tokens per frame (same as low)
+    'MEDIA_RESOLUTION_HIGH',        // Images: 1120 tokens | Video: 280 tokens per frame
   ]);
 
   const SpeechConfig_schema = z.object({
@@ -531,6 +546,15 @@ export namespace GeminiWire_API_Generate_Content {
        * - set to 0 to disable thinking
        */
       thinkingBudget: z.number().optional(),
+      /**
+       * [Gemini 3, 2025-11-18] Replaces thinkingBudget for Gemini 3 models.
+       * - 'low': Minimizes latency and cost
+       * - 'medium': Balanced (coming soon, not yet supported)
+       * - 'high': Maximizes reasoning depth (default when set)
+       * - undefined: Dynamic (model decides - which is equivalent to 'high' for now)
+       * CRITICAL: Cannot use both thinkingLevel and thinkingBudget (400 error)
+       */
+      thinkingLevel: z.enum(['low', 'medium', 'high']).optional(),
     }).optional(),
 
     // Image generation configuration
