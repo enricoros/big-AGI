@@ -155,6 +155,11 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           // <- FunctionCallPart
           case 'functionCall' in mPart:
             let { id: fcId, name: fcName, args: fcArgs } = mPart.functionCall;
+            // [Gemini 3, 2025-11-18] Log thought signatures for debugging
+            if ('thoughtSignature' in mPart && mPart.thoughtSignature) {
+              console.log(`[Gemini] Function call with thought signature: ${fcName} (signature length: ${mPart.thoughtSignature.length})`);
+              // TODO: Store signature for echo-back in next request (pending tool execution graph rebuild)
+            }
             // Validate the function call arguments - we expect a JSON object, not just any JSON value
             if (!fcArgs || typeof fcArgs !== 'object')
               console.warn(`[Gemini] Invalid function call arguments: ${JSON.stringify(fcArgs)} for ${fcName}`);
