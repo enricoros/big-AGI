@@ -192,8 +192,8 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
             }}
           >
             {data
-              .filter(model => showVoiceModels || !model.name.startsWith('voice-'))
-              .map((model) => (
+              .filter(model => showVoiceModels || !model.name?.startsWith('voice-'))
+              .map((model) => !!model.name && (
                 <ListItem key={model.name}>
 
                   {capitalizeFirstLetter(model.name)}
@@ -202,7 +202,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
                     color='neutral'
                     size='sm'
                     disabled={installModels.some(p => p.galleryName === model.gallery.name && p.modelName === model.name)}
-                    onClick={() => handleAppendInstall(model.gallery.name, model.name)}
+                    onClick={() => model.name && handleAppendInstall(model.gallery.name, model.name)}
                     sx={{
                       ml: 'auto',
                     }}
