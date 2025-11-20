@@ -11,7 +11,10 @@ const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
-  // Note: the streaming setting is ignored as it only belongs in the path
+  // Hotfixes - reduce these to the minimum, as they shall be higher-level resolved
+  const isFamilyNanoBanana = model.id.includes('nano-banana') || model.id.includes('gemini-3-pro-image-preview');
+
+  // Note: the streaming setting is ignored here as it only belongs in the path
 
   // Pre-process CGR - approximate spill of System to User message - note: no need to flush as every message is not batched
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -203,8 +206,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // [Gemini, 2025-08-18] URL Context: add tool when enabled
-  // Auto-enable with Google Search for backwards compatibility and ease of use
-  if (model.vndGeminiUrlContext === 'auto' && !skipHostedToolsDueToCustomTools) {
+  if (model.vndGeminiUrlContext === 'auto' && !isFamilyNanoBanana && !skipHostedToolsDueToCustomTools) {
     if (!payload.tools) payload.tools = [];
 
     // Build the URL Context tool configuration (empty object)
