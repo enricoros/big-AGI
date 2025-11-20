@@ -124,23 +124,6 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   output: 0.30,
 };
 
-const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
-  input: [{ upTo: 128000, price: 0.075 }, { upTo: null, price: 0.15 }],
-  output: [{ upTo: 128000, price: 0.30 }, { upTo: null, price: 0.60 }],
-  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: [{ upTo: 128000, price: 0.01875 }, { upTo: null, price: 0.0375 }] },
-};
-
-const gemini15Flash8BPricing: ModelDescriptionSchema['chatPrice'] = {
-  input: [{ upTo: 128000, price: 0.0375 }, { upTo: null, price: 0.075 }],
-  output: [{ upTo: 128000, price: 0.15 }, { upTo: null, price: 0.30 }],
-  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: [{ upTo: 128000, price: 0.01 }, { upTo: null, price: 0.02 }] },
-};
-
-const gemini15ProPricing: ModelDescriptionSchema['chatPrice'] = {
-  input: [{ upTo: 128000, price: 1.25 }, { upTo: null, price: 2.50 }],
-  output: [{ upTo: 128000, price: 5.00 }, { upTo: null, price: 10.00 }],
-  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: [{ upTo: 128000, price: 0.3125 }, { upTo: null, price: 0.625 }] },
-};
 
 
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
@@ -256,15 +239,9 @@ const _knownGeminiModels: ({
     ],
     benchmark: { cbaElo: 1407 }, // gemini-2.5-flash (updated from CSV)
   },
-  {
-    hidden: true, // show the final stable version instead
-    id: 'models/gemini-2.5-flash-preview-05-20',
-    isPreview: true,
-    chatPrice: gemini25FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
-    benchmark: { cbaElo: 1424 },
-  },
+
+  // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
+  // - models/gemini-2.5-flash-preview-05-20 (superseded by 09-2025 version)
 
   // 2.5 Pro-Based: Gemini Computer Use Preview - Released October 7, 2025
   // IMPORTANT: This model requires CLIENT-SIDE browser automation implementation
@@ -375,17 +352,9 @@ const _knownGeminiModels: ({
     ],
     benchmark: { cbaElo: 1310 }, // Based on 2.0 Flash-Lite performance
   },
-  // 2.5 Flash-Lite Preview (oldest version, superseded)
-  {
-    hidden: true, // Superseded by stable version
-    id: 'models/gemini-2.5-flash-lite-preview-06-17',
-    labelOverride: 'Gemini 2.5 Flash-Lite Preview 06-17',
-    isPreview: true,
-    chatPrice: gemini25FlashLitePricing,
-    interfaces: IF_25,
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
-    benchmark: { cbaElo: 1310 }, // Estimated based on 2.0 Flash-Lite performance
-  },
+
+  // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
+  // - models/gemini-2.5-flash-lite-preview-06-17 (superseded by 09-2025 version)
 
 
   /// Generation 2.0
@@ -464,20 +433,8 @@ const _knownGeminiModels: ({
     isPreview: true,
   },
 
-  // 2.0 Flash Preview Image Generation (Newer than the Experimental, introduced on 05-07)
-  {
-    hidden: true, // replaced by Nano Banana
-    id: 'models/gemini-2.0-flash-preview-image-generation',
-    // labelOverride: 'Gemini 2.0 Flash Image Generation Preview',
-    isPreview: true,
-    chatPrice: gemini20FlashPricing, // FIXME: this is missing the per-image generation pricing! (We don't have it in the code yet)
-    interfaces: [
-      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_CodeExecution,
-      LLM_IF_Outputs_Image,
-      LLM_IF_HOTFIX_StripSys0, // This first Gemini Image Generation model does not support the developer instruction
-    ],
-    // non benchmarkable because generates images
-  },
+  // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
+  // - models/gemini-2.0-flash-preview-image-generation (replaced by Nano Banana / Nano Banana Pro)
 
   // 2.0 Flash Experimental Image Generation
   {
@@ -634,14 +591,8 @@ const _knownGeminiModels: ({
 
   /// Media Generation Models - NOTE: THESE ARE FILTERED OUT (!) - but here anyway for reference
 
-  // Imagen 3 - Image Generation
-  {
-    id: 'models/imagen-3.0-generate-002',
-    isPreview: false,
-    // chatPrice: { input: 0.03, output: 0.03 }, // per image pricing
-    interfaces: [LLM_IF_Outputs_Image], // Not a chat model
-    hidden: true, // Not accessible through the normal chat interface
-  },
+  // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
+  // - models/imagen-3.0-generate-002 (Imagen 3 image generation - replaced by Nano Banana models)
 
   // Veo 2 - Video Generation
   {
