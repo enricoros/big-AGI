@@ -11,8 +11,47 @@ import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2025-10-28
+// Verified: 2025-11-19
+
+// Tiered pricing for Grok 4.1 Fast models (both reasoning and non-reasoning)
+const PRICE_41 = {
+  input: [{ upTo: 128000, price: 0.2 }, { upTo: null, price: 0.4 }],
+  output: [{ upTo: 128000, price: 0.5 }, { upTo: null, price: 1.0 }],
+  cache: { cType: 'oai-ac' as const, read: 0.05 },
+};
+
+// Tiered pricing for Grok 4.0 Fast models (both reasoning and non-reasoning)
+const PRICE_40 = {
+  input: [{ upTo: 128000, price: 0.2 }, { upTo: null, price: 0.4 }],
+  output: [{ upTo: 128000, price: 0.5 }, { upTo: null, price: 1.0 }],
+  cache: { cType: 'oai-ac' as const, read: 0.05 },
+};
+
 const _knownXAIChatModels: ManualMappings = [
+
+  // Grok 4.1
+  {
+    idPrefix: 'grok-4-1-fast-reasoning',
+    label: 'Grok 4.1 Fast Reasoning',
+    description: 'Next generation frontier multimodal model optimized for high-performance agentic tool calling with a 2M token context window. Trained specifically for real-world enterprise use cases with exceptional performance on agentic workflows.',
+    contextWindow: 2000000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: PRICE_41,
+    benchmark: { cbaElo: 1483 }, // grok-4-1-fast-reasoning
+  },
+  {
+    idPrefix: 'grok-4-1-fast-non-reasoning',
+    label: 'Grok 4.1 Fast', // 'Grok 4.1 Fast Non-Reasoning'
+    description: 'Next generation frontier multimodal model optimized for high-performance agentic tool calling with a 2M token context window. Non-reasoning variant for instant responses.',
+    contextWindow: 2000000,
+    maxCompletionTokens: undefined,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch],
+    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    chatPrice: PRICE_41,
+    benchmark: { cbaElo: 1465 }, // grok-4-1-fast-non-reasoning
+  },
 
   // Grok 4
   {
@@ -23,8 +62,8 @@ const _knownXAIChatModels: ManualMappings = [
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
-    chatPrice: { input: 0.2, output: 0.5, cache: { cType: 'oai-ac', read: 0.05 } }, // Price increases for >128K tokens: input $0.40, output $1.00
-    benchmark: { cbaElo: 1420 }, // Similar to grok-4-0709, slight adjustment for cost model
+    chatPrice: PRICE_40,
+    benchmark: { cbaElo: 1420 },
   },
   {
     idPrefix: 'grok-4-fast-non-reasoning',
@@ -34,8 +73,8 @@ const _knownXAIChatModels: ManualMappings = [
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch],
     parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
-    chatPrice: { input: 0.2, output: 0.5, cache: { cType: 'oai-ac', read: 0.05 } }, // Price increases for >128K tokens: input $0.40, output $1.00
-    benchmark: { cbaElo: 1420 - 2 }, // slightly lower than reasoning variant
+    chatPrice: PRICE_40,
+    benchmark: { cbaElo: 1409 },
   },
   {
     idPrefix: 'grok-4-0709',
@@ -249,6 +288,8 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
 
 // manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
+  'grok-4-1-fast-reasoning',
+  'grok-4-1-fast-non-reasoning',
   'grok-code-fast-1',
   'grok-4-fast-reasoning',
   'grok-4-fast-non-reasoning',
