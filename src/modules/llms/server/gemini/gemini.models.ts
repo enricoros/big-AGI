@@ -163,7 +163,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1501 }, // First model to exceed 1500 Elo on LMArena
+    benchmark: { cbaElo: 1498 }, // gemini-3-pro (preliminary)
   },
 
   // 3.0 Pro Image Preview - Released November 20, 2025
@@ -208,7 +208,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1455 }, // gemini-2.5-pro (updated from CSV)
+    benchmark: { cbaElo: 1451 }, // gemini-2.5-pro
   },
   {
     hidden: true, // show the final stable version instead
@@ -218,14 +218,14 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPricing,
     interfaces: IF_25,
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ }],
-    benchmark: { cbaElo: 1467 },
+    // benchmark: { cbaElo: 1467 }, // commented out, yielding to the final versions
   },
   {
     id: 'models/gemini-2.5-pro-preview-05-06',
     isPreview: true,
     chatPrice: gemini25ProPricing,
     interfaces: IF_25,
-    benchmark: { cbaElo: 1446 },
+    // benchmark: { cbaElo: 1446 },
     hidden: true, // superseded by 06-05 version
   },
   {
@@ -234,7 +234,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPricing,
     interfaces: IF_25,
     // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
-    benchmark: { cbaElo: 1439 },
+    // benchmark: { cbaElo: 1439 },
     hidden: true, // hard-superseded, but keeping this as non-symlink in case Gemini restores it
   },
 
@@ -265,7 +265,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1424 + 1 }, // FALLBACK-UNTIL-AVAILABLE: models/gemini-2.5-flash-preview-05-20 + 1
+    benchmark: { cbaElo: 1406 + 2 }, // gemini-2.5-flash-preview-09-2025 - the +2 is to be on top of the non-preview 2.5-flash (1407)
   },
   {
     hidden: true, // yielding to 'models/gemini-2.5-flash-preview-09-2025', which is more recent
@@ -377,7 +377,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1310 + 1 }, // FALLBACK-UNTIL-AVAILABLE: models/gemini-2.5-flash-lite-preview-06-17 + 1
+    benchmark: { cbaElo: 1380 }, // gemini-2.5-flash-lite-preview-09-2025 (no-thinking variant)
   },
   // 2.5 Flash-Lite (Stable) - Released July 2025
   {
@@ -497,7 +497,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
-    benchmark: { cbaElo: 1355 },
+    benchmark: { cbaElo: 1360 }, // gemini-2.0-flash-001
   },
   {
     id: 'models/gemini-2.0-flash',
@@ -506,7 +506,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
-    benchmark: { cbaElo: 1354 },
+    benchmark: { cbaElo: 1360 }, // gemini-2.0-flash
   },
 
   // 2.0 Flash Lite
