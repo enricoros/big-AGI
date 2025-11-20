@@ -53,6 +53,33 @@ export function isPwa(): boolean {
 }
 
 /**
+ * Detects if a mobile PWA is running in Desktop Mode (which causes layout issues).
+ * This happens when Chrome's "Request Desktop Site" is enabled on mobile devices.
+ *
+ * Returns true when:
+ * - App is running as a PWA (standalone mode)
+ * - Device OS is mobile (iOS or Android)
+ * - Viewport width is >= 900px (indicating desktop mode override)
+ */
+export function isMobilePwaInDesktopMode(): boolean {
+  if (!isBrowser) return false;
+
+  // Check if running as PWA
+  const isInPwaMode = isPwa();
+  if (!isInPwaMode) return false;
+
+  // Check if OS is mobile (iOS or Android)
+  const isMobileOS = Is.OS.iOS || Is.OS.Android;
+  if (!isMobileOS) return false;
+
+  // Check if viewport width suggests desktop mode (>= 900px)
+  // This matches the mobile breakpoint used in useMatchMedia.ts
+  const hasDesktopWidth = window.matchMedia('(min-width: 900px)').matches;
+
+  return hasDesktopWidth;
+}
+
+/**
  * Generates a human-readable device name with improved accuracy.
  * Handles browser precedence correctly, considers PWA status.
  *
