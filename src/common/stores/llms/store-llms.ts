@@ -81,7 +81,9 @@ export const useModelsStore = create<LlmsStore>()(persist(
         if (keepUserEdits) {
           serviceLLMs = serviceLLMs.map((llm: DLLM): DLLM => {
             const existing = existingLLMs.find(m => m.id === llm.id);
-            return !existing ? llm : {
+            if (!existing) return llm;
+
+            const result = {
               ...llm,
               ...(existing.userLabel !== undefined ? { userLabel: existing.userLabel } : {}),
               ...(existing.userHidden !== undefined ? { userHidden: existing.userHidden } : {}),
@@ -91,6 +93,14 @@ export const useModelsStore = create<LlmsStore>()(persist(
               ...(existing.userMaxOutputTokens !== undefined ? { userMaxOutputTokens: existing.userMaxOutputTokens } : {}),
               ...(existing.userPricing !== undefined ? { userPricing: existing.userPricing } : {}),
             };
+
+            // clean up stale parameters from userParameters - e.g. was in the model spec but removed in the new version
+            if (result.userParameters)
+              for (const key of Object.keys(result.userParameters))
+                if (!llm.parameterSpecs.some(spec => spec.paramId === key))
+                  delete result.userParameters[key as DModelParameterId];
+
+            return result;
           });
         }
 
