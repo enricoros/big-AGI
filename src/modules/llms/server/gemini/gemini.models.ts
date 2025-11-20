@@ -65,12 +65,20 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Nov 1, 2025)
+// Pricing based on https://ai.google.dev/pricing (Nov 20, 2025)
 
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
   output: [{ upTo: 200000, price: 12.00 }, { upTo: null, price: 18.00 }],
   cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+};
+
+const gemini30ProImagePricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 2.00, // text input (flat rate, no tiers)
+  output: 12.00, // text/thinking output (flat rate, no tiers)
+  // NOTE: Additional image-specific pricing (not yet supported in schema):
+  // - Image input: $0.0011/image (560 tokens = $0.067/image)
+  // - Image output: $0.134/image (1K/2K, 1120 tokens) or $0.24/image (4K, 2000 tokens)
 };
 
 const gemini25ProPricing: ModelDescriptionSchema['chatPrice'] = {
@@ -127,6 +135,8 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 
 
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
+const IF_30 = [LLM_IF_HOTFIX_NoTemperature /* vital: the Gemini 3 Developers Guide strongly recommending keeping it at 1 (aka not setting it) */, ...IF_25];
+const IF_30_IMG = [...IF_30, LLM_IF_Outputs_Image];
 
 
 const _knownGeminiModels: ({
@@ -146,7 +156,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 3 Pro Preview',
     isPreview: true,
     chatPrice: gemini30ProPricing,
-    interfaces: [LLM_IF_HOTFIX_NoTemperature /* vital: the Gemini 3 Developers Guide strongly recommending keeping it at 1 (aka not setting it) */, ...IF_25],
+    interfaces: IF_30,
     parameterSpecs: [
       { paramId: 'llmVndGeminiThinkingLevel' /* replaces thinking_budget for Gemini 3 */ },
       { paramId: 'llmVndGeminiMediaResolution' },
@@ -154,6 +164,36 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
     benchmark: { cbaElo: 1501 }, // First model to exceed 1500 Elo on LMArena
+  },
+
+  // 3.0 Pro Image Preview - Released November 20, 2025
+  {
+    id: 'models/gemini-3-pro-image-preview',
+    labelOverride: 'Nano Banana Pro', // Marketing name for the technical model ID
+    isPreview: true,
+    chatPrice: gemini30ProImagePricing,
+    interfaces: IF_30_IMG,
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiShowThoughts' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+  {
+    id: 'models/nano-banana-pro-preview',
+    labelOverride: 'Nano Banana Pro',
+    symLink: 'models/gemini-3-pro-image-preview',
+    // copied from symlink
+    isPreview: true,
+    chatPrice: gemini30ProImagePricing,
+    interfaces: IF_30_IMG,
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiShowThoughts' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
   },
 
   /// Generation 2.5
@@ -663,6 +703,8 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 const _sortOderIdPrefix: string[] = [
   'models/gemini-3-pro-preview',
+  'models/gemini-3-pro-image-preview',
+  'models/nano-banana-pro-preview',
   'models/gemini-3-pro',
   'models/gemini-3-',
 
