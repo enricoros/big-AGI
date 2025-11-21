@@ -366,10 +366,25 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+
+    {showParam('llmVndGeminiGoogleSearch') && (
+      <FormSelectControl
+        title='Google Search'
+        // tooltip='Enable Google Search grounding to ground responses in real-time web content. Optionally filter results by publication date.'
+        value={llmVndGeminiGoogleSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiGoogleSearch');
+          else onChangeParameter({ llmVndGeminiGoogleSearch: value });
+        }}
+        options={_geminiGoogleSearchOptions}
+      />
+    )}
+
+
     {showParam('llmVndGeminiShowThoughts') && (
       <FormSwitchControl
-        title='Show Chain of Thought'
-        description={`Displays Gemini\'s reasoning process`}
+        title='Show Reasoning'
+        description='Show chain of thoughts'
         checked={!!llmVndGeminiShowThoughts}
         onChange={checked => onChangeParameter({ llmVndGeminiShowThoughts: checked })}
       />
@@ -409,19 +424,6 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
-      />
-    )}
-
-    {showParam('llmVndGeminiGoogleSearch') && (
-      <FormSelectControl
-        title='Google Search'
-        // tooltip='Enable Google Search grounding to ground responses in real-time web content. Optionally filter results by publication date.'
-        value={llmVndGeminiGoogleSearch ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiGoogleSearch');
-          else onChangeParameter({ llmVndGeminiGoogleSearch: value });
-        }}
-        options={_geminiGoogleSearchOptions}
       />
     )}
 
