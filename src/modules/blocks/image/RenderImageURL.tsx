@@ -173,7 +173,6 @@ export const RenderImageURL = (props: {
           {/* Image / Loading Indicator */}
           {props.imageURL ? (
             <picture>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={props.imageURL} alt={props.expandableText ? `Generated Image: ${props.expandableText}` : 'Generated Image'} />
             </picture>
           ) : (
