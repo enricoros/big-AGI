@@ -126,6 +126,11 @@ export function ContentFragments(props: {
         const { part } = fragment;
         switch (part.pt) {
 
+          // Handled by VoidFragments
+          // case 'annotations':
+          //   console.warn('[DEV] ContentFragments: annotations fragment found in interleaved list');
+          //   return null;
+
           case 'ma':
             return (
               <BlockPartModelAux
@@ -137,7 +142,7 @@ export function ContentFragments(props: {
                 auxRedactedDataCount={part.redactedData?.length ?? 0}
                 zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
-                isLastVoid={false}
+                isLastVoid={true /* green rendering */}
                 onFragmentReplace={props.onFragmentReplace}
               />
             );
@@ -157,16 +162,13 @@ export function ContentFragments(props: {
               />
             );
 
-          case 'annotations':
-            // Annotations should be rendered at top level, not here
-            console.warn('[DEV] ContentFragments: annotations fragment found in interleaved list');
-            return null;
-
           case '_pt_sentinel':
             return null;
 
           default:
             const _exhaustiveVoidCheck: never = part;
+            // fallthrough - we don't handle these here anymore
+          case 'annotations':
             return (
               <ScaledTextBlockRenderer
                 key={fId}

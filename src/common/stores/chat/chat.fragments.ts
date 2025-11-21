@@ -33,7 +33,7 @@ export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
   | DMessageTextPart              // plain text or mixed content -> BlockRenderer
   | DMessageReferencePart         // reference (e.g. zync entity) Content, such as a Asset (image, audio, PFD, etc.), chat, persona, etc.
   | DMessageImageRefPart          // large image
-  | DMessageToolInvocationPart    // shown to dev only, singature of the llm function call
+  | DMessageToolInvocationPart    // shown to dev only, signature of the llm function call
   | DMessageToolResponsePart      // shown to dev only, response of the llm
   | DMessageErrorPart             // red message, e.g. non-content application issues
   | _SentinelPart
@@ -65,6 +65,10 @@ export type DMessageVoidFragment = _DMessageFragmentWrapper<'void',
   | DVoidPlaceholderPart          // (non submitted) placeholder to be replaced by another part
   | _SentinelPart
 >;
+
+export type DVoidFragmentModelAnnotations = _NarrowFragmentToPart<DMessageVoidFragment, DVoidModelAnnotationsPart>;
+type _DVoidFragmentModelAux = _NarrowFragmentToPart<DMessageVoidFragment, DVoidModelAuxPart>;
+type _NarrowFragmentToPart<TFragment extends DMessageFragment, TPart> = TFragment & { part: TPart };
 
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
@@ -303,11 +307,11 @@ export function isVoidFragment(fragment: DMessageFragment): fragment is DMessage
   return fragment.ft === 'void' && !!fragment.part?.pt;
 }
 
-export function isVoidAnnotationsFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment & { part: DVoidModelAnnotationsPart } {
+export function isVoidAnnotationsFragment(fragment: DMessageFragment): fragment is DVoidFragmentModelAnnotations {
   return fragment.ft === 'void' && fragment.part.pt === 'annotations';
 }
 
-export function isVoidThinkingFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment & { part: DVoidModelAuxPart } {
+export function isVoidThinkingFragment(fragment: DMessageFragment): fragment is _DVoidFragmentModelAux {
   return fragment.ft === 'void' && fragment.part.pt === 'ma' && fragment.part.aType === 'reasoning';
 }
 
