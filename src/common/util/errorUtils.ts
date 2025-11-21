@@ -103,7 +103,6 @@ export function maybeDebuggerBreak(): void {
   const isBreakEnabled = process.env.NEXT_PUBLIC_DEBUG_BREAKS === 'true';
 
   if (Release.IsNodeDevBuild && isBreakEnabled) {
-    // eslint-disable-next-line no-debugger
     debugger; // This line will be hit only if DevTools are open.
     // Build tools often remove debugger statements in production.
   }
