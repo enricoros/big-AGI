@@ -174,9 +174,10 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProImagePricing,
     interfaces: IF_30_IMG,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiShowThoughts' },
+      // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
@@ -189,9 +190,10 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProImagePricing,
     interfaces: IF_30_IMG,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiShowThoughts' },
+      // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
