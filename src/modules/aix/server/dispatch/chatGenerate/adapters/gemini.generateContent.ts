@@ -83,8 +83,8 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   if (model.vndGeminiShowThoughts === true || model.vndGeminiThinkingBudget !== undefined || model.vndGeminiThinkingLevel) {
     const thinkingConfig: Exclude<TRequest['generationConfig'], undefined>['thinkingConfig'] = {};
 
-    // This seems deprecated keep it in case Gemini turns it on again
-    if (model.vndGeminiShowThoughts)
+    // This shows mainly 'summaries' of thoughts, and we enable it for most cases where thinking is requested
+    if (model.vndGeminiShowThoughts || (model.vndGeminiThinkingBudget ?? 0) > 1 || model.vndGeminiThinkingLevel === 'high' || model.vndGeminiThinkingLevel === 'medium')
       thinkingConfig.includeThoughts = true;
 
     // [Gemini 3, 2025-11-18] Thinking Level (replaces thinkingBudget for Gemini 3)
