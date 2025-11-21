@@ -21,7 +21,7 @@ const _styles = {
   } as const,
 
   requestCardText: {
-    whiteSpace: 'pre',
+    whiteSpace: 'pre-wrap',
   } as const,
 
   particleNorminal: {
