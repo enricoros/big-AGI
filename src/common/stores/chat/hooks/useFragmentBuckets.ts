@@ -3,15 +3,7 @@ import * as React from 'react';
 import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isContentFragment, isErrorPart, isImageRefPart, isVoidAnnotationsFragment, isZyncAssetImageReferencePart } from '../chat.fragments';
-
-
-/**
- * Annotation fragments: void fragments with annotations part (web citations, references).
- * Rendered separately at the absolute top of messages.
- * Use isVoidAnnotationsFragment() type guard for runtime narrowing.
- */
-export type AnnotationFragment = DMessageVoidFragment;
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, DVoidFragmentModelAnnotations, isContentFragment, isErrorPart, isImageRefPart, isVoidAnnotationsFragment, isZyncAssetImageReferencePart } from '../chat.fragments';
 
 /**
  * Fragments that can be interleaved: void fragments (reasoning, placeholders) and content fragments (text, code, tools).
@@ -20,7 +12,7 @@ export type AnnotationFragment = DMessageVoidFragment;
 export type InterleavedFragment = DMessageVoidFragment | DMessageContentFragment;
 
 interface FragmentBuckets {
-  annotationFragments: AnnotationFragment[];
+  annotationFragments: DVoidFragmentModelAnnotations[];
   interleavedFragments: InterleavedFragment[];
   imageAttachments: DMessageAttachmentFragment[];
   nonImageAttachments: DMessageAttachmentFragment[];
@@ -33,7 +25,7 @@ interface FragmentBuckets {
 export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[]>): FragmentBuckets {
 
   // Refs to store the last stable value for each bucket
-  const annotationFragmentsRef = React.useRef<AnnotationFragment[]>([]);
+  const annotationFragmentsRef = React.useRef<DVoidFragmentModelAnnotations[]>([]);
   const interleavedFragmentsRef = React.useRef<InterleavedFragment[]>([]);
   const imageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
   const nonImageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
@@ -41,7 +33,7 @@ export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[
   // Use useMemo to recalculate buckets only when messageFragments changes
   return React.useMemo(() => {
 
-    const annotationFragments: AnnotationFragment[] = [];
+    const annotationFragments: DVoidFragmentModelAnnotations[] = [];
     const interleavedFragments: InterleavedFragment[] = [];
     const imageAttachments: DMessageAttachmentFragment[] = [];
     const nonImageAttachments: DMessageAttachmentFragment[] = [];

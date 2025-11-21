@@ -84,43 +84,47 @@ export function VoidFragments(props: {
             />
           );
 
-        case 'ma':
-          return (
-            <BlockPartModelAux
-              key={fId}
-              fragmentId={fId}
-              auxType={part.aType}
-              auxText={part.aText}
-              auxHasSignature={part.textSignature !== undefined}
-              auxRedactedDataCount={part.redactedData?.length ?? 0}
-              zenMode={props.uiComplexityMode === 'minimal'}
-              contentScaling={props.contentScaling}
-              isLastVoid={index === props.voidFragments.length - 1}
-              onFragmentReplace={props.onFragmentReplace}
-            />
-          );
+        // Moved to interleaved with content fragments
+        // case 'ma':
+        //   return (
+        //     <BlockPartModelAux
+        //       key={fId}
+        //       fragmentId={fId}
+        //       auxType={part.aType}
+        //       auxText={part.aText}
+        //       auxHasSignature={part.textSignature !== undefined}
+        //       auxRedactedDataCount={part.redactedData?.length ?? 0}
+        //       zenMode={props.uiComplexityMode === 'minimal'}
+        //       contentScaling={props.contentScaling}
+        //       isLastVoid={index === props.voidFragments.length - 1}
+        //       onFragmentReplace={props.onFragmentReplace}
+        //     />
+        //   );
 
-        case 'ph':
-          return (
-            <BlockPartPlaceholder
-              key={fId}
-              placeholderText={part.pText}
-              placeholderType={part.pType}
-              placeholderModelOp={part.modelOp}
-              placeholderAixControl={part.aixControl}
-              messageRole={props.messageRole}
-              contentScaling={props.contentScaling}
-              showAsItalic
-              showAsDataStreamViz={showDataStreamViz}
-            />
-          );
+        // Moved to in-order rendering with content fragments
+        // case 'ph':
+        //   return (
+        //     <BlockPartPlaceholder
+        //       key={fId}
+        //       placeholderText={part.pText}
+        //       placeholderType={part.pType}
+        //       placeholderModelOp={part.modelOp}
+        //       placeholderAixControl={part.aixControl}
+        //       messageRole={props.messageRole}
+        //       contentScaling={props.contentScaling}
+        //       showAsItalic
+        //       showAsDataStreamViz={showDataStreamViz}
+        //     />
+        //   );
 
         case '_pt_sentinel':
           return null;
 
         default:
-          // noinspection JSUnusedLocalSymbols
           const _exhaustiveVoidFragmentCheck: never = part;
+          // fallthrough - we don't handle these here anymore
+        case 'ma':
+        case 'ph':
           return (
             <ScaledTextBlockRenderer
               key={fId}
