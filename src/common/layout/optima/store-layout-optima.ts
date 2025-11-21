@@ -93,6 +93,7 @@ export interface OptimaActions {
 
   closeAIXDebugger: () => void;
   openAIXDebugger: () => void;
+  toggleAIXDebugger: () => void;
 
   closeKeyboardShortcuts: () => void;
   openKeyboardShortcuts: () => void;
@@ -195,6 +196,11 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
 
   closeAIXDebugger: () => _set({ showAIXDebugger: false }),
   openAIXDebugger: () => _set({ ...modalsClosedState, showAIXDebugger: true }),
+  toggleAIXDebugger: () => _set((state) =>
+    state.showAIXDebugger
+      ? { showAIXDebugger: false }
+      : { ...modalsClosedState, showAIXDebugger: true }
+  ),
 
   closeKeyboardShortcuts: () => _set({ showKeyboardShortcuts: false }),
   openKeyboardShortcuts: () => _set({ showKeyboardShortcuts: true }),

@@ -1,24 +1,19 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import * as z from 'zod/v4';
+
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping } from './models.data';
-import { wireOpenrouterModelsListOutputSchema } from '../openrouter.wiretypes';
+import { fromManualMapping } from '../../models.mappings';
+import { wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
+
+
+// configuration
+const FIXUP_MAX_OUTPUT = true;
 
 
 // [OpenRouter] - enough API info to auto-detect models, we only decide what to show here
 // - models: https://openrouter.ai/models
 // - models list API: https://openrouter.ai/docs/models
-
-
-// [EDITORIAL] - OpenRouter Anthropic thinking models - add a "reasoning" variant for these models
-const antThinkingModels: string[] = [
-  'anthropic/claude-opus-4.1',
-  'anthropic/claude-opus-4',
-  'anthropic/claude-sonnet-4.5',
-  'anthropic/claude-sonnet-4',
-  'anthropic/claude-haiku-4.5',
-  'anthropic/claude-3-7-sonnet',
-] as const;
 
 
 const orModelFamilyOrder = [
@@ -27,7 +22,7 @@ const orModelFamilyOrder = [
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'phind/', 'qwen/', 'inflection/',
+  'moonshotai/', 'perplexity/', 'qwen/', 'inflection/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'openchat/', // 'huggingfaceh4/',
   // Community/other providers
@@ -64,48 +59,125 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // parse the model
   const { data: model, error } = wireOpenrouterModelsListOutputSchema.safeParse(wireModel);
   if (error) {
-    console.warn(`openRouterModelToModelDescription: Failed to parse model data`, { error });
+    console.warn('[DEV] openRouterModelToModelDescription: parser fail', z.prettifyError(error), wireModel);
     return null;
   }
 
-  // parse pricing
+
+  // -- Label --
+
+  let label = model.name || model.id.replace('/', ' · ');
+
+
+  // -- Pricing --
+
   const inputPrice = parseFloat(model.pricing.prompt);
   const outputPrice = parseFloat(model.pricing.completion);
+  const cacheWritePrice = model.pricing.input_cache_write ? parseFloat(model.pricing.input_cache_write) : undefined;
+  const cacheReadPrice = model.pricing.input_cache_read ? parseFloat(model.pricing.input_cache_read) : undefined;
+
   const chatPrice: ModelDescriptionSchema['chatPrice'] = {
     input: inputPrice ? inputPrice * 1000 * 1000 : 'free',
     output: outputPrice ? outputPrice * 1000 * 1000 : 'free',
-    // image...
-    // request...
   };
-  const seemsFree = chatPrice.input === 'free' && chatPrice.output === 'free';
 
-  // openrouter provides the fields we need as part of the model object
-  let label = model.name || model.id.replace('/', ' · ');
+  if (cacheWritePrice && cacheReadPrice) {
+    // if writing, assume anthropic-style
+    chatPrice.cache = {
+      cType: 'ant-bp',
+      read: cacheReadPrice * 1000 * 1000,
+      write: cacheWritePrice * 1000 * 1000,
+      duration: 300, // 5 minutes default
+    };
+  } else if (cacheReadPrice) {
+    // if only reading, assume openai-style
+    chatPrice.cache = {
+      cType: 'oai-ac',
+      read: cacheReadPrice * 1000 * 1000,
+    };
+  }
+
+  // -- Pricing: free --
+  const seemsFree = chatPrice.input === 'free' && chatPrice.output === 'free';
   if (seemsFree)
     label += ' · 🎁'; // Free? Discounted?
-  // label = label.replace('(self-moderated)', '🔓');
+
+
+  // -- Context windows --
+  const contextWindow = model.context_length || 4096;
+  let maxCompletionTokens = model.top_provider.max_completion_tokens || undefined;
+
+  // sometimes maxCompletionTokens is equal to the context window somehow - if we detect it's > 50%, we set it to undefined
+  if (FIXUP_MAX_OUTPUT && maxCompletionTokens && (maxCompletionTokens > contextWindow * 0.5)) {
+    // console.log(`[FIXUP] openRouterModelToModelDescription: ignoring maxCompletionTokens=${maxCompletionTokens} for model ${model.id} with contextWindow=${contextWindow}`);
+    maxCompletionTokens = undefined;
+  }
+
+  // -- Interfaces --
+  const interfaces = [LLM_IF_OAI_Chat];
+
+  // input: vision
+  if (model.architecture?.input_modalities?.includes('image'))
+    interfaces.push(LLM_IF_OAI_Vision);
+
+  // output: image
+  if (model.architecture?.output_modalities?.includes('image'))
+    interfaces.push(LLM_IF_Outputs_Image);
+  // output: audio
+  if (model.architecture?.output_modalities?.includes('audio'))
+    interfaces.push(LLM_IF_Outputs_Audio);
+
+  // FC
+  if (model.supported_parameters?.includes('tools'))
+    interfaces.push(LLM_IF_OAI_Fn);
+  // Json
+  if (model.supported_parameters?.includes('response_format') || model.supported_parameters?.includes('structured_outputs'))
+    interfaces.push(LLM_IF_OAI_Json);
+  // Reasoning
+  if (model.supported_parameters?.includes('reasoning'))
+    interfaces.push(LLM_IF_OAI_Reasoning);
+
+  // Prompt caching support: check pricing fields
+  if (model.pricing?.input_cache_read !== undefined || model.pricing?.input_cache_write !== undefined)
+    interfaces.push(LLM_IF_OAI_PromptCaching);
+
+
+  // -- Parameters --
+
+  const parameterSpecs: ModelDescriptionSchema['parameterSpecs'] = [
+    { paramId: 'llmVndOrtWebSearch' }, // OpenRouter web search is available for all models
+  ];
+
+  if (model.id.startsWith('anthropic/') && interfaces.includes(LLM_IF_OAI_Reasoning))
+    parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', initialValue: null });
+
+  if (model.id.startsWith('google/') && interfaces.includes(LLM_IF_OAI_Reasoning))
+    parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' });
+
+  if (model.id.startsWith('openai/') && interfaces.includes(LLM_IF_OAI_Reasoning))
+    parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
+
+
+  // -- Hidden --
 
   // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
   const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
     || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
 
-  return fromManualMapping([], model.id, undefined, undefined, {
+
+  return fromManualMapping([], model.id, model?.created, undefined, {
     idPrefix: model.id,
     // latest: ...
     label,
-    // created: ...
-    // updated: ...
-    description: model.description,
-    contextWindow: model.context_length || 4096,
-    maxCompletionTokens: model.top_provider.max_completion_tokens || undefined,
+    description: model.description?.length > 280 ? model.description.slice(0, 277) + '...' : model.description,
+    contextWindow,
+    maxCompletionTokens,
     // trainingDataCutoff: ...
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces,
     // benchmark: ...
     chatPrice,
     hidden,
-    parameterSpecs: [
-      { paramId: 'llmVndOrtWebSearch' }, // [OpenRouter, 2025-10-22] OpenRouter web search is available for all models
-    ],
+    parameterSpecs,
   });
 }
 
@@ -114,20 +186,23 @@ export function openRouterInjectVariants(models: ModelDescriptionSchema[], model
   models.push(model);
 
   // inject thinking variants for Anthropic thinking models
-  if (antThinkingModels.includes(model.id)) {
+  // NOTE: we flipped the logic of some thinking/non-thinking models
+  if (model.id.includes('anthropic/') && model.interfaces.includes(LLM_IF_OAI_Reasoning)) {
 
     // create a thinking variant for the model, by setting 'idVariant' and modifying the label/description
     const thinkingVariant: ModelDescriptionSchema = {
       ...model,
       idVariant: 'thinking',
-      label: `${model.label} (thinking)`,
-      description: `(extended thinking mode) ${model.description}`,
-      interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+      label: `${model.label.replace(' (thinking)', '')} (thinking)`,
+      description: `(configurable thinking) ${model.description}`,
+      interfaces: model.interfaces.filter(i => i !== LLM_IF_OAI_Reasoning),
       // this is what makes it a thinking variant
-      parameterSpecs: [
-        ...(model.parameterSpecs || []),
-        { paramId: 'llmVndAntThinkingBudget', initialValue: 1024 },
-      ],
+      parameterSpecs: model.parameterSpecs?.map(param =>
+        param.paramId !== 'llmVndAntThinkingBudget' ? param : {
+          ...param,
+          initialValue: 8192,
+          // initialValue: null, // disable thinking
+        }),
     };
 
     models.push(thinkingVariant);

@@ -12,6 +12,7 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
   id: 'moonshot',
   name: 'Moonshot AI',
   displayRank: 34,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmMoonshot',

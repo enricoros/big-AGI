@@ -17,8 +17,9 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
       id-token: write
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -34,6 +35,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: '*'
           # track_progress: true # Enables tracking comments
+
+          # This is an optional setting that allows Claude to read CI results on PRs
+          additional_permissions: |
+            actions: read
 
           prompt: |
             REPO: ${{ github.repository }}
@@ -61,11 +66,12 @@ jobs:
                - Link duplicates if found
             
             If you're uncertain, say so and suggest next steps.
+            If you write any code make sure that it compiles and that you push it.
             Be welcoming, helpful, professional, solution-focused and no-BS.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
           claude_args: |
             --model claude-sonnet-4-5-20250929
-            --max-turns 60
+            --max-turns 75
             --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm install),Bash(npm install:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"

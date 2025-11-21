@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env';
 
@@ -10,16 +11,21 @@ import type { ModelDescriptionSchema, RequestAccessValues } from '../../llm.serv
 import type { OpenAIAccessSchema } from '../openai.router';
 import { fixupHost } from '../openai.router';
 
-import { fromManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
 import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
 
 
 // configuration
 /**
- * Azure OpenAI does not support the web_search_preview tool as of 2025-09-12
+ * Azure OpenAI does not support the web_search_preview tool as of 2025-11-18 and since 2025-09-12
  * as such we remove model parameters that enable search.
  */
-const FORCE_DISABLE_WEB_SEARCH_TOOL = true;
+const AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL = true;
+/**
+ * Azure OpenAI does not support the image_generation tool as of 2025-11-18 - however we let this through
+ * to enable future no-code image generation support once Azure enables it.
+ */
+const AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL = false;
 
 
 // [Azure]
@@ -128,9 +134,15 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
   const preciseLabel = (deploymentName !== likelyTheOpenAIModel) ?
     `${label} (${deploymentName})` : label;
 
-  // Apply web search tool disabling if flag is set
-  if (FORCE_DISABLE_WEB_SEARCH_TOOL && restOfModelDescription.parameterSpecs?.length)
+
+  // Azure hotfix: remove web search tool if flag is set
+  if (AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL && restOfModelDescription.parameterSpecs?.length)
     restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiWebSearchContext');
+
+  // Azure hotfix: remove image generation tool disabling if flag is set
+  if (AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL && restOfModelDescription.parameterSpecs?.length)
+    restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiImageGeneration');
+
 
   return {
     id: deploymentName,
@@ -150,7 +162,7 @@ function _azureServerSideVars() {
     versionAzureOpenAI: env.AZURE_OPENAI_API_VERSION || '2025-04-01-preview',
     // old-school API used to list deployments - still needed for listing models, as even /v1/models would list any model available on azure and not just the deployed ones
     versionDeployments: env.AZURE_DEPLOYMENTS_API_VERSION || '2023-03-15-preview',
-  }
+  };
 }
 
 export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): RequestAccessValues {
@@ -167,11 +179,11 @@ export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string
   try {
     azureBase = new URL(azureHostFixed).origin;
   } catch (e) {
-    throw new Error(`Azure OpenAI API Host is invalid: ${azureHostFixed || 'missing'}`);
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `Azure OpenAI API Host is invalid: ${azureHostFixed || 'missing'}` });
   }
 
   if (!azureKey || !azureBase)
-    throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
 
   /**
    * Azure OpenAI API Routing: Convert OpenAI standard paths to Azure-specific paths
@@ -205,14 +217,14 @@ export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string
 
       // require the model Id for traditional deployment-based routing
       if (!modelRefId)
-        throw new Error('Azure OpenAI API needs a deployment id');
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API needs a deployment id' });
 
       const functionName = apiPath.replace('/v1/', ''); // e.g. 'chat/completions'
       apiPath = `/openai/deployments/${modelRefId}/${functionName}?api-version=${server.versionAzureOpenAI}`;
       break;
 
     default:
-      throw new Error('Azure OpenAI API path not supported: ' + apiPath);
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API path not supported: ' + apiPath });
   }
 
   return {

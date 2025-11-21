@@ -4,7 +4,7 @@ description: Update Ollama model definitions with latest featured models
 
 Update `src/modules/llms/server/ollama/ollama.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Automated Workflow:**
 ```bash

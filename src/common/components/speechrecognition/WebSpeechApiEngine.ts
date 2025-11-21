@@ -158,15 +158,23 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
         let chunk = result[0]?.transcript?.trim();
         if (!chunk) continue;
 
+        /**
+         * Android Chrome bug tentative fix.
+         * On Android, interim results are incorrectly marked as isFinal, causing words to accumulate and duplicate.
+         * Use confidence attribute to validate truly final results (expected that
+         * Interim results have confidence = 0, while truly final results have confidence > 0.
+         */
+        const isTrulyFinal = result.isFinal && (result[0]?.confidence === undefined || result[0].confidence > 0);
+
         // Capitalize
-        if (chunk.length >= 2 && (result.isFinal || !this.results.interimTranscript))
+        if (chunk.length >= 2 && (isTrulyFinal || !this.results.interimTranscript))
           chunk = chunk.charAt(0).toUpperCase() + chunk.slice(1);
 
         // Punctuate
-        if (result.isFinal && !/[.!?;:,\s]$/.test(chunk))
+        if (isTrulyFinal && !/[.!?;:,\s]$/.test(chunk))
           chunk += '.';
 
-        if (result.isFinal)
+        if (isTrulyFinal)
           this.results.transcript = _chunkExpressionReplaceEN(this.results.transcript + chunk + ' ');
         else
           this.results.interimTranscript = _chunkExpressionReplaceEN(this.results.interimTranscript + chunk + ' ');

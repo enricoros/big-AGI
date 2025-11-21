@@ -178,6 +178,7 @@ export function BeamRay(props: {
   const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, {
     label: '',
     disabled: isScattering,
+    showStarFilter: true,
   });
 
   // more derived

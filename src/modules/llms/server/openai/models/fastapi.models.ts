@@ -3,7 +3,7 @@ import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from './models.data';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 
 const _fastAPIKnownModels: ManualMappings = [

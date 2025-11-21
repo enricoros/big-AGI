@@ -1,3 +1,32 @@
+<div align="center">
+
+<img width="256" height="256" alt="Big-AGI Logo" src="https://big-agi.com/assets/logo-bright-github.svg" />
+
+<h1><a href="https://big-agi.com">Big-AGI</a></h1>
+
+[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
+[![Deploy on Docker](https://img.shields.io/badge/Self--Host-Docker-blue?style=for-the-badge&logo=docker&logoColor=white&labelColor=000)](https://github.com/enricoros/big-AGI/pkgs/container/big-agi)
+[![Deploy on Vercel](https://img.shields.io/badge/Vercel-Deploy-blue?style=for-the-badge&logo=vercel&logoColor=white&labelColor=000)](https://vercel.com/new/clone?repository-url=https://github.com/enricoros/big-agi)
+[![Discord](https://img.shields.io/discord/1098796266906980422?style=for-the-badge&label=Discord&logo=discord&logoColor=white&labelColor=000000&color=purple)](https://discord.gg/MkH4qj2Jp9)
+<br/>
+[![GitHub Monthly Commits](https://img.shields.io/github/commit-activity/m/enricoros/big-agi?style=for-the-badge&x=3&logo=github&logoColor=white&label=commits&labelColor=000&color=green)](https://github.com/enricoros/big-agi/commits)
+[![GHCR Pulls](https://img.shields.io/badge/ghcr.io-767k_dl-12b76a?style=for-the-badge&logo=Xdocker&logoColor=white&labelColor=000&color=A8E6CF)](https://github.com/enricoros/big-AGI/pkgs/container/big-agi)
+[![Contributors](https://img.shields.io/github/contributors/enricoros/big-agi?style=for-the-badge&x=2&logo=Xgithub&logoColor=white&label=cooks&labelColor=000&color=A8E6CF)](https://github.com/enricoros/big-AGI/graphs/contributors)
+[![License: MIT](https://img.shields.io/badge/License-MIT-A8E6CF?style=for-the-badge&labelColor=000)](https://opensource.org/licenses/MIT)
+<br/>
+
+[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new?template=ai-triage.yml)
+
+[//]: # ([![Uptime Robot ratio &#40;30 days&#41;]&#40;https://img.shields.io/uptimerobot/ratio/m801796948-868b22ed7ceaa0acac4dc765?style=for-the-badge&labelColor=000&color=green&#41;]&#40;https://stats.uptimerobot.com/59MXcnmjrM&#41;)
+[//]: # ([![Open Version]&#40;https://img.shields.io/github/v/release/enricoros/big-AGI?label=Open+Release&style=flat-square&logo=github&logoColor=white&labelColor=000&#41;]&#40;https://github.com/enricoros/big-AGI/releases/latest&#41;)
+[//]: # (![GitHub Stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi?style=flat-square&logo=github&logoColor=white&labelColor=000&color=yellow&#41;)
+[//]: # ([![GitHub Forks]&#40;https://img.shields.io/github/forks/enricoros/big-agi?style=flat-square&logo=github&logoColor=white&labelColor=000&#41;]&#40;#&#41;)
+[//]: # ([![Follow on X]&#40;https://img.shields.io/twitter/follow/enricoros?style=flat-square&logo=X&logoColor=white&labelColor=000&color=000&#41;]&#40;https://x.com/enricoros&#41;)
+
+</div>
+
+<br/>
+
 # Big-AGI Open 🧠
 
 This is the open-source foundation of **Big-AGI**, ___the multi-model AI workspace for experts___.
@@ -8,17 +37,69 @@ You need to think broader, decide faster, and build with confidence, then you ne
 It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 **As an independent, non-VC-funded project, Pro subscriptions at $10.99/mo fund development for everyone, including the free and open-source tiers.**
 
-**What makes Big-AGI different:**  
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, or GPT-5 Pro - 
-**Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* - 
+![LLM Vendors](https://img.shields.io/badge/18+_LLM_Services-500+_Models-black?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=purple)&nbsp;
+[![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/beam)&nbsp;
+[![Feature Inspector](https://img.shields.io/badge/Expert_Mode-AI_Inspector-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/inspector)
+
+### What makes Big-AGI different:
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, Kimi K2 Thinking or GPT 5.1 -
+**Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
-**Who uses Big-AGI:**  
+<table>
+<tr>
+<td align="center" width="25%">
+<b>🧠 Intelligence</b><br/>
+<img src="https://img.shields.io/badge/Multi--Model-Trust-4285F4?style=for-the-badge" alt="Multi-Model"/>
+</td>
+<td align="center" width="25%">
+<b>✨ Experience</b><br/>
+<img src="https://img.shields.io/badge/Clean-UX-34A853?style=for-the-badge" alt="Clean UX"/>
+</td>
+<td align="center" width="25%">
+<b>⚡ Performance</b><br/>
+<img src="https://img.shields.io/badge/Zero-Latency-EA4335?style=for-the-badge" alt="Zero Latency"/>
+</td>
+<td align="center" width="25%">
+<b>🔒 Control</b><br/>
+<img src="https://img.shields.io/badge/No-Lock--in-FBBC04?style=for-the-badge" alt="No Lock-in"/>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top">
+Beam & Merge<br/>
+No context junk<br/>
+Purest AI outputs
+</td>
+<td align="center" valign="top">
+Flow-state interface<br/>
+Higly customizable<br/>
+Best-in-class UX
+</td>
+<td align="center" valign="top">
+Local-first<br/>
+Highly parallel<br/>
+Madly optimized
+</td>
+<td align="center" valign="top">
+No vendor lock-in<br/>
+Your API keys<br/>
+AI Inspector
+</td>
+</tr>
+</table>
+
+### Who uses Big-AGI:  
 Loved by engineers, founders, researchers, self-hosters, and IT departments for its power, reliability, and transparency.
 
 <img width="830" height="370" alt="image" src="https://github.com/user-attachments/assets/513c4f77-0970-4a56-b23b-1416c8246174" />
 
 Choose Big-AGI because you don't need another clone or slop - you need an AI tool that scales with you.
+
+### Show me a screenshot:
+Sure - here is real-world screeengrab as I'm writing this, while running a Beam to extract SVG from an image with Sonnet 4.5, Opus 4.1, GPT 5.1, Gemini 2.5 Pro, Nano Banana, etc.  
+<img alt="Real-world screen capture as of Nov 15 2025, 2am" src="https://github.com/user-attachments/assets/853f4160-27cb-4ac9-826b-402f1e63d4af" />
+
 
 ## Get Started
 
@@ -31,15 +112,12 @@ Choose Big-AGI because you don't need another clone or slop - you need an AI too
 \*: **Configuration requires your API keys**. *Big-AGI does not charge for model usage or limit your access*.  
 **Why Pro?** As an independent project, Pro subscriptions fund all development. Early subscribers shape the roadmap directly.    
 
-<a href="https://big-agi.com">
-  <img width="210" height="68" alt="image" src="https://github.com/user-attachments/assets/b2f8a7b8-415f-4c92-b228-4f5a54fe2bdd" />
-</a>  
+[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
 
 **Self-host and developers** (full control)  
 - Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
-- Or fork & run on Vercel:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
+- Or fork & run on Vercel:  
+  [![Deploy on Vercel](https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=vercel&logoColor=white&labelColor=000)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
 [//]: # (**For the latest Big-AGI:**)
 
@@ -225,96 +303,83 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 For full details and former releases, check out the [archived versions changelog](docs/changelog.md).
 
-## 👉 Key Features
+## 👉 Supported Models & Integrations
 
-| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
+Delightful UX with latest models exclusive features like Beam for **multi-model AI validation**.
+> ![LLM Vendors](https://img.shields.io/badge/18_LLM_Services-500+_Models-black?style=for-the-badge&logo=openai&logoColor=white&labelColor=purple)&nbsp;
+> [![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&logo=anthropic&labelColor=purple)](https://big-agi.com/beam)
+
+| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![500+ AI Models](https://img.shields.io/badge/500%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
 | **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
 
 ![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
-You can easily configure 100s of AI models in big-AGI:
+### AI Models & Vendors
 
-| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                               |
-|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                       |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                                                                                                                 |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                               |
-| Language services   | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
-| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                            |
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                   | 
+Configure 100s of AI models from 18+ providers:
 
-Add extra functionality with these integrations:
+| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                                                                                                             |
+|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.io/) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                                                                                                                  |
+| Local Servers       | [LM Studio](https://lmstudio.ai/) (non-open)                                                                                                                                                                                                                                                                                                                                                    |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                                                                             |
+| LLM services        | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [Moonshot](https://www.moonshot.cn/) · [OpenPipe](https://openpipe.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
+| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                                                                                                          |
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                                                                                                 |
 
-| **More**     | _integrations_                                                                                                 |
-|:-------------|:---------------------------------------------------------------------------------------------------------------| 
-| Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
-| Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
-| Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
-| Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
+### Additional Integrations
 
-[//]: # (- [x] **Flow-state UX** for uncompromised productivity)
-
-[//]: # (- [x] **AI Personas**: Tailor your AI interactions with customizable personas)
-
-[//]: # (- [x] **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface)
-
-[//]: # (- [x] **Efficient Interaction**: Voice commands, OCR, and drag-and-drop file uploads)
-
-[//]: # (- [x] **Privacy First**: Self-host and use your own API keys for full control)
-
-[//]: # (- [x] **Advanced Tools**: Execute code, import PDFs, and summarize documents)
-
-[//]: # (- [x] **Seamless Integrations**: Enhance functionality with various third-party services)
-
-[//]: # (- [x] **Open Roadmap**: Contribute to the progress of big-AGI)
-
-<br/>
-
-## 🚀 Installation
-
-To get started with big-AGI, follow our comprehensive [Installation Guide](docs/installation.md).
-The guide covers various installation options, whether you're spinning it up on
-your local computer, deploying on Vercel, on Cloudflare, or rolling it out
-through Docker.
-
-Whether you're a developer, system integrator, or enterprise user, you'll find step-by-step instructions
-to set up big-AGI quickly and easily.
-
-[![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
-
-Or bring your API keys and jump straight into our free instance on [big-AGI.com](https://big-agi.com).
-
-<br/>
-
-# 🌟 Get Involved!
-
-[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
-[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
-
-- [ ] 📢️ [**Chat with us** on Discord](https://discord.gg/MkH4qj2Jp9)
-- [ ] ⭐ **Give us a star** on GitHub 👆
-- [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
-- [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
-- [ ] ✨ [Deploy](docs/installation.md) your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
-
-<br/>
-
-[//]: # ([![GitHub stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/stargazers&#41;)
-
-[//]: # ([![GitHub forks]&#40;https://img.shields.io/github/forks/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/network&#41;)
-
-[//]: # ([![GitHub pull requests]&#40;https://img.shields.io/github/issues-pr/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/pulls&#41;)
-
-[//]: # ([![License]&#40;https://img.shields.io/github/license/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/LICENSE&#41;)
-
-## 📜 Licensing
-
-Big-AGI incorporates third-party software components that are subject
-to separate license terms. For detailed information about these
-components and their respective licenses, please refer to
-the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
+| **More**      | _integrations_                                                                                                 |
+|:--------------|:---------------------------------------------------------------------------------------------------------------| 
+| Web Browse    | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
+| Web Search    | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
+| Code Editors  | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
+| Observability | [Helicone](https://www.helicone.ai)                                                                            |
 
 ---
 
-2023-2025 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐
+## 🚀 Installation
+
+Self-host with Docker, deploy on Vercel, or develop locally. Full setup guide:
+
+[![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
+
+Or use the hosted version at [big-agi.com](https://big-agi.com) with your API keys.
+
+---
+
+## 👋 Community & Contributing
+
+### Connect
+
+[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
+
+⭐ [Star the repo](https://github.com/enricoros/big-agi) if Big-AGI is useful to you
+
+### Contribute
+
+**🤖 AI-Powered Issue Assistance**
+
+When you open an issue, our custom AI triage system (powered by [Claude Code](https://github.com/anthropics/claude-code-action) with Big-AGI architecture documentation) analyzes it, searches the codebase, and provides solutions - typically within 30 minutes. We've trained the system on our modules and subsystems so it handles most issues effectively. Your feedback drives development!
+
+[![Open an Issue](https://img.shields.io/badge/Open_Issue-AI_Will_Help-ff8c00?style=for-the-badge&logo=fireship&logoColor=fff&labelColor=8b0000)](https://github.com/enricoros/big-agi/issues/new?template=ai-triage.yml)
+[![Request Feature](https://img.shields.io/badge/Request_Feature-Roadmap_Idea-orange?style=for-the-badge&logo=lightbulb&logoColor=white)](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
+
+[![Good First Issues](https://img.shields.io/badge/Good_First_Issues-Start-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/users/enricoros/projects/4/views/4)
+[![Customization](https://img.shields.io/badge/Fork_&_Customize-Your_Own-purple?style=for-the-badge&logo=git&logoColor=white)](docs/customizations.md)
+[![Roadmap](https://img.shields.io/badge/Open_Roadmap-View-0366d6?style=for-the-badge&logo=github&logoColor=white)](https://github.com/users/enricoros/projects/4/views/2)
+
+#### Contributors
+
+<a href="https://github.com/enricoros/big-agi/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=enricoros/big-agi&max=48&columns=12" />
+</a>
+
+---
+
+## License
+
+MIT License · [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md)
+
+**2023-2025** · Enrico Ros × [Big-AGI](https://big-agi.com)

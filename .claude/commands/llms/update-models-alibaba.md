@@ -4,7 +4,7 @@ description: Update Alibaba model definitions with latest pricing and capabiliti
 
 Update `src/modules/llms/server/openai/models/alibaba.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Models & Pricing: https://www.alibabacloud.com/help/en/model-studio/models

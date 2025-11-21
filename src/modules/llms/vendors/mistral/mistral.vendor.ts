@@ -15,6 +15,7 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
   id: 'mistral',
   name: 'Mistral',
   displayRank: 18,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmMistral',

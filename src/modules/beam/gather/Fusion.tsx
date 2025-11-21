@@ -59,6 +59,7 @@ export function Fusion(props: {
   const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, {
     label: '',
     disabled: isFusing,
+    showStarFilter: true,
   });
 
   // hide selector when fusion starts

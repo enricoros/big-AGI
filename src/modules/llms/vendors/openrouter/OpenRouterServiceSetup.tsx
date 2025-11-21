@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, Button, Typography } from '@mui/joy';
+import { Box, Button, Chip, Typography } from '@mui/joy';
+import LaunchIcon from '@mui/icons-material/Launch';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
@@ -10,6 +11,7 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { getLLMPricing } from '~/common/stores/llms/llms.types';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { PhGift } from '~/common/components/icons/phosphor/PhGift';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
@@ -34,6 +36,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
+  const needsLink = needsUserKey && !keyValid;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
@@ -48,37 +51,64 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     // ...bye / see you soon at the callback location...
   };
 
-  const handleRemoveNonFreeLLMs = () => {
-    // A bit of a hack
+  const handleHIdeNonFreeLLMs = () => {
     const { llms } = llmsStoreState();
-    const { updateLLM } = llmsStoreActions();
-    llms
+    const { updateLLMs } = llmsStoreActions();
+    const updates = llms
       .filter(llm => llm.sId === props.serviceId)
-      .filter(llm => getLLMPricing(llm)?.chat?._isFree === false)
-      .forEach(llm => updateLLM(llm.id, { userHidden: true }));
+      .map(llm => {
+        const isFree = getLLMPricing(llm)?.chat?._isFree === true;
+        return { id: llm.id, partial: { userHidden: !isFree } };
+      });
+    updateLLMs(updates);
   };
 
   const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
     const { llms } = llmsStoreState();
-    const { updateLLM } = llmsStoreActions();
-    llms
+    const { updateLLMs } = llmsStoreActions();
+    const updates = llms
       .filter(llm => llm.sId === props.serviceId)
-      .forEach(llm => updateLLM(llm.id, { userHidden: !visible }));
+      .map(llm => ({ id: llm.id, partial: { userHidden: !visible } }));
+    updateLLMs(updates);
   }, [props.serviceId]);
 
   return <>
 
     <ApproximateCosts serviceId={service?.id} />
 
-    <Typography level='body-sm'>
-      <Link href='https://openrouter.ai/keys' target='_blank'>OpenRouter</Link> is an independent service
-      providing access to <Link href='https://openrouter.ai/docs#models' target='_blank'>a wide range of models</Link>. <Link
-      href='https://github.com/enricoros/big-agi/blob/main/docs/config-openrouter.md' target='_blank'>
-      Configuration &amp; documentation</Link>.
-    </Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Typography level='body-sm'>
+        <Link href='https://openrouter.ai' target='_blank'>OpenRouter</Link> is a service
+        providing access to <Link href='https://openrouter.ai/models' target='_blank'>a wide range of models</Link>. See our <Link
+        href='https://github.com/enricoros/big-agi/blob/main/docs/config-openrouter.md' target='_blank'>
+        Docs</Link>.
+      </Typography>
+
+      <Typography level='body-sm' endDecorator={
+        <PhGift sx={{ color: 'success.softColor' }} />
+        // <Chip component='span' size='sm' color='success' variant='soft' sx={{ borderRadius: 'sm', boxShadow: 'none', border: '1px solid', borderColor: 'success.outlinedBorder', mr: 0.5 }} startDecorator={<PhGift />}>
+        //   free
+        // </Chip>
+      }>
+        <span>
+          {/*A <Link href='https://openrouter.ai/models?q=%3Afree&order=newest' target='_blank'>selection</Link> of*/}
+          A selection of OpenRouter models is made available free of charge.
+        </span>
+      </Typography>
+    </Box>
+
+    <Button
+      color='neutral' variant={needsLink ? 'solid' : 'outlined'}
+      onClick={handleOpenRouterLogin}
+      // endDecorator={needsLink ? <LaunchIcon /> /*<PhKey />*/ /*'🎁'*/ : undefined}
+      endDecorator={<LaunchIcon /> /*<PhKey />*/ /*'🎁'*/}
+      sx={{ mx: 'auto', boxShadow: needsLink ? 'md' : undefined }}
+    >
+      {needsLink ? 'Link OpenRouter Key' : 'Create New Key'}
+    </Button>
 
     <FormInputKey
-      autoCompleteId='openrouter-key' label='OpenRouter API Key'
+      autoCompleteId='openrouter-key' label='API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <Link level='body-sm' href='https://openrouter.ai/keys' target='_blank'>your keys</Link>
         : <AlreadySet />
@@ -88,11 +118,6 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       required={needsUserKey} isError={keyError}
       placeholder='sk-or-...'
     />
-
-    <Typography level='body-sm'>
-      🎁 A selection of <Link href='https://openrouter.ai/docs#models' target='_blank'>OpenRouter models</Link> are
-      made available free of charge. You can get an API key by using the Login button below.
-    </Typography>
 
     {/*<Typography level='body-sm'>*/}
     {/*  🔓 Some models are available free of moderation by OpenRouter.*/}
@@ -104,17 +129,10 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       leftButton={
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           <Button
-            color='neutral' variant={(needsUserKey && !keyValid) ? 'solid' : 'outlined'}
-            onClick={handleOpenRouterLogin}
-            endDecorator={(needsUserKey && !keyValid) ? '🎁' : undefined}
-          >
-            OpenRouter Login
-          </Button>
-          <Button
             color='neutral' variant='outlined' size='sm'
-            onClick={handleRemoveNonFreeLLMs}
+            onClick={handleHIdeNonFreeLLMs}
           >
-            Only Free 🎁
+            Only Free <PhGift sx={{ ml: 1, color: 'success.softColor' }} />
           </Button>
           <Button
             color='neutral' variant='outlined' size='sm'

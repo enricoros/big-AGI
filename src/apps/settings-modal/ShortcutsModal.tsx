@@ -38,6 +38,7 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + ,         | ⚙️ Preferences                          |
 | Ctrl + Shift + M | 🧠 Models                               |
 | Ctrl + Shift + O | 💬 Options (current Chat Model)         |
+| Ctrl + Shift + A | Toggle AI Request Inspector             |
 | Ctrl + Shift + + | Increase Text Size                      |
 | Ctrl + Shift + - | Decrease Text Size                      |
 | Ctrl + Shift + / | Shortcuts                               |

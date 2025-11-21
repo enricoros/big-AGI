@@ -13,6 +13,7 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
   id: 'openpipe',
   name: 'OpenPipe',
   displayRank: 42,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmOpenPipe',

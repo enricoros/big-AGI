@@ -12,6 +12,7 @@ export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIA
   id: 'lmstudio',
   name: 'LM Studio',
   displayRank: 52,
+  displayGroup: 'local',
   location: 'local',
   instanceLimit: 1,
 

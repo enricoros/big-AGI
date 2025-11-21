@@ -15,13 +15,9 @@ import { createDMessageDataRefDBlob, createZyncAssetReferenceContentFragment, DM
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import type { T2iCreateImageOutput } from './t2i.server';
+import type { T2iCreateImageOutput, T2iGenerateOptions } from './t2i.server';
 import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
 import { useTextToImageStore } from './store-module-t2i';
-
-
-// configuration
-const T2I_ENABLE_LOCAL_AI = false; // Note: LocalAI t2i integration is experimental
 
 
 // Capabilities API - used by Settings, and whomever wants to check if this is available
@@ -30,7 +26,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // external state
 
-  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>(undefined);
+  const stableLlmsModelServices = React.useRef<T2ILlmsModelService[]>(undefined);
   const llmsModelServices = useModelsStore(({ llms, sources }) => {
     const next = _findLlmsT2IServices(llms, sources);
     const prev = stableLlmsModelServices.current;
@@ -44,7 +40,6 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   const userProviderId = useTextToImageStore(state => state.selectedT2IProviderId);
 
   const dalleModelId = useDalleStore(state => state.dalleModelId);
-
 
 
   // memo
@@ -93,27 +88,40 @@ export function getActiveTextToImageProviderOrThrow() {
   return activeProvider;
 }
 
-async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number): Promise<T2iCreateImageOutput[]> {
+/**
+ * Low-level T2I generation that returns raw image outputs (base64 + metadata)
+ * - NOTE: MINIMIZE - the app wants to use the other version, instead, which creates the DBlob/Assets directly
+ */
+export async function t2iGenerateImagesOrThrow(
+  provider: TextToImageProvider | null, // null: auto-detect active provider
+  prompt: string,
+  aixInlineImageParts: AixParts_InlineImagePart[],
+  count: number,
+  options?: T2iGenerateOptions,
+): Promise<T2iCreateImageOutput[]> {
+
+  // use the active provider if null
+  if (!provider)
+    provider = getActiveTextToImageProviderOrThrow();
+
+  const { vendor, modelServiceId } = provider;
+
   switch (vendor) {
-
-    case 'gemini':
-      throw new Error('Gemini Imagen integration coming soon');
-
+    case 'azure':
     case 'localai':
-      // if (!provider.providerId)
-      //   throw new Error('No LocalAI Model service configured for TextToImage');
-      // return await localaiGenerateImages(provider.id, prompt, count);
-      throw new Error('LocalAI t2i integration is not yet available');
-
     case 'openai':
-      if (!providerId)
-        throw new Error('No OpenAI Model Service configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(providerId, prompt, aixInlineImageParts, count);
+      if (!modelServiceId)
+        throw new Error(`No ${vendor} Model service configured for TextToImage`);
+      return await openAIGenerateImagesOrThrow(modelServiceId, vendor, prompt, aixInlineImageParts, count, options);
+
+    case 'googleai':
+      throw new Error('Gemini Imagen integration coming soon');
 
     case 'xai':
       throw new Error('xAI image generation integration coming soon');
 
     default:
+      const _exhaustiveCheck: never = vendor;
       throw new Error(`Unknown T2I vendor: ${vendor}`);
   }
 }
@@ -128,14 +136,11 @@ export async function t2iGenerateImageContentFragments(
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
   scopeId: DBlobDBScopeId,
+  abortSignal?: AbortSignal,
 ): Promise<DMessageContentFragment[]> {
 
-  // T2I: Use the active provider if null
-  if (!t2iProvider)
-    t2iProvider = getActiveTextToImageProviderOrThrow();
-
-  // T2I: Generate
-  const generatedImages = await _t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count);
+  // T2I: Generate using low-level function
+  const generatedImages = await t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count, { abortSignal });
   if (!generatedImages?.length)
     throw new Error('No image generated');
 
@@ -179,7 +184,7 @@ export async function t2iGenerateImageContentFragments(
         ...(_i.altText ? { altText: _i.altText } : {}),
         ...(_i.width ? { width: _i.width } : {}),
         ...(_i.height ? { height: _i.height } : {}),
-      }
+      },
     );
 
     imageFragments.push(zyncImageAssetFragmentWithLegacy);
@@ -190,7 +195,7 @@ export async function t2iGenerateImageContentFragments(
 
 /// Private
 
-interface T2ILlmsModelServices {
+interface T2ILlmsModelService {
   label: string;
   modelVendorId: ModelVendorId;
   modelServiceId: DModelsServiceId;
@@ -199,8 +204,8 @@ interface T2ILlmsModelServices {
 
 function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray<DModelsService>) {
   return services
-    .filter(s => (s.vId === 'openai' || (T2I_ENABLE_LOCAL_AI && s.vId === 'localai')))
-    .map((s): T2ILlmsModelServices => ({
+    .filter(s => ['azure', 'openai', 'localai'].includes(s.vId))
+    .map((s): T2ILlmsModelService => ({
       label: s.label,
       modelVendorId: s.vId,
       modelServiceId: s.id,
@@ -209,42 +214,49 @@ function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray
 }
 
 
-// Vendor priority system for auto-selection (lower number = higher priority)
-const T2I_VENDOR_PRIORITIES = {
-  openai: 1,    // highest priority (mature, reliable)
-  gemini: 2,    // second (Google Imagen - future)
-  xai: 3,       // third (Grok vision - future reference)
-  localai: 9,   // lowest (experimental)
-} as const;
-
-
-function _getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[]) {
+function _getTextToImageProviders(llmsModelServices: T2ILlmsModelService[]) {
   const providers: TextToImageProvider[] = [];
 
   // add providers from model services
   for (const { modelVendorId, modelServiceId, label, hasAnyModels } of llmsModelServices) {
     switch (modelVendorId) {
 
+      case 'azure':
+        providers.push({
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'azure',
+          priority: 30 - 2, // assuming custom Azure OpenAI configs are preferred over OpenAI
+          label,
+          painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
+          description: 'Azure OpenAI Image generation models',
+          configured: hasAnyModels,
+        });
+        break;
+
       case 'openai':
         providers.push({
-          providerId: modelServiceId,
-          label: label,
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'openai',
+          priority: 30,
+          label,
           painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
-          // painter: 'DALL·E',
           description: 'OpenAI Image generation models',
           configured: hasAnyModels,
-          vendor: 'openai',
         });
         break;
 
       case 'localai':
         providers.push({
-          providerId: modelServiceId,
-          label: label,
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'localai',
+          priority: 20, // LocalAI preferred over cloud services, if configured
+          label,
           painter: 'LocalAI',
           description: 'LocalAI\'s models',
           configured: hasAnyModels,
-          vendor: 'localai',
         });
         break;
 
@@ -259,8 +271,8 @@ function _getTextToImageProviders(llmsModelServices: T2ILlmsModelServices[]) {
 
   // Sort providers by vendor priority (then by label for deterministic ordering)
   return providers.sort((a, b) => {
-    const priorityA = T2I_VENDOR_PRIORITIES[a.vendor] ?? 999;
-    const priorityB = T2I_VENDOR_PRIORITIES[b.vendor] ?? 999;
+    const priorityA = a.priority ?? 999;
+    const priorityB = b.priority ?? 999;
     if (priorityA !== priorityB) return priorityA - priorityB;
     return a.label.localeCompare(b.label);
   });
@@ -273,7 +285,7 @@ function _resolveActiveT2IProvider(userSelectedId: string | null, prioritizedPro
     const chosen = prioritizedProviders.find(p => p.providerId === userSelectedId && p.configured);
     if (chosen) return chosen;
   }
-  
+
   // Auto-select: find highest priority configured provider (providers are already sorted)
   return prioritizedProviders.find(p => p.configured) || null;
 }

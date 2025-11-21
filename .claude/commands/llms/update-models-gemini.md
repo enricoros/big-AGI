@@ -4,7 +4,7 @@ description: Update Gemini model definitions with latest pricing and capabilitie
 
 Update `src/modules/llms/server/gemini/gemini.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.types.ts`, `src/modules/llms/server/llm.server.types.ts`, and `src/modules/llms/server/models.data.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.types.ts`, `src/modules/llms/server/llm.server.types.ts`, and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
 - Models: https://ai.google.dev/gemini-api/docs/models

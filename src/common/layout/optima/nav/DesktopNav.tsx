@@ -2,7 +2,7 @@ import * as React from 'react';
 import Router from 'next/router';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Divider, Dropdown, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Divider, Dropdown, FormHelperText, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import CodeIcon from '@mui/icons-material/Code';
 import HistoryIcon from '@mui/icons-material/History';
@@ -222,9 +222,13 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
               Support
             </Typography>
           </ListItem>
-          <MenuItem component="a" href={BaseProduct.SupportForm()} target="_blank">
-            <ListItemDecorator><LightbulbOutlinedIcon /></ListItemDecorator>
-            I Have Feedback
+          <MenuItem component='a' href={BaseProduct.SupportForm()} target='_blank'>
+            <ListItemDecorator>🔥</ListItemDecorator>
+            <div>
+              Improve Big-AGI
+              <FormHelperText>AI fixes what you report</FormHelperText>
+            </div>
+            <ArrowOutwardRoundedIcon sx={{ ml: 'auto' }} />
           </MenuItem>
           {!!releaseNotesUrl && (
             <MenuItem onClick={handleShowReleaseNotes}>

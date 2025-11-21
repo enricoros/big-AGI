@@ -20,7 +20,7 @@ function initTestConversation(): DConversation {
   return conversation;
 }
 
-function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamVanillaStore()): BeamStoreApi {
+function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi): BeamStoreApi {
   beamStore.getState().open(messages, null, false, (content) => alert(content));
   return beamStore;
 }

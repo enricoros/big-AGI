@@ -77,7 +77,7 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
       })
       .catch(error => {
         // catches errors and logs them, but does not stop the chain
-        console.error('Auto-configuration failed for service:', service.label, error);
+        console.warn('Auto-configuration failed for service:', service.label, error);
       })
       .then(() => {
         // short delay between vendors

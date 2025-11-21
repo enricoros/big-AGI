@@ -12,6 +12,7 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
   id: 'xai',
   name: 'xAI',
   displayRank: 15,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmXAI',

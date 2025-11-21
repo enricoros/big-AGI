@@ -7,30 +7,15 @@ import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.route
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
+import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
 
 import { Brand } from '~/common/app.config';
 
-import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-
 import { ListModelsResponse_schema, ModelDescriptionSchema, RequestAccessValues } from '../llm.server.types';
-import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
-import { azureDeploymentFilter, azureDeploymentToModelDescription, azureOpenAIAccess, azureParseFromDeploymentsAPI } from './models/azure.models';
-import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './models/chutesai.models';
-import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
-import { fastAPIHeuristic, fastAPIModels } from './models/fastapi.models';
-import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
-import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
-import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
-import { mistralModels } from './models/mistral.models';
-import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './models/moonshot.models';
-import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openaiDevCheckForModelsOverlap_DEV, openAISortModels } from './models/openai.models';
-import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
-import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
-import { perplexityAIModelDescriptions, perplexityInjectVariants } from './models/perplexity.models';
-import { togetherAIModelsToModelDescriptions } from './models/together.models';
-import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
-import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
+import { azureOpenAIAccess } from './models/azure.models';
+import { listModelsRunDispatch } from '../listModels.dispatch';
+import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './wiretypes/localai.wiretypes';
 
 
 const openAIDialects = z.enum([
@@ -121,6 +106,25 @@ const createImageConfigD2 = _createImageConfigBase.extend({
   response_format: z.enum([/*'url',*/ 'b64_json']).optional(),
 });
 
+// [LocalAI] simple default configuration
+const createImageConfigLocalAI = _createImageConfigBase.extend({
+  model: z.enum([
+    'stablediffusion', // default, mapped to 'gpt-image-1'
+    'dreamshaper', // mapped to 'high', mapped to 'gpt-image-1-mini'
+    'sd-3.5-large-ggml', // mapped to 'medium', mapped to 'dall-e-3'
+    'sd-3.5-medium-ggml', // mapped to 'medium', mapped to 'dall-e-2'
+  ]),
+  prompt: z.string(),
+  size: z.enum([
+    // 'auto',
+    '256x256', '512x512',
+    '1024x1024', '1536x1024', '1024x1536',
+  ]),
+  // stepCount: z.number().min(1).max(150).int().optional(), // unused for now, works when assigned to .step
+  response_format: z.enum(['url', 'b64_json']).optional(), // defaults to URL
+});
+
+
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
@@ -128,6 +132,7 @@ const createImagesInputSchema = z.object({
     createImageConfigGI, // handles both gpt-image-1 and gpt-image-1-mini
     createImageConfigD3,
     createImageConfigD2,
+    createImageConfigLocalAI,
   ]),
   editConfig: z.object({
     /**
@@ -164,152 +169,23 @@ export const llmOpenAIRouter = createTRPCRouter({
     // tRPC middleware: log errors for this procedure - as we don't have proper try/catch blocks yet
     .use(async ({ next, path, signal, type, input }) => {
       const result = await next();
+
+      // [PROD] log/warn listModel errors
       if (!result.ok && result.error) {
         // '401 unauthorized' is expected with wrong/missing API keys - log instead of warn
         const is401 = result.error instanceof TRPCFetcherError && result.error.httpStatus === 401;
-        console[is401 ? 'log' : 'warn'](`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
+        const isLocalAI = input.access?.dialect === 'localai';
+        console[(is401 || isLocalAI) ? 'log' : 'warn'](`${path} (${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
       }
+
+      // [DEV] NOTE: the trpc onError will also log next when in development mode, @see handlerEdgeRoutes
+
       return result;
     })
 
     .query(async ({ input: { access }, signal }): Promise<{ models: ModelDescriptionSchema[] }> => {
 
-      let models: ModelDescriptionSchema[];
-
-      // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/guides/model-cards)
-      if (access.dialect === 'perplexity') {
-        models = perplexityAIModelDescriptions()
-          .reduce(perplexityInjectVariants, [] as ModelDescriptionSchema[]);
-        return { models };
-      }
-
-      // [xAI]: custom models listing
-      if (access.dialect === 'xai')
-        return { models: (await xaiModelDescriptions(access)).sort(xaiModelSort) };
-
-      // [OpenAI-dialects]: fetch openAI-style for all but Azure (will be then used in each dialect)
-      const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire_API_Models_List.Response>(access, '/v1/models', signal);
-
-      // [Together] missing the .data property
-      if (access.dialect === 'togetherai')
-        return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
-
-      let openAIModels = openAIWireModelsResponse?.data || [];
-
-      // de-duplicate by ids (can happen for local servers.. upstream bugs)
-      const preCount = openAIModels.length;
-      openAIModels = openAIModels.filter((model, index) => openAIModels.findIndex(m => m.id === model.id) === index);
-      if (preCount !== openAIModels.length)
-        console.warn(`openai.router.listModels: removed ${preCount - openAIModels.length} duplicate models for dialect ${access.dialect}`);
-
-      // sort by id
-      openAIModels.sort((a, b) => a.id.localeCompare(b.id));
-
-      // every dialect has a different way to enumerate models - we execute the mapping on the server side
-      switch (access.dialect) {
-
-        case 'alibaba':
-          models = openAIModels
-            .filter(({ id }) => alibabaModelFilter(id))
-            .map(({ id, created }) => alibabaModelToModelDescription(id, created))
-            .sort(alibabaModelSort);
-          break;
-
-        case 'azure':
-          const azureOpenAIDeployments = azureParseFromDeploymentsAPI(openAIModels);
-          models = azureOpenAIDeployments
-            .filter(azureDeploymentFilter)
-            .map(azureDeploymentToModelDescription)
-            .sort(openAISortModels);
-          break;
-
-        case 'deepseek':
-          models = openAIModels
-            .filter(({ id }) => deepseekModelFilter(id))
-            .map(({ id }) => deepseekModelToModelDescription(id))
-            .sort(deepseekModelSort);
-          break;
-
-        case 'groq':
-          models = openAIModels
-            .filter(groqModelFilter)
-            .map(groqModelToModelDescription)
-            .sort(groqModelSortFn);
-          break;
-
-        case 'lmstudio':
-          models = openAIModels
-            .map(({ id }) => lmStudioModelToModelDescription(id));
-          break;
-
-        // [LocalAI]: map id to label
-        case 'localai':
-          models = openAIModels
-            .map(({ id }) => localAIModelToModelDescription(id))
-            .sort(localAIModelSortFn);
-          break;
-
-        case 'mistral':
-          models = mistralModels(openAIModels);
-          break;
-
-        case 'moonshot':
-          models = openAIModels
-            .filter(moonshotModelFilter)
-            .map(moonshotModelToModelDescription)
-            .sort(moonshotModelSortFn);
-          break;
-
-        // [OpenAI]: chat-only models, custom sort, manual mapping
-        case 'openai':
-
-          // [ChutesAI] special case for model enumeration
-          if (chutesAIHeuristic(access.oaiHost))
-            return { models: chutesAIModelsToModelDescriptions(openAIModels) };
-
-          // [FireworksAI] special case for model enumeration
-          if (fireworksAIHeuristic(access.oaiHost))
-            return { models: fireworksAIModelsToModelDescriptions(openAIModels) };
-
-          // [FastChat] make the best of the little info
-          if (fastAPIHeuristic(openAIModels))
-            return { models: fastAPIModels(openAIModels) };
-
-          models = openAIModels
-
-            // limit to only 'gpt' and 'non instruct' models
-            .filter(openAIModelFilter)
-
-            // to model description
-            .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
-
-            // inject variants
-            .reduce(openAIInjectVariants, [] as ModelDescriptionSchema[])
-
-            // custom OpenAI sort
-            .sort(openAISortModels);
-
-          // [DEV] check for superfluous and missing models
-          openaiDevCheckForModelsOverlap_DEV(openAIWireModelsResponse, models);
-          break;
-
-        case 'openpipe':
-          models = [
-            ...openAIModels.map(openPipeModelToModelDescriptions),
-            ...openPipeModelDescriptions().sort(openPipeModelSort),
-          ];
-          break;
-
-        case 'openrouter':
-          // openRouterStatTokenizers(openAIModels);
-          models = openAIModels
-            .sort(openRouterModelFamilySortFn)
-            .map(openRouterModelToModelDescription)
-            .filter(desc => !!desc)
-            .reduce(openRouterInjectVariants, [] as ModelDescriptionSchema[]);
-          break;
-
-      }
+      const models = await listModelsRunDispatch(access, signal);
 
       return { models };
     }),
@@ -343,16 +219,13 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       if (!isEdit) {
 
-        const { count, ...restConfig } = config;
+        const { model, count, ...restConfig } = config;
         requestBody = {
           ...restConfig, // includes response_format for dall-e-3 and dall-e-2 models
+          model: model as any, // [LocalAI] Fix: LocalAI wants 'stablediffusion' as model name
           n: count,
           user: config.user || 'Big-AGI',
         };
-
-        // [LocalAI] Fix: LocalAI does not want the 'response_format' field
-        if (access.dialect === 'localai' && 'response_format' in requestBody)
-          delete requestBody['response_format'];
 
         // auto-selects the output image mime type - or defaults to the first one
         if (requestBody.output_format === 'jpeg')
@@ -405,18 +278,18 @@ export const llmOpenAIRouter = createTRPCRouter({
           isEdit ? '/v1/images/edits' : '/v1/images/generations',
           signal, // wire the signal from the input
         )
-        .catch((error: any) => {
-          // if aborted, ignore the error, or else we'll throw an error
-          if (signal?.aborted)
-            return null; // de-facto ignores the error, and the connection is already gone
+          .catch((error: any) => {
+            // if aborted, ignore the error, or else we'll throw an error
+            if (signal?.aborted)
+              return null; // de-facto ignores the error, and the connection is already gone
 
-          // otherwise, re-throw the error
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `Error: ${error?.message || error?.toString() || 'Unknown error'}`,
-            cause: error,
-          });
-        }),
+            // otherwise, re-throw the error
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `Error: ${error?.message || error?.toString() || 'Unknown error'}`,
+              cause: error,
+            });
+          }),
       );
 
       // null: there was an error
@@ -436,8 +309,10 @@ export const llmOpenAIRouter = createTRPCRouter({
       // parse the response and emit all images in the response
       const { data: images, usage: tokens } = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput);
       for (const image of images) {
-        if (!('b64_json' in image))
+        if (!('b64_json' in image)) {
+          console.error(`openai.router.createImages: expected b64_json`, { image });
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
+        }
 
         // -> createImage
         yield {
@@ -487,7 +362,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     .input(listModelsInputSchema)
     .query(async ({ input: { access } }) => {
       const wireLocalAIModelsAvailable = await openaiGETOrThrow(access, '/models/available');
-      return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable);
+      return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable).filter(model => !!model.name);
     }),
 
   /* [LocalAI] Download a model from a Model Gallery */

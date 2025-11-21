@@ -1,26 +1,30 @@
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 
-import { apiStream } from '~/common/util/trpc.client';
-
-import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
-
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { apiStream } from '~/common/util/trpc.client';
+import { formatModelsCost } from '~/common/util/costUtils';
+
+import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import type { T2iCreateImageOutput } from '../t2i.server';
+import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
 import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolveDalleModelId, useDalleStore } from './store-module-dalle';
-import {
-  formatModelsCost
-} from '~/common/util/costUtils';
 
 
 /**
  * Client function to call the OpenAI image generation API.
  */
-export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, aixInlineImageParts: AixParts_InlineImagePart[], count: number): Promise<T2iCreateImageOutput[]> {
+export async function openAIGenerateImagesOrThrow(
+  modelServiceIdForAccess: DModelsServiceId,
+  modelVendor: 'azure' | 'localai' | 'openai',
+  prompt: string,
+  aixInlineImageParts: AixParts_InlineImagePart[],
+  count: number,
+  { agiProfilePic, abortSignal }: T2iGenerateOptions = {},
+): Promise<T2iCreateImageOutput[]> {
 
   // Use the current settings
-  const {
+  let {
     dalleModelId: dalleModelSelection,
     dalleNoRewrite,
     // -- GI
@@ -39,7 +43,18 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   } = useDalleStore.getState();
 
   // Resolve the actual model to use (null = latest)
-  const dalleModelId = resolveDalleModelId(dalleModelSelection);
+  let dalleModelId = resolveDalleModelId(dalleModelSelection);
+
+  // [special] Profile pic generation mode: force gpt-image-1-mini, square, low resolution, low quality
+  if (agiProfilePic) {
+    dalleModelId = 'gpt-image-1-mini';
+    dalleSizeGI = '1024x1024'; // square
+    dalleQualityGI = 'medium'; // we're rescaling to 256x256 anyway - low is $0.005, medium is $0.011 (2x)
+  }
+
+  // [Azure, 2025-11-18] WebP is not supported
+  if (modelVendor === 'azure' && dalleOutputFormatGI === 'webp')
+    dalleOutputFormatGI = 'png';
 
   // This trick is explained on: https://platform.openai.com/docs/guides/images/usage?context=node
   if (dalleNoRewrite && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
@@ -49,13 +64,40 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   if (aixInlineImageParts?.length && (dalleModelId === 'dall-e-3' || dalleModelId === 'dall-e-2'))
     throw new Error('Image transformation is not available with this model. Please use GPT Image or GPT Image Mini instead.');
 
+  // helper to check for abort conditions and throw consistent error
+  function throwIfAborted(error?: any) {
+    if (abortSignal?.aborted ||
+      error?.name === 'AbortError' ||
+      error?.message?.includes('aborted') ||
+      error?.message?.includes('BodyStreamBuffer was aborted')) {
+      const abortError = new Error('Image generation was cancelled');
+      abortError.name = 'AbortError';
+      throw abortError;
+    }
+  }
+
   // Function to generate images in batches
   async function generateImagesBatch(imageCount: number): Promise<T2iCreateImageOutput[]> {
+    throwIfAborted(); // Check before starting
 
     // we use an async generator to stream heartbeat events while waiting for the images
     const operations = await apiStream.llmOpenAI.createImages.mutate({
-      access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceId).transportAccess,
-      generationConfig: getImageModelFamily(dalleModelId) === 'gpt-image' ? {
+      access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceIdForAccess).transportAccess,
+      // [LocalAI, 2025-11-18] LocalAI uses the default model 'stablediffusion' and we don't have any dynamic model selection yet
+      generationConfig: modelVendor === 'localai' ? {
+        model: dalleModelId === 'gpt-image-1' ? 'stablediffusion'
+          : dalleModelId === 'gpt-image-1-mini' ? 'dreamshaper'
+            : dalleModelId === 'dall-e-3' ? 'sd-3.5-large-ggml'
+              : dalleModelId === 'dall-e-2' ? 'sd-3.5-medium-ggml'
+                : 'dreamshaper',
+        prompt,
+        count: imageCount,
+        // [LocalAI] size mapping - FIXME! - TEMP CODE
+        size: dalleSizeGI === '1024x1024' ? '512x512'
+          : dalleSizeGI === '1024x1536' ? '256x256'
+            : '1024x1024',
+        response_format: 'b64_json',
+      } : getImageModelFamily(dalleModelId) === 'gpt-image' ? {
         model: dalleModelId as 'gpt-image-1' | 'gpt-image-1-mini', // gpt-image-1 or gpt-image-1-mini
         prompt: prompt.slice(0, 32000 - 1), // GPT Image family accepts much longer prompts
         count: imageCount,
@@ -88,12 +130,21 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
           // maskImage: ...
         },
       }),
+    }, {
+      signal: abortSignal, // aborts the tRPC request
     });
 
     const createdImages: T2iCreateImageOutput[] = [];
-    for await (const op of operations)
-      if (op.p === 'createImage')
-        createdImages.push(op.image);
+    try {
+      for await (const op of operations) {
+        throwIfAborted(); // Check during iteration
+        if (op.p === 'createImage')
+          createdImages.push(op.image);
+      }
+    } catch (error: any) {
+      throwIfAborted(error);
+      throw error; // Re-throw non-abort errors
+    }
 
     return createdImages;
   }
@@ -117,6 +168,15 @@ export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsService
   // Throw if ALL promises were rejected
   const allRejected = imageRefsBatchesResults.every(result => result.status === 'rejected');
   if (allRejected) {
+
+    // check if any of the rejections are AbortErrors - if so, preserve the abort nature
+    const firstRejection = imageRefsBatchesResults.find(result => result.status === 'rejected') as PromiseRejectedResult;
+    const firstError = firstRejection?.reason;
+
+    // re-throw the abort error directly to preserve its nature
+    if (firstError?.name === 'AbortError')
+      throw firstError;
+
     const errorMessages = imageRefsBatchesResults
       .map(result => {
         const reason = (result as PromiseRejectedResult).reason as any; // TRPCClientError<TRPCErrorShape>;

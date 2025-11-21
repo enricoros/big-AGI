@@ -1,6 +1,7 @@
 import * as React from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
-import { Alert, Box, Button, Card, CircularProgress, IconButton, LinearProgress, List, ListItem, Switch, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, Chip, CircularProgress, IconButton, LinearProgress, List, ListItem, Sheet, Switch, Table, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
@@ -123,6 +124,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
   // state
   const [installModels, setInstallModels] = React.useState<{ galleryName: string; modelName: string; }[]>([]);
   const [showVoiceModels, setShowVoiceModels] = React.useState(false);
+  const parentRef = React.useRef<HTMLDivElement>(null);
 
   // external state
   const { data, error } = apiQuery.llmOpenAI.dialectLocalAI_galleryModelsAvailable.useQuery({ access: props.access }, {
@@ -131,6 +133,18 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
 
   // derived state
   const galleryNotConfigured = data === null;
+  const filteredModels = React.useMemo(() =>
+    data?.filter(model => showVoiceModels || !model.name?.startsWith('voice-')) || [],
+    [data, showVoiceModels]
+  );
+
+  // virtualizer
+  const virtualizer = useVirtualizer({
+    count: filteredModels.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40, // Fixed row height
+    overscan: 5,
+  });
 
 
   const handleAppendInstall = React.useCallback((galleryName: string, modelName: string) => {
@@ -179,47 +193,101 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
           how to configure model galleries.
         </>} />}
 
-        {/* List loading */}
+        {/* Table loading */}
         {!data ? (
           <CircularProgress color='success' />
         ) : (
-          <List
-            variant='outlined'
-            sx={{
-              '--ListItem-minHeight': '2.75rem',
-              borderRadius: 'md',
-              p: 0,
-            }}
-          >
-            {data
-              .filter(model => showVoiceModels || !model.name.startsWith('voice-'))
-              .map((model) => (
-                <ListItem key={model.name}>
+          <>
+            <Sheet
+              variant='outlined'
+              sx={{
+                borderRadius: 'md',
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                ref={parentRef}
+                sx={{
+                  height: '500px',
+                  overflow: 'auto',
+                }}
+              >
+                <Table
+                  stickyHeader
+                  hoverRow
+                >
+                  <thead>
+                    <tr>
+                      <th style={{ width: '35%' }}>Model</th>
+                      <th style={{ width: '35%' }}>Description</th>
+                      <th style={{ width: '20%' }}>Tags</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                      const model = filteredModels[virtualItem.index];
+                      if (!model?.name) return null;
 
-                  {capitalizeFirstLetter(model.name)}
-
-                  <Button
-                    color='neutral'
-                    size='sm'
-                    disabled={installModels.some(p => p.galleryName === model.gallery.name && p.modelName === model.name)}
-                    onClick={() => handleAppendInstall(model.gallery.name, model.name)}
-                    sx={{
-                      ml: 'auto',
-                    }}
-                  >
-                    Install
-                  </Button>
-                </ListItem>
-              ))}
-
-            <ListItemSwitch title='Show Voice Models' checked={showVoiceModels} onChange={setShowVoiceModels} />
-
-            <ExpanderAccordion title='Debug: show JSON' startCollapsed sx={{ fontSize: 'sm' }}>
-              <Box sx={{ whiteSpace: 'break-spaces' }}>
-                {JSON.stringify(data, null, 2)}
+                      return (
+                        <tr
+                          key={virtualItem.key}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '40px',
+                            transform: `translateY(${virtualItem.start}px)`,
+                            display: 'flex',
+                          }}
+                        >
+                          <td style={{ width: '35%', minWidth: 0 }} className='agi-ellipsize'>
+                            {capitalizeFirstLetter(model.name)}
+                          </td>
+                          <td style={{ width: '35%', minWidth: 0 }} className='agi-ellipsize'>
+                            <small>{model.description || '-'}</small>
+                          </td>
+                          <td style={{ width: '20%', minWidth: 0 }} className='agi-ellipsize'>
+                            {model.tags && model.tags.length > 0 &&
+                              model.tags.slice(0, 2).map((tag, idx) => (
+                                <Chip key={idx} size='sm' variant='soft' sx={{ fontSize: 'xs' }}>
+                                  {tag}
+                                </Chip>
+                             ))}
+                            {model.tags && model.tags.length > 2 && (
+                              <small>+{model.tags.length - 2}</small>
+                            )}
+                          </td>
+                          <td style={{ minWidth: 0, textAlign: 'right', flexShrink: 0 }}>
+                            <Button
+                              size='sm'
+                              color='neutral'
+                              disabled={installModels.some(p => p.galleryName === model.gallery.name && p.modelName === model.name)}
+                              onClick={() => model.name && handleAppendInstall(model.gallery.name, model.name)}
+                              sx={{ minWidth: 'auto', minHeight: 'auto', px: 1, py: 0.25 }}
+                            >
+                              Install
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
               </Box>
-            </ExpanderAccordion>
-          </List>
+            </Sheet>
+
+            <List variant='outlined' sx={{ borderRadius: 'md', p: 0, mt: 2 }}>
+              <ListItemSwitch title='Show Voice Models' checked={showVoiceModels} onChange={setShowVoiceModels} />
+
+              <ExpanderAccordion title='Debug: show JSON' startCollapsed sx={{ fontSize: 'sm' }}>
+                <Box sx={{ whiteSpace: 'break-spaces' }}>
+                  {JSON.stringify(data, null, 2)}
+                </Box>
+              </ExpanderAccordion>
+            </List>
+          </>
         )}
 
       </Box>

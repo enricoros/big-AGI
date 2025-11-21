@@ -55,6 +55,7 @@ export function DataStreamViz(props: { height: number, speed?: number }) {
   const tokensRef = React.useRef<Token[]>([]);
   const lastTimeRef = React.useRef<number>(0);
   const lastTokenTimeRef = React.useRef<number>(0);
+  const isVisibleRef = React.useRef<boolean>(true);
 
   // derived
   const dpr = window.devicePixelRatio || 1;
@@ -162,6 +163,9 @@ export function DataStreamViz(props: { height: number, speed?: number }) {
 
   // Animation function
   const animate = React.useCallback((currentTime: number) => {
+    // early exit if not visible or no animation ID (component unmounting)
+    if (!isVisibleRef.current || !animationRef.current) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -199,10 +203,46 @@ export function DataStreamViz(props: { height: number, speed?: number }) {
     }
 
     lastTimeRef.current = currentTime;
-    animationRef.current = requestAnimationFrame(animate);
+
+    // only schedule next frame if still visible
+    if (isVisibleRef.current)
+      animationRef.current = requestAnimationFrame(animate);
   }, [createToken, drawGrid, drawToken]);
 
 
+  // [effect] Detect visibility
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      const visible = entry.isIntersecting;
+      isVisibleRef.current = visible;
+
+      if (visible) {
+        // restart animation when becoming visible (cancel any existing first)
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        // stop animation and clear memory when going off-screen
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = 0;
+        tokensRef.current = [];
+        lastTimeRef.current = 0;
+        lastTokenTimeRef.current = 0;
+      }
+    }, {
+      threshold: 0.1, // Trigger when at least 10% visible
+      rootMargin: '50px', // Start animating slightly before entering viewport
+    });
+
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+    };
+  }, [animate]);
+
+  // Canvas setup and animation effect
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -216,11 +256,14 @@ export function DataStreamViz(props: { height: number, speed?: number }) {
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    // start initial animation (cancel any existing first to prevent duplicate loops)
+    cancelAnimationFrame(animationRef.current);
     animationRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationRef.current);
+      animationRef.current = 0; // Prevent RAF callbacks after unmount
     };
   }, [animate, props.height, setupCanvas]);
 

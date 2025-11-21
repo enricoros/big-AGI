@@ -48,6 +48,12 @@ interface UIPreferencesStore {
   showModelsHidden: boolean;
   setShowModelsHidden: (showModelsHidden: boolean) => void;
 
+  showModelsStarredOnly: boolean;
+  toggleShowModelsStarredOnly: () => void;
+
+  modelsStarredOnTop: boolean;
+  setModelsStarredOnTop: (modelsStarredOnTop: boolean) => void;
+
   composerQuickButton: 'off' | 'call' | 'beam';
   setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => void;
 
@@ -116,6 +122,12 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       showModelsHidden: false,
       setShowModelsHidden: (showModelsHidden: boolean) => set({ showModelsHidden }),
+
+      showModelsStarredOnly: false,
+      toggleShowModelsStarredOnly: () => set((state) => ({ showModelsStarredOnly: !state.showModelsStarredOnly })),
+
+      modelsStarredOnTop: true,
+      setModelsStarredOnTop: (modelsStarredOnTop: boolean) => set({ modelsStarredOnTop }),
 
       composerQuickButton: 'beam',
       setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => set({ composerQuickButton }),

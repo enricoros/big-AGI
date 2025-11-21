@@ -23,6 +23,7 @@ import { findModelVendor } from '../vendors/vendors.registry';
 
 // configuration
 const SHOW_LLM_INTERFACES = false;
+const SHOW_LLM_TOOLTIPS = false;
 
 
 const absorbListPadding: SxProps = { my: 'calc(var(--ListItem-paddingY) / -2)' };
@@ -65,7 +66,7 @@ const styles = {
 } as const;
 
 
-function ModelItem(props: {
+export const ModelItem = React.memo(function ModelItem(props: {
   llm: DLLM,
   serviceLabel: string,
   vendor: IModelVendor,
@@ -116,19 +117,22 @@ function ModelItem(props: {
   // const labelWithoutDate = dateMatch ? dateMatch[1].trim() : _label;
   // const labelDate = dateMatch ? dateMatch[2] : '';
 
-  let tooltip = props.serviceLabel;
-  if (llm.description)
-    tooltip += ' · ' + llm.description;
-  const llmContextTokens = getLLMContextTokens(llm);
-  const llmMaxOutputTokens = getLLMMaxOutputTokens(llm);
-  if (llmContextTokens) {
-    tooltip += '\n\n' + llmContextTokens.toLocaleString() + ' tokens';
-    if (llmMaxOutputTokens)
-      tooltip += ' / ' + llmMaxOutputTokens.toLocaleString() + ' max output tokens';
-  } else
-    tooltip += ' · token count not provided';
-  if (seemsFree)
-    tooltip += '\n\n🎁 Free model - refresh to check for pricing updates';
+  let tooltip = '';
+  if (SHOW_LLM_TOOLTIPS) {
+    tooltip = props.serviceLabel;
+    if (llm.description)
+      tooltip += ' · ' + llm.description;
+    const llmContextTokens = getLLMContextTokens(llm);
+    const llmMaxOutputTokens = getLLMMaxOutputTokens(llm);
+    if (llmContextTokens) {
+      tooltip += '\n\n' + llmContextTokens.toLocaleString() + ' tokens';
+      if (llmMaxOutputTokens)
+        tooltip += ' / ' + llmMaxOutputTokens.toLocaleString() + ' max output tokens';
+    } else
+      tooltip += ' · token count not provided';
+    if (seemsFree)
+      tooltip += '\n\n🎁 Free model - refresh to check for pricing updates';
+  }
 
   const chipsComponentsMemo = React.useMemo(() => {
     if (!SHOW_LLM_INTERFACES)
@@ -165,13 +169,21 @@ function ModelItem(props: {
       >
 
         {/* Model Name */}
-        <GoodTooltip title={tooltip}>
+        {SHOW_LLM_TOOLTIPS ? (
+          <GoodTooltip title={tooltip}>
+            <Box sx={isLLMHidden(llm) ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
+              {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
+              {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isLLMHidden(llm) ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
+              {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
+            </Box>
+          </GoodTooltip>
+        ) : (
           <Box sx={isLLMHidden(llm) ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
             {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
             {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isLLMHidden(llm) ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
             {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
           </Box>
-        </GoodTooltip>
+        )}
 
         {/* Preferred Chips */}
         {SHOW_LLM_INTERFACES ? (chipsComponentsMemo && (
@@ -224,7 +236,7 @@ function ModelItem(props: {
       </ListItemButton>
     </ListItem>
   );
-}
+});
 
 export function ModelsList(props: {
   filterServiceId: DModelsServiceId | null,
@@ -285,7 +297,7 @@ export function ModelsList(props: {
       const vendor = findModelVendor(llm.vId);
       !!vendor && items.push(
         <ModelItem
-          key={'llm-' + llm.id}
+          key={llm.userStarred ? llm.id + '_starred' : llm.id}
           llm={llm}
           serviceLabel={serviceLabel}
           vendor={vendor}
