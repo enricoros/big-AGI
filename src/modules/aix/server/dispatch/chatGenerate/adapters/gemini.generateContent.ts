@@ -8,11 +8,16 @@ import { aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_X
 const hotFixImagePartsFirst = true; // https://ai.google.dev/gemini-api/docs/image-understanding#tips-best-practices
 const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
+// [Gemini 3, 2025-11-20] Bypass dummy thoughtSignature for Gemini 3+ validation
+// https://ai.google.dev/gemini-api/docs/thought-signatures
+const GEMINI_BYPASS_THOUGHT_SIGNATURE = 'context_engineering_is_the_way_to_go';
+
 
 export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
   // Hotfixes - reduce these to the minimum, as they shall be higher-level resolved
   const isFamilyNanoBanana = model.id.includes('nano-banana') || model.id.includes('gemini-3-pro-image-preview');
+  const api3RequiresSignatures = isFamilyNanoBanana;
 
   // Note: the streaming setting is ignored here as it only belongs in the path
 
@@ -54,7 +59,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // Chat Messages
-  const contents: TRequest['contents'] = _toGeminiContents(chatGenerate.chatSequence);
+  const contents: TRequest['contents'] = _toGeminiContents(chatGenerate.chatSequence, api3RequiresSignatures);
 
   // Construct the request payload
   const payload: TRequest = {
@@ -231,7 +236,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 type TRequest = GeminiWire_API_Generate_Content.Request;
 
 
-function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_Messages.Content[] {
+function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresSignatures: boolean): GeminiWire_Messages.Content[] {
 
   // Remove messages that are made of empty parts
   // if (hotFixRemoveEmptyMessages)
@@ -260,15 +265,22 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
     }
 
     for (const part of message.parts) {
+      let partRequiresSignature = false;
       switch (part.pt) {
 
         case 'text':
           parts.push(GeminiWire_ContentParts.TextPart(part.text));
+
+          // [Gemini, 2025-11-20] Nano Banana Pro requires thoughtSignature on the first model text part
+          if (apiRequiresSignatures && message.role === 'model')
+            partRequiresSignature = true;
           break;
 
         case 'inline_audio':
         case 'inline_image':
           parts.push(GeminiWire_ContentParts.InlineDataPart(part.mimeType, part.base64));
+          if (apiRequiresSignatures)
+            partRequiresSignature = true;
           break;
 
         case 'doc':
@@ -358,6 +370,21 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
         default:
           const _exhaustiveCheck: never = part;
           throw new Error(`Unsupported part type in Chat message: ${(part as any).pt}`);
+      }
+
+      // apply thoughtSignature if present
+      if (parts.length) {
+        const tsTarget = parts[parts.length - 1];
+
+        // apply thoughtSignature to the last part if applicable
+        if ('_vnd' in part && part._vnd?.gemini?.thoughtSignature) {
+          tsTarget.thoughtSignature = part._vnd.gemini.thoughtSignature;
+        }
+        // if not applied yet, and required for this part type, apply bypass dummy and warn
+        else if (partRequiresSignature) {
+          tsTarget.thoughtSignature = GEMINI_BYPASS_THOUGHT_SIGNATURE;
+          console.log('[Gemini 3] Message part missing thoughtSignature - using bypass dummy (cross-provider or edited content)');
+        }
       }
     }
 
