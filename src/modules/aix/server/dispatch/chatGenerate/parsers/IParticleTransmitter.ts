@@ -69,6 +69,12 @@ export interface IParticleTransmitter {
   /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
   sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string): void;
 
+  /**
+   * Sends vendor-specific state modifier for the last emitted part.
+   * Used to attach opaque protocol state (e.g., Gemini thoughtSignature) without polluting core part schemas.
+   */
+  sendSetVendorState(vendor: string, state: unknown): void;
+
   // Non-parts data //
 
   /** Communicates the model name to the client */

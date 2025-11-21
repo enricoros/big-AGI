@@ -238,11 +238,14 @@ export class ContentReassembler {
           case 'ii':
             await this.onAppendInlineImage(op);
             break;
+          case 'svs':
+            this.onSetVendorState(op);
+            break;
           case 'urlc':
             this.onAddUrlCitation(op);
             break;
           case 'vp':
-            this.onVoidPlaceholder(op);
+            this.onAppendVoidPlaceholder(op);
             break;
           default:
             // noinspection JSUnusedLocalSymbols
@@ -579,7 +582,7 @@ export class ContentReassembler {
     // This ensures we don't interrupt the text flow
   }
 
-  private onVoidPlaceholder(vp: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
+  private onAppendVoidPlaceholder(vp: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
     const { text, mot } = vp;
 
     // update the model op
@@ -601,6 +604,22 @@ export class ContentReassembler {
     this.accumulator.fragments.unshift(placeholderFragment); // Add to beginning
 
     // Placeholders don't affect text fragment indexing
+  }
+
+  private onSetVendorState(vs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void {
+    // apply vendor state to the last created fragment
+    const lastFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    if (!lastFragment) {
+      console.warn('[ContentReassembler] Vendor state particle without preceding content fragment');
+      return;
+    }
+
+    // attach vendor state
+    const { vendor, state } = vs;
+    lastFragment.vendorState = {
+      ...lastFragment.vendorState,
+      [vendor]: state,
+    }
   }
 
   // Helper to remove placeholder when real content arrives
