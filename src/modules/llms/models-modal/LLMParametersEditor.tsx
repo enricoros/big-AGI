@@ -68,6 +68,13 @@ const _geminiAspectRatioOptions = [
   { value: '21:9', label: '21:9', description: 'Ultra wide' },
 ] as const;
 
+const _geminiImageSizeOptions = [
+  { value: _UNSPECIFIED, label: 'Default', description: '1K (default)' },
+  { value: '1K', label: '1K', description: 'Default' },
+  { value: '2K', label: '2K', description: '2K' },
+  { value: '4K', label: '4K', description: '4K' },
+] as const;
+
 const _geminiCodeExecutionOptions = [
   { value: 'auto', label: 'On', description: 'Enable code generation and execution' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -187,6 +194,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiAspectRatio,
     llmVndGeminiCodeExecution,
     llmVndGeminiGoogleSearch,
+    llmVndGeminiImageSize,
     llmVndGeminiMediaResolution,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
@@ -352,6 +360,19 @@ export function LLMParametersEditor(props: {
       <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
     )}
 
+
+    {showParam('llmVndGeminiImageSize') && (
+      <FormSelectControl
+        title='Image Size'
+        tooltip='Controls the resolution of generated images'
+        value={llmVndGeminiImageSize ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiImageSize');
+          else onChangeParameter({ llmVndGeminiImageSize: value });
+        }}
+        options={_geminiImageSizeOptions}
+      />
+    )}
 
     {showParam('llmVndGeminiAspectRatio') && (
       <FormSelectControl

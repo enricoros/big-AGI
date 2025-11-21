@@ -117,10 +117,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     payload.generationConfig!.mediaResolution = mediaResolutionValuesMap[model.vndGeminiMediaResolution];
   }
 
-  // [Gemini, 2025-10-02] Image generation: aspect ratio configuration
-  if (model.vndGeminiAspectRatio) {
+  // [Gemini, 2025-10-02] [Gemini, 2025-11-20] Image generation: aspect ratio and size configuration
+  if (model.vndGeminiAspectRatio || model.vndGeminiImageSize) {
     payload.generationConfig!.imageConfig = {
-      aspectRatio: model.vndGeminiAspectRatio,
+      ...(model.vndGeminiAspectRatio ? { aspectRatio: model.vndGeminiAspectRatio } : {}),
+      ...(model.vndGeminiImageSize ? { imageSize: model.vndGeminiImageSize } : {}),
     };
   }
 

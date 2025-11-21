@@ -581,6 +581,8 @@ export namespace GeminiWire_API_Generate_Content {
     imageConfig: z.object({
       /** Controls the aspect ratio of generated images */
       aspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+      /** [Gemini, 2025-11-20] Undocumented yet */
+      imageSize: z.enum(['1K', '2K', '4K']).optional(),
     }).optional(),
 
     // Added on 2025-01-10 - Low-level - not requested/used yet but added
