@@ -7,8 +7,8 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
-import { DMessageContentFragment, DMessageFragmentId, isContentFragment,
-  isModelAuxPart, isPlaceholderPart, isTextPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragmentId, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { Release } from '~/common/app.release';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
@@ -82,17 +82,18 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
 
-  // Counts and stats for display
-  const contentFragmentsCount = props.contentFragments.filter(isContentFragment).length;
-  const lastAuxFragment = props.contentFragments.findLast(f => isVoidFragment(f) && isModelAuxPart(f.part));
 
-  // Compute special data stream viz mode (only when sole placeholder, no other content)
-  const showDataStreamViz = props.contentFragments.length === 1
-    && isVoidFragment(props.contentFragments[0])
-    && isPlaceholderPart(props.contentFragments[0].part);
+  // solo placeholder - dataStreamViz trigger
+  const showDataStreamViz =
+    !Release.Features.LIGHTER_ANIMATIONS
+    && props.uiComplexityMode !== 'minimal'
+    && props.contentFragments.length === 1
+    // && props.noVoidFragments // not needed, we have all the interleaved fragments here
+    && isVoidPlaceholderFragment(props.contentFragments[0]);
+
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
-  if (isEditingText && isEmpty)
+  if (isEditingText && !props.contentFragments.some(isTextContentFragment))
     return !props.onFragmentAddBlank ? null : (
       <Button aria-label='message body empty' variant='plain' color='neutral' onClick={props.onFragmentAddBlank} sx={{ justifyContent: 'flex-start' }}>
         add text ...
@@ -107,7 +108,7 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && isEmpty)
     return null;
 
-  return <Box aria-label='message body' sx={showDataStreamViz ? _editLayoutSx : isEditingText ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
+  return <Box aria-label='message body' sx={(showDataStreamViz || isEditingText) ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
@@ -188,34 +189,37 @@ export function ContentFragments(props: {
       // CONTENT FRAGMENTS (text, code, tool calls, images, errors)
       const { part } = fragment;
 
-      // Determine the text to edit based on the part type
-      let editText = '';
-      let editLabel;
-      if (isTextPart(part))
-        editText = part.text;
-      else if (part.pt === 'error')
-        editText = part.error;
-      else if (part.pt === 'tool_invocation') {
-        if (part.invocation.type === 'function_call') {
-          editText = part.invocation.args /* string | null */ || '';
-          const humanName = humanReadableFunctionName(part.invocation.name, 'function_call', 'invocation');
-          editLabel = `[Invocation] ${humanName} · \`${part.invocation.name}\``;
-        } else {
-          editText = part.invocation.code;
-          const humanName = humanReadableFunctionName('code_execution', 'code_execution', 'invocation');
-          editLabel = `[Invocation] ${humanName} · \`${part.invocation.language}\``;
-        }
-      } else if (part.pt === 'tool_response') {
-        if (!part.error) {
-          editText = part.response.result;
-          const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
-          const humanName = humanReadableFunctionName(responseName, part.response.type, 'response');
-          editLabel = `[Response] ${humanName} · \`${part.id}\``;
-        }
-      }
-
       // editing for text parts, tool invocations, or tool responses
-      if (props.textEditsState && !!props.setEditedText && (isTextPart(part) || part.pt === 'error' || part.pt === 'tool_invocation' || part.pt === 'tool_response')) {
+      if (props.textEditsState && !!props.setEditedText && (
+        isTextPart(part) || part.pt === 'error' || part.pt === 'tool_invocation' || part.pt === 'tool_response'
+      )) {
+
+        // Determine the text to edit based on the part type
+        let editText = '';
+        let editLabel;
+        if (isTextPart(part)) {
+          editText = part.text;
+        } else if (part.pt === 'error') {
+          editText = part.error;
+        } else if (part.pt === 'tool_invocation') {
+          if (part.invocation.type === 'function_call') {
+            editText = part.invocation.args /* string | null */ || '';
+            const humanName = humanReadableFunctionName(part.invocation.name, 'function_call', 'invocation');
+            editLabel = `[Invocation] ${humanName} · \`${part.invocation.name}\``;
+          } else {
+            editText = part.invocation.code;
+            const humanName = humanReadableFunctionName('code_execution', 'code_execution', 'invocation');
+            editLabel = `[Invocation] ${humanName} · \`${part.invocation.language}\``;
+          }
+        } else if (part.pt === 'tool_response') {
+          if (!part.error) {
+            editText = part.response.result;
+            const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
+            const humanName = humanReadableFunctionName(responseName, part.response.type, 'response');
+            editLabel = `[Response] ${humanName} · \`${part.id}\``;
+          }
+        }
+
         return (
           <BlockEdit_TextFragment
             key={'edit-' + fId}
