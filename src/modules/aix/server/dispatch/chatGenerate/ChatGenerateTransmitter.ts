@@ -265,7 +265,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Appends reasoning text, which is its own kind of content */
-  appendReasoningText(textChunk: string, weak?: Extract<AixWire_Particles.PartParticleOp, { p: 'tr_' }>['weak']) {
+  appendReasoningText(textChunk: string, options?: { weak?: 'tag', restart?: boolean }) {
     // NOTE: don't skip on empty chunks, as we want to transition states
     // if there was another Part in the making, queue it
     if (this.currentPart)
@@ -273,7 +273,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.currentPart = {
       p: 'tr_',
       _t: textChunk,
-      ...(weak ? { weak } : {}),
+      ...(options?.weak ? { weak: options.weak } : {}),
+      ...(options?.restart ? { restart: true } : {}),
     };
     // [throttle] send it immediately for now
     this._queueParticleS();
@@ -326,12 +327,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
         const closingIdx = remaining.indexOf('</think>');
         if (closingIdx >= 0) {
           const reasoningText = remaining.substring(0, closingIdx);
-          this.appendReasoningText(reasoningText, 'tag');
+          this.appendReasoningText(reasoningText, { weak: 'tag' });
           this.isThinkingText = false;
           remaining = remaining.substring(closingIdx + '</think>'.length);
           // this is the only branch that can still loop
         } else {
-          this.appendReasoningText(remaining, 'tag');
+          this.appendReasoningText(remaining, { weak: 'tag' });
           return;
         }
       } else {

@@ -9,6 +9,7 @@ import { geminiConvertPCM2WAV } from './gemini.audioutils';
 
 
 // configuration
+const COLLAPSE_EMPTY_TEXT_PARTS = true;
 const ENABLE_RECITATIONS_AS_CITATIONS = false;
 
 
@@ -34,6 +35,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let sentRequestedModelName = false;
   let sentActualModelName = false;
   let timeToFirstEvent: number;
+  let collapsedTextPartForReasoning = false;
   let skipComputingTotalsOnce = isStreaming;
   let groundingIndexNumber = 0;
 
@@ -118,14 +120,18 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           // <- TextPart
           case 'text' in mPart:
             // [Gemini, 2025-01-23] CoT support
-            if (mPart.thought)
-              pt.appendReasoningText(mPart.text || '');
-            else {
+            if (mPart.thought) {
+              pt.appendReasoningText(mPart.text || '', collapsedTextPartForReasoning ? { restart: true } : undefined);
+              collapsedTextPartForReasoning = false;
+            } else {
               // NOTE: considering the below, but not yet
               // don't send an empty text part, which may happen in between reasoning parts
               // and this way we can merge them
               // if (mPart.text?.length)
-              pt.appendText(mPart.text || '');
+              if (!COLLAPSE_EMPTY_TEXT_PARTS || mPart.text)
+                pt.appendText(mPart.text || '');
+              else
+                collapsedTextPartForReasoning = true;
             }
             break;
 
