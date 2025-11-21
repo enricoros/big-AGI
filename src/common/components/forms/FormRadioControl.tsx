@@ -36,7 +36,7 @@ export const FormRadioControl = <TValue extends string>(props: {
         orientation='horizontal'
         value={props.value}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.value && props.onChange(event.target.value as TValue)}
-        sx={{ flexWrap: 'wrap' }}
+        sx={{ flexWrap: 'wrap', gap: 1 }}
       >
         {props.options.map((option) =>
           <Radio key={'opt-' + option.value} value={option.value} label={option.label} disabled={option.disabled || props.disabled} />,
