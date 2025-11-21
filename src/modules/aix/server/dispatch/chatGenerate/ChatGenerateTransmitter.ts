@@ -8,7 +8,8 @@ import type { IParticleTransmitter, ParticleServerLogLevel } from './parsers/IPa
 
 // configuration
 const ENABLE_EXTRA_DEV_MESSAGES = true;
-const DEBUG_REQUEST_MAX_BODY_LENGTH = 100_000;
+const DEBUG_REQUEST_MAX_STRING_BYTES = 2048;
+
 /**
  * This is enabled by default because probabilistically unlikely -- however there will be false positives/negatives.
  *
@@ -22,6 +23,32 @@ export const IssueSymbols = {
   Recitation: '🦜',
   Language: '🌐',
 };
+
+
+/**
+ * Deep-clones an object while ellipsizing any string exceeding maxBytes in the middle.
+ */
+function ellipsizeStringsInObject(value: any, maxBytes: number = DEBUG_REQUEST_MAX_STRING_BYTES): any {
+  if (value === null || value === undefined || typeof value !== 'object')
+    return value;
+
+  if (typeof value === 'string') {
+    if (value.length <= maxBytes)
+      return value;
+    const ellipsis = `...[${(value.length - maxBytes).toLocaleString()} bytes]...`;
+    const half = Math.floor((maxBytes - ellipsis.length) / 2);
+    return value.slice(0, half) + ellipsis + value.slice(-half);
+  }
+
+  if (Array.isArray(value))
+    return value.map(item => ellipsizeStringsInObject(item, maxBytes));
+
+  const result: any = {};
+  for (const key in value)
+    if (value.hasOwnProperty(key))
+      result[key] = ellipsizeStringsInObject(value[key], maxBytes);
+  return result;
+}
 
 
 /**
@@ -128,16 +155,9 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body?: object) {
-    const bodyStr = body === undefined ? '' : JSON.stringify(body, null, 2);
-
-    // ellipsize large bodies (e.g., many base64 images) to avoid huge debug packets
-    let processedBody = bodyStr;
-    if (bodyStr.length > DEBUG_REQUEST_MAX_BODY_LENGTH) {
-      const omittedCount = bodyStr.length - DEBUG_REQUEST_MAX_BODY_LENGTH;
-      const ellipsis = `\n...[${omittedCount.toLocaleString()} chars omitted]...\n`;
-      const half = Math.floor((DEBUG_REQUEST_MAX_BODY_LENGTH - ellipsis.length) / 2);
-      processedBody = bodyStr.slice(0, half) + ellipsis + bodyStr.slice(-half);
-    }
+    // Ellipsize individual strings in the body object (e.g., base64 images) to reduce debug packet size
+    const ellipsizedBody = body ? ellipsizeStringsInObject(body) : undefined;
+    const processedBody = ellipsizedBody ? JSON.stringify(ellipsizedBody, null, 2) : '';
 
     this.transmissionQueue.push({
       cg: '_debugDispatchRequest',
