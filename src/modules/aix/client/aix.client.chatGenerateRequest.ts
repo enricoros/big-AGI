@@ -447,8 +447,10 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
                       case 'image':
                         // dereference the Zync Image Asset, converting it to an inline image
+                        const legacyImageRefPart = refPart._legacyImageRefPart;
+                        const imageSize = legacyImageRefPart && legacyImageRefPart.dataRef.reftype === 'dblob' ? legacyImageRefPart?.dataRef?.bytesSize ?? 0 : 0;
                         const isLastAssistantMessage = _index === lastAssistantMessageIndex;
-                        const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
+                        const resizeMode = !isLastAssistantMessage ? 'openai-low-res' : imageSize > 400_000 ? 'openai-high-res' : false;
                         try {
                           const aixPart = await aixConvertZyncImageAssetRefToInlineImageOrThrow(refPart, resizeMode);
                           modelMessage.parts.push(_vnd ? { ...aixPart, _vnd } : aixPart);
@@ -491,8 +493,9 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
              * FIXME for GEMINI IMAGE GENERATION
              * For now we upload ONLY THE LAST IMAGE as full quality, while all others are resized before transmission.
              */
+            const imageSize = aPart.dataRef.reftype === 'dblob' ? aPart.dataRef?.bytesSize ?? 0 : 0;
             const isLastAssistantMessage = _index === lastAssistantMessageIndex;
-            const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
+            const resizeMode = !isLastAssistantMessage ? 'openai-low-res' : imageSize > 400_000 ? 'openai-high-res' : false;
             try {
               const aixPart = await aixConvertImageRefToInlineImageOrThrow(aPart, resizeMode);
               modelMessage.parts.push(_vnd ? { ...aixPart, _vnd } : aixPart);
