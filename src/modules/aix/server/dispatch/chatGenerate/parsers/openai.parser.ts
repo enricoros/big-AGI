@@ -457,7 +457,8 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
           if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
             pt.appendReasoningText(reasoningDetail.text);
           } else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
-            pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+            // pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
+            pt.appendReasoningText(reasoningDetail.summary);
           } else if (reasoningDetail.type === 'reasoning.encrypted') {
             // reasoning happened but not returned, skip
           } else
