@@ -164,7 +164,7 @@ export const DModelParameterRegistry = {
     label: 'Show Thoughts',
     type: 'boolean' as const,
     description: 'Show Gemini\'s reasoning process',
-    initialValue: true,
+    // initialValue: true, // no initial value
   } as const,
 
   llmVndGeminiThinkingBudget: {
