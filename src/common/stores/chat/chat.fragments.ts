@@ -84,6 +84,19 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
   fId: DMessageFragmentId;
   part: TPart;
   originId?: string;                  // optional, for multi-model, identifies which actor produced this fragment
+  vendorState?: DMessageFragmentVendorState; // optional vendor-specific protocol state (opaque, lossy-safe)
+}
+
+/**
+ * Carries opaque vendor metadata required for protocol correctness - i.e. state continuity tokens, encrypted signatures, protocol quirks.
+ * - Lossy-safe: Can be dropped during conversion/export without breaking functionality.
+ * - Graceful-degrade on missing.
+ */
+export type DMessageFragmentVendorState = Record<string, unknown> & {
+  gemini?: {
+    thoughtSignature?: string; // Gemini 3+ - echoed back to maintain reasoning context
+  };
+  // Future: openai?: { ... }, anthropic?: { ... }
 }
 
 
@@ -445,18 +458,20 @@ export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[
 }
 
 /**
- * NOTE: a duplicate fragment gets a new ID, and also loses any originId, if set (not sure why, but it's the way it is now)
+ * Duplicates a fragment with a new ID while preserving content-related metadata:
+ * - Preserved: originId, vendorState, mutability
+ * - Cleared: fId (new ID), identity (per spec: "removed on duplication (new edit)")
  */
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   switch (fragment.ft) {
     case 'content':
-      return _createContentFragment(_duplicate_Part(fragment.part));
+      return _carryMeta(fragment, _createContentFragment(_duplicate_Part(fragment.part)));
 
     case 'attachment':
-      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicate_Part(fragment.part), fragment.liveFileId);
+      return _carryMeta(fragment, _createAttachmentFragment(fragment.title, fragment.caption, _duplicate_Part(fragment.part), fragment.liveFileId));
 
     case 'void':
-      return _createVoidFragment(_duplicate_Part(fragment.part));
+      return _carryMeta(fragment, _createVoidFragment(_duplicate_Part(fragment.part)));
 
     case '_ft_sentinel':
       return _createSentinelFragment();
@@ -465,6 +480,22 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
       console.warn('[DEV] _duplicateFragment: Unknown fragment type, will duplicate as Error', { fragment });
       return createErrorContentFragment(`Unknown fragment type '${(fragment as any)?.ft || '(undefined)'}'`);
   }
+}
+
+/** Duplication: Preserves optional DMessageFragment metadata from source to target. */
+function _carryMeta<T extends DMessageFragment>(source: Readonly<DMessageFragment>, target: T): T {
+  // quick-out: sentinels don't have metadata
+  if (source.ft === '_ft_sentinel' || target.ft === '_ft_sentinel')
+    return target;
+
+  let enriched = target;
+  if ('originId' in source && source.originId)
+    enriched = { ...enriched, originId: source.originId };
+
+  if ('vendorState' in source && source.vendorState)
+    enriched = { ...enriched, vendorState: structuredClone(source.vendorState) };
+
+  return enriched;
 }
 
 
