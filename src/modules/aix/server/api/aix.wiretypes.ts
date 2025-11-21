@@ -213,6 +213,7 @@ export namespace AixWire_Parts {
 
   // Model Auxiliary Part (for thinking blocks)
 
+  // NOTE: not a _BasePart_schema for now, may become if we put the vndAnt attributes there
   export const ModelAuxPart_schema = z.object({
     pt: z.literal('ma'),
     aType: z.literal('reasoning'),
@@ -669,6 +670,7 @@ export namespace AixWire_Particles {
     | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
     | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string } // inline image, complete
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
+    | { p: 'svs', vendor: string, state: Record<string, unknown> } // set vendor state - applies to the last emitted part (opaque protocol state)
     | { p: 'vp', text: string, mot: 'search-web' | 'gen-image' | 'code-exec' }; // void placeholder - temporary status text that gets wiped when real content arrives
 
 }

@@ -442,6 +442,19 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>);
   }
 
+  /**
+   * Sends vendor-specific state modifier for the last emitted part.
+   * This attaches opaque protocol state (e.g., Gemini thoughtSignature) without polluting core part schemas.
+   */
+  sendSetVendorState(vendor: string, state: Record<string, unknown>) {
+    // queue vendor state particle immediately after the content part has been queued (and if text, it will be emitted sooner anyway)
+    this.transmissionQueue.push({
+      p: 'svs',
+      vendor,
+      state,
+    } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>);
+  }
+
   /** Communicates the model name to the client */
   setModelName(modelName: string) {
     this.transmissionQueue.push({
