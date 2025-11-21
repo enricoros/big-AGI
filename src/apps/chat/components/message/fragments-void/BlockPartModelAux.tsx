@@ -107,11 +107,10 @@ export function BlockPartModelAux(props: {
   auxText: string,
   auxHasSignature: boolean,
   auxRedactedDataCount: number,
-  nonVoidFragmentsCount: number,
   messagePendingIncomplete: boolean,
   zenMode: boolean,
   contentScaling: ContentScaling,
-  isLastVoid: boolean,
+  isLastFragment: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
@@ -185,14 +184,14 @@ export function BlockPartModelAux(props: {
     {/* Chip to expand/collapse */}
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
-        color={props.isLastVoid ? REASONING_COLOR : 'neutral'}
+        color={props.isLastFragment ? REASONING_COLOR : 'neutral'}
         variant={expanded ? 'solid' : 'soft'}
         size='sm'
         onClick={handleToggleExpanded}
-        sx={expanded ? _styles.chipExpanded : props.isLastVoid ? _styles.chip : _styles.chipDisabled}
+        sx={expanded ? _styles.chipExpanded : props.isLastFragment ? _styles.chip : _styles.chipDisabled}
         startDecorator={
           <AllInclusiveIcon
-            sx={(props.messagePendingIncomplete && !props.nonVoidFragmentsCount && !expanded && props.isLastVoid) ? _styles.chipIconPending : _styles.chipIcon}
+            sx={(props.messagePendingIncomplete && !expanded && props.isLastFragment) ? _styles.chipIconPending : _styles.chipIcon}
             /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
           />
         }

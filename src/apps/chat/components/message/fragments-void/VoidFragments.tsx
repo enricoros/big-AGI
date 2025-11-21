@@ -10,8 +10,6 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { DMessageContentFragment, DMessageFragmentId, DMessageVoidFragment, isPlaceholderPart } from '~/common/stores/chat/chat.fragments';
 import { Release } from '~/common/app.release';
 
-import { BlockPartModelAux } from './BlockPartModelAux';
-import { BlockPartPlaceholder } from './BlockPartPlaceholder';
 import { BlockPartModelAnnotations } from './BlockPartModelAnnotations';
 
 
@@ -96,11 +94,10 @@ export function VoidFragments(props: {
         //       auxText={part.aText}
         //       auxHasSignature={part.textSignature !== undefined}
         //       auxRedactedDataCount={part.redactedData?.length ?? 0}
-        //       nonVoidFragmentsCount={props.nonVoidFragmentsCount}
         //       messagePendingIncomplete={!!props.messagePendingIncomplete}
         //       zenMode={props.uiComplexityMode === 'minimal'}
         //       contentScaling={props.contentScaling}
-        //       isLastVoid={index === props.voidFragments.length - 1}
+        //       isLastFragment={fragmentIndex === props.contentFragments.length - 1}
         //       onFragmentDelete={props.onFragmentDelete}
         //       onFragmentReplace={props.onFragmentReplace}
         //     />

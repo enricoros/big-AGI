@@ -7,7 +7,8 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
-import { DMessageContentFragment, DMessageFragmentId, isContentFragment, isPlaceholderPart, isTextPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragmentId, isContentFragment,
+  isModelAuxPart, isPlaceholderPart, isTextPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
@@ -81,8 +82,9 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
 
-  // Count non-void fragments for reasoning display
-  const nonVoidFragmentsCount = props.contentFragments.filter(isContentFragment).length;
+  // Counts and stats for display
+  const contentFragmentsCount = props.contentFragments.filter(isContentFragment).length;
+  const lastAuxFragment = props.contentFragments.findLast(f => isVoidFragment(f) && isModelAuxPart(f.part));
 
   // Compute special data stream viz mode (only when sole placeholder, no other content)
   const showDataStreamViz = props.contentFragments.length === 1
@@ -116,7 +118,7 @@ export function ContentFragments(props: {
       />
     )}
 
-    {props.contentFragments.map((fragment) => {
+    {props.contentFragments.map((fragment, fragmentIndex) => {
 
       // simplify
       const { fId, ft } = fragment;
@@ -140,9 +142,11 @@ export function ContentFragments(props: {
                 auxText={part.aText}
                 auxHasSignature={part.textSignature !== undefined}
                 auxRedactedDataCount={part.redactedData?.length ?? 0}
+                messagePendingIncomplete={!!props.messagePendingIncomplete}
                 zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
-                isLastVoid={true /* green rendering */}
+                isLastFragment={fragmentIndex === props.contentFragments.length - 1}
+                onFragmentDelete={props.onFragmentDelete}
                 onFragmentReplace={props.onFragmentReplace}
               />
             );
