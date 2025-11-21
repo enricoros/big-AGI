@@ -6,13 +6,16 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageContentFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
+import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
+import { DMessageContentFragment, DMessageFragmentId, isContentFragment, isPlaceholderPart, isTextPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
 import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
 import { BlockPartImageRef } from './BlockPartImageRef';
+import { BlockPartModelAux } from '../fragments-void/BlockPartModelAux';
+import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
@@ -43,7 +46,7 @@ const _endLayoutSx: SxProps = {
 
 export function ContentFragments(props: {
 
-  contentFragments: DMessageContentFragment[]
+  contentFragments: InterleavedFragment[]
   showEmptyNotice: boolean,
 
   contentScaling: ContentScaling,
@@ -51,6 +54,7 @@ export function ContentFragments(props: {
   fitScreen: boolean,
   isMobile: boolean,
   messageRole: DMessageRole,
+  messagePendingIncomplete?: boolean,
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
   enhanceCodeBlocks: boolean,
@@ -77,6 +81,14 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
 
+  // Count non-void fragments for reasoning display
+  const nonVoidFragmentsCount = props.contentFragments.filter(isContentFragment).length;
+
+  // Compute special data stream viz mode (only when sole placeholder, no other content)
+  const showDataStreamViz = props.contentFragments.length === 1
+    && isVoidFragment(props.contentFragments[0])
+    && isPlaceholderPart(props.contentFragments[0].part);
+
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
   if (isEditingText && isEmpty)
     return !props.onFragmentAddBlank ? null : (
@@ -93,7 +105,7 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && isEmpty)
     return null;
 
-  return <Box aria-label='message body' sx={isEditingText ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
+  return <Box aria-label='message body' sx={showDataStreamViz ? _editLayoutSx : isEditingText ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
@@ -107,7 +119,68 @@ export function ContentFragments(props: {
     {props.contentFragments.map((fragment) => {
 
       // simplify
-      const { fId, part } = fragment;
+      const { fId, ft } = fragment;
+
+      // VOID FRAGMENTS (reasoning, placeholders - interleaved with content)
+      if (ft === 'void') {
+        const { part } = fragment;
+        switch (part.pt) {
+
+          case 'ma':
+            return (
+              <BlockPartModelAux
+                key={fId}
+                fragmentId={fId}
+                auxType={part.aType}
+                auxText={part.aText}
+                auxHasSignature={part.textSignature !== undefined}
+                auxRedactedDataCount={part.redactedData?.length ?? 0}
+                zenMode={props.uiComplexityMode === 'minimal'}
+                contentScaling={props.contentScaling}
+                isLastVoid={false}
+                onFragmentReplace={props.onFragmentReplace}
+              />
+            );
+
+          case 'ph':
+            return (
+              <BlockPartPlaceholder
+                key={fId}
+                placeholderText={part.pText}
+                placeholderType={part.pType}
+                placeholderModelOp={part.modelOp}
+                placeholderAixControl={part.aixControl}
+                messageRole={props.messageRole}
+                contentScaling={props.contentScaling}
+                showAsItalic
+                showAsDataStreamViz={showDataStreamViz}
+              />
+            );
+
+          case 'annotations':
+            // Annotations should be rendered at top level, not here
+            console.warn('[DEV] ContentFragments: annotations fragment found in interleaved list');
+            return null;
+
+          case '_pt_sentinel':
+            return null;
+
+          default:
+            const _exhaustiveVoidCheck: never = part;
+            return (
+              <ScaledTextBlockRenderer
+                key={fId}
+                text={`Unknown Void Fragment: ${(part as any)?.pt}`}
+                contentScaling={props.contentScaling}
+                textRenderVariant='text'
+                showAsDanger
+              />
+            );
+        }
+      }
+
+      // CONTENT FRAGMENTS (text, code, tool calls, images, errors)
+      const { part } = fragment;
 
       // Determine the text to edit based on the part type
       let editText = '';
