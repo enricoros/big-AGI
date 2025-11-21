@@ -68,6 +68,7 @@ export type DMessageVoidFragment = _DMessageFragmentWrapper<'void',
 
 export type DVoidFragmentModelAnnotations = _NarrowFragmentToPart<DMessageVoidFragment, DVoidModelAnnotationsPart>;
 type _DVoidFragmentModelAux = _NarrowFragmentToPart<DMessageVoidFragment, DVoidModelAuxPart>;
+type _DVoidFragmentPlaceholder = _NarrowFragmentToPart<DMessageVoidFragment, DVoidPlaceholderPart>;
 type _NarrowFragmentToPart<TFragment extends DMessageFragment, TPart> = TFragment & { part: TPart };
 
 
@@ -309,6 +310,10 @@ export function isVoidFragment(fragment: DMessageFragment): fragment is DMessage
 
 export function isVoidAnnotationsFragment(fragment: DMessageFragment): fragment is DVoidFragmentModelAnnotations {
   return fragment.ft === 'void' && fragment.part.pt === 'annotations';
+}
+
+export function isVoidPlaceholderFragment(fragment: DMessageFragment): fragment is _DVoidFragmentPlaceholder {
+  return fragment.ft === 'void' && fragment.part.pt === 'ph';
 }
 
 export function isVoidThinkingFragment(fragment: DMessageFragment): fragment is _DVoidFragmentModelAux {
