@@ -6,13 +6,17 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageContentFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
+import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
+import { DMessageContentFragment, DMessageFragmentId, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { Release } from '~/common/app.release';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
 import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
 import { BlockPartImageRef } from './BlockPartImageRef';
+import { BlockPartModelAux } from '../fragments-void/BlockPartModelAux';
+import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
@@ -43,7 +47,7 @@ const _endLayoutSx: SxProps = {
 
 export function ContentFragments(props: {
 
-  contentFragments: DMessageContentFragment[]
+  contentFragments: InterleavedFragment[]
   showEmptyNotice: boolean,
 
   contentScaling: ContentScaling,
@@ -51,6 +55,7 @@ export function ContentFragments(props: {
   fitScreen: boolean,
   isMobile: boolean,
   messageRole: DMessageRole,
+  messagePendingIncomplete?: boolean,
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
   enhanceCodeBlocks: boolean,
@@ -77,8 +82,18 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
 
+
+  // solo placeholder - dataStreamViz trigger
+  const showDataStreamViz =
+    !Release.Features.LIGHTER_ANIMATIONS
+    && props.uiComplexityMode !== 'minimal'
+    && props.contentFragments.length === 1
+    // && props.noVoidFragments // not needed, we have all the interleaved fragments here
+    && isVoidPlaceholderFragment(props.contentFragments[0]);
+
+
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
-  if (isEditingText && isEmpty)
+  if (isEditingText && !props.contentFragments.some(isTextContentFragment))
     return !props.onFragmentAddBlank ? null : (
       <Button aria-label='message body empty' variant='plain' color='neutral' onClick={props.onFragmentAddBlank} sx={{ justifyContent: 'flex-start' }}>
         add text ...
@@ -93,7 +108,7 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && isEmpty)
     return null;
 
-  return <Box aria-label='message body' sx={isEditingText ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
+  return <Box aria-label='message body' sx={(showDataStreamViz || isEditingText) ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
@@ -104,39 +119,107 @@ export function ContentFragments(props: {
       />
     )}
 
-    {props.contentFragments.map((fragment) => {
+    {props.contentFragments.map((fragment, fragmentIndex) => {
 
       // simplify
-      const { fId, part } = fragment;
+      const { fId, ft } = fragment;
 
-      // Determine the text to edit based on the part type
-      let editText = '';
-      let editLabel;
-      if (isTextPart(part))
-        editText = part.text;
-      else if (part.pt === 'error')
-        editText = part.error;
-      else if (part.pt === 'tool_invocation') {
-        if (part.invocation.type === 'function_call') {
-          editText = part.invocation.args /* string | null */ || '';
-          const humanName = humanReadableFunctionName(part.invocation.name, 'function_call', 'invocation');
-          editLabel = `[Invocation] ${humanName} · \`${part.invocation.name}\``;
-        } else {
-          editText = part.invocation.code;
-          const humanName = humanReadableFunctionName('code_execution', 'code_execution', 'invocation');
-          editLabel = `[Invocation] ${humanName} · \`${part.invocation.language}\``;
-        }
-      } else if (part.pt === 'tool_response') {
-        if (!part.error) {
-          editText = part.response.result;
-          const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
-          const humanName = humanReadableFunctionName(responseName, part.response.type, 'response');
-          editLabel = `[Response] ${humanName} · \`${part.id}\``;
+      // VOID FRAGMENTS (reasoning, placeholders - interleaved with content)
+      if (ft === 'void') {
+        const { part } = fragment;
+        switch (part.pt) {
+
+          // Handled by VoidFragments
+          // case 'annotations':
+          //   console.warn('[DEV] ContentFragments: annotations fragment found in interleaved list');
+          //   return null;
+
+          case 'ma':
+            return (
+              <BlockPartModelAux
+                key={fId}
+                fragmentId={fId}
+                auxType={part.aType}
+                auxText={part.aText}
+                auxHasSignature={part.textSignature !== undefined}
+                auxRedactedDataCount={part.redactedData?.length ?? 0}
+                messagePendingIncomplete={!!props.messagePendingIncomplete}
+                zenMode={props.uiComplexityMode === 'minimal'}
+                contentScaling={props.contentScaling}
+                isLastFragment={fragmentIndex === props.contentFragments.length - 1}
+                onFragmentDelete={props.onFragmentDelete}
+                onFragmentReplace={props.onFragmentReplace}
+              />
+            );
+
+          case 'ph':
+            return (
+              <BlockPartPlaceholder
+                key={fId}
+                placeholderText={part.pText}
+                placeholderType={part.pType}
+                placeholderModelOp={part.modelOp}
+                placeholderAixControl={part.aixControl}
+                messageRole={props.messageRole}
+                contentScaling={props.contentScaling}
+                showAsItalic
+                showAsDataStreamViz={showDataStreamViz}
+              />
+            );
+
+          case '_pt_sentinel':
+            return null;
+
+          default:
+            const _exhaustiveVoidCheck: never = part;
+            // fallthrough - we don't handle these here anymore
+          case 'annotations':
+            return (
+              <ScaledTextBlockRenderer
+                key={fId}
+                text={`Unknown Void Fragment: ${(part as any)?.pt}`}
+                contentScaling={props.contentScaling}
+                textRenderVariant='text'
+                showAsDanger
+              />
+            );
         }
       }
 
+      // CONTENT FRAGMENTS (text, code, tool calls, images, errors)
+      const { part } = fragment;
+
       // editing for text parts, tool invocations, or tool responses
-      if (props.textEditsState && !!props.setEditedText && (isTextPart(part) || part.pt === 'error' || part.pt === 'tool_invocation' || part.pt === 'tool_response')) {
+      if (props.textEditsState && !!props.setEditedText && (
+        isTextPart(part) || part.pt === 'error' || part.pt === 'tool_invocation' || part.pt === 'tool_response'
+      )) {
+
+        // Determine the text to edit based on the part type
+        let editText = '';
+        let editLabel;
+        if (isTextPart(part)) {
+          editText = part.text;
+        } else if (part.pt === 'error') {
+          editText = part.error;
+        } else if (part.pt === 'tool_invocation') {
+          if (part.invocation.type === 'function_call') {
+            editText = part.invocation.args /* string | null */ || '';
+            const humanName = humanReadableFunctionName(part.invocation.name, 'function_call', 'invocation');
+            editLabel = `[Invocation] ${humanName} · \`${part.invocation.name}\``;
+          } else {
+            editText = part.invocation.code;
+            const humanName = humanReadableFunctionName('code_execution', 'code_execution', 'invocation');
+            editLabel = `[Invocation] ${humanName} · \`${part.invocation.language}\``;
+          }
+        } else if (part.pt === 'tool_response') {
+          if (!part.error) {
+            editText = part.response.result;
+            const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
+            const humanName = humanReadableFunctionName(responseName, part.response.type, 'response');
+            editLabel = `[Response] ${humanName} · \`${part.id}\``;
+          }
+        }
+
         return (
           <BlockEdit_TextFragment
             key={'edit-' + fId}

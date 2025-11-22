@@ -398,37 +398,42 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
         if ((!isContentOrAttachmentFragment(aFragment) && !isVoidThinkingFragment(aFragment)) || aFragment.part.pt === '_pt_sentinel')
           continue;
 
-        switch (aFragment.part.pt) {
+        // aPart is a DMessageFragment['part'], and we use TS for type narrowing
+        const { part: aPart, vendorState: _vnd } = aFragment;
+        switch (aPart.pt) {
 
           case 'text':
           case 'tool_invocation':
             // Key place where the Aix Zod inferred types are compared to the Typescript defined DMessagePart* types
             // - in case of error, check that the types in `chat.fragments.ts` and `aix.wiretypes.ts` are in sync
-            modelMessage.parts.push(aFragment.part);
+            modelMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
             break;
 
           case 'ma':
             // https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#why-thinking-blocks-must-be-preserved
             // [Anthropic] special case: despite being Void, we send the DVoidModelAuxPart which has signed Thinking blocks and Redacted data,
             //             which may be instrumental for the model to execute tools-result follow-up actions/text.
-            const isAntModelAux = aFragment.part.textSignature || aFragment.part.redactedData?.length;
-            if (isAntModelAux)
-              modelMessage.parts.push(aFragment.part as AixParts_ModelAuxPart /* NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here*/);
+            const isAntModelAux = aPart.textSignature || aPart.redactedData?.length;
+            if (isAntModelAux) {
+              const aModelAuxPart = aPart as AixParts_ModelAuxPart; // NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here
+              // modelMessage.parts.push(_vnd ? { ...aModelAuxPart, _vnd } : aModelAuxPart);
+              modelMessage.parts.push(aModelAuxPart);
+            }
             break;
 
           case 'doc':
             // TODO
             console.warn('aixCGR_FromDMessages: doc part from Assistant not implemented yet');
-            // mMsg.parts.push(aFragment.part);
+            // mMsg.parts.push(aPart);
             break;
 
           case 'error':
             // Note: the llm will receive the extra '[ERROR]' text; this could be optimized to handle errors better
-            modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aFragment.part.error}` });
+            modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aPart.error}` });
             break;
 
           case 'reference':
-            const refPart = aFragment.part;
+            const refPart = aPart;
             const refPartRt = refPart.rt;
             switch (refPartRt) {
 
@@ -442,10 +447,13 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
                       case 'image':
                         // dereference the Zync Image Asset, converting it to an inline image
+                        const legacyImageRefPart = refPart._legacyImageRefPart;
+                        const imageSize = legacyImageRefPart && legacyImageRefPart.dataRef.reftype === 'dblob' ? legacyImageRefPart?.dataRef?.bytesSize ?? 0 : 0;
                         const isLastAssistantMessage = _index === lastAssistantMessageIndex;
-                        const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
+                        const resizeMode = !isLastAssistantMessage ? 'openai-low-res' : imageSize > 400_000 ? 'openai-high-res' : false;
                         try {
-                          modelMessage.parts.push(await aixConvertZyncImageAssetRefToInlineImageOrThrow(refPart, resizeMode));
+                          const aixPart = await aixConvertZyncImageAssetRefToInlineImageOrThrow(refPart, resizeMode);
+                          modelMessage.parts.push(_vnd ? { ...aixPart, _vnd } : aixPart);
                         } catch (error: any) {
                           if (IGNORE_CGR_NO_IMAGE_DEREFERENCE) console.warn(`Zync asset reference from the assistant missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
                           else throw error;
@@ -485,10 +493,12 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
              * FIXME for GEMINI IMAGE GENERATION
              * For now we upload ONLY THE LAST IMAGE as full quality, while all others are resized before transmission.
              */
+            const imageSize = aPart.dataRef.reftype === 'dblob' ? aPart.dataRef?.bytesSize ?? 0 : 0;
             const isLastAssistantMessage = _index === lastAssistantMessageIndex;
-            const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
+            const resizeMode = !isLastAssistantMessage ? 'openai-low-res' : imageSize > 400_000 ? 'openai-high-res' : false;
             try {
-              modelMessage.parts.push(await aixConvertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
+              const aixPart = await aixConvertImageRefToInlineImageOrThrow(aPart, resizeMode);
+              modelMessage.parts.push(_vnd ? { ...aixPart, _vnd } : aixPart);
             } catch (error: any) {
               if (IGNORE_CGR_NO_IMAGE_DEREFERENCE) console.warn(`Image from the assistant missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
               else throw error;
@@ -496,14 +506,14 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'tool_response':
-            // Valiation of DMessageToolResponsePart of response.type: 'function_call'
+            // Validation of DMessageToolResponsePart of response.type: 'function_call'
             // - NOTE: for now we make the large assumption that responses are JSON objects, not arrays, not strings
             // - This was done for Gemini as the response needs to be an object; however we will need to decide:
             // TODO: decide the responses policy: do we allow only objects? if not, then what's the rule to convert objects to Gemini's inputs?
-            if (isToolResponseFunctionCallPart(aFragment.part)) {
+            if (isToolResponseFunctionCallPart(aPart)) {
               let resultObject: any;
               try {
-                resultObject = JSON.parse(aFragment.part.response.result);
+                resultObject = JSON.parse(aPart.response.result);
               } catch (error: any) {
                 throw new Error('[AIX validation] expecting `tool_response` to be parseable');
               }
@@ -512,12 +522,12 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
               if (Array.isArray(resultObject))
                 throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
             }
-            toolMessage.parts.push(aFragment.part);
+            toolMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
             break;
 
           default:
-            const _exhaustiveCheck: never = aFragment.part;
-            console.warn('aixCGR_FromDMessages: unexpected Assistant fragment part', aFragment.part);
+            const _exhaustiveCheck: never = aPart;
+            console.warn('aixCGR_FromDMessages: unexpected Assistant fragment part', aPart);
             break;
         }
       }

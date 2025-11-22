@@ -9,6 +9,7 @@ import { geminiConvertPCM2WAV } from './gemini.audioutils';
 
 
 // configuration
+const COLLAPSE_EMPTY_TEXT_PARTS = true;
 const ENABLE_RECITATIONS_AS_CITATIONS = false;
 
 
@@ -34,6 +35,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let sentRequestedModelName = false;
   let sentActualModelName = false;
   let timeToFirstEvent: number;
+  let collapsedTextPartForReasoning = false;
   let skipComputingTotalsOnce = isStreaming;
   let groundingIndexNumber = 0;
 
@@ -108,21 +110,29 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
       // -> Candidates[0] -> Content
       for (const mPart of (candidate0.content?.parts || [])) {
+
+        // [Gemini 3, 2025-11-18] Extract thoughtSignature once (can appear on any part type)
+        // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thought_signatures
+        const thoughtSignature = ('thoughtSignature' in mPart && mPart.thoughtSignature) ? mPart.thoughtSignature : undefined;
+
         switch (true) {
 
           // <- TextPart
           case 'text' in mPart:
-            // [Gemini 3, 2025-11-18] Log thought signatures for debugging
-            // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thought_signatures
-            if ('thoughtSignature' in mPart && mPart.thoughtSignature?.length) {
-              console.log(`[Gemini] Text part with thought signature (length: ${mPart.thoughtSignature.length})`);
-              // TODO: Store signature for echo-back in next request
-            }
             // [Gemini, 2025-01-23] CoT support
-            if (mPart.thought)
-              pt.appendReasoningText(mPart.text || '');
-            else
-              pt.appendText(mPart.text || '');
+            if (mPart.thought) {
+              pt.appendReasoningText(mPart.text || '', collapsedTextPartForReasoning ? { restart: true } : undefined);
+              collapsedTextPartForReasoning = false;
+            } else {
+              // NOTE: considering the below, but not yet
+              // don't send an empty text part, which may happen in between reasoning parts
+              // and this way we can merge them
+              // if (mPart.text?.length)
+              if (!COLLAPSE_EMPTY_TEXT_PARTS || mPart.text)
+                pt.appendText(mPart.text || '');
+              else
+                collapsedTextPartForReasoning = true;
+            }
             break;
 
           // <- InlineDataPart
@@ -161,11 +171,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           // <- FunctionCallPart
           case 'functionCall' in mPart:
             let { id: fcId, name: fcName, args: fcArgs } = mPart.functionCall;
-            // [Gemini 3, 2025-11-18] Log thought signatures for debugging
-            if ('thoughtSignature' in mPart && mPart.thoughtSignature?.length) {
-              console.log(`[Gemini] Function call with thought signature: ${fcName} (signature length: ${mPart.thoughtSignature.length})`);
-              // TODO: Store signature for echo-back in next request (pending tool execution graph rebuild)
-            }
+
             // Validate the function call arguments - we expect a JSON object, not just any JSON value
             if (!fcArgs || typeof fcArgs !== 'object')
               console.warn(`[Gemini] Invalid function call arguments: ${JSON.stringify(fcArgs)} for ${fcName}`);
@@ -202,6 +208,9 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             const _exhaustiveCheck: never = mPart;
             throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
         }
+
+        // Set the thought signature if available
+        thoughtSignature && pt.sendSetVendorState('gemini', { thoughtSignature: mPart.thoughtSignature });
       }
 
       // -> Candidates[0] -> Safety Ratings

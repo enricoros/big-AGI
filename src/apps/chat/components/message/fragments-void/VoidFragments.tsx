@@ -6,28 +6,15 @@ import { Box } from '@mui/joy';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
+import type { DMessageContentFragment, DMessageFragmentId, DMessageVoidFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageContentFragment, DMessageFragmentId, DMessageVoidFragment, isPlaceholderPart } from '~/common/stores/chat/chat.fragments';
-import { Release } from '~/common/app.release';
 
-import { BlockPartModelAux } from './BlockPartModelAux';
-import { BlockPartPlaceholder } from './BlockPartPlaceholder';
 import { BlockPartModelAnnotations } from './BlockPartModelAnnotations';
 
 
-const editLayoutSx: SxProps = {
+const startLayoutSx: SxProps = {
   display: 'grid',
   gap: 1.5,     // see why we give more space on ChatMessage
-
-  // horizontal separator between messages (second part+ and before)
-  // '& > *:not(:first-of-type)': {
-  //   borderTop: '1px solid',
-  //   borderTopColor: 'background.level3',
-  // },
-};
-
-const startLayoutSx: SxProps = {
-  ...editLayoutSx,
 
   // NOTE: we used to have 'flex-start' here, but it was causing the Annotation fragment to not be able to
   // stretch to the full with of this 'void fragments' container.
@@ -36,7 +23,7 @@ const startLayoutSx: SxProps = {
 };
 
 const endLayoutSx: SxProps = {
-  ...editLayoutSx,
+  ...startLayoutSx,
   justifyContent: 'flex-end',
 };
 
@@ -47,6 +34,7 @@ const endLayoutSx: SxProps = {
  *
  * In the future we can revisit this decision in case Content fragments and *Void Fragments** are
  * interleaved - but for now, Void fragments will be grouped together at the top.
+ *   ^ 2025-11-20: NOTE: Lol, yes we did
  */
 export function VoidFragments(props: {
 
@@ -56,23 +44,18 @@ export function VoidFragments(props: {
   contentScaling: ContentScaling,
   uiComplexityMode: UIComplexityMode,
   messageRole: DMessageRole,
+  messagePendingIncomplete?: boolean,
 
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 
 }) {
 
-  const showDataStreamViz =
-    !Release.Features.LIGHTER_ANIMATIONS
-    && props.uiComplexityMode !== 'minimal'
-    && props.voidFragments.length === 1 && props.nonVoidFragmentsCount === 0
-    && isPlaceholderPart(props.voidFragments[0].part);
-
   const fromAssistant = props.messageRole === 'assistant';
 
+  return <Box aria-label='message void' sx={fromAssistant ? startLayoutSx : endLayoutSx}>
 
-  return <Box aria-label='message void' sx={showDataStreamViz ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
-
-    {props.voidFragments.map(({ fId, part }, index) => {
+    {props.voidFragments.map(({ fId, part }) => {
       switch (part.pt) {
 
         case 'annotations':
@@ -84,43 +67,15 @@ export function VoidFragments(props: {
             />
           );
 
-        case 'ma':
-          return (
-            <BlockPartModelAux
-              key={fId}
-              fragmentId={fId}
-              auxType={part.aType}
-              auxText={part.aText}
-              auxHasSignature={part.textSignature !== undefined}
-              auxRedactedDataCount={part.redactedData?.length ?? 0}
-              zenMode={props.uiComplexityMode === 'minimal'}
-              contentScaling={props.contentScaling}
-              isLastVoid={index === props.voidFragments.length - 1}
-              onFragmentReplace={props.onFragmentReplace}
-            />
-          );
-
-        case 'ph':
-          return (
-            <BlockPartPlaceholder
-              key={fId}
-              placeholderText={part.pText}
-              placeholderType={part.pType}
-              placeholderModelOp={part.modelOp}
-              placeholderAixControl={part.aixControl}
-              messageRole={props.messageRole}
-              contentScaling={props.contentScaling}
-              showAsItalic
-              showAsDataStreamViz={showDataStreamViz}
-            />
-          );
-
         case '_pt_sentinel':
           return null;
 
         default:
           // noinspection JSUnusedLocalSymbols
           const _exhaustiveVoidFragmentCheck: never = part;
+          // fallthrough - we don't handle these here anymore
+        case 'ma':
+        case 'ph':
           return (
             <ScaledTextBlockRenderer
               key={fId}

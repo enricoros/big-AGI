@@ -4,7 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
-import { DMessageContentFragment, DMessageTextPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
+import { DMessageTextPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // configuration
@@ -54,7 +55,7 @@ const optionSx: SxProps = {
 };
 
 
-export function optionsExtractFromFragments_dangerModifyFragment(enabled: boolean, fragments: DMessageContentFragment[]): { fragments: DMessageContentFragment[], options: string[], } {
+export function optionsExtractFromFragments_dangerModifyFragment(enabled: boolean, fragments: InterleavedFragment[]): { fragments: InterleavedFragment[], options: string[] } {
   if (enabled && fragments.length) {
     const fragment = fragments[fragments.length - 1];
     if (isTextContentFragment(fragment)) {

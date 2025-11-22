@@ -217,15 +217,15 @@ export function ChatMessage(props: {
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
 
   const {
+    annotationFragments,    // Web Citations, References (rendered at top)
+    interleavedFragments,   // Reasoning, Placeholders, Text, Code, Tools (interleaved in temporal order)
     imageAttachments,       // Stamp-sized Images
-    voidFragments,          // Model-Aux, Placeholders
-    contentFragments,       // Text (Markdown + Code + ... blocks), Errors, (large) Images
     nonImageAttachments,    // Document Attachments, likely the User dropped them in
     lastFragmentIsError,
   } = useFragmentBuckets(messageFragments);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
-  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, props.onMessageFragmentReplace);
+  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, interleavedFragments.filter(f => f.ft === 'content'), fromAssistant, props.onMessageFragmentReplace);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
   const isSpecialT2I = textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
@@ -579,9 +579,9 @@ export function ChatMessage(props: {
 
   const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && messageGenerator?.tokenStopReason !== 'out-of-tokens' && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
-  const { fragments: renderContentFragments, options: continuationOptions } = React.useMemo(() => {
-    return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, contentFragments);
-  }, [contentFragments, lookForOptions]);
+  const { fragments: renderInterleavedFragments, options: continuationOptions } = React.useMemo(() => {
+    return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, interleavedFragments);
+  }, [interleavedFragments, lookForOptions]);
 
 
   // style
@@ -773,20 +773,23 @@ export function ChatMessage(props: {
             />
           )}
 
-          {/* Void Fragments */}
-          {voidFragments.length >= 1 && (
+          {/* Annotation Fragments (absolute top: citations, references) */}
+          {annotationFragments.length >= 1 && (
             <VoidFragments
-              voidFragments={voidFragments}
-              nonVoidFragmentsCount={renderContentFragments.length}
+              voidFragments={annotationFragments}
+              nonVoidFragmentsCount={interleavedFragments.filter(f => f.ft === 'content').length}
               contentScaling={adjContentScaling}
               uiComplexityMode={uiComplexityMode}
               messageRole={messageRole}
+              messagePendingIncomplete={messagePendingIncomplete}
+              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
             />
           )}
 
-          {/* Content Fragments */}
+          {/* Interleaved Fragments (reasoning + content in temporal order) */}
           <ContentFragments
-            contentFragments={renderContentFragments}
+            contentFragments={renderInterleavedFragments}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={adjContentScaling}
@@ -794,6 +797,7 @@ export function ChatMessage(props: {
             fitScreen={props.fitScreen}
             isMobile={props.isMobile}
             messageRole={messageRole}
+            messagePendingIncomplete={messagePendingIncomplete}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showUnsafeHtmlCode={props.showUnsafeHtmlCode}

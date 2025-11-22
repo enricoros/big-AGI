@@ -170,7 +170,9 @@ export function BlockPartModelAnnotations(props: {
     return null;
 
   return (
-    <Box>
+    <Box
+      sx={{ mx: 1.5 }}
+    >
 
       {/* Row of favicons */}
       <Button

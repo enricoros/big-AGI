@@ -93,14 +93,28 @@ export namespace OpenAPI_Schema {
 
 export namespace AixWire_Parts {
 
+  /** Parts that come from the model shall inherit this, so they can echo-back vendor data */
+  const _BasePart_schema = z.object({
+
+    /** DMessageFragment.vendorState <- model-generated, vendor-specific opaque state (protocol continuity, not content) */
+    _vnd: z.object({
+      gemini: z.object({
+        thoughtSignature: z.string().optional(),
+      }).optional(),
+    }).optional(),
+    // _vnd: z.record(z.string(), z.unknown()).optional(),
+
+  });
+
+
   // User Input Parts
 
-  export const TextPart_schema = z.object({
+  export const TextPart_schema = _BasePart_schema.extend({
     pt: z.literal('text'),
     text: z.string(),
   });
 
-  export const InlineAudioPart_schema = z.object({
+  export const InlineAudioPart_schema = _BasePart_schema.extend({
     pt: z.literal('inline_audio'),
     /**
      * Minimal audio format support for browser compatibility:
@@ -116,7 +130,7 @@ export namespace AixWire_Parts {
   });
 
   // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than being referred to
-  export const InlineImagePart_schema = z.object({
+  export const InlineImagePart_schema = _BasePart_schema.extend({
     pt: z.literal('inline_image'),
     /**
      * The MIME type of the image.
@@ -177,7 +191,7 @@ export namespace AixWire_Parts {
     code: z.string(),
   });
 
-  export const ToolInvocationPart_schema = z.object({
+  export const ToolInvocationPart_schema = _BasePart_schema.extend({
     pt: z.literal('tool_invocation'),
     id: z.string(),
     invocation: z.discriminatedUnion('type', [
@@ -200,7 +214,7 @@ export namespace AixWire_Parts {
     // _variant: z.literal('gemini_auto_inline').optional(),
   });
 
-  export const ToolResponsePart_schema = z.object({
+  export const ToolResponsePart_schema = _BasePart_schema.extend({
     pt: z.literal('tool_response'),
     id: z.string(),
     response: z.discriminatedUnion('type', [
@@ -213,6 +227,7 @@ export namespace AixWire_Parts {
 
   // Model Auxiliary Part (for thinking blocks)
 
+  // NOTE: not a _BasePart_schema for now, may become if we put the vndAnt attributes there
   export const ModelAuxPart_schema = z.object({
     pt: z.literal('ma'),
     aType: z.literal('reasoning'),
@@ -418,6 +433,7 @@ export namespace AixWire_API {
     vndGeminiCodeExecution: z.enum(['auto']).optional(),
     vndGeminiComputerUse: z.enum(['browser']).optional(),
     vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
+    vndGeminiImageSize: z.enum(['1K', '2K', '4K']).optional(),
     vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(), // old param
@@ -655,7 +671,7 @@ export namespace AixWire_Particles {
 
   export type PartParticleOp =
     | { p: '❤' } // heart beat
-    | { p: 'tr_', _t: string, weak?: 'tag' } // reasoning text, incremental; could be a 'weak' detection, e.g. heuristic from '<think>' rather than API-provided
+    | { p: 'tr_', _t: string, weak?: 'tag', restart?: boolean } // reasoning text, incremental; could be a 'weak' detection, e.g. heuristic from '<think>' rather than API-provided
     | { p: 'trs', signature: string } // reasoning signature
     | { p: 'trr_', _data: string } // reasoning raw (or redacted) data
     // | { p: 'ii', mimeType: string, i_b64?: string /* never undefined */ }
@@ -669,6 +685,7 @@ export namespace AixWire_Particles {
     | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
     | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string } // inline image, complete
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
+    | { p: 'svs', vendor: string, state: Record<string, unknown> } // set vendor state - applies to the last emitted part (opaque protocol state)
     | { p: 'vp', text: string, mot: 'search-web' | 'gen-image' | 'code-exec' }; // void placeholder - temporary status text that gets wiped when real content arrives
 
 }

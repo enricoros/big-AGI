@@ -88,6 +88,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndGeminiCodeExecution',
     'llmVndGeminiComputerUse',
     'llmVndGeminiGoogleSearch',
+    'llmVndGeminiImageSize',
     'llmVndGeminiMediaResolution',
     'llmVndGeminiShowThoughts',
     'llmVndGeminiThinkingBudget',

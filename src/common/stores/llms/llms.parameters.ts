@@ -152,6 +152,14 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off
   } as const,
 
+  llmVndGeminiImageSize: { // [Gemini, 2025-11-20] Nano Banana launch
+    label: 'Image Size',
+    type: 'enum' as const,
+    description: 'Controls the resolution of generated images',
+    values: ['1K', '2K', '4K'] as const,
+    // No initial value - when undefined, the model decides the image size
+  } as const,
+
   llmVndGeminiMediaResolution: {
     label: 'Media Resolution',
     type: 'enum' as const,
@@ -164,7 +172,7 @@ export const DModelParameterRegistry = {
     label: 'Show Thoughts',
     type: 'boolean' as const,
     description: 'Show Gemini\'s reasoning process',
-    initialValue: true,
+    // initialValue: true, // no initial value
   } as const,
 
   llmVndGeminiThinkingBudget: {

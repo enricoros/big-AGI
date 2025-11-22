@@ -68,6 +68,13 @@ const _geminiAspectRatioOptions = [
   { value: '21:9', label: '21:9', description: 'Ultra wide' },
 ] as const;
 
+const _geminiImageSizeOptions = [
+  { value: _UNSPECIFIED, label: 'Default', description: '1K (default)' },
+  { value: '1K', label: '1K', description: 'Default' },
+  { value: '2K', label: '2K', description: '2K' },
+  { value: '4K', label: '4K', description: '4K' },
+] as const;
+
 const _geminiCodeExecutionOptions = [
   { value: 'auto', label: 'On', description: 'Enable code generation and execution' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -187,6 +194,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiAspectRatio,
     llmVndGeminiCodeExecution,
     llmVndGeminiGoogleSearch,
+    llmVndGeminiImageSize,
     llmVndGeminiMediaResolution,
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
@@ -353,6 +361,19 @@ export function LLMParametersEditor(props: {
     )}
 
 
+    {showParam('llmVndGeminiImageSize') && (
+      <FormSelectControl
+        title='Image Size'
+        tooltip='Controls the resolution of generated images'
+        value={llmVndGeminiImageSize ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiImageSize');
+          else onChangeParameter({ llmVndGeminiImageSize: value });
+        }}
+        options={_geminiImageSizeOptions}
+      />
+    )}
+
     {showParam('llmVndGeminiAspectRatio') && (
       <FormSelectControl
         title='Aspect Ratio'
@@ -366,10 +387,25 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+
+    {showParam('llmVndGeminiGoogleSearch') && (
+      <FormSelectControl
+        title='Google Search'
+        // tooltip='Enable Google Search grounding to ground responses in real-time web content. Optionally filter results by publication date.'
+        value={llmVndGeminiGoogleSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiGoogleSearch');
+          else onChangeParameter({ llmVndGeminiGoogleSearch: value });
+        }}
+        options={_geminiGoogleSearchOptions}
+      />
+    )}
+
+
     {showParam('llmVndGeminiShowThoughts') && (
       <FormSwitchControl
-        title='Show Chain of Thought'
-        description={`Displays Gemini\'s reasoning process`}
+        title='Show Reasoning'
+        description='Show chain of thoughts'
         checked={!!llmVndGeminiShowThoughts}
         onChange={checked => onChangeParameter({ llmVndGeminiShowThoughts: checked })}
       />
@@ -409,19 +445,6 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
-      />
-    )}
-
-    {showParam('llmVndGeminiGoogleSearch') && (
-      <FormSelectControl
-        title='Google Search'
-        // tooltip='Enable Google Search grounding to ground responses in real-time web content. Optionally filter results by publication date.'
-        value={llmVndGeminiGoogleSearch ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiGoogleSearch');
-          else onChangeParameter({ llmVndGeminiGoogleSearch: value });
-        }}
-        options={_geminiGoogleSearchOptions}
       />
     )}
 

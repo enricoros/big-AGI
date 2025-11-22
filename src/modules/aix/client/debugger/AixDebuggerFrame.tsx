@@ -21,7 +21,7 @@ const _styles = {
   } as const,
 
   requestCardText: {
-    whiteSpace: 'pre',
+    whiteSpace: 'pre-wrap',
   } as const,
 
   particleNorminal: {
@@ -66,7 +66,7 @@ export function AixDebuggerFrame(props: {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
       {/* Frame Header */}
-      <Box sx={{ fontSize: 'sm', display: 'grid', gridTemplateColumns: { xs: 'auto 1fr', md: 'auto 1fr auto 1fr' }, gap: 1, alignItems: 'center' }}>
+      <Box sx={{ fontSize: 'sm', display: 'grid', gridTemplateColumns: { xs: 'auto 1fr', md: 'auto auto auto auto' }, gap: 1, alignItems: 'center' }}>
         <Typography fontWeight='bold'>Request </Typography>
         <Typography fontWeight='bold'>{frame.id}</Typography>
         <div>Status:</div>
@@ -74,7 +74,7 @@ export function AixDebuggerFrame(props: {
         <div>Date</div>
         <div>{new Date(frame.timestamp).toLocaleString()}</div>
         <div>-&gt; URL:</div>
-        <Chip>{frame.url || 'No URL data available'}</Chip>
+        <Chip className='agi-ellipsize'>{frame.url || 'No URL data available'}</Chip>
         <div>Context:</div>
         <Chip>{frame.context.contextName}</Chip>
         <div>Reference:</div>
