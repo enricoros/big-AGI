@@ -3,6 +3,7 @@ import * as z from 'zod/v4';
 import { createServerDebugWireEvents, serverCapitalizeFirstLetter } from '~/server/wire';
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
+import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from './aix.consts';
 import { AixAPI_Access, AixAPI_Context_ChatGenerate, AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
 import { PerformanceProfiler } from '../dispatch/PerformanceProfiler';
 import { createChatGenerateDispatch, createChatGenerateResumeDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
@@ -12,15 +13,6 @@ import { executeChatGenerateWithRetry } from '../dispatch/chatGenerate/chatGener
 // -- Utilities ---
 
 export type AixDebugObject = ReturnType<typeof _createDebugConfig>;
-
-/**
- * Security - only allow certain operations in development builds (i.e. not in any production builds by default):
- *  1. dispatch Headers: hide sensitive data such as keys
- *  2. Performance profiling: visible in the AIX debugger when requested on development builds
- *  3. 'DEV_URL: ...' in error messages to show the problematic upstream URL
- *  4. onComment on SSE streams
- */
-export const AIX_SECURITY_ONLY_IN_DEV_BUILDS = process.env.NODE_ENV === 'development';
 
 /**
  * Production-allowed contexts for AIX inspector.
