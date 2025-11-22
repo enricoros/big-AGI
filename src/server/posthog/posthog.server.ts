@@ -1,22 +1,32 @@
 /**
  * PostHog server-side client for error tracking
  * Automatically uses the right implementation for Edge vs Node.js runtime
+ *
+ * NOTE: [server-client-safe] This file can be safely imported in client code - all functions become no-ops on the client side.
  */
-import { PostHog } from 'posthog-node';
-
 import { Release } from '~/common/app.release';
 
+// runtime detection: only load posthog-node on server
+const IS_SERVER = typeof window === 'undefined';
+let PostHog: any = null;
+if (IS_SERVER) {
+  try {
+    PostHog = require('posthog-node').PostHog;
+  } catch (e) {
+    console.warn('[PostHog] posthog-node not available:', e);
+  }
+}
 
-export const hasPostHogServer = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
+export const hasPostHogServer = IS_SERVER && !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
 
 // --- Singleton instance ---
 
 // Singleton instance - PostHog client handles batching internally
-let _posthogServer: PostHog | null = null;
+let _posthogServer: any = null;
 
-function _posthogServerSingleton(): PostHog | null {
-  if (!hasPostHogServer) return null;
+function _posthogServerSingleton(): any {
+  if (!hasPostHogServer || !PostHog) return null;
   if (_posthogServer) return _posthogServer;
   return _posthogServer = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
     host: 'https://us.i.posthog.com', // server exceptions host
