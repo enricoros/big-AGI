@@ -55,10 +55,10 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
       </ProviderSingleTab>
     </ProviderTheming>
 
-    {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
-    {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
     {hasPostHogAnalytics && <OptionalPostHogAnalytics />}
+    {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
+    {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
 
   </>;
 };
