@@ -1,6 +1,6 @@
 // import { createParser as createEventsourceParser, type EventSourceMessage, ParseError } from 'eventsource-parser';
 //
-// import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../api/aix.router';
+// import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../api/aix.consts';
 //
 // import type { AixDemuxers } from './stream.demuxers';
 //

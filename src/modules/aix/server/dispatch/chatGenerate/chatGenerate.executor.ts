@@ -2,7 +2,8 @@ import { createEmptyReadableStream, safeErrorString } from '~/server/wire';
 import { createRetryablePromise, RetryAttempt } from '~/server/trpc/trpc.fetchers.retrier';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { AIX_SECURITY_ONLY_IN_DEV_BUILDS, AixDebugObject } from '../../api/aix.router';
+import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.consts';
+import { AixDebugObject } from '../../api/aix.router';
 import { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import { AixDemuxers } from '../stream.demuxers';
