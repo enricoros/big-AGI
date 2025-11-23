@@ -17,13 +17,32 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   // get the access, assuming there's no client config and the server will do all
   const { service, vendor, transportAccess } = findServiceAccessOrThrow(serviceId);
 
+
+  // [CSF] Pre-load client-side executor if needed
+  let clientSideListModels: typeof import('./llm.client.direct-listModels').clientSideListModels | undefined;
+  if (!!transportAccess && typeof transportAccess === 'object' && (transportAccess as any).clientSideFetch)
+    try {
+      clientSideListModels = (await import('./llm.client.direct-listModels')).clientSideListModels;
+    } catch (error) {
+      throw new Error(`Direct model listing issue: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
+    }
+
   // fetch models
-  const data = await vendor.rpcUpdateModelsOrThrow(transportAccess);
+  let models: ModelDescriptionSchema[];
+
+  // LLMs [CSM] Direct Execution
+  if (clientSideListModels)
+    models = await clientSideListModels(transportAccess);
+
+  // LLMs tRPC Execution
+  else
+    models = (await vendor.rpcUpdateModelsOrThrow(transportAccess)).models;
+
 
   // update the global models store
   llmsStoreActions().setServiceLLMs(
     service.id,
-    data.models.map(model => _createDLLMFromModelDescription(model, service)),
+    models.map(model => _createDLLMFromModelDescription(model, service)),
     keepUserEdits,
     false,
   );
@@ -32,20 +51,20 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   hasGoogleAnalytics && sendGAEvent('event', 'app_models_updated', {
     app_models_source_id: service.id,
     app_models_source_label: service.label,
-    app_models_updated_count: data.models.length || 0,
+    app_models_updated_count: models.length || 0,
     app_models_vendor_id: vendor.id,
     app_models_vendor_label: vendor.name,
   });
 
   // return the fetched models
-  return data;
+  return { models };
 }
 
 const _fallbackInterfaces = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
 function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DModelsService): DLLM {
 
-  // null means unknown contenxt/output tokens
+  // null means unknown context/output tokens
   const contextTokens = d.contextWindow || null;
   const maxOutputTokens = d.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null);
   const llmResponseTokensRatio = d.maxCompletionTokens ? 1 : 1 / 4;
