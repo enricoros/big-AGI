@@ -20,6 +20,7 @@ import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } fro
 
 import { FlashRestore } from './BackupRestore';
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
+import { TypingMindImportModal } from '../data/typingmind/TypingMindImportModal';
 
 
 export type ImportConfig = { dir: 'import' };
@@ -43,6 +44,8 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
   const [chatGptSource, setChatGptSource] = React.useState('');
   const [importJson, setImportJson] = React.useState<string | null>(null);
   const [importOutcome, setImportOutcome] = React.useState<ImportedOutcome | null>(null);
+  const [typingMindModalOpen, setTypingMindModalOpen] = React.useState(false);
+  const [typingMindData, setTypingMindData] = React.useState<{ content: string; fileName: string } | null>(null);
 
   // derived state
   const isUrl = importMedia === 'link';
@@ -122,6 +125,32 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
     props.onClose();
   };
 
+  const handleTypingMindImport = () => {
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const content = await file.text();
+        setTypingMindData({ content, fileName: file.name });
+        setTypingMindModalOpen(true);
+      } catch (error) {
+        console.error('Failed to read file:', error);
+      }
+    };
+    input.click();
+  };
+
+  const handleTypingMindModalClose = () => {
+    setTypingMindModalOpen(false);
+    setTypingMindData(null);
+    props.onClose();
+  };
+
 
   return <>
 
@@ -147,6 +176,15 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
           onClick={handleChatGptToggleShown}
         >
           ChatGPT · Shared Link
+        </Button>
+      )}
+
+      {!chatGptEdit && (
+        <Button
+          variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+          onClick={handleTypingMindImport}
+        >
+          TypingMind · Export
         </Button>
       )}
 
@@ -192,6 +230,17 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
     {/* import outcome */}
     {!!importOutcome && <ImportOutcomeModal outcome={importOutcome} rawJson={importJson} onClose={handleImportOutcomeClosed} />}
+
+    {/* TypingMind import modal */}
+    {typingMindModalOpen && typingMindData && (
+      <TypingMindImportModal
+        open={typingMindModalOpen}
+        jsonContent={typingMindData.content}
+        fileName={typingMindData.fileName}
+        onClose={handleTypingMindModalClose}
+        onConversationActivate={props.onConversationActivate}
+      />
+    )}
 
   </>;
 }
