@@ -108,9 +108,9 @@ let nextConfig: NextConfig = {
   // },
 };
 
-// Validate environment variables, if set at build time. Will be actually read and used at runtime.
-import { verifyBuildTimeVars } from '~/server/env.server';
-verifyBuildTimeVars();
+// Validate environment variables at build time, if required. Server env vars will be actually read and used at runtime (cloud/edge).
+import { env as validateEnv } from '~/server/env.server';
+void validateEnv; // Triggers env validation - throws if required vars are missing
 
 // PostHog error reporting with source maps for production builds
 import { withPostHogConfig } from '@posthog/nextjs-config';
