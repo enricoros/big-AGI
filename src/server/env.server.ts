@@ -1,4 +1,12 @@
-// noinspection ES6PreferShortImport - because the build would not find this file with ~/...
+/**
+ * Server-side environment variables centralized access and validation.
+ * Replaced with env.client-mock.ts on client builds via webpack.
+ */
+// [server-side] throw immediately if imported on client side
+if (typeof window !== 'undefined')
+  throw new Error('[DEV] env.server: server module should never be imported on the client.');
+
+// noinspection ES6PreferShortImport - because this is included by `next.config.ts` and build would not find this file with ~/...
 import { createEnv } from '../modules/3rdparty/t3-env';
 import * as z from 'zod/v4';
 
