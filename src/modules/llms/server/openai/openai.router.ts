@@ -10,7 +10,7 @@ import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
 
-import { Brand } from '~/common/app.config';
+import { BaseProduct } from '~/common/app.release';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema, RequestAccessValues } from '../llm.server.types';
 import { azureOpenAIAccess } from './models/azure.models';
@@ -624,8 +624,8 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${orKey}`,
-          'HTTP-Referer': Brand.URIs.Home,
-          'X-Title': Brand.Title.Base,
+          'HTTP-Referer': BaseProduct.ProductURL,
+          'X-Title': BaseProduct.ProductName,
         },
         url: orHost + apiPath,
       };

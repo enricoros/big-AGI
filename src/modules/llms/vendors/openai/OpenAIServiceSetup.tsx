@@ -4,7 +4,7 @@ import { Alert } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
-import { Brand } from '~/common/app.config';
+import { BaseProduct } from '~/common/app.release';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -74,7 +74,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     {advanced.on && <FormTextField
       autoCompleteId='openai-org'
       title='Organization ID'
-      description={<Link level='body-sm' href={Brand.URIs.OpenRepo + '/issues/63'} target='_blank'>What is this</Link>}
+      description={<Link level='body-sm' href={BaseProduct.OpenSourceRepo + '/issues/63'} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
       value={oaiOrg}
       onChange={text => updateSettings({ oaiOrg: text })}
