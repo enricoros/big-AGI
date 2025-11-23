@@ -4,7 +4,7 @@ import { env } from '~/server/env.server';
 
 import packageJson from '../../../../../package.json';
 
-import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
@@ -90,7 +90,7 @@ const accessOnlySchema = z.object({
 export const llmGeminiRouter = createTRPCRouter({
 
   /* [Gemini] models.list = /v1beta/models */
-  listModels: publicProcedure
+  listModels: edgeProcedure
     .input(accessOnlySchema)
     .output(ListModelsResponse_schema)
     .query(async ({ input, signal }) => {

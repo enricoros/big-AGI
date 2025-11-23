@@ -1,7 +1,7 @@
 import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
-import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.server';
 import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
@@ -125,7 +125,7 @@ const listPullableOutputSchema = z.object({
 export const llmOllamaRouter = createTRPCRouter({
 
   /* Ollama: models that can be pulled */
-  adminListPullable: publicProcedure
+  adminListPullable: edgeProcedure
     .input(accessOnlySchema)
     .output(listPullableOutputSchema)
     .query(async ({}) => {
@@ -143,7 +143,7 @@ export const llmOllamaRouter = createTRPCRouter({
     }),
 
   /* Ollama: pull a model */
-  adminPull: publicProcedure
+  adminPull: edgeProcedure
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
 
@@ -166,7 +166,7 @@ export const llmOllamaRouter = createTRPCRouter({
     }),
 
   /* Ollama: delete a model */
-  adminDelete: publicProcedure
+  adminDelete: edgeProcedure
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
       const { headers, url } = ollamaAccess(input.access, '/api/delete');
@@ -177,7 +177,7 @@ export const llmOllamaRouter = createTRPCRouter({
 
 
   /* Ollama: List the Models available */
-  listModels: publicProcedure
+  listModels: edgeProcedure
     .input(accessOnlySchema)
     .output(ListModelsResponse_schema)
     .query(async ({ input, signal }) => {
