@@ -7,6 +7,7 @@ import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 interface DOllamaServiceSettings {
   ollamaHost: string;
   ollamaJson: boolean;
+  ollamaCSF?: boolean;
 }
 
 
@@ -20,8 +21,14 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   hasServerConfigKey: 'hasLlmOllama',
 
   // functions
+  initializeSetup: () => ({
+    ollamaHost: '',
+    ollamaJson: false,
+    // ollamaCSF: true, // eventually
+  }),
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({
     dialect: 'ollama',
+    clientSideFetch: !!(partialSetup?.ollamaHost && partialSetup?.ollamaCSF),
     ollamaHost: partialSetup?.ollamaHost || '',
     ollamaJson: partialSetup?.ollamaJson || false,
   }),
