@@ -1,3 +1,5 @@
+import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
+
 import { ModelVendorAlibaba } from './alibaba/alibaba.vendor';
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
@@ -67,7 +69,7 @@ export function findAllModelVendors(): IModelVendor[] {
   return modelVendors;
 }
 
-export function findModelVendor<TServiceSettings extends object = {}, TAccess = unknown>(
+export function findModelVendor<TServiceSettings extends object = {}, TAccess = AixAPI_Access>(
   vendorId?: ModelVendorId,
 ): IModelVendor<TServiceSettings, TAccess> | null {
   return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TServiceSettings, TAccess>) ?? null : null;
