@@ -34,7 +34,7 @@ type VendorCategory = 'popular' | 'local';
 
 interface WizardProvider {
   cat: VendorCategory,
-  vendor: IModelVendor<Record<string, any>, Record<string, any>>,
+  vendor: IModelVendor<Record<string, any>>,
   settingsKey: string,
   omit?: boolean,
 }
