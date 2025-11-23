@@ -164,6 +164,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
 
 export const anthropicAccessSchema = z.object({
   dialect: z.literal('anthropic'),
+  clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   anthropicKey: z.string().trim(),
   anthropicHost: z.string().trim().nullable(),
   heliconeKey: z.string().trim().nullable(),
