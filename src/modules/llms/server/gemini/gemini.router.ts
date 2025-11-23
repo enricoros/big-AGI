@@ -71,6 +71,7 @@ async function geminiPOST<TOut extends object, TPostBody extends object>(access:
 
 export const geminiAccessSchema = z.object({
   dialect: z.enum(['gemini']),
+  clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   geminiKey: z.string(),
   geminiHost: z.string(),
   minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold_enum,
