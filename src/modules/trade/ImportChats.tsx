@@ -11,11 +11,14 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { createDConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, createDMessageFromFragments } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
 import type { ChatGptSharedChatSchema } from './server/chatgpt';
+import type { TypingMindExportSchema, TypingMindChatSchema } from './server/typingmind';
+import { extractMessageText } from './server/typingmind';
 import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } from './trade.client';
 
 import { FlashRestore } from './BackupRestore';
@@ -41,6 +44,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
   const [chatGptEdit, setChatGptEdit] = React.useState(false);
   const [chatGptUrl, setChatGptUrl] = React.useState('');
   const [chatGptSource, setChatGptSource] = React.useState('');
+  const [typingMindEdit, setTypingMindEdit] = React.useState(false);
   const [importJson, setImportJson] = React.useState<string | null>(null);
   const [importOutcome, setImportOutcome] = React.useState<ImportedOutcome | null>(null);
 
@@ -122,6 +126,72 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
     props.onClose();
   };
 
+  const handleTypingMindToggleShown = () => setTypingMindEdit(!typingMindEdit);
+
+  const handleTypingMindImport = async () => {
+    setImportJson(null);
+
+    // user selects a file
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,application/json';
+    fileInput.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
+
+      try {
+        const jsonContent = await file.text();
+
+        // parse and validate with tRPC endpoint
+        const data: TypingMindExportSchema = await apiAsyncNode.trade.importTypingMindExport.mutate({ jsonContent });
+
+        // save raw JSON for inspection
+        setImportJson(jsonContent);
+
+        // convert chats to Big-AGI conversations
+        const chats = data.data.chats || [];
+
+        if (chats.length === 0) {
+          outcome.conversations.push({ fileName: file.name, success: false, error: 'No chats found in export file' });
+          setImportOutcome(outcome);
+          return;
+        }
+
+        for (const chat of chats) {
+          try {
+            const conversation = convertTypingMindChatToConversation(chat);
+
+            // import the conversation
+            useChatStore.getState().importConversation(conversation, false);
+
+            // set as activation candidate
+            outcome.activateConversationId = conversation.id;
+            outcome.conversations.push({ success: true, fileName: file.name, conversation });
+          } catch (error) {
+            outcome.conversations.push({
+              fileName: `${file.name} (${chat.chatTitle || chat.chatID})`,
+              success: false,
+              error: (error as any)?.message || error?.toString() || 'unknown error'
+            });
+          }
+        }
+
+        // activate the last imported conversation
+        if (outcome.activateConversationId)
+          props.onConversationActivate(outcome.activateConversationId);
+
+      } catch (error) {
+        outcome.conversations.push({ fileName: file.name, success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
+      }
+
+      setImportOutcome(outcome);
+    };
+
+    fileInput.click();
+  };
+
 
   return <>
 
@@ -149,6 +219,13 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
           ChatGPT · Shared Link
         </Button>
       )}
+
+      <Button
+        variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={handleTypingMindImport}
+      >
+        TypingMind · JSON
+      </Button>
 
       {/* Insert to Restore a Flash */}
       <FlashRestore unlockRestore={true} />
@@ -194,4 +271,58 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
     {!!importOutcome && <ImportOutcomeModal outcome={importOutcome} rawJson={importJson} onClose={handleImportOutcomeClosed} />}
 
   </>;
+}
+
+
+/**
+ * Convert a TypingMind chat to a Big-AGI DConversation
+ */
+function convertTypingMindChatToConversation(chat: TypingMindChatSchema): DConversation {
+  const conversation = createDConversation();
+
+  // preserve the original ID if valid
+  conversation.id = chat.chatID;
+
+  // set title
+  conversation.autoTitle = chat.chatTitle || 'Untitled Chat';
+
+  // parse timestamps
+  conversation.created = new Date(chat.createdAt).getTime();
+  conversation.updated = new Date(chat.updatedAt).getTime();
+
+  // convert messages
+  conversation.messages = chat.messages
+    .map((tmMsg): DMessage | null => {
+      try {
+        // extract text from content (handles both string and array formats)
+        const messageText = extractMessageText(tmMsg.content);
+
+        if (!messageText || messageText.trim().length === 0)
+          return null;
+
+        // create message with text fragment
+        const message = createDMessageFromFragments(
+          tmMsg.role,
+          [createTextContentFragment(messageText)]
+        );
+
+        // preserve original ID
+        message.id = tmMsg.uuid;
+
+        // set timestamp
+        if (tmMsg.createdAt)
+          message.created = new Date(tmMsg.createdAt).getTime();
+
+        // mark as complete
+        message.updated = message.created;
+
+        return message;
+      } catch (error) {
+        console.warn('Failed to convert TypingMind message:', error, tmMsg);
+        return null;
+      }
+    })
+    .filter((msg): msg is DMessage => msg !== null);
+
+  return conversation;
 }
