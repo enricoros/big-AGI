@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
-import { env } from '~/server/env';
+import { env } from '~/server/env.server';
 
 import packageJson from '../../../../../package.json';
 
