@@ -136,12 +136,3 @@ export const env = createEnv({
   },
 });
 
-/**
- * Dummy function to validate any build-time environment variables.
- * Does nothing really, but forces the creation of the `env` object.
- *
- * At runtime the `env` object is actually used.
- */
-export function verifyBuildTimeVars(): number {
-  return Object.keys(env).length;
-}
