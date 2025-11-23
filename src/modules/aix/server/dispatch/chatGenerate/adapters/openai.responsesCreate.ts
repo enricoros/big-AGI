@@ -1,4 +1,4 @@
-import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';

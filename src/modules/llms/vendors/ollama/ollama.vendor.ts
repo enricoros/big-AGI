@@ -1,7 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
+import type { OllamaAccessSchema } from '../../server/ollama/ollama.access';
 
 
 interface DOllamaServiceSettings {

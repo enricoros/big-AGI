@@ -1,6 +1,6 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
-import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
+import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.access';
 import type { IModelVendor } from '../IModelVendor';
 
 

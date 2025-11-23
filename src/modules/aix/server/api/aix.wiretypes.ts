@@ -3,10 +3,10 @@ import * as z from 'zod/v4';
 // Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
-import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.router';
-import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.router';
-import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.router';
-import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
+import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
+import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
+import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.access';
+import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 
 
 //
