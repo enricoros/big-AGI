@@ -2,7 +2,7 @@
  * Server-side environment variables centralized access and validation.
  * Replaced with env.client-mock.ts on client builds via webpack.
  */
-// [server-side] throw immediately if imported on client side
+// [client-side] throw immediately if imported
 if (typeof window !== 'undefined')
   throw new Error('[DEV] env.server: server module should never be imported on the client.');
 

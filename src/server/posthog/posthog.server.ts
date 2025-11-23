@@ -1,7 +1,11 @@
 /**
  * PostHog server-side client for error tracking
- * Automatically uses the right implementation for Edge vs Node.js runtime
+ * Replaced with posthog.client-mock.ts on client builds via webpack.
  */
+// [client-side] throw immediately if imported
+if (typeof window !== 'undefined')
+  throw new Error('[DEV] posthog.server: server module should never be imported on the client.');
+
 import { PostHog } from 'posthog-node';
 
 import { Release } from '~/common/app.release';

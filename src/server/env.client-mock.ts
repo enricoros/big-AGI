@@ -6,7 +6,9 @@
 if (typeof window === 'undefined')
   throw new Error('[DEV] env.client-mock: client module should never be imported on the server.');
 
-// [client-side] stub exports matching env.server.ts interface
+
+// -- [client-side] stub exports matching env.server.ts interface --
+
 export const env = new Proxy({} as any, {
 
   get(_target, prop) {
