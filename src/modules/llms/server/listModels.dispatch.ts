@@ -5,7 +5,6 @@ import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
-import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
 
@@ -25,7 +24,8 @@ import { ollamaAccess } from './ollama/ollama.access';
 import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/ollama.wiretypes';
 
 // protocol: OpenAI-compatible
-import { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
+import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
+import { openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
@@ -37,7 +37,6 @@ import { lmStudioModelToModelDescription } from './openai/models/lmstudio.models
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
-import { openAIAccess } from './openai/openai.access';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './openai/models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openaiDevCheckForModelsOverlap_DEV, openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './openai/models/openai.models';
@@ -69,6 +68,13 @@ export async function listModelsRunDispatch(access: AixAPI_Access, signal?: Abor
   const wireModels = await dispatch.fetchModels();
   return dispatch.convertToDescriptions(wireModels);
 }
+
+
+// stub to reduce dependencies - either server/client or both
+function _capitalize(s: string): string {
+  return s?.length ? (s.charAt(0).toUpperCase() + s.slice(1)) : s;
+}
+
 
 /**
  * Specializes to the correct vendor a request for listing models.
@@ -208,7 +214,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
             const [modelName, modelTag] = model.name.split(':');
 
             // pretty label and description
-            const label = serverCapitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` (${modelTag})` : '');
+            const label = _capitalize(modelName) + ((modelTag && modelTag !== 'latest') ? ` (${modelTag})` : '');
             const baseModel = OLLAMA_BASE_MODELS[modelName] ?? {};
             let description = ''; // baseModel.description || 'Model unknown'; // REMOVED description - bloated and not used by nobody
 
@@ -300,7 +306,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         // [OpenAI-compatible dialects]: fetch openAI-style /v1/models API
         fetchModels: async () => {
           const { headers, url } = openAIAccess(access, null, '/v1/models');
-          return fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: `OpenAI/${serverCapitalizeFirstLetter(dialect)}`, signal });
+          return fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: `OpenAI/${_capitalize(dialect)}`, signal });
         },
 
         // OpenAI models conversions: dependent on the dialect
