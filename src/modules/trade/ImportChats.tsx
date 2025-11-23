@@ -16,6 +16,8 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
 import type { ChatGptSharedChatSchema } from './server/chatgpt';
+import type { TypingMindChatSchema, TypingMindExportSchema } from './server/typingmind';
+import { extractMessageText } from './server/typingmind';
 import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } from './trade.client';
 
 import { FlashRestore } from './BackupRestore';
@@ -30,9 +32,66 @@ const chatGptMedia: FormRadioOption<'source' | 'link'>[] = [
   { label: 'Page Source', value: 'source' },
 ];
 
+
+/**
+ * Convert a TypingMind chat to a Big-AGI conversation
+ */
+function convertTypingMindChatToConversation(chat: TypingMindChatSchema) {
+  const conversation = createDConversation();
+
+  // Use chat ID if available
+  if (chat.chatID || chat.id)
+    conversation.id = (chat.chatID || chat.id) as DConversationId;
+
+  // Set title
+  conversation.autoTitle = chat.chatTitle || chat.preview || undefined;
+
+  // Set timestamps (convert ISO to Unix ms)
+  if (chat.createdAt) {
+    const created = new Date(chat.createdAt).getTime();
+    if (!isNaN(created))
+      conversation.created = created;
+  }
+  if (chat.updatedAt) {
+    const updated = new Date(chat.updatedAt).getTime();
+    if (!isNaN(updated))
+      conversation.updated = updated;
+  }
+
+  // Convert messages
+  const messages = chat.messages || [];
+  conversation.messages = messages
+    .map(msg => {
+      const role = msg.role;
+      if (role !== 'user' && role !== 'assistant') return null;
+
+      const text = extractMessageText(msg.content);
+      if (!text || text.length === 0) return null;
+
+      const dMessage = createDMessageTextContent(role, text);
+
+      // Preserve message ID if available
+      if (msg.uuid)
+        dMessage.id = msg.uuid;
+
+      // Set timestamp
+      if (msg.createdAt) {
+        const created = new Date(msg.createdAt).getTime();
+        if (!isNaN(created))
+          dMessage.created = created;
+      }
+
+      return dMessage;
+    })
+    .filter(msg => !!msg) as DMessage[];
+
+  return conversation;
+}
+
+
 /**
  * Components and functionality to import conversations
- * Supports our own JSON files, and ChatGPT Share Links
+ * Supports our own JSON files, ChatGPT Share Links, and TypingMind exports
  */
 export function ImportChats(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
 
@@ -59,6 +118,62 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
     // show the outcome of the import
     setImportOutcome(outcome);
+  };
+
+
+  const handleTypingMindImport = async () => {
+    // Open file picker for JSON
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
+
+      try {
+        // Read file content
+        const jsonString = await file.text();
+
+        // Parse via tRPC
+        const exportData = await apiAsyncNode.trade.importTypingMindExport.mutate({ jsonExport: jsonString });
+
+        // Convert chats to conversations
+        const chats = exportData?.data?.chats || [];
+        if (chats.length === 0) {
+          outcome.conversations.push({ fileName: file.name, success: false, error: 'No chats found in export' });
+          setImportOutcome(outcome);
+          return;
+        }
+
+        // Import each chat
+        for (const chat of chats) {
+          try {
+            const conversation = convertTypingMindChatToConversation(chat);
+            if (conversation.messages.length >= 1) {
+              useChatStore.getState().importConversation(conversation, false);
+              outcome.conversations.push({ success: true, fileName: chat.chatTitle || chat.chatID || 'Untitled', conversation });
+              outcome.activateConversationId = conversation.id; // Last imported will be activated
+            } else {
+              outcome.conversations.push({ success: false, fileName: chat.chatTitle || chat.chatID || 'Untitled', error: 'No messages found' });
+            }
+          } catch (error) {
+            outcome.conversations.push({ success: false, fileName: chat.chatTitle || chat.chatID || 'Untitled', error: (error as any)?.message || error?.toString() || 'unknown error' });
+          }
+        }
+
+        // Activate the last imported conversation
+        if (outcome.activateConversationId)
+          props.onConversationActivate(outcome.activateConversationId);
+
+      } catch (error) {
+        outcome.conversations.push({ fileName: file.name, success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
+      }
+
+      setImportOutcome(outcome);
+    };
+    input.click();
   };
 
 
@@ -139,6 +254,13 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
           {Brand.Title.Base} · JSON
         </Button>
       </GoodTooltip>
+
+      <Button
+        variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={handleTypingMindImport}
+      >
+        TypingMind · Export
+      </Button>
 
       {!chatGptEdit && (
         <Button

@@ -6,6 +6,7 @@ import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
 import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure, storageUpdateDeletionKeyProcedure } from './link';
+import { typingMindExportSchema, typingMindParseExport } from './typingmind';
 
 
 export const importChatGptShareInputSchema = z.union([
@@ -51,6 +52,14 @@ export const tradeRouter = createTRPCRouter({
         data: data.props.pageProps.serverResponse.data,
         conversationId: data.props.pageProps.sharedConversationId,
       };
+    }),
+
+  /** TypingMind Export Importer */
+  importTypingMindExport: publicProcedure
+    .input(z.object({ jsonExport: z.string() }))
+    .output(typingMindExportSchema)
+    .mutation(async ({ input }) => {
+      return typingMindParseExport(input.jsonExport);
     }),
 
   /**
