@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import type { WebpackConfigContext } from 'next/dist/server/config-shared';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
@@ -47,7 +48,7 @@ let nextConfig: NextConfig = {
   // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
   serverExternalPackages: ['puppeteer-core'],
 
-  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+  webpack: (config: any, { isServer, webpack /*, dev, nextRuntime*/ }: WebpackConfigContext) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
@@ -57,8 +58,28 @@ let nextConfig: NextConfig = {
       layers: true,
     };
 
-    // fix warnings for async functions in the browser (https://github.com/vercel/next.js/issues/64792)
+    // client-side bundling
     if (!isServer) {
+      /**
+       * AIX client-side
+       * We replace certain server-only modules with client-side mocks, to reuse the exact same imports
+       * while avoiding importing server-only code which would break the build or break at runtime.
+       */
+      const serverToClientMocks: ReadonlyArray<[RegExp, string]> = [
+        [/\/posthog\.server/, '/posthog.client-mock'],
+        [/\/env\.server/, '/env.client-mock'],
+      ];
+      config.plugins = [
+        ...config.plugins,
+        ...serverToClientMocks.map(([pattern, replacement]) =>
+          new webpack.NormalModuleReplacementPlugin(pattern, (resource: any) => {
+            // console.log(' 🧠 [WEBPACK REPLACEMENT]:', resource.request, '->', resource.request.replace(pattern, replacement));
+            resource.request = resource.request.replace(pattern, replacement);
+          }),
+        ),
+      ];
+
+      // cosmetic: fix warnings for (absent!) top-level awaits in the browser (https://github.com/vercel/next.js/issues/64792)
       config.output.environment = { ...config.output.environment, asyncFunction: true };
     }
 
