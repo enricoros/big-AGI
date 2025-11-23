@@ -502,6 +502,8 @@ export namespace AixWire_API {
       'aifn-image-caption',       // generating image captions - attachmentId
       'beam-gather',              // fusing beam rays - fusionId
       'beam-scatter',             // scattering beam rays - rayId
+      'beam-council-ranking',     // council peer ranking - rayId
+      'beam-council-chairman',    // council chairman synthesis - 'chairman'
       'call',                     // having a phone conversation - messageId of the first message
       'conversation',             // chatting with a persona - conversationId
       'persona-extract',          // extracting a persona from texts - chainId

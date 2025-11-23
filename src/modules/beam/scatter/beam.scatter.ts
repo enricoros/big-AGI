@@ -163,6 +163,9 @@ interface ScatterStateSlice {
   isScattering: boolean; // true if any ray is scattering at the moment
   raysReady: number;     // 0, or number of the rays that are ready
 
+  // council voting
+  isCouncilActive: boolean;
+
 }
 
 export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => {
@@ -176,6 +179,7 @@ export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => 
 
     isScattering: false,
     raysReady: 0,
+    isCouncilActive: false,
   };
 };
 
@@ -191,6 +195,9 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   rayToggleScattering: (rayId: BRayId) => void;
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
+
+  // council actions
+  setCouncilActive: (active: boolean) => void;
 
   _storeLastScatterConfig: () => void;
   _syncRaysStateToScatter: () => void;
@@ -352,6 +359,11 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
         : ray,
       ),
     })),
+
+  setCouncilActive: (active: boolean) =>
+    _set({
+      isCouncilActive: active,
+    }),
 
   _storeLastScatterConfig: () => {
     updateBeamLastConfig({

@@ -5,12 +5,14 @@ import { Box, Button } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
 import { BeamCard } from '../BeamCard';
 import { SCATTER_RAY_MAX, SCATTER_RAY_MIN } from '../beam.config';
 
 import { BeamRay } from './BeamRay';
+import { BeamCouncilView } from '../gather/council/BeamCouncilView';
 
 
 const rayGridDesktopSx: SxProps = {
@@ -39,6 +41,24 @@ export function BeamRayGrid(props: {
 }) {
 
   const raysCount = props.rayIds.length;
+
+  // Council voting state
+  const [isCouncilActive, setIsCouncilActive] = React.useState(false);
+
+  // Check if council voting is available (need at least 2 completed rays)
+  const rays = props.beamStore.getState().rays;
+  const completedRays = rays.filter(r => r.status === 'success');
+  const canRunCouncil = completedRays.length >= 2;
+
+  const handleCouncilStart = () => {
+    setIsCouncilActive(true);
+    props.beamStore.getState().setCouncilActive(true);
+  };
+
+  const handleCouncilClose = () => {
+    setIsCouncilActive(false);
+    props.beamStore.getState().setCouncilActive(false);
+  };
 
   return (
     <Box sx={props.isMobile ? rayGridMobileSx : rayGridDesktopSx}>
@@ -88,6 +108,33 @@ export function BeamRayGrid(props: {
             Use {props.showRaysOps == 2 ? 'both' : 'all ' + props.showRaysOps} messages
           </Button>
         </Box>
+      )}
+
+      {/* Council Voting Button */}
+      {canRunCouncil && !isCouncilActive && (
+        <Box sx={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Button
+            fullWidth
+            variant='outlined'
+            color='primary'
+            onClick={handleCouncilStart}
+            startDecorator={<HowToVoteIcon />}
+            sx={{
+              backgroundColor: 'background.surface',
+              '&:hover': { backgroundColor: 'background.popup' },
+            }}
+          >
+            🗳️ Run Council Vote
+          </Button>
+        </Box>
+      )}
+
+      {/* Council View */}
+      {isCouncilActive && (
+        <BeamCouncilView
+          beamStore={props.beamStore}
+          onClose={handleCouncilClose}
+        />
       )}
 
       {/*/!* Takes a full row *!/*/}
