@@ -18,6 +18,7 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOpenAI } from './openai.vendor';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 
 
 // avoid repeating it all over
@@ -34,7 +35,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
-  const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
+  const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
@@ -104,6 +105,14 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       checked={moderationCheck}
       onChange={on => updateSettings({ moderationCheck: on })}
     />}
+
+    {advanced.on && <SetupFormClientSideToggle
+      visible={!!oaiHost || !!oaiKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ oaiCSF: on })}
+      helpText="Fetch models and make requests directly to OpenAI's Responses / Completions and List Models API using your browser instead of through the server."
+    />}
+
 
     <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />
 
