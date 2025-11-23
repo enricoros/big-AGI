@@ -10,6 +10,7 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { asValidURL } from '~/common/util/urlUtils';
 
@@ -30,7 +31,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOllama);
 
   // derived state
-  const { ollamaHost, ollamaJson } = serviceAccess;
+  const { clientSideFetch, ollamaHost, ollamaJson } = serviceAccess;
 
   const hostValid = !!asValidURL(ollamaHost);
   const hostError = !!ollamaHost && !hostValid;
@@ -75,6 +76,13 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
         updateSettings({ ollamaJson: on });
         refetch();
       }}
+    />
+
+    <SetupFormClientSideToggle
+      visible={true}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ ollamaCSF: on })}
+      helpText="Fetch models and make requests directly from your local Ollama instance using the browser. Recommended for local setups."
     />
 
     <SetupFormRefetchButton
