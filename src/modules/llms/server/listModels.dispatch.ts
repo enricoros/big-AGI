@@ -12,16 +12,16 @@ import type { ModelDescriptionSchema } from './llm.server.types';
 
 // protocol: Anthropic
 import { AnthropicWire_API_Models_List, hardcodedAnthropicModels, hardcodedAnthropicVariants, llmsAntCreatePlaceholderModel, llmsAntDevCheckForObsoletedModels_DEV, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
-import { anthropicAccess } from './anthropic/anthropic.router';
+import { anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Gemini
 import { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
-import { geminiAccess } from './gemini/gemini.router';
+import { geminiAccess } from './gemini/gemini.access';
 import { geminiDevCheckForParserMisses_DEV, geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini/gemini.models';
 
 // protocol: Ollama
 import { OLLAMA_BASE_MODELS } from './ollama/ollama.models';
-import { ollamaAccess } from './ollama/ollama.router';
+import { ollamaAccess } from './ollama/ollama.access';
 import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/ollama.wiretypes';
 
 // protocol: OpenAI-compatible
@@ -37,7 +37,7 @@ import { lmStudioModelToModelDescription } from './openai/models/lmstudio.models
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
-import { openAIAccess } from './openai/openai.router';
+import { openAIAccess } from './openai/openai.access';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './openai/models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openaiDevCheckForModelsOverlap_DEV, openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './openai/models/openai.models';

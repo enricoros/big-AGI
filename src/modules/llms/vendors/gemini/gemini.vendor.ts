@@ -1,7 +1,8 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
-import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
 import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+
+import type { GeminiAccessSchema } from '../../server/gemini/gemini.access';
 import type { IModelVendor } from '../IModelVendor';
 
 

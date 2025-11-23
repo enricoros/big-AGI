@@ -11,7 +11,7 @@ import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
-import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 
 
 function ListItemSwitch(props: { title: string, checked: boolean, onChange: (checked: boolean) => void }) {

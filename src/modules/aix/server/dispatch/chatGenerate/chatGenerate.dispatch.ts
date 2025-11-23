@@ -1,7 +1,7 @@
-import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.router';
-import { geminiAccess } from '~/modules/llms/server/gemini/gemini.router';
-import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.router';
-import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
+import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
+import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
+import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
+import { openAIAccess } from '~/modules/llms/server/openai/openai.access';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
