@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, FormControl, Input, Sheet, Textarea, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 import { Brand } from '~/common/app.config';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
@@ -20,6 +21,7 @@ import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } fro
 
 import { FlashRestore } from './BackupRestore';
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
+import { DataImportModal } from '~/modules/data/ui/DataImportModal';
 
 
 export type ImportConfig = { dir: 'import' };
@@ -43,6 +45,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
   const [chatGptSource, setChatGptSource] = React.useState('');
   const [importJson, setImportJson] = React.useState<string | null>(null);
   const [importOutcome, setImportOutcome] = React.useState<ImportedOutcome | null>(null);
+  const [typingMindModalOpen, setTypingMindModalOpen] = React.useState(false);
 
   // derived state
   const isUrl = importMedia === 'link';
@@ -150,6 +153,13 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         </Button>
       )}
 
+      <Button
+        variant='soft' endDecorator={<CloudUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={() => setTypingMindModalOpen(true)}
+      >
+        TypingMind · Export
+      </Button>
+
       {/* Insert to Restore a Flash */}
       <FlashRestore unlockRestore={true} />
 
@@ -192,6 +202,15 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
     {/* import outcome */}
     {!!importOutcome && <ImportOutcomeModal outcome={importOutcome} rawJson={importJson} onClose={handleImportOutcomeClosed} />}
+
+    {/* TypingMind import modal */}
+    <DataImportModal
+      vendorId='typingmind'
+      vendorLabel='TypingMind'
+      open={typingMindModalOpen}
+      onConversationActivate={props.onConversationActivate}
+      onClose={() => setTypingMindModalOpen(false)}
+    />
 
   </>;
 }
