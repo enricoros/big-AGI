@@ -13,6 +13,7 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -35,7 +36,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   const { autoVndAntBreakpoints, setAutoVndAntBreakpoints } = useChatAutoAI();
 
   // derived state
-  const { anthropicKey, anthropicHost, heliconeKey } = serviceAccess;
+  const { anthropicKey, anthropicHost, clientSideFetch, heliconeKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   const keyValid = isValidAnthropicApiKey(anthropicKey);
@@ -103,6 +104,13 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
       value={heliconeKey || ''}
       onChange={text => updateSettings({ heliconeKey: text })}
+    />}
+
+    {advanced.on && <SetupFormClientSideToggle
+      visible={!!anthropicKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ anthropicCSF: on })}
+      helpText="Fetch models and make requests directly to Anthropic's API using your browser instead of through the server. Useful for bypassing server limitations or ensuring requests use your API key directly."
     />}
 
     {!!heliconeKey && <Alert variant='soft' color='success'>

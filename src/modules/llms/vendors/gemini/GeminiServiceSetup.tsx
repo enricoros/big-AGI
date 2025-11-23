@@ -10,6 +10,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -43,7 +44,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { geminiKey, geminiHost, minSafetyLevel } = serviceAccess;
+  const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel} = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
@@ -102,6 +103,13 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder={`https://generativelanguage.googleapis.com`}
       value={geminiHost}
       onChange={text => updateSettings({ geminiHost: text })}
+    />}
+
+    {advanced.on && <SetupFormClientSideToggle
+      visible={!!geminiKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ geminiCSF: on })}
+      helpText="Fetch models and make requests directly to Google's Gemini API using your browser instead of through the server."
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
