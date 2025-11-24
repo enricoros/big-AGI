@@ -74,9 +74,9 @@ export const NewsItems: NewsItem[] = [
   {
     versionCode: '2.0.1',
     versionName: 'Heavy Critters',
-    versionDate: new Date('2025-11-24T20:00:00Z'),
+    versionDate: new Date('2025-11-24T23:30:00Z'),
     items: [
-      { text: <>New: <B>Gemini 3 Pro</B> with code exec, <B>Nano Banana Pro</B>, <B>Grok 4.1</B>, <B>GPT-5.1</B>, <B>Kimi K2</B></> },
+      { text: <>New: <B>Opus 4.5</B>, <B>Gemini 3 Pro</B>, <B>Nano Banana Pro</B>, <B>Grok 4.1</B>, <B>GPT-5.1</B>, <B>Kimi K2</B></> },
       { text: <><B>Image Generation</B> with Azure and LocalAI providers, in addition to OpenAI</> },
       { text: <>Enhanced <B>OpenRouter</B> integration with auto-capabilities and reasoning</> },
       { text: <>Call transcripts, generate persona images, search button in beams</> },
