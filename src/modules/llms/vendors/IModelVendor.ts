@@ -19,6 +19,10 @@ export interface IModelVendor<TServiceSettings extends Record<string, any> = {},
   readonly hasServerConfigFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
   readonly hasServerConfigKey?: keyof BackendCapabilities;
 
+  /// client-side-fetch ///
+  readonly csfKey?: string; // was keyof TServiceSettings, but caused TS troubles
+  readonly csfAvailable?: (setup?: Partial<TServiceSettings>) => boolean; // undefined: not even, false: conditions not met
+
   /// abstraction interface ///
 
   initializeSetup?(): TServiceSettings;

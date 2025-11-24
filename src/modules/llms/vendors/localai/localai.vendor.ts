@@ -23,6 +23,10 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
     return backendCapabilities.hasLlmLocalAIHost || backendCapabilities.hasLlmLocalAIKey;
   },
 
+  /// client-side-fetch ///
+  csfKey: 'localAICSF',
+  csfAvailable: _csfLocalAIAvailable,
+
   // functions
   initializeSetup: () => ({
     localAIHost: '',
@@ -31,7 +35,7 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
   }),
   getTransportAccess: (partialSetup) => ({
     dialect: 'localai',
-    clientSideFetch: !!(partialSetup?.localAIHost && partialSetup?.localAICSF),
+    clientSideFetch: _csfLocalAIAvailable(partialSetup) && !!partialSetup?.localAICSF,
     oaiKey: partialSetup?.localAIKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.localAIHost || '',
@@ -43,3 +47,7 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfLocalAIAvailable(s?: Partial<DLocalAIServiceSettings>) {
+  return !!s?.localAIHost;
+}
