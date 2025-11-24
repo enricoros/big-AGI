@@ -26,6 +26,15 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
   // Claude 4.5 models with thinking variants
+  'claude-opus-4-5-20251101': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4.5 (Thinking)',
+    description: 'Claude Opus 4.5 with extended thinking mode for complex reasoning and agentic workflows',
+    parameterSpecs: ANT_PAR_WEB_THINKING,
+    maxCompletionTokens: 32000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
+  },
+
   'claude-sonnet-4-5-20250929': {
     idVariant: 'thinking',
     label: 'Claude Sonnet 4.5 (Thinking)',
@@ -96,6 +105,17 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 4.5 models
   {
+    id: 'claude-opus-4-5-20251101', // Active
+    label: 'Claude Opus 4.5', // 🌟
+    description: 'Most intelligent model with advanced reasoning for complex agentic workflows',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    trainingDataCutoff: 'Jan 2025',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    parameterSpecs: ANT_PAR_WEB,
+    chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
+  },
+  {
     id: 'claude-sonnet-4-5-20250929', // Active
     label: 'Claude Sonnet 4.5', // 🌟
     description: 'Best model for complex agents and coding, with the highest intelligence across most tasks',
@@ -133,7 +153,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // Claude 4.1 models
   {
     id: 'claude-opus-4-1-20250805', // Active
-    label: 'Claude Opus 4.1', // 🌟
+    label: 'Claude Opus 4.1',
     description: 'Exceptional model for specialized complex tasks requiring advanced reasoning',
     contextWindow: 200000,
     maxCompletionTokens: 32000,
@@ -160,7 +180,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
   {
     id: 'claude-sonnet-4-20250514', // Active
-    label: 'Claude Sonnet 4', // 🌟
+    label: 'Claude Sonnet 4',
     description: 'High-performance model',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
