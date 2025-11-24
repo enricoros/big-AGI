@@ -22,7 +22,6 @@
   "ollama": {
     "dialect": "ollama",
     "ollamaHost": "http://127.0.0.1:11434",
-    "ollamaJson": false
   },
   "groq": {
     "dialect": "groq",

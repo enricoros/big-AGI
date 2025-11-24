@@ -23,7 +23,6 @@ export const ollamaAccessSchema = z.object({
   dialect: z.enum(['ollama']),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   ollamaHost: z.string().trim(),
-  ollamaJson: z.boolean(),
 });
 
 

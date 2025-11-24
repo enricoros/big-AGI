@@ -97,7 +97,6 @@
     "_comment": "Local Ollama instance - no API key needed",
     "dialect": "ollama",
     "ollamaHost": "http://127.0.0.1:11434",
-    "ollamaJson": false
   },
   "lmstudio": {
     "_comment": "Local LM Studio instance - no API key needed",
