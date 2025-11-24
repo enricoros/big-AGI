@@ -4,7 +4,7 @@ import { Alert, IconButton } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { Is, isBrowser, isPwa } from '~/common/util/pwaUtils';
+import { isBrowser, isPwa } from '~/common/util/pwaUtils';
 import { useUICounter } from '~/common/stores/store-ui';
 
 
@@ -31,15 +31,14 @@ export function usePWADesktopModeWarning() {
 
     // if PWA
     const isInPwaMode = isPwa();
-    if (!isInPwaMode) return false;
+    // if Mobile device (detected using touch points), while desktop have 0 touch points
+    const isTouchDevice = navigator?.maxTouchPoints > 0;
+    // if Physical Screen is small - typical mobile screen size - e.g. 412 for SGS24 Ultra
+    const isSmallScreen = window.screen?.width < 600;
+    // if Desktop mode - e.g. "Desktop Site" reports a large viewport width, typically 9xx+
+    const isDesktopWidth = window.matchMedia('(min-width: 900px)').matches;
 
-    // if OS is mobile
-    const isMobileOS = Is.OS.iOS || Is.OS.Android;
-    if (!isMobileOS) return false;
-
-    // Check if viewport width suggests desktop mode (>= 900px)
-    // This matches the mobile breakpoint used in useMatchMedia.ts
-    return window.matchMedia('(min-width: 900px)').matches;
+    return isInPwaMode && isTouchDevice && isSmallScreen && isDesktopWidth;
   }, []);
 
   const showWarning = isInDesktopMode && !hideWarning && lessThanFive;
