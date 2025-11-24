@@ -837,6 +837,17 @@ export namespace AnthropicWire_API_Message_Create {
      * Recommended for advanced use cases only. You usually only need to use `temperature`.
      * */
     top_p: z.number().optional(),
+
+    /**
+     * [Anthropic, 2025-11-13] Structured Outputs - JSON output format configuration.
+     * Constrains Claude's response to follow a specific JSON schema.
+     * Beta feature requiring header: "structured-outputs-2025-11-13"
+     * Available for Claude Sonnet 4.5 and Claude Opus 4.1+.
+     */
+    output_format: z.object({
+      type: z.literal('json_schema'),
+      schema: z.any(), // JSON Schema object - validated by Anthropic
+    }).optional(),
   });
 
   /// Response
