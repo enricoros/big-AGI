@@ -42,7 +42,8 @@ It comes packed with **world-class features** like Beam, and is praised for its 
 [![Feature Inspector](https://img.shields.io/badge/Expert_Mode-AI_Inspector-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/inspector)
 
 ### What makes Big-AGI different:
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Nano Banana, Kimi K2 Thinking or GPT 5.1 -
+
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.5, Nano Banana, Kimi K2 or GPT 5.1 -
 **Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
@@ -138,9 +139,14 @@ so you **are not vendor locked-in**, and obsessed over a powerful UI that works,
 NOTE: this is a powerful tool - if you need a toy UI or clone, this ain't it.
 
 
-## What's New in 2.0 · Oct 31, 2025 · Open
+---
 
-👉 **[See the full changelog](https://big-agi.com/changes)**
+## Release Notes
+
+👉 **[See the Live Release Notes](https://big-agi.com/changes)**
+- Open 2.0.1: **Opus 4.5** full support, **Gemini 3 Pro** w/ code exec, **Nano Banana Pro**, **Grok 4.1**, **GPT-5.1**, **Kimi K2 Thinking** + 280 fixes
+
+### What's New in 2.0 · Oct 31, 2025 · Open
 
 - **Big-AGI Open** is ready and more productive and faster than ever, with:
 - **Beam 2**: multi-modal, program-based, follow-ups, save presets
@@ -153,7 +159,7 @@ NOTE: this is a powerful tool - if you need a toy UI or clone, this ain't it.
 
 <img width="830" height="385" alt="image" src="https://github.com/user-attachments/assets/ad52761d-7e3f-44d8-b41e-947ce8b4faa1" />
 
-### Open links: 👉 [changelog](https://big-agi.com/changes) 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
+#### **Open** links: 👉 [changelog](https://big-agi.com/changes) 👉 [installation](docs/installation.md) 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
 
 **For teams and institutions:** Need shared prompts, SSO, or managed deployments? Reach out at enrico@big-agi.com. We're actively collecting requirements from research groups and IT departments.
 
