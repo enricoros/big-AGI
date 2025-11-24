@@ -78,7 +78,7 @@ export type AnthropicHeaderOptions = {
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
   enableToolSearch?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool
-  enableStructuredOutputs?: boolean; // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
+  enableStrictOutputs?: boolean; // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
   clientSideFetch?: boolean; // whether the request will be made from client-side (browser) - adds CORS header
 };
 
@@ -168,7 +168,7 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
     betaFeatures.push('advanced-tool-use-2025-11-20');
 
   // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
-  if (options?.enableStructuredOutputs)
+  if (options?.enableStrictOutputs)
     betaFeatures.push('structured-outputs-2025-11-13');
 
   return {

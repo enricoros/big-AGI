@@ -56,7 +56,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         vndAntEffort: !!model.vndAntEffort,
         enableSkills: !!model.vndAntSkills,
         enableToolSearch: !!model.vndAntToolSearch,
-        enableStructuredOutputs: !!model.vndAntStructuredOutput || !!model.vndAntStrictTools, // [Anthropic, 2025-11-13]
+        enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
         // enableCodeExecution: ...
       });
 
