@@ -925,8 +925,18 @@ export namespace AnthropicWire_API_Message_Create {
       stop_reason: StopReason_schema.nullable(),
       stop_sequence: z.string().nullable(),
     }),
-    // MessageDeltaUsage
-    usage: z.object({ output_tokens: z.number() }),
+    // MessageDeltaUsage - extended to include cache and server tool metrics
+    usage: z.object({
+      cache_creation_input_tokens: z.number().nullish(),
+      cache_read_input_tokens: z.number().nullish(),
+      input_tokens: z.number().nullish(),
+      output_tokens: z.number(),
+      server_tool_use: z.object({
+        web_fetch_requests: z.number().optional(),
+        web_search_requests: z.number().optional(),
+        tool_search_requests: z.number().optional(),
+      }).nullish(),
+    }),
   });
 
   export const event_ContentBlockStart_schema = z.object({
