@@ -427,6 +427,7 @@ export namespace AixWire_API {
     vndAntEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
+    vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
     vndAntWebFetch: z.enum(['auto']).optional(),
     vndAntWebSearch: z.enum(['auto']).optional(),
     // Gemini

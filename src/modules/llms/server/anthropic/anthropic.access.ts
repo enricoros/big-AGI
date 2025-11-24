@@ -77,6 +77,7 @@ export type AnthropicHeaderOptions = {
   vndAntEffort?: boolean; // [Anthropic, effort-2025-11-24]
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
+  enableToolSearch?: boolean; // Anthropic, 2025-11-24] Tool Search Tool
   clientSideFetch?: boolean; // whether the request will be made from client-side (browser) - adds CORS header
 };
 
@@ -157,9 +158,13 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
     betaFeatures.push('code-execution-2025-08-25');
   }
 
-  // Add beta feature for effort parameter (Claude Opus 4.5+)
+  // [Anthropic, 2025-11-24] Add beta feature for effort parameter (Claude Opus 4.5+)
   if (options?.vndAntEffort)
     betaFeatures.push('effort-2025-11-24');
+
+  // [Anthropic, 2025-11-24] Add beta feature for Tool Search Tool (Claude Opus 4.5, Sonnet 4.5)
+  if (options?.enableToolSearch)
+    betaFeatures.push('advanced-tool-use-2025-11-20');
 
   return {
     ...DEFAULT_ANTHROPIC_HEADERS,

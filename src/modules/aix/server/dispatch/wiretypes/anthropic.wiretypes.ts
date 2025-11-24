@@ -224,6 +224,8 @@ export namespace AnthropicWire_Blocks {
         'code_execution',
         'bash_code_execution', // sub-tool of 'code_execution'
         'text_editor_code_execution', // sub-tool of 'code_execution'
+        'tool_search_tool_regex', // Tool Search Tool - regex variant
+        'tool_search_tool_bm25', // Tool Search Tool - BM25 (natural text) variant
       ]),
       z.string(), // forward-compatibility parsing
     ]),
@@ -369,6 +371,27 @@ export namespace AnthropicWire_Blocks {
     file_id: z.string(),
   });
 
+  /**
+   * [Anthropic, 2025-11-24] Tool Search Tool - Result of tool search operation
+   * Contains either an array of tool references or an error.
+   */
+  export const ToolSearchToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      // success - array of tool references
+      z.array(z.object({
+        type: z.literal('tool_reference'),
+        tool_name: z.string(),
+      })),
+      // error
+      z.object({
+        type: z.literal('tool_search_tool_result_error'),
+        error_code: z.union([z.enum(['too_many_requests', 'invalid_pattern', 'pattern_too_long', 'unavailable']), z.string() /* forward-compatibility */]),
+      }),
+    ]),
+  });
+
 
   /// Block Constructors
 
@@ -457,6 +480,7 @@ export namespace AnthropicWire_Messages {
    * - Code execution tool result, Bash code execution tool result, Text editor code execution tool result
    * - MCP tool use, MCP tool result
    * - Container upload
+   * - Tool reference
    */
   export const ContentBlockOutput_schema = z.discriminatedUnion('type', [
     // Common Blocks (both input and output)
@@ -474,6 +498,7 @@ export namespace AnthropicWire_Messages {
     AnthropicWire_Blocks.MCPToolUseBlock_schema,
     AnthropicWire_Blocks.MCPToolResultBlock_schema,
     AnthropicWire_Blocks.ContainerUploadBlock_schema,
+    AnthropicWire_Blocks.ToolSearchToolResultBlock_schema, // [Anthropic, 2025-11-24] Tool Search Tool
   ]);
 }
 
@@ -543,6 +568,11 @@ export namespace AnthropicWire_Tools {
       properties: z.record(z.string(), z.any()).nullish(), // FC-DEF params schema - WAS: z.json().nullable(),
       required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
     }),
+
+    /**
+     * [Anthropic, 2025-11-24] Tool Search Tool - when true, this tool is not loaded into context initially and can be discovered via the tool search tool when needed.
+     */
+    defer_loading: z.boolean().optional(),
   });
 
   // Latest Tool Versions (sorted alphabetically by tool name)
@@ -589,6 +619,18 @@ export namespace AnthropicWire_Tools {
     max_characters: z.number().nullish(),
   });
 
+  /** [Anthropic, 2025-11-24] Tool Search Tool - constructs regex patterns (e.g., "weather", "get_.*_data") to search tool names/descriptions. */
+  const _ToolSearchToolRegex_20251119_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('tool_search_tool_regex_20251119'),
+    name: z.literal('tool_search_tool_regex'),
+  });
+
+  /** [Anthropic, 2025-11-24] Tool Search Tool - BM25 variant (natural language search) - uses natural language queries to search for tools. */
+  const _ToolSearchToolBM25_20251119_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('tool_search_tool_bm25_20251119'),
+    name: z.literal('tool_search_tool_bm25'),
+  });
+
   const _WebFetchTool_20250910_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('web_fetch_20250910'),
     name: z.literal('web_fetch'),
@@ -617,6 +659,8 @@ export namespace AnthropicWire_Tools {
     _ComputerUseTool_20250124_schema,
     _MemoryTool_20250818_schema,
     _TextEditor_20250728_schema,
+    _ToolSearchToolBM25_20251119_schema, // [Anthropic, 2025-11-24] Tool Search Tool - BM25 variant
+    _ToolSearchToolRegex_20251119_schema, // [Anthropic, 2025-11-24] Tool Search Tool - Regex variant
     _WebFetchTool_20250910_schema,
     _WebSearchTool_20250305_schema,
   ]);
@@ -839,6 +883,7 @@ export namespace AnthropicWire_API_Message_Create {
       server_tool_use: z.object({
         web_fetch_requests: z.number(),
         web_search_requests: z.number(),
+        tool_search_requests: z.number().optional(), // [Anthropic, 2025-11-24] Tool Search Tool usage
       }).nullish(),
       service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
     }),
