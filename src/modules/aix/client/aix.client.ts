@@ -761,8 +761,10 @@ async function _aixChatGenerateContent_LL(
         // NOT retryable: e.g. client-abort, or missing handle
         if (errorType === 'client-aborted')
           await reassembler.setClientAborted().catch(console.error /* never */);
-        else
-          await reassembler.setClientExcepted(errorMessage).catch(console.error);
+        else {
+          const errorHint: DMessageErrorPart['hint'] = `aix-${errorType}`; // MUST MATCH our `aixClassifyStreamingError` hints with 'aix-<type>' in DMessageErrorPart
+          await reassembler.setClientExcepted(errorMessage, errorHint).catch(console.error);
+        }
         // ... fall through (traditional single path)
 
       } else {
