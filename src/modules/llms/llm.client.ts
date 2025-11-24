@@ -1,7 +1,7 @@
 import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DLLM, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { DLLM, DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { applyModelParameterInitialValues, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -88,7 +88,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     contextTokens,
     maxOutputTokens,
     trainingDataCutoff: d.trainingDataCutoff,
-    interfaces: d.interfaces?.length ? d.interfaces : _fallbackInterfaces,
+    interfaces: d.interfaces?.length ? d.interfaces as DModelInterfaceV1[] : _fallbackInterfaces,
     benchmark: d.benchmark,
     // pricing?: ..., // set below, since it needs some adaptation
 
