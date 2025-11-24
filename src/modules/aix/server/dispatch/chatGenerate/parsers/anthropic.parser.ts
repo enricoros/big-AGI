@@ -153,7 +153,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           console.log(`ant content_block_start[${index}]: type=${content_block.type}, ${debugInfo}`);
         }
 
-        switch (content_block.type) {
+        switch (content_block.type) { // .content_block_start.type
           case 'text':
             pt.appendText(content_block.text);
             // Note: In streaming mode, citations arrive via citations_delta events, not on content_block_start
@@ -183,7 +183,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               content_block.input = null;
 
             // Show placeholder for known server tools
-            switch (content_block.name) {
+            switch (content_block.name) { // .server_tool_use.name
               case 'web_search':
                 pt.sendVoidPlaceholder('search-web', 'Searching the web...');
                 break;
@@ -196,6 +196,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 break;
               case 'text_editor_code_execution':
                 pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+                break;
+              // [Anthropic, 2025-11-24] Tool Search Tool
+              case 'tool_search_tool_regex':
+              case 'tool_search_tool_bm25':
+                pt.sendVoidPlaceholder('code-exec', '🔍 Searching available tools...');
                 break;
               default:
                 // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
@@ -349,6 +354,19 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
             // TODO: Future enhancement - could trigger automatic file download here
             // using the Files API with content_block.file_id
+            break;
+
+          case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
+            if (Array.isArray(content_block.content)) {
+              // success
+              const toolNames = content_block.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+              pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
+              // Log for future debugging
+              console.log('[Anthropic] Tool search discovered:', { tools: toolNames });
+            } else if (content_block.content?.type === 'tool_search_tool_result_error') {
+              // error during tool search
+              pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${content_block.content.error_code}`);
+            }
             break;
 
           default:
@@ -570,7 +588,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     for (let i = 0; i < content.length; i++) {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
-      switch (contentBlock.type) {
+      switch (contentBlock.type) { // .content_block (non-streaming)
         case 'text':
           pt.appendText(contentBlock.text);
           // Handle citations if present (non-streaming mode has all citations attached)
@@ -610,7 +628,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         case 'server_tool_use':
           // Server tool use in non-streaming mode
           // NOTE: We don't create tool invocations for server tools - just show placeholders
-          switch (contentBlock.name) {
+          switch (contentBlock.name) { // .server_tool_use.name
             case 'web_search':
               pt.sendVoidPlaceholder('search-web', 'Searching the web...');
               break;
@@ -622,6 +640,11 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               break;
             case 'text_editor_code_execution':
               pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+              break;
+            // [Anthropic, 2025-11-24] Tool Search Tool
+            case 'tool_search_tool_regex':
+            case 'tool_search_tool_bm25':
+              pt.sendVoidPlaceholder('code-exec', '🔍 Searching available tools...');
               break;
             default:
               console.warn(`[Anthropic Parser] Unknown server tool (non-streaming): ${contentBlock.name}`);
@@ -769,6 +792,19 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           console.log('[Anthropic] Container upload (non-streaming):', {
             file_id: contentBlock.file_id,
           });
+          break;
+
+        case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
+          if (Array.isArray(contentBlock.content)) {
+            // success
+            const toolNames = contentBlock.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+            pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
+            // Log for future debugging
+            console.log('[Anthropic] Tool search discovered (non-streaming):', { tools: toolNames });
+          } else if ((contentBlock.content as any)?.type === 'tool_search_tool_result_error') {
+            // error during tool search
+            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${(contentBlock.content as any).error_code}`);
+          }
           break;
 
         default:

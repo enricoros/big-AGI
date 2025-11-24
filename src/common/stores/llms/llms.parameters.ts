@@ -126,6 +126,14 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (same as 'off')
   } as const,
 
+  // llmVndAntToolSearch: { // Not user set
+  //   label: 'Tool Search',
+  //   type: 'enum' as const,
+  //   description: 'Search algorithm for discovering tools on-demand (regex=pattern-based, bm25=natural language)',
+  //   values: ['regex', 'bm25'] as const,
+  //   // No initialValue - undefined means off (tool search disabled)
+  // } as const,
+
   llmVndGeminiAspectRatio: {
     label: 'Aspect Ratio',
     type: 'enum' as const,
