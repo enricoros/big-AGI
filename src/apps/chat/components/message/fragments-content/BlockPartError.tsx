@@ -3,10 +3,10 @@ import * as React from 'react';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
+import type { DMessageErrorPart } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 import { BlockPartError_RequestExceeded } from './BlockPartError_RequestExceeded';
-import { DMessageErrorPart } from '~/common/stores/chat/chat.fragments';
 
 
 export function BlockPartError(props: {
