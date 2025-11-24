@@ -77,8 +77,9 @@ export type AnthropicHeaderOptions = {
   vndAntEffort?: boolean; // [Anthropic, effort-2025-11-24]
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
-  enableToolSearch?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool
   enableStrictOutputs?: boolean; // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
+  enableToolSearch?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool
+  enableProgrammaticToolCalling?: boolean; // [Anthropic, 2025-11-24] Programmatic Tool Calling (allowed_callers, input_examples)
   clientSideFetch?: boolean; // whether the request will be made from client-side (browser) - adds CORS header
 };
 
@@ -163,8 +164,9 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   if (options?.vndAntEffort)
     betaFeatures.push('effort-2025-11-24');
 
-  // [Anthropic, 2025-11-24] Add beta feature for Tool Search Tool (Claude Opus 4.5, Sonnet 4.5)
-  if (options?.enableToolSearch)
+  // [Anthropic, 2025-11-24] Add beta feature for Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
+  // Same beta header covers both features: tool discovery and programmatic calling from code execution
+  if (options?.enableToolSearch || options?.enableProgrammaticToolCalling)
     betaFeatures.push('advanced-tool-use-2025-11-20');
 
   // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
