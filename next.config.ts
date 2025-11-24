@@ -30,7 +30,7 @@ buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig: NextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: !process.env.NO_STRICT_MODE, // default: enabled
 
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
   ...(buildType && {
