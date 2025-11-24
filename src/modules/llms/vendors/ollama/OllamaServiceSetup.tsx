@@ -1,11 +1,9 @@
 import * as React from 'react';
 
-import { Button, FormControl, Tooltip, Typography } from '@mui/joy';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+import { Button, FormControl, Typography } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -31,7 +29,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOllama);
 
   // derived state
-  const { clientSideFetch, ollamaHost, ollamaJson } = serviceAccess;
+  const { clientSideFetch, ollamaHost } = serviceAccess;
 
   const hostValid = !!asValidURL(ollamaHost);
   const hostError = !!ollamaHost && !hostValid;
@@ -60,23 +58,6 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
         For Image attachments, use the &quot;Original&quot; format option.
       </Typography>
     </FormControl>
-
-    <FormSwitchControl
-      title='JSON mode'
-      on={<Typography level='title-sm' endDecorator={<WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />}>Force JSON</Typography>}
-      off='Off (default)'
-      fullWidth
-      description={
-        <Tooltip arrow title='Models will output only JSON, including empty {} objects.'>
-          <Link level='body-sm' href='https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion' target='_blank'>Information</Link>
-        </Tooltip>
-      }
-      checked={ollamaJson}
-      onChange={on => {
-        updateSettings({ ollamaJson: on });
-        refetch();
-      }}
-    />
 
     <SetupFormClientSideToggle
       visible={true}

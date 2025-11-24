@@ -27,7 +27,6 @@ export function aixToOpenAIResponses(
   openAIDialect: OpenAIDialects,
   model: AixAPI_Model,
   _chatGenerate: AixAPIChatGenerate_Request,
-  jsonOutput: boolean,
   streaming: boolean,
   enableResumability: boolean,
 ): TRequest {
@@ -114,9 +113,6 @@ export function aixToOpenAIResponses(
         strict: true,
       },
     };
-  else if (jsonOutput) {
-    console.warn('[DEV] notImplemented: responses: jsonOutput without schema (use strictJsonOutput instead)');
-  }
 
   // GPT-5 Verbosity: Add to existing text config or create new one
   if (model.vndOaiVerbosity) {

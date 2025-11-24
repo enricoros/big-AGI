@@ -99,8 +99,8 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         request: {
           ...ollamaAccess(access, '/v1/chat/completions'), // use the OpenAI-compatible endpoint
           method: 'POST',
-          // body: ollamaChatCompletionPayload(model, _hist, access.ollamaJson, streaming),
-          body: aixToOpenAIChatCompletions('openai', model, chatGenerate, access.ollamaJson, streaming),
+          // body: ollamaChatCompletionPayload(model, _hist, streaming),
+          body: aixToOpenAIChatCompletions('openai', model, chatGenerate, streaming),
         },
         // demuxerFormat: streaming ? 'json-nl' : null,
         demuxerFormat: streaming ? 'fast-sse' : null,
@@ -133,7 +133,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           request: {
             ...openAIAccess(access, model.id, '/v1/responses'),
             method: 'POST',
-            body: aixToOpenAIResponses(dialect, model, chatGenerate, false, streaming, enableResumability),
+            body: aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
@@ -144,7 +144,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         request: {
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           method: 'POST',
-          body: aixToOpenAIChatCompletions(dialect, model, chatGenerate, false, streaming),
+          body: aixToOpenAIChatCompletions(dialect, model, chatGenerate, streaming),
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),

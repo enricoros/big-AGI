@@ -29,7 +29,7 @@ const approxSystemMessageJoiner = '\n\n---\n\n';
 type TRequest = OpenAIWire_API_Chat_Completions.Request;
 type TRequestMessages = TRequest['messages'];
 
-export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, _obsoleteJsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -87,9 +87,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     n: hotFixOnlySupportN1 ? undefined : 0, // NOTE: we choose to not support this at the API level - most downstram ecosystem supports 1 only, which is the default
     stream: streaming,
     stream_options: streaming ? { include_usage: true } : undefined,
-    response_format: model.strictJsonOutput
-      ? { type: 'json_schema', json_schema: { name: model.strictJsonOutput.name || 'response', description: model.strictJsonOutput.description, schema: model.strictJsonOutput.schema, strict: true } }
-      : _obsoleteJsonOutput ? { type: 'json_object' } : undefined, // very old, shall remove this
+    response_format: model.strictJsonOutput ? {
+      type: 'json_schema',
+      json_schema: {
+        name: model.strictJsonOutput.name || 'response',
+        description: model.strictJsonOutput.description,
+        schema: model.strictJsonOutput.schema,
+        strict: true,
+      },
+    } : undefined,
     seed: undefined,
     stop: undefined,
     user: undefined,
