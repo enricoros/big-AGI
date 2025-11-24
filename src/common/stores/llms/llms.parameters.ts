@@ -96,7 +96,7 @@ export const DModelParameterRegistry = {
     type: 'integer' as const,
     description: 'Budget for extended thinking',
     range: [1024, 65536] as const,
-    initialValue: 8192,
+    initialValue: 16384,
     nullable: {
       meaning: 'Disable extended thinking',
     } as const,
