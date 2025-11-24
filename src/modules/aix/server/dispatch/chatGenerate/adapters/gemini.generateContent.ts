@@ -384,7 +384,8 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
         // if not applied yet, and required for this part type, apply bypass dummy and warn
         else if (partRequiresSignature) {
           tsTarget.thoughtSignature = GEMINI_BYPASS_THOUGHT_SIGNATURE;
-          console.log('[Gemini 3] Message part missing thoughtSignature - using bypass dummy (cross-provider or edited content)');
+          // [Gemini 3, 2025-11-20] Cross-provider or edited content warning
+          console.log(`[Gemini 3] ${part.pt} missing thoughtSignature - bypass applied`);
         }
       }
     }
