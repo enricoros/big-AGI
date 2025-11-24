@@ -254,8 +254,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     let payloadString = safeErrorString(notOkayPayload);
     if (payloadString) {
       // truncate
-      if (payloadString.length > 200)
-        payloadString = payloadString.slice(0, 200) + '...';
+      if (payloadString.length > 240)
+        payloadString = payloadString.slice(0, 240) + '...';
       // frame
       const inferredType = _inferTextPayloadType(payloadString);
       if (inferredType)
