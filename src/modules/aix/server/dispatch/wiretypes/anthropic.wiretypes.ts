@@ -770,6 +770,14 @@ export namespace AnthropicWire_API_Message_Create {
     ]).optional(),
 
     /**
+     * [Anthropic, effort-2025-11-24] Output configuration for effort-based token control.
+     * Allows trading off response thoroughness for efficiency (Claude Opus 4.5+ only).
+     */
+    output_config: z.object({
+      effort: z.enum(['low', 'medium', 'high']).optional(),
+    }).optional(),
+
+    /**
      * Defaults to 1.0. Ranges from 0.0 to 1.0. Use temperature closer to 0.0 for analytical / multiple choice, and closer to 1.0 for creative and generative tasks.
      */
     temperature: z.number().optional(),

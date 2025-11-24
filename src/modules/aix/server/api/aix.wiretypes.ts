@@ -424,6 +424,7 @@ export namespace AixWire_API {
     forceNoStream: z.boolean().optional(),
     // Anthropic
     vndAnt1MContext: z.boolean().optional(),
+    vndAntEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
     vndAntWebFetch: z.enum(['auto']).optional(),

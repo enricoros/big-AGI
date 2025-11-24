@@ -84,6 +84,14 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (e.g. default 200K context window)
   } as const,
 
+  llmVndAntEffort: {
+    label: 'Effort',
+    type: 'enum' as const,
+    description: 'Controls token usage vs. thoroughness trade-off. Works alongside thinking budget.',
+    values: ['low', 'medium', 'high'] as const,
+    // No initialValue - undefined means high effort (default, equivalent to omitting the parameter)
+  } as const,
+
   llmVndAntSkills: {
     label: 'Document Skills',
     type: 'string' as const,

@@ -79,6 +79,7 @@ const ModelParameterSpec_schema = z.object({
     'llmForceNoStream',
     // Anthropic
     'llmVndAnt1MContext',
+    'llmVndAntEffort',
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',

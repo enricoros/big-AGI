@@ -120,6 +120,12 @@ const _antWebFetchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
+const _antEffortOptions = [
+  { value: _UNSPECIFIED, label: 'High', description: 'Maximum capability (default)' },
+  { value: 'medium', label: 'Medium', description: 'Balanced speed and quality' },
+  { value: 'low', label: 'Low', description: 'Fastest, most efficient' },
+] as const;
+
 // const _moonshotWebSearchOptions = [
 //   { value: 'auto', label: 'On', description: 'Enable Kimi $web_search ($0.005 per search)' },
 //   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -187,6 +193,7 @@ export function LLMParametersEditor(props: {
     llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
     llmForceNoStream,
     llmVndAnt1MContext,
+    llmVndAntEffort,
     llmVndAntSkills,
     llmVndAntThinkingBudget,
     llmVndAntWebFetch,
@@ -314,6 +321,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndAntEffort') && (
+      <FormSelectControl
+        title='Effort'
+        tooltip='Controls token usage vs. thoroughness. Low = fastest, most efficient. High = maximum capability (default). Works alongside thinking budget.'
+        value={llmVndAntEffort ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value || value === 'high') onRemoveParameter('llmVndAntEffort');
+          else onChangeParameter({ llmVndAntEffort: value });
+        }}
+        options={_antEffortOptions}
       />
     )}
 

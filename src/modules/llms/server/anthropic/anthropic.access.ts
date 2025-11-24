@@ -74,6 +74,7 @@ export type AnthropicHeaderOptions = {
   modelIdForBetaFeatures?: string;
   vndAntWebFetch?: boolean;
   vndAnt1MContext?: boolean;
+  vndAntEffort?: boolean; // [Anthropic, effort-2025-11-24]
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
   clientSideFetch?: boolean; // whether the request will be made from client-side (browser) - adds CORS header
@@ -155,6 +156,10 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   if (options?.enableCodeExecution || options?.enableSkills) {
     betaFeatures.push('code-execution-2025-08-25');
   }
+
+  // Add beta feature for effort parameter (Claude Opus 4.5+)
+  if (options?.vndAntEffort)
+    betaFeatures.push('effort-2025-11-24');
 
   return {
     ...DEFAULT_ANTHROPIC_HEADERS,

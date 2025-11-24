@@ -47,7 +47,7 @@ export function aixCreateModelFromLLMOptions(
   // destructure input with the overrides
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP,
-    llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch,
+    llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAntEffort,
     llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget, llmVndGeminiThinkingLevel,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
@@ -105,6 +105,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
+    ...(llmVndAntEffort ? { vndAntEffort: llmVndAntEffort } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
     ...(llmVndGeminiCodeExecution === 'auto' ? { vndGeminiCodeExecution: llmVndGeminiCodeExecution } : {}),
     ...(llmVndGeminiComputerUse ? { vndGeminiComputerUse: llmVndGeminiComputerUse } : {}),
