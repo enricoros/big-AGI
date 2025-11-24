@@ -492,6 +492,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (tokenStopReason !== null)
           pt.setTokenStopReason(tokenStopReason);
 
+        // NOTE: we have more fields we're not parsing yet - https://platform.claude.com/docs/en/api/typescript/messages#message_delta_usage
         if (usage?.output_tokens && messageStartTime) {
           const elapsedTimeMilliseconds = Date.now() - messageStartTime;
           const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
