@@ -77,11 +77,11 @@
     "zustand": "5.0.7"
   },
   "devDependencies": {
-    "@posthog/nextjs-config": "1.3.2",
+    "@posthog/nextjs-config": "1.5.1",
     "@types/node": "^24.10.1",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.5",
-    "@types/react": "^19.2.6",
+    "@types/react": "^19.2.7",
     "@types/react-csv": "^1.1.10",
     "@types/react-dom": "^19.2.3",
     "@types/turndown": "^5.0.6",
