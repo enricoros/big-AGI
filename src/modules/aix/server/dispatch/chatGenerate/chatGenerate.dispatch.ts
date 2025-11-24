@@ -49,14 +49,24 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
   const { dialect } = access;
   switch (dialect) {
     case 'anthropic': {
+
+      // [Anthropic, 2025-11-24] Detect if any tool uses Programmatic Tool Calling features (allowed_callers, input_examples)
+      const usesProgrammaticToolCalling = chatGenerate.tools?.some(tool =>
+          tool.type === 'function_call' && (
+            tool.function_call.allowed_callers?.includes('code_execution') ||
+            (tool.function_call.input_examples && tool.function_call.input_examples.length > 0)
+          ),
+      ) ?? false;
+
       const anthropicRequest = anthropicAccess(access, '/v1/messages', {
         modelIdForBetaFeatures: model.id,
         vndAntWebFetch: model.vndAntWebFetch === 'auto',
         vndAnt1MContext: model.vndAnt1MContext === true,
         vndAntEffort: !!model.vndAntEffort,
         enableSkills: !!model.vndAntSkills,
-        enableToolSearch: !!model.vndAntToolSearch,
         enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
+        enableToolSearch: !!model.vndAntToolSearch,
+        enableProgrammaticToolCalling: usesProgrammaticToolCalling,
         // enableCodeExecution: ...
       });
 
