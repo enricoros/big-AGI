@@ -103,9 +103,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   //   console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
   // }
 
-  // [Anthropic, 2025-11-13] Structured Outputs - strict mode for tool inputs
-  const strictToolsEnabled = !!model.vndAntStrictTools;
-  // const structuredOutputsEnabled = !!model.vndAntStructuredOutput;
+  // [Anthropic, 2025-11-13] constrained output modes - both JSON and tool invocations
+  const strictToolsEnabled = !!model.strictToolInvocations;
   // [Anthropic, 2025-11-24] Tool Search Tool - when enabled, all custom tools get defer_loading: true
   const toolSearchEnabled = !!model.vndAntToolSearch;
 
@@ -151,12 +150,13 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     };
 
   // [Anthropic, 2025-11-13] Structured Outputs - JSON output format
-  if (model.vndAntStructuredOutput) {
-    const schema = model.vndAntStructuredOutput.schema;
-    // Auto-add additionalProperties: false to root object if not present - additionalProperties: false is required by Anthropic for all object types in the schema
+  if (model.strictJsonOutput) {
+
+    // auto-add additionalProperties: false to root object if not present - required by Anthropic
+    let schema = model.strictJsonOutput.schema;
     if (schema && typeof schema === 'object' && schema.type === 'object' && schema.additionalProperties === undefined)
-      schema.additionalProperties = false;
-    payload.output_format = model.vndAntStructuredOutput;
+      schema = { ...schema, additionalProperties: false };
+    payload.output_format = { type: 'json_schema', schema };
 
     // warn about incompatible features (citations are enabled via web_fetch tool)
     if (model.vndAntWebFetch === 'auto')

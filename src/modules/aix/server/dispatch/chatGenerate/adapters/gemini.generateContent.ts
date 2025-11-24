@@ -61,6 +61,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   // Chat Messages
   const contents: TRequest['contents'] = _toGeminiContents(chatGenerate.chatSequence, api3RequiresSignatures);
 
+  // constrained output modes - only JSON (not tool invocations for now)
+  const jsonOutputEnabled = !!model.strictJsonOutput || jsonOutput;
+  const jsonOutputSchema = model.strictJsonOutput?.schema;
+  // const strictToolInvocation = model.strictToolInvocations; // Gemini does not seem to support this yet - need to confirm
+
   // Construct the request payload
   const payload: TRequest = {
     contents,
@@ -68,8 +73,8 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     systemInstruction,
     generationConfig: {
       stopSequences: undefined, // (default, optional)
-      responseMimeType: jsonOutput ? 'application/json' : undefined,
-      responseSchema: undefined, // (default, optional) NOTE: for JSON output, we'd take the schema here
+      responseMimeType: jsonOutputEnabled ? 'application/json' : undefined,
+      responseSchema: jsonOutputSchema,
       candidateCount: undefined, // (default, optional)
       maxOutputTokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
       ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
