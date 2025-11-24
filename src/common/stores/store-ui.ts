@@ -245,6 +245,7 @@ export function uiSetPanelGroupCollapsed(key: string, collapsed: boolean): void 
 //  'export-share'                    // used the export function
 //  'share-chat-link'                 // not shared a Chat Link yet
 type KnownKeys =
+  | 'acknowledge-pwa-desktop-mode-warning' // displayed if mobile PWA is in desktop mode (layout issues)
   | 'acknowledge-translation-warning' // displayed if Chrome is translating the page (may crash)
   | 'beam-wizard'                     // first Beam
   | 'call-wizard'                     // first Call

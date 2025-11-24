@@ -5,8 +5,10 @@ import { PanelGroup } from 'react-resizable-panels';
 import { GlobalDragOverlay } from '~/common/components/dnd-dt/GlobalDragOverlay';
 import { Is } from '~/common/util/pwaUtils';
 import { checkVisibleNav, navItems } from '~/common/app.nav';
+import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { usePWADesktopModeWarning } from '~/common/components/useIsBrowserInPWADesktop';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ScratchClip } from './scratchclip/ScratchClip';
@@ -61,6 +63,10 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
   // derived state
   const currentApp = navItems.apps.find(item => item.route === route);
 
+  // global warnings
+  const translationWarning = useBrowserTranslationWarning();
+  const pwaDesktopModeWarning = usePWADesktopModeWarning();
+
   // global shortcuts for Optima
   useGlobalShortcuts('OptimaApp', React.useMemo(() => [
     // Preferences & Model dialogs
@@ -77,6 +83,10 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
   ], []));
 
   return <>
+
+    {/* Global Warnings */}
+    {translationWarning}
+    {pwaDesktopModeWarning}
 
     <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
 
