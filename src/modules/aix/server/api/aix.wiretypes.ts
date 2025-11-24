@@ -336,6 +336,14 @@ export namespace AixWire_Tooling {
       properties: z.record(z.string(), OpenAPI_Schema.Object_schema),
       required: z.array(z.string()).optional(),
     }).optional(),
+
+    /**
+     * WARNING: Anthropic-ONLY for now - support for "Programmatic Tool Calling" - 2 new fields:
+     * - allowed_callers: which contexts can invoke this tool, where 'direct' is the model itself, and 'code_execution' is when invoked from a container, and even both
+     * - input_examples: array of example input objects that demonstrate format conventions, nested object population, etc.
+     */
+    allowed_callers: z.array(z.enum(['direct', 'code_execution'])).optional(),
+    input_examples: z.array(z.record(z.string(), z.any())).optional(),
   });
 
   const _FunctionCallTool_schema = z.object({
