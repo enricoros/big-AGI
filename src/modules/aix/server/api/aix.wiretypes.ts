@@ -426,6 +426,13 @@ export namespace AixWire_API {
     vndAnt1MContext: z.boolean().optional(),
     vndAntEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndAntSkills: z.string().optional(),
+    /** [Anthropic, 2025-11-13] Structured Outputs - Strict Tool Use - all function call tools get `strict: true` which guarantees tool inputs will exactly match the input_schema. */
+    vndAntStrictTools: z.boolean().optional(),
+    /** [Anthropic, 2025-11-13] Structured Outputs - JSON Output Format - response to follow a specific JSON schema - response will be valid JSON in `content[0].text` - few schema limitations. */
+    vndAntStructuredOutput: z.object({
+      type: z.literal('json_schema'),
+      schema: z.any(), // JSON Schema object - additionalProperties:false auto-added to root
+    }).optional(),
     vndAntThinkingBudget: z.number().nullable().optional(),
     vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
     vndAntWebFetch: z.enum(['auto']).optional(),
