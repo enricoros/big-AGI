@@ -138,6 +138,12 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     delete payload.temperature;
   }
 
+  // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
+  if (model.vndAntEffort /*&& model.vndAntEffort !== 'high'*/)
+    payload.output_config = {
+      effort: model.vndAntEffort,
+    };
+
   // --- Tools ---
 
   // Allow/deny auto-adding hosted tools when custom tools are present

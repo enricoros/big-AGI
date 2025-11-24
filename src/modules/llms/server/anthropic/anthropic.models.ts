@@ -30,7 +30,7 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     idVariant: 'thinking',
     label: 'Claude Opus 4.5 (Thinking)',
     description: 'Claude Opus 4.5 with extended thinking mode for complex reasoning and agentic workflows',
-    parameterSpecs: ANT_PAR_WEB_THINKING,
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }],
     maxCompletionTokens: 32000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
   },
@@ -112,7 +112,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     trainingDataCutoff: 'Jan 2025',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
-    parameterSpecs: ANT_PAR_WEB,
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
   },
   {
