@@ -10,6 +10,12 @@ import * as z from 'zod/v4';
  *
  * ## Updates
  *
+ * ### 2025-11-24 - Programmatic Tool Calling (Beta: advanced-tool-use-2025-11-20)
+ * - ToolUseBlock: added 'caller' field to indicate direct vs programmatic invocation
+ * - CustomToolDefinition: added 'allowed_callers' field to restrict tool invocation contexts
+ * - CustomToolDefinition: added 'input_examples' field for improved accuracy
+ * - New ToolUseCaller_schema for discriminating caller types
+ *
  * ### 2025-10-17 - MAJOR: Server Tools & 2025 API Additions
  * - ContentBlockOutput: added 9 new server tool response block types
  * - ToolDefinition: added 9 new 2025 tool types (web_search, web_fetch, memory, code_execution, etc.)
@@ -119,6 +125,17 @@ export namespace AnthropicWire_Blocks {
     id: z.string(),
     name: z.string(), // length: 1-64
     input: z.any(), // Formally an 'object', but relaxed for robust parsing, and code-enforced
+    /**
+     * [Anthropic, 2025-11-24] Programmatic Tool Calling - indicates how this tool was invoked.
+     * Requires the advanced-tool-use-2025-11-20 beta feature.
+     */
+    caller: z.discriminatedUnion('type', [
+      z.object({ type: z.literal('direct') }), // model called tool directly
+      z.object({
+        type: z.literal('code_execution_20250825'), // tool called programmatically from within code execution
+        tool_id: z.string(), // ref the server_tool_use (code_execution) that made this call
+      }),
+    ]).optional(),
   });
 
 
@@ -573,6 +590,14 @@ export namespace AnthropicWire_Tools {
      * [Anthropic, 2025-11-24] Tool Search Tool - when true, this tool is not loaded into context initially and can be discovered via the tool search tool when needed.
      */
     defer_loading: z.boolean().optional(),
+
+    /**
+     * [Anthropic, 2025-11-24] Programmatic Tool Calling - 2 new fields:
+     * - specifies which contexts can invoke this tool
+     * - concrete usage examples to improve accuracy - can increase accuracy (e.g. 72% -> 90% in examples)
+     */
+    allowed_callers: z.array(z.enum(['direct', 'code_execution_20250825'])).optional(), // can be both ['direct', 'code_execution_20250825']
+    input_examples: z.array(z.record(z.string(), z.any())).optional(),
   });
 
   // Latest Tool Versions (sorted alphabetically by tool name)

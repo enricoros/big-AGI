@@ -395,7 +395,7 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[], strictToolsEnabled: 
     switch (itd.type) {
 
       case 'function_call':
-        const { name, description, input_schema } = itd.function_call;
+        const { name, description, input_schema, allowed_callers, input_examples } = itd.function_call;
         return {
           type: 'custom', // we could not set it, but it helps our typesystem with discrimination
           name,
@@ -411,6 +411,9 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[], strictToolsEnabled: 
           ...(strictToolsEnabled ? { strict: true } : {}),
           // [Anthropic, 2025-11-24] Tool Search Tool - auto-defer all custom tools
           ...(toolSearchToolEnabled ? { defer_loading: true } : {}),
+          // [Anthropic, 2025-11-24] Programmatic Tool Calling - pass through allowed_callers and input_examples
+          ...(allowed_callers ? { allowed_callers: allowed_callers.map(c => c === 'code_execution' ? 'code_execution_20250825' : c) } : {}),
+          ...(input_examples ? { input_examples } : {}),
         };
 
       case 'code_execution':

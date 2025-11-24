@@ -173,6 +173,12 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
             if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
               content_block.input = null;
+
+            // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
+            const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825';
+            if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
+              console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from code_execution (tool_id: ${content_block.caller?.type === 'code_execution_20250825' ? content_block.caller.tool_id : 'n/a'})`);
+
             pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
             break;
 
@@ -622,6 +628,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
+
+          // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
+          const isProgrammaticCallNS = contentBlock.caller?.type === 'code_execution_20250825';
+          if (isProgrammaticCallNS)
+            console.log(`[Anthropic] Programmatic tool call (non-streaming): ${contentBlock.name} called from code_execution (tool_id: ${contentBlock.caller?.type === 'code_execution_20250825' ? contentBlock.caller.tool_id : 'n/a'})`);
+
           pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
           pt.endMessagePart();
           break;
