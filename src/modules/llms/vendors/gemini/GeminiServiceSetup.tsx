@@ -46,6 +46,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel} = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
   const showKeyError = !!geminiKey && !serviceSetupValid;
@@ -69,7 +70,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Safety Settings'
                       description='Threshold' />
       <Select
@@ -89,7 +90,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       </Select>
     </FormControl>}
 
-    {advanced.on && <FormHelperText sx={{ display: 'block' }}>
+    {showAdvanced && <FormHelperText sx={{ display: 'block' }}>
       Gemini has advanced <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
       safety settings</Link> on: harassment, hate speech,
       sexually explicit, civic integrity, and dangerous content, in addition to non-adjustable built-in filters.
@@ -97,7 +98,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       {/*of being unsafe.*/}
     </FormHelperText>}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='gemini-host'
       title='API Endpoint'
       placeholder={`https://generativelanguage.googleapis.com`}
@@ -105,7 +106,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ geminiHost: text })}
     />}
 
-    {advanced.on && <SetupFormClientSideToggle
+    {showAdvanced && <SetupFormClientSideToggle
       visible={!!geminiKey}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ geminiCSF: on })}
