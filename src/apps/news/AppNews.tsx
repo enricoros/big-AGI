@@ -283,7 +283,7 @@ export function AppNews() {
                 </Box>
               )}
 
-              {idx === 0 && <Divider sx={{ my: 6, mx: 6 }}/>}
+              {idx === 1 && <Divider sx={{ my: 6, mx: 6 }}/>}
 
             </React.Fragment>;
           })}
