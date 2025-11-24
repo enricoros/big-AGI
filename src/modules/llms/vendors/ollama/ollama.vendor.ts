@@ -20,6 +20,10 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   instanceLimit: 2,
   hasServerConfigKey: 'hasLlmOllama',
 
+  /// client-side-fetch ///
+  csfKey: 'ollamaCSF',
+  csfAvailable: _csfOllamaAvailable,
+
   // functions
   initializeSetup: () => ({
     ollamaHost: '',
@@ -28,7 +32,7 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   }),
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({
     dialect: 'ollama',
-    clientSideFetch: !!(partialSetup?.ollamaHost && partialSetup?.ollamaCSF),
+    clientSideFetch: _csfOllamaAvailable(partialSetup) && !!partialSetup?.ollamaCSF,
     ollamaHost: partialSetup?.ollamaHost || '',
     ollamaJson: partialSetup?.ollamaJson || false,
   }),
@@ -37,3 +41,7 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmOllama.listModels.query({ access }),
 
 };
+
+function _csfOllamaAvailable(s?: Partial<DOllamaServiceSettings>) {
+  return !!s?.ollamaHost;
+}

@@ -24,17 +24,24 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmAnthropic',
 
+  /// client-side-fetch ///
+  csfKey: 'anthropicCSF',
+  csfAvailable: _csfAnthropicAvailable,
+
   // functions
   getTransportAccess: (partialSetup): AnthropicAccessSchema => ({
     dialect: 'anthropic',
-    clientSideFetch: !!(partialSetup?.anthropicKey && partialSetup?.anthropicCSF),
+    clientSideFetch: _csfAnthropicAvailable(partialSetup) && !!partialSetup?.anthropicCSF,
     anthropicKey: partialSetup?.anthropicKey || '',
     anthropicHost: partialSetup?.anthropicHost || null,
     heliconeKey: partialSetup?.heliconeKey || null,
   }),
 
-
   // List Models
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmAnthropic.listModels.query({ access }),
 
 };
+
+function _csfAnthropicAvailable(s?: Partial<DAnthropicServiceSettings>) {
+  return !!s?.anthropicKey;
+}

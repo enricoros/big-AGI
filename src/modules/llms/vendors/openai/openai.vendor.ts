@@ -25,10 +25,14 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   instanceLimit: 5,
   hasServerConfigKey: 'hasLlmOpenAI',
 
+  /// client-side-fetch ///
+  csfKey: 'oaiCSF',
+  csfAvailable: _csfOpenAIAvailable,
+
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'openai',
-    clientSideFetch: !!((partialSetup?.oaiHost || partialSetup?.oaiKey) && partialSetup?.oaiCSF),
+    clientSideFetch: _csfOpenAIAvailable(partialSetup) && !partialSetup?.oaiCSF,
     oaiKey: '',
     oaiOrg: '',
     oaiHost: '',
@@ -41,3 +45,7 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmOpenAI.listModels.query({ access }),
 
 };
+
+function _csfOpenAIAvailable(s?: Partial<DOpenAIServiceSettings>) {
+  return !!(s?.oaiHost || s?.oaiKey);
+}
