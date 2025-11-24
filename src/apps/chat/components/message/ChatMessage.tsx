@@ -797,6 +797,7 @@ export function ChatMessage(props: {
             fitScreen={props.fitScreen}
             isMobile={props.isMobile}
             messageRole={messageRole}
+            messageGeneratorLlmId={messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined}
             messagePendingIncomplete={messagePendingIncomplete}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}

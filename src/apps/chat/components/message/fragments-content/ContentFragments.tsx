@@ -56,6 +56,7 @@ export function ContentFragments(props: {
   isMobile: boolean,
   messageRole: DMessageRole,
   messagePendingIncomplete?: boolean,
+  messageGeneratorLlmId?: string | null,
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
   enhanceCodeBlocks: boolean,
@@ -172,7 +173,7 @@ export function ContentFragments(props: {
 
           default:
             const _exhaustiveVoidCheck: never = part;
-            // fallthrough - we don't handle these here anymore
+          // fallthrough - we don't handle these here anymore
           case 'annotations':
             return (
               <ScaledTextBlockRenderer
@@ -243,7 +244,9 @@ export function ContentFragments(props: {
             <BlockPartError
               key={fId}
               errorText={part.error}
+              errorHint={part.hint}
               messageRole={props.messageRole}
+              messageGeneratorLlmId={props.messageGeneratorLlmId}
               contentScaling={props.contentScaling}
             />
           );
