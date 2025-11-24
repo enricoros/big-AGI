@@ -38,6 +38,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { anthropicKey, anthropicHost, clientSideFetch, heliconeKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
@@ -67,7 +68,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    {advanced.on && <FormSwitchControl
+    {showAdvanced && <FormSwitchControl
       title='Auto-Caching' on='Enabled' off='Disabled'
       tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
       description={autoVndAntBreakpoints ? <>Last 2 user messages</> : 'Disabled'}
@@ -76,7 +77,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
     />}
 
 
-    {advanced.on && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart
         title='Caching'
         description='Toggle per-Message'
@@ -87,7 +88,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       </Typography>
     </FormControl>}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='anthropic-host'
       title='API Host'
       description={<>e.g., <Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-aws-bedrock.md' target='_blank'>bedrock-claude</Link></>}
@@ -97,7 +98,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ anthropicHost: text })}
     />}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='anthropic-helicone-key'
       title='Helicone Key' disabled={!!anthropicHost}
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
@@ -106,7 +107,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ heliconeKey: text })}
     />}
 
-    {advanced.on && <SetupFormClientSideToggle
+    {showAdvanced && <SetupFormClientSideToggle
       visible={!!anthropicKey}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ anthropicCSF: on })}

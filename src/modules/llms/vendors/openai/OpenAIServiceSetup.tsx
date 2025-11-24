@@ -37,6 +37,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -62,7 +63,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='openai-host'
       title='API Endpoint'
       tooltip={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nCould be used for Helicone, Cloudflare, or other OpenAI compatible cloud or local services.\n\nExamples:\n - ${HELICONE_OPENAI_HOST}\n - localhost:1234`}
@@ -72,7 +73,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ oaiHost: text })}
     />}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='openai-org'
       title='Organization ID'
       description={<Link level='body-sm' href={BaseProduct.OpenSourceRepo + '/issues/63'} target='_blank'>What is this</Link>}
@@ -81,7 +82,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ oaiOrg: text })}
     />}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='openai-helicone-key'
       title='Helicone Key'
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
@@ -96,7 +97,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
 
-    {advanced.on && <FormSwitchControl
+    {showAdvanced && <FormSwitchControl
       title='Moderation' on='Enabled' fullWidth
       description={<>
         <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
@@ -106,7 +107,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={on => updateSettings({ moderationCheck: on })}
     />}
 
-    {advanced.on && <SetupFormClientSideToggle
+    {showAdvanced && <SetupFormClientSideToggle
       visible={!!oaiHost || !!oaiKey}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ oaiCSF: on })}
