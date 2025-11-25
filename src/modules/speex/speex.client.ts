@@ -10,7 +10,7 @@ import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 import type { DSpeexVoice, SpeexEngineId } from './speex.types';
 
 // ElevenLabs backend
-import { elevenLabsSpeakText, isElevenLabsEnabled, useCapability as useElevenLabsCapability } from '~/modules/elevenlabs/elevenlabs.client';
+import { elevenLabsSpeakText, isElevenLabsEnabled, useCapabilityElevenlabs as useElevenLabsCapability } from '~/modules/elevenlabs/elevenlabs.client';
 import { getElevenLabsData } from '~/modules/elevenlabs/store-module-elevenlabs';
 
 
