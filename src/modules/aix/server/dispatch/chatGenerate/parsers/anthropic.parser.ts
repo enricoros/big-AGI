@@ -61,6 +61,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let timeToFirstEvent: number;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
+  let needsTextSeparator = false; // insert text separator when text follows server tool
 
   return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
 
@@ -155,7 +156,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         switch (content_block.type) { // .content_block_start.type
           case 'text':
-            pt.appendText(content_block.text);
+            // add separator when text follows server tool execution
+            pt.appendText(!needsTextSeparator ? content_block.text : '\n\n' + content_block.text);
+            needsTextSeparator = false;
             // Note: In streaming mode, citations arrive via citations_delta events, not on content_block_start
             break;
 
@@ -379,6 +382,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             const _exhaustiveCheck: never = content_block;
             throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
         }
+
+        // set separator flag when server tools complete (text after tools needs visual separation)
+        if (content_block.type.includes('tool_use') || content_block.type.includes('tool_result'))
+          needsTextSeparator = true;
+
         break;
       }
 
@@ -576,6 +584,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
+  let needsTextSeparator = false; // insert text separator when text follows server tool
 
   return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
@@ -597,7 +606,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const isLastBlock = i === content.length - 1;
       switch (contentBlock.type) { // .content_block (non-streaming)
         case 'text':
-          pt.appendText(contentBlock.text);
+          // add separator when text follows server tool execution
+          pt.appendText(!needsTextSeparator ? contentBlock.text : '\n\n' + contentBlock.text);
+          needsTextSeparator = false;
           // Handle citations if present (non-streaming mode has all citations attached)
           if (contentBlock.citations && Array.isArray(contentBlock.citations)) {
             for (const citation of contentBlock.citations) {
@@ -824,6 +835,10 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           const _exhaustiveCheck: never = contentBlock;
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
       }
+
+      // set separator flag when server tools complete (text after tools needs visual separation)
+      if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
+        needsTextSeparator = true;
     }
 
     // -> Token Stop Reason

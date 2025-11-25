@@ -604,6 +604,8 @@ export class ContentReassembler {
     this.accumulator.fragments.unshift(placeholderFragment); // Add to beginning
 
     // Placeholders don't affect text fragment indexing
+    // NOTE: we could have placeholders breaking text accumulation into new fragments with `this.currentTextFragmentIndex = null;`, however
+    // since placeholders are used a lot with hosted tool calls, this could lead to way too many fragments being created
   }
 
   private onSetVendorState(vs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void {
@@ -619,7 +621,7 @@ export class ContentReassembler {
     lastFragment.vendorState = {
       ...lastFragment.vendorState,
       [vendor]: state,
-    }
+    };
   }
 
   // Helper to remove placeholder when real content arrives
