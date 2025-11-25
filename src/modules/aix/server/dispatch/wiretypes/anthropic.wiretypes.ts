@@ -587,6 +587,11 @@ export namespace AnthropicWire_Tools {
     }),
 
     /**
+     * [Anthropic, 2025-11-13] Structured Outputs - guarantees tool inputs to match `input_schema` exactly.
+     */
+    strict: z.boolean().optional(),
+
+    /**
      * [Anthropic, 2025-11-24] Tool Search Tool - when true, this tool is not loaded into context initially and can be discovered via the tool search tool when needed.
      */
     defer_loading: z.boolean().optional(),
