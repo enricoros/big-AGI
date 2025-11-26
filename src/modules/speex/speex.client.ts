@@ -8,12 +8,13 @@
 
 import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 
-// legacy ElevenLabs backend (to be replaced with speex.router)
-import { elevenLabsSpeakText, useCapabilityElevenlabs } from '~/modules/elevenlabs/elevenlabs.client';
+// Legacy ElevenLabs capability check - fallback only, to be removed once fully ported
+import { useCapabilityElevenlabs } from '~/modules/elevenlabs/elevenlabs.client';
 
 import type { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexVendorType } from './speex.types';
-import { speakWebSpeech } from './vendors/webspeech.client';
+import { listWebSpeechVoices, speakWebSpeech } from './vendors/webspeech.client';
 import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
+import { speexListVoicesRPC, speexSynthesizeRPC } from './speex.rpc-client';
 
 
 // Capability API
@@ -104,30 +105,23 @@ export async function speakText(
   // route based on engine
   try {
 
-    if (engine) {
+    switch (engine?.vendorType) {
+      // Web Speech: client-only, no RPC
+      case 'webspeech':
+        return speakWebSpeech(inputText, engine.voice as DVoiceWebSpeech, callbacks);
 
-      switch (engine.vendorType) {
-        // Web Speech: client-only, no RPC
-        case 'webspeech':
-          return speakWebSpeech(inputText, engine.voice as DVoiceWebSpeech, callbacks);
-
-        // ElevenLabs: legacy path (to be replaced with speex.router)
-        case 'elevenlabs':
-          return speakWithLegacyElevenLabs(inputText, voice, { streaming, playback, returnAudio }, callbacks);
-
-        // OpenAI/LocalAI: TODO - route through speex.router once wired
-        case 'openai':
-        case 'localai':
-          return {
-            success: false,
-            error: `Engine type '${engine.vendorType}' not yet implemented`,
-          };
-      }
-
+      // RPC providers: route through speex.router RPC
+      case 'elevenlabs':
+      case 'openai':
+      case 'localai':
+        return speexSynthesizeRPC(engine, inputText, { streaming, playback, returnAudio }, callbacks);
     }
 
-    // fallback to legacy ElevenLabs path
-    return await speakWithLegacyElevenLabs(inputText, voice, { streaming, playback, returnAudio }, callbacks);
+    // No engine found - return error
+    return {
+      success: false,
+      error: 'No TTS engine configured. Please configure a TTS engine in Settings.',
+    };
   } catch (error) {
     callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
     return {
@@ -160,31 +154,37 @@ function _resolveEngineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineA
 }
 
 
-// Private: Speech dispatch functions
+// Voice Listing API
 
-export async function speakWithLegacyElevenLabs(
-  text: string,
-  voice: SpeexVoiceSelector,
-  options: { streaming: boolean; playback: boolean; returnAudio: boolean },
-  callbacks?: { onStart?: () => void; onChunk?: (chunk: ArrayBuffer) => void; onComplete?: () => void; onError?: (error: Error) => void },
-): Promise<SpeexSpeakResult> {
+export interface SpeexVoiceInfo {
+  id: string;
+  name: string;
+  description?: string;
+  previewUrl?: string;
+  category?: string;
+}
 
-  // extract voiceId from voice selector
-  let elevenVoiceId: string | undefined;
-  if (voice && 'voice' in voice && voice.voice && 'voiceId' in voice.voice)
-    elevenVoiceId = voice.voice.voiceId;
+/**
+ * List available voices for an engine.
+ * For cloud providers, this calls the speex.router RPC.
+ * For webspeech, this uses the browser API.
+ */
+export async function speexListVoicesForEngine(engine: DSpeexEngineAny): Promise<SpeexVoiceInfo[]> {
+  switch (engine.vendorType) {
+    case 'webspeech':
+      // Use browser API - synchronous but may need async loading
+      const browserVoices = listWebSpeechVoices();
+      return browserVoices.map(v => ({
+        id: v.voiceURI,
+        name: v.name,
+        description: `${v.lang}${v.localService ? ' (local)' : ''}`,
+      }));
 
-  const result = await elevenLabsSpeakText(
-    text,
-    elevenVoiceId,
-    options.streaming && options.playback, // Only stream if also playing
-    true, // turbo mode
-  );
-
-  callbacks?.onComplete?.();
-
-  return {
-    success: result.success,
-    audioBase64: options.returnAudio ? result.audioBase64 : undefined,
-  };
+    case 'elevenlabs':
+    case 'openai':
+    case 'localai':
+      // Use RPC
+      const result = await speexListVoicesRPC(engine);
+      return result.voices;
+  }
 }
