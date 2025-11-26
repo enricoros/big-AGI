@@ -6,6 +6,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 interface DAlibabaServiceSettings {
   alibabaOaiKey: string;
   alibabaOaiHost: string;
+  csf?: boolean;
 }
 
 export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAccessSchema> = {
@@ -17,6 +18,9 @@ export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAcc
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmAlibaba',
 
+  /// client-side-fetch ///
+  csfAvailable: _csfAlibabaAvailable,
+
   // functions
   initializeSetup: () => ({
     alibabaOaiKey: '',
@@ -27,6 +31,7 @@ export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAcc
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'alibaba',
+    clientSideFetch: _csfAlibabaAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.alibabaOaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.alibabaOaiHost || '',
@@ -37,3 +42,7 @@ export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAcc
   // OpenAI transport ('alibaba' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 };
+
+function _csfAlibabaAvailable(s?: Partial<DAlibabaServiceSettings>) {
+  return !!s?.alibabaOaiKey;
+}

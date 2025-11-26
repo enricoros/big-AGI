@@ -5,7 +5,9 @@ import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { ModelVendorMoonshot } from './moonshot.vendor';
@@ -18,6 +20,9 @@ const MOONSHOT_API_LINK = 'https://platform.moonshot.ai/console/api-keys';
 
 export function MoonshotServiceSetup(props: { serviceId: DModelsServiceId }) {
 
+  // state
+  const advanced = useToggleableBoolean();
+
   // external state
   const {
     service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
@@ -25,8 +30,9 @@ export function MoonshotServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorMoonshot);
 
   // derived state
-  const { oaiKey: moonshotKey } = serviceAccess;
+  const { clientSideFetch, oaiKey: moonshotKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!moonshotKey && serviceSetupValid);
@@ -52,7 +58,14 @@ export function MoonshotServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!moonshotKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Moonshot API from your browser instead of through the server.'
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

@@ -7,7 +7,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 interface DLocalAIServiceSettings {
   localAIHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
   localAIKey: string;   // use OpenAI-compatible API keys
-  localAICSF?: boolean;
+  csf?: boolean;
 }
 
 export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAccessSchema> = {
@@ -24,18 +24,17 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
   },
 
   /// client-side-fetch ///
-  csfKey: 'localAICSF',
   csfAvailable: _csfLocalAIAvailable,
 
   // functions
   initializeSetup: () => ({
     localAIHost: '',
     localAIKey: '',
-    // localAICSF: true, // eventually, but requires CORS support on the server: -e CORS=true -e CORS_ALLOW_ORIGINS="*"
+    // csf: true, // eventually, but requires CORS support on the server: -e CORS=true -e CORS_ALLOW_ORIGINS="*"
   }),
   getTransportAccess: (partialSetup) => ({
     dialect: 'localai',
-    clientSideFetch: _csfLocalAIAvailable(partialSetup) && !!partialSetup?.localAICSF,
+    clientSideFetch: _csfLocalAIAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.localAIKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.localAIHost || '',

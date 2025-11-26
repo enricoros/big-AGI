@@ -6,6 +6,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 export interface DXAIServiceSettings {
   xaiKey: string;
+  csf?: boolean;
 }
 
 export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchema> = {
@@ -17,11 +18,15 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmXAI',
 
+  /// client-side-fetch ///
+  csfAvailable: _csfXAIAvailable,
+
   // functions
   initializeSetup: () => ({ xaiKey: '' }),
   validateSetup: setup => setup.xaiKey?.length >= 80, // we assume all API keys are 80 chars+ - we won't have a strict validation
   getTransportAccess: (partialSetup) => ({
     dialect: 'xai',
+    clientSideFetch: _csfXAIAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.xaiKey || '',
     oaiOrg: '',
     oaiHost: '',
@@ -33,3 +38,7 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfXAIAvailable(s?: Partial<DXAIServiceSettings>) {
+  return !!s?.xaiKey;
+}

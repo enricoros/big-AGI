@@ -11,7 +11,7 @@ export interface DOpenAIServiceSettings {
   oaiKey: string;
   oaiOrg: string;
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
-  oaiCSF?: boolean;
+  csf?: boolean;
   heliKey: string;  // helicone key (works in conjunction with oaiHost)
   moderationCheck: boolean;
 }
@@ -26,13 +26,12 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   hasServerConfigKey: 'hasLlmOpenAI',
 
   /// client-side-fetch ///
-  csfKey: 'oaiCSF',
   csfAvailable: _csfOpenAIAvailable,
 
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'openai',
-    clientSideFetch: _csfOpenAIAvailable(partialSetup) && !!partialSetup?.oaiCSF,
+    clientSideFetch: _csfOpenAIAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: '',
     oaiOrg: '',
     oaiHost: '',

@@ -10,7 +10,7 @@ export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.s
 interface DAnthropicServiceSettings {
   anthropicKey: string;
   anthropicHost: string;
-  anthropicCSF?: boolean;
+  csf?: boolean;
   heliconeKey: string;
 }
 
@@ -25,13 +25,12 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
   hasServerConfigKey: 'hasLlmAnthropic',
 
   /// client-side-fetch ///
-  csfKey: 'anthropicCSF',
   csfAvailable: _csfAnthropicAvailable,
 
   // functions
   getTransportAccess: (partialSetup): AnthropicAccessSchema => ({
     dialect: 'anthropic',
-    clientSideFetch: _csfAnthropicAvailable(partialSetup) && !!partialSetup?.anthropicCSF,
+    clientSideFetch: _csfAnthropicAvailable(partialSetup) && !!partialSetup?.csf,
     anthropicKey: partialSetup?.anthropicKey || '',
     anthropicHost: partialSetup?.anthropicHost || null,
     heliconeKey: partialSetup?.heliconeKey || null,

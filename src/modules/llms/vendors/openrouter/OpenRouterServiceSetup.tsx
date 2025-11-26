@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Chip, Typography } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -12,9 +12,11 @@ import { getLLMPricing } from '~/common/stores/llms/llms.types';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
@@ -25,13 +27,17 @@ import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor
 
 export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
+  // state
+  const advanced = useToggleableBoolean();
+
   // external state
   const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceHasVisibleLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorOpenRouter);
 
   // derived state
-  const { oaiKey } = serviceAccess;
+  const { clientSideFetch, oaiKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -124,8 +130,15 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     {/*  These are usually moderated by the upstream provider (e.g. OpenAI).*/}
     {/*</Typography>*/}
 
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!oaiKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to OpenRouter API from your browser instead of through the server.'
+    />}
+
     <SetupFormRefetchButton
-      refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
+      refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced}
       leftButton={
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           <Button
