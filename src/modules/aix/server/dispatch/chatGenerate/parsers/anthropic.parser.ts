@@ -61,6 +61,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let timeToFirstEvent: number;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
+  let needsTextSeparator = false; // insert text separator when text follows server tool
 
   return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
 
@@ -153,9 +154,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           console.log(`ant content_block_start[${index}]: type=${content_block.type}, ${debugInfo}`);
         }
 
-        switch (content_block.type) {
+        switch (content_block.type) { // .content_block_start.type
           case 'text':
-            pt.appendText(content_block.text);
+            // add separator when text follows server tool execution
+            pt.appendText(!needsTextSeparator ? content_block.text : '\n\n' + content_block.text);
+            needsTextSeparator = false;
             // Note: In streaming mode, citations arrive via citations_delta events, not on content_block_start
             break;
 
@@ -173,6 +176,12 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
             if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
               content_block.input = null;
+
+            // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
+            const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825';
+            if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
+              console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from code_execution (tool_id: ${content_block.caller?.type === 'code_execution_20250825' ? content_block.caller.tool_id : 'n/a'})`);
+
             pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
             break;
 
@@ -183,7 +192,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               content_block.input = null;
 
             // Show placeholder for known server tools
-            switch (content_block.name) {
+            switch (content_block.name) { // .server_tool_use.name
               case 'web_search':
                 pt.sendVoidPlaceholder('search-web', 'Searching the web...');
                 break;
@@ -196,6 +205,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 break;
               case 'text_editor_code_execution':
                 pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+                break;
+              // [Anthropic, 2025-11-24] Tool Search Tool
+              case 'tool_search_tool_regex':
+              case 'tool_search_tool_bm25':
+                pt.sendVoidPlaceholder('code-exec', '🔍 Searching available tools...');
                 break;
               default:
                 // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
@@ -351,10 +365,28 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // using the Files API with content_block.file_id
             break;
 
+          case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
+            if (Array.isArray(content_block.content)) {
+              // success
+              const toolNames = content_block.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+              pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
+              // Log for future debugging
+              console.log('[Anthropic] Tool search discovered:', { tools: toolNames });
+            } else if (content_block.content?.type === 'tool_search_tool_result_error') {
+              // error during tool search
+              pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${content_block.content.error_code}`);
+            }
+            break;
+
           default:
             const _exhaustiveCheck: never = content_block;
             throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
         }
+
+        // set separator flag when server tools complete (text after tools needs visual separation)
+        if (content_block.type.includes('tool_use') || content_block.type.includes('tool_result'))
+          needsTextSeparator = true;
+
         break;
       }
 
@@ -474,6 +506,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (tokenStopReason !== null)
           pt.setTokenStopReason(tokenStopReason);
 
+        // NOTE: we have more fields we're not parsing yet - https://platform.claude.com/docs/en/api/typescript/messages#message_delta_usage
         if (usage?.output_tokens && messageStartTime) {
           const elapsedTimeMilliseconds = Date.now() - messageStartTime;
           const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
@@ -551,6 +584,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
+  let needsTextSeparator = false; // insert text separator when text follows server tool
 
   return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
@@ -570,9 +604,11 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     for (let i = 0; i < content.length; i++) {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
-      switch (contentBlock.type) {
+      switch (contentBlock.type) { // .content_block (non-streaming)
         case 'text':
-          pt.appendText(contentBlock.text);
+          // add separator when text follows server tool execution
+          pt.appendText(!needsTextSeparator ? contentBlock.text : '\n\n' + contentBlock.text);
+          needsTextSeparator = false;
           // Handle citations if present (non-streaming mode has all citations attached)
           if (contentBlock.citations && Array.isArray(contentBlock.citations)) {
             for (const citation of contentBlock.citations) {
@@ -603,6 +639,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
+
+          // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
+          const isProgrammaticCallNS = contentBlock.caller?.type === 'code_execution_20250825';
+          if (isProgrammaticCallNS)
+            console.log(`[Anthropic] Programmatic tool call (non-streaming): ${contentBlock.name} called from code_execution (tool_id: ${contentBlock.caller?.type === 'code_execution_20250825' ? contentBlock.caller.tool_id : 'n/a'})`);
+
           pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
           pt.endMessagePart();
           break;
@@ -610,7 +652,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         case 'server_tool_use':
           // Server tool use in non-streaming mode
           // NOTE: We don't create tool invocations for server tools - just show placeholders
-          switch (contentBlock.name) {
+          switch (contentBlock.name) { // .server_tool_use.name
             case 'web_search':
               pt.sendVoidPlaceholder('search-web', 'Searching the web...');
               break;
@@ -622,6 +664,11 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               break;
             case 'text_editor_code_execution':
               pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+              break;
+            // [Anthropic, 2025-11-24] Tool Search Tool
+            case 'tool_search_tool_regex':
+            case 'tool_search_tool_bm25':
+              pt.sendVoidPlaceholder('code-exec', '🔍 Searching available tools...');
               break;
             default:
               console.warn(`[Anthropic Parser] Unknown server tool (non-streaming): ${contentBlock.name}`);
@@ -771,10 +818,27 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           });
           break;
 
+        case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
+          if (Array.isArray(contentBlock.content)) {
+            // success
+            const toolNames = contentBlock.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+            pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
+            // Log for future debugging
+            console.log('[Anthropic] Tool search discovered (non-streaming):', { tools: toolNames });
+          } else if ((contentBlock.content as any)?.type === 'tool_search_tool_result_error') {
+            // error during tool search
+            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${(contentBlock.content as any).error_code}`);
+          }
+          break;
+
         default:
           const _exhaustiveCheck: never = contentBlock;
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
       }
+
+      // set separator flag when server tools complete (text after tools needs visual separation)
+      if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
+        needsTextSeparator = true;
     }
 
     // -> Token Stop Reason

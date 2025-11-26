@@ -79,6 +79,7 @@ const ModelParameterSpec_schema = z.object({
     'llmForceNoStream',
     // Anthropic
     'llmVndAnt1MContext',
+    'llmVndAntEffort',
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',
@@ -129,7 +130,7 @@ export const ModelDescription_schema = z.object({
   updated: z.number().optional(),
   description: z.string(),
   contextWindow: z.number().nullable(),
-  interfaces: z.array(z.enum(LLMS_ALL_INTERFACES)),
+  interfaces: z.array(z.union([z.enum(LLMS_ALL_INTERFACES), z.string()])), // backward compatibility: to not Break client-side interface parsing on newer server
   parameterSpecs: z.array(ModelParameterSpec_schema).optional(),
   maxCompletionTokens: z.number().optional(),
   // rateLimits: rateLimitsSchema.optional(),

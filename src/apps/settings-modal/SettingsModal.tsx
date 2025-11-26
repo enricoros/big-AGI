@@ -44,18 +44,17 @@ const Topics = styled(AccordionGroup)({
 
   // larger summary, with a spinning icon
   [`& .${accordionSummaryClasses.button}`]: {
-    minHeight: 64,
+    minHeight: '52px',
+    border: 'none',
+    paddingRight: '0.75rem',
+    backgroundColor: 'rgba(var(--joy-palette-primary-lightChannel) / 0.2)',
+    gap: '1rem',
   },
   [`& .${accordionSummaryClasses.indicator}`]: {
     transition: '0.2s',
   },
   [`& [aria-expanded="true"] .${accordionSummaryClasses.indicator}`]: {
     transform: 'rotate(45deg)',
-  },
-
-  // larger padded block
-  [`& .${accordionDetailsClasses.content}.${accordionDetailsClasses.expanded}`]: {
-    paddingBlock: '1rem',
   },
 });
 
@@ -92,9 +91,9 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
         >
           {!!props.icon && (
             <Avatar
+              size='sm'
               color={COLOR_TOPIC_ICON}
               variant={expanded ? 'plain' /* was: soft */ : 'plain'}
-              // size='sm'
             >
               {props.icon}
             </Avatar>
@@ -109,7 +108,7 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
         slotProps={{
           content: {
             sx: {
-              px: { xs: 1.5, md: 2 },
+              p: { xs: 1.5, md: 2.5 },
             },
           },
         }}
@@ -153,6 +152,7 @@ const _styles = {
   tabsListTab: {
     // borderRadius: '2rem',
     borderRadius: 'sm',
+    fontSize: 'sm',
     flex: 1,
     p: 0,
     '&[aria-selected="true"]': {
@@ -251,7 +251,7 @@ export function SettingsModal(props: {
           <Tab value='tools' disableIndicator sx={_styles.tabsListTab}>Tools</Tab>
         </TabList>
 
-        <TabPanel value='chat' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='chat' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -268,7 +268,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='voice' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='voice' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
               <VoiceSettings />
@@ -279,7 +279,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='draw' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='draw' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic>
               <T2ISettings />
@@ -290,7 +290,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='tools' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='tools' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic icon={<LanguageRoundedIcon />} title='Load Web Pages (with images)' startCollapsed>
               <BrowseSettings />

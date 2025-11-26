@@ -4,7 +4,7 @@ import { Alert } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
-import { Brand } from '~/common/app.config';
+import { BaseProduct } from '~/common/app.release';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -18,6 +18,7 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOpenAI } from './openai.vendor';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 
 
 // avoid repeating it all over
@@ -34,8 +35,9 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
-  const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
+  const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -61,7 +63,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='openai-host'
       title='API Endpoint'
       tooltip={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nCould be used for Helicone, Cloudflare, or other OpenAI compatible cloud or local services.\n\nExamples:\n - ${HELICONE_OPENAI_HOST}\n - localhost:1234`}
@@ -71,16 +73,16 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ oaiHost: text })}
     />}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='openai-org'
       title='Organization ID'
-      description={<Link level='body-sm' href={Brand.URIs.OpenRepo + '/issues/63'} target='_blank'>What is this</Link>}
+      description={<Link level='body-sm' href={BaseProduct.OpenSourceRepo + '/issues/63'} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
       value={oaiOrg}
       onChange={text => updateSettings({ oaiOrg: text })}
     />}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='openai-helicone-key'
       title='Helicone Key'
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
@@ -95,7 +97,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
 
-    {advanced.on && <FormSwitchControl
+    {showAdvanced && <FormSwitchControl
       title='Moderation' on='Enabled' fullWidth
       description={<>
         <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
@@ -104,6 +106,14 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       checked={moderationCheck}
       onChange={on => updateSettings({ moderationCheck: on })}
     />}
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!oaiHost || !!oaiKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ oaiCSF: on })}
+      helpText="Fetch models and make requests directly to OpenAI's Responses / Completions and List Models API using your browser instead of through the server."
+    />}
+
 
     <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />
 

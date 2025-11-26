@@ -717,7 +717,6 @@ function createSingleConfig(
       config[dialect] = {
         dialect: 'ollama',
         ollamaHost: host || 'http://127.0.0.1:11434',
-        ollamaJson: false,
       } as any;
       break;
 

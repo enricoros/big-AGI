@@ -1,83 +1,16 @@
 import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
-import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env';
+import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
-import { fixupHost } from '../openai/openai.router';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
+import { ollamaAccess, ollamaAccessSchema } from './ollama.access';
 
-
-// configuration
-const DEFAULT_OLLAMA_HOST = 'http://127.0.0.1:11434';
-
-
-// Mappers
-
-export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
-
-  const ollamaHost = fixupHost(access.ollamaHost || env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
-
-  return {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    url: ollamaHost + apiPath,
-  };
-
-}
-
-
-/*export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, jsonOutput: boolean, stream: boolean): WireOllamaChatCompletionInput => ({
-  model: model.id,
-  messages: history,
-  options: {
-    ...(model.temperature !== undefined && { temperature: model.temperature }),
-  },
-  ...(jsonOutput && { format: 'json' }),
-  // n: ...
-  // functions: ...
-  // function_call: ...
-  stream,
-});*/
-
-
-/* Unused: switched to the Chat endpoint (above). The implementation is left here for reference.
-https://github.com/jmorganca/ollama/blob/main/docs/api.md#generate-a-completion
-export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean) {
-
-  // if the first message is the system prompt, extract it
-  let systemPrompt: string | undefined = undefined;
-  if (history.length && history[0].role === 'system') {
-    const [firstMessage, ...rest] = history;
-    systemPrompt = firstMessage.content;
-    history = rest;
-  }
-
-  // encode the prompt for ollama, assuming the same template for everyone for now
-  const prompt = history.map(({ role, content }) => {
-    return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
-  }).join('') + '\n\nAssistant:\n';
-
-  // const prompt = history.map(({ role, content }) => {
-  //   return role === 'assistant' ? `### Response:\n${content}\n\n` : `### User:\n${content}\n\n`;
-  // }).join('') + '### Response:\n';
-
-  return {
-    model: model.id,
-    prompt,
-    options: {
-      ...(model.temperature !== undefined && { temperature: model.temperature }),
-    },
-    ...(systemPrompt && { system: systemPrompt }),
-    stream,
-  };
-}*/
 
 // async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
 //   const { headers, url } = ollamaAccess(access, apiPath);
@@ -90,14 +23,7 @@ export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenA
 // }
 
 
-// Input/Output Schemas
-
-export const ollamaAccessSchema = z.object({
-  dialect: z.enum(['ollama']),
-  ollamaHost: z.string().trim(),
-  ollamaJson: z.boolean(),
-});
-export type OllamaAccessSchema = z.infer<typeof ollamaAccessSchema>;
+// Router Input/Output Schemas
 
 const accessOnlySchema = z.object({
   access: ollamaAccessSchema,
@@ -124,8 +50,20 @@ const listPullableOutputSchema = z.object({
 
 export const llmOllamaRouter = createTRPCRouter({
 
+  /* Ollama: List the Models available */
+  listModels: edgeProcedure
+    .input(accessOnlySchema)
+    .output(ListModelsResponse_schema)
+    .query(async ({ ctx, input, signal }) => {
+
+      const models = await listModelsRunDispatch(input.access, signal);
+
+      return { models };
+    }),
+
+
   /* Ollama: models that can be pulled */
-  adminListPullable: publicProcedure
+  adminListPullable: edgeProcedure
     .input(accessOnlySchema)
     .output(listPullableOutputSchema)
     .query(async ({}) => {
@@ -143,7 +81,7 @@ export const llmOllamaRouter = createTRPCRouter({
     }),
 
   /* Ollama: pull a model */
-  adminPull: publicProcedure
+  adminPull: edgeProcedure
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
 
@@ -166,25 +104,13 @@ export const llmOllamaRouter = createTRPCRouter({
     }),
 
   /* Ollama: delete a model */
-  adminDelete: publicProcedure
+  adminDelete: edgeProcedure
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
       const { headers, url } = ollamaAccess(input.access, '/api/delete');
       const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, body: { 'name': input.name }, name: 'Ollama::delete' });
       if (deleteOutput?.length && deleteOutput !== 'null')
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ollama delete issue: ' + deleteOutput });
-    }),
-
-
-  /* Ollama: List the Models available */
-  listModels: publicProcedure
-    .input(accessOnlySchema)
-    .output(ListModelsResponse_schema)
-    .query(async ({ input, signal }) => {
-
-      const models = await listModelsRunDispatch(input.access, signal);
-
-      return { models };
     }),
 
 });

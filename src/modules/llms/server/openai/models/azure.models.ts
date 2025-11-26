@@ -1,18 +1,11 @@
 import * as z from 'zod/v4';
-import { TRPCError } from '@trpc/server';
-
-import { env } from '~/server/env';
 
 // import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 
-import type { ModelDescriptionSchema, RequestAccessValues } from '../../llm.server.types';
-
-import type { OpenAIAccessSchema } from '../openai.router';
-import { fixupHost } from '../openai.router';
-
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
+import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 
 // configuration
@@ -148,90 +141,5 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
     id: deploymentName,
     label: preciseLabel,
     ...restOfModelDescription,
-  };
-}
-
-
-function _azureServerSideVars() {
-  return {
-    apiKey: env.AZURE_OPENAI_API_KEY || '',
-    apiEndpoint: env.AZURE_OPENAI_API_ENDPOINT || '',
-    // 'v1' is the next-gen API, which doesn't have a monthly version string anymore
-    apiEnableV1: env.AZURE_OPENAI_DISABLE_V1 !== 'true',
-    // https://learn.microsoft.com/en-us/azure/ai-foundry/openai/api-version-lifecycle?tabs=key
-    versionAzureOpenAI: env.AZURE_OPENAI_API_VERSION || '2025-04-01-preview',
-    // old-school API used to list deployments - still needed for listing models, as even /v1/models would list any model available on azure and not just the deployed ones
-    versionDeployments: env.AZURE_DEPLOYMENTS_API_VERSION || '2023-03-15-preview',
-  };
-}
-
-export function azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): RequestAccessValues {
-
-  // Server-side configuration, with defaults
-  const server = _azureServerSideVars();
-
-  // Client-provided values always take precedence over server env vars
-  const azureKey = access.oaiKey || server.apiKey || '';
-  const azureHostFixed = fixupHost(access.oaiHost || server.apiEndpoint || '', apiPath);
-
-  // Normalize to origin only (discard path/query) to prevent malformed URLs
-  let azureBase: string;
-  try {
-    azureBase = new URL(azureHostFixed).origin;
-  } catch (e) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: `Azure OpenAI API Host is invalid: ${azureHostFixed || 'missing'}` });
-  }
-
-  if (!azureKey || !azureBase)
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
-
-  /**
-   * Azure OpenAI API Routing: Convert OpenAI standard paths to Azure-specific paths
-   *
-   * Azure supports two API patterns:
-   * 1. Next-gen v1 API (/openai/v1/...): Direct endpoints without deployment IDs
-   *    - Used for GPT-5-like models with advanced features
-   *    - Enabled by default, can be disabled via AZURE_OPENAI_DISABLE_V1=true
-   * 2. Traditional deployment-based API (/openai/deployments/{id}/...): Legacy pattern
-   *    - Required for older models and when v1 API is disabled
-   *    - Requires deployment ID for all API calls
-   */
-  switch (true) {
-
-    // List models
-    case apiPath === '/v1/models':
-      // uses the good old Azure OpenAI Deployments listing API
-      apiPath = `/openai/deployments?api-version=${server.versionDeployments}`;
-      break;
-
-    // Responses API - next-gen v1 API
-    case apiPath === '/v1/responses' && server.apiEnableV1:
-      // Next-gen v1 API: direct endpoint without deployment path
-      apiPath = '/openai/v1/responses'; // NOTE: we seem to not need the api-version query param here
-      // apiPath = `/openai/v1/responses?api-version=${server.versionResponses}`;
-      // console.log('[Azure] Using next-gen v1 API for Responses:', apiPath);
-      break;
-
-    // Chat Completions API, and other v1 APIs
-    case apiPath === '/v1/chat/completions' || apiPath === '/v1/responses' || apiPath.startsWith('/v1/'):
-
-      // require the model Id for traditional deployment-based routing
-      if (!modelRefId)
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API needs a deployment id' });
-
-      const functionName = apiPath.replace('/v1/', ''); // e.g. 'chat/completions'
-      apiPath = `/openai/deployments/${modelRefId}/${functionName}?api-version=${server.versionAzureOpenAI}`;
-      break;
-
-    default:
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API path not supported: ' + apiPath });
-  }
-
-  return {
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': azureKey,
-    },
-    url: azureBase + apiPath,
   };
 }

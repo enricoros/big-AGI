@@ -1,11 +1,16 @@
 import * as React from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { MyAppProps } from 'next/app';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
-import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
 
 import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
+
+
+// [server-client-safe] dynamic imports to avoid webpack bundling issues with next/navigation
+const VercelAnalytics = dynamic(() => import('@vercel/analytics/next').then(mod => mod.Analytics), { ssr: false });
+const VercelSpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights), { ssr: false });
+
 
 import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
@@ -55,10 +60,10 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
       </ProviderSingleTab>
     </ProviderTheming>
 
-    {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
-    {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
     {hasPostHogAnalytics && <OptionalPostHogAnalytics />}
+    {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
+    {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
 
   </>;
 };

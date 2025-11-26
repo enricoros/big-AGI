@@ -103,13 +103,18 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   //   console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
   // }
 
+  // [Anthropic, 2025-11-13] constrained output modes - both JSON and tool invocations
+  const strictToolsEnabled = !!model.strictToolInvocations;
+  // [Anthropic, 2025-11-24] Tool Search Tool - when enabled, all custom tools get defer_loading: true
+  const toolSearchEnabled = !!model.vndAntToolSearch;
+
   // Construct the request payload
   const payload: TRequest = {
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : 8192,
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
-    tools: chatGenerate.tools && _toAnthropicTools(chatGenerate.tools),
+    tools: chatGenerate.tools && _toAnthropicTools(chatGenerate.tools, strictToolsEnabled, toolSearchEnabled),
     tool_choice: chatGenerate.toolsPolicy && _toAnthropicToolChoice(chatGenerate.toolsPolicy),
     // metadata: { user_id: ... }
     // stop_sequences: undefined,
@@ -136,6 +141,26 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       type: 'disabled',
     };
     delete payload.temperature;
+  }
+
+  // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
+  if (model.vndAntEffort /*&& model.vndAntEffort !== 'high'*/)
+    payload.output_config = {
+      effort: model.vndAntEffort,
+    };
+
+  // [Anthropic, 2025-11-13] Structured Outputs - JSON output format
+  if (model.strictJsonOutput) {
+
+    // auto-add additionalProperties: false to root object if not present - required by Anthropic
+    let schema = model.strictJsonOutput.schema;
+    if (schema && typeof schema === 'object' && schema.type === 'object' && schema.additionalProperties === undefined)
+      schema = { ...schema, additionalProperties: false };
+    payload.output_format = { type: 'json_schema', schema };
+
+    // warn about incompatible features (citations are enabled via web_fetch tool)
+    if (model.vndAntWebFetch === 'auto')
+      console.warn('[Anthropic] Structured output_format may conflict with web_fetch citations');
   }
 
   // --- Tools ---
@@ -167,6 +192,18 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
         citations: { enabled: true }, // Enable citations
       });
     }
+
+    // [Anthropic, 2025-11-24] Tool Search Tool(s)
+    if (model.vndAntToolSearch === 'regex')
+      hostedTools.push({
+        type: 'tool_search_tool_regex_20251119',
+        name: 'tool_search_tool_regex',
+      });
+    else if (model.vndAntToolSearch === 'bm25')
+      hostedTools.push({
+        type: 'tool_search_tool_bm25_20251119',
+        name: 'tool_search_tool_bm25',
+      });
 
     // Merge hosted tools with custom tools
     if (hostedTools.length > 0) {
@@ -353,12 +390,12 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
   }
 }
 
-function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['tools']> {
+function _toAnthropicTools(itds: AixTools_ToolDefinition[], strictToolsEnabled: boolean, toolSearchToolEnabled: boolean): NonNullable<TRequest['tools']> {
   return itds.map(itd => {
     switch (itd.type) {
 
       case 'function_call':
-        const { name, description, input_schema } = itd.function_call;
+        const { name, description, input_schema, allowed_callers, input_examples } = itd.function_call;
         return {
           type: 'custom', // we could not set it, but it helps our typesystem with discrimination
           name,
@@ -367,7 +404,16 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TReques
             type: 'object',
             properties: input_schema?.properties || null, // Anthropic valid values for input_schema.properties are 'object' or 'null' (null is used to declare functions with no inputs)
             required: input_schema?.required,
+            // [Anthropic, 2025-11-13] Structured Outputs requires additionalProperties: false
+            ...(strictToolsEnabled ? { additionalProperties: false } : {}),
           },
+          // [Anthropic, 2025-11-13] Structured Outputs: strict mode guarantees tool inputs match schema
+          ...(strictToolsEnabled ? { strict: true } : {}),
+          // [Anthropic, 2025-11-24] Tool Search Tool - auto-defer all custom tools
+          ...(toolSearchToolEnabled ? { defer_loading: true } : {}),
+          // [Anthropic, 2025-11-24] Programmatic Tool Calling - pass through allowed_callers and input_examples
+          ...(allowed_callers ? { allowed_callers: allowed_callers.map(c => c === 'code_execution' ? 'code_execution_20250825' : c) } : {}),
+          ...(input_examples ? { input_examples } : {}),
         };
 
       case 'code_execution':

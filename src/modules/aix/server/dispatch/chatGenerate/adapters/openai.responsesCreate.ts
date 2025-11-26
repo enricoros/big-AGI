@@ -1,4 +1,4 @@
-import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
@@ -27,7 +27,6 @@ export function aixToOpenAIResponses(
   openAIDialect: OpenAIDialects,
   model: AixAPI_Model,
   _chatGenerate: AixAPIChatGenerate_Request,
-  jsonOutput: boolean,
   streaming: boolean,
   enableResumability: boolean,
 ): TRequest {
@@ -51,6 +50,10 @@ export function aixToOpenAIResponses(
   // NOTE: the zod parsing will remove the undefined values from the upstream request, enabling an easier construction
   // ---
 
+  // constrained output modes - both JSON and tool invocations
+  // const strictJsonOutput = !!model.strictJsonOutput;
+  const strictToolInvocations = !!model.strictToolInvocations;
+
   const { requestInput, requestInstructions } = _toOpenAIResponsesRequestInput(chatGenerate.systemMessage, chatGenerate.chatSequence);
   const payload: TRequest = {
 
@@ -65,7 +68,7 @@ export function aixToOpenAIResponses(
     input: requestInput,
 
     // Tools
-    tools: chatGenerate.tools && _toOpenAIResponsesTools(chatGenerate.tools),
+    tools: chatGenerate.tools && _toOpenAIResponsesTools(chatGenerate.tools, strictToolInvocations),
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIResponsesToolChoice(chatGenerate.toolsPolicy),
     // parallel_tool_calls: undefined, // response if unset: true
 
@@ -98,15 +101,18 @@ export function aixToOpenAIResponses(
     payload.top_p = model.topP;
   }
 
-  // JSON output: not implemented yet - will need a schema definition (similar to the tool args definition)
-  if (jsonOutput) {
-    console.warn('[DEV] notImplemented: responses: jsonOutput');
-    // payload.text = {
-    //   format: {
-    //     type: 'json_schema',
-    //   },
-    // };
-  }
+  // Structured Outputs - JSON output grammar
+  if (model.strictJsonOutput)
+    payload.text = {
+      ...payload.text,
+      format: {
+        type: 'json_schema',
+        name: model.strictJsonOutput.name || 'response',
+        description: model.strictJsonOutput.description,
+        schema: model.strictJsonOutput.schema,
+        strict: true,
+      },
+    };
 
   // GPT-5 Verbosity: Add to existing text config or create new one
   if (model.vndOaiVerbosity) {
@@ -481,7 +487,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   };
 }
 
-function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequestTool[]> {
+function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[], strictToolInvocations: boolean): NonNullable<TRequestTool[]> {
   return itds.map(itd => {
     const itdType = itd.type;
     switch (itdType) {
@@ -496,7 +502,9 @@ function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[]): NonNullable<T
             type: 'object',
             properties: input_schema?.properties ?? {},
             required: input_schema?.required,
+            ...(strictToolInvocations ? { additionalProperties: false } : {}), // required for strict tool invocations
           },
+          ...(strictToolInvocations ? { strict: true } : {}), // enable strict (grammar-constrained) tool invocation inputs
         };
 
       case 'code_execution':

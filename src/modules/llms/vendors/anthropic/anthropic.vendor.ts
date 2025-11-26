@@ -1,6 +1,6 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
-import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
+import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.access';
 import type { IModelVendor } from '../IModelVendor';
 
 
@@ -10,6 +10,7 @@ export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.s
 interface DAnthropicServiceSettings {
   anthropicKey: string;
   anthropicHost: string;
+  anthropicCSF?: boolean;
   heliconeKey: string;
 }
 
@@ -23,16 +24,24 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmAnthropic',
 
+  /// client-side-fetch ///
+  csfKey: 'anthropicCSF',
+  csfAvailable: _csfAnthropicAvailable,
+
   // functions
   getTransportAccess: (partialSetup): AnthropicAccessSchema => ({
     dialect: 'anthropic',
+    clientSideFetch: _csfAnthropicAvailable(partialSetup) && !!partialSetup?.anthropicCSF,
     anthropicKey: partialSetup?.anthropicKey || '',
     anthropicHost: partialSetup?.anthropicHost || null,
     heliconeKey: partialSetup?.heliconeKey || null,
   }),
 
-
   // List Models
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmAnthropic.listModels.query({ access }),
 
 };
+
+function _csfAnthropicAvailable(s?: Partial<DAnthropicServiceSettings>) {
+  return !!s?.anthropicKey;
+}

@@ -4,7 +4,7 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { apiStream } from '~/common/util/trpc.client';
 import { formatModelsCost } from '~/common/util/costUtils';
 
-import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
+import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';

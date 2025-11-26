@@ -1,5 +1,5 @@
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 
 import { DOpenAIServiceSettings, ModelVendorOpenAI } from '../openai/openai.vendor';
 

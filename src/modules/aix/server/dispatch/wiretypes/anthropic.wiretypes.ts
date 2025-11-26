@@ -10,6 +10,12 @@ import * as z from 'zod/v4';
  *
  * ## Updates
  *
+ * ### 2025-11-24 - Programmatic Tool Calling (Beta: advanced-tool-use-2025-11-20)
+ * - ToolUseBlock: added 'caller' field to indicate direct vs programmatic invocation
+ * - CustomToolDefinition: added 'allowed_callers' field to restrict tool invocation contexts
+ * - CustomToolDefinition: added 'input_examples' field for improved accuracy
+ * - New ToolUseCaller_schema for discriminating caller types
+ *
  * ### 2025-10-17 - MAJOR: Server Tools & 2025 API Additions
  * - ContentBlockOutput: added 9 new server tool response block types
  * - ToolDefinition: added 9 new 2025 tool types (web_search, web_fetch, memory, code_execution, etc.)
@@ -119,6 +125,17 @@ export namespace AnthropicWire_Blocks {
     id: z.string(),
     name: z.string(), // length: 1-64
     input: z.any(), // Formally an 'object', but relaxed for robust parsing, and code-enforced
+    /**
+     * [Anthropic, 2025-11-24] Programmatic Tool Calling - indicates how this tool was invoked.
+     * Requires the advanced-tool-use-2025-11-20 beta feature.
+     */
+    caller: z.discriminatedUnion('type', [
+      z.object({ type: z.literal('direct') }), // model called tool directly
+      z.object({
+        type: z.literal('code_execution_20250825'), // tool called programmatically from within code execution
+        tool_id: z.string(), // ref the server_tool_use (code_execution) that made this call
+      }),
+    ]).optional(),
   });
 
 
@@ -224,6 +241,8 @@ export namespace AnthropicWire_Blocks {
         'code_execution',
         'bash_code_execution', // sub-tool of 'code_execution'
         'text_editor_code_execution', // sub-tool of 'code_execution'
+        'tool_search_tool_regex', // Tool Search Tool - regex variant
+        'tool_search_tool_bm25', // Tool Search Tool - BM25 (natural text) variant
       ]),
       z.string(), // forward-compatibility parsing
     ]),
@@ -369,6 +388,27 @@ export namespace AnthropicWire_Blocks {
     file_id: z.string(),
   });
 
+  /**
+   * [Anthropic, 2025-11-24] Tool Search Tool - Result of tool search operation
+   * Contains either an array of tool references or an error.
+   */
+  export const ToolSearchToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      // success - array of tool references
+      z.array(z.object({
+        type: z.literal('tool_reference'),
+        tool_name: z.string(),
+      })),
+      // error
+      z.object({
+        type: z.literal('tool_search_tool_result_error'),
+        error_code: z.union([z.enum(['too_many_requests', 'invalid_pattern', 'pattern_too_long', 'unavailable']), z.string() /* forward-compatibility */]),
+      }),
+    ]),
+  });
+
 
   /// Block Constructors
 
@@ -457,6 +497,7 @@ export namespace AnthropicWire_Messages {
    * - Code execution tool result, Bash code execution tool result, Text editor code execution tool result
    * - MCP tool use, MCP tool result
    * - Container upload
+   * - Tool reference
    */
   export const ContentBlockOutput_schema = z.discriminatedUnion('type', [
     // Common Blocks (both input and output)
@@ -474,6 +515,7 @@ export namespace AnthropicWire_Messages {
     AnthropicWire_Blocks.MCPToolUseBlock_schema,
     AnthropicWire_Blocks.MCPToolResultBlock_schema,
     AnthropicWire_Blocks.ContainerUploadBlock_schema,
+    AnthropicWire_Blocks.ToolSearchToolResultBlock_schema, // [Anthropic, 2025-11-24] Tool Search Tool
   ]);
 }
 
@@ -543,6 +585,24 @@ export namespace AnthropicWire_Tools {
       properties: z.record(z.string(), z.any()).nullish(), // FC-DEF params schema - WAS: z.json().nullable(),
       required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
     }),
+
+    /**
+     * [Anthropic, 2025-11-13] Structured Outputs - guarantees tool inputs to match `input_schema` exactly.
+     */
+    strict: z.boolean().optional(),
+
+    /**
+     * [Anthropic, 2025-11-24] Tool Search Tool - when true, this tool is not loaded into context initially and can be discovered via the tool search tool when needed.
+     */
+    defer_loading: z.boolean().optional(),
+
+    /**
+     * [Anthropic, 2025-11-24] Programmatic Tool Calling - 2 new fields:
+     * - specifies which contexts can invoke this tool
+     * - concrete usage examples to improve accuracy - can increase accuracy (e.g. 72% -> 90% in examples)
+     */
+    allowed_callers: z.array(z.enum(['direct', 'code_execution_20250825'])).optional(), // can be both ['direct', 'code_execution_20250825']
+    input_examples: z.array(z.record(z.string(), z.any())).optional(),
   });
 
   // Latest Tool Versions (sorted alphabetically by tool name)
@@ -589,6 +649,18 @@ export namespace AnthropicWire_Tools {
     max_characters: z.number().nullish(),
   });
 
+  /** [Anthropic, 2025-11-24] Tool Search Tool - constructs regex patterns (e.g., "weather", "get_.*_data") to search tool names/descriptions. */
+  const _ToolSearchToolRegex_20251119_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('tool_search_tool_regex_20251119'),
+    name: z.literal('tool_search_tool_regex'),
+  });
+
+  /** [Anthropic, 2025-11-24] Tool Search Tool - BM25 variant (natural language search) - uses natural language queries to search for tools. */
+  const _ToolSearchToolBM25_20251119_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('tool_search_tool_bm25_20251119'),
+    name: z.literal('tool_search_tool_bm25'),
+  });
+
   const _WebFetchTool_20250910_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('web_fetch_20250910'),
     name: z.literal('web_fetch'),
@@ -617,6 +689,8 @@ export namespace AnthropicWire_Tools {
     _ComputerUseTool_20250124_schema,
     _MemoryTool_20250818_schema,
     _TextEditor_20250728_schema,
+    _ToolSearchToolBM25_20251119_schema, // [Anthropic, 2025-11-24] Tool Search Tool - BM25 variant
+    _ToolSearchToolRegex_20251119_schema, // [Anthropic, 2025-11-24] Tool Search Tool - Regex variant
     _WebFetchTool_20250910_schema,
     _WebSearchTool_20250305_schema,
   ]);
@@ -770,6 +844,14 @@ export namespace AnthropicWire_API_Message_Create {
     ]).optional(),
 
     /**
+     * [Anthropic, effort-2025-11-24] Output configuration for effort-based token control.
+     * Allows trading off response thoroughness for efficiency (Claude Opus 4.5+ only).
+     */
+    output_config: z.object({
+      effort: z.enum(['low', 'medium', 'high']).optional(),
+    }).optional(),
+
+    /**
      * Defaults to 1.0. Ranges from 0.0 to 1.0. Use temperature closer to 0.0 for analytical / multiple choice, and closer to 1.0 for creative and generative tasks.
      */
     temperature: z.number().optional(),
@@ -785,6 +867,17 @@ export namespace AnthropicWire_API_Message_Create {
      * Recommended for advanced use cases only. You usually only need to use `temperature`.
      * */
     top_p: z.number().optional(),
+
+    /**
+     * [Anthropic, 2025-11-13] Structured Outputs - JSON output format configuration.
+     * Constrains Claude's response to follow a specific JSON schema.
+     * Beta feature requiring header: "structured-outputs-2025-11-13"
+     * Available for Claude Sonnet 4.5 and Claude Opus 4.1+.
+     */
+    output_format: z.object({
+      type: z.literal('json_schema'),
+      schema: z.any(), // JSON Schema object - validated by Anthropic
+    }).optional(),
   });
 
   /// Response
@@ -831,6 +924,7 @@ export namespace AnthropicWire_API_Message_Create {
       server_tool_use: z.object({
         web_fetch_requests: z.number(),
         web_search_requests: z.number(),
+        tool_search_requests: z.number().optional(), // [Anthropic, 2025-11-24] Tool Search Tool usage
       }).nullish(),
       service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
     }),
@@ -872,8 +966,18 @@ export namespace AnthropicWire_API_Message_Create {
       stop_reason: StopReason_schema.nullable(),
       stop_sequence: z.string().nullable(),
     }),
-    // MessageDeltaUsage
-    usage: z.object({ output_tokens: z.number() }),
+    // MessageDeltaUsage - extended to include cache and server tool metrics
+    usage: z.object({
+      cache_creation_input_tokens: z.number().nullish(),
+      cache_read_input_tokens: z.number().nullish(),
+      input_tokens: z.number().nullish(),
+      output_tokens: z.number(),
+      server_tool_use: z.object({
+        web_fetch_requests: z.number().optional(),
+        web_search_requests: z.number().optional(),
+        tool_search_requests: z.number().optional(),
+      }).nullish(),
+    }),
   });
 
   export const event_ContentBlockStart_schema = z.object({

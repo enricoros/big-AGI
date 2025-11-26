@@ -3,14 +3,29 @@ import * as React from 'react';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
+import type { DMessageErrorPart } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+
+import { BlockPartError_RequestExceeded } from './BlockPartError_RequestExceeded';
 
 
 export function BlockPartError(props: {
   errorText: string,
+  errorHint?: DMessageErrorPart['hint'],
   messageRole: DMessageRole,
+  messageGeneratorLlmId?: string | null,
   contentScaling: ContentScaling,
 }) {
+
+  // special error presentation, based on hints
+  switch (props.errorHint) {
+    case 'aix-request-exceeded':
+      return <BlockPartError_RequestExceeded messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
+
+    default:
+      // continue rendering generic error
+      break;
+  }
 
   // Check if the errorText starts with '**' and has a closing '**' following Markdown rules
   let textToRender = props.errorText;

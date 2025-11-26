@@ -1,4 +1,4 @@
-import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
@@ -29,7 +29,7 @@ const approxSystemMessageJoiner = '\n\n---\n\n';
 type TRequest = OpenAIWire_API_Chat_Completions.Request;
 type TRequestMessages = TRequest['messages'];
 
-export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -70,11 +70,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     chatMessages = _fixAlternateUserAssistantRoles(chatMessages);
 
 
+  // constrained output modes - both JSON and tool invocations
+  // const strictJsonOutput = !!model.strictJsonOutput;
+  const strictToolInvocations = !!model.strictToolInvocations;
+
   // Construct the request payload
   let payload: TRequest = {
     model: model.id,
     messages: chatMessages,
-    tools: chatGenerate.tools && _toOpenAITools(chatGenerate.tools),
+    tools: chatGenerate.tools && _toOpenAITools(chatGenerate.tools, strictToolInvocations),
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy),
     parallel_tool_calls: undefined,
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
@@ -83,7 +87,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     n: hotFixOnlySupportN1 ? undefined : 0, // NOTE: we choose to not support this at the API level - most downstram ecosystem supports 1 only, which is the default
     stream: streaming,
     stream_options: streaming ? { include_usage: true } : undefined,
-    response_format: jsonOutput ? { type: 'json_object' } : undefined,
+    response_format: model.strictJsonOutput ? {
+      type: 'json_schema',
+      json_schema: {
+        name: model.strictJsonOutput.name || 'response',
+        description: model.strictJsonOutput.description,
+        schema: model.strictJsonOutput.schema,
+        strict: true,
+      },
+    } : undefined,
     seed: undefined,
     stop: undefined,
     user: undefined,
@@ -623,7 +635,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
   return chatMessages;
 }
 
-function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['tools']> {
+function _toOpenAITools(itds: AixTools_ToolDefinition[], strictToolInvocations: boolean): NonNullable<TRequest['tools']> {
   return itds.map(itd => {
     const itdType = itd.type;
     switch (itdType) {
@@ -639,7 +651,9 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
               type: 'object',
               properties: input_schema?.properties ?? {},
               required: input_schema?.required,
+              ...(strictToolInvocations ? { additionalProperties: false } : {}), // required for strict tool invocations
             },
+            ...(strictToolInvocations ? { strict: true } : {}), // enable strict (grammar-constrained) tool invocation inputs
           },
         };
 

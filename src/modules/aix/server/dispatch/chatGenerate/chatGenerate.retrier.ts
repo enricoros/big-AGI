@@ -1,8 +1,9 @@
-import type { AixDebugObject } from '../../api/aix.router';
+import { abortableDelay } from '~/server/wire';
+
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
+import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
-import { abortableDelay } from '~/server/wire';
 import { executeChatGenerate } from './chatGenerate.executor';
 
 
