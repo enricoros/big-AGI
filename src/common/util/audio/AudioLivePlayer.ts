@@ -65,9 +65,8 @@ export class AudioLivePlayer {
       this.appendNextChunk();
     } else {
       // End the stream if all data has been appended
-      if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0) {
-        this.mediaSource.endOfStream();
-      }
+      if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0)
+        this._safeEndOfStream();
     }
   };
 
@@ -86,9 +85,17 @@ export class AudioLivePlayer {
         }
       }
     } else if (this.isMediaSourceEnded) {
-      if (this.sourceBuffer && !this.sourceBuffer.updating) {
-        this.mediaSource.endOfStream();
-      }
+      if (this.sourceBuffer && !this.sourceBuffer.updating)
+        this._safeEndOfStream();
+    }
+  }
+
+  private _safeEndOfStream() {
+    if (this.mediaSource.readyState !== 'open') return;
+    try {
+      this.mediaSource.endOfStream();
+    } catch (e) {
+      // Ignore - MediaSource may have already ended
     }
   }
 
@@ -106,9 +113,8 @@ export class AudioLivePlayer {
   public endPlayback() {
     this.isMediaSourceEnded = true;
     // If the sourceBuffer is not updating, we can end the stream
-    if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0) {
-      this.mediaSource.endOfStream();
-    }
+    if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0)
+      this._safeEndOfStream();
   }
 
   /**
@@ -121,9 +127,7 @@ export class AudioLivePlayer {
 
     if (this.sourceBuffer) {
       try {
-        if (this.mediaSource.readyState === 'open') {
-          this.mediaSource.endOfStream();
-        }
+        this._safeEndOfStream();
         this.sourceBuffer.abort();
       } catch (e) {
         console.warn('Error stopping playback:', e);
