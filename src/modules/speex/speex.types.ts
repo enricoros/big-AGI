@@ -1,39 +1,46 @@
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 
-// Speex Engine
+// Speex Vendor Types (supported TTS providers)
 
-export interface DSpeexEngine<T extends SpeexEngineType = SpeexEngineType> {
+export type SpeexVendorType = 'elevenlabs' | 'localai' | 'openai' | 'webspeech';
+
+
+// Speex Engines - instances of TTS Vendors Types - persisted in store-module-speex
+
+export type DSpeexEngineAny = { [TVt in SpeexVendorType]: DSpeexEngine<TVt> }[SpeexVendorType];
+
+export interface DSpeexEngine<TVt extends SpeexVendorType> {
   engineId: SpeexEngineId;
-  engineType: T;
+  vendorType: TVt;
   label: string;
   isAutoDetected: boolean;
   isAutoLinked: boolean;
   isDeleted: boolean;
-  credentials: _TypeMap[T]['credentials'];
-  voice: _TypeMap[T]['voice'];
+  credentials: DSpeexCredentials<TVt>;
+  voice: DSpeexVoice<TVt>;
 }
-
-export type DSpeexEngine_Any = { [T in SpeexEngineType]: DSpeexEngine<T> }[SpeexEngineType];
 
 export type SpeexEngineId = string; // agiUuidV4('speex.engine.instance')
 
-export type SpeexEngineType = 'elevenlabs' | 'openai' | 'web-speech';
+export type SpeexRPCDialect = Exclude<SpeexVendorType, 'webspeech'>;  // wire dialect for tRPC routing (server-side engines only)
 
-interface _TypeMap extends Record<SpeexEngineType, { voice: unknown; credentials: unknown }> {
+// helper for mapping credentials and voice types to the engine type
+interface _TypeMap extends Record<SpeexVendorType, { voice: unknown; credentials: unknown }> {
   'elevenlabs': { voice: DVoiceElevenLabs; credentials: DCredentialsApiKey };
+  'localai': { voice: DVoiceLocalAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'openai': { voice: DVoiceOpenAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
-  'web-speech': { voice: DVoiceWebSpeech; credentials: DCredentialsBrowser };
+  'webspeech': { voice: DVoiceWebSpeech; credentials: DCredentialsNone };
 }
 
 
-// Voices
+// Voices - a unique, engine-type-specific configuration that produces a repeatable voice output
 
-export type DSpeexVoice = _TypeMap[SpeexEngineType]['voice'];
+export type DSpeexVoice<TVt extends SpeexVendorType = SpeexVendorType> = _TypeMap[TVt]['voice'];
 
 interface DVoiceElevenLabs {
-  engineType: 'elevenlabs';
-  model?: string;
+  vendorType: 'elevenlabs';
+  ttsModel?: 'eleven_v3' | 'eleven_multilingual_v2' | 'eleven_flash_v2_5' | 'eleven_turbo_v2_5';
   voiceId?: string;
   // stability?: number;
   // similarityBoost?: number;
@@ -41,9 +48,15 @@ interface DVoiceElevenLabs {
   // speakerBoost?: boolean;
 }
 
+interface DVoiceLocalAI {
+  vendorType: 'localai';
+  ttsModel?: string;
+  voiceId?: string;
+}
+
 interface DVoiceOpenAI {
-  engineType: 'openai';
-  model?: 'tts-1' | 'tts-1-hd';
+  vendorType: 'openai';
+  ttsModel: 'tts-1' | 'tts-1-hd';
   voiceId?: 'alloy' | 'ash' | 'coral' | 'echo' | 'marin' | 'sage' | 'shimmer' | 'fable' | 'onyx' | 'nova' | string;
   // voiceId?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' | string;
   speed?: number; // 0.25-4.0
@@ -51,8 +64,8 @@ interface DVoiceOpenAI {
 }
 
 interface DVoiceWebSpeech {
-  engineType: 'web-speech';
-  voiceURI?: string;
+  vendorType: 'webspeech';
+  ttsVoiceURI?: string;
   rate?: number;
   pitch?: number;
 }
@@ -60,19 +73,19 @@ interface DVoiceWebSpeech {
 
 // Credentials
 
-export type SpeexCredentials = _TypeMap[SpeexEngineType]['credentials'];
+export type DSpeexCredentials<TVt extends SpeexVendorType = SpeexVendorType> = _TypeMap[TVt]['credentials'];
 
-interface DCredentialsApiKey {
+export interface DCredentialsApiKey {
   type: 'api-key';
   apiKey: string;
-  apiHost?: string;
+  apiHost?: string; // is missing, assumed to be the default host for the cloud provider
 }
 
-interface DCredentialsBrowser {
-  type: 'browser';
-}
-
-interface DCredentialsLLMSService {
+export interface DCredentialsLLMSService {
   type: 'llms-service';
   serviceId: DModelsServiceId;
+}
+
+export interface DCredentialsNone {
+  type: 'none';
 }

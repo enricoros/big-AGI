@@ -2,49 +2,70 @@
  * Speex - Speech Synthesis Module
  *
  * Centralized speech synthesis with provider abstraction.
+ * Supports multiple TTS engines: ElevenLabs, OpenAI, LocalAI, Web Speech.
  * Future: NorthBridge integration for queued audio output control.
  */
 
 import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 
-import type { DSpeexVoice, SpeexEngineId } from './speex.types';
+// legacy ElevenLabs backend (to be replaced with speex.router)
+import { elevenLabsSpeakText, useCapabilityElevenlabs } from '~/modules/elevenlabs/elevenlabs.client';
 
-// ElevenLabs backend
-import { elevenLabsSpeakText, isElevenLabsEnabled, useCapabilityElevenlabs as useElevenLabsCapability } from '~/modules/elevenlabs/elevenlabs.client';
-import { getElevenLabsData } from '~/modules/elevenlabs/store-module-elevenlabs';
+import type { DSpeexEngineAny, DSpeexVoice, SpeexEngineId, SpeexVendorType } from './speex.types';
+import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
 
 
 // Capability API
 
 export interface SpeexCapability {
   mayWork: boolean;
-  isConfiguredServerSide: boolean;
-  isConfiguredClientSide: boolean;
+  activeEngineId: SpeexEngineId | null;
+  activeVendorType: SpeexVendorType | null;
+  // Do we need these?
+  // isConfiguredServerSide: boolean;
+  // isConfiguredClientSide: boolean;
 }
 
 export function useSpeexCapability(): SpeexCapability {
-  const cap = useElevenLabsCapability();
+
+  // external state
+  const { engines, activeEngineId } = useSpeexStore();
+  const legacy11Cap = useCapabilityElevenlabs(); // backwards compatibility - to be REMOVED
+
+
+  // find active engine - may be null, even if soft deleted and the active ID still points to it
+  const { engineId = null, vendorType = null } = engines.find(e => e.engineId === activeEngineId && !e.isDeleted) ?? {};
+
   return {
-    mayWork: cap.mayWork,
-    isConfiguredServerSide: cap.isConfiguredServerSide,
-    isConfiguredClientSide: cap.isConfiguredClientSide,
+    // NOTE: the 'mayWork' logic may be wrong, will need to check how the callers use this value, as it's detached from the active engine
+    mayWork: legacy11Cap.mayWork || engines.some(e => speexAreCredentialsValid(e.credentials)),
+    activeEngineId: engineId,
+    activeVendorType: vendorType,
+    // isConfiguredServerSide: legacy11Cap.isConfiguredServerSide,
+    // isConfiguredClientSide: legacy11Cap.isConfiguredClientSide || engines.some(e => _isSpeexEngineValid(e)),
   };
 }
 
-export function isSpeexEnabled(): boolean {
-  const { elevenLabsApiKey } = getElevenLabsData();
-  return isElevenLabsEnabled(elevenLabsApiKey);
-}
+// Commented out - this immediate function does not seem to be used
+// export function isSpeexEnabled(): boolean {
+//   // check legacy ElevenLabs first
+//   const { elevenLabsApiKey } = getElevenLabsData();
+//   if (isElevenLabsEnabled(elevenLabsApiKey))
+//     return true;
+//
+//   // check store-based engines
+//   return speexResolveEngine() !== null;
+// }
 
 
 // Speech Synthesis API
 
-type SpeexVoiceSelector =
+export type SpeexVoiceSelector =
   | undefined
-  | { voice: DSpeexVoice } // uses the first voice.engineType engine, potentially overriding its voice settings
-  | { engineId: SpeexEngineId, voice?: DSpeexVoice }; // selects a specific engine instance, potentially overriding its voice settings
+  | { voice: DSpeexVoice } // uses first matching engine for voice.vendorType
+  | { engineId: SpeexEngineId; voice?: Partial<DSpeexVoice> }; // uses specific engine, optionally overriding voice
 
-type SpeexSpeakResult = {
+export type SpeexSpeakResult = {
   success: boolean;
   audioBase64?: string; // available when not streaming or when requested
   error?: string; // if success is false
@@ -73,38 +94,31 @@ export async function speakText(
   const playback = options?.playback ?? true;
   const returnAudio = options?.returnAudio ?? !streaming;
 
-  // Resolve instance: instanceId → providerType → active instance
-  // Currently: single ElevenLabs instance, all paths resolve to it
-  // Future: lookup from instance registry, handle cross-device fallback
+  // Resolve engine from voice selector
+  // - priority: explicit engineId > voice.vendorType > store active > priority-ordered available
+  const engine = _resolveEngineFromSelector(voice);
 
   callbacks?.onStart?.();
 
-  // FOR NOW - we only have a hardcoded ElevenLabs backend
+  // route based on engine
   try {
 
-    // Extract voiceId from the voice selector
-    let elevenVoiceId: string | undefined;
-    if (voice) {
-      const voiceConfig = 'voice' in voice ? voice.voice : undefined;
-      if (voiceConfig && 'voiceId' in voiceConfig && voiceConfig.voiceId)
-        elevenVoiceId = voiceConfig.voiceId;
+    // NOTE: Porting in progress - for now, only legacy ElevenLabs path is implemented
+    if (engine) {
+      // For now, route all cloud engines through legacy ElevenLabs path if it's ElevenLabs
+      if (engine.vendorType === 'elevenlabs')
+        return speakWithLegacyElevenLabs(inputText, voice, { streaming, playback, returnAudio }, callbacks);
+
+      // TODO: Route through speex.router for other dialects once wired
+      // For now, return error for non-ElevenLabs engines
+      return {
+        success: false,
+        error: `Engine type '${engine.vendorType}' not yet implemented`,
+      };
     }
 
-    // Currently only ElevenLabs implemented
-    // Future: dispatch based on resolved engine's engineType
-    const result = await elevenLabsSpeakText(
-      inputText,
-      elevenVoiceId,
-      streaming && playback,  // only stream if also playing
-      true,                   // turbo mode
-    );
-
-    callbacks?.onComplete?.();
-
-    return {
-      success: result.success,
-      audioBase64: returnAudio ? result.audioBase64 : undefined,
-    };
+    // fallback to legacy ElevenLabs path
+    return await speakWithLegacyElevenLabs(inputText, voice, { streaming, playback, returnAudio }, callbacks);
   } catch (error) {
     callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
     return {
@@ -112,4 +126,56 @@ export async function speakText(
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+
+// Private: Engine resolution
+
+function _resolveEngineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineAny | null {
+  if (!selector) return null;
+
+  // A. most specific selector: engineId
+  if ('engineId' in selector && selector.engineId) {
+    const engine = speexFindEngineById(selector.engineId);
+    if (engine) return engine;
+  }
+
+  // B. voice.vendorType - find first matching engine that's probably valid
+  if ('voice' in selector && selector.voice?.vendorType) {
+    const engine = speexFindValidEngineByType(selector.voice.vendorType);
+    if (engine) return engine;
+  }
+
+  // C. fall back to priority-based
+  return speexFindGlobalEngine();
+}
+
+
+// Private: Speech dispatch functions
+
+export async function speakWithLegacyElevenLabs(
+  text: string,
+  voice: SpeexVoiceSelector,
+  options: { streaming: boolean; playback: boolean; returnAudio: boolean },
+  callbacks?: { onStart?: () => void; onChunk?: (chunk: ArrayBuffer) => void; onComplete?: () => void; onError?: (error: Error) => void },
+): Promise<SpeexSpeakResult> {
+
+  // extract voiceId from voice selector
+  let elevenVoiceId: string | undefined;
+  if (voice && 'voice' in voice && voice.voice && 'voiceId' in voice.voice)
+    elevenVoiceId = voice.voice.voiceId;
+
+  const result = await elevenLabsSpeakText(
+    text,
+    elevenVoiceId,
+    options.streaming && options.playback, // Only stream if also playing
+    true, // turbo mode
+  );
+
+  callbacks?.onComplete?.();
+
+  return {
+    success: result.success,
+    audioBase64: options.returnAudio ? result.audioBase64 : undefined,
+  };
 }
