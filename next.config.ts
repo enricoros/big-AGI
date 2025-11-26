@@ -141,7 +141,7 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
     personalApiKey: process.env.POSTHOG_API_KEY,
     envId: process.env.POSTHOG_ENV_ID,
     host: 'https://us.i.posthog.com', // backtrace upload host
-    logLevel: 'info',
+    // logLevel: 'info', // disabled, too noisy
     sourcemaps: {
       enabled: process.env.NODE_ENV === 'production',
       project: 'big-agi',
