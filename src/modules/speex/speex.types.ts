@@ -38,7 +38,7 @@ interface _TypeMap extends Record<SpeexVendorType, { voice: unknown; credentials
 
 export type DSpeexVoice<TVt extends SpeexVendorType = SpeexVendorType> = _TypeMap[TVt]['voice'];
 
-interface DVoiceElevenLabs {
+export interface DVoiceElevenLabs {
   vendorType: 'elevenlabs';
   ttsModel?: 'eleven_v3' | 'eleven_multilingual_v2' | 'eleven_flash_v2_5' | 'eleven_turbo_v2_5';
   voiceId?: string;
@@ -48,15 +48,15 @@ interface DVoiceElevenLabs {
   // speakerBoost?: boolean;
 }
 
-interface DVoiceLocalAI {
+export interface DVoiceLocalAI {
   vendorType: 'localai';
   ttsModel?: string;
   voiceId?: string;
 }
 
-interface DVoiceOpenAI {
+export interface DVoiceOpenAI {
   vendorType: 'openai';
-  ttsModel: 'tts-1' | 'tts-1-hd';
+  ttsModel: 'tts-1' | 'tts-1-hd' | 'gpt-4o-mini-tts';
   voiceId?: 'alloy' | 'ash' | 'coral' | 'echo' | 'marin' | 'sage' | 'shimmer' | 'fable' | 'onyx' | 'nova' | string;
   // voiceId?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' | string;
   speed?: number; // 0.25-4.0

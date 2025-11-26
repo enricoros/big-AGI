@@ -8,9 +8,6 @@
 
 import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 
-// Legacy ElevenLabs capability check - fallback only, to be removed once fully ported
-import { useCapabilityElevenlabs } from '~/modules/elevenlabs/elevenlabs.client';
-
 import type { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexVendorType } from './speex.types';
 import { listWebSpeechVoices, speakWebSpeech } from './vendors/webspeech.client';
 import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
@@ -32,19 +29,14 @@ export function useSpeexCapability(): SpeexCapability {
 
   // external state
   const { engines, activeEngineId } = useSpeexStore();
-  const legacy11Cap = useCapabilityElevenlabs(); // backwards compatibility - to be REMOVED
-
 
   // find active engine - may be null, even if soft deleted and the active ID still points to it
-  const { engineId = null, vendorType = null } = engines.find(e => e.engineId === activeEngineId && !e.isDeleted) ?? {};
+  const activeEngine = engines.find(e => e.engineId === activeEngineId && !e.isDeleted);
 
   return {
-    // NOTE: the 'mayWork' logic may be wrong, will need to check how the callers use this value, as it's detached from the active engine
-    mayWork: legacy11Cap.mayWork || engines.some(e => speexAreCredentialsValid(e.credentials)),
-    activeEngineId: engineId,
-    activeVendorType: vendorType,
-    // isConfiguredServerSide: legacy11Cap.isConfiguredServerSide,
-    // isConfiguredClientSide: legacy11Cap.isConfiguredClientSide || engines.some(e => _isSpeexEngineValid(e)),
+    mayWork: engines.some(e => !e.isDeleted && speexAreCredentialsValid(e.credentials)),
+    activeEngineId: activeEngine?.engineId ?? null,
+    activeVendorType: activeEngine?.vendorType ?? null,
   };
 }
 
