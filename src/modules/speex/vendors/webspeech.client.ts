@@ -8,7 +8,7 @@
 import * as React from 'react';
 
 import type { DVoiceWebSpeech } from '../speex.types';
-import type { SpeexSpeakResult } from '../speex.client';
+import type { SpeexSpeakResult, SpeexVoiceInfo } from '../speex.client';
 
 
 // browser support
@@ -34,12 +34,13 @@ export function speexListVoicesWebSpeech(): SpeechSynthesisVoice[] {
 /**
  * React hook for voice listing with async loading support.
  * Handles the browser's async voice loading on first access.
+ * Returns normalized SpeexVoiceInfo[] for consistency with cloud providers.
  */
 export function useSpeexWebSpeechVoices(): {
-  voices: SpeechSynthesisVoice[];
+  voices: SpeexVoiceInfo[];
   isLoading: boolean;
 } {
-  const [voices, setVoices] = React.useState<SpeechSynthesisVoice[]>([]);
+  const [voices, setVoices] = React.useState<SpeexVoiceInfo[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -48,18 +49,24 @@ export function useSpeexWebSpeechVoices(): {
       return;
     }
 
+    const normalizeVoices = (browserVoices: SpeechSynthesisVoice[]): SpeexVoiceInfo[] =>
+      browserVoices.map(v => ({
+        id: v.voiceURI,
+        name: v.name,
+        description: `${v.lang}${v.localService ? ' (local)' : ''}`,
+      }));
+
     // Try to get voices immediately (may be cached)
     const initialVoices = speechSynthesis.getVoices();
     if (initialVoices.length > 0) {
-      setVoices(initialVoices);
+      setVoices(normalizeVoices(initialVoices));
       setIsLoading(false);
       return;
     }
 
     // Listen for voiceschanged event (fired when voices are loaded)
     const handleVoicesChanged = () => {
-      const loadedVoices = speechSynthesis.getVoices();
-      setVoices(loadedVoices);
+      setVoices(normalizeVoices(speechSynthesis.getVoices()));
       setIsLoading(false);
     };
 
@@ -69,9 +76,8 @@ export function useSpeexWebSpeechVoices(): {
     // Set a timeout to handle browsers that don't fire the event
     const timeoutId = setTimeout(() => {
       const timeoutVoices = speechSynthesis.getVoices();
-      if (timeoutVoices.length > 0) {
-        setVoices(timeoutVoices);
-      }
+      if (timeoutVoices.length > 0)
+        setVoices(normalizeVoices(timeoutVoices));
       setIsLoading(false);
     }, 1000);
 
