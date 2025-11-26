@@ -9,9 +9,9 @@
 import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 
 import type { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexVendorType } from './speex.types';
-import { listWebSpeechVoices, speakWebSpeech } from './vendors/webspeech.client';
+import { speexListVoicesWebSpeech, speexSynthesizeWebSpeech } from './vendors/webspeech.client';
 import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
-import { speexListVoicesRPC, speexSynthesizeRPC } from './speex.rpc-client';
+import { speexListVoicesRPC, speexSynthesizeRPC } from './vendors/rpc.client';
 
 
 // Capability API
@@ -100,7 +100,7 @@ export async function speakText(
     switch (engine?.vendorType) {
       // Web Speech: client-only, no RPC
       case 'webspeech':
-        return speakWebSpeech(inputText, engine.voice as DVoiceWebSpeech, callbacks);
+        return speexSynthesizeWebSpeech(inputText, engine.voice as DVoiceWebSpeech, callbacks);
 
       // RPC providers: route through speex.router RPC
       case 'elevenlabs':
@@ -165,7 +165,7 @@ export async function speexListVoicesForEngine(engine: DSpeexEngineAny): Promise
   switch (engine.vendorType) {
     case 'webspeech':
       // Use browser API - synchronous but may need async loading
-      const browserVoices = listWebSpeechVoices();
+      const browserVoices = speexListVoicesWebSpeech();
       return browserVoices.map(v => ({
         id: v.voiceURI,
         name: v.name,

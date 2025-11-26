@@ -10,9 +10,9 @@ import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 
-import type { DCredentialsApiKey, DCredentialsLLMSService, DSpeexEngineAny, SpeexRPCDialect } from './speex.types';
-import type { SpeexSpeakResult } from './speex.client';
-import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './server/speex.wiretypes';
+import type { DCredentialsApiKey, DCredentialsLLMSService, DSpeexEngineAny, SpeexRPCDialect } from '../speex.types';
+import type { SpeexSpeakResult } from '../speex.client';
+import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from '../server/speex.wiretypes';
 
 
 // Configuration

@@ -7,7 +7,7 @@ import type { ISpeexVendor, ISpeexVendorAny } from './vendors/ISpeexVendor';
 import { SpeexVendorElevenLabs } from './vendors/elevenlabs.vendor';
 import { SpeexVendorLocalAI } from './vendors/localai.vendor';
 import { SpeexVendorOpenAI } from './vendors/openai.vendor';
-import { SpeexVendorWebSpeech } from './vendors/web-speech.vendor';
+import { SpeexVendorWebSpeech } from './vendors/webspeech.vendor';
 
 
 // registry of Speex Vendors, for engine creation, priority ranking, etc.
