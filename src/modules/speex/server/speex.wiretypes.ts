@@ -66,7 +66,7 @@ export namespace SpeexWire {
   export const OpenAI_schema = z.object({
     dialect: z.literal('openai'),
     voiceId: z.string().optional(),
-    model: z.enum(['tts-1', 'tts-1-hd']).optional(),
+    model: z.enum(['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts']).optional(),
     speed: z.number().min(0.25).max(4.0).optional(),
     instruction: z.string().optional(),
   });
