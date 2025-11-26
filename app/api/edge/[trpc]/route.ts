@@ -16,5 +16,6 @@ const handlerEdgeRoutes = (req: Request) => fetchRequestHandler({
 
 // NOTE: we don't set maxDuration explicitly here - however we set it in the Vercel project settings, raising to the limit of 300s
 // export const maxDuration = 60;
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export { handlerEdgeRoutes as GET, handlerEdgeRoutes as POST };
