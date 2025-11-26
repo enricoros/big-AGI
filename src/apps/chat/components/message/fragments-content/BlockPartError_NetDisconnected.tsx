@@ -46,7 +46,7 @@ export function BlockPartError_NetDisconnected(props: {
 
 
         {/* Recovery options */}
-        {!csfAvailable ? <>
+        {csfAvailable ? <>
 
           {/* Explanation */}
           <Box color='text.tertiary' fontSize='sm' my={2}>
