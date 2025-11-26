@@ -11,7 +11,8 @@ import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 // legacy ElevenLabs backend (to be replaced with speex.router)
 import { elevenLabsSpeakText, useCapabilityElevenlabs } from '~/modules/elevenlabs/elevenlabs.client';
 
-import type { DSpeexEngineAny, DSpeexVoice, SpeexEngineId, SpeexVendorType } from './speex.types';
+import type { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexVendorType } from './speex.types';
+import { speakWebSpeech } from './vendors/webspeech.client';
 import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
 
 
@@ -103,18 +104,26 @@ export async function speakText(
   // route based on engine
   try {
 
-    // NOTE: Porting in progress - for now, only legacy ElevenLabs path is implemented
     if (engine) {
-      // For now, route all cloud engines through legacy ElevenLabs path if it's ElevenLabs
-      if (engine.vendorType === 'elevenlabs')
-        return speakWithLegacyElevenLabs(inputText, voice, { streaming, playback, returnAudio }, callbacks);
 
-      // TODO: Route through speex.router for other dialects once wired
-      // For now, return error for non-ElevenLabs engines
-      return {
-        success: false,
-        error: `Engine type '${engine.vendorType}' not yet implemented`,
-      };
+      switch (engine.vendorType) {
+        // Web Speech: client-only, no RPC
+        case 'webspeech':
+          return speakWebSpeech(inputText, engine.voice as DVoiceWebSpeech, callbacks);
+
+        // ElevenLabs: legacy path (to be replaced with speex.router)
+        case 'elevenlabs':
+          return speakWithLegacyElevenLabs(inputText, voice, { streaming, playback, returnAudio }, callbacks);
+
+        // OpenAI/LocalAI: TODO - route through speex.router once wired
+        case 'openai':
+        case 'localai':
+          return {
+            success: false,
+            error: `Engine type '${engine.vendorType}' not yet implemented`,
+          };
+      }
+
     }
 
     // fallback to legacy ElevenLabs path

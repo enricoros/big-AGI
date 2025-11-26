@@ -6,6 +6,7 @@ import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { DSpeexCredentials, DSpeexEngine, DSpeexEngineAny, SpeexEngineId, SpeexVendorType } from './speex.types';
+import { isWebSpeechSupported } from './vendors/webspeech.client';
 import { speexFindByVendorPriorityAsc, speexFindVendor, speexFindVendorForLLMVendor } from './speex.vendors-registry';
 
 
@@ -28,7 +29,7 @@ interface SpeexStoreActions {
   setActiveEngineId: (engineId: SpeexEngineId | null) => void;
 
   // auto-detection
-  // TODO: also add an auto-detection function for webspeech TTS engines?
+  syncWebSpeechEngine: () => void;
   syncEnginesFromLLMServices: () => void;
 
 }
@@ -98,7 +99,25 @@ export const useSpeexStore = create<SpeexStoreState & SpeexStoreActions>()(persi
     },
 
 
-    // Auto-detection from LLM services
+    // Auto-detections
+
+    syncWebSpeechEngine: () => {
+      if (!isWebSpeechSupported()) return;
+
+      const { engines, createEngine, updateEngine } = get();
+
+      // restore if soft-deleted
+      const existing = engines.find(e => e.vendorType === 'webspeech');
+      if (existing?.isDeleted)
+        return updateEngine(existing.engineId, { isDeleted: false });
+
+      // otherwise create
+      createEngine('webspeech', {
+        label: 'System Voice',
+        isAutoDetected: true,
+        isAutoLinked: false, // not linked to LLM service
+      });
+    },
 
     syncEnginesFromLLMServices: () => {
       const { createEngine, engines, updateEngine } = get();

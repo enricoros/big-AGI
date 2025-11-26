@@ -63,7 +63,7 @@ interface DVoiceOpenAI {
   instruction?: string;
 }
 
-interface DVoiceWebSpeech {
+export interface DVoiceWebSpeech {
   vendorType: 'webspeech';
   ttsVoiceURI?: string;
   rate?: number;
