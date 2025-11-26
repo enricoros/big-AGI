@@ -109,7 +109,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!geminiKey}
       checked={!!clientSideFetch}
-      onChange={on => updateSettings({ geminiCSF: on })}
+      onChange={on => updateSettings({ csf: on })}
       helpText="Fetch models and make requests directly to Google's Gemini API using your browser instead of through the server."
     />}
 

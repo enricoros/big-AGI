@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Typography } from '@mui/joy';
+import { Alert } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
@@ -8,6 +8,7 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -33,8 +34,9 @@ export function TogetherAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorTogetherAI);
 
   // derived state
-  const { oaiKey: togetherKey } = serviceAccess;
+  const { clientSideFetch, oaiKey: togetherKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!togetherKey && serviceSetupValid);
@@ -60,16 +62,23 @@ export function TogetherAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    {advanced.on && <FormSwitchControl
+    {showAdvanced && <FormSwitchControl
       title='Rate Limiter' on='Enabled' off='Disabled'
       description={partialSettings?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
       checked={partialSettings?.togetherFreeTrial ?? false}
       onChange={on => updateSettings({ togetherFreeTrial: on })}
     />}
 
-    {advanced.on && !!partialSettings?.togetherFreeTrial && <Alert variant='soft'>
+    {showAdvanced && !!partialSettings?.togetherFreeTrial && <Alert variant='soft'>
       Note: Please refresh the models list if you toggle the rate limiter.
     </Alert>}
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!togetherKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Together AI API from your browser instead of through the server.'
+    />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 

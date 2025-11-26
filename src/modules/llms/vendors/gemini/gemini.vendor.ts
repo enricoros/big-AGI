@@ -9,7 +9,7 @@ import type { IModelVendor } from '../IModelVendor';
 interface DGeminiServiceSettings {
   geminiKey: string;
   geminiHost: string;
-  geminiCSF?: boolean;
+  csf?: boolean;
   minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold;
 }
 
@@ -34,7 +34,6 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   hasServerConfigKey: 'hasLlmGemini',
 
   /// client-side-fetch ///
-  csfKey: 'geminiCSF',
   csfAvailable: _csfGeminiAvailable,
 
   // functions
@@ -48,7 +47,7 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   },
   getTransportAccess: (partialSetup): GeminiAccessSchema => ({
     dialect: 'gemini',
-    clientSideFetch: _csfGeminiAvailable(partialSetup) && !!partialSetup?.geminiCSF,
+    clientSideFetch: _csfGeminiAvailable(partialSetup) && !!partialSetup?.csf,
     geminiKey: partialSetup?.geminiKey || '',
     geminiHost: partialSetup?.geminiHost || '',
     minSafetyLevel: partialSetup?.minSafetyLevel || 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',

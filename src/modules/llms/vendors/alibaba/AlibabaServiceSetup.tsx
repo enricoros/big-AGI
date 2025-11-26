@@ -9,6 +9,7 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -36,10 +37,11 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorAlibaba);
 
   // derived state
-  const { oaiKey: alibabaOaiKey, oaiHost: alibabaOaiHost } = serviceAccess;
+  const { clientSideFetch, oaiKey: alibabaOaiKey, oaiHost: alibabaOaiHost } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
   const shallFetchSucceed = !needsUserKey || (!!alibabaOaiKey && serviceSetupValid);
   const showKeyError = !!alibabaOaiKey && !serviceSetupValid;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
@@ -73,13 +75,20 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
     {/*  See the <ExternalLink href={ALIBABA_REG_LINK}>Alibaba Cloud Model Studio</ExternalLink> for more information.*/}
     {/*</Typography>*/}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='alibaba-host'
       title='API Endpoint'
       tooltip={`The API endpoint for the Alibaba Cloud OpenAI service, to be used instead of the default endpoint.`}
       placeholder={`e.g., ${CLIENT_ALIBABA_DEFAULT_HOST}`}
       value={alibabaOaiHost}
       onChange={text => updateSettings({ alibabaOaiHost: text })}
+    />}
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!alibabaOaiKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Alibaba Cloud API from your browser instead of through the server.'
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />

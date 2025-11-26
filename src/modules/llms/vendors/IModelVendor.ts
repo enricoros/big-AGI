@@ -20,8 +20,7 @@ export interface IModelVendor<TServiceSettings extends Record<string, any> = {},
   readonly hasServerConfigKey?: keyof BackendCapabilities;
 
   /// client-side-fetch ///
-  readonly csfKey?: string; // was keyof TServiceSettings, but caused TS troubles
-  readonly csfAvailable?: (setup?: Partial<TServiceSettings>) => boolean; // undefined: not even, false: conditions not met
+  readonly csfAvailable?: (setup?: Partial<TServiceSettings>) => boolean; // undefined: not supported, false: conditions not met
 
   /// abstraction interface ///
 

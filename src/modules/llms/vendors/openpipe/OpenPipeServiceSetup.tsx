@@ -8,7 +8,9 @@ import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
@@ -23,7 +25,7 @@ const OPENPIPE_API_KEY_LINK = 'https://app.openpipe.ai/settings';
 export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
-  // const advanced = useToggleableBoolean();
+  const advanced = useToggleableBoolean();
 
   // external state
   const {
@@ -32,8 +34,9 @@ export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorOpenPipe);
 
   // derived state
-  const { oaiKey: openPipeKey, oaiOrg: openPipeTags } = serviceAccess;
+  const { clientSideFetch, oaiKey: openPipeKey, oaiOrg: openPipeTags } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!openPipeKey && serviceSetupValid);
@@ -80,7 +83,14 @@ export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
       and <strong>fine-tune</strong> and deploy custom models cost-effectively for specific tasks.
     </Typography>
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!openPipeKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to OpenPipe API from your browser instead of through the server.'
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

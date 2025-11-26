@@ -6,6 +6,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 interface DMoonshotServiceSettings {
   moonshotKey: string;
+  csf?: boolean;
 }
 
 export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIAccessSchema> = {
@@ -17,6 +18,9 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmMoonshot',
 
+  /// client-side-fetch ///
+  csfAvailable: _csfMoonshotAvailable,
+
   // functions
   initializeSetup: () => ({
     moonshotKey: '',
@@ -26,6 +30,7 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'moonshot',
+    clientSideFetch: _csfMoonshotAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.moonshotKey || '',
     oaiOrg: '',
     oaiHost: '',
@@ -37,3 +42,7 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfMoonshotAvailable(s?: Partial<DMoonshotServiceSettings>) {
+  return !!s?.moonshotKey;
+}

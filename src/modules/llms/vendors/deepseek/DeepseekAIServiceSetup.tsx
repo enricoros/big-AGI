@@ -5,6 +5,7 @@ import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -30,8 +31,9 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorDeepseek);
 
   // derived state
-  const { oaiKey: deepseekKey } = serviceAccess;
+  const { clientSideFetch, oaiKey: deepseekKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!deepseekKey && serviceSetupValid);
@@ -56,6 +58,13 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!deepseekKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Deepseek API from your browser instead of through the server.'
+    />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
