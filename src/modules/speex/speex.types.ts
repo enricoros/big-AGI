@@ -48,10 +48,13 @@ export interface DVoiceElevenLabs {
   // speakerBoost?: boolean;
 }
 
+// type LocalAITTSBackend = | 'coqui' | 'bark' | 'piper' | 'transformers-musicgen' | 'vall-e-x'
 export interface DVoiceLocalAI {
   vendorType: 'localai';
-  ttsModel?: string;
-  voiceId?: string;
+  // we let the user insert strings (or nothing) for the 2 fields below
+  ttsModel?: string;    // Model name (e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts', 'v2/en_speaker_4' for bark)
+  ttsBackend?: string;  // Backend (e.g., 'coqui', 'bark', 'piper', 'transformers-musicgen', 'vall-e-x')
+  language?: string;    // Language code for multilingual models (e.g., 'en', 'fr' for xtts_v2)
 }
 
 export interface DVoiceOpenAI {

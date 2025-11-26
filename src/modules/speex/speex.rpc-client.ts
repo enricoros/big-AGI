@@ -10,9 +10,9 @@ import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 
+import type { DCredentialsApiKey, DCredentialsLLMSService, DSpeexEngineAny, SpeexRPCDialect } from './speex.types';
 import type { SpeexSpeakResult } from './speex.client';
-import type { DCredentialsApiKey, DCredentialsLLMSService, DSpeexCredentials, DSpeexEngineAny, SpeexRPCDialect } from './speex.types';
-import type { SpeexSpeechParticle, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './server/speex.wiretypes';
+import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './server/speex.wiretypes';
 
 
 // Configuration
@@ -74,26 +74,24 @@ export async function speexSynthesizeRPC(
           const audioBuffer = _base64ToArrayBuffer(particle.base64);
 
           // Playback
-          if (options.playback && audioPlayer) {
+          if (options.playback && audioPlayer)
             audioPlayer.enqueueChunk(audioBuffer);
-          }
 
           // Accumulate for return
-          if (options.returnAudio) {
+          if (options.returnAudio)
             audioChunks.push(audioBuffer);
-          }
 
           // Callback
           callbacks?.onChunk?.(audioBuffer);
           break;
 
         case 'done':
-          if (audioPlayer) {
+          if (audioPlayer)
             audioPlayer.endPlayback();
-          }
           break;
 
         case 'error':
+          // noinspection ExceptionCaughtLocallyJS
           throw new Error(particle.e);
       }
     }
@@ -206,11 +204,11 @@ function _resolveFromLLMService(dialect: SpeexRPCDialect, credentials: DCredenti
   if (!service) return null;
 
   // Extract credentials based on LLM vendor type
-  const setup = service.setup as Record<string, any>;
+  const setup = service.setup as Record<string, any> || {};
 
   switch (dialect) {
     case 'elevenlabs':
-      // ElevenLabs doesn't typically link to LLM services
+      // ElevenLabs doesn't link to LLM services
       return null;
 
     case 'openai':
@@ -261,8 +259,9 @@ function _buildWireVoice(engine: DSpeexEngineAny): SpeexWire_Voice {
     case 'localai':
       return {
         dialect: 'localai',
-        voiceId: voice.voiceId,
+        backend: voice.ttsBackend,
         model: voice.ttsModel,
+        language: voice.language,
       };
 
     case 'webspeech':
