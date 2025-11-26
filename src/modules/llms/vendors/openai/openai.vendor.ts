@@ -32,7 +32,7 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'openai',
-    clientSideFetch: _csfOpenAIAvailable(partialSetup) && !partialSetup?.oaiCSF,
+    clientSideFetch: _csfOpenAIAvailable(partialSetup) && !!partialSetup?.oaiCSF,
     oaiKey: '',
     oaiOrg: '',
     oaiHost: '',
