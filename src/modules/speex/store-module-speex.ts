@@ -14,7 +14,11 @@ interface SpeexStoreState {
 
   // TODO: convert this to a map (using the engineId as key) and haven 'updatedAt' timestamps for implicit sorting (to replace the array order)
   engines: DSpeexEngineAny[];
-  activeEngineId: SpeexEngineId | null;
+  activeEngineId: SpeexEngineId | null; // null = no user selection = use global auto-selection
+
+  // to avoid repeated migrations
+  hasInitializedLlms: boolean;
+  hasMigratedElevenLabs: boolean;
 
 }
 
@@ -28,19 +32,24 @@ interface SpeexStoreActions {
   // selection
   setActiveEngineId: (engineId: SpeexEngineId | null) => void;
 
-  // auto-detection
-  syncWebSpeechEngine: () => void;
-  syncEnginesFromLLMServices: () => void;
+  // business logic: auto-detection or migration
+  syncWebSpeechEngine: () => boolean;
+  syncEnginesFromLLMServices: (llmsSources: ReturnType<typeof useModelsStore.getState>['sources']) => boolean;
+  syncMigrateLegacyElevenLabsStore: () => boolean;
 
 }
 
+type SpeexStore = SpeexStoreState & SpeexStoreActions;
 
-export const useSpeexStore = create<SpeexStoreState & SpeexStoreActions>()(persist(
+
+export const useSpeexStore = create<SpeexStore>()(persist(
   (set, get) => ({
 
     // initial state - TODO: convert to map
     engines: [],
     activeEngineId: null,
+    hasInitializedLlms: false,
+    hasMigratedElevenLabs: false,
 
 
     // Engine CRUD
@@ -102,14 +111,18 @@ export const useSpeexStore = create<SpeexStoreState & SpeexStoreActions>()(persi
     // Auto-detections
 
     syncWebSpeechEngine: () => {
-      if (!isWebSpeechSupported()) return;
-
+      if (!isWebSpeechSupported()) return false;
       const { engines, createEngine, updateEngine } = get();
 
       // restore if soft-deleted
       const existing = engines.find(e => e.vendorType === 'webspeech');
-      if (existing?.isDeleted)
-        return updateEngine(existing.engineId, { isDeleted: false });
+      if (existing) {
+        if (existing.isDeleted) {
+          updateEngine(existing.engineId, { isDeleted: false });
+          return true;
+        }
+        return false;
+      }
 
       // otherwise create
       createEngine('webspeech', {
@@ -117,16 +130,17 @@ export const useSpeexStore = create<SpeexStoreState & SpeexStoreActions>()(persi
         isAutoDetected: true,
         isAutoLinked: false, // not linked to LLM service
       });
+      return true;
     },
 
-    syncEnginesFromLLMServices: () => {
-      const { createEngine, engines, updateEngine } = get();
-      const { sources: llmSources } = useModelsStore.getState() || [];
+    syncEnginesFromLLMServices: (llmsSources) => {
+      const { engines, createEngine, updateEngine } = get();
 
+      let hasChanges = false;
       const autoLinkedIds = new Set<SpeexEngineId>();
 
       // restore or create auto-linked engines
-      for (const source of llmSources) {
+      for (const source of llmsSources) {
         const vendor = speexFindVendorForLLMVendor(source.vId);
         if (!vendor) continue;
 
@@ -139,13 +153,16 @@ export const useSpeexStore = create<SpeexStoreState & SpeexStoreActions>()(persi
 
         // existing: mark as valid and restore if soft-deleted
         if (existing) {
-          if (existing.isDeleted)
+          if (existing.isDeleted) {
+            hasChanges = true;
             updateEngine(existing.engineId, { isDeleted: false });
+          }
           autoLinkedIds.add(existing.engineId);
           continue;
         }
 
         // non-existing: create
+        hasChanges = true;
         const engineId = createEngine(vendor.vendorType, {
           label: `${vendor.name} (${source.label})`,
           isAutoDetected: true,
@@ -160,14 +177,91 @@ export const useSpeexStore = create<SpeexStoreState & SpeexStoreActions>()(persi
 
       // soft-delete auto-linked engines whose service disappeared
       for (const engine of engines)
-        if (engine.isAutoLinked && !autoLinkedIds.has(engine.engineId) && !engine.isDeleted)
+        if (engine.isAutoLinked && !autoLinkedIds.has(engine.engineId) && !engine.isDeleted) {
+          hasChanges = true;
           updateEngine(engine.engineId, { isDeleted: true });
+        }
+
+      // the first time we migrate something, we mark as migrated
+      if (hasChanges)
+        set({ hasInitializedLlms: true });
+
+      return hasChanges;
     },
 
-  }),
-  {
+    syncMigrateLegacyElevenLabsStore: () => {
+      const { hasMigratedElevenLabs, engines, createEngine } = get();
+      if (hasMigratedElevenLabs || typeof localStorage === 'undefined') return false;
+
+      let hasChanges = false;
+      try {
+        const LEGACY_STORAGE_KEY = 'app-module-elevenlabs';
+        const legacyStoreRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+
+        // with legacy store
+        if (legacyStoreRaw) {
+          const legacyState = JSON.parse(legacyStoreRaw)?.state;
+          const apiKey = legacyState?.elevenLabsApiKey;
+          const voiceId = legacyState?.elevenLabsVoiceId;
+
+          // with legacy key
+          if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
+            const existingEngine = engines.find(e =>
+              e.vendorType === 'elevenlabs' &&
+              e.credentials?.type === 'api-key' &&
+              e.credentials.apiKey === apiKey,
+            );
+
+            // with no existing engine
+            if (!existingEngine) {
+              hasChanges = true;
+              createEngine('elevenlabs', {
+                label: 'ElevenLabs (migrated)',
+                isAutoDetected: true,
+                isAutoLinked: false,
+                credentials: { type: 'api-key', apiKey: apiKey.trim() },
+                voice: { vendorType: 'elevenlabs', ttsModel: 'eleven_multilingual_v2', voiceId: voiceId || undefined },
+              });
+              console.log('[Speex] Migrated legacy ElevenLabs configuration');
+            }
+          }
+
+          // optionally remove the old store data
+          // localStorage.removeItem(LEGACY_ELEVENLABS_STORAGE_KEY);
+        }
+      } catch (error) {
+        console.warn('[Speex] Failed to migrate legacy ElevenLabs store:', error);
+      }
+
+      // in any case mark as migrated
+      set({ hasMigratedElevenLabs: true });
+      return hasChanges;
+    },
+
+  }), {
     name: 'app-module-speex',
     version: 1,
+
+    // Performs the business logic here
+    onRehydrateStorage: () => (store) => {
+      if (!store) return;
+
+      // perform initial auto-detections & migrations
+      store.syncWebSpeechEngine();
+
+      if (!store.hasInitializedLlms)
+        store.syncEnginesFromLLMServices(useModelsStore.getState().sources);
+
+      if (!store.hasMigratedElevenLabs)
+        store.syncMigrateLegacyElevenLabsStore();
+
+      // perform sync on LLM services changes
+      useModelsStore.subscribe((state, prevState) => {
+        if (state.sources === prevState.sources) return;
+        // with changes to the sources
+        store.syncEnginesFromLLMServices(state.sources);
+      });
+    },
   },
 ));
 
