@@ -3,8 +3,7 @@ import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { SpeexSpeechParticle, SpeexWire, SpeexWire_ListVoices_Output } from './speex.wiretypes';
 
 import { listVoicesElevenLabs, synthesizeElevenLabs } from './synthesize-elevenlabs';
-// import { synthesizeOpenAI, listVoicesOpenAI } from './synthesize-openai';
-// import { synthesizeLocalAI, listVoicesLocalAI } from './synthesize-localai';
+import { synthesizeOpenAIProtocol } from './synthesize-openai';
 
 
 export const speexRouter = createTRPCRouter({
@@ -29,8 +28,7 @@ export const speexRouter = createTRPCRouter({
 
           case 'localai':
           case 'openai':
-            // TODO: Implement OpenAI TTS synthesis
-            yield { t: 'error', e: `${access.dialect} TTS not yet implemented` };
+            yield* synthesizeOpenAIProtocol({ access, text, voice, streaming, signal: ctx.reqSignal });
             break;
 
           default:
