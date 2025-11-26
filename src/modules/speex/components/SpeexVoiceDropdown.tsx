@@ -14,7 +14,7 @@ import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTo
 import { apiQuery } from '~/common/util/trpc.client';
 
 import type { DSpeexEngineAny, SpeexVendorType } from '../speex.types';
-import { useWebSpeechVoices } from '../vendors/webspeech.client';
+import { useSpeexWebSpeechVoices } from '../vendors/webspeech.client';
 
 
 interface SpeexVoiceDropdownProps {
@@ -84,7 +84,7 @@ function useSpeexVoices(engine: DSpeexEngineAny): {
   const vendorType = engine.vendorType;
 
   // Browser voices (webspeech)
-  const browserVoices = useWebSpeechVoices();
+  const browserVoices = useSpeexWebSpeechVoices();
 
   // Cloud voices (elevenlabs, openai, localai) - use RPC
   // For now, we'll use hardcoded voices for OpenAI and skip RPC for LocalAI

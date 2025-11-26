@@ -11,7 +11,7 @@ import type { DVoiceWebSpeech } from '../speex.types';
 import type { SpeexSpeakResult } from '../speex.client';
 
 
-// Browser Support Detection
+// browser support
 
 export function isWebSpeechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
@@ -25,7 +25,7 @@ export function isWebSpeechSupported(): boolean {
  * Note: On first load, browser may return empty array until voices are loaded.
  * @deprecated use `useWebSpeechVoices()` hook for reactive voice loading, as voices are mostly configured by the UI.
  */
-export function listWebSpeechVoices(): SpeechSynthesisVoice[] {
+export function speexListVoicesWebSpeech(): SpeechSynthesisVoice[] {
   if (!isWebSpeechSupported()) return [];
   return speechSynthesis.getVoices();
 }
@@ -35,7 +35,7 @@ export function listWebSpeechVoices(): SpeechSynthesisVoice[] {
  * React hook for voice listing with async loading support.
  * Handles the browser's async voice loading on first access.
  */
-export function useWebSpeechVoices(): {
+export function useSpeexWebSpeechVoices(): {
   voices: SpeechSynthesisVoice[];
   isLoading: boolean;
 } {
@@ -91,7 +91,7 @@ export function useWebSpeechVoices(): {
  * Speak text using the Web Speech API.
  * This is a client-only function - no server RPC.
  */
-export function speakWebSpeech(
+export function speexSynthesizeWebSpeech(
   text: string,
   voice: DVoiceWebSpeech,
   callbacks?: {
