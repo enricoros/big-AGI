@@ -38,5 +38,5 @@ export function useModelServiceClientSideFetch(enabled: boolean, model: DLLM | n
       llmsStoreActions().updateServiceSettings(serviceId, { [csfKey]: false });
   }, [csfKey, serviceId]);
 
-  return { csfAvailable, csfActive, csfToggle, csfReset };
+  return { csfAvailable, csfActive, csfToggle, csfReset, vendorName: vendor?.name || vendor?.id || 'AI Service' };
 }
