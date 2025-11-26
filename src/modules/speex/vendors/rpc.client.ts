@@ -15,10 +15,6 @@ import type { SpeexSpeakResult } from '../speex.client';
 import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from '../server/speex.wiretypes';
 
 
-// Configuration
-const AUDIO_CHUNK_BUFFER_MS = 100; // Small delay to allow audio buffering
-
-
 /**
  * Synthesize speech via speex.router (streaming)
  */
@@ -243,25 +239,25 @@ function _buildWireVoice(engine: DSpeexEngineAny): SpeexWire_Voice {
     case 'elevenlabs':
       return {
         dialect: 'elevenlabs',
-        voiceId: voice.voiceId,
-        model: voice.ttsModel,
+        ...(voice.voiceId ? { voiceId: voice.voiceId } : {}),
+        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
       };
 
     case 'openai':
       return {
         dialect: 'openai',
-        voiceId: voice.voiceId,
-        model: voice.ttsModel,
-        speed: voice.speed,
-        instruction: voice.instruction,
+        ...(voice.voiceId ? { voiceId: voice.voiceId } : {}),
+        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
+        ...(voice.speed !== undefined ? { speed: voice.speed } : {}),
+        ...(voice.instruction ? { instruction: voice.instruction } : {}),
       };
 
     case 'localai':
       return {
         dialect: 'localai',
-        backend: voice.ttsBackend,
-        model: voice.ttsModel,
-        language: voice.language,
+        ...(voice.ttsBackend ? { backend: voice.ttsBackend } : {}),
+        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
+        ...(voice.language ? { language: voice.language } : {}),
       };
 
     case 'webspeech':

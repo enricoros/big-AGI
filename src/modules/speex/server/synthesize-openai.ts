@@ -69,7 +69,8 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
         ...(voice.backend ? { backend: voice.backend } : {}),
         ...(voice.model ? { model: voice.model } : {}),
         ...(voice.language ? { language: voice.language } : {}),
-        response_format: streaming ? 'wav' : 'mp3',
+        response_format: 'mp3', // MP3 for MediaSource compatibility
+        // response_format: streaming ? 'wav' : 'mp3',
       } satisfies LocalAIWire_TTSRequest;
       break;
 
@@ -81,7 +82,8 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
         voice: ('voiceId' in voice ? voice.voiceId : undefined) || FALLBACK_OPENAI_VOICE_ID,
         ...(voice.speed !== undefined ? { speed: voice.speed } : {}),
         ...(voice.instruction ? { instructions: voice.instruction } : {}),
-        response_format: streaming ? 'wav' : 'mp3',
+        response_format: 'mp3', // MP3 for MediaSource compatibility
+        // response_format: streaming ? 'wav' : 'mp3',
       } satisfies OpenAIWire_TTSRequest;
       break;
   }
@@ -154,6 +156,28 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
     yield { t: 'error', e: `Stream error: ${error.message || 'Unknown error'}` };
   }
 };
+
+
+//
+// List Voices - OpenAI (hardcoded)
+//
+
+const OPENAI_TTS_VOICES: SpeexWire_ListVoices_Output['voices'] = [
+  { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
+  { id: 'ash', name: 'Ash', description: 'Warm and engaging' },
+  { id: 'coral', name: 'Coral', description: 'Warm and friendly' },
+  { id: 'echo', name: 'Echo', description: 'Clear and resonant' },
+  { id: 'fable', name: 'Fable', description: 'Expressive and dynamic' },
+  { id: 'marin', name: 'Marin', description: 'Expressive and confident' },
+  { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
+  { id: 'nova', name: 'Nova', description: 'Friendly and upbeat' },
+  { id: 'sage', name: 'Sage', description: 'Calm and wise' },
+  { id: 'shimmer', name: 'Shimmer', description: 'Clear and bright' },
+];
+
+export function listVoicesOpenAI(): SpeexWire_ListVoices_Output['voices'] {
+  return OPENAI_TTS_VOICES;
+}
 
 
 //

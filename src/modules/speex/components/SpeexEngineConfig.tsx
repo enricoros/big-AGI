@@ -11,12 +11,46 @@
 
 import * as React from 'react';
 
-import { FormControl, FormHelperText, Input, Slider, Typography } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, Input, Slider, Typography } from '@mui/joy';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
-import type { DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech, SpeexVendorType } from '../speex.types';
+import type { DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
+import { speakText } from '../speex.client';
 import { SpeexVoiceDropdown } from './SpeexVoiceDropdown';
+
+
+const PREVIEW_TEXT = 'Hello, this is my voice.';
+
+function PreviewButton({ engine }: { engine: DSpeexEngineAny }) {
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+
+  const handlePreview = async () => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    await speakText(
+      PREVIEW_TEXT,
+      { engineId: engine.engineId },
+      { streaming: true, playback: true },
+      { onComplete: () => setIsSpeaking(false), onError: () => setIsSpeaking(false) },
+    );
+  };
+
+  return (
+    <Button
+      variant='outlined'
+      color='neutral'
+      size='sm'
+      onClick={handlePreview}
+      disabled={isSpeaking}
+      startDecorator={isSpeaking ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
+    >
+      {isSpeaking ? 'Speaking...' : 'Preview'}
+    </Button>
+  );
+}
 
 
 interface SpeexEngineConfigProps {
@@ -105,6 +139,10 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
         valueLabelDisplay='auto'
       />
     </FormControl>
+
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+      <PreviewButton engine={engine} />
+    </Box>
   </>;
 }
 
@@ -174,6 +212,10 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
         <FormHelperText>Only for GPT-4o Mini TTS model</FormHelperText>
       </FormControl>
     )}
+
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+      <PreviewButton engine={engine} />
+    </Box>
   </>;
 }
 
@@ -218,6 +260,10 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
     <FormHelperText>
       Voice listing for ElevenLabs requires API key configuration.
     </FormHelperText>
+
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+      <PreviewButton engine={engine} />
+    </Box>
   </>;
 }
 
@@ -229,15 +275,30 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
 }) {
   const voice = engine.voice as DVoiceLocalAI;
 
+  const handleModelChange = (modelId: string) => {
+    onUpdate({
+      voice: { ...voice, ttsModel: modelId },
+    });
+  };
+
   return <>
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Model' description='TTS model' />
+      <SpeexVoiceDropdown
+        engine={engine}
+        voiceId={voice.ttsModel ?? null}
+        onVoiceChange={handleModelChange}
+      />
+    </FormControl>
+
     <FormControl>
-      <FormLabelStart title='Model' description='TTS model name' />
+      <FormLabelStart title='Model Override' description='Manual model name' />
       <Input
         value={voice.ttsModel ?? ''}
         onChange={(e) => onUpdate({ voice: { ...voice, ttsModel: e.target.value } })}
         placeholder='e.g., kokoro'
       />
-      <FormHelperText>Model to use for speech synthesis</FormHelperText>
+      <FormHelperText>Override if model not in dropdown</FormHelperText>
     </FormControl>
 
     <FormControl>
@@ -249,5 +310,9 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
       />
       <FormHelperText>Leave empty for default backend</FormHelperText>
     </FormControl>
+
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+      <PreviewButton engine={engine} />
+    </Box>
   </>;
 }

@@ -1,19 +1,13 @@
-/**
- * SpeexVoiceDropdown - Generic voice selector for any Speex engine
- *
- * Uses speexListVoicesForEngine for cloud providers and useWebSpeechVoices for browser TTS.
- * Supports optional voice preview with play/stop functionality.
- */
-
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
-import { apiQuery } from '~/common/util/trpc.client';
-
-import type { DSpeexEngineAny, SpeexVendorType } from '../speex.types';
+import type { DSpeexEngineAny } from '../speex.types';
+import type { SpeexVoiceInfo } from '../speex.client';
+import { speexListVoicesRPC } from '../vendors/rpc.client';
 import { useSpeexWebSpeechVoices } from '../vendors/webspeech.client';
 
 
@@ -67,81 +61,39 @@ export function SpeexVoiceDropdown(props: SpeexVoiceDropdownProps) {
 }
 
 
-// Voice Data Hook
-
-interface VoiceInfo {
-  id: string;
-  name: string;
-  description?: string;
-  previewUrl?: string;
-}
+// Voice Data Hook - returns SpeexVoiceInfo[] for all vendors
 
 function useSpeexVoices(engine: DSpeexEngineAny): {
-  voices: VoiceInfo[];
+  voices: SpeexVoiceInfo[];
   isLoading: boolean;
   error: string | null;
 } {
-  const vendorType = engine.vendorType;
+  const { vendorType, engineId } = engine;
+  const isCloudVendor = vendorType !== 'webspeech';
 
-  // Browser voices (webspeech)
+  // Browser voices (webspeech) - returns normalized SpeexVoiceInfo[]
   const browserVoices = useSpeexWebSpeechVoices();
 
-  // Cloud voices (elevenlabs, openai, localai) - use RPC
-  // For now, we'll use hardcoded voices for OpenAI and skip RPC for LocalAI
-  const shouldFetchRPC = vendorType === 'elevenlabs';
+  // Cloud voices via react-query - credential resolution happens inside queryFn
+  const cloudVoicesQuery = useQuery({
+    queryKey: ['speex', 'listVoices', engineId, vendorType],
+    queryFn: () => speexListVoicesRPC(engine),
+    enabled: isCloudVendor,
+    staleTime: 5 * 60 * 1000, // 5 minutes - voices don't change often
+  });
 
-  // Note: This is a simplified implementation
-  // In a full implementation, we'd call speexListVoicesRPC through react-query
-
-  if (vendorType === 'webspeech') {
+  // WebSpeech: use browser voices (already normalized)
+  if (!isCloudVendor)
     return {
-      voices: browserVoices.voices.map(v => ({
-        id: v.voiceURI,
-        name: v.name,
-        description: `${v.lang}${v.localService ? ' (local)' : ''}`,
-      })),
+      voices: browserVoices.voices,
       isLoading: browserVoices.isLoading,
       error: null,
     };
-  }
 
-  if (vendorType === 'openai') {
-    // OpenAI has hardcoded voices
-    return {
-      voices: [
-        { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
-        { id: 'ash', name: 'Ash', description: 'Warm and engaging' },
-        { id: 'coral', name: 'Coral', description: 'Warm and friendly' },
-        { id: 'echo', name: 'Echo', description: 'Clear and resonant' },
-        { id: 'fable', name: 'Fable', description: 'Expressive and dynamic' },
-        { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
-        { id: 'nova', name: 'Nova', description: 'Friendly and upbeat' },
-        { id: 'sage', name: 'Sage', description: 'Calm and wise' },
-        { id: 'shimmer', name: 'Shimmer', description: 'Clear and bright' },
-      ],
-      isLoading: false,
-      error: null,
-    };
-  }
-
-  if (vendorType === 'localai') {
-    // LocalAI voices depend on configuration - can't enumerate
-    return {
-      voices: [],
-      isLoading: false,
-      error: null,
-    };
-  }
-
-  if (vendorType === 'elevenlabs') {
-    // TODO: Implement ElevenLabs voice fetching via speexListVoicesRPC
-    // For now, return empty - will be populated when properly integrated
-    return {
-      voices: [],
-      isLoading: false,
-      error: 'ElevenLabs voice listing not yet integrated',
-    };
-  }
-
-  return { voices: [], isLoading: false, error: 'Unknown vendor type' };
+  // Cloud providers: use react-query result
+  return {
+    voices: cloudVoicesQuery.data?.voices ?? [],
+    isLoading: cloudVoicesQuery.isLoading,
+    error: cloudVoicesQuery.error instanceof Error ? cloudVoicesQuery.error.message : null,
+  };
 }

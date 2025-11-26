@@ -2,7 +2,7 @@ import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
 import { SpeexSpeechParticle, SpeexWire, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './speex.wiretypes';
 import { listVoicesElevenLabs, synthesizeElevenLabs } from './synthesize-elevenlabs';
-import { synthesizeOpenAIProtocol } from './synthesize-openai';
+import { listVoicesLocalAI, listVoicesOpenAI, synthesizeOpenAIProtocol } from './synthesize-openai';
 
 
 interface SynthesizeBackendFnParams<TSpeexAccess extends SpeexWire_Access> {
@@ -56,29 +56,16 @@ export const speexRouter = createTRPCRouter({
 
       switch (access.dialect) {
         case 'elevenlabs':
-          return listVoicesElevenLabs(access);
+          return await listVoicesElevenLabs(access);
 
         case 'openai':
-          // OpenAI has hardcoded voices
-          return {
-            voices: [
-              { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
-              { id: 'ash', name: 'Ash', description: 'Warm and engaging' },
-              { id: 'coral', name: 'Coral', description: 'Warm and friendly' },
-              { id: 'echo', name: 'Echo', description: 'Clear and resonant' },
-              { id: 'fable', name: 'Fable', description: 'Expressive and dynamic' },
-              { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
-              { id: 'nova', name: 'Nova', description: 'Friendly and upbeat' },
-              { id: 'sage', name: 'Sage', description: 'Calm and wise' },
-              { id: 'shimmer', name: 'Shimmer', description: 'Clear and bright' },
-            ],
-          };
+          return { voices: listVoicesOpenAI() };
 
         case 'localai':
-          // TODO: Query LocalAI for available TTS models
-          return { voices: [] };
+          return await listVoicesLocalAI(access);
 
         default:
+          const _exhaustiveCheck: never = access;
           return { voices: [] };
       }
     }),
