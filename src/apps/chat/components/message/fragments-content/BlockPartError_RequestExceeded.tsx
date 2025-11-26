@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Box, FormHelperText, Switch, Typography } from '@mui/joy';
+import { Alert, Box, FormHelperText, Switch } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { ContentScaling } from '~/common/app.theme';
@@ -19,13 +19,13 @@ export function BlockPartError_RequestExceeded(props: {
 
   // external state
   const model = useLLM(props.messageGeneratorLlmId) ?? null;
-  const { csfAvailable, csfActive, csfToggle } = useModelServiceClientSideFetch(true, model);
+  const { csfAvailable, csfActive, csfToggle, vendorName } = useModelServiceClientSideFetch(true, model);
 
   return (
     <Alert
       size={props.contentScaling === 'xs' ? 'sm' : 'md'}
-      color='danger'
-      sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+      color='warning'
+      sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, border: '1px solid', borderColor: 'warning.outlinedBorder' }}
     >
 
       <WarningRoundedIcon sx={{ flexShrink: 0, mt: 0.25 }} />
@@ -36,70 +36,69 @@ export function BlockPartError_RequestExceeded(props: {
           Request Too Large
         </Box>
         <div>
-          Your message or attachments exceed the limit of the Vercel edge network.
+          Your message or attachments exceed the limit of the Vercel edge network
         </div>
 
         {/* Recovery options */}
-        {csfAvailable ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {csfAvailable ? <>
 
-            {/* Explanation */}
-            <Box color='text.secondary' fontSize='sm'>
-              <strong>Experimental:</strong> enable direct connection to the AI services, and try again.
-            </Box>
-
-            {/* Toggle */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                p: 2,
-                borderRadius: 'sm',
-                bgcolor: 'background.popup',
-                boxShadow: 'md',
-              }}
-            >
-
-              <Box sx={{ flex: 1 }}>
-                <Box color={!csfActive ? undefined : 'primary.solidBg'} fontWeight='lg' mb={0.5}>
-                  Direct Connection {csfActive && '- Now Try Again'}
-                </Box>
-                <FormHelperText>
-                  Bypassing servers and connect directly from this client -&gt; AI provider
-                </FormHelperText>
-              </Box>
-
-              <Switch
-                checked={csfActive}
-                onChange={(e) => csfToggle(e.target.checked)}
-              />
-            </Box>
-
-            {/* Regenerate button */}
-            {/*{props.onRegenerate && (*/}
-            {/*  <Button*/}
-            {/*    size='sm'*/}
-            {/*    variant={csfActive ? 'solid' : 'outlined'}*/}
-            {/*    color={csfActive ? 'success' : 'neutral'}*/}
-            {/*    startDecorator={<RefreshIcon />}*/}
-            {/*    onClick={props.onRegenerate}*/}
-            {/*    sx={{ alignSelf: 'flex-start' }}*/}
-            {/*  >*/}
-            {/*    {csfActive ? 'Regenerate with Direct Connection' : 'Regenerate'}*/}
-            {/*  </Button>*/}
-            {/*)}*/}
+          {/* Explanation */}
+          <Box color='text.secondary' fontSize='sm' my={2}>
+            <strong>Experimental:</strong> enable Direct Connection to {vendorName} to work around size limitations.
           </Box>
-        ) : (
+
+          {/* Toggle */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              p: 2,
+              borderRadius: 'sm',
+              bgcolor: 'background.popup',
+              boxShadow: 'md',
+            }}
+          >
+
+            <Box sx={{ flex: 1 }}>
+              <Box color={!csfActive ? undefined : 'primary.solidBg'} fontWeight='lg' mb={0.5}>
+                Direct Connection {csfActive && '- Now Try Again'}
+              </Box>
+              <FormHelperText>
+                Connect directly from this client -&gt; {vendorName || 'AI service'}
+              </FormHelperText>
+            </Box>
+
+            <Switch
+              checked={csfActive}
+              onChange={(e) => csfToggle(e.target.checked)}
+            />
+          </Box>
+
+          {/* Regenerate button */}
+          {/*{props.onRegenerate && (*/}
+          {/*  <Button*/}
+          {/*    size='sm'*/}
+          {/*    variant={csfActive ? 'solid' : 'outlined'}*/}
+          {/*    color={csfActive ? 'success' : 'neutral'}*/}
+          {/*    startDecorator={<RefreshIcon />}*/}
+          {/*    onClick={props.onRegenerate}*/}
+          {/*    sx={{ alignSelf: 'flex-start' }}*/}
+          {/*  >*/}
+          {/*    {csfActive ? 'Regenerate with Direct Connection' : 'Regenerate'}*/}
+          {/*  </Button>*/}
+          {/*)}*/}
+
+        </> : (
           <Box>
-            <Typography level='body-sm' sx={{ mb: 1 }}>
-              <strong>Suggestions:</strong>
-            </Typography>
-            <Typography component='ul' level='body-sm' sx={{ pl: 2, m: 0 }}>
+            <Box sx={{ color: 'text.secondary', my: 1 }}>
+              Suggestions:
+            </Box>
+            <Box component='ul' sx={{ color: 'text.secondary' }}>
               <li>Use the cleanup button in the right pane to hide old messages</li>
               <li>Remove large attachments from the conversation</li>
               {/*<li>Reduce conversation length before sending</li>*/}
-            </Typography>
+            </Box>
           </Box>
         )}
       </Box>

@@ -18,7 +18,7 @@ export function BlockPartError_NetDisconnected(props: {
 
   // external state
   const model = useLLM(props.messageGeneratorLlmId) ?? null;
-  const { csfAvailable, csfActive, csfToggle } = useModelServiceClientSideFetch(true, model);
+  const { csfAvailable, csfActive, csfToggle, vendorName } = useModelServiceClientSideFetch(true, model);
 
   return (
     <Alert
@@ -50,7 +50,7 @@ export function BlockPartError_NetDisconnected(props: {
 
           {/* Explanation */}
           <Box color='text.tertiary' fontSize='sm' my={2}>
-            <strong>Experimental:</strong> enable direct connection to the AI service, to bypass server timeouts, and try again.
+            <strong>Experimental:</strong> enable direct connection to {vendorName} to bypass server timeouts - then try again.
           </Box>
 
           {/* Toggle */}
@@ -63,6 +63,8 @@ export function BlockPartError_NetDisconnected(props: {
               borderRadius: 'sm',
               bgcolor: 'background.popup',
               boxShadow: 'md',
+              // border: '1px solid',
+              // borderColor: 'divider',
             }}
           >
 
@@ -71,7 +73,7 @@ export function BlockPartError_NetDisconnected(props: {
                 Direct Connection {csfActive && '- Now Try Again'}
               </Box>
               <FormHelperText>
-                Connect directly from this client -&gt; AI service
+                Connect directly from this client -&gt; {vendorName || 'AI service'}
               </FormHelperText>
             </Box>
 
