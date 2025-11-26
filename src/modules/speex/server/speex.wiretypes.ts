@@ -59,8 +59,9 @@ export namespace SpeexWire {
 
   export const LocalAI_schema = z.object({
     dialect: z.literal('localai'),
-    voiceId: z.string().optional(),
-    model: z.string().optional(),
+    backend: z.string().optional(),   // ttsBackend (e.g., 'coqui', 'bark', 'piper', 'vall-e-x')
+    model: z.string().optional(),     // ttsModel (e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts')
+    language: z.string().optional(),  // for multilingual models like xtts_v2
   });
 
   export const OpenAI_schema = z.object({

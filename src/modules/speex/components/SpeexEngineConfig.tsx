@@ -231,22 +231,23 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
 
   return <>
     <FormControl>
-      <FormLabelStart title='Voice ID' description='LocalAI voice identifier' />
-      <Input
-        value={voice.voiceId ?? ''}
-        onChange={(e) => onUpdate({ voice: { ...voice, voiceId: e.target.value } })}
-        placeholder='e.g., en-us-amy-low'
-      />
-      <FormHelperText>Depends on your LocalAI TTS configuration</FormHelperText>
-    </FormControl>
-
-    <FormControl>
       <FormLabelStart title='Model' description='TTS model name' />
       <Input
         value={voice.ttsModel ?? ''}
         onChange={(e) => onUpdate({ voice: { ...voice, ttsModel: e.target.value } })}
-        placeholder='e.g., piper'
+        placeholder='e.g., kokoro'
       />
+      <FormHelperText>Model to use for speech synthesis</FormHelperText>
+    </FormControl>
+
+    <FormControl>
+      <FormLabelStart title='Backend' description='TTS backend (optional)' />
+      <Input
+        value={voice.ttsBackend ?? ''}
+        onChange={(e) => onUpdate({ voice: { ...voice, ttsBackend: e.target.value || undefined } })}
+        placeholder='e.g., coqui, bark, piper'
+      />
+      <FormHelperText>Leave empty for default backend</FormHelperText>
     </FormControl>
   </>;
 }

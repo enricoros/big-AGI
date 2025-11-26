@@ -1,6 +1,17 @@
 import type { ISpeexVendor } from './ISpeexVendor';
 
 
+/**
+ * LocalAI TTS Vendor
+ *
+ * LocalAI supports multiple TTS backends: coqui, bark, piper, transformers-musicgen, vall-e-x.
+ * When no backend is specified, LocalAI uses its default configuration.
+ *
+ * Default recommendation: Use 'kokoro' model without specifying a backend for the best
+ * out-of-the-box experience with high-quality neural TTS.
+ *
+ * @see https://localai.io/features/text-to-audio/
+ */
 export const SpeexVendorLocalAI: ISpeexVendor<'localai'> = {
   vendorType: 'localai',
   name: 'LocalAI',
@@ -26,7 +37,8 @@ export const SpeexVendorLocalAI: ISpeexVendor<'localai'> = {
 
   getDefaultVoice: () => ({
     vendorType: 'localai',
-    ttsModel: undefined, // depends on what's installed
-    voiceId: undefined,
+    ttsBackend: undefined,
+    ttsModel: 'kokoro', // recommended default - high quality neural TTS
+    language: undefined,
   }),
 };

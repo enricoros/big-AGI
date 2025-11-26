@@ -1,9 +1,19 @@
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
-import { SpeexSpeechParticle, SpeexWire, SpeexWire_ListVoices_Output } from './speex.wiretypes';
-
+import { SpeexSpeechParticle, SpeexWire, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './speex.wiretypes';
 import { listVoicesElevenLabs, synthesizeElevenLabs } from './synthesize-elevenlabs';
 import { synthesizeOpenAIProtocol } from './synthesize-openai';
+
+
+interface SynthesizeBackendFnParams<TSpeexAccess extends SpeexWire_Access> {
+  access: TSpeexAccess;
+  text: string;
+  voice: SpeexWire_Voice;
+  streaming: boolean;
+  signal?: AbortSignal;
+}
+
+export type SynthesizeBackendFn<TSpeexAccess extends SpeexWire_Access> = (params: SynthesizeBackendFnParams<TSpeexAccess>) => AsyncGenerator<SpeexSpeechParticle>;
 
 
 export const speexRouter = createTRPCRouter({
@@ -16,11 +26,8 @@ export const speexRouter = createTRPCRouter({
     .input(SpeexWire.Synthesize_input_schema)
     .mutation(async function* ({ input, ctx }): AsyncGenerator<SpeexSpeechParticle> {
       const { access, text, voice, streaming } = input;
-
       try {
         yield { t: 'start' };
-
-        // Route based on access.dialect discriminant
         switch (access.dialect) {
           case 'elevenlabs':
             yield* synthesizeElevenLabs({ access, text, voice, streaming, signal: ctx.reqSignal });
@@ -32,9 +39,8 @@ export const speexRouter = createTRPCRouter({
             break;
 
           default:
-            yield { t: 'error', e: 'Unknown dialect' };
+            const _exhaustiveCheck: never = access;
         }
-
       } catch (error) {
         yield { t: 'error', e: error instanceof Error ? error.message : 'Synthesis failed' };
       }

@@ -5,78 +5,92 @@
  * Endpoint: POST /v1/audio/speech
  */
 
-import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import type { SpeexSpeechParticle, SpeexWire_Access_OpenAI, SpeexWire_Voice } from './speex.wiretypes';
+import type { SynthesizeBackendFn } from './speex.router';
+import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './speex.wiretypes';
 
 
 // configuration
 const SAFETY_TEXT_LENGTH = 4096; // OpenAI max
-const MIN_CHUNK_SIZE = 4096;
-const DEFAULT_VOICE_ID = 'alloy';
-const DEFAULT_MODEL = 'tts-1';
+const MIN_CHUNK_SIZE = 4096; // bytes
+const FALLBACK_OPENAI_MODEL = 'tts-1';
+const FALLBACK_OPENAI_VOICE_ID = 'alloy';
 
 
-interface SynthesizeOpenAIParams {
-  access: SpeexWire_Access_OpenAI;
-  text: string;
-  voice: SpeexWire_Voice;
-  streaming: boolean;
-  signal?: AbortSignal;
+/** OpenAI TTS API: POST /v1/audio/speech */
+interface OpenAIWire_TTSRequest {
+  input: string;
+  model: string;          // required: 'tts-1', 'tts-1-hd', 'gpt-4o-mini-tts'
+  voice: string;          // required: 'alloy', 'echo', 'fable', etc.
+  response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+  speed?: number;         // 0.25-4.0
+  instructions?: string;  // voice instructions
+}
+
+/** LocalAI TTS API: POST /v1/audio/speech (OpenAI-similar) */
+interface LocalAIWire_TTSRequest {
+  input: string;
+  model?: string;         // optional: e.g., 'kokoro'
+  backend?: string;       // optional: 'coqui', 'bark', 'piper', 'transformers-musicgen', 'vall-e-x'
+  language?: string;      // optional: for multilingual models
+  response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm'; // defaults to 'wav', 'mp3' also seem to work well, with kokoro at least
 }
 
 
 /**
- * Synthesize speech using OpenAI-compatible TTS API.
- * Works with both OpenAI and LocalAI dialects.
+ * Synthesize speech using OpenAI-compatible/similar TTS API.
  */
-export async function* synthesizeOpenAIProtocol(params: SynthesizeOpenAIParams): AsyncGenerator<SpeexSpeechParticle> {
+export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_OpenAI> = async function* (params) {
+
   const { access, text: inputText, voice, streaming, signal } = params;
 
-  // Safety check: trim text that's too long
+  // safety check: trim text that's too long
   let text = inputText;
   if (text.length > SAFETY_TEXT_LENGTH)
     text = text.slice(0, SAFETY_TEXT_LENGTH);
 
-  // Resolve host and API key based on dialect
+
+  // request.headers
   const { host, apiKey } = _resolveAccess(access);
-
-  // Build request
-  const voiceId = voice.voiceId || DEFAULT_VOICE_ID;
-  const model = voice.model || DEFAULT_MODEL;
-  const url = `${host}/v1/audio/speech`;
-
-  const body: OpenAIWire_TTSRequest = {
-    input: text,
-    model,
-    voice: voiceId,
-    // Use wav for streaming (lower latency, no decoding overhead)
-    // Use mp3 for non-streaming (smaller size)
-    response_format: streaming ? 'wav' : 'mp3',
-  };
-
-  // Add optional parameters if present
-  if (voice.dialect === 'openai') {
-    if (voice.speed !== undefined) body.speed = voice.speed;
-    if (voice.instruction) body.instructions = voice.instruction;
-  }
-
-  // Build headers
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
+    ...(!access.orgId ? {} : { 'OpenAI-Organization': access.orgId }),
   };
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-  if (access.orgId) {
-    headers['OpenAI-Organization'] = access.orgId;
+
+  // request.body
+  let body: OpenAIWire_TTSRequest | LocalAIWire_TTSRequest;
+  switch (access.dialect) {
+    case 'localai':
+      if (voice.dialect !== 'localai') throw new Error('Voice dialect mismatch for LocalAI access');
+      body = {
+        input: text,
+        ...(voice.backend ? { backend: voice.backend } : {}),
+        ...(voice.model ? { model: voice.model } : {}),
+        ...(voice.language ? { language: voice.language } : {}),
+        response_format: streaming ? 'wav' : 'mp3',
+      } satisfies LocalAIWire_TTSRequest;
+      break;
+
+    case 'openai':
+      if (voice.dialect !== 'openai') throw new Error('Voice dialect mismatch for OpenAI access');
+      body = {
+        input: text,
+        model: voice.model || FALLBACK_OPENAI_MODEL,
+        voice: ('voiceId' in voice ? voice.voiceId : undefined) || FALLBACK_OPENAI_VOICE_ID,
+        ...(voice.speed !== undefined ? { speed: voice.speed } : {}),
+        ...(voice.instruction ? { instructions: voice.instruction } : {}),
+        response_format: streaming ? 'wav' : 'mp3',
+      } satisfies OpenAIWire_TTSRequest;
+      break;
   }
 
-  // Fetch
+  // connect
   let response: Response;
   try {
     response = await fetchResponseOrTRPCThrow({
-      url,
+      url: `${host}/v1/audio/speech`,
       method: 'POST',
       headers,
       body,
@@ -89,7 +103,7 @@ export async function* synthesizeOpenAIProtocol(params: SynthesizeOpenAIParams):
     return;
   }
 
-  // Non-streaming: return entire audio at once
+  // non-streaming: return entire audio at once
   if (!streaming) {
     try {
       const audioArrayBuffer = await response.arrayBuffer();
@@ -102,12 +116,10 @@ export async function* synthesizeOpenAIProtocol(params: SynthesizeOpenAIParams):
     return;
   }
 
-  // Streaming: read chunks
+  // streaming: read chunks
   const reader = response.body?.getReader();
-  if (!reader) {
-    yield { t: 'error', e: 'No stream reader available' };
-    return;
-  }
+  if (!reader)
+    return yield { t: 'error', e: 'No stream reader available' };
 
   try {
     const accumulatedChunks: Uint8Array[] = [];
@@ -141,51 +153,83 @@ export async function* synthesizeOpenAIProtocol(params: SynthesizeOpenAIParams):
   } catch (error: any) {
     yield { t: 'error', e: `Stream error: ${error.message || 'Unknown error'}` };
   }
+};
+
+
+//
+// List Voices - LocalAI
+//
+
+const KNOWN_TTS_MODELS: Record<string, { name: string; description: string }> = {
+  'kokoro': { name: 'Kokoro', description: 'High-quality neural TTS' },
+  'bark': { name: 'Bark', description: 'Text-to-audio by Suno AI' },
+  'piper': { name: 'Piper', description: 'Fast local TTS' },
+  'coqui': { name: 'Coqui', description: 'Coqui TTS engine' },
+  'vall-e-x': { name: 'VALL-E X', description: 'Zero-shot voice cloning' },
+  'tts-1': { name: 'TTS-1', description: 'OpenAI-compatible TTS' },
+  'tts-1-hd': { name: 'TTS-1 HD', description: 'High-definition TTS' },
+};
+
+/** LocalAI GET /v1/models response */
+interface LocalAIWire_ModelsResponse {
+  object: 'list';
+  data: Array<{ id: string; object: 'model' }>;
+}
+
+/**
+ * List available TTS models from LocalAI instance
+ */
+export async function listVoicesLocalAI(access: SpeexWire_Access_OpenAI): Promise<SpeexWire_ListVoices_Output> {
+  if (access.dialect !== 'localai')
+    throw new Error('listVoicesLocalAI requires localai dialect');
+
+  const { host, apiKey } = _resolveAccess(access);
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
+  };
+
+  let modelsResponse: LocalAIWire_ModelsResponse;
+  try {
+    modelsResponse = await fetchJsonOrTRPCThrow<LocalAIWire_ModelsResponse>({
+      url: `${host}/v1/models`,
+      headers,
+      name: 'LocalAI',
+    });
+  } catch (error: any) {
+    console.warn('[listVoicesLocalAI] Failed to fetch models:', error.message);
+    return { voices: [] };
+  }
+
+  // Filter to known TTS models only
+  const ttsModels = modelsResponse.data.filter(model => model.id in KNOWN_TTS_MODELS);
+
+  return {
+    voices: ttsModels.map(model => ({
+      id: model.id,
+      name: KNOWN_TTS_MODELS[model.id].name,
+      description: KNOWN_TTS_MODELS[model.id].description,
+    })),
+  };
 }
 
 
 // Helpers
 
-function _resolveAccess(access: SpeexWire_Access_OpenAI): { host: string; apiKey: string } {
-  if (access.dialect === 'openai') {
-    // OpenAI: use default host if not specified, API key required
-    let host = (access.apiHost || 'https://api.openai.com').trim();
-    if (!host.startsWith('http'))
-      host = `https://${host}`;
-    if (host.endsWith('/'))
-      host = host.slice(0, -1);
+function _resolveAccess(access: Readonly<SpeexWire_Access_OpenAI>): { host: string; apiKey: string } {
 
-    return {
-      host,
-      apiKey: access.apiKey || '',
-    };
-  }
-
-  // LocalAI: host required, API key optional
-  let host = (access.apiHost || '').trim();
-  if (!host) throw new Error('LocalAI requires apiHost to be specified');
-
+  // determine host
+  const isOpenAI = access.dialect === 'openai';
+  let host = isOpenAI
+    ? (access.apiHost || 'https://api.openai.com').trim()
+    : (access.apiHost || '').trim();
+  if (!host) throw new Error('LocalAI requires a host URL');
   if (!host.startsWith('http')) {
     // noinspection HttpUrlsUsage
-    host = `http://${host}`; // LocalAI is often local, default to http
+    host = isOpenAI ? `https://${host}` : `http://${host}`; // LocalAI is often local, default to http
   }
   if (host.endsWith('/'))
     host = host.slice(0, -1);
 
-  return {
-    host,
-    apiKey: access.apiKey || '',
-  };
-}
-
-
-// Wire types
-
-interface OpenAIWire_TTSRequest {
-  input: string;
-  model: string;
-  voice: string;
-  response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
-  speed?: number;
-  instructions?: string;
+  return { host, apiKey: access.apiKey || '' };
 }

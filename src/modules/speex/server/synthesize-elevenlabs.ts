@@ -1,7 +1,8 @@
 import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './speex.wiretypes';
+import type { SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './speex.wiretypes';
+import type { SynthesizeBackendFn } from './speex.router';
 
 
 // configuration
@@ -10,16 +11,7 @@ const MIN_CHUNK_SIZE = 4096;
 const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
 
 
-interface SynthesizeElevenLabsParams {
-  access: SpeexWire_Access_ElevenLabs;
-  text: string;
-  voice: SpeexWire_Voice;
-  streaming: boolean;
-  signal?: AbortSignal;
-}
-
-
-export async function* synthesizeElevenLabs(params: SynthesizeElevenLabsParams): AsyncGenerator<SpeexSpeechParticle> {
+export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLabs> = async function* (params) {
   const { access, text: inputText, voice, streaming, signal } = params;
 
   // Safety check: trim text that's too long
@@ -27,8 +19,8 @@ export async function* synthesizeElevenLabs(params: SynthesizeElevenLabsParams):
   if (text.length > SAFETY_TEXT_LENGTH)
     text = text.slice(0, SAFETY_TEXT_LENGTH);
 
-  // Build request
-  const voiceId = voice.voiceId || DEFAULT_VOICE_ID;
+  // Build request - narrow to elevenlabs dialect for type safety
+  const voiceId = (voice.dialect === 'elevenlabs' ? voice.voiceId : undefined) || DEFAULT_VOICE_ID;
   const model = voice.model || 'eleven_turbo_v2_5';
   const path = `/v1/text-to-speech/${voiceId}${streaming ? '/stream' : ''}`;
   const { headers, url } = _elevenlabsAccess(access, path);
@@ -106,7 +98,7 @@ export async function* synthesizeElevenLabs(params: SynthesizeElevenLabsParams):
   } catch (error: any) {
     yield { t: 'error', e: `ElevenLabs stream error: ${error.message || 'Unknown error'}` };
   }
-}
+};
 
 
 export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs): Promise<SpeexWire_ListVoices_Output> {
