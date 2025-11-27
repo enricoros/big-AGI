@@ -8,12 +8,13 @@
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 
+import type { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
+import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
+
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 
-import { DSpeexEngine, SpeexSpeakResult } from '../../speex.types';
+import type { DSpeexEngine, SpeexSpeakResult } from '../../speex.types';
 import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './rpc.wiretypes';
-import { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
-import { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
 
 
 type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
@@ -40,7 +41,7 @@ export async function speexSynthesize_RPC(
 ): Promise<SpeexSpeakResult> {
 
   // engine credentials (DCredentials..) -> wire Access
-  const access = _buildWireAccess(engine);
+  const access = _buildRPCWireAccess(engine);
   if (!access) {
     const error = new Error(`Failed to resolve credentials for engine ${engine.engineId}`);
     callbacks?.onError?.(error);
@@ -136,8 +137,8 @@ export async function speexSynthesize_RPC(
 /**
  * List voices via speex.router
  */
-export async function speexListVoicesRPC(engine: _DSpeexEngineRPC): Promise<SpeexWire_ListVoices_Output> {
-  const access = _buildWireAccess(engine);
+export async function speexListVoices_RPC(engine: _DSpeexEngineRPC): Promise<SpeexWire_ListVoices_Output> {
+  const access = _buildRPCWireAccess(engine);
   if (!access)
     return { voices: [] };
 
@@ -152,24 +153,36 @@ export async function speexListVoicesRPC(engine: _DSpeexEngineRPC): Promise<Spee
 
 // -- private helpers --
 
-function _buildWireAccess({ credentials, vendorType }: _DSpeexEngineRPC): SpeexWire_Access | null {
-  // noinspection FallThroughInSwitchStatementJS
-  switch (credentials.type) {
+function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): SpeexWire_Access | null {
+  switch (c.type) {
 
     // resolve from inline API keys
     case 'api-key':
       switch (vendorType) {
         case 'elevenlabs':
-          return { dialect: 'elevenlabs', apiKey: credentials.apiKey, apiHost: credentials.apiHost };
+          return {
+            dialect: 'elevenlabs',
+            apiKey: c.apiKey,
+            ...(c.apiHost && { apiHost: c.apiHost }),
+          };
 
         case 'localai':
         case 'openai':
-          return { dialect: vendorType, apiKey: credentials.apiKey, apiHost: credentials.apiHost /*, orgId: credentials.orgId */ };
+          return {
+            dialect: vendorType,
+            ...(c.apiKey && { apiKey: c.apiKey }),
+            ...(c.apiHost && { apiHost: c.apiHost }),
+            // ...(c.apiOrgId && { apiOrgId: c.apiOrgId }),
+          };
+
+        default:
+          const _exhaustiveCheck: never = vendorType;
+          return null;
       }
 
     // resolve from LLMs services
     case 'llms-service':
-      const service = findModelsServiceOrNull(credentials.serviceId);
+      const service = findModelsServiceOrNull(c.serviceId);
       if (!service) return null;
       switch (vendorType) {
         case 'elevenlabs':
@@ -180,18 +193,22 @@ function _buildWireAccess({ credentials, vendorType }: _DSpeexEngineRPC): SpeexW
           const oai = (service.setup || {}) as DOpenAIServiceSettings;
           return {
             dialect: vendorType,
-            ...(oai.oaiKey ? { apiKey: oai.oaiKey } : {}),
-            ...(oai.oaiHost ? { apiHost: oai.oaiHost } : {}),
-            ...(oai.oaiOrg ? { orgId: oai.oaiOrg } : {}),
+            ...(oai.oaiKey && { apiKey: oai.oaiKey }),
+            ...(oai.oaiHost && { apiHost: oai.oaiHost }),
+            ...(oai.oaiOrg && { apiOrgId: oai.oaiOrg }),
           };
 
         case 'localai':
           const lai = (service.setup || {}) as DLocalAIServiceSettings;
           return {
             dialect: vendorType,
-            ...(lai.localAIHost ? { apiHost: lai.localAIHost } : {}),
-            ...(lai.localAIKey ? { apiKey: lai.localAIKey } : {}),
+            ...(lai.localAIKey && { apiKey: lai.localAIKey }),
+            ...(lai.localAIHost && { apiHost: lai.localAIHost }),
           };
+
+        default:
+          const _exhaustiveCheck: never = vendorType;
+          return null;
       }
   }
 }

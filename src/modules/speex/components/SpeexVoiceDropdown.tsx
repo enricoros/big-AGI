@@ -6,7 +6,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
 import type { DSpeexEngineAny, SpeexListVoiceOption } from '../speex.types';
-import { speexListVoicesRPC } from '../protocols/rpc/rpc.client';
+import { speexListVoices_RPC } from '../protocols/rpc/rpc.client';
 import { useSpeexWebSpeechVoices } from '../protocols/webspeech/webspeech.client';
 
 
@@ -80,7 +80,7 @@ function useSpeexVoices(engine: DSpeexEngineAny): {
   // RPC voices (for this engine) via react-query - credential resolution happens inside queryFn
   const cloudVoicesQuery = useQuery({
     queryKey: ['speex', 'listVoices', engineId, vendorType],
-    queryFn: () => speexListVoicesRPC(engine as any /* will not run for 'webspeech' */),
+    queryFn: () => speexListVoices_RPC(engine as any /* will not run for 'webspeech' */),
     enabled: isCloudVendor,
     staleTime: 5 * 60 * 1000, // 5 minutes - voices don't change often
   });
