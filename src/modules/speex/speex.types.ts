@@ -41,38 +41,38 @@ interface _TypeMap extends Record<DSpeexVendorType, { voice: unknown; credential
 export type DSpeexVoice<TVt extends DSpeexVendorType = DSpeexVendorType> = _TypeMap[TVt]['voice'];
 
 export interface DVoiceElevenLabs {
-  vendorType: 'elevenlabs';
+  dialect: 'elevenlabs';
   ttsModel?: 'eleven_v3' | 'eleven_multilingual_v2' | 'eleven_flash_v2_5' | 'eleven_turbo_v2_5';
   ttsVoiceId?: string;
-  // stability?: number;
-  // similarityBoost?: number;
-  // style?: number;
-  // speakerBoost?: boolean;
+  // ttsStability?: number;
+  // ttsSimilarityBoost?: number;
+  // ttsStyle?: number;
+  // ttsS?: boolean;
 }
 
 // type LocalAITTSBackend = | 'coqui' | 'bark' | 'piper' | 'transformers-musicgen' | 'vall-e-x'
 export interface DVoiceLocalAI {
-  vendorType: 'localai';
+  dialect: 'localai';
   // we let the user insert strings (or nothing) for the 2 fields below
-  ttsBackend?: string;  // Backend (e.g., 'coqui', 'bark', 'piper', 'transformers-musicgen', 'vall-e-x')
-  ttsModel?: string;    // Model name (e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts', 'v2/en_speaker_4' for bark)
-  language?: string;    // Language code for multilingual models (e.g., 'en', 'fr' for xtts_v2)
+  ttsBackend?: string;   // Backend (e.g., 'coqui', 'bark', 'piper', 'transformers-musicgen', 'vall-e-x')
+  ttsModel?: string;     // Model name (e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts', 'v2/en_speaker_4' for bark)
+  ttsLanguage?: string;  // Language code for multilingual models (e.g., 'en', 'fr' for xtts_v2)
 }
 
 export interface DVoiceOpenAI {
-  vendorType: 'openai';
+  dialect: 'openai';
   ttsModel: 'tts-1' | 'tts-1-hd' | 'gpt-4o-mini-tts';
   ttsVoiceId?: 'alloy' | 'ash' | 'coral' | 'echo' | 'marin' | 'sage' | 'shimmer' | 'fable' | 'onyx' | 'nova' | string;
   // voiceId?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' | string;
-  speed?: number; // 0.25-4.0
-  instruction?: string;
+  ttsSpeed?: number;       // 0.25-4.0
+  ttsInstruction?: string; // voice instructions (gpt-4o-mini-tts only?)
 }
 
 export interface DVoiceWebSpeech {
-  vendorType: 'webspeech';
+  dialect: 'webspeech';
   ttsVoiceURI?: string;
-  rate?: number;
-  pitch?: number;
+  ttsSpeed?: number;  // 0.5-2.0
+  ttsPitch?: number;  // 0.5-2.0
 }
 
 

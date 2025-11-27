@@ -23,9 +23,9 @@ export const SpeexVendorWebSpeech: ISpeexVendor<'webspeech'> = {
   }),
 
   getDefaultVoice: () => ({
-    vendorType: 'webspeech',
+    dialect: 'webspeech',
     ttsVoiceURI: undefined, // will use browser default
-    rate: 1.0,
-    pitch: 1.0,
+    ttsSpeed: 1.0,
+    ttsPitch: 1.0,
   }),
 };

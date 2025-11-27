@@ -47,8 +47,9 @@ export async function speexSynthesize_RPC(
     return { success: false, error: error.message };
   }
 
-  // engine voice (DVoice..) -> wire Voice
-  const voice = _buildWireVoice(engine);
+  // engine voice -> wire Voice
+  // IMPORTANT: TS ensures structural compatibility here between the DVoice* and Voice*_schema types
+  const voice: SpeexWire_Voice = engine.voice;
 
 
   // audio player for streaming playback
@@ -195,38 +196,6 @@ function _buildWireAccess({ credentials, vendorType }: _DSpeexEngineRPC): SpeexW
       }
   }
 }
-
-function _buildWireVoice({ vendorType, voice }: _DSpeexEngineRPC): SpeexWire_Voice {
-  switch (vendorType) {
-    case 'elevenlabs':
-      // DVoiceElevenLabs -> VoiceElevenLabs_schema
-      return {
-        dialect: 'elevenlabs',
-        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
-        ...(voice.ttsVoiceId ? { voiceId: voice.ttsVoiceId } : {}),
-      };
-
-    case 'localai':
-      // DVoiceLocalAI -> VoiceLocalAI_schema
-      return {
-        dialect: 'localai',
-        ...(voice.ttsBackend ? { backend: voice.ttsBackend } : {}),
-        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
-        ...(voice.language ? { language: voice.language } : {}),
-      };
-
-    case 'openai':
-      // DVoiceOpenAI -> VoiceOpenAI_schema
-      return {
-        dialect: 'openai',
-        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
-        ...(voice.ttsVoiceId ? { voiceId: voice.ttsVoiceId } : {}),
-        ...(voice.speed ? { speed: voice.speed } : {}),
-        ...(voice.instruction ? { instruction: voice.instruction } : {}),
-      };
-  }
-}
-
 
 // Private: Helpers
 

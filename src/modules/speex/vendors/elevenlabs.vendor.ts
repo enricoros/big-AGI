@@ -23,7 +23,7 @@ export const SpeexVendorElevenLabs: ISpeexVendor<'elevenlabs'> = {
   }),
 
   getDefaultVoice: () => ({
-    vendorType: 'elevenlabs',
+    dialect: 'elevenlabs',
     ttsModel: 'eleven_multilingual_v2', // best for mixed/non-English; user can switch to turbo for English-only
     ttsVoiceId: undefined, // will use API default
   }),

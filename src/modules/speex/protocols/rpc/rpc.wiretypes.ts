@@ -54,27 +54,27 @@ export namespace SpeexWire {
 
   export const VoiceElevenLabs_schema = z.object({
     dialect: z.literal('elevenlabs'),
-    model: z.string().optional(),
-    voiceId: z.string().optional(),
+    ttsModel: z.string().optional(),
+    ttsVoiceId: z.string().optional(),
   });
 
   export const VoiceLocalAI_schema = z.object({
     dialect: z.literal('localai'),
-    backend: z.string().optional(),   // ttsBackend (e.g., 'coqui', 'bark', 'piper', 'vall-e-x')
-    model: z.string().optional(),     // ttsModel (e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts')
-    language: z.string().optional(),  // for multilingual models like xtts_v2
+    ttsBackend: z.string().optional(),   // e.g., 'coqui', 'bark', 'piper', 'vall-e-x'
+    ttsModel: z.string().optional(),     // e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts'
+    ttsLanguage: z.string().optional(),  // for multilingual models like xtts_v2
   });
 
-  export const VoiceRPCOpenAI_schema = z.object({
+  export const VoiceOpenAI_schema = z.object({
     dialect: z.literal('openai'),
-    model: z.enum(['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts']).optional(),
-    voiceId: z.string().optional(),
-    speed: z.number().min(0.25).max(4.0).optional(),
-    instruction: z.string().optional(),
+    ttsModel: z.enum(['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts']).optional(),
+    ttsVoiceId: z.string().optional(),
+    ttsSpeed: z.number().min(0.25).max(4.0).optional(),
+    ttsInstruction: z.string().optional(),
   });
 
   export const Voice_schema = z.discriminatedUnion('dialect',
-    [VoiceElevenLabs_schema, VoiceLocalAI_schema, VoiceRPCOpenAI_schema],
+    [VoiceElevenLabs_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
   );
 
 

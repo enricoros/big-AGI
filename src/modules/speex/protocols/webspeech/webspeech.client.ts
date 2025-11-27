@@ -138,9 +138,9 @@ export function speexSynthesize_WebSpeech(
         utterance.voice = selectedVoice;
     }
 
-    // set rate and pitch
-    if (voice.rate !== undefined) utterance.rate = voice.rate;
-    if (voice.pitch !== undefined) utterance.pitch = voice.pitch;
+    // set speed and pitch
+    if (voice.ttsSpeed !== undefined) utterance.rate = voice.ttsSpeed;
+    if (voice.ttsPitch !== undefined) utterance.pitch = voice.ttsPitch;
 
     // set up event handlers
     utterance.onstart = () => {
