@@ -115,7 +115,10 @@ export type SpeexSpeakOptions = {
 }
 
 export type SpeexSpeakResult = {
-  success: boolean;
+  success: true;
   audioBase64?: string; // available when not streaming or when requested
-  error?: string; // if success is false
+} | {
+  success: false;
+  errorType: 'tts-no-engine' | 'tts-unconfigured' | 'tts-error' | 'tts-exception';
+  error: string; // if success is false
 }

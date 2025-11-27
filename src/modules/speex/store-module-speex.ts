@@ -169,7 +169,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
         // non-existing: create
         hasChanges = true;
         const engineId = createEngine(vendor.vendorType, {
-          label: `${vendor.name} (${source.label})`,
+          label: source?.label || vendor.name,
           isAutoDetected: true,
           isAutoLinked: true,
           credentials: {
@@ -277,9 +277,13 @@ export function useSpeexEngines() {
   return useSpeexStore(useShallow(state => state.engines.filter(e => !e.isDeleted)));
 }
 
-export function useSpeexActiveEngineId() {
-  return useSpeexStore(state => state.activeEngineId);
+export function useSpeexGlobalEngine(): DSpeexEngineAny | null {
+  return useSpeexStore(speexFindGlobalEngine);
 }
+
+// export function useSpeexActiveEngineId() {
+//   return useSpeexStore(state => state.activeEngineId);
+// }
 
 
 // Getters
@@ -302,9 +306,8 @@ export function speexFindValidEngineByType(vendorType: DSpeexVendorType): DSpeex
   return null;
 }
 
-export function speexFindGlobalEngine(): DSpeexEngineAny | null {
-  const { engines, activeEngineId } = useSpeexStore.getState();
 
+export function speexFindGlobalEngine({ engines, activeEngineId }: SpeexStore = useSpeexStore.getState()): DSpeexEngineAny | null {
   // A. return active engine
   if (activeEngineId) {
     const active = engines.find(e => e.engineId === activeEngineId && !e.isDeleted);
@@ -331,17 +334,21 @@ export function speexAreCredentialsValid(credentials: DSpeexCredentials): boolea
 
       // resolve service
       const llmService = llmSources.find(s => s.id === credentials.serviceId);
-      // if (!llmService?.vId) return false;
-      //
-      // // resolve vendor
-      // const vendor = findModelVendor(llmService.vId);
-      // if (!vendor) return false;
-      //
-      // // use CSF as a validator if available (e.g. validates the key presence)
-      // return !!vendor.csfAvailable?.(llmService.setup);
+      if (!llmService?.vId) return false;
 
-      // NOTE: relaxed to just presence
-      return !!llmService;
+      // resolve vendor
+      const vendor = findModelVendor(llmService.vId);
+      if (!vendor) return false;
+
+      // is vendor client-side configured? great
+      // const isClientSideConfigured = !!vendor.csfAvailable?.(llmService.setup);
+      // if (isClientSideConfigured) return true;
+      //
+      // // is vendor server-side configured? great
+      // return modelVendorHasCloudTenantConfiguration(vendor);
+
+      // use CSF as a validator if available (e.g. validates the key presence)
+      return !!vendor.csfAvailable?.(llmService.setup);
 
     case 'none':
       return true;

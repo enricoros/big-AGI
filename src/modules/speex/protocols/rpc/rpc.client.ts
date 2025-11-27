@@ -44,7 +44,7 @@ export async function speexSynthesize_RPC(
   if (!access) {
     const error = new Error(`Failed to resolve credentials for engine ${engine.engineId}`);
     callbacks?.onError?.(error);
-    return { success: false, error: error.message };
+    return { success: false, errorType: 'tts-unconfigured', error: error.message };
   }
 
   // engine voice -> wire Voice
@@ -123,13 +123,12 @@ export async function speexSynthesize_RPC(
 
   } catch (error: any) {
     // Cleanup
-    if (audioPlayer) {
+    if (audioPlayer)
       void audioPlayer.stop();
-    }
 
     const errorMessage = error.message || 'Synthesis failed';
     callbacks?.onError?.(new Error(errorMessage));
-    return { success: false, error: errorMessage };
+    return { success: false, errorType: 'tts-exception', error: errorMessage };
   }
 }
 
