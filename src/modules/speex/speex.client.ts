@@ -39,12 +39,15 @@ export function useSpeexCapability(): SpeexCapability {
 
   // find active engine - may be null, even if soft deleted and the active ID still points to it
   const activeEngine = engines.find(e => e.engineId === activeEngineId && !e.isDeleted);
-  const activeEngineValid = !!activeEngine; // && speexAreCredentialsValid(activeEngine.credentials);
+  // const activeEngineValid = !!activeEngine; // && speexAreCredentialsValid(activeEngine.credentials);
+  if (activeEngine) return { mayWork: true };
 
-  // const anyEngineValid = engines.some(e => !e.isDeleted && speexAreCredentialsValid(e.credentials));
+  // if not active engine, check if any other engine is ~~valid~~ present
+  const anyEnginePresent = engines.some(e => !e.isDeleted /*&& speexAreCredentialsValid(e.credentials)*/);
+  if (anyEnginePresent) return { mayWork: true };
 
   return {
-    mayWork: activeEngineValid,
+    mayWork: false, // activeEngineValid,
     // activeEngineId: activeEngine?.engineId ?? null,
     // activeVendorType: activeEngine?.vendorType ?? null,
   };

@@ -331,14 +331,17 @@ export function speexAreCredentialsValid(credentials: DSpeexCredentials): boolea
 
       // resolve service
       const llmService = llmSources.find(s => s.id === credentials.serviceId);
-      if (!llmService?.vId) return false;
+      // if (!llmService?.vId) return false;
+      //
+      // // resolve vendor
+      // const vendor = findModelVendor(llmService.vId);
+      // if (!vendor) return false;
+      //
+      // // use CSF as a validator if available (e.g. validates the key presence)
+      // return !!vendor.csfAvailable?.(llmService.setup);
 
-      // resolve vendor
-      const vendor = findModelVendor(llmService.vId);
-      if (!vendor) return false;
-
-      // use CSF as a validator if available (e.g. validates the key presence)
-      return !!vendor.csfAvailable?.(llmService.setup);
+      // NOTE: relaxed to just presence
+      return !!llmService;
 
     case 'none':
       return true;
