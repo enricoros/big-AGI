@@ -84,7 +84,7 @@ export interface DCredentialsApiKey {
   type: 'api-key';
   apiKey: string;
   apiHost?: string; // is missing, assumed to be the default host for the cloud provider
-  // orgId?: string;  // for OpenAI organization ID, if applicable - but won't have it here for manual api key entries
+  // apiOrgId?: string;  // for OpenAI organization ID, if applicable - but won't have it here for manual api key entries
 }
 
 export interface DCredentialsLLMSService {

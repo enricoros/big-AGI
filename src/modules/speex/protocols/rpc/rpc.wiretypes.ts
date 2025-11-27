@@ -42,7 +42,7 @@ export namespace SpeexWire {
     dialect: z.enum(['localai', 'openai']),
     apiKey: z.string().optional(),  // openai: required, localai: optional
     apiHost: z.string().optional(), // localai: required, openai: optional
-    orgId: z.string().optional(),   // openai only
+    apiOrgId: z.string().optional(),   // openai only
   });
 
   export const Access_schema = z.discriminatedUnion('dialect',
