@@ -15,8 +15,8 @@ import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/opena
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 
-import type { DSpeexEngine, SpeexSpeakResult } from '../../speex.types';
-import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './rpc.wiretypes';
+import type { DSpeexEngine, SpeexListVoiceOption, SpeexSpeakResult } from '../../speex.types';
+import type { SpeexWire_Access, SpeexWire_Voice } from './rpc.wiretypes';
 import { SPEEX_DEBUG } from '../../speex.config';
 
 
@@ -104,6 +104,7 @@ export async function speexSynthesize_RPC(
           break;
 
         case 'log':
+          // intended to be user visible
           console.log(`[Speex] (${particle.level})`, particle.message);
           break;
 
@@ -153,16 +154,16 @@ export async function speexSynthesize_RPC(
 /**
  * List voices via speex.router
  */
-export async function speexListVoices_RPC(engine: _DSpeexEngineRPC): Promise<SpeexWire_ListVoices_Output> {
+export async function speexListVoices_RPC(engine: _DSpeexEngineRPC): Promise<SpeexListVoiceOption[]> {
   const access = _buildRPCWireAccess(engine);
   if (!access)
-    return { voices: [] };
+    return [];
 
   try {
-    return await apiAsync.speex.listVoices.query({ access });
+    return (await apiAsync.speex.listVoices.query({ access })).voices;
   } catch (error) {
     // console.log('[DEV] speexListVoicesRPC. Failed to list voices:', error);
-    return { voices: [] };
+    return [];
   }
 }
 

@@ -8,7 +8,7 @@
 
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
-import { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexSpeakOptions, SpeexSpeakResult } from './speex.types';
+import type { DSpeexEngineAny, DVoiceWebSpeech, SpeexSpeakOptions, SpeexSpeakResult, SpeexVoiceSelector } from './speex.types';
 import { speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType } from './store-module-speex';
 
 import { speexSynthesize_RPC } from './protocols/rpc/rpc.client';
@@ -17,19 +17,17 @@ import { speexSynthesize_WebSpeech } from './protocols/webspeech/webspeech.clien
 
 // Speech Synthesis API
 
-type _Speak_VoiceSelector =
-  | undefined
-  | { voice: Partial<DSpeexVoice> } // uses first matching engine for voice.dialect, with voice override
-  | { engineId: SpeexEngineId; voice?: Partial<DSpeexVoice> }; // uses specific engine, optionally overriding voice
-
-type _Speak_Callbacks = {
-  onStart?: () => void;
-  onChunk?: (chunk: ArrayBuffer) => void;
-  onComplete?: () => void;
-  onError?: (error: Error) => void;
-}
-
-export async function speakText(inputText: string, voiceSelector: _Speak_VoiceSelector, options?: SpeexSpeakOptions, callbacks?: _Speak_Callbacks): Promise<SpeexSpeakResult> {
+export async function speakText(
+  inputText: string,
+  voiceSelector: SpeexVoiceSelector,
+  options?: SpeexSpeakOptions,
+  callbacks?: {
+    onStart?: () => void;
+    onChunk?: (chunk: ArrayBuffer) => void;
+    onComplete?: () => void;
+    onError?: (error: Error) => void;
+  },
+): Promise<SpeexSpeakResult> {
 
   const streaming = options?.streaming ?? true;
   const languageCode = options?.languageCode ?? _getUIPreferenceLanguageCode();
@@ -66,11 +64,11 @@ export async function speakText(inputText: string, voiceSelector: _Speak_VoiceSe
 
 // private helpers
 
-function _engineFromSelector(selector: _Speak_VoiceSelector): DSpeexEngineAny | null {
+function _engineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineAny | null {
   if (selector) {
     // A. most specific selector: engineId
     if ('engineId' in selector && selector.engineId) {
-      const engine = speexFindEngineById(selector.engineId);
+      const engine = speexFindEngineById(selector.engineId, false /* force through */);
       if (engine) return engine;
     }
 
@@ -85,7 +83,7 @@ function _engineFromSelector(selector: _Speak_VoiceSelector): DSpeexEngineAny | 
   return speexFindGlobalEngine();
 }
 
-function _engineApplyVoiceOverride(engine: DSpeexEngineAny, selector: _Speak_VoiceSelector): DSpeexEngineAny {
+function _engineApplyVoiceOverride(engine: DSpeexEngineAny, selector: SpeexVoiceSelector): DSpeexEngineAny {
   return (!selector || !('voice' in selector) || !selector.voice) ? engine : {
     ...engine,
     voice: { ...engine.voice, ...selector.voice },

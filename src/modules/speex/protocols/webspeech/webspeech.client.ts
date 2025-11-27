@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 
-import type { DVoiceWebSpeech, SpeexListVoiceOption, SpeexSpeakResult } from '../../speex.types';
+import type { DVoiceWebSpeech, SpeexListVoiceOption, SpeexListVoicesResult, SpeexSpeakResult } from '../../speex.types';
 
 import { SPEEX_DEBUG } from '~/modules/speex/speex.config';
 
@@ -50,10 +50,7 @@ export function webspeechIsSupported(): boolean {
  * Handles the browser's async voice loading on first access.
  * Returns normalized SpeexListVoiceOption[] for consistency with cloud providers.
  */
-export function useSpeexWebSpeechVoices(enabled: boolean): {
-  voices: SpeexListVoiceOption[];
-  isLoading: boolean;
-} {
+export function useSpeexWebSpeechVoices(enabled: boolean): SpeexListVoicesResult {
 
   // state
   const [isLoading, setIsLoading] = React.useState(true);
@@ -99,7 +96,7 @@ export function useSpeexWebSpeechVoices(enabled: boolean): {
     };
   }, [enabled]);
 
-  return { voices, isLoading };
+  return { voices, isLoading, error: null };
 }
 
 

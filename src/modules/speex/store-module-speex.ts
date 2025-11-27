@@ -7,7 +7,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
-import type { DSpeexCredentials, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, SpeexEngineId } from './speex.types';
+import type { DSpeexCredentialsAny, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, SpeexEngineId } from './speex.types';
 import { speexFindByVendorPriorityAsc, speexFindVendor, speexFindVendorForLLMVendor } from './speex.vendors-registry';
 import { webspeechIsSupported } from './protocols/webspeech/webspeech.client';
 
@@ -221,7 +221,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
             if (!existingEngine) {
               hasChanges = true;
               createEngine('elevenlabs', {
-                label: 'ElevenLabs (migrated)',
+                label: 'ElevenLabs', // (migrated) // no need as the user can't change..
                 isAutoDetected: true,
                 isAutoLinked: false,
                 credentials: { type: 'api-key', apiKey: apiKey.trim() },
@@ -292,14 +292,14 @@ export function useSpeexGlobalEngine(): DSpeexEngineAny | null {
 
 // Getters
 
-export function speexFindActiveEngine(): DSpeexEngineAny | null {
-  return speexFindEngineById(useSpeexStore.getState().activeEngineId);
-}
+// export function speexFindActiveEngine(): DSpeexEngineAny | null {
+//   return speexFindEngineById(useSpeexStore.getState().activeEngineId, false);
+// }
 
-export function speexFindEngineById(engineId: SpeexEngineId | null): DSpeexEngineAny | null {
+export function speexFindEngineById(engineId: SpeexEngineId | null, requireValidCredentials: boolean): DSpeexEngineAny | null {
   if (!engineId) return null;
   const { engines } = useSpeexStore.getState();
-  return engines.find(e => e.engineId === engineId && !e.isDeleted) || null;
+  return engines.find(e => e.engineId === engineId && !e.isDeleted && (!requireValidCredentials || speexAreCredentialsValid(e.credentials))) || null;
 }
 
 export function speexFindValidEngineByType(vendorType: DSpeexVendorType): DSpeexEngineAny | null {
@@ -327,7 +327,7 @@ export function speexFindGlobalEngine({ engines, activeEngineId }: SpeexStore = 
 }
 
 
-export function speexAreCredentialsValid(credentials: DSpeexCredentials): boolean {
+export function speexAreCredentialsValid(credentials: DSpeexCredentialsAny): boolean {
   switch (credentials.type) {
     case 'api-key':
       return !!credentials.apiKey || !!credentials.apiHost;

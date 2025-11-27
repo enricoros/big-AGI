@@ -85,7 +85,7 @@ export namespace SpeexWire {
     access: SpeexWire.Access_schema,
     text: z.string(),
     voice: SpeexWire.Voice_schema,
-    streaming: z.boolean().default(true),
+    streaming: z.boolean(),
     languageCode: z.string().optional(), // ISO language code (e.g., 'en', 'fr') for model selection fallback
     priority: z.enum(['fast', 'balanced', 'quality']).optional(), // Hint for speed vs quality tradeoff
   });
