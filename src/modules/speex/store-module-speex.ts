@@ -227,7 +227,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
                 credentials: { type: 'api-key', apiKey: apiKey.trim() },
                 voice: { vendorType: 'elevenlabs', ttsModel: 'eleven_multilingual_v2', ttsVoiceId: voiceId || undefined },
               });
-              console.log('[Speex] Migrated legacy ElevenLabs configuration');
+              console.log('[DEV] Speex: Migrated legacy ElevenLabs configuration');
             }
           }
 
@@ -235,7 +235,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
           // localStorage.removeItem(LEGACY_ELEVENLABS_STORAGE_KEY);
         }
       } catch (error) {
-        console.warn('[Speex] Failed to migrate legacy ElevenLabs store:', error);
+        console.warn('[DEV] Speex: Failed to migrate legacy ElevenLabs store:', error);
       }
 
       // in any case mark as migrated

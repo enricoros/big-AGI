@@ -184,7 +184,7 @@ export function listVoicesOpenAI(): SpeexWire_ListVoices_Output['voices'] {
 // List Voices - LocalAI
 //
 
-export async function listVoicesLocalAI(access: SpeexWire_Access_OpenAI): Promise<SpeexWire_ListVoices_Output> {
+export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI): Promise<SpeexWire_ListVoices_Output> {
   if (access.dialect !== 'localai')
     throw new Error('listVoicesLocalAI requires localai dialect');
 
@@ -202,7 +202,7 @@ export async function listVoicesLocalAI(access: SpeexWire_Access_OpenAI): Promis
       name: 'LocalAI',
     });
   } catch (error: any) {
-    console.warn('[listVoicesLocalAI] Failed to fetch models:', error.message);
+    console.warn('[DEV] Speex: listVoicesLocalAI: Failed to fetch models:', error.message);
     return { voices: [] };
   }
 
