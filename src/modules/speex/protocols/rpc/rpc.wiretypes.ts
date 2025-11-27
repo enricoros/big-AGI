@@ -20,6 +20,7 @@ export type SpeexWire_Voice = z.infer<typeof SpeexWire.Voice_schema>;
 
 export type SpeexWire_Synthesize_Input = z.infer<typeof SpeexWire.Synthesize_input_schema>;
 
+export type SpeexWire_VoiceOption = z.infer<typeof SpeexWire.VoiceOption_schema>;
 export type SpeexWire_ListVoices_Input = z.infer<typeof SpeexWire.ListVoices_input_schema>;
 export type SpeexWire_ListVoices_Output = z.infer<typeof SpeexWire.ListVoices_output_schema>;
 
@@ -51,29 +52,29 @@ export namespace SpeexWire {
 
   // Voice schemas - per dialect
 
-  export const ElevenLabs_schema = z.object({
+  export const VoiceElevenLabs_schema = z.object({
     dialect: z.literal('elevenlabs'),
-    voiceId: z.string().optional(),
     model: z.string().optional(),
+    voiceId: z.string().optional(),
   });
 
-  export const LocalAI_schema = z.object({
+  export const VoiceLocalAI_schema = z.object({
     dialect: z.literal('localai'),
     backend: z.string().optional(),   // ttsBackend (e.g., 'coqui', 'bark', 'piper', 'vall-e-x')
     model: z.string().optional(),     // ttsModel (e.g., 'kokoro', 'tts_models/en/ljspeech/glow-tts')
     language: z.string().optional(),  // for multilingual models like xtts_v2
   });
 
-  export const OpenAI_schema = z.object({
+  export const VoiceRPCOpenAI_schema = z.object({
     dialect: z.literal('openai'),
-    voiceId: z.string().optional(),
     model: z.enum(['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts']).optional(),
+    voiceId: z.string().optional(),
     speed: z.number().min(0.25).max(4.0).optional(),
     instruction: z.string().optional(),
   });
 
   export const Voice_schema = z.discriminatedUnion('dialect',
-    [ElevenLabs_schema, LocalAI_schema, OpenAI_schema],
+    [VoiceElevenLabs_schema, VoiceLocalAI_schema, VoiceRPCOpenAI_schema],
   );
 
 
@@ -84,23 +85,26 @@ export namespace SpeexWire {
     text: z.string(),
     voice: SpeexWire.Voice_schema,
     streaming: z.boolean().default(true),
+    languageCode: z.string().optional(), // ISO language code (e.g., 'en', 'fr') for model selection fallback
   });
 
 
   // .ListVoices voice schema
+
+  export const VoiceOption_schema = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    previewUrl: z.string().optional(),
+    category: z.string().optional(),
+  });
 
   export const ListVoices_input_schema = z.object({
     access: SpeexWire.Access_schema,
   });
 
   export const ListVoices_output_schema = z.object({
-    voices: z.array(z.object({
-      id: z.string(),
-      name: z.string(),
-      description: z.string().optional(),
-      previewUrl: z.string().optional(),
-      category: z.string().optional(),
-    })),
+    voices: z.array(VoiceOption_schema),
   });
 
 }

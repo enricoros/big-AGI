@@ -1,9 +1,10 @@
-import type { ISpeexVendor } from './ISpeexVendor';
+import type { ISpeexVendor } from '../ISpeexVendor';
 
 
 export const SpeexVendorElevenLabs: ISpeexVendor<'elevenlabs'> = {
   vendorType: 'elevenlabs',
   name: 'ElevenLabs',
+  protocol: 'rpc',
   location: 'cloud',
   priority: 10,
 
@@ -23,7 +24,7 @@ export const SpeexVendorElevenLabs: ISpeexVendor<'elevenlabs'> = {
 
   getDefaultVoice: () => ({
     vendorType: 'elevenlabs',
-    ttsModel: 'eleven_turbo_v2_5',
-    voiceId: undefined, // will use API default
+    ttsModel: 'eleven_multilingual_v2', // best for mixed/non-English; user can switch to turbo for English-only
+    ttsVoiceId: undefined, // will use API default
   }),
 };

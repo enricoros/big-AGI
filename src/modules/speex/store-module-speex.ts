@@ -2,12 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
+import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
-import type { DSpeexCredentials, DSpeexEngine, DSpeexEngineAny, SpeexEngineId, SpeexVendorType } from './speex.types';
-import { isWebSpeechSupported } from './vendors/webspeech.client';
+import type { DSpeexCredentials, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, SpeexEngineId } from './speex.types';
 import { speexFindByVendorPriorityAsc, speexFindVendor, speexFindVendorForLLMVendor } from './speex.vendors-registry';
+import { webspeechIsSupported } from './protocols/webspeech/webspeech.client';
 
 
 interface SpeexStoreState {
@@ -25,7 +27,7 @@ interface SpeexStoreState {
 interface SpeexStoreActions {
 
   // engine CRUD
-  createEngine: <TVt extends SpeexVendorType>(vendorType: TVt, partial?: Partial<DSpeexEngine<TVt>>) => SpeexEngineId;
+  createEngine: <TVt extends DSpeexVendorType>(vendorType: TVt, partial?: Partial<DSpeexEngine<TVt>>) => SpeexEngineId;
   updateEngine: (engineId: SpeexEngineId, partial: Partial<DSpeexEngineAny>) => void;
   deleteEngine: (engineId: SpeexEngineId) => void;
 
@@ -111,7 +113,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
     // Auto-detections
 
     syncWebSpeechEngine: () => {
-      if (!isWebSpeechSupported()) return false;
+      if (!webspeechIsSupported()) return false;
       const { engines, createEngine, updateEngine } = get();
 
       // restore if soft-deleted
@@ -130,6 +132,9 @@ export const useSpeexStore = create<SpeexStore>()(persist(
         isAutoDetected: true,
         isAutoLinked: false, // not linked to LLM service
       });
+
+      // TODO - FUTURE: if we're here we may also decide to fetch voices, and choose a good default one for WebSpeech?
+
       return true;
     },
 
@@ -220,7 +225,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
                 isAutoDetected: true,
                 isAutoLinked: false,
                 credentials: { type: 'api-key', apiKey: apiKey.trim() },
-                voice: { vendorType: 'elevenlabs', ttsModel: 'eleven_multilingual_v2', voiceId: voiceId || undefined },
+                voice: { vendorType: 'elevenlabs', ttsModel: 'eleven_multilingual_v2', ttsVoiceId: voiceId || undefined },
               });
               console.log('[Speex] Migrated legacy ElevenLabs configuration');
             }
@@ -289,7 +294,7 @@ export function speexFindEngineById(engineId: SpeexEngineId | null): DSpeexEngin
   return engines.find(e => e.engineId === engineId && !e.isDeleted) || null;
 }
 
-export function speexFindValidEngineByType(vendorType: SpeexVendorType): DSpeexEngineAny | null {
+export function speexFindValidEngineByType(vendorType: DSpeexVendorType): DSpeexEngineAny | null {
   const { engines } = useSpeexStore.getState();
   for (const engine of engines)
     if (engine.vendorType === vendorType && !engine.isDeleted && speexAreCredentialsValid(engine.credentials))
@@ -303,10 +308,13 @@ export function speexFindGlobalEngine(): DSpeexEngineAny | null {
   // A. return active engine
   if (activeEngineId) {
     const active = engines.find(e => e.engineId === activeEngineId && !e.isDeleted);
+    // NOTE: if it's set, we don't further check, otherwise we risk overriding a user selection
+    // if (active && !speexAreCredentialsValid(active.credentials))
+    //   return false;
     if (active) return active;
   }
 
-  // B. rank available engines by vendor priority
+  // B. rank available engines by vendor priority & availability of credentials
   const availableEngines = engines.filter(e => !e.isDeleted && speexAreCredentialsValid(e.credentials));
   return speexFindByVendorPriorityAsc(availableEngines);
 }
@@ -320,9 +328,17 @@ export function speexAreCredentialsValid(credentials: DSpeexCredentials): boolea
     case 'llms-service':
       // live-searches LLM services for presence
       const { sources: llmSources } = useModelsStore.getState();
+
+      // resolve service
       const llmService = llmSources.find(s => s.id === credentials.serviceId);
-      // NOTE: does not further validate the LLM Service's configuration, maybe in the future, but now now
-      return !!llmService; // ok if present
+      if (!llmService?.vId) return false;
+
+      // resolve vendor
+      const vendor = findModelVendor(llmService.vId);
+      if (!vendor) return false;
+
+      // use CSF as a validator if available (e.g. validates the key presence)
+      return !!vendor.csfAvailable?.(llmService.setup);
 
     case 'none':
       return true;

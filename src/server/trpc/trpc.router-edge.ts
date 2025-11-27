@@ -8,7 +8,7 @@ import { llmAnthropicRouter } from '~/modules/llms/server/anthropic/anthropic.ro
 import { llmGeminiRouter } from '~/modules/llms/server/gemini/gemini.router';
 import { llmOllamaRouter } from '~/modules/llms/server/ollama/ollama.router';
 import { llmOpenAIRouter } from '~/modules/llms/server/openai/openai.router';
-import { speexRouter } from '~/modules/speex/server/speex.router';
+import { speexRouter } from '~/modules/speex/protocols/rpc/rpc.router';
 import { youtubeRouter } from '~/modules/youtube/youtube.router';
 
 /**

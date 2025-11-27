@@ -1,31 +1,48 @@
+import * as z from 'zod/v4';
 import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import type { SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './speex.wiretypes';
-import type { SynthesizeBackendFn } from './speex.router';
+import type { SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
+import type { SynthesizeBackendFn } from './rpc.router';
 
 
 // configuration
 const SAFETY_TEXT_LENGTH = 1000;
 const MIN_CHUNK_SIZE = 4096;
 const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
+const DEFAULT_MODEL_ENGLISH = 'eleven_turbo_v2_5';
+const DEFAULT_MODEL_MULTILINGUAL = 'eleven_multilingual_v2';
+
+
+const _selectModelForLanguage = (languageCode: string | undefined): string =>
+  languageCode?.toLowerCase() === 'en' ? DEFAULT_MODEL_ENGLISH : DEFAULT_MODEL_MULTILINGUAL;
 
 
 export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLabs> = async function* (params) {
-  const { access, text: inputText, voice, streaming, signal } = params;
 
-  // Safety check: trim text that's too long
+  // destructure and validate
+  const { access, text: inputText, voice, streaming, languageCode, signal } = params;
+  if (access.dialect !== 'elevenlabs' || voice.dialect !== 'elevenlabs')
+    throw new Error('Mismatched dialect in ElevenLabs synthesize');
+
+
+  // safety check: trim text that's too long
   let text = inputText;
   if (text.length > SAFETY_TEXT_LENGTH)
     text = text.slice(0, SAFETY_TEXT_LENGTH);
 
-  // Build request - narrow to elevenlabs dialect for type safety
+
+  // build request - narrow to elevenlabs dialect for type safety
   const voiceId = (voice.dialect === 'elevenlabs' ? voice.voiceId : undefined) || DEFAULT_VOICE_ID;
-  const model = voice.model || 'eleven_turbo_v2_5';
+
+  // Model selection: use explicit model if provided, otherwise auto-select based on language
+  const explicitModel = voice.dialect === 'elevenlabs' ? voice.model : undefined;
+  const model = explicitModel || _selectModelForLanguage(languageCode);
+
   const path = `/v1/text-to-speech/${voiceId}${streaming ? '/stream' : ''}`;
   const { headers, url } = _elevenlabsAccess(access, path);
 
-  const body: ElevenlabsWire_TTSRequest = {
+  const body: ElevenLabsWire.TTS_Request = {
     text,
     model_id: model,
   };
@@ -104,13 +121,16 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
 export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs): Promise<SpeexWire_ListVoices_Output> {
   const { headers, url } = _elevenlabsAccess(access, '/v1/voices');
 
-  const voicesList = await fetchJsonOrTRPCThrow<ElevenlabsWire_VoicesList>({
-    url,
-    headers,
-    name: 'ElevenLabs',
-  });
+  // fetch voices
+  const voicesList = ElevenLabsWire.VoicesList_schema.parse(
+    await fetchJsonOrTRPCThrow({
+      url,
+      headers,
+      name: 'ElevenLabs',
+    }),
+  );
 
-  // Sort: custom voices first, then premade
+  // sort: custom voices first, then premade
   voicesList.voices.sort((a, b) => {
     if (a.category === 'premade' && b.category !== 'premade') return 1;
     if (a.category !== 'premade' && b.category === 'premade') return -1;
@@ -153,28 +173,34 @@ function _elevenlabsAccess(access: SpeexWire_Access_ElevenLabs, apiPath: string)
 }
 
 
-// Wire types
+// Wire types for the upstream ElevenLabs API
 
-interface ElevenlabsWire_TTSRequest {
-  text: string;
-  model_id?: string;
-  voice_settings?: {
-    stability: number;
-    similarity_boost: number;
-  };
-}
+namespace ElevenLabsWire {
 
-interface ElevenlabsWire_VoicesList {
-  voices: Array<{
-    voice_id: string;
-    name: string;
-    category: string;
-    labels: Record<string, string>;
-    description: string;
-    preview_url: string;
-    settings: {
-      stability: number;
-      similarity_boost: number;
-    };
-  }>;
+  export type TTS_Request = z.infer<typeof TTS_Request_schema>;
+  export const TTS_Request_schema = z.object({
+    text: z.string(),
+    model_id: z.string().optional(),
+    voice_settings: z.object({
+      stability: z.number(),
+      similarity_boost: z.number(),
+    }).optional(),
+  });
+
+  // export type VoicesList = z.infer<typeof VoicesList_schema>;
+  export const VoicesList_schema = z.object({
+    voices: z.array(z.object({
+      voice_id: z.string(),
+      name: z.string(),
+      category: z.string(),
+      labels: z.record(z.string(), z.string()),
+      description: z.string(),
+      preview_url: z.string(),
+      settings: z.object({
+        stability: z.number(),
+        similarity_boost: z.number(),
+      }),
+    })),
+  });
+
 }

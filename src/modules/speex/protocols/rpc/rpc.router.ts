@@ -1,6 +1,6 @@
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
-import { SpeexSpeechParticle, SpeexWire, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './speex.wiretypes';
+import { SpeexSpeechParticle, SpeexWire, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './rpc.wiretypes';
 import { listVoicesElevenLabs, synthesizeElevenLabs } from './synthesize-elevenlabs';
 import { listVoicesLocalAI, listVoicesOpenAI, synthesizeOpenAIProtocol } from './synthesize-openai';
 
@@ -10,6 +10,7 @@ interface SynthesizeBackendFnParams<TSpeexAccess extends SpeexWire_Access> {
   text: string;
   voice: SpeexWire_Voice;
   streaming: boolean;
+  languageCode?: string;
   signal?: AbortSignal;
 }
 
@@ -25,17 +26,17 @@ export const speexRouter = createTRPCRouter({
   synthesize: edgeProcedure
     .input(SpeexWire.Synthesize_input_schema)
     .mutation(async function* ({ input, ctx }): AsyncGenerator<SpeexSpeechParticle> {
-      const { access, text, voice, streaming } = input;
+      const { access, text, voice, streaming, languageCode } = input;
       try {
         yield { t: 'start' };
         switch (access.dialect) {
           case 'elevenlabs':
-            yield* synthesizeElevenLabs({ access, text, voice, streaming, signal: ctx.reqSignal });
+            yield* synthesizeElevenLabs({ access, text, voice, streaming, languageCode, signal: ctx.reqSignal });
             break;
 
           case 'localai':
           case 'openai':
-            yield* synthesizeOpenAIProtocol({ access, text, voice, streaming, signal: ctx.reqSignal });
+            yield* synthesizeOpenAIProtocol({ access, text, voice, streaming, languageCode, signal: ctx.reqSignal });
             break;
 
           default:

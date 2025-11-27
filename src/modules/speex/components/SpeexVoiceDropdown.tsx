@@ -5,30 +5,32 @@ import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
-import type { DSpeexEngineAny } from '../speex.types';
-import type { SpeexVoiceInfo } from '../speex.client';
-import { speexListVoicesRPC } from '../vendors/rpc.client';
-import { useSpeexWebSpeechVoices } from '../vendors/webspeech.client';
+import type { DSpeexEngineAny, SpeexListVoiceOption } from '../speex.types';
+import { speexListVoicesRPC } from '../protocols/rpc/rpc.client';
+import { useSpeexWebSpeechVoices } from '../protocols/webspeech/webspeech.client';
 
 
-interface SpeexVoiceDropdownProps {
+export function SpeexVoiceDropdown(props: {
   engine: DSpeexEngineAny;
   voiceId: string | null;
   onVoiceChange: (voiceId: string) => void;
   disabled?: boolean;
   autoPreview?: boolean;
-}
+}) {
 
-
-export function SpeexVoiceDropdown(props: SpeexVoiceDropdownProps) {
+  // props
   const { engine, voiceId, onVoiceChange, disabled, autoPreview } = props;
 
-  // Get voices based on vendor type
+  // external state - module
   const { voices, isLoading, error } = useSpeexVoices(engine);
 
-  const handleVoiceChange = (_event: unknown, value: string | null) => {
+
+  // handlers
+
+  const handleVoiceChange = React.useCallback((_event: unknown, value: string | null) => {
     if (value) onVoiceChange(value);
-  };
+  }, [onVoiceChange]);
+
 
   return (
     <Select
@@ -61,23 +63,24 @@ export function SpeexVoiceDropdown(props: SpeexVoiceDropdownProps) {
 }
 
 
-// Voice Data Hook - returns SpeexVoiceInfo[] for all vendors
+// voice Data Hook - returns SpeexListVoiceOption[] for all vendors
 
 function useSpeexVoices(engine: DSpeexEngineAny): {
-  voices: SpeexVoiceInfo[];
+  voices: SpeexListVoiceOption[];
   isLoading: boolean;
   error: string | null;
 } {
+
   const { vendorType, engineId } = engine;
   const isCloudVendor = vendorType !== 'webspeech';
 
-  // Browser voices (webspeech) - returns normalized SpeexVoiceInfo[]
-  const browserVoices = useSpeexWebSpeechVoices();
+  // browser voices (webspeech) - returns normalized SpeexListVoiceOption[]
+  const browserVoices = useSpeexWebSpeechVoices(engine.vendorType === 'webspeech');
 
-  // Cloud voices via react-query - credential resolution happens inside queryFn
+  // RPC voices (for this engine) via react-query - credential resolution happens inside queryFn
   const cloudVoicesQuery = useQuery({
     queryKey: ['speex', 'listVoices', engineId, vendorType],
-    queryFn: () => speexListVoicesRPC(engine),
+    queryFn: () => speexListVoicesRPC(engine as any /* will not run for 'webspeech' */),
     enabled: isCloudVendor,
     staleTime: 5 * 60 * 1000, // 5 minutes - voices don't change often
   });

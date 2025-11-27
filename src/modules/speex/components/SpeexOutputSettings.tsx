@@ -16,36 +16,38 @@ import { useChatAutoAI } from '../../../apps/chat/store-app-chat';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 
-import { useSpeexActiveEngineId, useSpeexEngines, useSpeexStore } from '../store-module-speex';
+import type { DSpeexEngineAny } from '../speex.types';
 import { SpeexEngineConfig } from './SpeexEngineConfig';
+import { useSpeexActiveEngineId, useSpeexEngines, useSpeexStore } from '../store-module-speex';
 
 
 export function SpeexOutputSettings() {
 
-  // Speex state
-  const engines = useSpeexEngines();
-  const activeEngineId = useSpeexActiveEngineId();
-  const { setActiveEngineId, updateEngine } = useSpeexStore.getState();
-
-  // Chat auto-speak state
+  // external state
   const { autoSpeak, setAutoSpeak } = useChatAutoAI();
 
-  // Find active engine
+  // external state - module
+  const engines = useSpeexEngines();
+  const activeEngineId = useSpeexActiveEngineId();
+  // const { setActiveEngineId, updateEngine } = useSpeexStore.getState();
+
+
+  // derived state
+  const hasEngines = engines.length > 0;
   const activeEngine = engines.find(e => e.engineId === activeEngineId);
 
-  // Handlers
+
+  // handlers
+
   const handleEngineChange = React.useCallback((_: unknown, value: string | null) => {
-    setActiveEngineId(value || null);
-  }, [setActiveEngineId]);
+    useSpeexStore.getState().setActiveEngineId(value || null);
+  }, []);
 
-  const handleEngineUpdate = React.useCallback((updates: Parameters<typeof updateEngine>[1]) => {
-    if (activeEngineId) {
-      updateEngine(activeEngineId, updates);
-    }
-  }, [activeEngineId, updateEngine]);
+  const handleEngineUpdate = React.useCallback((updates: Partial<DSpeexEngineAny>) => {
+    if (activeEngineId)
+      useSpeexStore.getState().updateEngine(activeEngineId, updates);
+  }, [activeEngineId]);
 
-  // Derived state
-  const hasEngines = engines.length > 0;
 
   return <>
 

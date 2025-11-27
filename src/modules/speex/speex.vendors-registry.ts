@@ -1,7 +1,7 @@
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DSpeexEngineAny, SpeexVendorType } from './speex.types';
-import type { ISpeexVendor, ISpeexVendorAny } from './vendors/ISpeexVendor';
+import type { DSpeexEngineAny, DSpeexVendorType } from './speex.types';
+import type { ISpeexVendor, ISpeexVendorAny } from './ISpeexVendor';
 
 // vendor imports (will be implemented as stubs initially)
 import { SpeexVendorElevenLabs } from './vendors/elevenlabs.vendor';
@@ -12,7 +12,7 @@ import { SpeexVendorWebSpeech } from './vendors/webspeech.vendor';
 
 // registry of Speex Vendors, for engine creation, priority ranking, etc.
 
-const _SPEEX_VENDOR_REGISTRY: { [key in SpeexVendorType]: ISpeexVendor<key> } = {
+const _SPEEX_VENDOR_REGISTRY: { [key in DSpeexVendorType]: ISpeexVendor<key> } = {
   elevenlabs: SpeexVendorElevenLabs,
   localai: SpeexVendorLocalAI,
   openai: SpeexVendorOpenAI,
@@ -22,7 +22,7 @@ const _SPEEX_VENDOR_REGISTRY: { [key in SpeexVendorType]: ISpeexVendor<key> } = 
 
 // Speex Vendors API
 
-export function speexFindVendor<TVt extends SpeexVendorType>(vendorType: TVt): ISpeexVendor<TVt> | null {
+export function speexFindVendor<TVt extends DSpeexVendorType>(vendorType: TVt): ISpeexVendor<TVt> | null {
   return _SPEEX_VENDOR_REGISTRY[vendorType] ?? null;
 }
 
