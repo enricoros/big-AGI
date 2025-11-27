@@ -1,11 +1,10 @@
 /**
- * SpeexOutputSettings - Voice output settings for the Settings Modal
+ * SpeexEngineSettings - TTS engine selection and configuration
  *
  * Provides:
  * - Chip-based engine selection with visual status
  * - Add Service dropdown menu
  * - Per-engine voice configuration in a Card
- * - Auto-speak toggle (from chat settings)
  */
 
 import * as React from 'react';
@@ -15,11 +14,8 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { useChatAutoAI } from '../../../apps/chat/store-app-chat';
-
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
@@ -31,7 +27,7 @@ import { SpeexEngineConfig } from './SpeexEngineConfig';
 import { speexAreCredentialsValid, useSpeexEngines, useSpeexGlobalEngine, useSpeexStore } from '../store-module-speex';
 
 
-const _style = {
+const _styles = {
   menu: {
     zIndex: themeZIndexOverMobileDrawer,
     minWidth: 220,
@@ -105,13 +101,10 @@ const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; descriptio
 ] as const;
 
 
-export function SpeexOutputSettings() {
+export function SpeexEngineSettings(_props: { isMobile: boolean }) {
 
   // state
   const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DSpeexEngineAny | null>(null);
-
-  // external state
-  const { autoSpeak, setAutoSpeak } = useChatAutoAI();
 
   // external state - module
   const engines = useSpeexEngines();
@@ -135,40 +128,28 @@ export function SpeexOutputSettings() {
       useSpeexStore.getState().updateEngine(activeEngineId, updates);
   }, [activeEngineId]);
 
-
-  // Add engine handlers
-
   const handleAddEngine = React.useCallback((vendorType: DSpeexVendorType) => {
     const newEngineId = useSpeexStore.getState().createEngine(vendorType);
     useSpeexStore.getState().setActiveEngineId(newEngineId);
   }, []);
 
-
-  // Delete engine handlers
-
   const handleDeleteClick = React.useCallback((event: React.MouseEvent) => {
     if (!activeEngine || !canDeleteActiveEngine) return;
 
-    // Shift+click skips confirmation
-    if (event.shiftKey) {
-      useSpeexStore.getState().deleteEngine(activeEngine.engineId);
-      // Auto-select next available engine
-      const remaining = engines.filter(e => e.engineId !== activeEngine.engineId);
-      useSpeexStore.getState().setActiveEngineId(remaining[0]?.engineId ?? null);
-    } else {
-      setConfirmDeleteEngine(activeEngine);
-    }
-  }, [activeEngine, canDeleteActiveEngine, engines]);
+    // shift+click skips confirmation
+    if (event.shiftKey)
+      return useSpeexStore.getState().deleteEngine(activeEngine.engineId);
+
+    setConfirmDeleteEngine(activeEngine);
+  }, [activeEngine, canDeleteActiveEngine]);
 
   const handleConfirmDelete = React.useCallback(() => {
     if (!confirmDeleteEngine) return;
 
     useSpeexStore.getState().deleteEngine(confirmDeleteEngine.engineId);
-    // Auto-select next available engine
-    const remaining = engines.filter(e => e.engineId !== confirmDeleteEngine.engineId);
-    useSpeexStore.getState().setActiveEngineId(remaining[0]?.engineId ?? null);
+
     setConfirmDeleteEngine(null);
-  }, [confirmDeleteEngine, engines]);
+  }, [confirmDeleteEngine]);
 
   const handleCancelDelete = React.useCallback(() => {
     setConfirmDeleteEngine(null);
@@ -177,22 +158,7 @@ export function SpeexOutputSettings() {
 
   return <>
 
-    {/* Auto-speak setting */}
-    <FormRadioControl
-      title='Speak Responses'
-      description={autoSpeak === 'off' ? 'Off' : autoSpeak === 'firstLine' ? 'First paragraph' : 'Full response'}
-      tooltip={!hasEngines ? 'No voice engines available. Configure a TTS service or use system voice.' : undefined}
-      disabled={!hasEngines}
-      options={[
-        { value: 'off', label: 'Off' },
-        { value: 'firstLine', label: 'Start' },
-        { value: 'all', label: 'Full' },
-      ]}
-      value={autoSpeak} onChange={setAutoSpeak}
-    />
-
-
-    {/* Voice Engine label + Add Service dropdown */}
+    {/* "Voice Engine" + Add Service dropdown */}
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
       {/* Voice Engine label */}
@@ -203,30 +169,30 @@ export function SpeexOutputSettings() {
 
       {/* -> Add Service */}
       <Dropdown>
-        <MenuButton size='sm' color='neutral' variant='solid' startDecorator={<AddRoundedIcon />} sx={_style.menuButton}>
+        <MenuButton size='sm' color='neutral' variant='solid' startDecorator={<AddRoundedIcon />} sx={_styles.menuButton}>
           Add Service
         </MenuButton>
-        <Menu placement='bottom' popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [-12, -2] } }] }} sx={_style.menu}>
+        <Menu placement='bottom' popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [-12, -2] } }] }} sx={_styles.menu}>
           {ADDABLE_VENDORS.map(vendor => (
-            <MenuItem key={vendor.vendorType} onClick={() => handleAddEngine(vendor.vendorType)} sx={_style.menuItem}>
+            <MenuItem key={vendor.vendorType} onClick={() => handleAddEngine(vendor.vendorType)} sx={_styles.menuItem}>
               <ListItemDecorator>
                 {vendor.icon ? <vendor.icon /> : null}
               </ListItemDecorator>
-              <Box sx={_style.menuItemContent}>
-                <Typography level='title-md' sx={_style.menuItemName}>{vendor.label}</Typography>
-                <Typography level='body-sm' sx={_style.menuItemDescription}>{vendor.description}</Typography>
+              <Box sx={_styles.menuItemContent}>
+                <Typography level='title-md' sx={_styles.menuItemName}>{vendor.label}</Typography>
+                <Typography level='body-sm' sx={_styles.menuItemDescription}>{vendor.description}</Typography>
               </Box>
             </MenuItem>
           ))}
         </Menu>
-
       </Dropdown>
+
     </Box>
 
 
     {/* Engine Chips row */}
     {hasEngines && (
-      <Box sx={_style.chipRow}>
+      <Box sx={_styles.chipRow}>
         {engines.map(engine => {
           const isActive = engine.engineId === activeEngineId;
           const isConfigured = speexAreCredentialsValid(engine.credentials);
@@ -236,11 +202,11 @@ export function SpeexOutputSettings() {
               <Chip
                 variant={isActive ? 'solid' : 'outlined'}
                 color={!isActive ? 'neutral' : !isConfigured ? 'danger' : 'neutral'}
-                startDecorator={isActive && <Box sx={_style.chipSymbol}>
+                startDecorator={isActive && <Box sx={_styles.chipSymbol}>
                   <CheckRoundedIcon sx={{ fontSize: 16, color: 'text.primary' }} />
                 </Box>}
                 onClick={event => handleEngineSelect(event.shiftKey ? null : engine.engineId)}
-                sx={isConfigured ? _style.chip : _style.chipUnconfigured}
+                sx={isConfigured ? _styles.chip : _styles.chipUnconfigured}
               >
                 {engine.label}
               </Chip>
