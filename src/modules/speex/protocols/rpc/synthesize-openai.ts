@@ -59,7 +59,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
-    ...(!access.orgId ? {} : { 'OpenAI-Organization': access.orgId }),
+    ...(!access.apiOrgId ? {} : { 'OpenAI-Organization': access.apiOrgId }),
   };
 
   // request.body

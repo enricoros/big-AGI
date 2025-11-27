@@ -225,7 +225,11 @@ export const useSpeexStore = create<SpeexStore>()(persist(
                 isAutoDetected: true,
                 isAutoLinked: false,
                 credentials: { type: 'api-key', apiKey: apiKey.trim() },
-                voice: { dialect: 'elevenlabs', ttsModel: 'eleven_multilingual_v2', ttsVoiceId: voiceId || undefined },
+                voice: {
+                  dialect: 'elevenlabs',
+                  ttsModel: 'eleven_multilingual_v2',
+                  ...((typeof voiceId === 'string' && voiceId.trim()) ? { ttsVoiceId: voiceId.trim() } : {}),
+                },
               });
               console.log('[DEV] Speex: Migrated legacy ElevenLabs configuration');
             }

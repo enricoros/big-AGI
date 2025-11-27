@@ -8,6 +8,7 @@ export type SpeexSpeechParticle =
   | { t: 'start' }
   | { t: 'audio'; base64: string; chunk: boolean; contentType?: string; characterCost?: number; ttsLatencyMs?: number }
   | { t: 'done'; durationMs?: number; chars?: number }
+  | { t: 'log'; level: 'info', message: string }
   | { t: 'error'; e: string }
   ;
 
@@ -86,6 +87,7 @@ export namespace SpeexWire {
     voice: SpeexWire.Voice_schema,
     streaming: z.boolean().default(true),
     languageCode: z.string().optional(), // ISO language code (e.g., 'en', 'fr') for model selection fallback
+    priority: z.enum(['fast', 'balanced', 'quality']).optional(), // Hint for speed vs quality tradeoff
   });
 
 
@@ -96,7 +98,12 @@ export namespace SpeexWire {
     name: z.string(),
     description: z.string().optional(),
     previewUrl: z.string().optional(),
-    category: z.string().optional(),
+    category: z.string().optional(),    // e.g., 'premade', 'cloned', 'professional'
+    // Voice labels (flattened for simplicity)
+    // gender: z.string().optional(),      // e.g., 'male', 'female', 'neutral'
+    // accent: z.string().optional(),      // e.g., 'american', 'british', 'australian'
+    // age: z.string().optional(),         // e.g., 'young', 'middle_aged', 'old'
+    // language: z.string().optional(),    // e.g., 'en', 'es', 'multilingual'
   });
 
   export const ListVoices_input_schema = z.object({
