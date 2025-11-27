@@ -11,6 +11,7 @@ interface SynthesizeBackendFnParams<TSpeexAccess extends SpeexWire_Access> {
   voice: SpeexWire_Voice;
   streaming: boolean;
   languageCode?: string;
+  priority?: 'fast' | 'balanced' | 'quality';
   signal?: AbortSignal;
 }
 
@@ -26,17 +27,18 @@ export const speexRouter = createTRPCRouter({
   synthesize: edgeProcedure
     .input(SpeexWire.Synthesize_input_schema)
     .mutation(async function* ({ input, ctx }): AsyncGenerator<SpeexSpeechParticle> {
-      const { access, text, voice, streaming, languageCode } = input;
+      const { access, text, voice, streaming, languageCode, priority } = input;
+
       try {
         yield { t: 'start' };
         switch (access.dialect) {
           case 'elevenlabs':
-            yield* synthesizeElevenLabs({ access, text, voice, streaming, languageCode, signal: ctx.reqSignal });
+            yield* synthesizeElevenLabs({ access, text, voice, streaming, languageCode, priority, signal: ctx.reqSignal });
             break;
 
           case 'localai':
           case 'openai':
-            yield* synthesizeOpenAIProtocol({ access, text, voice, streaming, languageCode, signal: ctx.reqSignal });
+            yield* synthesizeOpenAIProtocol({ access, text, voice, streaming, languageCode, priority, signal: ctx.reqSignal });
             break;
 
           default:

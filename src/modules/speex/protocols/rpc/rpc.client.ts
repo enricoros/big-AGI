@@ -6,12 +6,14 @@
  */
 
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
+import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 
 import type { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
 import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
 
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 
 import type { DSpeexEngine, SpeexSpeakResult } from '../../speex.types';
 import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './rpc.wiretypes';
@@ -28,9 +30,10 @@ export async function speexSynthesize_RPC(
   text: string,
   options: {
     streaming: boolean;
+    languageCode?: string;
+    priority?: 'fast' | 'balanced' | 'quality';
     playback: boolean;
     returnAudio: boolean;
-    languageCode?: string
   },
   callbacks?: {
     onStart?: () => void;
@@ -63,7 +66,7 @@ export async function speexSynthesize_RPC(
 
     // call the streaming RPC - whether the backend will stream in chunks or as a whole
     const particleStream = await apiStream.speex.synthesize.mutate(
-      { access, text, voice, streaming: options.streaming, languageCode: options.languageCode },
+      { access, text, voice, streaming: options.streaming, languageCode: options.languageCode, priority: options.priority },
       { signal: abortController.signal },
     );
 
@@ -78,12 +81,16 @@ export async function speexSynthesize_RPC(
 
         case 'audio':
           // Decode base64 to ArrayBuffer
-          // const audioBuffer = convert_Base64_To_UInt8Array(particle.base64, 'speexSynthesize_RPC audio chunk'); // preload conversion
-          const audioBuffer = _base64ToArrayBuffer(particle.base64);
+          const audioBuffer = convert_Base64_To_UInt8Array(particle.base64, 'speex.rpc.client').buffer;
 
-          // Playback
-          if (options.playback)
-            audioPlayer?.enqueueChunk(audioBuffer);
+          // Playback: streaming uses AudioLivePlayer for chunked playback,
+          // non-streaming uses AudioPlayer for single-buffer playback
+          if (options.playback) {
+            if (particle.chunk)
+              audioPlayer?.enqueueChunk(audioBuffer);
+            else
+              void AudioPlayer.playBuffer(audioBuffer); // fire-and-forget for whole audio
+          }
 
           // Accumulate for return
           if (options.returnAudio)
@@ -91,6 +98,10 @@ export async function speexSynthesize_RPC(
 
           // Callback
           callbacks?.onChunk?.(audioBuffer);
+          break;
+
+        case 'log':
+          console.log(`[Speex] (${particle.level})`, particle.message);
           break;
 
         case 'done':
@@ -117,7 +128,7 @@ export async function speexSynthesize_RPC(
         combined.set(new Uint8Array(chunk), offset);
         offset += chunk.byteLength;
       }
-      result.audioBase64 = _arrayBufferToBase64(combined.buffer);
+      result.audioBase64 = convert_UInt8Array_To_Base64(combined, 'speex.rpc.client');
     }
 
     return result;
@@ -211,26 +222,4 @@ function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): 
           return null;
       }
   }
-}
-
-// Private: Helpers
-
-// TODO: use `blobUtils.ts` functions instead?
-
-function _base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
-function _arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
 }

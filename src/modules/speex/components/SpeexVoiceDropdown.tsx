@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
+
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 
 import type { DSpeexEngineAny, SpeexListVoiceOption } from '../speex.types';
 import { speexListVoices_RPC } from '../protocols/rpc/rpc.client';
@@ -24,11 +25,24 @@ export function SpeexVoiceDropdown(props: {
   // external state - module
   const { voices, isLoading, error } = useSpeexVoices(engine);
 
+  // track user-initiated voice changes for preview (not initial load or voice list changes)
+  const [userSelectedVoiceId, setUserSelectedVoiceId] = React.useState<string | null>(null);
+
+
+  // [effect] auto-preview: play voice sample only when user explicitly selects a voice
+  const selectedVoice = userSelectedVoiceId ? voices.find(v => v.id === userSelectedVoiceId) : null;
+  const previewUrl = (autoPreview && selectedVoice?.previewUrl) || null;
+  React.useEffect(() => {
+    if (previewUrl)
+      void AudioPlayer.playUrl(previewUrl);
+  }, [previewUrl]);
+
 
   // handlers
 
   const handleVoiceChange = React.useCallback((_event: unknown, value: string | null) => {
-    if (value) onVoiceChange(value);
+    setUserSelectedVoiceId(value);
+    value && onVoiceChange(value);
   }, [onVoiceChange]);
 
 
@@ -44,7 +58,7 @@ export function SpeexVoiceDropdown(props: {
             : voices.length === 0 ? 'No voices available'
               : 'Select a voice'
       }
-      startDecorator={<RecordVoiceOverTwoToneIcon />}
+      // startDecorator={<RecordVoiceOverTwoToneIcon />}
       endDecorator={isLoading && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={{
@@ -53,7 +67,7 @@ export function SpeexVoiceDropdown(props: {
       }}
     >
       {voices.map(voice => (
-        <Option key={voice.id} value={voice.id}>
+        <Option key={voice.id} value={voice.id} label={voice.name}>
           {voice.name}
           {voice.description && <span style={{ opacity: 0.6, marginLeft: 8 }}>({voice.description})</span>}
         </Option>

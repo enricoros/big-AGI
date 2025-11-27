@@ -108,10 +108,12 @@ export type SpeexListVoiceOption = SpeexWire_VoiceOption;
 export type SpeexSpeakOptions = {
   label?: string;           // For NorthBridge queue display
   personaUid?: string;      // For NorthBridge queue icon / controls (if the audio came from a persona)
+  // core options
   streaming?: boolean;      // Streaming defaults to True
+  languageCode?: string;    // ISO language code (e.g., 'en', 'fr') - auto-detected from preferredLanguage if not provided
+  priority?: 'fast' | 'balanced' | 'quality'; // Hint for speed vs quality tradeoff: 'fast' = low latency (turbo models), 'quality' = highest quality
   playback?: boolean;       // Play audio (default: true)
   returnAudio?: boolean;    // Accumulate full audio buffer in result, even if streaming (for save/download)
-  languageCode?: string;    // ISO language code (e.g., 'en', 'fr') - auto-detected from preferredLanguage if not provided
 }
 
 export type SpeexSpeakResult = {

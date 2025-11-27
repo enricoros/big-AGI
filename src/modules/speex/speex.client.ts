@@ -32,9 +32,10 @@ type _Speak_Callbacks = {
 export async function speakText(inputText: string, voiceSelector: _Speak_VoiceSelector, options?: SpeexSpeakOptions, callbacks?: _Speak_Callbacks): Promise<SpeexSpeakResult> {
 
   const streaming = options?.streaming ?? true;
+  const languageCode = options?.languageCode ?? _getUIPreferenceLanguageCode();
+  const priority = options?.priority;
   const playback = options?.playback ?? true;
   const returnAudio = options?.returnAudio ?? !streaming;
-  const languageCode = options?.languageCode ?? _getUIPreferenceLanguageCode();
 
   // resolve engine from voice selector
   const engine = _engineFromSelector(voiceSelector);
@@ -50,7 +51,7 @@ export async function speakText(inputText: string, voiceSelector: _Speak_VoiceSe
       case 'elevenlabs':
       case 'openai':
       case 'localai':
-        return speexSynthesize_RPC(effectiveEngine, inputText, { streaming, playback, returnAudio, languageCode }, callbacks);
+        return speexSynthesize_RPC(effectiveEngine, inputText, { streaming, playback, returnAudio, languageCode, priority }, callbacks);
 
       // Web Speech: client-only, no RPC
       case 'webspeech':

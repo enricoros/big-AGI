@@ -144,6 +144,7 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
         engine={engine}
         voiceId={voice.ttsVoiceId ?? null}
         onVoiceChange={handleVoiceChange}
+        autoPreview
       />
     </FormControl>
 

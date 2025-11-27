@@ -10,35 +10,37 @@ import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streami
 // configuration
 const SAFETY_TEXT_LENGTH = 1000;
 const MIN_CHUNK_SIZE = 4096;
+const MODEL_FAST = 'eleven_turbo_v2_5';        // Fastest, English-optimized
+const MODEL_QUALITY = 'eleven_multilingual_v2'; // Highest quality, multilingual
 const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
-const DEFAULT_MODEL_ENGLISH = 'eleven_turbo_v2_5';
-const DEFAULT_MODEL_MULTILINGUAL = 'eleven_multilingual_v2';
 
 
-const _selectModelForLanguage = (languageCode: string | undefined): string =>
-  languageCode?.toLowerCase() === 'en' ? DEFAULT_MODEL_ENGLISH : DEFAULT_MODEL_MULTILINGUAL;
+const _selectModel = (priority: 'fast' | 'balanced' | 'quality' | undefined, languageCode: string | undefined): string => {
+  return priority === 'fast' ? MODEL_FAST // lowest latency, best for real-time use cases like calls
+    : priority === 'quality' ? MODEL_QUALITY // multilingual v2 (highest quality)
+      : languageCode?.toLowerCase() === 'en' ? MODEL_FAST : MODEL_QUALITY; // 'balanced'/undefined: English → turbo, non-English → multilingual
+};
 
 
 export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLabs> = async function* (params) {
 
   // destructure and validate
-  const { access, text: inputText, voice, streaming, languageCode, signal } = params;
+  const { access, text: inputText, voice, streaming, languageCode, priority, signal } = params;
   if (access.dialect !== 'elevenlabs' || voice.dialect !== 'elevenlabs')
     throw new Error('Mismatched dialect in ElevenLabs synthesize');
 
 
   // safety check: trim text that's too long
   let text = inputText;
-  if (text.length > SAFETY_TEXT_LENGTH)
+  if (text.length > SAFETY_TEXT_LENGTH) {
     text = text.slice(0, SAFETY_TEXT_LENGTH);
-
+    // -> log.info
+    yield { t: 'log', level: 'info', message: `Text truncated to ${SAFETY_TEXT_LENGTH} characters` };
+  }
 
   // build request - narrow to elevenlabs dialect for type safety
-  const voiceId = (voice.dialect === 'elevenlabs' ? voice.ttsVoiceId : undefined) || DEFAULT_VOICE_ID;
-
-  // Model selection: use explicit model if provided, otherwise auto-select based on language
-  const explicitModel = voice.dialect === 'elevenlabs' ? voice.ttsModel : undefined;
-  const model = explicitModel || _selectModelForLanguage(languageCode);
+  const voiceId = voice.ttsVoiceId || env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const model = voice.ttsModel || _selectModel(priority, languageCode);
 
   const path = `/v1/text-to-speech/${voiceId}${streaming ? '/stream' : ''}`;
   const { headers, url } = _elevenlabsAccess(access, path);
@@ -46,7 +48,7 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
   const body: ElevenLabsWire.TTS_Request = {
     text,
     model_id: model,
-  };
+  } as const;
 
   // Fetch
   let response: Response;
@@ -101,6 +103,11 @@ export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs):
       description: voice.description || undefined,
       previewUrl: voice.preview_url || undefined,
       category: voice.category,
+      // Flatten labels for UI display
+      // gender: voice.labels?.gender || undefined,
+      // accent: voice.labels?.accent || undefined,
+      // age: voice.labels?.age || undefined,
+      // language: voice.labels?.language || undefined,
     })),
   };
 }
@@ -142,6 +149,30 @@ function _elevenlabsAccess(access: SpeexWire_Access_ElevenLabs, apiPath: string)
 
 namespace ElevenLabsWire {
 
+  // export type VoicesList = z.infer<typeof VoicesList_schema>;
+  export const VoicesList_schema = z.object({
+    voices: z.array(z.object({
+      voice_id: z.string(),
+      name: z.string(),
+      category: z.enum(['premade', 'cloned', 'professional']).or(z.string()),
+      labels: z.looseObject({
+        gender: z.enum(['male', 'female', 'neutral']).or(z.string()).nullish(),
+        accent: z.string().nullish(),
+        age: z.string().nullish(),
+        language: z.string().nullish(),
+      }),
+      description: z.string().nullish(),
+      preview_url: z.string().nullish(),
+      settings: z.object({
+        stability: z.number(),
+        similarity_boost: z.number(),
+      }).nullish(),
+      // high_quality_base_model_ids: z.array(z.string()).nullish(),
+      is_owner: z.boolean().nullish(),
+      is_legacy: z.boolean().nullish(),
+    })),
+  });
+
   export type TTS_Request = z.infer<typeof TTS_Request_schema>;
   export const TTS_Request_schema = z.object({
     text: z.string(),
@@ -150,22 +181,6 @@ namespace ElevenLabsWire {
       stability: z.number(),
       similarity_boost: z.number(),
     }).optional(),
-  });
-
-  // export type VoicesList = z.infer<typeof VoicesList_schema>;
-  export const VoicesList_schema = z.object({
-    voices: z.array(z.object({
-      voice_id: z.string(),
-      name: z.string(),
-      category: z.string(),
-      labels: z.record(z.string(), z.string()),
-      description: z.string(),
-      preview_url: z.string(),
-      settings: z.object({
-        stability: z.number(),
-        similarity_boost: z.number(),
-      }),
-    })),
   });
 
 }
