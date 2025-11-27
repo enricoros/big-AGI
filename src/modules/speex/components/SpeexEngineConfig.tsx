@@ -17,9 +17,43 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
-import type { DSpeexEngine, DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
+import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
 import { speakText } from '../speex.client';
 import { SpeexVoiceDropdown } from './SpeexVoiceDropdown';
+
+
+// Credential input helper - shared across vendors
+function CredentialsApiKeyInputs({ credentials, onUpdate, showHost, hostRequired, hostPlaceholder }: {
+  credentials: DCredentialsApiKey;
+  onUpdate: (credentials: DCredentialsApiKey) => void;
+  showHost?: boolean;
+  hostRequired?: boolean;
+  hostPlaceholder?: string;
+}) {
+  return <>
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='API Key' description={hostRequired ? 'Optional' : 'Required'} />
+      <Input
+        type='password'
+        value={credentials.apiKey}
+        onChange={(e) => onUpdate({ ...credentials, apiKey: e.target.value })}
+        placeholder='sk-...'
+        sx={{ minWidth: 200 }}
+      />
+    </FormControl>
+    {showHost && (
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormLabelStart title='API Host' description={hostRequired ? 'Required' : 'Optional'} />
+        <Input
+          value={credentials.apiHost ?? ''}
+          onChange={(e) => onUpdate({ ...credentials, apiHost: e.target.value || undefined })}
+          placeholder={hostPlaceholder ?? 'https://api.example.com'}
+          sx={{ minWidth: 200 }}
+        />
+      </FormControl>
+    )}
+  </>;
+}
 
 
 // configuration
@@ -84,13 +118,26 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
   mode: 'full' | 'voice-only';
 }) {
 
-  const { voice } = engine;
+  const { credentials, voice } = engine;
+  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
+
+  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
+    onUpdate({ credentials: newCredentials });
+  }, [onUpdate]);
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceElevenLabs['ttsVoiceId']) => {
     onUpdate({ voice: { ...voice, ttsVoiceId } });
   }, [onUpdate, voice]);
 
   return <>
+    {/* Credentials (only for manually added engines in full mode) */}
+    {showCredentials && (
+      <CredentialsApiKeyInputs
+        credentials={credentials}
+        onUpdate={handleCredentialsUpdate}
+      />
+    )}
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Voice' description='ElevenLabs voice' />
       <SpeexVoiceDropdown
@@ -117,9 +164,11 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
       </FormHelperText>
     </FormControl>
 
-    <FormHelperText>
-      Voice listing requires API key. Language auto-detected from preferences.
-    </FormHelperText>
+    {showCredentials && (
+      <FormHelperText>
+        Voice listing requires API key. Language auto-detected from preferences.
+      </FormHelperText>
+    )}
 
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
       <PreviewButton engine={engine} />
@@ -133,13 +182,29 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
   mode: 'full' | 'voice-only';
 }) {
-  const { voice } = engine;
+  const { credentials, voice } = engine;
+  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
+
+  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
+    onUpdate({ credentials: newCredentials });
+  }, [onUpdate]);
 
   const handleModelChange = React.useCallback((ttsModel: DVoiceLocalAI['ttsModel']) => {
     onUpdate({ voice: { ...voice, ttsModel } });
   }, [onUpdate, voice]);
 
   return <>
+    {/* Credentials (only for manually added engines in full mode) */}
+    {showCredentials && (
+      <CredentialsApiKeyInputs
+        credentials={credentials}
+        onUpdate={handleCredentialsUpdate}
+        showHost
+        hostRequired
+        hostPlaceholder='http://localhost:8080'
+      />
+    )}
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Model' description='TTS model' />
       <SpeexVoiceDropdown
@@ -182,7 +247,12 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
   mode: 'full' | 'voice-only';
 }) {
 
-  const { voice } = engine;
+  const { credentials, voice } = engine;
+  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
+
+  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
+    onUpdate({ credentials: newCredentials });
+  }, [onUpdate]);
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceOpenAI['ttsVoiceId']) => {
     onUpdate({ voice: { ...voice, ttsVoiceId } });
@@ -193,6 +263,16 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
   }, [onUpdate, voice]);
 
   return <>
+    {/* Credentials (only for manually added engines in full mode) */}
+    {showCredentials && (
+      <CredentialsApiKeyInputs
+        credentials={credentials}
+        onUpdate={handleCredentialsUpdate}
+        showHost
+        hostPlaceholder='https://api.openai.com (optional)'
+      />
+    )}
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Voice' description='OpenAI TTS voice' />
       <SpeexVoiceDropdown
