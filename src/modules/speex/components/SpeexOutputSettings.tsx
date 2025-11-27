@@ -2,42 +2,112 @@
  * SpeexOutputSettings - Voice output settings for the Settings Modal
  *
  * Provides:
- * - Engine selection dropdown with Add/Delete controls
- * - Per-engine voice configuration
+ * - Chip-based engine selection with visual status
+ * - Add Service dropdown menu
+ * - Per-engine voice configuration in a Card
  * - Auto-speak toggle (from chat settings)
  */
 
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
-import AddIcon from '@mui/icons-material/Add';
+import { Box, Card, Chip, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem, Stack, SvgIconProps, Typography } from '@mui/joy';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { useChatAutoAI } from '../../../apps/chat/store-app-chat';
 
-import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
+import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 import type { DSpeexEngineAny, DSpeexVendorType } from '../speex.types';
 import { SpeexEngineConfig } from './SpeexEngineConfig';
-import { useSpeexActiveEngineId, useSpeexEngines, useSpeexStore } from '../store-module-speex';
-import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
+import { speexAreCredentialsValid, useSpeexEngines, useSpeexGlobalEngine, useSpeexStore } from '../store-module-speex';
 
 
-// Vendor options for the Add menu
-const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; description: string }[] = [
-  { vendorType: 'elevenlabs', label: 'ElevenLabs', description: 'High-quality voices' },
-  { vendorType: 'openai', label: 'OpenAI TTS', description: 'Fast and reliable' },
-  { vendorType: 'localai', label: 'LocalAI', description: 'Self-hosted TTS' },
-];
+const _style = {
+  menu: {
+    zIndex: themeZIndexOverMobileDrawer,
+    minWidth: 220,
+    '--List-padding': '0.75rem',
+    borderRadius: 'xl',
+    boxShadow: 'md',
+  },
+  menuButton: {
+    // minWidth: 150,
+    textWrap: 'nowrap',
+    '&[aria-expanded="true"]': {
+      borderBottomRightRadius: 0,
+      borderBottomLeftRadius: 0,
+      // color: 'neutral.softColor',
+      // backgroundColor: 'neutral.softHoverBg',
+    },
+  },
+  menuItem: {
+    py: 1,
+    px: 1,
+    borderRadius: 'md',
+    minHeight: 56,
+  },
+  menuItemContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0.125,
+  },
+  menuItemName: {
+    fontWeight: 600,
+  },
+  menuItemDescription: {
+    fontWeight: 400,
+  },
+  chipRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 1,
+  },
+  chip: {
+    px: 1.5,
+    minHeight: '2rem',
+    borderRadius: 'md',
+    // boxShadow: 'sm',
+  },
+  chipUnconfigured: {
+    px: 1.5,
+    minHeight: '2rem',
+    borderRadius: 'md',
+    // color: 'text.tertiary',
+    opacity: 0.6,
+  },
+  chipSymbol: {
+    ml: -0.75,
+    mr: 0.5,
+    width: 20,
+    height: 20,
+    borderRadius: 'sm',
+    backgroundColor: 'background.surface',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+} as const;
+
+
+const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; description: string, icon?: React.FunctionComponent<SvgIconProps> }[] = [
+  { vendorType: 'elevenlabs', label: 'ElevenLabs', description: 'Premium voice synthesis' },
+  { vendorType: 'openai', label: 'OpenAI TTS', description: 'Fast and reliable', icon: OpenAIIcon },
+  { vendorType: 'localai', label: 'LocalAI', description: 'Self-hosted TTS', icon: LocalAIIcon },
+] as const;
 
 
 export function SpeexOutputSettings() {
 
   // state
-  const [addMenuAnchor, setAddMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DSpeexEngineAny | null>(null);
 
   // external state
@@ -45,19 +115,19 @@ export function SpeexOutputSettings() {
 
   // external state - module
   const engines = useSpeexEngines();
-  const activeEngineId = useSpeexActiveEngineId();
+  const activeEngine = useSpeexGlobalEngine(); // auto-select the highest priority, if the user choice (active engine) is missing
+  const activeEngineId = activeEngine?.engineId ?? null;
 
 
   // derived state
   const hasEngines = engines.length > 0;
-  const activeEngine = engines.find(e => e.engineId === activeEngineId);
   const canDeleteActiveEngine = activeEngine && !activeEngine.isAutoDetected && !activeEngine.isAutoLinked;
 
 
   // handlers
 
-  const handleEngineChange = React.useCallback((_: unknown, value: string | null) => {
-    useSpeexStore.getState().setActiveEngineId(value || null);
+  const handleEngineSelect = React.useCallback((engineId: string | null) => {
+    useSpeexStore.getState().setActiveEngineId(engineId);
   }, []);
 
   const handleEngineUpdate = React.useCallback((updates: Partial<DSpeexEngineAny>) => {
@@ -68,19 +138,10 @@ export function SpeexOutputSettings() {
 
   // Add engine handlers
 
-  const handleOpenAddMenu = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    setAddMenuAnchor(event.currentTarget);
-  }, []);
-
-  const handleCloseAddMenu = React.useCallback(() => {
-    setAddMenuAnchor(null);
-  }, []);
-
   const handleAddEngine = React.useCallback((vendorType: DSpeexVendorType) => {
-    handleCloseAddMenu();
     const newEngineId = useSpeexStore.getState().createEngine(vendorType);
     useSpeexStore.getState().setActiveEngineId(newEngineId);
-  }, [handleCloseAddMenu]);
+  }, []);
 
 
   // Delete engine handlers
@@ -130,82 +191,112 @@ export function SpeexOutputSettings() {
       value={autoSpeak} onChange={setAutoSpeak}
     />
 
-    {/* Voice Engine label + Add button */}
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Voice Engine' description='TTS provider' />
-      <Button
-        size='sm'
-        variant='outlined'
-        color='neutral'
-        startDecorator={<AddIcon />}
-        onClick={handleOpenAddMenu}
-      >
-        Add
-      </Button>
-    </FormControl>
 
-    {/* Add Engine Popup Menu */}
-    <CloseablePopup
-      menu
-      anchorEl={addMenuAnchor}
-      onClose={handleCloseAddMenu}
-      placement='bottom-end'
-      minWidth={200}
-      zIndex={themeZIndexOverMobileDrawer}
-    >
-      {ADDABLE_VENDORS.map(vendor => (
-        <MenuItem key={vendor.vendorType} onClick={() => handleAddEngine(vendor.vendorType)}>
-          <ListItemDecorator />
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Typography level='title-sm'>{vendor.label}</Typography>
-            <Typography level='body-xs'>{vendor.description}</Typography>
-          </Box>
-        </MenuItem>
-      ))}
-    </CloseablePopup>
+    {/* Voice Engine label + Add Service dropdown */}
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
-    {/* Engine selection + Delete button */}
-    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-      <Select
-        value={activeEngineId || ''}
-        onChange={handleEngineChange}
-        placeholder={hasEngines ? 'Select engine' : 'No engines available'}
-        disabled={!hasEngines}
-        sx={{ flex: 1, minWidth: 200 }}
-      >
-        {engines.map(engine => (
-          <Option key={engine.engineId} value={engine.engineId}>
-            {engine.label}
-            {engine.isAutoLinked && <Typography level='body-xs' sx={{ ml: 1, opacity: 0.6 }}>(linked)</Typography>}
-          </Option>
-        ))}
-      </Select>
+      {/* Voice Engine label */}
+      <FormLabelStart
+        title='Voice Engine'
+        description={activeEngine ? activeEngine.label : 'Select a voice provider'}
+      />
 
-      <IconButton
-        size='sm'
-        variant='plain'
-        color='neutral'
-        disabled={!canDeleteActiveEngine}
-        onClick={handleDeleteClick}
-        sx={{ opacity: canDeleteActiveEngine ? 1 : 0.4 }}
-      >
-        <DeleteOutlineIcon />
-      </IconButton>
+      {/* -> Add Service */}
+      <Dropdown>
+        <MenuButton size='sm' color='neutral' variant='solid' startDecorator={<AddRoundedIcon />} sx={_style.menuButton}>
+          Add Service
+        </MenuButton>
+        <Menu placement='bottom' popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [-12, -2] } }] }} sx={_style.menu}>
+          {ADDABLE_VENDORS.map(vendor => (
+            <MenuItem key={vendor.vendorType} onClick={() => handleAddEngine(vendor.vendorType)} sx={_style.menuItem}>
+              <ListItemDecorator>
+                {vendor.icon ? <vendor.icon /> : null}
+              </ListItemDecorator>
+              <Box sx={_style.menuItemContent}>
+                <Typography level='title-md' sx={_style.menuItemName}>{vendor.label}</Typography>
+                <Typography level='body-sm' sx={_style.menuItemDescription}>{vendor.description}</Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
+
+      </Dropdown>
     </Box>
 
-    {/* Engine-specific configuration */}
-    {activeEngine ? (
-      <SpeexEngineConfig
-        engine={activeEngine}
-        onUpdate={handleEngineUpdate}
-        mode={activeEngine.isAutoLinked || activeEngine.isAutoDetected ? 'voice-only' : 'full'}
-      />
-    ) : (
-      <FormHelperText>
-        {hasEngines
-          ? 'Select a voice engine to configure its voice settings.'
-          : 'No voice engines detected. Voice engines are auto-detected from your LLM services (OpenAI) or browser (System Voice).'}
-      </FormHelperText>
+
+    {/* Engine Chips row */}
+    {hasEngines && (
+      <Box sx={_style.chipRow}>
+        {engines.map(engine => {
+          const isActive = engine.engineId === activeEngineId;
+          const isConfigured = speexAreCredentialsValid(engine.credentials);
+
+          return (
+            <TooltipOutlined key={engine.engineId} title={isConfigured ? 'Click to activate' : 'Needs configuration'}>
+              <Chip
+                variant={isActive ? 'solid' : 'outlined'}
+                color={!isActive ? 'neutral' : !isConfigured ? 'danger' : 'neutral'}
+                startDecorator={isActive && <Box sx={_style.chipSymbol}>
+                  <CheckRoundedIcon sx={{ fontSize: 16, color: 'text.primary' }} />
+                </Box>}
+                onClick={event => handleEngineSelect(event.shiftKey ? null : engine.engineId)}
+                sx={isConfigured ? _style.chip : _style.chipUnconfigured}
+              >
+                {engine.label}
+              </Chip>
+            </TooltipOutlined>
+          );
+        })}
+      </Box>
+    )}
+
+
+    {/* Active engine configuration Card */}
+    {activeEngine && (
+      <Card variant='outlined'>
+        <Stack spacing={2}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography level='title-sm' sx={{ flex: 1 }}>
+              {activeEngine.label}
+            </Typography>
+
+            {/*{activeEngine.isAutoDetected && <Chip size='sm' variant='soft' color='primary'>System</Chip>}*/}
+            {/*{activeEngine.isAutoLinked && <Chip size='sm' variant='soft'>Auto</Chip>}*/}
+            <Chip size='sm' variant='soft'>
+              {activeEngine.isAutoLinked ? 'Linked to AI Service' : activeEngine.isAutoDetected ? 'System' : 'Manual Config'}
+            </Chip>
+
+            {canDeleteActiveEngine && (
+              <GoodTooltip title='Delete this service'>
+                <IconButton
+                  size='sm'
+                  variant='plain'
+                  color='danger'
+                  onClick={handleDeleteClick}
+                >
+                  <DeleteOutlineIcon />
+                </IconButton>
+              </GoodTooltip>
+            )}
+          </Box>
+
+          {/* Engine-specific configuration */}
+          <SpeexEngineConfig
+            engine={activeEngine}
+            onUpdate={handleEngineUpdate}
+            mode={activeEngine.isAutoLinked || activeEngine.isAutoDetected ? 'voice-only' : 'full'}
+          />
+        </Stack>
+      </Card>
+    )}
+
+    {/* Empty state */}
+    {!hasEngines && (
+      <Typography level='body-sm' sx={{ color: 'text.tertiary' }}>
+        No voice engines detected. Voice engines are auto-detected from your LLM services (OpenAI) or browser (System Voice).
+        Click &quot;Add Service&quot; to manually configure a TTS provider.
+      </Typography>
     )}
 
     {/* Delete Confirmation Modal */}

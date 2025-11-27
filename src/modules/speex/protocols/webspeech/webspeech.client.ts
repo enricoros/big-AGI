@@ -120,7 +120,7 @@ export function speexSynthesize_WebSpeech(
     if (!webspeechIsSupported()) {
       const error = new Error('Web Speech API not supported');
       callbacks?.onError?.(error);
-      resolve({ success: false, error: error.message });
+      resolve({ success: false, errorType: 'tts-no-engine', error: error.message });
       return;
     }
 
@@ -156,7 +156,7 @@ export function speexSynthesize_WebSpeech(
       const errorMessage = event.error || 'Speech synthesis failed';
       const error = new Error(errorMessage);
       callbacks?.onError?.(error);
-      resolve({ success: false, error: errorMessage });
+      resolve({ success: false, errorType: 'tts-error', error: errorMessage });
     };
 
     // start speaking
