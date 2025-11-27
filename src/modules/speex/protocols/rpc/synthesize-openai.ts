@@ -6,6 +6,7 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 
 import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './rpc.router';
+import { SPEEX_DEBUG } from '../../speex.config';
 import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
@@ -56,6 +57,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
 
   // request.headers
   const { host, apiKey } = _resolveAccess(access);
+  const url = `${host}/v1/audio/speech`;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
@@ -95,8 +97,9 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
   const dialectName = access.dialect === 'localai' ? 'LocalAI' : 'OpenAI';
   let response: Response;
   try {
+    if (SPEEX_DEBUG) console.log(`[Speex][OpenAI] POST (stream=${streaming})`, { url, headers, body });
     response = await fetchResponseOrTRPCThrow({
-      url: `${host}/v1/audio/speech`,
+      url,
       method: 'POST',
       headers,
       body,

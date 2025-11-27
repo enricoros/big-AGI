@@ -17,6 +17,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 
 import type { DSpeexEngine, SpeexSpeakResult } from '../../speex.types';
 import type { SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './rpc.wiretypes';
+import { SPEEX_DEBUG } from '../../speex.config';
 
 
 type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
@@ -44,6 +45,7 @@ export async function speexSynthesize_RPC(
 ): Promise<SpeexSpeakResult> {
 
   // engine credentials (DCredentials..) -> wire Access
+  if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesize request (engine: ${engine.engineId}, ${text.length} chars) - options:`, options);
   const access = _buildRPCWireAccess(engine);
   if (!access) {
     const error = new Error(`Failed to resolve credentials for engine ${engine.engineId}`);
@@ -72,6 +74,7 @@ export async function speexSynthesize_RPC(
 
     // process streaming particles
     for await (const particle of particleStream) {
+      if (SPEEX_DEBUG) console.log('[Speex RPC] <-', particle);
       switch (particle.t) {
         case 'start':
           callbacks?.onStart?.();
@@ -134,7 +137,9 @@ export async function speexSynthesize_RPC(
     return result;
 
   } catch (error: any) {
-    // Cleanup
+    if (SPEEX_DEBUG) console.error('[Speex RPC] Synthesis error:', { error });
+
+    // cleanup
     if (audioPlayer)
       void audioPlayer.stop();
 

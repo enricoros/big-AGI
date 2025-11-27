@@ -4,6 +4,7 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 
 import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './rpc.router';
+import { SPEEX_DEBUG } from '../../speex.config';
 import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
@@ -53,6 +54,7 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
   // Fetch
   let response: Response;
   try {
+    if (SPEEX_DEBUG) console.log(`[Speex][ElevenLabs] POST (stream=${streaming})`, { url, headers, body });
     response = await fetchResponseOrTRPCThrow({
       url,
       method: 'POST',
