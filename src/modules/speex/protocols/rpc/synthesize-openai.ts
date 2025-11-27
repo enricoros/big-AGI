@@ -164,6 +164,7 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
       name: 'LocalAI',
     });
   } catch (error: any) {
+    // ok to be user visible
     console.warn('[DEV] Speex: listVoicesLocalAI: Failed to fetch models:', error.message);
     return { voices: [] };
   }

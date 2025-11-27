@@ -38,7 +38,9 @@ interface _TypeMap extends Record<DSpeexVendorType, { voice: unknown; credential
 
 // Voices - a unique, engine-type-specific configuration that produces a repeatable voice output
 
-export type DSpeexVoice<TVt extends DSpeexVendorType = DSpeexVendorType> = _TypeMap[TVt]['voice'];
+export type DSpeexVoiceAny = { [TVt in DSpeexVendorType]: DSpeexVoice<TVt> }[DSpeexVendorType];
+
+export type DSpeexVoice<TVt extends DSpeexVendorType> = _TypeMap[TVt]['voice'];
 
 export interface DVoiceElevenLabs {
   dialect: 'elevenlabs';
@@ -78,7 +80,9 @@ export interface DVoiceWebSpeech {
 
 // Credentials
 
-export type DSpeexCredentials<TVt extends DSpeexVendorType = DSpeexVendorType> = _TypeMap[TVt]['credentials'];
+export type DSpeexCredentialsAny = { [TVt in DSpeexVendorType]: DSpeexCredentials<TVt> }[DSpeexVendorType];
+
+export type DSpeexCredentials<TVt extends DSpeexVendorType> = _TypeMap[TVt]['credentials'];
 
 export interface DCredentialsApiKey {
   type: 'api-key';
@@ -103,7 +107,19 @@ export interface DCredentialsNone {
 
 export type SpeexListVoiceOption = SpeexWire_VoiceOption;
 
+export type SpeexListVoicesResult = {
+  voices: SpeexListVoiceOption[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+
 // Speak
+
+export type SpeexVoiceSelector =
+  | undefined
+  | { voice: Partial<DSpeexVoiceAny> } // uses first matching engine for voice.dialect, with voice override
+  | { engineId: SpeexEngineId; voice?: Partial<DSpeexVoiceAny> }; // uses specific engine, optionally overriding voice
 
 export type SpeexSpeakOptions = {
   label?: string;           // For NorthBridge queue display
