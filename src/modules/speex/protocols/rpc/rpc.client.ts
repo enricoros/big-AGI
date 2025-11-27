@@ -144,7 +144,7 @@ export async function speexListVoicesRPC(engine: _DSpeexEngineRPC): Promise<Spee
   try {
     return await apiAsync.speex.listVoices.query({ access });
   } catch (error) {
-    console.error('Failed to list voices:', error);
+    // console.log('[DEV] speexListVoicesRPC. Failed to list voices:', error);
     return { voices: [] };
   }
 }

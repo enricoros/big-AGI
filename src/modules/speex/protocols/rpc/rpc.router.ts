@@ -2,7 +2,7 @@ import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
 import { SpeexSpeechParticle, SpeexWire, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Voice } from './rpc.wiretypes';
 import { listVoicesElevenLabs, synthesizeElevenLabs } from './synthesize-elevenlabs';
-import { listVoicesLocalAI, listVoicesOpenAI, synthesizeOpenAIProtocol } from './synthesize-openai';
+import { listVoicesLocalAIOrThrow, listVoicesOpenAI, synthesizeOpenAIProtocol } from './synthesize-openai';
 
 
 interface SynthesizeBackendFnParams<TSpeexAccess extends SpeexWire_Access> {
@@ -63,7 +63,7 @@ export const speexRouter = createTRPCRouter({
           return { voices: listVoicesOpenAI() };
 
         case 'localai':
-          return await listVoicesLocalAI(access);
+          return await listVoicesLocalAIOrThrow(access);
 
         default:
           const _exhaustiveCheck: never = access;
