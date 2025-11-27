@@ -264,7 +264,7 @@ export function SpeexOutputSettings() {
             {/*{activeEngine.isAutoDetected && <Chip size='sm' variant='soft' color='primary'>System</Chip>}*/}
             {/*{activeEngine.isAutoLinked && <Chip size='sm' variant='soft'>Auto</Chip>}*/}
             <Chip size='sm' variant='soft'>
-              {activeEngine.isAutoLinked ? 'Linked to AI Service' : activeEngine.isAutoDetected ? 'System' : 'Manual Config'}
+              {activeEngine.isAutoLinked ? 'Linked to AI Service' : activeEngine.isAutoDetected ? 'System' : 'Configured Manually'}
             </Chip>
 
             {canDeleteActiveEngine && (
