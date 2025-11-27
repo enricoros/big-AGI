@@ -9,9 +9,9 @@
 import type { DPersonaUid } from '~/common/stores/persona/persona.types';
 
 import type { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexVendorType } from './speex.types';
-import { speexListVoicesWebSpeech, speexSynthesizeWebSpeech } from './vendors/webspeech.client';
+import { speexSynthesizeWebSpeech } from './vendors/webspeech.client';
 import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
-import { speexListVoicesRPC, speexSynthesizeRPC } from './vendors/rpc.client';
+import { speexSynthesizeRPC } from './vendors/rpc.client';
 
 
 // Capability API
@@ -92,8 +92,6 @@ export async function speakText(
   // - priority: explicit engineId > voice.vendorType > store active > priority-ordered available
   const engine = _resolveEngineFromSelector(voice);
 
-  callbacks?.onStart?.();
-
   // route based on engine
   try {
 
@@ -127,26 +125,26 @@ export async function speakText(
 // Private: Engine resolution
 
 function _resolveEngineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineAny | null {
-  if (!selector) return null;
+  if (selector) {
+    // A. most specific selector: engineId
+    if ('engineId' in selector && selector.engineId) {
+      const engine = speexFindEngineById(selector.engineId);
+      if (engine) return engine;
+    }
 
-  // A. most specific selector: engineId
-  if ('engineId' in selector && selector.engineId) {
-    const engine = speexFindEngineById(selector.engineId);
-    if (engine) return engine;
+    // B. voice.vendorType - find first matching engine that's probably valid
+    if ('voice' in selector && selector.voice?.vendorType) {
+      const engine = speexFindValidEngineByType(selector.voice.vendorType);
+      if (engine) return engine;
+    }
   }
 
-  // B. voice.vendorType - find first matching engine that's probably valid
-  if ('voice' in selector && selector.voice?.vendorType) {
-    const engine = speexFindValidEngineByType(selector.voice.vendorType);
-    if (engine) return engine;
-  }
-
-  // C. fall back to priority-based
+  // C. fall back to global engine (active or priority-ranked)
   return speexFindGlobalEngine();
 }
 
 
-// Voice Listing API
+// Voice Info type - shared across all providers
 
 export interface SpeexVoiceInfo {
   id: string;
@@ -156,27 +154,27 @@ export interface SpeexVoiceInfo {
   category?: string;
 }
 
-/**
- * List available voices for an engine.
- * For cloud providers, this calls the speex.router RPC.
- * For webspeech, this uses the browser API.
- */
-export async function speexListVoicesForEngine(engine: DSpeexEngineAny): Promise<SpeexVoiceInfo[]> {
-  switch (engine.vendorType) {
-    case 'webspeech':
-      // Use browser API - synchronous but may need async loading
-      const browserVoices = speexListVoicesWebSpeech();
-      return browserVoices.map(v => ({
-        id: v.voiceURI,
-        name: v.name,
-        description: `${v.lang}${v.localService ? ' (local)' : ''}`,
-      }));
-
-    case 'elevenlabs':
-    case 'openai':
-    case 'localai':
-      // Use RPC
-      const result = await speexListVoicesRPC(engine);
-      return result.voices;
-  }
-}
+// /**
+//  * List available voices for an engine.
+//  * For cloud providers, this calls the speex.router RPC.
+//  * For webspeech, this uses the browser API.
+//  */
+// export async function speexListVoicesForEngine(engine: DSpeexEngineAny): Promise<SpeexVoiceInfo[]> {
+//   switch (engine.vendorType) {
+//     case 'webspeech':
+//       // Use browser API - synchronous but may need async loading
+//       const browserVoices = speexListVoicesWebSpeech();
+//       return browserVoices.map(v => ({
+//         id: v.voiceURI,
+//         name: v.name,
+//         description: `${v.lang}${v.localService ? ' (local)' : ''}`,
+//       }));
+//
+//     case 'elevenlabs':
+//     case 'openai':
+//     case 'localai':
+//       // Use RPC
+//       const result = await speexListVoicesRPC(engine);
+//       return result.voices;
+//   }
+// }
