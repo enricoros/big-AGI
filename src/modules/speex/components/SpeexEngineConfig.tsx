@@ -189,7 +189,7 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
   }, [onUpdate, voice]);
 
   const handleSpeedChange = React.useCallback((_: unknown, value: number | number[]) => {
-    onUpdate({ voice: { ...voice, speed: value as number } });
+    onUpdate({ voice: { ...voice, ttsSpeed: value as number } });
   }, [onUpdate, voice]);
 
   return <>
@@ -218,10 +218,10 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
     <FormControl>
       <FormLabelStart title='Speed' />
       <Slider
-        value={voice.speed ?? 1}
+        value={voice.ttsSpeed ?? 1}
         onChange={handleSpeedChange}
-        min={0.25}
-        max={4}
+        min={0.5}
+        max={2}
         step={0.25}
         valueLabelDisplay='auto'
       />
@@ -231,8 +231,8 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
       <FormControl>
         <FormLabelStart title='Voice Instruction' description='Custom voice guidance' />
         <Input
-          value={voice.instruction ?? ''}
-          onChange={(e) => onUpdate({ voice: { ...voice, instruction: e.target.value } })}
+          value={voice.ttsInstruction ?? ''}
+          onChange={(e) => onUpdate({ voice: { ...voice, ttsInstruction: e.target.value } })}
           placeholder='e.g., Speak with enthusiasm'
         />
         <FormHelperText>Only for GPT-4o Mini TTS model</FormHelperText>
@@ -258,12 +258,12 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
     onUpdate({ voice: { ...voice, ttsVoiceURI } });
   }, [onUpdate, voice]);
 
-  const handleRateChange = React.useCallback((_: unknown, value: number | number[]) => {
-    onUpdate({ voice: { ...voice, rate: value as number } });
+  const handleSpeedChange = React.useCallback((_: unknown, value: number | number[]) => {
+    onUpdate({ voice: { ...voice, ttsSpeed: value as number } });
   }, [onUpdate, voice]);
 
   const handlePitchChange = React.useCallback((_: unknown, value: number | number[]) => {
-    onUpdate({ voice: { ...voice, pitch: value as number } });
+    onUpdate({ voice: { ...voice, ttsPitch: value as number } });
   }, [onUpdate, voice]);
 
   return <>
@@ -279,8 +279,8 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
     <FormControl>
       <FormLabelStart title='Speed' />
       <Slider
-        value={voice.rate ?? 1}
-        onChange={handleRateChange}
+        value={voice.ttsSpeed ?? 1}
+        onChange={handleSpeedChange}
         min={0.5}
         max={2}
         step={0.1}
@@ -291,7 +291,7 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
     <FormControl>
       <FormLabelStart title='Pitch' />
       <Slider
-        value={voice.pitch ?? 1}
+        value={voice.ttsPitch ?? 1}
         onChange={handlePitchChange}
         min={0.5}
         max={2}

@@ -55,7 +55,7 @@ export function useSpeexCapability(): SpeexCapability {
 
 type _Speak_VoiceSelector =
   | undefined
-  | { voice: Partial<DSpeexVoice> } // uses first matching engine for voice.vendorType, with voice override
+  | { voice: Partial<DSpeexVoice> } // uses first matching engine for voice.dialect, with voice override
   | { engineId: SpeexEngineId; voice?: Partial<DSpeexVoice> }; // uses specific engine, optionally overriding voice
 
 type _Speak_Callbacks = {
@@ -112,9 +112,9 @@ function _engineFromSelector(selector: _Speak_VoiceSelector): DSpeexEngineAny | 
       if (engine) return engine;
     }
 
-    // B. voice.vendorType - find first matching engine that's probably valid
-    if ('voice' in selector && selector.voice?.vendorType) {
-      const engine = speexFindValidEngineByType(selector.voice.vendorType);
+    // B. voice.dialect - find first matching engine that's probably valid
+    if ('voice' in selector && selector.voice?.dialect) {
+      const engine = speexFindValidEngineByType(selector.voice.dialect);
       if (engine) return engine;
     }
   }

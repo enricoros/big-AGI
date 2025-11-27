@@ -68,9 +68,9 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
       if (voice.dialect !== 'localai') throw new Error('Voice dialect mismatch for LocalAI access');
       body = {
         input: text,
-        ...(voice.backend ? { backend: voice.backend } : {}),
-        ...(voice.model ? { model: voice.model } : {}),
-        ...(voice.language ? { language: voice.language } : {}),
+        ...(voice.ttsBackend ? { backend: voice.ttsBackend } : {}),
+        ...(voice.ttsModel ? { model: voice.ttsModel } : {}),
+        ...(voice.ttsLanguage ? { language: voice.ttsLanguage } : {}),
         response_format: 'mp3', // MP3 for MediaSource compatibility
         // response_format: streaming ? 'wav' : 'mp3',
       } satisfies LocalAIWire_TTS_Request;
@@ -80,10 +80,10 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
       if (voice.dialect !== 'openai') throw new Error('Voice dialect mismatch for OpenAI access');
       body = {
         input: text,
-        model: voice.model || FALLBACK_OPENAI_MODEL,
-        voice: ('voiceId' in voice ? voice.voiceId : undefined) || FALLBACK_OPENAI_VOICE_ID,
-        ...(voice.speed !== undefined ? { speed: voice.speed } : {}),
-        ...(voice.instruction ? { instructions: voice.instruction } : {}),
+        model: voice.ttsModel || FALLBACK_OPENAI_MODEL,
+        voice: voice.ttsVoiceId || FALLBACK_OPENAI_VOICE_ID,
+        ...(voice.ttsSpeed !== undefined ? { speed: voice.ttsSpeed } : {}),
+        ...(voice.ttsInstruction ? { instructions: voice.ttsInstruction } : {}),
         response_format: 'mp3', // MP3 for MediaSource compatibility
         // response_format: streaming ? 'wav' : 'mp3',
       } satisfies OpenAIWire_TTS_Request;

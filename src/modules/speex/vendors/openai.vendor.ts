@@ -27,9 +27,9 @@ export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
   }),
 
   getDefaultVoice: () => ({
-    vendorType: 'openai',
+    dialect: 'openai',
     ttsModel: 'tts-1',
     ttsVoiceId: 'alloy',
-    speed: 1.0,
+    ttsSpeed: 1.0,
   }),
 };

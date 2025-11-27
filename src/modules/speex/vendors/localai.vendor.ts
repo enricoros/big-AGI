@@ -37,9 +37,9 @@ export const SpeexVendorLocalAI: ISpeexVendor<'localai'> = {
   }),
 
   getDefaultVoice: () => ({
-    vendorType: 'localai',
+    dialect: 'localai',
     ttsBackend: undefined,
     ttsModel: 'kokoro', // recommended default - high quality neural TTS
-    language: undefined,
+    ttsLanguage: undefined,
   }),
 };

@@ -33,10 +33,10 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
 
 
   // build request - narrow to elevenlabs dialect for type safety
-  const voiceId = (voice.dialect === 'elevenlabs' ? voice.voiceId : undefined) || DEFAULT_VOICE_ID;
+  const voiceId = (voice.dialect === 'elevenlabs' ? voice.ttsVoiceId : undefined) || DEFAULT_VOICE_ID;
 
   // Model selection: use explicit model if provided, otherwise auto-select based on language
-  const explicitModel = voice.dialect === 'elevenlabs' ? voice.model : undefined;
+  const explicitModel = voice.dialect === 'elevenlabs' ? voice.ttsModel : undefined;
   const model = explicitModel || _selectModelForLanguage(languageCode);
 
   const path = `/v1/text-to-speech/${voiceId}${streaming ? '/stream' : ''}`;
