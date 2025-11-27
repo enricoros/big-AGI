@@ -2,8 +2,9 @@ import * as z from 'zod/v4';
 import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import type { SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
+import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './rpc.router';
+import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
 // configuration
@@ -63,57 +64,13 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
     return;
   }
 
-  // Non-streaming: return entire audio at once
-  if (!streaming) {
-    try {
-      const audioArrayBuffer = await response.arrayBuffer();
-      const base64 = Buffer.from(audioArrayBuffer).toString('base64');
-      yield { t: 'audio', base64, final: true };
-      yield { t: 'done', chars: text.length };
-    } catch (error: any) {
-      yield { t: 'error', e: `ElevenLabs audio decode failed: ${error.message || 'Unknown error'}` };
-    }
-    return;
-  }
-
-  // Streaming: read chunks
-  const reader = response.body?.getReader();
-  if (!reader) {
-    yield { t: 'error', e: 'ElevenLabs: No stream reader available' };
-    return;
-  }
-
+  // Stream or return whole audio (with metadata for non-streaming)
   try {
-    const accumulatedChunks: Uint8Array[] = [];
-    let accumulatedSize = 0;
-
-    while (true) {
-      const { value, done: readerDone } = await reader.read();
-      if (readerDone) break;
-      if (!value) continue;
-
-      accumulatedChunks.push(value);
-      accumulatedSize += value.length;
-
-      // Yield when accumulated size reaches threshold
-      if (accumulatedSize >= MIN_CHUNK_SIZE) {
-        const base64 = Buffer.concat(accumulatedChunks).toString('base64');
-        yield { t: 'audio', base64 };
-        accumulatedChunks.length = 0;
-        accumulatedSize = 0;
-      }
-    }
-
-    // Yield any remaining data as final chunk
-    if (accumulatedSize > 0) {
-      const base64 = Buffer.concat(accumulatedChunks).toString('base64');
-      yield { t: 'audio', base64, final: true };
-    }
-
-    yield { t: 'done', chars: text.length };
-
+    yield* streaming
+      ? streamAudioChunksOrThrow(response, MIN_CHUNK_SIZE, text.length)
+      : returnAudioWholeOrThrow(response, text.length, _parseTTSResponseHeaders(response.headers));
   } catch (error: any) {
-    yield { t: 'error', e: `ElevenLabs stream error: ${error.message || 'Unknown error'}` };
+    yield { t: 'error', e: `ElevenLabs audio error: ${error.message || 'Unknown error'}` };
   }
 };
 
@@ -150,6 +107,14 @@ export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs):
 
 
 // Helpers
+
+function _parseTTSResponseHeaders(headers: Headers): Pick<Extract<SpeexSpeechParticle, { t: 'audio' }>, 'contentType' | 'characterCost' | 'ttsLatencyMs'> {
+  return {
+    contentType: headers.get('content-type') || 'audio/mpeg',
+    characterCost: parseInt(headers.get('character-cost') || '0') || undefined,
+    ttsLatencyMs: parseInt(headers.get('tts-latency-ms') || '0') || undefined,
+  };
+}
 
 function _elevenlabsAccess(access: SpeexWire_Access_ElevenLabs, apiPath: string): { headers: HeadersInit; url: string } {
   const apiKey = (access.apiKey || env.ELEVENLABS_API_KEY || '').trim();

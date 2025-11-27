@@ -6,6 +6,7 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 
 import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './rpc.router';
+import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
 // configuration
@@ -91,6 +92,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
   }
 
   // connect
+  const dialectName = access.dialect === 'localai' ? 'LocalAI' : 'OpenAI';
   let response: Response;
   try {
     response = await fetchResponseOrTRPCThrow({
@@ -99,63 +101,20 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
       headers,
       body,
       signal,
-      name: access.dialect === 'localai' ? 'LocalAI' : 'OpenAI',
+      name: dialectName,
     });
   } catch (error: any) {
-    const dialectName = access.dialect === 'localai' ? 'LocalAI' : 'OpenAI';
     yield { t: 'error', e: `${dialectName} TTS fetch failed: ${error.message || 'Unknown error'}` };
     return;
   }
 
-  // non-streaming: return entire audio at once
-  if (!streaming) {
-    try {
-      const audioArrayBuffer = await response.arrayBuffer();
-      const base64 = Buffer.from(audioArrayBuffer).toString('base64');
-      yield { t: 'audio', base64, final: true };
-      yield { t: 'done', chars: text.length };
-    } catch (error: any) {
-      yield { t: 'error', e: `Audio decode failed: ${error.message || 'Unknown error'}` };
-    }
-    return;
-  }
-
-  // streaming: read chunks
-  const reader = response.body?.getReader();
-  if (!reader)
-    return yield { t: 'error', e: 'No stream reader available' };
-
+  // Stream or return whole audio
   try {
-    const accumulatedChunks: Uint8Array[] = [];
-    let accumulatedSize = 0;
-
-    while (true) {
-      const { value, done: readerDone } = await reader.read();
-      if (readerDone) break;
-      if (!value) continue;
-
-      accumulatedChunks.push(value);
-      accumulatedSize += value.length;
-
-      // Yield when accumulated size reaches threshold
-      if (accumulatedSize >= MIN_CHUNK_SIZE) {
-        const base64 = Buffer.concat(accumulatedChunks).toString('base64');
-        yield { t: 'audio', base64 };
-        accumulatedChunks.length = 0;
-        accumulatedSize = 0;
-      }
-    }
-
-    // Yield any remaining data as final chunk
-    if (accumulatedSize > 0) {
-      const base64 = Buffer.concat(accumulatedChunks).toString('base64');
-      yield { t: 'audio', base64, final: true };
-    }
-
-    yield { t: 'done', chars: text.length };
-
+    yield* streaming
+      ? streamAudioChunksOrThrow(response, MIN_CHUNK_SIZE, text.length)
+      : returnAudioWholeOrThrow(response, text.length);
   } catch (error: any) {
-    yield { t: 'error', e: `Stream error: ${error.message || 'Unknown error'}` };
+    yield { t: 'error', e: `${dialectName} audio error: ${error.message || 'Unknown error'}` };
   }
 };
 
