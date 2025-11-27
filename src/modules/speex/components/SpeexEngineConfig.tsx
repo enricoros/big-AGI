@@ -15,6 +15,7 @@ import { Box, Button, FormControl, FormHelperText, Input, Slider, Typography } f
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
+import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
@@ -148,22 +149,21 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
       />
     </FormControl>
 
-    <FormControl>
-      <FormLabelStart title='Model' description='TTS model' />
-      <select
-        value={voice.ttsModel ?? 'eleven_multilingual_v2'}
-        onChange={(e) => onUpdate({ voice: { ...voice, ttsModel: e.target.value as DVoiceElevenLabs['ttsModel'] } })}
-        style={{ padding: '8px', borderRadius: '4px' }}
-      >
-        <option value='eleven_multilingual_v2'>Multilingual v2 (recommended)</option>
-        <option value='eleven_turbo_v2_5'>Turbo v2.5 (fast, English)</option>
-        <option value='eleven_flash_v2_5'>Flash v2.5 (fastest)</option>
-        <option value='eleven_v3'>v3 (newest)</option>
-      </select>
-      <FormHelperText>
-        Multilingual v2 works best for non-English or mixed content. Turbo v2.5 is faster for English-only.
-      </FormHelperText>
-    </FormControl>
+    <FormChipControl
+      title='Model'
+      description={voice.ttsModel === 'eleven_flash_v2_5' ? 'Fastest'
+        : voice.ttsModel === 'eleven_turbo_v2_5' ? 'Fast, English'
+          : voice.ttsModel === 'eleven_v3' ? 'Newest'
+            : 'Recommended'}
+      options={[
+        { value: 'eleven_multilingual_v2', label: 'Multilingual v2' },
+        { value: 'eleven_turbo_v2_5', label: 'Turbo v2.5' },
+        { value: 'eleven_flash_v2_5', label: 'Flash v2.5' },
+        { value: 'eleven_v3', label: 'v3' },
+      ]}
+      value={voice.ttsModel ?? 'eleven_multilingual_v2'}
+      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value as DVoiceElevenLabs['ttsModel'] } })}
+    />
 
     {showCredentials && (
       <FormHelperText>
@@ -283,21 +283,22 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
       />
     </FormControl>
 
-    <FormControl>
-      <FormLabelStart title='Model' description='TTS model quality' />
-      <select
-        value={voice.ttsModel ?? 'tts-1'}
-        onChange={(e) => onUpdate({ voice: { ...voice, ttsModel: e.target.value as DVoiceOpenAI['ttsModel'] } })}
-        style={{ padding: '8px', borderRadius: '4px' }}
-      >
-        <option value='tts-1'>TTS-1 (fast)</option>
-        <option value='tts-1-hd'>TTS-1-HD (quality)</option>
-        <option value='gpt-4o-mini-tts'>GPT-4o Mini TTS (expressive)</option>
-      </select>
-    </FormControl>
+    <FormChipControl
+      title='Model'
+      description={voice.ttsModel === 'tts-1-hd' ? 'Higher quality'
+        : voice.ttsModel === 'gpt-4o-mini-tts' ? 'Expressive'
+          : 'Fast'}
+      options={[
+        { value: 'tts-1', label: 'TTS-1' },
+        { value: 'tts-1-hd', label: 'TTS-1-HD' },
+        { value: 'gpt-4o-mini-tts', label: 'GPT-4o Mini' },
+      ]}
+      value={voice.ttsModel ?? 'tts-1'}
+      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value as DVoiceOpenAI['ttsModel'] } })}
+    />
 
     <FormControl>
-      <FormLabelStart title='Speed' />
+      <FormLabelStart title='Speed' description={`${(voice.ttsSpeed ?? 1).toFixed(2)}x`} />
       <Slider
         value={voice.ttsSpeed ?? 1}
         onChange={handleSpeedChange}
@@ -358,7 +359,7 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
     </FormControl>
 
     <FormControl>
-      <FormLabelStart title='Speed' />
+      <FormLabelStart title='Speed' description={`${(voice.ttsSpeed ?? 1).toFixed(1)}x`} />
       <Slider
         value={voice.ttsSpeed ?? 1}
         onChange={handleSpeedChange}
@@ -370,7 +371,7 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
     </FormControl>
 
     <FormControl>
-      <FormLabelStart title='Pitch' />
+      <FormLabelStart title='Pitch' description={`${(voice.ttsPitch ?? 1).toFixed(1)}`} />
       <Slider
         value={voice.ttsPitch ?? 1}
         onChange={handlePitchChange}
