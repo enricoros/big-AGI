@@ -1,6 +1,6 @@
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DSpeexCredentials, DSpeexVoice, SpeexVendorType } from '../speex.types';
+import type { DSpeexCredentials, DSpeexVoice, DSpeexVendorType } from './speex.types';
 
 
 /**
@@ -10,9 +10,10 @@ import type { DSpeexCredentials, DSpeexVoice, SpeexVendorType } from '../speex.t
  * Configuration including credentials and default voices are in DSpeexEngine instances
  * in the speex store.
  */
-export interface ISpeexVendor<TVt extends SpeexVendorType> {
+export interface ISpeexVendor<TVt extends DSpeexVendorType> {
   readonly vendorType: TVt;
   readonly name: string;
+  readonly protocol: 'rpc' | 'webspeech';
   readonly location: 'browser' | 'local' | 'cloud';
   readonly priority: number;  // display priority (lower = higher priority): elevenlabs=10, localai=20, openai=30, webspeech=100
 
@@ -34,4 +35,4 @@ export interface ISpeexVendor<TVt extends SpeexVendorType> {
   getDefaultVoice(): DSpeexVoice<TVt>;
 }
 
-export type ISpeexVendorAny = { [TVt in SpeexVendorType]: ISpeexVendor<TVt> }[SpeexVendorType];
+export type ISpeexVendorAny = { [TVt in DSpeexVendorType]: ISpeexVendor<TVt> }[DSpeexVendorType];

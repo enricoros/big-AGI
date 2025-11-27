@@ -6,25 +6,32 @@
  * Future: NorthBridge integration for queued audio output control.
  */
 
-import type { DPersonaUid } from '~/common/stores/persona/persona.types';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
-import type { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexVendorType } from './speex.types';
-import { speexSynthesizeWebSpeech } from './vendors/webspeech.client';
-import { speexAreCredentialsValid, speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
-import { speexSynthesizeRPC } from './vendors/rpc.client';
+import { DSpeexEngineAny, DSpeexVoice, DVoiceWebSpeech, SpeexEngineId, SpeexSpeakOptions, SpeexSpeakResult } from './speex.types';
+import { speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, useSpeexStore } from './store-module-speex';
+
+import { speexSynthesize_RPC } from './protocols/rpc/rpc.client';
+import { speexSynthesize_WebSpeech } from './protocols/webspeech/webspeech.client';
 
 
-// Capability API
+// Hook: Speex Capability - aka: a reactive 'can I speak?' indicator
 
 export interface SpeexCapability {
   mayWork: boolean;
-  activeEngineId: SpeexEngineId | null;
-  activeVendorType: SpeexVendorType | null;
+  // Seem not used? -YAGNI
+  // activeEngineId: SpeexEngineId | null;
+  // activeVendorType: DSpeexVendorType | null;
   // Do we need these?
   // isConfiguredServerSide: boolean;
   // isConfiguredClientSide: boolean;
 }
 
+/**
+ * Note: this may be improved based on usage in the future. Could have more and useful info, but
+ *       given it's being used to gate services, we may push forward and eventually recover, rather
+ *       than disable functionality preemptively.
+ */
 export function useSpeexCapability(): SpeexCapability {
 
   // external state
@@ -32,86 +39,59 @@ export function useSpeexCapability(): SpeexCapability {
 
   // find active engine - may be null, even if soft deleted and the active ID still points to it
   const activeEngine = engines.find(e => e.engineId === activeEngineId && !e.isDeleted);
+  const activeEngineValid = !!activeEngine; // && speexAreCredentialsValid(activeEngine.credentials);
+
+  // const anyEngineValid = engines.some(e => !e.isDeleted && speexAreCredentialsValid(e.credentials));
 
   return {
-    mayWork: engines.some(e => !e.isDeleted && speexAreCredentialsValid(e.credentials)),
-    activeEngineId: activeEngine?.engineId ?? null,
-    activeVendorType: activeEngine?.vendorType ?? null,
+    mayWork: activeEngineValid,
+    // activeEngineId: activeEngine?.engineId ?? null,
+    // activeVendorType: activeEngine?.vendorType ?? null,
   };
 }
-
-// Commented out - this immediate function does not seem to be used
-// export function isSpeexEnabled(): boolean {
-//   // check legacy ElevenLabs first
-//   const { elevenLabsApiKey } = getElevenLabsData();
-//   if (isElevenLabsEnabled(elevenLabsApiKey))
-//     return true;
-//
-//   // check store-based engines
-//   return speexResolveEngine() !== null;
-// }
 
 
 // Speech Synthesis API
 
-export type SpeexVoiceSelector =
+type _Speak_VoiceSelector =
   | undefined
-  | { voice: DSpeexVoice } // uses first matching engine for voice.vendorType
+  | { voice: Partial<DSpeexVoice> } // uses first matching engine for voice.vendorType, with voice override
   | { engineId: SpeexEngineId; voice?: Partial<DSpeexVoice> }; // uses specific engine, optionally overriding voice
 
-export type SpeexSpeakResult = {
-  success: boolean;
-  audioBase64?: string; // available when not streaming or when requested
-  error?: string; // if success is false
+type _Speak_Callbacks = {
+  onStart?: () => void;
+  onChunk?: (chunk: ArrayBuffer) => void;
+  onComplete?: () => void;
+  onError?: (error: Error) => void;
 }
 
-
-export async function speakText(
-  inputText: string,
-  voice: SpeexVoiceSelector,
-  options?: {
-    label?: string;           // For NorthBridge queue display
-    personaUid?: DPersonaUid; // For NorthBridge queue icon / controls (if the audio came from a persona)
-    streaming?: boolean;      // Streaming defaults to True
-    playback?: boolean;       // Play audio (default: true)
-    returnAudio?: boolean;    // Accumulate full audio buffer in result, even if streaming (for save/download)
-  },
-  callbacks?: {
-    onStart?: () => void;
-    onChunk?: (chunk: ArrayBuffer) => void;
-    onComplete?: () => void;
-    onError?: (error: Error) => void;
-  },
-): Promise<SpeexSpeakResult> {
+export async function speakText(inputText: string, voiceSelector: _Speak_VoiceSelector, options?: SpeexSpeakOptions, callbacks?: _Speak_Callbacks): Promise<SpeexSpeakResult> {
 
   const streaming = options?.streaming ?? true;
   const playback = options?.playback ?? true;
   const returnAudio = options?.returnAudio ?? !streaming;
+  const languageCode = options?.languageCode ?? _getUIPreferenceLanguageCode();
 
-  // Resolve engine from voice selector
-  // - priority: explicit engineId > voice.vendorType > store active > priority-ordered available
-  const engine = _resolveEngineFromSelector(voice);
+  // resolve engine from voice selector
+  const engine = _engineFromSelector(voiceSelector);
+  if (!engine)
+    return { success: false, error: 'No TTS engine configured. Please configure a TTS engine in Settings.' };
 
-  // route based on engine
+  // apply voice override from selector (merge with engine defaults)
+  const effectiveEngine = _engineApplyVoiceOverride(engine, voiceSelector);
+
   try {
-
-    switch (engine?.vendorType) {
-      // Web Speech: client-only, no RPC
-      case 'webspeech':
-        return speexSynthesizeWebSpeech(inputText, engine.voice as DVoiceWebSpeech, callbacks);
-
+    switch (effectiveEngine.vendorType) {
       // RPC providers: route through speex.router RPC
       case 'elevenlabs':
       case 'openai':
       case 'localai':
-        return speexSynthesizeRPC(engine, inputText, { streaming, playback, returnAudio }, callbacks);
-    }
+        return speexSynthesize_RPC(effectiveEngine, inputText, { streaming, playback, returnAudio, languageCode }, callbacks);
 
-    // No engine found - return error
-    return {
-      success: false,
-      error: 'No TTS engine configured. Please configure a TTS engine in Settings.',
-    };
+      // Web Speech: client-only, no RPC
+      case 'webspeech':
+        return speexSynthesize_WebSpeech(inputText, effectiveEngine.voice as DVoiceWebSpeech, callbacks);
+    }
   } catch (error) {
     callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
     return {
@@ -122,9 +102,9 @@ export async function speakText(
 }
 
 
-// Private: Engine resolution
+// private helpers
 
-function _resolveEngineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineAny | null {
+function _engineFromSelector(selector: _Speak_VoiceSelector): DSpeexEngineAny | null {
   if (selector) {
     // A. most specific selector: engineId
     if ('engineId' in selector && selector.engineId) {
@@ -143,38 +123,15 @@ function _resolveEngineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineA
   return speexFindGlobalEngine();
 }
 
-
-// Voice Info type - shared across all providers
-
-export interface SpeexVoiceInfo {
-  id: string;
-  name: string;
-  description?: string;
-  previewUrl?: string;
-  category?: string;
+function _engineApplyVoiceOverride(engine: DSpeexEngineAny, selector: _Speak_VoiceSelector): DSpeexEngineAny {
+  return (!selector || !('voice' in selector) || !selector.voice) ? engine : {
+    ...engine,
+    voice: { ...engine.voice, ...selector.voice },
+  } as DSpeexEngineAny;
 }
 
-// /**
-//  * List available voices for an engine.
-//  * For cloud providers, this calls the speex.router RPC.
-//  * For webspeech, this uses the browser API.
-//  */
-// export async function speexListVoicesForEngine(engine: DSpeexEngineAny): Promise<SpeexVoiceInfo[]> {
-//   switch (engine.vendorType) {
-//     case 'webspeech':
-//       // Use browser API - synchronous but may need async loading
-//       const browserVoices = speexListVoicesWebSpeech();
-//       return browserVoices.map(v => ({
-//         id: v.voiceURI,
-//         name: v.name,
-//         description: `${v.lang}${v.localService ? ' (local)' : ''}`,
-//       }));
-//
-//     case 'elevenlabs':
-//     case 'openai':
-//     case 'localai':
-//       // Use RPC
-//       const result = await speexListVoicesRPC(engine);
-//       return result.voices;
-//   }
-// }
+// extract base language code (e.g., 'en-US' -> 'en', 'fr' -> 'fr')
+function _getUIPreferenceLanguageCode(): string | undefined {
+  const { preferredLanguage } = useUIPreferencesStore.getState();
+  return preferredLanguage?.split('-')[0]?.toLowerCase() || undefined;
+}

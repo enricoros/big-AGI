@@ -1,14 +1,11 @@
 /**
- * OpenAI-compatible TTS Synthesizer
- *
- * Supports both OpenAI and LocalAI dialects using the same protocol.
- * Endpoint: POST /v1/audio/speech
+ * OpenAI-compatible/friendly TTS Synthesizer
  */
 
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import type { SynthesizeBackendFn } from './speex.router';
-import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './speex.wiretypes';
+import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
+import type { SynthesizeBackendFn } from './rpc.router';
 
 
 // configuration
@@ -18,8 +15,8 @@ const FALLBACK_OPENAI_MODEL = 'tts-1';
 const FALLBACK_OPENAI_VOICE_ID = 'alloy';
 
 
-/** OpenAI TTS API: POST /v1/audio/speech */
-interface OpenAIWire_TTSRequest {
+// OpenAI TTS API: POST /v1/audio/speech
+interface OpenAIWire_TTS_Request {
   input: string;
   model: string;          // required: 'tts-1', 'tts-1-hd', 'gpt-4o-mini-tts'
   voice: string;          // required: 'alloy', 'echo', 'fable', etc.
@@ -28,13 +25,18 @@ interface OpenAIWire_TTSRequest {
   instructions?: string;  // voice instructions
 }
 
-/** LocalAI TTS API: POST /v1/audio/speech (OpenAI-similar) */
-interface LocalAIWire_TTSRequest {
+// LocalAI TTS API: POST /v1/audio/speech
+interface LocalAIWire_TTS_Request {
   input: string;
   model?: string;         // optional: e.g., 'kokoro'
   backend?: string;       // optional: 'coqui', 'bark', 'piper', 'transformers-musicgen', 'vall-e-x'
   language?: string;      // optional: for multilingual models
   response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm'; // defaults to 'wav', 'mp3' also seem to work well, with kokoro at least
+}
+
+interface LocalAIWire_ListModels_Response {
+  object: 'list';
+  data: Array<{ id: string; object: 'model' }>;
 }
 
 
@@ -60,7 +62,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
   };
 
   // request.body
-  let body: OpenAIWire_TTSRequest | LocalAIWire_TTSRequest;
+  let body: OpenAIWire_TTS_Request | LocalAIWire_TTS_Request;
   switch (access.dialect) {
     case 'localai':
       if (voice.dialect !== 'localai') throw new Error('Voice dialect mismatch for LocalAI access');
@@ -71,7 +73,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
         ...(voice.language ? { language: voice.language } : {}),
         response_format: 'mp3', // MP3 for MediaSource compatibility
         // response_format: streaming ? 'wav' : 'mp3',
-      } satisfies LocalAIWire_TTSRequest;
+      } satisfies LocalAIWire_TTS_Request;
       break;
 
     case 'openai':
@@ -84,7 +86,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
         ...(voice.instruction ? { instructions: voice.instruction } : {}),
         response_format: 'mp3', // MP3 for MediaSource compatibility
         // response_format: streaming ? 'wav' : 'mp3',
-      } satisfies OpenAIWire_TTSRequest;
+      } satisfies OpenAIWire_TTS_Request;
       break;
   }
 
@@ -162,21 +164,19 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
 // List Voices - OpenAI (hardcoded)
 //
 
-const OPENAI_TTS_VOICES: SpeexWire_ListVoices_Output['voices'] = [
-  { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
-  { id: 'ash', name: 'Ash', description: 'Warm and engaging' },
-  { id: 'coral', name: 'Coral', description: 'Warm and friendly' },
-  { id: 'echo', name: 'Echo', description: 'Clear and resonant' },
-  { id: 'fable', name: 'Fable', description: 'Expressive and dynamic' },
-  { id: 'marin', name: 'Marin', description: 'Expressive and confident' },
-  { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
-  { id: 'nova', name: 'Nova', description: 'Friendly and upbeat' },
-  { id: 'sage', name: 'Sage', description: 'Calm and wise' },
-  { id: 'shimmer', name: 'Shimmer', description: 'Clear and bright' },
-];
-
 export function listVoicesOpenAI(): SpeexWire_ListVoices_Output['voices'] {
-  return OPENAI_TTS_VOICES;
+  return [
+    { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
+    { id: 'ash', name: 'Ash', description: 'Warm and engaging' },
+    { id: 'coral', name: 'Coral', description: 'Warm and friendly' },
+    { id: 'echo', name: 'Echo', description: 'Clear and resonant' },
+    { id: 'fable', name: 'Fable', description: 'Expressive and dynamic' },
+    { id: 'marin', name: 'Marin', description: 'Expressive and confident' },
+    { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
+    { id: 'nova', name: 'Nova', description: 'Friendly and upbeat' },
+    { id: 'sage', name: 'Sage', description: 'Calm and wise' },
+    { id: 'shimmer', name: 'Shimmer', description: 'Clear and bright' },
+  ];
 }
 
 
@@ -184,25 +184,6 @@ export function listVoicesOpenAI(): SpeexWire_ListVoices_Output['voices'] {
 // List Voices - LocalAI
 //
 
-const KNOWN_TTS_MODELS: Record<string, { name: string; description: string }> = {
-  'kokoro': { name: 'Kokoro', description: 'High-quality neural TTS' },
-  'bark': { name: 'Bark', description: 'Text-to-audio by Suno AI' },
-  'piper': { name: 'Piper', description: 'Fast local TTS' },
-  'coqui': { name: 'Coqui', description: 'Coqui TTS engine' },
-  'vall-e-x': { name: 'VALL-E X', description: 'Zero-shot voice cloning' },
-  'tts-1': { name: 'TTS-1', description: 'OpenAI-compatible TTS' },
-  'tts-1-hd': { name: 'TTS-1 HD', description: 'High-definition TTS' },
-};
-
-/** LocalAI GET /v1/models response */
-interface LocalAIWire_ModelsResponse {
-  object: 'list';
-  data: Array<{ id: string; object: 'model' }>;
-}
-
-/**
- * List available TTS models from LocalAI instance
- */
 export async function listVoicesLocalAI(access: SpeexWire_Access_OpenAI): Promise<SpeexWire_ListVoices_Output> {
   if (access.dialect !== 'localai')
     throw new Error('listVoicesLocalAI requires localai dialect');
@@ -213,9 +194,9 @@ export async function listVoicesLocalAI(access: SpeexWire_Access_OpenAI): Promis
     ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
   };
 
-  let modelsResponse: LocalAIWire_ModelsResponse;
+  let modelsResponse: LocalAIWire_ListModels_Response;
   try {
-    modelsResponse = await fetchJsonOrTRPCThrow<LocalAIWire_ModelsResponse>({
+    modelsResponse = await fetchJsonOrTRPCThrow<LocalAIWire_ListModels_Response>({
       url: `${host}/v1/models`,
       headers,
       name: 'LocalAI',
@@ -225,7 +206,16 @@ export async function listVoicesLocalAI(access: SpeexWire_Access_OpenAI): Promis
     return { voices: [] };
   }
 
-  // Filter to known TTS models only
+  // Filter to known TTS models to provide a better start
+  const KNOWN_TTS_MODELS: Record<string, { name: string; description: string }> = {
+    'kokoro': { name: 'Kokoro', description: 'High-quality neural TTS' },
+    'bark': { name: 'Bark', description: 'Text-to-audio by Suno AI' },
+    'piper': { name: 'Piper', description: 'Fast local TTS' },
+    'coqui': { name: 'Coqui', description: 'Coqui TTS engine' },
+    'vall-e-x': { name: 'VALL-E X', description: 'Zero-shot voice cloning' },
+    'tts-1': { name: 'TTS-1', description: 'OpenAI-compatible TTS' },
+    'tts-1-hd': { name: 'TTS-1 HD', description: 'High-definition TTS' },
+  };
   const ttsModels = modelsResponse.data.filter(model => model.id in KNOWN_TTS_MODELS);
 
   return {

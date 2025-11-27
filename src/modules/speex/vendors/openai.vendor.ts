@@ -1,9 +1,10 @@
-import type { ISpeexVendor } from './ISpeexVendor';
+import type { ISpeexVendor } from '../ISpeexVendor';
 
 
 export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
   vendorType: 'openai',
   name: 'OpenAI',
+  protocol: 'rpc',
   location: 'cloud',
   priority: 30,
 
@@ -28,7 +29,7 @@ export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
   getDefaultVoice: () => ({
     vendorType: 'openai',
     ttsModel: 'tts-1',
-    voiceId: 'alloy',
+    ttsVoiceId: 'alloy',
     speed: 1.0,
   }),
 };

@@ -1,4 +1,4 @@
-import type { ISpeexVendor } from './ISpeexVendor';
+import type { ISpeexVendor } from '../ISpeexVendor';
 
 
 /**
@@ -15,6 +15,7 @@ import type { ISpeexVendor } from './ISpeexVendor';
 export const SpeexVendorLocalAI: ISpeexVendor<'localai'> = {
   vendorType: 'localai',
   name: 'LocalAI',
+  protocol: 'rpc',
   location: 'local',
   priority: 20,
 

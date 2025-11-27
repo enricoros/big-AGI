@@ -1,9 +1,10 @@
-import type { ISpeexVendor } from './ISpeexVendor';
+import type { ISpeexVendor } from '../ISpeexVendor';
 
 
 export const SpeexVendorWebSpeech: ISpeexVendor<'webspeech'> = {
   vendorType: 'webspeech',
   name: 'System Voice',
+  protocol: 'webspeech',
   location: 'browser',
   priority: 100, // lowest priority, fallback
 
