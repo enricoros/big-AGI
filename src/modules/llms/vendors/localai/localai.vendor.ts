@@ -4,7 +4,7 @@ import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 
-interface DLocalAIServiceSettings {
+export interface DLocalAIServiceSettings {
   localAIHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
   localAIKey: string;   // use OpenAI-compatible API keys
   csf?: boolean;
