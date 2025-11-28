@@ -125,12 +125,13 @@ export class AudioLivePlayer {
     this.chunkQueue = [];
     this.isMediaSourceEnded = true;
 
-    if (this.sourceBuffer) {
+    // only abort SourceBuffer when MediaSource is 'open'
+    if (this.sourceBuffer && this.mediaSource.readyState === 'open') {
       try {
-        this._safeEndOfStream();
         this.sourceBuffer.abort();
+        this.mediaSource.endOfStream();
       } catch (e) {
-        console.warn('Error stopping playback:', e);
+        // Ignore - may race with natural stream end
       }
     }
 
