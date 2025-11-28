@@ -15,6 +15,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import LinkIcon from '@mui/icons-material/Link';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { ElevenLabsIcon } from '~/common/components/icons/vendors/ElevenLabsIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
@@ -97,9 +98,9 @@ const _styles = {
 
 
 const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; description: string, icon?: React.FunctionComponent<SvgIconProps> }[] = [
-  { vendorType: 'elevenlabs', label: 'ElevenLabs', description: 'Premium voice synthesis' },
-  { vendorType: 'openai', label: 'OpenAI TTS', description: 'Fast and reliable', icon: OpenAIIcon },
+  { vendorType: 'elevenlabs', label: 'ElevenLabs', description: 'Premium voices', icon: ElevenLabsIcon },
   { vendorType: 'localai', label: 'LocalAI', description: 'Self-hosted TTS', icon: LocalAIIcon },
+  { vendorType: 'openai', label: 'OpenAI TTS', description: 'Reliable', icon: OpenAIIcon },
 ] as const;
 
 
@@ -260,8 +261,7 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
     {/* Empty state */}
     {!hasEngines && (
       <Typography level='body-sm' sx={{ color: 'text.tertiary' }}>
-        No voice engines detected. Voice engines are auto-detected from your LLM services (OpenAI) or browser (System Voice).
-        Click &quot;Add Service&quot; to manually configure a TTS provider.
+        No voice engines available. Configure an OpenAI-compatible AI service to auto-link TTS, or add ElevenLabs for premium voices.
       </Typography>
     )}
 

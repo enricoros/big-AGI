@@ -28,6 +28,73 @@ export function webspeechIsSupported(): boolean {
 }
 
 
+// Smart voice selection for auto-detected WebSpeech engine
+
+/** Preferred voices by name, in priority order */
+const PREFERRED_VOICE_NAMES = [
+  'Google US English',
+  'Microsoft Zira - English (United States)',
+  'Microsoft David - English (United States)',
+] as const;
+
+/**
+ * Selects the best voice from available voices.
+ * Priority: preferred voices → browser language → English → first available
+ */
+function _selectBestVoice(voices: SpeechSynthesisVoice[]): string | undefined {
+  if (!voices.length) return undefined;
+
+  // 1. Preferred voices
+  for (const name of PREFERRED_VOICE_NAMES) {
+    const match = voices.find(v => v.name === name);
+    if (match) return match.voiceURI;
+  }
+
+  // 2. Match browser language
+  const lang = (navigator.language || 'en').split('-')[0].toLowerCase();
+  const langVoice = voices.find(v => v.lang.toLowerCase().startsWith(lang));
+  if (langVoice) return langVoice.voiceURI;
+
+  // 3. Any English voice
+  const enVoice = voices.find(v => v.lang.toLowerCase().startsWith('en'));
+  if (enVoice) return enVoice.voiceURI;
+
+  return undefined;
+}
+
+/**
+ * Sets the best voice, retrying once after voices load if needed.
+ * Safe to call at hydration - will update the engine when voices become available.
+ */
+export function webspeechHBestVoiceDeferred(setter: (voiceURI: string) => void): void {
+  if (!webspeechIsSupported()) return;
+
+  // try immediate
+  const voices = speechSynthesis.getVoices();
+  const b1 = _selectBestVoice(voices);
+  if (b1) return setter(b1);
+
+  // retry after voices load (one-shot)
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const onVoicesChanged = () => {
+    clearTimeout(timeoutId);
+    speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+    const v = speechSynthesis.getVoices();
+    const b2 = _selectBestVoice(v);
+    if (b2) setter(b2);
+  };
+  speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+
+  // fallback timeout in case voiceschanged never fires
+  timeoutId = setTimeout(() => {
+    speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+    const v = speechSynthesis.getVoices();
+    const b3 = _selectBestVoice(v);
+    if (b3) setter(b3);
+  }, 2000);
+}
+
+
 // List Voices - immediate
 
 // NOTE: we deprecated the code below and keep it around just as a warning or reference.
