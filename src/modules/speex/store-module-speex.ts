@@ -10,7 +10,7 @@ import { useModelsStore } from '~/common/stores/llms/store-llms';
 import type { DSpeexCredentialsAny, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, SpeexEngineId } from './speex.types';
 import { SPEEX_DEFAULTS } from './speex.config';
 import { speexFindByVendorPriorityAsc, speexFindVendor, speexFindVendorForLLMVendor } from './speex.vendors-registry';
-import { webspeechIsSupported } from './protocols/webspeech/webspeech.client';
+import { webspeechHBestVoiceDeferred, webspeechIsSupported } from './protocols/webspeech/webspeech.client';
 
 
 interface SpeexStoreState {
@@ -128,13 +128,16 @@ export const useSpeexStore = create<SpeexStore>()(persist(
       }
 
       // otherwise create
-      createEngine('webspeech', {
+      const engineId = createEngine('webspeech', {
         label: 'System Voice',
         isAutoDetected: true,
-        isAutoLinked: false, // not linked to LLM service
+        isAutoLinked: false,
       });
 
-      // TODO - FUTURE: if we're here we may also decide to fetch voices, and choose a good default one for WebSpeech?
+      // deferred: heuristic to pick a best voice
+      webspeechHBestVoiceDeferred((voiceURI) => {
+        updateEngine(engineId, { voice: { dialect: 'webspeech', ttsVoiceURI: voiceURI } });
+      });
 
       return true;
     },
