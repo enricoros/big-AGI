@@ -110,6 +110,7 @@ export type SpeexListVoicesResult = {
   voices: SpeexListVoiceOption[];
   isLoading: boolean;
   error: string | null;
+  refetch?: () => void;
 }
 
 

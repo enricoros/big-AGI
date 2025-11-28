@@ -8,6 +8,7 @@
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
+import { stripUndefined } from '~/common/util/objectUtils';
 
 import type { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
 import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
@@ -46,7 +47,7 @@ export async function speexSynthesize_RPC(
 
   // engine credentials (DCredentials..) -> wire Access
   if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesize request (engine: ${engine.engineId}, ${text.length} chars) - options:`, options);
-  const access = _buildRPCWireAccess(engine);
+  const access = stripUndefined(_buildRPCWireAccess(engine));
   if (!access) {
     const error = new Error(`Failed to resolve credentials for engine ${engine.engineId}`);
     callbacks?.onError?.(error);
@@ -55,7 +56,7 @@ export async function speexSynthesize_RPC(
 
   // engine voice -> wire Voice
   // IMPORTANT: TS ensures structural compatibility here between the DVoice* and Voice*_schema types
-  const voice: SpeexWire_Voice = engine.voice;
+  const voice: SpeexWire_Voice = stripUndefined(engine.voice);
 
 
   // audio player for streaming playback
@@ -162,17 +163,12 @@ export async function speexSynthesize_RPC(
 /**
  * List voices via speex.router
  */
-export async function speexListVoices_RPC(engine: _DSpeexEngineRPC): Promise<SpeexListVoiceOption[]> {
+export async function speexListVoices_RPC_orThrow(engine: _DSpeexEngineRPC): Promise<SpeexListVoiceOption[]> {
   const access = _buildRPCWireAccess(engine);
   if (!access)
     return [];
 
-  try {
-    return (await apiAsync.speex.listVoices.query({ access })).voices;
-  } catch (error) {
-    // console.log('[DEV] speexListVoicesRPC. Failed to list voices:', error);
-    return [];
-  }
+  return (await apiAsync.speex.listVoices.query({ access })).voices;
 }
 
 

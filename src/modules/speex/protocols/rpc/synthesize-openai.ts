@@ -164,7 +164,7 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
   } catch (error: any) {
     // ok to be user visible
     console.warn('[DEV] Speex: listVoicesLocalAI: Failed to fetch models:', error.message);
-    return { voices: [] };
+    throw error;
   }
 
   // Filter to known TTS models to provide a better start
