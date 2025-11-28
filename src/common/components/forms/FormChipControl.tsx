@@ -21,6 +21,13 @@ const _styles = {
     gap: 1,
   } as const,
 
+  chipGroupEnd: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 1,
+  } as const,
+
   chip: {
     '--Chip-minHeight': '1.75rem', // this makes it prob better
     px: 1.5,
@@ -36,6 +43,7 @@ export const FormChipControl = <TValue extends string>(props: {
   // specific
   size?: 'sm' | 'md' | 'lg',
   color?: ColorPaletteProp,
+  alignEnd?: boolean,
   // =FormRadioControl
   title: string | React.JSX.Element;
   description?: string | React.JSX.Element;
@@ -59,7 +67,7 @@ export const FormChipControl = <TValue extends string>(props: {
   return (
     <FormControl orientation='horizontal' disabled={props.disabled} sx={_styles.control}>
       {(!!props.title || !!description) && <FormLabelStart title={props.title} description={description} tooltip={props.tooltip} />}
-      <Box sx={_styles.chipGroup}>
+      <Box sx={props.alignEnd ? _styles.chipGroupEnd : _styles.chipGroup}>
         {props.options.map((option) => (
           <Chip
             key={'opt-' + option.value}
