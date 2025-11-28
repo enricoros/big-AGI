@@ -33,7 +33,7 @@ export async function speakText(
   const languageCode = options?.languageCode ?? _getUIPreferenceLanguageCode();
   const priority = options?.priority;
   const playback = options?.playback ?? true;
-  const returnAudio = options?.returnAudio ?? !streaming;
+  const returnAudio = options?.returnAudio ?? false;
 
   // resolve engine from voice selector
   const engine = _engineFromSelector(voiceSelector);

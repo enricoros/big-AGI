@@ -67,10 +67,16 @@ export async function speexSynthesize_RPC(
   try {
 
     // call the streaming RPC - whether the backend will stream in chunks or as a whole
-    const particleStream = await apiStream.speex.synthesize.mutate(
-      { access, text, voice, streaming: options.streaming, languageCode: options.languageCode, priority: options.priority },
-      { signal: abortController.signal },
-    );
+    const particleStream = await apiStream.speex.synthesize.mutate({
+      access,
+      text,
+      voice,
+      streaming: options.streaming,
+      ...(options.languageCode && { languageCode: options.languageCode }),
+      ...(options.priority && { priority: options.priority }),
+    }, {
+      signal: abortController.signal,
+    });
 
     // process streaming particles
     for await (const particle of particleStream) {
@@ -84,23 +90,23 @@ export async function speexSynthesize_RPC(
 
         case 'audio':
           // Decode base64 to ArrayBuffer
-          const audioBuffer = convert_Base64_To_UInt8Array(particle.base64, 'speex.rpc.client').buffer;
+          const audioData = convert_Base64_To_UInt8Array(particle.base64, 'speex.rpc.client');
+
+          // Accumulate for return (copy bytes before playback may transfer/detach the buffer)
+          if (options.returnAudio)
+            audioChunks.push(audioData.slice().buffer);
 
           // Playback: streaming uses AudioLivePlayer for chunked playback,
           // non-streaming uses AudioPlayer for single-buffer playback
           if (options.playback) {
             if (particle.chunk)
-              audioPlayer?.enqueueChunk(audioBuffer);
+              audioPlayer?.enqueueChunk(audioData.buffer);
             else
-              void AudioPlayer.playBuffer(audioBuffer); // fire-and-forget for whole audio
+              void AudioPlayer.playBuffer(audioData.buffer); // fire-and-forget for whole audio
           }
 
-          // Accumulate for return
-          if (options.returnAudio)
-            audioChunks.push(audioBuffer);
-
           // Callback
-          callbacks?.onChunk?.(audioBuffer);
+          callbacks?.onChunk?.(audioData.buffer);
           break;
 
         case 'log':
@@ -109,6 +115,8 @@ export async function speexSynthesize_RPC(
           break;
 
         case 'done':
+          const { chars, audioBytes, durationMs } = particle;
+          if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesis done: ${chars} chars, ${audioBytes} bytes, ${durationMs} ms`);
           audioPlayer?.endPlayback();
           break;
 
