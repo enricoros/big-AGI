@@ -28,6 +28,7 @@ export async function* streamAudioChunksOrThrow(
   try {
     const accumulatedChunks: Uint8Array[] = [];
     let accumulatedSize = 0;
+    let totalAudioBytes = 0;
 
     while (true) {
       const { value, done: readerDone } = await reader.read();
@@ -41,16 +42,19 @@ export async function* streamAudioChunksOrThrow(
       // Yield when accumulated size reaches threshold
       if (accumulatedSize >= minChunkSize) {
         yield { t: 'audio', base64: Buffer.concat(accumulatedChunks).toString('base64'), chunk: true };
+        totalAudioBytes += accumulatedSize;
         accumulatedChunks.length = 0;
         accumulatedSize = 0;
       }
     }
 
     // Yield any remaining data as final chunk
-    if (accumulatedSize > 0)
+    if (accumulatedSize > 0) {
       yield { t: 'audio', base64: Buffer.concat(accumulatedChunks).toString('base64'), chunk: true /*, final: true*/ };
+      totalAudioBytes += accumulatedSize;
+    }
 
-    yield { t: 'done', chars: textLength };
+    yield { t: 'done', chars: textLength, audioBytes: totalAudioBytes };
 
   } finally {
     reader.releaseLock();
@@ -78,6 +82,6 @@ export async function* returnAudioWholeOrThrow(
     ...(audioMeta?.ttsLatencyMs ? { ttsLatencyMs: audioMeta.ttsLatencyMs } : {}),
   };
 
-  yield { t: 'done', chars: textLength };
+  yield { t: 'done', chars: textLength, audioBytes: audioArrayBuffer.byteLength };
 
 }

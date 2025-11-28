@@ -7,7 +7,7 @@ import * as z from 'zod/v4';
 export type SpeexSpeechParticle =
   | { t: 'start' }
   | { t: 'audio'; base64: string; chunk: boolean; contentType?: string; characterCost?: number; ttsLatencyMs?: number }
-  | { t: 'done'; durationMs?: number; chars?: number }
+  | { t: 'done'; durationMs?: number; chars: number; audioBytes: number }
   | { t: 'log'; level: 'info', message: string }
   | { t: 'error'; e: string }
   ;

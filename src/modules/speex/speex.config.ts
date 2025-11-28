@@ -2,6 +2,7 @@
 export const SPEEX_DEBUG = false;
 
 export const SPEEX_PREVIEW_TEXT = 'Hello, this is my voice.';
+export const SPEEX_PREVIEW_STREAM = true; // default: true, whether to use streaming - this is for debugging
 
 // default voice parameters for each vendor
 export const SPEEX_DEFAULTS = {
