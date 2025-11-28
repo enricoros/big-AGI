@@ -1,4 +1,5 @@
 import type { ISpeexVendor } from '../ISpeexVendor';
+import { SPEEX_DEFAULTS } from '../speex.config';
 
 
 export const SpeexVendorElevenLabs: ISpeexVendor<'elevenlabs'> = {
@@ -24,7 +25,7 @@ export const SpeexVendorElevenLabs: ISpeexVendor<'elevenlabs'> = {
 
   getDefaultVoice: () => ({
     dialect: 'elevenlabs',
-    ttsModel: 'eleven_multilingual_v2', // best for mixed/non-English; user can switch to turbo for English-only
-    ttsVoiceId: undefined, // will use API default
+    ttsModel: SPEEX_DEFAULTS.ELEVENLABS_MODEL,
+    ttsVoiceId: SPEEX_DEFAULTS.ELEVENLABS_VOICE,
   }),
 };

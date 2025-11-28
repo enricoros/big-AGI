@@ -1,26 +1,18 @@
-/**
- * SpeexEngineConfig - Vendor-specific engine configuration
- *
- * Dynamically renders configuration UI based on engine vendor type.
- * Supports both full mode (credentials + voice) and voice-only mode.
- *
- * Used in:
- * - VoiceSettings (global engine configuration)
- * - PersonaEditor (per-persona voice override)
- */
-
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, Input, Slider, Typography } from '@mui/joy';
+import { Box, Button, Divider, FormControl, FormHelperText, Input, Typography } from '@mui/joy';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 
 import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
-import { speakText } from '../speex.client';
+import { SPEEX_DEFAULTS, SPEEX_PREVIEW_TEXT } from '../speex.config';
 import { SpeexVoiceSelect } from './SpeexVoiceSelect';
+import { speakText } from '../speex.client';
 
 
 // Credential input helper - shared across vendors
@@ -32,6 +24,7 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, showHost, hostRequired
   hostPlaceholder?: string;
 }) {
   return <>
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='API Key' description={hostRequired ? 'Optional' : 'Required'} />
       <Input
@@ -42,6 +35,7 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, showHost, hostRequired
         sx={{ minWidth: 200 }}
       />
     </FormControl>
+
     {showHost && (
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <FormLabelStart title='API Host' description={hostRequired ? 'Required' : 'Optional'} />
@@ -53,27 +47,26 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, showHost, hostRequired
         />
       </FormControl>
     )}
+
   </>;
 }
 
 
-// configuration
-const PREVIEW_TEXT = 'Hello, this is my voice.';
+function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) {
 
-
-function PreviewButton({ engine }: { engine: DSpeexEngineAny }) {
+  // state
   const [isSpeaking, setIsSpeaking] = React.useState(false);
 
-  const handlePreview = async () => {
+  const handlePreview = React.useCallback(async () => {
     if (isSpeaking) return;
     setIsSpeaking(true);
     await speakText(
-      PREVIEW_TEXT,
-      { engineId: engine.engineId },
+      SPEEX_PREVIEW_TEXT,
+      { engineId: engineId },
       { streaming: true, playback: true },
       { onComplete: () => setIsSpeaking(false), onError: () => setIsSpeaking(false) },
     );
-  };
+  }, [engineId, isSpeaking]);
 
   return (
     <Button
@@ -83,6 +76,7 @@ function PreviewButton({ engine }: { engine: DSpeexEngineAny }) {
       onClick={handlePreview}
       disabled={isSpeaking}
       startDecorator={isSpeaking ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
+      sx={{ ml: 'auto' }}
     >
       {isSpeaking ? 'Speaking...' : 'Preview'}
     </Button>
@@ -90,24 +84,39 @@ function PreviewButton({ engine }: { engine: DSpeexEngineAny }) {
 }
 
 
-export function SpeexEngineConfig(props: {
+export function SpeexConfigureEngineFull(props: {
   engine: DSpeexEngineAny;
+  isMobile: boolean;
+  mode?: 'full' | 'voice-only';
+  bottomStart?: React.ReactNode;
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
-  mode?: 'full' | 'voice-only'; // full: credentials + voice, voice-only: just voice settings
 }) {
-  const { engine, onUpdate, mode = 'full' } = props;
-  switch (engine.vendorType) {
-    case 'elevenlabs':
-      return <ElevenLabsConfig engine={engine} onUpdate={onUpdate} mode={mode} />;
-    case 'localai':
-      return <LocalAIConfig engine={engine} onUpdate={onUpdate} mode={mode} />;
-    case 'openai':
-      return <OpenAIConfig engine={engine} onUpdate={onUpdate} mode={mode} />;
-    case 'webspeech':
-      return <WebSpeechConfig engine={engine} onUpdate={onUpdate} mode={mode} />;
-    default:
-      return <Typography level='body-sm' color='warning'>Unknown engine type</Typography>;
-  }
+  const { engine, isMobile, mode = 'full', bottomStart, onUpdate } = props;
+  return <>
+
+    {/*<Box mt={2} />*/}
+    <Divider sx={{ my: 1 }} inset='context' />
+
+    {/* Engine-Specific pane */}
+    {engine.vendorType === 'elevenlabs' ? (
+      <ElevenLabsConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
+    ) : engine.vendorType === 'localai' ? (
+      <LocalAIConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
+    ) : engine.vendorType === 'openai' ? (
+      <OpenAIConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
+    ) : engine.vendorType === 'webspeech' ? (
+      <WebSpeechConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
+    ) : (
+      <Typography level='body-sm' color='warning'>Unknown engine type {(engine as any)?.vendorType}</Typography>
+    )}
+
+    {/* (Delete | Chip) -- Preview */}
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {bottomStart}
+      <PreviewButton engineId={engine.engineId} />
+    </Box>
+
+  </>;
 }
 
 
@@ -116,6 +125,7 @@ export function SpeexEngineConfig(props: {
 function ElevenLabsConfig({ engine, onUpdate, mode }: {
   engine: DSpeexEngine<'elevenlabs'>,
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
 
@@ -139,7 +149,7 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
       />
     )}
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
       <FormLabelStart title='Voice' description='ElevenLabs voice' />
       <SpeexVoiceSelect
         engine={engine}
@@ -149,20 +159,17 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
       />
     </FormControl>
 
-    <FormChipControl
+    <FormChipControl<Exclude<DVoiceElevenLabs['ttsModel'], undefined>>
       title='Model'
-      description={voice.ttsModel === 'eleven_flash_v2_5' ? 'Fastest'
-        : voice.ttsModel === 'eleven_turbo_v2_5' ? 'Fast, English'
-          : voice.ttsModel === 'eleven_v3' ? 'Newest'
-            : 'Recommended'}
+      alignEnd
       options={[
-        { value: 'eleven_multilingual_v2', label: 'Multilingual v2' },
-        { value: 'eleven_turbo_v2_5', label: 'Turbo v2.5' },
-        { value: 'eleven_flash_v2_5', label: 'Flash v2.5' },
-        { value: 'eleven_v3', label: 'v3' },
+        { value: 'eleven_multilingual_v2', label: 'Multilingual v2', description: 'Recommended' },
+        { value: 'eleven_turbo_v2_5', label: 'Turbo v2.5', description: 'Fast' },
+        { value: 'eleven_flash_v2_5', label: 'Flash v2.5', description: 'Fastest' },
+        { value: 'eleven_v3', label: 'v3', description: 'Newest' },
       ]}
-      value={voice.ttsModel ?? 'eleven_multilingual_v2'}
-      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value as DVoiceElevenLabs['ttsModel'] } })}
+      value={voice.ttsModel ?? SPEEX_DEFAULTS.ELEVENLABS_MODEL}
+      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value } })}
     />
 
     {showCredentials && (
@@ -170,10 +177,6 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
         Voice listing requires API key. Language auto-detected from preferences.
       </FormHelperText>
     )}
-
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-      <PreviewButton engine={engine} />
-    </Box>
   </>;
 }
 
@@ -181,6 +184,7 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
 function LocalAIConfig({ engine, onUpdate, mode }: {
   engine: DSpeexEngine<'localai'>,
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
   const { credentials, voice } = engine;
@@ -195,6 +199,7 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
   }, [onUpdate, voice]);
 
   return <>
+
     {/* Credentials (only for manually added engines in full mode) */}
     {showCredentials && (
       <CredentialsApiKeyInputs
@@ -206,7 +211,7 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
       />
     )}
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
       <FormLabelStart title='Model' description='TTS model' />
       <SpeexVoiceSelect
         engine={engine}
@@ -235,16 +240,14 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
       <FormHelperText>Leave empty for default backend</FormHelperText>
     </FormControl>
 
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-      <PreviewButton engine={engine} />
-    </Box>
   </>;
 }
 
 
-function OpenAIConfig({ engine, onUpdate, mode }: {
+function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
   engine: DSpeexEngine<'openai'>,
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
 
@@ -259,11 +262,12 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
     onUpdate({ voice: { ...voice, ttsVoiceId } });
   }, [onUpdate, voice]);
 
-  const handleSpeedChange = React.useCallback((_: unknown, value: number | number[]) => {
-    onUpdate({ voice: { ...voice, ttsSpeed: value as number } });
+  const handleSpeedChange = React.useCallback((value: number) => {
+    onUpdate({ voice: { ...voice, ttsSpeed: value } });
   }, [onUpdate, voice]);
 
   return <>
+
     {/* Credentials (only for manually added engines in full mode) */}
     {showCredentials && (
       <CredentialsApiKeyInputs
@@ -274,8 +278,20 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
       />
     )}
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Voice' description='OpenAI TTS voice' />
+    <FormChipControl<DVoiceOpenAI['ttsModel']>
+      title='Model'
+      alignEnd
+      options={[
+        { value: 'gpt-4o-mini-tts', label: 'GPT-4o Mini', description: 'Expressive' },
+        { value: 'tts-1', label: 'TTS-1', description: 'Fast' },
+        { value: 'tts-1-hd', label: 'TTS-1-HD', description: 'Quality' },
+      ]}
+      value={voice.ttsModel ?? SPEEX_DEFAULTS.OPENAI_MODEL}
+      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value as DVoiceOpenAI['ttsModel'] } })}
+    />
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
+      <FormLabelStart title='Voice' description={isMobile ? undefined : 'OpenAI TTS voice'} />
       <SpeexVoiceSelect
         engine={engine}
         voiceId={voice.ttsVoiceId ?? null}
@@ -283,54 +299,39 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
       />
     </FormControl>
 
-    <FormChipControl
-      title='Model'
-      description={voice.ttsModel === 'tts-1-hd' ? 'Higher quality'
-        : voice.ttsModel === 'gpt-4o-mini-tts' ? 'Expressive'
-          : 'Fast'}
-      options={[
-        { value: 'tts-1', label: 'TTS-1' },
-        { value: 'tts-1-hd', label: 'TTS-1-HD' },
-        { value: 'gpt-4o-mini-tts', label: 'GPT-4o Mini' },
-      ]}
-      value={voice.ttsModel ?? 'tts-1'}
-      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value as DVoiceOpenAI['ttsModel'] } })}
+
+    <FormSliderControl
+      title='Speed'
+      description={`${voice.ttsSpeed ?? 1}x`}
+      min={0.5}
+      max={2}
+      step={0.25}
+      value={voice.ttsSpeed ?? 1}
+      onChange={handleSpeedChange}
+      valueLabelDisplay={voice.ttsSpeed && voice.ttsSpeed !== 1 ? 'on' : 'auto'}
+      sliderSx={{ maxWidth: 220, my: -0.5 }}
     />
 
-    <FormControl>
-      <FormLabelStart title='Speed' description={`${(voice.ttsSpeed ?? 1).toFixed(2)}x`} />
-      <Slider
-        value={voice.ttsSpeed ?? 1}
-        onChange={handleSpeedChange}
-        min={0.5}
-        max={2}
-        step={0.25}
-        valueLabelDisplay='auto'
-      />
-    </FormControl>
-
     {voice.ttsModel === 'gpt-4o-mini-tts' && (
-      <FormControl>
-        <FormLabelStart title='Voice Instruction' description='Custom voice guidance' />
-        <Input
-          value={voice.ttsInstruction ?? ''}
-          onChange={(e) => onUpdate({ voice: { ...voice, ttsInstruction: e.target.value } })}
-          placeholder='e.g., Speak with enthusiasm'
-        />
-        <FormHelperText>Only for GPT-4o Mini TTS model</FormHelperText>
-      </FormControl>
+      <FormTextField
+        autoCompleteId='speex-openai-instruction'
+        title='Instruction'
+        description={isMobile ? undefined : '4o Mini only'}
+        placeholder='e.g., Speak with joy'
+        value={voice.ttsInstruction ?? ''}
+        onChange={(text) => onUpdate({ voice: { ...voice, ttsInstruction: text } })}
+        inputSx={{ flexGrow: 1, maxWidth: 220 }}
+      />
     )}
 
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-      <PreviewButton engine={engine} />
-    </Box>
   </>;
 }
 
 
-function WebSpeechConfig({ engine, onUpdate, mode }: {
+function WebSpeechConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'webspeech'>
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
 
@@ -340,17 +341,18 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
     onUpdate({ voice: { ...voice, ttsVoiceURI } });
   }, [onUpdate, voice]);
 
-  const handleSpeedChange = React.useCallback((_: unknown, value: number | number[]) => {
-    onUpdate({ voice: { ...voice, ttsSpeed: value as number } });
+  const handleSpeedChange = React.useCallback((value: number) => {
+    onUpdate({ voice: { ...voice, ttsSpeed: value } });
   }, [onUpdate, voice]);
 
-  const handlePitchChange = React.useCallback((_: unknown, value: number | number[]) => {
-    onUpdate({ voice: { ...voice, ttsPitch: value as number } });
+  const handlePitchChange = React.useCallback((value: number) => {
+    onUpdate({ voice: { ...voice, ttsPitch: value } });
   }, [onUpdate, voice]);
 
   return <>
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Voice' description='System voice' />
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
+      <FormLabelStart title='Voice' description={isMobile ? undefined : 'System voice'} />
       <SpeexVoiceSelect
         engine={engine}
         voiceId={voice.ttsVoiceURI ?? null}
@@ -358,32 +360,29 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
       />
     </FormControl>
 
-    <FormControl>
-      <FormLabelStart title='Speed' description={`${(voice.ttsSpeed ?? 1).toFixed(1)}x`} />
-      <Slider
-        value={voice.ttsSpeed ?? 1}
-        onChange={handleSpeedChange}
-        min={0.5}
-        max={2}
-        step={0.1}
-        valueLabelDisplay='auto'
-      />
-    </FormControl>
+    <FormSliderControl
+      title='Speed'
+      description={`${(voice.ttsSpeed ?? 1).toFixed(1)}x`}
+      min={0.5}
+      max={2}
+      step={0.1}
+      value={voice.ttsSpeed ?? 1}
+      onChange={handleSpeedChange}
+      valueLabelDisplay={voice.ttsSpeed && voice.ttsSpeed !== 1 ? 'on' : 'auto'}
+      sliderSx={{ maxWidth: 220, my: -0.5 }}
+    />
 
-    <FormControl>
-      <FormLabelStart title='Pitch' description={`${(voice.ttsPitch ?? 1).toFixed(1)}`} />
-      <Slider
-        value={voice.ttsPitch ?? 1}
-        onChange={handlePitchChange}
-        min={0.5}
-        max={2}
-        step={0.1}
-        valueLabelDisplay='auto'
-      />
-    </FormControl>
+    <FormSliderControl
+      title='Pitch'
+      description={`${(voice.ttsPitch ?? 1).toFixed(1)}`}
+      min={0.5}
+      max={2}
+      step={0.1}
+      value={voice.ttsPitch ?? 1}
+      onChange={handlePitchChange}
+      valueLabelDisplay={voice.ttsPitch && voice.ttsPitch !== 1 ? 'on' : 'auto'}
+      sliderSx={{ maxWidth: 220, my: -0.5 }}
+    />
 
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-      <PreviewButton engine={engine} />
-    </Box>
   </>;
 }

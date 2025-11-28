@@ -1,4 +1,5 @@
 import type { ISpeexVendor } from '../ISpeexVendor';
+import { SPEEX_DEFAULTS } from '../speex.config';
 
 
 /**
@@ -39,7 +40,7 @@ export const SpeexVendorLocalAI: ISpeexVendor<'localai'> = {
   getDefaultVoice: () => ({
     dialect: 'localai',
     ttsBackend: undefined,
-    ttsModel: 'kokoro', // recommended default - high quality neural TTS
+    ttsModel: SPEEX_DEFAULTS.LOCALAI_MODEL,
     ttsLanguage: undefined,
   }),
 };

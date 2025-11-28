@@ -127,7 +127,7 @@ export function speexSynthesize_WebSpeech(
     speechSynthesis.cancel(); // safe
 
     // create utterance
-    if (SPEEX_DEBUG) console.debug(`[Speex][WebSpeech] New utterance (${text.length} chars, voice: ${voice.ttsVoiceURI}, s=${voice.ttsSpeed}, p=${voice.ttsPitch})`);
+    if (SPEEX_DEBUG) console.log(`[Speex][WebSpeech] New utterance (${text.length} chars, voice: ${voice.ttsVoiceURI}, s=${voice.ttsSpeed}, p=${voice.ttsPitch})`);
     const utterance = new SpeechSynthesisUtterance(text);
 
     // find and set voice by URI
@@ -144,12 +144,12 @@ export function speexSynthesize_WebSpeech(
 
     // set up event handlers
     utterance.onstart = () => {
-      if (SPEEX_DEBUG) console.debug(`[Speex][WebSpeech] Utterance started`);
+      if (SPEEX_DEBUG) console.log(`[Speex][WebSpeech] Utterance started`);
       callbacks?.onStart?.();
     };
 
     utterance.onend = () => {
-      if (SPEEX_DEBUG) console.debug(`[Speex][WebSpeech] Utterance completed`);
+      if (SPEEX_DEBUG) console.log(`[Speex][WebSpeech] Utterance completed`);
       callbacks?.onComplete?.();
       resolve({ success: true });
     };

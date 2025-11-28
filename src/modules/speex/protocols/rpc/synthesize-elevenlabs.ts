@@ -1,25 +1,24 @@
 import * as z from 'zod/v4';
-import { env } from '~/server/env.server';
+
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './rpc.router';
-import { SPEEX_DEBUG } from '../../speex.config';
+import { SPEEX_DEBUG, SPEEX_DEFAULTS } from '../../speex.config';
 import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
 // configuration
 const SAFETY_TEXT_LENGTH = 1000;
 const MIN_CHUNK_SIZE = 4096;
-const MODEL_FAST = 'eleven_turbo_v2_5';        // Fastest, English-optimized
-const MODEL_QUALITY = 'eleven_multilingual_v2'; // Highest quality, multilingual
-const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
 
 
 const _selectModel = (priority: 'fast' | 'balanced' | 'quality' | undefined, languageCode: string | undefined): string => {
-  return priority === 'fast' ? MODEL_FAST // lowest latency, best for real-time use cases like calls
-    : priority === 'quality' ? MODEL_QUALITY // multilingual v2 (highest quality)
-      : languageCode?.toLowerCase() === 'en' ? MODEL_FAST : MODEL_QUALITY; // 'balanced'/undefined: English → turbo, non-English → multilingual
+  const fast = SPEEX_DEFAULTS.ELEVENLABS_MODEL_FAST;
+  const quality = SPEEX_DEFAULTS.ELEVENLABS_MODEL;
+  return priority === 'fast' ? fast               // lowest latency, best for real-time use cases like calls
+    : priority === 'quality' ? quality            // multilingual v2 (highest quality)
+      : languageCode?.toLowerCase() === 'en' ? fast : quality; // 'balanced'/undefined: English → turbo, non-English → multilingual
 };
 
 
@@ -40,7 +39,7 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
   }
 
   // build request - narrow to elevenlabs dialect for type safety
-  const voiceId = voice.ttsVoiceId || env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const voiceId = voice.ttsVoiceId /*|| env.ELEVENLABS_VOICE_ID*/ || SPEEX_DEFAULTS.ELEVENLABS_VOICE;
   const model = voice.ttsModel || _selectModel(priority, languageCode);
 
   const path = `/v1/text-to-speech/${voiceId}${streaming ? '/stream' : ''}`;
@@ -91,27 +90,39 @@ export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs):
     }),
   );
 
+  // map to output
+  const voices = voicesList.voices.map(voice => ({
+    id: voice.voice_id,
+    name: voice.name,
+    description: voice.description || undefined,
+    previewUrl: voice.preview_url || undefined,
+    category: voice.category,
+    // Flatten labels for UI display
+    // gender: voice.labels?.gender || undefined,
+    // accent: voice.labels?.accent || undefined,
+    // age: voice.labels?.age || undefined,
+    // language: voice.labels?.language || undefined,
+  }));
+
+  // inject Rachel (default voice) if not already in the list
+  const rachelId = SPEEX_DEFAULTS.ELEVENLABS_VOICE;
+  if (!voices.some(v => v.id === rachelId))
+    voices.unshift({
+      id: rachelId,
+      name: 'Rachel',
+      description: 'Matter-of-fact, personable woman. Great for conversational use cases.',
+      category: 'premade',
+      previewUrl: undefined,
+    });
+
   // sort: custom voices first, then premade
-  voicesList.voices.sort((a, b) => {
+  voices.sort((a, b) => {
     if (a.category === 'premade' && b.category !== 'premade') return 1;
     if (a.category !== 'premade' && b.category === 'premade') return -1;
     return 0;
   });
 
-  return {
-    voices: voicesList.voices.map(voice => ({
-      id: voice.voice_id,
-      name: voice.name,
-      description: voice.description || undefined,
-      previewUrl: voice.preview_url || undefined,
-      category: voice.category,
-      // Flatten labels for UI display
-      // gender: voice.labels?.gender || undefined,
-      // accent: voice.labels?.accent || undefined,
-      // age: voice.labels?.age || undefined,
-      // language: voice.labels?.language || undefined,
-    })),
-  };
+  return { voices };
 }
 
 
@@ -126,11 +137,11 @@ function _parseTTSResponseHeaders(headers: Headers): Pick<Extract<SpeexSpeechPar
 }
 
 function _elevenlabsAccess(access: SpeexWire_Access_ElevenLabs, apiPath: string): { headers: HeadersInit; url: string } {
-  const apiKey = (access.apiKey || env.ELEVENLABS_API_KEY || '').trim();
+  const apiKey = (access.apiKey /*|| env.ELEVENLABS_API_KEY */ || '').trim();
   if (!apiKey)
     throw new Error('Missing ElevenLabs API key');
 
-  let host = (access.apiHost || env.ELEVENLABS_API_HOST || 'api.elevenlabs.io').trim();
+  let host = (access.apiHost /*|| env.ELEVENLABS_API_HOST*/ || 'api.elevenlabs.io').trim();
   if (!host.startsWith('http'))
     host = `https://${host}`;
   if (host.endsWith('/') && apiPath.startsWith('/'))

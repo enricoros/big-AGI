@@ -42,7 +42,7 @@ export function SpeexEngineSelect(props: SpeexEngineSelectProps) {
       disabled={disabled || !validEngines.length}
       placeholder={placeholder}
       onChange={handleChange}
-      sx={{ minWidth: 220 }}
+      sx={{ minWidth: 200 }}
     >
       {validEngines.map(({ engineId, label, vendorType }) => (
         <Option key={engineId} value={engineId} label={label}>

@@ -1,4 +1,5 @@
 import type { ISpeexVendor } from '../ISpeexVendor';
+import { SPEEX_DEFAULTS } from '../speex.config';
 
 
 export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
@@ -29,8 +30,8 @@ export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
 
   getDefaultVoice: () => ({
     dialect: 'openai',
-    ttsModel: 'tts-1',
-    ttsVoiceId: 'alloy',
+    ttsModel: SPEEX_DEFAULTS.OPENAI_MODEL,
+    ttsVoiceId: SPEEX_DEFAULTS.OPENAI_VOICE,
     ttsSpeed: 1.0,
   }),
 };
