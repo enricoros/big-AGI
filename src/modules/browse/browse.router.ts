@@ -143,13 +143,31 @@ async function workerPuppeteer(
   };
 
   // [puppeteer] start the remote session
-  const browser: Browser = await puppeteer.connect({
-    browserWSEndpoint,
-    // Add default options for better stability
-    // defaultViewport: { width: 1024, height: 768 },
-    // acceptInsecureCerts: true,
-    protocolTimeout: WORKER_TIMEOUT + 2000, // 2s extra for taking the screenshot?
-  });
+  let browser: Browser;
+  try {
+    browser = await puppeteer.connect({
+      browserWSEndpoint,
+      // Add default options for better stability
+      // defaultViewport: { width: 1024, height: 768 },
+      // acceptInsecureCerts: true,
+      protocolTimeout: WORKER_TIMEOUT + 2000, // 2s extra for taking the screenshot?
+    });
+  } catch (connectError: any) {
+    // Transform connection errors into user-friendly messages
+    const errorMessage = connectError?.message || '';
+    if (errorMessage.includes('403'))
+      throw new Error('Browse service authentication failed (403). Please check your browser endpoint credentials.');
+    if (errorMessage.includes('401'))
+      throw new Error('Browse service unauthorized (401). Invalid credentials for the browser endpoint.');
+    if (errorMessage.includes('429'))
+      throw new Error('Browse service rate limited (429). Too many requests, please try again later.');
+    if (errorMessage.includes('502') || errorMessage.includes('503') || errorMessage.includes('504'))
+      throw new Error('Browse service temporarily unavailable. Please try again later.');
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND'))
+      throw new Error('Browse service unreachable. The browser endpoint is not accessible.');
+    // Re-throw with a cleaner message for other connection errors
+    throw new Error(`Browse service connection failed: ${errorMessage || 'Unknown error'}`);
+  }
 
   // for local testing, open an incognito context, to separate cookies
   let incognitoContext: BrowserContext | null = null;
