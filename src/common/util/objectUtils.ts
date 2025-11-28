@@ -28,3 +28,15 @@ export function countKeys(obj: object | null | undefined): number {
   for (const _ in obj) count++;
   return count;
 }
+
+/**
+ * Strip undefined fields from an object.
+ *
+ * Useful to prevent undefined becoming null over the wire (JSON serialization).
+ */
+export function stripUndefined<T extends object>(obj: T): T;
+export function stripUndefined<T extends object>(obj: T | null): T | null;
+export function stripUndefined<T extends object>(obj: T | null): T | null {
+  if (!obj) return null;
+  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined)) as T;
+}
