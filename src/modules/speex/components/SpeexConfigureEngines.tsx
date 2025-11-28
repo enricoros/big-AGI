@@ -12,6 +12,7 @@ import * as React from 'react';
 import { Box, Button, Chip, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, SvgIconProps, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import LinkIcon from '@mui/icons-material/Link';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -212,6 +213,7 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
                 // startDecorator={isActive && <Box sx={_styles.chipSymbol}>
                 //   <CheckRoundedIcon sx={{ fontSize: 16, color: 'text.primary' }} />
                 // </Box>}
+                endDecorator={engine.isAutoLinked && <LinkIcon sx={{ fontSize: 16 }} />}
                 onClick={event => handleEngineSelect(event.shiftKey ? null : engine.engineId)}
                 sx={isConfigured ? _styles.chip : _styles.chipUnconfigured}
               >
@@ -241,10 +243,11 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
             // <GoodTooltip title='Delete this service'>
             <Button
               size='sm'
-              color='danger'
-              variant='outlined'
+              color='neutral'
+              variant='plain'
               onClick={handleDeleteClick}
               startDecorator={<DeleteOutlineIcon />}
+              // sx={{ minWidth: 120 }}
             >
               Delete
             </Button>

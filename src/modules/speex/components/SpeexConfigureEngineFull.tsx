@@ -1,52 +1,60 @@
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { Box, Button, Divider, FormControl, FormHelperText, Input, Typography } from '@mui/joy';
+import { Box, Button, Divider, FormControl, Typography } from '@mui/joy';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormSecretField } from '~/common/components/forms/FormSecretField';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
-import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
-import { SPEEX_DEFAULTS, SPEEX_PREVIEW_TEXT } from '../speex.config';
+import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
+import { SPEEX_DEFAULTS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../speex.config';
+import { SpeexVoiceAutocomplete } from './SpeexVoiceAutocomplete';
 import { SpeexVoiceSelect } from './SpeexVoiceSelect';
 import { speakText } from '../speex.client';
+import { speexVendorTypeLabel } from './SpeexEngineSelect';
 
 
-// Credential input helper - shared across vendors
-function CredentialsApiKeyInputs({ credentials, onUpdate, showHost, hostRequired, hostPlaceholder }: {
+function CredentialsApiKeyInputs({ credentials, onUpdate, vendorType, showHost, hostRequired, hostPlaceholder }: {
   credentials: DCredentialsApiKey;
   onUpdate: (credentials: DCredentialsApiKey) => void;
+  vendorType: DSpeexVendorType;
   showHost?: boolean;
   hostRequired?: boolean;
   hostPlaceholder?: string;
 }) {
   return <>
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='API Key' description={hostRequired ? 'Optional' : 'Required'} />
-      <Input
-        type='password'
-        value={credentials.apiKey}
-        onChange={(e) => onUpdate({ ...credentials, apiKey: e.target.value })}
-        placeholder='sk-...'
-        sx={{ minWidth: 200 }}
-      />
-    </FormControl>
+    <FormSecretField
+      autoCompleteId={`speex-${vendorType}-key`}
+      title='API Key'
+      description={hostRequired ? 'Optional' : speexVendorTypeLabel(vendorType)}
+      value={credentials.apiKey}
+      onChange={value => onUpdate({ ...credentials, apiKey: value })}
+      required={!hostRequired}
+      startDecorator={credentials.apiKey ? false : undefined}
+      // placeholder='Required'
+      inputSx={{ maxWidth: 220 }}
+    />
 
     {showHost && (
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title='API Host' description={hostRequired ? 'Required' : 'Optional'} />
-        <Input
-          value={credentials.apiHost ?? ''}
-          onChange={(e) => onUpdate({ ...credentials, apiHost: e.target.value || undefined })}
-          placeholder={hostPlaceholder ?? 'https://api.example.com'}
-          sx={{ minWidth: 200 }}
-        />
-      </FormControl>
+      <FormTextField
+        autoCompleteId={`speex-${vendorType}-host`}
+        title='API Host'
+        description={hostRequired ? 'Required' : 'Optional'}
+        value={credentials.apiHost ?? ''}
+        onChange={text => onUpdate({ ...credentials, apiHost: text || undefined })}
+        placeholder={hostPlaceholder ?? 'https://api.example.com'}
+        inputSx={{ maxWidth: 220 }}
+      />
     )}
+
+    {showHost && <Divider inset='context' />}
 
   </>;
 }
@@ -54,32 +62,35 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, showHost, hostRequired
 
 function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) {
 
-  // state
-  const [isSpeaking, setIsSpeaking] = React.useState(false);
-
-  const handlePreview = React.useCallback(async () => {
-    if (isSpeaking) return;
-    setIsSpeaking(true);
-    await speakText(
-      SPEEX_PREVIEW_TEXT,
-      { engineId: engineId },
-      { streaming: true, playback: true },
-      { onComplete: () => setIsSpeaking(false), onError: () => setIsSpeaking(false) },
-    );
-  }, [engineId, isSpeaking]);
+  // async + cache
+  const { isFetching, isError, error, refetch: previewVoice } = useQuery({
+    enabled: false, // manual trigger only
+    queryKey: ['speex-preview', engineId],
+    queryFn: async () => {
+      const result = await speakText(
+        SPEEX_PREVIEW_TEXT,
+        { engineId: engineId },
+        { streaming: SPEEX_PREVIEW_STREAM },
+      );
+      if (!result.success) throw new Error(result.error || 'Preview failed');
+      return result;
+    },
+  });
 
   return (
-    <Button
-      variant='outlined'
-      color='neutral'
-      size='sm'
-      onClick={handlePreview}
-      disabled={isSpeaking}
-      startDecorator={isSpeaking ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
-      sx={{ ml: 'auto' }}
-    >
-      {isSpeaking ? 'Speaking...' : 'Preview'}
-    </Button>
+    <TooltipOutlined color='danger' title={error?.message ? <pre>{error.message}</pre> : false}>
+      <Button
+        variant='outlined'
+        color={isError ? 'danger' : 'neutral'}
+        size='sm'
+        onClick={() => previewVoice()}
+        disabled={isFetching}
+        startDecorator={isFetching ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
+        sx={{ ml: 'auto', minWidth: 130 }}
+      >
+        {isFetching ? 'Speaking...' : isError ? 'Retry' : 'Preview'}
+      </Button>
+    </TooltipOutlined>
   );
 }
 
@@ -95,7 +106,8 @@ export function SpeexConfigureEngineFull(props: {
   return <>
 
     {/*<Box mt={2} />*/}
-    <Divider sx={{ my: 1 }} inset='context' />
+    {/*<Divider sx={{ my: 1 }} inset='context' />*/}
+    <Divider sx={{ my: 1 }} inset='context'>{isMobile ? 'Configuration' : 'App Voice Configuration'}</Divider>
 
     {/* Engine-Specific pane */}
     {engine.vendorType === 'elevenlabs' ? (
@@ -122,9 +134,9 @@ export function SpeexConfigureEngineFull(props: {
 
 // Vendor-specific configs
 
-function ElevenLabsConfig({ engine, onUpdate, mode }: {
+function ElevenLabsConfig({ engine, onUpdate, mode, isMobile }: {
   engine: DSpeexEngine<'elevenlabs'>,
-  onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  onUpdate: (updates: Partial<DSpeexEngine<'elevenlabs'>>) => void;
   isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
@@ -137,33 +149,31 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
   }, [onUpdate]);
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceElevenLabs['ttsVoiceId']) => {
-    onUpdate({ voice: { ...voice, ttsVoiceId } });
+    const { ttsVoiceId: _, ...restVoice } = voice;
+    onUpdate({
+      voice: {
+        ...restVoice,
+        ...(ttsVoiceId && { ttsVoiceId }),
+      },
+    });
   }, [onUpdate, voice]);
 
   return <>
+
     {/* Credentials (only for manually added engines in full mode) */}
     {showCredentials && (
       <CredentialsApiKeyInputs
         credentials={credentials}
         onUpdate={handleCredentialsUpdate}
+        vendorType='elevenlabs'
       />
     )}
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
-      <FormLabelStart title='Voice' description='ElevenLabs voice' />
-      <SpeexVoiceSelect
-        engine={engine}
-        voiceId={voice.ttsVoiceId ?? null}
-        onVoiceChange={handleVoiceChange}
-        autoPreview
-      />
-    </FormControl>
 
     <FormChipControl<Exclude<DVoiceElevenLabs['ttsModel'], undefined>>
       title='Model'
       alignEnd
       options={[
-        { value: 'eleven_multilingual_v2', label: 'Multilingual v2', description: 'Recommended' },
+        { value: 'eleven_multilingual_v2', label: 'Multilingual v2', description: 'Default' },
         { value: 'eleven_turbo_v2_5', label: 'Turbo v2.5', description: 'Fast' },
         { value: 'eleven_flash_v2_5', label: 'Flash v2.5', description: 'Fastest' },
         { value: 'eleven_v3', label: 'v3', description: 'Newest' },
@@ -172,18 +182,29 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
       onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value } })}
     />
 
-    {showCredentials && (
-      <FormHelperText>
-        Voice listing requires API key. Language auto-detected from preferences.
-      </FormHelperText>
-    )}
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
+      <FormLabelStart title='Voice' description={isMobile ? undefined : 'ElevenLabs voice'} />
+      <SpeexVoiceSelect
+        autoPreview
+        engine={engine}
+        voiceId={voice.ttsVoiceId ?? null}
+        onVoiceChange={handleVoiceChange}
+      />
+    </FormControl>
+
+    {/*{showCredentials && (*/}
+    {/*  <FormHelperText>*/}
+    {/*    Voice listing requires API key. Language auto-detected from preferences.*/}
+    {/*  </FormHelperText>*/}
+    {/*)}*/}
+
   </>;
 }
 
 
-function LocalAIConfig({ engine, onUpdate, mode }: {
+function LocalAIConfig({ engine, onUpdate, mode, isMobile }: {
   engine: DSpeexEngine<'localai'>,
-  onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  onUpdate: (updates: Partial<DSpeexEngine<'localai'>>) => void;
   isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
@@ -195,7 +216,13 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
   }, [onUpdate]);
 
   const handleModelChange = React.useCallback((ttsModel: DVoiceLocalAI['ttsModel']) => {
-    onUpdate({ voice: { ...voice, ttsModel } });
+    const { ttsModel: _, ...restVoice } = voice;
+    onUpdate({
+      voice: {
+        ...restVoice,
+        ...(ttsModel && { ttsModel }),
+      },
+    });
   }, [onUpdate, voice]);
 
   return <>
@@ -205,40 +232,33 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
       <CredentialsApiKeyInputs
         credentials={credentials}
         onUpdate={handleCredentialsUpdate}
+        vendorType='localai'
         showHost
         hostRequired
         hostPlaceholder='http://localhost:8080'
       />
     )}
 
+    {/* Model: autocomplete with suggestions + free-form input */}
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
-      <FormLabelStart title='Model' description='TTS model' />
-      <SpeexVoiceSelect
+      <FormLabelStart title='Model' description={isMobile ? undefined : 'Select or type'} />
+      <SpeexVoiceAutocomplete
         engine={engine}
-        voiceId={voice.ttsModel ?? null}
-        onVoiceChange={handleModelChange}
-      />
-    </FormControl>
-
-    <FormControl>
-      <FormLabelStart title='Model Override' description='Manual model name' />
-      <Input
-        value={voice.ttsModel ?? ''}
-        onChange={(e) => onUpdate({ voice: { ...voice, ttsModel: e.target.value } })}
+        value={voice.ttsModel}
+        onValueChange={handleModelChange}
         placeholder='e.g., kokoro'
       />
-      <FormHelperText>Override if model not in dropdown</FormHelperText>
     </FormControl>
 
-    <FormControl>
-      <FormLabelStart title='Backend' description='TTS backend (optional)' />
-      <Input
-        value={voice.ttsBackend ?? ''}
-        onChange={(e) => onUpdate({ voice: { ...voice, ttsBackend: e.target.value || undefined } })}
-        placeholder='e.g., coqui, bark, piper'
-      />
-      <FormHelperText>Leave empty for default backend</FormHelperText>
-    </FormControl>
+    <FormTextField
+      autoCompleteId='speex-localai-backend'
+      title='Backend'
+      description='Optional'
+      placeholder='e.g., coqui, bark, piper'
+      value={voice.ttsBackend ?? ''}
+      onChange={(text) => onUpdate({ voice: { ...voice, ttsBackend: text || undefined } })}
+      inputSx={{ maxWidth: 220 }}
+    />
 
   </>;
 }
@@ -259,7 +279,13 @@ function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
   }, [onUpdate]);
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceOpenAI['ttsVoiceId']) => {
-    onUpdate({ voice: { ...voice, ttsVoiceId } });
+    const { ttsVoiceId: _, ...restVoice } = voice;
+    onUpdate({
+      voice: {
+        ...restVoice,
+        ...(ttsVoiceId && { ttsVoiceId }),
+      },
+    });
   }, [onUpdate, voice]);
 
   const handleSpeedChange = React.useCallback((value: number) => {
@@ -273,6 +299,7 @@ function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
       <CredentialsApiKeyInputs
         credentials={credentials}
         onUpdate={handleCredentialsUpdate}
+        vendorType='openai'
         showHost
         hostPlaceholder='https://api.openai.com (optional)'
       />
@@ -287,7 +314,12 @@ function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
         { value: 'tts-1-hd', label: 'TTS-1-HD', description: 'Quality' },
       ]}
       value={voice.ttsModel ?? SPEEX_DEFAULTS.OPENAI_MODEL}
-      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value as DVoiceOpenAI['ttsModel'] } })}
+      onChange={value => onUpdate({
+        voice: {
+          ...voice,
+          ttsModel: value,
+        },
+      })}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
@@ -330,7 +362,7 @@ function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
 
 function WebSpeechConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'webspeech'>
-  onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
+  onUpdate: (updates: Partial<DSpeexEngine<'webspeech'>>) => void;
   isMobile: boolean;
   mode: 'full' | 'voice-only';
 }) {
@@ -338,7 +370,13 @@ function WebSpeechConfig({ engine, onUpdate, isMobile }: {
   const { voice } = engine;
 
   const handleVoiceChange = React.useCallback((ttsVoiceURI: DVoiceWebSpeech['ttsVoiceURI']) => {
-    onUpdate({ voice: { ...voice, ttsVoiceURI } });
+    const { ttsVoiceURI: _, ...restVoice } = voice;
+    onUpdate({
+      voice: {
+        ...restVoice,
+        ...(ttsVoiceURI && { ttsVoiceURI }),
+      },
+    });
   }, [onUpdate, voice]);
 
   const handleSpeedChange = React.useCallback((value: number) => {

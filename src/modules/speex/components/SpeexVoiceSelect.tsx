@@ -1,21 +1,21 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
 
-import { CircularProgress, Option, optionClasses, Select, SelectSlotsAndSlotProps } from '@mui/joy';
+import { Box, CircularProgress, IconButton, Option, optionClasses, Select, SelectSlotsAndSlotProps } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
-import { DSpeexEngineAny, SpeexListVoiceOption, SpeexListVoicesResult } from '../speex.types';
-import { speexListVoices_RPC } from '../protocols/rpc/rpc.client';
-import { useSpeexWebSpeechVoices } from '../protocols/webspeech/webspeech.client';
+import type { DSpeexEngineAny } from '../speex.types';
+import { useSpeexVoices } from './useSpeexVoices';
 
 
 // copied from useLLMSelect.tsx - inspired by optimaSelectSlotProps.listbox
 const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
   root: {
     sx: {
-      minWidth: 220,
+      minWidth: 220, // 180 = 220 - 36 - 4
     },
   },
   button: {
@@ -31,14 +31,7 @@ const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
     // size: 'md',
     // className: 'agi-ellipsize',
     sx: {
-      // larger list
-      // '--ListItem-paddingLeft': '1rem',
-      // '--ListItem-minHeight': '2.5rem', // note that in the Optima Dropdowns we use 2.75rem
-      '--ListItemDecorator-size': '2rem', // compensate for the border
       boxShadow: 'xl',
-      // v-size: keep the default
-      // maxHeight: 'calc(100dvh - 200px)',
-
       // Option: clip width to 200...360px
       [`& .${optionClasses.root}`]: {
         // minWidth: 300,
@@ -61,7 +54,7 @@ export function SpeexVoiceSelect(props: {
   const { engine, voiceId, onVoiceChange, disabled, autoPreview } = props;
 
   // external state - module
-  const { voices, isLoading, error } = useSpeexVoices(engine);
+  const { voices, isLoading, error, refetch } = useSpeexVoices(engine);
 
   // track user-initiated voice changes for preview (not initial load or voice list changes)
   const [userSelectedVoiceId, setUserSelectedVoiceId] = React.useState<string | null>(null);
@@ -83,7 +76,21 @@ export function SpeexVoiceSelect(props: {
     value && onVoiceChange(value);
   }, [onVoiceChange]);
 
-  return (
+  return <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
+    {refetch && (
+      <TooltipOutlined color={error ? 'danger' : undefined} title={error ? <pre>{error}</pre> : 'Refresh voices'}>
+        <IconButton
+          color={error ? 'danger' : 'neutral'}
+          variant='plain'
+          disabled={isLoading}
+          onClick={() => refetch()}
+        >
+          {!isLoading ? <RefreshRoundedIcon /> : <CircularProgress size='sm' />}
+        </IconButton>
+      </TooltipOutlined>
+    )}
+
     <Select
       variant='outlined'
       disabled={disabled || isLoading || voices.length === 0}
@@ -97,7 +104,7 @@ export function SpeexVoiceSelect(props: {
                 : 'Select a voice'
       }
       // startDecorator={<PhVoice />}
-      endDecorator={isLoading && <CircularProgress size='sm' />}
+      // endDecorator={isLoading && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={_selectSlotProps}
     >
@@ -109,35 +116,6 @@ export function SpeexVoiceSelect(props: {
         </Option>
       ))}
     </Select>
-  );
-}
 
-
-// hooks - voice data: returns voices given an engine
-
-const _stableEmptyVoices: SpeexListVoiceOption[] = [] as const;
-
-function useSpeexVoices(engine: DSpeexEngineAny): SpeexListVoicesResult {
-
-  // props
-  const { vendorType, engineId } = engine;
-  const isWebspeech = vendorType === 'webspeech';
-
-  // use browser voices
-  const browserVoicesResult = useSpeexWebSpeechVoices(isWebspeech);
-
-  // use RPC voices
-  const { data: cloudVoices, error: cloudError, isLoading: cloudIsLoading } = useQuery({
-    enabled: !isWebspeech,
-    queryKey: ['speex', 'listVoices', engineId, vendorType],
-    queryFn: () => speexListVoices_RPC(engine as any /* will not run for 'webspeech' */),
-    staleTime: 5 * 60 * 1000, // 5 minutes - voices don't change often
-  });
-
-  // switch result
-  return isWebspeech ? browserVoicesResult : {
-    voices: cloudVoices?.length ? cloudVoices : _stableEmptyVoices,
-    isLoading: cloudIsLoading,
-    error: cloudError instanceof Error ? cloudError.message : null,
-  };
+  </Box>;
 }
