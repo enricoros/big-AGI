@@ -48,6 +48,9 @@ export const FormChipControl = <TValue extends string>(props: {
 
   const { onChange } = props;
 
+  const selectedOption = props.options.find(option => option.value === props.value);
+  const description = selectedOption?.description ?? props.description;
+
   const handleChipClick = React.useCallback((value: Immutable<TValue>) => {
     if (!props.disabled)
       onChange(value);
@@ -55,7 +58,7 @@ export const FormChipControl = <TValue extends string>(props: {
 
   return (
     <FormControl orientation='horizontal' disabled={props.disabled} sx={_styles.control}>
-      {(!!props.title || !!props.description) && <FormLabelStart title={props.title} description={props.description} tooltip={props.tooltip} />}
+      {(!!props.title || !!description) && <FormLabelStart title={props.title} description={description} tooltip={props.tooltip} />}
       <Box sx={_styles.chipGroup}>
         {props.options.map((option) => (
           <Chip
