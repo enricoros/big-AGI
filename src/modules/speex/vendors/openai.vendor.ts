@@ -9,7 +9,8 @@ export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
   priority: 30,
 
   autoFromLlmVendorIds: [
-    'azure',    // have ModelVendorId 'azure' also map to OpenAI TTS
+    // NOTE: azure not tested yet
+    // 'azure',    // have ModelVendorId 'azure' also map to OpenAI TTS
     'openai',   // default OpenAI mapping, note that this is
     // more.. ?
   ],
