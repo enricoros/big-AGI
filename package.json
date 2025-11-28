@@ -70,7 +70,7 @@
     "remark-mark-highlight": "^0.1.1",
     "remark-math": "^6.0.0",
     "sharp": "^0.34.5",
-    "superjson": "^2.2.5",
+    "superjson": "^2.2.6",
     "tesseract.js": "^6.0.1",
     "tiktoken": "^1.0.22",
     "turndown": "^7.2.2",
