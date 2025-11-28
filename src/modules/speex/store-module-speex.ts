@@ -8,6 +8,7 @@ import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { DSpeexCredentialsAny, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, SpeexEngineId } from './speex.types';
+import { SPEEX_DEFAULTS } from './speex.config';
 import { speexFindByVendorPriorityAsc, speexFindVendor, speexFindVendorForLLMVendor } from './speex.vendors-registry';
 import { webspeechIsSupported } from './protocols/webspeech/webspeech.client';
 
@@ -222,13 +223,13 @@ export const useSpeexStore = create<SpeexStore>()(persist(
               hasChanges = true;
               createEngine('elevenlabs', {
                 label: 'ElevenLabs', // (migrated) // no need as the user can't change..
-                isAutoDetected: true,
-                isAutoLinked: false,
+                isAutoDetected: false,  // both false to make this delete-able
+                isAutoLinked: false,    // both false
                 credentials: { type: 'api-key', apiKey: apiKey.trim() },
                 voice: {
                   dialect: 'elevenlabs',
-                  ttsModel: 'eleven_multilingual_v2',
-                  ...((typeof voiceId === 'string' && voiceId.trim()) ? { ttsVoiceId: voiceId.trim() } : {}),
+                  ttsModel: SPEEX_DEFAULTS.ELEVENLABS_MODEL,
+                  ttsVoiceId: (typeof voiceId === 'string' && voiceId.trim()) ? voiceId.trim() : SPEEX_DEFAULTS.ELEVENLABS_VOICE,
                 },
               });
               console.log('[DEV] Speex: Migrated legacy ElevenLabs configuration');

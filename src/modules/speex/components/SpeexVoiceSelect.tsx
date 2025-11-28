@@ -102,7 +102,7 @@ export function SpeexVoiceSelect(props: {
       slotProps={_selectSlotProps}
     >
       {voices.map(voice => (
-        <Option key={voice.id} value={voice.id} label={voice.name}>
+        <Option key={voice.id} value={voice.id} label={voice.name.split('-')[0]}>
           <div className='agi-ellipsize'>
             {voice.name} {voice.description && <span style={{ marginLeft: '0.75rem', opacity: 0.5, fontSize: 'smaller' }}>{voice.description}</span>}
           </div>

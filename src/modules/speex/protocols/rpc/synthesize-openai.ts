@@ -6,15 +6,13 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 
 import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './rpc.router';
-import { SPEEX_DEBUG } from '../../speex.config';
+import { SPEEX_DEBUG, SPEEX_DEFAULTS } from '../../speex.config';
 import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
 // configuration
 const SAFETY_TEXT_LENGTH = 4096; // OpenAI max
 const MIN_CHUNK_SIZE = 4096; // bytes
-const FALLBACK_OPENAI_MODEL = 'tts-1';
-const FALLBACK_OPENAI_VOICE_ID = 'alloy';
 
 
 // OpenAI TTS API: POST /v1/audio/speech
@@ -83,8 +81,8 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
       if (voice.dialect !== 'openai') throw new Error('Voice dialect mismatch for OpenAI access');
       body = {
         input: text,
-        model: voice.ttsModel || FALLBACK_OPENAI_MODEL,
-        voice: voice.ttsVoiceId || FALLBACK_OPENAI_VOICE_ID,
+        model: voice.ttsModel || SPEEX_DEFAULTS.OPENAI_MODEL,
+        voice: voice.ttsVoiceId || SPEEX_DEFAULTS.OPENAI_VOICE,
         ...(voice.ttsSpeed !== undefined ? { speed: voice.ttsSpeed } : {}),
         ...(voice.ttsInstruction ? { instructions: voice.ttsInstruction } : {}),
         response_format: 'mp3', // MP3 for MediaSource compatibility
@@ -127,13 +125,13 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
 //
 
 export function listVoicesOpenAI(): SpeexWire_ListVoices_Output['voices'] {
+  // Valid voices per OpenAI API: alloy, ash, coral, echo, fable, onyx, nova, sage, shimmer
   return [
     { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
     { id: 'ash', name: 'Ash', description: 'Warm and engaging' },
     { id: 'coral', name: 'Coral', description: 'Warm and friendly' },
     { id: 'echo', name: 'Echo', description: 'Clear and resonant' },
     { id: 'fable', name: 'Fable', description: 'Expressive and dynamic' },
-    { id: 'marin', name: 'Marin', description: 'Expressive and confident' },
     { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative' },
     { id: 'nova', name: 'Nova', description: 'Friendly and upbeat' },
     { id: 'sage', name: 'Sage', description: 'Calm and wise' },

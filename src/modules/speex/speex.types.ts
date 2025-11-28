@@ -64,8 +64,7 @@ export interface DVoiceLocalAI {
 export interface DVoiceOpenAI {
   dialect: 'openai';
   ttsModel: 'tts-1' | 'tts-1-hd' | 'gpt-4o-mini-tts';
-  ttsVoiceId?: 'alloy' | 'ash' | 'coral' | 'echo' | 'marin' | 'sage' | 'shimmer' | 'fable' | 'onyx' | 'nova' | string;
-  // voiceId?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' | string;
+  ttsVoiceId?: 'alloy' | 'ash' | 'coral' | 'echo' | 'fable' | 'nova' | 'onyx' | 'sage' | 'shimmer' | string;
   ttsSpeed?: number;       // 0.25-4.0
   ttsInstruction?: string; // voice instructions (gpt-4o-mini-tts only?)
 }

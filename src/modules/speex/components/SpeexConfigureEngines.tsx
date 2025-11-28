@@ -9,21 +9,19 @@
 
 import * as React from 'react';
 
-import { Box, Card, Chip, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem, Stack, SvgIconProps, Typography } from '@mui/joy';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import { Box, Button, Chip, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, SvgIconProps, Typography } from '@mui/joy';
+import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 import type { DSpeexEngineAny, DSpeexVendorType } from '../speex.types';
-import { SpeexEngineConfig } from './SpeexEngineConfig';
+import { SpeexConfigureEngineFull } from './SpeexConfigureEngineFull';
 import { speexAreCredentialsValid, useSpeexEngines, useSpeexGlobalEngine, useSpeexStore } from '../store-module-speex';
 
 
@@ -36,14 +34,17 @@ const _styles = {
     boxShadow: 'md',
   },
   menuButton: {
+    ml: 'auto',
+    // borderRadius: '1.5rem',
+    // borderColor: 'neutral.outlinedBorder', // like ModeServiceSelector's Add button
     // minWidth: 150,
     textWrap: 'nowrap',
-    '&[aria-expanded="true"]': {
-      borderBottomRightRadius: 0,
-      borderBottomLeftRadius: 0,
-      // color: 'neutral.softColor',
-      // backgroundColor: 'neutral.softHoverBg',
-    },
+    // '&[aria-expanded="true"]': {
+    //   borderBottomRightRadius: 0,
+    //   borderBottomLeftRadius: 0,
+    //   // color: 'neutral.softColor',
+    //   // backgroundColor: 'neutral.softHoverBg',
+    // },
   },
   menuItem: {
     py: 1,
@@ -70,13 +71,13 @@ const _styles = {
   chip: {
     px: 1.5,
     minHeight: '2rem',
-    borderRadius: 'md',
+    // borderRadius: 'md',
     // boxShadow: 'sm',
   },
   chipUnconfigured: {
     px: 1.5,
     minHeight: '2rem',
-    borderRadius: 'md',
+    // borderRadius: 'md',
     // color: 'text.tertiary',
     opacity: 0.6,
   },
@@ -85,7 +86,7 @@ const _styles = {
     mr: 0.5,
     width: 20,
     height: 20,
-    borderRadius: 'sm',
+    borderRadius: '50%',
     backgroundColor: 'background.surface',
     display: 'flex',
     alignItems: 'center',
@@ -101,7 +102,7 @@ const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; descriptio
 ] as const;
 
 
-export function SpeexEngineSettings(_props: { isMobile: boolean }) {
+export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
 
   // state
   const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DSpeexEngineAny | null>(null);
@@ -110,6 +111,7 @@ export function SpeexEngineSettings(_props: { isMobile: boolean }) {
   const engines = useSpeexEngines();
   const activeEngine = useSpeexGlobalEngine(); // auto-select the highest priority, if the user choice (active engine) is missing
   const activeEngineId = activeEngine?.engineId ?? null;
+  const activeEngineValid = !activeEngine ? false : speexAreCredentialsValid(activeEngine.credentials);
 
 
   // derived state
@@ -161,17 +163,23 @@ export function SpeexEngineSettings(_props: { isMobile: boolean }) {
     {/* "Voice Engine" + Add Service dropdown */}
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
-      {/* Voice Engine label */}
       <FormLabelStart
-        title='Voice Engine'
+        // title='Voice Engine'
+        title='Active Engine'
         description={activeEngine ? activeEngine.label : 'Select a voice provider'}
       />
 
+
       {/* -> Add Service */}
       <Dropdown>
-        <MenuButton size='sm' color='neutral' variant='solid' startDecorator={<AddRoundedIcon />} sx={_styles.menuButton}>
-          Add Service
+        <MenuButton size='sm' variant={!activeEngine ? 'solid' : 'outlined'} startDecorator={<AddIcon />} sx={_styles.menuButton}>
+          Add
+          {/*  Add Service*/}
         </MenuButton>
+        {/*<MenuButton size='sm' color='primary' variant={!activeEngine ? 'solid' : 'outlined'} startDecorator={<AddIcon />} sx={_styles.menuButton}>*/}
+        {/*  Add*/}
+        {/*  /!*  Add Service*!/*/}
+        {/*</MenuButton>*/}
         <Menu placement='bottom' popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [-12, -2] } }] }} sx={_styles.menu}>
           {ADDABLE_VENDORS.map(vendor => (
             <MenuItem key={vendor.vendorType} onClick={() => handleAddEngine(vendor.vendorType)} sx={_styles.menuItem}>
@@ -189,7 +197,6 @@ export function SpeexEngineSettings(_props: { isMobile: boolean }) {
 
     </Box>
 
-
     {/* Engine Chips row */}
     {hasEngines && (
       <Box sx={_styles.chipRow}>
@@ -198,13 +205,13 @@ export function SpeexEngineSettings(_props: { isMobile: boolean }) {
           const isConfigured = speexAreCredentialsValid(engine.credentials);
 
           return (
-            <TooltipOutlined key={engine.engineId} title={isConfigured ? 'Click to activate' : 'Needs configuration'}>
+            <TooltipOutlined key={engine.engineId} title={isActive ? 'Global application voice' : isConfigured ? 'Click to activate' : 'Needs configuration'}>
               <Chip
                 variant={isActive ? 'solid' : 'outlined'}
                 color={!isActive ? 'neutral' : !isConfigured ? 'danger' : 'neutral'}
-                startDecorator={isActive && <Box sx={_styles.chipSymbol}>
-                  <CheckRoundedIcon sx={{ fontSize: 16, color: 'text.primary' }} />
-                </Box>}
+                // startDecorator={isActive && <Box sx={_styles.chipSymbol}>
+                //   <CheckRoundedIcon sx={{ fontSize: 16, color: 'text.primary' }} />
+                // </Box>}
                 onClick={event => handleEngineSelect(event.shiftKey ? null : engine.engineId)}
                 sx={isConfigured ? _styles.chip : _styles.chipUnconfigured}
               >
@@ -216,45 +223,35 @@ export function SpeexEngineSettings(_props: { isMobile: boolean }) {
       </Box>
     )}
 
-
-    {/* Active engine configuration Card */}
+    {/* Active engine (specific) full configuration */}
     {activeEngine && (
-      <Card variant='outlined'>
-        <Stack spacing={2}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography level='title-sm' sx={{ flex: 1 }}>
-              {activeEngine.label}
-            </Typography>
-
-            {/*{activeEngine.isAutoDetected && <Chip size='sm' variant='soft' color='primary'>System</Chip>}*/}
-            {/*{activeEngine.isAutoLinked && <Chip size='sm' variant='soft'>Auto</Chip>}*/}
-            <Chip size='sm' variant='soft'>
-              {activeEngine.isAutoLinked ? 'Linked to AI Service' : activeEngine.isAutoDetected ? 'System' : 'Configured Manually'}
+      <SpeexConfigureEngineFull
+        engine={activeEngine}
+        isMobile={_props.isMobile}
+        mode={activeEngine.isAutoLinked || activeEngine.isAutoDetected ? 'voice-only' : 'full'}
+        bottomStart={
+          !canDeleteActiveEngine ? (
+            <Chip size='sm' color={!activeEngineValid ? 'danger' : undefined} variant='soft' sx={{ px: 1.5, py: 0.5 }}>
+              {!activeEngineValid ? (activeEngine.isAutoLinked ? 'Linked to AI Service' : 'Invalid Configuration')
+                : activeEngine.isAutoLinked ? 'Linked to AI Service'
+                  : activeEngine.isAutoDetected ? 'System'
+                    : 'Configured Manually'}
             </Chip>
-
-            {canDeleteActiveEngine && (
-              <GoodTooltip title='Delete this service'>
-                <IconButton
-                  size='sm'
-                  variant='plain'
-                  color='danger'
-                  onClick={handleDeleteClick}
-                >
-                  <DeleteOutlineIcon />
-                </IconButton>
-              </GoodTooltip>
-            )}
-          </Box>
-
-          {/* Engine-specific configuration */}
-          <SpeexEngineConfig
-            engine={activeEngine}
-            onUpdate={handleEngineUpdate}
-            mode={activeEngine.isAutoLinked || activeEngine.isAutoDetected ? 'voice-only' : 'full'}
-          />
-        </Stack>
-      </Card>
+          ) : (
+            // <GoodTooltip title='Delete this service'>
+            <Button
+              size='sm'
+              color='danger'
+              variant='outlined'
+              onClick={handleDeleteClick}
+              startDecorator={<DeleteOutlineIcon />}
+            >
+              Delete
+            </Button>
+            // </GoodTooltip>
+          )}
+        onUpdate={handleEngineUpdate}
+      />
     )}
 
     {/* Empty state */}
