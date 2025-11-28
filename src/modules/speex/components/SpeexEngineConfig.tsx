@@ -20,7 +20,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
 import { speakText } from '../speex.client';
-import { SpeexVoiceDropdown } from './SpeexVoiceDropdown';
+import { SpeexVoiceSelect } from './SpeexVoiceSelect';
 
 
 // Credential input helper - shared across vendors
@@ -141,7 +141,7 @@ function ElevenLabsConfig({ engine, onUpdate, mode }: {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Voice' description='ElevenLabs voice' />
-      <SpeexVoiceDropdown
+      <SpeexVoiceSelect
         engine={engine}
         voiceId={voice.ttsVoiceId ?? null}
         onVoiceChange={handleVoiceChange}
@@ -208,7 +208,7 @@ function LocalAIConfig({ engine, onUpdate, mode }: {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Model' description='TTS model' />
-      <SpeexVoiceDropdown
+      <SpeexVoiceSelect
         engine={engine}
         voiceId={voice.ttsModel ?? null}
         onVoiceChange={handleModelChange}
@@ -276,7 +276,7 @@ function OpenAIConfig({ engine, onUpdate, mode }: {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Voice' description='OpenAI TTS voice' />
-      <SpeexVoiceDropdown
+      <SpeexVoiceSelect
         engine={engine}
         voiceId={voice.ttsVoiceId ?? null}
         onVoiceChange={handleVoiceChange}
@@ -351,7 +351,7 @@ function WebSpeechConfig({ engine, onUpdate, mode }: {
   return <>
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Voice' description='System voice' />
-      <SpeexVoiceDropdown
+      <SpeexVoiceSelect
         engine={engine}
         voiceId={voice.ttsVoiceURI ?? null}
         onVoiceChange={handleVoiceChange}
