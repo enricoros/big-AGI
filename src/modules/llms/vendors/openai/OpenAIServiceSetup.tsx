@@ -110,7 +110,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!oaiHost || !!oaiKey}
       checked={!!clientSideFetch}
-      onChange={on => updateSettings({ oaiCSF: on })}
+      onChange={on => updateSettings({ csf: on })}
       helpText="Fetch models and make requests directly to OpenAI's Responses / Completions and List Models API using your browser instead of through the server."
     />}
 

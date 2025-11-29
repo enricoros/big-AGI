@@ -101,7 +101,7 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     <SetupFormClientSideToggle
       visible={true}
       checked={!!clientSideFetch}
-      onChange={on => updateSettings({ localAICSF: on })}
+      onChange={on => updateSettings({ csf: on })}
       helpText="Fetch models and make requests directly from your LocalAI instance using the browser. Recommended for local setups."
     />
 

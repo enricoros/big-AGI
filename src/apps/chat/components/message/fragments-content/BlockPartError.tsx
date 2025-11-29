@@ -6,6 +6,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageErrorPart } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
+import { BlockPartError_NetDisconnected } from './BlockPartError_NetDisconnected';
 import { BlockPartError_RequestExceeded } from './BlockPartError_RequestExceeded';
 
 
@@ -19,6 +20,9 @@ export function BlockPartError(props: {
 
   // special error presentation, based on hints
   switch (props.errorHint) {
+    case 'aix-net-disconnected':
+      return <BlockPartError_NetDisconnected messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
+
     case 'aix-request-exceeded':
       return <BlockPartError_RequestExceeded messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
 

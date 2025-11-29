@@ -7,6 +7,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 export interface DOpenPipeServiceSettings {
   openPipeKey: string;
   openPipeTags: string; // hack: this will travel as 'oaiOrg' in the access schema - then interpreted in the openAIAccess() function
+  csf?: boolean;
 }
 
 export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIAccessSchema> = {
@@ -18,6 +19,9 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmOpenPipe',
 
+  /// client-side-fetch ///
+  csfAvailable: _csfOpenPipeAvailable,
+
   // functions
   initializeSetup: () => ({
     openPipeKey: '',
@@ -28,6 +32,7 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'openpipe',
+    clientSideFetch: _csfOpenPipeAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.openPipeKey || '',
     oaiOrg: partialSetup?.openPipeTags || '', // HACK: use tags for org - should use type discrimination
     oaiHost: '',
@@ -39,3 +44,7 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfOpenPipeAvailable(s?: Partial<DOpenPipeServiceSettings>) {
+  return !!s?.openPipeKey;
+}

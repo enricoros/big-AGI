@@ -8,6 +8,7 @@ interface DTogetherAIServiceSettings {
   togetherKey: string;
   togetherHost: string;
   togetherFreeTrial: boolean;
+  csf?: boolean;
 }
 
 export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, OpenAIAccessSchema> = {
@@ -18,6 +19,9 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
   location: 'cloud',
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmTogetherAI',
+
+  /// client-side-fetch ///
+  csfAvailable: _csfTogetherAIAvailable,
 
   // functions
   initializeSetup: () => ({
@@ -30,6 +34,7 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'togetherai',
+    clientSideFetch: _csfTogetherAIAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.togetherKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.togetherHost || '',
@@ -62,3 +67,7 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
 
 // rate limit timestamp
 let nextGenerationTs = 0;
+
+function _csfTogetherAIAvailable(s?: Partial<DTogetherAIServiceSettings>) {
+  return !!s?.togetherKey;
+}

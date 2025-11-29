@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { Typography } from '@mui/joy';
-
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { ModelVendorGroq } from './groq.vendor';
@@ -20,6 +20,9 @@ const GROQ_REG_LINK = 'https://console.groq.com/keys';
 
 export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
 
+  // state
+  const advanced = useToggleableBoolean();
+
   // external state
   const {
     service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
@@ -27,8 +30,9 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorGroq);
 
   // derived state
-  const { oaiKey: groqKey } = serviceAccess;
+  const { clientSideFetch, oaiKey: groqKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!groqKey && serviceSetupValid);
@@ -54,7 +58,14 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!groqKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Groq API from your browser instead of through the server.'
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

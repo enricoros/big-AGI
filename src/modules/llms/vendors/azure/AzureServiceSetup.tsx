@@ -9,8 +9,10 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { asValidURL } from '~/common/util/urlUtils';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
@@ -22,6 +24,7 @@ import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
+  const advanced = useToggleableBoolean();
   const [checkboxExpanded, setCheckboxExpanded] = React.useState(false);
 
   // external state
@@ -29,8 +32,9 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorAzure);
 
   // derived state
-  const { oaiKey: azureKey, oaiHost: azureEndpoint } = serviceAccess;
+  const { clientSideFetch, oaiKey: azureKey, oaiHost: azureEndpoint } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
+  const showAdvanced = advanced.on || !!clientSideFetch;
 
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
@@ -81,7 +85,14 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!(azureKey && azureEndpoint)}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Azure OpenAI API from your browser instead of through the server.'
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

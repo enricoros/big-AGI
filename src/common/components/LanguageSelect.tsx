@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Option, Select } from '@mui/joy';
+import { Option, optionClasses, Select, SelectSlotsAndSlotProps } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
@@ -8,6 +8,20 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 // languages are defined as a JSON file
 import languages from './Languages.json';
+
+
+// copied from useLLMSelect.tsx - inspired by optimaSelectSlotProps.listbox
+const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
+  root: { sx: { minWidth: 200 } },
+  listbox: {
+    sx: {
+      boxShadow: 'xl',
+      [`& .${optionClasses.root}`]: {
+        maxWidth: 'min(640px, calc(100dvw - 0.25rem))',
+      },
+    },
+  } as const,
+} as const;
 
 
 export function LanguageSelect() {
@@ -32,19 +46,19 @@ export function LanguageSelect() {
         </Option>
       ) : (
         Object.entries(localesOrCode).map(([country, code]) => (
-          <Option key={code} value={code}>
+          <Option key={code} value={code} label={language}>
             {`${language} (${country})`}
           </Option>
         ))
       )), []);
 
   return (
-    <Select value={preferredLanguage} onChange={handleLanguageChanged}
-            indicator={<KeyboardArrowDownIcon />}
-            slotProps={{
-              root: { sx: { minWidth: 200 } },
-              indicator: { sx: { opacity: 0.5 } },
-            }}>
+    <Select
+      value={preferredLanguage}
+      onChange={handleLanguageChanged}
+      indicator={<KeyboardArrowDownIcon />}
+      slotProps={_selectSlotProps}
+    >
       {languageOptions}
     </Select>
   );

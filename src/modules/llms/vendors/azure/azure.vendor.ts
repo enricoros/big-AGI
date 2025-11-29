@@ -10,6 +10,7 @@ export const isValidAzureApiKey = (apiKey?: string) => !!apiKey && apiKey.length
 interface DAzureServiceSettings {
   azureEndpoint: string;
   azureKey: string;
+  csf?: boolean;
 }
 
 /** Implementation Notes for the Azure Vendor
@@ -37,9 +38,13 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
   instanceLimit: 2,
   hasServerConfigKey: 'hasLlmAzureOpenAI',
 
+  /// client-side-fetch ///
+  csfAvailable: _csfAzureAvailable,
+
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'azure',
+    clientSideFetch: _csfAzureAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.azureKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.azureEndpoint || '',
@@ -51,3 +56,7 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfAzureAvailable(s?: Partial<DAzureServiceSettings>) {
+  return !!(s?.azureKey && s?.azureEndpoint);
+}

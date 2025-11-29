@@ -24,6 +24,7 @@ export function FormSliderControl(props: {
   startAdornment?: React.ReactNode,
   endAdornment?: React.ReactNode,
   styleNoTrack?: boolean,
+  sliderSx?: SxProps,
 }) {
 
 
@@ -66,8 +67,7 @@ export function FormSliderControl(props: {
         onChange={handleChange}
         onChangeCommitted={handleChangeCommitted}
         valueLabelDisplay={props.valueLabelDisplay}
-        sx={props.styleNoTrack ? _styleNoTrack : undefined}
-        // sx={{ py: 1, mt: 1.1 }}
+        sx={props.styleNoTrack ? _styleNoTrack : props.sliderSx}
       />
       {props.endAdornment}
     </FormControl>

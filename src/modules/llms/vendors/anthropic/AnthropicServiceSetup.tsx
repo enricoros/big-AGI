@@ -6,7 +6,6 @@ import { useChatAutoAI } from '../../../../apps/chat/store-app-chat';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
-import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -110,7 +109,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!anthropicKey}
       checked={!!clientSideFetch}
-      onChange={on => updateSettings({ anthropicCSF: on })}
+      onChange={on => updateSettings({ csf: on })}
       helpText="Fetch models and make requests directly to Anthropic's API using your browser instead of through the server. Useful for bypassing server limitations or ensuring requests use your API key directly."
     />}
 

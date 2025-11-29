@@ -62,7 +62,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <SetupFormClientSideToggle
       visible={true}
       checked={!!clientSideFetch}
-      onChange={on => updateSettings({ ollamaCSF: on })}
+      onChange={on => updateSettings({ csf: on })}
       helpText="Fetch models and make requests directly from your local Ollama instance using the browser. Recommended for local setups."
     />
 

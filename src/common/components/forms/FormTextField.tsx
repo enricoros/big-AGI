@@ -6,11 +6,16 @@ import { FormControl, Input } from '@mui/joy';
 import { FormLabelStart } from './FormLabelStart';
 
 
-const formControlSx: SxProps = {
-  flexWrap: 'wrap',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-};
+const _styles = {
+  formControl: {
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  inputDefault: {
+    flexGrow: 1,
+  },
+} as const satisfies Record<string, SxProps>;
 
 
 /**
@@ -23,6 +28,7 @@ export function FormTextField(props: {
   tooltip?: string | React.JSX.Element,
   placeholder?: string, isError?: boolean, disabled?: boolean,
   value: string | undefined, onChange: (text: string) => void,
+  inputSx?: SxProps,
 }) {
   const acId = 'text-' + props.autoCompleteId;
   return (
@@ -30,7 +36,7 @@ export function FormTextField(props: {
       id={acId}
       orientation='horizontal'
       disabled={props.disabled}
-      sx={formControlSx}
+      sx={_styles.formControl}
     >
       <FormLabelStart title={props.title} description={props.description} tooltip={props.tooltip} />
       <Input
@@ -39,7 +45,7 @@ export function FormTextField(props: {
         autoComplete='off'
         variant='outlined' placeholder={props.placeholder} error={props.isError}
         value={props.value} onChange={event => props.onChange(event.target.value)}
-        sx={{ flexGrow: 1 }}
+        sx={props.inputSx ?? _styles.inputDefault}
       />
     </FormControl>
   );

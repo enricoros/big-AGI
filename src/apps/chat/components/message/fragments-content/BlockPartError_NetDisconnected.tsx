@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Alert, Box, FormHelperText, Switch } from '@mui/joy';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
@@ -9,12 +9,11 @@ import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useMo
 
 
 /**
- * Error recovery component for "Request too large" errors.
+ * Error recovery component for "Connection terminated" errors.
  */
-export function BlockPartError_RequestExceeded(props: {
+export function BlockPartError_NetDisconnected(props: {
   messageGeneratorLlmId?: string | null;
   contentScaling: ContentScaling;
-  onRegenerate?: () => void;
 }) {
 
   // external state
@@ -24,27 +23,34 @@ export function BlockPartError_RequestExceeded(props: {
   return (
     <Alert
       size={props.contentScaling === 'xs' ? 'sm' : 'md'}
-      color='warning'
-      sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, border: '1px solid', borderColor: 'warning.outlinedBorder' }}
+      color='danger'
+      variant='plain'
+      sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
     >
 
-      <WarningRoundedIcon sx={{ flexShrink: 0, mt: 0.25 }} />
 
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
 
-        <Box fontSize='larger'>
-          Request Too Large
+        {/* Header */}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <WifiOffRoundedIcon sx={{ flexShrink: 0, mt: 0.5 }} />
+          <div>
+            <Box fontSize='larger'>
+              Connection Terminated
+            </Box>
+            <div>
+              The connection was unexpectedly closed before the response completed.
+            </div>
+          </div>
         </Box>
-        <div>
-          Your message or attachments exceed the limit of the Vercel edge network
-        </div>
+
 
         {/* Recovery options */}
         {csfAvailable ? <>
 
           {/* Explanation */}
-          <Box color='text.secondary' fontSize='sm' my={2}>
-            <strong>Experimental:</strong> enable Direct Connection to {vendorName} to work around size limitations.
+          <Box color='text.tertiary' fontSize='sm' my={2}>
+            <strong>Experimental:</strong> enable direct connection to {vendorName} to bypass server timeouts - then try again.
           </Box>
 
           {/* Toggle */}
@@ -57,6 +63,8 @@ export function BlockPartError_RequestExceeded(props: {
               borderRadius: 'sm',
               bgcolor: 'background.popup',
               boxShadow: 'md',
+              // border: '1px solid',
+              // borderColor: 'divider',
             }}
           >
 
@@ -75,31 +83,17 @@ export function BlockPartError_RequestExceeded(props: {
             />
           </Box>
 
-          {/* Regenerate button */}
-          {/*{props.onRegenerate && (*/}
-          {/*  <Button*/}
-          {/*    size='sm'*/}
-          {/*    variant={csfActive ? 'solid' : 'outlined'}*/}
-          {/*    color={csfActive ? 'success' : 'neutral'}*/}
-          {/*    startDecorator={<RefreshIcon />}*/}
-          {/*    onClick={props.onRegenerate}*/}
-          {/*    sx={{ alignSelf: 'flex-start' }}*/}
-          {/*  >*/}
-          {/*    {csfActive ? 'Regenerate with Direct Connection' : 'Regenerate'}*/}
-          {/*  </Button>*/}
-          {/*)}*/}
-
         </> : (
-          <Box>
+          <div>
             <Box sx={{ color: 'text.secondary', my: 1 }}>
               Suggestions:
             </Box>
             <Box component='ul' sx={{ color: 'text.secondary' }}>
-              <li>Use the cleanup button in the right pane to hide old messages</li>
-              <li>Remove large attachments from the conversation</li>
-              {/*<li>Reduce conversation length before sending</li>*/}
+              <li>Check your internet connection and try again</li>
+              <li>The AI service may be experiencing issues - wait a moment and retry</li>
+              <li>If the issue persists, please let us know promptly on Discord or GitHib</li>
             </Box>
-          </Box>
+          </div>
         )}
       </Box>
     </Alert>

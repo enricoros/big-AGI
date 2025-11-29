@@ -14,6 +14,9 @@ Internal documentation for Big-AGI architecture and systems, for use by AI agent
 - **[AIX.md](modules/AIX.md)** - AIX streaming architecture documentation
 - **[AIX-callers-analysis.md](modules/AIX-callers-analysis.md)** - Analysis of AIX entry points, call chains, common and different rendering, error handling, etc.
 
+#### CSF - Client-Side Fetch
+- **[CSF.md](systems/client-side-fetch.md)** - Direct browser-to-API communication for LLM requests
+
 ### Systems Documentation
 
 #### Core Platform Systems
