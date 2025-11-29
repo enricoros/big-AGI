@@ -186,7 +186,7 @@ export function objectFindLargestStringPaths(obj: unknown, debugCaller: string, 
 
     // cycle detection
     if (seen.has(current)) {
-      console.warn(`[findLargestStringPaths (${debugCaller}] Circular reference at path: ${path}`);
+      console.warn(`[findLargestStringPaths (${debugCaller})] Circular reference at path: ${path}`);
       return;
     }
     seen.add(current);
