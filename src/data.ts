@@ -234,10 +234,10 @@ func _on_mouse_moved(delta): camera_controller.rotate_camera(delta)
 - **KISS**: Simplest approach always
 - **DRY**: Abstract when clear, duplicate when clearer  
 - **Files under 300 lines** unless this complicates things
-- **When modifying code, provide complete updated file**
+- **When modifying code, unless it is a few lines or a couple of functions to be replaced, provide the complete updated file**
 - **When rewriting: Remove old code entirely** - no deprecated functions
 - **Assume all nodes exist** - no error handling/validation
-- **Core functionality first** - minimum viable, comment enhancements
+- **Core functionality first** - minimum viable, no placeholders, comment potential enhancements
 
 ## Code Style (STRICT):
 
