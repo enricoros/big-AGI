@@ -1,6 +1,8 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
+import { objectDeepCloneWithStringLimit, objectEstimateJsonSize } from '~/common/util/objectUtils';
+
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { IParticleTransmitter, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
@@ -23,70 +25,6 @@ export const IssueSymbols = {
   Recitation: '🦜',
   Language: '🌐',
 };
-
-
-/** Estimates JSON size without stringifying (avoids memory spike on large objects). */
-function _fastEstimateJsonSize(value: any): number {
-  if (value === null) return 4; // "null"
-  if (value === undefined) return 0; // omitted in JSON
-  if (typeof value === 'string')
-    return value.length + 2; // quotes
-  if (typeof value === 'number')
-    return String(value).length;
-  if (typeof value === 'boolean')
-    return value ? 4 : 5; // "true" or "false"
-  if (Array.isArray(value)) {
-    let size = 2; // []
-    for (let i = 0; i < value.length; i++) {
-      size += _fastEstimateJsonSize(value[i]);
-      if (i < value.length - 1) size += 1; // comma
-    }
-    return size;
-  }
-  if (typeof value === 'object') {
-    let size = 2; // {}
-    const keys = Object.keys(value);
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      size += key.length + 3; // "key":
-      size += _fastEstimateJsonSize(value[key]);
-      if (i < keys.length - 1) size += 1; // comma
-    }
-    return size;
-  }
-  return 0;
-}
-
-/** Deep-clones an object while ellipsizing any string exceeding maxBytes in the middle. */
-function _fastEllipsizeStringsInObject(value: any, maxBytes: number = DEBUG_REQUEST_MAX_STRING_BYTES): any {
-  // handle primitives first
-  if (value === null || value === undefined)
-    return value;
-
-  // handle strings - ellipsize if too long
-  if (typeof value === 'string') {
-    if (value.length <= maxBytes)
-      return value;
-    const ellipsis = `...[${(value.length - maxBytes).toLocaleString()} bytes]...`;
-    const half = Math.floor((maxBytes - ellipsis.length) / 2);
-    return value.slice(0, half) + ellipsis + value.slice(-half);
-  }
-
-  // handle other primitives (number, boolean)
-  if (typeof value !== 'object')
-    return value;
-
-  // handle arrays - recurse
-  if (Array.isArray(value))
-    return value.map(item => _fastEllipsizeStringsInObject(item, maxBytes));
-
-  // handle objects - recurse
-  const result: any = {};
-  for (const key in value)
-    if (value.hasOwnProperty(key))
-      result[key] = _fastEllipsizeStringsInObject(value[key], maxBytes);
-  return result;
-}
 
 
 /**
@@ -194,7 +132,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body?: object) {
     // Ellipsize individual strings in the body object (e.g., base64 images) to reduce debug packet size
-    const ellipsizedBody = body ? _fastEllipsizeStringsInObject(body) : undefined;
+    const ellipsizedBody = body ? objectDeepCloneWithStringLimit(body, 'aix.addDebugRequest', DEBUG_REQUEST_MAX_STRING_BYTES) : undefined;
     const processedBody = ellipsizedBody ? JSON.stringify(ellipsizedBody, null, 2) : '';
 
     this.transmissionQueue.push({
@@ -204,7 +142,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
         url: url,
         headers: hideSensitiveData ? '(hidden sensitive data)' : JSON.stringify(headers, null, 2),
         body: processedBody,
-        bodySize: body ? _fastEstimateJsonSize(body) : 0,
+        bodySize: body ? objectEstimateJsonSize(body, 'aix.addDebugRequest') : 0,
       },
     });
   }
