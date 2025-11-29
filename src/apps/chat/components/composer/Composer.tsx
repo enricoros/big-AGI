@@ -905,7 +905,7 @@ export function Composer(props: {
                   )}
 
                   {!showChatInReferenceTo && !isDraw && tokenLimit > 0 && (
-                    <TokenBadgeMemo hideBelowDollars={0.005} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                    <TokenBadgeMemo hideBelowDollars={0.01} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 
                 </Box>
