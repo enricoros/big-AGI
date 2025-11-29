@@ -36,13 +36,14 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
 
   // Browser-level network connection drops (TypeError, happens below tRPC error wrapping layer)
   // Network errors - when the client is disconnected (Vercel 5min timeout, Mobile timeout / disconnect, etc) - they show up as TypeErrors
+  // IMPORTANT: we will differentiate between the 2 'net-disconnected' cases in the UI, checking for the errorMessage '**network error**' vs '**connection terminated**'
   if (error instanceof TypeError && error.message === 'network error')
-    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' };
+    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' /* DO NOT CHANGE '**network error**' - usually client-side broken */ };
 
   // tRPC <= 11.5.1 - Vercel Edge network disconnects are thrown form tRPC as 'Stream closed'
   // NOTE The behavior changed in 11.6+ for which we have an open upstream ticket: #6989
   if (error instanceof Error && error.message === 'Stream closed')
-    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' };
+    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' /* DO NOT CHANGE '**connection terminated**' - usually server (Vercel) side broken */ };
 
 
   // tRPC-level protocol errors (wrapped by tRPC client)

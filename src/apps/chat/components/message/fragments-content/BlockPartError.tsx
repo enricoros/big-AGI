@@ -21,7 +21,17 @@ export function BlockPartError(props: {
   // special error presentation, based on hints
   switch (props.errorHint) {
     case 'aix-net-disconnected':
-      return <BlockPartError_NetDisconnected messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
+      // determine the 2 'kinds' of disconnection errors in aix.client.ts
+      const kind =
+        props.errorText.includes('**network error**') ? 'net-client-closed'
+          : props.errorText.includes('**connection terminated**') ? 'net-server-closed'
+            : 'net-unknown-closed';
+
+      // For client-side error, we don't show the _NetDisconnected component
+      if (kind === 'net-client-closed')
+        break;
+
+      return <BlockPartError_NetDisconnected disconnectionKind={kind} messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
 
     case 'aix-request-exceeded':
       return <BlockPartError_RequestExceeded messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
