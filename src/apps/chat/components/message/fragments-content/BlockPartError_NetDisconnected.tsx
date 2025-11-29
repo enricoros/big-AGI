@@ -12,13 +12,15 @@ import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useMo
  * Error recovery component for "Connection terminated" errors.
  */
 export function BlockPartError_NetDisconnected(props: {
+  disconnectionKind: 'net-client-closed' | 'net-server-closed' | 'net-unknown-closed';
   messageGeneratorLlmId?: string | null;
   contentScaling: ContentScaling;
 }) {
 
   // external state
   const model = useLLM(props.messageGeneratorLlmId) ?? null;
-  const { csfAvailable, csfActive, csfToggle, vendorName } = useModelServiceClientSideFetch(true, model);
+  const isServerSideClosed = props.disconnectionKind === 'net-server-closed'; // do not show CSF option for non-server-side
+  const { csfAvailable, csfActive, csfToggle, vendorName } = useModelServiceClientSideFetch(isServerSideClosed, model);
 
   return (
     <Alert
