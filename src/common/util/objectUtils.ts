@@ -72,7 +72,7 @@ export function objectEstimateJsonSize(value: unknown, debugCaller: string): num
       case 'boolean':
         return val ? 4 : 5; // "true" or "false"
       case 'object': {
-        // Cycle detection
+        // cycle detection
         if (seen.has(val as object)) {
           console.warn(`[estimateJsonSize (${debugCaller})] Circular reference detected, returning 0 for this branch`);
           return 0;
@@ -88,7 +88,7 @@ export function objectEstimateJsonSize(value: unknown, debugCaller: string): num
           return size;
         }
 
-        // Plain object
+        // plain object
         let size = 2; // {}
         const keys = Object.keys(val);
         for (let i = 0; i < keys.length; i++) {
@@ -122,10 +122,10 @@ export function objectDeepCloneWithStringLimit(value: unknown, debugCaller: stri
   const seen = new WeakSet<object>();
 
   function clone(val: unknown): unknown {
-    // Handle primitives
+    // handle primitives first
     if (val === null || val === undefined) return val;
 
-    // Handle strings - truncate if too long
+    // handle strings - truncate if too long
     if (typeof val === 'string') {
       if (val.length <= maxBytes) return val;
       const ellipsis = `...[${(val.length - maxBytes).toLocaleString()} bytes]...`;
@@ -133,25 +133,22 @@ export function objectDeepCloneWithStringLimit(value: unknown, debugCaller: stri
       return val.slice(0, half) + ellipsis + val.slice(-half);
     }
 
-    // Handle other primitives
+    // handle other primitives
     if (typeof val !== 'object') return val;
 
-    // Cycle detection
+    // cycle detection
     if (seen.has(val)) return '[Circular]';
     seen.add(val);
 
-    // Handle arrays
-    if (Array.isArray(val)) {
+    // handle arrays - recurse
+    if (Array.isArray(val))
       return val.map(item => clone(item));
-    }
 
-    // Handle objects
+    // handle objects - recurse
     const result: Record<string, unknown> = {};
-    for (const key in val) {
-      if (Object.prototype.hasOwnProperty.call(val, key)) {
+    for (const key in val)
+      if (Object.prototype.hasOwnProperty.call(val, key))
         result[key] = clone((val as Record<string, unknown>)[key]);
-      }
-    }
     return result;
   }
 
