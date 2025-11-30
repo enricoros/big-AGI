@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
+
+import { Accordion, AccordionDetails, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import KeyboardCommandKeyOutlinedIcon from '@mui/icons-material/KeyboardCommandKeyOutlined';
@@ -11,7 +12,6 @@ import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
-import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
@@ -19,7 +19,6 @@ import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optim
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { DarkModeToggleButton, darkModeToggleButtonSx } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { Is } from '~/common/util/pwaUtils';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -27,7 +26,8 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
-import { VoiceSettings } from './VoiceSettings';
+import { VoiceInSettings } from './VoiceInSettings';
+import { VoiceOutSettings } from './VoiceOutSettings';
 
 
 // configuration
@@ -271,10 +271,10 @@ export function SettingsModal(props: {
         <TabPanel value='voice' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
-              <VoiceSettings />
+              <VoiceInSettings isMobile={isMobile} />
             </Topic>
-            <Topic icon={/*'📢'*/ <PhVoice />} title='ElevenLabs API'>
-              <ElevenlabsSettings />
+            <Topic icon={/*'📢'*/ <PhVoice />} title={'Speech'/*<>Voices <GoodBadge badge='New' /></>*/}>
+              <VoiceOutSettings isMobile={isMobile} />
             </Topic>
           </Topics>
         </TabPanel>
@@ -291,6 +291,44 @@ export function SettingsModal(props: {
         </TabPanel>
 
         <TabPanel value='tools' color='primary' variant='outlined' sx={_styles.tabPanel}>
+
+          {/* Search Modifier Info */}
+          <Box sx={{
+            p: 2,
+            borderRadius: 'calc(var(--joy-radius-md) - 1px)',
+            // backgroundColor: 'background.level1',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}>
+            <Button
+              variant='soft'
+              color='success'
+              startDecorator={<SearchIcon />}
+              sx={{
+                // this is copied frmo ButtonSearchControl._styles.desktop
+                minWidth: 100,
+                justifyContent: 'flex-start',
+                borderRadius: '18px',
+                pointerEvents: 'none',
+                '[data-joy-color-scheme="light"] &': {
+                  bgcolor: '#d5ec31',
+                },
+                boxShadow: 'inset 0 2px 4px -1px rgba(0,0,0,0.15)',
+                textWrap: 'nowrap',
+              }}
+            >
+              Search
+            </Button>
+            <Box sx={{ flex: 1 }}>
+              <Typography level='body-sm' sx={{ fontWeight: 'md', mb: 0.5 }}>
+                Use the Search button
+              </Typography>
+              <Typography level='body-xs' sx={{ color: 'text.secondary' }}>
+                Modern AI models have native search built-in. Click the Search button when chatting to enable real-time web search.
+              </Typography>
+            </Box>
+          </Box>
           <Topics>
             <Topic icon={<LanguageRoundedIcon />} title='Load Web Pages (with images)' startCollapsed>
               <BrowseSettings />
