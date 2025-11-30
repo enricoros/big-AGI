@@ -5,7 +5,6 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import KeyboardCommandKeyOutlinedIcon from '@mui/icons-material/KeyboardCommandKeyOutlined';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MicIcon from '@mui/icons-material/Mic';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
@@ -21,6 +20,7 @@ import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { DarkModeToggleButton, darkModeToggleButtonSx } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { Is } from '~/common/util/pwaUtils';
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -273,7 +273,7 @@ export function SettingsModal(props: {
             <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
               <VoiceSettings />
             </Topic>
-            <Topic icon={/*'📢'*/ <RecordVoiceOverIcon />} title='ElevenLabs API'>
+            <Topic icon={/*'📢'*/ <PhVoice />} title='ElevenLabs API'>
               <ElevenlabsSettings />
             </Topic>
           </Topics>

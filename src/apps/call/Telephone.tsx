@@ -7,7 +7,6 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
-import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
@@ -23,6 +22,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
@@ -64,7 +64,7 @@ function CallMenu(props: {
     </MenuItem>
 
     <MenuItem onClick={handleChangeVoiceToggle}>
-      <ListItemDecorator><RecordVoiceOverTwoToneIcon /></ListItemDecorator>
+      <ListItemDecorator><PhVoice /></ListItemDecorator>
       Change Voice
       <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
