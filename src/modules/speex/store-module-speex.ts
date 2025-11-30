@@ -15,8 +15,8 @@ import { webspeechHBestVoiceDeferred, webspeechIsSupported } from './protocols/w
 
 interface SpeexStoreState {
 
-  // TODO: convert this to a map (using the engineId as key) and haven 'updatedAt' timestamps for implicit sorting (to replace the array order)
-  engines: DSpeexEngineAny[];
+  // map of engineId -> engine (for O(1) lookups and ZYNC preparation)
+  engines: Record<SpeexEngineId, DSpeexEngineAny>;
   activeEngineId: SpeexEngineId | null; // null = no user selection = use global auto-selection
 
   // to avoid repeated migrations
@@ -48,8 +48,8 @@ type SpeexStore = SpeexStoreState & SpeexStoreActions;
 export const useSpeexStore = create<SpeexStore>()(persist(
   (set, get) => ({
 
-    // initial state - TODO: convert to map
-    engines: [],
+    // initial state
+    engines: {},
     activeEngineId: null,
     hasInitializedLlms: false,
     hasMigratedElevenLabs: false,
@@ -63,6 +63,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
       if (!v) throw new Error(`Unknown engine type: ${vendorType}`);
 
       const engineId = agiUuidV4('speex.engine.instance');
+      const now = Date.now();
 
       const engine = {
         engineId,
@@ -73,31 +74,48 @@ export const useSpeexStore = create<SpeexStore>()(persist(
         isDeleted: false,
         credentials: partial?.credentials ?? v.getDefaultCredentials(),
         voice: partial?.voice ?? v.getDefaultVoice(),
+        createdAt: now,
+        updatedAt: now,
       } as const satisfies DSpeexEngine<TVt>;
 
-      // append the engine
-      set(state => ({ engines: [...state.engines, engine as DSpeexEngineAny] }));
+      // add the engine to the map
+      set(state => ({ engines: { ...state.engines, [engineId]: engine as DSpeexEngineAny } }));
       return engineId;
     },
 
     updateEngine: (engineId, partial) => {
-      set(state => ({
-        engines: state.engines.map(e =>
-          e.engineId !== engineId ? e : { ...e, ...partial } as DSpeexEngineAny,
-        ),
-      }));
+      set(state => {
+        const engine = state.engines[engineId];
+        if (!engine) return state;
+        return {
+          engines: {
+            ...state.engines,
+            [engineId]: {
+              ...engine,
+              ...partial,
+              updatedAt: Date.now(),
+            } as DSpeexEngineAny,
+          },
+        };
+      });
     },
 
     deleteEngine: (engineId) => {
       set(state => {
-        const engine = state.engines.find(e => e.engineId === engineId);
+        const engine = state.engines[engineId];
         if (!engine) return state;
 
-        // soft-delete for auto-detected engines, hard delete for user-created ones
+        // soft-delete for auto-detected engines
+        if (engine.isAutoDetected)
+          return {
+            engines: { ...state.engines, [engineId]: { ...engine, isDeleted: true, updatedAt: Date.now() } },
+            activeEngineId: state.activeEngineId === engineId ? null : state.activeEngineId,
+          };
+
+        // hard removal for user created engines
+        const { [engineId]: _removed, ...restEngines } = state.engines;
         return {
-          engines: engine.isAutoDetected
-            ? state.engines.map(e => e.engineId !== engineId ? e : { ...e, isDeleted: true })
-            : state.engines.filter(e => e.engineId !== engineId),
+          engines: restEngines,
           activeEngineId: state.activeEngineId === engineId ? null : state.activeEngineId,
         };
       });
@@ -118,13 +136,15 @@ export const useSpeexStore = create<SpeexStore>()(persist(
       const { engines, createEngine, updateEngine } = get();
 
       // restore if soft-deleted
-      const existing = engines.find(e => e.vendorType === 'webspeech');
-      if (existing) {
-        if (existing.isDeleted) {
-          updateEngine(existing.engineId, { isDeleted: false });
-          return true;
+      for (const engineId in engines) {
+        const engine = engines[engineId];
+        if (engine.vendorType === 'webspeech') {
+          if (engine.isDeleted) {
+            updateEngine(engine.engineId, { isDeleted: false });
+            return true;
+          }
+          return false;
         }
-        return false;
       }
 
       // otherwise create
@@ -154,11 +174,14 @@ export const useSpeexStore = create<SpeexStore>()(persist(
         if (!vendor) continue;
 
         // check if we already have an auto-linked engine for this service
-        const existing = engines.find(e =>
-          e.isAutoLinked &&
-          e.credentials?.type === 'llms-service' &&
-          e.credentials.serviceId === source.id,
-        );
+        let existing: DSpeexEngineAny | undefined;
+        for (const engineId in engines) {
+          const e = engines[engineId];
+          if (e.isAutoLinked && e.credentials?.type === 'llms-service' && e.credentials.serviceId === source.id) {
+            existing = e;
+            break;
+          }
+        }
 
         // existing: mark as valid and restore if soft-deleted
         if (existing) {
@@ -185,11 +208,13 @@ export const useSpeexStore = create<SpeexStore>()(persist(
       }
 
       // soft-delete auto-linked engines whose service disappeared
-      for (const engine of engines)
+      for (const engineId in engines) {
+        const engine = engines[engineId];
         if (engine.isAutoLinked && !autoLinkedIds.has(engine.engineId) && !engine.isDeleted) {
           hasChanges = true;
           updateEngine(engine.engineId, { isDeleted: true });
         }
+      }
 
       // the first time we migrate something, we mark as migrated
       if (hasChanges)
@@ -215,11 +240,15 @@ export const useSpeexStore = create<SpeexStore>()(persist(
 
           // with legacy key
           if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
-            const existingEngine = engines.find(e =>
-              e.vendorType === 'elevenlabs' &&
-              e.credentials?.type === 'api-key' &&
-              e.credentials.apiKey === apiKey,
-            );
+            // check for existing engine with same API key
+            let existingEngine: DSpeexEngineAny | undefined;
+            for (const engineId in engines) {
+              const e = engines[engineId];
+              if (e.vendorType === 'elevenlabs' && e.credentials?.type === 'api-key' && e.credentials.apiKey === apiKey) {
+                existingEngine = e;
+                break;
+              }
+            }
 
             // with no existing engine
             if (!existingEngine) {
@@ -281,8 +310,16 @@ export const useSpeexStore = create<SpeexStore>()(persist(
 
 // Hooks
 
-export function useSpeexEngines() {
-  return useSpeexStore(useShallow(state => state.engines.filter(e => !e.isDeleted)));
+export function useSpeexEngines(): DSpeexEngineAny[] {
+  return useSpeexStore(useShallow(state => {
+    // collect non-deleted engines and sort by createdAt, oldest first
+    const result: DSpeexEngineAny[] = [];
+    for (const engineId in state.engines) {
+      const e = state.engines[engineId];
+      if (!e.isDeleted) result.push(e);
+    }
+    return result.sort((a, b) => a.createdAt - b.createdAt);
+  }));
 }
 
 export function useSpeexGlobalEngine(): DSpeexEngineAny | null {
@@ -303,30 +340,40 @@ export function useSpeexGlobalEngine(): DSpeexEngineAny | null {
 export function speexFindEngineById(engineId: SpeexEngineId | null, requireValidCredentials: boolean): DSpeexEngineAny | null {
   if (!engineId) return null;
   const { engines } = useSpeexStore.getState();
-  return engines.find(e => e.engineId === engineId && !e.isDeleted && (!requireValidCredentials || speexAreCredentialsValid(e.credentials))) || null;
+  const engine = engines[engineId];
+  if (!engine || engine.isDeleted) return null;
+  if (requireValidCredentials && !speexAreCredentialsValid(engine.credentials)) return null;
+  return engine;
 }
 
 export function speexFindValidEngineByType(vendorType: DSpeexVendorType): DSpeexEngineAny | null {
   const { engines } = useSpeexStore.getState();
-  for (const engine of engines)
+  for (const engineId in engines) {
+    const engine = engines[engineId];
     if (engine.vendorType === vendorType && !engine.isDeleted && speexAreCredentialsValid(engine.credentials))
       return engine;
+  }
   return null;
 }
 
 
 export function speexFindGlobalEngine({ engines, activeEngineId }: SpeexStore = useSpeexStore.getState()): DSpeexEngineAny | null {
-  // A. return active engine
+  // A. return active engine (O(1) lookup)
   if (activeEngineId) {
-    const active = engines.find(e => e.engineId === activeEngineId && !e.isDeleted);
+    const active = engines[activeEngineId];
     // NOTE: if it's set, we don't further check, otherwise we risk overriding a user selection
     // if (active && !speexAreCredentialsValid(active.credentials))
     //   return false;
-    if (active) return active;
+    if (active && !active.isDeleted) return active;
   }
 
   // B. rank available engines by vendor priority & availability of credentials
-  const availableEngines = engines.filter(e => !e.isDeleted && speexAreCredentialsValid(e.credentials));
+  const availableEngines: DSpeexEngineAny[] = [];
+  for (const engineId in engines) {
+    const e = engines[engineId];
+    if (!e.isDeleted && speexAreCredentialsValid(e.credentials))
+      availableEngines.push(e);
+  }
   return speexFindByVendorPriorityAsc(availableEngines);
 }
 

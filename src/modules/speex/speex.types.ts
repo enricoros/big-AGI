@@ -23,6 +23,9 @@ export interface DSpeexEngine<TVt extends DSpeexVendorType> {
   isDeleted: boolean;
   credentials: DSpeexCredentials<TVt>;
   voice: DSpeexVoice<TVt>;
+  // timestamps for sorting and ZYNC sync
+  createdAt: number;
+  updatedAt: number;
 }
 
 export type SpeexEngineId = string; // agiUuidV4('speex.engine.instance')
