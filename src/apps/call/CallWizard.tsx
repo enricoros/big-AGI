@@ -6,9 +6,9 @@ import ChatIcon from '@mui/icons-material/Chat';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicIcon from '@mui/icons-material/Mic';
-import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -128,7 +128,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
     {/* Text to Speech status */}
     <StatusCard
-      icon={<RecordVoiceOverTwoToneIcon />}
+      icon={<PhVoice />}
       text={
         (synthesis.mayWork ? 'Voice synthesis should be ready.' : 'There might be an issue with ElevenLabs voice synthesis.')
         + (synthesis.isConfiguredServerSide ? '' : (synthesis.isConfiguredClientSide ? '' : ' Please add your API key in the settings.'))
