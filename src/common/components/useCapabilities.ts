@@ -25,17 +25,6 @@ export interface CapabilityBrowserSpeechRecognition {
 export { browserSpeechRecognitionCapability as useCapabilityBrowserSpeechRecognition } from './speechrecognition/useSpeechRecognition';
 
 
-/// Speech Synthesis: ElevenLabs
-
-export interface CapabilityElevenLabsSpeechSynthesis {
-  mayWork: boolean;
-  isConfiguredServerSide: boolean;
-  isConfiguredClientSide: boolean;
-}
-
-export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
-
-
 /// Image Generation
 
 export interface TextToImageProvider {

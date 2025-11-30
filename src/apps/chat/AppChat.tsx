@@ -10,7 +10,6 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
@@ -345,11 +344,6 @@ export function AppChat() {
         cHandler.messageFragmentReplace(userImagineMessage.id, userImagineMessage.fragments[0].fId, createErrorContentFragment(`Issue requesting an Image prompt. ${error?.message || ''}`), true);
       });
   }, [handleExecuteAndOutcome]);
-
-  const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
-    await elevenLabsSpeakText(text, undefined, true, true);
-  }, []);
-
 
   // Chat actions
 
@@ -725,7 +719,6 @@ export function AppChat() {
                   onConversationNew={handleConversationNewInFocusedPane}
                   onTextDiagram={handleTextDiagram}
                   onTextImagine={handleImagineFromText}
-                  onTextSpeak={handleTextSpeak}
                   sx={chatMessageListSx}
                 />
               )}
