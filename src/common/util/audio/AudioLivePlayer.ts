@@ -19,6 +19,10 @@ export class AudioLivePlayer {
     this.audioElement.src = URL.createObjectURL(this.mediaSource);
     this.audioElement.autoplay = true;
 
+    // Suppress Android media notification by clearing media session metadata
+    if ('mediaSession' in navigator)
+      navigator.mediaSession.metadata = null;
+
     // Connect the audio element to the audio context
     const sourceNode = this.audioContext.createMediaElementSource(this.audioElement);
     sourceNode.connect(this.audioContext.destination);
@@ -60,13 +64,12 @@ export class AudioLivePlayer {
   private onSourceBufferUpdateEnd = () => {
     this.isSourceBufferUpdating = false;
 
-    // Continue appending if there's more data
-    if (!this.isMediaSourceEnded) {
+    // Always continue appending if there's more data in the queue
+    if (this.chunkQueue.length > 0) {
       this.appendNextChunk();
-    } else {
-      // End the stream if all data has been appended
-      if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0)
-        this._safeEndOfStream();
+    } else if (this.isMediaSourceEnded) {
+      // Only end the stream when queue is fully drained
+      this._safeEndOfStream();
     }
   };
 

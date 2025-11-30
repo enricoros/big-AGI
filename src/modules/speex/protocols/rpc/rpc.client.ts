@@ -127,7 +127,7 @@ export async function speexSynthesize_RPC(
           if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesis done: ${chars} chars, ${audioBytes} bytes, ${durationMs} ms`);
 
           // NOTE: calling this will end the sound abruptly if the final chunk is still playing, so we don't do it for now
-          // audioPlayer?.endPlayback();
+          audioPlayer?.endPlayback();
           break;
 
         case 'error':
