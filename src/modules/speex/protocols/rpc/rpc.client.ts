@@ -100,10 +100,17 @@ export async function speexSynthesize_RPC(
           // Playback: streaming uses AudioLivePlayer for chunked playback,
           // non-streaming uses AudioPlayer for single-buffer playback
           if (options.playback) {
-            if (particle.chunk)
-              audioPlayer?.enqueueChunk(audioData.buffer);
-            else
+            if (particle.chunk) {
+              // create the player on-demand, however in the near future we'll migrate to
+              // Northbridge AudioPlayer for all playback needs
+              if (!audioPlayer)
+                audioPlayer = new AudioLivePlayer();
+
+              audioPlayer.enqueueChunk(audioData.buffer);
+            } else {
+              // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
               void AudioPlayer.playBuffer(audioData.buffer); // fire-and-forget for whole audio
+            }
           }
 
           // Callback
@@ -118,7 +125,9 @@ export async function speexSynthesize_RPC(
         case 'done':
           const { chars, audioBytes, durationMs } = particle;
           if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesis done: ${chars} chars, ${audioBytes} bytes, ${durationMs} ms`);
-          audioPlayer?.endPlayback();
+
+          // NOTE: calling this will end the sound abruptly if the final chunk is still playing, so we don't do it for now
+          // audioPlayer?.endPlayback();
           break;
 
         case 'error':
