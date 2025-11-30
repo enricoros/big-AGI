@@ -317,7 +317,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
       issue={354}
       text='Call App: Support thread and compatibility matrix'
       note={<>
-        Voice input uses the HTML Web Speech API, and speech output requires an ElevenLabs API Key.
+        Voice input uses the HTML Web Speech API.
       </>}
       // note2='Please report any issues you encounter'
       sx={{
