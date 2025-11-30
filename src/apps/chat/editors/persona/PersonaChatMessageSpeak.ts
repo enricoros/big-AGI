@@ -1,8 +1,7 @@
-import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
+import type { AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
+import { speakText } from '~/modules/speex/speex.client';
 
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
-
-import type { AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
 
 import type { PersonaProcessorInterface } from '../chat-persona';
 
@@ -58,7 +57,7 @@ export class PersonaChatMessageSpeak implements PersonaProcessorInterface {
   #speak(text: string) {
     console.log('📢 TTS:', text);
     this.spokenLine = true;
-    // fire/forget: we don't want to stall this loop
-    void elevenLabsSpeakText(text, undefined, false, true);
+    // fire/forget: we don't want to stall streaming
+    void speakText(text, undefined, { label: 'Chat message' });
   }
 }
