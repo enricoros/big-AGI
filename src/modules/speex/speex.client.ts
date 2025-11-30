@@ -15,6 +15,39 @@ import { speexSynthesize_RPC } from './protocols/rpc/rpc.client';
 import { speexSynthesize_WebSpeech } from './protocols/webspeech/webspeech.client';
 
 
+// Text Preprocessing for Speech
+
+/**
+ * Preprocesses text before TTS synthesis to remove elements that shouldn't be spoken.
+ * - Removes code blocks (including mermaid diagrams)
+ * - Removes attachment references
+ * - Cleans up URLs (removes "http://" and "https://")
+ */
+function preprocessTextForSpeech(text: string): string {
+  let processed = text;
+
+  // Remove code blocks (including mermaid, sql, csv, etc.)
+  // Match triple backticks with optional language identifier
+  processed = processed.replace(/```[\s\S]*?```/g, '');
+
+  // Remove standalone HTML/SVG blocks that might not be in triple backticks
+  processed = processed.replace(/<!DOCTYPE html>[\s\S]*?<\/html>/gi, '');
+  processed = processed.replace(/<svg[\s\S]*?<\/svg>/g, '');
+
+  // Remove attachment references (markdown image syntax and links to attachments)
+  processed = processed.replace(/!\[.*?\]\(.*?\)/g, '');
+
+  // Clean URLs - remove http:// and https:// prefixes for more natural speech
+  processed = processed.replace(/https?:\/\//gi, '');
+
+  // Clean up multiple consecutive newlines or spaces
+  processed = processed.replace(/\n{3,}/g, '\n\n');
+  processed = processed.replace(/\s{3,}/g, ' ');
+
+  return processed.trim();
+}
+
+
 // Speech Synthesis API
 
 export async function speakText(
@@ -34,6 +67,10 @@ export async function speakText(
   const priority = options?.priority;
   const playback = options?.playback ?? true;
   const returnAudio = options?.returnAudio ?? false;
+  const preprocessText = options?.preprocessText ?? true;
+
+  // Preprocess text to remove code blocks, attachments, and clean URLs
+  const processedText = preprocessText ? preprocessTextForSpeech(inputText) : inputText;
 
   // resolve engine from voice selector
   const engine = _engineFromSelector(voiceSelector);
@@ -49,11 +86,11 @@ export async function speakText(
       case 'elevenlabs':
       case 'openai':
       case 'localai':
-        return speexSynthesize_RPC(effectiveEngine, inputText, { streaming, playback, returnAudio, languageCode, priority }, callbacks);
+        return speexSynthesize_RPC(effectiveEngine, processedText, { streaming, playback, returnAudio, languageCode, priority }, callbacks);
 
       // Web Speech: client-only, no RPC
       case 'webspeech':
-        return speexSynthesize_WebSpeech(inputText, effectiveEngine.voice as DVoiceWebSpeech, callbacks);
+        return speexSynthesize_WebSpeech(processedText, effectiveEngine.voice as DVoiceWebSpeech, callbacks);
     }
   } catch (error) {
     callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));

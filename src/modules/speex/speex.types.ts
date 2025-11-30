@@ -133,6 +133,7 @@ export type SpeexSpeakOptions = {
   priority?: 'fast' | 'balanced' | 'quality'; // Hint for speed vs quality tradeoff: 'fast' = low latency (turbo models), 'quality' = highest quality
   playback?: boolean;       // Play audio (default: true)
   returnAudio?: boolean;    // Accumulate full audio buffer in result, even if streaming (for save/download)
+  preprocessText?: boolean; // Preprocess text to remove code blocks, clean URLs, etc. (default: true)
 }
 
 export type SpeexSpeakResult = {
