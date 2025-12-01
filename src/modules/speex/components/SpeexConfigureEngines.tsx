@@ -12,6 +12,7 @@ import * as React from 'react';
 import { Box, Button, Chip, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, SvgIconProps, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import LinkIcon from '@mui/icons-material/Link';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
@@ -107,6 +108,7 @@ const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; descriptio
 export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
 
   // state
+  const [isEditing, setIsEditing] = React.useState(false);
   const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DSpeexEngineAny | null>(null);
 
   // external state - module
@@ -124,6 +126,7 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
   // handlers
 
   const handleEngineSelect = React.useCallback((engineId: string | null) => {
+    setIsEditing(true);
     useSpeexStore.getState().setActiveEngineId(engineId);
   }, []);
 
@@ -223,18 +226,33 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
             </TooltipOutlined>
           );
         })}
+
+        {/* Editing: just a way to remove clutter */}
+        {!!engines.length && !isEditing && (
+          <Button
+            size='sm'
+            variant='plain'
+            color='neutral'
+            startDecorator={<EditRoundedIcon />}
+            onClick={() => setIsEditing(true)}
+            sx={{ ml: 'auto' }}
+          >
+            {_props.isMobile ? 'Edit' : 'Edit Engine'}
+          </Button>
+        )}
+
       </Box>
     )}
 
     {/* Active engine (specific) full configuration */}
-    {activeEngine && (
+    {activeEngine && isEditing && (
       <SpeexConfigureEngineFull
         engine={activeEngine}
         isMobile={_props.isMobile}
         mode={activeEngine.isAutoLinked || activeEngine.isAutoDetected ? 'voice-only' : 'full'}
         bottomStart={
           !canDeleteActiveEngine ? (
-            <Chip size='sm' color={!activeEngineValid ? 'danger' : undefined} variant='soft' sx={{ px: 1.5, py: 0.5 }}>
+            <Chip size='sm' color={!activeEngineValid ? 'danger' : undefined} variant='soft' sx={{ px: 1.5, py: 0.5 }} startDecorator={activeEngineValid && activeEngine.isAutoLinked && <LinkIcon sx={{ fontSize: 14 }} />}>
               {!activeEngineValid ? (activeEngine.isAutoLinked ? 'Linked to AI Service' : 'Invalid Configuration')
                 : activeEngine.isAutoLinked ? 'Linked to AI Service'
                   : activeEngine.isAutoDetected ? 'System'
