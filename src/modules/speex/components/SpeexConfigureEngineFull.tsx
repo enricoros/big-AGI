@@ -31,7 +31,7 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, vendorType, showHost, 
   return <>
 
     <FormSecretField
-      autoCompleteId={`speex-${vendorType}-key`}
+      autoCompleteId={`tts-${vendorType}-key`}
       title='API Key'
       description={hostRequired ? 'Optional' : speexVendorTypeLabel(vendorType)}
       value={credentials.apiKey}
