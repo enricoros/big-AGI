@@ -132,10 +132,11 @@ Enable the app to Talk, Draw, and Google things up.
 
 | Variable                   | Description                                                                                                             |
 |:---------------------------|:------------------------------------------------------------------------------------------------------------------------|
-| **Text-To-Speech**         | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                         |
+| **Text-To-Speech**         | ElevenLabs, OpenAI TTS, LocalAI, and browser Web Speech API are supported                                               |
 | `ELEVENLABS_API_KEY`       | ElevenLabs API Key - used for calls, etc.                                                                               |
 | `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
 | `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
+|                            | *Note: OpenAI TTS and LocalAI TTS reuse credentials from your configured LLM services (no separate env vars needed)*   |
 | **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
 | `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
