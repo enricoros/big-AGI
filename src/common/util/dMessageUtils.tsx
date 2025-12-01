@@ -457,8 +457,14 @@ export function prettyShortChatModelName(model: string | undefined): string {
     // start past the last /, if any
     const lastSlashIndex = model.lastIndexOf('/');
     const modelName = lastSlashIndex === -1 ? model : model.slice(lastSlashIndex + 1);
-    return modelName.replace('deepseek-', ' Deepseek ')
-      .replace('reasoner', 'R1').replace('r1', 'R1')
+    return modelName
+      // map these for each release
+      .replace('-reasoner', ' 3.2 Reasoner')
+      .replace('-chat', ' 3.2 Chat')
+      .replace('-v3', ' 3')
+      // default replacements
+      .replace('deepseek', 'Deepseek')
+      .replace('speciale', 'Speciale').replace('@', ' ')
       .replaceAll('-', ' ')
       .trim();
   }
