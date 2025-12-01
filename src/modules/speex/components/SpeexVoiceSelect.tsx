@@ -79,7 +79,7 @@ export function SpeexVoiceSelect(props: {
   return <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
     {refetch && (
-      <TooltipOutlined color={error ? 'danger' : undefined} title={error ? <pre>{error}</pre> : 'Refresh voices'}>
+      <TooltipOutlined color={error ? 'danger' : undefined} title={error ? <div style={{ whiteSpace: 'pre-wrap' }}>{error}</div> : 'Refresh voices'}>
         <IconButton
           color={error ? 'danger' : 'neutral'}
           variant='plain'

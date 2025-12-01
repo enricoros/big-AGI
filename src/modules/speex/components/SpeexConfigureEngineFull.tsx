@@ -78,7 +78,7 @@ function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) 
   });
 
   return (
-    <TooltipOutlined color='danger' title={error?.message ? <pre>{error.message}</pre> : false}>
+    <TooltipOutlined color='danger' title={error?.message ? <div style={{ whiteSpace: 'pre-wrap' }}>{error.message}</div> : false}>
       <Button
         variant='outlined'
         color={isError ? 'danger' : 'neutral'}

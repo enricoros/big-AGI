@@ -75,7 +75,7 @@ export function SpeexVoiceAutocomplete(props: SpeexVoiceAutocompleteProps) {
 
       {/* Refresh button (only if refetch available) */}
       {refetch && (
-        <TooltipOutlined color={error ? 'danger' : undefined} title={error ? <pre>{error}</pre> : 'Refresh'}>
+        <TooltipOutlined color={error ? 'danger' : undefined} title={error ? <div style={{ whiteSpace: 'pre-wrap' }}>{error}</div> : 'Refresh'}>
           <IconButton
             color={error ? 'danger' : 'neutral'}
             variant='plain'
