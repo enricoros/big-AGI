@@ -130,6 +130,7 @@ const _styles = {
 
   // modal: undefined,
   modal: {
+    flexGrow: 1,
     backgroundColor: 'background.level1',
   } as const,
 
@@ -209,7 +210,7 @@ export function SettingsModal(props: {
     <GoodModal
       // title='Preferences' strongerTitle
       title={
-        <AppBreadcrumbs size='md' rootTitle='App'>
+        <AppBreadcrumbs size='md' rootTitle={isMobile ? 'App' : 'Application'}>
           <AppBreadcrumbs.Leaf><b>Preferences</b></AppBreadcrumbs.Leaf>
         </AppBreadcrumbs>
       }
