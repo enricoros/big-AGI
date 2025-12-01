@@ -1,9 +1,11 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
 import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
+
+const IF_3 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json];
 
 const _knownDeepseekChatModels: ManualMappings = [
   // [Models and Pricing](https://api-docs.deepseek.com/quick_start/pricing)
@@ -14,7 +16,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     label: 'DeepSeek V3.2 (Reasoner)',
     description: 'Reasoning model with Chain-of-Thought capabilities, 128K context length. Supports JSON output and function calling.',
     contextWindow: 131072, // 128K
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    interfaces: [...IF_3, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 32768, // default, max: 65536
     chatPrice: { input: 0.28, output: 0.42, cache: { cType: 'oai-ac', read: 0.028 } },
     benchmark: { cbaElo: 1418 }, // deepseek-r1-0528
@@ -24,7 +26,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     label: 'DeepSeek V3.2',
     description: 'General-purpose model with 128K context length. Supports JSON output and function calling.',
     contextWindow: 131072, // 128K
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    interfaces: IF_3,
     maxCompletionTokens: 8192, // default is 4096, max is 8192
     chatPrice: { input: 0.28, output: 0.42, cache: { cType: 'oai-ac', read: 0.028 } },
     benchmark: { cbaElo: 1419 }, // deepseek-v3.1-thinking
@@ -71,7 +73,7 @@ const _hardcodedDeepseekVariants: { [modelId: string]: Partial<ModelDescriptionS
     id: 'deepseek-reasoner' + DEEPSEEK_SPECIALE_SUFFIX, // [DeepSeek, 2025-12-01] marker for dispatch routing (no idVariant - the @speciale suffix serves as both)
     label: 'DeepSeek V3.2 Speciale',
     description: 'V3.2-Speciale reasoning model. 128K max output, no JSON/tool calling. Expires Dec 15, 2025.',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning], // NO Fn, NO Json
+    interfaces: [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning], // NO Fn, NO Json
     // contextWindow: null,
     // maxCompletionTokens: undefined, // default 64K, max 128K (higher than regular reasoner's 32K default)
   },
