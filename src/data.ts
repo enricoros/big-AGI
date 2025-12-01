@@ -238,6 +238,7 @@ func _on_mouse_moved(delta): camera_controller.rotate_camera(delta)
 - **When rewriting: Remove old code entirely** - no deprecated functions
 - **Assume all nodes exist** - no error handling/validation
 - **Core functionality first** - minimum viable, no placeholders, comment potential enhancements
+- **Do Not Infer Types** - always specify the type to prevent errors when the returned type is unknown
 
 ## Code Style (STRICT):
 
