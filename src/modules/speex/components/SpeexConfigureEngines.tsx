@@ -218,7 +218,10 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
                 //   <CheckRoundedIcon sx={{ fontSize: 16, color: 'text.primary' }} />
                 // </Box>}
                 endDecorator={engine.isAutoLinked && <LinkIcon sx={{ fontSize: 16 }} />}
-                onClick={event => handleEngineSelect(event.shiftKey ? null : engine.engineId)}
+                onClick={event => {
+                  handleEngineSelect(event.shiftKey ? null : engine.engineId);
+                  event.shiftKey && setIsEditing(false);
+                }}
                 sx={isConfigured ? _styles.chip : _styles.chipUnconfigured}
               >
                 {engine.label}
