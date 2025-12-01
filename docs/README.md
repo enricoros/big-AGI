@@ -43,7 +43,7 @@ How to set up AI models and features in big-AGI.
   - **[Web Browsing](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud
   - **Web Search**: Google Search API (see '[Environment Variables](environment-variables.md)')
   - **Image Generation**: GPT Image (gpt-image-1), DALL·E 3 and 2
-  - **Voice Synthesis**: ElevenLabs API for voice generation
+  - **Voice Synthesis**: ElevenLabs, OpenAI TTS, LocalAI, or browser Web Speech API
 
 ## Deployment & Customization
 

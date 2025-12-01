@@ -144,7 +144,7 @@ NOTE: this is a powerful tool - if you need a toy UI or clone, this ain't it.
 ## Release Notes
 
 👉 **[See the Live Release Notes](https://big-agi.com/changes)**
-- Open 2.0.1: **Opus 4.5** full support, **Gemini 3 Pro** w/ code exec, **Nano Banana Pro**, **Grok 4.1**, **GPT-5.1**, **Kimi K2 Thinking** + 280 fixes
+- Open 2.0.2: **Speex** multi-vendor speech synthesis, **Opus 4.5**, **Gemini 3 Pro**, **Nano Banana Pro**, **Grok 4.1**, **GPT-5.1**, **Kimi K2** + 280 fixes
 
 ### What's New in 2.0 · Oct 31, 2025 · Open
 
@@ -332,7 +332,7 @@ Configure 100s of AI models from 18+ providers:
 | Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                                                                             |
 | LLM services        | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [Moonshot](https://www.moonshot.cn/) · [OpenPipe](https://openpipe.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) |
 | Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                                                                                                          |
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                                                                                                                                                                                 |
+| Speech services     | [ElevenLabs](https://elevenlabs.io) · [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech) · LocalAI · Browser (Web Speech API)                                                                                                                                                                                                                                                 |
 
 ### Additional Integrations
 
