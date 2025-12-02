@@ -22,35 +22,32 @@ const _knownMistralModelDetails: Record<string, {
   hidden?: boolean;
 }> = {
 
-  // Premier models
-  'mistral-large-2512': { chatPrice: { input: 0.5, output: 1.5 } }, // Mistral Large 3 (Dec 2025) - MoE 41B active / 675B total
+  // Premier models - Mistral 3 (Dec 2025)
+  'mistral-large-2512': { chatPrice: { input: 0.5, output: 1.5 } }, // Mistral Large 3 - MoE 41B active / 675B total
   'mistral-large-2411': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1305 }, hidden: true }, // older version
-  'mistral-large-2407': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1314 }, hidden: true }, // older version
   'mistral-large-latest': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // → 2512
 
-  'mistral-medium-2508': { chatPrice: { input: 0.4, output: 2 } }, // mistral-medium-3 (Aug 2025)
+  'mistral-medium-2508': { chatPrice: { input: 0.4, output: 2 } }, // Mistral Medium 3
   'mistral-medium-2505': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1383 }, hidden: true }, // older version
   'mistral-medium-latest': { chatPrice: { input: 0.4, output: 2 }, hidden: true }, // → 2508
-  'mistral-medium': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1165 }, hidden: true }, // old symlink
+  'mistral-medium': { chatPrice: { input: 0.4, output: 2 }, hidden: true }, // symlink
 
-  'magistral-medium-2509': { chatPrice: { input: 2, output: 5 } }, // v25.09
-  'magistral-medium-2506': { chatPrice: { input: 2, output: 5 }, hidden: true }, // older version
+  'magistral-medium-2509': { chatPrice: { input: 2, output: 5 } }, // reasoning
   'magistral-medium-latest': { chatPrice: { input: 2, output: 5 }, hidden: true }, // symlink
 
-  'devstral-medium-2507': { chatPrice: { input: 0.4, output: 2 } }, // v25.07
+  'devstral-medium-2507': { chatPrice: { input: 0.4, output: 2 } }, // coding agents
 
   'mistral-large-pixtral-2411': { chatPrice: { input: 2, output: 6 } }, // Pixtral Large (alternate ID)
   'pixtral-large-2411': { chatPrice: { input: 2, output: 6 }, hidden: true }, // symlink
   'pixtral-large-latest': { chatPrice: { input: 2, output: 6 }, hidden: true }, // symlink
 
-  'codestral-2508': { chatPrice: { input: 0.3, output: 0.9 } }, // v25.08
-  'codestral-2501': { chatPrice: { input: 0.3, output: 0.9 }, hidden: true }, // older version
+  'codestral-2508': { chatPrice: { input: 0.3, output: 0.9 } }, // code generation
   'codestral-latest': { chatPrice: { input: 0.3, output: 0.9 }, hidden: true }, // symlink
 
-  'voxtral-small-2507': { chatPrice: { input: 0.1, output: 0.3 } }, // v25.07 (text tokens)
+  'voxtral-small-2507': { chatPrice: { input: 0.1, output: 0.3 } }, // voice (text tokens)
   'voxtral-small-latest': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
 
-  'voxtral-mini-2507': { chatPrice: { input: 0.04, output: 0.04 } }, // v25.07 (text tokens)
+  'voxtral-mini-2507': { chatPrice: { input: 0.04, output: 0.04 } }, // voice (text tokens)
   'voxtral-mini-latest': { chatPrice: { input: 0.04, output: 0.04 }, hidden: true }, // symlink
 
   // Ministral 3 family (Dec 2025) - multimodal, multilingual, Apache 2.0
@@ -62,37 +59,28 @@ const _knownMistralModelDetails: Record<string, {
   'ministral-8b-latest': { chatPrice: { input: 0.15, output: 0.15 }, hidden: true }, // symlink
 
   'ministral-3b-2512': { chatPrice: { input: 0.1, output: 0.1 } }, // Ministral 3 3B
-  'ministral-3b-2410': { chatPrice: { input: 0.04, output: 0.04 }, hidden: true }, // older version (was ministral-3b)
+  'ministral-3b-2410': { chatPrice: { input: 0.04, output: 0.04 }, hidden: true }, // older version
   'ministral-3b-latest': { chatPrice: { input: 0.1, output: 0.1 }, hidden: true }, // symlink
 
   // Open models
-  'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 } },
-  'mistral-small-2503': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1298 }, hidden: true }, // older version
-  'mistral-small-2501': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1235 }, hidden: true }, // older version
-  'mistral-small-2409': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // older version
+  'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 } }, // Mistral Small 3.2
   'mistral-small-latest': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
-  'mistral-small': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
 
-  'magistral-small-2509': { chatPrice: { input: 0.5, output: 1.5 } }, // v25.09
-  'magistral-small-2506': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // older version
+  'magistral-small-2509': { chatPrice: { input: 0.5, output: 1.5 } }, // reasoning
   'magistral-small-latest': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // symlink
 
-  'devstral-small-2507': { chatPrice: { input: 0.1, output: 0.3 } }, // v25.07
-  'devstral-small-2505': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // older version
+  'devstral-small-2507': { chatPrice: { input: 0.1, output: 0.3 } }, // coding agents
   'devstral-small-latest': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
 
-  'pixtral-12b-2409': { chatPrice: { input: 0.15, output: 0.15 } },
+  'pixtral-12b-2409': { chatPrice: { input: 0.15, output: 0.15 } }, // vision
   'pixtral-12b-latest': { chatPrice: { input: 0.15, output: 0.15 }, hidden: true }, // symlink
   'pixtral-12b': { chatPrice: { input: 0.15, output: 0.15 }, hidden: true }, // symlink
 
-  'open-mistral-nemo-2407': { chatPrice: { input: 0.15, output: 0.15 } },
+  'open-mistral-nemo-2407': { chatPrice: { input: 0.15, output: 0.15 } }, // NeMo
   'open-mistral-nemo': { chatPrice: { input: 0.15, output: 0.15 }, hidden: true }, // symlink
 
-  // Legacy models
-  'open-mixtral-8x22b-2404': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1165 }, hidden: true }, // legacy
-  'open-mixtral-8x22b': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1165 }, hidden: true }, // legacy symlink
-  'open-mixtral-8x7b': { chatPrice: { input: 0.7, output: 0.7 }, benchmark: { cbaElo: 1131 }, hidden: true }, // legacy
-  'open-mistral-7b': { chatPrice: { input: 0.25, output: 0.25 }, hidden: true }, // legacy
+  // Legacy (kept for reference, no longer in API)
+  'open-mistral-7b': { chatPrice: { input: 0.25, output: 0.25 }, hidden: true },
 };
 
 
@@ -123,13 +111,8 @@ const mistralModelFamilyOrder = [
   'open-codestral-mamba',
   'pixtral-12b',
   'open-mistral-nemo',
-  // Legacy
-  'open-mixtral-8x22b',
-  'open-mixtral-8x7b',
-  'mistral-small-2312', // note: this is set here explicitly, because otherwise it would show up earlier in the list due to its real name being the open mixtral 8x7b
+  // Legacy (no longer in API, kept for fallback)
   'open-mistral-7b',
-  // Open
-  'mistral-saba',
   // Deprecated
   'mistral-tiny',
   // Symlinks at the bottom
