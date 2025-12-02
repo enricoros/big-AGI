@@ -97,12 +97,18 @@ const _knownMistralModelDetails: Record<string, {
 
 
 const mistralModelFamilyOrder = [
+  // Mistral 3 (Dec 2025)
+  'mistral-large-2512',   // Mistral Large 3 - specific prefix must come before generic 'mistral-large'
+  'ministral-14b',
+  'ministral-8b',
+  'ministral-3b',
   // Premier
   'magistral-medium',
   'mistral-medium',
   'devstral-medium',
-  'mistral-large',
+  'mistral-large-pixtral', // Pixtral Large uses 'mistral-large-pixtral-2411' ID - must come before 'mistral-large'
   'pixtral-large',
+  'mistral-large',        // Generic fallback for other mistral-large variants
   'codestral',
   'magistral-small',
   'mistral-small',
@@ -111,8 +117,6 @@ const mistralModelFamilyOrder = [
   'voxtral-mini',
   'mistral-embed',
   'mistral-ocr',
-  'ministral-8b',
-  'ministral-3b',
   'codestral-embed',
   'mistral-moderation',
   // Open
