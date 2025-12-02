@@ -160,6 +160,8 @@ function _mistralCapabilitiesToInterfaces(capabilities: WireMistralModel['capabi
     interfaces.push(LLM_IF_OAI_Fn);
   if (!capabilities || capabilities.vision)
     interfaces.push(LLM_IF_OAI_Vision);
+  // if (!capabilities || capabilities.audio)
+  //   interfaces.push(...audio input...); // Voxtral
   // Add reasoning interface for magistral models
   if (modelId.includes('magistral'))
     interfaces.push(LLM_IF_OAI_Reasoning);
@@ -279,11 +281,14 @@ const wireMistralModelSchema = z.object({
 
   capabilities: z.object({
     completion_chat: z.boolean(), // used to remove other models
-    completion_fim: z.boolean().nullish(),
     function_calling: z.boolean().nullish(),
+    completion_fim: z.boolean().nullish(),
     fine_tuning: z.boolean().nullish(),
     vision: z.boolean().nullish(),
+    ocr: z.boolean().nullish(),
     classification: z.boolean().nullish(),
+    moderation: z.boolean().nullish(),
+    audio: z.boolean().nullish(),
   }).nullish(),
 
   // UI description fields
