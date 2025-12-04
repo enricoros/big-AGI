@@ -99,6 +99,22 @@ export const _knownOpenAIChatModels: ManualMappings = [
     // benchmark: TBD
   },
 
+  // GPT-5.1 Codex Max
+  {
+    idPrefix: 'gpt-5.1-codex-max',
+    label: 'GPT-5.1 Codex Max',
+    description: 'Our most intelligent coding model optimized for long-horizon, agentic coding tasks.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort4' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    // benchmark: TBD
+  },
   // GPT-5.1 Codex
   {
     idPrefix: 'gpt-5.1-codex',
@@ -936,6 +952,7 @@ const _manualOrderingIdPrefixes = [
   // GPT-5.1
   'gpt-5.1-20',
   'gpt-5.1-chat-latest',
+  'gpt-5.1-codex-max',
   'gpt-5.1-codex',
   'gpt-5.1-codex-mini',
   'gpt-5.1',
