@@ -1,6 +1,35 @@
 import { addSnackbar } from '../components/snackbar/useSnackbarsStore';
 import { Is, isBrowser } from './pwaUtils';
 
+
+/** Strip theme-dependent colors from an HTML element tree (in-place) */
+export function stripHtmlColors(element: HTMLElement) {
+  element.querySelectorAll('*').forEach((el) => {
+    if (el instanceof HTMLElement)
+      ['color', 'background', 'background-color'].forEach(p => el.style.removeProperty(p));
+  });
+}
+
+/**
+ * Copy HTML to clipboard with theme-dependent colors stripped (keeps formatting like font sizes).
+ * Falls back to plain text if HTML clipboard write fails.
+ */
+export function copyToClipboardHtmlMinusColors(html: string, plainText: string, typeLabel: string) {
+  if (!isBrowser) return;
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  stripHtmlColors(div);
+
+  const blob = new Blob([div.innerHTML], { type: 'text/html' });
+  const textBlob = new Blob([plainText], { type: 'text/plain' });
+
+  navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': textBlob })])
+    .then(() => addSnackbar({ key: 'copy-to-clipboard', message: `${typeLabel} copied to clipboard`, type: 'success', closeButton: false, overrides: { autoHideDuration: 2000 } }))
+    .catch(() => copyToClipboard(plainText, typeLabel)); // fallback to plain text
+}
+
+
 export function copyToClipboard(text: string, typeLabel: string) {
   if (!isBrowser)
     return;
