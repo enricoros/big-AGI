@@ -141,6 +141,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
         } else
           edit({ inputError: 'No content or file found at this link' });
       } catch (error: any) {
+        console.log('[DEV] Issue downloading page for attachment:', { error });
         edit({ inputError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
       }
       break;
