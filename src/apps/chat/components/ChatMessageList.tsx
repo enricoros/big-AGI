@@ -18,6 +18,7 @@ import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMess
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
+import { stripHtmlColors } from '~/common/util/clipboardUtils';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
@@ -287,6 +288,22 @@ export function ChatMessageList(props: {
   }, [conversationId, notifyBooting]);
 
 
+  // "ctrl + c" copy handler - strip theme-dependent colors from copied content (keep formatting like font sizes)
+  // similar to ChatMessage.handleOpsCopy
+  const handleCopyHTMLWithoutColors = React.useCallback((event: React.ClipboardEvent) => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+
+    const div = document.createElement('div');
+    div.appendChild(selection.getRangeAt(0).cloneContents());
+    stripHtmlColors(div);
+
+    event.clipboardData?.setData('text/html', div.innerHTML);
+    event.clipboardData?.setData('text/plain', selection.toString());
+    event.preventDefault();
+  }, []);
+
+
   // style memo
   const listSx: SxProps = React.useMemo(() => ({
     p: 0,
@@ -323,7 +340,7 @@ export function ChatMessageList(props: {
     );
 
   return (
-    <List role='chat-messages-list' sx={listSx}>
+    <List role='chat-messages-list' sx={listSx} onCopy={handleCopyHTMLWithoutColors}>
 
       {props.isMessageSelectionMode && (
         <MessagesSelectionHeader
