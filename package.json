@@ -54,8 +54,8 @@
     "next": "~15.1.9",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "5.4.54",
-    "posthog-js": "^1.298.1",
-    "posthog-node": "^5.14.0",
+    "posthog-js": "^1.302.2",
+    "posthog-node": "^5.17.2",
     "prismjs": "^1.30.0",
     "puppeteer-core": "^24.31.0",
     "react": "^18.3.1",
@@ -78,7 +78,7 @@
     "zustand": "5.0.7"
   },
   "devDependencies": {
-    "@posthog/nextjs-config": "^1.6.0",
+    "@posthog/nextjs-config": "^1.6.4",
     "@types/node": "^24.10.1",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.5",
