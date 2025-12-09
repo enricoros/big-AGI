@@ -28,6 +28,40 @@ export function webspeechIsSupported(): boolean {
 }
 
 
+// Shared async voice loading
+
+/**
+ * Returns voices, waiting for them to load if needed.
+ * Handles the browser's async voice loading on first access.
+ */
+function _getVoicesAsync(): Promise<SpeechSynthesisVoice[]> {
+  if (!webspeechIsSupported()) return Promise.resolve([]);
+
+  // try immediate (may be cached from previous calls)
+  const voices = speechSynthesis.getVoices();
+  if (voices.length > 0) return Promise.resolve(voices);
+
+  // wait for voices to load
+  return new Promise((resolve) => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const onVoicesChanged = () => {
+      clearTimeout(timeoutId);
+      speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+      resolve(speechSynthesis.getVoices());
+    };
+
+    speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+
+    // fallback timeout in case voiceschanged never fires
+    timeoutId = setTimeout(() => {
+      speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+      resolve(speechSynthesis.getVoices()); // may still be empty
+    }, 2000);
+  });
+}
+
+
 // Smart voice selection for auto-detected WebSpeech engine
 
 /** Preferred voices by name, in priority order */
@@ -63,35 +97,14 @@ function _selectBestVoice(voices: SpeechSynthesisVoice[]): string | undefined {
 }
 
 /**
- * Sets the best voice, retrying once after voices load if needed.
+ * Sets the best voice, waiting for voices to load if needed.
  * Safe to call at hydration - will update the engine when voices become available.
  */
 export function webspeechHBestVoiceDeferred(setter: (voiceURI: string) => void): void {
-  if (!webspeechIsSupported()) return;
-
-  // try immediate
-  const voices = speechSynthesis.getVoices();
-  const b1 = _selectBestVoice(voices);
-  if (b1) return setter(b1);
-
-  // retry after voices load (one-shot)
-  let timeoutId: ReturnType<typeof setTimeout>;
-  const onVoicesChanged = () => {
-    clearTimeout(timeoutId);
-    speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-    const v = speechSynthesis.getVoices();
-    const b2 = _selectBestVoice(v);
-    if (b2) setter(b2);
-  };
-  speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
-
-  // fallback timeout in case voiceschanged never fires
-  timeoutId = setTimeout(() => {
-    speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-    const v = speechSynthesis.getVoices();
-    const b3 = _selectBestVoice(v);
-    if (b3) setter(b3);
-  }, 2000);
+  _getVoicesAsync().then((voices) => {
+    const best = _selectBestVoice(voices);
+    if (best) setter(best);
+  });
 }
 
 
@@ -173,7 +186,7 @@ export function useSpeexWebSpeechVoices(enabled: boolean): SpeexListVoicesResult
  * Speak text using the Web Speech API.
  * This is a client-only function - no server RPC.
  */
-export function speexSynthesize_WebSpeech(
+export async function speexSynthesize_WebSpeech(
   text: string,
   voice: DVoiceWebSpeech,
   callbacks?: {
@@ -182,14 +195,25 @@ export function speexSynthesize_WebSpeech(
     onError?: (error: Error) => void;
   },
 ): Promise<SpeexSynthesizeResult> {
-  return new Promise((resolve) => {
-    if (!webspeechIsSupported()) {
-      const error = new Error('Web Speech API not supported');
-      callbacks?.onError?.(error);
-      resolve({ success: false, errorType: 'tts-no-engine', errorText: error.message });
-      return;
-    }
 
+  // ensure supported
+  if (!webspeechIsSupported()) {
+    const error = new Error('Web Speech API not supported');
+    callbacks?.onError?.(error);
+    return { success: false, errorType: 'tts-no-engine', errorText: error.message };
+  }
+
+  // find voice by URI (wait for voices to load if needed)
+  let selectedVoice: SpeechSynthesisVoice | undefined;
+  if (voice.ttsVoiceURI) {
+    const voices = await _getVoicesAsync();
+    selectedVoice = voices.find(v => v.voiceURI === voice.ttsVoiceURI);
+    if (!selectedVoice)
+      console.log(`[Speex][WebSpeech] Voice URI not found: ${voice.ttsVoiceURI} (${voices.length} voices available on this device)`);
+  }
+
+  // wrap the callback-based SpeechSynthesis API in a Promise
+  return new Promise((resolve) => {
     // cancel any ongoing speech
     speechSynthesis.cancel(); // safe
 
@@ -197,13 +221,9 @@ export function speexSynthesize_WebSpeech(
     if (SPEEX_DEBUG) console.log(`[Speex][WebSpeech] New utterance (${text.length} chars, voice: ${voice.ttsVoiceURI}, s=${voice.ttsSpeed}, p=${voice.ttsPitch})`);
     const utterance = new SpeechSynthesisUtterance(text);
 
-    // find and set voice by URI
-    if (voice.ttsVoiceURI) {
-      const voices = speechSynthesis.getVoices();
-      const selectedVoice = voices.find(v => v.voiceURI === voice.ttsVoiceURI);
-      if (selectedVoice)
-        utterance.voice = selectedVoice;
-    }
+    // set voice
+    if (selectedVoice)
+      utterance.voice = selectedVoice;
 
     // set speed and pitch
     if (voice.ttsSpeed !== undefined) utterance.rate = voice.ttsSpeed;

@@ -14,6 +14,7 @@ import type { DSpeexEngineAny, SpeexSpeakTextOptions, SpeexSpeakTextResult, Spee
 import { speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType } from './store-module-speex';
 import { speex_splitTextIntoChunks, speex_textApplyCharLimit, speex_textCleanupUnspoken } from './speex.processing';
 
+import { SPEEX_DEBUG } from './speex.config';
 import { speexSynthesize_RPC } from './protocols/rpc/rpc.client';
 import { speexSynthesize_WebSpeech, speexSynthesize_WebSpeechStop } from './protocols/webspeech/webspeech.client';
 
@@ -173,7 +174,7 @@ function speakRawText_withHandle(
 
   // apply voice override from selector (merge with engine defaults)
   const effectiveEngine = _engineApplyVoiceOverride(engine, voiceSelector);
-
+  if (SPEEX_DEBUG) console.log(`[Speex] speakRawText: Using effective engine ${effectiveEngine.engineId} (vendor: ${effectiveEngine.vendorType})`, { length: rawText.length, voiceSelector });
 
   const {
     rpcDisableStreaming = false,
