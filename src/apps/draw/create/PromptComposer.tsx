@@ -17,6 +17,7 @@ import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imagineProm
 import { agiUuid } from '~/common/util/idUtils';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { lineHeightTextareaMd } from '~/common/app.theme';
+import { enterIsNewline as computeEnterIsNewline, shouldSendOnEnter } from '~/common/util/keyboardUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
@@ -56,7 +57,8 @@ export function PromptComposer(props: {
 
   // external state
   const { currentIdea, nextRandomIdea, clearCurrentIdea } = useDrawIdeas();
-  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  const keyboardPreset = useUIPreferencesStore(state => state.keyboardPreset);
+  const enterIsNewline = computeEnterIsNewline(keyboardPreset);
 
 
   // derived state
@@ -101,13 +103,13 @@ export function PromptComposer(props: {
     if (e.key !== 'Enter')
       return;
 
-    // Shift: toggles the 'enter is newline'
-    if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+    // Use keyboard mapping to determine if this should send
+    if (shouldSendOnEnter(e, keyboardPreset)) {
       if (userHasText)
         handlePromptEnqueue();
       return e.preventDefault();
     }
-  }, [enterIsNewline, handlePromptEnqueue, userHasText]);
+  }, [keyboardPreset, handlePromptEnqueue, userHasText]);
 
 
   // Ideas

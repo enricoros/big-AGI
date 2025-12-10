@@ -4,6 +4,7 @@ import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { KeyStroke, platformAwareKeystrokes } from '~/common/components/KeyStroke';
+import { getSendShortcut, KeyboardPreset } from '~/common/util/keyboardUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { ChatExecuteMode } from './execute-mode.types';
@@ -20,7 +21,7 @@ export function ExecuteModeMenu(props: {
 }) {
 
   // external state
-  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  const keyboardPreset = useUIPreferencesStore(state => state.keyboardPreset);
 
   return (
     <CloseablePopup
@@ -48,11 +49,11 @@ export function ExecuteModeMenu(props: {
               </Box>
               {(key === props.chatExecuteMode || !!data.shortcut) && (
                 <KeyStroke variant='outlined' combo={platformAwareKeystrokes(
-                  newLineShortcut(
+                  getShortcutForMode(
                     (key === props.chatExecuteMode) ? 'ENTER'
                       : data.shortcut ? data.shortcut
                         : 'ENTER',
-                    enterIsNewline,
+                    keyboardPreset,
                   ),
                 )} />
               )}
@@ -64,8 +65,8 @@ export function ExecuteModeMenu(props: {
   );
 }
 
-function newLineShortcut(shortcut: string, enterIsNewLine: boolean) {
+function getShortcutForMode(shortcut: string, keyboardPreset: KeyboardPreset) {
   if (shortcut === 'ENTER')
-    return enterIsNewLine ? 'Shift + Enter' : 'Enter';
+    return getSendShortcut(keyboardPreset);
   return shortcut;
 }

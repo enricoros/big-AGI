@@ -43,6 +43,7 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
+import { enterIsNewline as computeEnterIsNewline, getKeyboardActionFromEvent, getSendShortcut, KeyboardPreset } from '~/common/util/keyboardUtils';
 import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
@@ -147,7 +148,7 @@ export function Composer(props: {
   const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
   const { novel: explainCtrlEnter, touch: touchCtrlEnter } = useUICounter('composer-ctrl-enter');
   const [startupText, setStartupText] = useComposerStartupText();
-  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  const keyboardPreset = useUIPreferencesStore(state => state.keyboardPreset);
   const composerQuickButton = useUIPreferencesStore(state => state.composerQuickButton);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
   const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
@@ -217,6 +218,7 @@ export function Composer(props: {
   const isMobile = props.isMobile;
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
+  const enterIsNewline = computeEnterIsNewline(keyboardPreset);
 
   const composerTextSuffix = chatExecuteMode === 'generate-image' && isDesktop && drawRepeat > 1 ? ` x${drawRepeat}` : '';
 
@@ -543,36 +545,41 @@ export function Composer(props: {
     if (actileInterceptKeydown(e))
       return;
 
-    // Enter: primary action
-    if (e.key === 'Enter') {
+    // Use the keyboard mapping system to determine the action
+    const action = getKeyboardActionFromEvent(e, keyboardPreset);
 
-      // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
-      if (e.altKey && !e.metaKey && !e.ctrlKey) {
-        if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
-          touchAltEnter();
-        return e.preventDefault();
-      }
+    if (action) {
+      switch (action) {
+        case 'append':
+          if (await handleSendAction('append-user', composeText))
+            touchAltEnter();
+          return e.preventDefault();
 
-      // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
-      if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) { // 'ctrl+enter' -> beam
-          touchCtrlEnter();
-          e.stopPropagation();
-        }
-        return e.preventDefault();
-      }
+        case 'beam':
+          if (await handleSendAction('beam-content', composeText)) {
+            touchCtrlEnter();
+            e.stopPropagation();
+          }
+          return e.preventDefault();
 
-      // Shift: toggles the 'enter is newline'
-      if (e.shiftKey)
-        touchShiftEnter();
-      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
-        if (!assistantAbortible)
-          await handleSendAction(chatExecuteMode, composeText); // enter -> send
-        return e.preventDefault();
+        case 'send':
+          // Track shift+enter usage for tips
+          if (e.shiftKey)
+            touchShiftEnter();
+          if (!assistantAbortible)
+            await handleSendAction(chatExecuteMode, composeText);
+          return e.preventDefault();
+
+        case 'newline':
+          // Track shift+enter usage for tips
+          if (e.shiftKey)
+            touchShiftEnter();
+          // Allow default behavior (newline)
+          break;
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, keyboardPreset, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -730,10 +737,10 @@ export function Composer(props: {
 
   if (isDesktop && timeToShowTips && !isDraw) {
     if (explainShiftEnter)
-      textPlaceholder += !enterIsNewline ? '\n\n⏎ Shift + Enter to add a new line' : '\n\n➤ Shift + Enter to send';
+      textPlaceholder += !enterIsNewline ? '\n\n⏎ Shift + Enter to add a new line' : `\n\n➤ ${getSendShortcut(keyboardPreset)} to send`;
       // else if (explainAltEnter)
     //   textPlaceholder += platformAwareKeystrokes('\n\n⭳ Tip: Alt + Enter to just append the message');
-    else if (explainCtrlEnter)
+    else if (explainCtrlEnter && keyboardPreset === 'big-agi')
       textPlaceholder += platformAwareKeystrokes('\n\n⫷ Tip: Ctrl + Enter to beam');
   }
 

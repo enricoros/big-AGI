@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Textarea } from '@mui/joy';
 
+import { enterIsNewline as computeEnterIsNewline } from '~/common/util/keyboardUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 /**
@@ -24,7 +25,8 @@ export function InlineTextarea(props: {
 }) {
 
   const [text, setText] = React.useState(props.initialText);
-  const enterIsNewline = useUIPreferencesStore(state => (!props.disableAutoSaveOnBlur && state.enterIsNewline));
+  const keyboardPreset = useUIPreferencesStore(state => state.keyboardPreset);
+  const enterIsNewline = !props.disableAutoSaveOnBlur && computeEnterIsNewline(keyboardPreset);
 
 
   // [effect] optional syncing of the text to the initial text. warning, will discard the current partial edit

@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
+import type { KeyboardPreset } from '~/common/util/keyboardUtils';
 import { BrowserLang } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
 
@@ -33,8 +34,8 @@ interface UIPreferencesStore {
   doubleClickToEdit: boolean;
   setDoubleClickToEdit: (doubleClickToEdit: boolean) => void;
 
-  enterIsNewline: boolean;
-  setEnterIsNewline: (enterIsNewline: boolean) => void;
+  keyboardPreset: KeyboardPreset;
+  setKeyboardPreset: (keyboardPreset: KeyboardPreset) => void;
 
   renderCodeLineNumbers: boolean;
   setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => void;
@@ -107,8 +108,8 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       disableMarkdown: false,
       setDisableMarkdown: (disableMarkdown: boolean) => set({ disableMarkdown }),
 
-      enterIsNewline: false,
-      setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
+      keyboardPreset: 'big-agi',
+      setKeyboardPreset: (keyboardPreset: KeyboardPreset) => set({ keyboardPreset }),
 
       renderCodeLineNumbers: false,
       setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => set({ renderCodeLineNumbers }),
@@ -172,8 +173,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
        * 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
        * 2: new Big-AGI 2 defaults
        * 3: centerMode: 'full' is the new default
+       * 4: replace 'enterIsNewline' with 'keyboardPreset' for full keyboard configuration
        */
-      version: 3,
+      version: 4,
 
       partialize: (state) => {
         if (Release.IsNodeDevBuild) return state; // in dev, persist everything
@@ -199,6 +201,14 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
           state.centerMode = 'full';
         }
 
+        // 4: migrate 'enterIsNewline' to 'keyboardPreset'
+        // Note: Both old enterIsNewline values map to 'big-agi' preset because
+        // Ctrl+Enter was always hard-coded to Beam before this change
+        if (state && fromVersion < 4) {
+          state.keyboardPreset = 'big-agi';
+          delete state.enterIsNewline;
+        }
+
         return state;
       },
     },
@@ -220,6 +230,10 @@ export function useUIContentScaling(): ContentScaling {
 
 export function getAixInspectorEnabled(): boolean {
   return useUIPreferencesStore.getState().aixInspector;
+}
+
+export function getKeyboardPreset(): KeyboardPreset {
+  return useUIPreferencesStore.getState().keyboardPreset;
 }
 
 

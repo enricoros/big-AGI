@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Button, FormControl, Switch } from '@mui/joy';
+import { Button, FormControl, Option, Select, Switch } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
+import { KEYBOARD_PRESET_DESCRIPTIONS, KEYBOARD_PRESET_LABELS, KeyboardPreset } from '~/common/util/keyboardUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { isPwa } from '~/common/util/pwaUtils';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
@@ -58,17 +59,17 @@ export function AppChatSettingsUI() {
     centerMode, setCenterMode,
     disableMarkdown, setDisableMarkdown,
     doubleClickToEdit, setDoubleClickToEdit,
-    enterIsNewline, setEnterIsNewline,
+    keyboardPreset, setKeyboardPreset,
     showPersonaFinder, setShowPersonaFinder,
   } = useUIPreferencesStore(useShallow(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     disableMarkdown: state.disableMarkdown, setDisableMarkdown: state.setDisableMarkdown,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
-    enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
+    keyboardPreset: state.keyboardPreset, setKeyboardPreset: state.setKeyboardPreset,
     showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
   })));
 
-  const handleEnterIsNewlineChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterIsNewline(!event.target.checked);
+  const handleKeyboardPresetChange = (_event: any, value: KeyboardPreset | null) => value && setKeyboardPreset(value);
 
   const handleDoubleClickToEditChange = (event: React.ChangeEvent<HTMLInputElement>) => setDoubleClickToEdit(event.target.checked);
 
@@ -85,11 +86,19 @@ export function AppChatSettingsUI() {
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Enter sends ⏎'
-                      description={enterIsNewline ? 'New line' : 'Sends message'} />
-      <Switch checked={!enterIsNewline} onChange={handleEnterIsNewlineChange}
-              endDecorator={enterIsNewline ? 'Off' : 'On'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+      <FormLabelStart title='Keyboard'
+                      description={KEYBOARD_PRESET_DESCRIPTIONS[keyboardPreset]} />
+      <Select
+        value={keyboardPreset}
+        onChange={handleKeyboardPresetChange}
+        sx={{ minWidth: 140 }}
+      >
+        {(Object.keys(KEYBOARD_PRESET_LABELS) as KeyboardPreset[]).map((preset) => (
+          <Option key={preset} value={preset}>
+            {KEYBOARD_PRESET_LABELS[preset]}
+          </Option>
+        ))}
+      </Select>
     </FormControl>
 
     {SHOW_MARKDOWN_DISABLE_SETTING && (

@@ -4,6 +4,7 @@ import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { enterIsNewline as computeEnterIsNewline, shouldSendOnEnter } from '~/common/util/keyboardUtils';
 import { Is } from '~/common/util/pwaUtils';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
@@ -84,7 +85,11 @@ export function BlockEdit_TextFragment(props: {
   // NOTE2: as per #https://github.com/enricoros/big-AGI/issues/760, this is a UX break of behavior.
   //        adding a configuration option to quickly
   const isControlled = !!props.controlled;
-  const enterIsNewline = useUIPreferencesStore(state => isControlled ? true : FORCE_ENTER_IS_NEWLINE !== undefined ? FORCE_ENTER_IS_NEWLINE : state.enterIsNewline);
+  const keyboardPreset = useUIPreferencesStore(state => state.keyboardPreset);
+  const isMobile = !Is.Desktop;
+
+  // Compute enterIsNewline: controlled mode forces true, mobile forces true, otherwise use preset
+  const enterIsNewline = isControlled ? true : FORCE_ENTER_IS_NEWLINE !== undefined ? FORCE_ENTER_IS_NEWLINE : computeEnterIsNewline(keyboardPreset);
 
   // derived state
   const { fragmentId, setEditedText, onSubmit, onEscapePressed } = props;
