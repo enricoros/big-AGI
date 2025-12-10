@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { PersonaForm } from './PersonaForm';
 
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, tabClasses, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -218,12 +219,19 @@ export function Creator(props: { display: boolean }) {
       >
         <Tab>From YouTube</Tab>
         <Tab>From Text</Tab>
+        <Tab>From Form</Tab>
       </TabList>
       <TabPanel keepMounted value={0} sx={{ p: 3 }}>
         <FromYouTube isTransforming={isTransforming} onCreate={handleCreate} />
       </TabPanel>
       <TabPanel keepMounted value={1} sx={{ p: 3 }}>
         <FromText isCreating={isTransforming} onCreate={handleCreate} />
+        </TabPanel>
+        <TabPanel keepMounted value={2} sx={{ p: 3 }}>
+          <PersonaForm />
+        </TabPanel>
+        <TabPanel keepMounted value={2} sx={{ p: 3 }}>
+          {/* Form for creating new personas */}
       </TabPanel>
 
       <Divider orientation='horizontal' />
