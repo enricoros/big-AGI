@@ -1065,6 +1065,13 @@ export namespace OpenAIWire_Responses_Items {
     type: z.literal('web_search_call'),
     id: z.string(), // unique ID of the output item
 
+    // BREAKING CHANGE from OpenAI - 2025-12-11
+    // redefining the following because we need 'searching' too here (seen during web search streaming)
+    status: z.enum([
+      'searching', // 2025-12-11: seen on OpenAI for `web_search_call` items when used with GPT 5.2 Pro, with web search on
+      'in_progress', 'completed', 'incomplete',
+    ]).optional(),
+
     // action may be present with `include: ['web_search_call.action.sources']`
     action: z.union([
 
