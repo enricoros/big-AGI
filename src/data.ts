@@ -239,6 +239,7 @@ func _on_mouse_moved(delta): camera_controller.rotate_camera(delta)
 - **Assume all nodes exist** - no error handling/validation
 - **Core functionality first** - minimum viable, no placeholders, comment potential enhancements
 - **Do Not Infer Types** - always specify the type to prevent errors when the returned type is unknown
+- **Ask for missing files** - if there are files mentioned in the code that are required for the request, list them first
 
 ## Code Style (STRICT):
 
