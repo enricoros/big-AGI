@@ -472,7 +472,7 @@ export namespace AixWire_API {
     vndMoonshotWebSearch: z.enum(['auto']).optional(),
     // OpenAI
     vndOaiResponsesAPI: z.boolean().optional(),
-    vndOaiReasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+    vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
