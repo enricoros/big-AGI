@@ -107,6 +107,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort52Pro' },
+      { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 21, output: 168 },
