@@ -3,6 +3,7 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
@@ -131,6 +132,8 @@ export interface GatherStoreSlice extends GatherStateSlice {
   fusionRecreateAsCustom: (sourceFusionId: BFusionId) => void;
   fusionInstructionUpdate: (fusionId: BFusionId, instructionIndex: number, update: Partial<Instruction>) => void;
   fusionSetLlmId: (fusionId: BFusionId, llmId: DLLMId | null) => void;
+  fusionDeleteFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId) => void;
+  fusionReplaceFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
 
   createFusion: () => void;
   removeFusion: (fusionId: BFusionId) => void;
@@ -211,6 +214,58 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
   fusionSetLlmId: (fusionId: BFusionId, llmId: DLLMId | null) =>
     _get()._fusionUpdate(fusionId, {
       llmId,
+    }),
+
+  fusionDeleteFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId) =>
+    _get()._fusionUpdate(fusionId, (fusion) => {
+      // Ensure there's an output message
+      if (!fusion.outputDMessage) {
+        console.error(`fusionDeleteFragment: No output message for fusion ${fusionId}`);
+        return {};
+      }
+
+      // Find the fragment to delete
+      const fragmentIndex = fusion.outputDMessage.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`fusionDeleteFragment: Fragment not found for ID ${fragmentId} in fusion ${fusionId}`);
+        return {};
+      }
+
+      return {
+        outputDMessage: {
+          ...fusion.outputDMessage,
+          fragments: fusion.outputDMessage.fragments.filter((_, index) => index !== fragmentIndex),
+          updated: Date.now(),
+        },
+      };
+    }),
+
+  fusionReplaceFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
+    _get()._fusionUpdate(fusionId, (fusion) => {
+      // Ensure there's an output message
+      if (!fusion.outputDMessage) {
+        console.error(`fusionReplaceFragment: No output message for fusion ${fusionId}`);
+        return {};
+      }
+
+      // Find the fragment to replace
+      const fragmentIndex = fusion.outputDMessage.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`fusionReplaceFragment: Fragment not found for ID ${fragmentId} in fusion ${fusionId}`);
+        return {};
+      }
+
+      return {
+        outputDMessage: {
+          ...fusion.outputDMessage,
+          fragments: fusion.outputDMessage.fragments.map((fragment, index) =>
+            (index === fragmentIndex)
+              ? { ...newFragment }
+              : fragment,
+          ),
+          updated: Date.now(),
+        },
+      };
     }),
 
 
