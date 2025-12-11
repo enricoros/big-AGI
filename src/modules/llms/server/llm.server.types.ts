@@ -100,6 +100,8 @@ const ModelParameterSpec_schema = z.object({
     // OpenAI
     'llmVndOaiReasoningEffort',
     'llmVndOaiReasoningEffort4',
+    'llmVndOaiReasoningEffort52',
+    'llmVndOaiReasoningEffort52Pro',
     'llmVndOaiRestoreMarkdown',
     'llmVndOaiVerbosity',
     'llmVndOaiWebSearchContext',
