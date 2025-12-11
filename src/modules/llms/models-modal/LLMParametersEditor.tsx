@@ -32,6 +32,18 @@ const _reasoningEffort4Options = [
   { value: 'minimal', label: 'Minimal', description: 'Fastest, cheapest, least reasoning' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
+const _reasoningEffort52Options = [
+  { value: 'xhigh', label: 'Max', description: 'Hardest thinking, best quality' } as const,
+  { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
+  { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
+  { value: 'low', label: 'Low', description: 'Quick, concise responses' } as const,
+  { value: _UNSPECIFIED, label: 'None', description: '-' } as const,
+] as const;
+const _reasoningEffort52ProOptions = [
+  { value: 'xhigh', label: 'Max', description: 'Hardest thinking, best quality' } as const,
+  { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
+  { value: _UNSPECIFIED, label: 'Medium', description: '-' } as const,
+] as const;
 const _verbosityOptions = [
   { value: 'high', label: 'Detailed', description: 'Thorough responses, great for audits' } as const,
   { value: 'medium', label: 'Balanced', description: 'Standard detail level (default)' } as const,
@@ -209,6 +221,8 @@ export function LLMParametersEditor(props: {
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort,
     llmVndOaiReasoningEffort4,
+    llmVndOaiReasoningEffort52,
+    llmVndOaiReasoningEffort52Pro,
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
@@ -257,8 +271,8 @@ export function LLMParametersEditor(props: {
   const gemTBSpec = modelParamSpec['llmVndGeminiThinkingBudget'];
   const gemTBMinMax = gemTBSpec?.rangeOverride || defGemTB.range;
 
-  // Check if web search should be disabled due to minimal reasoning effort
-  const isOaiReasoningEffortMinimal = llmVndOaiReasoningEffort4 === 'minimal';
+  // Check if web search should be disabled due to minimal/none reasoning effort
+  const isOaiReasoningEffortMinimal = llmVndOaiReasoningEffort4 === 'minimal' || llmVndOaiReasoningEffort52 === 'none';
 
   return <>
 
@@ -614,6 +628,34 @@ export function LLMParametersEditor(props: {
             onChangeParameter({ llmVndOaiReasoningEffort4: value });
         }}
         options={_reasoningEffort4Options}
+      />
+    )}
+
+    {showParam('llmVndOaiReasoningEffort52') && (
+      <FormSelectControl
+        title='Reasoning Effort'
+        tooltip='Controls how much effort the model spends on reasoning (5-level scale for GPT-5.2)'
+        value={(!llmVndOaiReasoningEffort52 || llmVndOaiReasoningEffort52 === 'none') ? _UNSPECIFIED : llmVndOaiReasoningEffort52}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiReasoningEffort52');
+          else
+            onChangeParameter({ llmVndOaiReasoningEffort52: value });
+        }}
+        options={_reasoningEffort52Options}
+      />
+    )}
+
+    {showParam('llmVndOaiReasoningEffort52Pro') && (
+      <FormSelectControl
+        title='Reasoning Effort'
+        tooltip='Controls how much effort the model spends on reasoning (3-level scale for GPT-5.2 Pro)'
+        value={(!llmVndOaiReasoningEffort52Pro || llmVndOaiReasoningEffort52Pro === 'medium') ? _UNSPECIFIED : llmVndOaiReasoningEffort52Pro}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOaiReasoningEffort52Pro');
+          else onChangeParameter({ llmVndOaiReasoningEffort52Pro: value });
+        }}
+        options={_reasoningEffort52ProOptions}
       />
     )}
 
