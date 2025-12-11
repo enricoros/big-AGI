@@ -63,7 +63,8 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiReasoningEffort52' },
+      { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiRestoreMarkdown' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },
@@ -86,7 +87,11 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 400000,
     maxCompletionTokens: 128000,
     trainingDataCutoff: 'Aug 2025',
-    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
+    ],
     chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
     // benchmark: TBD
   },
@@ -100,7 +105,10 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 272000,
     trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort52Pro' },
+      { paramId: 'llmForceNoStream' },
+    ],
     chatPrice: { input: 21, output: 168 },
     // benchmark: TBD
   },
