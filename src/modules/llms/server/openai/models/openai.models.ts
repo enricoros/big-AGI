@@ -51,6 +51,66 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // - "Structured Outputs" is LLM_IF_OAI_Json
 export const _knownOpenAIChatModels: ManualMappings = [
 
+  /// GPT-5.2 series - Released December 11, 2025
+
+  // GPT-5.2
+  {
+    idPrefix: 'gpt-5.2-2025-12-11',
+    label: 'GPT-5.2 (2025-12-11)',
+    description: 'Most capable model for professional work and long-running agents. Improvements in general intelligence, long-context, agentic tool-calling, and vision.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Aug 2025',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiRestoreMarkdown' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.2',
+    label: 'GPT-5.2',
+    symLink: 'gpt-5.2-2025-12-11',
+  },
+
+  // GPT-5.2 Chat Latest
+  {
+    idPrefix: 'gpt-5.2-chat-latest',
+    label: 'GPT-5.2 Instant',
+    description: 'GPT-5.2 model powering ChatGPT. Fast, capable for everyday work with clear improvements in info-seeking, how-tos, technical writing.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Aug 2025',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
+    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
+    // benchmark: TBD
+  },
+
+  // GPT-5.2 Pro
+  {
+    idPrefix: 'gpt-5.2-pro-2025-12-11',
+    label: 'GPT-5.2 Pro (2025-12-11)',
+    description: 'Smartest and most trustworthy option for difficult questions. Uses more compute for harder thinking on complex domains like programming.',
+    contextWindow: 400000,
+    maxCompletionTokens: 272000,
+    trainingDataCutoff: 'Aug 2025',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
+    chatPrice: { input: 21, output: 168 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.2-pro',
+    label: 'GPT-5.2 Pro',
+    symLink: 'gpt-5.2-pro-2025-12-11',
+  },
+
+
   /// GPT-5.1 series - Released November 13, 2025
 
   // GPT-5.1
@@ -866,6 +926,7 @@ const openAIModelsDenyList: string[] = [
   '4o-realtime',
   '4o-mini-realtime',
   'gpt-realtime',
+  'gpt-realtime-mini',
 
   // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
@@ -916,6 +977,12 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5.2
+  'gpt-5.2-20',
+  'gpt-5.2-pro-20',
+  'gpt-5.2-pro',
+  'gpt-5.2-chat-latest',
+  'gpt-5.2',
   // GPT-5.1
   'gpt-5.1-20',
   'gpt-5.1-chat-latest',
