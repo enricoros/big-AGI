@@ -38,7 +38,6 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hotFixAlternateUserAssistantRoles = openAIDialect === 'deepseek' || openAIDialect === 'perplexity';
   const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
-  const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
   const hotFixThrowCannotFC =
     // [OpenRouter] 2025-10-02: do not throw, rather let it fail if upstream has issues
     // openAIDialect === 'openrouter' || /* OpenRouter FC support is not good (as of 2024-07-15) */
@@ -60,8 +59,6 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   let chatMessages = _toOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence, hotFixOpenAIOFamily);
 
   // Apply hotfixes
-  if (hotFixSquashMultiPartText)
-    chatMessages = _fixSquashMultiPartText(chatMessages);
 
   if (hotFixRemoveEmptyMessages)
     chatMessages = _fixRemoveEmptyMessages(chatMessages);
@@ -248,11 +245,11 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     else if (model.vndGeminiThinkingBudget !== undefined)
       payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget || 8192 };
     // OpenAI via OpenRouter
-    else if (model.vndOaiReasoningEffort && model.vndOaiReasoningEffort !== 'minimal')
+    else if (model.vndOaiReasoningEffort && model.vndOaiReasoningEffort !== 'minimal' && model.vndOaiReasoningEffort !== 'none')
       payload.reasoning = { effort: model.vndOaiReasoningEffort };
 
     // FIX double-reasoning request - remove reasoning_effort after transferring it to reasoning (unless already set)
-    if (payload.reasoning_effort && payload.reasoning_effort !== 'minimal') {
+    if (payload.reasoning_effort && payload.reasoning_effort !== 'minimal' && payload.reasoning_effort !== 'none') {
       // we don't know which one takes precedence, so we prioritize .reasoning (OpenRouter) even if .reasoning_effort (OpenAI) is present
       if (!payload.reasoning)
         payload.reasoning = { effort: payload.reasoning_effort };
@@ -348,17 +345,6 @@ function _fixRequestForOpenAIO1_maxCompletionTokens(payload: TRequest): TRequest
 function _fixRemoveStreamOptions(payload: TRequest): TRequest {
   const { stream_options, parallel_tool_calls, ...rest } = payload;
   return rest;
-}
-
-function _fixSquashMultiPartText(chatMessages: TRequestMessages): TRequestMessages {
-  // Convert multi-part text messages to single strings for older OpenAI dialects
-  return chatMessages.reduce((acc, message) => {
-    if (message.role === 'user' && Array.isArray(message.content))
-      acc.push({ role: message.role, content: message.content.filter(part => part.type === 'text').map(textPart => textPart.text).filter(text => !!text).join(hotFixSquashTextSeparator) });
-    else
-      acc.push(message);
-    return acc;
-  }, [] as TRequestMessages);
 }
 
 function _fixVndOaiRestoreMarkdown_Inline(payload: TRequest) {

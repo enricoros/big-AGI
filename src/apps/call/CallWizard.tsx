@@ -6,13 +6,15 @@ import ChatIcon from '@mui/icons-material/Chat';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicIcon from '@mui/icons-material/Mic';
-import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import { useSpeexGlobalEngine } from '~/modules/speex/store-module-speex';
+
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
-import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useCapabilityBrowserSpeechRecognition } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUICounter } from '~/common/stores/store-ui';
 
@@ -45,7 +47,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
   // external state
   const recognition = useCapabilityBrowserSpeechRecognition();
-  const synthesis = useCapabilityElevenLabs();
+  const speexGlobalEngine = useSpeexGlobalEngine();
   const chatIsEmpty = useChatStore(state => {
     if (!props.conversationId)
       return false;
@@ -58,15 +60,16 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
   const outOfTheBlue = !props.conversationId;
   const overriddenEmptyChat = chatEmptyOverride || !chatIsEmpty;
   const overriddenRecognition = recognitionOverride || recognition.mayWork;
-  const allGood = overriddenEmptyChat && overriddenRecognition && synthesis.mayWork;
-  const fatalGood = overriddenRecognition && synthesis.mayWork;
+  const synthesisShallWork = !!speexGlobalEngine;
+  const allGood = overriddenEmptyChat && overriddenRecognition && synthesisShallWork;
+  const fatalGood = overriddenRecognition && synthesisShallWork;
 
 
   const handleOverrideChatEmpty = React.useCallback(() => setChatEmptyOverride(true), []);
 
   const handleOverrideRecognition = React.useCallback(() => setRecognitionOverride(true), []);
 
-  const handleConfigureElevenLabs = React.useCallback(() => optimaOpenPreferences('voice'), []);
+  const handleConfigureVoice = React.useCallback(() => optimaOpenPreferences('voice'), []);
 
   const handleFinishButton = React.useCallback(() => {
     if (!allGood)
@@ -128,17 +131,17 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
     {/* Text to Speech status */}
     <StatusCard
-      icon={<RecordVoiceOverTwoToneIcon />}
+      icon={<PhVoice />}
       text={
-        (synthesis.mayWork ? 'Voice synthesis should be ready.' : 'There might be an issue with ElevenLabs voice synthesis.')
-        + (synthesis.isConfiguredServerSide ? '' : (synthesis.isConfiguredClientSide ? '' : ' Please add your API key in the settings.'))
+        (synthesisShallWork ? 'Voice synthesis should be ready.' : 'There might be an issue with voice synthesis.')
+        // + (synthesis.isConfiguredServerSide ? '' : (synthesis.isConfiguredClientSide ? '' : ' Please add your API key in the settings.'))
       }
-      button={synthesis.mayWork ? undefined : (
-        <Button variant='outlined' onClick={handleConfigureElevenLabs} sx={{ mx: 1 }}>
+      button={synthesisShallWork ? undefined : (
+        <Button variant='outlined' onClick={handleConfigureVoice} sx={{ mx: 1 }}>
           Configure
         </Button>
       )}
-      hasIssue={!synthesis.mayWork}
+      hasIssue={!synthesisShallWork}
     />
 
     {/*<Typography>*/}

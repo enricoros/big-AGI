@@ -7,22 +7,22 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
-import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
-import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
-import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
+
+import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
+import { speakText } from '~/modules/speex/speex.client';
 
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
@@ -43,17 +43,12 @@ import { useAppCallStore } from './state/store-app-call';
 function CallMenu(props: {
   pushToTalk: boolean,
   setPushToTalk: (pushToTalk: boolean) => void,
-  override: boolean,
-  setOverride: (overridePersonaVoice: boolean) => void,
 }) {
 
   // external state
   const { grayUI, toggleGrayUI } = useAppCallStore();
-  const { voicesDropdown } = useElevenLabsVoiceDropdown(false, !props.override);
 
   const handlePushToTalkToggle = () => props.setPushToTalk(!props.pushToTalk);
-
-  const handleChangeVoiceToggle = () => props.setOverride(!props.override);
 
   return <OptimaPanelGroupedList title='Call'>
 
@@ -61,17 +56,6 @@ function CallMenu(props: {
       <ListItemDecorator>{props.pushToTalk ? <MicNoneIcon /> : <MicIcon />}</ListItemDecorator>
       Push to talk
       <Switch checked={props.pushToTalk} onChange={handlePushToTalkToggle} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-    <MenuItem onClick={handleChangeVoiceToggle}>
-      <ListItemDecorator><RecordVoiceOverTwoToneIcon /></ListItemDecorator>
-      Change Voice
-      <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-    <MenuItem>
-      <ListItemDecorator>{' '}</ListItemDecorator>
-      {voicesDropdown}
     </MenuItem>
 
     <ListDivider />
@@ -98,7 +82,6 @@ export function Telephone(props: {
   const [avatarClickCount, setAvatarClickCount] = React.useState<number>(0);// const [micMuted, setMicMuted] = React.useState(false);
   const [callElapsedTime, setCallElapsedTime] = React.useState<string>('00:00');
   const [callMessages, setCallMessages] = React.useState<DMessage[]>([]);
-  const [overridePersonaVoice, setOverridePersonaVoice] = React.useState<boolean>(false);
   const [personaTextInterim, setPersonaTextInterim] = React.useState<string | null>(null);
   const [pushToTalk, setPushToTalk] = React.useState(true);
   const [stage, setStage] = React.useState<'ring' | 'declined' | 'connected' | 'ended'>('ring');
@@ -118,7 +101,7 @@ export function Telephone(props: {
   }));
   const persona = SystemPurposes[props.callIntent.personaId as SystemPurposeId] ?? undefined;
   const personaCallStarters = persona?.call?.starters ?? undefined;
-  const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
+  // const personaVoiceSelector = React.useMemo(() => personaGetVoiceSelector(persona), [persona]);
   const personaSystemMessage = persona?.systemMessage ?? undefined;
 
   // hooks and speech
@@ -165,7 +148,6 @@ export function Telephone(props: {
   };
 
   // [E] pickup -> seed message and call timer
-  // FIXME: Overriding the voice will reset the call - not a desired behavior
   React.useEffect(() => {
     if (!isConnected) return;
 
@@ -185,11 +167,14 @@ export function Telephone(props: {
 
     setCallMessages([createDMessageTextContent('assistant', firstMessage)]); // [state] set assistant:hello message
 
-    // fire/forget
-    void elevenLabsSpeakText(firstMessage, personaVoiceId, true, true);
+    // fire/forget - use 'fast' priority for real-time conversation
+    void speakText(firstMessage,
+      undefined,
+      { label: 'Call', priority: 'fast' },
+    );
 
     return () => clearInterval(interval);
-  }, [isConnected, personaCallStarters, personaVoiceId]);
+  }, [isConnected, personaCallStarters]);
 
   // [E] persona streaming response - upon new user message
   React.useEffect(() => {
@@ -270,9 +255,12 @@ export function Telephone(props: {
       fullMessage.generator = status.lastDMessage.generator;
       setCallMessages(messages => [...messages, fullMessage]); // [state] append assistant:call_response
 
-      // fire/forget
+      // fire/forget - use 'fast' priority for real-time conversation
       if (status.outcome === 'success' && finalText?.length >= 1)
-        void elevenLabsSpeakText(finalText, personaVoiceId, true, true);
+        void speakText(finalText,
+          undefined,
+          { label: 'Call', priority: 'fast' },
+        );
 
     }).catch((err: DOMException) => {
       if (err?.name !== 'AbortError') {
@@ -288,7 +276,7 @@ export function Telephone(props: {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, modelId, personaVoiceId, personaSystemMessage, reMessages]);
+  }, [callMessages, isConnected, modelId, personaSystemMessage, reMessages]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && recognitionState.hasSpeech;
@@ -325,7 +313,6 @@ export function Telephone(props: {
     <OptimaPanelIn>
       <CallMenu
         pushToTalk={pushToTalk} setPushToTalk={setPushToTalk}
-        override={overridePersonaVoice} setOverride={setOverridePersonaVoice}
       />
     </OptimaPanelIn>
 

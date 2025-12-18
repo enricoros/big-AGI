@@ -14,6 +14,37 @@ import { InlineError } from '~/common/components/InlineError';
 import type { SimplePersonaProvenance } from '../store-app-personas';
 
 
+// configuration
+const TEMP_DISABLE_YOUTUBE_TRANSCRIPT = true;
+
+
+function YouTubeDisabledCard() {
+  return (
+    <Card
+      variant='soft'
+      color='primary'
+      invertedColors
+      sx={{
+        p: 3,
+        textAlign: 'center',
+        border: '1px solid',
+        borderColor: 'primary.solidBg',
+      }}
+    >
+      <Typography level='title-sm' sx={{ mb: 1 }}>
+        Temporarily Disabled
+      </Typography>
+      <Typography level='body-sm' sx={{ mb: 2 }}>
+        YouTube transcript extraction is currently unavailable due to API changes.
+      </Typography>
+      <Typography level='body-xs' color='neutral'>
+        Download transcripts manually and use the &quot;From Text&quot; option instead.
+      </Typography>
+    </Card>
+  );
+}
+
+
 function YouTubeVideoTranscriptCard(props: { transcript: YTVideoTranscript, onClose: () => void, sx?: SxProps }) {
   const { transcript } = props;
   return (
@@ -109,6 +140,13 @@ export function FromYouTube(props: {
     setVideoID(videoId);
   };
 
+  if (TEMP_DISABLE_YOUTUBE_TRANSCRIPT)
+    return <>
+      <Typography level='title-md' startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />} sx={{ mb: 3 }}>
+        YouTube -&gt; Persona
+      </Typography>
+      <YouTubeDisabledCard />
+    </>;
 
   return <>
 

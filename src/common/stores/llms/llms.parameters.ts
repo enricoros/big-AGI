@@ -249,6 +249,23 @@ export const DModelParameterRegistry = {
     requiredFallback: 'medium',
   } as const,
 
+  llmVndOaiReasoningEffort52: {
+    label: 'Reasoning Effort',
+    type: 'enum' as const,
+    description: 'Constrains effort on reasoning for GPT-5.2 models. When unset, defaults to none (fast responses).',
+    values: ['none', 'low', 'medium', 'high', 'xhigh'] as const,
+    // No requiredFallback - unset = none (the default for GPT-5.2)
+    // No initialValue - starts undefined, which the UI should display as "none"
+  } as const,
+
+  llmVndOaiReasoningEffort52Pro: {
+    label: 'Reasoning Effort',
+    type: 'enum' as const,
+    description: 'Constrains effort on reasoning for GPT-5.2 Pro. Defaults to medium.',
+    values: ['medium', 'high', 'xhigh'] as const,
+    // No requiredFallback - unset = medium (the default for GPT-5.2 Pro)
+  } as const,
+
   llmVndOaiRestoreMarkdown: {
     label: 'Restore Markdown',
     type: 'boolean' as const,

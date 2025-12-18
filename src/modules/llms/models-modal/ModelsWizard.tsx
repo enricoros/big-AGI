@@ -16,6 +16,7 @@ import { ModelVendorLMStudio } from '../vendors/lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from '../vendors/localai/localai.vendor';
 import { ModelVendorOllama } from '../vendors/ollama/ollama.vendor';
 import { ModelVendorOpenAI } from '../vendors/openai/openai.vendor';
+import { ModelVendorOpenRouter } from '../vendors/openrouter/openrouter.vendor';
 import { llmsUpdateModelsForServiceOrThrow } from '../llm.client';
 
 
@@ -24,10 +25,10 @@ const WizardProviders: ReadonlyArray<WizardProvider> = [
   { cat: 'popular', vendor: ModelVendorOpenAI, settingsKey: 'oaiKey' } as const,
   { cat: 'popular', vendor: ModelVendorAnthropic, settingsKey: 'anthropicKey' } as const,
   { cat: 'popular', vendor: ModelVendorGemini, settingsKey: 'geminiKey' } as const,
+  { cat: 'popular', vendor: ModelVendorOpenRouter, settingsKey: 'oaiKey' } as const,
   { cat: 'local', vendor: ModelVendorLocalAI, settingsKey: 'localAIHost' } as const,
   { cat: 'local', vendor: ModelVendorOllama, settingsKey: 'ollamaHost' } as const,
   { cat: 'local', vendor: ModelVendorLMStudio, settingsKey: 'oaiHost', omit: true } as const,
-  // { vendor: ModelVendorOpenRouter, settingsKey: 'oaiKey' } as const,
 ] as const;
 
 type VendorCategory = 'popular' | 'local';
@@ -89,6 +90,7 @@ function WizardProviderSetup(props: {
   provider: WizardProvider,
   isFirst: boolean,
   isHidden: boolean,
+  onUnsavedChange: (providerId: string, hasUnsaved: boolean) => void,
 }) {
 
   const { cat: providerCat, vendor: providerVendor, settingsKey: providerSettingsKey, omit: providerOmit } = props.provider;
@@ -133,6 +135,22 @@ function WizardProviderSetup(props: {
   const autoCompleteId = isLocal ? `${providerVendor.id}-host` : `${providerVendor.id}-key`;
 
 
+  // wrapped setter that notifies parent of unsaved state
+
+  const { onUnsavedChange } = props;
+
+  const handleLocalValueChange = React.useCallback((newValue: string) => {
+    // set locally
+    setLocalValue(newValue);
+
+    // notify parent of unsaved state
+    if (providerOmit || !onUnsavedChange) return;
+    const hasUnsaved = newValue !== (serviceKeyValue || '');
+    const hasValue = !!newValue.trim();
+    onUnsavedChange(providerVendor.id, hasUnsaved && hasValue);
+  }, [onUnsavedChange, providerOmit, providerVendor.id, serviceKeyValue]);
+
+
   // handlers
 
 
@@ -147,6 +165,10 @@ function WizardProviderSetup(props: {
     // set the key
     const newKey = localValue?.trim() ?? '';
     updateServiceSettings(vendorServiceId, { [providerSettingsKey]: newKey });
+
+    // notify parent that changes are now saved
+    if (!providerOmit)
+      onUnsavedChange(providerVendor.id, false);
 
     // if the key is empty, remove the models
     if (!newKey) {
@@ -169,7 +191,7 @@ function WizardProviderSetup(props: {
     }
     setIsLoading(false);
 
-  }, [localValue, providerSettingsKey, providerVendor, valueName]);
+  }, [localValue, onUnsavedChange, providerOmit, providerSettingsKey, providerVendor, valueName]);
 
 
   // memoed components
@@ -231,7 +253,7 @@ function WizardProviderSetup(props: {
               autoCompleteId={autoCompleteId}
               value={localValue ?? ''}
               placeholder={`${vendorName} ${valueName}`}
-              onChange={setLocalValue}
+              onChange={handleLocalValueChange}
               required={false}
             />
           </Box>
@@ -260,6 +282,8 @@ export function ModelsWizard(props: {
   isMobile: boolean,
   onSkip?: () => void,
   onSwitchToAdvanced?: () => void,
+  onSwitchToWhy?: () => void,
+  onProviderUnsavedChange: (providerId: string, hasUnsaved: boolean) => void,
 }) {
 
   // state
@@ -280,7 +304,7 @@ export function ModelsWizard(props: {
           <Chip variant={isLocal ? 'solid' : 'outlined'} sx={{ mx: 0.25 }} onClick={() => setActiveCategory('local')}>
             Local
           </Chip>
-          {' '}AI services below.
+          {' '}<Box component='a' onClick={props.onSwitchToWhy} sx={{ color: 'text.tertiary', cursor: 'pointer' }}>AI services </Box> below.
         </Typography>
         {/*<Box sx={{ fontSize: 'sm', color: 'text.primary' }}>*/}
         {/*  Enter API keys to connect your AI services.{' '}*/}
@@ -294,6 +318,7 @@ export function ModelsWizard(props: {
           provider={provider}
           isFirst={!index}
           isHidden={provider.cat !== activeCategory}
+          onUnsavedChange={props.onProviderUnsavedChange}
         />
       ))}
 

@@ -312,11 +312,11 @@ export namespace OpenAIWire_API_Chat_Completions {
     stream_options: z.object({
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
-    reasoning_effort: z.enum(['minimal', 'low', 'medium', 'high']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
+    reasoning_effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
     // [OpenRouter, 2025-11-11] Unified reasoning parameter for all models
     reasoning: z.object({
       max_tokens: z.number().int().positive().optional(), // Token-based control (Anthropic, Gemini): 1024-32000
-      effort: z.enum(['low', 'medium', 'high']).optional(), // Effort-based control (OpenAI o1/o3, DeepSeek): allocates % of max_tokens
+      effort: z.enum(['none', 'low', 'medium', 'high', 'xhigh']).optional(), // Effort-based control (OpenAI o1/o3/GPT-5, DeepSeek): allocates % of max_tokens
       enabled: z.boolean().optional(), // Simple enable with medium effort defaults
       exclude: z.boolean().optional(), // Use reasoning internally without returning it in response
     }).optional(),
@@ -1065,6 +1065,13 @@ export namespace OpenAIWire_Responses_Items {
     type: z.literal('web_search_call'),
     id: z.string(), // unique ID of the output item
 
+    // BREAKING CHANGE from OpenAI - 2025-12-11
+    // redefining the following because we need 'searching' too here (seen during web search streaming)
+    status: z.enum([
+      'searching', // 2025-12-11: seen on OpenAI for `web_search_call` items when used with GPT 5.2 Pro, with web search on
+      'in_progress', 'completed', 'incomplete',
+    ]).optional(),
+
     // action may be present with `include: ['web_search_call.action.sources']`
     action: z.union([
 
@@ -1413,7 +1420,7 @@ export namespace OpenAIWire_API_Responses {
 
     // configure reasoning
     reasoning: z.object({
-      effort: z.enum(['minimal', 'low', 'medium', 'high']).nullish(), // defaults to 'medium'
+      effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).nullish(), // defaults to 'none' for GPT-5.2, 'medium' for older
       summary: z.enum(['auto', 'concise', 'detailed']).nullish(),
     }).nullish(),
 

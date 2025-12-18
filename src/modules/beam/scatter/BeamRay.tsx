@@ -13,6 +13,8 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
@@ -216,6 +218,20 @@ export function BeamRay(props: {
     rayToggleScattering(props.rayId);
   }, [props.rayId, rayToggleScattering]);
 
+  const handleFragmentDelete = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
+    const { rays, rayDeleteFragment } = props.beamStore.getState();
+    const ray = rays.find(ray => ray.message.id === messageId);
+    if (ray)
+      rayDeleteFragment(ray.rayId, fragmentId);
+  }, [props.beamStore]);
+
+  const handleFragmentReplace = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+    const { rays, rayReplaceFragment } = props.beamStore.getState();
+    const ray = rays.find(ray => ray.message.id === messageId);
+    if (ray)
+      rayReplaceFragment(ray.rayId, fragmentId, newFragment);
+  }, [props.beamStore]);
+
   /*const handleRayToggleSelect = React.useCallback(() => {
     toggleUserSelection(props.rayId);
   }, [props.rayId, toggleUserSelection]);*/
@@ -264,6 +280,8 @@ export function BeamRay(props: {
               hideAvatar
               showUnsafeHtmlCode={true}
               adjustContentScaling={-1}
+              onMessageFragmentDelete={handleFragmentDelete}
+              onMessageFragmentReplace={handleFragmentReplace}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
             />
           )}

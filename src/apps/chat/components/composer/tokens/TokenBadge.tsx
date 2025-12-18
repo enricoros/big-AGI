@@ -47,9 +47,9 @@ function TokenBadge(props: {
   const showAltCosts = !!props.showCost && !!costMax && costMin !== undefined;
   if (showAltCosts) {
     // Note: switched to 'min cost (>= ...)' on mobile as well, to restore the former behavior, just uncomment the !props.enableHover (a proxy for isMobile)
-    badgeValue = (/*!props.enableHover ||*/ isHovering)
-      ? '< ' + formatModelsCost(costMax)
-      : '> ' + formatModelsCost(costMin);
+    badgeValue =
+      // (/*!props.enableHover ||*/ isHovering) ? '< ' + formatModelsCost(costMax) :
+      '> ' + formatModelsCost(costMin);
   } else {
 
     // show the direct tokens, unless we exceed the limit and 'showExcess' is enabled
@@ -77,7 +77,7 @@ function TokenBadge(props: {
         slotProps={{
           root: {
             sx: {
-              ...((props.absoluteBottomRight) && { position: 'absolute', bottom: 8, right: 8 }),
+              ...((props.absoluteBottomRight) && { position: 'absolute', bottom: 8, right: '1rem' }),
               cursor: 'help',
               ...(shallInvisible && {
                 opacity: 0,
@@ -92,6 +92,13 @@ function TokenBadge(props: {
               fontFamily: 'code',
               fontSize: 'xs',
               ...((props.absoluteBottomRight || props.inline) && { position: 'static', transform: 'none' }),
+              // make it transparent over text
+              // backgroundColor: `rgb(var(--joy-palette-${color}-lightChannel) / 15%)`, // similar to success.50
+              background: 'transparent',
+              boxShadow: 'none', // outline
+              '&:hover': {
+                backgroundColor: `${color}.softHoverBg`,
+              },
             },
           },
         }}
