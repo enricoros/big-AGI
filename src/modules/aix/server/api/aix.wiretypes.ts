@@ -468,6 +468,12 @@ export namespace AixWire_API {
     vndGeminiThinkingBudget: z.number().optional(), // old param
     vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low']).optional(), // new param
     vndGeminiUrlContext: z.enum(['auto']).optional(),
+    /**
+     * [Gemini, 2025-12-19] Interactions API for Deep Research agent
+     * When set to an agent name, uses the Interactions API instead of generateContent
+     * See: https://ai.google.dev/gemini-api/docs/interactions
+     */
+    vndGeminiInteractionsAgent: z.string().optional(),
     // Moonshot
     vndMoonshotWebSearch: z.enum(['auto']).optional(),
     // OpenAI

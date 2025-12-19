@@ -464,14 +464,15 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Communicates the upstream response handle, for remote control/resumability */
-  setUpstreamHandle(handle: string, _type: 'oai-responses' /* the only one for now, used for type safety */) {
+  setUpstreamHandle(handle: string, type: 'oai-responses' | 'gemini-interactions') {
     if (SERVER_DEBUG_WIRE)
-      console.log('|response-handle|', handle);
+      console.log('|response-handle|', handle, type);
     // NOTE: if needed, we could store the handle locally for server-side resumability, but we just implement client-side (correction, manual) for now
+    const uht = type === 'gemini-interactions' ? 'vnd.gemini.interactions' : 'vnd.oai.responses';
     this.transmissionQueue.push({
       cg: 'set-upstream-handle',
       handle: {
-        uht: 'vnd.oai.responses',
+        uht: uht as any, // TODO: add 'vnd.gemini.interactions' to the type union in aix.wiretypes.ts
         responseId: handle,
         expiresAt: Date.now() + 30 * 24 * 3600 * 1000, // default: 30 days expiry
       },

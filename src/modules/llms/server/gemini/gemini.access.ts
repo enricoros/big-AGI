@@ -35,6 +35,14 @@ export const geminiAccessSchema = z.object({
 });
 
 
+/**
+ * Build Gemini API access parameters for generateContent and other model APIs.
+ *
+ * @param access Gemini access configuration
+ * @param modelRefId Model ID to use in the path (e.g., 'models/gemini-pro')
+ * @param apiPath API path template (e.g., '/v1beta/{model=models/*}:generateContent')
+ * @param useV1Alpha Whether to use v1alpha API version (for experimental features)
+ */
 export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string, useV1Alpha: boolean): { headers: HeadersInit, url: string } {
 
   const geminiHost = llmsFixupHost(access.geminiHost || DEFAULT_GEMINI_HOST, apiPath);

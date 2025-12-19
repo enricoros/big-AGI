@@ -212,6 +212,14 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means 'dynamic', which for Gemini Pro is the same as 'high' (which is the equivalent of 'medium' for OpenAI's effort levels.. somehow)
   } as const,
 
+  llmVndGeminiInteractionsAgent: {
+    label: 'Agent (Interactions API)',
+    type: 'string' as const,
+    description: 'Uses Gemini Interactions API with the specified agent (e.g., deep-research-pro-preview-12-2025)',
+    hidden: true, // Auto-set by model definition
+    requiredFallback: 'deep-research-pro-preview-12-2025',
+  } as const,
+
   // NOTE: we don't have this as a parameter, as for now we use it in tandem with llmVndGeminiGoogleSearch
   // llmVndGeminiUrlContext: {
   //   label: 'URL Context',

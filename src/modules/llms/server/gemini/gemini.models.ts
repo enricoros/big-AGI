@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_GEM_Interactions, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 
@@ -196,6 +196,23 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
+  },
+
+  /// Agents (Interactions API)
+
+  // Deep Research Agent - Available via Interactions API
+  // https://ai.google.dev/gemini-api/docs/deep-research
+  {
+    id: 'agents/deep-research-pro-preview-12-2025',
+    labelOverride: 'Deep Research Pro Preview',
+    isPreview: true,
+    chatPrice: gemini25ProPricing, // Uses similar pricing to 2.5 Pro
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiInteractionsAgent' }, // Enables Interactions API with agent name
+    ],
+    benchmark: undefined, // Agent-based, not benchmarkable
+    // Note: This model uses background=true by default for long-running research tasks
   },
 
   /// Generation 2.5
@@ -709,6 +726,10 @@ const _sortOderIdPrefix: string[] = [
   'models/nano-banana-pro-preview',
   'models/gemini-3-pro',
   'models/gemini-3-',
+
+  // Agents (Interactions API)
+  'agents/deep-research-pro-preview',
+  'agents/',
 
   'models/gemini-exp',
 

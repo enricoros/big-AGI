@@ -8,16 +8,18 @@ import { DEEPSEEK_SPECIALE_HOST, DEEPSEEK_SPECIALE_SUFFIX } from '~/modules/llms
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
 
-import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
+import { GeminiWire_API_Generate_Content, GeminiWire_API_Interactions } from '../wiretypes/gemini.wiretypes';
 
 import { aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
+import { aixToGeminiInteractions } from './adapters/gemini.interactions';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
+import { createGeminiInteractionsResponseParser } from './parsers/gemini.interactions.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 
@@ -83,7 +85,27 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       };
     }
 
-    case 'gemini':
+    case 'gemini': {
+      /**
+       * [Gemini, 2025-12-19] Interactions API for agents like Deep Research
+       * When vndGeminiInteractionsAgent is set, use the Interactions API instead of generateContent
+       */
+      const useInteractionsAPI = !!model.vndGeminiInteractionsAgent;
+
+      if (useInteractionsAPI) {
+        // Use Interactions API for agent-based interactions (e.g., Deep Research)
+        const agentName = model.vndGeminiInteractionsAgent!;
+        return {
+          request: {
+            ...geminiAccess(access, null, streaming ? GeminiWire_API_Interactions.streamingPostPath : GeminiWire_API_Interactions.postPath, false),
+            method: 'POST',
+            body: aixToGeminiInteractions(model, chatGenerate, streaming),
+          },
+          demuxerFormat: streaming ? 'fast-sse' : null,
+          chatGenerateParse: createGeminiInteractionsResponseParser(agentName, streaming),
+        };
+      }
+
       /**
        * [Gemini, 2025-04-17] For newer thinking parameters, use v1alpha (we only see statistically better results)
        */
@@ -98,6 +120,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: createGeminiGenerateContentResponseParser(model.id.replace('models/', ''), streaming),
       };
+    }
 
     /**
      * Ollama has now an OpenAI compatibility layer for `chatGenerate` API, but still its own protocol for models listing.

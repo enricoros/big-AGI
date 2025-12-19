@@ -894,3 +894,239 @@ export namespace GeminiWire_API_Models_List {
   });
 
 }
+
+
+//
+// Interactions API (Deep Research Agent)
+// https://ai.google.dev/gemini-api/docs/interactions
+//
+export namespace GeminiWire_API_Interactions {
+
+  export const postPath = '/v1beta/interactions';
+  export const streamingPostPath = '/v1beta/interactions?alt=sse';
+  export const getPath = (interactionId: string) => `/v1beta/interactions/${interactionId}`;
+
+  // Input content types for the Interactions API
+
+  const TextInput_schema = z.object({
+    type: z.literal('text'),
+    text: z.string(),
+  });
+
+  const ImageInput_schema = z.object({
+    type: z.literal('image'),
+    data: z.string().optional(), // base64-encoded
+    uri: z.string().optional(),
+    mime_type: z.string().optional(),
+  });
+
+  const AudioInput_schema = z.object({
+    type: z.literal('audio'),
+    data: z.string().optional(), // base64-encoded
+    mime_type: z.string().optional(),
+  });
+
+  const VideoInput_schema = z.object({
+    type: z.literal('video'),
+    data: z.string().optional(), // base64-encoded
+    mime_type: z.string().optional(),
+  });
+
+  const DocumentInput_schema = z.object({
+    type: z.literal('document'),
+    data: z.string().optional(), // base64-encoded
+    mime_type: z.string().optional(),
+  });
+
+  const FunctionResultInput_schema = z.object({
+    type: z.literal('function_result'),
+    name: z.string(),
+    call_id: z.string(),
+    result: z.any(),
+  });
+
+  const ContentPart_Input_schema = z.union([
+    TextInput_schema,
+    ImageInput_schema,
+    AudioInput_schema,
+    VideoInput_schema,
+    DocumentInput_schema,
+    FunctionResultInput_schema,
+  ]);
+
+  const Turn_schema = z.object({
+    role: z.enum(['user', 'model']),
+    content: z.union([
+      z.array(ContentPart_Input_schema),
+      z.string(),
+    ]),
+  });
+
+  // Function tool definition
+  const FunctionTool_schema = z.object({
+    type: z.literal('function'),
+    name: z.string(),
+    description: z.string(),
+    parameters: z.object({
+      type: z.literal('object'),
+      properties: z.record(z.string(), z.any()).optional(),
+      required: z.array(z.string()).optional(),
+    }).optional(),
+  });
+
+  // Built-in tools
+  const GoogleSearchTool_schema = z.object({
+    type: z.literal('google_search'),
+  });
+
+  const CodeExecutionTool_schema = z.object({
+    type: z.literal('code_execution'),
+  });
+
+  const UrlContextTool_schema = z.object({
+    type: z.literal('url_context'),
+  });
+
+  const McpServerTool_schema = z.object({
+    type: z.literal('mcp_server'),
+    name: z.string(),
+    url: z.string(),
+  });
+
+  const Tool_schema = z.union([
+    FunctionTool_schema,
+    GoogleSearchTool_schema,
+    CodeExecutionTool_schema,
+    UrlContextTool_schema,
+    McpServerTool_schema,
+  ]);
+
+  // Generation config
+  const GenerationConfig_schema = z.object({
+    temperature: z.number().optional(),
+    max_output_tokens: z.number().optional(),
+    thinking_level: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+  });
+
+  // Request
+  export type Request = z.infer<typeof Request_schema>;
+  export const Request_schema = z.object({
+    // One of model or agent must be provided
+    model: z.string().optional(),
+    agent: z.string().optional(),
+
+    // Input can be a string, array of content parts, or array of turns
+    input: z.union([
+      z.string(),
+      z.array(ContentPart_Input_schema),
+      z.array(Turn_schema),
+    ]),
+
+    // Optional configuration
+    tools: z.array(Tool_schema).optional(),
+    response_format: z.any().optional(), // JSON schema for structured output
+    generation_config: GenerationConfig_schema.optional(),
+    system_instruction: z.string().optional(),
+
+    // Stateful conversation
+    previous_interaction_id: z.string().optional(),
+
+    // API options
+    stream: z.boolean().optional(),
+    background: z.boolean().optional(), // Only for agents
+    store: z.boolean().optional(), // Default: true
+  });
+
+
+  // Output content types
+
+  const TextOutput_schema = z.object({
+    type: z.literal('text'),
+    text: z.string(),
+  });
+
+  const ThoughtOutput_schema = z.object({
+    type: z.literal('thought'),
+    thought: z.string(),
+  });
+
+  const ImageOutput_schema = z.object({
+    type: z.literal('image'),
+    data: z.string(), // base64-encoded
+    mime_type: z.string(),
+  });
+
+  const FunctionCallOutput_schema = z.object({
+    type: z.literal('function_call'),
+    id: z.string(),
+    name: z.string(),
+    arguments: z.any(),
+  });
+
+  const GoogleSearchResultOutput_schema = z.object({
+    type: z.literal('google_search_result'),
+    // Search result data
+  });
+
+  const UrlContextResultOutput_schema = z.object({
+    type: z.literal('url_context_result'),
+    // URL context data
+  });
+
+  const ContentPart_Output_schema = z.union([
+    TextOutput_schema,
+    ThoughtOutput_schema,
+    ImageOutput_schema,
+    FunctionCallOutput_schema,
+    GoogleSearchResultOutput_schema,
+    UrlContextResultOutput_schema,
+  ]);
+
+  // Usage metadata
+  const Usage_schema = z.object({
+    input_tokens: z.number().optional(),
+    output_tokens: z.number().optional(),
+    total_tokens: z.number().optional(),
+  });
+
+  // Interaction status
+  const Status_enum = z.enum([
+    'in_progress',
+    'completed',
+    'requires_action',
+    'failed',
+    'cancelled',
+  ]);
+
+  // Response (non-streaming)
+  export type Response = z.infer<typeof Response_schema>;
+  export const Response_schema = z.object({
+    id: z.string(),
+    status: Status_enum,
+    outputs: z.array(ContentPart_Output_schema).optional(),
+    usage: Usage_schema.optional(),
+  });
+
+
+  // Streaming event types
+
+  const ContentDeltaEvent_schema = z.object({
+    event_type: z.literal('content.delta'),
+    delta: z.union([
+      z.object({ type: z.literal('text'), text: z.string() }),
+      z.object({ type: z.literal('thought'), thought: z.string() }),
+    ]),
+  });
+
+  const InteractionCompleteEvent_schema = z.object({
+    event_type: z.literal('interaction.complete'),
+    interaction: Response_schema,
+  });
+
+  export type StreamEvent = z.infer<typeof StreamEvent_schema>;
+  export const StreamEvent_schema = z.union([
+    ContentDeltaEvent_schema,
+    InteractionCompleteEvent_schema,
+  ]);
+
+}
