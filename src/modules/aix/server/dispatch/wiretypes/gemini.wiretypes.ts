@@ -569,12 +569,12 @@ export namespace GeminiWire_API_Generate_Content {
       /**
        * [Gemini 3, 2025-11-18] Replaces thinkingBudget for Gemini 3 models.
        * - 'low': Minimizes latency and cost
-       * - 'medium': Balanced (coming soon, not yet supported)
        * - 'high': Maximizes reasoning depth (default when set)
        * - undefined: Dynamic (model decides - which is equivalent to 'high' for now)
+       * Note: 'medium' and 'minimal' will be available when Gemini 3 Flash launches
        * CRITICAL: Cannot use both thinkingLevel and thinkingBudget (400 error)
        */
-      thinkingLevel: z.enum(['low', 'medium', 'high']).optional(),
+      thinkingLevel: z.enum(['low', 'high']).optional(),
     }).optional(),
 
     // Image generation configuration

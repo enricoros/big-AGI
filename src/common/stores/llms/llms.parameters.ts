@@ -208,7 +208,8 @@ export const DModelParameterRegistry = {
     label: 'Thinking Level',
     type: 'enum' as const,
     description: 'Controls internal reasoning depth. Replaces thinking_budget for Gemini 3 models. When unset, the model decides dynamically.',
-    values: ['high', 'medium' /* not present at launch */, 'low' /* default when unset */] as const,
+    // Note: 'medium' and 'minimal' will be available when Gemini 3 Flash launches
+    values: ['high', 'low' /* default when unset */] as const,
     // No initialValue - undefined means 'dynamic', which for Gemini Pro is the same as 'high' (which is the equivalent of 'medium' for OpenAI's effort levels.. somehow)
   } as const,
 
