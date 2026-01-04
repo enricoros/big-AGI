@@ -111,7 +111,7 @@ const _geminiMediaResolutionOptions = [
 
 const _geminiThinkingLevelOptions = [
   { value: 'high', label: 'High', description: 'Maximum reasoning depth' },
-  { value: 'medium', label: 'Medium', description: 'Balanced reasoning' },
+  // Note: 'medium' and 'minimal' will be available when Gemini 3 Flash launches
   { value: 'low', label: 'Low', description: 'Quick responses (default when unset)' },
   { value: _UNSPECIFIED, label: 'Default', description: 'Model decides automatically (default)' },
 ] as const;
