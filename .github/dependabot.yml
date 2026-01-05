@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      semver-major: 14
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown: # applies only to non-security updates
+      semver-patch: 3 # wait 3 days before applying patch updates
+      semver-minor: 7
+      semver-major: 14
+    groups:
+      next:
+        patterns:
+          - "@next/bundle-analyzer"
+          - "eslint-config-next"
+          - "next"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+      trpc:
+        patterns:
+          - "@trpc/*"
