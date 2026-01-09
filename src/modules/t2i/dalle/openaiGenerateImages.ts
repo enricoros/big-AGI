@@ -98,7 +98,7 @@ export async function openAIGenerateImagesOrThrow(
             : '1024x1024',
         response_format: 'b64_json',
       } : getImageModelFamily(dalleModelId) === 'gpt-image' ? {
-        model: dalleModelId as 'gpt-image-1' | 'gpt-image-1-mini', // gpt-image-1 or gpt-image-1-mini
+        model: dalleModelId as 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini',
         prompt: prompt.slice(0, 32000 - 1), // GPT Image family accepts much longer prompts
         count: imageCount,
         size: dalleSizeGI,
@@ -199,7 +199,8 @@ export async function openAIGenerateImagesOrThrow(
 export function openAIImageModelsCurrentGeneratorName() {
   const dalleModelSelection = useDalleStore.getState().dalleModelId;
   const dalleModelId = resolveDalleModelId(dalleModelSelection);
-  if (dalleModelId === 'gpt-image-1') return 'GPT Image';
+  if (dalleModelId === 'gpt-image-1.5') return 'GPT Image 1.5';
+  if (dalleModelId === 'gpt-image-1') return 'GPT Image 1';
   if (dalleModelId === 'gpt-image-1-mini') return 'GPT Image Mini';
   if (dalleModelId === 'dall-e-3') return 'DALL·E 3';
   if (dalleModelId === 'dall-e-2') return 'DALL·E 2';
@@ -216,7 +217,8 @@ export function openAIImageModelsCurrentGeneratorName() {
  * - Deduct credits after successful generation
  */
 const IMAGE_MODEL_PRICING = {
-  // Token-based pricing (GPT Image family)
+  // Token-based pricing (GPT Image family) - Note: chatgpt-image-latest has same pricing as gpt-image-1.5
+  'gpt-image-1.5': { inputText: 5.00, inputImage: 8.0, outputImage: 32.0 },
   'gpt-image-1': { inputText: 5.00, inputImage: 10.0, outputImage: 40.0 },
   'gpt-image-1-mini': { inputText: 2.00, inputImage: 2.50, outputImage: 8.00 },
   // Fixed pricing models handled separately in openAIImageModelsPricing()
@@ -233,8 +235,8 @@ function openAIImageModelsPrice(modelId: DalleModelId): undefined | { inputText:
  * TODO: update this when the OpenAI pricing changes.
  */
 export function openAIImageModelsPricing(modelId: DalleModelId, quality: DalleImageQuality, size: DalleSize): string {
-  // GPT Image family (gpt-image-1, gpt-image-1-mini, future: gpt-image-2, etc.)
-  if (modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini') {
+  // GPT Image family (gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
+  if (modelId === 'gpt-image-1.5' || modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini') {
 
     // gpt-image-1-mini does not support high quality
     if (modelId === 'gpt-image-1-mini' && quality === 'high') quality = 'medium';

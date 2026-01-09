@@ -748,10 +748,11 @@ export namespace OpenAIWire_API_Images_Generations {
   export type Request = z.infer<typeof Request_schema>;
   const Request_schema = z.object({
 
-    // 32,000 for gpt-image-1/gpt-image-1-mini, 4,000 for dall-e-3, 1,000 for dall-e-2
+    // 32,000 for gpt-image-1.5/gpt-image-1/gpt-image-1-mini, 4,000 for dall-e-3, 1,000 for dall-e-2
     prompt: z.string().max(32000),
 
     model: z.enum([
+      'gpt-image-1.5',
       'gpt-image-1',
       'gpt-image-1-mini',
       'dall-e-3',
@@ -764,7 +765,7 @@ export namespace OpenAIWire_API_Images_Generations {
     // Image quality
     quality: z.enum([
       'auto',                   // default
-      'high', 'medium', 'low',  // gpt-image-1, gpt-image-1-mini
+      'high', 'medium', 'low',  // gpt-image-1.5, gpt-image-1, gpt-image-1-mini
       'hd', 'standard',         // dall-e-3: hd | standard, dall-e-2: only standard
     ]).optional(),
 
@@ -790,7 +791,7 @@ export namespace OpenAIWire_API_Images_Generations {
     user: z.string().optional(),
 
 
-    // -- GPT Image Family Specific Parameters (gpt-image-1, gpt-image-1-mini) --
+    // -- GPT Image Family Specific Parameters (gpt-image-1.5, gpt-image-1, gpt-image-1-mini) --
 
     // Allows to set transparency (in that case, format = png or webp)
     background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
@@ -821,7 +822,7 @@ export namespace OpenAIWire_API_Images_Generations {
       url: z.url().optional(), // if the response_format is 'url' - DEPRECATED
     })),
 
-    // GPT Image models only (gpt-image-1, gpt-image-1-mini)
+    // GPT Image models only (gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
     usage: z.object({
       total_tokens: z.number(),
       input_tokens: z.number() // images + text tokens in the input prompt
@@ -849,14 +850,14 @@ export namespace OpenAIWire_API_Images_Edits {
    */
   export const Request_schema = z.object({
 
-    // 32,000 for gpt-image-1/gpt-image-1-mini, 1,000 for dall-e-2
+    // 32,000 for gpt-image-1.5/gpt-image-1/gpt-image-1-mini, 1,000 for dall-e-2
     prompt: z.string().max(32000),
 
     // image: file | file[] - REQUIRED - Handled as file uploads in FormData ('image' field)
 
     // mask: file - OPTIONAL - Handled as file upload in FormData ('mask' field)
 
-    model: z.enum(['gpt-image-1', 'gpt-image-1-mini', 'dall-e-2']).optional(),
+    model: z.enum(['gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini', 'dall-e-2']).optional(),
 
     // Number of images to generate, between 1 and 10
     n: z.number().min(1).max(10).nullable().optional(),
@@ -864,7 +865,7 @@ export namespace OpenAIWire_API_Images_Edits {
     // Image quality
     quality: z.enum([
       'auto',                   // default
-      'high', 'medium', 'low',  // gpt-image-1, gpt-image-1-mini
+      'high', 'medium', 'low',  // gpt-image-1.5, gpt-image-1, gpt-image-1-mini
       'standard',               // dall-e-2: only standard
     ]).optional(),
 
