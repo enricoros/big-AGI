@@ -154,6 +154,14 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   if (model.id.startsWith('google/') && interfaces.includes(LLM_IF_OAI_Reasoning))
     parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' });
 
+  // [OpenRouter, 2025-12-31] Add Gemini image generation params for Google models with image output
+  if (model.id.startsWith('google/') && interfaces.includes(LLM_IF_Outputs_Image)) {
+    parameterSpecs.push({ paramId: 'llmVndGeminiAspectRatio' });
+    // NOTE: temporarily disable the size, as the returned data is a > 16MB pic which will cause issues
+    // to the Zod parser, with "Maximum call stack size exceeded"
+    // parameterSpecs.push({ paramId: 'llmVndGeminiImageSize' });
+  }
+
   if (model.id.startsWith('openai/') && interfaces.includes(LLM_IF_OAI_Reasoning))
     parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
 
