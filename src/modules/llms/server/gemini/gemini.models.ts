@@ -256,6 +256,7 @@ const _knownGeminiModels: ({
   // Deep Research Pro Preview - Released December 12, 2025
   // Autonomous research agent for complex research task planning
   {
+    hidden: true, // not supported, requires "Interactions API"
     id: 'models/deep-research-pro-preview-12-2025',
     labelOverride: 'Deep Research Pro Preview',
     isPreview: true,
