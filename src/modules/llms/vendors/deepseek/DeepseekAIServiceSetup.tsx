@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
@@ -31,9 +32,9 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorDeepseek);
 
   // derived state
-  const { clientSideFetch, oaiKey: deepseekKey } = serviceAccess;
+  const { clientSideFetch, oaiKey: deepseekKey, oaiHost: deepseekHost } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+  const showAdvanced = advanced.on || !!clientSideFetch || !!deepseekHost;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!deepseekKey && serviceSetupValid);
@@ -58,6 +59,15 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
+
+    {showAdvanced && <FormTextField
+      autoCompleteId='deepseek-host'
+      title='API Host'
+      tooltip={`An alternative Deepseek API endpoint to use instead of the default 'api.deepseek.com'.\n\nExamples:\n - https://api.deepseek.com/beta`}
+      placeholder='e.g., https://api.deepseek.com/beta'
+      value={deepseekHost}
+      onChange={text => updateSettings({ deepseekHost: text })}
+    />}
 
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!deepseekKey}
