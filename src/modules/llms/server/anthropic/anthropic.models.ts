@@ -225,9 +225,9 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // retired: 'claude-3-5-sonnet-20241022'
   // retired: 'claude-3-5-sonnet-20240620'
   {
-    id: 'claude-3-5-haiku-20241022', // Active | Guaranteed Until: October 2025
-    label: 'Claude Haiku 3.5',
-    description: 'Intelligence at blazing speeds',
+    id: 'claude-3-5-haiku-20241022', // Deprecated | Deprecated: December 19, 2025 | Retiring: February 19, 2026
+    label: 'Claude Haiku 3.5 [Deprecated]',
+    description: 'Intelligence at blazing speeds. Deprecated December 19, 2025, retiring February 19, 2026.',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Jul 2024',
@@ -235,22 +235,12 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 0.80, output: 4.00, cache: { cType: 'ant-bp', read: 0.08, write: 1.00, duration: 300 } },
     benchmark: { cbaElo: 1319, cbaMmlu: 75.2 }, // claude-3-5-haiku-20241022
-  },
-
-  // Claude 3 models
-  {
-    id: 'claude-3-opus-20240229', // Deprecated | Deprecated: June 30, 2025 | Retiring: January 5, 2026
-    label: 'Claude Opus 3 [Deprecated]',
-    description: 'Powerful model for complex tasks. Deprecated June 30, 2025, retiring January 5, 2026.',
-    contextWindow: 200000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Aug 2023',
-    interfaces: IF_4,
-    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
-    benchmark: { cbaElo: 1322, cbaMmlu: 86.8 },
     hidden: true, // deprecated
     isLegacy: true,
   },
+
+  // Claude 3 models
+  // retired: 'claude-3-opus-20240229' - Retired January 5, 2026
   {
     hidden: true, // yield to successors
     id: 'claude-3-haiku-20240307', // Active
