@@ -2,8 +2,6 @@ import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.acces
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.access';
-// [DeepSeek, 2025-12-01] V3.2-Speciale temporary endpoint
-import { DEEPSEEK_SPECIALE_HOST, DEEPSEEK_SPECIALE_SUFFIX } from '~/modules/llms/server/openai/models/deepseek.models';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
@@ -137,22 +135,6 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
     case 'perplexity':
     case 'togetherai':
     case 'xai':
-
-      // [DeepSeek, 2025-12-01] V3.2-Speciale: Handle @speciale model ID marker
-      if (dialect === 'deepseek' && model.id.endsWith(DEEPSEEK_SPECIALE_SUFFIX)) {
-        const actualModelId = model.id.slice(0, -DEEPSEEK_SPECIALE_SUFFIX.length);
-        const { headers } = openAIAccess(access, actualModelId, '/v1/chat/completions');
-        return {
-          request: {
-            url: DEEPSEEK_SPECIALE_HOST + '/v1/chat/completions',
-            headers,
-            method: 'POST',
-            body: aixToOpenAIChatCompletions('deepseek', { ...model, id: actualModelId }, chatGenerate, streaming),
-          },
-          demuxerFormat: streaming ? 'fast-sse' : null,
-          chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
-        };
-      }
 
       // switch to the Responses API if the model supports it
       const isResponsesAPI = !!model.vndOaiResponsesAPI;

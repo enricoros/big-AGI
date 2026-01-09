@@ -29,7 +29,7 @@ import { openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
-import { deepseekInjectVariants, deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
+import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './openai/models/groq.models';
@@ -345,11 +345,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(openAISortModels);
 
             case 'deepseek':
-              // [DeepSeek, 2025-12-01] Inject V3.2-Speciale variant via reduce
               return maybeModels
                 .filter(({ id }) => deepseekModelFilter(id))
                 .map(({ id }) => deepseekModelToModelDescription(id))
-                .reduce(deepseekInjectVariants, [] as ModelDescriptionSchema[])
+                // .reduce(deepseekInjectVariants, [] as ModelDescriptionSchema[]) // was used to inject V3.2-Speciale
                 .sort(deepseekModelSort);
 
             case 'groq':
