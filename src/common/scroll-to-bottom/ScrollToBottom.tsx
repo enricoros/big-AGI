@@ -54,6 +54,8 @@ const scrollableBoxSx: SxProps = {
   overflowY: 'auto',
   // actually make sure this scrolls & fills
   height: '100%',
+  // prevents pull-to-refresh on mobile when scrolling up in the chat
+  overscrollBehaviorY: 'none',
 } as const;
 
 
