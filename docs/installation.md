@@ -136,11 +136,6 @@ Deploy big-AGI on a Kubernetes cluster for enhanced scalability and management. 
 
 For more detailed instructions on Kubernetes deployment, including updating and troubleshooting, refer to our [Kubernetes Deployment Guide](deploy-k8s.md).
 
-### Midori AI Subsystem for Docker Deployment
-
-Follow the instructions found on [Midori AI Subsystem Site](https://io.midori-ai.xyz/subsystem/manager/)
-for your host OS. After completing the setup process, install the Big-AGI docker backend to the Midori AI Subsystem.
-
 ## Enterprise-Grade Installation
 
 For businesses seeking a fully-managed, scalable solution, consider our managed installations.
