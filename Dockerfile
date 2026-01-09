@@ -62,9 +62,14 @@ RUN addgroup --system --gid 1001 nodejs \
 
 # Copy Built app
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/prisma ./src/server/prisma
+# Instead of `COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next`, we only extract some parts, excluding .next/cache which is build time only:
+COPY --from=builder --chown=nextjs:nodejs /app/.next/BUILD_ID ./.next/
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/server ./.next/server
+COPY --from=builder --chown=nextjs:nodejs /app/.next/types ./.next/types
+COPY --from=builder --chown=nextjs:nodejs /app/.next/*.json ./.next/
 
 # Minimal ENV for production
 ENV NODE_ENV=production
