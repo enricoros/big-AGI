@@ -350,6 +350,21 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         }
       }
 
+      // [OpenRouter, 2025-12-31] Extension for receiving Images (streaming)
+      if (delta.images && Array.isArray(delta.images)) {
+        for (const imageObj of delta.images) {
+          if (imageObj?.image_url?.url) {
+            const imageUrl = imageObj.image_url.url;
+            // Extract mime type and base64 data from data URL: "data:image/png;base64,..."
+            const match = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) {
+              const [, mimeType, base64Data] = match;
+              pt.appendImageInline(mimeType, base64Data, 'Generated image', `OpenRouter ${json.model || ''}`.trim(), '' /* prompt is unknown */);
+            }
+          }
+        }
+      }
+
       // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
       if (finish_reason) {
         const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
@@ -511,6 +526,21 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         } catch (error) {
           console.warn('[OpenAI] Failed to process audio:', error);
           pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
+        }
+      }
+
+      // [OpenRouter, 2025-12-31] Extension for receiving Images (non-streaming)
+      if ((message as any).images && Array.isArray((message as any).images)) {
+        for (const imageObj of (message as any).images) {
+          if (imageObj?.image_url?.url) {
+            const imageUrl = imageObj.image_url.url;
+            // Extract mime type and base64 data from data URL: "data:image/png;base64,..."
+            const match = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) {
+              const [, mimeType, base64Data] = match;
+              pt.appendImageInline(mimeType, base64Data, 'Generated image', `OpenRouter ${json.model || ''}`.trim(), '' /* prompt is unknown */);
+            }
+          }
         }
       }
 

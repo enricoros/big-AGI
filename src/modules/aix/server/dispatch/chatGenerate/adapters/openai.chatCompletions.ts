@@ -108,12 +108,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const outputsText = model.acceptsOutputs.includes('text');
   const outputsAudio = model.acceptsOutputs.includes('audio');
   const outputsImages = model.acceptsOutputs.includes('image');
-  if (openAIDialect === 'openai' && (outputsAudio || outputsImages)) {
+  if ((openAIDialect === 'openai' || openAIDialect === 'openrouter') && (outputsAudio || outputsImages)) {
     // set output modalities
     const modalities = new Set(payload.modalities || []);
     if (outputsText) modalities.add('text');
     if (outputsAudio) modalities.add('audio');
-    // if (outputsImages) modalities.add('image');
+    // [OpenRouter, 2025-12-31] Extension for image output through the OpenAI ChatCompletions protocol
+    if (openAIDialect === 'openrouter' && outputsImages) modalities.add('image');
     payload.modalities = Array.from(modalities);
 
     // configure audio output
@@ -122,6 +123,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
         voice: 'alloy', // FIXME: have the voice be selectable
         format: 'pcm16', // only supported value for streaming
       };
+
+    // [OpenRouter, 2025-12-31] Extension for image output configuration through OpenAI ChatCompletions protocol
+    if (openAIDialect === 'openrouter' && (model.vndGeminiAspectRatio || model.vndGeminiImageSize)) {
+      payload.image_config = { ...payload.image_config || {} };
+      if (model.vndGeminiAspectRatio)
+        payload.image_config.aspect_ratio = model.vndGeminiAspectRatio;
+      if (model.vndGeminiImageSize)
+        payload.image_config.image_size = model.vndGeminiImageSize;
+    }
   }
 
   // [OpenAI] Vendor-specific reasoning effort, for o1 models only as of 2024-12-24

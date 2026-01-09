@@ -296,7 +296,10 @@ export namespace OpenAIWire_API_Chat_Completions {
     top_p: z.number().min(0).max(1).optional(),
 
     // new output modalities
-    modalities: z.array(z.enum(['text', 'audio'])).optional(), // defaults to ['text']
+    modalities: z.array(z.enum([
+      'text', 'audio',
+      'image' // [OpenRouter, 2025-12-31] Extension for requesting Image output
+    ])).optional(), // defaults to ['text']
     audio: z.object({  // Parameters for audio output. Required when audio output is requested with `modalities: ["audio"]`
       voice: z.enum([
         'ash', 'ballad', 'coral', 'sage', 'verse', // recommended
@@ -304,6 +307,12 @@ export namespace OpenAIWire_API_Chat_Completions {
         'marin', // new
       ]),
       format: z.enum(['wav', 'mp3', 'flac', 'opus', 'pcm16']),
+    }).optional(),
+
+    // [OpenRouter, 2025-12-31] Extension for Image Generation Configuration (works with Gemini models at the beginning)
+    image_config: z.object({
+      aspect_ratio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']).optional(),
+      image_size: z.enum(['1K', '2K', '4K']).optional(),
     }).optional(),
 
     // API configuration
@@ -524,6 +533,15 @@ export namespace OpenAIWire_API_Chat_Completions {
       expires_at: z.number(), // Unix timestamp
     }).nullable().optional(),
 
+    /**
+     * [OpenRouter, 2025-12-31] Extension for Image generation output (non-streaming)
+     */
+    images: z.array(z.object({
+      image_url: z.object({
+        url: z.string(), // base64 data URL like "data:image/png;base64,..."
+      }),
+    })).optional(),
+
   });
 
   const Choice_NS_schema = z.object({
@@ -659,6 +677,14 @@ export namespace OpenAIWire_API_Chat_Completions {
       transcript: z.string().optional(), // incremental transcript
       expires_at: z.number().optional(), // seems to be only in the last chunk
     }).optional(),
+    /**
+     * [OpenRouter, 2025-12-31] Extension for Image generation output
+     */
+    images: z.array(z.object({
+      image_url: z.object({
+        url: z.string(), // base64 data URL like "data:image/png;base64,..."
+      }),
+    })).optional(),
   });
 
   const ChunkChoice_schema = z.object({
