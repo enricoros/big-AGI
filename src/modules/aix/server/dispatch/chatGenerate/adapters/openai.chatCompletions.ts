@@ -69,7 +69,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // constrained output modes - both JSON and tool invocations
   // const strictJsonOutput = !!model.strictJsonOutput;
-  const strictToolInvocations = !!model.strictToolInvocations;
+  // [DeepSeek, 2025-01] DeepSeek requires strict: true for reliable function calling
+  const strictToolInvocations = !!model.strictToolInvocations || openAIDialect === 'deepseek';
 
   // Construct the request payload
   let payload: TRequest = {
