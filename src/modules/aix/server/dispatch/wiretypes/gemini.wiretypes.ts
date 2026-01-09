@@ -630,6 +630,7 @@ export namespace GeminiWire_API_Generate_Content {
     'IMAGE_RECITATION',           // Image generation stopped due to recitation.
     'UNEXPECTED_TOOL_CALL',       // Model generated a tool call but no tools were enabled in the request.
     'TOO_MANY_TOOL_CALLS',        // Model called too many tools consecutively, thus the system exited execution.
+    'MISSING_THOUGHT_SIGNATURE',  // [Gemini 3, 2025-11] Thinking model validation failed - thoughtSignature missing or invalid.
   ]);
 
   /** A citation to a source for a portion of a specific response. **/
