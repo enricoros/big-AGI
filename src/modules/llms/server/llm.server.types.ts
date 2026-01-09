@@ -94,6 +94,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndGeminiShowThoughts',
     'llmVndGeminiThinkingBudget',
     'llmVndGeminiThinkingLevel',
+    'llmVndGeminiThinkingLevel4',
     // 'llmVndGeminiUrlContext',
     // Moonshot
     'llmVndMoonshotWebSearch',

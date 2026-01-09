@@ -104,8 +104,9 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     // [Gemini 3, 2025-11-18] Thinking Level (replaces thinkingBudget for Gemini 3)
     // CRITICAL: Cannot use both thinkingLevel and thinkingBudget (400 error)
     if (model.vndGeminiThinkingLevel) {
-      // FIXME: remove this cast once the 'medium' level is supported upstream
-      thinkingConfig.thinkingLevel = model.vndGeminiThinkingLevel === 'medium' ? 'high' : model.vndGeminiThinkingLevel;
+      // - Gemini 3 Pro: supports 'high', 'low'
+      // - Gemini 3 Flash: supports 'high', 'medium', 'low', 'minimal'
+      thinkingConfig.thinkingLevel = model.vndGeminiThinkingLevel;
     }
     // [Gemini 2.x] Thinking Budget (0 disables thinking explicitly)
     else if (model.vndGeminiThinkingBudget !== undefined) {

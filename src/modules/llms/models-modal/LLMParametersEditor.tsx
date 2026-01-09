@@ -109,11 +109,20 @@ const _geminiMediaResolutionOptions = [
   { value: _UNSPECIFIED, label: 'Auto', description: 'Model optimizes based on media type (default)' },
 ] as const;
 
+// Gemini 3 Pro: 2-level thinking (high, low)
 const _geminiThinkingLevelOptions = [
   { value: 'high', label: 'High', description: 'Maximum reasoning depth' },
-  // Note: 'medium' and 'minimal' will be available when Gemini 3 Flash launches
-  { value: 'low', label: 'Low', description: 'Quick responses (default when unset)' },
-  { value: _UNSPECIFIED, label: 'Default', description: 'Model decides automatically (default)' },
+  { value: 'low', label: 'Low', description: 'Quick responses' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Model decides' },
+] as const;
+
+// Gemini 3 Flash: 4-level thinking (high, medium, low, minimal)
+const _geminiThinkingLevel4Options = [
+  { value: 'high', label: 'High', description: 'Maximum reasoning depth' },
+  { value: 'medium', label: 'Medium', description: 'Balanced reasoning' },
+  { value: 'low', label: 'Low', description: 'Quick responses' },
+  { value: 'minimal', label: 'Minimal', description: 'Fastest, least reasoning' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Model decides' },
 ] as const;
 
 const _xaiSearchModeOptions = [
@@ -218,6 +227,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiShowThoughts,
     llmVndGeminiThinkingBudget,
     llmVndGeminiThinkingLevel,
+    llmVndGeminiThinkingLevel4,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort,
     llmVndOaiReasoningEffort4,
@@ -485,13 +495,26 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndGeminiThinkingLevel') && (
       <FormSelectControl
         title='Thinking Level'
-        tooltip='Controls internal reasoning depth. Replaces thinking_budget for Gemini 3 models. When unset, the model decides dynamically.'
+        tooltip='Controls internal reasoning depth for Gemini 3 Pro. When unset, the model decides dynamically.'
         value={llmVndGeminiThinkingLevel ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiThinkingLevel');
           else onChangeParameter({ llmVndGeminiThinkingLevel: value });
         }}
         options={_geminiThinkingLevelOptions}
+      />
+    )}
+
+    {showParam('llmVndGeminiThinkingLevel4') && (
+      <FormSelectControl
+        title='Thinking Level'
+        tooltip='Controls internal reasoning depth for Gemini 3 Flash. When unset, the model decides dynamically.'
+        value={llmVndGeminiThinkingLevel4 ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiThinkingLevel4');
+          else onChangeParameter({ llmVndGeminiThinkingLevel4: value });
+        }}
+        options={_geminiThinkingLevel4Options}
       />
     )}
 
