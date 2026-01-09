@@ -65,7 +65,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Jan 8, 2026)
+// Pricing based on https://ai.google.dev/pricing (Jan 9, 2026)
 
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
@@ -90,13 +90,13 @@ const gemini30FlashPricing: ModelDescriptionSchema['chatPrice'] = {
 const gemini25ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
   output: [{ upTo: 200000, price: 10.00 }, { upTo: null, price: 15.00 }],
-  cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.31 }, { upTo: null, price: 0.625 }] },
+  cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.125 }, { upTo: null, price: 0.25 }] },
 };
 
 const gemini25FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.30, // text/image/video; audio is $1.00 but we don't differentiate yet
   output: 2.50, // including thinking tokens
-  cache: { cType: 'oai-ac', read: 0.075 }, // text/image/video; audio is $0.25 but we don't differentiate yet
+  cache: { cType: 'oai-ac', read: 0.03 }, // text/image/video; audio is $0.10 but we don't differentiate yet
 };
 
 const gemini25FlashPreviewPricing = gemini25FlashPricing; // The latest model based on the 2.5 Flash model. 2.5 Flash Preview is best for large scale processing, low-latency.
@@ -104,7 +104,7 @@ const gemini25FlashPreviewPricing = gemini25FlashPricing; // The latest model ba
 const gemini25FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10, // text/image/video; audio is $0.30 but we don't differentiate yet
   output: 0.40, // including thinking tokens
-  cache: { cType: 'oai-ac', read: 0.025 }, // text/image/video; audio is $0.125 but we don't differentiate yet
+  cache: { cType: 'oai-ac', read: 0.01 }, // text/image/video; audio is $0.03 but we don't differentiate yet
 };
 
 const gemini25FlashLitePreviewPricing = gemini25FlashLitePricing; // The latest model based on Gemini 2.5 Flash lite optimized for cost-efficiency, high throughput and high quality.
