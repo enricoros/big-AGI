@@ -6,6 +6,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 export interface DDeepseekServiceSettings {
   deepseekKey: string;
+  deepseekHost: string;
   csf?: boolean;
 }
 
@@ -24,6 +25,7 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
   // functions
   initializeSetup: () => ({
     deepseekKey: '',
+    deepseekHost: '',
   }),
   validateSetup: (setup) => {
     return setup.deepseekKey?.length >= 35;
@@ -33,7 +35,7 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
     clientSideFetch: _csfDeepseekAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.deepseekKey || '',
     oaiOrg: '',
-    oaiHost: '',
+    oaiHost: partialSetup?.deepseekHost || '',
     heliKey: '',
     moderationCheck: false,
   }),
