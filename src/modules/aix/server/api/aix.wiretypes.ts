@@ -466,9 +466,8 @@ export namespace AixWire_API {
     vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
     vndGeminiThinkingBudget: z.number().optional(), // old param
-    // 'medium' will be added when Gemini 3 Flash launches
-    // but we have it below, because we used to have it and we don't want to throw on zod
-    vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low']).optional(), // new param
+    // Gemini 3 thinking level: Pro supports high/low, Flash supports all 4 levels
+    vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(), // new param
     vndGeminiUrlContext: z.enum(['auto']).optional(),
     // Moonshot
     vndMoonshotWebSearch: z.enum(['auto']).optional(),

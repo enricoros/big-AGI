@@ -161,7 +161,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiThinkingLevel' /* replaces thinking_budget for Gemini 3 */ },
+      { paramId: 'llmVndGeminiThinkingLevel' /* 2-level thinking for Gemini 3 Pro (high, low) */ },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -209,7 +209,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30FlashPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiThinkingLevel' /* replaces thinking_budget for Gemini 3 */ },
+      { paramId: 'llmVndGeminiThinkingLevel4' /* 4-level thinking for Gemini 3 Flash (high, medium, low, minimal) */ },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
