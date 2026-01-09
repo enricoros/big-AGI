@@ -10,7 +10,8 @@ import { persist } from 'zustand/middleware';
 export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this works in all
 export type DalleImageSize = DalleSizeGI | DalleSizeD3 | DalleSizeD2;
 
-export type DalleModelId = 'gpt-image-1' | 'gpt-image-1-mini' | 'dall-e-3' | 'dall-e-2';
+// Note: 'chatgpt-image-latest' also exists with same pricing as gpt-image-1.5
+export type DalleModelId = 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini' | 'dall-e-3' | 'dall-e-2';
 export type DalleModelSelection = DalleModelId | null; // null = auto-select latest
 
 /**
@@ -21,7 +22,7 @@ export type DalleModelSelection = DalleModelId | null; // null = auto-select lat
 export function resolveDalleModelId(selection: DalleModelSelection): DalleModelId {
   // Auto-select latest model when null
   if (selection === null) {
-    return 'gpt-image-1'; // Current latest model (prefer full model over mini)
+    return 'gpt-image-1.5'; // Current latest model
   }
   return selection;
 }
@@ -39,7 +40,7 @@ export function resolveDalleModelId(selection: DalleModelSelection): DalleModelI
  * - Each family can have its own settings/pricing structure
  */
 export function getImageModelFamily(modelId: DalleModelId): 'gpt-image' | 'dall-e-3' | 'dall-e-2' {
-  if (modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini')
+  if (modelId === 'gpt-image-1.5' || modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini')
     return 'gpt-image';
   if (modelId === 'dall-e-3')
     return 'dall-e-3';

@@ -30,9 +30,9 @@ const _createImageConfigBase = z.object({
   user: z.string().optional(),
 });
 
-// GPT Image family (gpt-image-1, gpt-image-1-mini share all parameters)
+// GPT Image family (gpt-image-1.5, gpt-image-1, gpt-image-1-mini share all parameters)
 const createImageConfigGI = _createImageConfigBase.extend({
-  model: z.enum(['gpt-image-1', 'gpt-image-1-mini']),
+  model: z.enum(['gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini']),
   prompt: z.string().max(32000),
   size: z.enum([/*'auto',*/ '1024x1024', '1536x1024', '1024x1536']),
   quality: z.enum(['high', 'medium', 'low']).optional(),
