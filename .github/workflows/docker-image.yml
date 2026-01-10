@@ -20,23 +20,112 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-push-image:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60  # Max 1 hour (expected: ~25min)
+  # Build job: runs on native runners for each platform (no QEMU emulation)
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+    name: Build ${{ matrix.platform }}
+    timeout-minutes: 30
+
     permissions:
       contents: read
       packages: write
-      security-events: write
 
     steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=Big-AGI Open
+            org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.documentation=https://big-agi.com
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          build-args: |
+            NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
+            NEXT_PUBLIC_BUILD_HASH=${{ github.sha }}
+            NEXT_PUBLIC_BUILD_REF_NAME=${{ github.ref_name }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          provenance: false
+          cache-from: type=gha,scope=${{ github.repository }}-${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ github.repository }}-${{ matrix.platform }},mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Merge job: combines platform-specific images into a unified multi-arch manifest
+  merge:
+    name: Merge manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -66,28 +155,18 @@ jobs:
             # Version tags (v2.0.0, 2.0.0)
             type=ref,event=tag
             type=semver,pattern={{version}}
-          labels: |
-            org.opencontainers.image.title=Big-AGI Open
-            org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.documentation=https://big-agi.com
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
-            NEXT_PUBLIC_BUILD_HASH=${{ github.sha }}
-            NEXT_PUBLIC_BUILD_REF_NAME=${{ github.ref_name }}
-          # Enable build cache (future)
-          #cache-from: type=gha
-          #cache-to: type=gha,mode=max
-          # Enable provenance and SBOM (future)
-          #provenance: true
-          #sbom: true
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            --annotation='index:org.opencontainers.image.title=Big-AGI Open' \
+            --annotation='index:org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.' \
+            --annotation='index:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}' \
+            --annotation='index:org.opencontainers.image.documentation=https://big-agi.com' \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
