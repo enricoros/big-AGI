@@ -90,7 +90,7 @@ jobs:
             NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
             NEXT_PUBLIC_BUILD_HASH=${{ github.sha }}
             NEXT_PUBLIC_BUILD_REF_NAME=${{ github.ref_name }}
-          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           provenance: false
           cache-from: type=gha,scope=${{ github.repository }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ github.repository }}-${{ matrix.platform }},mode=max
