@@ -79,7 +79,7 @@
   },
   "devDependencies": {
     "@posthog/nextjs-config": "^1.6.4",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.0.5",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.5",
     "@types/react": "^19.2.7",
@@ -87,7 +87,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/turndown": "^5.0.6",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-config-next": "~15.1.11",
     "prettier": "^3.7.4",
     "prisma": "~5.22.0",
