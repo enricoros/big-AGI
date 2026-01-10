@@ -34,7 +34,7 @@
     "@next/bundle-analyzer": "~15.1.11",
     "@prisma/client": "~5.22.0",
     "@tanstack/react-query": "5.90.10",
-    "@tanstack/react-virtual": "^3.13.12",
+    "@tanstack/react-virtual": "^3.13.18",
     "@trpc/client": "11.5.1",
     "@trpc/next": "11.5.1",
     "@trpc/react-query": "11.5.1",
@@ -60,7 +60,7 @@
     "puppeteer-core": "^24.34.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.69.0",
+    "react-hook-form": "^7.70.0",
     "react-markdown": "^10.1.0",
     "react-player": "^3.4.0",
     "react-resizable-panels": "^3.0.6",
@@ -74,7 +74,7 @@
     "tesseract.js": "^6.0.1",
     "tiktoken": "^1.0.22",
     "turndown": "^7.2.2",
-    "zod": "^4.2.1",
+    "zod": "^4.3.5",
     "zustand": "5.0.7"
   },
   "devDependencies": {
