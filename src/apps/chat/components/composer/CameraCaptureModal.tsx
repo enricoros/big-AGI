@@ -220,7 +220,7 @@ export function CameraCaptureModal(props: {
             backdropFilter: 'none', // using none because this is heavy
             // backdropFilter: 'blur(4px)',
             // backgroundColor: 'rgba(11 13 14 / 0.75)',
-            backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.5)',
+            backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.67)',
           },
         },
       }}
