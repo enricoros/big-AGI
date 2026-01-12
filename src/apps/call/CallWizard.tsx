@@ -58,7 +58,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
   // derived state
   const outOfTheBlue = !props.conversationId;
-  const overriddenEmptyChat = chatEmptyOverride || !chatIsEmpty;
+  const overriddenEmptyChat = outOfTheBlue || chatEmptyOverride || !chatIsEmpty;
   const overriddenRecognition = recognitionOverride || recognition.mayWork;
   const synthesisShallWork = !!speexGlobalEngine;
   const allGood = overriddenEmptyChat && overriddenRecognition && synthesisShallWork;
