@@ -1,23 +1,34 @@
 ---
 description: Generate changelog bullets for big-agi.com/changes
-argument-hint: date like "since jan 10" or commit reference
+argument-hint: date like "2026-01-10" or empty for auto-detect
 ---
 
-Generate changelog bullets for a single entry in https://big-agi.com/changes 
+Generate changelog bullets for a single entry in https://big-agi.com/changes
 
-**Step 1: Find the starting point**
+**Step 1: Find the starting date**
 
-If `$ARGUMENTS` provided, use it as the date/reference.
+IMPORTANT: This repo rebases frequently, so commits are INTERLEAVED throughout history.
+New commits can appear at line 10, 500, or 1800. Use AUTHOR DATE (`%ad`) to filter - it's preserved during rebases.
 
-If NO argument: fetch https://big-agi.com/changes and continue from the most recent date, but also with some
-margin so you can verify if we are really startging from the stated bullets or we forgot something. I.e.
-the starting content is more reliable than the date alone.
+If `$ARGUMENTS` provided, use it as the cutoff date.
 
-**Step 2: Get commits**
+If NO argument:
+1. Fetch https://big-agi.com/changes to get the most recent changelog date
+2. Use that date as the cutoff
+
+**Step 2: Get commits by author date**
+
+Filter commits by author date to catch ALL new commits regardless of position in history:
 
 ```bash
-git log --oneline --no-merges --since="$DATE"
+# For commits after Jan 10, 2026 (adjust date pattern as needed)
+git log --oneline --no-merges --format="%h %ad %s" --date=short | grep "2026-01-1[1-9]\|2026-01-2\|2026-02"
+
+# Verify interleaving by checking line numbers
+git log --oneline --no-merges --format="%h %ad %s" --date=short | grep -n "2026-01-1[1-9]"
 ```
+
+The line numbers prove commits are scattered (e.g., lines 14, 638, 1156, 1803 = interleaved).
 
 **Step 3: Write bullets**
 
@@ -39,7 +50,7 @@ Real examples from big-agi.com/changes:
 6. **Consolidate commits** - 10 persona editor commits = 1 bullet
 7. **No corporate speak** - no "enhanced", "streamlined", "robust", "leverage"
 
-**Skip:** WIP, internal refactors, KB docs, automation, review cleanups, trivial fixes.
+**Skip:** WIP, internal refactors, KB docs, automation, review cleanups, trivial fixes, deps bumps, CI changes.
 
 **Output:** Just bullets, ready to paste. 2-5 bullets but adapt depending on scope, especially
-in relation to the usual https://big-agi.com/changes entries. 
+in relation to the usual https://big-agi.com/changes entries.
