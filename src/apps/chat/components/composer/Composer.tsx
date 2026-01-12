@@ -125,7 +125,6 @@ export function Composer(props: {
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [sendStarted, setSendStarted] = React.useState(false);
-  const [isComposing, setIsComposing] = React.useState(false);
   const {
     chatExecuteMode,
     chatExecuteModeSendColor, chatExecuteModeSendLabel,
@@ -539,14 +538,6 @@ export function Composer(props: {
     isMobile && actileInterceptTextChange(e.target.value);
   }, [actileInterceptTextChange, isMobile, setComposeText]);
 
-  const handleCompositionStart = React.useCallback(() => {
-    setIsComposing(true);
-  }, []);
-
-  const handleCompositionEnd = React.useCallback(() => {
-    setIsComposing(false);
-  }, []);
-
   const handleTextareaKeyDown = React.useCallback(async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // disable keyboard handling if the actile is visible
     if (actileInterceptKeydown(e))
@@ -554,9 +545,9 @@ export function Composer(props: {
 
     // Enter: primary action
     if (e.key === 'Enter') {
-      if (isComposing) {
+      // Skip if composing (e.g., CJK input methods) - issue #784
+      if (e.nativeEvent.isComposing)
         return;
-      }
 
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey && !e.metaKey && !e.ctrlKey) {
@@ -584,7 +575,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, isComposing, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -878,8 +869,6 @@ export function Composer(props: {
                     value={composeText}
                     onChange={handleTextareaTextChange}
                     onKeyDown={handleTextareaKeyDown}
-                    onCompositionStart={handleCompositionStart}
-                    onCompositionEnd={handleCompositionEnd}
                     onPasteCapture={handleAttachCtrlV}
                     // onFocusCapture={handleFocusModeOn}
                     // onBlurCapture={handleFocusModeOff}
