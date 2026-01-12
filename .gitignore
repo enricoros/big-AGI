@@ -53,3 +53,6 @@ next-env.d.ts
 .env*.local
 /.run/dev (ENV).run.xml
 /src/modules/3rdparty/aider/scratch*
+
+# Ignore temporary CC files
+/tmpclaude*
