@@ -96,6 +96,8 @@ export function BlockEdit_TextFragment(props: {
 
   const handleEditKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
+      if (e.nativeEvent.isComposing)
+        return;
       const withControl = e.ctrlKey;
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         e.preventDefault();
