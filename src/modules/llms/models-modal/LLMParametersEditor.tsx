@@ -106,7 +106,7 @@ const _geminiMediaResolutionOptions = [
   { value: 'mr_high', label: 'High', description: 'Best quality, higher token usage' },
   { value: 'mr_medium', label: 'Medium', description: 'Balanced quality and cost' },
   { value: 'mr_low', label: 'Low', description: 'Faster, lower cost' },
-  { value: _UNSPECIFIED, label: 'Auto', description: 'Model optimizes based on media type (default)' },
+  { value: _UNSPECIFIED, label: 'Auto', description: 'Model decides based on media' },
 ] as const;
 
 // Gemini 3 Pro: 2-level thinking (high, low)
