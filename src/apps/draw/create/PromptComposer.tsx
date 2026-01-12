@@ -101,6 +101,10 @@ export function PromptComposer(props: {
     if (e.key !== 'Enter')
       return;
 
+    // Skip if composing (e.g., CJK input methods) - issue #784
+    if (e.nativeEvent.isComposing)
+      return;
+
     // Shift: toggles the 'enter is newline'
     if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
       if (userHasText)
