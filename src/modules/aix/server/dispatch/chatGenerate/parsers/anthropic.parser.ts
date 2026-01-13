@@ -11,6 +11,8 @@ import { RequestRetryError } from '../chatGenerate.retrier';
 
 // configuration
 const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
+// NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
+const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = true; // [Anthropic, 2026-01-12] Block Start Index issue workaround
 
 
 /**
@@ -139,9 +141,17 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (!responseMessage)
           throw new Error('Unexpected content_block_start');
 
-        const { index, content_block } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
+        const { index: requestedIndex, content_block } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
+
+        // [Anthropic, 2026-01-12] Block Start Index issue
+        let index = requestedIndex;
         if (responseMessage.content[index] !== undefined)
-          throw new Error(`Unexpected content block start location (${index})`);
+          if (ANTHROPIC_FIX_REUSED_BLOCK_INDEX) {
+            // Workaround: Anthropic server tools reuse indices - promote to next available
+            index = responseMessage.content.length;
+            // console.log(`[Anthropic] content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
+          } else
+            throw new Error(`Unexpected content block start location (${requestedIndex})`);
         responseMessage.content[index] = content_block;
 
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
