@@ -79,6 +79,24 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-5.2-2025-12-11',
   },
 
+  // GPT-5.2 Codex
+  {
+    idPrefix: 'gpt-5.2-codex',
+    label: 'GPT-5.2 Codex',
+    description: 'GPT-5.2 optimized for long-horizon, agentic coding tasks in Codex or similar environments. Supports low, medium, high, and xhigh reasoning effort settings.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Aug 2025',
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmForceNoStream' },
+      { paramId: 'llmVndOaiReasoningEffort52' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+    ],
+    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
+    // benchmark: TBD
+  },
+
   // GPT-5.2 Chat Latest
   {
     idPrefix: 'gpt-5.2-chat-latest',
@@ -990,6 +1008,7 @@ const _manualOrderingIdPrefixes = [
   'gpt-5.2-20',
   'gpt-5.2-pro-20',
   'gpt-5.2-pro',
+  'gpt-5.2-codex',
   'gpt-5.2-chat-latest',
   'gpt-5.2',
   // GPT-5.1
