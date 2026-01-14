@@ -1,5 +1,10 @@
 export class AudioLivePlayer {
-  private readonly mimeType: string = 'audio/mpeg';
+  private static readonly MIME_TYPE = 'audio/mpeg';
+
+  /** Whether the browser supports streaming audio playback via MediaSource (false on Firefox) */
+  static readonly isSupported = typeof MediaSource !== 'undefined' && MediaSource.isTypeSupported(AudioLivePlayer.MIME_TYPE);
+
+  private readonly mimeType: string = AudioLivePlayer.MIME_TYPE;
 
   private readonly audioContext: AudioContext;
   private readonly audioElement: HTMLAudioElement;
@@ -36,10 +41,16 @@ export class AudioLivePlayer {
 
   private onMediaSourceOpen = () => {
     this.isMediaSourceOpen = true;
-    this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeType);
-    this.sourceBuffer.mode = 'sequence'; // Ensure data is appended in order
-    this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
-    this.sourceBuffer.addEventListener('error', this.onSourceBufferError);
+    try {
+      this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeType);
+      this.sourceBuffer.mode = 'sequence'; // Ensure data is appended in order
+      this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.addEventListener('error', this.onSourceBufferError);
+    } catch (e) {
+      // Safety net for any edge cases not caught by isSupported check
+      console.error('AudioLivePlayer: Failed to create SourceBuffer:', e);
+      return;
+    }
 
     // Start appending data if any is queued
     this.appendNextChunk();
