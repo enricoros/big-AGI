@@ -71,7 +71,7 @@
     "remark-math": "^6.0.0",
     "sharp": "^0.34.5",
     "superjson": "^2.2.6",
-    "tesseract.js": "^6.0.1",
+    "tesseract.js": "^7.0.0",
     "tiktoken": "^1.0.22",
     "turndown": "^7.2.2",
     "zod": "^4.3.5",
