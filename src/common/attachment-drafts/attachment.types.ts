@@ -24,6 +24,13 @@ export type AttachmentDraft = {
   outputsConversionProgress: number | null;
   outputFragments: DMessageAttachmentFragment[];
 
+  // Auto-fallback info: set when a converter auto-switches due to quality issues (e.g., PDF with low text density)
+  conversionFallback?: {
+    from: AttachmentDraftConverterType;
+    to: AttachmentDraftConverterType;
+    reason: string;
+  };
+
   // metadata: {
   //   creationDate?: Date; // Creation date of the file
   //   modifiedDate?: Date; // Last modified date of the file

@@ -218,6 +218,13 @@ export function LLMAttachmentMenu(props: {
       )}
       {/*{!isUnconvertible && <ListDivider sx={{ mb: 0 }} />}*/}
 
+      {/* Auto-fallback notice (e.g., PDF with low text converted to images) */}
+      {draft.conversionFallback && (
+        <ListItem sx={{ fontSize: 'sm', color: 'success.softColor', fontStyle: 'italic', py: 0.5, px: 2 }}>
+          Auto: {draft.conversionFallback.reason}
+        </ListItem>
+      )}
+
       {/* Progress indicator (mainly for OCRs of Images, PDFs, and PDF to Images) */}
       {!!draft.outputsConversionProgress && draft.outputsConversionProgress < 1 && (
         <LinearProgress determinate value={100 * draft.outputsConversionProgress} sx={{ mx: 1 }} />
