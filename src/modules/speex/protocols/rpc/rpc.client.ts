@@ -59,8 +59,10 @@ export async function speexSynthesize_RPC(
   const voice: SpeexWire_Voice = stripUndefined(engine.voice);
 
 
-  // audio player for streaming playback
+  // audio player for streaming playback (only used when browser supports it)
   let audioPlayer: AudioLivePlayer | null = null;
+  // fallback: accumulate chunks for browsers that don't support streaming (Firefox)
+  const streamingFallbackChunks: ArrayBuffer[] = [];
   const audioChunks: ArrayBuffer[] = [];
 
   const abortController = new AbortController();
@@ -85,7 +87,7 @@ export async function speexSynthesize_RPC(
       switch (particle.t) {
         case 'start':
           callbacks?.onStart?.();
-          if (options.playback && options.streaming)
+          if (options.playback && options.streaming && AudioLivePlayer.isSupported)
             audioPlayer = new AudioLivePlayer();
           break;
 
@@ -101,12 +103,17 @@ export async function speexSynthesize_RPC(
           // non-streaming uses AudioPlayer for single-buffer playback
           if (options.playback) {
             if (particle.chunk) {
-              // create the player on-demand, however in the near future we'll migrate to
-              // Northbridge AudioPlayer for all playback needs
-              if (!audioPlayer)
-                audioPlayer = new AudioLivePlayer();
-
-              audioPlayer.enqueueChunk(audioData.buffer);
+              // Streaming chunk playback
+              if (AudioLivePlayer.isSupported) {
+                // create the player on-demand, however in the near future we'll migrate to
+                // Northbridge AudioPlayer for all playback needs
+                if (!audioPlayer)
+                  audioPlayer = new AudioLivePlayer();
+                audioPlayer.enqueueChunk(audioData.buffer);
+              } else {
+                // Fallback for Firefox: accumulate chunks, play all at once on 'done'
+                streamingFallbackChunks.push(audioData.slice().buffer);
+              }
             } else {
               // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
               void AudioPlayer.playBuffer(audioData.buffer); // fire-and-forget for whole audio
@@ -128,6 +135,18 @@ export async function speexSynthesize_RPC(
 
           // NOTE: calling this will end the sound abruptly if the final chunk is still playing, so we don't do it for now
           audioPlayer?.endPlayback();
+
+          // Fallback playback for Firefox: play all accumulated chunks as a single buffer
+          if (streamingFallbackChunks.length > 0) {
+            const totalLength = streamingFallbackChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+            const combined = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of streamingFallbackChunks) {
+              combined.set(new Uint8Array(chunk), offset);
+              offset += chunk.byteLength;
+            }
+            void AudioPlayer.playBuffer(combined.buffer);
+          }
           break;
 
         case 'error':
