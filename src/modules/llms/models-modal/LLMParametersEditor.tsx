@@ -37,12 +37,13 @@ const _reasoningEffort52Options = [
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
   { value: 'low', label: 'Low', description: 'Quick, concise responses' } as const,
-  { value: _UNSPECIFIED, label: 'None', description: '-' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: '-' } as const,
 ] as const;
 const _reasoningEffort52ProOptions = [
   { value: 'xhigh', label: 'Max', description: 'Hardest thinking, best quality' } as const,
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
-  { value: _UNSPECIFIED, label: 'Medium', description: '-' } as const,
+  { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: '-' } as const,
 ] as const;
 const _verbosityOptions = [
   { value: 'high', label: 'Detailed', description: 'Thorough responses, great for audits' } as const,
@@ -658,12 +659,10 @@ export function LLMParametersEditor(props: {
       <FormSelectControl
         title='Reasoning Effort'
         tooltip='Controls how much effort the model spends on reasoning (5-level scale for GPT-5.2)'
-        value={(!llmVndOaiReasoningEffort52 || llmVndOaiReasoningEffort52 === 'none') ? _UNSPECIFIED : llmVndOaiReasoningEffort52}
+        value={(!llmVndOaiReasoningEffort52 /*|| llmVndOaiReasoningEffort52 === 'none'*/) ? _UNSPECIFIED : llmVndOaiReasoningEffort52}
         onChange={(value) => {
-          if (value === _UNSPECIFIED || !value)
-            onRemoveParameter('llmVndOaiReasoningEffort52');
-          else
-            onChangeParameter({ llmVndOaiReasoningEffort52: value });
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOaiReasoningEffort52');
+          else onChangeParameter({ llmVndOaiReasoningEffort52: value });
         }}
         options={_reasoningEffort52Options}
       />
@@ -673,7 +672,7 @@ export function LLMParametersEditor(props: {
       <FormSelectControl
         title='Reasoning Effort'
         tooltip='Controls how much effort the model spends on reasoning (3-level scale for GPT-5.2 Pro)'
-        value={(!llmVndOaiReasoningEffort52Pro || llmVndOaiReasoningEffort52Pro === 'medium') ? _UNSPECIFIED : llmVndOaiReasoningEffort52Pro}
+        value={(!llmVndOaiReasoningEffort52Pro /*|| llmVndOaiReasoningEffort52Pro === 'medium'*/) ? _UNSPECIFIED : llmVndOaiReasoningEffort52Pro}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOaiReasoningEffort52Pro');
           else onChangeParameter({ llmVndOaiReasoningEffort52Pro: value });
