@@ -27,6 +27,10 @@ const PDF_IMAGE_QUALITY = 0.5;
 const ENABLE_TEXT_AND_IMAGES = false; // [PROD] ?
 const DOCPART_DEFAULT_VERSION = 1;
 
+// PDF text extraction quality thresholds
+const PDF_LOW_TEXT_THRESHOLD = 100; // chars per page - below this, consider the PDF as scanned/image-based
+const PDF_FALLBACK_MAX_IMAGES = 32; // max pages to convert to images when auto-falling back (to respect LLM limits)
+
 
 // internal mimes, only used to route data within us (source -> input -> converters)
 const INT_MIME_VND_AGI_EGO_FRAGMENTS = 'application/vnd.agi.ego.fragments';
@@ -621,18 +625,57 @@ export async function attachmentPerformConversion(
         break;
 
 
-      // pdf to text
+      // pdf to text (with auto-fallback to images for scanned/image-based PDFs)
       case 'pdf-text':
         if (!_expectBlob(input.data, 'PDF text converter')) break;
-        // Convert Blob to ArrayBuffer for PDF.js
-        const pdfText = await pdfToText(await input.data.arrayBuffer(), (progress: number) => {
-          edit(attachment.id, { outputsConversionProgress: progress });
-        });
-        if (pdfText.trim().length < 2) {
-          // Warn the user if no text is extracted
-          // edit(attachment.id, { inputError: 'No text found in the PDF file.' });
-        } else
-          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'pdf' }));
+        try {
+          // Convert Blob to ArrayBuffer for PDF.js
+          const pdfArrayBuffer = await input.data.arrayBuffer();
+
+          // Extract text with quality metadata
+          const pdfTextResult = await pdfToText(pdfArrayBuffer, (progress: number) => {
+            // Reserve 0-30% for text extraction attempt, 30-100% for potential image fallback
+            edit(attachment.id, { outputsConversionProgress: progress * 0.3 });
+          });
+
+          // Check text density to detect scanned/image-based PDFs
+          if (pdfTextResult.avgCharsPerPage >= PDF_LOW_TEXT_THRESHOLD) {
+            // Good text extraction - use it
+            newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfTextResult.text, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'pdf' }));
+          } else {
+            // Low text density detected - auto-fallback to images
+            console.log(`[PDF] Low text density (${pdfTextResult.avgCharsPerPage.toFixed(0)} chars/page across ${pdfTextResult.pageCount} pages), falling back to images`);
+
+            // Need fresh ArrayBuffer for image rendering (previous one may be consumed)
+            const pdfArrayBufferForImages = await input.data.arrayBuffer();
+            const imageDataURLs = await pdfToImageDataURLs(pdfArrayBufferForImages, PLATFORM_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+              edit(attachment.id, { outputsConversionProgress: 0.3 + progress * 0.7 }); // 30-100%
+            });
+
+            // Limit pages to respect LLM image limits
+            const pagesToAttach = Math.min(imageDataURLs.length, PDF_FALLBACK_MAX_IMAGES);
+            for (let i = 0; i < pagesToAttach; i++) {
+              const pdfPageImage = imageDataURLs[i];
+              const pdfPageImageF = await imageDataToImageAttachmentFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `${title} (pg. ${i + 1})`, caption, false, false);
+              if (pdfPageImageF)
+                newFragments.push(pdfPageImageF);
+            }
+
+            // Set fallback info for UI display
+            const truncatedNote = pdfTextResult.pageCount > PDF_FALLBACK_MAX_IMAGES
+              ? ` (first ${pagesToAttach} of ${pdfTextResult.pageCount} pages)`
+              : '';
+            edit(attachment.id, {
+              conversionFallback: {
+                from: 'pdf-text',
+                to: 'pdf-images',
+                reason: `Low text density (${pdfTextResult.avgCharsPerPage.toFixed(0)} chars/page) - converted to images${truncatedNote}`,
+              },
+            });
+          }
+        } catch (error) {
+          console.error('Error in PDF text extraction:', error);
+        }
         break;
 
       // pdf to images
@@ -674,15 +717,15 @@ export async function attachmentPerformConversion(
           }
 
           // duplicated from 'pdf-text'
-          const pdfText = await pdfToText(pdfArrayBufferForText, (progress: number) => {
+          const pdfTextResult = await pdfToText(pdfArrayBufferForText, (progress: number) => {
             edit(attachment.id, { outputsConversionProgress: 0.5 + progress / 2 }); // Update progress (50% to 100%)
           });
-          if (pdfText.trim().length < 2) {
-            // Do not warn the user, as hopefully the images are useful
-          } else {
-            const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'pdf' });
+          if (pdfTextResult.text.trim().length >= 2) {
+            // Add text fragment if there's meaningful text
+            const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfTextResult.text, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'pdf' });
             newFragments.push(textFragment);
           }
+          // Note: if text is sparse, images are still attached (user explicitly chose text+images), so we don't consider density here
 
           // Add the text fragment first, then the image fragments
           newFragments.push(...imageFragments);
