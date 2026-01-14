@@ -569,6 +569,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
         break;
 
+      case 'keepalive':
+        // [OpenAI, 2025-01-13] Keepalive events are sent periodically to keep the connection alive
+        // Nothing to do here - just acknowledge the event by not erroring
+        break;
+
       default:
         const _exhaustiveCheck: never = eventType;
       // noinspection FallThroughInSwitchStatementJS
