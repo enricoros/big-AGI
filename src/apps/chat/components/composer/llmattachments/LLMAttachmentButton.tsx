@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography, VariantProp } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, ListItem, Sheet, Typography, VariantProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -100,8 +100,10 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'image-to-default': ImageOutlinedIcon,
   'image-caption': AbcIcon,
   'image-ocr': AbcIcon,
+  'pdf-auto': PictureAsPdfIcon,
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PermMediaOutlinedIcon,
+  'pdf-images-ocr': AbcIcon,
   'pdf-text-and-images': PermMediaOutlinedIcon,
   'docx-to-html': DescriptionOutlinedIcon,
   'url-page-text': TextFieldsIcon, // was LanguageIcon
@@ -228,9 +230,10 @@ function LLMAttachmentButton(props: {
   const isUnconvertible = !draft.converters.length;
   const isOutputLoading = draft.outputsConverting;
   const isOutputMissing = !draft.outputFragments.length;
+  const isOutputWarned = !!draft.outputWarnings?.length;
   const hasLiveFiles = draft.outputFragments.some(_f => _f.liveFileId);
 
-  const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments);
+  const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments) || isOutputWarned;
 
 
   // handlers

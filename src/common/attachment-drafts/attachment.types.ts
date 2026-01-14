@@ -24,11 +24,14 @@ export type AttachmentDraft = {
   outputsConversionProgress: number | null;
   outputFragments: DMessageAttachmentFragment[];
 
-  // Auto-fallback info: set when a converter auto-switches due to quality issues (e.g., PDF with low text density)
-  conversionFallback?: {
-    from: AttachmentDraftConverterType;
-    to: AttachmentDraftConverterType;
-    reason: string;
+  // Warnings for poor conversions (e.g. scanned PDF with text extraction rather than OCR)
+  outputWarnings?: string[];
+
+  // Tracks what method was actually used (especially for Auto mode)
+  outputsHeuristic?: {
+    isAuto: boolean;
+    actualConverterId: AttachmentDraftConverterType;
+    explain?: string; // e.g., "42 chars/page detected"
   };
 
   // metadata: {
@@ -144,7 +147,7 @@ export type AttachmentDraftConverter = {
 export type AttachmentDraftConverterType =
   | 'text' | 'rich-text' | 'rich-text-cleaner' | 'rich-text-table'
   | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-caption' | 'image-to-default'
-  | 'pdf-text' | 'pdf-images' | 'pdf-text-and-images'
+  | 'pdf-auto' | 'pdf-text' | 'pdf-images' | 'pdf-images-ocr' | 'pdf-text-and-images'
   | 'docx-to-html'
   | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-null' | 'url-page-image'
   | 'youtube-transcript' | 'youtube-transcript-simple'

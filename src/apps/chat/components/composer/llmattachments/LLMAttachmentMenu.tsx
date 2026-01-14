@@ -1,16 +1,15 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Checkbox, Chip, CircularProgress, LinearProgress, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
-import AttachmentIcon from '@mui/icons-material/Attachment';
+import { Box, Button, ButtonGroup, Checkbox, Chip, CircularProgress, Divider, LinearProgress, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
@@ -18,6 +17,7 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { humanReadableBytes } from '~/common/util/textUtils';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
@@ -32,12 +32,20 @@ const DEFAULT_DETAILS_OPEN = true;
 const SHOW_INLINING_OPERATIONS = false;
 
 
-const indicatorSx = {
-  fontSize: '1rem',
-} as const;
+// const indicatorSx = {
+//   fontSize: '1rem',
+// } as const;
+//
+// const indicatorGapSx: SxProps = {
+//   paddingLeft: '1.375rem',
+// };
 
-const indicatorGapSx: SxProps = {
-  paddingLeft: '1.375rem',
+const actionButtonsSx: SxProps = {
+  ml: 'auto',
+  minHeight: 0,
+  borderRadius: '1rem',
+  backgroundColor: 'background.surface',
+  '& button': { fontSize: 'xs', fontWeight: 'md', py: 0, minWidth: 0, minHeight: 0 },
 };
 
 
@@ -82,9 +90,10 @@ export function LLMAttachmentMenu(props: {
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
   const isOutputMultiple = draft.outputFragments.length > 1;
+  const isOutputWarned = !!draft.outputWarnings?.length;
   const hasLiveFiles = draft.outputFragments.some(_f => _f.liveFileId);
 
-  const showWarning = isUnconvertible || isOutputMissing || !llmSupportsAllFragments;
+  const showWarning = isUnconvertible || isOutputMissing || !llmSupportsAllFragments || isOutputWarned;
 
 
   // hooks
@@ -197,6 +206,17 @@ export function LLMAttachmentMenu(props: {
           )}
         </ListItem>
       )}
+      {/* Auto-heuristics message, with explanation */}
+      {!!draft.outputsHeuristic?.isAuto && (
+        <ListItem color={draft.outputsHeuristic.isAuto ? 'primary' : undefined} sx={{ fontSize: 'sm', fontWeight: 'lg', mb: 0.5 }}>
+          {draft.outputsHeuristic.isAuto ? 'Auto: ' : ''}
+          {draft.outputsHeuristic.actualConverterId === 'pdf-text' && 'Text'}
+          {draft.outputsHeuristic.actualConverterId === 'pdf-images-ocr' && 'OCR'}
+          {draft.outputsHeuristic.actualConverterId === 'pdf-images' && 'Images'}
+          {draft.outputsHeuristic.actualConverterId === 'pdf-text-and-images' && 'Text + Images'}
+          {draft.outputsHeuristic.explain && ` (${draft.outputsHeuristic.explain})`}
+        </ListItem>
+      )}
       {!isUnconvertible && draft.converters.map((c, idx) =>
         <MenuItem
           disabled={c.disabled || isConverting}
@@ -213,17 +233,12 @@ export function LLMAttachmentMenu(props: {
           </ListItemDecorator>
           {c.unsupported
             ? <Box>Unsupported 🤔 <Typography level='body-xs'>{c.name}</Typography></Box>
-            : c.name}
+            : (/* auto-converted */ draft.outputsHeuristic?.isAuto && c.id === draft.outputsHeuristic.actualConverterId)
+              ? <Box component='span' sx={{ fontWeight: 'lg', color: 'primary.softColor' }}>{c.name}</Box>
+              : c.name}
         </MenuItem>,
       )}
       {/*{!isUnconvertible && <ListDivider sx={{ mb: 0 }} />}*/}
-
-      {/* Auto-fallback notice (e.g., PDF with low text converted to images) */}
-      {draft.conversionFallback && (
-        <ListItem sx={{ fontSize: 'sm', color: 'success.softColor', fontStyle: 'italic', py: 0.5, px: 2 }}>
-          Auto: {draft.conversionFallback.reason}
-        </ListItem>
-      )}
 
       {/* Progress indicator (mainly for OCRs of Images, PDFs, and PDF to Images) */}
       {!!draft.outputsConversionProgress && draft.outputsConversionProgress < 1 && (
@@ -268,11 +283,19 @@ export function LLMAttachmentMenu(props: {
               <Typography color={isInputError ? 'danger' : 'warning'} level='title-sm'>
                 {isInputError ? 'Loading Issue' : 'Warning'}
               </Typography>
+
+              {/* Only show 1 warning, excluding lower priorities */}
               {isInputError ? <div>{draft.inputError}</div>
                 : isUnconvertible ? <div>Attachments of type {draft.input?.mimeType} are not supported yet. You can request this on GitHub.</div>
                   : isOutputMissing ? <div>File not supported. Please try another format.</div>
                     : !llmSupportsAllFragments ? <div>May not be compatible with the current model. Please try another format.</div>
-                      : <>Unknown warning</>}
+                      : draft.outputWarnings?.length ? '' /* printed below */
+                        : <>Unknown warning</>}
+
+              {/* Explicit output warnings */}
+              {!!draft.outputWarnings?.length && draft.outputWarnings.map((w, widx) =>
+                <Box key={'ow-' + widx} sx={{ fontSize: 'sm', color: 'warning.softColor', py: 1 }}>⚠️ {w}</Box>)
+              }
             </Box>
           </MenuItem>
         </Box>
@@ -301,24 +324,24 @@ export function LLMAttachmentMenu(props: {
             Details
           </Typography>
         ) : (
-          <Box sx={{ my: 0.5 }}>
+          <Box sx={{ my: 1 }}>
 
             {/* <- inputs */}
             {showInputs && !!draftInput && (
-              <Typography level='body-sm' textColor='text.primary' startDecorator={<AttachmentIcon sx={indicatorSx} />}>
-                {draftInput.mimeType}{typeof draftInput.dataSize === 'number' ? ` · ${draftInput.dataSize.toLocaleString()} bytes` : ''}
+              <Typography level='body-sm' textColor='success.softColor'>
+                Input: {draftInput.mimeType}{typeof draftInput.dataSize === 'number' ? ` · ${humanReadableBytes(draftInput.dataSize)}` : ''}
               </Typography>
             )}
             {showInputs && !!draftInput?.altMimeType && (
-              <Typography level='body-sm' sx={indicatorGapSx}>
-                {draftInput.altMimeType} · {draftInput.altData?.length.toLocaleString()}
+              <Typography level='body-sm' textColor='success.softColor'>
+                Input: {draftInput.altMimeType}{!draftInput.altData?.length ? '' : ` · ${humanReadableBytes(draftInput.altData.length)}`}
               </Typography>
             )}
             {showInputs && !!draftInput?.urlImage && (
-              <Typography level='body-sm' sx={indicatorGapSx}>
-                {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.imgDataUrl?.length.toLocaleString()}
-                {' · '}
-                <Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => {
+              <Typography level='body-sm' textColor='success.softColor' sx={{ display: 'flex', alignItems: 'center' }}>
+                Input: {draftInput.urlImage.mimeType} · {draftInput.urlImage.width}x{draftInput.urlImage.height}{!draftInput.urlImage.imgDataUrl?.length ? '' : ` · ${humanReadableBytes(draftInput.urlImage.imgDataUrl.length)}`}
+                &nbsp;
+                <Chip component='span' size='sm' color='success' variant='soft' startDecorator={<VisibilityIcon />} onClick={(event) => {
                   if (draftInput?.urlImage?.imgDataUrl) {
                     // Invoke the viewer but with a virtual 'temp' part description to see this preview image
                     handleViewImageRefPart(event, {
@@ -332,8 +355,8 @@ export function LLMAttachmentMenu(props: {
                       height: draftInput.urlImage.height || undefined,
                     });
                   }
-                }}>
-                  view
+                }} sx={{ ml: 'auto' }}>
+                  view input
                 </Chip>
               </Typography>
             )}
@@ -342,45 +365,79 @@ export function LLMAttachmentMenu(props: {
             {/*  Converters: {draft.converters.map(((converter, idx) => ` ${converter.id}${converter.isActive ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
 
+            {/* Downward arrow */}
+            <Divider color='success'>
+              <KeyboardArrowDownIcon color='success' />
+            </Divider>
+
             {/* -> Outputs */}
-            <Box sx={{ mt: 1 }}>
+            <Box>
               {isOutputMissing ? (
-                <Typography level='body-sm' startDecorator={<ReadMoreIcon sx={indicatorSx} />}>...</Typography>
+                <Typography level='body-sm' color={isConverting ? 'primary' : 'danger'}>{isConverting ? '...' : '... nothing ...'}</Typography>
               ) : (
                 draft.outputFragments.map(({ part }, index) => {
                   if (isDocPart(part)) {
                     return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
-                        <span>{part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·&nbsp;</span>
-                        <Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewDocPart(event, part)}>
-                          view
-                        </Chip>
-                        <Chip component='span' size='sm' color='success' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>
-                          copy
-                        </Chip>
+                      <Typography key={index} component='div' level='body-sm' textColor='primary.softColor' sx={{ display: 'flex', alignItems: 'center' }}>
+                        <span>{part.data.mimeType /* part.type: big-agi type, not source mime */} · {humanReadableBytes(part.data.text.length)} &nbsp;</span>
+                        {/*<Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewDocPart(event, part)} sx={{ ml: 'auto' }}>*/}
+                        {/*  view*/}
+                        {/*</Chip>*/}
+                        {/*<Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>*/}
+                        {/*  copy*/}
+                        {/*</Chip>*/}
+                        <ButtonGroup size='sm' color='primary' variant='outlined' sx={actionButtonsSx}>
+                          <Button startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />} onClick={(event) => handleViewDocPart(event, part)}>
+                            view
+                          </Button>
+                          <Button onClick={(event) => handleCopyToClipboard(event, part.data.text)}/* endDecorator={<ContentCopyIcon />} */>
+                            copy
+                          </Button>
+                        </ButtonGroup>
                       </Typography>
                     );
                   } else if (isZyncAssetImageReferencePartWithLegacyDBlob(part) || isImageRefPart(part)) {
                     // Unified Image Reference handling (both Zync Asset References with legacy fallback and legacy image_ref)
                     const legacyImageRefPart = isZyncAssetImageReferencePartWithLegacyDBlob(part) ? part._legacyImageRefPart! : part;
                     const { dataRef, width, height } = legacyImageRefPart;
-                    const resolution = width && height ? `${width} x ${height}` : 'no resolution';
+                    const resolution = width && height ? `${width}x${height}` : 'no resolution';
                     const mime = dataRef.reftype === 'dblob' ? dataRef.mimeType : 'unknown image';
                     return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
-                        <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {dataRef.reftype === 'dblob' ? (dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
-                        <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='primary' variant='outlined' startDecorator={<VisibilityIcon />}
-                              onClick={(event) => handleViewImageRefPart(event, legacyImageRefPart)}>
-                          view
-                        </Chip>
-                        {isOutputMultiple && <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
-                          del
-                        </Chip>}
+                      <Typography key={index} component='div' level='body-sm' textColor='primary.softColor' sx={{ display: 'flex', alignItems: 'center' }}>
+                        <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {
+                          dataRef.reftype !== 'dblob' ? '(remote)'
+                            : !dataRef.bytesSize ? 'no size'
+                              : humanReadableBytes(dataRef.bytesSize)} &nbsp;</span>
+                        {/*<Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='primary' variant='outlined' startDecorator={<VisibilityIcon />}*/}
+                        {/*      onClick={(event) => handleViewImageRefPart(event, legacyImageRefPart)}>*/}
+                        {/*  view*/}
+                        {/*</Chip>*/}
+                        {/*{isOutputMultiple && <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>*/}
+                        {/*  del*/}
+                        {/*</Chip>}*/}
+                        <ButtonGroup size='sm' color='primary' variant='outlined' sx={actionButtonsSx}>
+                          <Button
+                            startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />}
+                            onClick={(event) => handleViewImageRefPart(event, legacyImageRefPart)}
+                          >
+                            view
+                          </Button>
+                          {isOutputMultiple && (
+                            <Button
+                              color='warning'
+                              endDecorator={<DeleteOutlineIcon sx={{ fontSize: 'md' }} />}
+                              onClick={(event) => handleDeleteOutputFragment(event, index)}
+                              // sx={{ width: 48 }}
+                            >
+                              del
+                            </Button>
+                          )}
+                        </ButtonGroup>
                       </Typography>
                     );
                   } else {
                     return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
+                      <Typography key={index} level='body-sm' textColor='primary.softColor'>
                         {(part as DMessageAttachmentFragment['part']).pt}: (other)
                       </Typography>
                     );
@@ -388,8 +445,8 @@ export function LLMAttachmentMenu(props: {
                 })
               )}
               {!!llmTokenCountApprox && (
-                <Typography level='body-xs' mt={0.5} sx={indicatorGapSx}>
-                  ~{llmTokenCountApprox.toLocaleString()} tokens
+                <Typography level='body-xs' mt={0.5} textColor='primary.softColor'>
+                  &nbsp; ~ {llmTokenCountApprox.toLocaleString()} tokens
                 </Typography>
               )}
             </Box>
