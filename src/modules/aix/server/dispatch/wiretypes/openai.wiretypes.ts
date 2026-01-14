@@ -1830,6 +1830,11 @@ export namespace OpenAIWire_API_Responses {
   //   response: Response_schema,
   // });
 
+  // Keepalive event - [OpenAI, 2025-01-13] sent periodically to keep the connection alive
+  const KeepaliveEvent_schema = _BaseEvent_schema.extend({
+    type: z.literal('keepalive'),
+  });
+
   // Error event
   const ErrorEvent_schema = _BaseEvent_schema.extend({
     type: z.literal('error'),
@@ -1923,6 +1928,9 @@ export namespace OpenAIWire_API_Responses {
 
     // Error events
     ErrorEvent_schema,
+
+    // Keepalive events
+    KeepaliveEvent_schema,
   ]);
 
 }
