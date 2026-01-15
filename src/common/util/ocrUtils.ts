@@ -7,6 +7,19 @@
  * - pdf-images-ocr converter (forced OCR on PDF pages)
  */
 
+import type { recognize as TesseractRecognize } from 'tesseract.js';
+
+// Cache the Tesseract module to avoid re-importing on every call
+let cachedRecognize: typeof TesseractRecognize | null = null;
+
+async function getTesseractRecognize(): Promise<typeof TesseractRecognize> {
+  if (!cachedRecognize) {
+    const tesseract = await import('tesseract.js');
+    cachedRecognize = tesseract.recognize;
+  }
+  return cachedRecognize;
+}
+
 
 /**
  * Result of OCR operation with quality metadata
@@ -29,7 +42,7 @@ export async function ocrImageWithProgress(
   imageData: Blob | string,
   onProgress?: (progress: number) => void,
 ): Promise<string> {
-  const { recognize } = await import('tesseract.js');
+  const recognize = await getTesseractRecognize();
   let lastProgress = -1;
 
   const { data: page } = await recognize(imageData, undefined, {
@@ -46,6 +59,8 @@ export async function ocrImageWithProgress(
       }
     },
   });
+
+  console.log('OCR', {page});
 
   return page.text;
 }
