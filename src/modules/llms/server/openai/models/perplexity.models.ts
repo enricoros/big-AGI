@@ -47,23 +47,6 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
       // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
     },
   },
-  {
-    id: 'sonar-reasoning',
-    label: 'Sonar Reasoning',
-    description: 'Fast, real-time reasoning model for quick problem-solving with search. 128k context.',
-    contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
-      { paramId: 'llmVndPerplexitySearchMode' },
-      { paramId: 'llmVndPerplexityDateFilter' },
-    ],
-    chatPrice: {
-      input: 1,
-      output: 5,
-      // Per-request pricing: $12(High), $8(Medium), $5(Low) per 1k requests
-    },
-  },
 
   // Search Models
   {
@@ -102,18 +85,10 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     },
   },
 
-  // Deprecated Models (removed August 2025)
-  // {
-  //   id: 'r1-1776',
-  //   label: 'R1-1776',
-  //   description: 'DEPRECATED: Removed August 2025. Use Sonar Reasoning Pro instead.',
-  //   contextWindow: 128000,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   chatPrice: {
-  //     input: 2,
-  //     output: 8,
-  //   },
-  // },
+  // Deprecated Models
+  // - sonar-reasoning: Removed December 2025. Use Sonar Reasoning Pro instead.
+  // - r1-1776: Removed August 2025. Use Sonar Reasoning Pro instead.
+  // - llama-3.1-sonar-*-128k-online aliases: Removed February 2025.
 
 ];
 
