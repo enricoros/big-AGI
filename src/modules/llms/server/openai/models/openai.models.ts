@@ -636,9 +636,19 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-audio-2025-08-28',
   },
   {
+    idPrefix: 'gpt-audio-mini-2025-12-15',
+    label: 'GPT Audio Mini (2025-12-15)',
+    description: 'Cost-efficient audio model. Accepts audio inputs and outputs via Chat Completions REST API.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: IFS_GPT_AUDIO,
+    chatPrice: { input: 0.6, output: 2.4 },
+  },
+  {
     idPrefix: 'gpt-audio-mini-2025-10-06',
     label: 'GPT Audio Mini (2025-10-06)',
-    description: '',
+    hidden: true, // previous version
+    description: 'Cost-efficient audio model. Accepts audio inputs and outputs via Chat Completions REST API.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     interfaces: IFS_GPT_AUDIO,
@@ -647,7 +657,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'gpt-audio-mini',
     label: 'GPT Audio Mini',
-    symLink: 'gpt-audio-mini-2025-10-06',
+    symLink: 'gpt-audio-mini-2025-12-15',
   },
 
 
