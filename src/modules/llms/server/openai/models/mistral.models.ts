@@ -11,7 +11,7 @@ const MISTRAL_DEV_SHOW_GAPS = Release.IsNodeDevBuild;
 
 
 // [Mistral]
-// Updated 2025-12-09
+// Updated 2026-01-14
 // - models on: https://docs.mistral.ai/getting-started/models/models_overview/
 // - pricing on: https://mistral.ai/pricing#api-pricing
 // - benchmark elo on CBA
@@ -73,7 +73,8 @@ const _knownMistralModelDetails: Record<string, {
   'magistral-small-2509': { chatPrice: { input: 0.5, output: 1.5 } }, // reasoning
   'magistral-small-latest': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // symlink
 
-  'devstral-small-2512': { label: 'Devstral Small 2 (2512)', chatPrice: { input: 0.1, output: 0.3 } }, // Devstral Small 2 - 24B coding agents
+  'labs-devstral-small-2512': { label: 'Devstral Small 2 (2512)', chatPrice: { input: 0.1, output: 0.3 } }, // Devstral Small 2 - 24B coding agents (Labs)
+  'devstral-small-2512': { label: 'Devstral Small 2 (2512)', chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // alternate ID
   'devstral-small-2507': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // older version
   'devstral-small-latest': { label: 'Devstral Small 2 (latest)', chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
 
@@ -107,6 +108,7 @@ const mistralModelFamilyOrder = [
   'codestral',
   'magistral-small',
   'mistral-small',
+  'labs-devstral-small-2512', // Devstral Small 2 (Labs) - must come before generic prefixes
   'devstral-small-2512',  // Devstral Small 2 - must come before generic 'devstral-small'
   'devstral-small',
   'voxtral-small',
