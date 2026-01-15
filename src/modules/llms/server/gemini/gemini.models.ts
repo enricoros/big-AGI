@@ -375,7 +375,9 @@ const _knownGeminiModels: ({
     benchmark: undefined, // TTS models are not benchmarkable
   },
 
-  // REMOVED MODELS (dialog models unsupported as of 2025-05-27):
+  // REMOVED MODELS - we do not support Native Audio Preview:
+  // - models/gemini-2.5-flash-native-audio-preview-12-2025
+  // REMOVED MODELS (old dialog models superseded by native audio preview):
   // - models/gemini-2.5-flash-preview-native-audio-dialog
   // - models/gemini-2.5-flash-exp-native-audio-thinking-dialog
 
