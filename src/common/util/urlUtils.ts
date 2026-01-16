@@ -55,6 +55,42 @@ export function urlPrettyHref(href: string, removeHttps: boolean, removeTrailing
 
 
 /**
+ * Checks if a URL hostname points to a local/private network address.
+ * Matches: localhost, 127.x.x.x, 192.168.x.x, 10.x.x.x, 172.16-31.x.x, ::1, etc.
+ */
+export function isLocalUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    // localhost
+    if (hostname === 'localhost') return true;
+
+    // IPv6 loopback
+    if (hostname === '::1' || hostname === '[::1]') return true;
+
+    // IPv4 patterns
+    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const [, a, b] = ipv4Match.map(Number);
+      // 127.x.x.x (loopback)
+      if (a === 127) return true;
+      // 10.x.x.x (private class A)
+      if (a === 10) return true;
+      // 172.16.x.x - 172.31.x.x (private class B)
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      // 192.168.x.x (private class C)
+      if (a === 192 && b === 168) return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+
+/**
  * If the string is a valid URL, return it. Otherwise, return null.
  */
 export function asValidURL(textString: string | null, relaxProtocol: boolean = false /*, strictMode: boolean = false*/): string | null {

@@ -10,7 +10,7 @@ import { Link } from '~/common/components/Link';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { asValidURL } from '~/common/util/urlUtils';
+import { asValidURL, isLocalUrl } from '~/common/util/urlUtils';
 
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -63,7 +63,8 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
       visible={true}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText="Fetch models and make requests directly from your local Ollama instance using the browser. Recommended for local setups."
+      helpText='Fetch models and make requests directly from your local Ollama instance using the browser. Recommended for local setups.'
+      localHostDetected={isLocalUrl(ollamaHost)}
     />
 
     <SetupFormRefetchButton
