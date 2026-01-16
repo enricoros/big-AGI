@@ -46,4 +46,4 @@ Focus on discrepancies and gaps:
 Report differences in wire types, adapter logic, parser handling, or dialect-specific quirks.
 Prioritize new capabilities that improve user experience (reasoning visibility, better tool use, etc.).
 
-When making changes, add comments with date: `// [OpenRouter, 2025-MM-DD]: explanation`
+When making changes, add comments with date: `// [OpenRouter, 2026-MM-DD]: explanation`
