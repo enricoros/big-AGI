@@ -11,6 +11,7 @@ import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
+import { isLocalUrl } from '~/common/util/urlUtils';
 import { Link } from '~/common/components/Link';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
@@ -102,7 +103,8 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       visible={true}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText="Fetch models and make requests directly from your LocalAI instance using the browser. Recommended for local setups."
+      helpText='Fetch models and make requests directly from your LocalAI instance using the browser. Recommended for local setups.'
+      localHostDetected={isLocalUrl(localAIHost)}
     />
 
     <SetupFormRefetchButton

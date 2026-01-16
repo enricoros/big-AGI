@@ -8,6 +8,7 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
+import { isLocalUrl } from '~/common/util/urlUtils';
 import { Link } from '~/common/components/Link';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
@@ -73,6 +74,7 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
       helpText='Connect directly to LM Studio from your browser. Requires CORS to be enabled in LM Studio.'
+      localHostDetected={isLocalUrl(oaiHost)}
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
