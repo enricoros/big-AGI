@@ -388,4 +388,4 @@ When you open an issue, our custom AI triage system (powered by [Claude Code](ht
 
 MIT License · [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md)
 
-**2023-2025** · Enrico Ros × [Big-AGI](https://big-agi.com)
+**2023-2026** · Enrico Ros × [Big-AGI](https://big-agi.com)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024-2025 Enrico Ros
+ * Copyright (c) 2024-2026 Enrico Ros
  *
  * Functions to deal with images from the frontend.
  * Also see videoUtils.ts for more image-related functions.
