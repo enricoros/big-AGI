@@ -15,7 +15,7 @@ import type { DModelDomainId } from './model.domains.types';
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
-import { DModelParameterRegistry } from './llms.parameters';
+import { DModelParameterRegistry, LLMS_ImplicitParamIds } from './llms.parameters';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
 import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
 import { getDomainModelConfiguration } from './hooks/useModelDomain';
@@ -99,9 +99,13 @@ export const useModelsStore = create<LlmsStore>()(persist(
             if (result.userParameters) {
               for (const key of Object.keys(result.userParameters)) {
                 const paramId = key as DModelParameterId;
-                const paramSpec = llm.parameterSpecs.find(spec => spec.paramId === paramId);
+
+                // Skip implicit common parameters (always supported, not in parameterSpecs)
+                if (LLMS_ImplicitParamIds.includes(paramId))
+                  continue;
 
                 // Remove if param no longer in spec
+                const paramSpec = llm.parameterSpecs.find(spec => spec.paramId === paramId);
                 if (!paramSpec) {
                   delete result.userParameters[paramId];
                   continue;
