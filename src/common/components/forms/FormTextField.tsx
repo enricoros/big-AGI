@@ -28,6 +28,7 @@ export function FormTextField(props: {
   tooltip?: string | React.JSX.Element,
   placeholder?: string, isError?: boolean, disabled?: boolean,
   value: string | undefined, onChange: (text: string) => void,
+  endDecorator?: React.ReactNode,
   inputSx?: SxProps,
 }) {
   const acId = 'text-' + props.autoCompleteId;
@@ -45,6 +46,7 @@ export function FormTextField(props: {
         autoComplete='off'
         variant='outlined' placeholder={props.placeholder} error={props.isError}
         value={props.value} onChange={event => props.onChange(event.target.value)}
+        endDecorator={props.endDecorator}
         sx={props.inputSx ?? _styles.inputDefault}
       />
     </FormControl>
