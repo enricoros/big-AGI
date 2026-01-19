@@ -279,7 +279,7 @@ export function ModelsList(props: {
         continue;
 
       // get the service label
-      const serviceLabel = findModelsServiceOrNull(llm.sId)?.label ?? llm.sId;
+      const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || llm.sId;
 
       // prepend label when switching services
       if ((hasManyServices || showAllServices) && serviceLabel !== lastGroupLabel) {

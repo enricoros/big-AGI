@@ -7,7 +7,7 @@ import { persist } from 'zustand/middleware';
 
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
-import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import { findModelVendor, type ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import { hasKeys } from '~/common/util/objectUtils';
 
@@ -47,6 +47,7 @@ interface LlmsRootActions {
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
   removeService: (id: DModelsServiceId) => void;
+  updateServiceLabel: (id: DModelsServiceId, label: string, allowEmpty?: boolean) => void;
   updateServiceSettings: <TServiceSettings>(id: DModelsServiceId, partialSettings: Partial<TServiceSettings>) => void;
 
   setConfServiceId: (id: DModelsServiceId | null) => void;
@@ -218,6 +219,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
     createModelsService: (vendor: IModelVendor): DModelsService => {
 
+      // e.g. 'openai', 'openai-1', 'openai-2' - finds the first available slot
       function _locallyUniqueServiceId(vendorId: ModelVendorId, existingServices: DModelsService[]): DModelsServiceId {
         let serviceId: DModelsServiceId = vendorId;
         let serviceIdx = 0;
@@ -228,32 +230,35 @@ export const useModelsStore = create<LlmsStore>()(persist(
         return serviceId;
       }
 
-      function _relabelServicesFromSameVendor(vendorId: ModelVendorId, services: DModelsService[]): DModelsService[] {
-        let n = 0;
-        return services.map((s: DModelsService): DModelsService =>
-          (s.vId !== vendorId) ? s
-            : { ...s, label: s.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : '') },
-        );
+      // e.g. 'OpenAI', 'OpenAI #2', 'OpenAI #3' - uses max index + 1, never relabels existing
+      function _nextAutoLabelForVendor(vendorId: ModelVendorId, vendorName: string, existingServices: DModelsService[]): string {
+        const sameVendorServices = existingServices.filter(s => s.vId === vendorId);
+        if (sameVendorServices.length === 0)
+          return vendorName;
+        let maxIndex = 1;
+        for (const s of sameVendorServices) {
+          const match = s.label.match(/ #(\d+)$/);
+          if (match)
+            maxIndex = Math.max(maxIndex, parseInt(match[1], 10));
+        }
+        return `${vendorName} #${maxIndex + 1}`;
       }
 
       const { sources: existingServices, confServiceId } = get();
 
-      // create the service
       const newService: DModelsService = {
         id: _locallyUniqueServiceId(vendor.id, existingServices),
-        label: vendor.name,
+        label: _nextAutoLabelForVendor(vendor.id, vendor.name, existingServices),
         vId: vendor.id,
         setup: vendor.initializeSetup?.() || {},
       };
 
-      const newServices = _relabelServicesFromSameVendor(vendor.id, [...existingServices, newService]);
-
       set({
-        sources: newServices,
+        sources: [...existingServices, newService],
         confServiceId: confServiceId ?? newService.id,
       });
 
-      return newServices[newServices.length - 1];
+      return newService;
     },
 
     removeService: (id: DModelsServiceId) =>
@@ -263,6 +268,26 @@ export const useModelsStore = create<LlmsStore>()(persist(
           llms,
           sources: state.sources.filter(s => s.id !== id),
           modelAssignments: llmsHeuristicUpdateAssignments(llms, state.modelAssignments),
+        };
+      }),
+
+    updateServiceLabel: (id: DModelsServiceId, label: string, allowEmpty: boolean = false) =>
+      set(state => {
+        // fallback label to vendor name if empty
+        if (!allowEmpty && !label.trim()) {
+          const service = state.sources.find(s => s.id === id);
+          const vendor = service ? findModelVendor(service.vId) : null;
+          label = vendor?.name || label;
+        }
+        // allow max of 32 chars for the name
+        if (label.length > 32)
+          label = label.substring(0, 32);
+        return {
+          sources: state.sources.map((s: DModelsService): DModelsService =>
+            s.id === id
+              ? { ...s, label: label }
+              : s,
+          ),
         };
       }),
 
