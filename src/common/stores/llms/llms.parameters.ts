@@ -441,17 +441,21 @@ export function applyModelParameterInitialValues(destValues: DModelParameterValu
 }
 
 
-const _requiredParamId: DModelParameterId[] = [
+/**
+ * Implicit common parameters always supported by all models, not listed in parameterSpecs.
+ * Must be preserved during model refresh operations.
+ */
+export const LLMS_ImplicitParamIds: readonly DModelParameterId[] = [
   // 'llmRef', // disabled: we know this can't have a fallback value in the registry
   'llmResponseTokens', // DModelParameterRegistry.llmResponseTokens.requiredFallback = FALLBACK_LLM_PARAM_RESPONSE_TOKENS
   'llmTemperature', // DModelParameterRegistry.llmTemperature.requiredFallback = FALLBACK_LLM_PARAM_TEMPERATURE
-] as const;
+];
 
 export function getAllModelParameterValues(initialParameters: undefined | DModelParameterValues, userParameters?: DModelParameterValues): DModelParameterValues {
 
   // fallback values
   const fallbackParameters: DModelParameterValues = {};
-  for (const requiredParamId of _requiredParamId) {
+  for (const requiredParamId of LLMS_ImplicitParamIds) {
     if ('requiredFallback' in DModelParameterRegistry[requiredParamId])
       fallbackParameters[requiredParamId] = DModelParameterRegistry[requiredParamId].requiredFallback as DModelParameterValue<typeof requiredParamId>;
   }
