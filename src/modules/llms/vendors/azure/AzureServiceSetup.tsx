@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Chip, Typography } from '@mui/joy';
+import { Chip, IconButton, Typography } from '@mui/joy';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
@@ -28,7 +29,7 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
   const [checkboxExpanded, setCheckboxExpanded] = React.useState(false);
 
   // external state
-  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings, updateLabel } =
     useServiceSetup(props.serviceId, ModelVendorAzure);
 
   // derived state
@@ -84,6 +85,19 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
       required={needsUserKey} isError={keyError}
       placeholder='...'
     />
+
+    {showAdvanced && <FormTextField
+      autoCompleteId='azure-service-name'
+      title='Service Name'
+      placeholder='e.g., My Azure OpenAI, etc.'
+      value={service?.label || ''}
+      onChange={updateLabel}
+      endDecorator={
+        <IconButton size='sm' variant='plain' color='neutral' onClick={() => updateLabel('')}>
+          <RestartAltIcon />
+        </IconButton>
+      }
+    />}
 
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!(azureKey && azureEndpoint)}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Alert } from '@mui/joy';
+import { Alert, IconButton } from '@mui/joy';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
@@ -31,7 +32,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   const advanced = useToggleableBoolean(!!props.serviceId?.includes('-'));
 
   // external state
-  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings, updateLabel } =
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
@@ -107,6 +108,20 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={on => updateSettings({ moderationCheck: on })}
     />}
 
+    {showAdvanced && <FormTextField
+      autoCompleteId='openai-service-name'
+      title='Custom Name'
+      // tooltip='Custom name for this service. Useful when you have multiple OpenAI-compatible services configured.'
+      placeholder='e.g., Fireworks, Together AI, etc.'
+      value={service?.label || ''}
+      onChange={updateLabel}
+      endDecorator={
+        <IconButton size='sm' variant='plain' color='neutral' onClick={() => updateLabel('')}>
+          <RestartAltIcon />
+        </IconButton>
+      }
+    />}
+
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!oaiHost || !!oaiKey}
       checked={!!clientSideFetch}
@@ -114,6 +129,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       helpText="Fetch models and make requests directly to OpenAI's Responses / Completions and List Models API using your browser instead of through the server."
     />}
 
+    {/* Note, there will be an item here, becasue the former adds an item when visible=false, and as such it must be the last item, to guarantee the gap is always there */}
 
     <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />
 
