@@ -39,7 +39,6 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
     oaiOrg: '',
     oaiHost: partialSetup?.localAIHost || '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('localai' dialect in 'access')

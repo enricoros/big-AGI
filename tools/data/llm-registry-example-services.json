@@ -4,8 +4,7 @@
     "oaiKey": "sk-...",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "anthropic": {
     "dialect": "anthropic",
@@ -28,7 +27,6 @@
     "oaiKey": "gsk_...",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   }
 }

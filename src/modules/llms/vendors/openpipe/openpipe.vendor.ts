@@ -37,7 +37,6 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
     oaiOrg: partialSetup?.openPipeTags || '', // HACK: use tags for org - should use type discrimination
     oaiHost: '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('openpipe' dialect in 'access')

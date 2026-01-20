@@ -7,7 +7,6 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { BaseProduct } from '~/common/app.release';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
-import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -34,7 +33,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
-  const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
+  const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   // state
@@ -114,16 +113,6 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       ? `But you also need to set the API Endpoint to ${HELICONE_OPENAI_HOST} to use Helicone.`
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
-
-    {showAdvanced && (!oaiHost || moderationCheck) && <FormSwitchControl
-      title='OpenAI Moderation'
-      description={<>
-        <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation' target='_blank'>Overview</Link>,
-        {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
-      </>}
-      checked={moderationCheck}
-      onChange={on => updateSettings({ moderationCheck: on })}
-    />}
 
     {(showAdvanced || clientSideFetch) && <SetupFormClientSideToggle
       visible={!!oaiHost || !!oaiKey}

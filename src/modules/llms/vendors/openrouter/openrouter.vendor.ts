@@ -52,7 +52,6 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // there is delay for OpenRouter Free API calls

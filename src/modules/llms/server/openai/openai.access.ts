@@ -51,8 +51,6 @@ export const OPENAI_API_PATHS = {
   images: '/v1/images/generations',
   imageEdits: '/v1/images/edits',
 
-  moderations: '/v1/moderations',
-
   audioSpeech: '/v1/audio/speech',
 
   // xAI-specific (different models endpoint)
@@ -105,7 +103,9 @@ export const openAIAccessSchema = z.object({
   oaiOrg: z.string().trim(), // [OpenPipe] we have a hack here, where we put the tags stringified JSON in here - cleanup in the future
   oaiHost: z.string().trim(),
   heliKey: z.string().trim(),
-  moderationCheck: z.boolean(),
+
+  // deprecated: accepted for backward compatibility with older clients/stored data, ignored by server
+  moderationCheck: z.boolean().optional(), // TODO: remove post releasing 2.0.4
 });
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
@@ -439,7 +439,7 @@ function _azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | nul
     // Chat Completions API, and other v1 APIs
     case apiPath === OPENAI_API_PATHS.chatCompletions
     || apiPath === OPENAI_API_PATHS.responses
-    || apiPath.startsWith('/v1/'): // all the other /v1/ paths, like images, moderations, audio, etc.
+    || apiPath.startsWith('/v1/'): // all the other /v1/ paths, like images, audio, etc.
 
       // require the model Id for traditional deployment-based routing
       if (!modelRefId)

@@ -949,49 +949,8 @@ export namespace OpenAIWire_API_Models_List {
 
 
 //
-// Moderations > Create Moderation
-//
-export namespace OpenAIWire_API_Moderations_Create {
-
-  export type Request = z.infer<typeof Request_schema>;
-  const Request_schema = z.object({
-    // input: z.union([z.string(), z.array(z.string())]),
-    input: z.string(),
-    model: z.enum(['text-moderation-stable', 'text-moderation-latest']).optional(),
-  });
-
-  const Category_schema = z.enum([
-    'sexual',
-    'hate',
-    'harassment',
-    'self-harm',
-    'sexual/minors',
-    'hate/threatening',
-    'violence/graphic',
-    'self-harm/intent',
-    'self-harm/instructions',
-    'harassment/threatening',
-    'violence',
-  ]);
-
-  const Result_schema = z.object({
-    flagged: z.boolean(),
-    categories: z.record(Category_schema, z.boolean()),
-    category_scores: z.record(Category_schema, z.number()),
-  });
-
-  export type Response = z.infer<typeof Response_schema>;
-  const Response_schema = z.object({
-    id: z.string(),
-    model: z.string(),
-    results: z.array(Result_schema),
-  });
-
-}
-
-
 // Chat > Responses API
-
+//
 export namespace OpenAIWire_Responses_Items {
 
   // Parts - Input
