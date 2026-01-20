@@ -33,6 +33,7 @@ import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './openai/models/groq.models';
+import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioModelToModelDescription } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
@@ -384,6 +385,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [FireworksAI] special case for model enumeration
               if (fireworksAIHeuristic(oaiHost))
                 return fireworksAIModelsToModelDescriptions(maybeModels);
+
+              // [Novita] special case for model enumeration
+              if (novitaHeuristic(oaiHost))
+                return novitaModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [FastChat] make the best of the little info
               if (fastAPIHeuristic(maybeModels))
