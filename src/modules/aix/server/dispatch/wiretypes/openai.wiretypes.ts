@@ -396,6 +396,10 @@ export namespace OpenAIWire_API_Chat_Completions {
       search_prompt: z.string().optional(), // custom search prompt
     })).optional(),
 
+    // [OpenRouter, 2025-01-20] Verbosity parameter - maps to output_config.effort for Anthropic models (Claude Opus 4.5)
+    // https://openrouter.ai/docs/api/reference/parameters#verbosity
+    verbosity: z.enum(['low', 'medium', 'high']).optional(),
+
     // [Perplexity, 2025-06-23] Perplexity-specific search parameters
     search_mode: z.enum(['academic']).optional(), // Academic filter for scholarly sources
     search_after_date_filter: z.string().optional(), // Date filter in MM/DD/YYYY format

@@ -179,6 +179,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       // search_prompt: undefined, // could be configurable in the future
     }];
 
+  // [OpenRouter, 2025-01-20] Verbosity - maps to output_config.effort for Anthropic Claude Opus 4.5, GPT-5 family
+  if (openAIDialect === 'openrouter' && model.vndOaiVerbosity)
+    payload.verbosity = model.vndOaiVerbosity;
+
   // [xAI] Vendor-specific extensions for Live Search
   if (openAIDialect === 'xai' && model.vndXaiSearchMode && model.vndXaiSearchMode !== 'off') {
     const search_parameters: any = {
