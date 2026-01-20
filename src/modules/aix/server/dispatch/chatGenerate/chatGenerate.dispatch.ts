@@ -1,7 +1,7 @@
 import { anthropicAccess, ANTHROPIC_API_PATHS } from '~/modules/llms/server/anthropic/anthropic.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
-import { openAIAccess } from '~/modules/llms/server/openai/openai.access';
+import { openAIAccess, OPENAI_API_PATHS } from '~/modules/llms/server/openai/openai.access';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
@@ -107,7 +107,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
     case 'ollama':
       return {
         request: {
-          ...ollamaAccess(access, '/v1/chat/completions'), // use the OpenAI-compatible endpoint
+          ...ollamaAccess(access, OPENAI_API_PATHS.chatCompletions), // use the OpenAI-compatible endpoint
           method: 'POST',
           // body: ollamaChatCompletionPayload(model, _hist, streaming),
           body: aixToOpenAIChatCompletions('openai', model, chatGenerate, streaming),
@@ -141,7 +141,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       if (isResponsesAPI) {
         return {
           request: {
-            ...openAIAccess(access, model.id, '/v1/responses'),
+            ...openAIAccess(access, model.id, OPENAI_API_PATHS.responses),
             method: 'POST',
             body: aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
           },
@@ -152,7 +152,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
 
       return {
         request: {
-          ...openAIAccess(access, model.id, '/v1/chat/completions'),
+          ...openAIAccess(access, model.id, OPENAI_API_PATHS.chatCompletions),
           method: 'POST',
           body: aixToOpenAIChatCompletions(dialect, model, chatGenerate, streaming),
         },
@@ -177,7 +177,7 @@ export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHa
     case 'openrouter':
 
       // ASSUME the OpenAI Responses API - https://platform.openai.com/docs/api-reference/responses/get
-      const { url, headers } = openAIAccess(access, '', `/v1/responses/${resumeHandle.responseId}`);
+      const { url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${resumeHandle.responseId}`);
       const queryParams = new URLSearchParams({
         stream: streaming ? 'true' : 'false',
         ...(!!resumeHandle.startingAfter && { starting_after: resumeHandle.startingAfter.toString() }),

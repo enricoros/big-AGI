@@ -35,6 +35,31 @@ const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
 
 
+// -- Centralized OpenAI-compatible API Paths --
+// These are the standard paths used across all OpenAI-compatible dialects.
+// Some dialects (perplexity, cloudflare, azure) have custom path handling.
+// Dialects with user-configurable hosts (lmstudio, localai, openai, ollama) support
+// custom base paths - when the host URL contains a path, /v1 is stripped.
+
+export const OPENAI_API_PATHS = {
+  chatCompletions: '/v1/chat/completions',
+
+  responses: '/v1/responses',
+
+  models: '/v1/models',
+
+  images: '/v1/images/generations',
+  imageEdits: '/v1/images/edits',
+
+  moderations: '/v1/moderations',
+
+  audioSpeech: '/v1/audio/speech',
+
+  // xAI-specific (different models endpoint)
+  xaiLanguageModels: '/v1/language-models',
+} as const;
+
+
 // --- Fixup Host (all accesses) ---
 
 /** Add https if missing, and remove trailing slash if present and the path starts with a slash. */
@@ -398,13 +423,13 @@ function _azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | nul
   switch (true) {
 
     // List models
-    case apiPath === '/v1/models':
+    case apiPath === OPENAI_API_PATHS.models:
       // uses the good old Azure OpenAI Deployments listing API
       apiPath = `/openai/deployments?api-version=${server.versionDeployments}`;
       break;
 
     // Responses API - next-gen v1 API
-    case apiPath === '/v1/responses' && server.apiEnableV1:
+    case apiPath === OPENAI_API_PATHS.responses && server.apiEnableV1:
       // Next-gen v1 API: direct endpoint without deployment path
       apiPath = '/openai/v1/responses'; // NOTE: we seem to not need the api-version query param here
       // apiPath = `/openai/v1/responses?api-version=${server.versionResponses}`;
@@ -412,7 +437,9 @@ function _azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | nul
       break;
 
     // Chat Completions API, and other v1 APIs
-    case apiPath === '/v1/chat/completions' || apiPath === '/v1/responses' || apiPath.startsWith('/v1/'):
+    case apiPath === OPENAI_API_PATHS.chatCompletions
+    || apiPath === OPENAI_API_PATHS.responses
+    || apiPath.startsWith('/v1/'): // all the other /v1/ paths, like images, moderations, audio, etc.
 
       // require the model Id for traditional deployment-based routing
       if (!modelRefId)
