@@ -149,7 +149,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   ];
 
   if (model.id.startsWith('anthropic/') && interfaces.includes(LLM_IF_OAI_Reasoning))
-    parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', initialValue: null });
+    parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', initialValue: null /* default: non-reasoning variant, thinking off */ });
 
   if (model.id.startsWith('google/') && interfaces.includes(LLM_IF_OAI_Reasoning))
     parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' });
@@ -190,33 +190,41 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 }
 
 export function openRouterInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
-  // keep the same list of models
-  models.push(model);
 
   // inject thinking variants for Anthropic thinking models
-  // NOTE: we flipped the logic of some thinking/non-thinking models
   if (model.id.includes('anthropic/') && model.interfaces.includes(LLM_IF_OAI_Reasoning)) {
 
-    // create a thinking variant for the model, by setting 'idVariant' and modifying the label/description
+    // thinking variant: keep reasoning interface, enable thinking budget (shows 🧠 icon)
     const thinkingVariant: ModelDescriptionSchema = {
       ...model,
       idVariant: 'thinking',
       label: `${model.label.replace(' (thinking)', '')} (thinking)`,
       description: `(configurable thinking) ${model.description}`,
-      interfaces: model.interfaces.filter(i => i !== LLM_IF_OAI_Reasoning),
-      // this is what makes it a thinking variant
+      // keep LLM_IF_OAI_Reasoning for the thinking variant
       parameterSpecs: model.parameterSpecs?.map(param =>
         param.paramId !== 'llmVndAntThinkingBudget' ? param : {
           ...param,
           initialValue: 8192,
-          // initialValue: null, // disable thinking
         }),
     };
-
     models.push(thinkingVariant);
+
+    // base model: remove reasoning interface and thinking budget param (no 🧠 icon)
+    const baseModel: ModelDescriptionSchema = {
+      ...model,
+      interfaces: model.interfaces.filter(i => i !== LLM_IF_OAI_Reasoning),
+      // NOTE: the following line removes the thinking budget param entirely, instead of keeping it with initialValue: null
+      parameterSpecs: model.parameterSpecs?.filter(p => p.paramId !== 'llmVndAntThinkingBudget'),
+    };
+    models.push(baseModel);
+
+  } else {
+
+    // non-Anthropic/reasoning models: keep as-is
+    models.push(model);
+
   }
 
-  // no more variants to inject for now
   return models;
 }
 
