@@ -33,17 +33,17 @@ const _reasoningEffort4Options = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
 const _reasoningEffort52Options = [
-  { value: 'xhigh', label: 'Max', description: 'Hardest thinking, best quality' } as const,
+  { value: 'xhigh', label: 'X-High', description: 'Hardest thinking, best quality' } as const,
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
   { value: 'low', label: 'Low', description: 'Quick, concise responses' } as const,
-  { value: _UNSPECIFIED, label: 'Default', description: '-' } as const,
+  { value: _UNSPECIFIED, label: 'None', description: 'Default (no reasoning)' } as const,
 ] as const;
 const _reasoningEffort52ProOptions = [
-  { value: 'xhigh', label: 'Max', description: 'Hardest thinking, best quality' } as const,
+  { value: 'xhigh', label: 'X-High', description: 'Hardest thinking, best quality' } as const,
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
-  { value: _UNSPECIFIED, label: 'Default', description: '-' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default (medium)' } as const,
 ] as const;
 const _verbosityOptions = [
   { value: 'high', label: 'Detailed', description: 'Thorough responses, great for audits' } as const,
@@ -167,8 +167,10 @@ const _imageGenerationOptions = [
   // { value: 'hq_png', label: 'HD PNG', description: 'Uncompressed' }, // TODO: re-enable when uncompressed PNG saving is implemented
 ] as const;
 
+// Note: the wire format also accepts 'unfiltered', but we use _UNSPECIFIED (undefined) for clarity
+// and remove the parameter entirely rather than setting 'unfiltered' - both are equivalent on the server
 const _xaiDateFilterOptions = [
-  { value: 'unfiltered', label: 'All Time', description: 'No date restriction' },
+  { value: _UNSPECIFIED, label: 'All Time', description: 'No date restriction' },
   { value: '1d', label: 'Last Day', description: 'Results from last 24 hours' },
   { value: '1w', label: 'Last Week', description: 'Results from last 7 days' },
   { value: '1m', label: 'Last Month', description: 'Results from last 30 days' },
@@ -802,9 +804,9 @@ export function LLMParametersEditor(props: {
         title='Search Period'
         // tooltip='Recency of search results'
         disabled={llmVndXaiSearchMode === 'off'}
-        value={llmVndXaiSearchDateFilter ?? 'unfiltered'}
+        value={llmVndXaiSearchDateFilter ?? _UNSPECIFIED}
         onChange={(value) => {
-          if (value === 'unfiltered' || !value)
+          if (value === _UNSPECIFIED || !value)
             onRemoveParameter('llmVndXaiSearchDateFilter');
           else
             onChangeParameter({ llmVndXaiSearchDateFilter: value });

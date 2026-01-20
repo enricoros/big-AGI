@@ -240,6 +240,11 @@ export const DModelParameterRegistry = {
   } as const,
 
   // OpenAI-specific parameters
+  // Reasoning effort levels per model:
+  // - GPT-5: minimal, low, medium (default), high
+  // - GPT-5.1: none (default), low, medium, high
+  // - GPT-5.2: none (default), low, medium, high, xhigh
+  // - GPT-5.2 Pro: medium (default), high, xhigh
 
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
