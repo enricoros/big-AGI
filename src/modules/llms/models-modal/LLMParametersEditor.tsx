@@ -143,9 +143,10 @@ const _antWebFetchOptions = [
 ] as const;
 
 const _antEffortOptions = [
-  { value: _UNSPECIFIED, label: 'High', description: 'Maximum capability (default)' },
+  { value: 'high', label: 'High', description: 'Maximum capability' },
   { value: 'medium', label: 'Medium', description: 'Balanced speed and quality' },
   { value: 'low', label: 'Low', description: 'Fastest, most efficient' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (High)' },
 ] as const;
 
 // const _moonshotWebSearchOptions = [
@@ -355,7 +356,7 @@ export function LLMParametersEditor(props: {
         tooltip='Controls token usage vs. thoroughness. Low = fastest, most efficient. High = maximum capability (default). Works alongside thinking budget.'
         value={llmVndAntEffort ?? _UNSPECIFIED}
         onChange={(value) => {
-          if (value === _UNSPECIFIED || !value || value === 'high') onRemoveParameter('llmVndAntEffort');
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndAntEffort');
           else onChangeParameter({ llmVndAntEffort: value });
         }}
         options={_antEffortOptions}
