@@ -37,7 +37,6 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
     oaiOrg: '',
     oaiHost: partialSetup?.deepseekHost || '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('Deepseek' dialect in 'access')

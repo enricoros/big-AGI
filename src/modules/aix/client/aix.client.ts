@@ -424,7 +424,6 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
  * - vendor-specific rate limit
  * - 'pendingIncomplete' logic
  * - 'o1-preview' hotfix for OpenAI models
- * - [NOT PORTED YET: checks for harmful content with the free 'moderation' API (OpenAI-only)]
  *
  * @param llmId - ID of the Language Model to use
  * @param aixChatGenerate - Multi-modal chat generation request specifics, including Tools and high-level metadata
@@ -460,13 +459,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   if (shallDisableStreaming || aixModel.forceNoStream)
     aixStreaming = false;
 
-
-  // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
-  // if (aixAccess.dialect === 'openai' && aixAccess.moderationCheck) {
-  //   const moderationUpdate = await _openAIModerationCheck(aixAccess, messages.at(-1) ?? null);
-  //   if (moderationUpdate)
-  //     return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
-  // }
+  // Legacy Note: awaited OpenAI moderation check was removed (was only on this codepath)
 
   // Aix Low-Level Chat Generation
   const dMessage: AixChatGenerateContent_DMessageGuts = {

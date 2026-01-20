@@ -35,7 +35,6 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
     oaiOrg: '',
     oaiHost: '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('perplexity' dialect in 'access')

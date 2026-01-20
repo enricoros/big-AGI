@@ -691,7 +691,6 @@ function createSingleConfig(
         oaiOrg: '',
         oaiHost: host || '',
         heliKey: '',
-        moderationCheck: false,
       } as any;
       break;
 

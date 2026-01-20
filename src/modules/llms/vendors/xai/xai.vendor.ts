@@ -31,7 +31,6 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
     oaiOrg: '',
     oaiHost: '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('xai' dialect in 'access')

@@ -6,8 +6,7 @@
     "oaiKey": "YOUR_OPENAI_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "anthropic": {
     "dialect": "anthropic",
@@ -26,77 +25,68 @@
     "oaiKey": "YOUR_GROQ_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "deepseek": {
     "dialect": "deepseek",
     "oaiKey": "YOUR_DEEPSEEK_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "mistral": {
     "dialect": "mistral",
     "oaiKey": "YOUR_MISTRAL_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "perplexity": {
     "dialect": "perplexity",
     "oaiKey": "YOUR_PERPLEXITY_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "xai": {
     "dialect": "xai",
     "oaiKey": "YOUR_XAI_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "openrouter": {
     "dialect": "openrouter",
     "oaiKey": "YOUR_OPENROUTER_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "togetherai": {
     "dialect": "togetherai",
     "oaiKey": "YOUR_TOGETHERAI_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "alibaba": {
     "dialect": "alibaba",
     "oaiKey": "YOUR_ALIBABA_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "moonshot": {
     "dialect": "moonshot",
     "oaiKey": "YOUR_MOONSHOT_API_KEY_HERE",
     "oaiOrg": "",
     "oaiHost": "",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "ollama": {
     "_comment": "Local Ollama instance - no API key needed",
     "dialect": "ollama",
-    "ollamaHost": "http://127.0.0.1:11434",
+    "ollamaHost": "http://127.0.0.1:11434"
   },
   "lmstudio": {
     "_comment": "Local LM Studio instance - no API key needed",
@@ -104,8 +94,7 @@
     "oaiKey": "",
     "oaiOrg": "",
     "oaiHost": "http://127.0.0.1:1234",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   },
   "localai": {
     "_comment": "Local LocalAI instance - no API key needed",
@@ -113,7 +102,6 @@
     "oaiKey": "",
     "oaiOrg": "",
     "oaiHost": "http://127.0.0.1:8080",
-    "heliKey": "",
-    "moderationCheck": false
+    "heliKey": ""
   }
 }
