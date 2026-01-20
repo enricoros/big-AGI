@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, IconButton } from '@mui/joy';
+import { Alert, Divider, IconButton } from '@mui/joy';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -11,6 +11,7 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -19,7 +20,7 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOpenAI } from './openai.vendor';
-import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
+import { OpenAIHostAutocomplete } from './OpenAIHostAutocomplete';
 
 
 // avoid repeating it all over
@@ -28,9 +29,6 @@ const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 
 export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean(!!props.serviceId?.includes('-'));
-
   // external state
   const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings, updateLabel } =
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
@@ -38,7 +36,11 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // state
+  const initialShowOAIAdvanced = !!props.serviceId?.includes('-') /* likely a custom service */ && needsUserKey && !oaiKey && !oaiHost /* missing both */;
+  const advanced = useToggleableBoolean(initialShowOAIAdvanced);
+  const showAdvanced = advanced.on;
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -52,26 +54,40 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <ApproximateCosts serviceId={service?.id} />
 
+
+    {(showAdvanced || !!oaiHost) && (
+      <OpenAIHostAutocomplete
+        value={oaiHost}
+        onChange={host => updateSettings({ oaiHost: host })}
+      />
+    )}
+
     <FormInputKey
       autoCompleteId='openai-key' label='API Key'
       rightLabel={<>{needsUserKey
-        ? !oaiKey && <Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create key</Link>
-        : <AlreadySet />
-      } {oaiKey && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
+        ? (!oaiKey && !oaiHost && <Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create key</Link>)
+        : (!oaiHost && <AlreadySet /> /* only show "Already set" when using default OpenAI, not custom endpoints */)
+      } {oaiKey && !oaiHost && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSettings({ oaiKey: value })}
-      required={needsUserKey} isError={keyError}
+      required={needsUserKey || !!oaiHost} isError={keyError}
       placeholder='sk-...'
     />
 
+    {showAdvanced && <Divider sx={{ mx: 4, my: 2 }} />}
+
     {showAdvanced && <FormTextField
-      autoCompleteId='openai-host'
-      title='API Endpoint'
-      tooltip={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nCould be used for Helicone, Cloudflare, or other OpenAI compatible cloud or local services.\n\nExamples:\n - ${HELICONE_OPENAI_HOST}\n - localhost:1234`}
-      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
-      placeholder={`e.g., ${HELICONE_OPENAI_HOST}, https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai, etc..`}
-      value={oaiHost}
-      onChange={text => updateSettings({ oaiHost: text })}
+      autoCompleteId='openai-service-name'
+      title='Custom Name'
+      // tooltip='Custom name for this service. Useful when you have multiple OpenAI-compatible services configured.'
+      placeholder='e.g., Fireworks, etc.'
+      value={service?.label || ''}
+      onChange={updateLabel}
+      endDecorator={
+        <IconButton size='sm' variant='plain' color='neutral' onClick={() => updateLabel('')}>
+          <RestartAltIcon />
+        </IconButton>
+      }
     />}
 
     {showAdvanced && <FormTextField
@@ -94,12 +110,12 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     {!!heliKey && <Alert variant='soft' color={oaiHost?.includes(HELICONE_OPENAI_HOST) ? 'success' : 'warning'}>
       Advanced: You set the Helicone key. {!oaiHost?.includes(HELICONE_OPENAI_HOST)
-      ? `But you also need to set the OpenAI Host to ${HELICONE_OPENAI_HOST} to use Helicone.`
+      ? `But you also need to set the OpenAI Host to https://${HELICONE_OPENAI_HOST} to use Helicone.`
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
 
-    {showAdvanced && <FormSwitchControl
-      title='Moderation' on='Enabled' fullWidth
+    {showAdvanced && (!oaiHost || moderationCheck) && <FormSwitchControl
+      title='OpenAI Moderation' on='Enabled'
       description={<>
         <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
         {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
@@ -108,21 +124,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={on => updateSettings({ moderationCheck: on })}
     />}
 
-    {showAdvanced && <FormTextField
-      autoCompleteId='openai-service-name'
-      title='Custom Name'
-      // tooltip='Custom name for this service. Useful when you have multiple OpenAI-compatible services configured.'
-      placeholder='e.g., Fireworks, Together AI, etc.'
-      value={service?.label || ''}
-      onChange={updateLabel}
-      endDecorator={
-        <IconButton size='sm' variant='plain' color='neutral' onClick={() => updateLabel('')}>
-          <RestartAltIcon />
-        </IconButton>
-      }
-    />}
-
-    {showAdvanced && <SetupFormClientSideToggle
+    {(showAdvanced || clientSideFetch) && <SetupFormClientSideToggle
       visible={!!oaiHost || !!oaiKey}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
