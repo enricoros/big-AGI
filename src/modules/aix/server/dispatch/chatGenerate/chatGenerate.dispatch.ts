@@ -1,4 +1,4 @@
-import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
+import { anthropicAccess, ANTHROPIC_API_PATHS } from '~/modules/llms/server/anthropic/anthropic.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.access';
@@ -58,7 +58,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ),
       ) ?? false;
 
-      const anthropicRequest = anthropicAccess(access, '/v1/messages', {
+      const anthropicRequest = anthropicAccess(access, ANTHROPIC_API_PATHS.messages, {
         modelIdForBetaFeatures: model.id,
         vndAntWebFetch: model.vndAntWebFetch === 'auto',
         vndAnt1MContext: model.vndAnt1MContext === true,

@@ -6,7 +6,7 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
-import { anthropicAccess, anthropicAccessSchema, AnthropicAccessSchema, AnthropicHeaderOptions } from './anthropic.access';
+import { anthropicAccess, anthropicAccessSchema, AnthropicAccessSchema, AnthropicHeaderOptions, ANTHROPIC_API_PATHS } from './anthropic.access';
 
 
 // Mappers
@@ -43,7 +43,7 @@ export const llmAnthropicRouter = createTRPCRouter({
   listSkills: edgeProcedure
     .input(z.object({ access: anthropicAccessSchema }))
     .query(async ({ input: { access } }) => {
-      return await anthropicGETOrThrow(access, '/v1/skills', { enableSkills: true });
+      return await anthropicGETOrThrow(access, ANTHROPIC_API_PATHS.skills, { enableSkills: true });
     }),
 
   /* [Anthropic] get skill details */
@@ -53,7 +53,7 @@ export const llmAnthropicRouter = createTRPCRouter({
       skillId: z.string(),
     }))
     .query(async ({ input: { access, skillId } }) => {
-      return await anthropicGETOrThrow(access, `/v1/skills/${skillId}`, { enableSkills: true });
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.skills}/${skillId}`, { enableSkills: true });
     }),
 
   /* [Anthropic] get file metadata - for Skills-generated files */
@@ -63,7 +63,7 @@ export const llmAnthropicRouter = createTRPCRouter({
       fileId: z.string(),
     }))
     .query(async ({ input: { access, fileId } }) => {
-      return await anthropicGETOrThrow(access, `/v1/files/${fileId}`, { enableSkills: true });
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true });
     }),
 
   /* [Anthropic] download file - for Skills-generated files */
@@ -74,7 +74,7 @@ export const llmAnthropicRouter = createTRPCRouter({
     }))
     .query(async ({ input: { access, fileId } }) => {
       // Return file data - could be integrated with ZYNC Assets in the future
-      return await anthropicGETOrThrow(access, `/v1/files/${fileId}/download`, { enableSkills: true });
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true });
     }),
 
 });

@@ -17,6 +17,28 @@ import { llmsFixupHost } from '../openai/openai.access';
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
+/**
+ * Centralized Anthropic API paths.
+ */
+export const ANTHROPIC_API_PATHS = {
+  // Messages
+  messages: '/v1/messages', // POST: create a message (chat completion)
+  // /v1/messages/count_tokens, // POST: count tokens in a message
+
+  // Models
+  models: '/v1/models', // GET: List Models
+
+  // Skills
+  skills: '/v1/skills', // POST: create, GET: list
+  // /v1/skills/{skill_id} // GET: get skill, DELETE: delete skill
+
+  // Files
+  files: '/v1/files', // POST: upload file, GET: list files,
+  // /v1/files/{file_id} // GET: get file metadata, DELETE: delete file
+  // /v1/files/{file_id}/content // GET: download file
+} as const;
+
+
 const DEFAULT_ANTHROPIC_HEADERS = {
   // Latest version hasn't changed (as of Feb 2025)
   'anthropic-version': '2023-06-01',

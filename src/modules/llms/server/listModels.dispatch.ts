@@ -11,7 +11,7 @@ import type { ModelDescriptionSchema } from './llm.server.types';
 
 // protocol: Anthropic
 import { AnthropicWire_API_Models_List, hardcodedAnthropicModels, hardcodedAnthropicVariants, llmsAntCreatePlaceholderModel, llmsAntDevCheckForObsoletedModels_DEV, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
-import { anthropicAccess } from './anthropic/anthropic.access';
+import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Gemini
 import { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
@@ -25,7 +25,7 @@ import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/
 
 // protocol: OpenAI-compatible
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-import { openAIAccess } from './openai/openai.access';
+import { OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
@@ -90,7 +90,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'anthropic': {
       return createDispatch({
         fetchModels: async () => {
-          const { headers, url } = anthropicAccess(access, '/v1/models?limit=1000', {/* ... no options for list ... */ });
+          const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.models}?limit=1000`, {/* ... no options for list ... */ });
           const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Anthropic', signal });
           return AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
         },
