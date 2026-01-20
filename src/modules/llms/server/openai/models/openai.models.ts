@@ -108,6 +108,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext' },
+      // { paramId: 'llmVndOaiVerbosity' }, // 2026-01-20: still unsupported
       { paramId: 'llmVndOaiImageGeneration' },
     ],
     chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
@@ -175,13 +176,11 @@ export const _knownOpenAIChatModels: ManualMappings = [
     // trainingDataCutoff: 'Oct 31, 2024',
     // interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
-    // parameterSpecs: [
-    //   { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
-    //   { paramId: 'llmVndOaiRestoreMarkdown' },
-    //   { paramId: 'llmVndOaiVerbosity' },
-    //   { paramId: 'llmVndOaiImageGeneration' },
-    //   { paramId: 'llmForceNoStream' },
-    // ],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext' },
+      // { paramId: 'llmVndOaiVerbosity' }, // 2026-01-20: still unsupported
+      { paramId: 'llmVndOaiImageGeneration' },
+    ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 }, // TODO: Update with official pricing when available - this is `gpt-5-chat-latest` pricing
     // benchmark: TBD
   },
