@@ -88,7 +88,7 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     {showAdvanced && <FormTextField
       autoCompleteId='azure-service-name'
-      title='Service Name'
+      title='Custom Name'
       placeholder='e.g., My Azure OpenAI, etc.'
       value={service?.label || ''}
       onChange={updateLabel}
