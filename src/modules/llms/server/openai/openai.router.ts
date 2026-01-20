@@ -14,7 +14,7 @@ import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSch
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
-import { openAIAccess, OpenAIAccessSchema, openAIAccessSchema } from './openai.access';
+import { openAIAccess, OpenAIAccessSchema, openAIAccessSchema, OPENAI_API_PATHS } from './openai.access';
 
 
 // Router Input/Output Schemas
@@ -231,7 +231,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           access,
           config.model,  // modelRefId not really needed for these endpoints
           requestBody,
-          isEdit ? '/v1/images/edits' : '/v1/images/generations',
+          isEdit ? OPENAI_API_PATHS.imageEdits : OPENAI_API_PATHS.images,
           signal, // wire the signal from the input
         )
           .catch((error: any) => {
@@ -299,7 +299,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         return await openaiPOSTOrThrow<OpenAIWire_API_Moderations_Create.Response, OpenAIWire_API_Moderations_Create.Request>(access, null, {
           input: text,
           model: 'text-moderation-latest',
-        }, '/v1/moderations');
+        }, OPENAI_API_PATHS.moderations);
 
       } catch (error: any) {
         if (error.code === 'ECONNRESET')

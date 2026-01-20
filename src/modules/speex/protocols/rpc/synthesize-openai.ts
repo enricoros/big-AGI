@@ -2,6 +2,7 @@
  * OpenAI-compatible/friendly TTS Synthesizer
  */
 
+import { OPENAI_API_PATHS } from '~/modules/llms/server/openai/openai.access'; // server-side import
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
@@ -55,7 +56,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
 
   // request.headers
   const { host, apiKey } = _resolveAccess(access);
-  const url = `${host}/v1/audio/speech`;
+  const url = `${host}${OPENAI_API_PATHS.audioSpeech}`;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
@@ -148,7 +149,7 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
   if (access.dialect !== 'localai')
     throw new Error('listVoicesLocalAI requires localai dialect');
 
-  const { host, apiKey } = _resolveAccess(access);
+  const { host: localAIHost, apiKey } = _resolveAccess(access);
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
@@ -157,7 +158,7 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
   let modelsResponse: LocalAIWire_ListModels_Response;
   try {
     modelsResponse = await fetchJsonOrTRPCThrow<LocalAIWire_ListModels_Response>({
-      url: `${host}/v1/models`,
+      url: `${localAIHost}${OPENAI_API_PATHS.models}`,
       headers,
       name: 'LocalAI',
     });

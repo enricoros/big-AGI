@@ -6,7 +6,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, 
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, KnownModel, ManualMappings } from '../../models.mappings';
-import { openAIAccess, OpenAIAccessSchema } from '../openai.access';
+import { openAIAccess, OpenAIAccessSchema, OPENAI_API_PATHS } from '../openai.access';
 
 
 // Known xAI Models - Manual Mappings
@@ -221,7 +221,7 @@ const _knownXAIChatModels: ManualMappings = [
 export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
 
   // List models
-  const { headers, url } = openAIAccess(access, null, '/v1/language-models');
+  const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.xaiLanguageModels);
   const modelsResponse = await fetchJsonOrTRPCThrow({ url, headers, name: 'xAI' });
 
   const xaiModels = wireXAIModelsListSchema.parse(modelsResponse);

@@ -303,9 +303,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'togetherai':
       return createDispatch({
 
-        // [OpenAI-compatible dialects]: fetch openAI-style /v1/models API
+        // [OpenAI-compatible dialects]: openAI-style fetch models list
         fetchModels: async () => {
-          const { headers, url } = openAIAccess(access, null, '/v1/models');
+          const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
           return fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: `OpenAI/${_capitalize(dialect)}`, signal });
         },
 
