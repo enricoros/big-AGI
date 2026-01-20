@@ -74,7 +74,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    {showAdvanced && <Divider sx={{ mx: 4, my: 2 }} />}
+    {showAdvanced && <Divider sx={{ mx: 4, my: 1 }}>Advanced</Divider>}
 
     {showAdvanced && <FormTextField
       autoCompleteId='openai-service-name'
@@ -99,9 +99,10 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ oaiOrg: text })}
     />}
 
-    {showAdvanced && <FormTextField
+    {showAdvanced && !oaiHost && <FormTextField
       autoCompleteId='openai-helicone-key'
       title='Helicone Key'
+      disabled={!!oaiHost}
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'
       value={heliKey}
@@ -115,9 +116,9 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     </Alert>}
 
     {showAdvanced && (!oaiHost || moderationCheck) && <FormSwitchControl
-      title='OpenAI Moderation' on='Enabled'
+      title='OpenAI Moderation'
       description={<>
-        <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
+        <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation' target='_blank'>Overview</Link>,
         {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
       </>}
       checked={moderationCheck}
