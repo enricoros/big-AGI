@@ -24,7 +24,7 @@ import { OpenAIHostAutocomplete } from './OpenAIHostAutocomplete';
 
 
 // avoid repeating it all over
-const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+const HELICONE_OPENAI_HOST = 'https://oai.hconeai.com';
 
 
 export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
@@ -110,7 +110,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     {!!heliKey && <Alert variant='soft' color={oaiHost?.includes(HELICONE_OPENAI_HOST) ? 'success' : 'warning'}>
       Advanced: You set the Helicone key. {!oaiHost?.includes(HELICONE_OPENAI_HOST)
-      ? `But you also need to set the OpenAI Host to https://${HELICONE_OPENAI_HOST} to use Helicone.`
+      ? `But you also need to set the API Endpoint to ${HELICONE_OPENAI_HOST} to use Helicone.`
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
 
