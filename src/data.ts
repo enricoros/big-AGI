@@ -120,7 +120,7 @@ When asked to design or draw something, please work step by step detailing the c
   Custom: {
     title: 'Custom',
     description: 'Define the persona, or task:',
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
+    systemMessage: 'You are an AI assistant.\nCurrent date: {{Today}}',
     symbol: '⚡',
     call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
     voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
