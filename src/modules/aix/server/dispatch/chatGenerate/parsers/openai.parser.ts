@@ -196,7 +196,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         deltaHasReasoning = true;
 
       }
-      // delta: Reasoning Details (Structured) [OpenRouter, 2025-11-11]
+      // delta: Reasoning Details (Structured) [OpenRouter, 2025-01-20]
       else if (Array.isArray(delta.reasoning_details)) {
 
         for (const reasoningDetail of delta.reasoning_details) {
@@ -466,7 +466,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 
-      // [OpenRouter, 2025-11-11] Handle structured reasoning_details
+      // [OpenRouter, 2025-01-20] Handle structured reasoning_details
       if (Array.isArray(message.reasoning_details)) {
         for (const reasoningDetail of message.reasoning_details) {
           if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {

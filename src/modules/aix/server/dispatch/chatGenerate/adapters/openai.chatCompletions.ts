@@ -257,13 +257,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     }
     // Gemini via OpenRouter
     else if (model.vndGeminiThinkingBudget !== undefined)
-      payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget || 8192 };
-    // OpenAI via OpenRouter
-    else if (model.vndOaiReasoningEffort && model.vndOaiReasoningEffort !== 'minimal' && model.vndOaiReasoningEffort !== 'none')
+      payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget ?? 8192 };
+    // OpenAI via OpenRouter - all effort levels including 'none' and 'minimal' are valid
+    else if (model.vndOaiReasoningEffort)
       payload.reasoning = { effort: model.vndOaiReasoningEffort };
 
     // FIX double-reasoning request - remove reasoning_effort after transferring it to reasoning (unless already set)
-    if (payload.reasoning_effort && payload.reasoning_effort !== 'minimal' && payload.reasoning_effort !== 'none') {
+    if (payload.reasoning_effort) {
       // we don't know which one takes precedence, so we prioritize .reasoning (OpenRouter) even if .reasoning_effort (OpenAI) is present
       if (!payload.reasoning)
         payload.reasoning = { effort: payload.reasoning_effort };
