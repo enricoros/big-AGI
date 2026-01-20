@@ -165,6 +165,12 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   if (model.id.startsWith('openai/') && interfaces.includes(LLM_IF_OAI_Reasoning))
     parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
 
+  // [OpenRouter, 2025-01-20] Verbosity parameter - controls response length and detail level
+  // - Anthropic: only Claude Opus 4.5 supports effort (maps to output_config.effort)
+  // - OpenAI: GPT-5 family supports verbosity
+  if (model.id.startsWith('anthropic/claude-opus-4.5') || model.id.startsWith('openai/gpt-5'))
+    parameterSpecs.push({ paramId: 'llmVndOaiVerbosity' /* 3-levels verbosity */ });
+
 
   // -- Hidden --
 
