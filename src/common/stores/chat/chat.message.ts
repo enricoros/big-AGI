@@ -300,8 +300,8 @@ function _messageSetGeneratorAIX(message: Pick<DMessage, 'generator'>, modelLabe
 
 export function messageSetGeneratorAIX_AutoLabel(message: Pick<DMessage, 'generator'>, modelVendorId: ModelVendorId, modelId: DLLMId): void {
 
-  // Simply strip the first part of the modelId, which is the serviceId, before the dash.
-  const heuristicLabel = modelId.includes('-') ? modelId.replace(/^[^-]+-/, '') : modelId;
+  // Strip the serviceId prefix: 'vendor-' or 'vendor-N-' (when multiple providers of same vendor)
+  const heuristicLabel = modelId.includes('-') ? modelId.replace(/^[^-]+-(\d-)?/, '') : modelId;
 
   _messageSetGeneratorAIX(message, heuristicLabel, modelVendorId, modelId);
 }
