@@ -6,16 +6,16 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
-import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, getLLMPricing, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { StarIconUnstyled, StarredNoXL2 } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { findModelsServiceOrNull, getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
@@ -179,22 +179,26 @@ export function useLLMSelect(
   const optimizeToSingleVisibleId = (!controlledOpen && _filteredLLMs.length > LLM_SELECT_REDUCE_OPTIONS) ? llmId : null; // id to keep visible when optimizing
 
   const optionsArray = React.useMemo(() => {
+    // check if we have multiple services (to show separators)
+    const hasMultipleServices = _filteredLLMs.some((llm, i, arr) => i > 0 && llm.sId !== arr[i - 1].sId);
+
     // create the option items
-    let formerVendor: IModelVendor | null = null;
+    let prevServiceId: DModelsServiceId | null = null;
     return _filteredLLMs.reduce((acc, llm, _index) => {
 
       if (optimizeToSingleVisibleId && llm.id !== optimizeToSingleVisibleId)
         return acc;
 
-      const vendor = findModelVendor(llm.vId);
-      const vendorChanged = vendor !== formerVendor;
-      if (vendorChanged)
-        formerVendor = vendor;
+      const serviceVendor = findModelVendor(llm.vId);
 
-      // add separators if the vendor changed (and more than one vendor)
-      const addSeparator = vendorChanged && formerVendor !== null;
-      if (addSeparator && !optimizeToSingleVisibleId)
-        acc.push(<Box key={'llm-sep-' + llm.id} sx={_styles.listVendor}>{vendor?.name}</Box>);
+      // add separators when changing services (using custom service label if available)
+      if (hasMultipleServices && llm.sId !== prevServiceId) {
+        if (!optimizeToSingleVisibleId) {
+          const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || serviceVendor?.name || llm.sId;
+          acc.push(<Box key={'llm-sep-' + llm.sId} sx={_styles.listVendor}>{serviceLabel}</Box>);
+        }
+        prevServiceId = llm.sId;
+      }
 
       let features = '';
       const isNotSymlink = !llm.label.startsWith('🔗');
@@ -225,7 +229,7 @@ export function useLLMSelect(
         >
           {!noIcons && (
             <ListItemDecorator>
-              {(llm.userStarred && !starredOnly) ? <StarredNoXL2 /> : vendor?.id ? <LLMVendorIcon vendorId={vendor.id} /> : null}
+              {(llm.userStarred && !starredOnly) ? <StarredNoXL2 /> : serviceVendor?.id ? <LLMVendorIcon vendorId={serviceVendor.id} /> : null}
             </ListItemDecorator>
           )}
           {/*<Tooltip title={llm.description}>*/}
