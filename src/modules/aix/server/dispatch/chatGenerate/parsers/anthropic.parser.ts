@@ -4,6 +4,7 @@ import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
+import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
 import { RequestRetryError } from '../chatGenerate.retrier';
@@ -390,7 +391,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
           default:
             const _exhaustiveCheck: never = content_block;
-            throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
+            aixResilientUnknownValue('Anthropic', 'contentBlockType', (content_block as any)?.type);
+            break;
         }
 
         // set separator flag when server tools complete (text after tools needs visual separation)
@@ -483,7 +485,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
           default:
             const _exhaustiveCheck: never = delta;
-            throw new Error(`Unexpected content block delta type: ${(delta as any).type}`);
+            aixResilientUnknownValue('Anthropic', 'deltaType', (delta as any)?.type);
+            break;
         }
         break;
       }
@@ -586,7 +589,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
       default:
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);
-        throw new Error(`Unexpected event name: ${eventName}`);
+        aixResilientUnknownValue('Anthropic', 'eventName', eventName);
+        break;
     }
   };
 }
@@ -843,7 +847,8 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
         default:
           const _exhaustiveCheck: never = contentBlock;
-          throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
+          aixResilientUnknownValue('Anthropic-NS', 'contentBlockType', (contentBlock as any)?.type);
+          break;
       }
 
       // set separator flag when server tools complete (text after tools needs visual separation)

@@ -2,6 +2,7 @@ import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
+import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
@@ -199,14 +200,17 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 pt.addCodeExecutionResponse(null, deadlineError, '', 'gemini_auto_inline', 'upstream');
                 break;
               default:
-                throw new Error(`unexpected code execution outcome: ${mPart.codeExecutionResult.outcome}`);
+                const _exhaustiveCheck: never = mPart.codeExecutionResult.outcome;
+                aixResilientUnknownValue('Gemini', 'codeExecutionOutcome', mPart.codeExecutionResult.outcome);
+                break;
             }
             break;
 
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = mPart;
-            throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
+            aixResilientUnknownValue('Gemini', 'contentPartType', mPart);
+            break;
         }
 
         // Set the thought signature if available
@@ -314,6 +318,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           default:
             // Exhaustiveness check - if we get here, Gemini added a new finishReason
             const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
+            aixResilientUnknownValue('Gemini', 'finishReason', candidate0.finishReason);
             pt.setTokenStopReason('cg-issue');
             return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null, 'srv-warn');
         }
