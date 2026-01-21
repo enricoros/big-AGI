@@ -966,7 +966,7 @@ export const _fallbackOpenAIModel: KnownModel = {
   description: 'Unknown, please let us know the ID. Assuming a context window of 128k tokens, and a maximum output of 4k tokens.',
   contextWindow: 128000,
   maxCompletionTokens: 4096,
-  interfaces: IFS_CHAT_MIN,
+  interfaces: [...IFS_CHAT_MIN, LLM_IF_OAI_Responses], // Use Responses API by default for new models
   // hidden: true,
 };
 
