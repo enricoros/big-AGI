@@ -6,6 +6,7 @@ import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
+import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { OpenAIWire_API_Responses } from '../../wiretypes/openai.wiretypes';
 
@@ -396,7 +397,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             // case 'file_search_call': // OpenAI vector store - not implemented
             // case 'mcp_call':
             // TODO: Implement these when types are properly integrated
-            console.log(`[DEV] Output item type: ${doneItemType} (TODO: implement)`, doneItem);
+            aixResilientUnknownValue('OpenAI-Responses', `outputItemType:${doneItemType}`, doneItem);
             break;
         }
 
@@ -597,7 +598,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
       // case 'response.custom_tool_call_input.done':
       // case 'response.queued':
         // FIXME: if we're here, we prob needed to implement the part
-        console.warn('[DEV] AIX: OpenAI Responses: unexpected event type:', eventType);
+        aixResilientUnknownValue('OpenAI-Responses', 'eventType', eventType);
         break;
 
     }
@@ -688,7 +689,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
       default:
         const _exhaustiveCheck: never = response.status;
-        console.warn('[DEV] AIX: OpenAI-Response-NS unexpected response status:', { status: response.status });
+        aixResilientUnknownValue('OpenAI-Responses-NS', 'responseStatus', { status: response.status });
         break;
     }
 
@@ -776,7 +777,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
               default:
                 const _exhaustiveCheck: never = contentType;
-                console.warn('[DEV] AIX: OpenAI-Response-NS unexpected message content type:', contentType);
+                aixResilientUnknownValue('OpenAI-Responses-NS', 'contentType', contentType);
                 break;
             }
           }
@@ -820,7 +821,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         default:
           const _exhaustiveCheck: never = oItemType;
-          console.log(`[DEV] Final Response output item type: ${oItemType} (TODO: implement)`);
+          aixResilientUnknownValue('OpenAI-Responses-NS', 'outputItemType', oItemType);
           break;
       }
 
