@@ -371,6 +371,22 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-5-nano-2025-08-07',
   },
 
+  /// OSB-120b - Speculative support for new model appearing in API
+  {
+    idPrefix: 'osb-120b',
+    label: 'OSB-120B',
+    description: 'Speculative support for osb-120b model. Uses Responses API.',
+    contextWindow: 128000,
+    maxCompletionTokens: 32768,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    // chatPrice: TBD - unknown pricing
+  },
+
+
   /// [OpenAI, 2025-03-11] NEW `v1/responses` API MODELS - UNSUPPORTED YET
 
   // Computer Use Preview - INTERNAL MODEL FOR AGENTS - UNSUPPORTED YET
@@ -1036,6 +1052,8 @@ const _manualOrderingIdPrefixes = [
   'gpt-5-chat-latest',
   'gpt-5-codex',
   'gpt-5-',
+  // OSB models?
+  'osb-',
   // Reasoning models
   'o5-20',
   'o5-mini-20',
