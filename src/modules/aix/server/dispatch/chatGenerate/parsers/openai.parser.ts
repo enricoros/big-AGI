@@ -73,6 +73,11 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
     const chunkData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
 
+    // [OpenAI, 2025-01-13] Keepalive events - skip silently
+    // These are sent periodically to keep the connection alive (e.g., {"type":"keepalive","sequence_number":59})
+    if (chunkData?.type === 'keepalive')
+      return;
+
     // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
     if (_forwardOpenRouterDataError(chunkData, pt))
       return;
