@@ -71,10 +71,13 @@ const _styles = {
   },
   listVendor: {
     // see OptimaBarDropdown's _styles.separator
+    // color: 'text.tertiary',
     fontSize: 'sm',
-    color: 'text.tertiary',
+    fontWeight: 'md',
     textAlign: 'center',
-    my: 0.75,
+    py: 1.125,
+    // pt: 1.25, pb: 1,
+    // minHeight: '2.5rem', // other items are 40px
   },
   listConfSep: {
     mb: 0,
