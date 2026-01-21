@@ -5,6 +5,8 @@ import { Box, Chip, ColorPaletteProp, FormControl, IconButton, ListDivider, List
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
@@ -69,15 +71,13 @@ const _styles = {
     backgroundColor: 'background.surface',
     zIndex: 1,
   },
-  listVendor: {
-    // see OptimaBarDropdown's _styles.separator
-    // color: 'text.tertiary',
+  listServiceHeaderButton: {
     fontSize: 'sm',
     fontWeight: 'md',
-    textAlign: 'center',
-    py: 1.125,
-    // pt: 1.25, pb: 1,
-    // minHeight: '2.5rem', // other items are 40px
+    justifyContent: 'space-between',
+  },
+  listServiceHeaderExpand: {
+    fontSize: 'md',
   },
   listConfSep: {
     mb: 0,
@@ -165,6 +165,7 @@ export function useLLMSelect(
 
   // state
   const [controlledOpen, setControlledOpen] = React.useState(false);
+  const [collapsedServices, setCollapsedServices] = React.useState<Set<DModelsServiceId>>(new Set());
 
   // external state
   const starredOnly = useUIPreferencesStore(state => showStarFilter && state.showModelsStarredOnly);
@@ -177,12 +178,24 @@ export function useLLMSelect(
   const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
 
 
+  // handlers
+
+  const toggleServiceCollapse = React.useCallback((serviceId: DModelsServiceId) => {
+    setCollapsedServices(prev => {
+      const next = new Set(prev);
+      if (next.has(serviceId)) next.delete(serviceId);
+      else next.add(serviceId);
+      return next;
+    });
+  }, []);
+
+
   // memo LLM Options
 
   const optimizeToSingleVisibleId = (!controlledOpen && _filteredLLMs.length > LLM_SELECT_REDUCE_OPTIONS) ? llmId : null; // id to keep visible when optimizing
 
   const optionsArray = React.useMemo(() => {
-    // check if we have multiple services (to show separators)
+    // check if we have multiple services (to show collapsible headers)
     const hasMultipleServices = _filteredLLMs.some((llm, i, arr) => i > 0 && llm.sId !== arr[i - 1].sId);
 
     // create the option items
@@ -193,15 +206,29 @@ export function useLLMSelect(
         return acc;
 
       const serviceVendor = findModelVendor(llm.vId);
+      const isServiceCollapsed = hasMultipleServices && collapsedServices.has(llm.sId);
 
-      // add separators when changing services (using custom service label if available)
+      // add collapsible service headers when changing services
       if (hasMultipleServices && llm.sId !== prevServiceId) {
         if (!optimizeToSingleVisibleId) {
           const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || serviceVendor?.name || llm.sId;
-          acc.push(<Box key={'llm-sep-' + llm.sId} sx={_styles.listVendor}>{serviceLabel}</Box>);
+          acc.push(
+            <ListItem key={'llm-sep-' + llm.sId}>
+              <ListItemButton onClick={() => toggleServiceCollapse(llm.sId)} sx={_styles.listServiceHeaderButton}>
+                {/*{serviceVendor?.id && <ListItemDecorator><LLMVendorIcon vendorId={serviceVendor.id} /></ListItemDecorator>}*/}
+                <div />
+                {isServiceCollapsed ? <i>{serviceLabel}</i> : serviceLabel}
+                {isServiceCollapsed ? <ExpandMoreIcon sx={_styles.listServiceHeaderExpand} /> : <ExpandLessIcon sx={_styles.listServiceHeaderExpand} />}
+              </ListItemButton>
+            </ListItem>,
+          );
         }
         prevServiceId = llm.sId;
       }
+
+      // skip models if service is collapsed (but always show selected model)
+      if (isServiceCollapsed && llm.id !== llmId)
+        return acc;
 
       let features = '';
       const isNotSymlink = !llm.label.startsWith('🔗');
@@ -267,7 +294,7 @@ export function useLLMSelect(
 
       return acc;
     }, [] as React.JSX.Element[]);
-  }, [_filteredLLMs, llmId, noIcons, optimizeToSingleVisibleId, starredOnly]);
+  }, [_filteredLLMs, collapsedServices, llmId, noIcons, optimizeToSingleVisibleId, starredOnly, toggleServiceCollapse]);
 
 
   const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => {
