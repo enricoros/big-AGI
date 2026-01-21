@@ -5,6 +5,7 @@
       "Bash(cp:*)",
       "Bash(curl:*)",
       "Bash(find:*)",
+      "Bash(gh issue view:*)",
       "Bash(git branch:*)",
       "Bash(git cherry-pick:*)",
       "Bash(git describe:*)",
