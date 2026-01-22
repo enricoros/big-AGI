@@ -32,7 +32,7 @@ import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/m
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
-import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './openai/models/groq.models';
+import { groqDevCheckForSuperfluousModels_DEV, groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './openai/models/groq.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioModelToModelDescription } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
@@ -353,6 +353,8 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(deepseekModelSort);
 
             case 'groq':
+              // [DEV] check for superfluous model definitions
+              groqDevCheckForSuperfluousModels_DEV(maybeModels.map(m => m.id));
               return maybeModels
                 .filter(groqModelFilter)
                 .map(groqModelToModelDescription)

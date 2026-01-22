@@ -9,7 +9,7 @@ import { wireGroqModelsListOutputSchema } from '../wiretypes/groq.wiretypes';
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-01-14
+ * - updated: 2026-01-21
  */
 const _knownGroqModels: ManualMappings = [
 
@@ -65,6 +65,12 @@ const _knownGroqModels: ManualMappings = [
     chatPrice: { input: 1.00, output: 3.00 },
     hidden: true,
   },
+  // REMOVED MODELS (no longer returned by API as of Jan 21, 2026):
+  // - qwen-qwq-32b (QwQ 32B reasoning model)
+  // - qwen-2.5-32b (Qwen 2.5 32B general-purpose)
+  // - qwen-2.5-coder-32b (Qwen 2.5 Coder 32B)
+  // - deepseek-r1-distill-llama-70b (DeepSeek R1 Distill Llama 70B)
+  // - deepseek-r1-distill-qwen-32b (DeepSeek R1 Distill Qwen 32B)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)
@@ -98,8 +104,9 @@ const _knownGroqModels: ManualMappings = [
     chatPrice: { input: 0.15, output: 0.60 },
   },
   {
+    isPreview: true,
     idPrefix: 'openai/gpt-oss-safeguard-20b',
-    label: 'GPT OSS Safeguard 20B',
+    label: 'GPT OSS Safeguard 20B (Preview)',
     description: 'OpenAI safety classification model (20B MoE). Purpose-built for content moderation with Harmony response format. 131K context, 65K max output. ~1000 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 65536,
@@ -198,6 +205,32 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
 
   return description;
 }
+
+// dev options
+const DEV_DEBUG_GROQ_MODELS = process.env.NODE_ENV === 'development';
+
+
+/**
+ * Checks for model definitions in _knownGroqModels that are not present in the API response.
+ * This helps identify stale model definitions that should be removed.
+ */
+export function groqDevCheckForSuperfluousModels_DEV(apiModelIds: string[]): void {
+
+  if (DEV_DEBUG_GROQ_MODELS) {
+
+    // editorial model ids (prefixes)
+    const expectedModelPrefixes = _knownGroqModels.map(model => model.idPrefix);
+
+    // find editorial models which aren't matched by any API model
+    const superfluousModels = expectedModelPrefixes.filter(prefix => !apiModelIds.some(apiId => apiId.startsWith(prefix)));
+
+    if (superfluousModels.length > 0)
+      console.log(`[DEV] Groq: superfluous model definitions (not in API): [ ${superfluousModels.join(', ')} ]`);
+
+  }
+
+}
+
 
 export function groqModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
   // sort hidden at the end
