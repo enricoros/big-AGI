@@ -30,7 +30,7 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
     togetherFreeTrial: false,
   }),
   validateSetup: (setup) => {
-    return setup.togetherKey?.length >= 64;
+    return setup.togetherKey?.length >= 50;
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'togetherai',
