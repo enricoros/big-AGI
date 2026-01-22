@@ -9,6 +9,12 @@
  * Outputs: pipe-delimited format: modelName|pulls|capabilities|sizes
  * Example: deepseek-r1|66200000|tools,thinking|1.5b,7b,8b,14b,32b,70b,671b
  *
+ * Filtering rules:
+ *   - Top 30 newest models are always included (regardless of pull count)
+ *   - After top 30, only models with 50K+ pulls are included
+ *   - Models with 'cloud' capability are always excluded
+ *   - Models with 'embedding' capability are always excluded
+ *
  * Pull counts are rounded to significant figures for stable diffs:
  *   - >=10M: round to 100K (e.g., 109,123,456 -> 109,100,000)
  *   - >=1M:  round to 10K  (e.g., 5,432,100 -> 5,430,000)
@@ -18,6 +24,8 @@
 const fs = require('fs');
 
 const htmlPath = process.argv[2] || '/tmp/ollama-newest.html';
+const TOP_N_ALWAYS_INCLUDE = 30;
+const MIN_PULLS_THRESHOLD = 50000;
 
 if (!fs.existsSync(htmlPath)) {
   console.error(`Error: HTML file not found at ${htmlPath}`);
@@ -30,7 +38,7 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 
 // Split into model sections - each starts with <a href="/library/
 const modelSections = html.split(/<a href="\/library\//);
-const models = [];
+const allParsedModels = [];
 
 for (let i = 1; i < modelSections.length; i++) {
   const section = modelSections[i].substring(0, 5000); // Large enough window to capture all data
@@ -70,11 +78,18 @@ for (let i = 1; i < modelSections.length; i++) {
     sizes.push(sizeMatch[1].trim());
   }
 
-  // Only include models with 50K+ pulls
-  if (pulls >= 50000) {
-    models.push({ name, pulls: roundPulls(pulls), capabilities, sizes });
+  // Skip models with 'cloud' or 'embedding' capability
+  if (capabilities.includes('cloud') || capabilities.includes('embedding')) {
+    continue;
   }
+
+  allParsedModels.push({ name, pulls: roundPulls(pulls), capabilities, sizes });
 }
+
+// Apply filtering: top 30 always included, rest need 50K+ pulls
+const models = allParsedModels.filter((model, index) => {
+  return index < TOP_N_ALWAYS_INCLUDE || model.pulls >= MIN_PULLS_THRESHOLD;
+});
 
 /**
  * Round pulls to significant figures for stable output.
@@ -93,4 +108,6 @@ models.forEach(m => {
   console.log(`${m.name}|${m.pulls}|${caps}|${tags}`);
 });
 
-console.error(`\nTotal models with 50K+ pulls: ${models.length}`);
+const topNCount = Math.min(TOP_N_ALWAYS_INCLUDE, allParsedModels.length);
+const thresholdCount = models.length - topNCount;
+console.error(`\nTotal models: ${models.length} (top ${topNCount} newest + ${thresholdCount} with ${MIN_PULLS_THRESHOLD / 1000}K+ pulls)`);
