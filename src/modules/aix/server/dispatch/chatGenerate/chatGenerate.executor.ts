@@ -115,8 +115,8 @@ async function* _connectToDispatch(
     return dispatchResponse;
 
   } catch (error: any) {
-    // Handle expected dispatch abortion while the first fetch hasn't even completed
-    if (error && error?.name === 'TRPCError' && intakeAbortSignal.aborted) {
+    // Handle expected dispatch abortion while the first fetch hasn't even completed - both TRPCError (for RPC conversion) and TRPCFetcherError (for direct fetch)
+    if (error && (error?.name === 'TRPCError' /* tRPC */ || error?.name === 'TRPCFetcherError') && intakeAbortSignal.aborted) {
       chatGenerateTx.setEnded('done-dispatch-aborted');
       yield* chatGenerateTx.flushParticles();
       return null; // signal caller to exit
@@ -218,7 +218,7 @@ async function* _consumeDispatchStream(
     } catch (error: any) {
       // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
       // TODO: check if 'AbortError' is also a cause. Seems like ResponseAborted is NextJS vs signal driven.
-      if (error && error?.name === 'ResponseAborted') {
+      if (error && (error?.name === 'ResponseAborted' /* tRPC */ || error?.name === 'AbortError' /* CSF */)) {
         chatGenerateTx.setEnded('done-dispatch-aborted');
         break; // outer do {}
       }
