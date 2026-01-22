@@ -67,8 +67,13 @@ export function AixDebuggerFrame(props: {
 
       {/* Frame Header */}
       <Box sx={{ fontSize: 'sm', display: 'grid', gridTemplateColumns: { xs: 'auto 1fr', md: 'auto auto auto auto' }, gap: 1, alignItems: 'center' }}>
-        <Typography fontWeight='bold'>Request </Typography>
-        <Typography fontWeight='bold'>{frame.id}</Typography>
+        <div>Request</div>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box fontWeight='bold'>{frame.id}</Box>
+          <Chip size='sm' variant='soft' color={frame.transport === 'csf' ? 'primary' : 'success'}>
+            {frame.transport === 'csf' ? 'direct connect' : 'edge server'}
+          </Chip>
+        </Box>
         <div>Status:</div>
         <Chip variant='soft' color={frame.isComplete ? 'success' : 'warning'}>{frame.isComplete ? 'Complete' : 'In Progress'}</Chip>
         <div>Date</div>

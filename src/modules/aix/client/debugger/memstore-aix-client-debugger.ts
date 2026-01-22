@@ -16,6 +16,7 @@ export namespace AixClientDebugger {
     // frame information
     id: AixFrameId;
     timestamp: number;
+    transport: Transport;
     // calling purpose
     context: Context;
     // upstream request
@@ -30,6 +31,8 @@ export namespace AixClientDebugger {
     // aix response particles
     particles: Particle[];
   }
+
+  export type Transport = 'csf' | 'trpc';
 
   export type Measurements = Record<string, string | number>[];
 
@@ -50,10 +53,11 @@ export type AixFrameId = number;
 
 let _lastInMemoryFrameId = 1;
 
-function _createAixClientDebuggerFrame(frameContext: AixClientDebugger.Context): AixClientDebugger.Frame {
+function _createAixClientDebuggerFrame(transport: AixClientDebugger.Transport, frameContext: AixClientDebugger.Context): AixClientDebugger.Frame {
   return {
     id: ++_lastInMemoryFrameId,
     timestamp: Date.now(),
+    transport: transport,
     url: '',
     headers: '',
     body: '',
@@ -78,7 +82,7 @@ interface AixClientDebuggerState {
 
 interface AixClientDebuggerActions {
   // frames
-  createFrame: (initialContext: AixClientDebugger.Context) => AixFrameId;
+  createFrame: (transport: AixClientDebugger.Transport, initialContext: AixClientDebugger.Context) => AixFrameId;
   setRequest: (fId: AixFrameId, updates: Pick<AixClientDebugger.Frame, 'url' | 'headers' | 'body' | 'bodySize'>) => void;
   setProfilerMeasurements: (fId: AixFrameId, measurements: AixClientDebugger.Measurements) => void;
   addParticle: (fId: AixFrameId, particle: AixClientDebugger.Particle, isAborted?: boolean) => void;
@@ -103,8 +107,8 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
 
   // Frame actions
 
-  createFrame: (initialContext) => {
-    const newFrame = _createAixClientDebuggerFrame(initialContext);
+  createFrame: (transport, initialContext) => {
+    const newFrame = _createAixClientDebuggerFrame(transport, initialContext);
 
     _set((state) => ({
       frames: [newFrame, ...state.frames].slice(0, state.maxFrames),
