@@ -90,19 +90,6 @@ const _knownXAIChatModels: ManualMappings = [
 
   // Grok 3
   {
-    isLegacy: true,
-    hidden: true,
-    idPrefix: 'grok-3-fast',
-    label: 'Grok 3 Fast',
-    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications. (Not available as of October 2025)',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
-    chatPrice: { input: 5, output: 25, cache: { cType: 'oai-ac', read: 1.25 } },
-    benchmark: { cbaElo: 1408 }, // grok-3-fast (slight adjustment for cost model)
-  },
-  {
     idPrefix: 'grok-3',
     label: 'Grok 3',
     description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
@@ -126,22 +113,6 @@ const _knownXAIChatModels: ManualMappings = [
     ],
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
     benchmark: { cbaElo: 1358 }, // grok-3-mini-beta (updated from CSV)
-  },
-  {
-    isLegacy: true,
-    hidden: true,
-    idPrefix: 'grok-3-mini-fast',
-    label: 'Grok 3 Mini Fast',
-    description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications. (Not available as of October 2025)',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort' },
-      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
-    chatPrice: { input: 0.6, output: 4, cache: { cType: 'oai-ac', read: 0.15 } },
-    benchmark: { cbaElo: 1357 }, // grok-3-mini-fast (slight adjustment for cost model)
   },
 
   // Grok Code
@@ -191,30 +162,6 @@ const _knownXAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1288 },
   },
 
-  // Grok Beta (all deprecated)
-  {
-    isLegacy: true,
-    idPrefix: 'grok-vision-beta',
-    label: 'Grok Vision Beta',
-    description: 'xAI model grok-vision-beta with image and text input capabilities. Supports text generation with an 8,192 token context window.',
-    contextWindow: 8192,
-    maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
-    chatPrice: { input: 5, output: 15 },
-    hidden: true,
-  },
-  {
-    isLegacy: true,
-    idPrefix: 'grok-beta',
-    label: 'Grok Beta',
-    description: 'xAI model grok-beta (deprecated) with text input capabilities. Supports text generation with a 131,072 token context window.',
-    contextWindow: 131072,
-    maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 5, output: 15 },
-    hidden: true,
-  },
-];
 
 
 function xaiValidateModelDefs_DEV(availableModels: z.infer<typeof wireXAIModelsListSchema>['models']): void {
