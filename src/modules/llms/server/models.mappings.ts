@@ -1,6 +1,36 @@
 import type { ModelDescriptionSchema } from './llm.server.types';
 
 
+// -- Dev model definitions check --
+
+/**
+ * DEV: Checks for stale and optionally unknown model definitions (exact match).
+ * - Stale: defined locally but not returned by API (should remove)
+ * - Unknown: in API but not defined locally (should add)
+ *
+ * @param vendor - Vendor name for logging
+ * @param apiIds - Model IDs from the API
+ * @param knownIds - Model IDs defined locally
+ * @param options - Optional: { checkUnknown: boolean, apiFilter: (id) => boolean }
+ */
+export function llmDevCheckModels_DEV(vendor: string, apiIds: string[], knownIds: string[], options?: { checkUnknown?: boolean; apiFilter?: (id: string) => boolean }): void {
+  const { checkUnknown = true, apiFilter } = options || {};
+
+  // Stale: known but not in API
+  const stale = knownIds.filter(k => !apiIds.includes(k));
+  if (stale.length)
+    console.log(`[DEV] ${vendor}: stale model defs (remove): [ ${stale.join(', ')} ]`);
+
+  // Unknown: in API but not known
+  if (checkUnknown) {
+    const filtered = apiFilter ? apiIds.filter(apiFilter) : apiIds;
+    const unknown = filtered.filter(a => !knownIds.includes(a));
+    if (unknown.length)
+      console.log(`[DEV] ${vendor}: unknown models (add): [ ${unknown.join(', ')} ]`);
+  }
+}
+
+
 // -- Manual model mappings: types and helper --
 
 export type ManualMappings = (KnownModel | KnownLink)[];

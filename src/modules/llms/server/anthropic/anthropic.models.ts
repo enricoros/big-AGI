@@ -4,10 +4,11 @@ import { LLM_IF_ANT_PromptCaching, LLM_IF_ANT_ToolsSearch, LLM_IF_OAI_Chat, LLM_
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
+import { llmDevCheckModels_DEV } from '../models.mappings';
 
 
 // configuration
-export const DEV_DEBUG_ANTHROPIC_MODELS = Release.IsNodeDevBuild;
+const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 
 
 const IF_4 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching];
@@ -289,16 +290,9 @@ export namespace AnthropicWire_API_Models_List {
 
 // -- Helper Functions --
 
-/**
- * DEV: Checks for obsoleted models that are defined in hardcodedAnthropicModels but no longer present in the API.
- * Similar to Gemini's geminiDevCheckForSuperfluousModels_DEV.
- */
-export function llmsAntDevCheckForObsoletedModels_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
+export function anthropicValidateModelDefs_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
-    const apiModelIds = new Set(availableModels.map(m => m.id));
-    const obsoletedModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
-    if (obsoletedModels.length > 0)
-      console.log(`[DEV] Anthropic: obsoleted model definitions: [ ${obsoletedModels.map(m => m.id).join(', ')} ]`);
+    llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id));
   }
 }
 

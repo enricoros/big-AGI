@@ -10,13 +10,13 @@ import type { ModelDescriptionSchema } from './llm.server.types';
 
 
 // protocol: Anthropic
-import { AnthropicWire_API_Models_List, hardcodedAnthropicModels, hardcodedAnthropicVariants, llmsAntCreatePlaceholderModel, llmsAntDevCheckForObsoletedModels_DEV, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
+import { anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, hardcodedAnthropicVariants, llmsAntCreatePlaceholderModel, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Gemini
 import { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiAccess } from './gemini/gemini.access';
-import { geminiDevCheckForParserMisses_DEV, geminiDevCheckForSuperfluousModels_DEV, geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels } from './gemini/gemini.models';
+import { geminiFilterModels, geminiModelsAddVariants, geminiModelToModelDescription, geminiSortModels, geminiValidateModelDefs_DEV, geminiValidateParserOutput_DEV } from './gemini/gemini.models';
 
 // protocol: Ollama
 import { OLLAMA_BASE_MODELS } from './ollama/ollama.models';
@@ -32,7 +32,7 @@ import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/m
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
-import { groqDevCheckForSuperfluousModels_DEV, groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './openai/models/groq.models';
+import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioModelToModelDescription } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
@@ -40,7 +40,7 @@ import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './openai/models/openpipe.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
-import { openaiDevCheckForModelsOverlap_DEV, openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './openai/models/openai.models';
+import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels, openaiValidateModelDefs_DEV } from './openai/models/openai.models';
 import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from './openai/models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
@@ -98,6 +98,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         convertToDescriptions: (wireModelsResponse) => {
           const { data: availableModels } = wireModelsResponse;
 
+          // [DEV] check for stale/unknown model definitions
+          anthropicValidateModelDefs_DEV(availableModels);
+
           // sort by: family (desc) > class (desc) > date (desc) -- Future NOTE: -5- will match -4-5- and -3-5-.. figure something else out
           const familyPrecedence = ['-4-7-', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
           const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
@@ -106,7 +109,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           const getClassIdx = (id: string) => classPrecedence.findIndex(c => id.includes(c));
 
           // cast the models to the common schema
-          const models = availableModels
+          return availableModels
             .sort((a, b) => {
               const familyA = getFamilyIdx(a.id);
               const familyB = getFamilyIdx(b.id);
@@ -145,18 +148,15 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               } else {
                 // for day-0 support of new models, create a placeholder model using sensible defaults
                 const novelModel = llmsAntCreatePlaceholderModel(model);
-                // if (DEV_DEBUG_ANTHROPIC_MODELS) // kind of important...
-                console.log('[DEV] anthropic.router: new model found, please configure it:', novelModel.id);
+
+                // Note: this logs in prod and dev, while anthropicValidateModelDefs_DEV only in dev/staging - important, keep this
+                console.log('[DEV] Anthropic: new model found, please configure it:', novelModel.id);
+
                 acc.push(novelModel);
               }
               return acc;
             }, [] as ModelDescriptionSchema[])
             .map(llmsAntInjectWebSearchInterface);
-
-          // [DEV] check for obsoleted models (defined but no longer in API response)
-          llmsAntDevCheckForObsoletedModels_DEV(availableModels);
-
-          return models;
         },
       });
     }
@@ -168,9 +168,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Gemini', signal });
           const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
 
-          // [DEV] check for missing or superfluous models
-          geminiDevCheckForParserMisses_DEV(wireModels, detailedModels);
-          geminiDevCheckForSuperfluousModels_DEV(detailedModels.map((model: any) => model.name));
+          // [DEV] check for stale/unknown model definitions
+          geminiValidateParserOutput_DEV(wireModels, detailedModels);
+          geminiValidateModelDefs_DEV(detailedModels);
 
           return detailedModels;
         },
@@ -353,8 +353,8 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(deepseekModelSort);
 
             case 'groq':
-              // [DEV] check for superfluous model definitions
-              groqDevCheckForSuperfluousModels_DEV(maybeModels.map(m => m.id));
+              // [DEV] check for stale/unknown model definitions
+              groqValidateModelDefs_DEV(maybeModels.map(m => m.id));
               return maybeModels
                 .filter(groqModelFilter)
                 .map(groqModelToModelDescription)
@@ -407,8 +407,8 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 // custom OpenAI sort
                 .sort(openAISortModels);
 
-              // [DEV] check for superfluous and missing models
-              openaiDevCheckForModelsOverlap_DEV(maybeModels, models);
+              // [DEV] check for stale/unknown model definitions
+              openaiValidateModelDefs_DEV(maybeModels, models);
               return models;
 
             case 'openpipe':
