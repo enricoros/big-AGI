@@ -732,8 +732,8 @@ export function LLMParametersEditor(props: {
     {showParam('llmForceNoStream') && (
       <FormSwitchControl
         title='Disable Streaming'
-        description='Receive complete responses'
-        tooltip='Turn on to get entire responses at once. Useful for models with streaming issues, but will make responses appear slower.'
+        description='For unverified OpenAI orgs'
+        tooltip='Disables streaming and reasoning summaries, which both require OpenAI organization verification. Enable if you get verification errors with GPT-5 models.'
         checked={!!llmForceNoStream}
         onChange={checked => {
           if (!checked)

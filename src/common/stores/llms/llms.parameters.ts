@@ -69,6 +69,12 @@ export const DModelParameterRegistry = {
   /**
    * First introduced as a user-configurable parameter for the 'Verification' required by o3.
    * [2025-04-16] Adding parameter to disable streaming for o3, and possibly more models.
+   *
+   * [2026-01-21] OpenAI Responses API: Reasoning Summaries require organization verification.
+   * Per OpenAI docs, both streaming AND reasoning summaries require org verification for GPT-5/5.1/5.2.
+   *  - https://help.openai.com/en/articles/10362446-api-model-availability-by-usage-tier-and-verification-status
+   *  - Rather than adding a separate param, we piggyback on llmForceNoStream.
+   *  - AIX Wire type `vndOaiReasoningSummary` is derived from `llmForceNoStream` in aix.client.ts.
    */
   llmForceNoStream: {
     label: 'Disable Streaming',
