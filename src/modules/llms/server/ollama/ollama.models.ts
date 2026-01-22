@@ -5,10 +5,10 @@
  *
  * <<<
  Can you modify the following data structure, according to the updated information from the attached
- web page(https://ollama.ai/library?sort=featured). Be very thorough, do not skip any lines, both in
- the provided file and in the web page. Add/remove to reflect the order in the web page, update
- the *description* and *pulls*, and preserve the existing *added* field on existing entries, or set
- it to 20250312 on brand new entries. Note: the default contextWindow in code is 8192, so we do not redefine that.
+ web page (https://ollama.com/library?sort=newest). Be very thorough, do not skip any lines, both in
+ the provided file and in the web page. Add/remove to reflect the order in the web page (newest first),
+ update the *pulls*, and preserve the existing *added* field on existing entries, or set it to today's
+ date (YYYYMMDD) on brand new entries. Note: the default contextWindow in code is 8192, so we do not redefine that.
  >>>
  */
 export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow?: number, hasTools?: true, hasVision?: true, isEmbeddings?: true, tags?: string[], added?: string } } = {

@@ -1,23 +1,28 @@
 #!/usr/bin/env node
 /**
- * Parse Ollama featured models from HTML
+ * Parse Ollama models from HTML (sorted by newest for stable ordering)
  *
  * Usage:
- *   1. Fetch HTML: curl -s "https://ollama.com/library?sort=featured" -o /tmp/ollama-featured.html
+ *   1. Fetch HTML: curl -s "https://ollama.com/library?sort=newest" -o /tmp/ollama-newest.html
  *   2. Parse: node .claude/scripts/parse-ollama-models.js
  *
  * Outputs: pipe-delimited format: modelName|pulls|capabilities|sizes
  * Example: deepseek-r1|66200000|tools,thinking|1.5b,7b,8b,14b,32b,70b,671b
+ *
+ * Pull counts are rounded to significant figures for stable diffs:
+ *   - >=10M: round to 100K (e.g., 109,123,456 -> 109,100,000)
+ *   - >=1M:  round to 10K  (e.g., 5,432,100 -> 5,430,000)
+ *   - <1M:   round to 1K   (e.g., 88,700 -> 89,000)
  */
 
 const fs = require('fs');
 
-const htmlPath = process.argv[2] || '/tmp/ollama-featured.html';
+const htmlPath = process.argv[2] || '/tmp/ollama-newest.html';
 
 if (!fs.existsSync(htmlPath)) {
   console.error(`Error: HTML file not found at ${htmlPath}`);
   console.error('Please fetch it first with:');
-  console.error('  curl -s "https://ollama.com/library?sort=featured" -o /tmp/ollama-featured.html');
+  console.error('  curl -s "https://ollama.com/library?sort=newest" -o /tmp/ollama-newest.html');
   process.exit(1);
 }
 
@@ -78,8 +83,7 @@ for (let i = 1; i < modelSections.length; i++) {
 function roundPulls(pulls) {
   if (pulls >= 10000000) return Math.round(pulls / 100000) * 100000;  // >=10M: round to 100K
   if (pulls >= 1000000) return Math.round(pulls / 10000) * 10000;     // >=1M: round to 10K
-  if (pulls >= 100000) return Math.round(pulls / 1000) * 1000;        // >=100K: round to 1K
-  return pulls;
+  return Math.round(pulls / 1000) * 1000;                             // <1M: round to 1K
 }
 
 // Output in pipe-delimited format (in the order they appear on the page)

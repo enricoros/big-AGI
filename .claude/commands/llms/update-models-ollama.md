@@ -8,8 +8,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Automated Workflow:**
 ```bash
-# 1. Fetch the HTML
-curl -s "https://ollama.com/library?sort=featured" -o /tmp/ollama-featured.html
+# 1. Fetch the HTML (sorted by newest for stable ordering)
+curl -s "https://ollama.com/library?sort=newest" -o /tmp/ollama-newest.html
 
 # 2. Parse it with the script
 node .claude/scripts/parse-ollama-models.js > /tmp/ollama-parsed.txt 2>&1
@@ -22,7 +22,7 @@ The parser outputs: `modelName|pulls|capabilities|sizes`
 - Example: `deepseek-r1|66200000|tools,thinking|1.5b,7b,8b,14b,32b,70b,671b`
 
 **Primary Sources:**
-- Model Library: https://ollama.com/library?sort=featured
+- Model Library: https://ollama.com/library?sort=newest
 - Parser script: `.claude/scripts/parse-ollama-models.js`
 
 **Fallbacks if blocked:** Check https://github.com/ollama/ollama, search "ollama featured models", "ollama latest models", or search GitHub for latest model info
@@ -30,7 +30,7 @@ The parser outputs: `modelName|pulls|capabilities|sizes`
 **Important:**
 - Skip models below 50,000 pulls (parser does this automatically)
 - Skip embedding models (parser does not do this automatically)
-- Sort them in the EXACT same order as the source (featured models)
+- Sort them in the EXACT same order as the source (newest first, for stable ordering)
 - Extract tags: 'tools' → hasTools, 'vision' → hasVision, 'embedding' → isEmbeddings (note the 's'), 'thinking' → tags only
 - Extract 'b' tags (1.5b, 7b, 32b) to tags field
 - Set today's date (YYYYMMDD format) for newly added models only
