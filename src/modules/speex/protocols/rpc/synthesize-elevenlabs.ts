@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
-import type { SynthesizeBackendFn } from './rpc.router';
+import type { SynthesizeBackendFn } from './synthesize.core';
 import { SPEEX_DEBUG, SPEEX_DEFAULTS } from '../../speex.config';
 import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
