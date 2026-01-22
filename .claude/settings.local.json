@@ -27,6 +27,7 @@
       "Bash(sed:*)",
       "Bash(tree:*)",
       "Read(//tmp/**)",
+      "Skill(llms:update-models*)",
       "WebFetch",
       "WebFetch(domain:big-agi.com)",
       "WebSearch",
