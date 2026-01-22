@@ -43,6 +43,14 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
           console.log(`[fetchers.retrier] Detected quota/billing error - will not retry`);
         return null; // Don't retry quota/billing errors - user needs to upgrade plan
       }
+      // Don't retry "request too large" errors - request size won't change
+      // e.g. "Request too large for o3 ... on tokens per min (TPM): Limit 30000, Requested 56108"
+      const isRequestTooLarge = /request too large|limit \d+, requested \d+/i.test(error.message);
+      if (isRequestTooLarge) {
+        if (AIX_DEBUG_SERVER_RETRY)
+          console.log(`[fetchers.retrier] Detected request-too-large error - will not retry`);
+        return null;
+      }
       return RETRY_PROFILES.server; // Retry temporary rate limits
     }
 
