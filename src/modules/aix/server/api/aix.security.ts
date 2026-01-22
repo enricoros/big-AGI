@@ -1,3 +1,5 @@
+import type { AixAPI_Context_ChatGenerate } from './aix.wiretypes';
+
 /**
  * Security - only allow certain operations in development builds (i.e. not in any production builds by default):
  *  1. dispatch Headers: hide sensitive data such as keys
@@ -6,3 +8,16 @@
  *  4. onComment on SSE streams
  */
 export const AIX_SECURITY_ONLY_IN_DEV_BUILDS = process.env.NODE_ENV === 'development';
+
+/**
+ * Production-allowed contexts for AIX inspector.
+ * These are the only contexts that can be captured in production builds for security.
+ */
+export const AIX_INSPECTOR_ALLOWED_CONTEXTS: (AixAPI_Context_ChatGenerate['name'] | string)[] = [
+  'beam-followup',
+  'beam-gather',
+  'beam-scatter',
+  'chat-react-turn',
+  'conversation',
+  'scratch-chat',
+] as const;

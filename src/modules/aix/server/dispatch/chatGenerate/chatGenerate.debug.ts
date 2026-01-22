@@ -1,22 +1,8 @@
 import { createServerDebugWireEvents, serverCapitalizeFirstLetter } from '~/server/wire';
 
-import type { AixAPI_Access, AixAPI_Context_ChatGenerate } from '../../api/aix.wiretypes';
-import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
+import type { AixAPI_Access } from '../../api/aix.wiretypes';
+import { AIX_INSPECTOR_ALLOWED_CONTEXTS, AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
 import { PerformanceProfiler } from '../PerformanceProfiler';
-
-
-/**
- * Production-allowed contexts for AIX inspector.
- * These are the only contexts that can be captured in production builds for security.
- */
-const AIX_INSPECTOR_ALLOWED_CONTEXTS: (AixAPI_Context_ChatGenerate['name'] | string)[] = [
-  'beam-followup',
-  'beam-gather',
-  'beam-scatter',
-  'chat-react-turn',
-  'conversation',
-  'scratch-chat',
-] as const;
 
 
 export type AixDebugObject = ReturnType<typeof _createDebugConfig>;
