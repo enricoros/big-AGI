@@ -11,7 +11,7 @@ import { openAIAccess, OpenAIAccessSchema, OPENAI_API_PATHS } from '../openai.ac
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2025-11-19
+// Verified: 2026-01-21
 
 // Tiered pricing for Grok 4.1 Fast models (both reasoning and non-reasoning)
 const PRICE_41 = {
