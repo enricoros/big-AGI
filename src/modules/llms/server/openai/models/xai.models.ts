@@ -217,7 +217,12 @@ const _knownXAIChatModels: ManualMappings = [
 ];
 
 
-// xAI Model Descriptions
+function xaiValidateModelDefs_DEV(availableModels: z.infer<typeof wireXAIModelsListSchema>['models']): void {
+  if (DEV_DEBUG_XAI_MODELS) {
+    llmDevCheckModels_DEV('xAI', availableModels.map(m => m.id), _knownXAIChatModels.map(m => m.idPrefix));
+  }
+}
+
 export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
 
   // List models
@@ -225,6 +230,9 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
   const modelsResponse = await fetchJsonOrTRPCThrow({ url, headers, name: 'xAI' });
 
   const xaiModels = wireXAIModelsListSchema.parse(modelsResponse);
+
+  // DEV: validate model definitions
+  xaiValidateModelDefs_DEV(xaiModels.models);
 
   return xaiModels.models.reduce((acc, xm) => {
 
