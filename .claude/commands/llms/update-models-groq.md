@@ -6,11 +6,11 @@ Update `src/modules/llms/server/openai/models/groq.models.ts` with latest model 
 
 Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
-**Primary Sources:**
-- Models: https://console.groq.com/docs/models
+**Primary Source:**
+- Fetch https://console.groq.com/docs/models.md directly (markdown format, no search needed)
 - Pricing: https://groq.com/pricing/
 
-**Fallbacks if blocked:** Search "groq models latest pricing", "groq latest models", "groq api models", or search GitHub for latest model prices and context windows
+**Do NOT use web search.** The `.md` endpoint provides structured markdown content directly.
 
 **Important:**
 - Review the full model list for additions, removals, and price changes
