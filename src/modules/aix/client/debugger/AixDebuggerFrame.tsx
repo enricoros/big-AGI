@@ -16,7 +16,7 @@ const _styles = {
     boxShadow: 'inset 2px 0 4px -2px rgba(0, 0, 0, 0.2)',
     fontFamily: 'code',
     fontSize: 'xs',
-    p: 1.5,
+    py: 1,
     gap: 1,
   } as const,
 
@@ -66,18 +66,16 @@ export function AixDebuggerFrame(props: {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
       {/* Frame Header */}
-      <Box sx={{ fontSize: 'sm', display: 'grid', gridTemplateColumns: { xs: 'auto 1fr', md: 'auto auto auto auto' }, gap: 1, alignItems: 'center' }}>
+      <Box sx={{ fontSize: 'sm', display: 'grid', gridTemplateColumns: { xs: 'auto 1fr', md: 'auto auto auto auto' }, gap: 0.5, alignItems: 'center' }}>
         <div>Request</div>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box fontWeight='bold'>{frame.id}</Box>
-          <Chip size='sm' variant='soft' color={frame.transport === 'csf' ? 'primary' : 'success'}>
-            {frame.transport === 'csf' ? 'direct connect' : 'edge server'}
-          </Chip>
-        </Box>
+        <Box fontWeight='md'>#{frame.id}</Box>
         <div>Status:</div>
-        <Chip variant='soft' color={frame.isComplete ? 'success' : 'warning'}>{frame.isComplete ? 'Complete' : 'In Progress'}</Chip>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Chip variant={frame.transport !== 'csf' ? undefined : 'solid'} color={frame.transport === 'csf' ? 'primary' : 'success'}>{frame.transport === 'csf' ? 'Direct Connection' : 'Edge Server'}</Chip>
+          <Chip variant={frame.isComplete ? undefined : 'solid'} color={frame.isComplete ? 'success' : 'warning'}>{frame.isComplete ? 'Done' : 'In Progress'}</Chip>
+        </Box>
         <div>Date</div>
-        <div>{new Date(frame.timestamp).toLocaleString()}</div>
+        <Chip>{new Date(frame.timestamp).toLocaleString()}</Chip>
         <div>-&gt; URL:</div>
         <Chip className='agi-ellipsize'>{frame.url || 'No URL data available'}</Chip>
         <div>Context:</div>
