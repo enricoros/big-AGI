@@ -1,20 +1,25 @@
 import { escapeXml } from '~/server/wire';
 
-import  { AixAPIChatGenerate_Request,
-  AixMessages_ChatMessage, AixMessages_SystemMessage, AixMessages_UserMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart } from '../../../api/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixMessages_UserMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart } from '../../../api/aix.wiretypes';
+
+
+// types of AixMessages_SystemMessage contents that trigger a 'cut point' from system to user message
+const DEFAULT_SPILL_PART_TYPES: AixMessages_SystemMessage['parts'][number]['pt'][] = [
+  'inline_image', // images cannot be in system messages
+] as const;
 
 
 /**
  * CGR Server-side approximate Helper
  * Finds a cut point (if any) in the system message to move everything after it to a user message.
  */
-export function aixSpillSystemToUser(chatGenerate: AixAPIChatGenerate_Request, splitItems: AixMessages_SystemMessage['parts'][number]['pt'][] = ['inline_image']): AixAPIChatGenerate_Request & { systemSplit: boolean } {
+export function aixSpillSystemToUser(chatGenerate: AixAPIChatGenerate_Request, aixSpillPartTypes: AixMessages_SystemMessage['parts'][number]['pt'][] = DEFAULT_SPILL_PART_TYPES): AixAPIChatGenerate_Request & { systemSplit: boolean } {
   let systemSplit = false;
   let { systemMessage, chatSequence } = chatGenerate;
 
   // check if splittable
   if (systemMessage?.parts.length) {
-    const splitIndex = systemMessage.parts.findIndex((p) => splitItems.includes(p.pt));
+    const splitIndex = systemMessage.parts.findIndex((p) => aixSpillPartTypes.includes(p.pt));
     if (splitIndex >= 0) {
       // perform the split
       const partsPreSplit = systemMessage.parts.slice(0, splitIndex);
@@ -23,7 +28,7 @@ export function aixSpillSystemToUser(chatGenerate: AixAPIChatGenerate_Request, s
       // system message keeps the first part
       systemMessage = {
         ...systemMessage,
-        parts: partsPreSplit
+        parts: partsPreSplit,
       };
 
       // user message gets the rest
@@ -42,7 +47,7 @@ export function aixSpillSystemToUser(chatGenerate: AixAPIChatGenerate_Request, s
     systemMessage,
     chatSequence: chatSequence,
     systemSplit,
-  }
+  };
 }
 
 export function aixSpillShallFlush(message: AixMessages_ChatMessage): boolean {
