@@ -38,7 +38,6 @@ export function aixToOpenAIResponses(
   const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
-  const isOpenAIO1Pro = model.id === 'o1-pro' || model.id.startsWith('o1-pro-');
 
   const hotFixNoTemperature = isOpenAIOFamily && !isOpenAIChatGPT;
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
@@ -75,7 +74,8 @@ export function aixToOpenAIResponses(
     // Operations Config
     reasoning: !model.vndOaiReasoningEffort ? undefined : {
       effort: model.vndOaiReasoningEffort,
-      summary: !isOpenAIO1Pro ? 'detailed' : 'auto', // elevated from 'auto' (o1-pro still at 'auto')
+      // 'none' = omit (for unverified orgs), 'detailed' = explicit, undefined = default per model
+      ...(model.vndOaiReasoningSummary !== 'none' ? { summary: model.vndOaiReasoningSummary } : {}),
     },
 
     // Output Config
