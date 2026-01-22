@@ -18,7 +18,7 @@ const IF_K2_REASON = [...IF_K2, LLM_IF_OAI_Reasoning];
  * Moonshot AI (Kimi) models.
  * - models list and pricing: https://platform.moonshot.ai/docs/pricing/chat
  * - API docs: https://platform.moonshot.ai/docs/api/chat
- * - updated: 2025-11-09
+ * - updated: 2026-01-21
  */
 const _knownMoonshotModels: ManualMappings = [
 
@@ -28,9 +28,9 @@ const _knownMoonshotModels: ManualMappings = [
   {
     idPrefix: 'kimi-k2-thinking-turbo',
     label: 'Kimi K2 Thinking Turbo',
-    description: 'High-speed reasoning model with advanced thinking and tool calling capabilities. Faster inference with optimized performance. 256K context, 32K output. Temperature 1.0 recommended.',
+    description: 'High-speed reasoning model with advanced thinking and tool calling capabilities. Faster inference (~50 tok/s) with optimized performance. 256K context. Temperature 1.0 recommended.',
     contextWindow: 262144,
-    maxCompletionTokens: 32768,
+    maxCompletionTokens: 65536,
     interfaces: IF_K2_REASON,
     chatPrice: { input: 1.15, output: 8.00, cache: { cType: 'oai-ac', read: 0.15 } },
     benchmark: { cbaElo: 1417 + 1 }, // UNKNOWN +1 over 0905, but don't want to be above the non-turbo
@@ -40,9 +40,9 @@ const _knownMoonshotModels: ManualMappings = [
   {
     idPrefix: 'kimi-k2-thinking',
     label: 'Kimi K2 Thinking',
-    description: 'Advanced reasoning model with multi-step thinking and autonomous tool calling (200-300 sequential calls). Interleaves chain-of-thought with tool use. 256K context, 32K output. Temperature 1.0 recommended.',
+    description: 'Advanced reasoning model with multi-step thinking and autonomous tool calling (200-300 sequential calls). Interleaves chain-of-thought with tool use. 256K context. Temperature 1.0 recommended.',
     contextWindow: 262144,
-    maxCompletionTokens: 32768,
+    maxCompletionTokens: 65536,
     interfaces: IF_K2_REASON,
     chatPrice: { input: 0.60, output: 2.50, cache: { cType: 'oai-ac', read: 0.15 } },
     benchmark: { cbaElo: 1417 + 2 }, // UNKNOWN +2 over 0905, to be at the top here
@@ -53,9 +53,9 @@ const _knownMoonshotModels: ManualMappings = [
   {
     idPrefix: 'kimi-k2-0905-preview',
     label: 'Kimi K2 0905 (Preview)',
-    description: 'Preview variant of K2 0905 with extended 256K context. For testing latest features before production.',
+    description: 'State-of-the-art MoE model (1T total, 32B active) with extended 256K context. Enhanced agentic coding intelligence and improved instruction following.',
     contextWindow: 262144,
-    maxCompletionTokens: 16384,
+    maxCompletionTokens: 32768,
     interfaces: IF_K2,
     chatPrice: { input: 0.60, output: 2.50, cache: { cType: 'oai-ac', read: 0.15 } },
     isPreview: true,
@@ -78,9 +78,9 @@ const _knownMoonshotModels: ManualMappings = [
   {
     idPrefix: 'kimi-k2-turbo-preview',
     label: 'Kimi K2 Turbo (Preview)',
-    description: 'High-speed variant with 60-100 tokens/second output. 256K context. Optimized for real-time applications. Recommended for web search due to dynamic context handling.',
+    description: 'High-speed variant with 60-100 tokens/second output. 256K context. Optimized for real-time applications and agentic tasks.',
     contextWindow: 262144,
-    maxCompletionTokens: 16384,
+    maxCompletionTokens: 32768,
     interfaces: IF_K2,
     chatPrice: { input: 1.15, output: 8.00, cache: { cType: 'oai-ac', read: 0.15 } },
     isPreview: true,
