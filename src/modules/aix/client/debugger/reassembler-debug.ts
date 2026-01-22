@@ -1,8 +1,8 @@
 import { AixClientDebugger, AixFrameId, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
 
-export function aixClientDebugger_init(contextInfo: AixClientDebugger.Context): AixFrameId {
-  return useAixClientDebuggerStore.getState().createFrame(contextInfo);
+export function aixClientDebugger_init(transport: AixClientDebugger.Transport, contextInfo: AixClientDebugger.Context): AixFrameId {
+  return useAixClientDebuggerStore.getState().createFrame(transport, contextInfo);
 }
 
 export function aixClientDebugger_setRequest(

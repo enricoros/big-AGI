@@ -617,6 +617,7 @@ async function _aixChatGenerateContent_LL(
 
   // Inspector support - can be requested by the client, but granted on the server side
   const inspectorEnabled = getAixInspectorEnabled();
+  const inspectorTransport = inspectorEnabled ? aixAccess.clientSideFetch ? 'csf' as const : 'trpc' as const : undefined;
   const inspectorContext = inspectorEnabled ? { contextName: aixContext.name, contextRef: aixContext.ref } : undefined;
 
   /**
@@ -679,6 +680,7 @@ async function _aixChatGenerateContent_LL(
     const reassembler = new ContentReassembler(
       accumulator_LL, // FIXME: TEMP: moved the accumulator outside to keep appending to it (recreating new ContentReassembler each retry)
       sendContentUpdate,
+      inspectorTransport,
       inspectorContext,
       abortSignal,
     );
