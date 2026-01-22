@@ -693,9 +693,10 @@ async function _aixChatGenerateContent_LL(
           aixAccess,
           aixModel,
           aixChatGenerate,
+          aixContext,
           getLabsDevNoStreaming() ? false : aixStreaming,
+          aixConnectionOptions,
           abortSignal,
-          !!aixConnectionOptions?.enableResumability,
         );
 
       // AIX tRPC Streaming Generation from Chat input
