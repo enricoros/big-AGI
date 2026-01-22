@@ -2,12 +2,16 @@
  * Speex RPC Client
  *
  * Handles communication with speex.router for cloud TTS providers.
- * Resolves credentials from engine configuration and calls the streaming API.
+ *
+ * Supports both tRPC (server-routed) and CSF (client-side fetch) modes.
+ * CSF if is essential for local services (LocalAI, Ollama) that are unreachable
+ * from cloud deployments like Vercel.
  */
 
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
+import { isLocalUrl } from '~/common/util/urlUtils';
 import { stripUndefined } from '~/common/util/objectUtils';
 
 import type { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
@@ -19,6 +23,19 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import type { DSpeexEngine, SpeexListVoiceOption, SpeexSpeakResult } from '../../speex.types';
 import type { SpeexWire_Access, SpeexWire_Voice } from './rpc.wiretypes';
 import { SPEEX_DEBUG } from '../../speex.config';
+
+
+// --- CSF: cached dynamic import for client-side fetch, unbundled ---
+
+let _speexCsfModule: typeof import('./synthesize.core') | null = null;
+
+async function _getSpeexCsfModule() {
+  if (!_speexCsfModule)
+    _speexCsfModule = await import('./synthesize.core');
+  return _speexCsfModule;
+}
+
+// --- /CSF
 
 
 type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
@@ -70,16 +87,17 @@ export async function speexSynthesize_RPC(
   try {
 
     // call the streaming RPC - whether the backend will stream in chunks or as a whole
-    const particleStream = await apiStream.speex.synthesize.mutate({
+    const synthInput = {
       access,
       text,
       voice,
       streaming: options.streaming,
       ...(options.languageCode && { languageCode: options.languageCode }),
       ...(options.priority && { priority: options.priority }),
-    }, {
-      signal: abortController.signal,
-    });
+    };
+    const particleStream = !_shouldUseCSF(engine)
+      ? await apiStream.speex.synthesize.mutate(synthInput, { signal: abortController.signal })
+      : (await _getSpeexCsfModule()).speexRpcCoreSynthesize(synthInput, abortController.signal);
 
     // process streaming particles
     for await (const particle of particleStream) {
@@ -189,14 +207,23 @@ export async function speexSynthesize_RPC(
 
 
 /**
- * List voices via speex.router
+ * List voices
  */
 export async function speexListVoices_RPC_orThrow(engine: _DSpeexEngineRPC): Promise<SpeexListVoiceOption[]> {
-  const access = _buildRPCWireAccess(engine);
+  const access = stripUndefined(_buildRPCWireAccess(engine));
   if (!access)
     return [];
 
-  return (await apiAsync.speex.listVoices.query({ access })).voices;
+  try {
+    const results = !_shouldUseCSF(engine)
+      ? await apiAsync.speex.listVoices.query({ access })
+      : await (await _getSpeexCsfModule()).speexRpcCoreListVoices(access);
+
+    return results.voices;
+  } catch (error) {
+    if (SPEEX_DEBUG) console.error('[Speex RPC] List voices error:', { error });
+    throw error;
+  }
 }
 
 
@@ -258,6 +285,37 @@ function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): 
         default:
           const _exhaustiveCheck: never = vendorType;
           return null;
+      }
+  }
+}
+
+/**
+ * Determine if CSF should be used - separate from access building.
+ * CSF is a client routing decision based on:
+ * - Local URLs (unreachable from cloud servers like Vercel)
+ * - Explicit CSF setting in linked LLM service
+ */
+function _shouldUseCSF({ credentials: c, vendorType }: _DSpeexEngineRPC): boolean {
+  switch (c.type) {
+    case 'api-key':
+      // Auto-enable CSF for local URLs (LocalAI typically runs locally)
+      return vendorType === 'localai' && isLocalUrl(c.apiHost);
+
+    case 'llms-service':
+      const service = findModelsServiceOrNull(c.serviceId);
+      if (!service) return false;
+
+      switch (vendorType) {
+        case 'localai':
+          const lai = (service.setup || {}) as DLocalAIServiceSettings;
+          return lai.csf || isLocalUrl(lai.localAIHost);
+
+        case 'openai':
+          const oai = (service.setup || {}) as DOpenAIServiceSettings;
+          return !!oai.csf;
+
+        default:
+          return false;
       }
   }
 }

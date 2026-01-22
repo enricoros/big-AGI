@@ -35,9 +35,8 @@ interface SynthesizeBackendFnParams<TSpeexAccess extends SpeexWire_Access> {
  *
  * Yields SpeexSpeechParticle stream: start → audio chunks → done (or error)
  */
-export async function* speexRpcCoreSynthesize(input: SpeexWire_Synthesize_Input, options?: { signal?: AbortSignal }): AsyncGenerator<SpeexSpeechParticle> {
+export async function* speexRpcCoreSynthesize(input: SpeexWire_Synthesize_Input, signal: AbortSignal): AsyncGenerator<SpeexSpeechParticle> {
   const { access, text, voice, streaming, languageCode, priority } = input;
-  const signal = options?.signal;
 
   try {
     yield { t: 'start' };

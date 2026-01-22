@@ -15,7 +15,7 @@ export const speexRouter = createTRPCRouter({
   synthesize: edgeProcedure
     .input(SpeexWire.Synthesize_input_schema)
     .mutation(async function* ({ input, ctx }): AsyncGenerator<SpeexSpeechParticle> {
-      yield* speexRpcCoreSynthesize(input, { signal: ctx.reqSignal });
+      yield* speexRpcCoreSynthesize(input, ctx.reqSignal);
     }),
 
   /**
