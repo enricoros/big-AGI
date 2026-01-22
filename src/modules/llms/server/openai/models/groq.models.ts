@@ -1,8 +1,13 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
 import { wireGroqModelsListOutputSchema } from '../wiretypes/groq.wiretypes';
+
+
+// dev options
+const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduce noise
 
 
 /**
@@ -206,29 +211,10 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
   return description;
 }
 
-// dev options
-const DEV_DEBUG_GROQ_MODELS = process.env.NODE_ENV === 'development';
-
-
-/**
- * Checks for model definitions in _knownGroqModels that are not present in the API response.
- * This helps identify stale model definitions that should be removed.
- */
-export function groqDevCheckForSuperfluousModels_DEV(apiModelIds: string[]): void {
-
+export function groqValidateModelDefs_DEV(apiModelIds: string[]): void {
   if (DEV_DEBUG_GROQ_MODELS) {
-
-    // editorial model ids (prefixes)
-    const expectedModelPrefixes = _knownGroqModels.map(model => model.idPrefix);
-
-    // find editorial models which aren't matched by any API model
-    const superfluousModels = expectedModelPrefixes.filter(prefix => !apiModelIds.some(apiId => apiId.startsWith(prefix)));
-
-    if (superfluousModels.length > 0)
-      console.log(`[DEV] Groq: superfluous model definitions (not in API): [ ${superfluousModels.join(', ')} ]`);
-
+    llmDevCheckModels_DEV('Groq', apiModelIds, _knownGroqModels.map(m => m.idPrefix), { checkUnknown: false });
   }
-
 }
 
 

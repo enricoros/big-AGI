@@ -4,7 +4,7 @@ import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImag
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, KnownModel, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
 
 
 // OpenAI Model Variants
@@ -31,7 +31,7 @@ export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescript
 
 
 // configuration
-const DEV_DEBUG_OPENAI_MODELS = /* (Release.TenantSlug as any) === 'staging' || */ Release.IsNodeDevBuild;
+const DEV_DEBUG_OPENAI_MODELS = Release.IsNodeDevBuild; // not in staging to reduce noise
 
 
 // per-family interfaces
@@ -1178,16 +1178,12 @@ export function openAIInjectVariants(models: ModelDescriptionSchema[], model: Mo
 
 
 /**
- * Checks for both superfluous and missing models in OpenAI API.
- *
- * Combines the functionality of checking for models in our editorial definitions
- * that aren't present in the API response (superfluous) and checking for models
- * in the API that we don't have definitions for (missing).
- *
- * @param apiModels is the raw API response from OpenAI, the .data[] array
- * @param parsedModels is the parsed models array, which should match the wireModels
+ * Checks for model definition issues:
+ * 1. Stale definitions: in our known models but not in API (should remove)
+ * 2. Unknown models: in API but not in our known models (should add)
+ * 3. Parsing gaps: in API but lost during parsing pipeline (bug detection)
  */
-export function openaiDevCheckForModelsOverlap_DEV(apiModels: unknown, parsedModels: object[]): void {
+export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels?: object[]): void {
 
   if (DEV_DEBUG_OPENAI_MODELS) {
 
@@ -1197,35 +1193,23 @@ export function openaiDevCheckForModelsOverlap_DEV(apiModels: unknown, parsedMod
       return;
     }
 
-    const apiModelIds = apiModels.map((model: any) => model.id);
-
-    // 1. Check for superfluous models (in our definitions but not in API)
-    const expectedModelIds = _knownOpenAIChatModels
+    const apiIds = apiModels.map((model: any) => model.id);
+    const knownIds = _knownOpenAIChatModels
       .filter(model => model.idPrefix && model.idPrefix !== '') // exclude fallback model
       .map(model => model.idPrefix);
 
-    const superfluousModels = expectedModelIds.filter(id => !apiModelIds.includes(id));
-    if (superfluousModels.length > 0)
-      console.warn(`[DEV] OpenAI: superfluous model definitions: [\n  - ${superfluousModels.join('\n  - ')}\n]`);
+    // 1 & 2: Check stale and unknown definitions
+    llmDevCheckModels_DEV('OpenAI', apiIds, knownIds, { apiFilter: id => openAIModelFilter({ id } as any) });
 
-    // 2. Check for missing models (in API but not in our definitions)
-    const parsedModelIds = parsedModels.map((model: any) => model.id);
-    const missingModelIds = apiModelIds.filter((id: string) => !parsedModelIds.includes(id));
-
-    if (missingModelIds.length > 0) {
-      // Split missing models: filtered out vs truly missing
-      // const filteredOutModels = missingModelIds.filter((id: string) =>
-      //   openAIModelsDenyList.some(deny => id.includes(deny))
-      // );
-      const trulyMissingModels = missingModelIds.filter((id: string) =>
-        !openAIModelsDenyList.some(deny => id.includes(deny)),
+    // 3: Check for parsing gaps (models lost during filter/map pipeline)
+    if (parsedModels) {
+      const parsedIds = new Set(parsedModels.map((m: any) => m.id));
+      const parsingGaps = apiIds.filter(id =>
+        !parsedIds.has(id) && // not in parsed output
+        openAIModelFilter({ id } as any), // not filtered by deny list
       );
-
-      // if (filteredOutModels.length > 0)
-      //   console.warn(`[DEV] OpenAI: filtered out models: [\n  - ${filteredOutModels.join('\n  - ')}\n]`);
-
-      if (trulyMissingModels.length > 0)
-        console.warn(`[DEV] OpenAI: truly missing model definitions[\n  - ${trulyMissingModels.join('\n  - ')}\n]`);
+      if (parsingGaps.length)
+        console.log(`[DEV] OpenAI: parsing gaps (in API, passed filter, but not in output): [ ${parsingGaps.join(', ')} ]`);
     }
 
   }
