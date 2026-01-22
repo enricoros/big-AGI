@@ -25,7 +25,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     chatPrice: {
       input: 2,
       output: 8,
-      // Full pricing: $2/1M input, $8/1M output, $2/1M citations, $5/1k searches, $3/1M reasoning tokens
+      // Additional: $2/1M citations, $5/1k searches, $3/1M reasoning tokens
     },
   },
 
@@ -44,7 +44,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     chatPrice: {
       input: 2,
       output: 8,
-      // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
+      // Additional per-request: $6(Low) - $14(High) per 1k requests by search context size
     },
   },
 
@@ -64,7 +64,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     chatPrice: {
       input: 3,
       output: 15,
-      // Per-request pricing: $14(High), $10(Medium), $6(Low) per 1k requests
+      // Additional per-request: $6(Low) - $14(High) per 1k requests by search context size
     },
   },
   {
@@ -81,7 +81,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     chatPrice: {
       input: 1,
       output: 1,
-      // Per-request pricing: $12(High), $8(Medium), $5(Low) per 1k requests
+      // Additional per-request: $5(Low) - $12(High) per 1k requests by search context size
     },
   },
 

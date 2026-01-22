@@ -408,16 +408,17 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'computer-use-preview-2025-03-11',
   },
   {
-    hidden: true, // RESPONSES API UNSUPPORTED YET
+    hidden: true, // yield to more capable
     idPrefix: 'codex-mini-latest',
     label: 'Codex Mini Latest',
-    description: 'Fast reasoning model optimized for the Codex CLI. A fine-tuned version of o4-mini.',
+    description: 'Fast reasoning model optimized for the Codex CLI. A fine-tuned version of o4-mini for low-latency code Q&A and editing.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.5, cache: { cType: 'oai-ac', read: 0.375 }, output: 6 },
+    isLegacy: true, // Deprecated January 16, 2026.
   },
 
 
@@ -731,6 +732,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // does not support Tools
     chatPrice: { input: 5, output: 15 },
     benchmark: { cbaElo: 1441 }, // chatgpt-4o-latest-20250326
+    isLegacy: true, // Deprecated February 17, 2026.
   },
 
   // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
