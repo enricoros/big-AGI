@@ -14,6 +14,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { CustomARenderer } from './CustomARenderer';
+import { remarkTableCellBreaks } from './tableBreaks.remark';
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
 
 
@@ -210,6 +211,7 @@ const reactMarkdownComponents = {
 const remarkPluginsStable: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
   remarkMark, // Mark-Highlight, for ==yellow==
+  remarkTableCellBreaks, // Convert <br> HTML tags inside tables to break nodes (for line breaks in table cells)
   [remarkMath, {
     /**
      * NOTE: this could be configurable, some users reported liking single dollar signs math, despite even the official
