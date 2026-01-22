@@ -7,6 +7,15 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
 
+/**
+ * Normalizes a host URL by stripping trailing /v1 or /v1/ suffix.
+ * Server-side OPENAI_API_PATHS, uses /v1/ for all paths, so we don't repeat it here.
+ */
+function normalizeHostStripV1Suffix(host: string): string {
+  return host.replace(/\/v1\/?$/, '');
+}
+
+
 // Verified OpenAI-compatible providers that work with the 'openai' dialect
 interface VerifiedProvider {
   id: string;
@@ -61,7 +70,7 @@ export function OpenAIHostAutocomplete(props: {
     if (newValue === null)
       props.onChange('');
     else if (typeof newValue === 'string')
-      props.onChange(newValue);
+      props.onChange(normalizeHostStripV1Suffix(newValue));
     else
       props.onChange(newValue.host);
   }, [props]);
@@ -70,6 +79,9 @@ export function OpenAIHostAutocomplete(props: {
     // Only update on user input, not on programmatic changes
     if (reason !== 'input')
       return;
+
+    // strip /v1 suffix immediately - gives user clear feedback that it's not needed
+    newInputValue = normalizeHostStripV1Suffix(newInputValue);
     setInputValue(newInputValue);
     props.onChange(newInputValue);
   }, [props]);
