@@ -67,8 +67,19 @@ for (let i = 1; i < modelSections.length; i++) {
 
   // Only include models with 50K+ pulls
   if (pulls >= 50000) {
-    models.push({ name, pulls, capabilities, sizes });
+    models.push({ name, pulls: roundPulls(pulls), capabilities, sizes });
   }
+}
+
+/**
+ * Round pulls to significant figures for stable output.
+ * This reduces churn from daily fluctuations while preserving magnitude.
+ */
+function roundPulls(pulls) {
+  if (pulls >= 10000000) return Math.round(pulls / 100000) * 100000;  // >=10M: round to 100K
+  if (pulls >= 1000000) return Math.round(pulls / 10000) * 10000;     // >=1M: round to 10K
+  if (pulls >= 100000) return Math.round(pulls / 1000) * 1000;        // >=100K: round to 1K
+  return pulls;
 }
 
 // Output in pipe-delimited format (in the order they appear on the page)
