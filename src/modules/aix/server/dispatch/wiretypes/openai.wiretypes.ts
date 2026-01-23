@@ -1066,8 +1066,10 @@ export namespace OpenAIWire_Responses_Items {
 
     // BREAKING CHANGE from OpenAI - 2025-12-11
     // redefining the following because we need 'searching' too here (seen during web search streaming)
+    // [XAI] 2025-01-23: added 'failed' as xAI returns this when web search fails
     status: z.enum([
       'searching', // 2025-12-11: seen on OpenAI for `web_search_call` items when used with GPT 5.2 Pro, with web search on
+      'failed', // 2025-01-23: seen on xAI for `web_search_call` items when web search fails
       'in_progress', 'completed', 'incomplete',
     ]).optional(),
 
