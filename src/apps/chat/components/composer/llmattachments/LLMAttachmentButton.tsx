@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, ListItem, Sheet, Typography, VariantProp } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography, VariantProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -91,8 +91,11 @@ function InputErrorIndicator() {
 
 const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.ComponentType<any> | null } = {
   'text': TextFieldsIcon,
+  'text-cleaner': CodeIcon,
+  'text-markdown': TextFieldsIcon,
   'rich-text': CodeIcon,
   'rich-text-cleaner': CodeIcon,
+  'rich-text-markdown': TextFieldsIcon,
   'rich-text-table': PivotTableChartIcon,
   'image-original': ImageOutlinedIcon,
   'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
@@ -201,13 +204,21 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
 
 function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
   const converter = attachmentDraft.converters.find(c => c.isActive) ?? null;
-  if (converter && attachmentDraft.label === 'Rich Text') {
-    if (converter.id === 'rich-text-table')
-      return 'Rich Table';
-    if (converter.id === 'rich-text-cleaner')
+  if (converter && attachmentDraft.label === 'Text') {
+    if (converter.id === 'text-markdown')
+      return 'Markdown';
+    if (converter.id === 'text-cleaner')
       return 'Clean HTML';
+  }
+  if (converter && attachmentDraft.label === 'Rich Text') {
     if (converter.id === 'rich-text')
       return 'Rich HTML';
+    if (converter.id === 'rich-text-markdown')
+      return 'Markdown';
+    if (converter.id === 'rich-text-cleaner')
+      return 'Clean HTML';
+    if (converter.id === 'rich-text-table')
+      return 'Rich Table';
   }
   return ellipsizeFront(attachmentDraft.label, 22);
 }

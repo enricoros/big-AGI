@@ -265,6 +265,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
     case mimeTypeIsPlainText(input.mimeType):
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = source.media === 'text' && input.altMimeType === 'text/html' && !!input.altData;
+      const textOriginClipboard = source.media === 'text' && ['clipboard-read', 'paste'].includes(source.method);
       const isHtmlTable = !!input.altData?.startsWith('<table');
 
       // p1: Tables
@@ -273,11 +274,16 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
 
       // p2: Text
       converters.push({ id: 'text', name: attachmentSourceSupportsLiveFile(source) ? 'Text (Live)' : 'Text' });
+      if (!textOriginHtml && textOriginClipboard) {
+        converters.push({ id: 'text-markdown', name: 'Text -> Markdown' });
+        converters.push({ id: 'text-cleaner', name: 'Text -> Clean HTML' });
+      }
 
-      // p3: Html
+      // p3: Html -> Markdown, and Html
       if (textOriginHtml) {
-        converters.push({ id: 'rich-text-cleaner', name: 'Cleaner HTML' });
         converters.push({ id: 'rich-text', name: 'HTML · Heavy' });
+        converters.push({ id: 'rich-text-markdown', name: 'HTML -> Markdown' });
+        converters.push({ id: 'rich-text-cleaner', name: 'HTML -> Clean HTML' });
       }
       break;
 
@@ -501,33 +507,61 @@ export async function attachmentPerformConversion(
 
     switch (converter.id) {
 
-      // text as-is
+      // text
       case 'text':
+      case 'text-cleaner':
+      case 'text-markdown':
         const possibleLiveFileId = await attachmentGetLiveFileId(source);
-        const textContent = await _inputDataToString(input.data, 'text');
-        const textualInlineData = createDMessageDataInlineText(textContent, input.mimeType);
+        let textContent = await _inputDataToString(input.data, 'text');
+        let textContentMime = input.mimeType || 'text/plain';
+
+        switch (converter.id) {
+          case 'text-cleaner':
+            textContent = _cleanPossibleHtmlText(textContent);
+            break;
+          case 'text-markdown':
+            try {
+              const { convertHtmlToMarkdown } = await import('./file-converters/HtmlToMarkdown');
+              textContent = convertHtmlToMarkdown(textContent);
+              textContentMime = 'text/markdown';
+            } catch (error) {
+              console.log('[DEV] Error converting Text (HTML) to Markdown:', error);
+            }
+            break;
+        }
+
+        const textualInlineData = createDMessageDataInlineText(textContent, textContentMime);
         newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, DOCPART_DEFAULT_VERSION, docMeta, possibleLiveFileId));
         break;
 
-      // html as-is
+      // html
       case 'rich-text':
+      case 'rich-text-cleaner':
+      case 'rich-text-markdown':
+        let richText = input.altData || '';
+        let richTextMimeType = input.altMimeType || 'text/html';
+
+        // html -> cleaner/html or markdown
+        switch (converter.id) {
+          case 'rich-text-cleaner':
+            richText = _cleanPossibleHtmlText(richText);
+            richTextMimeType = 'text/html';
+            break;
+          case 'rich-text-markdown':
+            try {
+              const { convertHtmlToMarkdown } = await import('./file-converters/HtmlToMarkdown');
+              richText = convertHtmlToMarkdown(richText);
+              richTextMimeType = 'text/markdown';
+            } catch (error) {
+              console.log('[DEV] Error converting HTML to Markdown:', error);
+            }
+            break;
+        }
+
         // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
         //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
-        const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
+        const richTextData = createDMessageDataInlineText(richText, richTextMimeType);
         newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, richTextData, refString, DOCPART_DEFAULT_VERSION, docMeta));
-        break;
-
-      // html cleaned
-      case 'rich-text-cleaner':
-        const cleanerHtml = (input.altData || '')
-          // remove class and style attributes
-          .replace(/<[^>]+>/g, (tag) =>
-            tag.replace(/ class="[^"]*"/g, '').replace(/ style="[^"]*"/g, ''),
-          )
-          // remove svg elements
-          .replace(/<svg[^>]*>.*?<\/svg>/g, '');
-        const cleanedHtmlData = createDMessageDataInlineText(cleanerHtml, 'text/html');
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, cleanedHtmlData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
       // html to markdown table
@@ -919,6 +953,11 @@ export async function attachmentPerformConversion(
       case 'unhandled':
         // force the user to explicitly select 'as text' if they want to proceed
         break;
+
+
+      default:
+        const _exhaustiveCheck: never = converter.id;
+        break;
     }
   }
 
@@ -959,6 +998,19 @@ async function _inputDataToString(data: AttachmentDraftInput['data'], debugLocat
   }
   console.warn(`[DEV] Expected string or Blob for input data at ${debugLocation}, got:`, typeof data);
   return '';
+}
+
+/**
+ * Simple Client-side cleaning of possible HTML
+ */
+function _cleanPossibleHtmlText(inputStr: string): string {
+  return inputStr
+    // remove class and style attributes
+    .replace(/<[^>]+>/g, (tag) =>
+      tag.replace(/ class="[^"]*"/g, '').replace(/ style="[^"]*"/g, ''),
+    )
+    // remove svg elements
+    .replace(/<svg[^>]*>.*?<\/svg>/g, '');
 }
 
 
