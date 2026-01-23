@@ -1,7 +1,7 @@
-import { anthropicAccess, ANTHROPIC_API_PATHS } from '~/modules/llms/server/anthropic/anthropic.access';
+import { ANTHROPIC_API_PATHS, anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
+import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
-import { openAIAccess, OPENAI_API_PATHS } from '~/modules/llms/server/openai/openai.access';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
@@ -12,6 +12,7 @@ import { aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate'
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
+import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
@@ -136,20 +137,33 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
     case 'togetherai':
     case 'xai':
 
-      // switch to the Responses API if the model supports it
+      // newer: OpenAI Responses API, for models that support it and all XAI models
       const isResponsesAPI = !!model.vndOaiResponsesAPI;
-      if (isResponsesAPI) {
+      const isXAIModel = dialect === 'xai'; // All XAI models are accessed via Responses now
+      if (isResponsesAPI || isXAIModel) {
         return {
           request: {
             ...openAIAccess(access, model.id, OPENAI_API_PATHS.responses),
             method: 'POST',
-            body: aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
+            /**
+             * xAI uses its own Responses API adapter.
+             *
+             * Key differences from OpenAI Responses API:
+             * - No 'instructions' field - system content prepended to first user message
+             * - xAI-native tools: web_search, x_search, code_execution
+             * - Tool calls come in single chunks
+             *
+             * Note: Response format is compatible with OpenAI parser.
+             */
+            body: isXAIModel ? aixToXAIResponses(model, chatGenerate, streaming, enableResumability)
+              : aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
         };
       }
 
+      // default: industry-standard OpenAI ChatCompletions API with per-dialect extensions
       return {
         request: {
           ...openAIAccess(access, model.id, OPENAI_API_PATHS.chatCompletions),
