@@ -823,7 +823,7 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndXaiXSearch') && (
       <FormSelectControl
         title='X Search'
-        value={llmVndXaiXSearch ?? 'auto'}
+        value={llmVndXaiXSearch ?? 'off'}
         onChange={(value) => onChangeParameter({ llmVndXaiXSearch: value /* we don't remove because there's a default to this param, so we must user-override it */ })}
         options={_xaiXSearchOptions}
       />
