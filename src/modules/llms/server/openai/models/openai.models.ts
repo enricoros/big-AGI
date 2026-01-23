@@ -213,7 +213,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort4' },
+      { paramId: 'llmVndOaiReasoningEffort' }, // low, medium, high (no minimal)
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
@@ -229,7 +229,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort4' },
+      { paramId: 'llmVndOaiReasoningEffort' }, // low, medium, high (no minimal)
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
@@ -274,7 +274,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 272000,
     trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
+    parameterSpecs: [{ paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
     chatPrice: { input: 15, output: 120 },
     // benchmark: has not been measured yet
   },
