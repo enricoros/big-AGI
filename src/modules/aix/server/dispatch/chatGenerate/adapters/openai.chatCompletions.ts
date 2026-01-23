@@ -1,3 +1,5 @@
+import * as z from 'zod/v4';
+
 import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
@@ -283,8 +285,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);
   if (!validated.success) {
-    console.warn('OpenAI: invalid chatCompletions payload. Error:', validated.error);
-    throw new Error(`Invalid sequence for OpenAI models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
+    console.warn('[DEV] OpenAI: invalid chatCompletions payload. Error:', { valError: validated.error });
+    throw new Error(`Invalid request for OpenAI-compatible models: ${z.prettifyError(validated.error)}`);
   }
 
   // if (hotFixUseDeprecatedFunctionCalls)
