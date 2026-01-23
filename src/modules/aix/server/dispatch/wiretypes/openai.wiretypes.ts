@@ -308,7 +308,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // new output modalities
     modalities: z.array(z.enum([
       'text', 'audio',
-      'image' // [OpenRouter, 2025-12-31] Extension for requesting Image output
+      'image', // [OpenRouter, 2025-12-31] Extension for requesting Image output
     ])).optional(), // defaults to ['text']
     audio: z.object({  // Parameters for audio output. Required when audio output is requested with `modalities: ["audio"]`
       voice: z.enum([
@@ -986,6 +986,7 @@ export namespace OpenAIWire_Responses_Items {
     file_data: z.string().optional(), // content of the file
     file_id: z.string().optional(), // ID of the file
     filename: z.string().optional(), // name of the file
+    // mime_type: z.string().optional(), // [?XAI] optional MIME type for inline uploads (e.g. "application/pdf")
   });
 
 
@@ -999,10 +1000,10 @@ export namespace OpenAIWire_Responses_Items {
       type: z.literal('url_citation'),
       url: z.string(),
       title: z.string(),
-      start_index: z.number().optional(),
-      end_index: z.number().optional(),
+      start_index: z.int().optional(),
+      end_index: z.int().optional(),
     })).optional(),
-    // Log Probabilities are ignored on purpose
+    // [DO-NOT-CARE] // logprobs: ...
   });
 
   export const ContentItem_RefusalPart_schema = z.object({
@@ -1030,7 +1031,7 @@ export namespace OpenAIWire_Responses_Items {
   const OutputContentItem_schema = _OutputItemBase_schema.extend({
     type: z.literal('message'),
     id: z.string(), // unique ID of the output item
-    role: z.literal('assistant'),
+    role: z.literal('assistant'), // [?XAI] also 'tool'?
     content: z.array(_ContentItem_Parts_schema),
   });
 
@@ -1039,8 +1040,9 @@ export namespace OpenAIWire_Responses_Items {
     /**
      * ID seems missing from the reasoning output (at least in response.reasoning_summary_part.added),
      * but the docs say it's required as input?
+     * 2026-01-22: re-enabled with nullish, as XAI lists it as required
      */
-    // id: z.string(),
+    id: z.string().optional(),
     summary: z.array(ReasoningItem_SummaryTextPart_schema), // summary of the reasoning
     encrypted_content: z.string().nullish(), // populated when a response is generated with reasoning.encrypted_content in the include
   });
@@ -1049,9 +1051,9 @@ export namespace OpenAIWire_Responses_Items {
   const OutputFunctionCallItem_schema = _OutputItemBase_schema.extend({
     type: z.literal('function_call'),
     id: z.string().optional(), // unique ID of the output item - optional when looped back to input
-    arguments: z.string(), // FC args STRING (Responses) - JSON string of the arguments to pass to the function
     call_id: z.string(), //  unique ID of the function tool call -- same as ID? verify
     name: z.string(), // name of the function to call
+    arguments: z.string(), // FC args STRING (Responses) - JSON string of the arguments to pass to the function
   });
 
   // const OutputCustomToolCallItem_schema = _OutputItemBase_schema.extend({
@@ -1096,8 +1098,9 @@ export namespace OpenAIWire_Responses_Items {
       }),
 
       // Action type: 'find_in_page' - searches for a pattern within an opened page
+      // [XAI] added 'find' as per their doc
       z.object({
-        type: z.literal('find_in_page'),
+        type: z.enum(['find_in_page', 'find']),
         pattern: z.string(), // text pattern to search for
         url: z.string(), // URL of the page being searched
       }),
@@ -1159,10 +1162,15 @@ export namespace OpenAIWire_Responses_Items {
    *
    */
   export const OutputItem_schema = z.union([
-    OutputContentItem_schema,
+    // Text output
+    OutputContentItem_schema, // assistant/tool message/refusal
     OutputReasoningItem,
+
+    // Client tool invocation output
     OutputFunctionCallItem_schema,
     // OutputCustomToolCallItem_schema, // plain text custom tool output
+
+    // Hosted tools invocation output
     OutputWebSearchCallItem_schema,
     OutputImageGenerationCallItem_schema,
     // OutputCodeInterpreterCallItem_schema,
@@ -1174,6 +1182,13 @@ export namespace OpenAIWire_Responses_Items {
     // MCPToolCallOutput_schema,
     // MCPListToolsOutput_schema,
     // MCPApprovalRequestOutput_schema,
+
+    // XAI Hosted tool invocation outputs:
+    // - web_search_call = OutputWebSearchCallItem_schema
+    // - x_search_call = not documented, will ned rev-eng?
+    // - file_search_call = IGNORED for now
+    // - code_interpreter_call = IGNORED for now
+    // - mcp_call = IGNORED for now
   ]);
 
 
@@ -1227,7 +1242,7 @@ export namespace OpenAIWire_Responses_Items {
    */
   export type InputMessage_Compat = z.infer<typeof InputMessage_Compat_schema>;
 
-  const _InputMessage_Compat_User_schema = z.object({
+  const _InputMessage_Compat_Client_schema = z.object({
     type: z.literal('message'),
     role: z.enum(['user', 'system', 'developer']),
     // user/system/developer inputs: 'input_text', 'input_image', 'input_file'
@@ -1237,7 +1252,7 @@ export namespace OpenAIWire_Responses_Items {
       Input_FilePart_schema,
     ])),
   });
-  const _InputMessage_Compat_Model_schema = z.object({
+  const _InputMessage_Compat_ModelOutputText_schema = z.object({
     type: z.literal('message'),
     role: z.literal('assistant'),
     // assistant inputs: 'output_text', 'refusal'
@@ -1245,20 +1260,27 @@ export namespace OpenAIWire_Responses_Items {
   });
 
   const InputMessage_Compat_schema = z.union([
-    _InputMessage_Compat_User_schema,
-    _InputMessage_Compat_Model_schema,
+    _InputMessage_Compat_Client_schema,
+    _InputMessage_Compat_ModelOutputText_schema,
   ]);
 
   // Input Item (combined)
 
   export type InputItem = z.infer<typeof InputItem_schema>;
   export const InputItem_schema = z.union([
-    // Old-style Item Message
+    // Old-style User/Assistant History
+    // - user/system/developer (text / image / file)
+    // - assistant output messages (output_text / refusal)
     InputMessage_Compat_schema,
-    // Item:
+
+    // Client Message (text / image / file)
     UserItemMessage_schema,
+    // Client Tool Output
     FunctionToolCallOutput_schema,
+
+    // Previous output
     OutputItem_schema,
+
     // Item Reference (not used yet):
     z.object({
       type: z.literal('item_reference'),
@@ -1271,7 +1293,7 @@ export namespace OpenAIWire_Responses_Tools {
 
   // Custom tool definitions
 
-  const CustomFunctionTool_schema = z.object({
+  export const CustomFunctionTool_schema = z.object({
     type: z.literal('function'),
     name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
     description: z.string(), // Used by the model to determine whether or not to call the function.
@@ -1405,7 +1427,7 @@ export namespace OpenAIWire_API_Responses {
 
     // Model configuration
     model: z.string(),
-    max_output_tokens: z.number().int().positive().nullish(),
+    max_output_tokens: z.int().nullish(),
     temperature: z.number().min(0).nullish(), // [OpenAI] Defaults to 1, max: 2
     top_p: z.number().min(0).nullish(), // [OpenAI] Defaults to 1, max: 1
 
