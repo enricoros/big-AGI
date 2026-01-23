@@ -12,7 +12,7 @@ import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streami
 
 
 // configuration
-const SAFETY_TEXT_LENGTH = 4096; // OpenAI max
+const SAFETY_TEXT_LENGTH = 40000; // fallback safety net (user limit applied in speex.client.ts)
 const MIN_CHUNK_SIZE = 4096; // bytes
 
 

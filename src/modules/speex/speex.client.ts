@@ -9,7 +9,7 @@
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { DSpeexEngineAny, DVoiceWebSpeech, SpeexSpeakOptions, SpeexSpeakResult, SpeexVoiceSelector } from './speex.types';
-import { speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType } from './store-module-speex';
+import { speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType, speexGetTtsCharLimit } from './store-module-speex';
 
 import { speexSynthesize_RPC } from './protocols/rpc/rpc.client';
 import { speexSynthesize_WebSpeech } from './protocols/webspeech/webspeech.client';
@@ -43,17 +43,24 @@ export async function speakText(
   // apply voice override from selector (merge with engine defaults)
   const effectiveEngine = _engineApplyVoiceOverride(engine, voiceSelector);
 
+  // apply user-configurable character limit (null = unlimited)
+  const charLimit = speexGetTtsCharLimit();
+  const truncated = charLimit !== null && inputText.length > charLimit;
+  const text = truncated ? inputText.slice(0, charLimit) : inputText;
+  if (truncated)
+    console.log(`[Speex] Text truncated from ${inputText.length} to ${charLimit} characters`);
+
   try {
     switch (effectiveEngine.vendorType) {
       // RPC providers: route through speex.router RPC
       case 'elevenlabs':
       case 'openai':
       case 'localai':
-        return speexSynthesize_RPC(effectiveEngine, inputText, { streaming, playback, returnAudio, languageCode, priority }, callbacks);
+        return speexSynthesize_RPC(effectiveEngine, text, { streaming, playback, returnAudio, languageCode, priority }, callbacks);
 
       // Web Speech: client-only, no RPC
       case 'webspeech':
-        return speexSynthesize_WebSpeech(inputText, effectiveEngine.voice as DVoiceWebSpeech, callbacks);
+        return speexSynthesize_WebSpeech(text, effectiveEngine.voice as DVoiceWebSpeech, callbacks);
     }
   } catch (error) {
     callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
