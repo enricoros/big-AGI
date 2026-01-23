@@ -328,6 +328,14 @@ export const DModelParameterRegistry = {
     // No requiredFallback - this is optional
   } as const,
 
+  llmVndOaiCodeInterpreter: {
+    label: 'Code Interpreter',
+    type: 'enum' as const,
+    description: 'Python code execution ($0.03/container)',
+    values: ['off', 'auto'] as const,
+    // No initialValue - undefined means off (same as 'off')
+  } as const,
+
   // Perplexity-specific parameters
 
   // llmVndPerplexityReasoningEffort - we reuse the OpenAI reasoning effort parameter
