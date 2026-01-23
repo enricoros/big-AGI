@@ -51,7 +51,7 @@ export function aixCreateModelFromLLMOptions(
     llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAntEffort,
     llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget, llmVndGeminiThinkingLevel, llmVndGeminiThinkingLevel4,
     // llmVndMoonshotWebSearch,
-    llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiReasoningEffort52, llmVndOaiReasoningEffort52Pro, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
+    llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiReasoningEffort52, llmVndOaiReasoningEffort52Pro, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration, llmVndOaiCodeInterpreter,
     llmVndOrtWebSearch,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
     // xAI
@@ -132,6 +132,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndOaiVerbosity ? { vndOaiVerbosity: llmVndOaiVerbosity } : {}),
     ...(llmVndOaiWebSearchContext ? { vndOaiWebSearchContext: llmVndOaiWebSearchContext } : {}),
     ...(llmVndOaiImageGeneration ? { vndOaiImageGeneration: (llmVndOaiImageGeneration as any /* backward comp */) === true ? 'mq' : llmVndOaiImageGeneration } : {}),
+    ...(llmVndOaiCodeInterpreter === 'auto' ? { vndOaiCodeInterpreter: llmVndOaiCodeInterpreter } : {}),
     ...(llmVndOrtWebSearch === 'auto' ? { vndOrtWebSearch: 'auto' } : {}),
     ...(llmVndPerplexityDateFilter ? { vndPerplexityDateFilter: llmVndPerplexityDateFilter } : {}),
     ...(llmVndPerplexitySearchMode ? { vndPerplexitySearchMode: llmVndPerplexitySearchMode } : {}),

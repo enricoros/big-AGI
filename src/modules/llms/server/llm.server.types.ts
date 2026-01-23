@@ -109,6 +109,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndOaiWebSearchContext',
     'llmVndOaiWebSearchGeolocation',
     'llmVndOaiImageGeneration',
+    'llmVndOaiCodeInterpreter',
     // OpenRouter
     'llmVndOrtWebSearch',
     // Perplexity
