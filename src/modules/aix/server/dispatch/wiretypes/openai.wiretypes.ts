@@ -1373,10 +1373,18 @@ export namespace OpenAIWire_Responses_Tools {
     size: z.enum(['1024x1024', '1024x1536', '1536x1024', 'auto']).optional(),
   });
 
-  // const CodeInterpreterTool_schema = z.object({
-  //   type: z.literal('code_interpreter'),
-  //   container: z.union([z.string(), z.object({})]), // container ID or object with file IDs
-  // });
+  // Code Interpreter tool - runs Python code in a sandboxed container
+  const CodeInterpreterTool_schema = z.object({
+    type: z.literal('code_interpreter'),
+    container: z.union([
+      z.string(), // explicit container ID
+      z.object({
+        type: z.literal('auto'),
+        file_ids: z.array(z.string()).optional(), // uploaded file IDs to make available
+        memory_limit: z.string().optional(), // e.g., "512m", "1g", "2g", "4g", "8g"
+      }),
+    ]).nullish(), // optional - if omitted, auto mode is used
+  });
 
   // const FileSearchTool_schema = z.object({
   //   type: z.literal('file_search'),
@@ -1398,7 +1406,7 @@ export namespace OpenAIWire_Responses_Tools {
     // hosted tools
     WebSearchTool_schema,
     ImageGenerationTool_schema,
-    // CodeInterpreterTool_schema,
+    CodeInterpreterTool_schema,
     // FileSearchTool_schema, // OpenAI vector store - not implemented
     // MCPTool_schema,
     // ComputerUseTool_schema,
@@ -1422,8 +1430,8 @@ export namespace OpenAIWire_Responses_Tools {
         // 'file_search',
         'web_search', 'web_search_preview', 'web_search_preview_2025_03_11',
         'image_generation',
+        'code_interpreter',
         // 'computer_use_preview',
-        // 'code_interpreter',
         // 'mcp',
         // 'local_shell' ?
       ]),
@@ -1486,11 +1494,11 @@ export namespace OpenAIWire_API_Responses {
     truncation: z.enum(['auto', 'disabled']).nullish(), // defaults to 'disabled', 'auto' drops input items in the middle of the conversation.
     include: z.array(z.enum([
       'web_search_call.action.sources', // get web search citations
+      'code_interpreter_call.outputs', // get code execution logs and images
       // 'file_search_call.results',
       // 'message.input_image.image_url',
       // 'computer_call_output.output.image_url',
       // 'reasoning.encrypted_content',
-      // 'code_interpreter_call.outputs'
     ])).optional(), // additional output to include in the response
     user: z.string().optional(), // stable identifier for your end-users
 
