@@ -24,6 +24,15 @@ export const DocSelColor: ColorPaletteProp = 'primary';
 const DocUnselColor: ColorPaletteProp = 'primary';
 
 
+const _styles = {
+  label: {
+    whiteSpace: 'nowrap',
+    fontWeight: 'md',
+    minWidth: 48,
+  },
+} as const;
+
+
 export function buttonIconForFragment(part: DMessageAttachmentFragment['part']): React.ComponentType<any> {
   const pt = part.pt;
   switch (pt) {
@@ -146,9 +155,13 @@ export function DocAttachmentFragmentButton(props: {
   if (!isDocPart(fragment.part))
     return 'Unexpected: ' + fragment.part.pt;
 
-  const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
-
   const Icon = isSelected ? EditRoundedIcon : buttonIconForFragment(fragment.part);
+
+  const fullTitle = fragment.part.l1Title || fragment.title || 'Document';
+  const buttonText = ellipsizeMiddle(fullTitle, 28 /* totally arbitrary length */);
+  const showFilenameTooltip = fullTitle !== buttonText;
+
+  const labelContent = <Box sx={_styles.label}>{buttonText}</Box>;
 
   return (
     <Button
@@ -171,9 +184,10 @@ export function DocAttachmentFragmentButton(props: {
         </Box>
       )}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingX: '0.5rem' }}>
-        <Box sx={{ whiteSpace: 'nowrap', fontWeight: 'md', minWidth: 48 }}>
-          {buttonText}
-        </Box>
+        {showFilenameTooltip
+          ? <TooltipOutlined title={<span style={{ wordBreak: 'break-all' }}>{fullTitle}</span>}>{labelContent}</TooltipOutlined>
+          : labelContent
+        }
         {/*<Box sx={{ fontSize: 'xs', fontWeight: 'sm' }}>*/}
         {/*  {fragment.caption}*/}
         {/*</Box>*/}

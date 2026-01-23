@@ -271,6 +271,17 @@ function LLMAttachmentButton(props: {
   if (isInputLoading)
     return <InputLoadingPlaceholder label={draft.label} />;
 
+  // tooltip for truncated filenames (only show when menu is closed)
+  const displayedLabel = attachmentLabelText(draft);
+  const showFilenameTooltip = !props.menuShown && !isOutputLoading && displayedLabel !== draft.label;
+
+  // label element (reused with/without tooltip)
+  const labelElement = (
+    <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
+      {isOutputLoading ? 'Converting... ' : displayedLabel}
+    </Typography>
+  );
+
   return (
     <Button
       size='sm'
@@ -294,10 +305,11 @@ function LLMAttachmentButton(props: {
       {/* Icons: Web Page Screenshot, Converter[s] */}
       {attachmentIcons(draft, props.menuShown, props.onViewImageRefPart)}
 
-      {/* Label */}
-      <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-        {isOutputLoading ? 'Converting... ' : attachmentLabelText(draft)}
-      </Typography>
+      {/* Label (with tooltip for truncated filenames) */}
+      {showFilenameTooltip
+        ? <TooltipOutlined title={<span style={{ wordBreak: 'break-all' }}>{draft.label}</span>}>{labelElement}</TooltipOutlined>
+        : labelElement
+      }
 
       {/* Is Converting icon */}
       {isOutputLoading && <CircularProgress color='success' size='sm' />}
