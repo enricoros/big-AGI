@@ -3,10 +3,15 @@ import * as z from 'zod/v4';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, KnownModel, ManualMappings } from '../../models.mappings';
 import { openAIAccess, OpenAIAccessSchema, OPENAI_API_PATHS } from '../openai.access';
+
+
+// configuration
+const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 
 
 // Known xAI Models - Manual Mappings
