@@ -208,7 +208,7 @@ export type DMessageToolInvocationPart = {
     type: 'code_execution';
     language: string;
     code: string;
-    author: 'gemini_auto_inline';
+    author: DMessageToolCodeExecutor;
   }
 };
 
@@ -224,12 +224,12 @@ export type DMessageToolResponsePart = {
   } | {
     type: 'code_execution';
     result: string;           // The output
-    executor: 'gemini_auto_inline';
+    executor: DMessageToolCodeExecutor;
   },
   environment: DMessageToolEnvironment,
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
-
+type DMessageToolCodeExecutor = 'gemini_auto_inline' | 'code_interpreter';
 
 type DVoidModelAnnotationsPart = {
   pt: 'annotations',
@@ -403,7 +403,7 @@ export function create_FunctionCallInvocation_ContentFragment(id: string, functi
   return _createContentFragment(_create_FunctionCallInvocation_Part(id, functionName, args));
 }
 
-export function create_CodeExecutionInvocation_ContentFragment(id: string, language: string, code: string, author: 'gemini_auto_inline'): DMessageContentFragment {
+export function create_CodeExecutionInvocation_ContentFragment(id: string, language: string, code: string, author: DMessageToolCodeExecutor): DMessageContentFragment {
   return _createContentFragment(_create_CodeExecutionInvocation_Part(id, language, code, author));
 }
 
@@ -411,7 +411,7 @@ export function create_FunctionCallResponse_ContentFragment(id: string, error: b
   return _createContentFragment(_create_FunctionCallResponse_Part(id, error, name, result, environment));
 }
 
-export function create_CodeExecutionResponse_ContentFragment(id: string, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: DMessageToolEnvironment): DMessageContentFragment {
+export function create_CodeExecutionResponse_ContentFragment(id: string, error: boolean | string, result: string, executor: DMessageToolCodeExecutor, environment: DMessageToolEnvironment): DMessageContentFragment {
   return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
 }
 
@@ -553,7 +553,7 @@ function _create_FunctionCallInvocation_Part(id: string, functionName: string, a
   return { pt: 'tool_invocation', id, invocation: { type: 'function_call', name: functionName, args } };
 }
 
-function _create_CodeExecutionInvocation_Part(id: string, language: string, code: string, author: 'gemini_auto_inline'): DMessageToolInvocationPart {
+function _create_CodeExecutionInvocation_Part(id: string, language: string, code: string, author: DMessageToolCodeExecutor): DMessageToolInvocationPart {
   return { pt: 'tool_invocation', id, invocation: { type: 'code_execution', language, code, author } };
 }
 
@@ -561,7 +561,7 @@ function _create_FunctionCallResponse_Part(id: string, error: boolean | string, 
   return { pt: 'tool_response', id, error, response: { type: 'function_call', name, result }, environment };
 }
 
-function _create_CodeExecutionResponse_Part(id: string, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: DMessageToolEnvironment): DMessageToolResponsePart {
+function _create_CodeExecutionResponse_Part(id: string, error: boolean | string, result: string, executor: DMessageToolCodeExecutor, environment: DMessageToolEnvironment): DMessageToolResponsePart {
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
