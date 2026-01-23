@@ -54,7 +54,8 @@ export function aixCreateModelFromLLMOptions(
     llmVndOaiReasoningEffort, llmVndOaiReasoningEffort4, llmVndOaiReasoningEffort52, llmVndOaiReasoningEffort52Pro, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration,
     llmVndOrtWebSearch,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
-    llmVndXaiSearchMode, llmVndXaiSearchSources, llmVndXaiSearchDateFilter,
+    // xAI
+    llmVndXaiCodeExecution, llmVndXaiSearchInterval, llmVndXaiWebSearch, llmVndXaiXSearch, llmVndXaiXSearchHandles,
   } = {
     ...llmOptions,
     ...llmOptionOverrides,
@@ -135,9 +136,12 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndPerplexityDateFilter ? { vndPerplexityDateFilter: llmVndPerplexityDateFilter } : {}),
     ...(llmVndPerplexitySearchMode ? { vndPerplexitySearchMode: llmVndPerplexitySearchMode } : {}),
     ...(userGeolocation ? { userGeolocation } : {}),
-    ...(llmVndXaiSearchMode ? { vndXaiSearchMode: llmVndXaiSearchMode } : {}),
-    ...(llmVndXaiSearchSources ? { vndXaiSearchSources: llmVndXaiSearchSources } : {}),
-    ...(llmVndXaiSearchDateFilter ? { vndXaiSearchDateFilter: llmVndXaiSearchDateFilter } : {}),
+    // xAI
+    ...(llmVndXaiCodeExecution === 'auto' ? { vndXaiCodeExecution: llmVndXaiCodeExecution } : {}),
+    ...(llmVndXaiSearchInterval ? { vndXaiSearchInterval: llmVndXaiSearchInterval } : {}),
+    ...(llmVndXaiWebSearch === 'auto' ? { vndXaiWebSearch: llmVndXaiWebSearch } : {}),
+    ...(llmVndXaiXSearch === 'auto' ? { vndXaiXSearch: llmVndXaiXSearch } : {}),
+    ...(llmVndXaiXSearchHandles ? { vndXaiXSearchHandles: llmVndXaiXSearchHandles } : {}),
   });
 }
 
