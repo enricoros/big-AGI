@@ -1,3 +1,5 @@
+import * as z from 'zod/v4';
+
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
@@ -238,8 +240,8 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
   if (!validated.success) {
-    console.warn('Gemini: invalid generateContent payload. Error:', validated.error.message);
-    throw new Error(`Invalid sequence for Gemini models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
+    console.warn('[DEV] Gemini: invalid generateContent payload. Error:', { valError: validated.error });
+    throw new Error(`Invalid request for Gemini models: ${z.prettifyError(validated.error)}`);
   }
 
   return validated.data;

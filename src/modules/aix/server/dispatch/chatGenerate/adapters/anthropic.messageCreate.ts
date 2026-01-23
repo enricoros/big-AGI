@@ -1,3 +1,5 @@
+import * as z from 'zod/v4';
+
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
@@ -243,8 +245,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);
   if (!validated.success) {
-    console.error('Anthropic: invalid messageCreate payload. Error:', validated.error.message);
-    throw new Error(`Invalid sequence for Anthropic models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
+    console.warn('[DEV] Anthropic: invalid messageCreate payload. Error:', { valError: validated.error });
+    throw new Error(`Invalid request for Anthropic models: ${z.prettifyError(validated.error)}`);
   }
 
   return validated.data;
