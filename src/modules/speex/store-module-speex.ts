@@ -19,6 +19,9 @@ interface SpeexStoreState {
   engines: Record<SpeexEngineId, DSpeexEngineAny>;
   activeEngineId: SpeexEngineId | null; // null = no user selection = use global auto-selection
 
+  // TTS character limit: number = limit chars, null = unlimited (default: 4096)
+  ttsCharLimit: number | null;
+
   // to avoid repeated migrations
   hasInitializedLlms: boolean;
   hasMigratedElevenLabs: boolean;
@@ -34,6 +37,9 @@ interface SpeexStoreActions {
 
   // selection
   setActiveEngineId: (engineId: SpeexEngineId | null) => void;
+
+  // TTS settings
+  setTtsCharLimit: (limit: number | null) => void;
 
   // business logic: auto-detection or migration
   syncWebSpeechEngine: () => boolean;
@@ -51,6 +57,7 @@ export const useSpeexStore = create<SpeexStore>()(persist(
     // initial state
     engines: {},
     activeEngineId: null,
+    ttsCharLimit: 4096, // default: ~3 min of speech, null = unlimited
     hasInitializedLlms: false,
     hasMigratedElevenLabs: false,
 
@@ -126,6 +133,13 @@ export const useSpeexStore = create<SpeexStore>()(persist(
 
     setActiveEngineId: (engineId) => {
       set({ activeEngineId: engineId });
+    },
+
+
+    // TTS settings
+
+    setTtsCharLimit: (limit) => {
+      set({ ttsCharLimit: limit });
     },
 
 
@@ -375,6 +389,20 @@ export function speexFindGlobalEngine({ engines, activeEngineId }: SpeexStore = 
       availableEngines.push(e);
   }
   return speexFindByVendorPriorityAsc(availableEngines);
+}
+
+
+// TTS character limit
+
+export function useSpeexTtsCharLimit() {
+  return useSpeexStore(useShallow(state => ({
+    ttsCharLimit: state.ttsCharLimit,
+    setTtsCharLimit: state.setTtsCharLimit,
+  })));
+}
+
+export function speexGetTtsCharLimit(): number | null {
+  return useSpeexStore.getState().ttsCharLimit;
 }
 
 

@@ -1,10 +1,11 @@
 import { SpeexConfigureEngines } from '~/modules/speex/components/SpeexConfigureEngines';
-import { useSpeexEngines } from '~/modules/speex/store-module-speex';
+import { useSpeexEngines, useSpeexTtsCharLimit } from '~/modules/speex/store-module-speex';
 
 import { ChatAutoSpeakType, useChatAutoAI } from '../chat/store-app-chat';
 
-import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
+import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 
 
 const _autoSpeakOptions: FormRadioOption<ChatAutoSpeakType>[] = [
@@ -21,6 +22,7 @@ export function VoiceOutSettings(props: { isMobile: boolean }) {
 
   // external state
   const { autoSpeak, setAutoSpeak } = useChatAutoAI();
+  const { ttsCharLimit, setTtsCharLimit } = useSpeexTtsCharLimit();
 
   // external state - module
   const hasEngines = useSpeexEngines().length > 0;
@@ -37,6 +39,15 @@ export function VoiceOutSettings(props: { isMobile: boolean }) {
       options={_autoSpeakOptions}
       value={autoSpeak}
       onChange={setAutoSpeak}
+    />
+
+    {/* TTS character limit toggle */}
+    <FormSwitchControl
+      title='Speak Cost Guard'
+      description={ttsCharLimit !== null ? 'Max ~3 min' : 'Unlimited'}
+      tooltip='Limits text sent to TTS providers, helping prevent unexpected costs with cloud services'
+      checked={ttsCharLimit !== null}
+      onChange={(checked) => setTtsCharLimit(checked ? 4096 : null)}
     />
 
     {/* Engine configuration */}
