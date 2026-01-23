@@ -32,6 +32,45 @@ const PRICE_40 = {
   cache: { cType: 'oai-ac' as const, read: 0.05 },
 };
 
+// Interfaces: ALL XAI MODELS use the OpenAI Responses API (XAI dialect)
+// we don't add LLM_IF_OAI_Responses explicitly here, as the code fully treats XAI/XAI Models with responses
+
+const XAI_IF: ModelDescriptionSchema['interfaces'] = [
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch,
+] as const;
+
+const XAI_IF_Vision: ModelDescriptionSchema['interfaces'] = [
+  ...XAI_IF, LLM_IF_OAI_Vision,
+] as const;
+
+
+// Parameter specs for xAI models
+
+const XAI_PAR: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndXaiCodeExecution' },
+  { paramId: 'llmVndXaiSearchInterval' },
+  { paramId: 'llmVndXaiWebSearch' },
+  { paramId: 'llmVndXaiXSearch' },
+  // { paramId: 'llmVndXaiXSearchHandles' }, // too early
+] as const;
+
+// Reasoning variants have no configuration for it - only grok-3-mini had it, as of 2026-01-22:
+// - https://docs.x.ai/docs/guides/reasoning
+// hence it's the same parameters
+const XAI_PAR_Reasoning = XAI_PAR;
+
+// Pre-Grok 4 models do NOT support server-side tools (web_search, x_search, code_interpreter)
+const XAI_IF_Pre4: ModelDescriptionSchema['interfaces'] = [
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+] as const;
+
+const XAI_IF_Pre4_Vision: ModelDescriptionSchema['interfaces'] = [
+  ...XAI_IF_Pre4, LLM_IF_OAI_Vision,
+] as const;
+
+const XAI_PAR_Pre4: ModelDescriptionSchema['parameterSpecs'] = [] as const;
+
+
 const _knownXAIChatModels: ManualMappings = [
 
   // Grok 4.1
@@ -41,8 +80,8 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'Next generation frontier multimodal model optimized for high-performance agentic tool calling with a 2M token context window. Trained specifically for real-world enterprise use cases with exceptional performance on agentic workflows.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Reasoning,
     chatPrice: PRICE_41,
     benchmark: { cbaElo: 1483 }, // grok-4-1-fast-reasoning
   },
@@ -52,32 +91,34 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'Next generation frontier multimodal model optimized for high-performance agentic tool calling with a 2M token context window. Non-reasoning variant for instant responses.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: XAI_IF_Vision,
+    parameterSpecs: XAI_PAR,
     chatPrice: PRICE_41,
     benchmark: { cbaElo: 1465 }, // grok-4-1-fast-non-reasoning
   },
 
   // Grok 4
   {
+    hidden: true, // yield to 4.1
     idPrefix: 'grok-4-fast-reasoning',
     label: 'Grok 4 Fast Reasoning',
     description: 'Cost-efficient reasoning model with a 2M token context window. Optimized for fast reasoning in agentic workflows. 98% cost reduction vs Grok 4 with comparable performance.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Reasoning,
     chatPrice: PRICE_40,
     benchmark: { cbaElo: 1420 },
   },
   {
+    hidden: true, // yield to 4.1
     idPrefix: 'grok-4-fast-non-reasoning',
     label: 'Grok 4 Fast', // 'Grok 4 Fast Non-Reasoning'
     description: 'Cost-efficient non-reasoning model with a 2M token context window. Same weights as grok-4-fast-reasoning but constrained by non-reasoning system prompt for quick responses.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: XAI_IF_Vision,
+    parameterSpecs: XAI_PAR,
     chatPrice: PRICE_40,
     benchmark: { cbaElo: 1409 },
   },
@@ -87,21 +128,21 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'xAI\'s most advanced model, offering state-of-the-art reasoning and problem-solving capabilities over a massive 256k context window. Supports text and image inputs.',
     contextWindow: 256000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Reasoning,
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
     benchmark: { cbaElo: 1415 + 6 }, // grok-4-0709 (+6 to stay on top of the fast)
   },
 
-  // Grok 3
+  // Grok 3 (Pre-Grok 4: no server-side tools)
   {
     idPrefix: 'grok-3',
     label: 'Grok 3',
     description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: XAI_IF_Pre4,
+    parameterSpecs: XAI_PAR_Pre4,
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
     benchmark: { cbaElo: 1409 }, // grok-3-preview-02-24
   },
@@ -111,36 +152,34 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'A lightweight model that is fast and smart for logic-based tasks. Supports function calling and structured outputs.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort' },
-      { paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' },
-    ],
+    interfaces: [...XAI_IF_Pre4, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Pre4,
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
     benchmark: { cbaElo: 1358 }, // grok-3-mini-beta (updated from CSV)
   },
 
-  // Grok Code
+  // Grok Code (Pre-Grok 4: no server-side tools)
   {
     idPrefix: 'grok-code-fast-1',
     label: 'Grok Code Fast 1',
     description: 'Specialized reasoning model for agentic coding workflows. Fast, economical, and optimized for code generation, debugging, and software development tasks.',
     contextWindow: 256000,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndXaiSearchMode' }, { paramId: 'llmVndXaiSearchSources' }, { paramId: 'llmVndXaiSearchDateFilter' }],
+    interfaces: [...XAI_IF_Pre4, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Pre4,
     chatPrice: { input: 0.2, output: 1.5, cache: { cType: 'oai-ac', read: 0.02 } },
     benchmark: { cbaElo: 1380 }, // Estimated for coding-specialized model
   },
 
-  // Grok 2
+  // Grok 2 (Pre-Grok 4: no server-side tools)
   {
     idPrefix: 'grok-2-vision-1212',
     label: 'Grok 2 Vision (1212)',
     description: 'xAI model grok-2-vision-1212 with image and text input capabilities. Supports text generation with a 32,768 token context window.',
     contextWindow: 32768,
     maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: XAI_IF_Pre4_Vision,
+    parameterSpecs: XAI_PAR_Pre4,
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
@@ -175,12 +214,12 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
       idPrefix: xm.id,
       label: _xaiFormatNewModelLabel(xm.id),
       description: `xAI model ${xm.id}`,
-      contextWindow: 16384,
+      contextWindow: 256000, // random picked on 2026-01-22
       interfaces: [
-        LLM_IF_OAI_Chat,
-        LLM_IF_OAI_Fn,
+        ...XAI_IF,
         ...(xm.input_modalities?.includes('image') ? [LLM_IF_OAI_Vision] : []),
       ],
+      parameterSpecs: XAI_PAR,
       ...(xm.prompt_text_token_price != null && xm.completion_text_token_price != null && {
         chatPrice: {
           input: xm.prompt_text_token_price / 10000, // Scaling factor applied as per API data

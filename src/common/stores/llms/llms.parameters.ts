@@ -358,27 +358,44 @@ export const DModelParameterRegistry = {
 
   // xAI-specific parameters
 
-  llmVndXaiSearchMode: {
-    label: 'Search Mode',
+  llmVndXaiCodeExecution: {
+    label: 'Code Execution',
     type: 'enum' as const,
-    description: 'Controls when to use live search',
-    values: ['auto', 'on', 'off'] as const,
-    initialValue: 'auto', // we default to auto for our users, to get them search out of the box
+    description: 'Enable server-side code execution by the model',
+    values: ['off', 'auto'] as const,
+    // No initialValue - undefined means off (same as 'off')
   } as const,
 
-  llmVndXaiSearchSources: {
-    label: 'Search Sources',
-    type: 'string' as const,
-    description: 'Comma-separated sources (web,x,news,rss)',
-    initialValue: 'web,x', // defaults to web,x as per xAI docs
-  } as const,
-
-  llmVndXaiSearchDateFilter: {
-    label: 'Search From Date',
+  llmVndXaiSearchInterval: {
+    label: 'Search Interval', // "X Search only" for now, fw comp to web search
     type: 'enum' as const,
-    description: 'Filter search results by publication date',
+    description: 'Search in this interval',
     values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'] as const,
-    // requiredFallback: 'unfiltered',
+    // No initialValue - undefined means unfiltered
+  } as const,
+
+  llmVndXaiWebSearch: {
+    label: 'Web Search',
+    type: 'enum' as const,
+    description: 'Enable web search for real-time information',
+    values: ['off', 'auto'] as const,
+    // No initialValue - undefined means off (same as 'off')
+  } as const,
+
+  llmVndXaiXSearch: {
+    label: 'X Search',
+    type: 'enum' as const,
+    description: 'Enable X/Twitter search for social media content',
+    values: ['off', 'auto'] as const,
+    // NOTE: disabling or this could be slow
+    // initialValue: 'auto', // we default to 'auto' for our users, as they may expect "X search" out of the box
+  } as const,
+
+  llmVndXaiXSearchHandles: {
+    label: 'X Handles Filter',
+    type: 'string' as const,
+    description: 'Filter X search to specific handles (comma-separated, e.g. @elonmusk, @xai)',
+    // initialValue: '', // empty = no filter
   } as const,
 
 } as const;
