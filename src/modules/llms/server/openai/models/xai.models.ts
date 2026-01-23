@@ -140,29 +140,11 @@ const _knownXAIChatModels: ManualMappings = [
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
   },
-  {
-    hidden: true, // IMAGE model - does not chat (!) - is actually not returned by the list endpoint, but we have it anyway for our records
-    idPrefix: 'grok-2-image-1212',
-    label: 'Grok 2 Image (1212)',
-    description: 'xAI model for image generation. Each generated image costs $0.07.',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: [],
-  },
-  {
-    hidden: true, // Not listed in official docs as of 2025-10-28
-    idPrefix: 'grok-2-1212',
-    label: 'Grok 2 (1212)',
-    description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window. (Not available as of October 2025)',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 2, output: 10 },
-    // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
-    benchmark: { cbaElo: 1288 },
-  },
+
+] as const;
 
 
+// -- xAI Model Descriptions --
 
 function xaiValidateModelDefs_DEV(availableModels: z.infer<typeof wireXAIModelsListSchema>['models']): void {
   if (DEV_DEBUG_XAI_MODELS) {
