@@ -1015,7 +1015,15 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
  * - citations: High-quality links (2-3) via annotations in message content
  */
 function _forwardWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>): void {
-  const { action } = webSearchCall;
+  const { action, status } = webSearchCall;
+
+  // Handle failed web search (e.g., xAI returns status: 'failed' when web search fails)
+  if (status === 'failed') {
+    const failedUrl = action?.type === 'open_page' ? action.url : undefined;
+    pt.sendVoidPlaceholder('search-web', failedUrl ? `Failed to access ${sanitizeUrlForDisplay(failedUrl)}` : 'Web search failed');
+    return;
+  }
+
   switch (action?.type) {
     case 'search':
       if (action.query && action.sources && Array.isArray(action.sources)) {
