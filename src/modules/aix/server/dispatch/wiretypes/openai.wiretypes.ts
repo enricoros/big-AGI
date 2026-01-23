@@ -996,7 +996,7 @@ export namespace OpenAIWire_Responses_Items {
     annotations: z.array(z.object({
       type: z.literal('url_citation'),
       url: z.string(),
-      title: z.string(),
+      title: z.string().optional(), // [xAI] xAI doesn't always send title
       start_index: z.int().optional(),
       end_index: z.int().optional(),
     })).optional(),
