@@ -166,6 +166,8 @@ export function LLMAttachmentMenu(props: {
       minWidth={260}
       noTopPadding
       placement='top'
+      placementOffset={[0, 15]}
+      boxShadow='lg'
       zIndex={themeZIndexOverMobileDrawer /* was not set, but the Attachment Menu can be used from the Personas Modal */}
     >
 
