@@ -198,6 +198,28 @@ export function aixToOpenAIResponses(
     payload.tools.push(imageGenerationTool);
   }
 
+  // Tool: Code Interpreter: Python code execution in sandboxed container ($0.03/container)
+  const requestCodeInterpreterTool = model.vndOaiCodeInterpreter === 'auto';
+  if (requestCodeInterpreterTool && !skipHostedToolsDueToCustomTools) {
+    if (isDialectAzure) {
+      console.log('[DEV] Azure OpenAI Responses: skipping code interpreter tool due to Azure limitations');
+    } else {
+      // Add the code interpreter tool to the request
+      if (!payload.tools?.length)
+        payload.tools = [];
+
+      payload.tools.push({
+        type: 'code_interpreter',
+        container: { type: 'auto' }, // auto-create/reuse container
+      });
+
+      // Include code execution outputs in the response
+      const extendedInclude = new Set(payload.include);
+      extendedInclude.add('code_interpreter_call.outputs');
+      payload.include = Array.from(extendedInclude);
+    }
+  }
+
 
   // [OpenAI] Vendor-specific restore markdown, for GPT-5 models and recent 'o' models
   const skipMarkdownDueToCustomTools = hasCustomTools && hasRestrictivePolicy;

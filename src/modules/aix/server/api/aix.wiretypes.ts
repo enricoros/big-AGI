@@ -472,6 +472,7 @@ export namespace AixWire_API {
     // Moonshot
     vndMoonshotWebSearch: z.enum(['auto']).optional(),
     // OpenAI
+    vndOaiCodeInterpreter: z.enum(['off', 'auto']).optional(),
     vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
     vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
