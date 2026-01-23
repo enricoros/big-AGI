@@ -53,10 +53,10 @@ export interface IParticleTransmitter {
   appendFunctionCallInvocationArgs(id: string | null, argsJsonChunk: string): void;
 
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
-  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline'): void;
+  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter'): void;
 
   /** Creates a CE result part, flushing the previous one if needed, and completes it */
-  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: 'upstream'): void;
+  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline' | 'code_interpreter', environment: 'upstream'): void;
 
   /** Adds a URL citation part */
   appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number): void;
