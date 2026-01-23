@@ -382,7 +382,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
-  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline') {
+  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter') {
     this.endMessagePart();
     this.transmissionQueue.push({
       p: 'cei',
@@ -394,7 +394,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Creates a CE result part, flushing the previous one if needed, and completes it */
-  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: 'upstream') {
+  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline' | 'code_interpreter', environment: 'upstream') {
     this.endMessagePart();
     this.transmissionQueue.push({
       p: 'cer',

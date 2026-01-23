@@ -452,8 +452,9 @@ function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
         break;
 
       case 'code_execution':
-        if (itd.variant !== 'gemini_auto_inline')
-          throw new Error('Gemini only supports inline code execution');
+        // NOTE: commented because now we have 'code_interpreter' too
+        // if (itd.variant !== 'gemini_auto_inline')
+        //   throw new Error('Gemini only supports inline code execution');
 
         // throw if code execution is present more than once
         if (tools.some(tool => tool.codeExecution))
