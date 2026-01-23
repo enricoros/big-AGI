@@ -162,6 +162,11 @@ const _imageGenerationOptions = [
   // { value: 'hq_png', label: 'HD PNG', description: 'Uncompressed' }, // TODO: re-enable when uncompressed PNG saving is implemented
 ] as const;
 
+const _oaiCodeInterpreterOptions = [
+  { value: 'auto', label: 'On', description: 'Python code execution ($0.03/container)' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 
 // XAI
 
@@ -254,6 +259,7 @@ export function LLMParametersEditor(props: {
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
     llmVndOaiImageGeneration,
+    llmVndOaiCodeInterpreter,
     llmVndOaiVerbosity,
     llmVndOrtWebSearch,
     llmVndPerplexityDateFilter,
@@ -727,6 +733,21 @@ export function LLMParametersEditor(props: {
             onChangeParameter({ llmVndOaiImageGeneration: value });
         }}
         options={_imageGenerationOptions}
+      />
+    )}
+
+    {showParam('llmVndOaiCodeInterpreter') && (
+      <FormSelectControl
+        title='Code Interpreter'
+        tooltip='Enable Python code execution in a sandboxed container. Costs $0.03 per container (expires after 20 minutes of inactivity).'
+        value={llmVndOaiCodeInterpreter ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiCodeInterpreter');
+          else
+            onChangeParameter({ llmVndOaiCodeInterpreter: value });
+        }}
+        options={_oaiCodeInterpreterOptions}
       />
     )}
 
