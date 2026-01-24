@@ -145,7 +145,7 @@ export function Fusion(props: {
         isInterrupted={isStopped}
         isMobile={props.isMobile}
         isUsable={isUsable}
-        llmComponent={(isFusing || !showLlmSelector) ? undefined : llmComponent}
+        llmComponent={(isFusing || (!isEditable && !showLlmSelector)) ? undefined : llmComponent}
         llmLabel={llmLabel}
         llmVendorIcon={llmVendorIcon}
         fusionAvatarTooltip={fusionAvatarTooltip}
