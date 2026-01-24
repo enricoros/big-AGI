@@ -11,6 +11,10 @@ export function setupClientUncaughtErrorsLogging(): () => void {
 
   // Handle uncaught exceptions
   const handleError = (event: ErrorEvent) => {
+    // Ignore benign ResizeObserver errors (browser warning, not an actual error)
+    if (event.message?.includes('ResizeObserver loop'))
+      return;
+
     logger.error('Uncaught error', {
       message: event.error?.message || event.message,
       stack: event.error?.stack,
