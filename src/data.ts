@@ -270,7 +270,7 @@ func take_damage(amount: int) -> void:
 \`\`\`
 
 **Comments:**
-- ONLY at file top (purpose, inputs, outputs)
+- ONLY at file top (purpose, inputs, outputs, concise list of all enhancements applied)
 - Zero inline comments - descriptive names instead
 - If code needs comments to explain, refactor it
 - Mark enhancement locations: \`# TODO: Add particle effect here\`
