@@ -111,7 +111,7 @@ function TableRenderer({ children, node, ...props }: TableRendererProps) {
 
       {/* Download CSV link and Copy Markdown Button */}
       {tableData?.length >= 1 && (
-        <Box sx={_styles.buttons}>
+        <Box data-agi-no-copy /* do not copy these buttons */ sx={_styles.buttons}>
           {/* Download button*/}
           <Chip
             variant='soft'

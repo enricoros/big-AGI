@@ -171,6 +171,7 @@ export function BlockPartModelAnnotations(props: {
 
   return (
     <Box
+      data-agi-no-copy // do not copy these buttons: has its own copy functionality
       sx={{ mx: 1.5 }}
     >
 
