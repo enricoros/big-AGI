@@ -69,7 +69,7 @@ const ENABLE_BUBBLE = true;
 export const BUBBLE_MIN_TEXT_LENGTH = 3;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
-const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
+// const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
 
 const messageBodySx: SxProps = {
@@ -898,18 +898,18 @@ export function ChatMessage(props: {
 
 
       {/* Overlay copy icon */}
-      {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditingText && (
-        <Tooltip title={messagePendingIncomplete ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>
-          <IconButton
-            variant='outlined' onClick={handleOpsCopy}
-            sx={{
-              position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
-              opacity: 0, transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',
-            }}>
-            <ContentCopyIcon />
-          </IconButton>
-        </Tooltip>
-      )}
+      {/*{ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditingText && (*/}
+      {/*  <Tooltip title={messagePendingIncomplete ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>*/}
+      {/*    <IconButton*/}
+      {/*      variant='outlined' onClick={handleOpsCopy}*/}
+      {/*      sx={{*/}
+      {/*        position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,*/}
+      {/*        opacity: 0, transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',*/}
+      {/*      }}>*/}
+      {/*      <ContentCopyIcon />*/}
+      {/*    </IconButton>*/}
+      {/*  </Tooltip>*/}
+      {/*)}*/}
 
 
       {/* Message Operations Menu (3 dots) */}
