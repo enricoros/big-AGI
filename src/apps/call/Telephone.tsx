@@ -24,6 +24,7 @@ import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanel
 import { OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
+import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
@@ -360,7 +361,7 @@ export function Telephone(props: {
 
         <ScrollToBottom stickToBottomInitial>
 
-          <Box sx={{ minHeight: '100%', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={{ minHeight: '100%', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
             {/* Call Messages [] */}
             {callMessages.map((message) =>

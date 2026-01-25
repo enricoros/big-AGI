@@ -14,7 +14,7 @@ import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/util/clipboardUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
@@ -175,7 +175,7 @@ export function Fusion(props: {
 
       {/* Output Message */}
       {(!!fusion?.outputDMessage?.fragments.length || fusion?.stage === 'fusing') && (
-        <Box sx={beamCardMessageWrapperSx}>
+        <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={beamCardMessageWrapperSx}>
           {!!fusion.outputDMessage && (
             <ChatMessageMemo
               message={fusion.outputDMessage}
