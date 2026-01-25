@@ -2,7 +2,7 @@ import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/Go
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
-import { applyModelParameterInitialValues, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
+import { applyModelParameterSpecsInitialValues, DModelParameterSpecAny, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
@@ -66,9 +66,11 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
 
   // null means unknown context/output tokens
   const contextTokens = d.contextWindow || null;
-  const maxOutputTokens = d.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null);
-  const llmResponseTokensRatio = d.maxCompletionTokens ? 1 : 1 / 4;
-  const llmResponseTokens = maxOutputTokens ? Math.round(maxOutputTokens * llmResponseTokensRatio) : null;
+  const maxOutputTokens = d.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null); // fallback to half context window
+
+  // initial (user overridable) response tokens setting: equal to the max, if the max is given, or to 1/8th of the context window (when max is set to 1/2 of context)
+  const llmResponseTokens = !maxOutputTokens ? null : !d.maxCompletionTokens ? Math.round(maxOutputTokens / 4) : d.maxCompletionTokens;
+
 
   // DLLM is a fundamental type in our application
   const dllm: DLLM = {
@@ -93,11 +95,13 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // pricing?: ..., // set below, since it needs some adaptation
 
     // parameters system (spec and initial values)
-    parameterSpecs: d.parameterSpecs?.length ? d.parameterSpecs : [],
+    parameterSpecs: d.parameterSpecs?.length
+      ? d.parameterSpecs as DModelParameterSpecAny[] // NOTE: our force cast, assume the server (simple zod type) sent valid specs to the client (TS discriminated type)
+      : [],
     initialParameters: {
       llmRef: d.id, // this is the vendor model id
       llmTemperature: d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null : FALLBACK_LLM_PARAM_TEMPERATURE,
-      llmResponseTokens: llmResponseTokens,
+      llmResponseTokens: llmResponseTokens, // number | null
     },
 
     // references
@@ -127,7 +131,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
 
   // set other params from spec's initialValues
   if (dllm.parameterSpecs?.length)
-    applyModelParameterInitialValues(dllm.initialParameters, dllm.parameterSpecs, false);
+    applyModelParameterSpecsInitialValues(dllm.initialParameters, dllm.parameterSpecs, false);
 
   return dllm;
 }

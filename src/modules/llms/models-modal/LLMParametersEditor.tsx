@@ -7,7 +7,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
-import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterId, DModelParameterRegistry, DModelParameterSpecAny, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -200,7 +200,7 @@ const _xaiSearchIntervalOptions = [
 export function LLMParametersEditor(props: {
   // constants
   maxOutputTokens: DLLMMaxOutputTokens,
-  parameterSpecs: DModelParameterSpec<DModelParameterId>[],
+  parameterSpecs: DModelParameterSpecAny[],
   parameterOmitTemperature?: boolean,
   baselineParameters: DModelParameterValues,
 
@@ -222,11 +222,9 @@ export function LLMParametersEditor(props: {
   const defGemTB = DModelParameterRegistry['llmVndGeminiThinkingBudget'];
 
   // specs: whether a models supports a parameter
-  const modelParamSpec = React.useMemo(() => {
-    return Object.fromEntries(
-      (props.parameterSpecs ?? []).map(spec => [spec.paramId, spec]),
-    ) as Record<DModelParameterId, DModelParameterSpec<DModelParameterId>>;
-  }, [props.parameterSpecs]);
+  const modelParamSpec = React.useMemo(() =>
+      Object.fromEntries((props.parameterSpecs ?? []).map(spec => [spec.paramId, spec]))
+    , [props.parameterSpecs]);
 
 
   // current values: { ...fallback, ...baseline, ...user }

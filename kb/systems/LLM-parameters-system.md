@@ -105,7 +105,7 @@ When a model is loaded:
 The system maintains type safety through:
 - `DModelParameterId` union from registry keys
 - `DModelParameterValue<T>` conditional types for values
-- `DModelParameterSpec<T>` interfaces for specifications
+- `DModelParameterSpecAny` interfaces for specifications
 - Runtime validation via Zod schemas at API boundaries
 
 ## Model Variant Pattern

@@ -4,7 +4,7 @@
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DModelParameterId, DModelParameterSpec, DModelParameterValues } from './llms.parameters';
+import type { DModelParameterSpecAny, DModelParameterValues } from './llms.parameters';
 import type { DModelPricing } from './llms.pricing';
 import type { DModelsServiceId } from './llms.service.types';
 
@@ -37,7 +37,7 @@ export interface DLLM {
   pricing?: DModelPricing;
 
   // parameters system
-  parameterSpecs: DModelParameterSpec<DModelParameterId>[];
+  parameterSpecs: DModelParameterSpecAny[];
   initialParameters: DModelParameterValues;
 
   // references

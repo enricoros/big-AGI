@@ -483,13 +483,20 @@ type _EnumValues<T> = T extends { readonly type: 'enum'; readonly values: readon
 
 
 /**
+ * Union of all possible model parameter specifications.
+ */
+export type DModelParameterSpecAny = {
+  [K in DModelParameterId]: DModelParameterSpec<K>;
+}[DModelParameterId];
+
+/**
  * Model-specific parameter configuration
  * Defines which parameters a model supports and their per-model settings.
  *
  * Note: This is the client-side TypeScript definition that matches
  * ModelParameterSpec_schema in `llm.server.types.ts`.
  */
-export interface DModelParameterSpec<T extends DModelParameterId> {
+interface DModelParameterSpec<T extends DModelParameterId> {
   paramId: T;
   required?: boolean;
   hidden?: boolean;
@@ -505,17 +512,18 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
 
 /// Utility Functions
 
-export function applyModelParameterInitialValues(destValues: DModelParameterValues, parameterSpecs: DModelParameterSpec<DModelParameterId>[], overwriteExisting: boolean): void {
-  for (const param of parameterSpecs) {
-    const paramId = param.paramId;
+export function applyModelParameterSpecsInitialValues(destValues: DModelParameterValues, modelParameterSpecs: DModelParameterSpecAny[], overwriteExisting: boolean): void {
+  for (const parameterSpec of modelParameterSpecs) {
+    const paramId = parameterSpec.paramId;
 
     // skip if already present
+    // NOTE: for the currently only caller, the destValues already has llmRef, llmTemperature, llmResponseTokens
     if (!overwriteExisting && paramId in destValues)
       continue;
 
     // 1. (if present) apply Spec.initialValue
-    if (param.initialValue !== undefined) {
-      destValues[paramId] = param.initialValue as DModelParameterValue<typeof paramId>;
+    if (parameterSpec.initialValue !== undefined) {
+      destValues[paramId] = parameterSpec.initialValue as DModelParameterValue<typeof paramId>;
       continue;
     }
 
