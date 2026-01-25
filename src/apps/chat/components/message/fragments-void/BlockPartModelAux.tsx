@@ -182,7 +182,7 @@ export function BlockPartModelAux(props: {
   return <Box sx={_styles.block}>
 
     {/* Chip to expand/collapse */}
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box data-agi-no-copy /* do not copy these buttons */ sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
         color={props.isLastFragment ? REASONING_COLOR : 'neutral'}
         variant={expanded ? 'solid' : 'soft'}
