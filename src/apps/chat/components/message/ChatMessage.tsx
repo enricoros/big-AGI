@@ -44,7 +44,7 @@ import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
-import { copyToClipboard, copyToClipboardHtmlMinusColors } from '~/common/util/clipboardUtils';
+import { clipboardCopyDOMSelectionOrFallback } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
@@ -315,13 +315,8 @@ export function ChatMessage(props: {
   const handleCloseOpsMenu = React.useCallback(() => setOpsMenuAnchor(null), []);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
-    const html = blocksRendererRef.current?.innerHTML;
-    if (html) {
-      // same as ChatMessageList.handleCopyHTMLWithoutColors
-      copyToClipboardHtmlMinusColors(html, textSubject, 'Message');
-    } else
-      copyToClipboard(textSubject, 'Text');
     e.preventDefault();
+    clipboardCopyDOMSelectionOrFallback(blocksRendererRef.current, textSubject, 'Message');
     handleCloseOpsMenu();
     closeContextMenu();
     closeBubble();
