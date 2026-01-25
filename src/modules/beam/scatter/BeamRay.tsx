@@ -19,7 +19,7 @@ import { DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/util/clipboardUtils';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
@@ -271,7 +271,7 @@ export function BeamRay(props: {
 
       {/* Ray Message */}
       {(!!ray?.message?.fragments.length || ray?.status === 'scattering') && (
-        <Box sx={beamCardMessageWrapperSx}>
+        <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={beamCardMessageWrapperSx}>
           {!!ray.message && (
             <ChatMessageMemo
               message={ray.message}

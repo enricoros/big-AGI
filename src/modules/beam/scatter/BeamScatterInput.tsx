@@ -8,6 +8,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { hasSystemMessageInHistory } from '~/common/stores/chat/chat.conversation';
+import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 
 import { BEAM_INVERT_BACKGROUND } from '../beam.config';
 import { useModuleBeamStore } from '../store-module-beam';
@@ -94,7 +95,7 @@ export function BeamScatterInput(props: {
     return null;
 
   return (
-    <Box sx={!BEAM_INVERT_BACKGROUND ? userMessageWrapperSx : isDarkMode ? userMessageWrapperDarkINVSx : userMessageWrapperINVSx}>
+    <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={!BEAM_INVERT_BACKGROUND ? userMessageWrapperSx : isDarkMode ? userMessageWrapperDarkINVSx : userMessageWrapperINVSx}>
       <ChatMessageMemo
         message={lastHistoryMessage}
         fitScreen={props.isMobile}
