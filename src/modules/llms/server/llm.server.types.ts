@@ -133,13 +133,13 @@ export const ModelDescription_schema = z.object({
   id: z.string(),
   idVariant: z.string().optional(), // only used on the client by '_createDLLMFromModelDescription' to instantiate 'unique' copies of the same model
   label: z.string(),
-  created: z.number().optional(),
-  updated: z.number().optional(),
+  created: z.int().optional(),
+  updated: z.int().optional(),
   description: z.string(),
-  contextWindow: z.number().nullable(),
+  contextWindow: z.int().nullable(),
   interfaces: z.array(z.union([z.enum(LLMS_ALL_INTERFACES), z.string()])), // backward compatibility: to not Break client-side interface parsing on newer server
   parameterSpecs: z.array(ModelParameterSpec_schema).optional(),
-  maxCompletionTokens: z.number().optional(),
+  maxCompletionTokens: z.int().optional(),
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
   benchmark: BenchmarksScores_schema.optional(),
