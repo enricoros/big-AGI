@@ -20,7 +20,7 @@ const BoxCollapsee = styled(Box)({
 
 export function ExpanderControlledBox(props: { expanded: boolean, children: React.ReactNode, sx?: SxProps }) {
   return (
-    <BoxCollapser aria-expanded={props.expanded} sx={props.sx}>
+    <BoxCollapser aria-expanded={props.expanded} data-agi-no-copy={!props.expanded || undefined} sx={props.sx}>
       <BoxCollapsee>
         {props.children}
       </BoxCollapsee>
