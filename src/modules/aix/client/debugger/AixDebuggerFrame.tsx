@@ -62,6 +62,9 @@ export function AixDebuggerFrame(props: {
 
   const { frame } = props;
 
+  const contextName = frame.context?.contextName || '';
+  const isConversation = contextName === 'conversation';
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
@@ -79,7 +82,7 @@ export function AixDebuggerFrame(props: {
         <div>-&gt; URL:</div>
         <Chip className='agi-ellipsize'>{frame.url || 'No URL data available'}</Chip>
         <div>Context:</div>
-        <Chip>{frame.context.contextName}</Chip>
+        <Chip variant={isConversation ? 'soft' : 'solid'} color='primary'>{contextName}</Chip>
         <div>Reference:</div>
         <Chip>{frame.context.contextRef}</Chip>
       </Box>
