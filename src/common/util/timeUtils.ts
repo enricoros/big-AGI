@@ -9,47 +9,28 @@ export function prettyTimestampForFilenames(useSeconds: boolean = true) {
   return `${year}-${month}-${day}-${hour}${minute}${useSeconds ? second : ''}`; // YYYY-MM-DD_HHMM[SS] format
 }
 
-export function getLocalMidnightInUTCTimestamp(): number {
-  const midnight = new Date();
-  // midnight.setDate(midnight.getDate() - 1);
-  midnight.setHours(24, 0, 0, 0);
-  return midnight.getTime();
-}
+/**
+ * Creates a time bucket classifier with precomputed calendar boundaries.
+ * Buckets: Today, Yesterday, This Week, This Month, Last Month, Older
+ * Call once, then use returned function for each item - avoids redundant Date computations.
+ */
+export function createTimeBucketClassifierEn() {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  const todayMs = new Date(y, m, now.getDate()).getTime();
+  const DAY_MS = 86400000;
+  const yesterdayMs = todayMs - DAY_MS;
+  // Week starts Monday (ISO 8601) - locale-aware: new Intl.Locale(navigator.language).getWeekInfo?.().firstDay
+  const weekStartMs = todayMs - ((now.getDay() + 6) % 7) * DAY_MS;
+  const monthStartMs = new Date(y, m, 1).getTime();
+  const lastMonthStartMs = new Date(y, m - 1, 1).getTime();
 
-export function getTimeBucketEn(itemTimeStamp: number, midnightTimestamp: number): string {
-  const oneHour = 60 * 60 * 1000;
-  const oneDay = oneHour * 24;
-  const oneWeek = oneDay * 7;
-  const oneMonth = oneDay * 30; // approximation
-
-  // relative time
-  const relDiff = Date.now() - itemTimeStamp;
-  if (relDiff < oneHour)
-    return 'Last Hour';
-
-  // midnight-relative time
-  const diff = midnightTimestamp - itemTimeStamp;
-  if (diff < oneDay) {
-    // if (diff > oneDay / 2)
-    //   return 'This morning';
-    // else if (diff > oneDay / 4)
-    //   return 'This afternoon';
-    // else
-    //   return 'This evening';
-    return 'Today';
-  } else if (diff < oneDay * 2) {
-    return 'Yesterday';
-  } else if (diff < oneDay * 3) {
-    return 'Two Days Ago';
-  } else if (diff < oneWeek) {
-    return 'This Week';
-  } else if (diff < oneWeek * 2) {
-    return 'Last Week';
-  } else if (diff < oneMonth) {
-    return 'This Month';
-  } else if (diff < oneMonth * 2) {
-    return 'Last Month';
-  } else {
+  return (itemTimestamp: number): string => {
+    const t = new Date(itemTimestamp).setHours(0, 0, 0, 0);
+    if (t >= todayMs) return 'Today';
+    if (t >= yesterdayMs) return 'Yesterday';
+    if (t >= weekStartMs) return 'This Week';
+    if (t >= monthStartMs) return 'This Month';
+    if (t >= lastMonthStartMs) return 'Last Month';
     return 'Older';
-  }
+  };
 }
