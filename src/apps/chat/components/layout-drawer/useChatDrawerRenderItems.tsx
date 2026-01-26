@@ -5,7 +5,7 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { getLocalMidnightInUTCTimestamp, getTimeBucketEn } from '~/common/util/timeUtils';
+import { createTimeBucketClassifierEn } from '~/common/util/timeUtils';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -235,14 +235,14 @@ export function useChatDrawerRenderItems(
             break;
         }
 
-        const midnightTime = getLocalMidnightInUTCTimestamp();
+        const getTimeBucket = createTimeBucketClassifierEn();
         const grouped = chatNavItems.reduce((acc, item) => {
 
           // derive the bucket name
           let bucket: string;
           switch (grouping) {
             case 'date':
-              bucket = getTimeBucketEn(item.updatedAt || midnightTime, midnightTime);
+              bucket = getTimeBucket(item.updatedAt || Date.now());
               break;
             case 'persona':
               bucket = item.systemPurposeId;
