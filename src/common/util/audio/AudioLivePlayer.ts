@@ -132,6 +132,45 @@ export class AudioLivePlayer {
   }
 
   /**
+   * Returns a Promise that resolves when audio playback completes.
+   * This waits for the actual audio to finish playing, not just streaming to end.
+   */
+  public waitForPlaybackEnd(): Promise<void> {
+    return new Promise((resolve) => {
+      // If already ended naturally, resolve immediately
+      if (this.audioElement.ended) {
+        resolve();
+        return;
+      }
+
+      const cleanup = () => {
+        this.audioElement.removeEventListener('ended', onEnded);
+        this.audioElement.removeEventListener('error', onError);
+      };
+
+      const onEnded = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        resolve(); // Resolve even on error to not hang
+      };
+
+      this.audioElement.addEventListener('ended', onEnded);
+      this.audioElement.addEventListener('error', onError);
+
+      // Safety: if audio has duration and already played through, resolve
+      // This handles edge case where 'ended' event was missed
+      if (this.audioElement.duration > 0 && this.audioElement.currentTime >= this.audioElement.duration) {
+        cleanup();
+        resolve();
+      }
+    });
+  }
+
+  /**
    * Stop playback and clean up resources
    */
   public async stop() {
