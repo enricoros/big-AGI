@@ -24,21 +24,20 @@ const IF_K2_5 = [
  * Moonshot AI (Kimi) models.
  * - models list and pricing: https://platform.moonshot.ai/docs/pricing/chat
  * - API docs: https://platform.moonshot.ai/docs/api/chat
- * - updated: 2026-01-21
+ * - updated: 2026-01-26
  */
 const _knownMoonshotModels: ManualMappings = [
 
   // Kimi K2.5 Series
   {
     idPrefix: 'kimi-k2.5',
-    label: 'Kimi K2.5 (2026-01-27)',
-    description: 'State-of-the-art MoE model (1T total, 32B active) with extended 256K context. Enhanced agentic coding intelligence and improved instruction following.',
+    label: 'Kimi K2.5',
+    description: 'Most intelligent Kimi model with native multimodal architecture. Supports vision (images/videos), thinking mode, and Agent tasks. Open-source SoTA in coding and visual understanding. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
     interfaces: IF_K2_5,
+    chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
-    // chatPrice: unknown for now
-    isPreview: true,
     benchmark: { cbaElo: 1417 + 2 }, // to be at the top
   },
 
