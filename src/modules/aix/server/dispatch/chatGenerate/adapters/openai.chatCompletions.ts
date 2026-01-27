@@ -185,6 +185,17 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (openAIDialect === 'openrouter' && model.vndOaiVerbosity)
     payload.verbosity = model.vndOaiVerbosity;
 
+  // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
+  if (openAIDialect === 'moonshot' && model.vndOaiReasoningEffort) {
+    if (model.vndOaiReasoningEffort !== 'none' && model.vndOaiReasoningEffort !== 'high')
+      throw new Error(`Moonshot Kimi K2.5 only supports reasoning effort 'none' or 'high', got '${model.vndOaiReasoningEffort}'`);
+
+    payload.thinking = { type: model.vndOaiReasoningEffort === 'none' ? 'disabled' : 'enabled' };
+
+    // Remove OpenAI-style reasoning_effort if it was set
+    delete payload.reasoning_effort;
+  }
+
   // [Moonshot] Kimi's $web_search builtin function
   if (openAIDialect === 'moonshot' && model.vndMoonshotWebSearch === 'auto' && !skipWebSearchDueToCustomTools)
     payload.tools = [...(payload.tools || []), {

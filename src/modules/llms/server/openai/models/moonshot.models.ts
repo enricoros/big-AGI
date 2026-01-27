@@ -37,7 +37,7 @@ const _knownMoonshotModels: ManualMappings = [
     maxCompletionTokens: 32768,
     interfaces: IF_K2_5,
     chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
-    // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
+    parameterSpecs: [{ paramId: 'llmVndMoonReasoningEffort' }],
     benchmark: { cbaElo: 1417 + 2 }, // to be at the top
   },
 

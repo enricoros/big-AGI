@@ -282,6 +282,14 @@ export const DModelParameterRegistry = {
 
   // Moonshot-specific parameters
 
+  llmVndMoonReasoningEffort: {
+    label: 'Reasoning Effort',
+    type: 'enum',
+    description: 'Controls thinking depth for Kimi K2.5. High enables extended multi-step reasoning (default).',
+    values: ['none', 'high'] as const,
+    // No initialValue - undefined means high (thinking enabled, the default for K2.5)
+  },
+
   llmVndMoonshotWebSearch: {
     label: 'Web Search',
     type: 'enum',
