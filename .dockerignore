@@ -9,6 +9,7 @@
 
 !*.mjs
 !middleware_BASIC_AUTH.ts
+!middleware.ts
 !next.config.ts
 !package*.json
 !tsconfig.json
