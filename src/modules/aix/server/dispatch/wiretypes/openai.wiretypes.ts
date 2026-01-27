@@ -414,6 +414,11 @@ export namespace OpenAIWire_API_Chat_Completions {
     search_mode: z.enum(['academic']).optional(), // Academic filter for scholarly sources
     search_after_date_filter: z.string().optional(), // Date filter in MM/DD/YYYY format
 
+    // [Moonshot, 2026-01-26] Kimi K2.5 thinking mode control
+    thinking: z.object({
+      type: z.enum(['enabled', 'disabled']),
+    }).optional(),
+
     seed: z.number().int().optional(),
     stop: z.array(z.string()).optional(), // Up to 4 sequences where the API will stop generating further tokens.
     user: z.string().optional(),

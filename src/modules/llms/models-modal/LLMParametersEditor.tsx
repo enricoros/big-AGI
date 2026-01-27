@@ -144,6 +144,12 @@ const _antEffortOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (High)' },
 ] as const;
 
+const _moonReasoningEffortOptions = [
+  { value: 'high', label: 'On', description: 'Multi-step reasoning' },
+  { value: 'none', label: 'Off', description: 'Disable thinking mode' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default (On)' },
+] as const;
+
 // const _moonshotWebSearchOptions = [
 //   { value: 'auto', label: 'On', description: 'Enable Kimi $web_search ($0.005 per search)' },
 //   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -248,6 +254,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiThinkingBudget,
     llmVndGeminiThinkingLevel,
     llmVndGeminiThinkingLevel4,
+    llmVndMoonReasoningEffort,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningEffort,
     llmVndOaiReasoningEffort4,
@@ -568,6 +575,19 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+
+    {showParam('llmVndMoonReasoningEffort') && (
+      <FormSelectControl
+        title='Thinking'
+        tooltip='Enable extended multi-step reasoning for Kimi K2.5'
+        value={llmVndMoonReasoningEffort ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndMoonReasoningEffort');
+          else onChangeParameter({ llmVndMoonReasoningEffort: value });
+        }}
+        options={_moonReasoningEffortOptions}
+      />
+    )}
 
     {/*{showParam('llmVndMoonshotWebSearch') && (*/}
     {/*  <FormSelectControl*/}
