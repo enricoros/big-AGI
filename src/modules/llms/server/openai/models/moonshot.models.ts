@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from '../../models.mappings';
@@ -13,6 +13,12 @@ const IF_K2 = [
 ];
 const IF_K2_REASON = [...IF_K2, LLM_IF_OAI_Reasoning];
 
+const IF_K2_5 = [
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching,
+  LLM_IF_OAI_Vision, // this is supported since 2.5
+  LLM_IF_HOTFIX_NoTemperature, // no temperature control
+];
+
 
 /**
  * Moonshot AI (Kimi) models.
@@ -21,6 +27,20 @@ const IF_K2_REASON = [...IF_K2, LLM_IF_OAI_Reasoning];
  * - updated: 2026-01-21
  */
 const _knownMoonshotModels: ManualMappings = [
+
+  // Kimi K2.5 Series
+  {
+    idPrefix: 'kimi-k2.5',
+    label: 'Kimi K2.5 (2026-01-27)',
+    description: 'State-of-the-art MoE model (1T total, 32B active) with extended 256K context. Enhanced agentic coding intelligence and improved instruction following.',
+    contextWindow: 262144,
+    maxCompletionTokens: 32768,
+    interfaces: IF_K2_5,
+    // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
+    // chatPrice: unknown for now
+    isPreview: true,
+    benchmark: { cbaElo: 1417 + 2 }, // to be at the top
+  },
 
   // Kimi K2 Series - Latest Models
 
