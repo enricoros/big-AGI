@@ -140,13 +140,14 @@ export const ModelDescription_schema = z.object({
   contextWindow: z.int().nullable(),
   interfaces: z.array(z.union([z.enum(LLMS_ALL_INTERFACES), z.string()])), // backward compatibility: to not Break client-side interface parsing on newer server
   parameterSpecs: z.array(ModelParameterSpec_schema).optional(),
-  maxCompletionTokens: z.int().optional(),
+  maxCompletionTokens: z.int().optional(), // initial parameter value for 'llmResponseTokens'
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
   benchmark: BenchmarksScores_schema.optional(),
   chatPrice: PricingChatGenerate_schema.optional(),
   hidden: z.boolean().optional(),
-  // TODO: add inputTypes/Kinds..
+  // parameter initializers for vendor-specific defaults
+  initialTemperature: z.number().optional(), // vendor-specific initial 'llmTemperature' (e.g. Gemini has 1.0)
 });
 
 

@@ -3,12 +3,13 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 import type { ModelDescriptionSchema } from '../llm.server.types';
 import { llmDevCheckModels_DEV } from '../models.mappings';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 
 // dev options
 const DEV_DEBUG_GEMINI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
+const GEMINI_DEFAULT_TEMPERATURE = 1.0;
 
 
 // supported interfaces
@@ -140,9 +141,8 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
-const IF_30 = [LLM_IF_HOTFIX_NoTemperature /* vital: the Gemini 3 Developers Guide strongly recommending keeping it at 1 (aka not setting it) */, ...IF_25];
+const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 const IF_30_IMG = [...IF_30, LLM_IF_Outputs_Image];
 
 
@@ -786,6 +786,14 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     interfaces.push(LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json);
   }
 
+  // validate the recommended temperature, we expect the default temperature
+  let initialTemperature: number = temperature === undefined ? GEMINI_DEFAULT_TEMPERATURE : temperature;
+  if (initialTemperature < 0 || initialTemperature > 2) {
+    if (DEV_DEBUG_GEMINI_MODELS)
+      console.log(`[DEV] geminiModelToModelDescription: unexpected temperature=${initialTemperature} for model ${modelId} (${displayName}) - resetting to default ${GEMINI_DEFAULT_TEMPERATURE}.`);
+    initialTemperature = GEMINI_DEFAULT_TEMPERATURE;
+  }
+
   return {
     id: modelId,
     label: label, // + (knownModel?.isNewest ? ' 🌟' : ''),
@@ -802,6 +810,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     chatPrice: knownModel?.chatPrice,
     hidden,
     // deprecated: knownModel?.deprecated,
+    initialTemperature,
   };
 }
 
