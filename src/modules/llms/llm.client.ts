@@ -40,9 +40,12 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
 
 
   // update the global models store
+  const factoryLLMs: ReadonlyArray<DLLM> = models.map(
+    (model: ModelDescriptionSchema) => _createDLLMFromModelDescription(model, service),
+  );
   llmsStoreActions().setServiceLLMs(
     service.id,
-    models.map(model => _createDLLMFromModelDescription(model, service)),
+    factoryLLMs,
     keepUserEdits,
     false,
   );
@@ -100,7 +103,9 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
       : [],
     initialParameters: {
       llmRef: d.id, // this is the vendor model id
-      llmTemperature: d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null : FALLBACK_LLM_PARAM_TEMPERATURE,
+      llmTemperature:
+        d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null
+          : d.initialTemperature ?? FALLBACK_LLM_PARAM_TEMPERATURE,
       llmResponseTokens: llmResponseTokens, // number | null
     },
 
