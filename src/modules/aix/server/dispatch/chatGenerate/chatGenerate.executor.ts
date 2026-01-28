@@ -45,6 +45,10 @@ export async function* executeChatGenerate(
     return; // exit
   }
 
+  // [DEV] Apply a request body override, if set
+  if (_d.requestBodyOverride && 'body' in dispatch.request)
+    dispatch.request.body = { ...dispatch.request.body, ..._d.requestBodyOverride };
+
   // Connect to the dispatch
   const dispatchResponse = yield* _connectToDispatch(dispatch.request, intakeAbortSignal, chatGenerateTx, _d);
   if (!dispatchResponse)

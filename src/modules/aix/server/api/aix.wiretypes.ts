@@ -567,6 +567,11 @@ export namespace AixWire_API {
     debugProfilePerformance: z.boolean().optional(),
 
     /**
+     * Applies a JSON override to the dispatch request body.
+     */
+    debugRequestBodyOverride: z.record(z.string(), z.unknown()).optional(),
+
+    /**
      * Request a resumable connection, if the model/service supports it.
      * - enables response storage for resumability (first found in the OpenAI Responses API)
      */
