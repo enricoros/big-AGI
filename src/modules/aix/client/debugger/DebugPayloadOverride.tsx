@@ -1,6 +1,9 @@
 import * as React from 'react';
 
 import { Box, Button, Chip, Textarea, Typography } from '@mui/joy';
+import DataObjectIcon from '@mui/icons-material/DataObject';
+
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { aixClientDebuggerSetRBO, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
@@ -21,6 +24,7 @@ function _parseJsonOrError(json: string): { parsed: Record<string, unknown> | nu
 export function DebugPayloadOverride() {
 
   // external state
+  const isMobile = useIsMobile();
   const storeJson = useAixClientDebuggerStore(state => state.requestBodyOverrideJson);
 
   // local state - initialize from store
@@ -51,12 +55,13 @@ export function DebugPayloadOverride() {
   }, []);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {isActive && <Chip size='sm' color='warning' variant='solid'>Active</Chip>}
-        <Box color={error ? 'danger.softColor' : hasLocalChanges ? 'primary.plainColor' : 'warning.plainColor'} fontSize='sm' fontWeight='md' lineHeight='sm'>
-          {error || (hasLocalChanges ? 'Unsaved changes' : 'JSON merged into the request body')}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }} color={error ? 'danger.softColor' : hasLocalChanges ? 'primary.plainColor' : undefined} fontSize='sm' fontWeight='md' lineHeight='sm'>
+          <DataObjectIcon sx={{ fontSize: 'md' }} />
+          {error || (hasLocalChanges ? 'WARNING: Unsaved changes' : 'JSON request injection')}
         </Box>
       </Box>
 
@@ -67,20 +72,22 @@ export function DebugPayloadOverride() {
           value={localJson}
           onChange={(e) => setLocalJson(e.target.value)}
           error={!!error}
-          minRows={3}
+          minRows={2}
           maxRows={8}
           sx={{ flex: 1, fontFamily: 'code', fontSize: 'xs', backgroundColor: 'background.popup', boxShadow: 'none' }}
         />
 
         <Box sx={{ flex: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button
-            variant={canApply ? 'soft' : 'plain'}
+            size='sm'
+            variant={canApply ? 'solid' : 'plain'}
             disabled={!canApply}
             onClick={handleApply}
           >
             Apply
           </Button>
           <Button
+            size='sm'
             variant='soft'
             color='neutral'
             disabled={!canClear}
@@ -92,7 +99,7 @@ export function DebugPayloadOverride() {
 
       </Box>
 
-      {!!storeJson && !hasLocalChanges && (
+      {!!storeJson && !hasLocalChanges && !isMobile && (
         <Typography level='body-xs'>
           Hint: you can press Shift + Ctrl + Z to regenerate the last `Chat` message.
         </Typography>
