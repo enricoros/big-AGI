@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Box, Button, Divider, FormControl, Typography } from '@mui/joy';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
@@ -63,16 +63,18 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, vendorType, showHost, 
 function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) {
 
   // async + cache
+  const queryClient = useQueryClient();
   const { isFetching, isError, error, refetch: previewVoice } = useQuery({
     enabled: false, // manual trigger only
     queryKey: ['speex-preview', engineId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const result = await speakText(
         SPEEX_PREVIEW_TEXT,
         { engineId: engineId },
         { rpcDisableStreaming: !SPEEX_PREVIEW_STREAM },
+        signal,
       );
-      if (!result.success) throw new Error(result.errorText || 'Preview failed');
+      if (!result.success && !signal.aborted) throw new Error(result.errorText || 'Preview failed');
       return result;
     },
   });
@@ -80,11 +82,11 @@ function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) 
   return (
     <TooltipOutlined color='danger' title={error?.message ? <div style={{ whiteSpace: 'pre-wrap' }}>{error.message}</div> : false}>
       <Button
-        variant='outlined'
-        color={isError ? 'danger' : 'neutral'}
+        variant={isFetching ? 'soft' : 'outlined'}
+        color={isError ? 'danger' : isFetching ? 'primary' : 'neutral'}
         size='sm'
-        onClick={() => previewVoice()}
-        disabled={isFetching}
+        onClick={() => !isFetching ? previewVoice() : queryClient.cancelQueries({ queryKey: ['speex-preview', engineId] })}
+        // disabled={isFetching}
         startDecorator={isFetching ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
         sx={{ ml: 'auto', minWidth: 130 }}
       >
