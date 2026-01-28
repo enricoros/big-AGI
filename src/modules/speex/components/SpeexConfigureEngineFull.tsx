@@ -11,6 +11,7 @@ import { FormSecretField } from '~/common/components/forms/FormSecretField';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, DVoiceElevenLabs, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
 import { SPEEX_DEFAULTS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../speex.config';
@@ -146,6 +147,9 @@ function ElevenLabsConfig({ engine, onUpdate, mode, isMobile }: {
   const { credentials, voice } = engine;
   const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
 
+  // advanced toggle for custom API host (#624)
+  const advanced = useToggleableBoolean(!!credentials.apiHost);
+
   const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
     onUpdate({ credentials: newCredentials });
   }, [onUpdate]);
@@ -168,7 +172,18 @@ function ElevenLabsConfig({ engine, onUpdate, mode, isMobile }: {
         credentials={credentials}
         onUpdate={handleCredentialsUpdate}
         vendorType='elevenlabs'
+        showHost={advanced.on}
+        hostPlaceholder='https://api.elevenlabs.io'
       />
+    )}
+
+    {/* Advanced toggle */}
+    {showCredentials && (
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -2 }}>
+        <Typography level='body-xs' onClick={advanced.toggle} sx={{ textDecoration: 'underline', cursor: 'pointer', color: 'text.tertiary' }}>
+          {advanced.on ? 'Hide Advanced' : 'Advanced'}
+        </Typography>
+      </Box>
     )}
 
     <FormChipControl<Exclude<DVoiceElevenLabs['ttsModel'], undefined>>
