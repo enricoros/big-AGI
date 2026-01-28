@@ -9,7 +9,7 @@
  */
 
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
-import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+import { combine_ArrayBuffers_To_Uint8Array, convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isLocalUrl } from '~/common/util/urlUtils';
 import { stripUndefined } from '~/common/util/objectUtils';
@@ -17,10 +17,9 @@ import { stripUndefined } from '~/common/util/objectUtils';
 import type { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
 import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
 
-import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
-import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
+import type { AudioAutoPlayer } from '~/common/util/audio/AudioAutoPlayer';
 
-import type { DSpeexEngine, SpeexListVoiceOption, SpeexSpeakResult } from '../../speex.types';
+import type { DSpeexEngine, SpeexListVoiceOption, SpeexSynthesizeResult } from '../../speex.types';
 import type { SpeexWire_Access, SpeexWire_Voice } from './rpc.wiretypes';
 import { SPEEX_DEBUG } from '../../speex.config';
 
@@ -48,41 +47,31 @@ export async function speexSynthesize_RPC(
   engine: _DSpeexEngineRPC,
   text: string,
   options: {
-    streaming: boolean;
+    dataStreaming: boolean; // data streaming
+    returnAudioBuffer: boolean; // yes: heavy, will accumulate audio as a single base64 results
     languageCode?: string;
     priority?: 'fast' | 'balanced' | 'quality';
-    playback: boolean;
-    returnAudio: boolean;
   },
-  callbacks?: {
-    onStart?: () => void;
-    onChunk?: (chunk: ArrayBuffer) => void;
-    onComplete?: () => void;
-    onError?: (error: Error) => void;
-  },
-): Promise<SpeexSpeakResult> {
+  abortController: AbortController,
+  createAudioPlayer?: () => AudioAutoPlayer,
+): Promise<SpeexSynthesizeResult> {
 
   // engine credentials (DCredentials..) -> wire Access
   if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesize request (engine: ${engine.engineId}, ${text.length} chars) - options:`, options);
   const access = stripUndefined(_buildRPCWireAccess(engine));
-  if (!access) {
-    const error = new Error(`Failed to resolve credentials for engine ${engine.engineId}`);
-    callbacks?.onError?.(error);
-    return { success: false, errorType: 'tts-unconfigured', error: error.message };
-  }
+  if (!access)
+    return { success: false, errorType: 'tts-unconfigured', errorText: `Failed to resolve credentials for engine ${engine.engineId}` };
 
   // engine voice -> wire Voice
   // IMPORTANT: TS ensures structural compatibility here between the DVoice* and Voice*_schema types
   const voice: SpeexWire_Voice = stripUndefined(engine.voice);
 
 
-  // audio player for streaming playback (only used when browser supports it)
-  let audioPlayer: AudioLivePlayer | null = null;
-  // fallback: accumulate chunks for browsers that don't support streaming (Firefox)
-  const streamingFallbackChunks: ArrayBuffer[] = [];
-  const audioChunks: ArrayBuffer[] = [];
+  // if !!createAudioPlayer, we stream audio to it as we receive it
+  let audioPlayer: AudioAutoPlayer | undefined;
 
-  const abortController = new AbortController();
+  // if options.returnAudioBuffer, we accumulate audio chunks here
+  const returnedAudioChunks: ArrayBuffer[] = [];
 
   try {
 
@@ -91,7 +80,7 @@ export async function speexSynthesize_RPC(
       access,
       text,
       voice,
-      streaming: options.streaming,
+      streaming: options.dataStreaming,
       ...(options.languageCode && { languageCode: options.languageCode }),
       ...(options.priority && { priority: options.priority }),
     };
@@ -104,9 +93,8 @@ export async function speexSynthesize_RPC(
       if (SPEEX_DEBUG) console.log('[Speex RPC] <-', particle);
       switch (particle.t) {
         case 'start':
-          callbacks?.onStart?.();
-          if (options.playback && options.streaming && AudioLivePlayer.isSupported)
-            audioPlayer = new AudioLivePlayer();
+          if (createAudioPlayer)
+            audioPlayer = createAudioPlayer();
           break;
 
         case 'audio':
@@ -114,32 +102,14 @@ export async function speexSynthesize_RPC(
           const audioData = convert_Base64_To_UInt8Array(particle.base64, 'speex.rpc.client');
 
           // Accumulate for return (copy bytes before playback may transfer/detach the buffer)
-          if (options.returnAudio)
-            audioChunks.push(audioData.slice().buffer);
+          if (options.returnAudioBuffer)
+            returnedAudioChunks.push(audioData.slice().buffer);
 
-          // Playback: streaming uses AudioLivePlayer for chunked playback,
-          // non-streaming uses AudioPlayer for single-buffer playback
-          if (options.playback) {
-            if (particle.chunk) {
-              // Streaming chunk playback
-              if (AudioLivePlayer.isSupported) {
-                // create the player on-demand, however in the near future we'll migrate to
-                // Northbridge AudioPlayer for all playback needs
-                if (!audioPlayer)
-                  audioPlayer = new AudioLivePlayer();
-                audioPlayer.enqueueChunk(audioData.buffer);
-              } else {
-                // Fallback for Firefox: accumulate chunks, play all at once on 'done'
-                streamingFallbackChunks.push(audioData.slice().buffer);
-              }
-            } else {
-              // also consider merging LiveAudioPlayer into AudioPlayer - note this will throw on malformed base64 data
-              void AudioPlayer.playBuffer(audioData.buffer); // fire-and-forget for whole audio
-            }
-          }
-
-          // Callback
-          callbacks?.onChunk?.(audioData.buffer);
+          // Play if requested, in both chunked and full modes
+          if (particle.chunk)
+            audioPlayer?.enqueueChunk(audioData.buffer);
+          else
+            audioPlayer?.playFullBuffer(audioData.buffer);
           break;
 
         case 'log':
@@ -148,23 +118,8 @@ export async function speexSynthesize_RPC(
           break;
 
         case 'done':
-          const { chars, audioBytes, durationMs } = particle;
-          if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesis done: ${chars} chars, ${audioBytes} bytes, ${durationMs} ms`);
-
-          // NOTE: calling this will end the sound abruptly if the final chunk is still playing, so we don't do it for now
+          if (SPEEX_DEBUG) console.log(`[Speex RPC] Synthesis done: ${particle.chars} chars, ${particle.audioBytes} bytes, ${particle.durationMs} ms`);
           audioPlayer?.endPlayback();
-
-          // Fallback playback for Firefox: play all accumulated chunks as a single buffer
-          if (streamingFallbackChunks.length > 0) {
-            const totalLength = streamingFallbackChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
-            const combined = new Uint8Array(totalLength);
-            let offset = 0;
-            for (const chunk of streamingFallbackChunks) {
-              combined.set(new Uint8Array(chunk), offset);
-              offset += chunk.byteLength;
-            }
-            void AudioPlayer.playBuffer(combined.buffer);
-          }
           break;
 
         case 'error':
@@ -173,20 +128,12 @@ export async function speexSynthesize_RPC(
       }
     }
 
-    callbacks?.onComplete?.();
-
     // build result
-    const result: SpeexSpeakResult = { success: true };
+    const result: SpeexSynthesizeResult = { success: true };
 
-    if (options.returnAudio && audioChunks.length > 0) {
+    if (options.returnAudioBuffer && returnedAudioChunks.length > 0) {
       // Concatenate all chunks and convert to base64
-      const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
-      const combined = new Uint8Array(totalLength);
-      let offset = 0;
-      for (const chunk of audioChunks) {
-        combined.set(new Uint8Array(chunk), offset);
-        offset += chunk.byteLength;
-      }
+      const combined = combine_ArrayBuffers_To_Uint8Array(returnedAudioChunks);
       result.audioBase64 = convert_UInt8Array_To_Base64(combined, 'speex.rpc.client');
     }
 
@@ -194,20 +141,14 @@ export async function speexSynthesize_RPC(
 
   } catch (error: any) {
     if (SPEEX_DEBUG) console.error('[Speex RPC] Synthesis error:', { error });
-
-    // cleanup
-    if (audioPlayer)
-      void audioPlayer.stop();
-
-    const errorMessage = error.message || 'Synthesis failed';
-    callbacks?.onError?.(new Error(errorMessage));
-    return { success: false, errorType: 'tts-exception', error: errorMessage };
+    audioPlayer?.stop();
+    return { success: false, errorType: 'tts-exception', errorText: error.message || 'Synthesis failed' };
   }
 }
 
 
 /**
- * List voices
+ * List available voices for an engine.
  */
 export async function speexListVoices_RPC_orThrow(engine: _DSpeexEngineRPC): Promise<SpeexListVoiceOption[]> {
   const access = stripUndefined(_buildRPCWireAccess(engine));

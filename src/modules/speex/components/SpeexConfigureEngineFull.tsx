@@ -70,9 +70,9 @@ function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) 
       const result = await speakText(
         SPEEX_PREVIEW_TEXT,
         { engineId: engineId },
-        { streaming: SPEEX_PREVIEW_STREAM },
+        { rpcDisableStreaming: !SPEEX_PREVIEW_STREAM },
       );
-      if (!result.success) throw new Error(result.error || 'Preview failed');
+      if (!result.success) throw new Error(result.errorText || 'Preview failed');
       return result;
     },
   });
