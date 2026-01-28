@@ -7,7 +7,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
-import { DModelParameterId, DModelParameterRegistry, DModelParameterSpecAny, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterId, DModelParameterRegistry, DModelParameterSpecAny, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -237,7 +237,7 @@ export function LLMParametersEditor(props: {
   const allParameters = getAllModelParameterValues(props.baselineParameters, props.parameters);
   const {
     llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, // fallback for undefined, result is number | null
-    llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE, // fallback for undefined, result is number | null
+    llmTemperature, // null: no temperature, number: temperature value, undefined: shall not happen, we treat is similarly to null
     llmForceNoStream,
     llmVndAnt1MContext,
     llmVndAntEffort,
@@ -279,7 +279,7 @@ export function LLMParametersEditor(props: {
 
 
   // state (here because the initial state depends on props)
-  const tempAboveOne = llmTemperature !== null && llmTemperature > 1;
+  const tempAboveOne = llmTemperature !== null && llmTemperature !== undefined && llmTemperature > 1;
   const [overheat, setOverheat] = React.useState(tempAboveOne);
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
@@ -319,11 +319,20 @@ export function LLMParametersEditor(props: {
 
     {!temperatureHide && <FormSliderControl
       title='Temperature' ariaLabel='Model Temperature'
-      description={llmTemperature === null ? 'Unsupported' : llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
-      disabled={props.parameterOmitTemperature}
-      min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
+      description={
+        llmTemperature === null ? 'Unsupported'
+          : llmTemperature === undefined ? 'Default'
+            : llmTemperature < 0.33 ? 'More strict'
+              : llmTemperature > 1 ? 'Extra hot ♨️'
+                : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'
+      }
+      disabled={props.parameterOmitTemperature /* set when LLM_IF_HOTFIX_NoTemperature */}
+      min={0}
+      max={overheat ? 2 : 1}
+      step={0.1}
+      defaultValue={0.5 /* FIXME: this wasn't FALLBACK_LLM_PARAM_TEMPERATURE, but we shall not need this */}
       valueLabelDisplay={props.parameters?.llmTemperature !== undefined ? 'on' : 'auto'} // detect user-overridden or not
-      value={llmTemperature}
+      value={llmTemperature === undefined ? null : llmTemperature}
       onChange={value => onChangeParameter({ llmTemperature: value })}
       endAdornment={
         <Tooltip arrow disableInteractive title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
