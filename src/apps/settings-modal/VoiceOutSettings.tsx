@@ -45,7 +45,7 @@ export function VoiceOutSettings(props: { isMobile: boolean }) {
     <FormSwitchControl
       title='Speak Cost Guard'
       description={ttsCharLimit !== null ? 'Max ~3 min' : 'Unlimited'}
-      tooltip='Limits text sent to TTS providers, helping prevent unexpected costs with cloud services'
+      tooltip='Limits text sent to TTS providers, helping prevent unexpected costs with cloud services. By default the limit is 4096 characters (~3 minutes of speech).'
       checked={ttsCharLimit !== null}
       onChange={(checked) => setTtsCharLimit(checked ? 4096 : null)}
     />

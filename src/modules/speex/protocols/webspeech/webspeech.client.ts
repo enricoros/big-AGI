@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 
-import type { DVoiceWebSpeech, SpeexListVoiceOption, SpeexListVoicesResult, SpeexSpeakResult } from '../../speex.types';
+import type { DVoiceWebSpeech, SpeexListVoiceOption, SpeexListVoicesResult, SpeexSynthesizeResult } from '../../speex.types';
 
 import { SPEEX_DEBUG } from '~/modules/speex/speex.config';
 
@@ -181,12 +181,12 @@ export function speexSynthesize_WebSpeech(
     onComplete?: () => void;
     onError?: (error: Error) => void;
   },
-): Promise<SpeexSpeakResult> {
+): Promise<SpeexSynthesizeResult> {
   return new Promise((resolve) => {
     if (!webspeechIsSupported()) {
       const error = new Error('Web Speech API not supported');
       callbacks?.onError?.(error);
-      resolve({ success: false, errorType: 'tts-no-engine', error: error.message });
+      resolve({ success: false, errorType: 'tts-no-engine', errorText: error.message });
       return;
     }
 
@@ -226,7 +226,7 @@ export function speexSynthesize_WebSpeech(
       const errorMessage = event.error || 'Speech synthesis failed';
       const error = new Error(errorMessage);
       callbacks?.onError?.(error);
-      resolve({ success: false, errorType: 'tts-error', error: errorMessage });
+      resolve({ success: false, errorType: 'tts-error', errorText: errorMessage });
     };
 
     // start speaking
@@ -237,11 +237,11 @@ export function speexSynthesize_WebSpeech(
 
 // Helpers (not used for now, keep them around)
 
-// export function webspeechStop(): void {
-//   if (webspeechIsSupported())
-//     speechSynthesis.cancel();
-// }
-//
+export function speexSynthesize_WebSpeechStop(): void {
+  if (webspeechIsSupported())
+    speechSynthesis.cancel();
+}
+
 // export function webspeechPause(): void {
 //   if (webspeechIsSupported())
 //     speechSynthesis.pause();

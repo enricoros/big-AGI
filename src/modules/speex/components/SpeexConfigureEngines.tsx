@@ -13,6 +13,7 @@ import { Box, Button, Chip, Dropdown, ListItemDecorator, Menu, MenuButton, MenuI
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import LinkIcon from '@mui/icons-material/Link';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
@@ -22,9 +23,11 @@ import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
+import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import type { DSpeexEngineAny, DSpeexVendorType } from '../speex.types';
 import { SpeexConfigureEngineFull } from './SpeexConfigureEngineFull';
+import { SpeexSystemTest } from './SpeexSystemTest';
 import { speexAreCredentialsValid, useSpeexEngines, useSpeexGlobalEngine, useSpeexStore } from '../store-module-speex';
 
 
@@ -110,8 +113,10 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
   // state
   const [isEditing, setIsEditing] = React.useState(false);
   const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DSpeexEngineAny | null>(null);
+  const [showSystemTest, setShowSystemTest] = React.useState(false);
 
   // external state - module
+  const labsDevMode = useLabsDevMode();
   const engines = useSpeexEngines();
   const activeEngine = useSpeexGlobalEngine(); // auto-select the highest priority, if the user choice (active engine) is missing
   const activeEngineId = activeEngine?.engineId ?? null;
@@ -298,6 +303,20 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
         positiveActionText='Remove'
       />
     )}
+
+    {/* TTS System Test (inline, dev mode only) */}
+    {labsDevMode && <>
+      <Button
+        color='warning'
+        variant='soft'
+        startDecorator={<EngineeringIcon />}
+        onClick={() => setShowSystemTest(on => !on)}
+      >
+        [DEV] {showSystemTest ? 'Hide Test' : 'Test'} TTS
+      </Button>
+
+      {showSystemTest && <SpeexSystemTest />}
+    </>}
 
   </>;
 }
