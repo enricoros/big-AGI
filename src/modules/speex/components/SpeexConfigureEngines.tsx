@@ -18,6 +18,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ElevenLabsIcon } from '~/common/components/icons/vendors/ElevenLabsIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { InworldIcon } from '~/common/components/icons/vendors/InworldIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -101,6 +102,7 @@ const _styles = {
 
 const ADDABLE_VENDORS: { vendorType: DSpeexVendorType; label: string; description: string, icon?: React.FunctionComponent<SvgIconProps> }[] = [
   { vendorType: 'elevenlabs', label: 'ElevenLabs', description: 'Premium voices', icon: ElevenLabsIcon },
+  { vendorType: 'inworld', label: 'Inworld', description: 'Expressive AI voices', icon: InworldIcon },
   { vendorType: 'localai', label: 'LocalAI', description: 'Self-hosted TTS', icon: LocalAIIcon },
   { vendorType: 'openai', label: 'OpenAI TTS', description: 'Reliable', icon: OpenAIIcon },
 ] as const;
