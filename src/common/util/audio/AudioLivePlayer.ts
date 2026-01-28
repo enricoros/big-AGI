@@ -16,6 +16,7 @@ export class AudioLivePlayer {
   private isSourceBufferUpdating: boolean = false;
   private isMediaSourceEnded: boolean = false;
   private isMediaSourceOpen: boolean = false;
+  private isSourceBufferFailed: boolean = false;
   private isStopped: boolean = false;
 
   // Deferred for waitForPlaybackEnd() - allows stop() to unblock waiters
@@ -46,15 +47,19 @@ export class AudioLivePlayer {
   }
 
   private onMediaSourceOpen = () => {
-    this.isMediaSourceOpen = true;
+    if (this.isStopped) return; // Prevent race with stop()
+
     try {
       this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeType);
       this.sourceBuffer.mode = 'sequence'; // Ensure data is appended in order
       this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
       this.sourceBuffer.addEventListener('error', this.onSourceBufferError);
+      this.isMediaSourceOpen = true; // Set after successful initialization
     } catch (e) {
       // Safety net for any edge cases not caught by isSupported check
-      console.error('AudioLivePlayer: Failed to create SourceBuffer:', e);
+      console.error('[DEV] AudioLivePlayer: Failed to create SourceBuffer:', e);
+      this.isSourceBufferFailed = true;
+      this.playbackEndResolve?.(); // Unblock any waiters
       return;
     }
 
@@ -63,19 +68,19 @@ export class AudioLivePlayer {
   };
 
   private onMediaSourceError = (e: Event) => {
-    console.error('MediaSource error:', e);
+    console.warn('[DEV] AudioLivePlayer: MediaSource error:', e);
   };
 
   private onMediaSourceEnded = () => {
-    console.log('MediaSource ended');
+    // MediaSource stream ended (all data received)
   };
 
   private onMediaSourceClosed = () => {
-    console.log('MediaSource closed');
+    // MediaSource closed (cleanup complete)
   };
 
   private onSourceBufferError = (e: Event) => {
-    console.error('SourceBuffer error:', e);
+    console.error('[DEV] AudioLivePlayer: SourceBuffer error:', e);
   };
 
   private onSourceBufferUpdateEnd = () => {
@@ -91,6 +96,7 @@ export class AudioLivePlayer {
   };
 
   private appendNextChunk() {
+    if (this.isStopped) return; // Early exit if stopped
     if (!this.sourceBuffer || this.isSourceBufferUpdating || !this.isMediaSourceOpen) return;
 
     if (this.chunkQueue.length > 0) {
@@ -100,7 +106,7 @@ export class AudioLivePlayer {
           this.isSourceBufferUpdating = true;
           this.sourceBuffer.appendBuffer(chunk);
         } catch (e) {
-          console.error('Error appending buffer:', e);
+          console.error('[DEV] AudioLivePlayer: Error appending buffer:', e);
           this.isSourceBufferUpdating = false;
         }
       }
@@ -144,8 +150,8 @@ export class AudioLivePlayer {
    */
   public waitForPlaybackEnd(): Promise<void> {
     return new Promise((resolve) => {
-      // If already stopped or ended, resolve immediately
-      if (this.isStopped || this.audioElement.ended) {
+      // If already stopped, ended, or failed to initialize, resolve immediately
+      if (this.isStopped || this.audioElement.ended || this.isSourceBufferFailed) {
         resolve();
         return;
       }
@@ -189,6 +195,7 @@ export class AudioLivePlayer {
    */
   public stop() {
     this.isStopped = true;
+    this.isSourceBufferFailed = true; // Prevent late initialization
     this.audioElement.pause();
     this.chunkQueue = [];
     this.isMediaSourceEnded = true;
@@ -216,7 +223,9 @@ export class AudioLivePlayer {
     this.mediaSource.removeEventListener('sourceended', this.onMediaSourceEnded);
     this.mediaSource.removeEventListener('sourceclose', this.onMediaSourceClosed);
 
-    void this.audioContext.close(); // fire/forget
+    if (this.audioContext.state !== 'closed')
+      void this.audioContext.close().catch(() => { /* ignore - already closed */
+      });
     URL.revokeObjectURL(this.mediaSourceObjectUrl);
     this.audioElement.src = '';
   }
