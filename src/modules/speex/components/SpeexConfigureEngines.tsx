@@ -13,7 +13,6 @@ import { Box, Button, Chip, Dropdown, ListItemDecorator, Menu, MenuButton, MenuI
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import EngineeringIcon from '@mui/icons-material/Engineering';
 import LinkIcon from '@mui/icons-material/Link';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
@@ -23,7 +22,6 @@ import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
-import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import type { DSpeexEngineAny, DSpeexVendorType } from '../speex.types';
 import { SpeexConfigureEngineFull } from './SpeexConfigureEngineFull';
@@ -116,7 +114,6 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
   const [showSystemTest, setShowSystemTest] = React.useState(false);
 
   // external state - module
-  const labsDevMode = useLabsDevMode();
   const engines = useSpeexEngines();
   const activeEngine = useSpeexGlobalEngine(); // auto-select the highest priority, if the user choice (active engine) is missing
   const activeEngineId = activeEngine?.engineId ?? null;
@@ -173,11 +170,13 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
     {/* "Voice Engine" + Add Service dropdown */}
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
-      <FormLabelStart
-        // title='Voice Engine'
-        title='Active Engine'
-        description={activeEngine ? activeEngine.label : 'Select a voice provider'}
-      />
+      <Box onClick={event => event.shiftKey && setShowSystemTest(on => !on)}>
+        <FormLabelStart
+          // title='Voice Engine'
+          title='Active Engine'
+          description={activeEngine ? activeEngine.label : 'Select a voice provider'}
+        />
+      </Box>
 
 
       {/* -> Add Service */}
@@ -305,18 +304,7 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
     )}
 
     {/* TTS System Test (inline, dev mode only) */}
-    {labsDevMode && <>
-      <Button
-        color='warning'
-        variant='soft'
-        startDecorator={<EngineeringIcon />}
-        onClick={() => setShowSystemTest(on => !on)}
-      >
-        [DEV] {showSystemTest ? 'Hide Test' : 'Test'} TTS
-      </Button>
-
-      {showSystemTest && <SpeexSystemTest />}
-    </>}
+    {showSystemTest && <SpeexSystemTest />}
 
   </>;
 }
