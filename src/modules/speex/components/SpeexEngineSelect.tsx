@@ -14,6 +14,8 @@ export function speexVendorTypeLabel(vendorType: DSpeexVendorType): string {
   switch (vendorType) {
     case 'elevenlabs':
       return 'ElevenLabs';
+    case 'inworld':
+      return 'Inworld';
     case 'openai':
       return 'OpenAI';
     case 'localai':
