@@ -10,6 +10,25 @@ import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } 
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
 
+  // GPT-5.2 with reasoning disabled (non-thinking) - supports temperature control
+  // Per https://platform.openai.com/docs/guides/latest-model#gpt-5-2-parameter-compatibility
+  // temperature, top_p, logprobs are only supported when reasoning_effort=none
+  'gpt-5.2-2025-12-11': {
+    idVariant: '::thinking-none',
+    label: 'GPT-5.2 (No-thinking)',
+    hidden: true, // hidden by default as redundant, user can unhide in settings
+    description: 'Supports temperature control for creative applications. GPT-5.2 with reasoning disabled (reasoning_effort=none).',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_Tools_WebSearch], // NO LLM_IF_OAI_Reasoning, NO LLM_IF_HOTFIX_NoTemperature
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort52', initialValue: 'none', hidden: true }, // factory 'none', not changeable
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+  },
+
   // GPT-5 with web search enabled by default
   // 'gpt-5-2025-08-07': {
   //   idVariant: 'search',
@@ -1165,15 +1184,15 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
  */
 export function openAIInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
 
-  // Add variant first (if defined), then the base model
+  // Add the base model first
+  models.push(model);
+
+  // Add variant second (if defined)
   if (hardcodedOpenAIVariants[model.id])
     models.push({
       ...model,
       ...hardcodedOpenAIVariants[model.id],
     });
-
-  // Add the base model
-  models.push(model);
 
   return models;
 }
