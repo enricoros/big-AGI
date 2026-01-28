@@ -53,8 +53,8 @@ export async function speakText(
     inputText = speex_textApplyCharLimit(inputText);
 
   // chunk text unless disabled
-  const chunks = !options?.maxChunkLength ? [inputText]
-    : speex_splitTextIntoChunks(inputText, options.maxChunkLength /* 500 if missing */);
+  const chunks = options?.maxChunkLength === false || options?.maxChunkLength === 0 ? [inputText]
+    : speex_splitTextIntoChunks(inputText, options?.maxChunkLength /* 500 if missing */);
   if (!chunks.length) {
     chunkedCallbacks?.onComplete?.(false);
     return { success: true, aborted: false, chunksSpoken: 0, totalChunks: 0 };
