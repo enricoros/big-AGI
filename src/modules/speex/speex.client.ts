@@ -156,7 +156,7 @@ interface _SpeexSpeakHandle {
  * handle.stop();
  * ```
  */
-function speakRawText_withHandle(
+export function speakRawText_withHandle(
   rawText: string, // this won't be processed - use speakText for chunking, cleanup, etc.
   voiceSelector: SpeexVoiceSelector,
   rpcOptions?: SpeexSynthesizeOptions,
