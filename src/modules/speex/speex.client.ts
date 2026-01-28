@@ -294,7 +294,18 @@ function _engineFromSelector(selector: SpeexVoiceSelector): DSpeexEngineAny | nu
 }
 
 function _engineApplyVoiceOverride(engine: DSpeexEngineAny, selector: SpeexVoiceSelector): DSpeexEngineAny {
-  return (!selector || !('voice' in selector) || !selector.voice) ? engine : {
+  // No voice override in selector - use engine's default voice
+  if (!selector || !('voice' in selector) || !selector.voice)
+    return engine;
+
+  // IMPORTANT: Don't apply voice override if dialects don't match - this prevents
+  // "Voice dialect mismatch" errors when e.g. an ElevenLabs persona voice falls back
+  // to an OpenAI engine because ElevenLabs isn't configured
+  if (selector.voice.dialect && selector.voice.dialect !== engine.vendorType)
+    return engine;
+
+  // Apply voice override
+  return {
     ...engine,
     voice: { ...engine.voice, ...selector.voice },
   } as DSpeexEngineAny;
