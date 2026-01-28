@@ -10,6 +10,7 @@
 
 import type { SpeexSpeechParticle, SpeexWire_Access, SpeexWire_ListVoices_Output, SpeexWire_Synthesize_Input, SpeexWire_Voice } from './rpc.wiretypes';
 import { listVoicesElevenLabs, synthesizeElevenLabs } from './synthesize-elevenlabs';
+import { listVoicesInworld, synthesizeInworld } from './synthesize-inworld';
 import { listVoicesLocalAIOrThrow, listVoicesOpenAI, synthesizeOpenAIProtocol } from './synthesize-openai';
 
 
@@ -46,6 +47,10 @@ export async function* speexRpcCoreSynthesize(input: SpeexWire_Synthesize_Input,
         yield* synthesizeElevenLabs({ access, text, voice, streaming, languageCode, priority, signal });
         break;
 
+      case 'inworld':
+        yield* synthesizeInworld({ access, text, voice, streaming, languageCode, priority, signal });
+        break;
+
       case 'localai':
       case 'openai':
         yield* synthesizeOpenAIProtocol({ access, text, voice, streaming, languageCode, priority, signal });
@@ -67,6 +72,9 @@ export async function speexRpcCoreListVoices(access: SpeexWire_Access): Promise<
   switch (access.dialect) {
     case 'elevenlabs':
       return await listVoicesElevenLabs(access);
+
+    case 'inworld':
+      return await listVoicesInworld(access);
 
     case 'openai':
       return { voices: listVoicesOpenAI() };
