@@ -22,4 +22,10 @@ export const SPEEX_DEFAULTS = {
   // LocalAI - kokoro is a high-quality neural TTS
   LOCALAI_MODEL: 'kokoro',
 
+  // Inworld - high-quality, low-latency TTS with voice cloning
+  INWORLD_MODEL: 'inworld-tts-1.5-max',       // best quality (~200ms latency, $10/1M chars)
+  INWORLD_MODEL_FAST: 'inworld-tts-1.5-mini', // fastest (<100ms latency, $5/1M chars)
+  INWORLD_VOICE: 'Alex',                      // default voice
+  INWORLD_TTS_MAX_LEN: 2000,                  // max chars per TTS request - as of 2026-01-27 it's 2000
+
 } as const;

@@ -15,6 +15,7 @@ export type SpeexSpeechParticle =
 
 export type SpeexWire_Access = z.infer<typeof SpeexWire.Access_schema>;
 export type SpeexWire_Access_ElevenLabs = z.infer<typeof SpeexWire.AccessElevenLabs_schema>;
+export type SpeexWire_Access_Inworld = z.infer<typeof SpeexWire.AccessInworld_schema>;
 export type SpeexWire_Access_OpenAI = z.infer<typeof SpeexWire.AccessOpenAI_schema>;
 
 export type SpeexWire_Voice = z.infer<typeof SpeexWire.Voice_schema>;
@@ -39,6 +40,12 @@ export namespace SpeexWire {
     apiHost: z.string().optional(),
   });
 
+  export const AccessInworld_schema = z.object({
+    dialect: z.literal('inworld'),
+    apiKey: z.string(),             // base64-encoded API key from Inworld Portal
+    apiHost: z.string().optional(), // defaults to api.inworld.ai
+  });
+
   export const AccessOpenAI_schema = z.object({
     dialect: z.enum(['localai', 'openai']),
     apiKey: z.string().optional(),  // openai: required, localai: optional
@@ -47,7 +54,7 @@ export namespace SpeexWire {
   });
 
   export const Access_schema = z.discriminatedUnion('dialect',
-    [AccessElevenLabs_schema, AccessOpenAI_schema],
+    [AccessElevenLabs_schema, AccessInworld_schema, AccessOpenAI_schema],
   );
 
 
@@ -57,6 +64,14 @@ export namespace SpeexWire {
     dialect: z.literal('elevenlabs'),
     ttsModel: z.string().optional(),
     ttsVoiceId: z.string().optional(),
+  });
+
+  export const VoiceInworld_schema = z.object({
+    dialect: z.literal('inworld'),
+    ttsModel: z.enum(['inworld-tts-1.5-max', 'inworld-tts-1.5-mini']).optional(),
+    ttsVoiceId: z.string().optional(),
+    ttsTemperature: z.number().min(0).max(2).optional(),
+    ttsSpeakingRate: z.number().min(0.5).max(1.5).optional(),
   });
 
   export const VoiceLocalAI_schema = z.object({
@@ -75,7 +90,7 @@ export namespace SpeexWire {
   });
 
   export const Voice_schema = z.discriminatedUnion('dialect',
-    [VoiceElevenLabs_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
+    [VoiceElevenLabs_schema, VoiceInworld_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
   );
 
 

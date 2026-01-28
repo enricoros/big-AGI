@@ -3,8 +3,9 @@ import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import type { DSpeexEngineAny, DSpeexVendorType } from './speex.types';
 import type { ISpeexVendor, ISpeexVendorAny } from './ISpeexVendor';
 
-// vendor imports (will be implemented as stubs initially)
+// vendor imports
 import { SpeexVendorElevenLabs } from './vendors/elevenlabs.vendor';
+import { SpeexVendorInworld } from './vendors/inworld.vendor';
 import { SpeexVendorLocalAI } from './vendors/localai.vendor';
 import { SpeexVendorOpenAI } from './vendors/openai.vendor';
 import { SpeexVendorWebSpeech } from './vendors/webspeech.vendor';
@@ -14,6 +15,7 @@ import { SpeexVendorWebSpeech } from './vendors/webspeech.vendor';
 
 const _SPEEX_VENDOR_REGISTRY: { [key in DSpeexVendorType]: ISpeexVendor<key> } = {
   elevenlabs: SpeexVendorElevenLabs,
+  inworld: SpeexVendorInworld,
   localai: SpeexVendorLocalAI,
   openai: SpeexVendorOpenAI,
   webspeech: SpeexVendorWebSpeech,

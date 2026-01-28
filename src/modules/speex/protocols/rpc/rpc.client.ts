@@ -37,7 +37,7 @@ async function _getSpeexCsfModule() {
 // --- /CSF
 
 
-type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
+type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'inworld'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
 
 
 /**
@@ -177,8 +177,9 @@ function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): 
     case 'api-key':
       switch (vendorType) {
         case 'elevenlabs':
+        case 'inworld':
           return {
-            dialect: 'elevenlabs',
+            dialect: vendorType,
             apiKey: c.apiKey,
             ...(c.apiHost && { apiHost: c.apiHost }),
           };
@@ -203,7 +204,8 @@ function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): 
       if (!service) return null;
       switch (vendorType) {
         case 'elevenlabs':
-          // no linking for ElevenLabs - we shall NOT be here
+        case 'inworld':
+          // no linking for ElevenLabs or Inworld - we shall NOT be here
           return null;
 
         case 'openai':
@@ -240,7 +242,22 @@ function _shouldUseCSF({ credentials: c, vendorType }: _DSpeexEngineRPC): boolea
   switch (c.type) {
     case 'api-key':
       // Auto-enable CSF for local URLs (LocalAI typically runs locally)
-      return vendorType === 'localai' && isLocalUrl(c.apiHost);
+      switch (vendorType) {
+        case 'inworld':
+          return false; // Inworld has blocked CORS policy - never CSF
+
+        case 'localai':
+          return isLocalUrl(c.apiHost);
+
+        default:
+          const _exhaustiveCheck: never = vendorType;
+        // fallthrough
+        case 'elevenlabs':
+        case 'openai':
+          break;
+      }
+      // NOTE: we should have a switch or something
+      return false;
 
     case 'llms-service':
       const service = findModelsServiceOrNull(c.serviceId);

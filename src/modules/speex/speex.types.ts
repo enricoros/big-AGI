@@ -7,7 +7,7 @@ import type { SpeexWire_VoiceOption } from './protocols/rpc/rpc.wiretypes';
 
 // Speex Vendor Types (supported TTS providers)
 
-export type DSpeexVendorType = 'elevenlabs' | 'localai' | 'openai' | 'webspeech';
+export type DSpeexVendorType = 'elevenlabs' | 'inworld' | 'localai' | 'openai' | 'webspeech';
 
 
 // Speex Engines - instances of TTS Vendors Types - persisted in store-module-speex
@@ -33,6 +33,7 @@ export type SpeexEngineId = string; // agiUuidV4('speex.engine.instance')
 // helper for mapping credentials and voice types to the engine type
 interface _TypeMap extends Record<DSpeexVendorType, { voice: unknown; credentials: unknown }> {
   'elevenlabs': { voice: DVoiceElevenLabs; credentials: DCredentialsApiKey };
+  'inworld': { voice: DVoiceInworld; credentials: DCredentialsApiKey };
   'localai': { voice: DVoiceLocalAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'openai': { voice: DVoiceOpenAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'webspeech': { voice: DVoiceWebSpeech; credentials: DCredentialsNone };
@@ -53,6 +54,14 @@ export interface DVoiceElevenLabs {
   // ttsSimilarityBoost?: number;
   // ttsStyle?: number;
   // ttsS?: boolean;
+}
+
+export interface DVoiceInworld {
+  dialect: 'inworld';
+  ttsModel?: 'inworld-tts-1.5-max' | 'inworld-tts-1.5-mini';
+  ttsVoiceId?: string;        // e.g., 'Alex', 'Ashley', 'Dennis'
+  ttsTemperature?: number;    // 0-2, default 1.1 (controls expressiveness)
+  ttsSpeakingRate?: number;   // 0.5-1.5, default 1.0
 }
 
 // type LocalAITTSBackend = | 'coqui' | 'bark' | 'piper' | 'transformers-musicgen' | 'vall-e-x'
