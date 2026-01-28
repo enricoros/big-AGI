@@ -9,6 +9,7 @@ export class AudioLivePlayer {
   private readonly audioContext: AudioContext;
   private readonly audioElement: HTMLAudioElement;
   private readonly mediaSource: MediaSource;
+  private readonly mediaSourceObjectUrl: string;
   private sourceBuffer: SourceBuffer | null = null;
 
   private chunkQueue: ArrayBuffer[] = [];
@@ -16,12 +17,16 @@ export class AudioLivePlayer {
   private isMediaSourceEnded: boolean = false;
   private isMediaSourceOpen: boolean = false;
 
+  // Deferred for waitForPlaybackEnd() - allows stop() to unblock waiters
+  private playbackEndResolve: (() => void) | null = null;
+
 
   constructor() {
     this.audioContext = new AudioContext();
     this.audioElement = new Audio();
     this.mediaSource = new MediaSource();
-    this.audioElement.src = URL.createObjectURL(this.mediaSource);
+    this.mediaSourceObjectUrl = URL.createObjectURL(this.mediaSource);
+    this.audioElement.src = this.mediaSourceObjectUrl;
     this.audioElement.autoplay = true;
 
     // Suppress Android media notification by clearing media session metadata
@@ -134,6 +139,7 @@ export class AudioLivePlayer {
   /**
    * Returns a Promise that resolves when audio playback completes.
    * This waits for the actual audio to finish playing, not just streaming to end.
+   * Also resolves if stop() is called.
    */
   public waitForPlaybackEnd(): Promise<void> {
     return new Promise((resolve) => {
@@ -144,6 +150,7 @@ export class AudioLivePlayer {
       }
 
       const cleanup = () => {
+        this.playbackEndResolve = null;
         this.audioElement.removeEventListener('ended', onEnded);
         this.audioElement.removeEventListener('error', onError);
       };
@@ -156,6 +163,12 @@ export class AudioLivePlayer {
       const onError = () => {
         cleanup();
         resolve(); // Resolve even on error to not hang
+      };
+
+      // store resolver so stop() can call it
+      this.playbackEndResolve = () => {
+        cleanup();
+        resolve();
       };
 
       this.audioElement.addEventListener('ended', onEnded);
@@ -173,22 +186,36 @@ export class AudioLivePlayer {
   /**
    * Stop playback and clean up resources
    */
-  public async stop() {
+  public stop() {
     this.audioElement.pause();
     this.chunkQueue = [];
     this.isMediaSourceEnded = true;
 
-    // only abort SourceBuffer when MediaSource is 'open'
-    if (this.sourceBuffer && this.mediaSource.readyState === 'open') {
+    // Resolve any pending waitForPlaybackEnd() callers
+    this.playbackEndResolve?.();
+
+    // Clean up SourceBuffer event listeners and abort if open
+    if (this.sourceBuffer) {
+      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.removeEventListener('error', this.onSourceBufferError);
       try {
-        this.sourceBuffer.abort();
-        this.mediaSource.endOfStream();
+        if (this.mediaSource.readyState === 'open') {
+          this.sourceBuffer.abort();
+          this.mediaSource.endOfStream();
+        }
       } catch (e) {
         // Ignore - may race with natural stream end
       }
     }
 
+    // Clean up MediaSource event listeners
+    this.mediaSource.removeEventListener('sourceopen', this.onMediaSourceOpen);
+    this.mediaSource.removeEventListener('error', this.onMediaSourceError);
+    this.mediaSource.removeEventListener('sourceended', this.onMediaSourceEnded);
+    this.mediaSource.removeEventListener('sourceclose', this.onMediaSourceClosed);
+
     void this.audioContext.close(); // fire/forget
+    URL.revokeObjectURL(this.mediaSourceObjectUrl);
     this.audioElement.src = '';
   }
 }
