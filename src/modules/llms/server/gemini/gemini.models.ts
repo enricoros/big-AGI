@@ -484,25 +484,9 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
     benchmark: { cbaElo: 1310 },
   },
-  {
-    hidden: true, // discouraged, as the official is out
-    id: 'models/gemini-2.0-flash-lite-preview-02-05',
-    isPreview: true,
-    deprecated: '2026-02-25',
-    chatPrice: gemini20FlashLitePricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1352 },
-  },
-  {
-    id: 'models/gemini-2.0-flash-lite-preview',
-    symLink: 'models/gemini-2.0-flash-lite-preview-02-05',
-    // copied from symlink
-    isPreview: true,
-    deprecated: '2026-02-25',
-    chatPrice: gemini20FlashLitePricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    benchmark: { cbaElo: 1352 },
-  },
+  // REMOVED MODELS (no longer returned by API as of Jan 28, 2026):
+  // - models/gemini-2.0-flash-lite-preview-02-05 (superseded by stable gemini-2.0-flash-lite)
+  // - models/gemini-2.0-flash-lite-preview (symlink to above)
 
 
   /// Generation 1.5
