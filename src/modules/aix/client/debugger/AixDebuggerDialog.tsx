@@ -101,6 +101,7 @@ export function AixDebuggerDialog(props: {
   return (
     <GoodModal
       open
+      unfilterBackdrop
       onClose={props.onClose}
       title={isMobile ? 'AI Inspector' :
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
