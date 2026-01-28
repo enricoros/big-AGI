@@ -142,6 +142,7 @@ export function SpeexConfigureEngines(_props: { isMobile: boolean }) {
   const handleAddEngine = React.useCallback((vendorType: DSpeexVendorType) => {
     const newEngineId = useSpeexStore.getState().createEngine(vendorType);
     useSpeexStore.getState().setActiveEngineId(newEngineId);
+    setIsEditing(true);
   }, []);
 
   const handleDeleteClick = React.useCallback((event: React.MouseEvent) => {
