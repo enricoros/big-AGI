@@ -16,6 +16,7 @@ export class AudioLivePlayer {
   private isSourceBufferUpdating: boolean = false;
   private isMediaSourceEnded: boolean = false;
   private isMediaSourceOpen: boolean = false;
+  private isStopped: boolean = false;
 
   // Deferred for waitForPlaybackEnd() - allows stop() to unblock waiters
   private playbackEndResolve: (() => void) | null = null;
@@ -139,12 +140,12 @@ export class AudioLivePlayer {
   /**
    * Returns a Promise that resolves when audio playback completes.
    * This waits for the actual audio to finish playing, not just streaming to end.
-   * Also resolves if stop() is called.
+   * Also resolves if stop() is called (or was already called).
    */
   public waitForPlaybackEnd(): Promise<void> {
     return new Promise((resolve) => {
-      // If already ended naturally, resolve immediately
-      if (this.audioElement.ended) {
+      // If already stopped or ended, resolve immediately
+      if (this.isStopped || this.audioElement.ended) {
         resolve();
         return;
       }
@@ -187,6 +188,7 @@ export class AudioLivePlayer {
    * Stop playback and clean up resources
    */
   public stop() {
+    this.isStopped = true;
     this.audioElement.pause();
     this.chunkQueue = [];
     this.isMediaSourceEnded = true;
