@@ -93,6 +93,8 @@ interface AixClientDebuggerState {
   frames: AixClientDebugger.Frame[];
   activeFrameId: AixFrameId | null;
   maxFrames: number;
+  // AIX next payload override - JSON string injected into requests after validation
+  requestBodyOverrideJson: string;
 }
 
 interface AixClientDebuggerActions {
@@ -118,6 +120,7 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
   frames: [],
   activeFrameId: null,
   maxFrames: DEFAULT_FRAMES_COUNT,
+  requestBodyOverrideJson: '',
 
 
   // Frame actions
@@ -190,6 +193,14 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
 }));
 
 
-export function aixClientDebuggerActions() {
-  return useAixClientDebuggerStore.getState() as AixClientDebuggerActions;
+export function aixClientDebuggerActions(): AixClientDebuggerActions {
+  return useAixClientDebuggerStore.getState();
+}
+
+export function aixClientDebuggerSetRBO(json: string) {
+  useAixClientDebuggerStore.setState({ requestBodyOverrideJson: json });
+}
+
+export function aixClientDebuggerGetRBO(): string {
+  return useAixClientDebuggerStore.getState().requestBodyOverrideJson;
 }

@@ -21,6 +21,7 @@ import { AixStreamRetry } from './aix.client.retry';
 import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
+import { aixClientDebuggerGetRBO } from './debugger/memstore-aix-client-debugger';
 import { withDecimator } from './withDecimator';
 
 
@@ -629,6 +630,10 @@ async function _aixChatGenerateContent_LL(
   const inspectorTransport = inspectorEnabled ? aixAccess.clientSideFetch ? 'csf' as const : 'trpc' as const : undefined;
   const inspectorContext = inspectorEnabled ? { contextName: aixContext.name, contextRef: aixContext.ref } : undefined;
 
+  // [DEV] Inspector - request body override
+  const requestBodyOverrideJson = inspectorEnabled && aixClientDebuggerGetRBO();
+  const debugRequestBodyOverride = !requestBodyOverrideJson ? false : JSON.parse(requestBodyOverrideJson);
+
   /**
    * FIXME: implement client selection of resumability - aixAccess option?
    * For now we turn it on for Responses API for select kinds of request.
@@ -638,6 +643,7 @@ async function _aixChatGenerateContent_LL(
 
   const aixConnectionOptions: AixAPI_ConnectionOptions_ChatGenerate = {
     ...inspectorEnabled && { debugDispatchRequest: true, debugProfilePerformance: true },
+    ...debugRequestBodyOverride && { debugRequestBodyOverride },
     // FIXME: disabled until clearly working
     // ...requestResumability && { enableResumability: true },
   } as const;

@@ -36,11 +36,12 @@ export async function* clientSideChatGenerate(
 }
 
 // CSF debug config - lighter than server-side
-function _createClientDebugConfig(access: AixAPI_Access, options: undefined | { debugDispatchRequest?: boolean, debugProfilePerformance?: boolean }, chatGenerateContextName: string): AixDebugObject {
+function _createClientDebugConfig(access: AixAPI_Access, options: undefined | { debugDispatchRequest?: boolean, debugProfilePerformance?: boolean, debugRequestBodyOverride?: Record<string, unknown> }, chatGenerateContextName: string): AixDebugObject {
   const echoRequest = !!options?.debugDispatchRequest && (AIX_SECURITY_ONLY_IN_DEV_BUILDS || AIX_INSPECTOR_ALLOWED_CONTEXTS.includes(chatGenerateContextName));
   return {
-    prettyDialect: capitalizeFirstLetter(access.dialect),
-    echoRequest: echoRequest,
+    prettyDialect: capitalizeFirstLetter(access.dialect), // string
+    echoRequest: echoRequest, // boolean
+    requestBodyOverride: echoRequest ? options?.debugRequestBodyOverride : undefined,
     consoleLogErrors: false, // NO client-side error-echo log to console (handled by UI)
     profiler: undefined, // NO client-side profiler
     wire: undefined, // NO client-side wire

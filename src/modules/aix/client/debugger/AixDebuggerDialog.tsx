@@ -9,7 +9,8 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { AixDebuggerFrame } from './AixDebuggerFrame';
-import { aixClientDebuggerActions, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
+import { DebugPayloadOverride } from './DebugPayloadOverride';
+import { aixClientDebuggerActions, aixClientDebuggerSetRBO, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
 
 // configuration
@@ -22,7 +23,7 @@ function _getStoreSnapshot() {
     frames: state.frames,
     activeFrameId: state.activeFrameId,
     maxFrames: state.maxFrames,
-  }
+  };
 }
 
 
@@ -71,12 +72,16 @@ export function AixDebuggerDialog(props: {
   onClose: () => void;
 }) {
 
+  // local state
+  const [showInjector, setShowInjector] = React.useState(false);
+
   // external state
   const isMobile = useIsMobile();
   const aixInspector = useUIPreferencesStore(state => state.aixInspector);
   const { frames, activeFrameId, maxFrames } = useDebouncedAixDebuggerStore();
 
   // derived state
+  const isInjector = aixInspector && showInjector;
   const activeFrame = frames.find(f => f.id === activeFrameId) ?? null;
 
 
@@ -97,7 +102,18 @@ export function AixDebuggerDialog(props: {
       onClose={props.onClose}
       title={isMobile ? 'AI Inspector' :
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          AI Request Inspector
+          {aixInspector && (
+            <Switch
+              // size='sm'
+              checked={showInjector}
+              color={isInjector ? 'warning' : undefined}
+              onChange={({ target }) => {
+                if (!target.checked) aixClientDebuggerSetRBO('');
+                setShowInjector(target.checked);
+              }}
+            />
+          )}
+          AI Request {isInjector ? 'Injector' : 'Inspector'}
           <KeyStroke size='sm' variant='soft' combo='Ctrl + Shift + A' />
         </Box>
       }
@@ -169,6 +185,9 @@ export function AixDebuggerDialog(props: {
         </Box>
       </Box>
 
+      {/* Debug Payload Override */}
+      {isInjector && <DebugPayloadOverride />}
+
       <Divider />
 
       {/* Zero State */}
@@ -182,14 +201,14 @@ export function AixDebuggerDialog(props: {
               {aixInspector
                 ? 'Your next AI request will be captured here.'
                 : <>
-                    <Link
-                      component='button'
-                      level='body-sm'
-                      onClick={useUIPreferencesStore.getState().toggleAixInspector}
-                    >
-                      Turn on inspector
-                    </Link> to see the exact requests to AI models.
-                  </>}
+                  <Link
+                    component='button'
+                    level='body-sm'
+                    onClick={useUIPreferencesStore.getState().toggleAixInspector}
+                  >
+                    Turn on inspector
+                  </Link> to see the exact requests to AI models.
+                </>}
             </Typography>
           </>}
           {!activeFrame && !!frames.length && (
