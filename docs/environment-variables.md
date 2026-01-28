@@ -132,7 +132,7 @@ Enable the app to Talk, Draw, and Google things up.
 
 | Variable                   | Description                                                                                                             |
 |:---------------------------|:------------------------------------------------------------------------------------------------------------------------|
-| **Text-To-Speech**         | ElevenLabs, OpenAI TTS, LocalAI, and browser Web Speech API are supported                                               |
+| **Text-To-Speech**         | ElevenLabs, Inworld, OpenAI TTS, LocalAI, and browser Web Speech API are supported                                      |
 | `ELEVENLABS_API_KEY`       | ElevenLabs API Key - used for calls, etc.                                                                               |
 | `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
 | `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
