@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Checkbox, Divider, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, Divider, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -47,6 +47,7 @@ export function ModelsConfiguratorModal(props: {
   const isMobile = useIsMobile();
   const hasLLMs = useHasLLMs();
   const [showModelsHidden, setShowModelsHidden] = useUIPreferencesStore(useShallow((state) => [state.showModelsHidden, state.setShowModelsHidden]));
+  const [modelsStarredOnTop, setModelsStarredOnTop] = useUIPreferencesStore(useShallow((state) => [state.modelsStarredOnTop, state.setModelsStarredOnTop]));
 
 
   // active service with fallback to the last added service
@@ -104,24 +105,53 @@ export function ModelsConfiguratorModal(props: {
     if (!hasAnyServices)
       return <Button variant='outlined' color='neutral' onClick={handleShowWizard} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'Quick Setup' : 'Quick Setup'}</Button>;
 
-    // Show checkbox for filtering hidden models when we have LLMs
+    // Service-level 3-dots menu when we have LLMs
     if (isTabSetup && hasLLMs)
       return (
-        <TooltipOutlined title='Show hidden models - some may be experimental, deprecated, or just not recommended.' placement='top'>
-          <Checkbox
-            // size='sm'
-            color='neutral'
-            // variant='outlined'
-            label='Include Hidden'
-            checked={showModelsHidden}
-            onChange={(e) => setShowModelsHidden(e.target.checked)}
-            sx={{ my: 'auto', fontSize: 'sm' }}
-          />
-        </TooltipOutlined>
+        <Dropdown>
+          <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', sx: { backgroundColor: 'background.surface' } } }}>
+            <MoreVertIcon sx={{ fontSize: 'xl' }} />
+          </MenuButton>
+          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 220 }}>
+
+
+            {/* Refresh Models */}
+            {/* <MenuItem onClick={handleRefreshModels}>
+              <ListItemDecorator><RefreshIcon /></ListItemDecorator>
+              Refresh Models
+            </MenuItem>
+            <ListDivider /> */}
+
+            {/* View toggles */}
+            <MenuItem onClick={() => setShowModelsHidden(!showModelsHidden)}>
+              <ListItemDecorator><Checkbox color='neutral' checked={showModelsHidden} /></ListItemDecorator>
+              Show Hidden Models
+            </MenuItem>
+            {/*<MenuItem onClick={() => setModelsStarredOnTop(!modelsStarredOnTop)}>*/}
+            {/*  <ListItemDecorator><Checkbox color='neutral' checked={modelsStarredOnTop} /></ListItemDecorator>*/}
+            {/*  Starred on Top*/}
+            {/*</MenuItem>*/}
+
+            {/*<ListDivider />*/}
+
+            {/* Reset All Parameters */}
+            {/* <MenuItem onClick={handleResetAllParameters}>
+              <ListItemDecorator><RestoreIcon /></ListItemDecorator>
+              Reset All Parameters
+            </MenuItem> */}
+
+            {/* Delete Service */}
+            {/* <MenuItem color='danger' onClick={handleDeleteService}>
+              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+              Delete Service
+            </MenuItem> */}
+
+          </Menu>
+        </Dropdown>
       );
 
     return undefined;
-  }, [handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
+  }, [handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isTabSetup, isTabWizard, modelsStarredOnTop, setModelsStarredOnTop, setShowModelsHidden, showModelsHidden]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
@@ -141,7 +171,7 @@ export function ModelsConfiguratorModal(props: {
         {/* unsaved warning */}
         {hasUnsavedChanges && (
           <Typography color='warning' level='body-sm' ml='auto'>
-            {isMobile ? 'Unsaved' : `You have ${unsavedWizardProviders.size} unsaved change${ unsavedWizardProviders.size > 1 ? 's' : '' }`}
+            {isMobile ? 'Unsaved' : `You have ${unsavedWizardProviders.size} unsaved change${unsavedWizardProviders.size > 1 ? 's' : ''}`}
           </Typography>
         )}
 
