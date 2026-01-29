@@ -1581,7 +1581,9 @@ export namespace OpenAIWire_API_Responses {
   // Response - Streaming Events
 
   const _BaseEvent_schema = z.object({
-    sequence_number: z.number(),
+    // [LiteLLM, 2026-01-29] Made optional to support proxies that don't pass through sequence numbers
+    // The parser will validate monotonicity once the first valid sequence_number is seen
+    sequence_number: z.number().optional(),
   });
 
   // Streaming > Response lifecycle
