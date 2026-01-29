@@ -161,12 +161,13 @@ export const ModelItem = React.memo(function ModelItem(props: {
   const featuresChipMemo = React.useMemo(() => {
     if (!isNotSymlink) return null;
     let fs = '';
+    if (llm.isUserClone) fs += '➕ ';
     if (llm.interfaces.includes(LLM_IF_OAI_Reasoning)) fs += '🧠 ';
     if (llm.interfaces.includes(LLM_IF_Tools_WebSearch)) fs += '🌐 ';
     if (llm.interfaces.includes(LLM_IF_Outputs_Audio)) fs += '🔊 ';
     if (llm.interfaces.includes(LLM_IF_Outputs_Image)) fs += '🖼️ ';
     return !fs ? null : <Chip size='sm' variant='plain' sx={styles.chipCapability}>{fs.trim()}</Chip>;
-  }, [isNotSymlink, llm.interfaces]);
+  }, [isNotSymlink, llm.interfaces, llm.isUserClone]);
 
 
   return (
