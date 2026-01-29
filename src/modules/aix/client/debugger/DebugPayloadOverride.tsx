@@ -88,8 +88,8 @@ export function DebugPayloadOverride() {
           </Button>
           <Button
             size='sm'
-            variant='soft'
-            color='neutral'
+            variant={storeJson ? 'solid' : 'soft'}
+            color={storeJson ? 'primary' : 'neutral'}
             disabled={!canClear}
             onClick={handleClear}
           >

@@ -66,7 +66,7 @@ export function AixDebuggerFrame(props: {
   const isConversation = contextName === 'conversation';
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 'var(--Card-padding, 1rem)' }}>
 
       {/* Frame Header */}
       <Box sx={{ fontSize: 'sm', display: 'grid', gridTemplateColumns: { xs: 'auto 1fr', md: 'auto auto auto auto' }, gap: 0.5, alignItems: 'center' }}>
@@ -78,13 +78,13 @@ export function AixDebuggerFrame(props: {
           <Chip variant={frame.isComplete ? undefined : 'solid'} color={frame.isComplete ? 'success' : 'warning'}>{frame.isComplete ? 'Done' : 'In Progress'}</Chip>
         </Box>
         <div>Date</div>
-        <Chip>{new Date(frame.timestamp).toLocaleString()}</Chip>
+        <div>{new Date(frame.timestamp).toLocaleString()}</div>
         <div>-&gt; URL:</div>
-        <Chip className='agi-ellipsize'>{frame.url || 'No URL data available'}</Chip>
+        <div className='agi-ellipsize'>{frame.url || 'No URL data available'}</div>
         <div>Context:</div>
         <Chip variant={isConversation ? 'soft' : 'solid'} color='primary'>{contextName}</Chip>
         <div>Reference:</div>
-        <Chip>{frame.context.contextRef}</Chip>
+        <div>{frame.context.contextRef}</div>
       </Box>
 
       {/* Headers */}
