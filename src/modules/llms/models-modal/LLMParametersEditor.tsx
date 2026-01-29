@@ -318,7 +318,7 @@ export function LLMParametersEditor(props: {
   return <>
 
     {!temperatureHide && <FormSliderControl
-      title='Temperature' ariaLabel='Model Temperature'
+      title={<span style={{ minWidth: 100 }}>Temperature</span>} ariaLabel='Model Temperature'
       description={
         llmTemperature === null ? 'Unsupported'
           : llmTemperature === undefined ? 'Default'
@@ -352,7 +352,7 @@ export function LLMParametersEditor(props: {
     ) : !props.simplified && (
       <Box sx={{ mr: 1 }}>
         <FormSliderControl
-          title='Output Tokens' ariaLabel='Model Max Tokens'
+          title={<span style={{ minWidth: 100 }}>Output Tokens</span>} ariaLabel='Model Max Tokens'
           description='Max Size'
           min={256} max={props.maxOutputTokens} step={256} defaultValue={1024}
           valueLabelDisplay={props.parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'} // detect user-overridden or not
