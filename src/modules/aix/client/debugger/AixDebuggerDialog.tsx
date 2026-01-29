@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { Box, Button, Divider, FormControl, FormLabel, Link, Option, Select, Switch, Typography } from '@mui/joy';
+import { Box, Button, Chip, Divider, FormControl, FormLabel, Link, Option, Select, Switch, Typography } from '@mui/joy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -10,12 +11,37 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { AixDebuggerFrame } from './AixDebuggerFrame';
 import { DebugPayloadOverride } from './DebugPayloadOverride';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { aixClientDebuggerActions, aixClientDebuggerSetRBO, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
+import { aixClientDebuggerActions, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
 
 // configuration
 const DEBUGGER_DEBOUNCE_MS = 1000 / 5; // 5Hz
+
+const _styles = {
+  zeroState: {
+    minHeight: '228px', // take up some space even when empty
+
+    // backgroundColor: 'background.level1',
+    borderBottom: '1px solid',
+    borderBottomColor: 'divider',
+
+    margin: 'calc(-1 * var(--Card-padding, 1rem))', mb: 0, padding: 'var(--Card-padding, 1rem)', // fill card
+
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  frameViewer: {
+    overflow: 'auto', // scroll this part of the dialog, i.e. the full debugging frame
+
+    // backgroundColor: 'background.level1',
+    borderBottom: '1px solid',
+    borderBottomColor: 'divider',
+
+    margin: 'calc(-1 * var(--Card-padding, 1rem))', mb: 0, padding: 'var(--Card-padding, 1rem)', // fill card
+  },
+} as const;
 
 
 function _getStoreSnapshot() {
@@ -75,7 +101,7 @@ export function AixDebuggerDialog(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const aixInspector = useUIPreferencesStore(state => state.aixInspector);
+  const hasInspector = useUIPreferencesStore(state => state.aixInspector);
   const hasInjectorJson = useAixClientDebuggerStore(state => !!state.requestBodyOverrideJson);
   const { frames, activeFrameId, maxFrames } = useDebouncedAixDebuggerStore();
 
@@ -83,8 +109,8 @@ export function AixDebuggerDialog(props: {
   const [showInjector, setShowInjector] = React.useState(hasInjectorJson);
 
   // derived state
-  const isInjector = aixInspector && (showInjector || hasInjectorJson);
   const activeFrame = frames.find(f => f.id === activeFrameId) ?? null;
+  const willInjectJson = hasInspector && hasInjectorJson;
 
 
   // handlers
@@ -97,40 +123,52 @@ export function AixDebuggerDialog(props: {
     aixClientDebuggerActions().setActiveFrame(value);
   }, []);
 
+  const handleToggleInjector = React.useCallback(() => {
+    setShowInjector(on => !on);
+    // NOTE: we don't clear injection on close anymore, as we have a good 'active' tag to show injection
+    // if (showInjector || hasInjectorJson) {
+    //   // aixClientDebuggerSetRBO(''); // turning off - clear the RBO
+    //   setShowInjector(false);
+    // } else {
+    //   setShowInjector(true);
+    // }
+  }, []);
+
 
   return (
     <GoodModal
       open
-      unfilterBackdrop
       onClose={props.onClose}
-      title={isMobile ? 'AI Inspector' :
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {aixInspector && (
-            <GoodTooltip variantOutlined title='Injector: modifies outgoing AI requests' arrow placement='top'>
-              <Switch
-                // size='sm'
-                checked={isInjector}
-                color={isInjector ? 'warning' : undefined}
-                onChange={({ target }) => {
-                  if (!target.checked) aixClientDebuggerSetRBO('');
-                  setShowInjector(target.checked);
-                }}
-              />
-            </GoodTooltip>
-          )}
-          AI Request {isInjector ? 'Injector' : 'Inspector'}
-          <KeyStroke size='sm' variant='soft' combo='Ctrl + Shift + A' />
-        </Box>
-      }
+      unfilterBackdrop
+      autoOverflow
+      fullscreen={isMobile || 'button'}
       titleStartDecorator={
         <Switch
-          checked={aixInspector}
+          checked={hasInspector}
           onChange={useUIPreferencesStore.getState().toggleAixInspector}
           sx={{ mr: 1 }}
         />
       }
-      autoOverflow
-      fullscreen={isMobile || 'button'}
+      title={isMobile ? 'AI Inspector' :
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+          AI Request {(willInjectJson || showInjector) ? 'Injector' : 'Inspector'}
+          <KeyStroke size='sm' variant='soft' combo='Ctrl + Shift + A' />
+        </Box>
+      }
+      startButton={
+        <Button
+          disabled={!hasInspector}
+          variant={showInjector ? 'solid' : willInjectJson ? 'soft' : 'plain'}
+          color={willInjectJson ? 'warning' : 'neutral'}
+          size='sm'
+          onClick={handleToggleInjector}
+          startDecorator={<KeyboardDoubleArrowDownIcon sx={{ transition: 'transform 0.2s', transform: showInjector ? 'rotate(0deg)' : 'rotate(180deg)' }} />}
+          endDecorator={!hasInjectorJson ? null : <Chip size='sm' color='warning' variant={showInjector ? 'soft' : 'solid'}>Active</Chip>}
+          // sx={{ gap: 1 }}
+        >
+          {isMobile ? 'Inject' : 'AI Injector'}
+        </Button>
+      }
       sx={{ maxWidth: undefined }}
     >
 
@@ -194,13 +232,13 @@ export function AixDebuggerDialog(props: {
 
       {/* Zero State */}
       {(!frames.length || !activeFrame) && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+        <Box sx={_styles.zeroState}>
           {!frames.length && <>
             <Typography level='title-lg'>
-              {aixInspector ? 'Ready to capture' : 'AI Request Inspector'}
+              {hasInspector ? 'Ready to capture' : 'AI Request Inspector'}
             </Typography>
             <Typography level='body-sm' sx={{ mt: 2, maxWidth: 468, textAlign: 'center' }}>
-              {aixInspector
+              {hasInspector
                 ? 'Your next AI request will be captured here.'
                 : <>
                   <Link
@@ -223,14 +261,13 @@ export function AixDebuggerDialog(props: {
 
       {/* Frame viewer */}
       {!!activeFrame && (
-        <Box sx={{ overflow: 'auto' }}>
+        <Box sx={_styles.frameViewer}>
           <AixDebuggerFrame frame={activeFrame} />
         </Box>
       )}
 
       {/* Debug Payload Override */}
-      {isInjector && <Divider />}
-      {isInjector && <DebugPayloadOverride />}
+      {showInjector && <DebugPayloadOverride />}
 
     </GoodModal>
   );
