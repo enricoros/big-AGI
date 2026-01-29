@@ -224,6 +224,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
       color='neutral'
       level='body-sm'
       onClick={handleResetParameters}
+      sx={{ mt: 0.375 }}
     >
       Reset to defaults ...
     </Link>
@@ -254,7 +255,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
                 {visible ? <VisibilityIcon sx={{ fontSize: 'xl' }} /> : <VisibilityOffIcon />}
               </IconButton>
             </TooltipOutlined>}
-            <span><b>{llm.label}</b> options</span>
+            <div>{llm.label} <span style={{ opacity: 0.5 }}>options</span></div>
           </Box>
 
           {/* [Desktop] Reset to default - show only when user has customized parameters */}
