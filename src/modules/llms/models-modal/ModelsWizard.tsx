@@ -173,7 +173,7 @@ function WizardProviderSetup(props: {
     // if the key is empty, remove the models
     if (!newKey) {
       setUpdateError(null);
-      setServiceLLMs(vendorServiceId, [], false, false);
+      setServiceLLMs(vendorServiceId, [], true, false);
       return;
     }
 
@@ -187,7 +187,7 @@ function WizardProviderSetup(props: {
       if (errorText.includes('Incorrect API key'))
         errorText = '[OpenAI issue] Unauthorized: Incorrect API key.';
       setUpdateError(errorText);
-      setServiceLLMs(vendorServiceId, [], false, false);
+      setServiceLLMs(vendorServiceId, [], true, false);
     }
     setIsLoading(false);
 
