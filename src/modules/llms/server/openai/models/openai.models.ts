@@ -83,7 +83,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort52' },
+      { paramId: 'llmVndOaiReasoningEffort52', initialValue: 'medium' /* our decision: set to medium to have thinking - clones can set to 'none' to have temperature */ },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },
