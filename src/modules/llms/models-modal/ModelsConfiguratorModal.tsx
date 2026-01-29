@@ -1,22 +1,29 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Checkbox, Divider, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, CircularProgress, Divider, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import RestoreIcon from '@mui/icons-material/Restore';
 
-import type { DModelsService } from '~/common/stores/llms/llms.service.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { LLMVendorSetup } from '../components/LLMVendorSetup';
 import { ModelsList } from './ModelsList';
 import { ModelsServiceSelector } from './ModelsServiceSelector';
 import { ModelsWizard } from './ModelsWizard';
+import { useLlmUpdateModels } from '../llm.client.hooks';
 
 
 // configuration
@@ -46,6 +53,7 @@ export function ModelsConfiguratorModal(props: {
   // external state
   const isMobile = useIsMobile();
   const hasLLMs = useHasLLMs();
+  const { showPromisedOverlay } = useOverlayComponents();
   const [showModelsHidden, setShowModelsHidden] = useUIPreferencesStore(useShallow((state) => [state.showModelsHidden, state.setShowModelsHidden]));
   const [modelsStarredOnTop, setModelsStarredOnTop] = useUIPreferencesStore(useShallow((state) => [state.modelsStarredOnTop, state.setModelsStarredOnTop]));
 
@@ -97,6 +105,44 @@ export function ModelsConfiguratorModal(props: {
   }, []);
 
 
+  // Menu handlers
+
+  const { isFetching: isRefreshing, refetch: handleRefreshModels } = useLlmUpdateModels(false, activeService ?? null);
+
+  const handleResetAllParameters = React.useCallback(() => {
+    showPromisedOverlay('llms-reset-parameters', {}, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={`Reset all user-customized model parameters for ${activeService?.label ?? 'this service'}? All settings such as temperature, reasoning effort, etc. will be reverted to defaults.`}
+        positiveActionText='Reset'
+      />,
+    ).then(() => llmsStoreActions().resetServiceUserParameters(activeServiceId)).catch(() => null /* ignore closure */);
+  }, [activeService?.label, activeServiceId, showPromisedOverlay]);
+
+  const handleDeleteService = React.useCallback((serviceId: DModelsServiceId, skipConfirmation: boolean) => {
+    const targetService = modelsServices.find(s => s.id === serviceId);
+    if (!targetService) return;
+
+    const doDelete = () => {
+      // select the next service
+      setConfServiceId(modelsServices.find(s => s.id !== serviceId)?.id ?? null);
+      // remove the service
+      llmsStoreActions().removeService(serviceId);
+    };
+
+    // [shift] to delete without confirmation
+    if (skipConfirmation) return doDelete();
+
+    showPromisedOverlay('llms-service-remove', {}, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={`Remove ${targetService.label} and all its models?`}
+        positiveActionText='Remove'
+      />,
+    ).then(doDelete).catch(() => null /* ignore closure */);
+  }, [modelsServices, setConfServiceId, showPromisedOverlay]);
+
+
   // start button
   const startButton = React.useMemo(() => {
     if (isTabWizard)
@@ -112,15 +158,23 @@ export function ModelsConfiguratorModal(props: {
           <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', sx: { backgroundColor: 'background.surface' } } }}>
             <MoreVertIcon sx={{ fontSize: 'xl' }} />
           </MenuButton>
-          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 220 }}>
-
+          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 240 }}>
 
             {/* Refresh Models */}
-            {/* <MenuItem onClick={handleRefreshModels}>
-              <ListItemDecorator><RefreshIcon /></ListItemDecorator>
-              Refresh Models
+            <MenuItem disabled={isRefreshing} onClick={handleRefreshModels}>
+              <ListItemDecorator>
+                {isRefreshing ? <CircularProgress size='sm' /> : <RefreshIcon />}
+              </ListItemDecorator>
+              {isRefreshing ? 'Refreshing...' : 'Refresh Models'}
             </MenuItem>
-            <ListDivider /> */}
+
+            {/* Reset All Parameters */}
+            <MenuItem disabled={false /* */} onClick={handleResetAllParameters}>
+              <ListItemDecorator><RestoreIcon /></ListItemDecorator>
+              Reset Customizations
+            </MenuItem>
+
+            <ListDivider />
 
             {/* View toggles */}
             <MenuItem onClick={() => setShowModelsHidden(!showModelsHidden)}>
@@ -134,24 +188,18 @@ export function ModelsConfiguratorModal(props: {
 
             {/*<ListDivider />*/}
 
-            {/* Reset All Parameters */}
-            {/* <MenuItem onClick={handleResetAllParameters}>
-              <ListItemDecorator><RestoreIcon /></ListItemDecorator>
-              Reset All Parameters
-            </MenuItem> */}
-
             {/* Delete Service */}
-            {/* <MenuItem color='danger' onClick={handleDeleteService}>
-              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-              Delete Service
-            </MenuItem> */}
+            {/*<MenuItem color='danger' disabled={!activeServiceId} onClick={(event) => handleDeleteService(activeServiceId, event.shiftKey)}>*/}
+            {/*  <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>*/}
+            {/*  Delete Service*/}
+            {/*</MenuItem>*/}
 
           </Menu>
         </Dropdown>
       );
 
     return undefined;
-  }, [handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isTabSetup, isTabWizard, modelsStarredOnTop, setModelsStarredOnTop, setShowModelsHidden, showModelsHidden]);
+  }, [handleRefreshModels, handleResetAllParameters, handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
@@ -305,7 +353,7 @@ export function ModelsConfiguratorModal(props: {
         />
       )}
 
-      {isTabSetup && <ModelsServiceSelector modelsServices={modelsServices} selectedServiceId={activeServiceId} setSelectedServiceId={setConfServiceId} onSwitchToWizard={handleShowWizard} />}
+      {isTabSetup && <ModelsServiceSelector modelsServices={modelsServices} selectedServiceId={activeServiceId} setSelectedServiceId={setConfServiceId} onDeleteService={handleDeleteService} onSwitchToWizard={handleShowWizard} />}
       {isTabSetup && <Divider sx={activeService ? undefined : { visibility: 'hidden' }} />}
       {isTabSetup && (
         <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
