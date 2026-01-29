@@ -332,7 +332,7 @@ export function LLMParametersEditor(props: {
       step={0.1}
       defaultValue={0.5 /* FIXME: this wasn't FALLBACK_LLM_PARAM_TEMPERATURE, but we shall not need this */}
       valueLabelDisplay={props.parameters?.llmTemperature !== undefined ? 'on' : 'auto'} // detect user-overridden or not
-      value={llmTemperature === undefined ? null : llmTemperature}
+      value={llmTemperature ?? (overheat ? [1, 1] : [0.5, 0.5]) /* null and undefined both would become undefined (uncontrolled) in the slider */}
       onChange={value => onChangeParameter({ llmTemperature: value })}
       endAdornment={
         <Tooltip arrow disableInteractive title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
