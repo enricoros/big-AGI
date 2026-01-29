@@ -1,10 +1,33 @@
 import type { ModelDescriptionSchema } from '../../llm.server.types';
+import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 
 // configuration
 const PERPLEXITY_ENABLE_VARIANTS = false; // enable variants for Perplexity models
+
+
+// Perplexity Model Variants (variants appear before base model)
+const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANTS ? {} : {
+
+  // Academic deep research variant
+  'sonar-deep-research': {
+    idVariant: 'academic',
+    label: 'Sonar Deep Research (Academic)',
+    description: 'Expert-level research model with academic sources only. Searches scholarly databases, peer-reviewed papers, and academic publications. 128k context.',
+    parameterSpecs: [
+      // Fixed parameters for academic search
+      { paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium', hidden: true },
+      { paramId: 'llmVndPerplexitySearchMode', initialValue: 'academic', hidden: true },
+      { paramId: 'llmForceNoStream', initialValue: true, hidden: true },
+      // Free parameters
+      // { paramId: 'llmVndOaiReasoningEffort', initialValue: 'medium' },
+      { paramId: 'llmVndPerplexityDateFilter' },
+    ],
+  },
+
+};
 
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
@@ -92,34 +115,12 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
 
 ];
 
-export function perplexityInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
-
-  // Variant: academic deep research
-  if (PERPLEXITY_ENABLE_VARIANTS && model.id === 'sonar-deep-research') {
-    models.push({
-      ...model,
-      idVariant: 'academic',
-      label: 'Sonar Deep Research (Academic)',
-      description: 'Expert-level research model with academic sources only. Searches scholarly databases, peer-reviewed papers, and academic publications. 128k context.',
-      parameterSpecs: [
-        // Fixed parameters for academic search
-        { paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium', hidden: true },
-        { paramId: 'llmVndPerplexitySearchMode', initialValue: 'academic', hidden: true },
-        { paramId: 'llmForceNoStream', initialValue: true, hidden: true },
-        // Free parameters
-        // { paramId: 'llmVndOaiReasoningEffort', initialValue: 'medium' },
-        { paramId: 'llmVndPerplexityDateFilter' },
-      ],
-    } satisfies ModelDescriptionSchema);
-  }
-
-  // Add the base model
-  models.push(model);
-
-  return models;
-}
 
 export function perplexityHardcodedModelDescriptions() {
   // Returns the list of known Perplexity models
   return _knownPerplexityChatModels;
+}
+
+export function perplexityInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
+  return createVariantInjector(_hardcodedPerplexityVariants, 'before')(acc, model);
 }

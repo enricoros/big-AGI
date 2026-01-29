@@ -1,14 +1,15 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
+import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
 import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
 
 
 // OpenAI Model Variants
-export const hardcodedOpenAIVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
+export const hardcodedOpenAIVariants: ModelVariantMap = {
 
   // GPT-5.2 with reasoning disabled (non-thinking) - supports temperature control
   // Per https://platform.openai.com/docs/guides/latest-model#gpt-5-2-parameter-compatibility
@@ -1050,6 +1051,10 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
   return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated, _fallbackOpenAIModel);
 }
 
+export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
+  return createVariantInjector(hardcodedOpenAIVariants, 'after')(acc, model);
+}
+
 
 const _manualOrderingIdPrefixes = [
   // GPT-5.2
@@ -1174,27 +1179,6 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
 
   // due to using by-label, sorting doesn't require special cases anymore
   return remapReleaseDate(b.label).localeCompare(remapReleaseDate(a.label));
-}
-
-
-/**
- * Inject model variants into the models array.
- * Similar to how Anthropic handles variants (e.g., thinking variants),
- * this allows creating specialized versions of models with different defaults.
- */
-export function openAIInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
-
-  // Add the base model first
-  models.push(model);
-
-  // Add variant second (if defined)
-  if (hardcodedOpenAIVariants[model.id])
-    models.push({
-      ...model,
-      ...hardcodedOpenAIVariants[model.id],
-    });
-
-  return models;
 }
 
 

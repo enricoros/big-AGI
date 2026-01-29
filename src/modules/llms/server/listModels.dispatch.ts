@@ -10,7 +10,7 @@ import type { ModelDescriptionSchema } from './llm.server.types';
 
 
 // protocol: Anthropic
-import { anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, hardcodedAnthropicVariants, llmsAntCreatePlaceholderModel, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
+import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Gemini
@@ -123,39 +123,23 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // date desc (newer first) - string comparison works since format is YYYYMMDD
               return b.id.localeCompare(a.id);
             })
-            .reduce((acc: ModelDescriptionSchema[], model) => {
-              // find the model description
-              const hardcodedModel = hardcodedAnthropicModels.find(m => m.id === model.id);
-              if (hardcodedModel) {
+            .map((model): ModelDescriptionSchema => {
+              // match model definition
+              const knownModel = hardcodedAnthropicModels.find(m => m.id === model.id);
+              if (knownModel) {
 
-                // update creation date
-                function roundTime(date: string) {
-                  return Math.round(new Date(date).getTime() / 1000);
-                }
+                // update model creation time, if provided
+                if (!knownModel.created && model.created_at)
+                  knownModel.created = Math.round(new Date(model.created_at).getTime() / 1000);
 
-                if (!hardcodedModel.created && model.created_at)
-                  hardcodedModel.created = roundTime(model.created_at);
-
-                // add FIRST a thinking variant, if defined
-                if (hardcodedAnthropicVariants[model.id])
-                  acc.push({
-                    ...hardcodedModel,
-                    ...hardcodedAnthropicVariants[model.id],
-                  });
-
-                // add the base model
-                acc.push(hardcodedModel);
-              } else {
-                // for day-0 support of new models, create a placeholder model using sensible defaults
-                const novelModel = llmsAntCreatePlaceholderModel(model);
-
-                // Note: this logs in prod and dev, while anthropicValidateModelDefs_DEV only in dev/staging - important, keep this
-                console.log('[DEV] Anthropic: new model found, please configure it:', novelModel.id);
-
-                acc.push(novelModel);
+                return knownModel;
               }
-              return acc;
-            }, [] as ModelDescriptionSchema[])
+
+              // 0-day, new model: create an approximate model definition (placeholder) with sensible defaultss
+              return llmsAntCreatePlaceholderModel(model);
+            })
+            // inject thinking variants using the centralized variant system
+            .reduce(anthropicInjectVariants, [])
             .map(llmsAntInjectWebSearchInterface);
         },
       });
@@ -403,7 +387,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 // to model description
                 .map((model: any): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
                 // inject variants
-                .reduce(openAIInjectVariants, [] as ModelDescriptionSchema[])
+                .reduce(openAIInjectVariants, [])
                 // custom OpenAI sort
                 .sort(openAISortModels);
 
@@ -423,7 +407,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(openRouterModelFamilySortFn)
                 .map(openRouterModelToModelDescription)
                 .filter(desc => !!desc)
-                .reduce(openRouterInjectVariants, [] as ModelDescriptionSchema[]);
+                .reduce(openRouterInjectVariants, []);
 
             default:
               const _exhaustiveCheck: never = dialect;
