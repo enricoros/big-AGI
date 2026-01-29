@@ -15,7 +15,8 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
-import { DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
@@ -118,7 +119,31 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
   const domainAssignments = useModelDomains();
   const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
 
-  const handleResetParameters = React.useCallback(() => llm?.id && resetLLMUserParameters(llm?.id), [llm?.id, resetLLMUserParameters]);
+  const handleResetParameters = React.useCallback(() => {
+    llm?.id && resetLLMUserParameters(llm?.id);
+  }, [llm?.id, resetLLMUserParameters]);
+
+  const handleInterfaceToggle = React.useCallback((iface: DModelInterfaceV1, enable: boolean) => {
+    if (!llm?.isUserClone) return; // safety: only clones can modify interfaces
+
+    const hasInterface = llm.interfaces.includes(iface);
+    if (enable === hasInterface) return; // no change needed
+
+    const newInterfaces = enable ? [...llm.interfaces, iface]
+      : llm.interfaces.filter(i => i !== iface);
+
+    const updates: Partial<typeof llm> = { interfaces: newInterfaces };
+    switch (iface) {
+      case LLM_IF_HOTFIX_NoTemperature:
+        updates.initialParameters = { ...llm.initialParameters, llmTemperature: enable ? null : FALLBACK_LLM_PARAM_TEMPERATURE };
+        const { llmTemperature: _, ...otherUserParameters } = { ...llm.userParameters };
+        updates.userParameters = otherUserParameters;
+        break;
+    }
+
+    updateLLM(llm.id, updates);
+  }, [llm, updateLLM]);
+
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
@@ -255,7 +280,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
         <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 1, md: 3 } }}>
 
           {/* Star + Model Name */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, md: 1 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, md: 1 } }} onClick={event => event.shiftKey && console.log({ llm })}>
             {ENABLE_STARRING_ICON && <TooltipOutlined title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
               <IconButton size='sm' onClick={handleLlmStarredToggle} sx={{ ml: -0.5 }}>
                 {llm.userStarred ? <StarIcon sx={{ color: '#fad857', fontSize: 'xl2' }} /> : <StarBorderIcon />}
@@ -410,6 +435,31 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             />
           </Tooltip>
         </FormControl>}
+
+        {/* Clone Interface Toggles (only for clones) */}
+        {!!llm.isUserClone && <Box sx={{ display: 'flex' }}>
+          <FormLabelStart title='Special' description='ADVANCED' tooltip='Change special technical parameters, only available on cloned models.' sx={{ minWidth: 96 }} />
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+            <Switch
+              size='sm'
+              checked={!llm.interfaces.includes(LLM_IF_HOTFIX_NoTemperature)}
+              onChange={(e) => handleInterfaceToggle(LLM_IF_HOTFIX_NoTemperature, !e.target.checked)}
+              endDecorator={<Typography level='body-sm'>🌡️ Temperature</Typography>}
+            />
+            <Switch
+              size='sm'
+              checked={!llm.interfaces.includes(LLM_IF_HOTFIX_NoStream)}
+              onChange={(e) => handleInterfaceToggle(LLM_IF_HOTFIX_NoStream, !e.target.checked)}
+              endDecorator={<Typography level='body-sm'>Streaming</Typography>}
+            />
+            <Switch
+              size='sm'
+              checked={llm.interfaces.includes(LLM_IF_OAI_Reasoning)}
+              onChange={(e) => handleInterfaceToggle(LLM_IF_OAI_Reasoning, e.target.checked)}
+              endDecorator={<Typography level='body-sm'>Icon: 🧠</Typography>}
+            />
+          </Box>
+        </Box>}
 
       </Box>}
 
