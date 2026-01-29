@@ -2,7 +2,7 @@ import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
 import { Box, Button, ButtonGroup, Divider, Dropdown, FormControl, Grid, IconButton, Input, Link, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
@@ -84,8 +84,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const { modelsServices, setConfServiceId } = useModelsServices();
   const modelService = llm ? modelsServices.find(s => s.id === llm.sId) : null;
 
-  // state - auto-open details if user has customized pricing or token limits
-  const [showDetails, setShowDetails] = React.useState(
+  // state - auto-open advanced if user has customized pricing or token limits
+  const [showDetails, setShowDetails] = React.useState(false);
+  const [showAdvanced, setShowAdvanced] = React.useState(
     !!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined,
   );
   const domainAssignments = useModelDomains();
@@ -236,7 +237,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
         <Dropdown>
           <TooltipOutlined title='More...' placement='top-start'>
             <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft' } }}>
-              <MoreVertIcon sx={{ fontSize: 'xl' }}/>
+              <MoreVertIcon sx={{ fontSize: 'xl' }} />
             </MenuButton>
           </TooltipOutlined>
           <Menu placement='bottom-start' disablePortal sx={{ minWidth: 200 }}>
@@ -250,6 +251,18 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
               </MenuItem>
               <ListDivider />
             </>}
+
+            {/* View toggles */}
+            <MenuItem onClick={() => setShowDetails(!showDetails)}>
+              <ListItemDecorator>{showDetails && <CheckRoundedIcon />}</ListItemDecorator>
+              Details ...
+            </MenuItem>
+            <MenuItem onClick={() => setShowAdvanced(!showAdvanced)}>
+              <ListItemDecorator>{showAdvanced && <CheckRoundedIcon />}</ListItemDecorator>
+              Advanced ...
+            </MenuItem>
+
+            <ListDivider />
 
             {/* Future: Clone Model, Reset to Defaults */}
 
@@ -354,108 +367,107 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             {Object.keys(llm.userParameters || {}).length > 0 && <>user parameters: {JSON.stringify(llm.userParameters, null, 2)}<br /></>}
           </Typography>
 
-          {/* Advanced: Token Overrides */}
-          <Grid container spacing={2} alignItems='center' sx={{ mt: 0.5 }}>
-            <Grid xs={12} md={6}>
-              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                <FormLabelStart title='Context Window' description='Tokens Override' sx={{ minWidth: 120 }} />
-                <Input
-                  type='number'
-                  variant='outlined'
-                  placeholder={
-                    // NOTE: direct access to the underlying, instead of via getLLMContextTokens
-                    llm.contextTokens?.toLocaleString() ?? 'default'
-                  }
-                  value={llm.userContextTokens ?? ''}
-                  onChange={handleContextTokensChange}
-                  endDecorator={llm.userContextTokens !== undefined && (
-                    <Button size='sm' variant='plain' onClick={handleContextTokensReset}>Reset</Button>
-                  )}
-                  slotProps={{ input: { min: 1 } }}
-                  sx={{ flex: 1 }}
-                />
-              </FormControl>
-            </Grid>
-
-            <Grid xs={12} md={6}>
-              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                <FormLabelStart title='Max Output' description='Tokens Override' sx={{ minWidth: 120 }} />
-                <Input
-                  type='number'
-                  variant='outlined'
-                  placeholder={
-                    // NOTE: direct access to the underlying, instead of via getLLMMaxOutputTokens
-                    llm.maxOutputTokens?.toLocaleString() ?? 'default'
-                  }
-                  value={llm.userMaxOutputTokens ?? ''}
-                  onChange={handleMaxOutputTokensChange}
-                  slotProps={{ input: { min: 1 } }}
-                  endDecorator={llm.userMaxOutputTokens !== undefined && (
-                    <Button size='sm' variant='plain' onClick={handleMaxOutputTokensReset}>Reset</Button>
-                  )}
-                  sx={{ flex: 1 }}
-                />
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          {/* Advanced: Pricing Overrides */}
-          <Grid container spacing={2} alignItems='center' sx={{ mt: 1 }}>
-            <Grid xs={12}>
-              <Typography level='title-sm'>
-                Pricing Override (for hypothetical cost tracking)
-              </Typography>
-            </Grid>
-
-            <Grid xs={12} md={6}>
-              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                <FormLabelStart title='Input Price' description='$/Million Tokens' sx={{ minWidth: 120 }} />
-                <Input
-                  type='number'
-                  variant='outlined'
-                  placeholder={
-                    // NOTE: direct access to the underlying, instead of via getLLMPricing
-                    typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
-                  }
-                  value={
-                    typeof llm.userPricing?.chat?.input === 'number' ? llm.userPricing.chat.input ?? '' : ''
-                  }
-                  onChange={handleInputPriceChange}
-                  endDecorator={llm.userPricing?.chat?.input !== undefined && (
-                    <Button size='sm' variant='plain' onClick={handleInputPriceReset}>Reset</Button>
-                  )}
-                  slotProps={{ input: { min: 0, step: 0.01 } }}
-                  sx={{ flex: 1 }}
-                />
-              </FormControl>
-            </Grid>
-
-            <Grid xs={12} md={6}>
-              <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                <FormLabelStart title='Output Price' description='$/Million Tokens' sx={{ minWidth: 120 }} />
-                <Input
-                  type='number'
-                  variant='outlined'
-                  placeholder={
-                    // NOTE: direct access to the underlying, instead of via getLLMPricing
-                    typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
-                  }
-                  value={
-                    typeof llm.userPricing?.chat?.output === 'number' ? llm.userPricing.chat.output ?? '' : ''
-                  }
-                  onChange={handleOutputPriceChange}
-                  slotProps={{ input: { min: 0, step: 0.01 } }}
-                  endDecorator={llm.userPricing?.chat?.output !== undefined && (
-                    <Button size='sm' variant='plain' onClick={handleOutputPriceReset}>Reset</Button>
-                  )}
-                  sx={{ flex: 1 }}
-                />
-              </FormControl>
-            </Grid>
-          </Grid>
-
         </Box>}
+
       </FormControl>
+
+      {/* Advanced: Token & Pricing Overrides */}
+      {showAdvanced && <Divider>Advanced: Parameters Override</Divider>}
+      {showAdvanced && <Grid container spacing={2} alignItems='center'>
+        <Grid xs={12} md={6}>
+          <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            <FormLabelStart title='Context Window' description='Tokens Override' sx={{ minWidth: 120 }} />
+            <Input
+              type='number'
+              variant='outlined'
+              placeholder={
+                // NOTE: direct access to the underlying, instead of via getLLMContextTokens
+                llm.contextTokens?.toLocaleString() ?? 'default'
+              }
+              value={llm.userContextTokens ?? ''}
+              onChange={handleContextTokensChange}
+              endDecorator={llm.userContextTokens !== undefined && (
+                <Button size='sm' variant='plain' onClick={handleContextTokensReset}>Reset</Button>
+              )}
+              slotProps={{ input: { min: 1 } }}
+              sx={{ flex: 1 }}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} md={6}>
+          <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            <FormLabelStart title='Max Output' description='Tokens Override' sx={{ minWidth: 120 }} />
+            <Input
+              type='number'
+              variant='outlined'
+              placeholder={
+                // NOTE: direct access to the underlying, instead of via getLLMMaxOutputTokens
+                llm.maxOutputTokens?.toLocaleString() ?? 'default'
+              }
+              value={llm.userMaxOutputTokens ?? ''}
+              onChange={handleMaxOutputTokensChange}
+              slotProps={{ input: { min: 1 } }}
+              endDecorator={llm.userMaxOutputTokens !== undefined && (
+                <Button size='sm' variant='plain' onClick={handleMaxOutputTokensReset}>Reset</Button>
+              )}
+              sx={{ flex: 1 }}
+            />
+          </FormControl>
+        </Grid>
+
+        {/*<Grid xs={12}>*/}
+        {/*  <Typography level='title-sm'>*/}
+        {/*    Pricing Override (for hypothetical cost tracking)*/}
+        {/*  </Typography>*/}
+        {/*</Grid>*/}
+
+        <Grid xs={12} md={6}>
+          <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            <FormLabelStart title='Input Price' description='$/M Override' sx={{ minWidth: 120 }} />
+            <Input
+              type='number'
+              variant='outlined'
+              placeholder={
+                // NOTE: direct access to the underlying, instead of via getLLMPricing
+                typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
+              }
+              value={
+                typeof llm.userPricing?.chat?.input === 'number' ? llm.userPricing.chat.input ?? '' : ''
+              }
+              onChange={handleInputPriceChange}
+              endDecorator={llm.userPricing?.chat?.input !== undefined && (
+                <Button size='sm' variant='plain' onClick={handleInputPriceReset}>Reset</Button>
+              )}
+              slotProps={{ input: { min: 0, step: 0.01 } }}
+              sx={{ flex: 1 }}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} md={6}>
+          <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            <FormLabelStart title='Output Price' description='$/M Override' sx={{ minWidth: 120 }} />
+            <Input
+              type='number'
+              variant='outlined'
+              placeholder={
+                // NOTE: direct access to the underlying, instead of via getLLMPricing
+                typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
+              }
+              value={
+                typeof llm.userPricing?.chat?.output === 'number' ? llm.userPricing.chat.output ?? '' : ''
+              }
+              onChange={handleOutputPriceChange}
+              slotProps={{ input: { min: 0, step: 0.01 } }}
+              endDecorator={llm.userPricing?.chat?.output !== undefined && (
+                <Button size='sm' variant='plain' onClick={handleOutputPriceReset}>Reset</Button>
+              )}
+              sx={{ flex: 1 }}
+            />
+          </FormControl>
+        </Grid>
+      </Grid>}
 
     </GoodModal>
 
