@@ -1,7 +1,7 @@
 import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DLLM, DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { applyModelParameterSpecsInitialValues, DModelParameterSpecAny, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -153,4 +153,69 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     applyModelParameterSpecsInitialValues(dllm.initialParameters, dllm.parameterSpecs, false);
 
   return dllm;
+}
+
+
+// LLM Clone Creation
+
+/**
+ * Creates a clone DLLM object from a source LLM.
+ * The clone has its own ID and label but inherits all settings from the source.
+ *
+ * @param sourceLlm - The source LLM to clone
+ * @param cloneLabel - Display label for the clone
+ * @param cloneVariant - Variant suffix for the clone ID (will be appended as `-{variant}`)
+ * @returns The new DLLM object ready to be added to the store
+ */
+export function createDLLMUserClone(sourceLlm: DLLM, cloneLabel: string, cloneVariant: string): DLLM {
+  const cloneId = getDLLMCloneId(sourceLlm.id, cloneVariant);
+
+  return {
+    ...sourceLlm,
+    id: cloneId,
+    label: cloneLabel,
+
+    // -- Inherited Editable
+    // created
+    // updated
+    // description
+    // hidden
+
+    // -- Inherited Hard Properties
+    // contextTokens
+    // maxOutputTokens
+    // trainingDataCutoff
+    // interfaces
+    // benchmark
+    // pricing
+
+    // -- Inherited Parameters
+    // parameterSpecs
+    // initialParameters
+
+    // references(!)
+    // sId
+    // vId
+
+    // copy user customizations as the clone's own
+    userLabel: undefined, // use the cloneLabel as label directly
+    userHidden: sourceLlm.userHidden,
+    userStarred: false, // don't auto-star clones
+    userParameters: sourceLlm.userParameters ? { ...sourceLlm.userParameters } : undefined,
+    userContextTokens: sourceLlm.userContextTokens,
+    userMaxOutputTokens: sourceLlm.userMaxOutputTokens,
+    userPricing: sourceLlm.userPricing ? { ...sourceLlm.userPricing } : undefined,
+
+    // clone metadata
+    isUserClone: true,
+    cloneSourceId: sourceLlm.id,
+  };
+}
+
+/**
+ * Generates the clone ID that would be created for a given source and variant.
+ * Useful for checking uniqueness before creating a clone.
+ */
+export function getDLLMCloneId(sourceId: DLLMId, cloneVariant: string): DLLMId {
+  return `${sourceId}::${cloneVariant}` as DLLMId;
 }
