@@ -10,6 +10,21 @@ import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { findServiceAccessOrThrow } from './vendors/vendor.helpers';
 
 
+// configuration
+
+/**
+ * DO NOT EXPORT TO THE SERVER, as the server knows already but we don't want to cross bundles.
+ * When this prefix is used, then the variant ID will not be prefixed with a dash.
+ */
+export const LLMS_VARIANT_SEPARATOR = '::' as const;
+
+function _clientIdWithVariant(id: string, idVariant?: string): string {
+  return !idVariant ? id
+    : idVariant.startsWith(LLMS_VARIANT_SEPARATOR) ? `${id}${idVariant}`
+      : `${id}-${idVariant}`;
+}
+
+
 // LLM Model Updates Client Functions
 
 export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServiceId, keepUserEdits: boolean): Promise<{ models: ModelDescriptionSchema[] }> {
@@ -79,8 +94,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   const dllm: DLLM = {
 
     // this id is Big-AGI specific, not the vendor's
-    id: !d.idVariant ? `${service.id}-${d.id}`
-      : `${service.id}-${d.id}-${d.idVariant}`,
+    id: `${service.id}-${_clientIdWithVariant(d.id, d.idVariant)}`,
 
     // editable properties
     label: d.label,

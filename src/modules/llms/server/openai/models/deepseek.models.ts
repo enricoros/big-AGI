@@ -65,9 +65,4 @@ export function deepseekModelSort(a: ModelDescriptionSchema, b: ModelDescription
 
 // [DeepSeek, 2025-12-15] V3.2-Speciale endpoint has expired and been removed
 // The temporary endpoint (v3.2_speciale_expires_on_20251215) was decommissioned on Dec 15, 2025 15:59 UTC
-
-// export function deepseekInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
-//   // Currently no variants to inject (Speciale was removed after expiration)
-//   models.push(model);
-//   return models;
-// }
+// To re-enable variants, use createVariantInjector() from llm.server.variants.ts

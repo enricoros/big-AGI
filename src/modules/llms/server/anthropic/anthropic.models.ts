@@ -4,6 +4,7 @@ import { LLM_IF_ANT_PromptCaching, LLM_IF_ANT_ToolsSearch, LLM_IF_OAI_Chat, LLM_
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
+import { createVariantInjector, ModelVariantMap } from '../llm.server.variants';
 import { llmDevCheckModels_DEV } from '../models.mappings';
 
 
@@ -25,7 +26,7 @@ const ANT_PAR_WEB_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
 ] as const;
 
 
-export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
+const _hardcodedAnthropicVariants: ModelVariantMap = {
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
@@ -71,8 +72,8 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
 
   // Claude 4 models with thinking variants
   'claude-opus-4-20250514': {
-    hidden: true, // superseded by 4.1
     idVariant: 'thinking',
+    hidden: true, // superseded by 4.1
     label: 'Claude Opus 4 (Thinking)',
     description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 32000,
@@ -103,6 +104,10 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
   },
 
 } as const;
+
+export function anthropicInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
+  return createVariantInjector(_hardcodedAnthropicVariants, 'before')(acc, model);
+}
 
 
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
@@ -303,13 +308,13 @@ export function anthropicValidateModelDefs_DEV(availableModels: AnthropicWire_AP
 export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
   return {
     id: model.id,
+    idVariant: '::placeholder',
     label: model.display_name,
     created: Math.round(new Date(model.created_at).getTime() / 1000),
     description: 'Newest model, description not available yet.',
     contextWindow: 200000,
-    maxCompletionTokens: 8192,
-    trainingDataCutoff: 'Latest',
-    interfaces: IF_4,
+    maxCompletionTokens: 32768,
+    interfaces: IF_4_R,
     // chatPrice: ...
     // benchmark: ...
   };

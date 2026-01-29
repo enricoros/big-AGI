@@ -19,10 +19,12 @@ const FIXUP_MAX_OUTPUT = true;
 const orModelFamilyOrder = [
   // Leading models/organizations (based on capabilities and popularity)
   'anthropic/', 'deepseek/', 'google/', 'openai/', 'x-ai/',
+  // Upcoming
+  'moonshotai/', 'z-ai/', 'qwen/',
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'moonshotai/', 'perplexity/', 'qwen/', 'inflection/',
+  'perplexity/', 'inflection/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'openchat/', // 'huggingfaceh4/',
   // Community/other providers
@@ -203,9 +205,18 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   });
 }
 
+/**
+ * Inject model variants for OpenRouter models.
+ *
+ * Unlike other providers that use the centralized createVariantInjector() from llm.server.variants.ts,
+ * OpenRouter uses dynamic variant creation based on model properties (vendor prefix, interfaces).
+ * This is because OpenRouter aggregates models from multiple vendors and needs provider-specific logic.
+ *
+ * For static variant maps, prefer using createVariantInjector() or createMultiVariantInjector().
+ */
 export function openRouterInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
 
-  // inject thinking variants for Anthropic thinking models
+  // OR->Anthropic: inject thinking variants
   if (model.id.includes('anthropic/') && model.interfaces.includes(LLM_IF_OAI_Reasoning)) {
 
     // thinking variant: keep reasoning interface, enable thinking budget (shows 🧠 icon)
@@ -232,13 +243,11 @@ export function openRouterInjectVariants(models: ModelDescriptionSchema[], model
     };
     models.push(baseModel);
 
-  } else {
-
-    // non-Anthropic/reasoning models: keep as-is
-    models.push(model);
-
+    return models;
   }
 
+  // default
+  models.push(model);
   return models;
 }
 

@@ -1,6 +1,7 @@
 import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
+import { createVariantInjector, ModelVariantMap } from '../llm.server.variants';
 import { llmDevCheckModels_DEV } from '../models.mappings';
 
 import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
@@ -799,14 +800,14 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 }
 
 
-const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSchema>[] } = {
+const _hardcodedGeminiVariants: ModelVariantMap = {
 
   // The Gemini 2.5 Pro Preview model does not have a non-thinking variant,
   // so we cannot add it here.
 
   // Adding non-thinking variant for the newest Gemini 2.5 Flash Preview 05-20 model
   // 'models/gemini-2.5-flash-preview-05-20': [{
-  //   idVariant: '-non-thinking',
+  //   idVariant: 'non-thinking',
   //   label: 'Gemini 2.5 Flash Preview (Non-thinking, 05-20)',
   //   chatPrice: gemini25FlashPricing,
   //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
@@ -820,7 +821,7 @@ const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSche
 
   // Changes to the thinking variant (same model ID) for the Gemini 2.5 Flash Preview model
   // 'models/gemini-2.5-flash-preview-04-17': [{
-  //   idVariant: '-non-thinking',
+  //   idVariant: 'non-thinking',
   //   label: 'Gemini 2.5 Flash Preview (Non-thinking, 04-17)',
   //   chatPrice: gemini25FlashPricing,
   //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
@@ -832,22 +833,8 @@ const hardcodedGeminiVariants: { [modelId: string]: Partial<ModelDescriptionSche
   //   hidden: true,
   // }],
 
-} as const;
+};
 
 export function geminiModelsAddVariants(models: ModelDescriptionSchema[]): ModelDescriptionSchema[] {
-  return models.reduce((acc, model) => {
-
-    // insert the model in the same order
-    acc.push(model);
-
-    // add variants, if defined
-    if (hardcodedGeminiVariants[model.id])
-      for (const variant of hardcodedGeminiVariants[model.id])
-        acc.push({
-          ...model,
-          ...variant,
-        });
-
-    return acc;
-  }, [] as ModelDescriptionSchema[]);
+  return models.reduce(createVariantInjector(_hardcodedGeminiVariants, 'after'), [] as ModelDescriptionSchema[]);
 }
