@@ -56,6 +56,7 @@ class ResponseParserStateMachine {
 
   // low-level verifications
   #sequenceNumber: number = 0;
+  #sequenceNumberActive: boolean = false; // tracks if sequence_number validation is active
   #expectedEvents: TEventType[] | undefined;
 
   // most recently updated response object
@@ -77,11 +78,27 @@ class ResponseParserStateMachine {
 
   // Validations
 
-  validateSequenceNumber(sequenceNumber: number) {
+  validateSequenceNumber(sequenceNumber: number | undefined) {
     // time-to-first-event
     if (this.timeToFirstEvent === undefined)
       this.timeToFirstEvent = Date.now() - this.parserCreationTimestamp;
 
+    // [LiteLLM, 2026-01-29] Handle optional sequence_number for proxy compatibility
+    // Once we see a valid sequence_number, we activate validation and require monotonicity
+    if (sequenceNumber === undefined) {
+      // If validation was previously active, warn about missing sequence number
+      if (this.#sequenceNumberActive)
+        console.warn(`[DEV] AIX: OpenAI Responses: sequence_number missing after previously seeing valid numbers`);
+      return;
+    }
+
+    // First valid sequence_number activates validation
+    if (!this.#sequenceNumberActive) {
+      this.#sequenceNumberActive = true;
+      this.#sequenceNumber = sequenceNumber;
+    }
+
+    // Validate monotonicity
     if (sequenceNumber !== this.#sequenceNumber)
       console.warn(`[DEV] AIX: OpenAI Responses: sequence mismatch: got ${sequenceNumber}, expected ${this.#sequenceNumber}`);
     this.#sequenceNumber = sequenceNumber + 1;
