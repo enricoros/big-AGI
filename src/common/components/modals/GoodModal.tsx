@@ -186,7 +186,7 @@ export function GoodModal(props: {
             },
             display: 'flex',
             flexWrap: 'wrap',
-            gap: 1,
+            // gap: { md: 1 }, // Note: let the startButton decide how to space itself
             justifyContent: 'space-between',
           }}>
             {props.startButton}
