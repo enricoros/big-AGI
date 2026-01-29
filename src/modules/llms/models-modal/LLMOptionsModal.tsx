@@ -2,8 +2,8 @@ import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
 import { Box, Button, ButtonGroup, Checkbox, Divider, Dropdown, FormControl, Grid, IconButton, Input, Link, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestoreIcon from '@mui/icons-material/Restore';
@@ -328,8 +328,8 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
 
             {/* Duplicate Model */}
             <MenuItem onClick={() => setCloneDialogOpen(true)}>
-              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-              Clone Model ...
+              <ListItemDecorator><AddRoundedIcon /></ListItemDecorator>
+              Duplicate Model ...
             </MenuItem>
 
             <ListDivider />
