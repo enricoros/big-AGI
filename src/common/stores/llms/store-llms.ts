@@ -39,12 +39,14 @@ interface LlmsRootActions {
 
   setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false) => void;
   removeLLM: (id: DLLMId) => void;
+  removeCustomModels: (serviceId: DModelsServiceId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMs: (updates: Array<{ id: DLLMId; partial: Partial<DLLM> }>) => void;
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
   resetLLMUserParameters: (id: DLLMId) => void;
+  resetServiceUserParameters: (serviceId: DModelsServiceId) => void;
   userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string) => DLLMId | null;
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
@@ -162,6 +164,15 @@ export const useModelsStore = create<LlmsStore>()(persist(
         };
       }),
 
+    removeCustomModels: (serviceId: DModelsServiceId) =>
+      set(state => {
+        const newLlms = state.llms.filter(llm => !(llm.sId === serviceId && llm.isUserClone === true));
+        return {
+          llms: newLlms,
+          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
+        };
+      }),
+
     rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) =>
       set(state => {
         // Create a mapping of service IDs to their index in the provided order
@@ -226,6 +237,16 @@ export const useModelsStore = create<LlmsStore>()(persist(
       set(({ llms }) => ({
         llms: llms.map((llm: DLLM): DLLM => {
           if (llm.id !== id) return llm;
+          // strip away just the user parameters
+          const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
+          return rest;
+        }),
+      })),
+
+    resetServiceUserParameters: (serviceId: DModelsServiceId) =>
+      set(({ llms }) => ({
+        llms: llms.map((llm: DLLM): DLLM => {
+          if (llm.sId !== serviceId) return llm;
           // strip away just the user parameters
           const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
           return rest;
