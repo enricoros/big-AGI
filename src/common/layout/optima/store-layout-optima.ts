@@ -10,6 +10,8 @@ import { OPTIMA_OPEN_DEBOUNCE, OPTIMA_PEEK_HOVER_ENTER_DELAY, OPTIMA_PEEK_HOVER_
 
 export type PreferencesTabId = 'chat' | 'voice' | 'draw' | 'tools' | undefined;
 
+export type ModelOptionsContext = 'full' | 'parameters';
+
 
 interface OptimaState {
 
@@ -27,6 +29,7 @@ interface OptimaState {
   showKeyboardShortcuts: boolean;
   showLogger: boolean;
   showModelOptions: DLLMId | false;
+  showModelOptionsContext: ModelOptionsContext;
   showModels: boolean;
   showPreferences: boolean;
   preferencesTab: PreferencesTabId;
@@ -51,6 +54,7 @@ const modalsClosedState = {
   showKeyboardShortcuts: false,
   showLogger: false,
   showModelOptions: false,
+  showModelOptionsContext: 'full' as ModelOptionsContext,
   showModels: false,
   showPreferences: false,
 } as const;
@@ -102,7 +106,7 @@ export interface OptimaActions {
   openLogger: () => void;
 
   closeModelOptions: () => void;
-  openModelOptions: (id: DLLMId) => void;
+  openModelOptions: (id: DLLMId, context?: ModelOptionsContext) => void;
 
   closeModels: () => void;
   openModels: () => void;
@@ -209,7 +213,7 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
   openLogger: () => _set({ ...modalsClosedState, showLogger: true }),
 
   closeModelOptions: () => _set({ showModelOptions: false }),
-  openModelOptions: (id: DLLMId) => _set({ showModelOptions: id }),
+  openModelOptions: (id: DLLMId, context?: ModelOptionsContext) => _set({ showModelOptions: id, showModelOptionsContext: context ?? 'full' }),
 
   closeModels: () => _set({ showModels: false }),
   openModels: () => _set({ showModels: true }),
