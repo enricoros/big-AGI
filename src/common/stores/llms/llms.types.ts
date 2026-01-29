@@ -21,12 +21,12 @@ export type DLLMId = string;
 export interface DLLM {
   id: DLLMId;
 
-  // editable properties (kept on update, if isEdited)
+  // factory properties (overwritten on update)
   label: string;
   created: number | 0;
   updated?: number | 0;
   description: string;
-  hidden: boolean;                  // default hidden state (can change underlying between refreshes)
+  hidden: boolean;
 
   // hard properties (overwritten on update)
   contextTokens: DLLMContextTokens;     // null: must assume it's unknown
@@ -36,22 +36,22 @@ export interface DLLM {
   benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
   pricing?: DModelPricing;
 
-  // parameters system
+  // parameters system (overwritten on update)
   parameterSpecs: DModelParameterSpecAny[];
   initialParameters: DModelParameterValues;
 
-  // references
-  sId: DModelsServiceId;
-  vId: ModelVendorId;
+  // references (const, never change)
+  sId: DModelsServiceId; // could be weak, but they're removed at the same time
+  vId: ModelVendorId; // known hardcoded value
 
   // user edited properties - if not undefined/missing, they override the others
   userLabel?: string;
   userHidden?: boolean;
   userStarred?: boolean;
-  userParameters?: DModelParameterValues; // user has set these parameters
-  userContextTokens?: DLLMContextTokens;       // user override for context window
-  userMaxOutputTokens?: DLLMMaxOutputTokens;   // user override for max output tokens
-  userPricing?: DModelPricing;                 // user override for model pricing
+  userContextTokens?: DLLMContextTokens;
+  userMaxOutputTokens?: DLLMMaxOutputTokens;
+  userPricing?: DModelPricing;
+  userParameters?: DModelParameterValues;
 
   // clone metadata - user-created duplicates of models with independent settings
   isUserClone?: boolean;        // true if this is a user-created clone

@@ -37,7 +37,7 @@ export interface LlmsRootState {
 
 interface LlmsRootActions {
 
-  setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: boolean, keepMissingLLMs: boolean) => void;
+  setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false) => void;
   removeLLM: (id: DLLMId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
@@ -78,62 +78,75 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
     // actions
 
-    setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: boolean, keepMissingLLMs: boolean) =>
-      set(({ llms: existingLLMs, modelAssignments }) => {
+    setServiceLLMs: (serviceId: DModelsServiceId, updatedServiceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false) =>
+      set(({ llms, modelAssignments }) => {
 
-        // keep existing model customizations
-        if (keepUserEdits) {
-          serviceLLMs = serviceLLMs.map((llm: DLLM): DLLM => {
-            const existing = existingLLMs.find(m => m.id === llm.id);
-            if (!existing) return llm;
+        // separate existing models
+        const otherServiceLLMs = llms.filter(llm => llm.sId !== serviceId);
+        const previousServiceLLMs = llms.filter(llm => llm.sId === serviceId);
+        const consumedPreviousIds = new Set<DLLMId>();
 
-            const result = {
-              ...llm,
-              ...(existing.userLabel !== undefined ? { userLabel: existing.userLabel } : {}),
-              ...(existing.userHidden !== undefined ? { userHidden: existing.userHidden } : {}),
-              ...(existing.userStarred !== undefined ? { userStarred: existing.userStarred } : {}),
-              ...(existing.userParameters !== undefined ? { userParameters: { ...existing.userParameters } } : {}),
-              ...(existing.userContextTokens !== undefined ? { userContextTokens: existing.userContextTokens } : {}),
-              ...(existing.userMaxOutputTokens !== undefined ? { userMaxOutputTokens: existing.userMaxOutputTokens } : {}),
-              ...(existing.userPricing !== undefined ? { userPricing: existing.userPricing } : {}),
-            };
+        // process updated models, re-applying user customizations where applicable
+        const mergedServiceLLMs: DLLM[] = updatedServiceLLMs.map((llm: DLLM): DLLM => {
+          // new model: as-is
+          const e = previousServiceLLMs.find(m => m.id === llm.id);
+          if (!e) return llm;
 
-            // clean up stale parameters from userParameters - e.g. was in the model spec but removed in the new version
-            if (result.userParameters) {
-              for (const key of Object.keys(result.userParameters)) {
-                const paramId = key as DModelParameterId;
+          // mark this previous model as matched (consumed)
+          consumedPreviousIds.add(e.id);
 
-                // Skip implicit common parameters (always supported, not in parameterSpecs)
-                if (LLMS_ImplicitParamIds.includes(paramId))
-                  continue;
+          // re-apply user edits from existing model to the new model data
+          if (!keepUserEdits) return llm;
+          const result: DLLM = {
+            ...llm,
+            ...(e.userLabel !== undefined ? { userLabel: e.userLabel } : {}),
+            ...(e.userHidden !== undefined ? { userHidden: e.userHidden } : {}),
+            ...(e.userStarred !== undefined ? { userStarred: e.userStarred } : {}),
+            ...(e.userContextTokens !== undefined ? { userContextTokens: e.userContextTokens } : {}),
+            ...(e.userMaxOutputTokens !== undefined ? { userMaxOutputTokens: e.userMaxOutputTokens } : {}),
+            ...(e.userPricing !== undefined ? { userPricing: e.userPricing } : {}),
+            ...(e.userParameters !== undefined ? { userParameters: { ...e.userParameters } } : {}),
+          };
 
-                // Remove if param no longer in spec
-                const paramSpec = llm.parameterSpecs.find(spec => spec.paramId === paramId);
-                if (!paramSpec) {
-                  delete result.userParameters[paramId];
-                  continue;
-                }
+          // clean up stale parameters from userParameters -
+          // - e.g. was in the model spec but removed in the new version
+          // - or the value of an enum got removed, and so we remove ours
+          if (result.userParameters) {
+            for (const key of Object.keys(result.userParameters)) {
+              const paramId = key as DModelParameterId;
 
-                // For enum types, validate the value is still in the allowed values (e.g., 'medium' was removed from thinkingLevel)
-                const regDef = DModelParameterRegistry[paramId];
-                if (regDef && regDef.type === 'enum' && 'values' in regDef) {
-                  const currentValue = result.userParameters[paramId];
-                  if (currentValue !== undefined && !(regDef.values as readonly unknown[]).includes(currentValue))
-                    delete result.userParameters[paramId]; // Reset to default (undefined)
-                }
+              // keep implicit common parameters (always supported, not in parameterSpecs)
+              if (LLMS_ImplicitParamIds.includes(paramId))
+                continue;
+
+              // remove parameters no longer in spec
+              const paramSpec = llm.parameterSpecs.find(spec => spec.paramId === paramId);
+              if (!paramSpec) {
+                delete result.userParameters[paramId];
+                continue;
+              }
+
+              // for enum types, validate the value is still in the allowed values (e.g., 'medium' was removed from thinkingLevel)
+              const regDef = DModelParameterRegistry[paramId];
+              if (regDef && regDef.type === 'enum' && 'values' in regDef) {
+                const currentValue = result.userParameters[paramId];
+                if (currentValue && typeof currentValue === 'string' && !(regDef.values as readonly string[]).includes(currentValue))
+                  delete result.userParameters[paramId]; // reset to default (undefined)
               }
             }
+          }
 
-            return result;
-          });
-        }
+          return result;
+        });
 
-        // remove models that are not in the new list, but preserve user clones
-        if (!keepMissingLLMs)
-          existingLLMs = existingLLMs.filter(llm => llm.sId !== serviceId || llm.isUserClone === true);
 
-        // replace existing llms with the same id
-        const newLlms = [...serviceLLMs, ...existingLLMs.filter(existingLlm => !serviceLLMs.some(newLlm => newLlm.id === existingLlm.id))];
+        // Always preserve custom models
+        // - NOTE: shall we check for the undelying ref to still be in the service, to auto-clean-up older models?
+        const customModels = previousServiceLLMs.filter(llm => llm.isUserClone === true && !consumedPreviousIds.has(llm.id));
+        const missingModels = !keepMissingLLMs ? [] : previousServiceLLMs.filter(llm => !llm.isUserClone && !consumedPreviousIds.has(llm.id));
+
+        // Build the final list in priority order
+        const newLlms = [...customModels, ...missingModels, ...mergedServiceLLMs, ...otherServiceLLMs];
         return {
           llms: newLlms,
           modelAssignments: llmsHeuristicUpdateAssignments(newLlms, modelAssignments),
@@ -228,11 +241,15 @@ export const useModelsStore = create<LlmsStore>()(persist(
       const cloneId = getDLLMCloneId(sourceId, cloneVariant);
       if (llms.some(llm => llm.id === cloneId)) return null;
 
-      // create and add the clone
-      const userCloneLLM = createDLLMUserClone(sourceLlm, cloneLabel, cloneVariant);
-      set({
-        llms: [userCloneLLM, ...llms],
-      });
+      // create clone
+      const cloneLlm = createDLLMUserClone(sourceLlm, cloneLabel, cloneVariant);
+
+      // IMPORTANT: we have to have this LLM be part of the same group (or the UI will break on multiple-grouping)
+      const serviceStartIndex = llms.findIndex(llm => llm.sId === sourceLlm.sId);
+      const newLlms = [...llms];
+      newLlms.splice(serviceStartIndex, 0, cloneLlm);
+      set({ llms: newLlms });
+
       return cloneId;
     },
 
