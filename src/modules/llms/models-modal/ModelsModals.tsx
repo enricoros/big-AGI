@@ -13,7 +13,7 @@ import { ModelsConfiguratorModal } from './ModelsConfiguratorModal';
 export function ModelsModals() {
 
   // external state
-  const { showModels, showModelOptions } = useOptimaModals();
+  const { showModels, showModelOptions, showModelOptionsContext } = useOptimaModals();
   const { modelsServices, confServiceId, setConfServiceId } = useModelsServices();
 
 
@@ -30,7 +30,7 @@ export function ModelsModals() {
 
     {/* per-LLM options */}
     {!!showModelOptions && (
-      <LLMOptionsModal id={showModelOptions} onClose={optimaActions().closeModelOptions} />
+      <LLMOptionsModal id={showModelOptions} context={showModelOptionsContext} onClose={optimaActions().closeModelOptions} />
     )}
 
   </>;

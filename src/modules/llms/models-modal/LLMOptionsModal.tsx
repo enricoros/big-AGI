@@ -13,6 +13,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
+import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
 import { DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
@@ -30,7 +31,28 @@ import { LLMVendorIcon } from '../components/LLMVendorIcon';
 
 // configuration
 export const ENABLE_STARRING_ICON = true;
+const ENABLE_PURPOSEFUL_VISIBILITY = false;
 const ENABLE_HIDING_ICON = false;
+
+
+const _styles = {
+  fullContainer: {
+    mx: 'calc(-1 * var(--Card-padding, 1rem))', padding: 'var(--Card-padding, 1rem)', // fill card
+
+    borderTop: '1px solid',
+    borderBottom: '1px solid',
+    borderColor: 'divider',
+    backgroundColor: 'background.level1',
+
+    // repeat layout
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--Card-padding)',
+  },
+  multiSelectButton: {
+    backgroundColor: 'background.surface',
+  },
+} as const;
 
 
 function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): React.ReactNode {
@@ -77,7 +99,7 @@ function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): Reac
 }
 
 
-export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
+export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsContext, onClose: () => void }) {
 
   // external state
   const isMobile = useIsMobile();
@@ -207,6 +229,11 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     </Link>
   );
 
+
+  // if 'full' or missing, show all options
+  const showFull = !ENABLE_PURPOSEFUL_VISIBILITY || props.context !== 'parameters';
+
+
   return (
 
     <GoodModal
@@ -292,56 +319,72 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
         {isMobile && resetButton}
       </Box>
 
-      <Divider />
 
-      <Grid container spacing={2} alignItems='center'>
+      {/* General Settings */}
 
-        <Grid xs={12} md={8}>
-          <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-            <FormLabelStart title='Name' sx={{ minWidth: 80 }} />
-            <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
-          </FormControl>
-        </Grid>
+      {/*{showFull && <Divider />} replaced by the border of the following */}
 
-        <Grid xs={12} md={4}>
-          {!ENABLE_HIDING_ICON && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-            <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
-            <Tooltip title={visible ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
-              <Switch checked={visible} onChange={handleLlmVisibilityToggle}
-                      endDecorator={visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                      slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-            </Tooltip>
-          </FormControl>}
-        </Grid>
+      {showFull && <Box sx={_styles.fullContainer}>
 
-      </Grid>
+        <Grid container spacing={2} alignItems='center'>
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabelStart title='Default' description='Model for' sx={{ minWidth: 80 }} />
-        <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
-          {ModelDomainsList.filter(dId => !['imageCaption'].includes(dId)).map(domainId => {
-            const domainSpec = ModelDomainsRegistry[domainId];
-            const domainModelId = domainAssignments[domainId]?.modelId;
-            const isActive = domainModelId === llm.id;
-            return (
-              // Note: use Tooltip instead of GoodTooltip here, because GoodTooltip is not working well with ButtonGroup
-              <Tooltip arrow placement='top' key={domainId} title={domainSpec.confTooltip}>
-                <Button variant={isActive ? 'solid' : undefined} onClick={() => assignDomainModelId(domainId, isActive ? null : llm.id)}>{domainSpec.confLabel}</Button>
+          <Grid xs={12} md={8}>
+            <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+              <FormLabelStart title='Name' sx={{ minWidth: 80 }} />
+              <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
+            </FormControl>
+          </Grid>
+
+          <Grid xs={12} md={4}>
+            {!ENABLE_HIDING_ICON && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+              <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
+              <Tooltip title={visible ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
+                <Switch checked={visible} onChange={handleLlmVisibilityToggle}
+                        endDecorator={visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
               </Tooltip>
-            );
-          })}
-        </ButtonGroup>
-      </FormControl>
+            </FormControl>}
+          </Grid>
 
-      {!ENABLE_STARRING_ICON && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabelStart title='Starred' sx={{ minWidth: 80 }} />
-        <Tooltip title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
-          <Switch checked={!!llm.userStarred} onChange={handleLlmStarredToggle}
-                  endDecorator={llm.userStarred ? <StarIcon sx={{ color: '#fad857' }} /> : <StarBorderIcon />}
-                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-          />
-        </Tooltip>
-      </FormControl>}
+        </Grid>
+
+        <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+          <FormLabelStart title='Default' description='Model for' sx={{ minWidth: 80 }} />
+          <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
+            {ModelDomainsList.filter(dId => !['imageCaption'].includes(dId)).map(domainId => {
+              const domainSpec = ModelDomainsRegistry[domainId];
+              const domainModelId = domainAssignments[domainId]?.modelId;
+              const isActive = domainModelId === llm.id;
+              return (
+                // Note: use Tooltip instead of GoodTooltip here, because GoodTooltip is not working well with ButtonGroup
+                <Tooltip arrow placement='top' key={domainId} title={domainSpec.confTooltip}>
+                  <Button
+                    variant={isActive ? 'solid' : undefined}
+                    onClick={() => assignDomainModelId(domainId, isActive ? null : llm.id)}
+                    sx={isActive ? undefined : _styles.multiSelectButton}
+                  >
+                    {domainSpec.confLabel}
+                  </Button>
+                </Tooltip>
+              );
+            })}
+          </ButtonGroup>
+        </FormControl>
+
+        {!ENABLE_STARRING_ICON && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+          <FormLabelStart title='Starred' sx={{ minWidth: 80 }} />
+          <Tooltip title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
+            <Switch checked={!!llm.userStarred} onChange={handleLlmStarredToggle}
+                    endDecorator={llm.userStarred ? <StarIcon sx={{ color: '#fad857' }} /> : <StarBorderIcon />}
+                    slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
+            />
+          </Tooltip>
+        </FormControl>}
+
+      </Box>}
+
+
+      {/* Details Text */}
 
       {showDetails && <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap', gap: 1 }}>
 
@@ -381,7 +424,10 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
       </FormControl>}
 
-      {showOverrides ? <Divider>Expert: Overrides <WarningRoundedIcon sx={{ color: 'text.tertiary', ml: 1 }} /></Divider> : <Divider />}
+
+      {/* Overrides */}
+
+      {showOverrides ? <Divider>Expert: Overrides <WarningRoundedIcon sx={{ color: 'text.tertiary', ml: 1 }} /></Divider> : null}
 
       {/* Overrides: Token & Pricing Overrides */}
       {showOverrides && <Grid container spacing={2} alignItems='center'>

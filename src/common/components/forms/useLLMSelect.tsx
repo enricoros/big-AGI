@@ -304,7 +304,7 @@ export function useLLMSelect(
                 // variant='outlined'
                 onClick={(e) => {
                   e.stopPropagation();
-                  optimaActions().openModelOptions(llm.id);
+                  optimaActions().openModelOptions(llm.id, 'parameters');
                 }}
                 sx={_styles.configButton}
               >
