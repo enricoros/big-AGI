@@ -148,6 +148,11 @@ function _cleanElementForCopy(element: HTMLElement) {
     // strip theme-dependent colors, but keeps formatting like font sizes
     ['color', 'background', 'background-color'].forEach(p => el.style.removeProperty(p));
 
+    // preserve whitespace formatting for code elements (newlines would collapse otherwise)
+    const tagName = el.tagName.toLowerCase();
+    if (tagName === 'pre' || tagName === 'code')
+      el.style.whiteSpace = 'pre-wrap';
+
     // remove framework/accessibility cruft
     el.removeAttribute('class');
     el.removeAttribute('tabindex');
@@ -163,7 +168,8 @@ function _cleanElementForCopy(element: HTMLElement) {
 function _getInnerTextFromFloatingElement(element: HTMLElement, fallback: string): string {
   // innerText requires element to be in DOM to respect CSS layout
   // Note: can't use visibility:hidden as innerText won't return text from hidden elements
-  element.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden';
+  // Note: white-space:pre-wrap preserves newlines in code (partial selections may not include <code> wrapper)
+  element.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;white-space:pre-wrap';
   document.body.appendChild(element);
   try {
     return element.innerText || fallback;
