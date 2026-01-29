@@ -27,7 +27,7 @@ function _clientIdWithVariant(id: string, idVariant?: string): string {
 
 // LLM Model Updates Client Functions
 
-export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServiceId, keepUserEdits: boolean): Promise<{ models: ModelDescriptionSchema[] }> {
+export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServiceId, keepUserEdits: true): Promise<{ models: ModelDescriptionSchema[] }> {
 
   // get the access, assuming there's no client config and the server will do all
   const { service, vendor, transportAccess } = findServiceAccessOrThrow(serviceId);
@@ -96,7 +96,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // this id is Big-AGI specific, not the vendor's
     id: `${service.id}-${_clientIdWithVariant(d.id, d.idVariant)}`,
 
-    // editable properties
+    // factory properties
     label: d.label,
     created: d.created || 0,
     updated: d.updated || 0,
@@ -116,11 +116,12 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
       ? d.parameterSpecs as DModelParameterSpecAny[] // NOTE: our force cast, assume the server (simple zod type) sent valid specs to the client (TS discriminated type)
       : [],
     initialParameters: {
-      llmRef: d.id, // this is the vendor model id
-      llmTemperature:
-        d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null
-          : d.initialTemperature ?? FALLBACK_LLM_PARAM_TEMPERATURE,
+      llmRef: d.id, // CONST - this is the vendor model id
       llmResponseTokens: llmResponseTokens, // number | null
+      llmTemperature: // number | null
+        d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null
+          : d.initialTemperature !== undefined ? d.initialTemperature
+            : FALLBACK_LLM_PARAM_TEMPERATURE,
     },
 
     // references
@@ -131,10 +132,14 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // userLabel: undefined,
     // userHidden: undefined
     // userStarred: undefined,
-    // userParameters: undefined,
     // userContextTokens: undefined,
     // userMaxOutputTokens: undefined,
     // userPricing: undefined,
+    // userParameters: undefined,
+
+    // clone metadata
+    // isUserClone: false,
+    // cloneSourceId: undefined,
   };
 
   // set the pricing
@@ -175,7 +180,7 @@ export function createDLLMUserClone(sourceLlm: DLLM, cloneLabel: string, cloneVa
     id: cloneId,
     label: cloneLabel,
 
-    // -- Inherited Editable
+    // -- Inherited Factory Properties
     // created
     // updated
     // description
@@ -201,10 +206,10 @@ export function createDLLMUserClone(sourceLlm: DLLM, cloneLabel: string, cloneVa
     userLabel: undefined, // use the cloneLabel as label directly
     userHidden: sourceLlm.userHidden,
     userStarred: false, // don't auto-star clones
-    userParameters: sourceLlm.userParameters ? { ...sourceLlm.userParameters } : undefined,
     userContextTokens: sourceLlm.userContextTokens,
     userMaxOutputTokens: sourceLlm.userMaxOutputTokens,
     userPricing: sourceLlm.userPricing ? { ...sourceLlm.userPricing } : undefined,
+    userParameters: sourceLlm.userParameters ? { ...sourceLlm.userParameters } : undefined,
 
     // clone metadata
     isUserClone: true,

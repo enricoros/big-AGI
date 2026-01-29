@@ -106,6 +106,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
   // external state
   const isMobile = useIsMobile();
   const llm = useLLM(props.id);
+  const cloneSourceLlm = useLLM(llm?.cloneSourceId ?? null);
 
   const { modelsServices, setConfServiceId } = useModelsServices();
   const modelService = llm ? modelsServices.find(s => s.id === llm.sId) : null;
@@ -220,6 +221,11 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
     optimaActions().openModelOptions(cloneId, props.context);
   };
 
+  const handleGoToCloneSource = () => {
+    if (llm.cloneSourceId)
+      optimaActions().openModelOptions(llm.cloneSourceId, props.context);
+  };
+
   const visible = isLLMVisible(llm);
 
   const hasUserParameters = llm.userParameters && Object.keys(llm.userParameters).length > 0;
@@ -330,6 +336,17 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
         {/* On Mobile, display the button below the settings */}
         {isMobile && resetButton}
       </Box>
+
+      {/* Clone Source Info */}
+      {llm.isUserClone && (
+        <Typography level='body-sm' sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          ➕ Cloned from:{' '}
+          {cloneSourceLlm
+            ? <Link component='button' onClick={handleGoToCloneSource}>{cloneSourceLlm.label}</Link>
+            : <Typography component='span' sx={{ color: 'text.tertiary' }}>{llm.cloneSourceId} (not found)</Typography>
+          }
+        </Typography>
+      )}
 
 
       {/* General Settings */}
