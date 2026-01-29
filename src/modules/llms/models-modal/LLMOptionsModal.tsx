@@ -235,7 +235,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
       color='neutral'
       level='body-sm'
       onClick={handleResetParameters}
-      sx={{ mt: 0.375 }}
+      // sx={{ mt: 0.125 }}
     >
       Reset to defaults ...
     </Link>
@@ -329,6 +329,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
           </Menu>
         </Dropdown>
       }
+      // darkBottomClose
     >
 
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
@@ -437,13 +438,14 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
           </Typography>}
 
           <Typography level='body-xs'>
-            llm id: {llm.id}<br />
-            context tokens: <b>{getLLMContextTokens(llm)?.toLocaleString() ?? 'not provided'}</b>{` · `}
-            max output tokens: <b>{getLLMMaxOutputTokens(llm)?.toLocaleString() ?? 'not provided'}</b><br />
+            id: {llm.id}<br />
+            context: <b>{getLLMContextTokens(llm)?.toLocaleString() ?? 'not provided'}</b> tokens{` · `}
+            max output: <b>{getLLMMaxOutputTokens(llm)?.toLocaleString() ?? 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
             {!!getLLMPricing(llm)?.chat && prettyPricingComponent(getLLMPricing(llm)!.chat!)}
             {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
+            {!!llm.interfaces?.length && <>interfaces: {llm.interfaces.join(', ')}<br /></>}
             {llm.parameterSpecs?.length > 0 && <>options: {llm.parameterSpecs.map(ps => ps.paramId).join(', ')}<br /></>}
             {Object.keys(llm.initialParameters || {}).length > 0 && <>initial parameters: {JSON.stringify(llm.initialParameters, null, 2)}<br /></>}
             {Object.keys(llm.userParameters || {}).length > 0 && <>user parameters: {JSON.stringify(llm.userParameters, null, 2)}<br /></>}
