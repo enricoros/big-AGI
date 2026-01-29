@@ -1,14 +1,16 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, ButtonGroup, Divider, Dropdown, FormControl, Grid, IconButton, Input, Link, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import { Box, Button, ButtonGroup, Checkbox, Divider, Dropdown, FormControl, Grid, IconButton, Input, Link, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RestoreIcon from '@mui/icons-material/Restore';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import { DLLMId, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible } from '~/common/stores/llms/llms.types';
@@ -84,9 +86,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const { modelsServices, setConfServiceId } = useModelsServices();
   const modelService = llm ? modelsServices.find(s => s.id === llm.sId) : null;
 
-  // state - auto-open advanced if user has customized pricing or token limits
+  // state - auto-open overrides if user has customized pricing or token limits
   const [showDetails, setShowDetails] = React.useState(false);
-  const [showAdvanced, setShowAdvanced] = React.useState(
+  const [showOverrides, setshowOverrides] = React.useState(
     !!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined,
   );
   const domainAssignments = useModelDomains();
@@ -104,7 +106,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const handleLlmStarredToggle = () => updateLLM(llm.id, { userStarred: !llm.userStarred });
 
 
-  // Advanced > user Context/MaxOutput
+  // Overrides > user Context/MaxOutput
 
   const handleContextTokensChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -121,7 +123,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const handleMaxOutputTokensReset = () => updateLLM(llm.id, { userMaxOutputTokens: undefined });
 
 
-  // Advanced > user Pricing
+  // Overrides > user Pricing
 
   const handleInputPriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -240,33 +242,41 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
               <MoreVertIcon sx={{ fontSize: 'xl' }} />
             </MenuButton>
           </TooltipOutlined>
-          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 200 }}>
+          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 220 }}>
 
             {/* -> Models Service */}
             {modelService && <>
               <MenuItem onClick={handleGoToService}>
-                <ListItemDecorator><LLMVendorIcon vendorId={llm.vId} sx={{ fontSize: 'lg' }} /></ListItemDecorator>
+                <ListItemDecorator><LLMVendorIcon vendorId={llm.vId} /></ListItemDecorator>
                 {modelService.label}
-                {/*<ArrowForwardRoundedIcon sx={{ ml: 'auto', fontSize: 'lg' }} />*/}
+                <ArrowForwardRoundedIcon sx={{ ml: 'auto' }} />
               </MenuItem>
               <ListDivider />
             </>}
 
-            {/* View toggles */}
+            {/* Reset to Defaults */}
+            <MenuItem disabled={!hasUserParameters} onClick={handleResetParameters}>
+              <ListItemDecorator><RestoreIcon /></ListItemDecorator>
+              Reset Parameters
+            </MenuItem>
+
+            {/* Future: Clone Model */}
+
+            <ListDivider />
+
+            {/*View toggles */}
             <MenuItem onClick={() => setShowDetails(!showDetails)}>
-              <ListItemDecorator>{showDetails && <CheckRoundedIcon />}</ListItemDecorator>
+              <ListItemDecorator><Checkbox color='neutral' checked={showDetails} /></ListItemDecorator>
               Details ...
             </MenuItem>
-            <MenuItem onClick={() => setShowAdvanced(!showAdvanced)}>
-              <ListItemDecorator>{showAdvanced && <CheckRoundedIcon />}</ListItemDecorator>
-              Advanced ...
+            <MenuItem onClick={() => setshowOverrides(!showOverrides)}>
+              <ListItemDecorator><Checkbox color='neutral' checked={showOverrides} /></ListItemDecorator>
+              Overrides ...
             </MenuItem>
 
             <ListDivider />
 
-            {/* Future: Clone Model, Reset to Defaults */}
-
-            {/* Delete */}
+            {/*  Delete */}
             <MenuItem color='danger' onClick={handleLlmDelete}>
               <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
               Delete
@@ -307,7 +317,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       </Grid>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabelStart title='Assignment' description='Default model' sx={{ minWidth: 80 }} />
+        <FormLabelStart title='Default' description='Model for' sx={{ minWidth: 80 }} />
         <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
           {ModelDomainsList.filter(dId => !['imageCaption'].includes(dId)).map(domainId => {
             const domainSpec = ModelDomainsRegistry[domainId];
@@ -333,7 +343,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
         </Tooltip>
       </FormControl>}
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap', gap: 1 }}>
+      {showDetails && <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap', gap: 1 }}>
 
         <Link
           component='button'
@@ -369,11 +379,12 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
         </Box>}
 
-      </FormControl>
+      </FormControl>}
 
-      {/* Advanced: Token & Pricing Overrides */}
-      {showAdvanced && <Divider>Advanced: Parameters Override</Divider>}
-      {showAdvanced && <Grid container spacing={2} alignItems='center'>
+      {showOverrides ? <Divider>Expert: Overrides <WarningRoundedIcon sx={{ color: 'text.tertiary', ml: 1 }} /></Divider> : <Divider />}
+
+      {/* Overrides: Token & Pricing Overrides */}
+      {showOverrides && <Grid container spacing={2} alignItems='center'>
         <Grid xs={12} md={6}>
           <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
             <FormLabelStart title='Context Window' description='Tokens Override' sx={{ minWidth: 120 }} />
