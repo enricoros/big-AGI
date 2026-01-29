@@ -1,8 +1,10 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, ButtonGroup, Divider, FormControl, Grid, IconButton, Input, Link, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Divider, Dropdown, FormControl, Grid, IconButton, Input, Link, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -15,11 +17,13 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
-import { useLLM } from '~/common/stores/llms/llms.hooks';
+import { useLLM, useModelsServices } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsGlobal } from './LLMOptionsGlobal';
+import { LLMVendorIcon } from '../components/LLMVendorIcon';
 
 
 // configuration
@@ -76,6 +80,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   // external state
   const isMobile = useIsMobile();
   const llm = useLLM(props.id);
+
+  const { modelsServices, setConfServiceId } = useModelsServices();
+  const modelService = llm ? modelsServices.find(s => s.id === llm.sId) : null;
 
   // state - auto-open details if user has customized pricing or token limits
   const [showDetails, setShowDetails] = React.useState(
@@ -170,6 +177,13 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   };
 
 
+  const handleGoToService = () => {
+    if (!modelService?.id) return;
+    props.onClose();
+    setConfServiceId(modelService.id);
+    optimaOpenModels();
+  };
+
   const handleLlmDelete = () => {
     removeLLM(llm.id);
     props.onClose();
@@ -219,9 +233,33 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       }
       open={!!props.id} onClose={props.onClose}
       startButton={
-        <Button variant='plain' color='neutral' onClick={handleLlmDelete} startDecorator={<DeleteOutlineIcon />}>
-          Delete
-        </Button>
+        <Dropdown>
+          <TooltipOutlined title='More...' placement='top-start'>
+            <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft' } }}>
+              <MoreVertIcon sx={{ fontSize: 'xl' }}/>
+            </MenuButton>
+          </TooltipOutlined>
+          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 200 }}>
+
+            {/* -> Models Service */}
+            {modelService && <>
+              <MenuItem onClick={handleGoToService}>
+                <ListItemDecorator><LLMVendorIcon vendorId={llm.vId} sx={{ fontSize: 'lg' }} /></ListItemDecorator>
+                {modelService.label}
+                {/*<ArrowForwardRoundedIcon sx={{ ml: 'auto', fontSize: 'lg' }} />*/}
+              </MenuItem>
+              <ListDivider />
+            </>}
+
+            {/* Future: Clone Model, Reset to Defaults */}
+
+            {/* Delete */}
+            <MenuItem color='danger' onClick={handleLlmDelete}>
+              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+              Delete
+            </MenuItem>
+          </Menu>
+        </Dropdown>
       }
     >
 
