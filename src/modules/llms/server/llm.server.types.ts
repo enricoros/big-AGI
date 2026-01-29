@@ -147,7 +147,7 @@ export const ModelDescription_schema = z.object({
   chatPrice: PricingChatGenerate_schema.optional(),
   hidden: z.boolean().optional(),
   // parameter initializers for vendor-specific defaults
-  initialTemperature: z.number().optional(), // vendor-specific initial 'llmTemperature' (e.g. Gemini has 1.0)
+  initialTemperature: z.number().nullish(), // vendor-specific initial 'llmTemperature' (e.g. Gemini has 1.0)
 });
 
 
