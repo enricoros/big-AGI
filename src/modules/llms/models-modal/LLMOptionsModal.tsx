@@ -3,6 +3,7 @@ import TimeAgo from 'react-timeago';
 
 import { Box, Button, ButtonGroup, Checkbox, Divider, Dropdown, FormControl, Grid, IconButton, Input, Link, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestoreIcon from '@mui/icons-material/Restore';
@@ -20,11 +21,12 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
 import { useLLM, useModelsServices } from '~/common/stores/llms/llms.hooks';
 
+import { LLMOptionsClone } from './LLMOptionsClone';
 import { LLMOptionsGlobal } from './LLMOptionsGlobal';
 import { LLMVendorIcon } from '../components/LLMVendorIcon';
 
@@ -110,9 +112,8 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
 
   // state - auto-open overrides if user has customized pricing or token limits
   const [showDetails, setShowDetails] = React.useState(false);
-  const [showOverrides, setshowOverrides] = React.useState(
-    !!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined,
-  );
+  const [showOverrides, setshowOverrides] = React.useState(!!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined);
+  const [cloneDialogOpen, setCloneDialogOpen] = React.useState(false);
   const domainAssignments = useModelDomains();
   const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
 
@@ -214,6 +215,10 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
     props.onClose();
   };
 
+  const handleLlmCloned = (cloneId: DLLMId) => {
+    // switch to the newly created clone
+    optimaActions().openModelOptions(cloneId, props.context);
+  };
 
   const visible = isLLMVisible(llm);
 
@@ -288,18 +293,24 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               Reset Parameters
             </MenuItem>
 
-            {/* Future: Clone Model */}
+            <ListDivider />
+
+            {/* Duplicate Model */}
+            <MenuItem onClick={() => setCloneDialogOpen(true)}>
+              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+              Clone Model ...
+            </MenuItem>
 
             <ListDivider />
 
             {/*View toggles */}
             <MenuItem onClick={() => setShowDetails(!showDetails)}>
               <ListItemDecorator><Checkbox color='neutral' checked={showDetails} /></ListItemDecorator>
-              Details ...
+              Show Details
             </MenuItem>
             <MenuItem onClick={() => setshowOverrides(!showOverrides)}>
               <ListItemDecorator><Checkbox color='neutral' checked={showOverrides} /></ListItemDecorator>
-              Overrides ...
+              Show Overrides
             </MenuItem>
 
             <ListDivider />
@@ -526,6 +537,15 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
           </FormControl>
         </Grid>
       </Grid>}
+
+      {/* Clone Model Dialog */}
+      {cloneDialogOpen && (
+        <LLMOptionsClone
+          llmId={llm.id}
+          onClose={() => setCloneDialogOpen(false)}
+          onCloned={handleLlmCloned}
+        />
+      )}
 
     </GoodModal>
 

@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
+import { createDLLMUserClone, getDLLMCloneId } from '~/modules/llms/llm.client';
 import { findModelVendor, type ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import { hasKeys } from '~/common/util/objectUtils';
@@ -44,6 +45,7 @@ interface LlmsRootActions {
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
   resetLLMUserParameters: (id: DLLMId) => void;
+  userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string) => DLLMId | null;
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
   removeService: (id: DModelsServiceId) => void;
@@ -126,9 +128,9 @@ export const useModelsStore = create<LlmsStore>()(persist(
           });
         }
 
-        // remove models that are not in the new list
+        // remove models that are not in the new list, but preserve user clones
         if (!keepMissingLLMs)
-          existingLLMs = existingLLMs.filter(llm => llm.sId !== serviceId);
+          existingLLMs = existingLLMs.filter(llm => llm.sId !== serviceId || llm.isUserClone === true);
 
         // replace existing llms with the same id
         const newLlms = [...serviceLLMs, ...existingLLMs.filter(existingLlm => !serviceLLMs.some(newLlm => newLlm.id === existingLlm.id))];
@@ -216,6 +218,23 @@ export const useModelsStore = create<LlmsStore>()(persist(
           return rest;
         }),
       })),
+
+    userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string): DLLMId | null => {
+      const { llms } = get();
+      const sourceLlm = llms.find(llm => llm.id === sourceId);
+      if (!sourceLlm) return null;
+
+      // check uniqueness
+      const cloneId = getDLLMCloneId(sourceId, cloneVariant);
+      if (llms.some(llm => llm.id === cloneId)) return null;
+
+      // create and add the clone
+      const userCloneLLM = createDLLMUserClone(sourceLlm, cloneLabel, cloneVariant);
+      set({
+        llms: [userCloneLLM, ...llms],
+      });
+      return cloneId;
+    },
 
     createModelsService: (vendor: IModelVendor): DModelsService => {
 

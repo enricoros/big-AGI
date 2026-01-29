@@ -9,6 +9,10 @@ export function useLLM(llmId: undefined | DLLMId | null): DLLM | undefined {
   return useModelsStore(state => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));
 }
 
+export function useLLMExists(llmId: undefined | DLLMId | null): boolean {
+  return useModelsStore(state => !llmId ? false : state.llms.some(llm => llm.id === llmId));
+}
+
 export function useLLMs(llmIds: ReadonlyArray<DLLMId>): ReadonlyArray<DLLM | undefined> {
   return useModelsStore(useShallow(state => {
     return llmIds.map(llmId => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));

@@ -52,6 +52,10 @@ export interface DLLM {
   userContextTokens?: DLLMContextTokens;       // user override for context window
   userMaxOutputTokens?: DLLMMaxOutputTokens;   // user override for max output tokens
   userPricing?: DModelPricing;                 // user override for model pricing
+
+  // clone metadata - user-created duplicates of models with independent settings
+  isUserClone?: boolean;        // true if this is a user-created clone
+  cloneSourceId?: DLLMId;       // original model ID (for reference)
 }
 
 
