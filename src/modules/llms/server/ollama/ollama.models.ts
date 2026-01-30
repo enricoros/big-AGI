@@ -25,8 +25,10 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'olmo-3': { pulls: 102000, tags: ['7b', '32b'], added: '20260114' },
   'devstral-small-2': { pulls: 109000, tags: ['24b'], hasVision: true, hasTools: true, added: '20260114' },
   'rnj-1': { pulls: 70000, tags: ['8b'], hasTools: true, added: '20260122' },
+  'deepseek-v3.2': { pulls: 16000, tags: ['thinking'], hasTools: true, added: '20260129' },
   'devstral-2': { pulls: 56000, tags: ['123b'], hasTools: true, added: '20260122' },
   'qwen3-next': { pulls: 274000, tags: ['thinking', '80b'], hasTools: true, added: '20260114' },
+  'mistral-large-3': { pulls: 13000, hasVision: true, hasTools: true, added: '20260129' },
   'ministral-3': { pulls: 294000, tags: ['3b', '8b', '14b'], hasVision: true, hasTools: true, added: '20260114' },
   'deepseek-ocr': { pulls: 114000, tags: ['3b'], hasVision: true, added: '20260114' },
   'cogito-2.1': { pulls: 51000, tags: ['671b'], added: '20260122' },
@@ -208,5 +210,5 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'everythinglm': { pulls: 167000, tags: ['13b'], added: '20251015' },
   'codeup': { pulls: 170000, tags: ['13b'], added: '20251015' },
 };
-export const OLLAMA_LAST_UPDATE: string = '20260122';
-export const OLLAMA_PREV_UPDATE: string = '20260114';
+export const OLLAMA_LAST_UPDATE: string = '20260129';
+export const OLLAMA_PREV_UPDATE: string = '20260122';
