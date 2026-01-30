@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-01-21
+// Updated 2026-01-29
 // - models on: https://docs.mistral.ai/getting-started/models/models_overview/
 // - pricing on: https://mistral.ai/pricing#api-pricing
 // - benchmark elo on CBA
@@ -39,6 +39,7 @@ const _knownMistralModelDetails: Record<string, {
 
   'devstral-2512': { label: 'Devstral 2 (2512)', chatPrice: { input: 0.4, output: 2 } }, // Devstral 2 - 123B coding agents (API returns "Mistral Vibe Cli")
   'devstral-latest': { label: 'Devstral 2 (latest)', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // symlink
+  'devstral-medium-latest': { label: 'Devstral 2 (latest)', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // symlink
   'mistral-vibe-cli-latest': { label: 'Devstral 2 (latest)', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // alternate ID for devstral-latest
   'devstral-medium-2507': { chatPrice: { input: 0.4, output: 2 }, hidden: true }, // older version
 
