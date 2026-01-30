@@ -172,7 +172,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1490 }, // gemini-3-pro
+    benchmark: { cbaElo: 1487 }, // gemini-3-pro
   },
 
   // 3.0 Pro Image Preview - Released November 20, 2025
@@ -221,7 +221,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1480 }, // gemini-3-flash
+    benchmark: { cbaElo: 1471 }, // gemini-3-flash
   },
 
   /// Generation 2.5
@@ -237,7 +237,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1451 }, // gemini-2.5-pro
+    benchmark: { cbaElo: 1450 }, // gemini-2.5-pro
   },
 
   // REMOVED MODELS (no longer returned by API as of Jan 8, 2026):
@@ -289,7 +289,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1406 + 2 }, // gemini-2.5-flash-preview-09-2025 - the +2 is to be on top of the non-preview 2.5-flash (1407)
+    benchmark: { cbaElo: 1405 }, // gemini-2.5-flash-preview-09-2025
   },
   // 2.5 Flash
   {
@@ -303,7 +303,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1407 }, // gemini-2.5-flash (updated from CSV)
+    benchmark: { cbaElo: 1409 }, // gemini-2.5-flash
   },
 
   // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
@@ -398,7 +398,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1380 }, // gemini-2.5-flash-lite-preview-09-2025 (no-thinking variant)
+    benchmark: { cbaElo: 1379 }, // gemini-2.5-flash-lite-preview-09-2025-no-thinking
   },
   // 2.5 Flash-Lite - Released July 2025
   {
@@ -463,7 +463,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
-    benchmark: { cbaElo: 1360 }, // gemini-2.0-flash-001
+    benchmark: { cbaElo: 1361 }, // gemini-2.0-flash-001
   },
   {
     id: 'models/gemini-2.0-flash',
@@ -473,7 +473,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
-    benchmark: { cbaElo: 1360 }, // gemini-2.0-flash
+    benchmark: { cbaElo: 1361 }, // gemini-2.0-flash
   },
 
   // 2.0 Flash Lite
@@ -529,7 +529,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
-    benchmark: { cbaElo: 1311 }, // Estimating based on comparable models
+    benchmark: { cbaElo: 1319 }, // gemma-3n-e4b-it
   },
   {
     id: 'models/gemma-3n-e2b-it',
@@ -547,7 +547,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Pricing page indicates free tier only
-    benchmark: { cbaElo: 1341 },
+    benchmark: { cbaElo: 1365 }, // gemma-3-27b-it
     // hidden: true, // Keep visible if it's a distinct offering
   },
   {
@@ -556,7 +556,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree,
-    benchmark: { cbaElo: 1321 },
+    benchmark: { cbaElo: 1342 }, // gemma-3-12b-it
   },
   {
     hidden: true, // keep larger model
@@ -564,7 +564,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree,
-    benchmark: { cbaElo: 1275 },
+    benchmark: { cbaElo: 1303 }, // gemma-3-4b-it
   },
   {
     hidden: true, // keep larger model
