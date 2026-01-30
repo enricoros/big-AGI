@@ -5,6 +5,7 @@ import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/
 
 // configuration
 const SERVER_LOG_FETCHERS_ERRORS = true; // log all fetcher errors to the console
+const SERVER_DEBUG_FETCH_HEADERS = false; // log response headers (rate limits, etc.)
 
 
 //
@@ -174,6 +175,13 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     // @throws Error.name=ResponseAborted (Next.js) when the request is aborted (e.g. HMR)
     // @throws TypeError: network error occurred (URL invalid, invalid RequestInit, network error such as DNS failure or no connectivity or IP, etc.)
     response = await fetch(url, request);
+
+    // debug logging = off
+    if (SERVER_DEBUG_FETCH_HEADERS) {
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => headers[key] = value);
+      console.log(`[${method}] [${moduleName}] Response headers:`, headers);
+    }
 
   } catch (error: any) {
 
