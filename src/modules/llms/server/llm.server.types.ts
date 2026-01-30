@@ -19,10 +19,8 @@ export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
 /// Benchmark
 
 const BenchmarksScores_schema = z.object({
-  cbaElo: z.number().optional(),
-  cbaMmlu: z.number().optional(),
-  // heCode: z.number().optional(), // HumanEval, code, 0-shot
-  // vqaMmmu: z.number().optional(), // Visual Question Answering, MMMU, 0-shot
+  cbaElo: z.number().optional(), // Chat Bot Arena ELO score
+  // removed others for now to reduce noise - also maybe we shall have a mapping table instead
 });
 
 
