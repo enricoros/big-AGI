@@ -80,7 +80,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Most capable model for professional work and long-running agents. Improvements in general intelligence, long-context, agentic tool-calling, and vision.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort52', initialValue: 'medium' /* our decision: set to medium to have thinking - clones can set to 'none' to have temperature */ },
@@ -106,7 +105,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-5.2 optimized for long-horizon, agentic coding tasks in Codex or similar environments. Supports low, medium, high, and xhigh reasoning effort settings.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmForceNoStream' },
@@ -124,7 +122,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-5.2 model powering ChatGPT. Fast, capable for everyday work with clear improvements in info-seeking, how-tos, technical writing.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext' },
@@ -143,7 +140,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Smartest and most trustworthy option for difficult questions. Uses more compute for harder thinking on complex domains like programming.',
     contextWindow: 400000,
     maxCompletionTokens: 272000,
-    trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort52Pro' },
@@ -169,7 +165,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'The best model for coding and agentic tasks with configurable reasoning effort.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    // trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
@@ -194,7 +189,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-5.1 Instant with adaptive reasoning. More conversational with improved instruction following.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    // trainingDataCutoff: 'Oct 31, 2024',
     // interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
@@ -214,7 +208,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Our most intelligent coding model optimized for long-horizon, agentic coding tasks.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort4' },
@@ -230,7 +223,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'A version of GPT-5.1 optimized for agentic coding tasks in Codex or similar environments.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' }, // low, medium, high (no minimal)
@@ -246,7 +238,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Smaller, faster version of GPT-5.1 Codex for efficient coding tasks.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' }, // low, medium, high (no minimal)
@@ -267,7 +258,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'The best model for coding and agentic tasks across domains.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' },
@@ -292,7 +282,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Version of GPT-5 that uses more compute to produce smarter and more precise responses. Designed for tough problems.',
     contextWindow: 400000,
     maxCompletionTokens: 272000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
     chatPrice: { input: 15, output: 120 },
@@ -311,7 +300,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-5 model used in ChatGPT. Points to the GPT-5 snapshot currently used in ChatGPT.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Sep 29, 2024',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     benchmark: { cbaElo: 1430 }, // gpt-5-chat
@@ -324,7 +312,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'A version of GPT-5 optimized for agentic coding in Codex.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' }, // works
@@ -343,7 +330,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Updated web search model in Chat Completions API. 60% cheaper with domain filtering support.',
     contextWindow: 400000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Sep 30, 2024',
     interfaces: [...IFS_CHAT_MIN, LLM_IF_Tools_WebSearch],
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium' }], // Search enabled by default
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
@@ -362,7 +348,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'A faster, more cost-efficient version of GPT-5 for well-defined tasks.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'May 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
@@ -381,7 +366,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Fastest, most cost-efficient version of GPT-5 for summarization and classification tasks.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
-    trainingDataCutoff: 'May 30, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
     chatPrice: { input: 0.05, cache: { cType: 'oai-ac', read: 0.005 }, output: 0.4 },
@@ -419,7 +403,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Specialized model for computer use tool. Optimized for computer interaction capabilities.',
     contextWindow: 8192,
     maxCompletionTokens: 1024,
-    trainingDataCutoff: 'Sep 30, 2023',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_NoTemperature],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
@@ -436,7 +419,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Fast reasoning model optimized for the Codex CLI. A fine-tuned version of o4-mini for low-latency code Q&A and editing.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.5, cache: { cType: 'oai-ac', read: 0.375 }, output: 6 },
@@ -453,7 +435,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Faster, more affordable deep research model for complex, multi-step research tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON],
     parameterSpecs: PS_DEEP_RESEARCH,
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
@@ -471,7 +452,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Latest o4-mini model. Optimized for fast, effective reasoning with exceptionally efficient performance in coding and visual tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: IFS_CHAT_CACHE_REASON,
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.275 }, output: 4.4 },
@@ -490,7 +470,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Our most powerful deep research model for complex, multi-step research tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON],
     parameterSpecs: PS_DEEP_RESEARCH,
     chatPrice: { input: 10, cache: { cType: 'oai-ac', read: 2.5 }, output: 40 },
@@ -508,7 +487,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Version of o3 with more compute for better responses. Provides consistently better answers for complex tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 20, output: 80 },
@@ -527,7 +505,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'A well-rounded and powerful model across domains. Sets a new standard for math, science, coding, and visual reasoning tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: IFS_CHAT_CACHE_REASON,
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
@@ -546,7 +523,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Latest o3-mini model snapshot. High intelligence at the same cost and latency targets of o1-mini. Excels at science, math, and coding tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_StripImages],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
@@ -566,7 +542,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'A version of o1 with more compute for better responses. Provides consistently better answers for complex tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Sep 30, 2023',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 150, output: 600 },
@@ -585,7 +560,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Previous full o-series reasoning model.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_CHAT_CACHE_REASON,
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
@@ -607,7 +581,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Flagship GPT model for complex tasks. Major improvements on coding, instruction following, and long context with 1M token context window.',
     contextWindow: 1047576,
     maxCompletionTokens: 32768,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
     benchmark: { cbaElo: 1409 }, // gpt-4.1-2025-04-14
@@ -625,7 +598,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Balanced for intelligence, speed, and cost. Matches or exceeds GPT-4o in intelligence while reducing latency by nearly half and cost by 83%.',
     contextWindow: 1047576,
     maxCompletionTokens: 32768,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 0.4, cache: { cType: 'oai-ac', read: 0.1 }, output: 1.6 },
     benchmark: { cbaElo: 1377 }, // gpt-4.1-mini-2025-04-14
@@ -643,7 +615,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Fastest, most cost-effective GPT 4.1 model. Delivers exceptional performance with low latency, ideal for tasks like classification or autocompletion.',
     contextWindow: 1047576,
     maxCompletionTokens: 32768,
-    trainingDataCutoff: 'May 31, 2024',
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 0.1, cache: { cType: 'oai-ac', read: 0.025 }, output: 0.4 },
     benchmark: { cbaElo: 1320 }, // gpt-4.1-nano-2025-04-14
@@ -710,7 +681,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Snapshot of gpt-4o from November 20th, 2024.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 },
     benchmark: { cbaElo: 1265 + 1 }, // not reported; using gpt-4o-2024-08-06 + 1
@@ -722,7 +692,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Snapshot that supports Structured Outputs. gpt-4o currently points to this version.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 },
     benchmark: { cbaElo: 1333 }, // GPT-4o (08/06)
@@ -734,7 +703,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Original gpt-4o snapshot from May 13, 2024.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_CHAT_MIN,
     chatPrice: { input: 5, output: 15 },
     benchmark: { cbaElo: 1344 }, // gpt-4o-2024-05-13
@@ -750,7 +718,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'The chatgpt-4o-latest model version continuously points to the version of GPT-4o used in ChatGPT, and is updated frequently.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // does not support Tools
     chatPrice: { input: 5, output: 15 },
     benchmark: { cbaElo: 1441 }, // chatgpt-4o-latest-20250326
@@ -765,7 +732,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Latest snapshot of the GPT-4o model optimized for web search capabilities.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Sep 30, 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
     chatPrice: { input: 2.5, output: 10 },
@@ -786,7 +752,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Latest snapshot for the Audio API model.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_GPT_AUDIO,
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
@@ -799,7 +764,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Snapshot for the Audio API model.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_GPT_AUDIO,
     chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
     // benchmarks don't apply to audio models
@@ -818,7 +782,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Affordable model for fast, lightweight tasks. GPT-4o Mini is cheaper and more capable than GPT-3.5 Turbo.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 0.15, cache: { cType: 'oai-ac', read: 0.075 }, output: 0.6 },
     benchmark: { cbaElo: 1316 }, // GPT-4o-mini (07/18)
@@ -835,7 +798,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Snapshot for the Audio API model.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
     interfaces: IFS_GPT_AUDIO,
     chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
     // benchmarks don't apply to audio models
@@ -854,7 +816,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'Latest snapshot of the GPT-4o Mini model optimized for web search capabilities.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Sep 30, 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
     chatPrice: { input: 0.15, output: 0.6 },
@@ -875,7 +836,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-4 Turbo with Vision model. Vision requests can now use JSON mode and function calling. gpt-4-turbo currently points to this version.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Dec 2023',
     interfaces: IFS_CHAT_MIN,
     chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1324 }, // gpt-4-turbo-2024-04-09
@@ -892,7 +852,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-4 Turbo preview model intended to reduce cases of "laziness" where the model doesn\'t complete a task.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1315 }, // gpt-4-0125-preview
@@ -904,7 +863,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-4 Turbo preview model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1315 }, // gpt-4-1106-preview
@@ -923,7 +881,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true, // OLD
     description: 'Snapshot of gpt-4 from June 13th 2023 with improved function calling support. Data up to Sep 2021.',
     contextWindow: 8192,
-    trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 30, output: 60 },
     benchmark: { cbaElo: 1163 },
@@ -935,7 +892,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true, // OLD
     description: 'Snapshot of gpt-4 from March 14th 2023 with function calling data. Data up to Sep 2021.',
     contextWindow: 8192,
-    trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 30, output: 60 },
     benchmark: { cbaElo: 1186 },
@@ -959,7 +915,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls.',
     contextWindow: 16385,
     maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
     benchmark: { cbaElo: 1106 },
@@ -971,7 +926,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     description: 'GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
     contextWindow: 16385,
     maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 1, output: 2 },
     benchmark: { cbaElo: 1068 },

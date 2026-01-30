@@ -31,7 +31,6 @@ export interface DLLM {
   // hard properties (overwritten on update)
   contextTokens: DLLMContextTokens;     // null: must assume it's unknown
   maxOutputTokens: DLLMMaxOutputTokens; // null: must assume it's unknown
-  trainingDataCutoff?: string;          // 'Apr 2029'
   interfaces: DModelInterfaceV1[];      // if set, meaning this is the known and comprehensive set of interfaces
   benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
   pricing?: DModelPricing;
