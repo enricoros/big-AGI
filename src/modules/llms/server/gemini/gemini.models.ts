@@ -71,7 +71,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Jan 21, 2026)
+// Pricing based on https://ai.google.dev/pricing (Jan 29, 2026)
 
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
@@ -170,6 +170,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
     benchmark: { cbaElo: 1490 }, // gemini-3-pro
   },
@@ -218,16 +219,18 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
     benchmark: { cbaElo: 1480 }, // gemini-3-flash
   },
 
   /// Generation 2.5
 
-  // 2.5 Pro (Stable) - Released June 17, 2025
+  // 2.5 Pro (Stable) - Released June 17, 2025; DEPRECATED: shutdown June 17, 2026
   {
     id: 'models/gemini-2.5-pro',
     labelOverride: 'Gemini 2.5 Pro',
+    deprecated: '2026-06-17',
     chatPrice: gemini25ProPricing,
     interfaces: IF_25,
     parameterSpecs: [
@@ -288,10 +291,12 @@ const _knownGeminiModels: ({
     ],
     benchmark: { cbaElo: 1406 + 2 }, // gemini-2.5-flash-preview-09-2025 - the +2 is to be on top of the non-preview 2.5-flash (1407)
   },
+  // 2.5 Flash
   {
     hidden: true, // yielding to 'models/gemini-2.5-flash-preview-09-2025', which is more recent
     id: 'models/gemini-2.5-flash',
     labelOverride: 'Gemini 2.5 Flash',
+    deprecated: '2026-06-17',
     chatPrice: gemini25FlashPricing,
     interfaces: IF_25,
     parameterSpecs: [
@@ -340,10 +345,11 @@ const _knownGeminiModels: ({
     benchmark: undefined, // Robotics model, not benchmarkable on standard tests
   },
 
-  // 2.5 Flash Image Preview
+  // 2.5 Flash Image
   {
     id: 'models/gemini-2.5-flash-image',
     labelOverride: 'Nano Banana',
+    deprecated: '2026-10-02',
     chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
     parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' }],
@@ -394,11 +400,12 @@ const _knownGeminiModels: ({
     ],
     benchmark: { cbaElo: 1380 }, // gemini-2.5-flash-lite-preview-09-2025 (no-thinking variant)
   },
-  // 2.5 Flash-Lite (Stable) - Released July 2025
+  // 2.5 Flash-Lite - Released July 2025
   {
-    hidden: true, // yielding to 'models/gemini-2.5-flash-lite', which is stable now
+    hidden: true, // yielding to more recent preview
     id: 'models/gemini-2.5-flash-lite',
     labelOverride: 'Gemini 2.5 Flash-Lite',
+    deprecated: '2026-07-22',
     chatPrice: gemini25FlashLitePricing,
     interfaces: IF_25,
     parameterSpecs: [
@@ -449,10 +456,10 @@ const _knownGeminiModels: ({
     isPreview: true,
   },
 
-  // 2.0 Flash - DEPRECATED: shutdown February 5, 2026
+  // 2.0 Flash
   {
     id: 'models/gemini-2.0-flash-001',
-    deprecated: '2026-02-05',
+    deprecated: '2026-03-31',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
@@ -461,7 +468,7 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemini-2.0-flash',
     symLink: 'models/gemini-2.0-flash-001',
-    deprecated: '2026-02-05',
+    deprecated: '2026-03-31',
     // copied from symlink
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
@@ -469,19 +476,19 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1360 }, // gemini-2.0-flash
   },
 
-  // 2.0 Flash Lite - DEPRECATED: shutdown February 25, 2026
+  // 2.0 Flash Lite
   {
     id: 'models/gemini-2.0-flash-lite',
     chatPrice: gemini20FlashLitePricing,
     symLink: 'models/gemini-2.0-flash-lite-001',
-    deprecated: '2026-02-25',
+    deprecated: '2026-03-31',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
     benchmark: { cbaElo: 1310 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-001',
     chatPrice: gemini20FlashLitePricing,
-    deprecated: '2026-02-25',
+    deprecated: '2026-03-31',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
     benchmark: { cbaElo: 1310 },
   },
