@@ -12,7 +12,6 @@
  */
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
 /// Types
@@ -131,22 +130,6 @@ Choose the most suitable chart type based on the data and context. Include only 
   },
 
   // Model Capabilities
-
-  '{{LLM.Cutoff}}': {
-    scope: 'model',
-    description: 'Model knowledge cutoff date',
-    dependencies: { assistantLlmId: true },
-    wholeLine: true,
-    replace: ({ assistantLlmId }) => {
-      try {
-        if (assistantLlmId)
-          return findLLMOrThrow(assistantLlmId).trainingDataCutoff || null;
-      } catch (e) {
-        // ignore...
-      }
-      return null;
-    },
-  },
 
   '{{LLM.LowRL:...}}': {
     scope: 'model',

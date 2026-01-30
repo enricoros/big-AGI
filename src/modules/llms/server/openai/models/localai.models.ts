@@ -58,7 +58,6 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
     interfaces,
     // parameterSpecs
     // maxCompletionTokens
-    // trainingDataCutoff
     // benchmark
     chatPrice: _knownLocalAIPrice,
     hidden: _hideLocalAIModels.includes(modelId),

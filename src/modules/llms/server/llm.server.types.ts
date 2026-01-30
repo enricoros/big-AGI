@@ -142,7 +142,6 @@ export const ModelDescription_schema = z.object({
   parameterSpecs: z.array(ModelParameterSpec_schema).optional(),
   maxCompletionTokens: z.int().optional(), // initial parameter value for 'llmResponseTokens'
   // rateLimits: rateLimitsSchema.optional(),
-  trainingDataCutoff: z.string().optional(),
   benchmark: BenchmarksScores_schema.optional(),
   chatPrice: PricingChatGenerate_schema.optional(),
   hidden: z.boolean().optional(),

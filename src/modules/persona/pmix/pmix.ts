@@ -67,6 +67,10 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
     for (const [placeholder, replacement] of Object.entries(context.customFields))
       mixed = mixed.replaceAll(placeholder, replacement);
 
+  // Remove deprecated variables (whole line removal)
+  // - {{LLM.Cutoff}} - deprecated on 2026-01-29; not used, maybe back to gpt-4, but then we could just update those prompts
+  mixed = mixed.replaceAll(/.*\{\{LLM\.Cutoff}}.*\n/g, '');
+
   // At most leave 2 newlines in a row
   mixed = mixed.replace(/\n{3,}/g, '\n\n');
 

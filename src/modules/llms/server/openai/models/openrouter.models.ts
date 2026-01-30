@@ -196,7 +196,6 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     description: model.description?.length > 280 ? model.description.slice(0, 277) + '...' : model.description,
     contextWindow,
     maxCompletionTokens,
-    // trainingDataCutoff: ...
     interfaces,
     // benchmark: ...
     chatPrice,

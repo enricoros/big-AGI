@@ -794,7 +794,6 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     description: descriptionLong,
     contextWindow: contextWindow,
     maxCompletionTokens: outputTokenLimit,
-    // trainingDataCutoff: knownModel?.trainingDataCutoff, // disabled as we don't get this from Gemini
     interfaces,
     parameterSpecs: knownModel?.parameterSpecs,
     // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,

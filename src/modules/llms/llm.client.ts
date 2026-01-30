@@ -106,7 +106,6 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // hard properties
     contextTokens,
     maxOutputTokens,
-    trainingDataCutoff: d.trainingDataCutoff,
     interfaces: d.interfaces?.length ? d.interfaces as DModelInterfaceV1[] : _fallbackInterfaces,
     benchmark: d.benchmark,
     // pricing?: ..., // set below, since it needs some adaptation
@@ -189,7 +188,6 @@ export function createDLLMUserClone(sourceLlm: DLLM, cloneLabel: string, cloneVa
     // -- Inherited Hard Properties
     // contextTokens
     // maxOutputTokens
-    // trainingDataCutoff
     // interfaces
     // benchmark
     // pricing

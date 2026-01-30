@@ -142,7 +142,6 @@ export function fromManualMapping(mappings: (KnownModel | KnownLink)[], upstream
   // apply optional fields
   if (m.parameterSpecs) md.parameterSpecs = m.parameterSpecs;
   if (m.maxCompletionTokens) md.maxCompletionTokens = m.maxCompletionTokens;
-  if (m.trainingDataCutoff) md.trainingDataCutoff = m.trainingDataCutoff;
   if (m.benchmark) md.benchmark = m.benchmark;
   if (m.chatPrice) md.chatPrice = m.chatPrice;
   if (m.hidden) md.hidden = true;
