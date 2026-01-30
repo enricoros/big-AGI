@@ -195,6 +195,7 @@ async function* _consumeDispatchStream(
 
     // Stream... -> Events[] (& yield heartbeats)
     let demuxedEvents: AixDemuxers.DemuxedEvent[] = [];
+    let isFinalIteration = false;
     try {
 
       // 1. Blocking read with heartbeats
@@ -205,19 +206,31 @@ async function* _consumeDispatchStream(
 
       // Handle normal dispatch stream closure (no more data, AI Service closed the stream)
       if (done) {
-        chatGenerateTx.setEnded('done-dispatch-closed');
-        break; // outer do {}
+
+        // we used to `chatGenerateTx.setEnded('done-dispatch-closed');` here and break out of the processing loop,
+        // but there may be recoverable events in the demuxer's buffer
+        isFinalIteration = true;
+
+        // 2. Decode nothing new
+
+        // 3. Recover leftover events
+        _d.profiler?.measureStart('demux');
+        demuxedEvents = dispatchDemuxer.flushRemaining();
+        _d.profiler?.measureEnd('demux');
+
+      } else {
+
+        // 2. Decode the chunk - does Not throw (see the constructor for why)
+        _d.profiler?.measureStart('decode');
+        const chunk = dispatchDecoder.decode(value, { stream: true });
+        _d.profiler?.measureEnd('decode');
+
+        // 3. Demux the chunk into 0 or more events
+        _d.profiler?.measureStart('demux');
+        demuxedEvents = dispatchDemuxer.demux(chunk);
+        _d.profiler?.measureEnd('demux');
+
       }
-
-      // 2. Decode the chunk - does Not throw (see the constructor for why)
-      _d.profiler?.measureStart('decode');
-      const chunk = dispatchDecoder.decode(value, { stream: true });
-      _d.profiler?.measureEnd('decode');
-
-      // 3. Demux the chunk into 0 or more events
-      _d.profiler?.measureStart('demux');
-      demuxedEvents = dispatchDemuxer.demux(chunk);
-      _d.profiler?.measureEnd('demux');
 
     } catch (error: any) {
       // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
@@ -274,6 +287,12 @@ async function* _consumeDispatchStream(
         chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(demuxedItem.data, 'aix.service-parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
         break; // inner for {}, then outer do
       }
+    }
+
+    // 6. Normal stream end - if didn't end in a connection or event parsing error
+    if (isFinalIteration && !chatGenerateTx.isEnded) {
+      chatGenerateTx.setEnded('done-dispatch-closed');
+      break; // outer do {}
     }
 
   } while (!chatGenerateTx.isEnded);
