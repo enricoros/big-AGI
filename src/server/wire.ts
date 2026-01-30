@@ -162,29 +162,39 @@ export function abortableDelay(delayMs: number, abortSignal: AbortSignal): Promi
 
 
 /**
- * Small debugging utility to log train of events, used on the server-side
- * for incoming packets (e.g. SSE).
+ * Debugging utility for logging network I/O with sequence tracking and timing.
+ * Used for both server-side and client-side (via CSF) wire debugging.
+ *
+ * Usage:
+ *  - Server: const wire = createDebugWireLogger('AIX', SERVER_DEBUG_WIRE);
+ *  - Client: const wire = null; // explicitly disabled
+ *  - Access: wire?.logRequest(...); wire?.logResponse(...);
  */
-export class ServerDebugWireEvents {
+export class DebugWireLogger {
   private sequenceNumber: number = 0;
   private lastMs: number | null = null;
-  private distinct: string = Date.now().toString(36).slice(-3);
+  private readonly distinct: string = Date.now().toString(36).slice(-4);
 
-  onMessage(message: any) {
-    this.sequenceNumber++;
-    if (SERVER_DEBUG_WIRE) {
-      const nowMs = Date.now();
-      const elapsedMs = this.lastMs ? nowMs - this.lastMs : 0;
-      this.lastMs = nowMs;
-      console.log(
-        `<- SSE (${this.distinct}, ${this.sequenceNumber}, ${elapsedMs} ms):`,
-        objectDeepCloneWithStringLimit(message, 'wire.sse-debug', 8192)
-      );
-    }
+  constructor(private readonly label: string) {}
+
+  logRequest(method: 'GET' | 'POST' | 'DELETE' | 'PUT', url: string, headers?: HeadersInit, body?: object) {
+    console.log(`[${this.label}:${this.distinct}] ->`, debugGenerateCurlCommand(method, url, headers, body));
   }
+
+  logResponse(data: any) {
+    this.sequenceNumber++;
+    const nowMs = Date.now();
+    const elapsedMs = this.lastMs ? nowMs - this.lastMs : 0;
+    this.lastMs = nowMs;
+    console.log(
+      `[${this.label}:${this.distinct}] <- #${this.sequenceNumber} (${elapsedMs} ms):`,
+      objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, 8192),
+    );
+  }
+
 }
 
-export const createServerDebugWireEvents = () => SERVER_DEBUG_WIRE ? new ServerDebugWireEvents() : null;
+export const createDebugWireLogger = (label: string) => SERVER_DEBUG_WIRE ? new DebugWireLogger(label) : null;
 
 
 /** Utility to escape XML, for example to avoid XSS attacks. */

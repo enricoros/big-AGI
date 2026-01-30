@@ -155,7 +155,7 @@ async function* _consumeDispatchUnified(
     const fullBodyReadPromise = dispatchResponse.text();
     dispatchBody = yield* heartbeatsWhileAwaiting(fullBodyReadPromise);
     _d.profiler?.measureEnd('read-full');
-    _d.wire?.onMessage(dispatchBody);
+    _d.wire?.logResponse(dispatchBody);
 
     // Parse the response in full
     _d.profiler?.measureStart('parse-full');
@@ -234,7 +234,7 @@ async function* _consumeDispatchStream(
 
     // ...Events[] -> parse() -> Particles* -> yield
     for (const demuxedItem of demuxedEvents) {
-      _d.wire?.onMessage(demuxedItem);
+      _d.wire?.logResponse(demuxedItem);
 
       // ignore events post termination
       if (chatGenerateTx.isEnded) {
