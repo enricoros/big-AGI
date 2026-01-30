@@ -16,7 +16,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2026-01-21
+// Verified: 2026-01-29
 
 // Tiered pricing for Grok 4.1 Fast models (both reasoning and non-reasoning)
 const PRICE_41 = {
