@@ -169,7 +169,7 @@ export function ModelsConfiguratorModal(props: {
           <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', sx: { backgroundColor: 'background.surface' } } }}>
             <MoreVertIcon sx={{ fontSize: 'xl' }} />
           </MenuButton>
-          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 240, pt: 0 }}>
+          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 240 }}>
 
             {/* Service Name Header */}
             {/*<ListItem sx={{ '--ListItem-minHeight': '2.5rem' }}>*/}
