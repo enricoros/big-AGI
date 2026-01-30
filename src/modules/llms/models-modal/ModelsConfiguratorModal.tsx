@@ -64,6 +64,7 @@ export function ModelsConfiguratorModal(props: {
     ?? null;
 
   const activeService = modelsServices.find(s => s.id === activeServiceId);
+  // const hasClones = useModelsStore(({ llms }) => llms.some(llm => llm.sId === activeServiceId && llm.isUserClone));
 
   const hasAnyServices = !!modelsServices.length;
   const isTabWizard = tab === 'wizard';
@@ -119,6 +120,16 @@ export function ModelsConfiguratorModal(props: {
     ).then(() => llmsStoreActions().resetServiceUserParameters(activeServiceId)).catch(() => null /* ignore closure */);
   }, [activeService?.label, activeServiceId, showPromisedOverlay]);
 
+  const handleRemoveClones = React.useCallback(() => {
+    showPromisedOverlay('llms-remove-clones', {}, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={`Remove all user-cloned models from ${activeService?.label ?? 'this service'}?`}
+        positiveActionText='Remove'
+      />,
+    ).then(() => llmsStoreActions().removeCustomModels(activeServiceId)).catch(() => null /* ignore closure */);
+  }, [activeService?.label, activeServiceId, showPromisedOverlay]);
+
   const handleDeleteService = React.useCallback((serviceId: DModelsServiceId, skipConfirmation: boolean) => {
     const targetService = modelsServices.find(s => s.id === serviceId);
     if (!targetService) return;
@@ -158,7 +169,14 @@ export function ModelsConfiguratorModal(props: {
           <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', sx: { backgroundColor: 'background.surface' } } }}>
             <MoreVertIcon sx={{ fontSize: 'xl' }} />
           </MenuButton>
-          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 240 }}>
+          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 240, pt: 0 }}>
+
+            {/* Service Name Header */}
+            {/*<ListItem sx={{ '--ListItem-minHeight': '2.5rem' }}>*/}
+            {/*  <ListItemDecorator><LLMVendorIcon vendorId={activeService?.vId} /></ListItemDecorator>*/}
+            {/*  <div>{activeService?.label ?? ''}</div>*/}
+            {/*</ListItem>*/}
+            {/*<ListDivider sx={{ mt: 0 }} />*/}
 
             {/* Refresh Models */}
             <MenuItem disabled={isRefreshing} onClick={handleRefreshModels}>
@@ -172,6 +190,12 @@ export function ModelsConfiguratorModal(props: {
             <MenuItem disabled={false /* */} onClick={handleResetAllParameters}>
               <ListItemDecorator><RestoreIcon /></ListItemDecorator>
               Reset Customizations
+            </MenuItem>
+
+            {/* Remove Cloned Models */}
+            <MenuItem disabled={false /* unnecessary: !hasClones */} onClick={handleRemoveClones}>
+              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+              Remove Duplicate Models
             </MenuItem>
 
             <ListDivider />
@@ -199,7 +223,7 @@ export function ModelsConfiguratorModal(props: {
       );
 
     return undefined;
-  }, [handleRefreshModels, handleResetAllParameters, handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
+  }, [handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleShowAdvanced, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
