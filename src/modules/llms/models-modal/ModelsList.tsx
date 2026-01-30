@@ -59,6 +59,9 @@ const styles = {
     // boxShadow: 'sm',
     boxShadow: 'md',
   } as const,
+  chipDisabled: {
+    opacity: 0.5,
+  } as const,
   // styleNameChip: {
   //   marginLeft: '0.5rem',
   //   fontSize: '0.75rem',
@@ -83,6 +86,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
   const { llm, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
 
   const seemsFree = !!getLLMPricing(llm)?.chat?._isFree;
+  const isHidden = isLLMHidden(llm);
   const isNotSymlink = !llm.label.startsWith('🔗');
 
 
@@ -165,16 +169,16 @@ export const ModelItem = React.memo(function ModelItem(props: {
     if (llm.interfaces.includes(LLM_IF_Tools_WebSearch)) fs += '🌐 ';
     if (llm.interfaces.includes(LLM_IF_Outputs_Audio)) fs += '🔊 ';
     if (llm.interfaces.includes(LLM_IF_Outputs_Image)) fs += '🖼️ ';
-    return !fs ? null : <Chip size='sm' variant='plain' sx={styles.chipCapability}>{fs.trim()}</Chip>;
-  }, [isNotSymlink, llm.interfaces, llm.isUserClone]);
+    return !fs ? null : <Chip size='sm' variant='plain' sx={isHidden ? styles.chipDisabled : styles.chipCapability}>{fs.trim()}</Chip>;
+  }, [isNotSymlink, llm.isUserClone, llm.interfaces, isHidden]);
 
 
   return (
     <ListItem>
       <ListItemButton
         aria-label='Configure LLM'
-        // color={(seemsFree && !llm.hidden) ? 'success' : undefined}
-        // variant={(seemsFree && !llm.hidden) ? 'soft' : undefined}
+        // color={(seemsFree && !isHidden) ? 'success' : undefined}
+        // variant={(seemsFree && !isHidden) ? 'soft' : undefined}
         onClick={handleLLMConfigure}
         tabIndex={-1}
         sx={styles.liButton}
@@ -183,16 +187,16 @@ export const ModelItem = React.memo(function ModelItem(props: {
         {/* Model Name */}
         {SHOW_LLM_TOOLTIPS ? (
           <GoodTooltip title={tooltip}>
-            <Box sx={isLLMHidden(llm) ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
+            <Box sx={isHidden ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
               {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
-              {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isLLMHidden(llm) ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
+              {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isHidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
               {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
             </Box>
           </GoodTooltip>
         ) : (
-          <Box sx={isLLMHidden(llm) ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
+          <Box sx={isHidden ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
             {(/*props.isMobile &&*/ llm.userStarred) ? `${STAR_EMOJI} ${llm.label}` : llm.label}
-            {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isLLMHidden(llm) ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
+            {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: isHidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
             {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
           </Box>
         )}
@@ -215,7 +219,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
 
         {/* Features Chips - sync with `useLLMSelect.tsx` */}
         {featuresChipMemo}
-        {seemsFree && isNotSymlink && <Chip size='sm' color='success' variant='plain' sx={styles.chipFree}>free</Chip>}
+        {seemsFree && isNotSymlink && <Chip size='sm' color='success' variant='plain' sx={isHidden ? styles.chipDisabled : styles.chipFree}>free</Chip>}
 
 
         {/* Action Buttons */}
@@ -228,9 +232,9 @@ export const ModelItem = React.memo(function ModelItem(props: {
           {/*  </IconButton>*/}
           {/*</GoodTooltip>}*/}
 
-          {!props.isMobile && <GoodTooltip title={isLLMHidden(llm) ? 'Hidden' : 'Shown in Chat'}>
-            <IconButton aria-label={isLLMHidden(llm) ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={isLLMHidden(llm) ? handleLLMUnhide : handleLLMHide} sx={absorbListPadding}>
-              {isLLMHidden(llm) ? <VisibilityOffOutlinedIcon sx={{ opacity: 0.5, fontSize: 'md' }} /> : <VisibilityOutlinedIcon />}
+          {!props.isMobile && <GoodTooltip title={isHidden ? 'Hidden' : 'Shown in Chat'}>
+            <IconButton aria-label={isHidden ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={isHidden ? handleLLMUnhide : handleLLMHide} sx={absorbListPadding}>
+              {isHidden ? <VisibilityOffOutlinedIcon sx={{ opacity: 0.5, fontSize: 'md' }} /> : <VisibilityOutlinedIcon />}
             </IconButton>
           </GoodTooltip>}
 
