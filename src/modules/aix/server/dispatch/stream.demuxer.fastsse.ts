@@ -192,9 +192,134 @@ export function createFastEventSourceDemuxer(): AixDemuxers.StreamDemuxer {
       return events;
     },
 
-    remaining: () => buffer,
+    /**
+     * Recover events from unflushed buffer at stream end.
+     * Some servers don't send proper \n\n terminators between SSE events, causing
+     * data to accumulate without dispatching. This applies lenient parsing to
+     * extract JSON payloads from the remaining buffer.
+     */
+    flushRemaining: (): AixDemuxers.DemuxedEvent[] => {
+      // capture pending event type before clearing state
+      const pendingEventType = eventType || undefined;
+
+      // combine both sources: eventData first (no prefixes), then buffer (raw SSE)
+      const combined = ((eventData ? eventData + '\n' : '') + buffer).trim();
+
+      // clear state
+      buffer = '';
+      eventData = '';
+      eventType = '';
+      eolSearchIndex = 0;
+
+      if (!combined)
+        return [];
+
+      // extract JSON events with lenient parsing
+      const { events, skippedParts } = _extractJsonEventsFromSSE(combined, pendingEventType);
+
+      // warn about recovery for protocol debugging
+      if (events.length > 0 || skippedParts.length > 0)
+        console.warn(`[AIX] SSE demuxer: recovered ${events.length} event(s) from unterminated stream`, {
+          skippedParts: skippedParts.length,
+          combinedLen: combined.length,
+          combinedSample: combined.length <= 300 ? combined : combined.slice(0, 300) + '...',
+          ...(skippedParts.length > 0 && { skipped: skippedParts }),
+        });
+
+      return events;
+    },
 
     reconnectInterval: () => streamReconnectTime,
     lastEventId: () => streamLastEventId,
   };
+}
+
+
+/**
+ * Extract complete JSON objects from SSE buffer remnants.
+ * Handles `event:` and `data:` prefixes, tracks brace depth and string context.
+ */
+function _extractJsonEventsFromSSE(input: string, initialEventName: string | undefined): {
+  events: AixDemuxers.DemuxedEvent[];
+  skippedParts: string[];
+} {
+  const events: AixDemuxers.DemuxedEvent[] = [];
+  const skippedParts: string[] = [];
+  let i = 0;
+  let currentEventName = initialEventName;
+
+  while (i < input.length) {
+    // skip whitespace
+    while (i < input.length && /\s/.test(input[i])) i++;
+    if (i >= input.length) break;
+
+    // check for `event:` line (SSE event name, used by Anthropic format)
+    if (input.slice(i, i + 6) === 'event:') {
+      i += 6;
+      while (i < input.length && input[i] === ' ') i++;
+      const lineEnd = input.indexOf('\n', i);
+      currentEventName = input.slice(i, lineEnd === -1 ? undefined : lineEnd).trim();
+      i = lineEnd === -1 ? input.length : lineEnd + 1;
+      continue;
+    }
+
+    // check for `data:` prefix and skip it
+    if (input.slice(i, i + 5) === 'data:') {
+      i += 5;
+      while (i < input.length && input[i] === ' ') i++;
+      // check for [DONE] marker
+      if (input.slice(i, i + 6) === '[DONE]') {
+        i += 6;
+        continue;
+      }
+    }
+
+    // look for start of JSON object
+    if (input[i] !== '{') {
+      const lineEnd = input.indexOf('\n', i);
+      const skipped = input.slice(i, lineEnd === -1 ? undefined : lineEnd).trim();
+      if (skipped && skipped !== '[DONE]')
+        skippedParts.push(skipped.length > 100 ? skipped.slice(0, 100) + '...' : skipped);
+      i = lineEnd === -1 ? input.length : lineEnd + 1;
+      continue;
+    }
+
+    // parse JSON object by tracking brace depth and string context
+    const start = i;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    while (i < input.length) {
+      const char = input[i];
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\' && inString) {
+        escaped = true;
+      } else if (char === '"') {
+        inString = !inString;
+      } else if (!inString) {
+        if (char === '{') depth++;
+        else if (char === '}') {
+          depth--;
+          if (depth === 0) {
+            events.push({ type: 'event', name: currentEventName, data: input.slice(start, i + 1) });
+            currentEventName = undefined; // reset for next event
+            i++;
+            break;
+          }
+        }
+      }
+      i++;
+    }
+
+    // incomplete JSON at end
+    if (depth !== 0) {
+      const partial = input.slice(start);
+      skippedParts.push(partial.length > 100 ? partial.slice(0, 100) + '...' : partial);
+      break;
+    }
+  }
+
+  return { events, skippedParts };
 }
