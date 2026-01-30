@@ -14,7 +14,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-01-21
+ * - updated: 2026-01-29
  */
 const _knownGroqModels: ManualMappings = [
 
@@ -70,12 +70,10 @@ const _knownGroqModels: ManualMappings = [
     chatPrice: { input: 1.00, output: 3.00 },
     hidden: true,
   },
-  // REMOVED MODELS (no longer returned by API as of Jan 21, 2026):
-  // - qwen-qwq-32b (QwQ 32B reasoning model)
-  // - qwen-2.5-32b (Qwen 2.5 32B general-purpose)
-  // - qwen-2.5-coder-32b (Qwen 2.5 Coder 32B)
-  // - deepseek-r1-distill-llama-70b (DeepSeek R1 Distill Llama 70B)
-  // - deepseek-r1-distill-qwen-32b (DeepSeek R1 Distill Qwen 32B)
+  // REMOVED MODELS (no longer returned by API):
+  // - (Jan 21, 2026) qwen-qwq-32b, qwen-2.5-32b, qwen-2.5-coder-32b
+  // - (Jan 21, 2026) deepseek-r1-distill-llama-70b, deepseek-r1-distill-qwen-32b
+  // - (Jan 29, 2026) allam-2-7b (SDAIA bilingual Arabic-English model)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)
@@ -126,17 +124,6 @@ const _knownGroqModels: ManualMappings = [
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.075, output: 0.30 },
-  },
-
-  // Production Models - SDAIA
-  {
-    idPrefix: 'allam-2-7b',
-    label: 'ALLaM 2 · 7B',
-    description: 'SDAIA bilingual Arabic-English model (7B params). Trained on 4T English + 1.2T Arabic/English tokens. 4K context. ~1800 t/s on Groq.',
-    contextWindow: 4096,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    hidden: true, // Pricing pending
   },
 
   // Production Models - Meta
