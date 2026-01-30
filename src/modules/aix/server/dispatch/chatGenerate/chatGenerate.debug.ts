@@ -1,4 +1,4 @@
-import { createServerDebugWireEvents, serverCapitalizeFirstLetter } from '~/server/wire';
+import { createDebugWireLogger, serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { AixAPI_Access } from '../../api/aix.wiretypes';
 import { AIX_INSPECTOR_ALLOWED_CONTEXTS, AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
@@ -18,6 +18,6 @@ export function _createDebugConfig(access: AixAPI_Access, options: undefined | {
     requestBodyOverride: echoRequest ? options?.debugRequestBodyOverride : undefined,
     consoleLogErrors,
     profiler: AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoRequest && !!options?.debugProfilePerformance ? new PerformanceProfiler() : undefined, // PerformanceProfiler | undefined
-    wire: createServerDebugWireEvents() ?? undefined, // ServerDebugWireEvents | undefined
+    wire: createDebugWireLogger('AIX') ?? undefined, // DebugWireLogger | undefined
   };
 }

@@ -4,6 +4,7 @@ import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
+import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
@@ -83,6 +84,9 @@ function _capitalize(s: string): string {
  */
 function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal): ListModelsDispatch {
 
+  // create the debug logger (if enabled)
+  const _wire = createDebugWireLogger('LLMs');
+
   // dialect is the only common property
   const { dialect } = access;
 
@@ -92,7 +96,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       return createDispatch({
         fetchModels: async () => {
           const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.models}?limit=1000`, {/* ... no options for list ... */ });
+          _wire?.logRequest('GET', url, headers);
           const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Anthropic', signal });
+          _wire?.logResponse(wireModels);
           return AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
         },
         convertToDescriptions: (wireModelsResponse) => {
@@ -149,7 +155,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       return createDispatch({
         fetchModels: async () => {
           const { headers, url } = geminiAccess(access, null, GeminiWire_API_Models_List.getPath, false);
+          _wire?.logRequest('GET', url, headers);
           const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Gemini', signal });
+          _wire?.logResponse(wireModels);
           const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
 
           // [DEV] check for stale/unknown model definitions
@@ -179,7 +187,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       return createDispatch({
         fetchModels: async () => {
           const { headers, url } = ollamaAccess(access, '/api/tags');
+          _wire?.logRequest('GET', url, headers);
           const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Ollama', signal });
+          _wire?.logResponse(wireModels);
           const models = wireOllamaListModelsSchema.parse(wireModels).models;
 
           // retrieve info for each of the models
@@ -291,7 +301,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         // [OpenAI-compatible dialects]: openAI-style fetch models list
         fetchModels: async () => {
           const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
-          return fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: `OpenAI/${_capitalize(dialect)}`, signal });
+          _wire?.logRequest('GET', url, headers);
+          const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: `OpenAI/${_capitalize(dialect)}`, signal });
+          _wire?.logResponse(wireModels);
+          return wireModels;
         },
 
         // OpenAI models conversions: dependent on the dialect
