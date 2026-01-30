@@ -37,6 +37,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Opus 4.5 with extended thinking mode for complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    benchmark: { cbaElo: 1468 }, // claude-opus-4-5-20251101-thinking-32k
     maxCompletionTokens: 32000,
   },
 
@@ -47,7 +48,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     maxCompletionTokens: 64000,
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
-    benchmark: { cbaElo: 1451 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805-thinking-16k + 1
+    benchmark: { cbaElo: 1450 }, // claude-sonnet-4-5-20250929-thinking-32k
   },
 
   'claude-haiku-4-5-20251001': {
@@ -67,7 +68,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
     parameterSpecs: ANT_PAR_WEB_THINKING,
-    benchmark: { cbaElo: 1451 }, // claude-opus-4-1-20250805-thinking-16k
+    benchmark: { cbaElo: 1448 }, // claude-opus-4-1-20250805-thinking-16k
   },
 
   // Claude 4 models with thinking variants
@@ -79,7 +80,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
     parameterSpecs: ANT_PAR_WEB_THINKING,
-    benchmark: { cbaElo: 1420 }, // claude-opus-4-20250514-thinking-16k
+    benchmark: { cbaElo: 1424 }, // claude-opus-4-20250514-thinking-16k
   },
 
   'claude-sonnet-4-20250514': {
@@ -100,7 +101,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
     parameterSpecs: ANT_PAR_WEB_THINKING,
-    benchmark: { cbaElo: 1385 }, // claude-3-7-sonnet-20250219-thinking-32k
+    benchmark: { cbaElo: 1389 }, // claude-3-7-sonnet-20250219-thinking-32k
   },
 
 } as const;
@@ -122,6 +123,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
+    benchmark: { cbaElo: 1466 }, // claude-opus-4-5-20251101
   },
   {
     id: 'claude-sonnet-4-5-20250929', // Active
@@ -143,7 +145,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
         duration: 300,
       },
     },
-    benchmark: { cbaElo: 1438 + 1 }, // FALLBACK-UNTIL-AVAILABLE: claude-opus-4-1-20250805 + 1
+    benchmark: { cbaElo: 1450 }, // claude-sonnet-4-5-20250929
   },
   {
     id: 'claude-haiku-4-5-20251001', // Active
@@ -154,6 +156,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: IF_4,
     parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntSkills' }],
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
+    benchmark: { cbaElo: 1403 }, // claude-haiku-4-5-20251001
   },
 
   // Claude 4.1 models
@@ -166,7 +169,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: IF_4,
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
-    benchmark: { cbaElo: 1438 }, // claude-opus-4-1-20250805
+    benchmark: { cbaElo: 1445 }, // claude-opus-4-1-20250805
   },
 
   // Claude 4 models
@@ -180,7 +183,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: IF_4,
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
-    benchmark: { cbaElo: 1411 }, // claude-opus-4-20250514
+    benchmark: { cbaElo: 1414 }, // claude-opus-4-20250514
   },
   {
     id: 'claude-sonnet-4-20250514', // Active
@@ -202,7 +205,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
         duration: 300,
       },
     },
-    benchmark: { cbaElo: 1386 }, // claude-sonnet-4-20250514
+    benchmark: { cbaElo: 1390 }, // claude-sonnet-4-20250514
   },
 
   // Claude 3.7 models
@@ -215,7 +218,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: IF_4,
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1369 }, // claude-3-7-sonnet-20250219
+    benchmark: { cbaElo: 1372 }, // claude-3-7-sonnet-20250219
     hidden: true, // deprecated
     isLegacy: true,
   },
@@ -232,7 +235,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: IF_4,
     parameterSpecs: ANT_PAR_WEB,
     chatPrice: { input: 0.80, output: 4.00, cache: { cType: 'ant-bp', read: 0.08, write: 1.00, duration: 300 } },
-    benchmark: { cbaElo: 1319, cbaMmlu: 75.2 }, // claude-3-5-haiku-20241022
+    benchmark: { cbaElo: 1324 }, // claude-3-5-haiku-20241022
     hidden: true, // deprecated
     isLegacy: true,
   },
@@ -248,7 +251,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 4096,
     interfaces: IF_4,
     chatPrice: { input: 0.25, output: 1.25, cache: { cType: 'ant-bp', read: 0.03, write: 0.30, duration: 300 } },
-    benchmark: { cbaElo: 1263, cbaMmlu: 75.1 },
+    benchmark: { cbaElo: 1262 }, // claude-3-haiku-20240307
   },
 
   // Legacy/Retired models

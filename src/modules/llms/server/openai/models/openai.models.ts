@@ -90,7 +90,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
-    // benchmark: TBD
+    benchmark: { cbaElo: 1440 }, // gpt-5.2-high
   },
   {
     idPrefix: 'gpt-5.2',
@@ -174,7 +174,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
-    // benchmark: TBD
+    benchmark: { cbaElo: 1459 }, // gpt-5.1-high
   },
   {
     idPrefix: 'gpt-5.1',
@@ -267,7 +267,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmForceNoStream' }, // non-streaming option for unverified organizations
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
-    benchmark: { cbaElo: 1442 }, // gpt-5-high
+    benchmark: { cbaElo: 1435 }, // gpt-5-high
   },
   {
     idPrefix: 'gpt-5',
@@ -302,7 +302,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
-    benchmark: { cbaElo: 1430 }, // gpt-5-chat
+    benchmark: { cbaElo: 1426 }, // gpt-5-chat
   },
 
   // GPT-5 Codex
@@ -351,7 +351,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
-    benchmark: { cbaElo: 1388 }, // gpt-5-mini-high
+    benchmark: { cbaElo: 1390 }, // gpt-5-mini-high
   },
   {
     idPrefix: 'gpt-5-mini',
@@ -369,7 +369,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
     chatPrice: { input: 0.05, cache: { cType: 'oai-ac', read: 0.005 }, output: 0.4 },
-    benchmark: { cbaElo: 1344 }, // gpt-5-nano-high
+    benchmark: { cbaElo: 1338 }, // gpt-5-nano-high
   },
   {
     idPrefix: 'gpt-5-nano',
@@ -390,6 +390,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmForceNoStream' },
     ],
     // chatPrice: TBD - unknown pricing
+    benchmark: { cbaElo: 1354 }, // gpt-oss-120b
   },
 
 
@@ -455,7 +456,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: IFS_CHAT_CACHE_REASON,
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.275 }, output: 4.4 },
-    benchmark: { cbaElo: 1393 }, // o4-mini-2025-04-16
+    benchmark: { cbaElo: 1391 }, // o4-mini-2025-04-16
   },
   {
     idPrefix: 'o4-mini',
@@ -508,7 +509,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: IFS_CHAT_CACHE_REASON,
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
-    benchmark: { cbaElo: 1444 }, // o3-2025-04-16
+    benchmark: { cbaElo: 1433 }, // o3-2025-04-16
   },
   {
     idPrefix: 'o3',
@@ -526,7 +527,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_StripImages],
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
     chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
-    benchmark: { cbaElo: 1347 }, // o3-mini (not using o3-mini-high here, as it seems too inflated)
+    benchmark: { cbaElo: 1348 }, // o3-mini
   },
   {
     idPrefix: 'o3-mini',
@@ -563,7 +564,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: IFS_CHAT_CACHE_REASON,
     parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1399 }, // o1-2024-12-17
+    benchmark: { cbaElo: 1402 }, // o1-2024-12-17
   },
   {
     idPrefix: 'o1',
@@ -583,7 +584,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 32768,
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
-    benchmark: { cbaElo: 1409 }, // gpt-4.1-2025-04-14
+    benchmark: { cbaElo: 1413 }, // gpt-4.1-2025-04-14
   },
   {
     idPrefix: 'gpt-4.1',
@@ -600,7 +601,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 32768,
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 0.4, cache: { cType: 'oai-ac', read: 0.1 }, output: 1.6 },
-    benchmark: { cbaElo: 1377 }, // gpt-4.1-mini-2025-04-14
+    benchmark: { cbaElo: 1382 }, // gpt-4.1-mini-2025-04-14
   },
   {
     idPrefix: 'gpt-4.1-mini',
@@ -617,7 +618,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 32768,
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 0.1, cache: { cType: 'oai-ac', read: 0.025 }, output: 0.4 },
-    benchmark: { cbaElo: 1320 }, // gpt-4.1-nano-2025-04-14
+    benchmark: { cbaElo: 1322 }, // gpt-4.1-nano-2025-04-14
   },
   {
     idPrefix: 'gpt-4.1-nano',
@@ -694,7 +695,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 },
-    benchmark: { cbaElo: 1333 }, // GPT-4o (08/06)
+    benchmark: { cbaElo: 1335 }, // gpt-4o-2024-08-06
   },
   {
     idPrefix: 'gpt-4o-2024-05-13',
@@ -705,7 +706,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     interfaces: IFS_CHAT_MIN,
     chatPrice: { input: 5, output: 15 },
-    benchmark: { cbaElo: 1344 }, // gpt-4o-2024-05-13
+    benchmark: { cbaElo: 1346 }, // gpt-4o-2024-05-13
   },
   {
     idPrefix: 'gpt-4o',
@@ -720,7 +721,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // does not support Tools
     chatPrice: { input: 5, output: 15 },
-    benchmark: { cbaElo: 1441 }, // chatgpt-4o-latest-20250326
+    benchmark: { cbaElo: 1443 }, // chatgpt-4o-latest-20250326
     isLegacy: true, // Deprecated February 17, 2026.
   },
 
@@ -784,7 +785,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     interfaces: IFS_CHAT_CACHE,
     chatPrice: { input: 0.15, cache: { cType: 'oai-ac', read: 0.075 }, output: 0.6 },
-    benchmark: { cbaElo: 1316 }, // GPT-4o-mini (07/18)
+    benchmark: { cbaElo: 1318 }, // gpt-4o-mini-2024-07-18
   },
   {
     idPrefix: 'gpt-4o-mini',
@@ -838,7 +839,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     interfaces: IFS_CHAT_MIN,
     chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1324 }, // gpt-4-turbo-2024-04-09
+    benchmark: { cbaElo: 1325 }, // gpt-4-turbo-2024-04-09
   },
   {
     idPrefix: 'gpt-4-turbo',
@@ -854,7 +855,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1315 }, // gpt-4-0125-preview
+    benchmark: { cbaElo: 1314 }, // gpt-4-0125-preview
   },
   {
     idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
@@ -865,7 +866,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1315 }, // gpt-4-1106-preview
+    benchmark: { cbaElo: 1314 }, // gpt-4-1106-preview
   },
   {
     idPrefix: 'gpt-4-turbo-preview',
@@ -883,7 +884,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 30, output: 60 },
-    benchmark: { cbaElo: 1163 },
+    benchmark: { cbaElo: 1276 }, // gpt-4-0613
     isLegacy: true,
   },
   {
@@ -894,7 +895,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 30, output: 60 },
-    benchmark: { cbaElo: 1186 },
+    benchmark: { cbaElo: 1288 }, // gpt-4-0314
     isLegacy: true,
   },
   {
@@ -917,7 +918,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
-    benchmark: { cbaElo: 1106 },
+    benchmark: { cbaElo: 1225 }, // gpt-3.5-turbo-0125
   },
   {
     idPrefix: 'gpt-3.5-turbo-1106',
@@ -928,7 +929,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 1, output: 2 },
-    benchmark: { cbaElo: 1068 },
+    benchmark: { cbaElo: 1204 }, // gpt-3.5-turbo-1106
   },
   {
     idPrefix: 'gpt-3.5-turbo',
