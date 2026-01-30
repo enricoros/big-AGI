@@ -59,7 +59,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
   },
 
-  // Hosted inference models with OpenPipe pricing
+  // Hosted inference models with OpenPipe pricing - Llama 3.1 series
   {
     id: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
     label: '💾 Llama 3.1 · 8B Instruct',
@@ -77,6 +77,61 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 1.80, output: 2.00 },
   },
   {
+    id: 'meta-llama/Llama-3.1-8B',
+    label: '💾 Llama 3.1 · 8B Base',
+    description: 'Meta Llama 3.1 8B base model for fine-tuning',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'meta-llama/Llama-3.1-70B',
+    label: '💾 Llama 3.1 · 70B Base',
+    description: 'Meta Llama 3.1 70B base model for fine-tuning',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+
+  // Hosted inference models - Llama 3.2 series
+  {
+    id: 'meta-llama/Llama-3.2-1B-Instruct',
+    label: '💾 Llama 3.2 · 1B Instruct',
+    description: 'Meta Llama 3.2 1B Instruct - lightweight model for edge and mobile deployment',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'meta-llama/Llama-3.2-3B-Instruct',
+    label: '💾 Llama 3.2 · 3B Instruct',
+    description: 'Meta Llama 3.2 3B Instruct - efficient model for edge deployment',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+
+  // Hosted inference models - Llama 3.3 series
+  {
+    id: 'meta-llama/Llama-3.3-70B-Instruct',
+    label: '💾 Llama 3.3 · 70B Instruct',
+    description: 'Meta Llama 3.3 70B Instruct - latest 70B model with performance comparable to Llama 3.1 405B',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+
+  // Hosted inference models - Qwen 2.5 series
+  {
+    id: 'Qwen/Qwen2.5-1.5B-Instruct',
+    label: '💾 Qwen 2.5 · 1.5B Instruct',
+    description: 'Alibaba Qwen 2.5 1.5B Instruct - efficient small model',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'Qwen/Qwen2.5-7B-Instruct',
+    label: '💾 Qwen 2.5 · 7B Instruct',
+    description: 'Alibaba Qwen 2.5 7B Instruct - balanced performance and efficiency',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+  {
     id: 'Qwen/Qwen2.5-14B-Instruct',
     label: '💾 Qwen 2.5 · 14B Instruct',
     description: 'Alibaba Qwen 2.5 14B Instruct - hosted inference with per-token pricing',
@@ -84,10 +139,40 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 1.00, output: 1.50 },
   },
+  {
+    id: 'Qwen/Qwen2.5-72B-Instruct',
+    label: '💾 Qwen 2.5 · 72B Instruct',
+    description: 'Alibaba Qwen 2.5 72B Instruct - flagship model with performance comparable to Llama 3.1 405B',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+    label: '💾 Qwen 2.5 · Coder 32B Instruct',
+    description: 'Alibaba Qwen 2.5 Coder 32B Instruct - specialized for code generation and understanding',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+
+  // Hosted inference models - Mistral series
+  {
+    id: 'mistralai/Mistral-Nemo-Base-2407',
+    label: '💾 Mistral Nemo · Base',
+    description: 'Mistral Nemo 12B base model (July 2024) for fine-tuning',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'mistralai/Mistral-Small-24B-Base-2501',
+    label: '💾 Mistral Small · 24B Base',
+    description: 'Mistral Small 24B base model (Jan 2025) - competitive with larger models while faster',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
 
 ];
 const openPipeModelFamilyOrder = [
-  'gpt-4o', 'gpt-3.5-turbo', 'gemini', 'meta-llama', 'Qwen', 'mistralai', '',
+  'gpt-4o', 'gpt-3.5-turbo', 'gemini', 'meta-llama/Llama-3.3', 'meta-llama/Llama-3.2', 'meta-llama/Meta-Llama-3.1', 'meta-llama/Llama-3.1', 'meta-llama', 'Qwen', 'mistralai', '',
 ];
 
 export function openPipeModelDescriptions() {
