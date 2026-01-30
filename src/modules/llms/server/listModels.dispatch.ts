@@ -43,6 +43,7 @@ import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescr
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels, openaiValidateModelDefs_DEV } from './openai/models/openai.models';
 import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from './openai/models/perplexity.models';
+import { tlusApiHeuristic, tlusApiTryParse } from './openai/models/tlusapi.models';
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
 
@@ -313,6 +314,13 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           // [Together] missing the .data property - so we have to do this early
           if (dialect === 'togetherai')
             return togetherAIModelsToModelDescriptions(openAIWireModelsResponse);
+
+          // [TLUS-style API] detect by structure: { data: [{ id, tier, capabilities, ... }] }
+          if (tlusApiHeuristic(openAIWireModelsResponse)) {
+            const tlusModels = tlusApiTryParse(openAIWireModelsResponse);
+            if (tlusModels) return tlusModels;
+            // fall through if failed
+          }
 
           // NOTE: we don't zod here as it would strip unknown properties needed for some dialects - so we proceed optimistically
           // let maybeModels = OpenAIWire_API_Models_List.Response_schema.parse(openAIWireModelsResponse).data || [];
