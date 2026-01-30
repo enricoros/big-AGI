@@ -1525,7 +1525,8 @@ export namespace OpenAIWire_API_Responses {
 
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
-    object: z.literal('response'),
+    object: z.literal('response')
+      .or(z.literal('chat.completion')), // [LiteLLM, 2026-01-30] Accept 'chat.completion' for proxy compatibility (should be 'response')
 
     id: z.string(), // unique ID for this response
     created_at: z.number(), // unix timestamp (in seconds)
