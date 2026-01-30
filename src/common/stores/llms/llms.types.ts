@@ -32,7 +32,7 @@ export interface DLLM {
   contextTokens: DLLMContextTokens;     // null: must assume it's unknown
   maxOutputTokens: DLLMMaxOutputTokens; // null: must assume it's unknown
   interfaces: DModelInterfaceV1[];      // if set, meaning this is the known and comprehensive set of interfaces
-  benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
+  benchmark?: { cbaElo?: number }; // benchmark values (Chat Bot Arena ELO)
   pricing?: DModelPricing;
 
   // parameters system (overwritten on update)

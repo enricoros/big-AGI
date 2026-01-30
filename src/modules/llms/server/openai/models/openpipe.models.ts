@@ -17,7 +17,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4o-mini-2024-07-18')?.chatPrice,
-    benchmark: { cbaMmlu: 82.0 },
   },
   {
     id: 'gpt-4o-2024-08-06',
