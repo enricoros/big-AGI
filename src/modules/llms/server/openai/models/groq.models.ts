@@ -14,7 +14,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-01-29
+ * - updated: 2026-01-30
  */
 const _knownGroqModels: ManualMappings = [
 
@@ -73,7 +73,6 @@ const _knownGroqModels: ManualMappings = [
   // REMOVED MODELS (no longer returned by API):
   // - (Jan 21, 2026) qwen-qwq-32b, qwen-2.5-32b, qwen-2.5-coder-32b
   // - (Jan 21, 2026) deepseek-r1-distill-llama-70b, deepseek-r1-distill-qwen-32b
-  // - (Jan 29, 2026) allam-2-7b (SDAIA bilingual Arabic-English model)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)
@@ -107,9 +106,8 @@ const _knownGroqModels: ManualMappings = [
     chatPrice: { input: 0.15, output: 0.60 },
   },
   {
-    isPreview: true,
     idPrefix: 'openai/gpt-oss-safeguard-20b',
-    label: 'GPT OSS Safeguard 20B (Preview)',
+    label: 'GPT OSS Safeguard 20B',
     description: 'OpenAI safety classification model (20B MoE). Purpose-built for content moderation with Harmony response format. 131K context, 65K max output. ~1000 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 65536,
@@ -153,6 +151,18 @@ const _knownGroqModels: ManualMappings = [
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.05, output: 0.08 },
+  },
+
+  // Preview Models - SDAIA
+  {
+    isPreview: true,
+    idPrefix: 'allam-2-7b',
+    label: 'ALLaM 2 7B (Preview)',
+    description: 'ALLaM 2 7B by Saudi Data and AI Authority (SDAIA). Bilingual Arabic-English model. 4K context and max output.',
+    contextWindow: 4096,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true, // Pricing unknown
   },
 
 ];
