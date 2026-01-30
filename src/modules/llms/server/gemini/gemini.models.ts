@@ -727,6 +727,10 @@ export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
 }
 
 
+/**
+ * Converts Gemini API model to ModelDescriptionSchema. Combines API data with local overrides.
+ * NOTE: Keep optional fields in sync with fromManualMapping (models.mappings.ts)
+ */
 export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models_List.Model): ModelDescriptionSchema | null {
   const { description, displayName, name: modelId, supportedGenerationMethods } = geminiModel;
 

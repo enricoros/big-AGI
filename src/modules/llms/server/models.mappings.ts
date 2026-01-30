@@ -54,6 +54,10 @@ type KnownLink = {
 } & Partial<Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>>;
 
 
+/**
+ * Converts a KnownModel to ModelDescriptionSchema. Used by OpenAI-style vendors.
+ * NOTE: Keep optional fields in sync with geminiModelToModelDescription (gemini.models.ts)
+ */
 export function fromManualMapping(mappings: (KnownModel | KnownLink)[], upstreamModelId: string, created: undefined | number, updated: undefined | number, fallback: KnownModel, disableSymlinkLooks?: boolean): ModelDescriptionSchema {
 
   // model resolution outputs
@@ -145,6 +149,7 @@ export function fromManualMapping(mappings: (KnownModel | KnownLink)[], upstream
   if (m.benchmark) md.benchmark = m.benchmark;
   if (m.chatPrice) md.chatPrice = m.chatPrice;
   if (m.hidden) md.hidden = true;
+  if (m.initialTemperature !== undefined) md.initialTemperature = m.initialTemperature;
 
   return md;
 }
