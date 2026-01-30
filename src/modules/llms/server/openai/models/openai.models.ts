@@ -122,8 +122,8 @@ export const _knownOpenAIChatModels: ManualMappings = [
     idPrefix: 'gpt-5.2-chat-latest',
     label: 'GPT-5.2 Instant',
     description: 'GPT-5.2 model powering ChatGPT. Fast, capable for everyday work with clear improvements in info-seeking, how-tos, technical writing.',
-    contextWindow: 400000,
-    maxCompletionTokens: 128000,
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
     trainingDataCutoff: 'Aug 2025',
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
@@ -192,8 +192,8 @@ export const _knownOpenAIChatModels: ManualMappings = [
     idPrefix: 'gpt-5.1-chat-latest',
     label: 'GPT-5.1 Instant',
     description: 'GPT-5.1 Instant with adaptive reasoning. More conversational with improved instruction following.',
-    contextWindow: 400000,
-    maxCompletionTokens: 128000,
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
     // trainingDataCutoff: 'Oct 31, 2024',
     // interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
@@ -309,8 +309,8 @@ export const _knownOpenAIChatModels: ManualMappings = [
     idPrefix: 'gpt-5-chat-latest',
     label: 'GPT-5 ChatGPT (Non-Thinking)',
     description: 'GPT-5 model used in ChatGPT. Points to the GPT-5 snapshot currently used in ChatGPT.',
-    contextWindow: 400000,
-    maxCompletionTokens: 128000,
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
     trainingDataCutoff: 'Sep 29, 2024',
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
