@@ -18,6 +18,7 @@ import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAtta
 
 import type { AttachmentCreationOptions, AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftInput, AttachmentDraftSource, AttachmentDraftSourceOriginFile, DraftEgoFragmentsInputData, DraftWebInputData, DraftYouTubeInputData } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts_slice';
+import { attachmentCloudConverterPrefix, attachmentCloudFetchFile, attachmentCloudGoogleWorkspaceExportMIME, CloudFetchError } from './attachment.cloud';
 import { attachmentGetLiveFileId, attachmentSourceSupportsLiveFile } from './attachment.livefile';
 import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
@@ -69,7 +70,8 @@ export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft
 export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftSource>, edit: (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void) {
   edit({ inputLoading: true });
 
-  switch (source.media) {
+  const sourceMedia = source.media;
+  switch (sourceMedia) {
 
     // Download URL (page, file, ..) and attach as input
     case 'url':
@@ -228,6 +230,34 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       }
       break;
 
+    case 'cloud':
+      const cloudLabel = source.fileName || 'Cloud File';
+      const cloudRef = source.webViewLink || `${source.provider}:${source.fileId}`;
+      edit({ label: cloudLabel, ref: cloudRef });
+
+      try {
+        // fetch / export to the destination mime
+        const exportMime = attachmentCloudGoogleWorkspaceExportMIME(source.mimeType);
+        const cloudBlob = await attachmentCloudFetchFile(source.provider, source.fileId, source.accessToken, exportMime);
+
+        // use export mime if we exported, otherwise use source or detected mime
+        const resultMime = exportMime || source.mimeType /* provided outside  */ || cloudBlob.type /* connection */ || 'application/octet-stream';
+
+        edit({
+          input: {
+            mimeType: resultMime,
+            data: cloudBlob,
+            dataSize: cloudBlob.size,
+          },
+        });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof CloudFetchError
+          ? `${error.code}: ${error.details || error.message}`
+          : `Failed to download: ${error instanceof Error ? error.message : String(error)}`;
+        edit({ inputError: errorMessage });
+      }
+      break;
+
     case 'ego':
       edit({
         label: source.label,
@@ -237,6 +267,10 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
           data: source.egoFragmentsInputData,
         },
       });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = sourceMedia;
       break;
   }
 
@@ -258,6 +292,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
   const converters: AttachmentDraftConverter[] = [];
 
   const autoAddImages = ENABLE_TEXT_AND_IMAGES && !!options?.hintAddImages;
+  const fromCloud = source.media === 'cloud';
 
   switch (true) {
 
@@ -273,10 +308,14 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      converters.push({ id: 'text', name: attachmentSourceSupportsLiveFile(source) ? 'Text (Live)' : 'Text' });
-      if (!textOriginHtml && textOriginClipboard) {
-        converters.push({ id: 'text-markdown', name: 'Text -> Markdown' });
-        converters.push({ id: 'text-cleaner', name: 'Text -> Clean HTML' });
+      if (fromCloud && input.mimeType === 'text/markdown') {
+        converters.push({ id: 'text', name: 'Markdown' });
+      } else {
+        converters.push({ id: 'text', name: attachmentSourceSupportsLiveFile(source) ? 'Text (Live)' : 'Text' });
+        if (!textOriginHtml && textOriginClipboard) {
+          converters.push({ id: 'text-markdown', name: 'Text -> Markdown' });
+          converters.push({ id: 'text-cleaner', name: 'Text -> Clean HTML' });
+        }
       }
 
       // p3: Html -> Markdown, and Html
@@ -351,6 +390,12 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       converters.push({ id: 'text', name: 'As Text' });
       break;
   }
+
+  // cosmetic for cloud: prepend cloud label prefixes (e.g., "Doc → ", "Sheet → ")
+  const cloudLabelPrefix = source.media === 'cloud' ? attachmentCloudConverterPrefix(source.mimeType) : '';
+  if (cloudLabelPrefix)
+    for (const converter of converters)
+      converter.name = cloudLabelPrefix + converter.name;
 
   edit({ converters });
 }
@@ -428,6 +473,25 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
         title: converterName || 'Text',
         caption: source.method === 'drop' ? 'Dropped' : 'Pasted',
         refString: humanReadableHyphenated(textRef),
+      };
+
+    // Cloud files
+    case 'cloud':
+      const cloudFileName = source.fileName || 'Cloud File';
+      const cloudProviderLabel = source.provider === 'gdrive' ? 'Google Drive'
+        : source.provider === 'onedrive' ? 'OneDrive'
+          : source.provider === 'dropbox' ? 'Dropbox'
+            : 'Cloud';
+      const cloudRef = `${source.provider}-${source.fileName || _lowCollisionRefString('file', 6)}`;
+      return {
+        title: cloudFileName,
+        caption: `From ${cloudProviderLabel}`,
+        refString: humanReadableHyphenated(cloudRef),
+        // TODO: expand this to allow future redownload - or other location but for the same purpose
+        docMeta: {
+          srcFileName: source.fileName,
+          srcFileSize: source.fileSize || input.dataSize,
+        },
       };
 
     // The application attaching pieces of itself
@@ -538,8 +602,14 @@ export async function attachmentPerformConversion(
       case 'rich-text':
       case 'rich-text-cleaner':
       case 'rich-text-markdown':
-        let richText = input.altData || '';
-        let richTextMimeType = input.altMimeType || 'text/html';
+        let richText: string;
+        if (input.altData)
+          richText = input.altData;
+        else if (input.mimeType === 'text/html')
+          richText = await _inputDataToString(input.data, 'rich-text');
+        else
+          richText = '';
+        let richTextMimeType = 'text/html';
 
         // html -> cleaner/html or markdown
         switch (converter.id) {
@@ -957,6 +1027,7 @@ export async function attachmentPerformConversion(
 
       default:
         const _exhaustiveCheck: never = converter.id;
+        console.warn('[DEV] Unhandled converter type:', _exhaustiveCheck);
         break;
     }
   }

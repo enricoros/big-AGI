@@ -12,7 +12,7 @@ import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
 import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_vanilla';
 
-import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
+import type { AttachmentDraftSource, AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 
 
@@ -254,8 +254,8 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       // https://github.com/enricoros/big-AGI/issues/286
       const textHtml = clipboardItem.types.includes('text/html')
         ? await clipboardItem.getType('text/html')
-            .then(blob => blob?.text() ?? '')
-            .catch(() => '')
+          .then(blob => blob?.text() ?? '')
+          .catch(() => '')
         : '';
       const heuristicBypassImage = textHtml.startsWith('<table ');
 
@@ -289,8 +289,8 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       // get the Plain text
       const textPlain = clipboardItem.types.includes('text/plain')
         ? await clipboardItem.getType('text/plain')
-            .then(blob => blob?.text() ?? '')
-            .catch(() => '')
+          .then(blob => blob?.text() ?? '')
+          .catch(() => '')
         : '';
 
       // attach as URL
@@ -341,6 +341,30 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     }, { hintAddImages });
   }, [_createAttachmentDraft, hintAddImages]);
 
+  /**
+   * Append a cloud file (Google Drive, OneDrive, etc.) to the attachments.
+   * This is the entry point for cloud file picker integrations.
+   *
+   * @param cloudFile - Cloud file metadata from the picker (provider, fileId, token, etc.)
+   * @returns Promise with attachment creation info, or null if failed
+   */
+  const attachAppendCloudFile = React.useCallback((cloudFile: Omit<Extract<AttachmentDraftSource, { media: 'cloud' }>, 'media' | 'origin'>) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendCloudFile', cloudFile);
+
+    // only-images: ignore cloud files as they may not be images
+    if (filterOnlyImages && !cloudFile.mimeType.startsWith('image/')) {
+      notifyOnlyImages(cloudFile);
+      return null;
+    }
+
+    return _createAttachmentDraft({
+      media: 'cloud',
+      origin: `picker-${cloudFile.provider}`,
+      ...cloudFile,
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, filterOnlyImages, hintAddImages]);
+
 
   return {
     // state
@@ -348,6 +372,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // create drafts
     attachAppendClipboardItems,
+    attachAppendCloudFile,
     attachAppendDataTransfer,
     attachAppendEgoFragments,
     attachAppendFile,
