@@ -245,7 +245,7 @@ function preprocessMarkdown(markdownText: string) {
     // for performance, disable the preprocessor if the text is too long
     if (markdownText.length > MAX_PREPROCESSOR_LENGTH) {
       if (!warnedAboutLength) {
-        console.warn('[DEV] Preprocessing markdown: text too long, skipping');
+        console.log('[DEV] Preprocessing markdown: text too long, skipping');
         warnedAboutLength = true;
       }
       return markdownText;
