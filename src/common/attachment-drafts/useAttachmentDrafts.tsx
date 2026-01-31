@@ -26,6 +26,9 @@ function notifyOnlyImages(item: any) {
 }
 
 
+export type AttachmentStoreCloudInput = Omit<Extract<AttachmentDraftSource, { media: 'cloud' }>, 'media' | 'origin'>;
+
+
 /**
  * @param attachmentsStoreApi A Per-Chat or standalone Attachment Drafts store.
  * @param enableLoadURLsOnPaste Only used if invoking attachAppendDataTransfer or attachAppendClipboardItems.
@@ -322,6 +325,27 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
   }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, filterOnlyImages, hintAddImages]);
 
   /**
+   * Append a cloud file (Google Drive, OneDrive, etc.) to the attachments.
+   * This is the entry point for cloud file picker integrations.
+   */
+  const attachAppendCloudFile = React.useCallback((cloudFile: AttachmentStoreCloudInput) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendCloudFile', cloudFile);
+
+    // only-images: ignore cloud files as they may not be images
+    if (filterOnlyImages && !cloudFile.mimeType.startsWith('image/')) {
+      notifyOnlyImages(cloudFile);
+      return Promise.resolve();
+    }
+
+    return _createAttachmentDraft({
+      media: 'cloud',
+      origin: `picker-${cloudFile.provider}`,
+      ...cloudFile,
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, filterOnlyImages, hintAddImages]);
+
+  /**
    * Append ego content to the attachments.
    */
   const attachAppendEgoFragments = React.useCallback((fragments: DMessageFragment[], label: string, conversationTitle: string, conversationId: DConversationId, messageId: DMessageId) => {
@@ -340,30 +364,6 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       },
     }, { hintAddImages });
   }, [_createAttachmentDraft, hintAddImages]);
-
-  /**
-   * Append a cloud file (Google Drive, OneDrive, etc.) to the attachments.
-   * This is the entry point for cloud file picker integrations.
-   *
-   * @param cloudFile - Cloud file metadata from the picker (provider, fileId, token, etc.)
-   * @returns Promise with attachment creation info, or null if failed
-   */
-  const attachAppendCloudFile = React.useCallback((cloudFile: Omit<Extract<AttachmentDraftSource, { media: 'cloud' }>, 'media' | 'origin'>) => {
-    if (ATTACHMENTS_DEBUG_INTAKE)
-      console.log('attachAppendCloudFile', cloudFile);
-
-    // only-images: ignore cloud files as they may not be images
-    if (filterOnlyImages && !cloudFile.mimeType.startsWith('image/')) {
-      notifyOnlyImages(cloudFile);
-      return null;
-    }
-
-    return _createAttachmentDraft({
-      media: 'cloud',
-      origin: `picker-${cloudFile.provider}`,
-      ...cloudFile,
-    }, { hintAddImages });
-  }, [_createAttachmentDraft, filterOnlyImages, hintAddImages]);
 
 
   return {

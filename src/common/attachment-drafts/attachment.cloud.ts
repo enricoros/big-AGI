@@ -43,10 +43,10 @@ type _CloudFetchErrorCode = 'AUTH_EXPIRED' | 'NOT_FOUND' | 'FORBIDDEN' | 'RATE_L
  * @see https://developers.google.com/workspace/drive/api/guides/ref-export-formats
  */
 const _GOOGLE_WORKSPACE_EXPORT: Record<string, { mimeType: string; ext: string, converter: string }> = {
-  'application/vnd.google-apps.document': { mimeType: 'text/markdown', ext: '.md', converter: 'Doc → ' },
-  'application/vnd.google-apps.spreadsheet': { mimeType: 'text/csv', ext: '.csv', converter: 'Sheet → ' },
-  'application/vnd.google-apps.presentation': { mimeType: 'text/plain', ext: '.txt', converter: 'Slides → ' },
-  'application/vnd.google-apps.drawing': { mimeType: 'image/png', ext: '.png', converter: 'Drawing → ' },
+  'application/vnd.google-apps.document': { mimeType: 'text/markdown', ext: '.md', converter: 'Doc -> ' },
+  'application/vnd.google-apps.spreadsheet': { mimeType: 'text/csv', ext: '.csv', converter: 'Sheet -> ' },
+  'application/vnd.google-apps.presentation': { mimeType: 'application/pdf', ext: '.pdf', converter: 'Slides -> ' },
+  'application/vnd.google-apps.drawing': { mimeType: 'image/svg+xml', ext: '.svg', converter: 'Drawing -> ' },
 };
 
 export function attachmentCloudGoogleWorkspaceExportMIME(cloudMimeType: string): string | undefined {
@@ -54,7 +54,7 @@ export function attachmentCloudGoogleWorkspaceExportMIME(cloudMimeType: string):
 }
 
 export function attachmentCloudConverterPrefix(cloudMimeType: string): string {
-  return _GOOGLE_WORKSPACE_EXPORT[cloudMimeType]?.converter || '';
+  return _GOOGLE_WORKSPACE_EXPORT[cloudMimeType]?.converter || 'Drive -> ';
 }
 
 
@@ -110,6 +110,7 @@ async function _fetchGoogleDriveFile(
       'Authorization': `Bearer ${accessToken}`,
     },
   }).catch((error) => {
+    console.log('[DEV] Network error while fetching Google Drive file:', { error });
     throw new CloudFetchError('NETWORK_ERROR', error?.message || String(error));
   });
 

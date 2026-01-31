@@ -126,12 +126,17 @@ export const env = createEnv({
    * Environment variables available on the client (and server).
    * You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
    *
+   * This is here basically for validation, but seems to not be used anywhere in the client code.
+   *
    * NOTE: they must be set at build time, not runtime(!)
    */
   client: {
 
     // Frontend: Google Analytics GA4 Measurement ID
     NEXT_PUBLIC_GA4_MEASUREMENT_ID: z.string().optional(),
+
+    // Google Drive Picker: download files from Google Drive
+    NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID: z.string().optional(),
 
     // Frontend: server to use for PlantUML rendering
     NEXT_PUBLIC_PLANTUML_SERVER_URL: z.url().optional(),
@@ -144,6 +149,7 @@ export const env = createEnv({
   // with Noext.JS >= 13.4.4 we'd only need to destructure client variables
   experimental__runtimeEnv: {
     NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
+    NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID,
     NEXT_PUBLIC_PLANTUML_SERVER_URL: process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL,
   },
 });

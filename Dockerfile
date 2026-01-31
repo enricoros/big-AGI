@@ -39,6 +39,10 @@ ENV NEXT_PUBLIC_GA4_MEASUREMENT_ID=${NEXT_PUBLIC_GA4_MEASUREMENT_ID}
 ARG NEXT_PUBLIC_POSTHOG_KEY
 ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
 
+# Optional argument to configure Google Drive Picker at build time (can reuse AUTH_GOOGLE_ID value)
+ARG NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID}
+
 # Copy development deps and source
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
