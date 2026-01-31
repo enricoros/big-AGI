@@ -24,7 +24,7 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   displayRank: 10,
   displayGroup: 'popular',
   location: 'cloud',
-  instanceLimit: 5,
+  instanceLimit: 10,
   hasServerConfigKey: 'hasLlmOpenAI',
 
   /// client-side-fetch ///
