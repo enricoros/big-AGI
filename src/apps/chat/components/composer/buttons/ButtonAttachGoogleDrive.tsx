@@ -41,7 +41,6 @@ function ButtonAttachGoogleDrive(props: {
       <Box sx={buttonAttachSx.tooltip}>
         <b>Add from Google Drive</b><br />
         Attach files from your Drive
-        <KeyStroke combo='Ctrl + Shift + G' sx={{ mt: 1, mb: 0.5 }} />
       </Box>
     }>
       {button}

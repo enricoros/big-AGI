@@ -35,7 +35,6 @@ NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 ## Usage
 
 - Click **Drive** button in attachment menu
-- Or press **Ctrl + Shift + G**
 
 ## Supported Files
 
