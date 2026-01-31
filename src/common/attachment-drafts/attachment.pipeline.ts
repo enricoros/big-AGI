@@ -391,7 +391,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       break;
   }
 
-  // cosmetic for cloud: prepend cloud label prefixes (e.g., "Doc → ", "Sheet → ")
+  // cosmetic for cloud: prepend cloud label prefixes
   const cloudLabelPrefix = source.media === 'cloud' ? attachmentCloudConverterPrefix(source.mimeType) : '';
   if (cloudLabelPrefix)
     for (const converter of converters)
@@ -440,7 +440,8 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
         srcFileSize: source.fileWithHandle.size || input.dataSize,
       };
 
-      switch (source.origin) {
+      const sourceOrigin = source.origin;
+      switch (sourceOrigin) {
         case 'camera':
           fileTitle = source.refPath || _lowCollisionRefString('Camera Photo', 6);
           break;
@@ -457,6 +458,10 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
           break;
         case 'drop':
           fileTitle = source.refPath || _lowCollisionRefString('Dropped File', 6);
+          break;
+        default:
+          const _exhaustiveCheck: never = sourceOrigin;
+          fileTitle = 'File';
           break;
       }
       return {

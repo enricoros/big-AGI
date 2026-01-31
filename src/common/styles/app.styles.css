@@ -19,3 +19,31 @@
 body {
     overscroll-behavior-y: none;
 }
+
+
+/* Customize the Google Drive Picker background */
+
+.picker-dialog-bg {
+    /* fixes a weird scrollbars issue */
+    margin-top: -1px !important;
+    margin-left: -1px !important;
+}
+
+iframe.picker-dialog-bg {
+    background: none !important;
+}
+
+div.picker-dialog-bg {
+    /* we have alpha in the background, don't also use opacity */
+    opacity: 1 !important;
+    /*noinspection CssUnresolvedCustomProperty*/
+    background-color: rgba(var(--joy-palette-neutral-darkChannel, 11 13 14) / 0.25) !important;
+    /*backdrop-filter: blur(8px);*/
+}
+
+div.picker-dialog {
+    /*noinspection CssUnresolvedCustomProperty*/
+    /*box-shadow: var(--joy-shadow-md);*/
+    border-radius: 1.25rem;
+    border: none !important;
+}

@@ -66,8 +66,9 @@ HTTP_BASIC_AUTH_PASSWORD=
 # Frontend variables 
 NEXT_PUBLIC_MOTD=
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
-NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID=
 NEXT_PUBLIC_PLANTUML_SERVER_URL=
+NEXT_PUBLIC_POSTHOG_KEY=
 ```
 
 ## Backend Variables
@@ -155,8 +156,9 @@ The value of these variables are passed to the frontend (Web UI) - make sure the
 | `NEXT_PUBLIC_DEBUG_BREAKS`        | (optional, development) When set to 'true', enables automatic debugger breaks on DEV/error/critical logs in development builds                                                                                                                  |
 | `NEXT_PUBLIC_MOTD`                | Message of the Day - displays a dismissible banner at the top of the app (see [customizations](customizations.md) for the template variables). Example: 🔔 Welcome to our deployment! Version {{app_build_pkgver}} built on {{app_build_time}}. |
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | (optional) The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                             |
-| `NEXT_PUBLIC_POSTHOG_KEY`         | (optional) Key for PostHog analytics. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                                             |
+| `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID` | (optional) Google OAuth Client ID for Drive Picker. Can reuse `AUTH_GOOGLE_ID`. See [Google Drive](config-feature-google-drive.md)                                                                                                          |
 | `NEXT_PUBLIC_PLANTUML_SERVER_URL` | The URL of the PlantUML server, used for rendering UML diagrams. Allows using custom local servers.                                                                                                                                             |
+| `NEXT_PUBLIC_POSTHOG_KEY`         | (optional) Key for PostHog analytics. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                                             |
 
 > Important: these variables must be set at build time, which is required by Next.js to pass them to the frontend.
 > This is in contrast to the backend variables, which can be set when starting the local server/container.
