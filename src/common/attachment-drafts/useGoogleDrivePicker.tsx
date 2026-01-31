@@ -5,7 +5,7 @@ import type { PickerCanceledEvent, PickerPickedEvent } from '@googleworkspace/dr
 import { DrivePicker, DrivePickerDocsView } from '@googleworkspace/drive-picker-react';
 
 import { IconButton } from '@mui/joy';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
@@ -21,35 +21,53 @@ const MAX_PICKER_FILES = 8; // max files per picker session; 0 = unlimited
 export const hasGoogleDriveCapability = !!GOOGLE_DRIVE_CLIENT_ID;
 
 
-// Token provider interface, simple get/set
+// -- Token Definitions --
+
 export interface ICloudProviderTokenAccessor {
-  get: () => string | null;
-  set: (token: string | null) => void;
+  get: () => CloudProviderToken | null;
+  set: (value: CloudProviderToken | null) => void;
 }
 
-// in-memory token storage as default
-let _inMemoryToken: string | null = null;
+export interface CloudProviderToken {
+  token: string;
+  expiresAt?: number; // timestamp in ms; if missing, token is treated as valid (the downstream may clear it eventually)
+}
+
+function _getUnexpiredToken(stored: CloudProviderToken | null): string | undefined {
+  if (!stored?.token) return undefined;
+  // if expiresAt is set and expired (with 60s safety margin), return undefined
+  if (stored.expiresAt && Date.now() > stored.expiresAt - 60 * 1000) return undefined;
+  return stored.token;
+}
+
+
+// --- In-memory token storage ---
+
+let _inMemoryToken: CloudProviderToken | null = null;
+
 const _inMemoryTokenStorage: ICloudProviderTokenAccessor = {
   get: () => _inMemoryToken,
-  set: (token: string | null) => _inMemoryToken = token,
+  set: (value: CloudProviderToken | null) => _inMemoryToken = value,
 };
 
 
 type _OauthResponseEvent = {
   detail?: {
     access_token: string; // xxxx.yyyyy....
-    expires_in: string | number; // 3599
-    scope: string; // 'https://www.googleapis.com/auth/drive.file'
-    token_type: string; // 'Bearer
+    expires_in?: string | number; // 3599
+    // scope?: string; // 'https://www.googleapis.com/auth/drive.file'
+    // token_type?: string; // 'Bearer'
   };
 }
 
 type _OauthErrorEvent = {
-  detail?: object | {
+  detail?: {
+    error?: string; // 'access_denied', 'popup_closed_by_user', ...
+  } | {
     type?: string; // 'popup_closed'
-    message?: string; // 'Popup window closed'
+    // message?: string; // 'Popup window closed'
     // stack?: string;
-  };
+  } | object;
 }
 
 export function useGoogleDrivePicker(
@@ -66,21 +84,36 @@ export function useGoogleDrivePicker(
   const openGoogleDrivePicker = React.useCallback(() => setIsPickerOpen(true), []);
 
 
+  const handleDeauthClick = React.useCallback(() => {
+    setIsPickerOpen(false);
+    tokenStorage.set(null);
+  }, [tokenStorage]);
+
+
+  // handle oauth events, to store the token for the picker callback
+
   const handleOAuthResponse = React.useCallback((e: _OauthResponseEvent) => {
-    if (e.detail?.access_token)
-      tokenStorage.set(e.detail.access_token);
+    if (!e.detail?.access_token) return;
+
+    const expiresIn = typeof e.detail.expires_in === 'number' ? e.detail.expires_in : typeof e.detail.expires_in === 'string' ? parseInt(e.detail.expires_in, 10) : undefined;
+    tokenStorage.set({
+      token: e.detail.access_token,
+      expiresAt: expiresIn === undefined ? undefined : Date.now() + expiresIn * 1000,
+    });
   }, [tokenStorage]);
 
   const handleOAuthError = React.useCallback((e: _OauthErrorEvent) => {
     setIsPickerOpen(false);
-    if (!e?.detail || !('type' in e?.detail) || e.detail.type !== 'popup_closed')
-      addSnackbar({ key: 'gdrive-oauth-error', message: 'Google Drive authentication failed.', type: 'issue' });
+    // ignore if user closed the popup
+    if (e?.detail && 'type' in e?.detail && e.detail.type === 'popup_closed') return;
+    const errorMsg = e?.detail && 'error' in e?.detail && typeof e.detail.error === 'string' ? e.detail.error : undefined;
+    addSnackbar({ key: 'gdrive-oauth-error', message: errorMsg === 'access_denied' ? 'Drive file access was denied' : 'Google Drive authentication failed.', type: 'issue' });
   }, []);
 
 
-  const handleCanceled = React.useCallback((_e: PickerCanceledEvent) => {
-    setIsPickerOpen(false);
-  }, []);
+  // handler picker events
+
+  const handleCanceled = React.useCallback((_e: PickerCanceledEvent) => setIsPickerOpen(false), []);
 
   const handlePicked = React.useCallback((e: PickerPickedEvent) => {
     setIsPickerOpen(false);
@@ -88,8 +121,8 @@ export function useGoogleDrivePicker(
     const docs = e.detail?.docs;
     if (!docs?.length) return;
 
-    // read token, probably just set by handleOAuthResponse
-    const currentToken = tokenStorage.get();
+    // read token, just set by handleOAuthResponse
+    const currentToken = _getUnexpiredToken(tokenStorage.get());
     if (!currentToken)
       return addSnackbar({ key: 'gdrive-no-token', message: 'Unable to access Google Drive.', type: 'issue' });
 
@@ -120,18 +153,14 @@ export function useGoogleDrivePicker(
   }, [onCloudFileSelected, tokenStorage]);
 
 
-  const handleCloseClick = React.useCallback(() => {
-    setIsPickerOpen(false);
-    tokenStorage.set('');
-  }, [tokenStorage]);
-
+  // memo components (close button and picker) | null
   const googleDrivePickerComponent = React.useMemo(() => !isPickerOpen || !GOOGLE_DRIVE_CLIENT_ID ? null : <>
 
     {/* Top-level close button - portaled to body, above the Google Drive picker */}
     {createPortal(
-      <TooltipOutlined title='Close and change account' placement='bottom'>
+      <TooltipOutlined title='Close and Switch Google Drive Account' placement='bottom'>
         <IconButton
-          onClick={handleCloseClick}
+          onClick={handleDeauthClick}
           sx={{
             '--IconButton-size': '2.75rem',
 
@@ -146,7 +175,7 @@ export function useGoogleDrivePicker(
             zIndex: 2002, // above the Drive Picker (2001+)
           }}
         >
-          <CloseRoundedIcon />
+          <LogoutIcon />
         </IconButton>
       </TooltipOutlined>,
       document.body,
@@ -163,7 +192,7 @@ export function useGoogleDrivePicker(
       // mine-only={true}
       login-hint={loginHint}
       max-items={MAX_PICKER_FILES || undefined}
-      oauth-token={tokenStorage.get() || undefined}
+      oauth-token={_getUnexpiredToken(tokenStorage.get())}
       onOauthResponse={handleOAuthResponse}
       onOauthError={handleOAuthError}
       onPicked={handlePicked}
@@ -181,7 +210,7 @@ export function useGoogleDrivePicker(
       />
 
     </DrivePicker>
-  </>, [handleCanceled, handleCloseClick, handleOAuthError, handleOAuthResponse, handlePicked, isMobile, isPickerOpen, loginHint, tokenStorage]);
+  </>, [handleCanceled, handleDeauthClick, handleOAuthError, handleOAuthResponse, handlePicked, isMobile, isPickerOpen, loginHint, tokenStorage]);
 
   return {
     openGoogleDrivePicker,
