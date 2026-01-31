@@ -1,7 +1,13 @@
 import * as React from 'react';
-import type { OAuthResponseEvent, PickerCanceledEvent, PickerPickedEvent } from '@googleworkspace/drive-picker-element';
+import { createPortal } from 'react-dom';
+
+import type { PickerCanceledEvent, PickerPickedEvent } from '@googleworkspace/drive-picker-element';
 import { DrivePicker, DrivePickerDocsView } from '@googleworkspace/drive-picker-react';
 
+import { IconButton } from '@mui/joy';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 
 import type { AttachmentStoreCloudInput } from './useAttachmentDrafts';
@@ -16,23 +22,40 @@ export const hasGoogleDriveCapability = !!GOOGLE_DRIVE_CLIENT_ID;
 
 
 // Token provider interface, simple get/set
-export interface ICloudProviderTokenValue {
+export interface ICloudProviderTokenAccessor {
   get: () => string | null;
-  set: (token: string) => void;
+  set: (token: string | null) => void;
 }
 
 // in-memory token storage as default
 let _inMemoryToken: string | null = null;
-const _inMemoryTokenStorage: ICloudProviderTokenValue = {
+const _inMemoryTokenStorage: ICloudProviderTokenAccessor = {
   get: () => _inMemoryToken,
-  set: (token: string) => _inMemoryToken = token,
+  set: (token: string | null) => _inMemoryToken = token,
 };
 
+
+type _OauthResponseEvent = {
+  detail?: {
+    access_token: string; // xxxx.yyyyy....
+    expires_in: string | number; // 3599
+    scope: string; // 'https://www.googleapis.com/auth/drive.file'
+    token_type: string; // 'Bearer
+  };
+}
+
+type _OauthErrorEvent = {
+  detail?: object | {
+    type?: string; // 'popup_closed'
+    message?: string; // 'Popup window closed'
+    // stack?: string;
+  };
+}
 
 export function useGoogleDrivePicker(
   onCloudFileSelected: (cloudFile: AttachmentStoreCloudInput) => void,
   isMobile: boolean,
-  tokenStorage: ICloudProviderTokenValue = _inMemoryTokenStorage,
+  tokenStorage: ICloudProviderTokenAccessor = _inMemoryTokenStorage,
   loginHint?: string,
 ) {
 
@@ -43,14 +66,15 @@ export function useGoogleDrivePicker(
   const openGoogleDrivePicker = React.useCallback(() => setIsPickerOpen(true), []);
 
 
-  const handleOAuthResponse = React.useCallback((e: OAuthResponseEvent) => {
+  const handleOAuthResponse = React.useCallback((e: _OauthResponseEvent) => {
     if (e.detail?.access_token)
       tokenStorage.set(e.detail.access_token);
   }, [tokenStorage]);
 
-  const handleOAuthError = React.useCallback(() => {
+  const handleOAuthError = React.useCallback((e: _OauthErrorEvent) => {
     setIsPickerOpen(false);
-    addSnackbar({ key: 'gdrive-oauth-error', message: 'Google Drive authentication failed.', type: 'issue' });
+    if (!e?.detail || !('type' in e?.detail) || e.detail.type !== 'popup_closed')
+      addSnackbar({ key: 'gdrive-oauth-error', message: 'Google Drive authentication failed.', type: 'issue' });
   }, []);
 
 
@@ -96,7 +120,39 @@ export function useGoogleDrivePicker(
   }, [onCloudFileSelected, tokenStorage]);
 
 
-  const googleDrivePickerComponent = React.useMemo(() => !isPickerOpen || !GOOGLE_DRIVE_CLIENT_ID ? null : (
+  const handleCloseClick = React.useCallback(() => {
+    setIsPickerOpen(false);
+    tokenStorage.set('');
+  }, [tokenStorage]);
+
+  const googleDrivePickerComponent = React.useMemo(() => !isPickerOpen || !GOOGLE_DRIVE_CLIENT_ID ? null : <>
+
+    {/* Top-level close button - portaled to body, above the Google Drive picker */}
+    {createPortal(
+      <TooltipOutlined title='Close and change account' placement='bottom'>
+        <IconButton
+          onClick={handleCloseClick}
+          sx={{
+            '--IconButton-size': '2.75rem',
+
+            backgroundColor: 'background.popup',
+            borderRadius: '50%',
+            boxShadow: 'lg',
+
+            position: 'fixed',
+            top: '1rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2002, // above the Drive Picker (2001+)
+          }}
+        >
+          <CloseRoundedIcon />
+        </IconButton>
+      </TooltipOutlined>,
+      document.body,
+    )}
+
+
     <DrivePicker
       app-id={GOOGLE_DRIVE_CLIENT_ID.split('-')[0] || ''}
       client-id={GOOGLE_DRIVE_CLIENT_ID}
@@ -125,7 +181,7 @@ export function useGoogleDrivePicker(
       />
 
     </DrivePicker>
-  ), [handleCanceled, handleOAuthError, handleOAuthResponse, handlePicked, isMobile, isPickerOpen, loginHint, tokenStorage]);
+  </>, [handleCanceled, handleCloseClick, handleOAuthError, handleOAuthResponse, handlePicked, isMobile, isPickerOpen, loginHint, tokenStorage]);
 
   return {
     openGoogleDrivePicker,
