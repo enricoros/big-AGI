@@ -59,17 +59,35 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
       origin: { // User originated
         ot: 'user',
         source: 'attachment',
-        media: source.media === 'file' ? source.origin : source.media === 'url' ? 'url' : 'unknown',
-        url: source.media === 'url' ? source.url : undefined,
-        fileName: source.media === 'file' ? source.refPath : undefined,
+        media:
+          source.media === 'file' ? source.origin
+            : source.media === 'url' ? 'url'
+              : source.media === 'cloud' ? source.provider
+                : 'unknown',
+        url:
+          source.media === 'url' ? source.url
+            : source.media === 'cloud' ? source.webViewLink
+              : undefined,
+        fileName:
+          source.media === 'file' ? source.refPath
+            : source.media === 'cloud' ? source.fileName
+              : undefined,
       },
     });
+
+    // use title if available, otherwise use the source refPath/refUrl/fileName
+    const refTextSummary = title || (
+      source.media === 'file' ? source.refPath
+        : source.media === 'url' ? source.refUrl
+          : source.media === 'cloud' ? source.fileName
+            : undefined
+    );
 
     // Future-proof: create a Zync Image Asset reference attachment fragment, with the legacy image_ref part for compatibility for the time being
     return createZyncAssetReferenceAttachmentFragment(
       title, caption,
       nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
-      title || (source.media === 'file' ? source.refPath : source.media === 'url' ? source.refUrl : undefined), // use title if available, otherwise use the source refPath or refUrl
+      refTextSummary,
       'image',
       {
         pt: 'image_ref' as const,
@@ -77,7 +95,7 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
         ...(title ? { altText: title } : {}),
         ...(imageWidth ? { width: imageWidth } : {}),
         ...(imageHeight ? { height: imageHeight } : {}),
-      }
+      },
     );
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
