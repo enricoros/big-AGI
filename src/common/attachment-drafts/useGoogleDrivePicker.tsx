@@ -15,41 +15,38 @@ const MAX_PICKER_FILES = 8; // max files per picker session; 0 = unlimited
 export const hasGoogleDriveCapability = !!GOOGLE_DRIVE_CLIENT_ID;
 
 
-// Simple in-mem token store
-let _cachedToken: string | null = null;
-
-// Session storage for OAuth token persistence
-// const GDRIVE_TOKEN_KEY = 'google-drive-oauth-token';
-
-function getStoredToken(): string | null {
-  return _cachedToken;
-  // if (typeof window === 'undefined') return null;
-  // return sessionStorage.getItem(GDRIVE_TOKEN_KEY);
+// Token provider interface, simple get/set
+export interface ICloudProviderTokenValue {
+  get: () => string | null;
+  set: (token: string) => void;
 }
 
-function storeToken(token: string): void {
-  _cachedToken = token;
-  // if (typeof window !== 'undefined')
-  //   sessionStorage.setItem(GDRIVE_TOKEN_KEY, token);
-}
+// in-memory token storage as default
+let _inMemoryToken: string | null = null;
+const _inMemoryTokenStorage: ICloudProviderTokenValue = {
+  get: () => _inMemoryToken,
+  set: (token: string) => _inMemoryToken = token,
+};
 
 
-export function useGoogleDrivePicker(onCloudFileSelected: (cloudFile: AttachmentStoreCloudInput) => void, isMobile: boolean, loginHint?: string) {
+export function useGoogleDrivePicker(
+  onCloudFileSelected: (cloudFile: AttachmentStoreCloudInput) => void,
+  isMobile: boolean,
+  tokenStorage: ICloudProviderTokenValue = _inMemoryTokenStorage,
+  loginHint?: string,
+) {
 
   // state
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
-  const [oauthToken, setOauthToken] = React.useState<string | null>(getStoredToken);
 
 
   const openGoogleDrivePicker = React.useCallback(() => setIsPickerOpen(true), []);
 
 
   const handleOAuthResponse = React.useCallback((e: OAuthResponseEvent) => {
-    if (e.detail?.access_token) {
-      setOauthToken(e.detail.access_token);
-      storeToken(e.detail.access_token);
-    }
-  }, []);
+    if (e.detail?.access_token)
+      tokenStorage.set(e.detail.access_token);
+  }, [tokenStorage]);
 
   const handleOAuthError = React.useCallback(() => {
     setIsPickerOpen(false);
@@ -67,7 +64,9 @@ export function useGoogleDrivePicker(onCloudFileSelected: (cloudFile: Attachment
     const docs = e.detail?.docs;
     if (!docs?.length) return;
 
-    if (!oauthToken)
+    // read token, probably just set by handleOAuthResponse
+    const currentToken = tokenStorage.get();
+    if (!currentToken)
       return addSnackbar({ key: 'gdrive-no-token', message: 'Unable to access Google Drive.', type: 'issue' });
 
     // convert picker docs to cloud file metadata for the attachment system
@@ -81,7 +80,7 @@ export function useGoogleDrivePicker(onCloudFileSelected: (cloudFile: Attachment
         continue;
       }
       onCloudFileSelected({
-        accessToken: oauthToken,
+        accessToken: currentToken,
         provider: 'gdrive',
         fileId: doc.id,
         mimeType: doc.mimeType,
@@ -94,7 +93,7 @@ export function useGoogleDrivePicker(onCloudFileSelected: (cloudFile: Attachment
     if (skippedFiles.length)
       addSnackbar({ key: 'gdrive-size-limit', message: `Skipped ${skippedFiles.length} file(s) over ${MAX_FILE_SIZE_MB} MB: ${skippedFiles.join(', ')}`, type: 'issue' });
 
-  }, [oauthToken, onCloudFileSelected]);
+  }, [onCloudFileSelected, tokenStorage]);
 
 
   const googleDrivePickerComponent = React.useMemo(() => !isPickerOpen || !GOOGLE_DRIVE_CLIENT_ID ? null : (
@@ -108,7 +107,7 @@ export function useGoogleDrivePicker(onCloudFileSelected: (cloudFile: Attachment
       // mine-only={true}
       login-hint={loginHint}
       max-items={MAX_PICKER_FILES || undefined}
-      oauth-token={oauthToken || undefined}
+      oauth-token={tokenStorage.get() || undefined}
       onOauthResponse={handleOAuthResponse}
       onOauthError={handleOAuthError}
       onPicked={handlePicked}
@@ -126,7 +125,7 @@ export function useGoogleDrivePicker(onCloudFileSelected: (cloudFile: Attachment
       />
 
     </DrivePicker>
-  ), [isPickerOpen, loginHint, oauthToken, handleOAuthResponse, handleOAuthError, handlePicked, handleCanceled, isMobile]);
+  ), [handleCanceled, handleOAuthError, handleOAuthResponse, handlePicked, isMobile, isPickerOpen, loginHint, tokenStorage]);
 
   return {
     openGoogleDrivePicker,
