@@ -56,7 +56,7 @@
     "nprogress": "^0.2.0",
     "pdfjs-dist": "5.4.54",
     "posthog-js": "^1.336.4",
-    "posthog-node": "^5.20.0",
+    "posthog-node": "^5.24.7",
     "prismjs": "^1.30.0",
     "puppeteer-core": "^24.34.0",
     "react": "^18.3.1",
