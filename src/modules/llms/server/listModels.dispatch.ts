@@ -35,7 +35,7 @@ import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models'
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
-import { lmStudioModelToModelDescription } from './openai/models/lmstudio.models';
+import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
@@ -285,11 +285,17 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         convertToDescriptions: models => models.sort(xaiModelSort),
       });
 
+    case 'lmstudio':
+      // [LM Studio]: custom models listing with native API
+      return createDispatch({
+        fetchModels: async () => lmStudioFetchModels(access),
+        convertToDescriptions: (response) => lmStudioModelsToModelDescriptions(response.models),
+      });
+
     case 'alibaba':
     case 'azure':
     case 'deepseek':
     case 'groq':
-    case 'lmstudio':
     case 'localai':
     case 'mistral':
     case 'moonshot':
@@ -364,10 +370,6 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .filter(groqModelFilter)
                 .map(groqModelToModelDescription)
                 .sort(groqModelSortFn);
-
-            case 'lmstudio':
-              return maybeModels
-                .map(({ id }) => lmStudioModelToModelDescription(id));
 
             case 'localai':
               return maybeModels
