@@ -4,7 +4,7 @@ import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
 
 /// set this to true to see the tRPC and fetch requests made by the server
-export const SERVER_DEBUG_WIRE = false; //
+export const SERVER_DEBUG_WIRE = true; //
 
 
 export class ServerFetchError extends Error {
@@ -124,7 +124,7 @@ export function debugGenerateCurlCommand(method: 'GET' | 'POST' | 'DELETE' | 'PU
         }
       }
     } else
-      curl += `-d '${JSON.stringify(body)}'`;
+      curl += `-d '${JSON.stringify(objectDeepCloneWithStringLimit(body, 'debug-curl-body', 4096))}'`;
   }
 
   return curl;
