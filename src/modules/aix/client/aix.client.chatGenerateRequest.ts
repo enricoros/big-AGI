@@ -660,9 +660,9 @@ export async function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['
   if (llmInterfaces.includes(LLM_IF_HOTFIX_StripImages))
     workaroundsCount += clientHotFixGenerateRequest_StripImages(aixChatGenerate);
 
-  // Apply the no-webp hot fix - convert WebP images to JPEG
+  // Apply the no-webp hot fix - convert WebP images to JPEG (smaller) or PNG (lossless)
   if (llmInterfaces.includes(LLM_IF_HOTFIX_NoWebP))
-    workaroundsCount += await clientHotFixGenerateRequest_ConvertWebPToJpeg(aixChatGenerate);
+    workaroundsCount += await clientHotFixGenerateRequest_ConvertWebP(aixChatGenerate, 'image/jpeg');
 
   // Disable streaming for select chat models that don't support it (e.g. o1-preview (old) and o1-2024-12-17)
   const shallDisableStreaming = llmInterfaces.includes(LLM_IF_HOTFIX_NoStream);
@@ -707,29 +707,25 @@ function clientHotFixGenerateRequest_StripImages(aixChatGenerate: AixAPIChatGene
 }
 
 /**
- * Hot fix for models that don't support WebP images
+ * Hot fix for models that don't support WebP images - converts to JPEG or PNG
  */
-async function clientHotFixGenerateRequest_ConvertWebPToJpeg(aixChatGenerate: AixAPIChatGenerate_Request): Promise<number> {
+async function clientHotFixGenerateRequest_ConvertWebP(aixChatGenerate: AixAPIChatGenerate_Request, toFormat: 'image/jpeg' | 'image/png'): Promise<number> {
 
   let workaroundsCount = 0;
+  const quality = toFormat === 'image/jpeg' ? 0.92 : 1.0;
 
-  // WebP images -> JPEG
   for (const message of aixChatGenerate.chatSequence) {
     for (let j = 0; j < message.parts.length; j++) {
       const part = message.parts[j];
       if (part.pt === 'inline_image' && part.mimeType === 'image/webp') {
         try {
-          // base64 -> Blob
           const webpBlob = await convert_Base64WithMimeType_To_Blob(part.base64, 'image/webp', 'hotfix-no-webp');
-          // WebP Blob -> JPEG Blob (0.92 quality, much smaller than PNG)
-          const { blob: jpegBlob } = await imageBlobConvertType(webpBlob, 'image/jpeg', 0.92);
-          // JPEG Blob -> base64
-          const jpegBase64 = await convert_Blob_To_Base64(jpegBlob, 'hotfix-no-webp');
-          message.parts[j] = { pt: 'inline_image', mimeType: 'image/jpeg', base64: jpegBase64 };
+          const { blob: convertedBlob } = await imageBlobConvertType(webpBlob, toFormat, quality);
+          const convertedBase64 = await convert_Blob_To_Base64(convertedBlob, 'hotfix-no-webp');
+          message.parts[j] = { pt: 'inline_image', mimeType: toFormat, base64: convertedBase64 };
           workaroundsCount++;
         } catch (error) {
-          console.warn('[DEV] clientHotFixGenerateRequest_ConvertWebPToJpeg: Error converting image:', error);
-          // continue without converting - the API will likely reject it
+          console.warn('[DEV] clientHotFixGenerateRequest_ConvertWebP: Error converting image:', error);
         }
       }
     }
