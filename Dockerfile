@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+# check=skip=CopyIgnoredFile
+
 # Base
 FROM node:24-alpine AS base
 ENV NEXT_TELEMETRY_DISABLED=1
