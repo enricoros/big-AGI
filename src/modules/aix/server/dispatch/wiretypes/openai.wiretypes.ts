@@ -58,7 +58,7 @@ export namespace OpenAIWire_ContentParts {
   }
 
   export function ImageContentPart(url: string, detail?: 'auto' | 'low' | 'high'): z.infer<typeof ImageContentPart_schema> {
-    return { type: 'image_url', image_url: { url, detail } };
+    return { type: 'image_url', image_url: { url, ...(detail && { detail }) } };
   }
 
   export function OpenAI_AudioContentPart(data: string, format: 'wav' | 'mp3'): z.infer<typeof OpenAI_AudioContentPart_schema> {
