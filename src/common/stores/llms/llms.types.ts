@@ -160,6 +160,7 @@ export type DModelInterfaceV1 =
   | 'tools-web-search'         // TEMP: ui flag - supports integrated web search tool
   | 'hotfix-no-stream'         // disable streaming for o1-preview (old) and o1 (20241217)
   | 'hotfix-no-temperature'    // disable temperature for deepseek-r1
+  | 'hotfix-no-webp'           // convert WebP images to PNG (e.g. some local models via LM Studio)
   | 'hotfix-strip-images'      // strip images from the input
   | 'hotfix-strip-sys0'        // strip the system instruction (unsupported)
   | 'hotfix-sys0-to-usr0'      // cast sys0 to usr0
@@ -185,6 +186,7 @@ export const LLM_IF_OAI_Responses: DModelInterfaceV1 = 'oai-responses';
 export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
 export const LLM_IF_HOTFIX_NoStream: DModelInterfaceV1 = 'hotfix-no-stream';
 export const LLM_IF_HOTFIX_NoTemperature: DModelInterfaceV1 = 'hotfix-no-temperature';
+export const LLM_IF_HOTFIX_NoWebP: DModelInterfaceV1 = 'hotfix-no-webp';
 export const LLM_IF_HOTFIX_StripImages: DModelInterfaceV1 = 'hotfix-strip-images';
 export const LLM_IF_HOTFIX_StripSys0: DModelInterfaceV1 = 'hotfix-strip-sys0';
 export const LLM_IF_HOTFIX_Sys0ToUsr0: DModelInterfaceV1 = 'hotfix-sys0-to-usr0';
@@ -212,6 +214,7 @@ export const LLMS_ALL_INTERFACES = [
   // Hotfixes to patch specific model quirks
   LLM_IF_HOTFIX_NoStream,     // disable streaming (e.g., o1-preview(old))
   LLM_IF_HOTFIX_NoTemperature,// disable temperature parameter (e.g., deepseek-r1)
+  LLM_IF_HOTFIX_NoWebP,       // convert WebP images to PNG (e.g. LM Studio)
   LLM_IF_HOTFIX_StripImages,  // remove images from input (e.g. o3-mini-2025-01-31)
   LLM_IF_HOTFIX_StripSys0,    // strip system instruction (e.g. Gemini Image Generation 2025-03-13), excludes Sys0ToUsr0
   LLM_IF_HOTFIX_Sys0ToUsr0,   // downgrade system to user messages for this model (e.g. o1-mini-2024-09-12)
