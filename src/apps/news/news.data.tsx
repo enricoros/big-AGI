@@ -72,6 +72,20 @@ export const DevNewsItem: NewsItem = {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
+    versionCode: '2.0.3',
+    versionName: 'Red Carpet',
+    versionDate: new Date('2026-02-03T12:00:00Z'),
+    items: [
+      { text: <><B>Kimi K2.5</B>, <B>Gemini 3 Flash</B>, <B>GPT Image 1.5</B>, <B>GPT 5.2 Codex</B>, <B issue={921}>Novita.ai</B> models, and xAI search and code execution</> },
+      { text: <><B issue={943}>Google Drive</B>: attach docs, sheets, images with optimal LLM conversion</> },
+      { text: <>Speech: new <B href='https://inworld.ai'>Inworld</B> support, cancelable, unlimited length</> },
+      { text: <>Copy as-seen, reorder messages, AI Injector, PDF auto-OCR</> },
+      { text: <>Models: <B issue={941}>duplication</B>, improved parameters, cleaner UI</> },
+      { text: <>Fixes, security patches, CJK/IME input</> },
+      { text: <>Developers: new Docker build, faster, and smaller containers, AI request injection capabilities in the inspector</>, dev: true },
+    ],
+  },
+  {
     versionCode: '2.0.2',
     versionName: 'Heavy Critters',
     versionDate: new Date('2025-12-01T06:00:00Z'), // 2.0.2
