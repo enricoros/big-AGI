@@ -1,12 +1,12 @@
 import type { Immutable } from '~/common/types/immutable.types';
 import { getImageAsset } from '~/common/stores/blob/dblobs-portability';
 
-import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
+import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, isContentOrAttachmentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
-import { imageBlobResizeIfNeeded, LLMImageResizeMode } from '~/common/util/imageUtils';
+import { imageBlobConvertType, imageBlobResizeIfNeeded, LLMImageResizeMode } from '~/common/util/imageUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_ToolMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart, AixParts_ModelAuxPart } from '../server/api/aix.wiretypes';
@@ -641,10 +641,10 @@ function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): Aix
 /// Client-side hotfixes
 
 
-export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interfaces'], aixChatGenerate: AixAPIChatGenerate_Request, modelName: string): {
+export async function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interfaces'], aixChatGenerate: AixAPIChatGenerate_Request, modelName: string): Promise<{
   shallDisableStreaming: boolean;
   workaroundsCount: number;
-} {
+}> {
 
   let workaroundsCount = 0;
 
@@ -659,6 +659,10 @@ export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interf
   // Apply the strip-images hot fix (e.g. o1-preview); however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   if (llmInterfaces.includes(LLM_IF_HOTFIX_StripImages))
     workaroundsCount += clientHotFixGenerateRequest_StripImages(aixChatGenerate);
+
+  // Apply the no-webp hot fix - convert WebP images to PNG (e.g. some local models via LM Studio that don't support WebP)
+  if (llmInterfaces.includes(LLM_IF_HOTFIX_NoWebP))
+    workaroundsCount += await clientHotFixGenerateRequest_ConvertWebPToPng(aixChatGenerate);
 
   // Disable streaming for select chat models that don't support it (e.g. o1-preview (old) and o1-2024-12-17)
   const shallDisableStreaming = llmInterfaces.includes(LLM_IF_HOTFIX_NoStream);
@@ -698,6 +702,39 @@ function clientHotFixGenerateRequest_StripImages(aixChatGenerate: AixAPIChatGene
   }
 
   // Log the number of workarounds applied
+  return workaroundsCount;
+
+}
+
+/**
+ * Hot fix for models that don't support WebP images
+ */
+async function clientHotFixGenerateRequest_ConvertWebPToPng(aixChatGenerate: AixAPIChatGenerate_Request): Promise<number> {
+
+  let workaroundsCount = 0;
+
+  // WebP images -> PNG
+  for (const message of aixChatGenerate.chatSequence) {
+    for (let j = 0; j < message.parts.length; j++) {
+      const part = message.parts[j];
+      if (part.pt === 'inline_image' && part.mimeType === 'image/webp') {
+        try {
+          // base64 -> Blob
+          const webpBlob = await convert_Base64WithMimeType_To_Blob(part.base64, 'image/webp', 'hotfix-no-webp');
+          // WebP Blob -> PNG Blob
+          const { blob: pngBlob } = await imageBlobConvertType(webpBlob, 'image/png', 1.0);
+          // PNG Blob -> base64
+          const pngBase64 = await convert_Blob_To_Base64(pngBlob, 'hotfix-no-webp');
+          message.parts[j] = { pt: 'inline_image', mimeType: 'image/png', base64: pngBase64 };
+          workaroundsCount++;
+        } catch (error) {
+          console.warn('[DEV] clientHotFixGenerateRequest_ConvertWebPToPng: Error converting image:', error);
+          // continue without converting - the API will likely reject it
+        }
+      }
+    }
+  }
+
   return workaroundsCount;
 
 }

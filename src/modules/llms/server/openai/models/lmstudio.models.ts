@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoWebP, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
@@ -113,7 +113,7 @@ export function lmStudioModelsToModelDescriptions(wireModels: LMStudioWire_API_M
         LLM_IF_OAI_Chat,
         ...(model.capabilities?.vision ? [LLM_IF_OAI_Vision] : []),
         ...(model.capabilities?.trained_for_tool_use ? [LLM_IF_OAI_Fn] : []),
-        // LLM_IF_HOTFIX_NoWebP, // because they are not supported
+        LLM_IF_HOTFIX_NoWebP, // because they are not supported
       ];
 
       // If loaded, use the actual context length from the instance config
