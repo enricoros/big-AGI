@@ -702,7 +702,7 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   const { error } = parsedData;
 
   // require .message/.code to consider this a valid error object
-  if (!(typeof error === 'object') || !('message' in error) || !('code' in error)) {
+  if (!(typeof error === 'object') || !('message' in error) /*|| !('code' in error) */) { // .code is optional for LM Studio and others
     console.log('AIX: OpenAI-dispatch ignored error:', { error });
     return false;
   }
