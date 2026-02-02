@@ -18,6 +18,7 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 
 // configuration
 const DISABLE_MARKDOWN_PROGRESSIVE_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
+// import '~/common/util/forceTouchToDoubleClick'; // Future: Mac trackpad: force press → double-click
 
 
 // To get to the 'ref' version (which doesn't seem to be used anymore, and was used to isolate the source of the bubble bar):
@@ -110,6 +111,7 @@ export function AutoBlocksRenderer(props: {
   return (
     <BlocksContainer
       // ref={ref /* this will assign the ref, now not needed anymore */}
+      // data-edit-intent={props.onDoubleClick ? true : undefined /* Future: Mac Force Touch */}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
     >
