@@ -8,6 +8,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 const _styles = {
   headerButton: {
     color: 'text.tertiary',
+    py: 1.5,
+    border: 'none',
+    fontSize: 'sm',
     fontWeight: 'md',
     justifyContent: 'space-between',
     '&[aria-expanded="false"]': {
