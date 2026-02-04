@@ -3,6 +3,8 @@ import * as React from 'react';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 
+import { VendorIconSpriteMemo } from '~/modules/llms/components/LLMVendorIconSprite';
+
 import { createAppTheme, createEmotionCache } from '~/common/app.theme';
 import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
 
@@ -61,6 +63,8 @@ export const ProviderTheming = (props: { emotionCache?: EmotionCache, children: 
     <CacheProvider value={props.emotionCache || clientSideEmotionCache}>
       <CssVarsProvider defaultMode='light' theme={theme}>
         <CssBaseline />
+        {/* Inject sprites to be referenced by SVG rendering */}
+        <VendorIconSpriteMemo />
         {/* Disabled for now, we don't use those */}
         {/*<_GlobalSVGFiltersMemo />*/}
         {props.children}
