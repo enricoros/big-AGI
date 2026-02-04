@@ -8,8 +8,8 @@ import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
-import { llmsGetVendorIcon, LLMVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -158,7 +158,7 @@ export function useLLMSelect(
   llmId: undefined | DLLMId | null, // undefined: not set at all, null: has the meaning of no-llm-wanted here
   setLlmId: (llmId: DLLMId | null) => void,
   options: LLMSelectOptions,
-): [DLLM | null, React.JSX.Element | null, React.FunctionComponent<SvgIconProps> | undefined] {
+): [DLLM | null, React.JSX.Element | null] {
 
   // options
   const { label, larger = false, disabled = false, placeholder = LLM_TEXT_PLACEHOLDER, isHorizontal = false, autoRefreshDomain, appendConfigureModels = false, showStarFilter = false } = options;
@@ -241,7 +241,7 @@ export function useLLMSelect(
           acc.push(
             <ListItem key={'llm-sep-' + llm.sId}>
               <ListItemButton onClick={() => toggleServiceCollapse(llm.sId)} sx={_styles.listServiceHeaderButton}>
-                {/*{serviceVendor?.id && <ListItemDecorator><LLMVendorIcon vendorId={serviceVendor.id} /></ListItemDecorator>}*/}
+                {/*{serviceVendor?.id && <ListItemDecorator><LLMVendorIconSprite vendorId={serviceVendor.id} /></ListItemDecorator>}*/}
                 <div />
                 {isServiceCollapsed ? <i>{serviceLabel}</i> : serviceLabel}
                 {isServiceCollapsed ? <ExpandMoreIcon sx={_styles.listServiceHeaderExpand} /> : <ExpandLessIcon sx={_styles.listServiceHeaderExpand} />}
@@ -287,7 +287,7 @@ export function useLLMSelect(
         >
           {!noIcons && (
             <ListItemDecorator>
-              {(llm.userStarred && !starredOnly) ? <StarredNoXL2 /> : serviceVendor?.id ? <LLMVendorIcon vendorId={serviceVendor.id} /> : null}
+              {(llm.userStarred && !starredOnly) ? <StarredNoXL2 /> : serviceVendor?.id ? <LLMVendorIconSprite vendorId={serviceVendor.id} /> : null}
             </ListItemDecorator>
           )}
           {/*<Tooltip title={llm.description}>*/}
@@ -396,10 +396,5 @@ export function useLLMSelect(
     </FormControl>
   ), [appendConfigureModels, autoRefreshDomain, controlledOpen, disabled, hasNoModels, hasStarred, isHorizontal, isReasoning, label, larger, listboxSlotPropsStable, llmId, onSelectChange, optimizeToSingleVisibleId, options.color, options.sx, options.variant, optionsArray, placeholder, showNoOptions, showStarFilter, starredOnly]);
 
-  // Memo the vendor icon for the chat LLM
-  const chatLLMVendorIconFC = React.useMemo(() => {
-    return !llm?.vId ? undefined : llmsGetVendorIcon(llm.vId);
-  }, [llm?.vId]);
-
-  return [llm, llmSelectComponent, chatLLMVendorIconFC];
+  return [llm, llmSelectComponent];
 }

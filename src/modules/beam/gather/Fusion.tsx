@@ -58,7 +58,7 @@ export function Fusion(props: {
   // get LLM Label and Vendor Icon
   const llmId = fusion?.llmId ?? null;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => fusionSetLlmId(props.fusionId, llmId), [props.fusionId, fusionSetLlmId]);
-  const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, {
+  const [llmOrNull, llmComponent] = useLLMSelect(llmId, setLlmId, {
     label: '',
     disabled: isFusing,
     showStarFilter: true,
@@ -147,7 +147,7 @@ export function Fusion(props: {
         isUsable={isUsable}
         llmComponent={(isFusing || (!isEditable && !showLlmSelector)) ? undefined : llmComponent}
         llmLabel={llmLabel}
-        llmVendorIcon={llmVendorIcon}
+        llmVendorId={llmOrNull?.vId}
         fusionAvatarTooltip={fusionAvatarTooltip}
         onIconClick={isFusing ? undefined : handleIconClick}
         onRemove={handleFusionRemove}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, SvgIconProps, Typography } from '@mui/joy';
+import { Box, IconButton, Typography } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -10,6 +10,9 @@ import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutl
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
+
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
@@ -72,7 +75,7 @@ function RayControls(props: {
   isScattering: boolean,
   llmComponent: React.ReactNode,
   llmShowReasoning?: boolean,
-  llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
+  llmVendorId: undefined | ModelVendorId,
   onIconClick: (event: React.MouseEvent) => void,
   onRemove: () => void,
   onToggleGenerate: () => void,
@@ -92,12 +95,12 @@ function RayControls(props: {
 
     {/* Letter / LLM Icon (default) */}
     <TooltipOutlined asLargePane enableInteractive title={props.rayAvatarTooltip} placement='top-start'>
-      <Box sx={{ display: 'flex' }} onClick={props.onIconClick}>
+      <Box sx={{ display: 'flex', '--Icon-fontSize': 'var(--joy-fontSize-lg)' }} onClick={props.onIconClick}>
         {props.rayLetter ? (
           <Typography level='title-sm' color={SCATTER_COLOR !== 'neutral' ? SCATTER_COLOR : undefined}>
             {props.rayLetter}
           </Typography>
-        ) : props.llmVendorIcon ? <props.llmVendorIcon sx={{ fontSize: 'lg' }} />
+        ) : props.llmVendorId ? <LLMVendorIconSprite vendorId={props.llmVendorId} />
           : null
           // : <TextureIcon sx={{ fontSize: 'lg' }} />
         }
@@ -177,7 +180,7 @@ export function BeamRay(props: {
 
   const llmId = ray?.rayLlmId ?? null;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
-  const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, {
+  const [llmOrNull, llmComponent] = useLLMSelect(llmId, setLlmId, {
     label: '',
     disabled: isScattering,
     showStarFilter: true,
@@ -256,7 +259,7 @@ export function BeamRay(props: {
         isScattering={isScattering}
         llmComponent={llmComponent}
         llmShowReasoning={llmShowReasoning}
-        llmVendorIcon={llmVendorIcon}
+        llmVendorId={llmOrNull?.vId}
         onIconClick={handleDebugPrint}
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
