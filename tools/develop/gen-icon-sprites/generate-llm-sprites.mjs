@@ -2,9 +2,9 @@
 /**
  * Generates VendorIconSprite.tsx from individual vendor icon files + a template.
  *
- * Source of truth:  individual icon .tsx files in src/common/components/icons/vendors/
+ * Source of truth:  individual icon .tsx files in src/modules/llms/components/
  * Template:         tools/develop/gen-icon-sprites/VendorIconSprite.template.tsx
- * Output:           src/common/components/icons/vendors/VendorIconSprite.tsx
+ * Output:           src/modules/llms/components/LLMVendorIconSprite.tsx
  *
  * Usage:  node tools/develop/gen-icon-sprites/generate-llm-sprites.mjs
  */
@@ -16,7 +16,7 @@ const ROOT = resolve(import.meta.dirname, '../../..');
 const VENDORS_DIR = join(ROOT, 'src/common/components/icons/vendors');
 const REGISTRY_FILE = join(ROOT, 'src/modules/llms/components/LLMVendorIcon.tsx');
 const TEMPLATE_FILE = join(import.meta.dirname, 'VendorIconSprite.template.tsx');
-const OUTPUT_FILE = join(VENDORS_DIR, 'VendorIconSprite.tsx');
+const OUTPUT_FILE = join(ROOT, 'src/modules/llms/components/LLMVendorIconSprite.tsx');
 
 
 // ── Step 1: Parse vendor registry (vendorId → component name → file) ──────────

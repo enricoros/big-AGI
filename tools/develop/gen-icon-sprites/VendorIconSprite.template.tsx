@@ -1,26 +1,19 @@
 // /**
 //  * AUTO-GENERATED — do not edit the symbol definitions or VI entries manually.
-//  * Source of truth: individual vendor icon files in src/common/components/icons/vendors/
+//  * Source of truth: individual vendor icon files in src/modules/llms/components/
 //  *
 //  * Regenerate: npm run gen:icon-sprites
-//  * Regenerate: node tools/develop/gen-icon-sprites/generate-llm-sprites.mjs
 //  */
 // import * as React from 'react';
 //
-// import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+// import type { ModelVendorId } from '../vendors/vendors.registry';
 //
+// import { PhRobot } from '~/common/components/icons/phosphor/PhRobot';
 //
 // // Symbol IDs for each vendor — generated from the vendor registry
 // const VI: Record<ModelVendorId, string> = {
 // /* __GENERATED_VI_ENTRIES__ */
 // } as const;
-//
-//
-// // Joy fontSize tokens -> CSS
-// const _FS: Record<string, string> = {
-//   inherit: 'inherit', xs: '1rem', sm: '1.25rem', md: '1.5rem', lg: '1.875rem',
-//   xl: '2.25rem', xl2: '3rem', xl3: '4rem', xl4: '6rem',
-// };
 //
 //
 // /**
@@ -44,33 +37,29 @@
 //
 //
 // /**
-//  * Lightweight vendor icon that references the sprite via `<use href>`.
-//  * Near-zero rendering cost per instance — no Emotion/styled-components overhead.
+//  * Lightweight vendor icon using SVG sprite `<use href>`.
+//  * Near-zero per-instance cost — no Emotion/styled-components.
 //  *
-//  * Supports a minimal subset of Joy's `sx` prop: `fontSize`, `ml`/`mr`/`mt`/`mb`/`mx`/`my`/`m`, `color`.
+//  * Uses Joy's CSS custom properties (--Icon-fontSize, --Icon-margin, --Icon-color)
+//  * so parent components (ListItemDecorator, etc.) control sizing automatically.
+//  * Accepts optional `sx` with `fontSize` override for explicit sizing.
 //  */
-// export function VendorIconLw({ vendorId, sx, className }: {
+// export function LLMVendorIconSprite({ vendorId, sx, className }: {
 //   vendorId: ModelVendorId | undefined;
-//   sx?: Record<string, unknown>;
+//   sx?: { fontSize?: number | string; ml?: number | string; color?: string };
 //   className?: string;
 // }) {
 //   const symbolId = vendorId ? VI[vendorId] : undefined;
-//   if (!symbolId) return null;
+//   if (!symbolId)
+//     return <PhRobot sx={sx} className={className} />;
 //
-//   // Build style: base + sx overrides
-//   let style = _lwBaseSx;
+//   // Compute style only when sx overrides are present
+//   let style: React.CSSProperties = _lwBaseSx;
 //   if (sx) {
 //     const s: React.CSSProperties = { ..._lwBaseSx };
-//     if (sx.fontSize !== undefined)
-//       s.fontSize = typeof sx.fontSize === 'number' ? `${sx.fontSize}px` : (_FS[sx.fontSize as string] ?? sx.fontSize) as string;
-//     if (sx.ml !== undefined) s.marginLeft = _sp(sx.ml);
-//     if (sx.mr !== undefined) s.marginRight = _sp(sx.mr);
-//     if (sx.mt !== undefined) s.marginTop = _sp(sx.mt);
-//     if (sx.mb !== undefined) s.marginBottom = _sp(sx.mb);
-//     if (sx.mx !== undefined) { const v = _sp(sx.mx); s.marginLeft = v; s.marginRight = v; }
-//     if (sx.my !== undefined) { const v = _sp(sx.my); s.marginTop = v; s.marginBottom = v; }
-//     if (sx.m !== undefined) s.margin = _sp(sx.m);
-//     if (sx.color) s.color = sx.color as string;
+//     if (sx.fontSize !== undefined) s.fontSize = typeof sx.fontSize === 'number' ? sx.fontSize : sx.fontSize;
+//     if (sx.ml !== undefined) s.marginLeft = typeof sx.ml === 'number' ? sx.ml * 8 : sx.ml;
+//     if (sx.color !== undefined) s.color = sx.color;
 //     style = s;
 //   }
 //
@@ -81,15 +70,15 @@
 //   );
 // }
 //
+// // Matches Joy's SvgIcon base styles — uses the same CSS custom properties
 // const _lwBaseSx: React.CSSProperties = {
 //   width: '1em',
 //   height: '1em',
 //   display: 'inline-block',
+//   fill: 'currentColor',
 //   flexShrink: 0,
 //   userSelect: 'none',
-// };
-//
-// function _sp(v: unknown): string | undefined {
-//   if (typeof v === 'number') return `${v * 8}px`;
-//   return v as string;
-// }
+//   margin: 'var(--Icon-margin)',
+//   fontSize: 'var(--Icon-fontSize, 1.5rem)',
+//   color: 'var(--Icon-color)',
+// } as const;
