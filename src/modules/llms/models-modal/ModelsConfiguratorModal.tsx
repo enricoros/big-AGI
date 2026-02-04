@@ -173,7 +173,7 @@ export function ModelsConfiguratorModal(props: {
 
             {/* Service Name Header */}
             {/*<ListItem sx={{ '--ListItem-minHeight': '2.5rem' }}>*/}
-            {/*  <ListItemDecorator><LLMVendorIcon vendorId={activeService?.vId} /></ListItemDecorator>*/}
+            {/*  <ListItemDecorator><LLMVendorIconSprite vendorId={activeService?.vId} /></ListItemDecorator>*/}
             {/*  <div>{activeService?.label ?? ''}</div>*/}
             {/*</ListItem>*/}
             {/*<ListDivider sx={{ mt: 0 }} />*/}

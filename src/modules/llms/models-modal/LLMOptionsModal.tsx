@@ -29,7 +29,7 @@ import { useLLM, useModelsServices } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsClone } from './LLMOptionsClone';
 import { LLMOptionsGlobal } from './LLMOptionsGlobal';
-import { LLMVendorIcon } from '../components/LLMVendorIcon';
+import { LLMVendorIconSprite } from '../components/LLMVendorIconSprite';
 
 
 // configuration
@@ -311,7 +311,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             {/* -> Models Service */}
             {modelService && <>
               <MenuItem onClick={handleGoToService}>
-                <ListItemDecorator><LLMVendorIcon vendorId={llm.vId} /></ListItemDecorator>
+                <ListItemDecorator><LLMVendorIconSprite vendorId={llm.vId} /></ListItemDecorator>
                 {modelService.label}
                 <ArrowForwardRoundedIcon sx={{ ml: 'auto' }} />
               </MenuItem>

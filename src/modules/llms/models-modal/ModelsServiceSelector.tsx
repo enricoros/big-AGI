@@ -17,7 +17,7 @@ import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
-import { LLMVendorIcon } from '../components/LLMVendorIcon';
+import { LLMVendorIconSprite } from '../components/LLMVendorIconSprite';
 import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
 import { vendorHasBackendCap } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
@@ -100,7 +100,7 @@ const _styles = {
 }*/
 
 function vendorIconWithMark(vendor: IModelVendor | null, greenMark: boolean) {
-  const icon = !vendor?.id ? null : <LLMVendorIcon vendorId={vendor.id} />;
+  const icon = !vendor?.id ? null : <LLMVendorIconSprite vendorId={vendor.id} />;
   return (greenMark && icon)
     ? <Badge size='sm' badgeContent='' slotProps={{ badge: { sx: { backgroundColor: 'lime', boxShadow: 'none', border: '1px solid gray', p: 0 } } }}>{icon}</Badge>
     : icon;
