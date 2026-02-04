@@ -1,0 +1,49 @@
+{
+  "_comment": "LLM Parameter Sweep config template. Copy to sweep-config.json and fill in API keys.",
+  "delayMs": 1000,
+  "maxTokens": 128,
+  "vendors": {
+    "openai": {
+      "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "modelFilter": ["o", "gpt-5.2"],
+      "sweeps": [
+        { "type": "enum", "param": "vndOaiReasoningEffort", "values": ["none", "minimal", "low", "medium", "high", "xhigh"] },
+        { "type": "enum", "param": "vndOaiVerbosity", "values": ["low", "medium", "high"] },
+        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 }
+      ]
+    },
+    "anthropic": {
+      "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
+      "modelFilter": "claude-3",
+      "sweeps": [
+        { "type": "enum", "param": "vndAntEffort", "values": ["low", "medium", "high"] },
+        { "type": "enum", "param": "vndAntThinkingBudget", "values": [0, 1024, 4096, 8192, 16000] }
+      ],
+      "baseModelOverrides": { "maxTokens": 16384 }
+    },
+    "gemini": {
+      "access": { "dialect": "gemini", "geminiKey": "AIza...", "geminiHost": "", "minSafetyLevel": "BLOCK_NONE" },
+      "modelFilter": "gemini-2",
+      "sweeps": [
+        { "type": "enum", "param": "vndGeminiThinkingLevel", "values": ["minimal", "low", "medium", "high"] },
+        { "type": "range", "param": "vndGeminiThinkingBudget", "min": 0, "max": 16384, "step": 4096 },
+        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 1 }
+      ]
+    },
+    "xai": {
+      "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "modelFilter": "grok",
+      "sweeps": [
+        { "type": "enum", "param": "vndOaiReasoningEffort", "values": ["low", "medium", "high"] }
+      ]
+    },
+    "openrouter": {
+      "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "modelFilter": "anthropic/claude",
+      "sweeps": [
+        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 },
+        { "type": "bisect", "param": "temperature", "low": 0, "high": 10, "precision": 0.1 }
+      ]
+    }
+  }
+}
