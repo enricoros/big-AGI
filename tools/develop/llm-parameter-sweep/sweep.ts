@@ -278,19 +278,24 @@ const SWEEP_DEFINITIONS = [
 
 
   // Gemini: thinking level (Gemini 3.x)
+  // - Pro supports: high, low
+  // - Flash supports: high, medium, low, minimal
+  // - null = dynamic (model decides)
   defineSweep({
     name: 'gemini-thinking-level',
     description: 'Gemini thinkingConfig.thinkingLevel values',
     applicability: { type: 'dialects', dialects: ['gemini'] },
-    applyToModel: (value) => ({
-      vndGeminiThinkingLevel: value,
-      vndGeminiShowThoughts: true,
-    }),
-    values: ['minimal', 'low', 'medium', 'high'] satisfies AixAPI_Model['vndGeminiThinkingLevel'][],
+    applyToModel: (value) => value
+      ? { vndGeminiThinkingLevel: value, vndGeminiShowThoughts: true }
+      : { vndGeminiShowThoughts: true }, // null = dynamic mode, don't set level
+    values: [null, 'minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['vndGeminiThinkingLevel'] | null)[],
     mode: 'enumerate',
   }),
 
   // Gemini: thinking budget (Gemini 2.x)
+  // - Range: 0 to 24576
+  // - Values 1-1024 get rounded up to 1024
+  // - 0 = disable thinking
   defineSweep({
     name: 'gemini-thinking-budget',
     description: 'Gemini thinkingConfig.thinkingBudget boundaries',
@@ -298,7 +303,7 @@ const SWEEP_DEFINITIONS = [
     applyToModel: (value) => ({
       vndGeminiThinkingBudget: value,
     }),
-    values: [0, 1024, 4096, 8192, 16384],
+    values: [0, 1024, 4096, 8192, 16384, 24576],
     mode: 'enumerate',
   }),
 
@@ -762,8 +767,10 @@ ${COLORS.bright}Config file format (SweepConfig):${COLORS.reset}
 
 ${COLORS.bright}Available built-in sweeps:${COLORS.reset}
 ${SWEEP_DEFINITIONS.map(s => {
-    const dialects = s.applicability.type === 'all' ? 'all' : s.applicability.dialects.join(', ');
-    return `  ${COLORS.cyan}${s.name.padEnd(26)}${COLORS.reset} ${s.description} ${COLORS.dim}[${dialects}]${COLORS.reset}`;
+    const dialects = s.applicability.type === 'all'
+      ? `${COLORS.green}all${COLORS.reset}`
+      : s.applicability.dialects.map(d => `${COLORS.magenta}${d}${COLORS.reset}`).join(', ');
+    return `  ${COLORS.cyan}${s.name.padEnd(26)}${COLORS.reset} ${s.description} [${dialects}]`;
   }).join('\n')}
 
 ${COLORS.bright}Examples:${COLORS.reset}
@@ -997,14 +1004,17 @@ async function runSweep(
     };
 
     // 5. For each model
-    for (const modelDesc of models) {
+    const totalModels = models.length;
+    for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
+      const modelDesc = models[modelIndex];
       // Derive API routing overrides from the model's interfaces (e.g. oai-responses, hotfix-no-temperature)
       const interfaceOverrides = modelOverridesFromInterfaces(modelDesc.interfaces);
       const mergedOverrides: Partial<AixAPI_Model> = { ...interfaceOverrides, ...vendorConfig.baseModelOverrides };
 
       const apiTag = interfaceOverrides.vndOaiResponsesAPI ? 'responses' : `${access.dialect}-chat`;
       const tempTag = interfaceOverrides.temperature === null ? ', no-temp' : '';
-      console.log(`\n  ${COLORS.bright}Model: ${modelDesc.id}${COLORS.reset} ${COLORS.dim}(${modelDesc.label}) [${apiTag}${tempTag}]${COLORS.reset}`);
+      const progressTag = `${modelIndex + 1}/${totalModels}`;
+      console.log(`\n  ${COLORS.dim}[${progressTag}]${COLORS.reset} ${COLORS.bright}Model: ${modelDesc.id}${COLORS.reset} ${COLORS.dim}(${modelDesc.label}) [${apiTag}${tempTag}]${COLORS.reset}`);
 
       const modelResult: ModelSweepResult = {
         modelId: modelDesc.id,
