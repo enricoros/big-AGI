@@ -6,7 +6,7 @@
  * Template:         tools/develop/gen-icon-sprites/VendorIconSprite.template.tsx
  * Output:           src/modules/llms/components/LLMVendorIconSprite.tsx
  *
- * Usage:  node tools/develop/gen-icon-sprites/generate-llm-sprites.mjs
+ * Usage:  node tools/develop/gen-icon-sprites/generate-llm-sprites.ts
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -19,21 +19,35 @@ const TEMPLATE_FILE = join(import.meta.dirname, 'VendorIconSprite.template.tsx')
 const OUTPUT_FILE = join(ROOT, 'src/modules/llms/components/LLMVendorIconSprite.tsx');
 
 
+interface VendorEntry {
+  vendorId: string;
+  componentName: string;
+  fileName: string;
+}
+
+interface ParsedIcon {
+  attrs: Record<string, string>;
+  children: string;
+}
+
+
 // ── Step 1: Parse vendor registry (vendorId → component name → file) ──────────
 
-function parseVendorRegistry() {
+function parseVendorRegistry(): VendorEntry[] {
   const src = readFileSync(REGISTRY_FILE, 'utf-8');
 
   // Extract imports: import { ComponentName } from '~/common/components/icons/vendors/FileName';
-  const importMap = {}; // ComponentName → fileName (without .tsx)
+  const importMap: Record<string, string> = {}; // ComponentName → fileName (without .tsx)
+  // noinspection RegExpRedundantEscape
   for (const m of src.matchAll(/import\s*\{\s*(\w+)\s*\}\s*from\s*'~\/common\/components\/icons\/vendors\/(\w+)'/g))
     importMap[m[1]] = m[2];
 
   // Extract registry entries: vendorId: ComponentName
+  // noinspection RegExpRedundantEscape
   const registryMatch = src.match(/const vendorIcons[^{]*\{([\s\S]*?)\};/);
   if (!registryMatch) throw new Error('Could not find vendorIcons registry in LLMVendorIcon.tsx');
 
-  const vendors = []; // [{ vendorId, componentName, fileName }]
+  const vendors: VendorEntry[] = [];
   for (const m of registryMatch[1].matchAll(/(\w+):\s*(\w+)/g)) {
     const vendorId = m[1];
     const componentName = m[2];
@@ -49,7 +63,7 @@ function parseVendorRegistry() {
 
 // ── Step 2: Parse a vendor icon .tsx file ─────────────────────────────────────
 
-function parseIconFile(fileName) {
+function parseIconFile(fileName: string): ParsedIcon {
   const filePath = join(VENDORS_DIR, fileName + '.tsx');
   const src = readFileSync(filePath, 'utf-8');
 
@@ -69,9 +83,11 @@ function parseIconFile(fileName) {
  * Returns: { viewBox: "'0 0 24 24'", strokeWidth: "{1.5}", ... }
  * Values include their delimiters (quotes or braces) for faithful reproduction.
  */
-function parseAttrs(raw) {
-  const attrs = {};
+function parseAttrs(raw: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  // noinspection RegExpRedundantEscape
   const cleaned = raw.replace(/\{\.\.\.props\}/g, '').trim();
+  // noinspection RegExpRedundantEscape
   const re = /(\w+)=('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|\{[^}]*\})/g;
   let m;
   while ((m = re.exec(cleaned)))
@@ -82,13 +98,13 @@ function parseAttrs(raw) {
 
 // ── Step 3: Build <symbol> JSX for one vendor ─────────────────────────────────
 
-function buildSymbol(vendorId, parsed) {
+function buildSymbol(vendorId: string, parsed: ParsedIcon): string {
   const { attrs, children } = parsed;
   const viewBox = stripQuotes(attrs.viewBox || "'0 0 24 24'");
 
   // Collect presentation attrs for the <g> wrapper (skip structural ones)
   const skipKeys = new Set(['viewBox', 'width', 'height']);
-  const gAttrs = [];
+  const gAttrs: string[] = [];
   let hasFill = false;
 
   for (const [key, val] of Object.entries(attrs)) {
@@ -109,14 +125,17 @@ function buildSymbol(vendorId, parsed) {
   const gAttrsStr = gAttrs.length ? ' ' + gAttrs.join(' ') : '';
   const indent = '          ';
 
-  if (!children)
+  if (!children) {
+    // noinspection JSUnresolvedReference
     return `        <symbol id={VI.${vendorId}} viewBox='${viewBox}'>\n${indent}<g${gAttrsStr} />\n        </symbol>`;
+  }
 
   const childLines = children.split('\n').map(l => indent + l.trimStart()).join('\n');
+  // noinspection JSUnresolvedReference
   return `        <symbol id={VI.${vendorId}} viewBox='${viewBox}'>\n${indent}<g${gAttrsStr}>\n${childLines}\n${indent}</g>\n        </symbol>`;
 }
 
-function stripQuotes(s) {
+function stripQuotes(s: string): string {
   if ((s.startsWith("'") && s.endsWith("'")) || (s.startsWith('"') && s.endsWith('"')))
     return s.slice(1, -1);
   return s;
@@ -125,7 +144,7 @@ function stripQuotes(s) {
 
 // ── Step 4: Generate output by replacing template placeholders ────────────────
 
-function generateFromTemplate(vendors, symbols) {
+function generateFromTemplate(vendors: VendorEntry[], symbols: string[]): string {
   // Template lines are prefixed with '// ' (or just '//') to avoid linter/tsc processing — strip them
   const template = readFileSync(TEMPLATE_FILE, 'utf-8')
     .split('\n').map(l => l.startsWith('// ') ? l.slice(3) : l === '//' ? '' : l).join('\n');
@@ -145,19 +164,19 @@ function generateFromTemplate(vendors, symbols) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-function main() {
+function main(): void {
   console.log('Generating VendorIconSprite.tsx ...\n');
 
   const vendors = parseVendorRegistry();
-  const symbols = [];
+  const symbols: string[] = [];
 
   for (const v of vendors) {
     try {
       const parsed = parseIconFile(v.fileName);
       symbols.push(buildSymbol(v.vendorId, parsed));
-      console.log(`  \u2713 ${v.vendorId} (${v.fileName})`);
+      console.log(`  ✓ ${v.vendorId} (${v.fileName})`);
     } catch (e) {
-      console.error(`  \u2717 ${v.vendorId} (${v.fileName}): ${e.message}`);
+      console.error(`  ✗ ${v.vendorId} (${v.fileName}): ${(e as Error).message}`);
       process.exit(1);
     }
   }
