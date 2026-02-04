@@ -237,6 +237,27 @@ const SWEEP_DEFINITIONS = [
     mode: 'enumerate',
   }),
 
+  // OpenAI: image generation (Responses API)
+  defineSweep({
+    name: 'oai-image-generation',
+    description: 'OpenAI image generation quality (off/mq/hq)',
+    applicability: { type: 'dialects', dialects: ['openai'] },
+    applyToModel: (value) => value ? { vndOaiImageGeneration: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
+    values: [null, 'mq', 'hq'] satisfies (AixAPI_Model['vndOaiImageGeneration'] | null)[],
+    mode: 'enumerate',
+  }),
+
+  // OpenAI: web search context (Responses API)
+  defineSweep({
+    name: 'oai-web-search',
+    description: 'OpenAI web search context size (off/medium)',
+    applicability: { type: 'dialects', dialects: ['openai'] },
+    applyToModel: (value) => value ? { vndOaiWebSearchContext: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
+    values: [null, 'medium'] satisfies (AixAPI_Model['vndOaiWebSearchContext'] | null)[],
+    mode: 'enumerate',
+  }),
+
+
   // Anthropic: effort
   defineSweep({
     name: 'ant-effort',
@@ -259,6 +280,7 @@ const SWEEP_DEFINITIONS = [
     values: [0, 1024, 4096, 8192, 16000],
     mode: 'enumerate',
   }),
+
 
   // Gemini: thinking level (Gemini 3.x)
   defineSweep({
@@ -284,6 +306,7 @@ const SWEEP_DEFINITIONS = [
     values: [0, 1024, 4096, 8192, 16384],
     mode: 'enumerate',
   }),
+
 
   // xAI: reasoning effort (Responses API)
   defineSweep({
@@ -345,7 +368,8 @@ function configSweepToDefinition(configSweep: ConfigSweepDefinition): SweepDefin
         name: param,
         description: `Config sweep: ${param} enum`,
         applicability: { type: 'all' },
-        applyToModel: (value) => ({ [param]: value }) as Partial<AixAPI_Model>,
+        // When value is null, return empty object (feature off); otherwise set the property
+        applyToModel: (value) => (value !== null ? { [param]: value } : {}) as Partial<AixAPI_Model>,
         values: configSweep.values as SweepValue[],
         mode: 'enumerate',
       });
@@ -602,13 +626,16 @@ async function executeBisectSweep(
 
 function printProbeResultInline(result: TestResult): void {
   // ✅ pass, ❌ fail (http/rejected), ✂️ truncated (out-of-tokens), ⚠️ error (exception)
+  // For null values (undefined in API), use dim ✓ instead of green ✅
+  const isUndefined = result.paramValue === null;
   const symbol =
-    result.outcome === 'pass' ? COLORS.green + '✅ ' :
+    result.outcome === 'pass' ? (isUndefined ? COLORS.dim + '✓ ' : COLORS.green + '✅ ') :
       result.outcome === 'fail' ? COLORS.red + '❌ ' :
         result.outcome === 'truncated' ? COLORS.magenta + '✂️ ' :
           COLORS.yellow + '⚠️ ';
+  const displayValue = isUndefined ? 'undefined' : String(result.paramValue);
   const statusSuffix = result.httpStatus ? `:${result.httpStatus}` : '';
-  process.stdout.write(`${symbol}(${String(result.paramValue)}${statusSuffix})${COLORS.reset} `);
+  process.stdout.write(`${symbol}(${displayValue}${statusSuffix})${COLORS.reset} `);
 }
 
 function printSweepSummary(results: VendorSweepResult[]): void {
@@ -628,10 +655,11 @@ function printSweepSummary(results: VendorSweepResult[]): void {
       }
 
       for (const [sweepName, sweepResults] of bySweep) {
-        const passed = sweepResults.filter(r => r.outcome === 'pass').map(r => String(r.paramValue));
-        const failed = sweepResults.filter(r => r.outcome === 'fail').map(r => String(r.paramValue));
-        const truncated = sweepResults.filter(r => r.outcome === 'truncated').map(r => String(r.paramValue));
-        const errored = sweepResults.filter(r => r.outcome === 'error').map(r => String(r.paramValue));
+        const formatValue = (v: SweepValue) => v === null ? 'undefined' : String(v);
+        const passed = sweepResults.filter(r => r.outcome === 'pass').map(r => formatValue(r.paramValue));
+        const failed = sweepResults.filter(r => r.outcome === 'fail').map(r => formatValue(r.paramValue));
+        const truncated = sweepResults.filter(r => r.outcome === 'truncated').map(r => formatValue(r.paramValue));
+        const errored = sweepResults.filter(r => r.outcome === 'error').map(r => formatValue(r.paramValue));
 
         const parts: string[] = [];
         if (passed.length) parts.push(`${COLORS.green}✅ [${passed.join(', ')}]${COLORS.reset}`);
@@ -940,6 +968,25 @@ async function runSweep(
       models = models.filter(m => !m.label.includes('🔗'));
       if (models.length < beforeCount)
         console.log(`  Excluded ${beforeCount - models.length} symlink models`);
+    }
+
+    // 2b. Filter out duplicate models with idVariant (keep base model, or first variant if no base)
+    {
+      const beforeCount = models.length;
+      // Sort so base models (no idVariant) come before variants
+      models.sort((a, b) => (a.idVariant ? 1 : 0) - (b.idVariant ? 1 : 0));
+      const seenIds = new Set<string>();
+      const excludedVariants: string[] = [];
+      models = models.filter(m => {
+        if (seenIds.has(m.id)) {
+          if (m.idVariant) excludedVariants.push(`${m.id}::${m.idVariant}`);
+          return false;
+        }
+        seenIds.add(m.id);
+        return true;
+      });
+      if (excludedVariants.length > 0)
+        console.log(`  Excluded ${excludedVariants.length} variant models: ${COLORS.dim}${excludedVariants.join(', ')}${COLORS.reset}`);
     }
 
     // 3. Filter models by: vendor config modelFilter (prefix match), then CLI --model-filter (regex)

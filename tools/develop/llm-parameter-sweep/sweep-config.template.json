@@ -1,15 +1,17 @@
 {
   "_comment": "LLM Parameter Sweep config template. Copy to sweep-config.json and fill in API keys.",
   "delayMs": 1000,
-  "maxTokens": 128,
+  "maxTokens": 1024,
   "vendors": {
     "openai": {
       "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-      "modelFilter": ["o", "gpt-5.2"],
+      "modelFilter": ["gpt-5", "o"],
       "sweeps": [
         { "type": "enum", "param": "vndOaiReasoningEffort", "values": ["none", "minimal", "low", "medium", "high", "xhigh"] },
         { "type": "enum", "param": "vndOaiVerbosity", "values": ["low", "medium", "high"] },
-        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 }
+        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 },
+        { "type": "enum", "param": "vndOaiImageGeneration", "values": [null, "mq", "hq"] },
+        { "type": "enum", "param": "vndOaiWebSearchContext", "values": [null, "medium"] }
       ]
     },
     "anthropic": {
