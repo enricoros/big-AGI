@@ -15,6 +15,20 @@
     text-overflow: ellipsis;
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
+.agi-vendor-icon-sprite {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+    flex-shrink: 0;
+    /* Auto-adapt to the properties passed by the container, usually an IconButton, Typography, etc. */
+    margin: var(--Icon-margin, 0);
+    font-size: var(--Icon-fontSize, 1.5rem);
+    color: var(--Icon-color, inherit);
+    user-select: none;
+}
+
 /* Prevents pull-to-refresh on mobile, so it's not triggered while scrolling the chat inadvertently */
 body {
     overscroll-behavior-y: none;

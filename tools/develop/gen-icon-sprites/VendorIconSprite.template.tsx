@@ -44,41 +44,44 @@
 //  * so parent components (ListItemDecorator, etc.) control sizing automatically.
 //  * Accepts optional `sx` with `fontSize` override for explicit sizing.
 //  */
-// export function LLMVendorIconSprite({ vendorId, sx, className }: {
+// export function LLMVendorIconSprite({ vendorId /*, sx, className*/ }: {
 //   vendorId: ModelVendorId | undefined;
-//   sx?: { fontSize?: number | string; ml?: number | string; color?: string };
-//   className?: string;
+//   // sx?: { fontSize?: number | string; ml?: number | string; color?: string };
+//   // className?: string;
 // }) {
 //   const symbolId = vendorId ? VI[vendorId] : undefined;
 //   if (!symbolId)
-//     return <PhRobot sx={sx} className={className} />;
+//     return <PhRobot />;
 //
 //   // Compute style only when sx overrides are present
-//   let style: React.CSSProperties = _lwBaseSx;
-//   if (sx) {
-//     const s: React.CSSProperties = { ..._lwBaseSx };
-//     if (sx.fontSize !== undefined) s.fontSize = typeof sx.fontSize === 'number' ? sx.fontSize : sx.fontSize;
-//     if (sx.ml !== undefined) s.marginLeft = typeof sx.ml === 'number' ? sx.ml * 8 : sx.ml;
-//     if (sx.color !== undefined) s.color = sx.color;
-//     style = s;
-//   }
+//   // let style: React.CSSProperties = _lwBaseSx;
+//   // if (sx) {
+//   //   const s: React.CSSProperties = { ..._lwBaseSx };
+//   //   if (sx.fontSize !== undefined) s.fontSize = typeof sx.fontSize === 'number' ? sx.fontSize : sx.fontSize;
+//   //   if (sx.ml !== undefined) s.marginLeft = typeof sx.ml === 'number' ? sx.ml * 8 : sx.ml;
+//   //   if (sx.color !== undefined) s.color = sx.color;
+//   //   style = s;
+//   // }
 //
+//   // was: <svg xmlns='http://www.w3.org/2000/svg' focusable={false} aria-hidden style={style} className={className}>
+//   // was:   <use href={`#${symbolId}`} width='100%' height='100%' />
+//   // was: </svg>
 //   return (
-//     <svg xmlns='http://www.w3.org/2000/svg' focusable={false} aria-hidden style={style} className={className}>
-//       <use href={`#${symbolId}`} width='100%' height='100%' />
+//     <svg xmlns='http://www.w3.org/2000/svg' aria-hidden className='agi-vendor-icon-sprite'>
+//       <use href={`#${symbolId}`} />
 //     </svg>
 //   );
 // }
 //
 // // Matches Joy's SvgIcon base styles — uses the same CSS custom properties
-// const _lwBaseSx: React.CSSProperties = {
-//   width: '1em',
-//   height: '1em',
-//   display: 'inline-block',
-//   fill: 'currentColor',
-//   flexShrink: 0,
-//   userSelect: 'none',
-//   margin: 'var(--Icon-margin)',
-//   fontSize: 'var(--Icon-fontSize, 1.5rem)',
-//   color: 'var(--Icon-color)',
-// } as const;
+// // const _lwBaseSx: React.CSSProperties = {
+// //   width: '1em',
+// //   height: '1em',
+// //   display: 'inline-block',
+// //   fill: 'currentColor',
+// //   flexShrink: 0,
+// //   userSelect: 'none',
+// //   margin: 'var(--Icon-margin)',
+// //   fontSize: 'var(--Icon-fontSize, 1.5rem)',
+// //   color: 'var(--Icon-color)',
+// // } as const;
