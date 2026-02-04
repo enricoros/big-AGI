@@ -1,12 +1,10 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Chip, ColorPaletteProp, FormControl, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Option, optionClasses, Select, SelectSlotsAndSlotProps, SvgIconProps, VariantProp } from '@mui/joy';
+import { Chip, ColorPaletteProp, FormControl, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Option, optionClasses, Select, SelectSlotsAndSlotProps, VariantProp } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
@@ -14,11 +12,13 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, getLLMPricing, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { ListItemGroupCollapser } from '~/common/components/ListItemGroupCollapser';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { StarIconUnstyled, StarredNoXL2 } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { findModelsServiceOrNull, getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { useToggleableStringSet } from '~/common/util/hooks/useToggleableStringSet';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 
@@ -70,14 +70,6 @@ const _styles = {
     bottom: 0,
     backgroundColor: 'background.surface',
     zIndex: 1,
-  },
-  listServiceHeaderButton: {
-    fontSize: 'sm',
-    fontWeight: 'md',
-    justifyContent: 'space-between',
-  },
-  listServiceHeaderExpand: {
-    fontSize: 'md',
   },
   listConfSep: {
     mb: 0,
@@ -165,7 +157,7 @@ export function useLLMSelect(
 
   // state
   const [controlledOpen, setControlledOpen] = React.useState(false);
-  const [collapsedServices, setCollapsedServices] = React.useState<Set<DModelsServiceId>>(new Set());
+  const { set: collapsedServices, toggle: toggleServiceCollapse } = useToggleableStringSet<DModelsServiceId>();
 
   // external state
   const starredOnly = useUIPreferencesStore(state => showStarFilter && state.showModelsStarredOnly);
@@ -176,18 +168,6 @@ export function useLLMSelect(
   const noIcons = false; //smaller;
   const llm = !llmId ? null : _filteredLLMs.find(llm => llm.id === llmId) ?? null;
   const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
-
-
-  // handlers
-
-  const toggleServiceCollapse = React.useCallback((serviceId: DModelsServiceId) => {
-    setCollapsedServices(prev => {
-      const next = new Set(prev);
-      if (next.has(serviceId)) next.delete(serviceId);
-      else next.add(serviceId);
-      return next;
-    });
-  }, []);
 
 
   // Scroll preservation: MUI's useSelect auto-scrolls to highlighted item when options change - we want to preserve scroll instead
@@ -238,16 +218,7 @@ export function useLLMSelect(
       if (hasMultipleServices && llm.sId !== prevServiceId) {
         if (!optimizeToSingleVisibleId) {
           const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || serviceVendor?.name || llm.sId;
-          acc.push(
-            <ListItem key={'llm-sep-' + llm.sId}>
-              <ListItemButton onClick={() => toggleServiceCollapse(llm.sId)} sx={_styles.listServiceHeaderButton}>
-                {/*{serviceVendor?.id && <ListItemDecorator><LLMVendorIconSprite vendorId={serviceVendor.id} /></ListItemDecorator>}*/}
-                <div />
-                {isServiceCollapsed ? <i>{serviceLabel}</i> : serviceLabel}
-                {isServiceCollapsed ? <ExpandMoreIcon sx={_styles.listServiceHeaderExpand} /> : <ExpandLessIcon sx={_styles.listServiceHeaderExpand} />}
-              </ListItemButton>
-            </ListItem>,
-          );
+          acc.push(<ListItemGroupCollapser key={'SID-' + llm.sId} id={llm.sId} label={serviceLabel} isCollapsed={isServiceCollapsed} onToggleCollapse={toggleServiceCollapse} />);
         }
         prevServiceId = llm.sId;
       }
