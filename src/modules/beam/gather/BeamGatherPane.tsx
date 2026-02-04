@@ -83,7 +83,7 @@ export function BeamGatherPane(props: {
   })));
   const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
   const disableUnlessAutoStart = !props.canGather && !gatherAutoStartAfterScatter;
-  const [llmOrNull, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(currentGatherLlmId, setCurrentGatherLlmId, {
+  const [llmOrNull, gatherLlmComponent] = useLLMSelect(currentGatherLlmId, setCurrentGatherLlmId, {
     label: props.isMobile ? '' : 'Merge Model',
     disabled: disableUnlessAutoStart,
     showStarFilter: true,

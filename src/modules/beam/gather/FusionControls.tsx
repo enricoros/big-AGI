@@ -1,11 +1,14 @@
 import * as React from 'react';
 
-import { Box, CircularProgress, IconButton, Sheet, SvgIconProps } from '@mui/joy';
+import { Box, CircularProgress, IconButton, Sheet } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
+
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -27,7 +30,7 @@ function FusionControls(props: {
   isUsable: boolean,
   llmComponent?: React.ReactNode,
   llmLabel: string,
-  llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
+  llmVendorId: ModelVendorId | undefined,
   fusionAvatarTooltip: React.ReactNode,
   onIconClick?: (event: React.MouseEvent) => void,
   onRemove: () => void,
@@ -58,7 +61,7 @@ function FusionControls(props: {
             },
           }}
         >
-          {props.llmVendorIcon ? <props.llmVendorIcon sx={{ fontSize: 'lg' }} /> : <BuildCircleIcon sx={{ fontSize: 'lg' }} />}
+          {props.llmVendorId ? <LLMVendorIconSprite vendorId={props.llmVendorId} /> : <BuildCircleIcon sx={{ fontSize: 'lg' }} />}
         </IconButton>
       </TooltipOutlined>
 
