@@ -17,7 +17,7 @@
     },
     "gemini": {
       "access": { "dialect": "gemini", "geminiKey": "AIza...", "geminiHost": "", "minSafetyLevel": "BLOCK_NONE" },
-      "modelFilter": "gemini-2",
+      "modelFilter": ["models/gemini-3", "models/gemini-2", "models/gemma"],
       "sweeps": ["temperature", "gemini-thinking-level", "gemini-thinking-budget"]
     },
     "xai": {

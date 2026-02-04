@@ -56,6 +56,7 @@ interface CliOptions {
   debug: boolean;
   includeSymlinks: boolean;
   dryRun: boolean;
+  sequential: boolean;
 }
 
 type SweepValue = string | number | boolean | null;
@@ -740,8 +741,9 @@ ${COLORS.bright}Options:${COLORS.reset}
   --host <url>          Custom host for single vendor
   --model-filter <re>   Regex to filter model IDs
   --sweep-filter <csv>  Comma-separated sweep names to run
-  --delay <ms>          Delay between requests (default: 1000)
+  --delay <ms>          Delay between sweeps (default: 1000). In --sequential mode, delay between values.
   --max-models <n>      Max models to test per vendor (default: 100)
+  --sequential          Run value tests sequentially (default: parallel)
   --verbose             Show detailed log messages below each sweep line
   --debug               Print request body before each probe
   --include-symlinks    Include symlink models (excluded by default)
@@ -797,6 +799,7 @@ function parseArgs(): CliOptions {
     debug: false,
     includeSymlinks: false,
     dryRun: false,
+    sequential: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -841,6 +844,9 @@ function parseArgs(): CliOptions {
         break;
       case '--dry-run':
         options.dryRun = true;
+        break;
+      case '--sequential':
+        options.sequential = true;
         break;
       case '--help':
         printUsage();
@@ -1040,20 +1046,30 @@ async function runSweep(
             sweepResults.push(...bisectResults);
           }
         } else {
-          // 7. Enumerate mode: for each value in the sweep
-          for (const value of sweep.values) {
-            if (options.dryRun) {
+          // 7. Enumerate mode: test each value in the sweep
+          if (options.dryRun) {
+            for (const value of sweep.values)
               process.stdout.write(`${COLORS.dim}[${String(value)}]${COLORS.reset} `);
-              continue;
+          } else if (options.sequential) {
+            // Sequential: test one value at a time with delay between values
+            for (const value of sweep.values) {
+              const result = await testParameterValue(access, modelDesc.id, sweep, value, maxTokens, mergedOverrides);
+              sweepResults.push(result);
+              printProbeResultInline(result);
+              if (globalDelay > 0)
+                await sleep(globalDelay);
             }
-
-            const result = await testParameterValue(access, modelDesc.id, sweep, value, maxTokens, mergedOverrides);
-            sweepResults.push(result);
-            printProbeResultInline(result);
-
-            // Delay between requests
-            if (globalDelay > 0)
-              await sleep(globalDelay);
+          } else {
+            // Parallel (default): fire all requests at once, print results in order
+            const results = await Promise.all(
+              sweep.values.map(value =>
+                testParameterValue(access, modelDesc.id, sweep, value, maxTokens, mergedOverrides),
+              ),
+            );
+            for (const result of results) {
+              sweepResults.push(result);
+              printProbeResultInline(result);
+            }
           }
         }
 
@@ -1076,6 +1092,10 @@ async function runSweep(
               process.stdout.write(` -> ${r.debugRequestBody}${COLORS.reset}\n      ${mayDim}    `);
             process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ')}${COLORS.reset}\n`);
           }
+
+        // Delay between sweeps (parameters) in parallel mode
+        if (!options.sequential && !options.dryRun && globalDelay > 0)
+          await sleep(globalDelay);
 
       }
 
@@ -1105,9 +1125,11 @@ async function main(): Promise<void> {
   }
 
   // Header
+  const execMode = options.sequential ? 'sequential' : 'parallel';
+  const delayDesc = options.sequential ? 'delay between values' : 'delay between sweeps';
   console.log(`${COLORS.bright}LLM Parameter Sweep Tool${COLORS.reset}`);
   console.log(`${COLORS.dim}Vendors: ${Object.keys(sweepConfig.vendors).join(', ')}${COLORS.reset}`);
-  console.log(`${COLORS.dim}Delay: ${sweepConfig.delayMs ?? options.delay}ms | Max models/vendor: ${options.maxModels}${COLORS.reset}`);
+  console.log(`${COLORS.dim}Mode: ${execMode} | ${delayDesc}: ${sweepConfig.delayMs ?? options.delay}ms | Max models/vendor: ${options.maxModels}${COLORS.reset}`);
   if (options.modelFilter) console.log(`${COLORS.dim}Model filter: ${options.modelFilter}${COLORS.reset}`);
   if (options.sweepFilter) console.log(`${COLORS.dim}Sweep filter: ${options.sweepFilter}${COLORS.reset}`);
   if (options.dryRun) console.log(`${COLORS.yellow}DRY RUN - no requests will be sent${COLORS.reset}`);
