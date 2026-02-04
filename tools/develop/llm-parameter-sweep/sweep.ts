@@ -91,6 +91,11 @@ interface SweepConfig {
   vendors: Record<string, VendorSweepConfig>;
 }
 
+// Results file format: dialect -> model -> sweep -> passing values
+type SweepResultsFile = Record<string, DialectResults>;
+type DialectResults = Record<string, ModelResults>;
+type ModelResults = Record<string, SweepValue[]>;
+
 type ErrorCategory =
   | 'exception' // exception testing the parameter
   | 'dialect'   // parsing fails
@@ -616,16 +621,105 @@ function printSweepSummary(results: VendorSweepResult[]): void {
         const errored = sweepResults.filter(r => r.outcome === 'error').map(r => formatValue(r.paramValue));
 
         const parts: string[] = [];
-        if (passed.length) parts.push(`${COLORS.green}✅ [${passed.join(', ')}]${COLORS.reset}`);
-        if (truncated.length) parts.push(`${COLORS.magenta}✂️ [${truncated.join(', ')}]${COLORS.reset}`);
-        if (failed.length) parts.push(`${COLORS.red}❌ [${failed.join(', ')}]${COLORS.reset}`);
-        if (errored.length) parts.push(`${COLORS.yellow}⚠️ [${errored.join(', ')}]${COLORS.reset}`);
+        if (passed.length) {
+          // Show passing values
+          parts.push(`${COLORS.green}✅ [${passed.join(', ')}]${COLORS.reset}`);
+          // Only show other categories if some values passed (to show which didn't)
+          if (truncated.length) parts.push(`${COLORS.magenta}✂️ [${truncated.join(', ')}]${COLORS.reset}`);
+          if (failed.length) parts.push(`${COLORS.red}❌ [${failed.join(', ')}]${COLORS.reset}`);
+          if (errored.length) parts.push(`${COLORS.yellow}⚠️ [${errored.join(', ')}]${COLORS.reset}`);
+        } else {
+          // Nothing passed - just show ❌ without listing all failed values
+          parts.push(`${COLORS.red}❌${COLORS.reset}`);
+        }
 
         console.log(`    ${sweepName.padEnd(26)} ${parts.join(' | ')}`);
       }
     }
     console.log('');
   }
+}
+
+
+// ============================================================================
+// Results File (sweep-results.json)
+// ============================================================================
+
+function getResultsFilePath(): string {
+  const scriptDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  return path.join(scriptDir, 'sweep-results.json');
+}
+
+function loadResultsFile(): SweepResultsFile {
+  const filePath = getResultsFilePath();
+  if (!fs.existsSync(filePath))
+    return {};
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(content) as SweepResultsFile;
+  } catch {
+    return {};
+  }
+}
+
+function saveResultsFile(results: SweepResultsFile): void {
+  const filePath = getResultsFilePath();
+  // Sort keys for stable output
+  const sorted: SweepResultsFile = {};
+  for (const dialect of Object.keys(results).sort()) {
+    sorted[dialect] = {};
+    for (const model of Object.keys(results[dialect]).sort()) {
+      sorted[dialect][model] = {};
+      for (const sweep of Object.keys(results[dialect][model]).sort()) {
+        sorted[dialect][model][sweep] = results[dialect][model][sweep];
+      }
+    }
+  }
+  fs.writeFileSync(filePath, JSON.stringify(sorted, null, 2) + '\n', 'utf-8');
+  console.log(`${COLORS.dim}Results saved to: ${filePath}${COLORS.reset}`);
+}
+
+function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectResults {
+  const dialectResults: DialectResults = {};
+
+  for (const model of vendorResult.models) {
+    const modelResults: ModelResults = {};
+
+    // Group results by sweep name
+    const bySweep = new Map<string, TestResult[]>();
+    for (const r of model.results) {
+      if (!bySweep.has(r.sweepName)) bySweep.set(r.sweepName, []);
+      bySweep.get(r.sweepName)!.push(r);
+    }
+
+    // Extract passing values for each sweep
+    for (const [sweepName, sweepResults] of bySweep) {
+      const passingValues = sweepResults
+        .filter(r => r.outcome === 'pass')
+        .map(r => r.paramValue);
+      modelResults[sweepName] = passingValues;
+    }
+
+    dialectResults[model.modelId] = modelResults;
+  }
+
+  return dialectResults;
+}
+
+function mergeAndSaveResults(allResults: VendorSweepResult[]): void {
+  if (allResults.length === 0) return;
+
+  // Load existing results
+  const existingResults = loadResultsFile();
+
+  // Merge new results (replace entire dialect section)
+  for (const vendorResult of allResults) {
+    if (vendorResult.models.length === 0) continue;
+    existingResults[vendorResult.dialect] = vendorResultToDialectResults(vendorResult);
+  }
+
+  // Save merged results
+  saveResultsFile(existingResults);
 }
 
 
@@ -1137,9 +1231,11 @@ async function main(): Promise<void> {
   // Run sweeps
   const results = await runSweep(sweepConfig, options);
 
-  // Summary
-  if (!options.dryRun && results.some(v => v.models.length > 0))
+  // Summary and save results
+  if (!options.dryRun && results.some(v => v.models.length > 0)) {
     printSweepSummary(results);
+    mergeAndSaveResults(results);
+  }
 
   console.log(`${COLORS.dim}Done.${COLORS.reset}`);
 }
