@@ -1,51 +1,49 @@
 {
   "_comment": "LLM Parameter Sweep config template. Copy to sweep-config.json and fill in API keys.",
+  "_comment2": "Sweeps are referenced by name from SWEEP_DEFINITIONS in sweep.ts. Run with --help to see available sweeps.",
   "delayMs": 1000,
   "maxTokens": 1024,
   "vendors": {
     "openai": {
       "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-      "modelFilter": ["gpt-5", "o"],
-      "sweeps": [
-        { "type": "enum", "param": "vndOaiReasoningEffort", "values": ["none", "minimal", "low", "medium", "high", "xhigh"] },
-        { "type": "enum", "param": "vndOaiVerbosity", "values": ["low", "medium", "high"] },
-        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 },
-        { "type": "enum", "param": "vndOaiImageGeneration", "values": [null, "mq", "hq"] },
-        { "type": "enum", "param": "vndOaiWebSearchContext", "values": [null, "medium"] }
-      ]
+      "modelFilter": ["gpt-4o", "o1", "o3"],
+      "sweeps": ["temperature", "oai-reasoning-effort", "oai-verbosity", "oai-reasoning-summary", "oai-image-generation", "oai-web-search"]
     },
     "anthropic": {
       "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
       "modelFilter": "claude-3",
-      "sweeps": [
-        { "type": "enum", "param": "vndAntEffort", "values": ["low", "medium", "high"] },
-        { "type": "enum", "param": "vndAntThinkingBudget", "values": [0, 1024, 4096, 8192, 16000] }
-      ],
+      "sweeps": ["temperature", "ant-effort", "ant-thinking-budget"],
       "baseModelOverrides": { "maxTokens": 16384 }
     },
     "gemini": {
       "access": { "dialect": "gemini", "geminiKey": "AIza...", "geminiHost": "", "minSafetyLevel": "BLOCK_NONE" },
       "modelFilter": "gemini-2",
-      "sweeps": [
-        { "type": "enum", "param": "vndGeminiThinkingLevel", "values": ["minimal", "low", "medium", "high"] },
-        { "type": "range", "param": "vndGeminiThinkingBudget", "min": 0, "max": 16384, "step": 4096 },
-        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 1 }
-      ]
+      "sweeps": ["temperature", "gemini-thinking-level", "gemini-thinking-budget"]
     },
     "xai": {
       "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
       "modelFilter": "grok",
-      "sweeps": [
-        { "type": "enum", "param": "vndOaiReasoningEffort", "values": ["low", "medium", "high"] }
-      ]
+      "sweeps": ["temperature", "xai-reasoning-effort"]
     },
     "openrouter": {
       "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
       "modelFilter": "anthropic/claude",
-      "sweeps": [
-        { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 },
-        { "type": "bisect", "param": "temperature", "low": 0, "high": 10, "precision": 0.1 }
-      ]
+      "__AUTO_IGNORE_sweeps": ["temperature", "oai-reasoning-effort"]
+    },
+    "deepseek": {
+      "access": { "dialect": "deepseek", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
+    },
+    "groq": {
+      "access": { "dialect": "groq", "oaiKey": "gsk_...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
+    },
+    "mistral": {
+      "access": { "dialect": "mistral", "oaiKey": "...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
+    },
+    "perplexity": {
+      "access": { "dialect": "perplexity", "oaiKey": "pplx-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
+    },
+    "togetherai": {
+      "access": { "dialect": "togetherai", "oaiKey": "tgp_...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
     }
   }
 }

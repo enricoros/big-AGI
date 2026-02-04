@@ -77,15 +77,9 @@ function defineSweep<const TValue>(definition: SweepDefinition<TValue>) {
   return definition;
 }
 
-// Config-file based sweep definition (JSON-friendly, no functions)
-type ConfigSweepDefinition =
-  | { type: 'enum'; param: string; values: unknown[] }
-  | { type: 'range'; param: string; min: number; max: number; step: number }
-  | { type: 'bisect'; param: string; low: number; high: number; precision: number };
-
 interface VendorSweepConfig {
   access: AixAPI_Access;
-  sweeps?: ConfigSweepDefinition[];
+  sweeps?: string[];                // names of built-in sweeps from SWEEP_DEFINITIONS
   modelFilter?: string | string[];  // prefix(es) to match model IDs
   baseModelOverrides?: Partial<AixAPI_Model>;
 }
@@ -112,6 +106,7 @@ interface TestResult {
   httpStatus?: number;
   responseText?: string;
   verboseLogs: string[];       // --verbose: response/error details
+  debugRequestAixModel?: string; // --debug: AixAPI_Model JSON
   debugRequestBody?: string;   // --debug: request body JSON
   durationMs: number;
 }
@@ -356,53 +351,6 @@ function modelOverridesFromInterfaces(interfaces: string[]): Partial<AixAPI_Mode
 
 
 // ============================================================================
-// Config Sweep -> Runtime Sweep Conversion
-// ============================================================================
-
-function configSweepToDefinition(configSweep: ConfigSweepDefinition): SweepDefinition<SweepValue> {
-  const param = configSweep.param;
-
-  switch (configSweep.type) {
-    case 'enum':
-      return defineSweep({
-        name: param,
-        description: `Config sweep: ${param} enum`,
-        applicability: { type: 'all' },
-        // When value is null, return empty object (feature off); otherwise set the property
-        applyToModel: (value) => (value !== null ? { [param]: value } : {}) as Partial<AixAPI_Model>,
-        values: configSweep.values as SweepValue[],
-        mode: 'enumerate',
-      });
-
-    case 'range': {
-      const values: SweepValue[] = [];
-      for (let v = configSweep.min; v <= configSweep.max + configSweep.step / 2; v += configSweep.step)
-        values.push(Math.round(v * 1e6) / 1e6); // avoid float drift
-      return defineSweep({
-        name: param,
-        description: `Config sweep: ${param} range [${configSweep.min}..${configSweep.max}]`,
-        applicability: { type: 'all' },
-        applyToModel: (value) => ({ [param]: value }) as Partial<AixAPI_Model>,
-        values,
-        mode: 'enumerate',
-      });
-    }
-
-    case 'bisect':
-      return defineSweep({
-        name: param,
-        description: `Config sweep: ${param} bisect [${configSweep.low}..${configSweep.high}]`,
-        applicability: { type: 'all' },
-        applyToModel: (value) => ({ [param]: value }) as Partial<AixAPI_Model>,
-        values: [configSweep.low, configSweep.high] as SweepValue[], // initial endpoints; binary search fills in
-        mode: 'bisect',
-        bisectPrecision: configSweep.precision,
-      });
-  }
-}
-
-
-// ============================================================================
 // Core Test Function
 // ============================================================================
 
@@ -419,6 +367,7 @@ async function testParameterValue(
   const baseModel = createBaseModel(modelId, maxTokens);
   const modelOverrides = sweepDef.applyToModel(value);
   const model: AixAPI_Model = { ...baseModel, ...baseModelOverrides, ...modelOverrides };
+  const debugRequestAixModel = JSON.stringify(model);
   const chatGenerate = createMinimalChatRequest();
 
   // Build vendor-specific HTTP request via the AIX dispatch system
@@ -431,14 +380,13 @@ async function testParameterValue(
   );
 
   // Capture request body for --debug output
-  const debugRequestBody = 'body' in dispatch.request
-    ? JSON.stringify(dispatch.request.body) //, null, 2)
-    : undefined;
+  const debugRequestBody = 'body' in dispatch.request ? JSON.stringify(dispatch.request.body) /*, null, 2)*/ : undefined;
 
   // Helper to build result with common fields
   const makeResult = (fields: Omit<TestResult, 'sweepName' | 'paramValue' | 'debugRequestBody'>): TestResult => ({
     sweepName: sweepDef.name,
     paramValue: value,
+    debugRequestAixModel,
     debugRequestBody,
     ...fields,
   });
@@ -802,16 +750,15 @@ ${COLORS.bright}Config file format (SweepConfig):${COLORS.reset}
     "vendors": {
       "openai": {
         "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-        "sweeps": [
-          { "type": "enum", "param": "vndOaiReasoningEffort", "values": ["low","medium","high"] },
-          { "type": "range", "param": "temperature", "min": 0, "max": 2, "step": 0.5 },
-          { "type": "bisect", "param": "temperature", "low": 0, "high": 10, "precision": 0.1 }
-        ],
+        "sweeps": ["temperature", "oai-reasoning-effort", "oai-verbosity"],
         "modelFilter": "gpt-4o",
         "baseModelOverrides": {}
       }
     }
   }
+
+  Sweeps are referenced by name from the built-in definitions (see below).
+  If "sweeps" is omitted, all applicable sweeps for the dialect are run.
 
 ${COLORS.bright}Available built-in sweeps:${COLORS.reset}
 ${SWEEP_DEFINITIONS.map(s => {
@@ -1009,11 +956,18 @@ async function runSweep(
       console.log(`  Capped to first ${options.maxModels} models`);
     }
 
-    // 5. Determine applicable sweeps
+    // 5. Determine applicable sweeps (always from SWEEP_DEFINITIONS)
     let applicableSweeps: SweepDefinition<any>[];
     if (vendorConfig.sweeps && vendorConfig.sweeps.length > 0) {
-      // Use config-defined sweeps
-      applicableSweeps = vendorConfig.sweeps.map(configSweepToDefinition);
+      // Use named sweeps from config, looked up in SWEEP_DEFINITIONS
+      applicableSweeps = [];
+      for (const sweepName of vendorConfig.sweeps) {
+        const sweep = SWEEP_DEFINITIONS.find(s => s.name === sweepName);
+        if (sweep)
+          applicableSweeps.push(sweep);
+        else
+          console.warn(`  ${COLORS.yellow}Warning: Unknown sweep "${sweepName}" - skipping${COLORS.reset}`);
+      }
     } else {
       // Use built-in sweeps filtered by dialect
       applicableSweeps = SWEEP_DEFINITIONS.filter(s => {
@@ -1105,7 +1059,10 @@ async function runSweep(
             if (!printRequest && !printLogs)
               continue;
             process.stdout.write(`      ${mayDim}(${String(r.paramValue)})`);
-            if (printRequest)
+            // NOTE: uncomment this to see the AixAPI_Model object being passed to the dispatcher
+            // if (printRequest && r.debugRequestAixModel)
+            //   process.stdout.write(` -> ${r.debugRequestAixModel}${COLORS.reset}\n      ${mayDim}    `);
+            if (printRequest || (r.outcome !== 'pass' && r.debugRequestBody))
               process.stdout.write(` -> ${r.debugRequestBody}${COLORS.reset}\n      ${mayDim}    `);
             process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ')}${COLORS.reset}\n`);
           }
