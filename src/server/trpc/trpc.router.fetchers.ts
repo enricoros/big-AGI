@@ -4,7 +4,7 @@ import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/
 
 
 // configuration
-const SERVER_LOG_FETCHERS_ERRORS = true; // log all fetcher errors to the console
+const SERVER_LOG_FETCHERS_ERRORS = !process.env.SUPPRESS_FETCHER_LOGS; // default: true - log all fetcher errors to the console
 const SERVER_DEBUG_FETCH_HEADERS = false; // log response headers (rate limits, etc.)
 
 
