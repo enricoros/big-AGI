@@ -1,0 +1,76 @@
+{
+  "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
+  "_evaluated": "Evaluated: gemini-thinking-budget, gemini-thinking-level, temperature. If missing, the parameter is not supported by that model.",
+  "models/gemini-2.0-flash-001": {
+    "gemini-thinking-budget": [0],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.0-flash-exp-image-generation": {
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.0-flash-lite-001": {
+    "gemini-thinking-budget": [0],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-flash": {
+    "gemini-thinking-budget": [0,1024,16384,24576],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-flash-image": {
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-flash-lite": {
+    "gemini-thinking-budget": [0,1024,16384,24576],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-flash-lite-preview-09-2025": {
+    "gemini-thinking-budget": [0,1024,16384,24576],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-flash-preview-09-2025": {
+    "gemini-thinking-budget": [0,1024,16384,24576],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-flash-preview-tts": {
+    "temperature": [0,0.5,1.5,2]
+  },
+  "models/gemini-2.5-pro": {
+    "gemini-thinking-budget": [1024,16384,24576,32768],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-pro-preview-tts": {
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3-flash-preview": {
+    "gemini-thinking-budget": [0,1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3-pro-image-preview": {
+    "gemini-thinking-budget": [0,1024,16384,24576,32768,65535],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3-pro-preview": {
+    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["low","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemma-3-12b-it": {
+    "temperature-range": [0,2]
+  },
+  "models/gemma-3-1b-it": {
+    "temperature-range": [0,2]
+  },
+  "models/gemma-3-27b-it": {
+    "temperature-range": [0,2]
+  },
+  "models/gemma-3-4b-it": {
+    "temperature-range": [0,2]
+  },
+  "models/gemma-3n-e2b-it": {
+    "temperature-range": [0,2]
+  },
+  "models/gemma-3n-e4b-it": {
+    "temperature-range": [0,2]
+  }
+}
