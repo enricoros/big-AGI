@@ -300,8 +300,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     parallel_tool_calls: z.boolean().optional(), // defaults to true
 
     // common model configuration
-    max_completion_tokens: z.number().int().positive().optional(), // [OpenAI o1, 2024-09-12]
-    max_tokens: z.number().optional(), // Deprecated in favor of max_completion_tokens - but still used by pre-o1 models and OpenAI-compatible APIs
+    max_completion_tokens: z.number().int().positive().optional(),
+    max_tokens: z.number().optional(), // DEPRECATED
     temperature: z.number().min(0).max(2).optional(),
     top_p: z.number().min(0).max(1).optional(),
 
@@ -332,6 +332,9 @@ export namespace OpenAIWire_API_Chat_Completions {
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
     reasoning_effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
+    // OpenAI and [OpenRouter, 2025-01-20] Verbosity parameter - maps to output_config.effort for Anthropic models (Claude Opus 4.5)
+    // https://openrouter.ai/docs/api/reference/parameters#verbosity
+    verbosity: z.enum(['low', 'medium', 'high']).optional(),
     // [OpenRouter, 2025-11-11] Unified reasoning parameter for all models
     reasoning: z.object({
       max_tokens: z.int().optional(), // Token-based control (Anthropic, Gemini): 1024-32000
@@ -406,10 +409,6 @@ export namespace OpenAIWire_API_Chat_Completions {
       search_prompt: z.string().optional(), // custom search prompt
     })).optional(),
 
-    // [OpenRouter, 2025-01-20] Verbosity parameter - maps to output_config.effort for Anthropic models (Claude Opus 4.5)
-    // https://openrouter.ai/docs/api/reference/parameters#verbosity
-    verbosity: z.enum(['low', 'medium', 'high']).optional(),
-
     // [Perplexity, 2025-06-23] Perplexity-specific search parameters
     search_mode: z.enum(['academic']).optional(), // Academic filter for scholarly sources
     search_after_date_filter: z.string().optional(), // Date filter in MM/DD/YYYY format
@@ -422,6 +421,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     seed: z.number().int().optional(),
     stop: z.array(z.string()).optional(), // Up to 4 sequences where the API will stop generating further tokens.
     user: z.string().optional(),
+    // IGNORING: safety_identifier: z.string().optional(),
+    // IGNORING: prompt_cache_key: z.string().optional(),
 
     // (deprecated upstream, OMITTED BY CHOICE): function_call and functions
 

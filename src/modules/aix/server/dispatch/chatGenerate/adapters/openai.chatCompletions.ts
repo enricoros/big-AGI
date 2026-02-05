@@ -12,7 +12,7 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } fro
 // OpenAI API - Chat Adapter - Implementation Notes
 //
 // - only supports N=1, mainly because the whole ecosystem downstream only supports N=1
-// - not implemented: top_p, parallel_tool_calls, seed, stop, user
+// - not implemented: top_p, parallel_tool_calls, seed (deprecated), stop, user (deprecated -> safety_identifier, prompt_cache_key)
 // - fully ignored at the moment: frequency_penalty, presence_penalty, logit_bias, logprobs, top_logprobs, service_tier
 // - impedence mismatch: see the notes in the message conversion function for additional decisions, including:
 //   - doc parts embedded as markdown text
@@ -47,9 +47,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Model incompatibilities -> Hotfixes
 
-  // [OpenAI] - o1 models
-  // - o1 models don't support system messages, we could hotfix this here once and for all, but we want to transfer the responsibility to the UI for better messaging to the user
-  // - o1 models also use the new 'max_completion_tokens' rather than 'max_tokens', breaking API compatibility, so we have to address it here
+  // [OpenAI] max_tokens is now fully deprecated in favor of max_completion_tokens for all OpenAI models
+  const hotFixUseMaxCompletionTokens = openAIDialect === 'openai' || openAIDialect === 'azure';
+
+  // [OpenAI] - o-family and reasoning models: don't support temperature/top_p, use developer role instead of system
   const hotFixOpenAIOFamily = (openAIDialect === 'openai' || openAIDialect === 'azure')
     && ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
 
@@ -109,14 +110,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [OpenAI] Vendor-specific output modalities configuration
   const outputsText = model.acceptsOutputs.includes('text');
   const outputsAudio = model.acceptsOutputs.includes('audio');
-  const outputsImages = model.acceptsOutputs.includes('image');
+  const outputsImages = model.acceptsOutputs.includes('image')
+    || !!model.vndOaiImageGeneration ; // this is here because when used in 'sweep' the 'acceptsOutputs' are not set yet
   if ((openAIDialect === 'openai' || openAIDialect === 'openrouter') && (outputsAudio || outputsImages)) {
     // set output modalities
     const modalities = new Set(payload.modalities || []);
     if (outputsText) modalities.add('text');
     if (outputsAudio) modalities.add('audio');
     // [OpenRouter, 2025-12-31] Extension for image output through the OpenAI ChatCompletions protocol
-    if (openAIDialect === 'openrouter' && outputsImages) modalities.add('image');
+    if (/*openAIDialect === 'openrouter' &&*/ outputsImages) modalities.add('image');
     payload.modalities = Array.from(modalities);
 
     // configure audio output
@@ -136,9 +138,14 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     }
   }
 
-  // [OpenAI] Vendor-specific reasoning effort, for o1 models only as of 2024-12-24
+  // [OpenAI] Vendor-specific reasoning effort
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
+  }
+  // [OpenAI, 2026-02-04] Verbosity control - official OpenAI parameter (low/medium/high, default: medium)
+  if (model.vndOaiVerbosity) {
+    // [OpenRouter, 2025-01-20] Also supported via OpenRouter for Anthropic Claude Opus 4.5, GPT-5 family
+    payload.verbosity = model.vndOaiVerbosity;
   }
 
   // --- Tools ---
@@ -180,10 +187,6 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       // max_results: 5, // could be configurable in the future
       // search_prompt: undefined, // could be configurable in the future
     }];
-
-  // [OpenRouter, 2025-01-20] Verbosity - maps to output_config.effort for Anthropic Claude Opus 4.5, GPT-5 family
-  if (openAIDialect === 'openrouter' && model.vndOaiVerbosity)
-    payload.verbosity = model.vndOaiVerbosity;
 
   // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
   if (openAIDialect === 'moonshot' && model.vndOaiReasoningEffort) {
@@ -255,8 +258,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   }
 
+  // [OpenAI, 2026-02-04] max_tokens is deprecated for all OpenAI models - use max_completion_tokens
+  if (hotFixUseMaxCompletionTokens)
+    payload = _fixUseMaxCompletionTokens(payload);
+
+  // [OpenAI] o-family/reasoning models: remove temperature and top_p controls
   if (hotFixOpenAIOFamily)
-    payload = _fixRequestForOpenAIO1_maxCompletionTokens(payload);
+    payload = _fixRemoveTemperatureAndTopP(payload);
 
   if (hotFixRemoveStreamOptions)
     payload = _fixRemoveStreamOptions(payload);
@@ -324,17 +332,17 @@ function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessag
   return chatMessages.filter(message => message.content !== null && message.content !== '');
 }
 
-function _fixRequestForOpenAIO1_maxCompletionTokens(payload: TRequest): TRequest {
-
-  // Remove temperature and top_p controls
-  const { max_tokens, temperature: _removeTemperature, top_p: _removeTopP, ...rest } = payload;
-
-  // Change max_tokens to max_completion_tokens:
-  // - pre-o1: max_tokens is the output amount
-  // - o1: max_completion_tokens is the output amount + reasoning amount
+/** [OpenAI, 2026-02-04] max_tokens fully deprecated - convert to max_completion_tokens for all OpenAI models */
+function _fixUseMaxCompletionTokens(payload: TRequest): TRequest {
+  const { max_tokens, ...rest } = payload;
   if (max_tokens)
     rest.max_completion_tokens = max_tokens;
+  return rest;
+}
 
+/** [OpenAI] o-family and reasoning models don't support temperature/top_p controls */
+function _fixRemoveTemperatureAndTopP(payload: TRequest): TRequest {
+  const { temperature: _removeTemperature, top_p: _removeTopP, ...rest } = payload;
   return rest;
 }
 
