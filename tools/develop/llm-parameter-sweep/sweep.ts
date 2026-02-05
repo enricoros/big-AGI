@@ -204,6 +204,7 @@ interface CliOptions {
   includeSymlinks: boolean;
   dryRun: boolean;
   sequential: boolean;
+  mergeModels: boolean;
 }
 
 // Types: Config File
@@ -655,8 +656,39 @@ function getResultsFilePath(dialect: string): string {
   return path.join(scriptDir, `llm-${dialect}-parameters-sweep.json`);
 }
 
-function saveDialectResults(dialect: string, dialectResults: DialectReultsByModel, evaluatedSweeps: string[], modelFilter?: string): void {
+function loadExistingDialectResults(filePath: string): DialectReultsByModel | null {
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(content);
+    // Strip metadata keys (starting with '_')
+    const results: DialectReultsByModel = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!key.startsWith('_') && typeof value === 'object' && value !== null)
+        results[key] = value as ModelResultsBySweep;
+    }
+    return results;
+  } catch {
+    return null;
+  }
+}
+
+function saveDialectResults(dialect: string, dialectResults: DialectReultsByModel, evaluatedSweeps: string[], modelFilter?: string, mergeModels?: boolean): void {
   const filePath = getResultsFilePath(dialect);
+
+  // When --merge-models, shallow-merge new model entries into existing file
+  if (mergeModels) {
+    const existing = loadExistingDialectResults(filePath);
+    if (existing) {
+      const newModelIds = Object.keys(dialectResults);
+      const updatedCount = newModelIds.filter(id => id in existing).length;
+      const addedCount = newModelIds.length - updatedCount;
+      // Shallow merge: new models overwrite, existing models are preserved
+      dialectResults = { ...existing, ...dialectResults };
+      console.log(`${COLORS.dim}Merging into existing file (${Object.keys(existing).length} existing, ${updatedCount} updated, ${addedCount} added -> ${Object.keys(dialectResults).length} total)${COLORS.reset}`);
+    }
+  }
+
   // Sort keys for stable output
   const sorted: DialectReultsByModel = {};
   for (const model of Object.keys(dialectResults).sort()) {
@@ -752,7 +784,7 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
   return dialectResults;
 }
 
-function saveAllResults(allResults: VendorSweepResult[]): void {
+function saveAllResults(allResults: VendorSweepResult[], mergeModels?: boolean): void {
   for (const vendorResult of allResults) {
     if (vendorResult.models.length === 0) continue;
     // Collect all evaluated sweep names for this dialect
@@ -763,7 +795,7 @@ function saveAllResults(allResults: VendorSweepResult[]): void {
       }
     }
     const dialectResults = vendorResultToDialectResults(vendorResult);
-    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps], vendorResult.modelFilter);
+    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps], vendorResult.modelFilter, mergeModels);
   }
 }
 
@@ -883,6 +915,7 @@ ${COLORS.bright}Options:${COLORS.reset}
   --delay <ms>          Delay between sweeps (default: 1000). In --sequential mode, delay between values.
   --max-models <n>      Max models to test per vendor (default: 100)
   --sequential          Run value tests sequentially (default: parallel)
+  --merge-models        Merge new models into existing JSON file (default: overwrite)
   --verbose             Show detailed log messages below each sweep line
   --debug               Print request body before each probe
   --include-symlinks    Include symlink models (excluded by default)
@@ -939,6 +972,7 @@ function parseArgs(): CliOptions {
     includeSymlinks: false,
     dryRun: false,
     sequential: false,
+    mergeModels: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -986,6 +1020,9 @@ function parseArgs(): CliOptions {
         break;
       case '--sequential':
         options.sequential = true;
+        break;
+      case '--merge-models':
+        options.mergeModels = true;
         break;
       case '--help':
         printUsage();
@@ -1286,6 +1323,7 @@ async function main(): Promise<void> {
   console.log(`${COLORS.dim}Mode: ${execMode} | ${delayDesc}: ${sweepConfig.delayMs ?? options.delay}ms | Max models/vendor: ${options.maxModels}${COLORS.reset}`);
   if (options.modelFilter) console.log(`${COLORS.dim}Model filter: ${options.modelFilter}${COLORS.reset}`);
   if (options.sweepFilter) console.log(`${COLORS.dim}Sweep filter: ${options.sweepFilter}${COLORS.reset}`);
+  if (options.mergeModels) console.log(`${COLORS.dim}Merge mode: new models will be merged into existing JSON files${COLORS.reset}`);
   if (options.dryRun) console.log(`${COLORS.yellow}DRY RUN - no requests will be sent${COLORS.reset}`);
 
   // Run sweeps
@@ -1308,7 +1346,7 @@ async function main(): Promise<void> {
   // Summary and save results
   if (!options.dryRun && results.some(v => v.models.length > 0)) {
     printSweepSummary(results);
-    saveAllResults(results);
+    saveAllResults(results, options.mergeModels);
   }
 
   console.log(`${COLORS.dim}Done.${COLORS.reset}`);
