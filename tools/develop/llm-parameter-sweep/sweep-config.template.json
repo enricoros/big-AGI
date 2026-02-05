@@ -7,7 +7,7 @@
     "openai": {
       "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
       "modelFilter": ["gpt-4o", "o1", "o3"],
-      "sweeps": ["temperature", "oai-reasoning-effort", "oai-verbosity", "oai-reasoning-summary", "oai-image-generation", "oai-web-search"]
+      "sweeps": ["temperature", "oai-reasoning-effort", "oai-verbosity", "oai-image-generation", "oai-web-search"]
     },
     "anthropic": {
       "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
@@ -29,21 +29,6 @@
       "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
       "modelFilter": "anthropic/claude",
       "__AUTO_IGNORE_sweeps": ["temperature", "oai-reasoning-effort"]
-    },
-    "deepseek": {
-      "access": { "dialect": "deepseek", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
-    },
-    "groq": {
-      "access": { "dialect": "groq", "oaiKey": "gsk_...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
-    },
-    "mistral": {
-      "access": { "dialect": "mistral", "oaiKey": "...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
-    },
-    "perplexity": {
-      "access": { "dialect": "perplexity", "oaiKey": "pplx-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
-    },
-    "togetherai": {
-      "access": { "dialect": "togetherai", "oaiKey": "tgp_...", "oaiOrg": "", "oaiHost": "", "heliKey": "" }
     }
   }
 }
