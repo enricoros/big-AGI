@@ -8,7 +8,7 @@ import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
-import { llmsAutoInjectWebSearchInterface } from './models.mappings';
+import { llmsAutoImplyInterfaces } from './models.mappings';
 
 
 // protocol: Anthropic
@@ -71,7 +71,7 @@ export async function listModelsRunDispatch(access: AixAPI_Access, signal?: Abor
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
   return dispatch.convertToDescriptions(wireModels)
-    .map(llmsAutoInjectWebSearchInterface); // unified way of auto-injecting cosmetic/derived IFs
+    .map(llmsAutoImplyInterfaces); // auto-inject implied IFs from parameterSpecs
 }
 
 
