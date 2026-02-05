@@ -11,12 +11,11 @@
     },
     "anthropic": {
       "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
-      "modelFilter": "claude-3",
       "sweeps": ["temperature", "ant-effort", "ant-thinking-budget"],
-      "baseModelOverrides": { "maxTokens": 16384 }
+      "baseModelOverrides": { "maxTokens": 4096 }
     },
     "gemini": {
-      "access": { "dialect": "gemini", "geminiKey": "AIza...", "geminiHost": "", "minSafetyLevel": "BLOCK_NONE" },
+      "access": { "dialect": "gemini", "geminiKey": "AIza...", "geminiHost": "", "minSafetyLevel": "HARM_BLOCK_THRESHOLD_UNSPECIFIED" },
       "modelFilter": ["models/gemini-3", "models/gemini-2", "models/gemma"],
       "sweeps": ["temperature", "gemini-thinking-level", "gemini-thinking-budget"]
     },
