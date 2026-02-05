@@ -21,7 +21,6 @@
     },
     "xai": {
       "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-      "modelFilter": "grok",
       "sweeps": ["temperature", "xai-reasoning-effort"],
       "baseModelOverrides": { "maxTokens": 512 }
     },

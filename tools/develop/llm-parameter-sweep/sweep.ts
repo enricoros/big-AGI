@@ -23,172 +23,7 @@ import { createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGe
 import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 
-// ============================================================================
-// Terminal Colors
-// ============================================================================
-
-const COLORS = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  cyan: '\x1b[36m',
-  magenta: '\x1b[35m',
-} as const;
-
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface CliOptions {
-  config?: string;
-  dialect?: string;
-  key?: string;
-  host?: string;
-  modelFilter?: string;
-  sweepFilter?: string;
-  delay: number;
-  maxModels: number;
-  verbose: boolean;
-  debug: boolean;
-  includeSymlinks: boolean;
-  dryRun: boolean;
-  sequential: boolean;
-}
-
-type SweepValue = string | number | boolean | null;
-
-interface SweepDefinition<TValue> {
-  name: string;
-  description: string;
-  applicability:
-    | { type: 'all' }
-    | { type: 'dialects'; dialects: AixAPI_Access['dialect'][] };
-  values: TValue[];
-  applyToModel: (value: TValue) => Partial<AixAPI_Model>;
-  mode: 'enumerate' | 'bisect';
-  /** For bisect mode: precision to stop binary search */
-  bisectPrecision?: number;
-}
-
-function defineSweep<const TValue>(definition: SweepDefinition<TValue>) {
-  return definition;
-}
-
-interface VendorSweepConfig {
-  access: AixAPI_Access;
-  sweeps?: string[];                // names of built-in sweeps from SWEEP_DEFINITIONS
-  modelFilter?: string | string[];  // prefix(es) to match model IDs
-  baseModelOverrides?: Partial<AixAPI_Model>;
-}
-
-interface SweepConfig {
-  delayMs?: number;
-  maxTokens?: number;
-  vendors: Record<string, VendorSweepConfig>;
-}
-
-// Results file format: dialect -> model -> sweep -> passing values
-type SweepResultsFile = Record<string, DialectResults>;
-type DialectResults = Record<string, ModelResults>;
-type ModelResults = Record<string, SweepValue[]>;
-
-type ErrorCategory =
-  | 'exception' // exception testing the parameter
-  | 'dialect'   // parsing fails
-  | 'abort' | 'connection' | 'http' | 'parse'; // tRPC errors
-
-type TestOutcome = 'pass' | 'fail' | 'truncated' | 'error';
-
-interface TestResult {
-  sweepName: string;
-  paramValue: SweepValue;
-  outcome: TestOutcome;
-  errorMessage: string | null; // source of truth for non-pass outcomes (always set when outcome !== 'pass')
-  errorCategory?: ErrorCategory; // secondary, used for symbol display
-  httpStatus?: number;
-  responseText?: string;
-  verboseLogs: string[];       // --verbose: response/error details
-  debugRequestAixModel?: string; // --debug: AixAPI_Model JSON
-  debugRequestBody?: string;   // --debug: request body JSON
-  durationMs: number;
-}
-
-interface ModelSweepResult {
-  modelId: string;
-  modelLabel: string;
-  results: TestResult[];
-}
-
-interface VendorSweepResult {
-  vendorName: string;
-  dialect: AixAPI_Access['dialect'];
-  modelsAvailable: number;
-  modelsTested: number;
-  models: ModelSweepResult[];
-}
-
-
-// ============================================================================
-// SweepCollectorTransmitter - Lightweight IParticleTransmitter for probing
-// ============================================================================
-
-class SweepCollectorTransmitter implements IParticleTransmitter {
-  text: string = '';
-  dialectIssue: string | null = null;
-  tokenStopReason: AixWire_Particles.GCTokenStopReason | null = null;
-  endReason: string | null = null;
-
-  get hasText(): boolean { return this.text.length > 0; }
-  get hasError(): boolean { return this.dialectIssue !== null; }
-
-  // Parser-initiated Control
-  setEnded(reason: 'done-dialect' | 'issue-dialect'): void {
-    this.endReason = reason;
-  }
-
-  setDialectTerminatingIssue(dialectText: string, _symbol: string | null, _serverLog: ParticleServerLogLevel): void {
-    this.dialectIssue = dialectText;
-  }
-
-  // Parts data - only collect text, everything else is a no-op
-  endMessagePart(): void { /* no-op */ }
-
-  appendText(textChunk: string): void {
-    this.text += textChunk;
-  }
-
-  appendReasoningText(_textChunk: string, _options?: { weak?: 'tag'; restart?: boolean }): void { /* no-op */ }
-  setReasoningSignature(_signature: string): void { /* no-op */ }
-  addReasoningRedactedData(_data: string): void { /* no-op */ }
-  appendAutoText_weak(textChunk: string): void { this.text += textChunk; }
-  appendAudioInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _durationMs: number): void { /* no-op */ }
-  appendImageInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _prompt: string): void { /* no-op */ }
-  startFunctionCallInvocation(_id: string | null, _functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', _args: string | object | null): void { /* no-op */ }
-  appendFunctionCallInvocationArgs(_id: string | null, _argsJsonChunk: string): void { /* no-op */ }
-  addCodeExecutionInvocation(_id: string | null, _language: string, _code: string, _author: 'gemini_auto_inline' | 'code_interpreter'): void { /* no-op */ }
-  addCodeExecutionResponse(_id: string | null, _error: boolean | string, _result: string, _executor: 'gemini_auto_inline' | 'code_interpreter', _environment: 'upstream'): void { /* no-op */ }
-  appendUrlCitation(_title: string, _url: string, _citationNumber?: number, _startIndex?: number, _endIndex?: number, _textSnippet?: string, _pubTs?: number): void { /* no-op */ }
-
-  // Special
-  sendControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
-  sendVoidPlaceholder(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string): void { /* no-op */ }
-  sendSetVendorState(_vendor: string, _state: unknown): void { /* no-op */ }
-
-  // Non-parts data
-  setModelName(_modelName: string): void { /* no-op */ }
-  setUpstreamHandle(_handle: string, _type: 'oai-responses'): void { /* no-op */ }
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void { this.tokenStopReason = reason; }
-  updateMetrics(_update: Partial<AixWire_Particles.CGSelectMetrics>): void { /* no-op */ }
-}
-
-
-// ============================================================================
-// Built-in Sweep Definitions
-// ============================================================================
+// --- SWEEP DEFINITIONS ---
 
 const SWEEP_DEFINITIONS = [
 
@@ -324,6 +159,165 @@ const SWEEP_DEFINITIONS = [
 ] as const satisfies SweepDefinition<any>[];
 
 
+interface SweepDefinition<TValue> {
+  name: string;
+  description: string;
+  applicability:
+    | { type: 'all' }
+    | { type: 'dialects'; dialects: AixAPI_Access['dialect'][] };
+  values: TValue[];
+  applyToModel: (value: TValue) => Partial<AixAPI_Model>;
+  mode: 'enumerate' | 'bisect';
+  /** For bisect mode: precision to stop binary search */
+  bisectPrecision?: number;
+}
+
+type SweepValue = string | number | boolean | null;
+
+function defineSweep<const TValue>(definition: SweepDefinition<TValue>) {
+  return definition;
+}
+
+// ============================================================================
+// Types
+// ============================================================================
+
+const COLORS = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m',
+} as const;
+
+interface CliOptions {
+  config?: string;
+  dialect?: string;
+  key?: string;
+  host?: string;
+  modelFilter?: string;
+  sweepFilter?: string;
+  delay: number;
+  maxModels: number;
+  verbose: boolean;
+  debug: boolean;
+  includeSymlinks: boolean;
+  dryRun: boolean;
+  sequential: boolean;
+}
+
+// Types: Config File
+
+interface SweepConfigFile {
+  delayMs?: number;
+  maxTokens?: number;
+  vendors: Record<string, SweepConfigFile_Vendor>;
+}
+
+interface SweepConfigFile_Vendor {
+  access: AixAPI_Access;
+  sweeps?: string[];                // names of built-in sweeps from SWEEP_DEFINITIONS
+  modelFilter?: string | string[];  // prefix(es) to match model IDs
+  baseModelOverrides?: Partial<AixAPI_Model>;
+}
+
+// Types: Sweep Results
+
+interface VendorSweepResult {
+  vendorName: string;
+  dialect: AixAPI_Access['dialect'];
+  modelsAvailable: number;
+  modelsTested: number;
+  models: ModelSweepResult[];
+  modelFilter?: string; // effective filter used (from config and/or CLI)
+}
+
+interface ModelSweepResult {
+  modelId: string;
+  modelLabel: string;
+  results: TestResult[];
+}
+
+interface TestResult {
+  sweepName: string;
+  paramValue: SweepValue;
+  outcome: TestOutcome;
+  errorMessage: string | null; // source of truth for non-pass outcomes (always set when outcome !== 'pass')
+  errorCategory?: ErrorCategory; // secondary, used for symbol display
+  httpStatus?: number;
+  responseText?: string;
+  verboseLogs: string[];       // --verbose: response/error details
+  debugRequestAixModel?: string; // --debug: AixAPI_Model JSON
+  debugRequestBody?: string;   // --debug: request body JSON
+  durationMs: number;
+}
+
+type TestOutcome = 'pass' | 'fail' | 'truncated' | 'error';
+
+
+type ErrorCategory =
+  | 'exception' // exception testing the parameter
+  | 'dialect'   // parsing fails
+  | 'abort' | 'connection' | 'http' | 'parse'; // tRPC errors
+
+
+// ============================================================================
+// SweepCollectorTransmitter - Lightweight IParticleTransmitter for probing
+// ============================================================================
+
+class SweepCollectorTransmitter implements IParticleTransmitter {
+  text: string = '';
+  dialectIssue: string | null = null;
+  tokenStopReason: AixWire_Particles.GCTokenStopReason | null = null;
+  endReason: string | null = null;
+
+  get hasText(): boolean { return this.text.length > 0; }
+  get hasError(): boolean { return this.dialectIssue !== null; }
+
+  // Parser-initiated Control
+  setEnded(reason: 'done-dialect' | 'issue-dialect'): void {
+    this.endReason = reason;
+  }
+
+  setDialectTerminatingIssue(dialectText: string, _symbol: string | null, _serverLog: ParticleServerLogLevel): void {
+    this.dialectIssue = dialectText;
+  }
+
+  // Parts data - only collect text, everything else is a no-op
+  endMessagePart(): void { /* no-op */ }
+
+  appendText(textChunk: string): void {
+    this.text += textChunk;
+  }
+
+  appendReasoningText(_textChunk: string, _options?: { weak?: 'tag'; restart?: boolean }): void { /* no-op */ }
+  setReasoningSignature(_signature: string): void { /* no-op */ }
+  addReasoningRedactedData(_data: string): void { /* no-op */ }
+  appendAutoText_weak(textChunk: string): void { this.text += textChunk; }
+  appendAudioInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _durationMs: number): void { /* no-op */ }
+  appendImageInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _prompt: string): void { /* no-op */ }
+  startFunctionCallInvocation(_id: string | null, _functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', _args: string | object | null): void { /* no-op */ }
+  appendFunctionCallInvocationArgs(_id: string | null, _argsJsonChunk: string): void { /* no-op */ }
+  addCodeExecutionInvocation(_id: string | null, _language: string, _code: string, _author: 'gemini_auto_inline' | 'code_interpreter'): void { /* no-op */ }
+  addCodeExecutionResponse(_id: string | null, _error: boolean | string, _result: string, _executor: 'gemini_auto_inline' | 'code_interpreter', _environment: 'upstream'): void { /* no-op */ }
+  appendUrlCitation(_title: string, _url: string, _citationNumber?: number, _startIndex?: number, _endIndex?: number, _textSnippet?: string, _pubTs?: number): void { /* no-op */ }
+
+  // Special
+  sendControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
+  sendVoidPlaceholder(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string): void { /* no-op */ }
+  sendSetVendorState(_vendor: string, _state: unknown): void { /* no-op */ }
+
+  // Non-parts data
+  setModelName(_modelName: string): void { /* no-op */ }
+  setUpstreamHandle(_handle: string, _type: 'oai-responses'): void { /* no-op */ }
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void { this.tokenStopReason = reason; }
+  updateMetrics(_update: Partial<AixWire_Particles.CGSelectMetrics>): void { /* no-op */ }
+}
+
+
 // ============================================================================
 // Minimal Request Construction
 // ============================================================================
@@ -383,7 +377,6 @@ async function testParameterValue(
   value: SweepValue,
   maxTokens: number,
   baseModelOverrides: Partial<AixAPI_Model> | undefined,
-  debug: boolean = false,
 ): Promise<TestResult> {
   const startTime = Date.now();
   const baseModel = createBaseModel(modelId, maxTokens);
@@ -656,15 +649,19 @@ function printSweepSummary(results: VendorSweepResult[]): void {
 // Results File (per-dialect: llm-{dialect}-parameters-sweep.json)
 // ============================================================================
 
+// Results file format: dialect -> model -> sweep -> passing values
+type DialectReultsByModel = Record<string, ModelResultsBySweep>;
+type ModelResultsBySweep = Record<string, SweepValue[]>;
+
 function getResultsFilePath(dialect: string): string {
   const scriptDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
   return path.join(scriptDir, `llm-${dialect}-parameters-sweep.json`);
 }
 
-function saveDialectResults(dialect: string, dialectResults: DialectResults, evaluatedSweeps: string[]): void {
+function saveDialectResults(dialect: string, dialectResults: DialectReultsByModel, evaluatedSweeps: string[], modelFilter?: string): void {
   const filePath = getResultsFilePath(dialect);
   // Sort keys for stable output
-  const sorted: DialectResults = {};
+  const sorted: DialectReultsByModel = {};
   for (const model of Object.keys(dialectResults).sort()) {
     sorted[model] = {};
     for (const sweep of Object.keys(dialectResults[model]).sort()) {
@@ -686,16 +683,18 @@ function saveDialectResults(dialect: string, dialectResults: DialectResults, eva
   // Insert header comments after opening brace
   const comment1 = '"_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",';
   const comment2 = `"_evaluated": "Evaluated: ${evaluatedSweeps.sort().join(', ')}. If missing, the parameter is not supported by that model.",`;
-  const json = jsonBody.replace(/^\{\n {2}/, '{\n  ' + comment1 + '\n  ' + comment2 + '\n  ');
+  const comment3 = modelFilter ? `"_modelFilter": "${modelFilter}",` : '';
+  const comments = [comment1, comment2, comment3].filter(Boolean).join('\n  ');
+  const json = jsonBody.replace(/^\{\n {2}/, '{\n  ' + comments + '\n  ');
   fs.writeFileSync(filePath, json + '\n', 'utf-8');
   console.log(`${COLORS.dim}Results saved to: ${filePath}${COLORS.reset}`);
 }
 
-function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectResults {
-  const dialectResults: DialectResults = {};
+function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectReultsByModel {
+  const dialectResults: DialectReultsByModel = {};
 
   for (const model of vendorResult.models) {
-    const modelResults: ModelResults = {};
+    const modelResults: ModelResultsBySweep = {};
 
     // Group results by sweep name
     const bySweep = new Map<string, TestResult[]>();
@@ -705,8 +704,10 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
     }
 
     // Sweeps that become "tools" when fully supported
-    const toolSweeps = ['oai-image-generation', 'oai-web-search', 'xai-web-search'];
+    const toolSweeps = ['oai-image-generation', 'oai-web-search'];
     const tools: string[] = [];
+    const xaiToolSweeps = ['xai-web-search'];
+    const xaiTools: string[] = [];
 
     // Extract passing values for each sweep (skip if none passed)
     for (const [sweepName, sweepResults] of bySweep) {
@@ -719,6 +720,10 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
       // Special case: tool sweeps with full support -> add to tools array
       if (toolSweeps.includes(sweepName) && passingValues.length === sweepResults.length) {
         tools.push(sweepName);
+        continue;
+      }
+      if (xaiToolSweeps.includes(sweepName) && passingValues.length === sweepResults.length) {
+        xaiTools.push(sweepName);
         continue;
       }
 
@@ -741,6 +746,8 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
     // Add tools array if non-empty
     if (tools.length > 0)
       modelResults['tools'] = tools.sort();
+    if (xaiTools.length > 0)
+      modelResults['xai-tools'] = xaiTools.sort();
 
     dialectResults[model.modelId] = modelResults;
   }
@@ -759,7 +766,7 @@ function saveAllResults(allResults: VendorSweepResult[]): void {
       }
     }
     const dialectResults = vendorResultToDialectResults(vendorResult);
-    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps]);
+    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps], vendorResult.modelFilter);
   }
 }
 
@@ -768,7 +775,7 @@ function saveAllResults(allResults: VendorSweepResult[]): void {
 // Config Loading
 // ============================================================================
 
-function loadSweepConfig(configPath: string): SweepConfig {
+function loadSweepConfig(configPath: string): SweepConfigFile {
   const fullPath = path.resolve(configPath);
   if (!fs.existsSync(fullPath))
     throw new Error(`Configuration file not found: ${fullPath}`);
@@ -779,11 +786,11 @@ function loadSweepConfig(configPath: string): SweepConfig {
 
     // Support both old format (flat Record<string, AixAPI_Access>) and new format (SweepConfig)
     if (parsed.vendors) {
-      return parsed as SweepConfig;
+      return parsed as SweepConfigFile;
     }
 
     // Legacy: flat Record<string, AixAPI_Access>
-    const vendors: Record<string, VendorSweepConfig> = {};
+    const vendors: Record<string, SweepConfigFile_Vendor> = {};
     for (const [key, value] of Object.entries(parsed)) {
       if (key.startsWith('_')) continue;
       if (typeof value === 'object' && value !== null && 'dialect' in value)
@@ -795,7 +802,7 @@ function loadSweepConfig(configPath: string): SweepConfig {
   }
 }
 
-function createSingleVendorConfig(dialect: string, key: string, host?: string): SweepConfig {
+function createSingleVendorConfig(dialect: string, key: string, host?: string): SweepConfigFile {
   let access: AixAPI_Access;
 
   switch (dialect) {
@@ -1025,7 +1032,7 @@ function sleep(ms: number): Promise<void> {
 // ============================================================================
 
 async function runSweep(
-  sweepConfig: SweepConfig,
+  sweepConfig: SweepConfigFile,
   options: CliOptions,
 ): Promise<VendorSweepResult[]> {
   const allResults: VendorSweepResult[] = [];
@@ -1067,7 +1074,7 @@ async function runSweep(
 
     // 2b. Filter out duplicate models with idVariant (keep base model, or first variant if no base)
     {
-      const beforeCount = models.length;
+      // const beforeCount = models.length;
       // Sort so base models (no idVariant) come before variants
       models.sort((a, b) => (a.idVariant ? 1 : 0) - (b.idVariant ? 1 : 0));
       const seenIds = new Set<string>();
@@ -1136,12 +1143,22 @@ async function runSweep(
     }
     console.log(`  Applicable sweeps: ${applicableSweeps.map(s => COLORS.magenta + s.name + COLORS.reset).join(', ')}`);
 
+    // Build effective model filter string for JSON output
+    const effectiveFilters: string[] = [];
+    if (vendorModelFilter) {
+      const prefixes = Array.isArray(vendorModelFilter) ? vendorModelFilter : [vendorModelFilter];
+      effectiveFilters.push(...prefixes);
+    }
+    if (options.modelFilter)
+      effectiveFilters.push(options.modelFilter);
+
     const vendorResult: VendorSweepResult = {
       vendorName,
       dialect: access.dialect,
       modelsAvailable: models.length,
       modelsTested: models.length,
       models: [],
+      modelFilter: effectiveFilters.length > 0 ? effectiveFilters.join(', ') : undefined,
     };
 
     // 5. For each model
@@ -1257,7 +1274,7 @@ async function main(): Promise<void> {
   const options = parseArgs();
 
   // Load vendor config
-  let sweepConfig: SweepConfig;
+  let sweepConfig: SweepConfigFile;
   if (options.config) {
     sweepConfig = loadSweepConfig(options.config);
   } else {
