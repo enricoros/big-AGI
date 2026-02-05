@@ -59,7 +59,7 @@ const IFS_GPT_AUDIO: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_Outputs_Audi
 const IFS_CHAT_MIN: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json] as const;
 const IFS_CHAT_CACHE: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching] as const;
 const IFS_CHAT_CACHE_REASON: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning] as const;
-// NOTE: LLM_IF_Tools_WebSearch and LLM_IF_Outputs_Image are auto-injected by llmsAutoInjectInterfaces() by checking parameter specs, as such we don't need to add them here
+// NOTE: LLM_IF_Tools_WebSearch and LLM_IF_Outputs_Image are auto-implied by llmsAutoImplyInterfaces() from parameterSpecs - no need to add them manually
 
 // per-type parameter specs
 const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initialValue: 'medium', hidden: true } as const];
@@ -146,6 +146,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmVndOaiReasoningEffort52Pro' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 21, output: 168 },
@@ -213,6 +214,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort4' },
+      { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
@@ -228,6 +230,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' }, // low, medium, high (no minimal)
+      { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
@@ -243,6 +246,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' }, // low, medium, high (no minimal)
+      { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
@@ -284,7 +288,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 400000,
     maxCompletionTokens: 272000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
+    parameterSpecs: [{ paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
     chatPrice: { input: 15, output: 120 },
     // benchmark: has not been measured yet
   },
@@ -302,6 +306,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching], // no function calling or reasoning
+    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiImageGeneration' }],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     benchmark: { cbaElo: 1426 }, // gpt-5-chat
   },
@@ -368,7 +373,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 400000,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
     chatPrice: { input: 0.05, cache: { cType: 'oai-ac', read: 0.005 }, output: 0.4 },
     benchmark: { cbaElo: 1338 }, // gpt-5-nano-high
   },
@@ -490,7 +495,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmForceNoStream' }],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }],
     chatPrice: { input: 20, output: 80 },
     // benchmark: has not been measured yet
   },
