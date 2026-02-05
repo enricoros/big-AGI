@@ -6,11 +6,11 @@
     "xai-reasoning-effort": ["low","medium","high"]
   },
   "grok-3": {
-    "temperature-range": [0,1.5],
+    "temperature-range": [0,2],
     "xai-reasoning-effort": ["low","medium","high"]
   },
   "grok-3-mini": {
-    "temperature-range": [0,1.5],
+    "temperature-range": [0,2],
     "xai-reasoning-effort": ["low","medium","high"]
   },
   "grok-4-0709": {
@@ -24,7 +24,7 @@
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-1-fast-reasoning": {
-    "temperature-range": [0,1.5],
+    "temperature-range": [0,2],
     "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
   },
@@ -34,12 +34,12 @@
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-fast-reasoning": {
-    "temperature-range": [0,1.5],
+    "temperature-range": [0,2],
     "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
   },
   "grok-code-fast-1": {
-    "temperature-range": [0,1],
+    "temperature-range": [0,2],
     "xai-reasoning-effort": ["low","medium","high"]
   }
 }
