@@ -30,6 +30,17 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
+  // Claude 4.6 models with thinking variants
+  'claude-opus-4-6': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4.6 (Thinking)',
+    description: 'Claude Opus 4.6 with extended thinking mode for the most complex reasoning and agentic workflows',
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    // benchmark: { cbaElo: ... }, // TBD
+    maxCompletionTokens: 32000,
+  },
+
   // Claude 4.5 models with thinking variants
   'claude-opus-4-5-20251101': {
     idVariant: 'thinking',
@@ -113,11 +124,36 @@ export function anthropicInjectVariants(acc: ModelDescriptionSchema[], model: Mo
 
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
 
+  // Claude 4.6 models
+  {
+    id: 'claude-opus-4-6', // Active
+    label: 'Claude Opus 4.6', // 🌟
+    description: 'Most intelligent model for building agents and coding, with adaptive thinking',
+    contextWindow: 200000,
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50 (with 1M context enabled)
+    // Cache pricing also tiered: write 1.25× input, read 0.10× input
+    chatPrice: {
+      input: [{ upTo: 200000, price: 5 }, { upTo: null, price: 10 }],
+      output: [{ upTo: 200000, price: 25 }, { upTo: null, price: 37.50 }],
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }],
+        write: [{ upTo: 200000, price: 6.25 }, { upTo: null, price: 12.50 }],
+        duration: 300,
+      },
+    },
+    // benchmark: { cbaElo: ... }, // TBD
+  },
+
   // Claude 4.5 models
   {
+    hidden: true, // superseded by 4.6
     id: 'claude-opus-4-5-20251101', // Active
-    label: 'Claude Opus 4.5', // 🌟
-    description: 'Most intelligent model with advanced reasoning for complex agentic workflows',
+    label: 'Claude Opus 4.5',
+    description: 'Previous most intelligent model with advanced reasoning for complex agentic workflows',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
@@ -210,7 +246,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 3.7 models
   {
-    id: 'claude-3-7-sonnet-20250219', // Deprecated | Deprecated: October 28, 2025 | Retiring: February 19, 2026
+    id: 'claude-3-7-sonnet-20250219', // Deprecated | Deprecated: October 28, 2025 | Retiring: February 19, 2026 | Replacement: claude-opus-4-6
     label: 'Claude Sonnet 3.7 [Deprecated]',
     description: 'High-performance model with early extended thinking. Deprecated October 28, 2025, retiring February 19, 2026.',
     contextWindow: 200000,
