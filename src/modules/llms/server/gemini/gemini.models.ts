@@ -144,7 +144,7 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
-const IF_30_IMG = [...IF_30, LLM_IF_Outputs_Image];
+// NOTE: LLM_IF_Outputs_Image is auto-implied by llmsAutoImplyInterfaces() from image parameterSpecs (llmVndGeminiAspectRatio, llmVndGeminiImageSize)
 
 
 const _knownGeminiModels: ({
@@ -181,7 +181,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Nano Banana Pro', // Marketing name for the technical model ID
     isPreview: true,
     chatPrice: gemini30ProImagePricing,
-    interfaces: IF_30_IMG,
+    interfaces: IF_30,
     parameterSpecs: [
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -197,7 +197,7 @@ const _knownGeminiModels: ({
     // copied from symlink
     isPreview: true,
     chatPrice: gemini30ProImagePricing,
-    interfaces: IF_30_IMG,
+    interfaces: IF_30,
     parameterSpecs: [
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -351,7 +351,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Nano Banana',
     deprecated: '2026-10-02',
     chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Outputs_Image],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' }],
     benchmark: undefined, // Non-benchmarkable because generates images
   },

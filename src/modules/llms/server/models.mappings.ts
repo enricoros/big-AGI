@@ -1,37 +1,52 @@
+import type { DModelInterfaceV1 } from '~/common/stores/llms/llms.types';
 import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
-import { LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
 
 
-// -- Auto-inject web search interface --
+// -- Auto-inject implied model interfaces from parameterSpecs --
+
+const _paramIdToInterface: { paramIds: DModelParameterId[], iface: DModelInterfaceV1 }[] = [
+  // Web search parameters -> LLM_IF_Tools_WebSearch
+  {
+    iface: LLM_IF_Tools_WebSearch,
+    paramIds: [
+      'llmVndAntWebFetch',
+      'llmVndAntWebSearch',
+      'llmVndGeminiGoogleSearch',
+      'llmVndMoonshotWebSearch',
+      'llmVndOaiWebSearchContext',
+      'llmVndOrtWebSearch',
+      'llmVndPerplexitySearchMode',
+      'llmVndXaiWebSearch',
+      'llmVndXaiXSearch',
+    ],
+  },
+  // Image generation parameters -> LLM_IF_Outputs_Image
+  {
+    iface: LLM_IF_Outputs_Image,
+    paramIds: [
+      'llmVndGeminiAspectRatio',
+      'llmVndGeminiImageSize',
+      'llmVndOaiImageGeneration',
+    ],
+  },
+] as const;
 
 /**
- * Parameter IDs that imply the model supports web search capabilities.
- * When any of these are present in parameterSpecs, LLM_IF_Tools_WebSearch is auto-added to interfaces.
+ * Auto-injects interfaces (e.g. WebSearch, Outputs_Image) for models whose parameterSpecs
+ * include parameter IDs that imply those capabilities.
  */
-const _webSearchParamIds: string[] = [
-  'llmVndAntWebFetch',
-  'llmVndAntWebSearch',
-  'llmVndGeminiGoogleSearch',
-  'llmVndMoonshotWebSearch',
-  'llmVndOaiWebSearchContext',
-  'llmVndOrtWebSearch',
-  'llmVndPerplexitySearchMode',
-  'llmVndXaiWebSearch',
-  'llmVndXaiXSearch',
-] as const satisfies DModelParameterId[];
+export function llmsAutoImplyInterfaces(model: ModelDescriptionSchema): ModelDescriptionSchema {
+  if (!model.parameterSpecs?.length) return model;
 
-/**
- * Auto-injects LLM_IF_Tools_WebSearch for models that have web search/fetch parameters.
- * Applied centrally in listModelsRunDispatch so individual vendors don't need to manage this.
- */
-export function llmsAutoInjectWebSearchInterface(model: ModelDescriptionSchema): ModelDescriptionSchema {
-  const hasWebParams = model.parameterSpecs?.some(spec => _webSearchParamIds.includes(spec.paramId));
-  return (hasWebParams && !model.interfaces?.includes(LLM_IF_Tools_WebSearch)) ? {
-    ...model,
-    interfaces: [...model.interfaces, LLM_IF_Tools_WebSearch],
-  } : model;
+  let interfaces = model.interfaces;
+  for (const { paramIds, iface } of _paramIdToInterface)
+    if (!interfaces.includes(iface) && model.parameterSpecs.some(spec => paramIds.includes(spec.paramId as DModelParameterId)))
+      interfaces = [...interfaces, iface];
+
+  return interfaces !== model.interfaces ? { ...model, interfaces } : model;
 }
 
 
