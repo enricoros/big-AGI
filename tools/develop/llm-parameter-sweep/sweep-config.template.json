@@ -22,7 +22,8 @@
     "xai": {
       "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
       "modelFilter": "grok",
-      "sweeps": ["temperature", "xai-reasoning-effort"]
+      "sweeps": ["temperature", "xai-reasoning-effort"],
+      "baseModelOverrides": { "maxTokens": 512 }
     },
     "openrouter": {
       "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
