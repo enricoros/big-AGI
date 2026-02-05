@@ -44,6 +44,7 @@ const SWEEP_DEFINITIONS = [
     applicability: { type: 'dialects', dialects: ['openai', 'azure', 'openrouter'] },
     applyToModel: (value) => ({ vndOaiReasoningEffort: value }),
     values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'] satisfies AixAPI_Model['vndOaiReasoningEffort'][],
+    neuteredValues: ['medium'], // medium is the default, so only-medium means no real support
     mode: 'enumerate',
   }),
 
@@ -263,7 +264,7 @@ interface TestResult {
   durationMs: number;
 }
 
-type TestOutcome = 'pass' | 'fail' | 'truncated' | 'error';
+type TestOutcome = 'pass' | 'fail' | 'blocked' | 'truncated' | 'error';
 
 
 type ErrorCategory =
@@ -354,6 +355,11 @@ function modelOverridesFromInterfaces(interfaces: string[]): Partial<AixAPI_Mode
   const overrides: Partial<AixAPI_Model> = {};
 
   // Output modalities (mirrors aix.client.ts logic)
+  // FIXME: FLAW, THIS IS REFERENCING THE FUTURE - Chicken/Egg
+  //        Right now we have a chicken-and-egg problem where we need to
+  //        This may under-report capabilities for in image gen/audio output (not tested yet)
+  //        We do 'fix' this for images by checking 'vndOaiImageGeneration' in OAI chatCompletions (no issue in Responses API)
+  //        - Long term we shall get rid of the modalities, which is client-side logic, and let the server-side(S) compute them
   const acceptsOutputs: AixAPI_Model['acceptsOutputs'] = [];
   if (!interfaces.includes('outputs-no-text')) acceptsOutputs.push('text');
   if (interfaces.includes('outputs-audio')) acceptsOutputs.push('audio');
@@ -511,8 +517,11 @@ async function testParameterValue(
     // Structured HTTP/connection error from fetchResponseOrTRPCThrow
     if (error instanceof TRPCFetcherError) {
       const errorMessage = (error.message || '').slice(0, 300);
+      // HTTP 503 (Service Unavailable) and 429 (Too Many Requests) are transient:
+      // the server is telling us to back off, not that the parameter is unsupported
+      const isTransient = error.httpStatus === 503 || error.httpStatus === 429;
       return makeResult({
-        outcome: 'fail',
+        outcome: isTransient ? 'blocked' : 'fail',
         httpStatus: error.httpStatus,
         errorCategory: error.category,
         errorMessage,
@@ -604,14 +613,15 @@ async function executeBisectSweep(
 // ============================================================================
 
 function printProbeResultInline(result: TestResult): void {
-  // ✅ pass, ❌ fail (http/rejected), ✂️ truncated (out-of-tokens), ⚠️ error (exception)
+  // ✅ pass, ❌ fail (http/rejected), ❓ blocked (503/429 transient), ✂️ truncated (out-of-tokens), ⚠️ error (exception)
   // For null values (undefined in API), use dim ✓ instead of green ✅
   const isUndefined = result.paramValue === null;
   const symbol =
     result.outcome === 'pass' ? (isUndefined ? COLORS.dim + '✓ ' : COLORS.green + '✅ ') :
       result.outcome === 'fail' ? COLORS.red + '❌ ' :
-        result.outcome === 'truncated' ? COLORS.magenta + '✂️ ' :
-          COLORS.yellow + '⚠️ ';
+        result.outcome === 'blocked' ? COLORS.yellow + '❓ ' :
+          result.outcome === 'truncated' ? COLORS.magenta + '✂️ ' :
+            COLORS.yellow + '⚠️ ';
   const displayValue = isUndefined ? '(none)' : String(result.paramValue);
   const statusSuffix = result.httpStatus ? `:${result.httpStatus}` : '';
   process.stdout.write(`${symbol}(${displayValue}${statusSuffix})${COLORS.reset} `);
@@ -625,7 +635,7 @@ function printSweepSummary(results: VendorSweepResult[]): void {
     console.log(`${COLORS.bright}${vendor.vendorName}${COLORS.reset} (${vendor.dialect})`);
 
     for (const model of vendor.models) {
-      console.log(`  ${COLORS.bright}${model.modelId}${COLORS.reset} ${COLORS.dim}(${model.modelLabel})${COLORS.reset}`);
+      console.log(`  ${COLORS.bright}${COLORS.yellow}${model.modelId}${COLORS.reset} ${COLORS.dim}(${model.modelLabel})${COLORS.reset}`);
 
       // Group results by sweep name
       const bySweep = new Map<string, TestResult[]>();
@@ -638,11 +648,12 @@ function printSweepSummary(results: VendorSweepResult[]): void {
         const formatValue = (v: SweepValue) => v === null ? '<null>' : String(v);
         const passed = sweepResults.filter(r => r.outcome === 'pass').map(r => formatValue(r.paramValue));
         const failed = sweepResults.filter(r => r.outcome === 'fail').map(r => formatValue(r.paramValue));
+        const blocked = sweepResults.filter(r => r.outcome === 'blocked').map(r => formatValue(r.paramValue));
         const truncated = sweepResults.filter(r => r.outcome === 'truncated').map(r => formatValue(r.paramValue));
         const errored = sweepResults.filter(r => r.outcome === 'error').map(r => formatValue(r.paramValue));
 
-        // Skip sweeps with no passing values (don't clutter output with failures)
-        if (passed.length === 0)
+        // Skip sweeps with no passing values and no blocked values (don't clutter output with definitive failures)
+        if (passed.length === 0 && blocked.length === 0)
           continue;
 
         // Check for neutered sweeps (only default/no-op values passed)
@@ -654,9 +665,10 @@ function printSweepSummary(results: VendorSweepResult[]): void {
 
         const parts: string[] = [];
         // Show passing values
-        parts.push(`${COLORS.green}✅ [${passed.join(', ').replace('0, 0.5, 1, 1.5, 2', '0..2')}]${COLORS.reset}`);
-        // Only show other categories if some values passed (to show which didn't)
+        if (passed.length) parts.push(`${COLORS.green}✅ [${passed.join(', ').replace('0, 0.5, 1, 1.5, 2', '0..2')}]${COLORS.reset}`);
+        // Only show other categories if some values passed or blocked (to show which didn't)
         if (truncated.length) parts.push(`${COLORS.magenta}✂️ [${truncated.join(', ')}]${COLORS.reset}`);
+        if (blocked.length) parts.push(`${COLORS.yellow}❓ [${blocked.join(', ')}]${COLORS.reset}`);
         if (failed.length) parts.push(`${COLORS.red}❌ [${failed.join(', ')}]${COLORS.reset}`);
         if (errored.length) parts.push(`${COLORS.yellow}⚠️ [${errored.join(', ')}]${COLORS.reset}`);
 
@@ -1236,7 +1248,7 @@ async function runSweep(
       const apiTag = interfaceOverrides.vndOaiResponsesAPI ? 'OAI-Responses' : `${access.dialect}-chat`;
       const tempTag = interfaceOverrides.temperature === null ? ', no-temp' : '';
       const progressTag = `${modelIndex + 1}/${totalModels}`;
-      console.log(`\n  ${COLORS.dim}[${progressTag}]${COLORS.reset} ${COLORS.bright}Model: ${modelDesc.id}${COLORS.reset} ${COLORS.dim}(${modelDesc.label}) [${apiTag}${tempTag}]${COLORS.reset}`);
+      console.log(`\n  ${COLORS.dim}[${progressTag}]${COLORS.reset} ${COLORS.bright}${COLORS.yellow}Model: ${modelDesc.id}${COLORS.reset} ${COLORS.dim}(${modelDesc.label}) [${apiTag}${tempTag}]${COLORS.reset}`);
 
       const modelResult: ModelSweepResult = {
         modelId: modelDesc.id,
