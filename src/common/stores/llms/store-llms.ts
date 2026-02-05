@@ -47,6 +47,8 @@ interface LlmsRootActions {
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
   resetLLMUserParameters: (id: DLLMId) => void;
   resetServiceUserParameters: (serviceId: DModelsServiceId) => void;
+  resetServiceVisibility: (serviceId: DModelsServiceId) => void;
+  setServiceModelsHidden: (serviceId: DModelsServiceId, hidden: boolean) => void;
   userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string) => DLLMId | null;
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
@@ -251,6 +253,24 @@ export const useModelsStore = create<LlmsStore>()(persist(
           const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
           return rest;
         }),
+      })),
+
+    resetServiceVisibility: (serviceId: DModelsServiceId) =>
+      set(({ llms }) => ({
+        llms: llms.map((llm: DLLM): DLLM => {
+          if (llm.sId !== serviceId) return llm;
+          const { userHidden, ...rest } = llm;
+          return rest;
+        }),
+      })),
+
+    setServiceModelsHidden: (serviceId: DModelsServiceId, hidden: boolean) =>
+      set(({ llms }) => ({
+        llms: llms.map((llm: DLLM): DLLM =>
+          llm.sId === serviceId
+            ? { ...llm, userHidden: hidden }
+            : llm,
+        ),
       })),
 
     userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string): DLLMId | null => {
