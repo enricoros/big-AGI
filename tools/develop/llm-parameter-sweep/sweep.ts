@@ -244,7 +244,7 @@ const SWEEP_DEFINITIONS = [
     description: 'OpenAI image generation quality (off/mq/hq)',
     applicability: { type: 'dialects', dialects: ['openai'] },
     applyToModel: (value) => value ? { vndOaiImageGeneration: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
-    values: [null, 'mq', 'hq'] satisfies (AixAPI_Model['vndOaiImageGeneration'] | null)[],
+    values: ['mq', 'hq'] satisfies (AixAPI_Model['vndOaiImageGeneration'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -254,7 +254,7 @@ const SWEEP_DEFINITIONS = [
     description: 'OpenAI web search context size (off/medium)',
     applicability: { type: 'dialects', dialects: ['openai'] },
     applyToModel: (value) => value ? { vndOaiWebSearchContext: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
-    values: [null, 'medium'] satisfies (AixAPI_Model['vndOaiWebSearchContext'] | null)[],
+    values: ['medium'] satisfies (AixAPI_Model['vndOaiWebSearchContext'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -278,7 +278,7 @@ const SWEEP_DEFINITIONS = [
       vndAntThinkingBudget: value,
       maxTokens: 16384,
     }),
-    values: [0, 1024, 4096, 8192, 16000],
+    values: [1024, 8192, 16384, 32768, 65535],
     mode: 'enumerate',
   }),
 
@@ -293,8 +293,8 @@ const SWEEP_DEFINITIONS = [
     applicability: { type: 'dialects', dialects: ['gemini'] },
     applyToModel: (value) => value
       ? { vndGeminiThinkingLevel: value, vndGeminiShowThoughts: true }
-      : { vndGeminiShowThoughts: true }, // null = dynamic mode, don't set level
-    values: [null, 'minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['vndGeminiThinkingLevel'] | null)[],
+      : {}, // { vndGeminiShowThoughts: true }, // null = dynamic mode, don't set level
+    values: ['minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['vndGeminiThinkingLevel'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -592,13 +592,14 @@ function printProbeResultInline(result: TestResult): void {
       result.outcome === 'fail' ? COLORS.red + '❌ ' :
         result.outcome === 'truncated' ? COLORS.magenta + '✂️ ' :
           COLORS.yellow + '⚠️ ';
-  const displayValue = isUndefined ? 'undefined' : String(result.paramValue);
+  const displayValue = isUndefined ? '(none)' : String(result.paramValue);
   const statusSuffix = result.httpStatus ? `:${result.httpStatus}` : '';
   process.stdout.write(`${symbol}(${displayValue}${statusSuffix})${COLORS.reset} `);
 }
 
 function printSweepSummary(results: VendorSweepResult[]): void {
-  console.log(`\n${COLORS.bright}${COLORS.cyan}=== SWEEP SUMMARY ===${COLORS.reset}\n`);
+  const date = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+  console.log(`\n${COLORS.bright}${COLORS.cyan}=== SWEEP SUMMARY (${date}) ===${COLORS.reset}\n`);
 
   for (const vendor of results) {
     console.log(`${COLORS.bright}${vendor.vendorName}${COLORS.reset} (${vendor.dialect})`);
@@ -614,24 +615,23 @@ function printSweepSummary(results: VendorSweepResult[]): void {
       }
 
       for (const [sweepName, sweepResults] of bySweep) {
-        const formatValue = (v: SweepValue) => v === null ? 'undefined' : String(v);
+        const formatValue = (v: SweepValue) => v === null ? '<null>' : String(v);
         const passed = sweepResults.filter(r => r.outcome === 'pass').map(r => formatValue(r.paramValue));
         const failed = sweepResults.filter(r => r.outcome === 'fail').map(r => formatValue(r.paramValue));
         const truncated = sweepResults.filter(r => r.outcome === 'truncated').map(r => formatValue(r.paramValue));
         const errored = sweepResults.filter(r => r.outcome === 'error').map(r => formatValue(r.paramValue));
 
+        // Skip sweeps with no passing values (don't clutter output with failures)
+        if (passed.length === 0)
+          continue;
+
         const parts: string[] = [];
-        if (passed.length) {
-          // Show passing values
-          parts.push(`${COLORS.green}✅ [${passed.join(', ')}]${COLORS.reset}`);
-          // Only show other categories if some values passed (to show which didn't)
-          if (truncated.length) parts.push(`${COLORS.magenta}✂️ [${truncated.join(', ')}]${COLORS.reset}`);
-          if (failed.length) parts.push(`${COLORS.red}❌ [${failed.join(', ')}]${COLORS.reset}`);
-          if (errored.length) parts.push(`${COLORS.yellow}⚠️ [${errored.join(', ')}]${COLORS.reset}`);
-        } else {
-          // Nothing passed - just show ❌ without listing all failed values
-          parts.push(`${COLORS.red}❌${COLORS.reset}`);
-        }
+        // Show passing values
+        parts.push(`${COLORS.green}✅ [${passed.join(', ').replace('0, 0.5, 1, 1.5, 2', '0..2')}]${COLORS.reset}`);
+        // Only show other categories if some values passed (to show which didn't)
+        if (truncated.length) parts.push(`${COLORS.magenta}✂️ [${truncated.join(', ')}]${COLORS.reset}`);
+        if (failed.length) parts.push(`${COLORS.red}❌ [${failed.join(', ')}]${COLORS.reset}`);
+        if (errored.length) parts.push(`${COLORS.yellow}⚠️ [${errored.join(', ')}]${COLORS.reset}`);
 
         console.log(`    ${sweepName.padEnd(26)} ${parts.join(' | ')}`);
       }
@@ -656,7 +656,14 @@ function loadResultsFile(): SweepResultsFile {
     return {};
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(content) as SweepResultsFile;
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    // Filter out _comment and other non-dialect keys
+    const results: SweepResultsFile = {};
+    for (const key of Object.keys(parsed)) {
+      if (!key.startsWith('_'))
+        results[key] = parsed[key] as DialectResults;
+    }
+    return results;
   } catch {
     return {};
   }
@@ -675,7 +682,23 @@ function saveResultsFile(results: SweepResultsFile): void {
       }
     }
   }
-  fs.writeFileSync(filePath, JSON.stringify(sorted, null, 2) + '\n', 'utf-8');
+  // Custom JSON formatting: keep value arrays on single lines
+  // Use placeholder strings for arrays, then replace back
+  const placeholder = '___ARRAY___';
+  const arrays: string[] = [];
+  const withPlaceholders = JSON.stringify(sorted, (_, value) => {
+    // Collapse arrays of primitives (typeof null === 'object', so check explicitly)
+    if (Array.isArray(value) && (value.length === 0 || value[0] === null || typeof value[0] !== 'object')) {
+      arrays.push(JSON.stringify(value));
+      return placeholder + (arrays.length - 1);
+    }
+    return value;
+  }, 2);
+  const jsonBody = withPlaceholders.replace(/"___ARRAY___(\d+)"/g, (_, idx) => arrays[parseInt(idx)]);
+  // Insert header comment after opening brace
+  const comment = '"_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",\n  ';
+  const json = jsonBody.replace(/^\{\n {2}/, '{\n  ' + comment);
+  fs.writeFileSync(filePath, json + '\n', 'utf-8');
   console.log(`${COLORS.dim}Results saved to: ${filePath}${COLORS.reset}`);
 }
 
@@ -692,11 +715,27 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
       bySweep.get(r.sweepName)!.push(r);
     }
 
-    // Extract passing values for each sweep
+    // Extract passing values for each sweep (skip if none passed)
     for (const [sweepName, sweepResults] of bySweep) {
       const passingValues = sweepResults
         .filter(r => r.outcome === 'pass')
         .map(r => r.paramValue);
+      if (passingValues.length === 0)
+        continue;
+
+      // Special case: temperature with contiguous range from 0 -> use range [min, max]
+      if (sweepName === 'temperature') {
+        const numericPassing = passingValues.filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+        const numericTested = sweepResults.map(r => r.paramValue).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+        // Check if passing values form a contiguous prefix of tested values (no gaps)
+        const isContiguousFromStart = numericPassing.length >= 2 &&
+          numericPassing.every((v, i) => v === numericTested[i]);
+        if (isContiguousFromStart) {
+          modelResults['temperature-range'] = [numericPassing[0], numericPassing[numericPassing.length - 1]];
+          continue;
+        }
+      }
+
       modelResults[sweepName] = passingValues;
     }
 
@@ -1155,14 +1194,22 @@ async function runSweep(
             }
           } else {
             // Parallel (default): fire all requests at once, print results in order
+            const sweepStartTime = Date.now();
             const results = await Promise.all(
               sweep.values.map(value =>
                 testParameterValue(access, modelDesc.id, sweep, value, maxTokens, mergedOverrides),
               ),
             );
+            const sweepElapsed = Date.now() - sweepStartTime;
             for (const result of results) {
               sweepResults.push(result);
               printProbeResultInline(result);
+            }
+            // Delay between sweeps only if elapsed < 2x delay (skip if requests already took long enough)
+            if (globalDelay > 0 && sweepElapsed < globalDelay * 2) {
+              const remainingDelay = Math.max(0, globalDelay - sweepElapsed);
+              if (remainingDelay > 0)
+                await sleep(remainingDelay);
             }
           }
         }
@@ -1184,12 +1231,8 @@ async function runSweep(
             //   process.stdout.write(` -> ${r.debugRequestAixModel}${COLORS.reset}\n      ${mayDim}    `);
             if (printRequest || (r.outcome !== 'pass' && r.debugRequestBody))
               process.stdout.write(` -> ${r.debugRequestBody}${COLORS.reset}\n      ${mayDim}    `);
-            process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ')}${COLORS.reset}\n`);
+            process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ').trim().replaceAll('\n',' · ')}${COLORS.reset}\n`);
           }
-
-        // Delay between sweeps (parameters) in parallel mode
-        if (!options.sequential && !options.dryRun && globalDelay > 0)
-          await sleep(globalDelay);
 
       }
 
@@ -1230,6 +1273,20 @@ async function main(): Promise<void> {
 
   // Run sweeps
   const results = await runSweep(sweepConfig, options);
+
+  // Filter out models where all sweeps failed (no passing values)
+  const excludedModels: string[] = [];
+  for (const vendor of results) {
+    vendor.models = vendor.models.filter(model => {
+      const hasAnyPass = model.results.some(r => r.outcome === 'pass');
+      if (!hasAnyPass) excludedModels.push(model.modelId);
+      return hasAnyPass;
+    });
+  }
+  if (excludedModels.length > 0) {
+    console.log(`\n${COLORS.yellow}Excluded ${excludedModels.length} model(s) with no passing values:${COLORS.reset}`);
+    console.log(`  ${COLORS.dim}${excludedModels.join(', ')}${COLORS.reset}`);
+  }
 
   // Summary and save results
   if (!options.dryRun && results.some(v => v.models.length > 0)) {
