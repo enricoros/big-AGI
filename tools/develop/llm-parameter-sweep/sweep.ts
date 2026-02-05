@@ -635,7 +635,7 @@ function printSweepSummary(results: VendorSweepResult[]): void {
     console.log(`${COLORS.bright}${vendor.vendorName}${COLORS.reset} (${vendor.dialect})`);
 
     for (const model of vendor.models) {
-      console.log(`  ${COLORS.bright}${COLORS.yellow}${model.modelId}${COLORS.reset} ${COLORS.dim}(${model.modelLabel})${COLORS.reset}`);
+      console.log(`  ${COLORS.bright}${model.modelId}${COLORS.reset} ${COLORS.dim}(${model.modelLabel})${COLORS.reset}`);
 
       // Group results by sweep name
       const bySweep = new Map<string, TestResult[]>();
