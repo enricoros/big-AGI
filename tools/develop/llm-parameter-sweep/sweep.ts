@@ -54,6 +54,7 @@ const SWEEP_DEFINITIONS = [
     applicability: { type: 'dialects', dialects: ['openai', 'openrouter'] },
     applyToModel: (value) => ({ vndOaiVerbosity: value }),
     values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndOaiVerbosity'][],
+    neuteredValues: ['medium'], // medium is the default, so only-medium means no real support
     mode: 'enumerate',
   }),
 
@@ -73,7 +74,7 @@ const SWEEP_DEFINITIONS = [
     description: 'OpenAI web search context size (off/medium)',
     applicability: { type: 'dialects', dialects: ['openai'] },
     applyToModel: (value) => value ? { vndOaiWebSearchContext: value } : {},
-    values: ['medium'] satisfies (AixAPI_Model['vndOaiWebSearchContext'] | null)[],
+    values: ['high'] satisfies (AixAPI_Model['vndOaiWebSearchContext'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -167,12 +168,21 @@ interface SweepDefinition<TValue> {
   mode: 'enumerate' | 'bisect';
   /** For bisect mode: precision to stop binary search */
   bisectPrecision?: number;
+  /** If ALL passing values are in this set, the parameter is considered neutered (default-only, not truly supported) */
+  neuteredValues?: TValue[];
 }
 
 type SweepValue = string | number | boolean | null;
 
 function defineSweep<const TValue>(definition: SweepDefinition<TValue>) {
   return definition;
+}
+
+/** Check if passing values are neutered (only default/no-op values passed) */
+function isSweepNeutered(sweepName: string, passingValues: SweepValue[]): boolean {
+  const sweepDef = SWEEP_DEFINITIONS.find(s => s.name === sweepName);
+  if (!sweepDef?.neuteredValues?.length || passingValues.length === 0) return false;
+  return passingValues.every(v => (sweepDef.neuteredValues as SweepValue[]).includes(v));
 }
 
 // ============================================================================
@@ -635,6 +645,13 @@ function printSweepSummary(results: VendorSweepResult[]): void {
         if (passed.length === 0)
           continue;
 
+        // Check for neutered sweeps (only default/no-op values passed)
+        const passingRawValues = sweepResults.filter(r => r.outcome === 'pass').map(r => r.paramValue);
+        if (isSweepNeutered(sweepName, passingRawValues)) {
+          console.log(`    ${sweepName.padEnd(26)} ${COLORS.dim}~neutered~ [${passed.join(', ')}]${COLORS.reset}`);
+          continue;
+        }
+
         const parts: string[] = [];
         // Show passing values
         parts.push(`${COLORS.green}✅ [${passed.join(', ').replace('0, 0.5, 1, 1.5, 2', '0..2')}]${COLORS.reset}`);
@@ -752,6 +769,10 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
         .filter(r => r.outcome === 'pass')
         .map(r => r.paramValue);
       if (passingValues.length === 0)
+        continue;
+
+      // Skip neutered sweeps (only default/no-op values passed)
+      if (isSweepNeutered(sweepName, passingValues))
         continue;
 
       // Special case: tool sweeps with full support -> add to tools array
