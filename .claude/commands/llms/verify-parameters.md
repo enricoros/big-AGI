@@ -13,6 +13,7 @@ If `$ARGUMENTS` provided, verify only that dialect, which includes reading the p
 
 **Sweep results** (source of truth for select parameters):
 - `tools/develop/llm-parameter-sweep/llm-{dialect}-parameters-sweep.json`
+  By the time you see these files, the repo owner has already updated them via `tools/develop/llm-parameter-sweep/sweep.sh` (very long running, 15 min per vendor).
 
 **Model definitions (source of truth for model defintions for the user and application, including constants, interfaces, supported parameters and sometimes allowed parameter values)**:
 - OpenAI: `src/modules/llms/server/openai/models/openai.models.ts`
