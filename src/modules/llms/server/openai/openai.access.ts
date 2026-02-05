@@ -245,33 +245,41 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         url: moonshotHost + apiPath,
       };
 
-    case 'openai':
+    case 'openai': {
+
+      // Security: prevent server API key exfiltration via client-provided hosts.
+      if (access.oaiHost && !access.oaiKey && !!env.OPENAI_API_KEY)
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Missing API Key for your custom host.' });
+
+      // API key: client-provided takes precedence over server-configured
       const oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
       const oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
+
+      // API host: client-provided > server env > default
       let oaiHost = llmsFixupHost(access.oaiHost || env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
-      // warn if no key - only for default (non-overridden) hosts
+
+      // Require a key when targeting the default OpenAI host
       if (!oaiKey && llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST))
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing OpenAI API Key. Add it on the UI or server side (your deployment).' });
 
-      // [Helicone]
-      // We don't change the host (as we do on Anthropic's), as we expect the user to have a custom host.
+      // [Helicone] proxy: when a Helicone key is present, redirect default OpenAI host to Helicone;
+      // if the host is already Helicone, keep it; otherwise disable the Helicone key
       let heliKey = access.heliKey || env.HELICONE_API_KEY || false;
       if (heliKey) {
-        if (llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST)) {
+        if (llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST))
           oaiHost = `https://${DEFAULT_HELICONE_OPENAI_HOST}`;
-        } else if (!llmsHostnameMatches(oaiHost, DEFAULT_HELICONE_OPENAI_HOST)) {
+        else if (!llmsHostnameMatches(oaiHost, DEFAULT_HELICONE_OPENAI_HOST)) {
           // throw new Error(`The Helicone OpenAI Key has been provided, but the host is not set to https://${DEFAULT_HELICONE_OPENAI_HOST}. Please fix it in the Models Setup page.`);
           heliKey = false;
         }
       }
 
-      // [Cloudflare OpenAI AI Gateway support]
-      // Adapts the API path when using a 'universal' or 'openai' Cloudflare AI Gateway endpoint in the "API Host" field
+      // [Cloudflare AI Gateway] proxy: adapt API paths for Cloudflare's routing
       if (llmsHostnameMatches(oaiHost, 'gateway.ai.cloudflare.com')) {
         const parsedUrl = new URL(oaiHost);
         const pathSegments = parsedUrl.pathname.split('/').filter(segment => segment.length > 0);
 
-        // The expected path should be: /v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/<PROVIDER_ENDPOINT>
+        // Expected: /v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/<PROVIDER_ENDPOINT>
         if (pathSegments.length < 3 || pathSegments.length > 4 || pathSegments[0] !== 'v1')
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cloudflare AI Gateway API Host is not valid. Please check the API Host field in the Models Setup page.' });
 
@@ -295,6 +303,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         },
         url: oaiHost + apiPath,
       };
+    }
 
     case 'openpipe':
       const openPipeKey = access.oaiKey || env.OPENPIPE_API_KEY || '';
