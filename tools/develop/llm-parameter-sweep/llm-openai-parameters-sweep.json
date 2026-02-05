@@ -1,107 +1,98 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: oai-image-generation, oai-reasoning-effort, oai-verbosity, oai-web-search, temperature. If missing, the parameter is not supported by that model.",
+  "_modelFilter": "gpt-5, o",
   "gpt-5-2025-08-07": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["minimal","low","medium","high"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-chat-latest": {
-    "oai-image-generation": ["hq"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-codex": {
     "oai-reasoning-effort": ["low","medium","high"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-web-search"]
   },
   "gpt-5-mini-2025-08-07": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["minimal","low","medium","high"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-nano-2025-08-07": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["minimal","low","medium","high"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-pro-2025-10-06": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["high"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-search-api-2025-10-14": {
     "temperature-range": [0,2]
   },
   "gpt-5.1-2025-11-13": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["none","low","medium","high"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.1-chat-latest": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["medium"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.1-codex": {
     "oai-reasoning-effort": ["low","medium","high"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-web-search"]
   },
   "gpt-5.1-codex-max": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-web-search"]
   },
   "gpt-5.1-codex-mini": {
     "oai-reasoning-effort": ["low","medium","high"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-web-search"]
   },
   "gpt-5.2-2025-12-11": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.2-chat-latest": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["medium"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.2-codex": {
-    "oai-reasoning-effort": ["low", "medium","high","xhigh"],
+    "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-web-search"]
   },
   "gpt-5.2-pro-2025-12-11": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["medium","high","xhigh"],
     "oai-verbosity": ["low","medium","high"],
-    "oai-web-search": ["medium"],
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "o1-2024-12-17": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
@@ -114,41 +105,39 @@
     "temperature-range": [0,2]
   },
   "o3-2025-04-16": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "o3-deep-research-2025-06-26": {
     "oai-reasoning-effort": ["medium"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-web-search"]
   },
   "o3-mini-2025-01-31": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-verbosity": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation"]
   },
   "o3-pro-2025-06-10": {
-    "oai-image-generation": ["hq"],
     "oai-reasoning-effort": ["low","medium","high"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "o4-mini-2025-04-16": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-web-search"]
   },
   "o4-mini-deep-research-2025-06-26": {
     "oai-reasoning-effort": ["medium"],
     "oai-verbosity": ["medium"],
-    "oai-web-search": ["medium"],
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-web-search"]
   }
 }
