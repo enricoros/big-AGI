@@ -339,13 +339,25 @@ function createBaseModel(modelId: string, maxTokens: number): AixAPI_Model {
   };
 }
 
-/** Derive AixAPI_Model overrides from the model's interfaces array */
+/** Derive AixAPI_Model overrides from the model's interfaces array (mirrors aix.client.ts) */
 function modelOverridesFromInterfaces(interfaces: string[]): Partial<AixAPI_Model> {
   const overrides: Partial<AixAPI_Model> = {};
+
+  // Output modalities (mirrors aix.client.ts logic)
+  const acceptsOutputs: AixAPI_Model['acceptsOutputs'] = [];
+  if (!interfaces.includes('outputs-no-text')) acceptsOutputs.push('text');
+  if (interfaces.includes('outputs-audio')) acceptsOutputs.push('audio');
+  if (interfaces.includes('outputs-image')) acceptsOutputs.push('image');
+  overrides.acceptsOutputs = acceptsOutputs;
+
+  // Output APIs
   if (interfaces.includes('oai-responses'))
     overrides.vndOaiResponsesAPI = true;
+
+  // Client-side HotFixes
   if (interfaces.includes('hotfix-no-temperature'))
     overrides.temperature = null;
+
   return overrides;
 }
 
@@ -355,10 +367,6 @@ function modelOverridesFromId(modelId: string, dialect: string): Partial<AixAPI_
   // Enable web search for deep-research and search-api models (OpenAI only for now)
   if (dialect === 'openai' && (modelId.includes('-deep-research-') || modelId.includes('-search-api-'))) {
     overrides.vndOaiWebSearchContext = 'medium';
-  }
-  // Enable audio output for Gemini TTS models
-  if (dialect === 'gemini' && (modelId.includes('-pro-preview-tts') || modelId.includes('-flash-preview-tts'))) {
-    overrides.acceptsOutputs = ['audio'];
   }
   return overrides;
 }
@@ -1285,7 +1293,7 @@ async function runSweep(
             //   process.stdout.write(` -> ${r.debugRequestAixModel}${COLORS.reset}\n      ${mayDim}    `);
             if (printRequest || (r.outcome !== 'pass' && r.debugRequestBody))
               process.stdout.write(` -> ${r.debugRequestBody}${COLORS.reset}\n      ${mayDim}    `);
-            process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ').trim().replaceAll('\n',' · ')}${COLORS.reset}\n`);
+            process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ').trim()/*.replaceAll('\n',' · ')*/}${COLORS.reset}\n`);
           }
 
       }
