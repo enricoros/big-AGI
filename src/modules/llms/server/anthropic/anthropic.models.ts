@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_ANT_ToolsSearch, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_ANT_ToolsSearch, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
@@ -314,16 +314,3 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
   };
 }
 
-/**
- * Injects the LLM_IF_Tools_WebSearch interface for models that have web search/fetch parameters.
- * This allows the UI to show the web search indicator automatically based on model capabilities.
- */
-export function llmsAntInjectWebSearchInterface(model: ModelDescriptionSchema): ModelDescriptionSchema {
-  const hasWebParams = model.parameterSpecs?.some(spec =>
-    spec.paramId === 'llmVndAntWebSearch' || spec.paramId === 'llmVndAntWebFetch',
-  );
-  return (hasWebParams && !model.interfaces?.includes(LLM_IF_Tools_WebSearch)) ? {
-    ...model,
-    interfaces: [...model.interfaces, LLM_IF_Tools_WebSearch],
-  } : model;
-}
