@@ -46,7 +46,6 @@
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.1-chat-latest": {
-    "oai-reasoning-effort": ["medium"],
     "temperature": [1],
     "tools": ["oai-image-generation","oai-web-search"]
   },
@@ -72,7 +71,6 @@
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.2-chat-latest": {
-    "oai-reasoning-effort": ["medium"],
     "temperature": [1],
     "tools": ["oai-image-generation","oai-web-search"]
   },
@@ -100,7 +98,6 @@
     "temperature-range": [0,2]
   },
   "o3-deep-research-2025-06-26": {
-    "oai-reasoning-effort": ["medium"],
     "temperature-range": [0,2]
   },
   "o3-mini-2025-01-31": {
@@ -117,7 +114,6 @@
     "temperature-range": [0,2]
   },
   "o4-mini-deep-research-2025-06-26": {
-    "oai-reasoning-effort": ["medium"],
     "temperature-range": [0,2]
   }
 }
