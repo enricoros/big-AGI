@@ -1,7 +1,7 @@
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 
 // configuration
@@ -38,7 +38,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Deep Research',
     description: 'Expert-level research model for exhaustive searches and comprehensive reports. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort' }, // REUSE!
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
@@ -58,7 +58,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar Reasoning Pro',
     description: 'Premier reasoning model (DeepSeek R1) with Chain of Thought. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_Tools_WebSearch],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
@@ -78,7 +78,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Advanced search model for complex queries and deep content understanding. 200k context.',
     contextWindow: 200000,
     maxCompletionTokens: 8000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
+    interfaces: [LLM_IF_OAI_Chat],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
@@ -95,7 +95,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     label: 'Sonar',
     description: 'Lightweight, cost-effective search model for quick, grounded answers. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_Tools_WebSearch],
+    interfaces: [LLM_IF_OAI_Chat],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },

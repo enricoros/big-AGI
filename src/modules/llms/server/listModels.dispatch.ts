@@ -8,10 +8,11 @@ import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
+import { llmsAutoInjectWebSearchInterface } from './models.mappings';
 
 
 // protocol: Anthropic
-import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
+import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Gemini
@@ -69,7 +70,8 @@ function createDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<
 export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
-  return dispatch.convertToDescriptions(wireModels);
+  return dispatch.convertToDescriptions(wireModels)
+    .map(llmsAutoInjectWebSearchInterface); // unified way of auto-injecting cosmetic/derived IFs
 }
 
 
@@ -146,8 +148,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               return llmsAntCreatePlaceholderModel(model);
             })
             // inject thinking variants using the centralized variant system
-            .reduce(anthropicInjectVariants, [])
-            .map(llmsAntInjectWebSearchInterface);
+            .reduce(anthropicInjectVariants, []);
         },
       });
     }

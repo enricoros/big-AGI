@@ -2,7 +2,7 @@ import * as z from 'zod/v4';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
@@ -36,7 +36,7 @@ const PRICE_40 = {
 // we don't add LLM_IF_OAI_Responses explicitly here, as the code fully treats XAI/XAI Models with responses
 
 const XAI_IF: ModelDescriptionSchema['interfaces'] = [
-  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_Tools_WebSearch,
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
 ] as const;
 
 const XAI_IF_Vision: ModelDescriptionSchema['interfaces'] = [
