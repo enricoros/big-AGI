@@ -248,7 +248,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
-
   /// GPT-5 series - Released August 7, 2025
 
   // GPT-5
@@ -939,7 +938,14 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
 ];
 
-export const _fallbackOpenAIModel: KnownModel = {
+
+// -- 0-day or unknown models --
+
+export function llmsFallbackForOpenAIModel(modelId: string, isLikelyOpenAI: boolean): KnownModel {
+  return isLikelyOpenAI && _isLikelyResponsesAPIModel(modelId) ? _llmsOpenAIModelResponsesFallback : _llmsOpenAIModelFallback;
+}
+
+const _llmsOpenAIModelFallback: KnownModel = {
   idPrefix: '',
   label: '?',
   description: 'Unknown, please let us know the ID. Assuming a context window of 128k tokens, and a maximum output of 4k tokens.',
@@ -948,6 +954,20 @@ export const _fallbackOpenAIModel: KnownModel = {
   interfaces: IFS_CHAT_MIN,
   // hidden: true,
 };
+
+const _llmsOpenAIModelResponsesFallback: KnownModel = {
+  ..._llmsOpenAIModelFallback,
+  description: 'Unknown OpenAI model. Assuming Responses API support, 128k context, 16k output.',
+  maxCompletionTokens: 16384,
+  interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN],
+};
+
+function _isLikelyResponsesAPIModel(modelId: string): boolean {
+  // GPT-5+ family (gpt-5, gpt-5.1, gpt-5.2, gpt-6, etc.)
+  if (/^gpt-[5-9]/.test(modelId)) return true;
+  // o-series reasoning models with deep-research, pro variants (o3-pro, o4-pro, etc.)
+  return /^o[3-9]-(pro|deep-research|mini)/.test(modelId);
+}
 
 
 const openAIModelsDenyList: string[] = [
@@ -1002,8 +1022,8 @@ export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
   return !openAIModelsDenyList.some(deny => model.id.includes(deny));
 }
 
-export function openAIModelToModelDescription(modelId: string, modelCreated: number | undefined, modelUpdated?: number): ModelDescriptionSchema {
-  return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated, _fallbackOpenAIModel);
+export function openAIModelToModelDescription(modelId: string, options?: { isNotOpenai?: boolean, modelCreated?: number, modelUpdated?: number }): ModelDescriptionSchema {
+  return fromManualMapping(_knownOpenAIChatModels, modelId, options?.modelCreated, options?.modelUpdated, llmsFallbackForOpenAIModel(modelId, !options?.isNotOpenai));
 }
 
 export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {

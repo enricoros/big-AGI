@@ -26,7 +26,7 @@ import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/
 
 // protocol: OpenAI-compatible
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-import { OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
+import { llmsHostnameMatches, OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
@@ -404,11 +404,12 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 return fastAPIModels(maybeModels);
 
               // [OpenAI or OpenAI-compatible]: chat-only models, custom sort, manual mapping
+              const isNotOpenai = !!(oaiHost && !llmsHostnameMatches(oaiHost, 'api.openai.com')); // empty host (uses default) or explicitly api.openai.com
               const models = maybeModels
                 // limit to only 'gpt' and 'non instruct' models
                 .filter(openAIModelFilter)
                 // to model description
-                .map((model: any): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
+                .map((model: any): ModelDescriptionSchema => openAIModelToModelDescription(model.id, { isNotOpenai, modelCreated: model.created }))
                 // inject variants
                 .reduce(openAIInjectVariants, [])
                 // custom OpenAI sort
