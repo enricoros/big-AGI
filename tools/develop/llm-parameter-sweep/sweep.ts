@@ -244,7 +244,7 @@ const SWEEP_DEFINITIONS = [
     description: 'OpenAI image generation quality (off/mq/hq)',
     applicability: { type: 'dialects', dialects: ['openai'] },
     applyToModel: (value) => value ? { vndOaiImageGeneration: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
-    values: ['mq', 'hq'] satisfies (AixAPI_Model['vndOaiImageGeneration'] | null)[],
+    values: ['hq'] satisfies (AixAPI_Model['vndOaiImageGeneration'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -309,7 +309,7 @@ const SWEEP_DEFINITIONS = [
     applyToModel: (value) => ({
       vndGeminiThinkingBudget: value,
     }),
-    values: [0, 1024, 4096, 8192, 16384, 24576],
+    values: [0, 1024, 16384, 24576, 32768, 65535],
     mode: 'enumerate',
   }),
 
@@ -321,6 +321,16 @@ const SWEEP_DEFINITIONS = [
     applicability: { type: 'dialects', dialects: ['xai'] },
     applyToModel: (value) => ({ vndOaiReasoningEffort: value }),
     values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndOaiReasoningEffort'][],
+    mode: 'enumerate',
+  }),
+
+  // xAI: web search
+  defineSweep({
+    name: 'xai-web-search',
+    description: 'xAI web search capability',
+    applicability: { type: 'dialects', dialects: ['xai'] },
+    applyToModel: (value) => ({ vndXaiWebSearch: value }),
+    values: ['auto'] satisfies AixAPI_Model['vndXaiWebSearch'][],
     mode: 'enumerate',
   }),
 
@@ -642,48 +652,25 @@ function printSweepSummary(results: VendorSweepResult[]): void {
 
 
 // ============================================================================
-// Results File (sweep-results.json)
+// Results File (per-dialect: llm-{dialect}-parameters-sweep.json)
 // ============================================================================
 
-function getResultsFilePath(): string {
+function getResultsFilePath(dialect: string): string {
   const scriptDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
-  return path.join(scriptDir, 'sweep-results.json');
+  return path.join(scriptDir, `llm-${dialect}-parameters-sweep.json`);
 }
 
-function loadResultsFile(): SweepResultsFile {
-  const filePath = getResultsFilePath();
-  if (!fs.existsSync(filePath))
-    return {};
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const parsed = JSON.parse(content) as Record<string, unknown>;
-    // Filter out _comment and other non-dialect keys
-    const results: SweepResultsFile = {};
-    for (const key of Object.keys(parsed)) {
-      if (!key.startsWith('_'))
-        results[key] = parsed[key] as DialectResults;
-    }
-    return results;
-  } catch {
-    return {};
-  }
-}
-
-function saveResultsFile(results: SweepResultsFile): void {
-  const filePath = getResultsFilePath();
+function saveDialectResults(dialect: string, dialectResults: DialectResults, evaluatedSweeps: string[]): void {
+  const filePath = getResultsFilePath(dialect);
   // Sort keys for stable output
-  const sorted: SweepResultsFile = {};
-  for (const dialect of Object.keys(results).sort()) {
-    sorted[dialect] = {};
-    for (const model of Object.keys(results[dialect]).sort()) {
-      sorted[dialect][model] = {};
-      for (const sweep of Object.keys(results[dialect][model]).sort()) {
-        sorted[dialect][model][sweep] = results[dialect][model][sweep];
-      }
+  const sorted: DialectResults = {};
+  for (const model of Object.keys(dialectResults).sort()) {
+    sorted[model] = {};
+    for (const sweep of Object.keys(dialectResults[model]).sort()) {
+      sorted[model][sweep] = dialectResults[model][sweep];
     }
   }
   // Custom JSON formatting: keep value arrays on single lines
-  // Use placeholder strings for arrays, then replace back
   const placeholder = '___ARRAY___';
   const arrays: string[] = [];
   const withPlaceholders = JSON.stringify(sorted, (_, value) => {
@@ -695,9 +682,10 @@ function saveResultsFile(results: SweepResultsFile): void {
     return value;
   }, 2);
   const jsonBody = withPlaceholders.replace(/"___ARRAY___(\d+)"/g, (_, idx) => arrays[parseInt(idx)]);
-  // Insert header comment after opening brace
-  const comment = '"_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",\n  ';
-  const json = jsonBody.replace(/^\{\n {2}/, '{\n  ' + comment);
+  // Insert header comments after opening brace
+  const comment1 = '"_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",';
+  const comment2 = `"_evaluated": "Evaluated: ${evaluatedSweeps.sort().join(', ')}. If missing, the parameter is not supported by that model.",`;
+  const json = jsonBody.replace(/^\{\n {2}/, '{\n  ' + comment1 + '\n  ' + comment2 + '\n  ');
   fs.writeFileSync(filePath, json + '\n', 'utf-8');
   console.log(`${COLORS.dim}Results saved to: ${filePath}${COLORS.reset}`);
 }
@@ -745,20 +733,19 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
   return dialectResults;
 }
 
-function mergeAndSaveResults(allResults: VendorSweepResult[]): void {
-  if (allResults.length === 0) return;
-
-  // Load existing results
-  const existingResults = loadResultsFile();
-
-  // Merge new results (replace entire dialect section)
+function saveAllResults(allResults: VendorSweepResult[]): void {
   for (const vendorResult of allResults) {
     if (vendorResult.models.length === 0) continue;
-    existingResults[vendorResult.dialect] = vendorResultToDialectResults(vendorResult);
+    // Collect all evaluated sweep names for this dialect
+    const evaluatedSweeps = new Set<string>();
+    for (const model of vendorResult.models) {
+      for (const result of model.results) {
+        evaluatedSweeps.add(result.sweepName);
+      }
+    }
+    const dialectResults = vendorResultToDialectResults(vendorResult);
+    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps]);
   }
-
-  // Save merged results
-  saveResultsFile(existingResults);
 }
 
 
@@ -834,7 +821,7 @@ function createSingleVendorConfig(dialect: string, key: string, host?: string): 
         dialect: 'gemini',
         geminiKey: key,
         geminiHost: host || '',
-        minSafetyLevel: 'BLOCK_NONE',
+        minSafetyLevel: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
       } as any;
       break;
 
@@ -1291,7 +1278,7 @@ async function main(): Promise<void> {
   // Summary and save results
   if (!options.dryRun && results.some(v => v.models.length > 0)) {
     printSweepSummary(results);
-    mergeAndSaveResults(results);
+    saveAllResults(results);
   }
 
   console.log(`${COLORS.dim}Done.${COLORS.reset}`);
