@@ -1,12 +1,27 @@
 import * as React from 'react';
 
-import { Breadcrumbs, Typography } from '@mui/joy';
+import { Breadcrumbs, BreadcrumbsSlotsAndSlotProps, Typography } from '@mui/joy';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 import { Link } from '~/common/components/Link';
 
 
-const _sx = { p: 0 };
+const _breadcrumbSlotProps: BreadcrumbsSlotsAndSlotProps['slotProps'] = {
+  root: {
+    sx: { p: 0 },
+  },
+  // see anatomy https://mui.com/joy-ui/react-breadcrumbs/#anatomy
+  ol: {
+    // keep it all in one line
+    sx: { flexWrap: 'nowrap' },
+  },
+  li: {
+    // undo the 'flex' on li, and auto-ellipsize contents
+    sx: { display: 'block' },
+    className: 'agi-ellipsize',
+  },
+} as const;
+
 
 export function AppBreadcrumbs(props: {
   size?: 'sm' | 'md' | 'lg';
@@ -23,12 +38,13 @@ export function AppBreadcrumbs(props: {
     onRootClick?.();
   }, [onRootClick]);
 
-  return <Breadcrumbs size={props.size || 'sm'} separator={<KeyboardArrowRightIcon />} aria-label='breadcrumbs' sx={_sx}>
-    {(props.children && !!rootTitle && !!onRootClick)
-      ? <AppBreadcrumbs.Link color='neutral' href='#' onClick={handleRootClick}>{props.rootTitle}</AppBreadcrumbs.Link>
+  return <Breadcrumbs size={props.size || 'sm'} aria-label='breadcrumbs' separator={<KeyboardArrowRightIcon />} slotProps={_breadcrumbSlotProps}>
+    {/* Title */}
+    {(props.children && !!rootTitle && !!onRootClick) ? <AppBreadcrumbs.Link color='neutral' href='#' onClick={handleRootClick}>{props.rootTitle}</AppBreadcrumbs.Link>
       : (typeof props.rootTitle === 'string') ? <Typography>{props.rootTitle}</Typography>
         : props.rootTitle
     }
+    {/* Rest */}
     {props.children}
     {/*{nav.pnt === 'create-new' && <Link color='neutral' href='#'>Create New</Link>}*/}
     {/*{['Characters', 'Futurama', 'TV Shows', 'Home'].map((item: string) => (*/}
