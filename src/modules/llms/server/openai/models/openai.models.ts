@@ -144,6 +144,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningEffort52Pro' },
       { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 21, output: 168 },
@@ -282,7 +283,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 400000,
     maxCompletionTokens: 272000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
+    parameterSpecs: [{ paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
     chatPrice: { input: 15, output: 120 },
     // benchmark: has not been measured yet
   },
