@@ -247,31 +247,41 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'openai': {
 
-      // Security: prevent server API key exfiltration via client-provided hosts.
-      if (access.oaiHost && !access.oaiKey && !!env.OPENAI_API_KEY)
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Missing API Key for your custom host.' });
+      // Credential resolution: client-dominated
+      // - if the client provides a host, they own the whole request - no server
+      // - credentials (API key, org, Helicone key) are sent to client-chosen endpoints
+      // - if the client doesn't set a host, they can still override the key (own billing).
+      let oaiKey: string;
+      let oaiHost: string;
+      let oaiOrg: string;
+      let heliKey: string | false;
+      if (access.oaiHost) {
+        // Client controls the endpoint: only client credentials
+        oaiKey = access.oaiKey || '';
+        oaiHost = access.oaiHost;
+        oaiOrg = access.oaiOrg || '';
+        heliKey = access.heliKey || false;
+      } else {
+        // Client hasn't touched the endpoint: server infrastructure
+        oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
+        oaiHost = /* NO access.oaiHost */ env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
+        oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
+        heliKey = access.heliKey || env.HELICONE_API_KEY || false;
+      }
 
-      // API key: client-provided takes precedence over server-configured
-      const oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
-      const oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
-
-      // API host: client-provided > server env > default
-      let oaiHost = llmsFixupHost(access.oaiHost || env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
+      oaiHost = llmsFixupHost(oaiHost, apiPath);
 
       // Require a key when targeting the default OpenAI host
       if (!oaiKey && llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST))
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing OpenAI API Key. Add it on the UI or server side (your deployment).' });
 
-      // [Helicone] proxy: when a Helicone key is present, redirect default OpenAI host to Helicone;
-      // if the host is already Helicone, keep it; otherwise disable the Helicone key
-      let heliKey = access.heliKey || env.HELICONE_API_KEY || false;
+      // [Helicone] proxy: redirect default OpenAI host to Helicone when key present;
+      // if host is already Helicone keep it; for any other host, disable the Helicone key
       if (heliKey) {
         if (llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST))
           oaiHost = `https://${DEFAULT_HELICONE_OPENAI_HOST}`;
-        else if (!llmsHostnameMatches(oaiHost, DEFAULT_HELICONE_OPENAI_HOST)) {
-          // throw new Error(`The Helicone OpenAI Key has been provided, but the host is not set to https://${DEFAULT_HELICONE_OPENAI_HOST}. Please fix it in the Models Setup page.`);
+        else if (!llmsHostnameMatches(oaiHost, DEFAULT_HELICONE_OPENAI_HOST))
           heliKey = false;
-        }
       }
 
       // [Cloudflare AI Gateway] proxy: adapt API paths for Cloudflare's routing
