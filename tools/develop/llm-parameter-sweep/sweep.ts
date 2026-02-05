@@ -52,10 +52,7 @@ const SWEEP_DEFINITIONS = [
     name: 'oai-verbosity',
     description: 'OpenAI text.verbosity values (Responses API)',
     applicability: { type: 'dialects', dialects: ['openai', 'openrouter'] },
-    applyToModel: (value) => ({
-      vndOaiVerbosity: value,
-      vndOaiResponsesAPI: true,
-    }),
+    applyToModel: (value) => ({ vndOaiVerbosity: value }),
     values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndOaiVerbosity'][],
     mode: 'enumerate',
   }),
@@ -65,7 +62,7 @@ const SWEEP_DEFINITIONS = [
     name: 'oai-image-generation',
     description: 'OpenAI image generation quality (off/mq/hq)',
     applicability: { type: 'dialects', dialects: ['openai'] },
-    applyToModel: (value) => value ? { vndOaiImageGeneration: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
+    applyToModel: (value) => value ? { vndOaiImageGeneration: value } : {},
     values: ['hq'] satisfies (AixAPI_Model['vndOaiImageGeneration'] | null)[],
     mode: 'enumerate',
   }),
@@ -75,7 +72,7 @@ const SWEEP_DEFINITIONS = [
     name: 'oai-web-search',
     description: 'OpenAI web search context size (off/medium)',
     applicability: { type: 'dialects', dialects: ['openai'] },
-    applyToModel: (value) => value ? { vndOaiWebSearchContext: value, vndOaiResponsesAPI: true } : { vndOaiResponsesAPI: true },
+    applyToModel: (value) => value ? { vndOaiWebSearchContext: value } : {},
     values: ['medium'] satisfies (AixAPI_Model['vndOaiWebSearchContext'] | null)[],
     mode: 'enumerate',
   }),
@@ -86,7 +83,7 @@ const SWEEP_DEFINITIONS = [
     name: 'ant-effort',
     description: 'Anthropic output_config.effort values',
     applicability: { type: 'dialects', dialects: ['anthropic'] },
-    applyToModel: (value) => ({ vndAntEffort: value}),
+    applyToModel: (value) => ({ vndAntEffort: value }),
     values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndAntEffort'][],
     mode: 'enumerate',
   }),
@@ -1170,7 +1167,7 @@ async function runSweep(
       const idOverrides = modelOverridesFromId(modelDesc.id, access.dialect);
       const mergedOverrides: Partial<AixAPI_Model> = { ...interfaceOverrides, ...idOverrides, ...vendorConfig.baseModelOverrides };
 
-      const apiTag = interfaceOverrides.vndOaiResponsesAPI ? 'responses' : `${access.dialect}-chat`;
+      const apiTag = interfaceOverrides.vndOaiResponsesAPI ? 'OAI-Responses' : `${access.dialect}-chat`;
       const tempTag = interfaceOverrides.temperature === null ? ', no-temp' : '';
       const progressTag = `${modelIndex + 1}/${totalModels}`;
       console.log(`\n  ${COLORS.dim}[${progressTag}]${COLORS.reset} ${COLORS.bright}Model: ${modelDesc.id}${COLORS.reset} ${COLORS.dim}(${modelDesc.label}) [${apiTag}${tempTag}]${COLORS.reset}`);
