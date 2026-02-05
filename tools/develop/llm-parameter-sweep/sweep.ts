@@ -357,6 +357,20 @@ function modelOverridesFromInterfaces(interfaces: string[]): Partial<AixAPI_Mode
   return overrides;
 }
 
+/** Derive AixAPI_Model overrides from the model ID (name-based heuristics) */
+function modelOverridesFromId(modelId: string, dialect: string): Partial<AixAPI_Model> {
+  const overrides: Partial<AixAPI_Model> = {};
+  // Enable web search for deep-research and search-api models (OpenAI only for now)
+  if (dialect === 'openai' && (modelId.includes('-deep-research-') || modelId.includes('-search-api-'))) {
+    overrides.vndOaiWebSearchContext = 'medium';
+  }
+  // Enable audio output for Gemini TTS models
+  if (dialect === 'gemini' && (modelId.includes('-pro-preview-tts') || modelId.includes('-flash-preview-tts'))) {
+    overrides.acceptsOutputs = ['audio'];
+  }
+  return overrides;
+}
+
 
 // ============================================================================
 // Core Test Function
@@ -1120,9 +1134,10 @@ async function runSweep(
     const totalModels = models.length;
     for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
       const modelDesc = models[modelIndex];
-      // Derive API routing overrides from the model's interfaces (e.g. oai-responses, hotfix-no-temperature)
+      // Derive API routing overrides from the model's interfaces and ID
       const interfaceOverrides = modelOverridesFromInterfaces(modelDesc.interfaces);
-      const mergedOverrides: Partial<AixAPI_Model> = { ...interfaceOverrides, ...vendorConfig.baseModelOverrides };
+      const idOverrides = modelOverridesFromId(modelDesc.id, access.dialect);
+      const mergedOverrides: Partial<AixAPI_Model> = { ...interfaceOverrides, ...idOverrides, ...vendorConfig.baseModelOverrides };
 
       const apiTag = interfaceOverrides.vndOaiResponsesAPI ? 'responses' : `${access.dialect}-chat`;
       const tempTag = interfaceOverrides.temperature === null ? ', no-temp' : '';
