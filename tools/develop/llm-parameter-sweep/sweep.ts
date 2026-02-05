@@ -225,19 +225,6 @@ const SWEEP_DEFINITIONS = [
     mode: 'enumerate',
   }),
 
-  // OpenAI: reasoning summary (Responses API)
-  defineSweep({
-    name: 'oai-reasoning-summary',
-    description: 'OpenAI reasoning.summary values (Responses API)',
-    applicability: { type: 'dialects', dialects: ['openai'] },
-    applyToModel: (value) => ({
-      vndOaiReasoningSummary: value,
-      vndOaiResponsesAPI: true,
-    }),
-    values: ['none', 'detailed'] satisfies AixAPI_Model['vndOaiReasoningSummary'][],
-    mode: 'enumerate',
-  }),
-
   // OpenAI: image generation (Responses API)
   defineSweep({
     name: 'oai-image-generation',
