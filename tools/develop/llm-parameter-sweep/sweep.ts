@@ -704,6 +704,10 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
       bySweep.get(r.sweepName)!.push(r);
     }
 
+    // Sweeps that become "tools" when fully supported
+    const toolSweeps = ['oai-image-generation', 'oai-web-search', 'xai-web-search'];
+    const tools: string[] = [];
+
     // Extract passing values for each sweep (skip if none passed)
     for (const [sweepName, sweepResults] of bySweep) {
       const passingValues = sweepResults
@@ -711,6 +715,12 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
         .map(r => r.paramValue);
       if (passingValues.length === 0)
         continue;
+
+      // Special case: tool sweeps with full support -> add to tools array
+      if (toolSweeps.includes(sweepName) && passingValues.length === sweepResults.length) {
+        tools.push(sweepName);
+        continue;
+      }
 
       // Special case: temperature with contiguous range from 0 -> use range [min, max]
       if (sweepName === 'temperature') {
@@ -727,6 +737,10 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
 
       modelResults[sweepName] = passingValues;
     }
+
+    // Add tools array if non-empty
+    if (tools.length > 0)
+      modelResults['tools'] = tools.sort();
 
     dialectResults[model.modelId] = modelResults;
   }
