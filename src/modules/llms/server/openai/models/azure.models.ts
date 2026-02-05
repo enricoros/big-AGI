@@ -4,7 +4,7 @@ import * as z from 'zod/v4';
 import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { _fallbackOpenAIModel, _knownOpenAIChatModels } from './openai.models';
+import { _knownOpenAIChatModels, llmsFallbackForOpenAIModel } from './openai.models';
 import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 
@@ -119,7 +119,7 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
     isNameAKnownOpenAIModel ? deploymentName : likelyTheOpenAIModel,
     modelCreated,
     modelUpdated,
-    _fallbackOpenAIModel,
+    llmsFallbackForOpenAIModel(isNameAKnownOpenAIModel ? deploymentName : likelyTheOpenAIModel, true),
     true,
   );
 
