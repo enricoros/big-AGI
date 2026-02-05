@@ -9,13 +9,11 @@
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-chat-latest": {
-    "oai-verbosity": ["medium"],
     "temperature-range": [0,2],
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-codex": {
     "oai-reasoning-effort": ["low","medium","high"],
-    "oai-verbosity": ["medium"],
     "temperature-range": [0,2],
     "tools": ["oai-web-search"]
   },
@@ -38,7 +36,8 @@
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-search-api-2025-10-14": {
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-web-search"]
   },
   "gpt-5.1-2025-11-13": {
     "oai-reasoning-effort": ["none","low","medium","high"],
@@ -48,25 +47,21 @@
   },
   "gpt-5.1-chat-latest": {
     "oai-reasoning-effort": ["medium"],
-    "oai-verbosity": ["medium"],
     "temperature": [1],
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.1-codex": {
     "oai-reasoning-effort": ["low","medium","high"],
-    "oai-verbosity": ["medium"],
     "temperature": [1],
     "tools": ["oai-web-search"]
   },
   "gpt-5.1-codex-max": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
-    "oai-verbosity": ["medium"],
     "temperature": [1],
     "tools": ["oai-web-search"]
   },
   "gpt-5.1-codex-mini": {
     "oai-reasoning-effort": ["low","medium","high"],
-    "oai-verbosity": ["medium"],
     "temperature": [1],
     "tools": ["oai-web-search"]
   },
@@ -78,13 +73,11 @@
   },
   "gpt-5.2-chat-latest": {
     "oai-reasoning-effort": ["medium"],
-    "oai-verbosity": ["medium"],
     "temperature": [1],
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.2-codex": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
-    "oai-verbosity": ["medium"],
     "temperature": [1],
     "tools": ["oai-web-search"]
   },
@@ -96,48 +89,35 @@
   },
   "o1-2024-12-17": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
-    "oai-verbosity": ["medium"],
     "temperature-range": [0,2]
   },
   "o1-pro-2025-03-19": {
     "oai-reasoning-effort": ["low","medium","high"],
-    "oai-verbosity": ["medium"],
     "temperature-range": [0,2]
   },
   "o3-2025-04-16": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
-    "oai-verbosity": ["medium"],
-    "temperature-range": [0,2],
-    "tools": ["oai-image-generation","oai-web-search"]
+    "temperature-range": [0,2]
   },
   "o3-deep-research-2025-06-26": {
     "oai-reasoning-effort": ["medium"],
-    "oai-verbosity": ["medium"],
-    "temperature-range": [0,2],
-    "tools": ["oai-web-search"]
+    "temperature-range": [0,2]
   },
   "o3-mini-2025-01-31": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
-    "oai-verbosity": ["medium"],
-    "temperature-range": [0,2],
-    "tools": ["oai-image-generation"]
+    "temperature-range": [0,2]
   },
   "o3-pro-2025-06-10": {
     "oai-reasoning-effort": ["low","medium","high"],
-    "oai-verbosity": ["medium"],
     "temperature-range": [0,2],
     "tools": ["oai-image-generation","oai-web-search"]
   },
   "o4-mini-2025-04-16": {
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
-    "oai-verbosity": ["medium"],
-    "temperature-range": [0,2],
-    "tools": ["oai-web-search"]
+    "temperature-range": [0,2]
   },
   "o4-mini-deep-research-2025-06-26": {
     "oai-reasoning-effort": ["medium"],
-    "oai-verbosity": ["medium"],
-    "temperature-range": [0,2],
-    "tools": ["oai-web-search"]
+    "temperature-range": [0,2]
   }
 }
