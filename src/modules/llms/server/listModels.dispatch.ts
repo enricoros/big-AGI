@@ -111,7 +111,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           anthropicValidateModelDefs_DEV(availableModels);
 
           // sort by: family (desc) > class (desc) > date (desc) -- Future NOTE: -5- will match -4-5- and -3-5-.. figure something else out
-          const familyPrecedence = ['-4-7-', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
+          const familyPrecedence = ['-4-7-', '-4-6', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
           const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
 
           const getFamilyIdx = (id: string) => familyPrecedence.findIndex(f => id.includes(f));
