@@ -20,6 +20,7 @@ type UidScope =
   | 'livefile-item'
   | 'logger'
   | 'persona-creator-chain'
+  | 'persona'
   | 'persona-simple'
   | 'processing-queue-task'
   | 'server-storage-deletion-key'
@@ -34,7 +35,7 @@ type UidScope =
  * Application-wide unique identifier generator
  * @param _scope Does not influence the ID generation, but is used to index all the IDs in the application
  */
-export function agiUuid(_scope: Exclude<UidScope, 'chat-dfragment'>) {
+export function agiUuid(_scope: Exclude<UidScope, 'chat-dfragment' | 'persona'>) {
   return nanoid();
 }
 

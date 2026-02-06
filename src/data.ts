@@ -19,7 +19,9 @@ export type SystemPurposeData = {
 
 export type SystemPurposeExample = string | { prompt: string, action?: 'require-data-attachment' };
 
-export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
+export type SystemPurposesType = { [key in SystemPurposeId]: SystemPurposeData; } & { [key: string]: SystemPurposeData };
+
+export const SystemPurposes: SystemPurposesType = {
   Generic: {
     title: 'Default',
     description: 'Start here',
