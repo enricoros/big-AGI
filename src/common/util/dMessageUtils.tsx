@@ -519,14 +519,15 @@ function _prettyAnthropicModelName(modelId: string): string | null {
 
   const subStr = modelId.slice(claudeIndex);
   const version =
-    subStr.includes('-4-5') ? '4.5' // fixes the -5
-      : subStr.includes('-3-5') ? '3.5' // fixes the -5
-        : subStr.includes('-5') ? '5'
-          : subStr.includes('-4-1') ? '4.1'
-            : subStr.includes('-4') ? '4'
-              : subStr.includes('-3-7') ? '3.7'
-                : subStr.includes('-3') ? '3'
-                  : '?';
+    subStr.includes('-4-6') ? '4.6'
+      : subStr.includes('-4-5') ? '4.5' // fixes the -5
+        : subStr.includes('-3-5') ? '3.5' // fixes the -5
+          : subStr.includes('-5') ? '5'
+            : subStr.includes('-4-1') ? '4.1'
+              : subStr.includes('-4') ? '4'
+                : subStr.includes('-3-7') ? '3.7'
+                  : subStr.includes('-3') ? '3'
+                    : '?';
 
   if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
   if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;
