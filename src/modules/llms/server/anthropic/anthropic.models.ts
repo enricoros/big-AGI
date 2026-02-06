@@ -15,14 +15,22 @@ const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* 
 const IF_4 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching];
 const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 
-const ANT_PAR_WEB: ModelDescriptionSchema['parameterSpecs'] = [
+// Anthropic Parameters Semantics:
+// - llmVndAnt1MContext         only available on select models
+// - llmVndAntEffort            since 4.5: low/medium/high (3 levels). Since 4.6: +max (4 levels, 'max' is 4.6-exclusive). Check if future models expand support.
+// - llmVndAntSkills            2026-02-06: seems GA to any model now: a parameter spec for user/UI configurability
+// - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking, was used for manual control of thinking up to 4.5, we pre-default it to 16384 and the user can set it to another value or null to turn thinking off
+// - llmVndAntWebFetch/Search   seem an API feature available on all models
+
+const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndAntWebSearch' },
   { paramId: 'llmVndAntWebFetch' },
+  { paramId: 'llmVndAntSkills' },
 ] as const;
 
-const ANT_PAR_WEB_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
+const ANT_TOOLS_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndAntThinkingBudget' }, // NOTE: we had 'required: true, hidden: false' here, but it's not useful at all?
-  ...ANT_PAR_WEB,
+  ...ANT_TOOLS,
 ] as const;
 
 
@@ -36,7 +44,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     label: 'Claude Opus 4.6 (Thinking)',
     description: 'Claude Opus 4.6 with extended thinking mode for the most complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_TOOLS_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }],
     // benchmark: { cbaElo: ... }, // TBD
     maxCompletionTokens: 32000,
   },
@@ -47,7 +55,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     label: 'Claude Opus 4.5 (Thinking)',
     description: 'Claude Opus 4.5 with extended thinking mode for complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }, { paramId: 'llmVndAntEffort' }],
     benchmark: { cbaElo: 1468 }, // claude-opus-4-5-20251101-thinking-32k
     maxCompletionTokens: 32000,
   },
@@ -58,7 +66,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Sonnet 4.5 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_TOOLS_THINKING, { paramId: 'llmVndAnt1MContext' }],
     benchmark: { cbaElo: 1450 }, // claude-sonnet-4-5-20250929-thinking-32k
   },
 
@@ -68,7 +76,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Haiku 4.5 with extended thinking mode - first Haiku model with reasoning capabilities',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: ANT_TOOLS_THINKING,
   },
 
   // Claude 4.1 models with thinking variants
@@ -78,7 +86,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Opus 4.1 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_PAR_WEB_THINKING,
+    parameterSpecs: ANT_TOOLS_THINKING,
     benchmark: { cbaElo: 1448 }, // claude-opus-4-1-20250805-thinking-16k
   },
 
@@ -90,7 +98,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_PAR_WEB_THINKING,
+    parameterSpecs: ANT_TOOLS_THINKING,
     benchmark: { cbaElo: 1424 }, // claude-opus-4-20250514-thinking-16k
   },
 
@@ -100,7 +108,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS_THINKING, { paramId: 'llmVndAnt1MContext' }],
     benchmark: { cbaElo: 1400 }, // claude-sonnet-4-20250514-thinking-32k
   },
 
@@ -111,7 +119,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude 3.7 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_PAR_WEB_THINKING,
+    parameterSpecs: ANT_TOOLS_THINKING,
     benchmark: { cbaElo: 1389 }, // claude-3-7-sonnet-20250219-thinking-32k
   },
 
@@ -132,7 +140,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 128000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }],
     // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50 (with 1M context enabled)
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
@@ -156,7 +164,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntEffort' }],
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
     benchmark: { cbaElo: 1466 }, // claude-opus-4-5-20251101
   },
@@ -167,7 +175,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAnt1MContext' }],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
@@ -189,7 +197,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: IF_4,
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
     benchmark: { cbaElo: 1403 }, // claude-haiku-4-5-20251001
   },
@@ -202,7 +210,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 32000,
     interfaces: IF_4,
-    parameterSpecs: ANT_PAR_WEB,
+    parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1445 }, // claude-opus-4-1-20250805
   },
@@ -216,7 +224,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 32000,
     interfaces: IF_4,
-    parameterSpecs: ANT_PAR_WEB,
+    parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1414 }, // claude-opus-4-20250514
   },
@@ -227,7 +235,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: IF_4,
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAnt1MContext' }],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
@@ -251,7 +259,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: IF_4,
-    parameterSpecs: ANT_PAR_WEB,
+    parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1372 }, // claude-3-7-sonnet-20250219
     hidden: true, // deprecated
@@ -268,7 +276,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 8192,
     interfaces: IF_4,
-    parameterSpecs: ANT_PAR_WEB,
+    parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 0.80, output: 4.00, cache: { cType: 'ant-bp', read: 0.08, write: 1.00, duration: 300 } },
     benchmark: { cbaElo: 1324 }, // claude-3-5-haiku-20241022
     hidden: true, // deprecated
