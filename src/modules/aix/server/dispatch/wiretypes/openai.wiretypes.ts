@@ -332,9 +332,12 @@ export namespace OpenAIWire_API_Chat_Completions {
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
     reasoning_effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
-    // OpenAI and [OpenRouter, 2025-01-20] Verbosity parameter - maps to output_config.effort for Anthropic models (Claude Opus 4.5)
+    // OpenAI and [OpenRouter, 2025-01-20] Verbosity parameter - maps to output_config.effort for Anthropic models
     // https://openrouter.ai/docs/api/reference/parameters#verbosity
-    verbosity: z.enum(['low', 'medium', 'high']).optional(),
+    verbosity: z.enum([
+      'low', 'medium', 'high',
+      'max', // [OpenRouter, 2026-02-06] Anthropic-through-openrouter has its llmVndAntEffort/llmVndAntEffortMax mapped to 'verbosity'
+    ]).optional(), // 'max' is Opus 4.6 only
     // [OpenRouter, 2025-11-11] Unified reasoning parameter for all models
     reasoning: z.object({
       max_tokens: z.int().optional(), // Token-based control (Anthropic, Gemini): 1024-32000

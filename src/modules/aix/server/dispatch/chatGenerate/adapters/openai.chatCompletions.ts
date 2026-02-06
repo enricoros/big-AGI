@@ -231,23 +231,27 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (openAIDialect === 'openrouter') {
 
     // Anthropic via OpenRouter
+    // ref: https://openrouter.ai/docs/guides/guides/model-migrations/claude-4-6-opus
     if (model.vndAntThinkingBudget !== undefined) {
       // vndAntThinkingBudget's presence indicates a user preference:
-      // - 'adaptive': adaptive thinking (4.6+) - skip, let effort handle it via OpenRouter
+      // - 'adaptive': adaptive thinking (4.6+) - reasoning enabled, no explicit budget
       // - a number: explicit token budget (1024-32000)
       // - null: disable thinking (don't set reasoning field)
-      if (model.vndAntThinkingBudget === 'adaptive') {
-        // Adaptive thinking on OpenRouter: no explicit budget, effort controls depth
-        // TODO: verify if this is a good assumption - new guide:
-        // https://openrouter.ai/docs/guides/guides/model-migrations/claude-4-6-opus#verbosity-vs-reasoning-effort
-      } else if (model.vndAntThinkingBudget === null) {
+      if (model.vndAntThinkingBudget === 'adaptive')
+        payload.reasoning = { enabled: true };
+      else if (model.vndAntThinkingBudget === null) {
         // If null, don't set reasoning field at all (disables thinking)
       } else
         payload.reasoning = { max_tokens: model.vndAntThinkingBudget || 8192 };
     }
+    // Anthropic effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
+    if (model.vndAntEffort)
+      payload.verbosity = model.vndAntEffort;
+
     // Gemini via OpenRouter
     else if (model.vndGeminiThinkingBudget !== undefined)
       payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget ?? 8192 };
+
     // OpenAI via OpenRouter - all effort levels including 'none' and 'minimal' are valid
     else if (model.vndOaiReasoningEffort)
       payload.reasoning = { effort: model.vndOaiReasoningEffort };
