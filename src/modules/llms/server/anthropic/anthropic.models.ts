@@ -15,6 +15,7 @@ const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* 
 const IF_4 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching];
 const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 
+
 // Anthropic Parameters Semantics:
 // - llmVndAnt1MContext         only available on select models
 // - llmVndAntEffort            since 4.5: low/medium/high (3 levels). Since 4.6: +max (4 levels, 'max' is 4.6-exclusive). Check if future models expand support.
@@ -28,11 +29,6 @@ const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndAntSkills' },
 ] as const;
 
-const ANT_TOOLS_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndAntThinkingBudget' }, // NOTE: we had 'required: true, hidden: false' here, but it's not useful at all?
-  ...ANT_TOOLS,
-] as const;
-
 
 const _hardcodedAnthropicVariants: ModelVariantMap = {
 
@@ -42,9 +38,9 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
   'claude-opus-4-6': {
     idVariant: 'thinking',
     label: 'Claude Opus 4.6 (Thinking)',
-    description: 'Claude Opus 4.6 with extended thinking mode for the most complex reasoning and agentic workflows',
+    description: 'Claude Opus 4.6 with adaptive thinking mode for the most complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_TOOLS_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }],
     // benchmark: { cbaElo: ... }, // TBD
     maxCompletionTokens: 32000,
   },
@@ -66,7 +62,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Sonnet 4.5 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_TOOLS_THINKING, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }, { paramId: 'llmVndAnt1MContext' }],
     benchmark: { cbaElo: 1450 }, // claude-sonnet-4-5-20250929-thinking-32k
   },
 
@@ -76,7 +72,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Haiku 4.5 with extended thinking mode - first Haiku model with reasoning capabilities',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_TOOLS_THINKING,
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }],
   },
 
   // Claude 4.1 models with thinking variants
@@ -86,7 +82,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Opus 4.1 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_TOOLS_THINKING,
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }],
     benchmark: { cbaElo: 1448 }, // claude-opus-4-1-20250805-thinking-16k
   },
 
@@ -98,7 +94,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_TOOLS_THINKING,
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }],
     benchmark: { cbaElo: 1424 }, // claude-opus-4-20250514-thinking-16k
   },
 
@@ -108,7 +104,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: [...ANT_TOOLS_THINKING, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }, { paramId: 'llmVndAnt1MContext' }],
     benchmark: { cbaElo: 1400 }, // claude-sonnet-4-20250514-thinking-32k
   },
 
@@ -119,7 +115,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude 3.7 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: ANT_TOOLS_THINKING,
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget' }],
     benchmark: { cbaElo: 1389 }, // claude-3-7-sonnet-20250219-thinking-32k
   },
 
