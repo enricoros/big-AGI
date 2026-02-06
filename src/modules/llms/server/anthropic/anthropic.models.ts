@@ -21,7 +21,7 @@ const ANT_PAR_WEB: ModelDescriptionSchema['parameterSpecs'] = [
 ] as const;
 
 const ANT_PAR_WEB_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+  { paramId: 'llmVndAntThinkingBudget' }, // NOTE: we had 'required: true, hidden: false' here, but it's not useful at all?
   ...ANT_PAR_WEB,
 ] as const;
 
