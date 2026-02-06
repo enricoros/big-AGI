@@ -52,6 +52,19 @@ const _verbosityOptions = [
   { value: 'low', label: 'Brief', description: 'Concise responses' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
+
+export const VERBOSITY_VALUE_LABELS = Object.freeze(
+  Object.fromEntries(_verbosityOptions.filter(o => o.value !== _UNSPECIFIED).map(o => [o.value, o.label] as const))
+) as Readonly<Record<string, string>>;
+
+export const REASONING_EFFORT_VALUE_LABELS = Object.freeze(
+  Object.fromEntries(_reasoningEffortOptions.filter(o => o.value !== _UNSPECIFIED).map(o => [o.value, o.label] as const))
+) as Readonly<Record<string, string>>;
+
+export const REASONING_EFFORT4_VALUE_LABELS = Object.freeze(
+  Object.fromEntries(_reasoningEffort4Options.filter(o => o.value !== _UNSPECIFIED).map(o => [o.value, o.label] as const))
+) as Readonly<Record<string, string>>;
+
 const _webSearchContextOptions = [
   { value: 'high', label: 'Comprehensive', description: 'Largest, highest cost, slower' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced context, cost, and speed' } as const,
