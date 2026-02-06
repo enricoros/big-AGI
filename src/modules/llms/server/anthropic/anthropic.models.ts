@@ -150,7 +150,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 4.5 models
   {
-    hidden: true, // superseded by 4.6
     id: 'claude-opus-4-5-20251101', // Active
     label: 'Claude Opus 4.5',
     description: 'Previous most intelligent model with advanced reasoning for complex agentic workflows',
