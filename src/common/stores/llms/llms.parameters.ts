@@ -156,8 +156,8 @@ export const DModelParameterRegistry = {
     type: 'integer',
     description: 'Budget for extended thinking',
     range: [1024, 65536] as const,
-    initialValue: 16384,
-    nullable: {
+    initialValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
+    nullable: { // null means to not turn on thinking at all, and it's the user-overridden equivalent to the param missing
       meaning: 'Disable extended thinking',
     },
   },

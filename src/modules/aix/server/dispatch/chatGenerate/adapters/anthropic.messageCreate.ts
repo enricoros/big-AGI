@@ -132,11 +132,13 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     delete payload.temperature;
   }
 
-  // [Anthropic] Thinking Budget
+  // [Anthropic] Thinking: adaptive (4.6+), enabled with budget (≤4.5), or disabled
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
   const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
   if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
-    payload.thinking = model.vndAntThinkingBudget !== null ? {
+    payload.thinking = model.vndAntThinkingBudget === 'adaptive' ? {
+      type: 'adaptive',
+    } : model.vndAntThinkingBudget !== null ? {
       type: 'enabled',
       budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
     } : {
