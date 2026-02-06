@@ -834,11 +834,10 @@ export namespace AnthropicWire_API_Message_Create {
      * When enabled, responses include thinking content blocks showing Claude's thinking process before the final answer.
      */
     thinking: z.union([
+      // [Anthropic, 4.6+] Adaptive thinking - Claude decides when and how much to think
+      z.object({ type: z.literal('adaptive') }),
       // Requires a minimum budget of 1,024 tokens and counts towards your max_tokens limit.
-      z.object({
-        type: z.literal('enabled'),
-        budget_tokens: z.number(),
-      }),
+      z.object({ type: z.literal('enabled'), budget_tokens: z.number() }),
       // having this for completeness, but seems like it's not needed / can be omitted
       z.object({ type: z.literal('disabled') }),
     ]).optional(),

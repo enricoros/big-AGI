@@ -233,9 +233,14 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     // Anthropic via OpenRouter
     if (model.vndAntThinkingBudget !== undefined) {
       // vndAntThinkingBudget's presence indicates a user preference:
+      // - 'adaptive': adaptive thinking (4.6+) - skip, let effort handle it via OpenRouter
       // - a number: explicit token budget (1024-32000)
       // - null: disable thinking (don't set reasoning field)
-      if (model.vndAntThinkingBudget === null) {
+      if (model.vndAntThinkingBudget === 'adaptive') {
+        // Adaptive thinking on OpenRouter: no explicit budget, effort controls depth
+        // TODO: verify if this is a good assumption - new guide:
+        // https://openrouter.ai/docs/guides/guides/model-migrations/claude-4-6-opus#verbosity-vs-reasoning-effort
+      } else if (model.vndAntThinkingBudget === null) {
         // If null, don't set reasoning field at all (disables thinking)
       } else
         payload.reasoning = { max_tokens: model.vndAntThinkingBudget || 8192 };
