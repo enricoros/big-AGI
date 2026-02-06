@@ -5,6 +5,15 @@ import { Box, styled } from '@mui/joy';
 
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
+import CustomMarkdownRenderer from './CustomMarkdownRenderer';
+
+
+/*
+ * Markdown is bundled in the main chunk (not lazy-loaded) because:
+ * - It's used immediately when opening any conversation with existing messages
+ * - Lazy loading caused a visible "Loading..." flash on the critical path
+ * - The ~150KB cost is acceptable for instant rendering of this core feature
+ */
 
 /*
  * For performance reasons, we style this component here and copy the equivalent of 'props.sx' (the lineHeight) locally.
@@ -21,17 +30,14 @@ const RenderMarkdownBox = styled(Box)({
   '& table': { width: 'inherit !important' },           // un-break auto-width (tables have 'max-content', which overflows)
 });
 
-const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
 export function RenderMarkdown(props: { content: string; disablePreprocessor?: boolean, sx?: SxProps; }) {
   return (
     <RenderMarkdownBox
-      className='markdown-body' /* NODE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
+      className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
       sx={props.sx}
     >
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer content={props.content} disablePreprocessor={props.disablePreprocessor} />
-      </React.Suspense>
+      <CustomMarkdownRenderer content={props.content} disablePreprocessor={props.disablePreprocessor} />
     </RenderMarkdownBox>
   );
 }
