@@ -451,7 +451,7 @@ export namespace AixWire_API {
 
     // Anthropic
     vndAnt1MContext: z.boolean().optional(),
-    vndAntEffort: z.enum(['low', 'medium', 'high']).optional(),
+    vndAntEffort: z.enum(['low', 'medium', 'high', 'max']).optional(),
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
     vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant

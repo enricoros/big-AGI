@@ -49,7 +49,7 @@ export function aixCreateModelFromLLMOptions(
   // destructure input with the overrides
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
-    llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAntEffort,
+    llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAntEffort, llmVndAntEffortMax,
     llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget, llmVndGeminiThinkingLevel, llmVndGeminiThinkingLevel4,
     llmVndMoonReasoningEffort, // -> mapped to vndOaiReasoningEffort below
     // llmVndMoonshotWebSearch,
@@ -110,7 +110,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
-    ...(llmVndAntEffort ? { vndAntEffort: llmVndAntEffort } : {}),
+    ...((llmVndAntEffortMax || llmVndAntEffort) ? { vndAntEffort: llmVndAntEffortMax || llmVndAntEffort } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
     ...(llmVndGeminiCodeExecution === 'auto' ? { vndGeminiCodeExecution: llmVndGeminiCodeExecution } : {}),
     ...(llmVndGeminiComputerUse ? { vndGeminiComputerUse: llmVndGeminiComputerUse } : {}),

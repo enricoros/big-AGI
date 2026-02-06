@@ -79,6 +79,7 @@ const ModelParameterSpec_schema = z.object({
     // Anthropic
     'llmVndAnt1MContext',
     'llmVndAntEffort',
+    'llmVndAntEffortMax',
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',

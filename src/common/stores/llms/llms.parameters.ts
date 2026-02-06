@@ -136,6 +136,14 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (e.g. default 200K context window)
   },
 
+  llmVndAntEffortMax: { // introduced with Claude Opus 4.6; this adds the 'max' level on top of llmVndAntEffort
+    label: 'Effort',
+    type: 'enum' as const,
+    description: 'Controls thinking depth. max = deepest reasoning with no constraints, high = default.',
+    values: ['low', 'medium', 'high', 'max'] as const,
+    // No initialValue - undefined means high effort (default)
+  } as const,
+
   llmVndAntEffort: {
     label: 'Effort',
     type: 'enum' as const,

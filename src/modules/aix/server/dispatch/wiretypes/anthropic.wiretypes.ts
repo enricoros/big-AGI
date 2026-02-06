@@ -847,7 +847,7 @@ export namespace AnthropicWire_API_Message_Create {
      * Allows trading off response thoroughness for efficiency (Claude Opus 4.5+ only).
      */
     output_config: z.object({
-      effort: z.enum(['low', 'medium', 'high']).optional(),
+      effort: z.enum(['low', 'medium', 'high', 'max']).optional(),
     }).optional(),
 
     /**
