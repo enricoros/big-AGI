@@ -65,8 +65,10 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
       'logprobs',
       'max_tokens',
       'min_p',
+      'parallel_tool_calls',
       'presence_penalty',
       'reasoning', // Reasoning
+      'reasoning_effort', // Legacy (prefer 'reasoning')
       'repetition_penalty',
       'response_format',
       'seed',
@@ -79,6 +81,7 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
       'top_k',
       'top_logprobs',
       'top_p',
+      'verbosity',
       'web_search_options', // all models have also fallback search
     ]),
     z.string(), // Allow other parameters not in the enum
