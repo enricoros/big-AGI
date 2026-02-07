@@ -38,7 +38,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
   // Claude 4.6 models with thinking variants
   'claude-opus-4-6': {
     idVariant: 'thinking',
-    label: 'Claude Opus 4.6 (Thinking)',
+    label: 'Claude Opus 4.6 (Adaptive)',
     description: 'Claude Opus 4.6 with adaptive thinking mode for the most complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* adaptive */ }, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }],

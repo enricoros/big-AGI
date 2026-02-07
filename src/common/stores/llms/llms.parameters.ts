@@ -159,6 +159,11 @@ export const DModelParameterRegistry = {
     initialValue: '', // empty string = disabled
   },
 
+  /**
+   * Important: when this is set to anything other than nullish, it enables Adaptive(-1)/Extended(int > 1024) thinking,
+   * and as a side effect **disables the temperature** in the requests (even when tunneled through OpenRouter). So this
+   * control must disable the UI controls for temperature in both the side panel and the model configuration dialog.
+   */
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer',
