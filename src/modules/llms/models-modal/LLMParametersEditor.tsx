@@ -144,6 +144,14 @@ const _antEffortOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (High)' },
 ] as const;
 
+const _antEffortMaxOptions = [
+  { value: 'max', label: 'Max', description: 'Deepest reasoning' },
+  { value: 'high', label: 'High', description: 'Maximum capability' },
+  { value: 'medium', label: 'Medium', description: 'Balanced' },
+  { value: 'low', label: 'Low', description: 'Most efficient' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (High)' },
+] as const;
+
 const _moonReasoningEffortOptions = [
   { value: 'high', label: 'On', description: 'Multi-step reasoning' },
   { value: 'none', label: 'Off', description: 'Disable thinking mode' },
@@ -241,6 +249,7 @@ export function LLMParametersEditor(props: {
     llmForceNoStream,
     llmVndAnt1MContext,
     llmVndAntEffort,
+    llmVndAntEffortMax,
     llmVndAntSkills,
     llmVndAntThinkingBudget,
     llmVndAntWebFetch,
@@ -385,6 +394,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndAntEffortMax') && (
+      <FormSelectControl
+        title='Effort'
+        tooltip='Controls thinking depth. Max = deepest reasoning with no constraints. High = default capability. Low = fastest, most efficient.'
+        value={llmVndAntEffortMax ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndAntEffortMax');
+          else onChangeParameter({ llmVndAntEffortMax: value });
+        }}
+        options={_antEffortMaxOptions}
       />
     )}
 
