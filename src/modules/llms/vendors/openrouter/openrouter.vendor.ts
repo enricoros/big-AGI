@@ -14,6 +14,7 @@ export interface DOpenRouterServiceSettings {
   oaiKey: string;
   oaiHost: string;
   csf?: boolean;
+  requireParameters?: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
     heliKey: '',
+    ...(partialSetup?.requireParameters ? { orRequireParameters: true } : {}),
   }),
 
   // there is delay for OpenRouter Free API calls

@@ -171,11 +171,17 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       }
 
       // default: industry-standard OpenAI ChatCompletions API with per-dialect extensions
+      const chatCompletionsBody = aixToOpenAIChatCompletions(dialect, model, chatGenerate, streaming);
+
+      // [OpenRouter] Service-level provider routing parameter
+      if (dialect === 'openrouter' && access.orRequireParameters)
+        chatCompletionsBody.provider = { ...chatCompletionsBody.provider, require_parameters: true };
+
       return {
         request: {
           ...openAIAccess(access, model.id, OPENAI_API_PATHS.chatCompletions),
           method: 'POST',
-          body: aixToOpenAIChatCompletions(dialect, model, chatGenerate, streaming),
+          body: chatCompletionsBody,
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
