@@ -405,12 +405,41 @@ export namespace OpenAIWire_API_Chat_Completions {
     // -- Vendor-specific extensions to the request --
 
     // [OpenRouter, 2025-10-22] OpenRouter-specific plugins parameter for web search and other hosted tools
-    plugins: z.array(z.object({
-      id: z.literal('web'), // plugin identifier, e.g., 'web
-      engine: z.enum(['native', 'exa']).optional(), // search engine: 'native', 'exa', or undefined (auto)
-      max_results: z.number().int().positive().optional(), // defaults to 5
-      search_prompt: z.string().optional(), // custom search prompt
-    })).optional(),
+    plugins: z.array(z.union([
+      z.object({
+        id: z.literal('web'),
+        engine: z.enum(['native', 'exa']).optional(), // search engine: 'native', 'exa', or undefined (auto)
+        max_results: z.number().int().positive().optional(), // defaults to 5
+        search_prompt: z.string().optional(), // custom search prompt
+      }),
+      // [OpenRouter, 2026-02-06] Auto-fixes malformed JSON/tool calls from providers - DISABLED for now
+      // z.object({
+      //   id: z.literal('response-healing'),
+      //   enabled: z.boolean().optional(),
+      // }),
+    ])).optional(),
+
+    // [OpenRouter, 2026-02-06] Provider routing preferences
+    provider: z.object({
+      require_parameters: z.boolean().optional(), // Only route to providers supporting all request params (strict mode)
+      allow_fallbacks: z.boolean().optional(), // Whether to allow backup providers (default: true)
+      data_collection: z.enum(['allow', 'deny']).optional(), // 'deny' = only use providers that don't train on user data
+      sort: z.union([
+        z.enum(['price', 'throughput', 'latency']), // Simple sort preference
+        z.object({
+          by: z.enum(['price', 'throughput', 'latency']).optional(),
+          partition: z.enum(['model', 'none']).optional(),
+        }),
+      ]).optional(),
+      order: z.array(z.string()).optional(), // Ordered list of provider slugs to prefer
+      ignore: z.array(z.string()).optional(), // Provider slugs to skip
+      quantizations: z.array(z.enum(['int4', 'int8', 'fp4', 'fp6', 'fp8', 'fp16', 'bf16', 'fp32', 'unknown'])).optional(),
+    }).optional(),
+
+    // [OpenRouter, 2026-02-06] Debug/diagnostics
+    debug: z.object({
+      echo_upstream_body: z.boolean().optional(), // Returns the exact body sent to the upstream provider
+    }).optional(),
 
     // [Perplexity, 2025-06-23] Perplexity-specific search parameters
     search_mode: z.enum(['academic']).optional(), // Academic filter for scholarly sources
