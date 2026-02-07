@@ -1,9 +1,10 @@
 import * as z from 'zod/v4';
 
+import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
 import { LLM_IF_ANT_PromptCaching, LLM_IF_ANT_ToolsSearch, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
-import type { ModelDescriptionSchema } from '../llm.server.types';
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../llm.server.variants';
 import { llmDevCheckModels_DEV } from '../models.mappings';
 
@@ -30,7 +31,7 @@ const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
 ] as const;
 
 
-const _hardcodedAnthropicVariants: ModelVariantMap = {
+const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { idVariant: 'thinking' /* this is here because of OpenRouter matching, see below - all these are assued as thinking variants */ } } = {
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
@@ -42,7 +43,6 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* adaptive */ }, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }],
     // benchmark: { cbaElo: ... }, // TBD
-    maxCompletionTokens: 32000,
   },
 
   // Claude 4.5 models with thinking variants
@@ -122,7 +122,7 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
 } as const;
 
 export function anthropicInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
-  return createVariantInjector(_hardcodedAnthropicVariants, 'before')(acc, model);
+  return createVariantInjector(_hardcodedAnthropicThinkingVariants, 'before')(acc, model);
 }
 
 
@@ -353,3 +353,50 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
   };
 }
 
+
+// -- Anthropic-through-OpenRouter Vendor Lookup --
+
+const _ORT_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
+] as const);
+const _ORT_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  'llmVndAntEffort', 'llmVndAntEffortMax',
+  'llmVndAntThinkingBudget',
+] as const satisfies DModelParameterId[]);
+
+/**
+ * Lookup for OpenRouter: match an OR Anthropic model ID to a known hardcoded model
+ * @param orModelName - The model name after stripping 'anthropic/' prefix (e.g. 'claude-4.6-opus')
+ */
+export function llmOrtAntLookup_ThinkingVariants(orModelName: string): OrtVendorLookupResult | undefined {
+
+  // tokenize the OR name into a set of tokens ['claude', '3', '7', 'sonnet'], ignoring order, dots vs dashes, date suffixes, and OR-specific tags (e.g. ':beta')
+  const orTokens = new Set(orModelName.replace(/:.*$/, '').replace(/\./g, '-').replace(/-\d{8}$/, '').split('-'));
+
+  // find a known model by matching all tokens
+  const _knownModel = hardcodedAnthropicModels.find((m) => {
+    // tokenize known model name, removing the '...-date' suffix
+    const antTokens = new Set(m.id.replace(/-\d{8}$/, '').split('-'));
+    return antTokens.size === orTokens.size && [...antTokens].every((t) => orTokens.has(t));
+  });
+  if (!_knownModel) return undefined;
+
+  // found a model
+  let model = _knownModel;
+
+  // if there's a variant, it must be the thinking variant, so return that
+  const thinkingVariant = _hardcodedAnthropicThinkingVariants[model.id];
+  if (thinkingVariant && !Array.isArray(thinkingVariant)) {
+    const { idVariant: _idV, variantOrder: _vo, ...variantChanges } = thinkingVariant;
+    model = { ...model, ...variantChanges };
+  }
+
+  // allowlists on interfaces and parameter specs
+  const interfaces = model.interfaces.filter((i) => _ORT_ANT_IF_ALLOWLIST.has(i));
+
+  const parameterSpecs = model.parameterSpecs
+    ?.filter((spec) => _ORT_ANT_PARAM_ALLOWLIST.has(spec.paramId))
+    .map((spec) => ({ ...spec }));
+
+  return { interfaces, parameterSpecs };
+}
