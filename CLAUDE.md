@@ -5,11 +5,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ```bash
-# Targeted Code Quality (safe while dev server runs)
-npx tsc --noEmit                      # Type check without building
-npx eslint src/path/to/file.ts        # Lint specific file
-npm run lint                          # Lint entire project
+# Validate (~5s, safe while dev server runs, do NOT use `next build` ~45s for same checks)
+tsc --noEmit --pretty && npm run lint # Type check (~3.5s) + ESLint (~2s)
+eslint src/path/to/file.ts           # Lint specific file
+
+# Full build (~60s+, only when suspecting runtime/bundle issues)                                                                                                                                                                        
+npm run build  # next build runs compile+lint+types but stops at first type-error file; tsc shows all at once        
+
+# Database & External Services
+# npm run supabase:local-update-types   # Generate TypeScript types
+# npm run stripe:listen                 # Listen for Stripe webhooks
 ```
+
+## Development Environment
+
+- Dev servers may be running on ports 3000, 3001, 3002, or 3003 (not always this app - other projects may occupy these ports). Never start or stop dev servers, let the user do it.
+- For runtime debugging, use `mcp__chrome-devtools` if present to launch a controlled Chrome instance against the running dev server - useful for console errors, network inspection, and React devtree.
 
 ## Architecture Overview
 
@@ -181,7 +192,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 
 ### Testing & Quality
 - Run `npm run lint` before committing
-- Type-check with `npx tsc --noEmit`
+- Type-check with `tsc --noEmit`
 - Test critical user flows manually
 
 ### Adding a New LLM Vendor
