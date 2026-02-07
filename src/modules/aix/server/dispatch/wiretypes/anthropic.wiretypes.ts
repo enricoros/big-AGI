@@ -642,7 +642,10 @@ export namespace AnthropicWire_Tools {
     name: z.literal('code_execution'),
   });
 
-  /** Requires beta header: "computer-use-2025-01-24" */
+  /**
+   * Requires beta header: "computer-use-2025-01-24"
+   * NOTE: newer version available - computer_20251124 (beta header: "computer-use-2025-11-24") adds `enable_zoom: boolean`
+   */
   const _ComputerUseTool_20250124_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('computer_20250124'),
     name: z.literal('computer'),
