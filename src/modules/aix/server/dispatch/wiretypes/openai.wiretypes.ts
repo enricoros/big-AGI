@@ -436,9 +436,9 @@ export namespace OpenAIWire_API_Chat_Completions {
       quantizations: z.array(z.enum(['int4', 'int8', 'fp4', 'fp6', 'fp8', 'fp16', 'bf16', 'fp32', 'unknown'])).optional(),
     }).optional(),
 
-    // [OpenRouter, 2026-02-06] Debug/diagnostics
+    // [OpenRouter, 2026-02-06] Debug - echoes what OR sent upstream; not wired, use requestBodyOverride to inject ad-hoc
     debug: z.object({
-      echo_upstream_body: z.boolean().optional(), // Returns the exact body sent to the upstream provider
+      echo_upstream_body: z.boolean().optional(),
     }).optional(),
 
     // [Perplexity, 2025-06-23] Perplexity-specific search parameters
