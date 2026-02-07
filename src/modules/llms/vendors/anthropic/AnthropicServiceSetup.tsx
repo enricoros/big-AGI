@@ -106,7 +106,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ heliconeKey: text })}
     />}
 
-    {showAdvanced && <FormSwitchControl
+    {(showAdvanced || !!anthropicInferenceGeo) && <FormSwitchControl
       title='US-only Inference' on='US' off='Global'
       tooltip='Restrict model inference to US data centers at 1.1x pricing. Supported on Claude Opus 4.6 and newer models only — older models will return an error.'
       description={anthropicInferenceGeo ? 'US region (1.1x)' : 'Default routing'}
