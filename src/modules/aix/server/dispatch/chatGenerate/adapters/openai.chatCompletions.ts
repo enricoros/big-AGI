@@ -248,9 +248,11 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     if (model.vndAntEffort)
       payload.verbosity = model.vndAntEffort;
 
-    // Gemini via OpenRouter
+    // Gemini via OpenRouter - budget-based (2.5) or level-based (3.0+)
     else if (model.vndGeminiThinkingBudget !== undefined)
       payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget ?? 8192 };
+    else if (model.vndGeminiThinkingLevel)
+      payload.reasoning = { effort: model.vndGeminiThinkingLevel };
 
     // OpenAI via OpenRouter - all effort levels including 'none' and 'minimal' are valid
     else if (model.vndOaiReasoningEffort)

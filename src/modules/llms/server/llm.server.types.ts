@@ -149,6 +149,15 @@ export const ModelDescription_schema = z.object({
 });
 
 
+/// Vendor Lookup for OpenRouter parameter inheritance
+// Each vendor's lookup filters to only what works through OpenRouter's OAI-compatible API.
+// OpenRouter merges these with its own auto-detected interfaces and params.
+export type OrtVendorLookupResult = {
+  interfaces?: ModelDescriptionSchema['interfaces'];
+  parameterSpecs?: ModelDescriptionSchema['parameterSpecs'];
+};
+
+
 /// ListModels Response
 
 export const ListModelsResponse_schema = z.object({
