@@ -136,6 +136,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
   const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
   if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
+    // NOTE: We don't want to maintain patches here - so just FYI: budget_tokens is deprecated on Opus 4.6 in favor of adaptive thinking
+    // if (typeof model.vndAntThinkingBudget === 'number' && model.id.includes('opus-4-6'))
+    //   console.warn('[Anthropic] budget_tokens is deprecated on Opus 4.6 - use adaptive thinking instead');
     payload.thinking = model.vndAntThinkingBudget === 'adaptive' ? {
       type: 'adaptive',
     } : model.vndAntThinkingBudget !== null ? {
@@ -187,6 +190,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
         type: 'web_search_20250305',
         name: 'web_search',
         max_uses: 10, // Allow up to 10 progressive searches // FIXME: HARDCODED
+        // Pass user geolocation for location-aware search results
+        ...(model.userGeolocation ? {
+          user_location: { type: 'approximate' as const, ...model.userGeolocation },
+        } : {}),
       });
     }
 

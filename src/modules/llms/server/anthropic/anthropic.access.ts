@@ -52,29 +52,15 @@ const DEFAULT_ANTHROPIC_HEADERS = {
 
 const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
 
-  // NOTE: undocumented: I wonder what this is for
-  // 'claude-code-20250219',
+  // Known SDK beta headers (for reference, not all used):
+  //   prompt-caching-2024-07-31        -- GA: no longer needed
+  //   pdfs-2024-09-25                  -- GA: no longer needed
+  //   token-efficient-tools-2025-02-19 -- not used; disabled for now as side-effects are untested
+  //   extended-cache-ttl-2025-04-11    -- for 1h cache TTL; we support ttl:'1h' in wiretypes already
+  //   interleaved-thinking-2025-05-14  -- for Claude 4/4.5 interleaved thinking (auto on Opus 4.6 adaptive)
+  //   context-management-2025-06-27    -- for context_management edits (e.g. clear_tool_uses)
+  //   model-context-window-exceeded-2025-08-26 -- Sonnet 4.5+ have this by default
 
-  // NOTE: disabled for now, as we don't have tested side-effects for this feature yet
-  // 'token-efficient-tools-2025-02-19', // https://docs.anthropic.com/en/docs/build-with-claude/tool-use/token-efficient-tool-use
-
-  /**
-   * to use the prompt caching feature; adds to any API invocation:
-   *  - message_start.message.usage.cache_creation_input_tokens: number
-   *  - message_start.message.usage.cache_read_input_tokens: number
-   */
-  'prompt-caching-2024-07-31',
-
-  /**
-   * Enables model_context_window_exceeded stop reason for models earlier than Sonnet 4.5
-   * (Sonnet 4.5+ have this by default). This allows requesting max tokens without calculating
-   * input size, and the API will return as much as possible within the context window.
-   * https://docs.claude.com/en/api/handling-stop-reasons#model-context-window-exceeded
-   */
-  // 'model-context-window-exceeded-2025-08-26',
-
-  // now default
-  // 'messages-2023-12-15'
 ] as const;
 
 const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
