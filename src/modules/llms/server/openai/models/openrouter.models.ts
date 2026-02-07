@@ -159,6 +159,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // -- Vendor parameter & interface inheritance --
   const llmRef = model.id.replace(/^[^/]+\//, '');
+  let initialTemperature: number | undefined;
 
   const _mergeLookup = (lookup: OrtVendorLookupResult | undefined) => {
     if (lookup?.interfaces)
@@ -169,6 +170,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       for (const param of lookup.parameterSpecs)
         if (!parameterSpecs.some(p => p.paramId === param.paramId))
           parameterSpecs.push(...lookup.parameterSpecs);
+    if (lookup?.initialTemperature !== undefined)
+      initialTemperature = lookup.initialTemperature;
   };
 
   switch (true) {
@@ -265,6 +268,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     chatPrice,
     hidden,
     parameterSpecs,
+    ...(initialTemperature !== undefined && { initialTemperature }),
   });
 }
 
