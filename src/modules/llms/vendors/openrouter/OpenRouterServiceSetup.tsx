@@ -12,6 +12,7 @@ import { getLLMPricing } from '~/common/stores/llms/llms.types';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
@@ -35,7 +36,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOpenRouter);
 
   // derived state
-  const { clientSideFetch, oaiKey } = serviceAccess;
+  const { clientSideFetch, oaiKey, orRequireParameters } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
   const showAdvanced = advanced.on || !!clientSideFetch;
 
@@ -129,6 +130,14 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     {/*  🔓 Some models are available free of moderation by OpenRouter.*/}
     {/*  These are usually moderated by the upstream provider (e.g. OpenAI).*/}
     {/*</Typography>*/}
+
+    {(showAdvanced || !!orRequireParameters) && <FormSwitchControl
+      title='Require Parameters' on='Strict' off='Default'
+      tooltip='When enabled, OpenRouter only routes to providers that support all the parameters in your request (e.g. temperature, top_p, tools). When off, unsupported parameters are silently dropped.'
+      description={orRequireParameters ? 'Strict provider filtering' : 'Best-effort routing'}
+      checked={!!orRequireParameters}
+      onChange={on => updateSettings({ requireParameters: on })}
+    />}
 
     {showAdvanced && <SetupFormClientSideToggle
       visible={!!oaiKey}
