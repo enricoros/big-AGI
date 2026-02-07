@@ -384,6 +384,25 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-5-nano-2025-08-07',
   },
 
+  /// GPT-5.3 Codex - Released February 5, 2026 (API access coming soon)
+  {
+    hidden: true, // API access not yet available - rolling out soon
+    idPrefix: 'gpt-5.3-codex',
+    label: 'GPT-5.3 Codex',
+    description: 'Most capable agentic coding model. Combines frontier coding performance of GPT-5.2-Codex with reasoning and professional knowledge of GPT-5.2. ~25% faster.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort52' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    // chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 }, // estimated from gpt-5.2-codex pricing
+    // benchmark: TBD
+  },
+
+
   /// OSB-120b - Speculative support for new model appearing in API
   {
     idPrefix: 'osb-120b',
@@ -1040,6 +1059,8 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5.3
+  'gpt-5.3-codex',
   // GPT-5.2
   'gpt-5.2-20',
   'gpt-5.2-pro-20',
