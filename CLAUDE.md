@@ -43,7 +43,7 @@ Big-AGI is a Next.js 15 application with a modular architecture built for advanc
 
 - **Frontend**: Next.js 15, React 18, Material-UI Joy, Emotion (CSS-in-JS)
 - **State Management**: Zustand with localStorge/IndexedDB (single cell) persistence
-- **API Layer**: tRPC with React Query for type-safe communication
+- **API Layer**: tRPC with TanStack React Query for type-safe communication
 - **Runtime**: Edge Runtime for AI operations, Node.js for data processing
 
 ### Apps Architecture Pattern
@@ -62,7 +62,7 @@ Modules in `/src/modules/` provide reusable business logic:
 - **`aix/`** - AI communication framework for real-time streaming
 - **`beam/`** - Multi-model AI reasoning system (scatter/gather pattern)
 - **`blocks/`** - Content rendering (markdown, code, images, etc.)
-- **`llms/`** - Language model abstraction supporting 16 vendors
+- **`llms/`** - Language model abstraction supporting 19 vendors
 
 ### Key Subsystems & Their Patterns
 
@@ -133,6 +133,7 @@ Located in `/src/common/layout/optima/`
 2. **Per-Instance Stores** (Vanilla Zustand)
    - `store-beam_vanilla`: Beam scatter/gather state
    - `store-perchat_vanilla`: Chat overlay state
+   - `store-attachment-drafts_vanilla`: Attachment drafts
    - High-performance, no React integration
 
 3. **Module Stores**
@@ -199,7 +200,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 1. Create vendor in `/src/modules/llms/vendors/[vendor]/`
 2. Implement `IModelVendor` interface
 3. Register in `vendors.registry.ts`
-4. Add environment variables to `env.ts` (if server-side keys needed)
+4. Add environment variables to the vendor's server file and `/src/server/env.server.ts` (if server-side keys needed)
 
 ### Debugging Storage Issues
 - Check IndexedDB: DevTools → Application → IndexedDB → `app-chats`
@@ -211,9 +212,9 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 ### AIX Streaming Pattern
 ```typescript
 // Efficient streaming with decimation
-aixChatGenerateContent_DMessage(
+aixChatGenerateContent_DMessage_FromConversation(
   llmId,
-  request,
+  chatHistory,
   { abortSignal, throttleParallelThreads: 1 },
   async (update, isDone) => {
     // Real-time UI updates
@@ -227,7 +228,7 @@ aixChatGenerateContent_DMessage(
 const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   openai: ModelVendorOpenAI,
   anthropic: ModelVendorAnthropic,
-  // ... 14 more vendors
+  // ... 17 more vendors
 };
 ```
 
@@ -239,7 +240,8 @@ The server uses a split architecture with two tRPC routers:
 Distributed edge runtime for low-latency AI operations:
 - **AIX** - AI streaming and communication
 - **LLM Routers** - Direct vendor integrations (OpenAI, Anthropic, Gemini, Ollama)
-- **External Services** - ElevenLabs (TTS), Inworld (TTS), Google Search, YouTube transcripts
+- **Speex** - Unified TTS router (ElevenLabs, Inworld, and other TTS vendors)
+- **External Services** - Google Search, YouTube transcripts
 
 Located at `/src/server/trpc/trpc.router-edge.ts`
 
