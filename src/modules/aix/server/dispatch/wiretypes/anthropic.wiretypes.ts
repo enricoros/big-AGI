@@ -887,9 +887,11 @@ export namespace AnthropicWire_API_Message_Create {
 
     /**
      * [Anthropic, 2026-02-01] Geographic region for model inference.
-     * US-only inference at 1.1x pricing for models after Feb 1, 2026.
+     * - "global": default, inference may run in any available geography
+     * - "us": US-only inference at 1.1x pricing
+     * Only supported on Claude Opus 4.6 and subsequent models; older models return 400.
      */
-    inference_geo: z.string().nullish(),
+    inference_geo: z.enum(['global', 'us']).or(z.string()).nullish(),
   });
 
   /// Response

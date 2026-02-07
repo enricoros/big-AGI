@@ -71,11 +71,18 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         // enableCodeExecution: ...
       });
 
+      // Build the request body from model + chat parameters
+      const anthropicBody = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
+
+      // [Anthropic, 2026-02-01] Service-level inference geo routing (e.g. "us")
+      if (access.anthropicInferenceGeo)
+        anthropicBody.inference_geo = access.anthropicInferenceGeo;
+
       return {
         request: {
           ...anthropicRequest,
           method: 'POST',
-          body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
+          body: anthropicBody,
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),

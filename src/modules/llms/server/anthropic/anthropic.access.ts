@@ -112,6 +112,7 @@ export const anthropicAccessSchema = z.object({
   anthropicKey: z.string().trim(),
   anthropicHost: z.string().trim().nullable(),
   heliconeKey: z.string().trim().nullable(),
+  anthropicInferenceGeo: z.string().trim().nullable().optional(), // [Anthropic, 2026-02-01] e.g. "us" for US-only inference, optional: for server backward-comp, and can be removed
 });
 
 export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHeaderOptions): { headers: HeadersInit, url: string } {
