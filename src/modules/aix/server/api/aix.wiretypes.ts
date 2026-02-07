@@ -497,8 +497,8 @@ export namespace AixWire_API {
      */
     userGeolocation: z.object({
       city: z.string().optional(),      // free text input for the city of the user, e.g. San Francisco.
-      country: z.string().optional(),   // two-letter ISO country code of the user, e.g. US
       region: z.string().optional(),    // free text input for the reg. of the user the user, e.g. California
+      country: z.string().optional(),   // two-letter ISO country code of the user, e.g. US
       timezone: z.string().optional(),  // IANA timezone of the user, e.g. America/Los_Angeles
     }).optional(),
   });
