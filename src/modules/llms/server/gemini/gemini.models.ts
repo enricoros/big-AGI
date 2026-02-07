@@ -883,5 +883,5 @@ export function llmOrtGemLookup(orModelName: string): OrtVendorLookupResult | un
     ?.filter(spec => _ORT_GEM_PARAM_ALLOWLIST.has(spec.paramId))
     .map(spec => ({ ...spec }));
 
-  return { interfaces, parameterSpecs };
+  return { interfaces, parameterSpecs, initialTemperature: GEMINI_DEFAULT_TEMPERATURE };
 }

@@ -155,6 +155,7 @@ export const ModelDescription_schema = z.object({
 export type OrtVendorLookupResult = {
   interfaces?: ModelDescriptionSchema['interfaces'];
   parameterSpecs?: ModelDescriptionSchema['parameterSpecs'];
+  initialTemperature?: number; // vendor-specific default (e.g. Gemini 1.0); undefined = use global fallback (0.5)
 };
 
 
