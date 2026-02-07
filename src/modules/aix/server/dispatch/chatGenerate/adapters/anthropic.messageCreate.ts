@@ -153,18 +153,21 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       effort: model.vndAntEffort,
     };
 
-  // [Anthropic, 2025-11-13] Structured Outputs - JSON output format
+  // [Anthropic, 2026-01-29 GA] Structured Outputs - JSON output format (now in output_config.format)
   if (model.strictJsonOutput) {
 
     // auto-add additionalProperties: false to root object if not present - required by Anthropic
     let schema = model.strictJsonOutput.schema;
     if (schema && typeof schema === 'object' && schema.type === 'object' && schema.additionalProperties === undefined)
       schema = { ...schema, additionalProperties: false };
-    payload.output_format = { type: 'json_schema', schema };
+    payload.output_config = {
+      ...payload.output_config,
+      format: { type: 'json_schema', schema },
+    };
 
     // warn about incompatible features (citations are enabled via web_fetch tool)
     if (model.vndAntWebFetch === 'auto')
-      console.warn('[Anthropic] Structured output_format may conflict with web_fetch citations');
+      console.warn('[Anthropic] Structured output_config.format may conflict with web_fetch citations');
   }
 
   // --- Tools ---

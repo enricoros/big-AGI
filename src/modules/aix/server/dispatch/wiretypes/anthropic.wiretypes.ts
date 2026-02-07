@@ -10,6 +10,13 @@ import * as z from 'zod/v4';
  *
  * ## Updates
  *
+ * ### 2026-02-06 - API Sync: output_config.format, inference_geo, eager_input_streaming
+ * - Request: deprecated top-level `output_format`, moved to `output_config.format` (GA: 2026-01-29)
+ * - Request: added `inference_geo` for region-of-availability inference routing
+ * - Response.usage: added `inference_geo` field
+ * - CustomToolDefinition: added `eager_input_streaming` for fine-grained tool input streaming
+ * - WebSearchToolResultError: added `request_too_large` error code
+ *
  * ### 2025-11-24 - Programmatic Tool Calling (Beta: advanced-tool-use-2025-11-20)
  * - ToolUseBlock: added 'caller' field to indicate direct vs programmatic invocation
  * - CustomToolDefinition: added 'allowed_callers' field to restrict tool invocation contexts
@@ -263,7 +270,7 @@ export namespace AnthropicWire_Blocks {
       z.object({
         type: z.literal('web_search_tool_result_error'),
         error_code: z.union([
-          z.enum(['invalid_tool_input', 'unavailable', 'max_uses_exceeded', 'too_many_requests', 'query_too_long']),
+          z.enum(['invalid_tool_input', 'unavailable', 'max_uses_exceeded', 'too_many_requests', 'query_too_long', 'request_too_large']),
           z.string(), // forward-compatibility
         ]),
       }),
@@ -592,6 +599,12 @@ export namespace AnthropicWire_Tools {
     strict: z.boolean().optional(),
 
     /**
+     * [Anthropic, 2025-06-11] Eager Input Streaming - enables fine-grained streaming of tool input parameters.
+     * When true, tool inputs are streamed earlier during generation for lower latency.
+     */
+    eager_input_streaming: z.boolean().optional(),
+
+    /**
      * [Anthropic, 2025-11-24] Tool Search Tool - when true, this tool is not loaded into context initially and can be discovered via the tool search tool when needed.
      */
     defer_loading: z.boolean().optional(),
@@ -843,11 +856,16 @@ export namespace AnthropicWire_API_Message_Create {
     ]).optional(),
 
     /**
-     * [Anthropic, effort-2025-11-24] Output configuration for effort-based token control.
-     * Allows trading off response thoroughness for efficiency (Claude Opus 4.5+ only).
+     * Output configuration for effort-based token control and structured outputs.
+     * - effort: [Anthropic, effort-2025-11-24] Allows trading off response thoroughness for efficiency.
+     * - format: [Anthropic, 2026-01-29 GA] JSON schema constraint on output. Replaces deprecated top-level `output_format`.
      */
     output_config: z.object({
       effort: z.enum(['low', 'medium', 'high', 'max']).optional(),
+      format: z.object({
+        type: z.literal('json_schema'),
+        schema: z.any(), // JSON Schema object - validated by Anthropic
+      }).optional(),
     }).optional(),
 
     /**
@@ -868,15 +886,10 @@ export namespace AnthropicWire_API_Message_Create {
     top_p: z.number().optional(),
 
     /**
-     * [Anthropic, 2025-11-13] Structured Outputs - JSON output format configuration.
-     * Constrains Claude's response to follow a specific JSON schema.
-     * Beta feature requiring header: "structured-outputs-2025-11-13"
-     * Available for Claude Sonnet 4.5 and Claude Opus 4.1+.
+     * [Anthropic, 2026-02-01] Geographic region for model inference.
+     * US-only inference at 1.1x pricing for models after Feb 1, 2026.
      */
-    output_format: z.object({
-      type: z.literal('json_schema'),
-      schema: z.any(), // JSON Schema object - validated by Anthropic
-    }).optional(),
+    inference_geo: z.string().nullish(),
   });
 
   /// Response
@@ -926,6 +939,7 @@ export namespace AnthropicWire_API_Message_Create {
         tool_search_requests: z.number().optional(), // [Anthropic, 2025-11-24] Tool Search Tool usage
       }).nullish(),
       service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
+      inference_geo: z.string().nullish(),
     }),
 
     /**
