@@ -35,7 +35,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   const { autoVndAntBreakpoints, setAutoVndAntBreakpoints } = useChatAutoAI();
 
   // derived state
-  const { anthropicKey, anthropicHost, clientSideFetch, heliconeKey } = serviceAccess;
+  const { anthropicKey, anthropicHost, anthropicInferenceGeo, clientSideFetch, heliconeKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
   const showAdvanced = advanced.on || !!clientSideFetch;
 
@@ -104,6 +104,14 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
       value={heliconeKey || ''}
       onChange={text => updateSettings({ heliconeKey: text })}
+    />}
+
+    {showAdvanced && <FormSwitchControl
+      title='US-only Inference' on='US' off='Global'
+      tooltip='Restrict model inference to US data centers at 1.1x pricing. Supported on Claude Opus 4.6 and newer models only — older models will return an error.'
+      description={anthropicInferenceGeo ? 'US region (1.1x)' : 'Default routing'}
+      checked={!!anthropicInferenceGeo}
+      onChange={on => updateSettings({ inferenceGeoUS: on })}
     />}
 
     {showAdvanced && <SetupFormClientSideToggle
