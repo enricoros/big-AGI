@@ -111,7 +111,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const outputsText = model.acceptsOutputs.includes('text');
   const outputsAudio = model.acceptsOutputs.includes('audio');
   const outputsImages = model.acceptsOutputs.includes('image')
-    || !!model.vndOaiImageGeneration ; // this is here because when used in 'sweep' the 'acceptsOutputs' are not set yet
+    || !!model.vndOaiImageGeneration; // this is here because when used in 'sweep' the 'acceptsOutputs' are not set yet
   if ((openAIDialect === 'openai' || openAIDialect === 'openrouter') && (outputsAudio || outputsImages)) {
     // set output modalities
     const modalities = new Set(payload.modalities || []);
@@ -237,12 +237,20 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       // - 'adaptive': adaptive thinking (4.6+) - reasoning enabled, no explicit budget
       // - a number: explicit token budget (1024-32000)
       // - null: disable thinking (don't set reasoning field)
-      if (model.vndAntThinkingBudget === 'adaptive')
-        payload.reasoning = { enabled: true };
-      else if (model.vndAntThinkingBudget === null) {
-        // If null, don't set reasoning field at all (disables thinking)
-      } else
-        payload.reasoning = { max_tokens: model.vndAntThinkingBudget || 8192 };
+      if (model.vndAntThinkingBudget === 'adaptive') {
+        payload.reasoning = {
+          enabled: true,
+        };
+        delete payload.temperature;
+      } else if (model.vndAntThinkingBudget !== null) {
+        payload.reasoning = {
+          max_tokens: model.vndAntThinkingBudget,
+        };
+        delete payload.temperature;
+      } else {
+        // NOTE: with thinking disabled, we can still use temperature, so we don't delete it
+        //       see the note on llms.parameters.ts: 'llmVndAntThinkingBudget'
+      }
     }
     // Anthropic effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
     if (model.vndAntEffort)

@@ -287,10 +287,11 @@ export function openRouterInjectVariants(models: ModelDescriptionSchema[], model
   if (model.id.includes('anthropic/') && model.interfaces.includes(LLM_IF_OAI_Reasoning) && model.parameterSpecs?.some(p => p.paramId === 'llmVndAntThinkingBudget')) {
 
     // remove the
+    const isAdaptive = !!model.parameterSpecs?.find(p => p.paramId === 'llmVndAntThinkingBudget' && p.initialValue === -1);
     const thinkingVariant: ModelDescriptionSchema = {
       ...model,
       idVariant: '::thinking',
-      label: `${model.label.replace(' (thinking)', '')} (thinking)`,
+      label: `${model.label.replace(' (thinking)', '')} ${isAdaptive ? '(Adaptive)' : '(thinking)'}`,
       description: `(configurable thinking) ${model.description}`,
     };
     models.push(thinkingVariant);

@@ -136,18 +136,24 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
   const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
   if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
-    // NOTE: We don't want to maintain patches here - so just FYI: budget_tokens is deprecated on Opus 4.6 in favor of adaptive thinking
-    // if (typeof model.vndAntThinkingBudget === 'number' && model.id.includes('opus-4-6'))
-    //   console.warn('[Anthropic] budget_tokens is deprecated on Opus 4.6 - use adaptive thinking instead');
-    payload.thinking = model.vndAntThinkingBudget === 'adaptive' ? {
-      type: 'adaptive',
-    } : model.vndAntThinkingBudget !== null ? {
-      type: 'enabled',
-      budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
-    } : {
-      type: 'disabled',
-    };
-    delete payload.temperature;
+    if (model.vndAntThinkingBudget === 'adaptive') {
+      payload.thinking = {
+        type: 'adaptive',
+      };
+      delete payload.temperature;
+    } else if (model.vndAntThinkingBudget !== null) {
+      payload.thinking = {
+        type: 'enabled',
+        budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
+      };
+      delete payload.temperature;
+    } else {
+      payload.thinking = {
+        type: 'disabled',
+      };
+      // NOTE: with thinking disabled, we can still use temperature, so we don't delete it
+      //       see the note on llms.parameters.ts: 'llmVndAntThinkingBudget'
+    }
   }
 
   // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
