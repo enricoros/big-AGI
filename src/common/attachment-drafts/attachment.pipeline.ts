@@ -644,7 +644,13 @@ export async function attachmentPerformConversion(
         let tableData: DMessageDataInline;
         try {
           const mdTable = htmlTableToMarkdown(input.altData!, false);
-          tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
+          // fall back to source text if the table conversion produced empty/tiny content
+          if (mdTable.replace(/[\s|:\-]/g, '').length < 2) {
+            const fallbackText = await _inputDataToString(input.data, 'rich-text-table');
+            tableData = createDMessageDataInlineText(fallbackText || mdTable, input.mimeType);
+          } else {
+            tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
+          }
         } catch (error) {
           // fallback to text/plain
           const fallbackText = await _inputDataToString(input.data, 'rich-text-table');
