@@ -1043,11 +1043,19 @@ export async function attachmentPerformConversion(
     }
   }
 
+  // warn if any doc output fragment has empty text content (something went wrong in conversion)
+  // TODO: future: check if the text is a conversion error... can happen with drag & drop
+  const emptyOutputWarnings: string[] = [];
+  for (const fragment of newFragments)
+    if (isDocPart(fragment.part) && fragment.part.data.idt === 'text' && !fragment.part.data.text.trim())
+      emptyOutputWarnings.push('Converted output is empty - the source content may be missing or invalid.');
+
   // update
   replaceOutputFragments(attachment.id, newFragments);
   edit(attachment.id, {
     outputsConverting: false,
     outputsConversionProgress: null,
+    ...(emptyOutputWarnings.length && { outputWarnings: emptyOutputWarnings }),
   });
 }
 
