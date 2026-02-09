@@ -54,19 +54,19 @@ jobs:
                **Use web search**: When potentially outside Big-AGI (e.g. user configuration), search the web for similar errors or related issues
                **Provide a solution**:
                - Provide multiple solutions if uncertain, and say so
-               - If you can fix it in code, propose the fix
-                 - If possible also suggest fixes or workarounds for immediate relief
+               - Analyze the code and suggest specific fixes with code examples in your comment
                - Reference specific files and line numbers
-               - Test selectively and even npm install and run build if needed to verify the solution
+               - Suggest workarounds for immediate relief if applicable
+               - Use web search to find similar issues and solutions
             2. Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
             3. Comment with:
                - Very brief thank you note, if applicable
-               - Initial assessment
+               - Initial assessment with suggested code changes (in comment format)
                - Next steps or clarification needed
                - Link duplicates if found
-            
+
+            IMPORTANT: You are in READ-ONLY triage mode. Analyze and suggest solutions in your comment, but do NOT attempt to push code changes.
             If you're uncertain, say so and suggest next steps.
-            If you write any code make sure that it compiles and that you push it.
             Be welcoming, helpful, professional, solution-focused and no-BS.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
