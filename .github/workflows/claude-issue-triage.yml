@@ -17,15 +17,15 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: write
-      id-token: write
+      pull-requests: read # was write, but we're not altering PRs here
       actions: read
+      # id-token: write # required if using OIDC to authenticate to Claude Code API, otherwise use claude_code_oauth_token
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0 # 1 -> 0: full history helps with git blame, etc.
 
       - name: Analyze issue and provide help
         uses: anthropics/claude-code-action@v1
@@ -35,6 +35,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: '*'
           # track_progress: true # Enables tracking comments
+          show_full_output: ${{ github.event.repository.private }} # security: do not log verbosely in private repo
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -66,6 +67,9 @@ jobs:
                - Initial assessment
                - Next steps or clarification needed
                - Link duplicates if found
+            
+            Remember: design values for this codebase: orthogonal features, features that generalize well, modularized and reusable code,
+            type-discriminated data, optimized code, zero maintenance burden. Minimize future pain, etc.
 
             IMPORTANT: You are in READ-ONLY triage mode. Analyze and suggest solutions in your comment, but do NOT attempt to push code changes.
             If you're uncertain, say so and suggest next steps.
@@ -76,4 +80,4 @@ jobs:
           claude_args: |
             --model claude-opus-4-6
             --max-turns 75
-            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),SlashCommand"

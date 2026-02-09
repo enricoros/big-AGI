@@ -26,16 +26,16 @@ jobs:
 
     permissions:
       contents: write  # Required for code creation and commits
-      pull-requests: write
       issues: write
-      id-token: write
+      pull-requests: write
       actions: read # Required for Claude to read CI results on PRs
+      # id-token: write # required if using OIDC to authenticate to Claude Code API, otherwise use claude_code_oauth_token
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0 # 1 -> 0: full history helps with git blame, etc.
 
       - name: Run Claude Code DM Response
         id: claude
@@ -56,4 +56,4 @@ jobs:
           claude_args: |
             --model claude-opus-4-6
             --max-turns 100
-            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),SlashCommand"
