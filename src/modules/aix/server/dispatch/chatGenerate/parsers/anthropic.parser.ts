@@ -150,7 +150,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           if (ANTHROPIC_FIX_REUSED_BLOCK_INDEX) {
             // Workaround: Anthropic server tools reuse indices - promote to next available
             index = responseMessage.content.length;
-            // console.log(`[Anthropic] content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
+            // Note: always on, because now this seems to have been fixed, so we need this warn if that's not the case
+            console.log(`[Anthropic] ♨️ content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
           } else
             throw new Error(`Unexpected content block start location (${requestedIndex})`);
         responseMessage.content[index] = content_block;
