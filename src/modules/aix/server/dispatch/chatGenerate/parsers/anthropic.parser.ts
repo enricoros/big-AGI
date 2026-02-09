@@ -15,6 +15,8 @@ const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of eve
 // NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
 const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = true; // [Anthropic, 2026-01-12] Block Start Index issue workaround
 
+const hotFixAntInjectToolsTextSpacer = true; // FIXME: check if this is still needed with 4.6
+
 
 /**
  * Anthropic Streaming Completions - Messages Architecture
@@ -398,7 +400,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         // set separator flag when server tools complete (text after tools needs visual separation)
         if (content_block.type.includes('tool_use') || content_block.type.includes('tool_result'))
-          needsTextSeparator = true;
+          needsTextSeparator = hotFixAntInjectToolsTextSpacer;
 
         break;
       }
@@ -854,7 +856,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
       // set separator flag when server tools complete (text after tools needs visual separation)
       if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
-        needsTextSeparator = true;
+        needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
     // -> Token Stop Reason
