@@ -178,7 +178,7 @@ export class DebugWireLogger {
   constructor(private readonly label: string) {}
 
   logRequest(method: 'GET' | 'POST' | 'DELETE' | 'PUT', url: string, headers?: HeadersInit, body?: object) {
-    console.log(`[${this.label}:${this.distinct}] ->`, debugGenerateCurlCommand(method, url, headers, body));
+    console.log(`\n[${this.label}:${this.distinct}] ->`, debugGenerateCurlCommand(method, url, headers, body));
   }
 
   logResponse(data: any) {
@@ -187,7 +187,7 @@ export class DebugWireLogger {
     const elapsedMs = this.lastMs ? nowMs - this.lastMs : 0;
     this.lastMs = nowMs;
     console.log(
-      `[${this.label}:${this.distinct}] <- #${this.sequenceNumber} (${elapsedMs} ms):`,
+      `\n[${this.label}:${this.distinct}] <- #${this.sequenceNumber} (${elapsedMs} ms):`,
       objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, 8192),
     );
   }
