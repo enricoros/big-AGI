@@ -19,7 +19,7 @@ jobs:
       issues: write
       pull-requests: read # was write, but we're not altering PRs here
       actions: read
-      # id-token: write # required if using OIDC to authenticate to Claude Code API, otherwise use claude_code_oauth_token
+      id-token: write # required to use OIDC to authenticate to Claude Code API
 
     steps:
       - name: Checkout repository
