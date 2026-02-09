@@ -1,6 +1,9 @@
 import * as z from 'zod/v4';
 
 
+const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a newline
+
+
 /**
  * See the latest Anthropic Typescript definitions on:
  * - https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages/messages.ts
@@ -419,7 +422,12 @@ export namespace AnthropicWire_Blocks {
 
   /// Block Constructors
 
-  export function TextBlock(text: string): z.infer<typeof TextBlock_schema> {
+  export function TextBlock(text: string, debugSender: string): z.infer<typeof TextBlock_schema> {
+    // HOTFIX - is we are here, issues have already happened, and we can't let this stay
+    if (hotFixAntShipNoEmptyTextBlocks && !text) {
+      console.warn(`[Anthropic] ⚠️ Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
+      text = '\n';
+    }
     return { type: 'text', text };
   }
 
