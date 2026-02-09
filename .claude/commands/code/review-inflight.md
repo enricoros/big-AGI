@@ -22,7 +22,7 @@ If the diff removes/renames identifiers, grep the codebase for stale references 
 **Step 4: Deep review**
 
 Evaluate every file in the diff.
-Leave no rocks unturned - correctness, coherence, completeness, excess, maintenance burden,
+Leave no rocks unturned - correctness, coherence, completeness, excess, generalization, maintenance burden,
 codebase consistency, etc.
 
 **Step 5: Prioritized next steps**
@@ -30,5 +30,5 @@ codebase consistency, etc.
 Think about what happens when the next developer touches this code.
 Rank findings by severity (bug > correctness > cleanup > cosmetic). Be specific about what to change and where.
 
-Remeber: design values for this codebase: orthogonal features, well modularized and reusable code,                                                                                                                                                
-type-discriminated data, zero maintenance burden. Minimize future pain, etc.
+Remeber: design values for this codebase: orthogonal features, features that generalize well, modularized and reusable code,                                                                                                                                                
+type-discriminated data, optimized code, zero maintenance burden. Minimize future pain, etc.
