@@ -54,14 +54,16 @@ jobs:
                **Use web search**: When potentially outside Big-AGI (e.g. user configuration), search the web for similar errors or related issues
                **Provide a solution**:
                - Provide multiple solutions if uncertain, and say so
-               - Analyze the code and suggest specific fixes with code examples in your comment
+               - Analyze the code and suggest specific fixes with code examples
+               - If possible also suggest fixes or workarounds for immediate relief
                - Reference specific files and line numbers
                - Suggest workarounds for immediate relief if applicable
                - Use web search to find similar issues and solutions
+               - Test selectively and even npm install and run build if needed to verify the solution
             2. Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
             3. Comment with:
                - Very brief thank you note, if applicable
-               - Initial assessment with suggested code changes (in comment format)
+               - Initial assessment
                - Next steps or clarification needed
                - Link duplicates if found
 
