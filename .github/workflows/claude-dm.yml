@@ -14,8 +14,8 @@ jobs:
   claude-dm:
     # Only allow repository owner to trigger DMs with @claude (blocks other users and bots)
     if: |
-      github.actor == github.repository_owner &&
-      github.triggering_actor == github.repository_owner &&
+      github.actor == 'enricoros' &&
+      github.triggering_actor == 'enricoros' &&
       ((github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
