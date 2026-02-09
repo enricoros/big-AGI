@@ -2,7 +2,7 @@ name: Claude Code Auto-Triage Issues
 
 on:
   issues:
-    types: [ opened, assigned ]
+    types: [ opened ]
 
 jobs:
   claude-issue-triage:
