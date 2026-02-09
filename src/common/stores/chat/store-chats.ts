@@ -41,7 +41,7 @@ export interface ChatActions {
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
   historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
-  historyKeepLastThinkingOnly: (cId: DConversationId) => void;
+  historyStripThinking: (cId: DConversationId, keepCount: number /* 0 = discard all, 1 = keep last */) => void;
   historyView: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
@@ -247,30 +247,26 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           };
         }),
 
-      historyKeepLastThinkingOnly: (conversationId: DConversationId) =>
+      historyStripThinking: (conversationId: DConversationId, keepCount: number) =>
         _get()._editConversation(conversationId, ({ messages: _currentMessages }) => {
           let madeChanges = false;
           const updatedMessages = [..._currentMessages];
-          let foundLastAssistant = false;
+          let assistantsSeen = 0;
 
-          // reverse iterate
+          // reverse iterate to find and skip `keepCount` most recent assistant messages
           for (let i = updatedMessages.length - 1; i >= 0; i--) {
             const message = updatedMessages[i];
 
             // skip non-assistant messages
             if (message.role !== 'assistant') continue;
 
-            // skip the last assistant message
-            if (!foundLastAssistant) {
-              foundLastAssistant = true;
-              continue;
-            }
+            // preserve the N most recent assistant messages
+            if (assistantsSeen++ < keepCount) continue;
 
-            // skip if doesn't have thinking blocks
-            const hasThinkingBlocks = message.fragments.some(isVoidThinkingFragment);
-            if (!hasThinkingBlocks) continue;
+            // strip thinking blocks from older messages
+            if (!message.fragments.some(isVoidThinkingFragment)) continue;
 
-            // Filter out thinking blocks
+            // filter out thinking blocks
             updatedMessages[i] = {
               ...message,
               fragments: message.fragments.filter(fragment => !isVoidThinkingFragment(fragment)),
@@ -283,7 +279,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           return {
             messages: updatedMessages,
             // No need to update the following as void fragments don't contribute
-            // tokenCount: updateMessagesTokenCounts(updatedMessages, true, 'historyKeepLastThinkingOnly'),
+            // tokenCount: updateMessagesTokenCounts(updatedMessages, true, 'historyStripThinking'),
             // updated: Date.now(),
           };
         }),
