@@ -38,7 +38,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Dialect incompatibilities -> Hotfixes
   const hotFixAlternateUserAssistantRoles = openAIDialect === 'deepseek' || openAIDialect === 'perplexity';
-  const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
+  const hotFixRemoveEmptyMessages = openAIDialect === 'moonshot' || openAIDialect === 'perplexity'; // [Moonshot, 2026-02-10] consecutive assistant messages (empty + content) break Moonshot - coalesce to fix
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixThrowCannotFC =
     // [OpenRouter] 2025-10-02: do not throw, rather let it fail if upstream has issues
@@ -348,7 +348,13 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
 }
 
 function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessages {
-  return chatMessages.filter(message => message.content !== null && message.content !== '');
+  return chatMessages.filter(message => {
+    const c = message.content;
+    if (c === null || c === '') return false;
+    if (typeof c === 'string' && !c.trim()) return false; // whitespace-only (e.g. '\n\n' from Anthropic)
+    if (Array.isArray(c) && c.every(part => part.type === 'text' && !part.text.trim())) return false; // all-empty text parts
+    return true;
+  });
 }
 
 /** [OpenAI, 2026-02-04] max_tokens fully deprecated - convert to max_completion_tokens for all OpenAI models */
