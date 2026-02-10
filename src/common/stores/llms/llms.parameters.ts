@@ -65,6 +65,8 @@ interface _EnumParamDef<V extends string = string> extends _ParamDefBase {
   readonly values: readonly V[];
   readonly requiredFallback?: NoInfer<V>;
   readonly initialValue?: NoInfer<V>;
+  /** Per-value pricing multiplier. When the parameter is set to a value listed here, model pricing is multiplied. */
+  readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
 }
 
 /** Zero-cost identity function — TS infers V from `values` only: NoInfer constrains fallback/initial. */
