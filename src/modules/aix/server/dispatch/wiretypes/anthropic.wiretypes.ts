@@ -897,6 +897,12 @@ export namespace AnthropicWire_API_Message_Create {
     top_p: z.number().optional(),
 
     /**
+     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode.
+     * Preview/waitlist. Only supported on Claude Opus 4.6.
+     */
+    speed: z.enum(['fast']).optional(),
+
+    /**
      * [Anthropic, 2026-02-01] Geographic region for model inference.
      * - "global": default, inference may run in any available geography
      * - "us": US-only inference at 1.1x pricing

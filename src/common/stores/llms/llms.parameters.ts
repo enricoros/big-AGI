@@ -159,6 +159,15 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means high effort (default, equivalent to omitting the parameter)
   }),
 
+  llmVndAntInfSpeed: _enumDef({
+    label: 'Fast Mode',
+    type: 'enum',
+    description: 'Accelerated inference (~2.5x faster output) at 6x pricing. Preview access required.',
+    values: ['fast'],
+    enumPriceMultiplier: { fast: 6 },
+    // No initialValue - undefined means standard speed (omitted from request)
+  }),
+
   llmVndAntSkills: {
     label: 'Document Skills',
     type: 'string',

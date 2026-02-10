@@ -80,6 +80,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndAnt1MContext',
     'llmVndAntEffort',
     'llmVndAntEffortMax',
+    'llmVndAntInfSpeed',
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',

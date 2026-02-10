@@ -250,6 +250,7 @@ export function LLMParametersEditor(props: {
     llmVndAnt1MContext,
     llmVndAntEffort,
     llmVndAntEffortMax,
+    llmVndAntInfSpeed,
     llmVndAntSkills,
     llmVndAntThinkingBudget,
     llmVndAntWebFetch,
@@ -463,6 +464,20 @@ export function LLMParametersEditor(props: {
         onChange={checked => {
           if (!checked) onRemoveParameter('llmVndAnt1MContext');
           else onChangeParameter({ llmVndAnt1MContext: true });
+        }}
+      />
+    )}
+
+    {/* Anthropic Fast Mode - currently hidden via parameterSpec.hidden */}
+    {showParam('llmVndAntInfSpeed') && (
+      <FormSwitchControl
+        title='Fast Mode (Preview)'
+        description={llmVndAntInfSpeed === 'fast' ? 'Fast - 6x pricing ⚠️' : 'Standard (default)'}
+        tooltip='Accelerated inference (~2.5x faster output) at 6x pricing. Preview access required.'
+        checked={llmVndAntInfSpeed === 'fast'}
+        onChange={(checked) => {
+          if (!checked) onRemoveParameter('llmVndAntInfSpeed');
+          else onChangeParameter({ llmVndAntInfSpeed: 'fast' });
         }}
       />
     )}

@@ -41,7 +41,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     label: 'Claude Opus 4.6 (Adaptive)',
     description: 'Claude Opus 4.6 with adaptive thinking mode for the most complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* adaptive */ }, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* adaptive */ }, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntInfSpeed' }],
     // benchmark: { cbaElo: ... }, // TBD
   },
 
@@ -136,7 +136,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 128000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntInfSpeed' }],
     // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50 (with 1M context enabled)
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
@@ -359,6 +359,7 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
 const _ORT_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
   LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
 ] as const);
+// NOTE: llmVndAntInfSpeed intentionally NOT included - fast mode not available through OpenRouter
 const _ORT_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndAntEffort', 'llmVndAntEffortMax',
   'llmVndAntThinkingBudget',

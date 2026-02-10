@@ -85,6 +85,7 @@ export type AnthropicHeaderOptions = {
   vndAntEffort?: boolean; // [Anthropic, effort-2025-11-24]
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
+  enableFastMode?: boolean; // [Anthropic, fast-mode-2026-02-01]
   enableStrictOutputs?: boolean; // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
   enableToolSearch?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool
   enableProgrammaticToolCalling?: boolean; // [Anthropic, 2025-11-24] Programmatic Tool Calling (allowed_callers, input_examples)
@@ -165,9 +166,12 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   }
 
   // Add beta feature for code execution (required for Skills)
-  if (options?.enableCodeExecution || options?.enableSkills) {
+  if (options?.enableCodeExecution || options?.enableSkills)
     betaFeatures.push('code-execution-2025-08-25');
-  }
+
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
+  if (options?.enableFastMode)
+    betaFeatures.push('fast-mode-2026-02-01');
 
   // [Anthropic, 2025-11-24] Add beta feature for effort parameter (Claude Opus 4.5+)
   if (options?.vndAntEffort)

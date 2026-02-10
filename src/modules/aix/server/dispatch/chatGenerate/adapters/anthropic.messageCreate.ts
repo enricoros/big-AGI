@@ -193,6 +193,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       console.warn('[Anthropic] Structured output_config.format may conflict with web_fetch citations');
   }
 
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode (preview/waitlist)
+  if (model.vndAntInfSpeed === 'fast')
+    payload.speed = 'fast';
+
   // --- Tools ---
 
   // Allow/deny auto-adding hosted tools when custom tools are present
