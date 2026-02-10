@@ -14,6 +14,7 @@
       "Bash(git grep:*)",
       "Bash(git log:*)",
       "Bash(git ls-tree:*)",
+      "Bash(git mv:*)",
       "Bash(git show:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
