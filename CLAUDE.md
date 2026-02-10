@@ -28,6 +28,8 @@ Big-AGI is a Next.js 15 application with a modular architecture built for advanc
 
 ### Core Directory Structure
 
+You are started from the root of the repository (i.e. where the git folder is or scripts should be run from). You won't need to issue 'cd ...' commands.
+
 ```
 /app/api/          # Next.js App Router (API routes only, mostly -> /src/server/)
 /pages/            # Next.js Pages Router (file-based, mostly -> /src/apps/)
