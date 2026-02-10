@@ -24,9 +24,6 @@ const OPENPIPE_API_KEY_LINK = 'https://app.openpipe.ai/settings';
 
 export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const {
     service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
@@ -36,7 +33,10 @@ export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey: openPipeKey, oaiOrg: openPipeTags } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!openPipeKey && serviceSetupValid);

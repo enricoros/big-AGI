@@ -23,9 +23,6 @@ const MISTRAL_REG_LINK = 'https://console.mistral.ai/';
 
 export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorMistral);
@@ -33,7 +30,10 @@ export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey: mistralKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const shallFetchSucceed = !needsUserKey || (!!mistralKey && serviceSetupValid);
   const showKeyError = !!mistralKey && !serviceSetupValid;

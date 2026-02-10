@@ -27,9 +27,6 @@ const ALIBABA_MODELS = 'https://www.alibabacloud.com/help/en/model-studio/gettin
 
 export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const {
     service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
@@ -41,7 +38,10 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
   const needsUserKey = !serviceHasCloudTenantConfig;
   const shallFetchSucceed = !needsUserKey || (!!alibabaOaiKey && serviceSetupValid);
   const showKeyError = !!alibabaOaiKey && !serviceSetupValid;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   // fetch models
   const { isFetching, refetch, isError, error } =

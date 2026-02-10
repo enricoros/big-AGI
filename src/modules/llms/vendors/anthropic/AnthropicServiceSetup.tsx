@@ -25,9 +25,6 @@ import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor
 
 export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorAnthropic);
@@ -37,7 +34,10 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { anthropicKey, anthropicHost, anthropicInferenceGeo, clientSideFetch, heliconeKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;

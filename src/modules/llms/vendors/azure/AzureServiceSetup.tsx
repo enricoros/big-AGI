@@ -25,7 +25,6 @@ import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
-  const advanced = useToggleableBoolean();
   const [checkboxExpanded, setCheckboxExpanded] = React.useState(false);
 
   // external state
@@ -35,7 +34,10 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey: azureKey, oaiHost: azureEndpoint } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
