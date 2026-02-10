@@ -3,11 +3,11 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelDomainId } from './model.domains.types';
-import { DLLM, DLLMId, getLLMPricing, isLLMHidden, isLLMVisible } from './llms.types';
+import { DLLM, DLLMId, isLLMHidden, isLLMVisible } from './llms.types';
 import { LlmsRootState, useModelsStore } from './store-llms';
 import { ModelDomainsList, ModelDomainsRegistry } from './model.domains.registry';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
-import { getLlmCostForTokens } from './llms.pricing';
+import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_adjusted } from './llms.pricing';
 
 
 /// LLMs Assignments Slice
@@ -272,10 +272,12 @@ function _groupLlmsByVendorRankedByElo(llms: ReadonlyArray<DLLM>): PreferredRank
   const grouped = llms.reduce((acc, llm) => {
     if (isLLMHidden(llm)) return acc;
     const group = acc.find(v => v.vendorId === llm.vId);
+    // adjustd: includes price multipliers
+    const adjChatPricing = llmChatPricing_adjusted(llm);
     const eloCostItem = {
       id: llm.id,
       cbaElo: llm.benchmark?.cbaElo,
-      costRank: !getLLMPricing(llm) ? undefined : _getLlmCostBenchmark(llm),
+      costRank: !adjChatPricing ? undefined : _getLlmCostBenchmarkFromPricing(adjChatPricing),
     };
     if (!group)
       acc.push({ vendorId: llm.vId, llmsByElo: [eloCostItem] });
@@ -294,10 +296,8 @@ function _groupLlmsByVendorRankedByElo(llms: ReadonlyArray<DLLM>): PreferredRank
 }
 
 // Hypothetical cost benchmark for a model, based on total cost of 100k input tokens and 10k output tokens.
-function _getLlmCostBenchmark(llm: DLLM): number | undefined {
-  const pricing = getLLMPricing(llm);
-  if (!pricing?.chat) return undefined;
-  const costIn = getLlmCostForTokens(100000, 100000, pricing.chat.input);
-  const costOut = getLlmCostForTokens(100000, 10000, pricing.chat.output);
+function _getLlmCostBenchmarkFromPricing(chatPricing: DPricingChatGenerate): number | undefined {
+  const costIn = getLlmCostForTokens(100000, 100000, chatPricing.input);
+  const costOut = getLlmCostForTokens(100000, 10000, chatPricing.output);
   return (costIn !== undefined && costOut !== undefined) ? costIn + costOut : undefined;
 }

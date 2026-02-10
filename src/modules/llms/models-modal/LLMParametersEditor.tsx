@@ -144,6 +144,14 @@ const _antEffortOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (High)' },
 ] as const;
 
+const _antEffortMaxOptions = [
+  { value: 'max', label: 'Max', description: 'Deepest reasoning' },
+  { value: 'high', label: 'High', description: 'Maximum capability' },
+  { value: 'medium', label: 'Medium', description: 'Balanced' },
+  { value: 'low', label: 'Low', description: 'Most efficient' },
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (High)' },
+] as const;
+
 const _moonReasoningEffortOptions = [
   { value: 'high', label: 'On', description: 'Multi-step reasoning' },
   { value: 'none', label: 'Off', description: 'Disable thinking mode' },
@@ -241,6 +249,8 @@ export function LLMParametersEditor(props: {
     llmForceNoStream,
     llmVndAnt1MContext,
     llmVndAntEffort,
+    llmVndAntEffortMax,
+    llmVndAntInfSpeed,
     llmVndAntSkills,
     llmVndAntThinkingBudget,
     llmVndAntWebFetch,
@@ -303,8 +313,12 @@ export function LLMParametersEditor(props: {
     return paramId in modelParamSpec && !modelParamSpec[paramId].hidden;
   }
 
-  const temperatureHide = showParam('llmVndAntThinkingBudget');
-  const antThinkingOff = llmVndAntThinkingBudget === null;
+  // Anthropic adaptive(-1)/extended(>1024) thinking disables temperature control
+  const _antThinkingDefined = 'llmVndAntThinkingBudget' in modelParamSpec;
+  const antThinkingEnabled = _antThinkingDefined && !!llmVndAntThinkingBudget; // both mullish mean "off"
+  const antThinkingEnabled_Adaptive = antThinkingEnabled && llmVndAntThinkingBudget === -1;
+  const antThinkingShown = _antThinkingDefined && !modelParamSpec['llmVndAntThinkingBudget'].hidden;
+
   const gemThinkingAuto = llmVndGeminiThinkingBudget === undefined;
   const gemThinkingOff = llmVndGeminiThinkingBudget === 0;
 
@@ -317,21 +331,22 @@ export function LLMParametersEditor(props: {
 
   return <>
 
-    {!temperatureHide && <FormSliderControl
+    {!(props.simplified && props.parameterOmitTemperature) && <FormSliderControl
       title={<span style={{ minWidth: 100 }}>Temperature</span>} ariaLabel='Model Temperature'
       description={
-        llmTemperature === null ? 'Unsupported'
-          : llmTemperature === undefined ? 'Default'
-            : llmTemperature < 0.33 ? 'More strict'
-              : llmTemperature > 1 ? 'Extra hot ♨️'
-                : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'
+        antThinkingEnabled_Adaptive ? 'Off (adaptive)' : antThinkingEnabled ? 'Off (thinking)'
+          : llmTemperature === null ? 'Unsupported'
+            : llmTemperature === undefined ? 'Default'
+              : llmTemperature < 0.33 ? 'More strict'
+                : llmTemperature > 1 ? 'Extra hot ♨️'
+                  : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'
       }
-      disabled={props.parameterOmitTemperature /* set when LLM_IF_HOTFIX_NoTemperature */}
+      disabled={props.parameterOmitTemperature /* set when LLM_IF_HOTFIX_NoTemperature */ || antThinkingEnabled}
       min={0}
       max={overheat ? 2 : 1}
       step={0.1}
       defaultValue={0.5 /* FIXME: this wasn't FALLBACK_LLM_PARAM_TEMPERATURE, but we shall not need this */}
-      valueLabelDisplay={props.parameters?.llmTemperature !== undefined ? 'on' : 'auto'} // detect user-overridden or not
+      valueLabelDisplay={props.parameters?.llmTemperature === undefined || antThinkingEnabled ? 'auto' : 'on'} // detect user-overridden or not
       value={llmTemperature ?? (overheat ? [1, 1] : [0.5, 0.5]) /* null and undefined both would become undefined (uncontrolled) in the slider */}
       onChange={value => onChangeParameter({ llmTemperature: value })}
       endAdornment={
@@ -362,22 +377,22 @@ export function LLMParametersEditor(props: {
       </Box>
     )}
 
-    {showParam('llmVndAntThinkingBudget') && (
+    {antThinkingShown && (
       <FormSliderControl
-        title='Thinking Budget' ariaLabel='Anthropic Extended Thinking Token Budget'
+        title={antThinkingEnabled ? 'Thinking Budget' : 'Disabled'} ariaLabel='Anthropic Extended Thinking Token Budget'
         description='Tokens'
         min={defAntTB.range[0]} max={defAntTB.range[1]} step={1024}
-        valueLabelDisplay={antThinkingOff ? 'off' : 'on'}
+        valueLabelDisplay={antThinkingEnabled ? 'on' : 'off'}
         value={llmVndAntThinkingBudget ?? 0}
-        disabled={antThinkingOff}
+        disabled={!antThinkingEnabled}
         onChange={value => onChangeParameter({ llmVndAntThinkingBudget: value })}
         endAdornment={
-          <Tooltip arrow disableInteractive title={antThinkingOff ? 'Enable Thinking' : 'Disable Thinking'}>
+          <Tooltip arrow disableInteractive title={antThinkingEnabled ? 'Disable Thinking' : 'Enable Thinking'}>
             <IconButton
-              variant={antThinkingOff ? 'solid' : 'outlined'}
-              onClick={() => antThinkingOff
-                ? onRemoveParameter('llmVndAntThinkingBudget')
-                : onChangeParameter({ llmVndAntThinkingBudget: null })
+              variant={antThinkingEnabled ? 'outlined' : 'solid'}
+              onClick={() => antThinkingEnabled
+                ? onChangeParameter({ llmVndAntThinkingBudget: null })
+                : onRemoveParameter('llmVndAntThinkingBudget')
               }
               sx={{ ml: 2 }}
             >
@@ -385,6 +400,19 @@ export function LLMParametersEditor(props: {
             </IconButton>
           </Tooltip>
         }
+      />
+    )}
+
+    {showParam('llmVndAntEffortMax') && (
+      <FormSelectControl
+        title='Effort'
+        tooltip='Controls thinking depth. Max = deepest reasoning with no constraints. High = default capability. Low = fastest, most efficient.'
+        value={llmVndAntEffortMax ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndAntEffortMax');
+          else onChangeParameter({ llmVndAntEffortMax: value });
+        }}
+        options={_antEffortMaxOptions}
       />
     )}
 
@@ -436,6 +464,20 @@ export function LLMParametersEditor(props: {
         onChange={checked => {
           if (!checked) onRemoveParameter('llmVndAnt1MContext');
           else onChangeParameter({ llmVndAnt1MContext: true });
+        }}
+      />
+    )}
+
+    {/* Anthropic Fast Mode - currently hidden via parameterSpec.hidden */}
+    {showParam('llmVndAntInfSpeed') && (
+      <FormSwitchControl
+        title='Fast Mode (Preview)'
+        description={llmVndAntInfSpeed === 'fast' ? 'Fast - 6x pricing ⚠️' : 'Standard (default)'}
+        tooltip='Accelerated inference (~2.5x faster output) at 6x pricing. Preview access required.'
+        checked={llmVndAntInfSpeed === 'fast'}
+        onChange={(checked) => {
+          if (!checked) onRemoveParameter('llmVndAntInfSpeed');
+          else onChangeParameter({ llmVndAntInfSpeed: 'fast' });
         }}
       />
     )}

@@ -22,9 +22,6 @@ const EXTERNAL_LINK_XAI_API_KEYS = 'https://console.x.ai/';
 
 export function XAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorXAI);
@@ -32,7 +29,10 @@ export function XAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey: xaiKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!xaiKey && serviceSetupValid);

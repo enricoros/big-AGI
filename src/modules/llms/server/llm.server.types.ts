@@ -79,6 +79,8 @@ const ModelParameterSpec_schema = z.object({
     // Anthropic
     'llmVndAnt1MContext',
     'llmVndAntEffort',
+    'llmVndAntEffortMax',
+    'llmVndAntInfSpeed',
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',
@@ -146,6 +148,16 @@ export const ModelDescription_schema = z.object({
   // parameter initializers for vendor-specific defaults
   initialTemperature: z.number().nullish(), // vendor-specific initial 'llmTemperature' (e.g. Gemini has 1.0)
 });
+
+
+/// Vendor Lookup for OpenRouter parameter inheritance
+// Each vendor's lookup filters to only what works through OpenRouter's OAI-compatible API.
+// OpenRouter merges these with its own auto-detected interfaces and params.
+export type OrtVendorLookupResult = {
+  interfaces?: ModelDescriptionSchema['interfaces'];
+  parameterSpecs?: ModelDescriptionSchema['parameterSpecs'];
+  initialTemperature?: number; // vendor-specific default (e.g. Gemini 1.0); undefined = use global fallback (0.5)
+};
 
 
 /// ListModels Response

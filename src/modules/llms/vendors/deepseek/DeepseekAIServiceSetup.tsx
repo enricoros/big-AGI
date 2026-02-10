@@ -22,9 +22,6 @@ const DEEPSEEK_REG_LINK = 'https://platform.deepseek.com/api_keys';
 
 export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const {
     service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
@@ -34,7 +31,10 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey: deepseekKey, oaiHost: deepseekHost } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch || !!deepseekHost;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on || !!deepseekHost;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!deepseekKey && serviceSetupValid);

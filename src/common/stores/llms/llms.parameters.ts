@@ -60,11 +60,18 @@ interface _BooleanParamDef extends _ParamDefBase {
   readonly initialValue?: boolean;
 }
 
-interface _EnumParamDef extends _ParamDefBase {
+interface _EnumParamDef<V extends string = string> extends _ParamDefBase {
   readonly type: 'enum';
-  readonly values: readonly string[];
-  readonly requiredFallback?: string;
-  readonly initialValue?: string;
+  readonly values: readonly V[];
+  readonly requiredFallback?: NoInfer<V>;
+  readonly initialValue?: NoInfer<V>;
+  /** Per-value pricing multiplier. When the parameter is set to a value listed here, model pricing is multiplied. */
+  readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
+}
+
+/** Zero-cost identity function — TS infers V from `values` only: NoInfer constrains fallback/initial. */
+function _enumDef<const V extends string>(def: _EnumParamDef<V>): _EnumParamDef<V> {
+  return def;
 }
 
 
@@ -95,7 +102,7 @@ export const DModelParameterRegistry = {
     label: 'Temperature',
     type: 'float',
     description: 'Controls randomness in the output',
-    range: [0.0, 2.0] as const,
+    range: [0.0, 2.0],
     nullable: {
       meaning: 'Explicitly avoid sending temperature to upstream API',
     },
@@ -108,7 +115,7 @@ export const DModelParameterRegistry = {
     label: 'Top P',
     type: 'float',
     description: 'Nucleus sampling threshold',
-    range: [0.0, 1.0] as const,
+    range: [0.0, 1.0],
     requiredFallback: 1.0,
   },
 
@@ -136,13 +143,30 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (e.g. default 200K context window)
   },
 
-  llmVndAntEffort: {
+  llmVndAntEffortMax: _enumDef({ // introduced with Claude Opus 4.6; this adds the 'max' level on top of llmVndAntEffort
     label: 'Effort',
-    type: 'enum' as const,
+    type: 'enum',
+    description: 'Controls thinking depth. max = deepest reasoning with no constraints, high = default.',
+    values: ['low', 'medium', 'high', 'max'],
+    // No initialValue - undefined means high effort (default)
+  }),
+
+  llmVndAntEffort: _enumDef({
+    label: 'Effort',
+    type: 'enum',
     description: 'Controls token usage vs. thoroughness trade-off. Works alongside thinking budget.',
-    values: ['low', 'medium', 'high'] as const,
+    values: ['low', 'medium', 'high'],
     // No initialValue - undefined means high effort (default, equivalent to omitting the parameter)
-  } as const,
+  }),
+
+  llmVndAntInfSpeed: _enumDef({
+    label: 'Fast Mode',
+    type: 'enum',
+    description: 'Accelerated inference (~2.5x faster output) at 6x pricing. Preview access required.',
+    values: ['fast'],
+    enumPriceMultiplier: { fast: 6 },
+    // No initialValue - undefined means standard speed (omitted from request)
+  }),
 
   llmVndAntSkills: {
     label: 'Document Skills',
@@ -151,89 +175,94 @@ export const DModelParameterRegistry = {
     initialValue: '', // empty string = disabled
   },
 
+  /**
+   * Important: when this is set to anything other than nullish, it enables Adaptive(-1)/Extended(int > 1024) thinking,
+   * and as a side effect **disables the temperature** in the requests (even when tunneled through OpenRouter). So this
+   * control must disable the UI controls for temperature in both the side panel and the model configuration dialog.
+   */
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer',
     description: 'Budget for extended thinking',
-    range: [1024, 65536] as const,
-    initialValue: 16384,
-    nullable: {
+    range: [1024, 65536],
+    initialValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
+    nullable: { // null means to not turn on thinking at all, and it's the user-overridden equivalent to the param missing
       meaning: 'Disable extended thinking',
     },
   },
 
-  llmVndAntWebFetch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndAntWebFetch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Fetch',
     type: 'enum',
     description: 'Enable fetching content from web pages and PDFs',
-    values: ['auto', 'off'] as const,
+    values: ['auto', 'off'],
     // No initialValue - undefined means off (same as 'off')
-  },
+  }),
 
-  llmVndAntWebSearch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndAntWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
     description: 'Enable web search for real-time information',
-    values: ['auto', 'off'] as const,
+    values: ['auto', 'off'],
     // No initialValue - undefined means off (same as 'off')
-  },
+  }),
 
   // llmVndAntToolSearch: { // Not user set
   //   label: 'Tool Search',
-  //   type: 'enum' as const,
+  //   type: 'enum',
   //   description: 'Search algorithm for discovering tools on-demand (regex=pattern-based, bm25=natural language)',
-  //   values: ['regex', 'bm25'] as const,
+  //   values: ['regex', 'bm25'],
   //   // No initialValue - undefined means off (tool search disabled)
-  // } as const,
+  // },
 
-  llmVndGeminiAspectRatio: { // implies: LLM_IF_Outputs_Image
+  llmVndGeminiAspectRatio: _enumDef({ // implies: LLM_IF_Outputs_Image
     label: 'Aspect Ratio',
     type: 'enum',
     description: 'Controls the aspect ratio of generated images',
-    values: ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'] as const,
+    values: ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'],
     // No initial value - when undefined, the model decides the aspect ratio
-  },
+  }),
 
-  llmVndGeminiCodeExecution: {
+  llmVndGeminiCodeExecution: _enumDef({
     label: 'Code Execution',
     type: 'enum',
     description: 'Enable automatic Python code generation and execution by the model',
-    values: ['auto'] as const,
+    values: ['auto'],
     // No initialValue - undefined means off
-  },
+  }),
 
-  llmVndGeminiComputerUse: {
+  llmVndGeminiComputerUse: _enumDef({
     label: 'Computer Use Environment',
     type: 'enum',
     description: 'Environment type for Computer Use tool (required for Computer Use model)',
-    values: ['browser'] as const,
+    values: ['browser'],
     initialValue: 'browser',
     // requiredFallback: 'browser', // See `const _requiredParamId: DModelParameterId[]` in llms.parameters.ts for why custom params don't have required values at AIX invocation...
-  },
+  }),
 
-  llmVndGeminiGoogleSearch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndGeminiGoogleSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Google Search',
     type: 'enum',
     description: 'Enable Google Search grounding with optional time filter',
-    values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'] as const,
+    values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'],
     // No initialValue - undefined means off
-  },
+  }),
 
-  llmVndGeminiImageSize: { // implies: LLM_IF_Outputs_Image - [Gemini, 2025-11-20] Nano Banana launch
+  llmVndGeminiImageSize: _enumDef({ // implies: LLM_IF_Outputs_Image - [Gemini, 2025-11-20] Nano Banana launch
     label: 'Image Size',
     type: 'enum',
     description: 'Controls the resolution of generated images',
-    values: ['1K', '2K', '4K'] as const,
+    values: ['1K', '2K', '4K'],
     // No initial value - when undefined, the model decides the image size
-  },
+  }),
 
-  llmVndGeminiMediaResolution: {
+  llmVndGeminiMediaResolution: _enumDef({
     label: 'Media Resolution',
     type: 'enum',
     description: 'Controls vision processing quality for multimodal inputs. Higher resolution improves text reading and detail identification but increases token usage.',
-    values: ['mr_high', 'mr_medium', 'mr_low'] as const,
+    values: ['mr_high', 'mr_medium', 'mr_low'],
     // No initialValue - undefined: "If unspecified, the model uses optimal defaults based on the media type." (Images: high, PDFs: medium, Videos: low/medium (rec: high for OCR))
-  },
+  }),
 
   llmVndGeminiShowThoughts: {
     label: 'Show Thoughts',
@@ -250,53 +279,53 @@ export const DModelParameterRegistry = {
      * - value = 0 disables thinking
      * - value = undefined means 'auto thinking budget'.
      */
-    range: [0, 24576] as const,
+    range: [0, 24576],
     // initialValue: unset, // auto-budgeting
     description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
   },
 
-  llmVndGeminiThinkingLevel: {
+  llmVndGeminiThinkingLevel: _enumDef({
     label: 'Thinking Level',
     type: 'enum',
     description: 'Controls internal reasoning depth for Gemini 3 Pro. When unset, the model decides dynamically.',
-    values: ['high', 'low'] as const,
+    values: ['high', 'low'],
     // No initialValue - undefined means 'dynamic', which for Gemini Pro is the same as 'high'
-  },
+  }),
 
-  llmVndGeminiThinkingLevel4: {
+  llmVndGeminiThinkingLevel4: _enumDef({
     label: 'Thinking Level',
     type: 'enum',
     description: 'Controls internal reasoning depth for Gemini 3 Flash. When unset, the model decides dynamically.',
-    values: ['high', 'medium', 'low', 'minimal'] as const,
+    values: ['high', 'medium', 'low', 'minimal'],
     // No initialValue - undefined means 'dynamic'
-  },
+  }),
 
   // NOTE: we don't have this as a parameter, as for now we use it in tandem with llmVndGeminiGoogleSearch
   // llmVndGeminiUrlContext: {
   //   label: 'URL Context',
-  //   type: 'enum' as const,
+  //   type: 'enum',
   //   description: 'Enable fetching and analyzing content from URLs provided in prompts (up to 20 URLs, 34MB each)',
-  //   values: ['auto'] as const,
+  //   values: ['auto'],
   //   // No initialValue - undefined means off
-  // } as const,
+  // },
 
   // Moonshot-specific parameters
 
-  llmVndMoonReasoningEffort: {
+  llmVndMoonReasoningEffort: _enumDef({
     label: 'Reasoning Effort',
     type: 'enum',
     description: 'Controls thinking depth for Kimi K2.5. High enables extended multi-step reasoning (default).',
-    values: ['none', 'high'] as const,
+    values: ['none', 'high'],
     // No initialValue - undefined means high (thinking enabled, the default for K2.5)
-  },
+  }),
 
-  llmVndMoonshotWebSearch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndMoonshotWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
     description: 'Enable Kimi\'s $web_search builtin function for real-time web search ($0.005 per search)',
-    values: ['auto'] as const,
+    values: ['auto'],
     // No initialValue - undefined means off
-  },
+  }),
 
   // OpenAI-specific parameters
   // Reasoning effort levels per model:
@@ -305,38 +334,38 @@ export const DModelParameterRegistry = {
   // - GPT-5.2: none (default), low, medium, high, xhigh
   // - GPT-5.2 Pro: medium (default), high, xhigh
 
-  llmVndOaiReasoningEffort: {
+  llmVndOaiReasoningEffort: _enumDef({
     label: 'Reasoning Effort',
     type: 'enum',
     description: 'Constrains effort on reasoning for OpenAI reasoning models',
-    values: ['low', 'medium', 'high'] as const,
+    values: ['low', 'medium', 'high'],
     requiredFallback: 'medium',
-  },
+  }),
 
-  llmVndOaiReasoningEffort4: {
+  llmVndOaiReasoningEffort4: _enumDef({
     label: 'Reasoning Effort',
     type: 'enum',
     description: 'Constrains effort on reasoning for OpenAI advanced reasoning models',
-    values: ['minimal', 'low', 'medium', 'high'] as const,
+    values: ['minimal', 'low', 'medium', 'high'],
     requiredFallback: 'medium',
-  },
+  }),
 
-  llmVndOaiReasoningEffort52: {
+  llmVndOaiReasoningEffort52: _enumDef({
     label: 'Reasoning Effort',
     type: 'enum',
     description: 'Constrains effort on reasoning for GPT-5.2 models. When unset, defaults to none (fast responses).',
-    values: ['none', 'low', 'medium', 'high', 'xhigh'] as const,
+    values: ['none', 'low', 'medium', 'high', 'xhigh'],
     // No requiredFallback - unset = none (the default for GPT-5.2)
     // No initialValue - starts undefined, which the UI should display as "none"
-  },
+  }),
 
-  llmVndOaiReasoningEffort52Pro: {
+  llmVndOaiReasoningEffort52Pro: _enumDef({
     label: 'Reasoning Effort',
     type: 'enum',
     description: 'Constrains effort on reasoning for GPT-5.2 Pro. Defaults to medium.',
-    values: ['medium', 'high', 'xhigh'] as const,
+    values: ['medium', 'high', 'xhigh'],
     // No requiredFallback - unset = medium (the default for GPT-5.2 Pro)
-  },
+  }),
 
   llmVndOaiRestoreMarkdown: {
     label: 'Restore Markdown',
@@ -345,21 +374,21 @@ export const DModelParameterRegistry = {
     initialValue: true,
   },
 
-  llmVndOaiVerbosity: {
+  llmVndOaiVerbosity: _enumDef({
     label: 'Verbosity',
     type: 'enum',
     description: 'Controls response length and detail level',
-    values: ['low', 'medium', 'high'] as const,
+    values: ['low', 'medium', 'high'],
     requiredFallback: 'medium',
-  },
+  }),
 
-  llmVndOaiWebSearchContext: { // implies: LLM_IF_Tools_WebSearch
+  llmVndOaiWebSearchContext: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Search Context Size',
     type: 'enum',
     description: 'Amount of context retrieved from the web',
-    values: ['low', 'medium', 'high'] as const,
+    values: ['low', 'medium', 'high'],
     requiredFallback: 'medium',
-  },
+  }),
 
   llmVndOaiWebSearchGeolocation: {
     // NOTE: for now this is a boolean to enable/disable using client-side geolocation, but
@@ -372,85 +401,85 @@ export const DModelParameterRegistry = {
     initialValue: false,
   },
 
-  llmVndOaiImageGeneration: { // implies: LLM_IF_Outputs_Image
+  llmVndOaiImageGeneration: _enumDef({ // implies: LLM_IF_Outputs_Image
     label: 'Image Generation',
     type: 'enum',
     description: 'Image generation mode and quality',
-    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */] as const,
+    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */],
     // No initialValue - defaults to undefined (off)
     // No requiredFallback - this is optional
-  },
+  }),
 
-  llmVndOaiCodeInterpreter: {
+  llmVndOaiCodeInterpreter: _enumDef({
     label: 'Code Interpreter',
     type: 'enum',
     description: 'Python code execution ($0.03/container)',
-    values: ['off', 'auto'] as const,
+    values: ['off', 'auto'],
     // No initialValue - undefined means off (same as 'off')
-  },
+  }),
 
   // Perplexity-specific parameters
 
   // llmVndPerplexityReasoningEffort - we reuse the OpenAI reasoning effort parameter
 
-  llmVndPerplexityDateFilter: {
+  llmVndPerplexityDateFilter: _enumDef({
     label: 'Date Range',
     type: 'enum',
     description: 'Filter results by publication date',
-    values: ['unfiltered', '1m', '3m', '6m', '1y'] as const,
+    values: ['unfiltered', '1m', '3m', '6m', '1y'],
     // requiredFallback: 'unfiltered',
-  },
+  }),
 
-  llmVndOrtWebSearch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndOrtWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
     description: 'Enable OpenRouter web search (uses native search for OpenAI/Anthropic, Exa for others)',
-    values: ['auto'] as const,
+    values: ['auto'],
     // No initialValue - undefined means off
-  },
+  }),
 
-  llmVndPerplexitySearchMode: { // implies: LLM_IF_Tools_WebSearch
+  llmVndPerplexitySearchMode: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Search Mode',
     type: 'enum',
     description: 'Type of sources to search',
-    values: ['default', 'academic'] as const,
+    values: ['default', 'academic'],
     // requiredFallback: 'default', // or leave unset for "unspecified"
-  },
+  }),
 
   // xAI-specific parameters
 
-  llmVndXaiCodeExecution: {
+  llmVndXaiCodeExecution: _enumDef({
     label: 'Code Execution',
     type: 'enum',
     description: 'Enable server-side code execution by the model',
-    values: ['off', 'auto'] as const,
+    values: ['off', 'auto'],
     // No initialValue - undefined means off (same as 'off')
-  },
+  }),
 
-  llmVndXaiSearchInterval: {
+  llmVndXaiSearchInterval: _enumDef({
     label: 'Search Interval', // "X Search only" for now, fw comp to web search
     type: 'enum',
     description: 'Search in this interval',
-    values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'] as const,
+    values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'],
     // No initialValue - undefined means unfiltered
-  },
+  }),
 
-  llmVndXaiWebSearch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndXaiWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
     description: 'Enable web search for real-time information',
-    values: ['off', 'auto'] as const,
+    values: ['off', 'auto'],
     // No initialValue - undefined means off (same as 'off')
-  },
+  }),
 
-  llmVndXaiXSearch: { // implies: LLM_IF_Tools_WebSearch
+  llmVndXaiXSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'X Search',
     type: 'enum',
     description: 'Enable X/Twitter search for social media content',
-    values: ['off', 'auto'] as const,
+    values: ['off', 'auto'],
     // NOTE: disabling or this could be slow
     // initialValue: 'auto', // we default to 'auto' for our users, as they may expect "X search" out of the box
-  },
+  }),
 
   llmVndXaiXSearchHandles: {
     label: 'X Handles Filter',

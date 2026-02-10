@@ -12,27 +12,30 @@ on:
 
 jobs:
   claude-dm:
+    # Only allow repository owner to trigger DMs with @claude (blocks other users and bots)
     if: |
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
+      github.actor == 'enricoros' &&
+      github.triggering_actor == 'enricoros' &&
+      ((github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')))
 
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     permissions:
-      contents: read
-      pull-requests: write
+      contents: write  # Required for code creation and commits
       issues: write
-      id-token: write
+      pull-requests: write
       actions: read # Required for Claude to read CI results on PRs
+      id-token: write # required to use OIDC to authenticate to Claude Code API
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0 # 1 -> 0: full history helps with git blame, etc.
 
       - name: Run Claude Code DM Response
         id: claude
@@ -41,6 +44,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           # Security: Only users with write access can trigger (DMs allow code execution)
+          # Note: contents:write permission enables code creation and commits
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -49,10 +53,7 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr:*)'
-          # disabling opus for now claude-opus-4-1-20250805
-          # former: claude-sonnet-4-5-20250929
           claude_args: |
-            --model claude-opus-4-5-20251101
+            --model claude-opus-4-6
             --max-turns 100
-            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),SlashCommand"

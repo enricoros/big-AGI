@@ -13,9 +13,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
+import { type DPricingChatGenerate, isLLMChatFree_cached, llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
-import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMMaxOutputTokens, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
@@ -270,6 +270,9 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
   // if 'full' or missing, show all options
   const showFull = !ENABLE_PURPOSEFUL_VISIBILITY || props.context !== 'parameters';
 
+  // cache
+  const adjChatPricing = llmChatPricing_adjusted(llm);
+
 
   return (
 
@@ -483,7 +486,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             {llm.description}
           </Typography>}
 
-          {!!getLLMPricing(llm)?.chat?._isFree && <Typography level='body-xs'>
+          {isLLMChatFree_cached(llm) && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
 
@@ -493,7 +496,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             max output: <b>{getLLMMaxOutputTokens(llm)?.toLocaleString() ?? 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
-            {!!getLLMPricing(llm)?.chat && prettyPricingComponent(getLLMPricing(llm)!.chat!)}
+            {!!adjChatPricing && prettyPricingComponent(adjChatPricing)}
             {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
             {!!llm.interfaces?.length && <>interfaces: {llm.interfaces.join(', ')}<br /></>}
             {llm.parameterSpecs?.length > 0 && <>options: {llm.parameterSpecs.map(ps => ps.paramId).join(', ')}<br /></>}
@@ -567,7 +570,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               type='number'
               variant='outlined'
               placeholder={
-                // NOTE: direct access to the underlying, instead of via getLLMPricing
+                // NOTE: direct access to the underlying, instead of via llmChatPricing_adjusted
                 typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
               }
               value={
@@ -590,7 +593,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               type='number'
               variant='outlined'
               placeholder={
-                // NOTE: direct access to the underlying, instead of via getLLMPricing
+                // NOTE: direct access to the underlying, instead of via llmChatPricing_adjusted
                 typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
               }
               value={

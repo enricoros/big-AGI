@@ -1,9 +1,10 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
+import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
 import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
 import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
 
@@ -382,6 +383,25 @@ export const _knownOpenAIChatModels: ManualMappings = [
     label: 'GPT-5 Nano',
     symLink: 'gpt-5-nano-2025-08-07',
   },
+
+  /// GPT-5.3 Codex - Released February 5, 2026 (API access coming soon)
+  {
+    hidden: true, // API access not yet available - rolling out soon
+    idPrefix: 'gpt-5.3-codex',
+    label: 'GPT-5.3 Codex',
+    description: 'Most capable agentic coding model. Combines frontier coding performance of GPT-5.2-Codex with reasoning and professional knowledge of GPT-5.2. ~25% faster.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningEffort52' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    // chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 }, // estimated from gpt-5.2-codex pricing
+    // benchmark: TBD
+  },
+
 
   /// OSB-120b - Speculative support for new model appearing in API
   {
@@ -1039,6 +1059,8 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5.3
+  'gpt-5.3-codex',
   // GPT-5.2
   'gpt-5.2-20',
   'gpt-5.2-pro-20',
@@ -1201,4 +1223,60 @@ export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels?: o
 
   }
 
+}
+
+
+// -- OpenAI-through-OpenRouter Vendor Lookup --
+
+const _ORT_OAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning,
+] as const);
+const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  'llmVndOaiReasoningEffort', 'llmVndOaiReasoningEffort4', 'llmVndOaiReasoningEffort52', 'llmVndOaiReasoningEffort52Pro', // reasoning
+  'llmVndOaiVerbosity', // verbosity
+  // 'llmVndOaiImageGeneration', // OR does NOT support image gen with OAI yet (2026-02-06)
+] as const satisfies DModelParameterId[]);
+
+/**
+ * Lookup for OpenRouter: match an OR OpenAI model ID to a known hardcoded model
+ * @param orModelName - The model name after stripping 'openai/' prefix (e.g. 'gpt-5.2', 'o3')
+ */
+export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | undefined | null {
+
+  // typemap to known models
+  const ortOaiRefMap: Record<string, string | null> = {
+    // renames
+    'gpt-5.2-chat': 'gpt-5.2-chat-latest',
+    'gpt-5.1-chat': 'gpt-5.1-chat-latest',
+    'gpt-5-chat': 'gpt-5-chat-latest',
+    // remove openai variants
+    'o4-mini-high': null,
+    'o3-mini-high': null,
+    'gpt-5-image-mini': null,
+    'gpt-5-image': null,
+    'gpt-4o:extended': null,
+  } as const;
+  if (orModelName in ortOaiRefMap) {
+    if (ortOaiRefMap[orModelName] === null) return null;
+    orModelName = ortOaiRefMap[orModelName]!;
+  }
+
+  // try exact match
+  let entry = _knownOpenAIChatModels.find(m => m.idPrefix === orModelName);
+
+  // if symlink, follow it to the concrete model definition
+  const symLink = entry && 'symLink' in entry ? entry.symLink : undefined;
+  if (symLink) entry = _knownOpenAIChatModels.find(m => m.idPrefix === symLink);
+  if (!entry?.interfaces) return undefined;
+
+  // allowlists on interfaces and parameter specs
+  const interfaces = entry.interfaces.filter(i => _ORT_OAI_IF_ALLOWLIST.has(i));
+
+  const parameterSpecs = entry.parameterSpecs
+    ?.filter(spec => _ORT_OAI_PARAM_ALLOWLIST.has(spec.paramId))
+    .map(spec => ({ ...spec }));
+
+  // initialTemperature: not set — OpenAI models use the global fallback (0.5);
+  // NoTemperature models are handled client-side via LLM_IF_HOTFIX_NoTemperature (not propagated to OR)
+  return { interfaces, parameterSpecs };
 }

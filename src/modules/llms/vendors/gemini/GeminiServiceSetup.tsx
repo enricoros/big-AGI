@@ -36,9 +36,6 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
 
 export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // advanced mode
-  const advanced = useToggleableBoolean(false);
-
   // external state
   const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorGemini);
@@ -46,7 +43,10 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel} = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
   const showKeyError = !!geminiKey && !serviceSetupValid;

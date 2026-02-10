@@ -15,6 +15,21 @@ const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of eve
 // NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
 const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = true; // [Anthropic, 2026-01-12] Block Start Index issue workaround
 
+/**
+ * [Anthropic, Opus-4.6] First text packet is '\n\n' - elide it
+ *
+ * NOTE: disabled because the sequence seems:
+ * {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}
+ * {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\\n\\n"}
+ * {"type":"content_block_stop","index":0 }
+ */
+const hotFixAntElideLeadingDoubleNewline = false;
+/**
+ * This was needed because tools and text were too close together
+ * FIXME: check if this is still needed with 4.6
+ */
+const hotFixAntInjectToolsTextSpacer = true;
+
 
 /**
  * Anthropic Streaming Completions - Messages Architecture
@@ -65,6 +80,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
   let needsTextSeparator = false; // insert text separator when text follows server tool
+
+  let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
+  const elisionCheck = (fullText: string) => {
+    elideFirstTextBlock = false;
+    if (fullText !== '\n\n') return false;
+    console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
+    return true;
+  };
 
   return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
 
@@ -150,7 +173,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           if (ANTHROPIC_FIX_REUSED_BLOCK_INDEX) {
             // Workaround: Anthropic server tools reuse indices - promote to next available
             index = responseMessage.content.length;
-            // console.log(`[Anthropic] content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
+            // Note: always on, because now this seems to have been fixed, so we need this warn if that's not the case
+            console.log(`[Anthropic] ♨️ content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
           } else
             throw new Error(`Unexpected content block start location (${requestedIndex})`);
         responseMessage.content[index] = content_block;
@@ -167,6 +191,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         switch (content_block.type) { // .content_block_start.type
           case 'text':
+            // Hotfix Opus-4.6: elide first text block if it's '\n\n'
+            if (elisionCheck(content_block.text)) break;
             // add separator when text follows server tool execution
             pt.appendText(!needsTextSeparator ? content_block.text : '\n\n' + content_block.text);
             needsTextSeparator = false;
@@ -397,7 +423,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         // set separator flag when server tools complete (text after tools needs visual separation)
         if (content_block.type.includes('tool_use') || content_block.type.includes('tool_result'))
-          needsTextSeparator = true;
+          needsTextSeparator = hotFixAntInjectToolsTextSpacer;
 
         break;
       }
@@ -425,6 +451,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         switch (delta.type) {
           case 'text_delta':
             if (contentBlock.type === 'text') {
+              // Hotfix Opus-4.6: elide first text block if it's '\n\n'
+              if (elisionCheck(delta.text)) break;
               contentBlock.text += delta.text;
               pt.appendText(delta.text);
             } else
@@ -600,6 +628,14 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let needsTextSeparator = false; // insert text separator when text follows server tool
 
+  let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
+  const elisionCheck = (fullText: string) => {
+    elideFirstTextBlock = false;
+    if (fullText !== '\n\n') return false;
+    console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
+    return true;
+  };
+
   return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
@@ -620,6 +656,8 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const isLastBlock = i === content.length - 1;
       switch (contentBlock.type) { // .content_block (non-streaming)
         case 'text':
+          // Hotfix Opus-4.6: elide first text block if it's '\n\n'
+          if (elisionCheck(contentBlock.text)) break;
           // add separator when text follows server tool execution
           pt.appendText(!needsTextSeparator ? contentBlock.text : '\n\n' + contentBlock.text);
           needsTextSeparator = false;
@@ -853,7 +891,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
       // set separator flag when server tools complete (text after tools needs visual separation)
       if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
-        needsTextSeparator = true;
+        needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
     // -> Token Stop Reason

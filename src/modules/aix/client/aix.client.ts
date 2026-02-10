@@ -1,7 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { MaybePromise } from '~/common/types/useful.types';
-import { DLLM, DLLMId, getLLMPricing, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageGenerator, messageSetGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
@@ -10,6 +10,7 @@ import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart,
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
 import { getLabsDevNoStreaming } from '~/common/stores/store-ux-labs';
+import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
@@ -49,7 +50,7 @@ export function aixCreateModelFromLLMOptions(
   // destructure input with the overrides
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
-    llmVndAnt1MContext, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAntEffort,
+    llmVndAnt1MContext, llmVndAntInfSpeed, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch, llmVndAntEffort, llmVndAntEffortMax,
     llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiShowThoughts, llmVndGeminiThinkingBudget, llmVndGeminiThinkingLevel, llmVndGeminiThinkingLevel4,
     llmVndMoonReasoningEffort, // -> mapped to vndOaiReasoningEffort below
     // llmVndMoonshotWebSearch,
@@ -105,12 +106,13 @@ export function aixCreateModelFromLLMOptions(
     ...(llmResponseTokens /* null: similar to undefined, will omit the value */ ? { maxTokens: llmResponseTokens } : {}),
     ...(llmTopP !== undefined ? { topP: llmTopP } : {}),
     ...(llmForceNoStream ? { forceNoStream: true } : {}),
-    ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget } : {}),
+    ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget === -1 ? 'adaptive' as const : llmVndAntThinkingBudget } : {}),
     ...(llmVndAnt1MContext ? { vndAnt1MContext: llmVndAnt1MContext } : {}),
+    ...(llmVndAntInfSpeed === 'fast' ? { vndAntInfSpeed: 'fast' } : {}),
     ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
-    ...(llmVndAntEffort ? { vndAntEffort: llmVndAntEffort } : {}),
+    ...((llmVndAntEffortMax || llmVndAntEffort) ? { vndAntEffort: llmVndAntEffortMax || llmVndAntEffort } : {}),
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),
     ...(llmVndGeminiCodeExecution === 'auto' ? { vndGeminiCodeExecution: llmVndGeminiCodeExecution } : {}),
     ...(llmVndGeminiComputerUse ? { vndGeminiComputerUse: llmVndGeminiComputerUse } : {}),
@@ -541,7 +543,8 @@ function _llToDMessageGuts(src: AixChatGenerateContent_LL, dest: AixChatGenerate
 function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, debugCostSource: string) {
   // Compute costs
   const logLlmRefId = getAllModelParameterValues(llm.initialParameters, llm.userParameters).llmRef || llm.id;
-  const costs = metricsComputeChatGenerateCostsMd(generator.metrics, getLLMPricing(llm)?.chat, logLlmRefId);
+  const adjChatPricing = llmChatPricing_adjusted(llm);
+  const costs = metricsComputeChatGenerateCostsMd(generator.metrics, adjChatPricing, logLlmRefId);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices
     return;

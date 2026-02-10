@@ -644,7 +644,13 @@ export async function attachmentPerformConversion(
         let tableData: DMessageDataInline;
         try {
           const mdTable = htmlTableToMarkdown(input.altData!, false);
-          tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
+          // fall back to source text if the table conversion produced empty/tiny content
+          if (mdTable.replace(/[\s|:\-]/g, '').length < 2) {
+            const fallbackText = await _inputDataToString(input.data, 'rich-text-table');
+            tableData = createDMessageDataInlineText(fallbackText || mdTable, input.mimeType);
+          } else {
+            tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
+          }
         } catch (error) {
           // fallback to text/plain
           const fallbackText = await _inputDataToString(input.data, 'rich-text-table');
@@ -1037,11 +1043,19 @@ export async function attachmentPerformConversion(
     }
   }
 
+  // warn if any doc output fragment has empty text content (something went wrong in conversion)
+  // TODO: future: check if the text is a conversion error... can happen with drag & drop
+  const emptyOutputWarnings: string[] = [];
+  for (const fragment of newFragments)
+    if (isDocPart(fragment.part) && fragment.part.data.idt === 'text' && !fragment.part.data.text.trim())
+      emptyOutputWarnings.push('Converted output is empty - the source content may be missing or invalid.');
+
   // update
   replaceOutputFragments(attachment.id, newFragments);
   edit(attachment.id, {
     outputsConverting: false,
     outputsConversionProgress: null,
+    ...(emptyOutputWarnings.length && { outputWarnings: emptyOutputWarnings }),
   });
 }
 

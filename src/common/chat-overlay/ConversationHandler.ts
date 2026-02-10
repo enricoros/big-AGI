@@ -227,8 +227,9 @@ export class ConversationHandler {
     return _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
   }
 
-  historyKeepLastThinkingOnly(): void {
-    return _chatStoreActions.historyKeepLastThinkingOnly(this.conversationId);
+  /** Strips thinking fragments from assistant messages, preserving `keepCount` most recent (0 = discard all, 1 = keep last only). */
+  historyStripThinking(keepCount: number): void {
+    return _chatStoreActions.historyStripThinking(this.conversationId, keepCount);
   }
 
   title(): string | undefined {

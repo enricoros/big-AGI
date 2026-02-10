@@ -120,8 +120,8 @@ export const openAIAccessSchema = z.object({
   oaiHost: z.string().trim(),
   heliKey: z.string().trim(),
 
-  // deprecated: accepted for backward compatibility with older clients/stored data, ignored by server
-  moderationCheck: z.boolean().optional(), // TODO: remove post releasing 2.0.4
+  // [OpenRouter only] Debug/routing service-level settings
+  orRequireParameters: z.boolean().optional(), // Only route to providers supporting all request params
 });
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {

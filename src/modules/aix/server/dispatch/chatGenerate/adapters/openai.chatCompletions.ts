@@ -38,7 +38,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Dialect incompatibilities -> Hotfixes
   const hotFixAlternateUserAssistantRoles = openAIDialect === 'deepseek' || openAIDialect === 'perplexity';
-  const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
+  const hotFixRemoveEmptyMessages = openAIDialect === 'moonshot' || openAIDialect === 'perplexity'; // [Moonshot, 2026-02-10] consecutive assistant messages (empty + content) break Moonshot - coalesce to fix
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixThrowCannotFC =
     // [OpenRouter] 2025-10-02: do not throw, rather let it fail if upstream has issues
@@ -111,7 +111,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const outputsText = model.acceptsOutputs.includes('text');
   const outputsAudio = model.acceptsOutputs.includes('audio');
   const outputsImages = model.acceptsOutputs.includes('image')
-    || !!model.vndOaiImageGeneration ; // this is here because when used in 'sweep' the 'acceptsOutputs' are not set yet
+    || !!model.vndOaiImageGeneration; // this is here because when used in 'sweep' the 'acceptsOutputs' are not set yet
   if ((openAIDialect === 'openai' || openAIDialect === 'openrouter') && (outputsAudio || outputsImages)) {
     // set output modalities
     const modalities = new Set(payload.modalities || []);
@@ -231,18 +231,37 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (openAIDialect === 'openrouter') {
 
     // Anthropic via OpenRouter
+    // ref: https://openrouter.ai/docs/guides/guides/model-migrations/claude-4-6-opus
     if (model.vndAntThinkingBudget !== undefined) {
       // vndAntThinkingBudget's presence indicates a user preference:
+      // - 'adaptive': adaptive thinking (4.6+) - reasoning enabled, no explicit budget
       // - a number: explicit token budget (1024-32000)
       // - null: disable thinking (don't set reasoning field)
-      if (model.vndAntThinkingBudget === null) {
-        // If null, don't set reasoning field at all (disables thinking)
-      } else
-        payload.reasoning = { max_tokens: model.vndAntThinkingBudget || 8192 };
+      if (model.vndAntThinkingBudget === 'adaptive') {
+        payload.reasoning = {
+          enabled: true,
+        };
+        delete payload.temperature;
+      } else if (model.vndAntThinkingBudget !== null) {
+        payload.reasoning = {
+          max_tokens: model.vndAntThinkingBudget,
+        };
+        delete payload.temperature;
+      } else {
+        // NOTE: with thinking disabled, we can still use temperature, so we don't delete it
+        //       see the note on llms.parameters.ts: 'llmVndAntThinkingBudget'
+      }
     }
-    // Gemini via OpenRouter
+    // Anthropic effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
+    if (model.vndAntEffort)
+      payload.verbosity = model.vndAntEffort;
+
+    // Gemini via OpenRouter - budget-based (2.5) or level-based (3.0+)
     else if (model.vndGeminiThinkingBudget !== undefined)
       payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget ?? 8192 };
+    else if (model.vndGeminiThinkingLevel)
+      payload.reasoning = { effort: model.vndGeminiThinkingLevel };
+
     // OpenAI via OpenRouter - all effort levels including 'none' and 'minimal' are valid
     else if (model.vndOaiReasoningEffort)
       payload.reasoning = { effort: model.vndOaiReasoningEffort };
@@ -329,7 +348,13 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
 }
 
 function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessages {
-  return chatMessages.filter(message => message.content !== null && message.content !== '');
+  return chatMessages.filter(message => {
+    const c = message.content;
+    if (c === null || c === '') return false;
+    if (typeof c === 'string' && !c.trim()) return false; // whitespace-only (e.g. '\n\n' from Anthropic)
+    if (Array.isArray(c) && c.every(part => part.type === 'text' && !part.text.trim())) return false; // all-empty text parts
+    return true;
+  });
 }
 
 /** [OpenAI, 2026-02-04] max_tokens fully deprecated - convert to max_completion_tokens for all OpenAI models */

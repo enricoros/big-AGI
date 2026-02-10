@@ -5,17 +5,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ```bash
-# Targeted Code Quality (safe while dev server runs)
-npx tsc --noEmit                      # Type check without building
-npx eslint src/path/to/file.ts        # Lint specific file
-npm run lint                          # Lint entire project
+# Validate (~5s, safe while dev server runs, do NOT use `next build` ~45s for same checks)
+tsc --noEmit --pretty && npm run lint # Type check (~3.5s) + ESLint (~2s)
+eslint src/path/to/file.ts           # Lint specific file
+
+# Full build (~60s+, only when suspecting runtime/bundle issues)                                                                                                                                                                        
+npm run build  # next build runs compile+lint+types but stops at first type-error file; tsc shows all at once        
+
+# Database & External Services
+# npm run supabase:local-update-types   # Generate TypeScript types
+# npm run stripe:listen                 # Listen for Stripe webhooks
 ```
+
+## Development Environment
+
+- Dev servers may be running on ports 3000, 3001, 3002, or 3003 (not always this app - other projects may occupy these ports). Never start or stop dev servers, let the user do it.
+- For runtime debugging, use `mcp__chrome-devtools` if present to launch a controlled Chrome instance against the running dev server - useful for console errors, network inspection, and React devtree.
 
 ## Architecture Overview
 
 Big-AGI is a Next.js 15 application with a modular architecture built for advanced AI interactions. The codebase follows a three-layer structure with distinct separation of concerns.
 
 ### Core Directory Structure
+
+You are started from the root of the repository (i.e. where the git folder is or scripts should be run from). You won't need to issue 'cd ...' commands.
 
 ```
 /app/api/          # Next.js App Router (API routes only, mostly -> /src/server/)
@@ -32,7 +45,7 @@ Big-AGI is a Next.js 15 application with a modular architecture built for advanc
 
 - **Frontend**: Next.js 15, React 18, Material-UI Joy, Emotion (CSS-in-JS)
 - **State Management**: Zustand with localStorge/IndexedDB (single cell) persistence
-- **API Layer**: tRPC with React Query for type-safe communication
+- **API Layer**: tRPC with TanStack React Query for type-safe communication
 - **Runtime**: Edge Runtime for AI operations, Node.js for data processing
 
 ### Apps Architecture Pattern
@@ -51,7 +64,7 @@ Modules in `/src/modules/` provide reusable business logic:
 - **`aix/`** - AI communication framework for real-time streaming
 - **`beam/`** - Multi-model AI reasoning system (scatter/gather pattern)
 - **`blocks/`** - Content rendering (markdown, code, images, etc.)
-- **`llms/`** - Language model abstraction supporting 16 vendors
+- **`llms/`** - Language model abstraction supporting 19 vendors
 
 ### Key Subsystems & Their Patterns
 
@@ -122,6 +135,7 @@ Located in `/src/common/layout/optima/`
 2. **Per-Instance Stores** (Vanilla Zustand)
    - `store-beam_vanilla`: Beam scatter/gather state
    - `store-perchat_vanilla`: Chat overlay state
+   - `store-attachment-drafts_vanilla`: Attachment drafts
    - High-performance, no React integration
 
 3. **Module Stores**
@@ -181,14 +195,14 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 
 ### Testing & Quality
 - Run `npm run lint` before committing
-- Type-check with `npx tsc --noEmit`
+- Type-check with `tsc --noEmit`
 - Test critical user flows manually
 
 ### Adding a New LLM Vendor
 1. Create vendor in `/src/modules/llms/vendors/[vendor]/`
 2. Implement `IModelVendor` interface
 3. Register in `vendors.registry.ts`
-4. Add environment variables to `env.ts` (if server-side keys needed)
+4. Add environment variables to the vendor's server file and `/src/server/env.server.ts` (if server-side keys needed)
 
 ### Debugging Storage Issues
 - Check IndexedDB: DevTools → Application → IndexedDB → `app-chats`
@@ -200,9 +214,9 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 ### AIX Streaming Pattern
 ```typescript
 // Efficient streaming with decimation
-aixChatGenerateContent_DMessage(
+aixChatGenerateContent_DMessage_FromConversation(
   llmId,
-  request,
+  chatHistory,
   { abortSignal, throttleParallelThreads: 1 },
   async (update, isDone) => {
     // Real-time UI updates
@@ -216,7 +230,7 @@ aixChatGenerateContent_DMessage(
 const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   openai: ModelVendorOpenAI,
   anthropic: ModelVendorAnthropic,
-  // ... 14 more vendors
+  // ... 17 more vendors
 };
 ```
 
@@ -228,7 +242,8 @@ The server uses a split architecture with two tRPC routers:
 Distributed edge runtime for low-latency AI operations:
 - **AIX** - AI streaming and communication
 - **LLM Routers** - Direct vendor integrations (OpenAI, Anthropic, Gemini, Ollama)
-- **External Services** - ElevenLabs (TTS), Inworld (TTS), Google Search, YouTube transcripts
+- **Speex** - Unified TTS router (ElevenLabs, Inworld, and other TTS vendors)
+- **External Services** - Google Search, YouTube transcripts
 
 Located at `/src/server/trpc/trpc.router-edge.ts`
 

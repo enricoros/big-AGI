@@ -1,4 +1,4 @@
-import { DPricingChatGenerate, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
+import { DPricingChatGenerate, getLlmCostForTokens, isLLMChatPricingFree } from '~/common/stores/llms/llms.pricing';
 
 
 // configuration
@@ -172,7 +172,7 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
     return { $code: 'no-pricing' };
 
   // pricing: bail if free
-  if (isModelPricingFree(pricing))
+  if (isLLMChatPricingFree(pricing))
     return { $code: 'free' };
 
 

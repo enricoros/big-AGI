@@ -22,9 +22,6 @@ const PERPLEXITY_REG_LINK = 'https://www.perplexity.ai/settings/api';
 
 export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const {
     service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
@@ -34,7 +31,10 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
   // derived state
   const { clientSideFetch, oaiKey: perplexityKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!perplexityKey && serviceSetupValid);

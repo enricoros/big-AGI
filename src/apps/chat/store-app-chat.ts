@@ -8,6 +8,8 @@ import { Is } from '~/common/util/pwaUtils';
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
 
+export type ChatThinkingPolicy = 'last-only' | 'all' | 'discard-all';
+
 export type TokenCountingMethod = 'accurate' | 'approximate';
 
 
@@ -38,8 +40,8 @@ interface AppChatStore {
   autoVndAntBreakpoints: boolean;
   setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => void;
 
-  chatKeepLastThinkingOnly: boolean,
-  setChatKeepLastThinkingOnly: (chatKeepLastThinkingOnly: boolean) => void;
+  chatThinkingPolicy: ChatThinkingPolicy,
+  setChatThinkingPolicy: (chatThinkingPolicy: ChatThinkingPolicy) => void;
 
   tokenCountingMethod: TokenCountingMethod;
   setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => void;
@@ -110,8 +112,8 @@ const useAppChatStore = create<AppChatStore>()(persist(
     autoVndAntBreakpoints: true, // 2024-08-24: on as it saves user's money
     setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => _set({ autoVndAntBreakpoints }),
 
-    chatKeepLastThinkingOnly: true,
-    setChatKeepLastThinkingOnly: (chatKeepLastThinkingOnly: boolean) => _set({ chatKeepLastThinkingOnly }),
+    chatThinkingPolicy: 'last-only',
+    setChatThinkingPolicy: (chatThinkingPolicy: ChatThinkingPolicy) => _set({ chatThinkingPolicy }),
 
     tokenCountingMethod: Is.Desktop ? 'accurate' : 'approximate',
     setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => _set({ tokenCountingMethod }),
@@ -189,7 +191,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoSuggestQuestions: state.autoSuggestQuestions,
   autoTitleChat: state.autoTitleChat,
   autoVndAntBreakpoints: state.autoVndAntBreakpoints,
-  chatKeepLastThinkingOnly: state.chatKeepLastThinkingOnly,
+  chatThinkingPolicy: state.chatThinkingPolicy,
   tokenCountingMethod: state.tokenCountingMethod,
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestAttachmentPrompts: state.setAutoSuggestAttachmentPrompts,
@@ -198,7 +200,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
   setAutoTitleChat: state.setAutoTitleChat,
   setAutoVndAntBreakpoints: state.setAutoVndAntBreakpoints,
-  setChatKeepLastThinkingOnly: state.setChatKeepLastThinkingOnly,
+  setChatThinkingPolicy: state.setChatThinkingPolicy,
   setTokenCountingMethod: state.setTokenCountingMethod,
 })));
 
@@ -210,7 +212,7 @@ export const getChatAutoAI = (): {
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
   autoVndAntBreakpoints: boolean,
-  chatKeepLastThinkingOnly: boolean,
+  chatThinkingPolicy: ChatThinkingPolicy,
 } => useAppChatStore.getState();
 
 export const useChatAutoSuggestHTMLUI = (): boolean =>

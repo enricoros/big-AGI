@@ -1,6 +1,9 @@
 import * as z from 'zod/v4';
 
 
+const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a newline
+
+
 /**
  * See the latest Anthropic Typescript definitions on:
  * - https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages/messages.ts
@@ -9,6 +12,13 @@ import * as z from 'zod/v4';
  * - or blame: https://github.com/anthropics/anthropic-sdk-python/blame/main/src/anthropic/types/anthropic_beta_param.py
  *
  * ## Updates
+ *
+ * ### 2026-02-06 - API Sync: output_config.format, inference_geo, eager_input_streaming
+ * - Request: deprecated top-level `output_format`, moved to `output_config.format` (GA: 2026-01-29)
+ * - Request: added `inference_geo` for region-of-availability inference routing
+ * - Response.usage: added `inference_geo` field
+ * - CustomToolDefinition: added `eager_input_streaming` for fine-grained tool input streaming
+ * - WebSearchToolResultError: added `request_too_large` error code
  *
  * ### 2025-11-24 - Programmatic Tool Calling (Beta: advanced-tool-use-2025-11-20)
  * - ToolUseBlock: added 'caller' field to indicate direct vs programmatic invocation
@@ -263,7 +273,7 @@ export namespace AnthropicWire_Blocks {
       z.object({
         type: z.literal('web_search_tool_result_error'),
         error_code: z.union([
-          z.enum(['invalid_tool_input', 'unavailable', 'max_uses_exceeded', 'too_many_requests', 'query_too_long']),
+          z.enum(['invalid_tool_input', 'unavailable', 'max_uses_exceeded', 'too_many_requests', 'query_too_long', 'request_too_large']),
           z.string(), // forward-compatibility
         ]),
       }),
@@ -412,7 +422,12 @@ export namespace AnthropicWire_Blocks {
 
   /// Block Constructors
 
-  export function TextBlock(text: string): z.infer<typeof TextBlock_schema> {
+  export function TextBlock(text: string, debugSender: string): z.infer<typeof TextBlock_schema> {
+    // HOTFIX - is we are here, issues have already happened, and we can't let this stay
+    if (hotFixAntShipNoEmptyTextBlocks && !text) {
+      console.warn(`[Anthropic] ⚠️ Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
+      text = '\n';
+    }
     return { type: 'text', text };
   }
 
@@ -592,6 +607,12 @@ export namespace AnthropicWire_Tools {
     strict: z.boolean().optional(),
 
     /**
+     * [Anthropic, 2025-06-11] Eager Input Streaming - enables fine-grained streaming of tool input parameters.
+     * When true, tool inputs are streamed earlier during generation for lower latency.
+     */
+    eager_input_streaming: z.boolean().optional(),
+
+    /**
      * [Anthropic, 2025-11-24] Tool Search Tool - when true, this tool is not loaded into context initially and can be discovered via the tool search tool when needed.
      */
     defer_loading: z.boolean().optional(),
@@ -629,7 +650,10 @@ export namespace AnthropicWire_Tools {
     name: z.literal('code_execution'),
   });
 
-  /** Requires beta header: "computer-use-2025-01-24" */
+  /**
+   * Requires beta header: "computer-use-2025-01-24"
+   * NOTE: newer version available - computer_20251124 (beta header: "computer-use-2025-11-24") adds `enable_zoom: boolean`
+   */
   const _ComputerUseTool_20250124_schema = _ToolDefinitionBase_schema.extend({
     type: z.literal('computer_20250124'),
     name: z.literal('computer'),
@@ -834,21 +858,25 @@ export namespace AnthropicWire_API_Message_Create {
      * When enabled, responses include thinking content blocks showing Claude's thinking process before the final answer.
      */
     thinking: z.union([
+      // [Anthropic, 4.6+] Adaptive thinking - Claude decides when and how much to think
+      z.object({ type: z.literal('adaptive') }),
       // Requires a minimum budget of 1,024 tokens and counts towards your max_tokens limit.
-      z.object({
-        type: z.literal('enabled'),
-        budget_tokens: z.number(),
-      }),
+      z.object({ type: z.literal('enabled'), budget_tokens: z.number() }),
       // having this for completeness, but seems like it's not needed / can be omitted
       z.object({ type: z.literal('disabled') }),
     ]).optional(),
 
     /**
-     * [Anthropic, effort-2025-11-24] Output configuration for effort-based token control.
-     * Allows trading off response thoroughness for efficiency (Claude Opus 4.5+ only).
+     * Output configuration for effort-based token control and structured outputs.
+     * - effort: [Anthropic, effort-2025-11-24] Allows trading off response thoroughness for efficiency.
+     * - format: [Anthropic, 2026-01-29 GA] JSON schema constraint on output. Replaces deprecated top-level `output_format`.
      */
     output_config: z.object({
-      effort: z.enum(['low', 'medium', 'high']).optional(),
+      effort: z.enum(['low', 'medium', 'high', 'max']).optional(),
+      format: z.object({
+        type: z.literal('json_schema'),
+        schema: z.any(), // JSON Schema object - validated by Anthropic
+      }).optional(),
     }).optional(),
 
     /**
@@ -869,15 +897,18 @@ export namespace AnthropicWire_API_Message_Create {
     top_p: z.number().optional(),
 
     /**
-     * [Anthropic, 2025-11-13] Structured Outputs - JSON output format configuration.
-     * Constrains Claude's response to follow a specific JSON schema.
-     * Beta feature requiring header: "structured-outputs-2025-11-13"
-     * Available for Claude Sonnet 4.5 and Claude Opus 4.1+.
+     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode.
+     * Preview/waitlist. Only supported on Claude Opus 4.6.
      */
-    output_format: z.object({
-      type: z.literal('json_schema'),
-      schema: z.any(), // JSON Schema object - validated by Anthropic
-    }).optional(),
+    speed: z.enum(['fast']).optional(),
+
+    /**
+     * [Anthropic, 2026-02-01] Geographic region for model inference.
+     * - "global": default, inference may run in any available geography
+     * - "us": US-only inference at 1.1x pricing
+     * Only supported on Claude Opus 4.6 and subsequent models; older models return 400.
+     */
+    inference_geo: z.enum(['global', 'us']).or(z.string()).nullish(),
   });
 
   /// Response
@@ -927,6 +958,7 @@ export namespace AnthropicWire_API_Message_Create {
         tool_search_requests: z.number().optional(), // [Anthropic, 2025-11-24] Tool Search Tool usage
       }).nullish(),
       service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
+      inference_geo: z.string().nullish(),
     }),
 
     /**

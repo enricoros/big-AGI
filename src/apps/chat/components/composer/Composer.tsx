@@ -17,7 +17,8 @@ import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '.
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
-import { DLLM, getLLMContextTokens, getLLMPricing, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { DLLM, getLLMContextTokens, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
@@ -235,7 +236,7 @@ export function Composer(props: {
   const tokensHistory = _historyTokenCount;
   const tokensResponseMax = getModelParameterValueOrThrow('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0;
   const tokenLimit = getLLMContextTokens(props.chatLLM) ?? 0;
-  const tokenChatPricing = getLLMPricing(props.chatLLM)?.chat;
+  const tokenChatPricing = React.useMemo(() => llmChatPricing_adjusted(props.chatLLM), [props.chatLLM]);
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targetF)

@@ -2,7 +2,7 @@ name: Claude Code Auto-Triage Issues
 
 on:
   issues:
-    types: [ opened, assigned ]
+    types: [ opened ]
 
 jobs:
   claude-issue-triage:
@@ -17,15 +17,15 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: write
-      id-token: write
+      pull-requests: read # was write, but we're not altering PRs here
       actions: read
+      id-token: write # required to use OIDC to authenticate to Claude Code API
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0 # 1 -> 0: full history helps with git blame, etc.
 
       - name: Analyze issue and provide help
         uses: anthropics/claude-code-action@v1
@@ -35,6 +35,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: '*'
           # track_progress: true # Enables tracking comments
+          show_full_output: ${{ github.event.repository.private }} # security: do not log verbosely in private repo
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -54,9 +55,11 @@ jobs:
                **Use web search**: When potentially outside Big-AGI (e.g. user configuration), search the web for similar errors or related issues
                **Provide a solution**:
                - Provide multiple solutions if uncertain, and say so
-               - If you can fix it in code, propose the fix
-                 - If possible also suggest fixes or workarounds for immediate relief
+               - Analyze the code and suggest specific fixes with code examples
+               - If possible also suggest fixes or workarounds for immediate relief
                - Reference specific files and line numbers
+               - Suggest workarounds for immediate relief if applicable
+               - Use web search to find similar issues and solutions
                - Test selectively and even npm install and run build if needed to verify the solution
             2. Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
             3. Comment with:
@@ -65,13 +68,16 @@ jobs:
                - Next steps or clarification needed
                - Link duplicates if found
             
+            Remember: design values for this codebase: orthogonal features, features that generalize well, modularized and reusable code,
+            type-discriminated data, optimized code, zero maintenance burden. Minimize future pain, etc.
+
+            IMPORTANT: You are in READ-ONLY triage mode. Analyze and suggest solutions in your comment, but do NOT attempt to push code changes.
             If you're uncertain, say so and suggest next steps.
-            If you write any code make sure that it compiles and that you push it.
             Be welcoming, helpful, professional, solution-focused and no-BS.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
           claude_args: |
-            --model claude-opus-4-5-20251101
+            --model claude-opus-4-6
             --max-turns 75
-            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),mcp__chrome-devtools,SlashCommand"
+            --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),SlashCommand"

@@ -125,19 +125,6 @@ export function getLLMMaxOutputTokens(llm: DLLM | null): DLLMMaxOutputTokens | u
   return llm.userMaxOutputTokens ?? llm.maxOutputTokens;
 }
 
-/**
- * Returns the effective pricing for a model.
- * Checks user override first, then falls back to model default.
- */
-export function getLLMPricing(llm: DLLM | null): DModelPricing | undefined {
-  if (!llm)
-    return undefined; // undefined if no model
-
-  // Check user override first, then fall back to model default
-  return llm.userPricing ?? llm.pricing;
-}
-
-
 /// Interfaces ///
 
 // do not change anything below! those will be persisted in data

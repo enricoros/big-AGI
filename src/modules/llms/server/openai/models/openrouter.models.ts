@@ -1,13 +1,18 @@
 import * as z from 'zod/v4';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { fromManualMapping } from '../../models.mappings';
+import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
+import { llmOrtGemLookup } from '../../gemini/gemini.models';
+import { llmOrtOaiLookup } from './openai.models';
 import { wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
 
 
 // configuration
+const DEV_DEBUG_OPENROUTER_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 const FIXUP_MAX_OUTPUT = true;
 
 
@@ -116,7 +121,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   }
 
   // -- Interfaces --
-  const interfaces = [LLM_IF_OAI_Chat];
+  const interfaces: ModelDescriptionSchema['interfaces'] = [
+    LLM_IF_OAI_Chat, // very basic, everyone gets this
+  ];
 
   // input: vision
   if (model.architecture?.input_modalities?.includes('image'))
@@ -148,38 +155,98 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   const parameterSpecs: ModelDescriptionSchema['parameterSpecs'] = [
     { paramId: 'llmVndOrtWebSearch' }, // OpenRouter web search is available for all models
-  ];
+  ] as const;
 
-  if (model.id.startsWith('anthropic/') && interfaces.includes(LLM_IF_OAI_Reasoning))
-    parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', initialValue: null /* default: non-reasoning variant, thinking off */ });
+  // -- Vendor parameter & interface inheritance --
+  const llmRef = model.id.replace(/^[^/]+\//, '');
+  let initialTemperature: number | undefined;
 
-  if (model.id.startsWith('google/') && interfaces.includes(LLM_IF_OAI_Reasoning))
-    parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' });
+  const _mergeLookup = (lookup: OrtVendorLookupResult | undefined) => {
+    if (lookup?.interfaces)
+      for (const iface of lookup.interfaces)
+        if (!interfaces.includes(iface))
+          interfaces.push(iface);
+    if (lookup?.parameterSpecs)
+      for (const param of lookup.parameterSpecs)
+        if (!parameterSpecs.some(p => p.paramId === param.paramId))
+          parameterSpecs.push(...lookup.parameterSpecs);
+    if (lookup?.initialTemperature !== undefined)
+      initialTemperature = lookup.initialTemperature;
+  };
 
-  // [OpenRouter, 2025-12-31] Add Gemini image generation params for Google models with image output
-  if (model.id.startsWith('google/') && interfaces.includes(LLM_IF_Outputs_Image)) {
-    parameterSpecs.push({ paramId: 'llmVndGeminiAspectRatio' });
-    // NOTE: temporarily disable the size, as the returned data is a > 16MB pic which will cause issues
-    // to the Zod parser, with "Maximum call stack size exceeded"
-    // parameterSpecs.push({ paramId: 'llmVndGeminiImageSize' });
+  switch (true) {
+
+    /**
+     * Anthropic: all models come in thinking flavor, which is then labeled as variant, or stripped for the base.
+     * The 0-day adds the thiking budget
+     */
+    case model.id.startsWith('anthropic/'):
+      const antLookup = llmOrtAntLookup_ThinkingVariants(llmRef);
+      _mergeLookup(antLookup);
+
+      if (DEV_DEBUG_OPENROUTER_MODELS && !antLookup && ['anthropic/claude-3.5-sonnet'].every(silence => !model.id.startsWith(silence)))
+        console.log('[DEV] openRouterModelToModelDescription: unknown Anthropic model:', model.id);
+
+      // 0-day
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndAntThinkingBudget')) {
+        DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: unexpected ${antLookup ? 'KNOWN' : 'unknown'} Anthropic reasoning model:`, model.id);
+        parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget' }); // configurable thinking budget
+        if (!parameterSpecs.some(p => p.paramId.startsWith('llmVndAntEffort')))
+          parameterSpecs.push({ paramId: 'llmVndAntEffortMax' }); // try to enable the broader support
+      }
+     break;
+
+    case model.id.startsWith('google/'):
+      const gemLookup = llmOrtGemLookup(llmRef);
+      _mergeLookup(gemLookup);
+
+      if (DEV_DEBUG_OPENROUTER_MODELS && !gemLookup && ['google/gemma-', 'google/gemini-2.5-pro-preview-05-06'].every(silence => !model.id.startsWith(silence)))
+        console.log('[DEV] openRouterModelToModelDescription: unknown Gemini model:', model.id);
+
+      // 0-day: reasoning models get default thinking budget if not inherited
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndGeminiThinkingBudget' || p.paramId === 'llmVndGeminiThinkingLevel' || p.paramId === 'llmVndGeminiThinkingLevel4')) {
+        // DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: tagging ${gemLookup ? 'KNOWN' : 'unknown'} Gemini reasoning model:`, model.id);
+        parameterSpecs.push({ paramId: 'llmVndGeminiThinkingLevel4' }); // fallback
+        // parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' }); // fallback with default range
+      }
+
+      // 0-day: Gemini image generation params
+      if (interfaces.includes(LLM_IF_Outputs_Image) && !parameterSpecs.some(p => p.paramId === 'llmVndGeminiAspectRatio' || p.paramId === 'llmVndGeminiImageSize')) {
+        DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: tagging ${gemLookup ? 'KNOWN' : 'unknown'} Gemini image output model:`, model.id);
+        parameterSpecs.push({ paramId: 'llmVndGeminiAspectRatio' });
+        // NOTE: temporarily disable the size, as the returned data is a > 16MB pic which will cause issues
+        // to the Zod parser, with "Maximum call stack size exceeded"
+        // parameterSpecs.push({ paramId: 'llmVndGeminiImageSize' });
+      }
+      break;
+
+    case model.id.startsWith('openai/'):
+      const oaiLookup = llmOrtOaiLookup(llmRef);
+      if (oaiLookup === null) return null; // drop models we really don't care about
+      _mergeLookup(oaiLookup);
+
+      if (DEV_DEBUG_OPENROUTER_MODELS && !oaiLookup && ['openai/gpt-oss', 'openai/gpt-3.5'].every(silence => !model.id.startsWith(silence)))
+        console.log('[DEV] openRouterModelToModelDescription: unknown OpenAI model:', model.id);
+
+      // 0-day: reasoning models get default 3-level effort if not inherited
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId.startsWith('llmVndOaiReasoning'))) {
+        // console.log('[DEV] openRouterModelToModelDescription: unexpected OpenAI reasoning model:', model.id);
+        parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
+      }
+      break;
+
+    case model.id.startsWith('x-ai/') || model.id.startsWith('moonshotai/') || model.id.startsWith('z-ai/') || model.id.startsWith('deepseek/'):
+      // 0-day: xAI/Grok models get default reasoning effort if not inherited
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId.startsWith('llmVndOaiReasoning'))) {
+        // console.log('[DEV] openRouterModelToModelDescription: unexpected xAI/Grok/DeepSeek reasoning model:', model.id);
+        parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
+      }
+      break;
+
+    default:
+      // in the default case, we let it be
+      break;
   }
-
-  if (model.id.startsWith('openai/') && interfaces.includes(LLM_IF_OAI_Reasoning))
-    parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
-
-  // [OpenRouter, 2025-01-20] xAI/Grok reasoning effort support
-  if (model.id.startsWith('x-ai/') && interfaces.includes(LLM_IF_OAI_Reasoning))
-    parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
-
-  // [OpenRouter, 2025-01-20] DeepSeek reasoning effort support
-  if (model.id.startsWith('deepseek/') && interfaces.includes(LLM_IF_OAI_Reasoning))
-    parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
-
-  // [OpenRouter, 2025-01-20] Verbosity parameter - controls response length and detail level
-  // - Anthropic: only Claude Opus 4.5 supports effort (maps to output_config.effort)
-  // - OpenAI: GPT-5 family supports verbosity
-  if (model.id.startsWith('anthropic/claude-opus-4.5') || model.id.startsWith('openai/gpt-5'))
-    parameterSpecs.push({ paramId: 'llmVndOaiVerbosity' /* 3-levels verbosity */ });
 
 
   // -- Hidden --
@@ -201,6 +268,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     chatPrice,
     hidden,
     parameterSpecs,
+    ...(initialTemperature !== undefined && { initialTemperature }),
   });
 }
 
@@ -215,32 +283,27 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
  */
 export function openRouterInjectVariants(models: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
 
-  // OR->Anthropic: inject thinking variants
-  if (model.id.includes('anthropic/') && model.interfaces.includes(LLM_IF_OAI_Reasoning)) {
+  // OR->Anthropic: inject non-thinking variants
+  if (model.id.includes('anthropic/') && model.interfaces.includes(LLM_IF_OAI_Reasoning) && model.parameterSpecs?.some(p => p.paramId === 'llmVndAntThinkingBudget')) {
 
-    // thinking variant: keep reasoning interface, enable thinking budget (shows 🧠 icon)
+    // remove the
+    const isAdaptive = !!model.parameterSpecs?.find(p => p.paramId === 'llmVndAntThinkingBudget' && p.initialValue === -1);
     const thinkingVariant: ModelDescriptionSchema = {
       ...model,
-      idVariant: 'thinking',
-      label: `${model.label.replace(' (thinking)', '')} (thinking)`,
+      idVariant: '::thinking',
+      label: `${model.label.replace(' (thinking)', '')} ${isAdaptive ? '(Adaptive)' : '(thinking)'}`,
       description: `(configurable thinking) ${model.description}`,
-      // keep LLM_IF_OAI_Reasoning for the thinking variant
-      parameterSpecs: model.parameterSpecs?.map(param =>
-        param.paramId !== 'llmVndAntThinkingBudget' ? param : {
-          ...param,
-          initialValue: 8192,
-        }),
     };
     models.push(thinkingVariant);
 
     // base model: remove reasoning interface and thinking budget param (no 🧠 icon)
-    const baseModel: ModelDescriptionSchema = {
+    const nonThinkingModel: ModelDescriptionSchema = {
       ...model,
       interfaces: model.interfaces.filter(i => i !== LLM_IF_OAI_Reasoning),
       // NOTE: the following line removes the thinking budget param entirely, instead of keeping it with initialValue: null
       parameterSpecs: model.parameterSpecs?.filter(p => p.paramId !== 'llmVndAntThinkingBudget'),
     };
-    models.push(baseModel);
+    models.push(nonThinkingModel);
 
     return models;
   }
