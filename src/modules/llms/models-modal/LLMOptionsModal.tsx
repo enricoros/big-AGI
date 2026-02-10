@@ -13,7 +13,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
+import { isLLMChatFree_cached, type DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
 import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMMaxOutputTokens, getLLMPricing, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
@@ -483,7 +483,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             {llm.description}
           </Typography>}
 
-          {!!getLLMPricing(llm)?.chat?._isFree && <Typography level='body-xs'>
+          {isLLMChatFree_cached(llm) && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
 

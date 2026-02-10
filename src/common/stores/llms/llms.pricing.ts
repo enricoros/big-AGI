@@ -40,7 +40,18 @@ type DPricePerMToken = number | 'free';
 
 /// detect Free Pricing
 
-export function isModelPricingFree(pricingChatGenerate: DPricingChatGenerate): boolean {
+export function isLLMChatFree_cached(llm: DLLM | null): boolean {
+  // simplified equivalent to getLLMChatPricing, simplified as we are just checking zeros (i.e. not scaling anything)
+  const pricing = llm?.userPricing ?? llm?.pricing;
+
+  // data issue: assume not free
+  if (!pricing?.chat) return false;
+
+  // cached value, including re-caching it
+  return pricing.chat._isFree ??= isLLMChatPricingFree(pricing.chat);
+}
+
+export function isLLMChatPricingFree(pricingChatGenerate: DPricingChatGenerate): boolean {
   if (!pricingChatGenerate) return true;
   return _isPricingFree(pricingChatGenerate.input) && _isPricingFree(pricingChatGenerate.output);
 }
@@ -95,7 +106,7 @@ export function portModelPricingV2toV3(llm: DLLM): void {
       V3pcg.input = pretendIsV2.chatIn;
     if (pretendIsV2.chatOut)
       V3pcg.output = pretendIsV2.chatOut;
-    V3pcg._isFree = isModelPricingFree(V3pcg);
+    V3pcg._isFree = isLLMChatPricingFree(V3pcg);
     llm.pricing = { chat: V3pcg };
     delete pretendIsV2.chatIn;
     delete pretendIsV2.chatOut;

@@ -8,7 +8,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
-import { getLLMPricing } from '~/common/stores/llms/llms.types';
+import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
@@ -64,7 +64,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     const updates = llms
       .filter(llm => llm.sId === props.serviceId)
       .map(llm => {
-        const isFree = getLLMPricing(llm)?.chat?._isFree === true;
+        const isFree = isLLMChatFree_cached(llm);
         return { id: llm.id, partial: { userHidden: !isFree } };
       });
     updateLLMs(updates);

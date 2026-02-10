@@ -235,7 +235,7 @@ export function Composer(props: {
   const tokensHistory = _historyTokenCount;
   const tokensResponseMax = getModelParameterValueOrThrow('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0;
   const tokenLimit = getLLMContextTokens(props.chatLLM) ?? 0;
-  const tokenChatPricing = getLLMPricing(props.chatLLM)?.chat;
+  const tokenChatPricing = React.useMemo(() => getLLMPricing(props.chatLLM)?.chat, [props.chatLLM]);
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targetF)
