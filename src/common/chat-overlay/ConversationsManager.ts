@@ -1,4 +1,6 @@
+import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { collectFragmentAssetIds, gcRegisterAssetCollector } from '~/common/stores/chat/chat.gc';
 
 import { ConversationHandler } from './ConversationHandler';
 
@@ -13,6 +15,40 @@ import { ConversationHandler } from './ConversationHandler';
 export class ConversationsManager {
   private static _instance: ConversationsManager;
   private readonly handlers: Map<DConversationId, ConversationHandler> = new Map();
+
+  private constructor() {
+    // Register a GC collector to protect DBlob assets referenced in active Beam stores.
+    // Uses inversion of control to avoid circular dependency (chat/ -> chat-overlay/).
+    gcRegisterAssetCollector(() => this._collectBeamAssetIds());
+  }
+
+  /**
+   * Collect DBlob asset IDs from all active Beam stores (rays, fusions, follow-ups).
+   */
+  private _collectBeamAssetIds(): DBlobAssetId[] {
+    const assetIds = new Set<DBlobAssetId>();
+    for (const handler of this.handlers.values()) {
+      const { rays, fusions } = handler.getBeamStore().getState();
+
+      // Scatter rays + their follow-up messages
+      for (const ray of rays) {
+        collectFragmentAssetIds(ray.message.fragments, assetIds);
+        // if (ray.followUpMessages)
+        //   for (const msg of ray.followUpMessages)
+        //     collectFragmentAssetIds(msg.fragments, assetIds);
+      }
+
+      // Gather fusions + their follow-up messages
+      for (const fusion of fusions) {
+        if (fusion.outputDMessage)
+          collectFragmentAssetIds(fusion.outputDMessage.fragments, assetIds);
+        // if (fusion.followUpMessages)
+        //   for (const msg of fusion.followUpMessages)
+        //     collectFragmentAssetIds(msg.fragments, assetIds);
+      }
+    }
+    return Array.from(assetIds);
+  }
 
   static getHandler(conversationId: DConversationId): ConversationHandler {
     const instance = ConversationsManager._instance || (ConversationsManager._instance = new ConversationsManager());
