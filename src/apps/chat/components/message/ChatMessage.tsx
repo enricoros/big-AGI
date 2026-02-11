@@ -44,7 +44,7 @@ import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
-import { clipboardCopyDOMSelectionOrFallback } from '~/common/util/clipboardUtils';
+import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
@@ -314,11 +314,17 @@ export function ChatMessage(props: {
 
   const handleCloseOpsMenu = React.useCallback(() => setOpsMenuAnchor(null), []);
 
-  const handleOpsCopy = (e: React.MouseEvent) => {
+  const handleOpsMessageCopySrc = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    clipboardCopyDOMSelectionOrFallback(blocksRendererRef.current, textSubject, 'Message');
+    // copy full source text (ops menu) - bypasses DOM, always gets pre-collapsed content
+    copyToClipboard(fragmentFlattenedText, 'Message');
     handleCloseOpsMenu();
-    closeContextMenu();
+  }, [fragmentFlattenedText, handleCloseOpsMenu]);
+
+  const handleBubbleCopyDOM = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // copy cleaned DOM selection (bubble) - rich text for pasting into Google Docs, etc.
+    clipboardCopyDOMSelectionOrFallback(blocksRendererRef.current, textSubject, 'Selection');
     closeBubble();
   };
 
@@ -896,7 +902,7 @@ export function ChatMessage(props: {
       {/*{ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditingText && (*/}
       {/*  <Tooltip title={messagePendingIncomplete ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>*/}
       {/*    <IconButton*/}
-      {/*      variant='outlined' onClick={handleOpsCopy}*/}
+      {/*      variant='outlined' onClick={handleOpsMessageCopySrc}*/}
       {/*      sx={{*/}
       {/*        position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,*/}
       {/*        opacity: 0, transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',*/}
@@ -934,7 +940,7 @@ export function ChatMessage(props: {
               </MenuItem>
             )}
             {/* Copy */}
-            <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
+            <MenuItem onClick={handleOpsMessageCopySrc} sx={{ flex: 1 }}>
               <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
               Copy
             </MenuItem>
@@ -1162,7 +1168,7 @@ export function ChatMessage(props: {
 
               {/* Bubble Copy */}
               <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
-                <IconButton onClick={handleOpsCopy}>
+                <IconButton onClick={handleBubbleCopyDOM}>
                   <ContentCopyIcon />
                 </IconButton>
               </Tooltip>
@@ -1181,7 +1187,7 @@ export function ChatMessage(props: {
           minWidth={220}
           placement='bottom-start'
         >
-          <MenuItem onClick={handleOpsCopy} sx={{ flex: 1, alignItems: 'center' }}>
+          <MenuItem onClick={(e) => { handleOpsMessageCopySrc(e); closeContextMenu(); }} sx={{ flex: 1, alignItems: 'center' }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy
           </MenuItem>

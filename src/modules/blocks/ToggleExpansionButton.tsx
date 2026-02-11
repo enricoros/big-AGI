@@ -16,7 +16,7 @@ export function ToggleExpansionButton(props: {
   sx: SxProps;
 }) {
   return (
-    <div style={{ lineHeight: 1 /* Absorbs some weird height issue since the parent has an extended line height (lineHeightChatTextMd) */ }}>
+    <div data-agi-no-copy style={{ lineHeight: 1 /* Absorbs some weird height issue since the parent has an extended line height (lineHeightChatTextMd) */ }}>
       <Button
         variant='soft'
         color={props.color}
