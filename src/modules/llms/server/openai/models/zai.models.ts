@@ -20,6 +20,7 @@ const _PS_Reasoning = [{ paramId: 'llmEffort' as const, enumValues: ['none', 'hi
 
 // [Z.ai] Known Models - Manual Mappings
 // Also used for prefix-matching 0-day API-discovered models
+// Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing
 // Ref: https://docs.z.ai/api-reference/chat/completions (model enum), https://docs.z.ai/guides/overview/pricing
 const _knownZAIModels: ManualMappings = [
 
@@ -36,13 +37,25 @@ const _knownZAIModels: ManualMappings = [
     chatPrice: { input: 1, output: 3.2, cache: { cType: 'oai-ac', read: 0.2 } },
     initialTemperature: 1.0, // Z.ai default for GLM-5
   },
+  {
+    idPrefix: 'glm-5-code',
+    label: 'GLM-5 Code',
+    description: 'GLM-5 optimized for coding tasks. Uses the dedicated Coding endpoint. 200K context, thinking mode.',
+    contextWindow: 204800, // 200K
+    interfaces: _IF_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning,
+    chatPrice: { input: 1.2, output: 5, cache: { cType: 'oai-ac', read: 0.3 } },
+    initialTemperature: 1.0,
+    // hidden: true,
+  },
 
   // GLM-4.7 Series
   // 128K context, 128K output. Thinking compulsory when enabled (default: enabled).
   {
     idPrefix: 'glm-4.7',
     label: 'GLM-4.7',
-    description: 'GLM-4.7 model with 128K context. Thinking mode activated by default.',
+    description: 'Latest-gen GLM model with 128K context. Thinking mode activated by default.',
     contextWindow: 131072, // 128K
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
@@ -52,8 +65,8 @@ const _knownZAIModels: ManualMappings = [
   },
   {
     idPrefix: 'glm-4.7-flashx',
-    label: 'GLM-4.7 FlashX',
-    description: 'Extended GLM-4.7 Flash variant. Thinking mode activated by default.',
+    label: 'GLM-4.7 FlashX', // fast, low cost
+    description: 'Fast GLM-4.7 variant with priority routing and higher concurrency. Same model as Flash, better infrastructure.',
     contextWindow: 131072,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
@@ -63,8 +76,8 @@ const _knownZAIModels: ManualMappings = [
   },
   {
     idPrefix: 'glm-4.7-flash',
-    label: 'GLM-4.7 Flash',
-    description: 'Fast GLM-4.7 variant. Thinking mode activated by default. Free tier.',
+    label: 'GLM-4.7 Flash (Free)',
+    description: 'Free GLM-4.7 variant. Same model as FlashX but with limited concurrency (1 concurrent request) and lower priority.',
     contextWindow: 131072,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
@@ -77,19 +90,20 @@ const _knownZAIModels: ManualMappings = [
   // 128K context, 32K output. Hybrid thinking (auto-determines whether to think).
   {
     idPrefix: 'glm-4.6v-flashx',
-    label: 'GLM-4.6V FlashX',
-    description: 'Extended fast vision-enabled GLM-4.6 variant. 32K output, hybrid thinking.',
+    label: 'GLM-4.6 V FlashX',
+    description: 'Fast vision GLM-4.6 with priority routing and higher concurrency. Image/video/file inputs, 32K output.',
     contextWindow: 131072,
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.04, output: 0.4, cache: { cType: 'oai-ac', read: 0.004 } },
     initialTemperature: 0.8, // Z.ai default for vision models
+    hidden: true,
   },
   {
     idPrefix: 'glm-4.6v-flash',
-    label: 'GLM-4.6V Flash',
-    description: 'Fast vision-enabled GLM-4.6 variant. 32K output, hybrid thinking. Free tier.',
+    label: 'GLM-4.6 V Flash (Free)',
+    description: 'Free vision GLM-4.6. Same model as FlashX but with limited concurrency (1 concurrent request). Image/video/file inputs, 32K output.',
     contextWindow: 131072,
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
@@ -99,7 +113,7 @@ const _knownZAIModels: ManualMappings = [
   },
   {
     idPrefix: 'glm-4.6v',
-    label: 'GLM-4.6V',
+    label: 'GLM-4.6 V',
     description: 'Vision-enabled GLM-4.6 model. Supports image/video/file inputs, 32K output, hybrid thinking.',
     contextWindow: 131072,
     interfaces: _IF_Vision_Reasoning,
@@ -114,7 +128,7 @@ const _knownZAIModels: ManualMappings = [
   {
     idPrefix: 'glm-4.6',
     label: 'GLM-4.6',
-    description: 'GLM-4.6 model with 128K context/output. Hybrid thinking by default.',
+    description: 'GLM-4.6 model with 128K context/output. Hybrid thinking: auto-determines whether to engage deep reasoning.',
     contextWindow: 131072,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
@@ -123,32 +137,47 @@ const _knownZAIModels: ManualMappings = [
     initialTemperature: 1.0,
   },
 
+  // GLM-OCR (Vision, no reasoning)
+  {
+    idPrefix: 'glm-ocr',
+    label: 'GLM-OCR (Vision, OCR)',
+    description: 'Specialized OCR model for text extraction from images and documents.',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    maxCompletionTokens: 4096,
+    chatPrice: { input: 0.03, output: 0.03 },
+    initialTemperature: 0.8,
+    // hidden: true,
+  },
+
   // GLM-4.5V (Vision + Reasoning)
   // 96K context, 16K output. Supports interleaved thinking.
   {
     idPrefix: 'glm-4.5v',
-    label: 'GLM-4.5V',
+    label: 'GLM-4.5 V',
     description: 'Vision-enabled GLM-4.5 model. 96K context, 16K output, interleaved thinking.',
     contextWindow: 98304, // 96K
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 16384,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 1.8, cache: { cType: 'oai-ac', read: 0.11 } },
-    initialTemperature: 0.8, // Z.ai default for vision models
+    initialTemperature: 0.8,
+    hidden: true,
   },
 
   // GLM-4.5 Text Series
   // 96K context, 96K output. Supports interleaved thinking.
   {
     idPrefix: 'glm-4.5-flash',
-    label: 'GLM-4.5 Flash',
-    description: 'Fast GLM-4.5 variant. Interleaved thinking. Free tier.',
+    label: 'GLM-4.5 Flash (Free)',
+    description: 'Free GLM-4.5 variant with limited concurrency. Prior-gen, superseded by GLM-4.7 Flash.',
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 'free', output: 'free' },
     initialTemperature: 0.6, // Z.ai default for GLM-4.5
+    hidden: true,
   },
   {
     idPrefix: 'glm-4.5-airx',
@@ -160,6 +189,7 @@ const _knownZAIModels: ManualMappings = [
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1.1, output: 4.5, cache: { cType: 'oai-ac', read: 0.22 } },
     initialTemperature: 0.6,
+    hidden: true,
   },
   {
     idPrefix: 'glm-4.5-air',
@@ -171,6 +201,7 @@ const _knownZAIModels: ManualMappings = [
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.2, output: 1.1, cache: { cType: 'oai-ac', read: 0.03 } },
     initialTemperature: 0.6,
+    hidden: true,
   },
   {
     idPrefix: 'glm-4.5-x',
@@ -182,11 +213,12 @@ const _knownZAIModels: ManualMappings = [
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 2.2, output: 8.9, cache: { cType: 'oai-ac', read: 0.45 } },
     initialTemperature: 0.6,
+    hidden: true,
   },
   {
     idPrefix: 'glm-4.5',
     label: 'GLM-4.5',
-    description: 'GLM-4.5 model with 96K context/output. Interleaved thinking.',
+    description: 'Prior-gen GLM-4.5 model with 96K context/output. Interleaved thinking.',
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
@@ -204,7 +236,8 @@ const _knownZAIModels: ManualMappings = [
     interfaces: _IF_Chat,
     maxCompletionTokens: 16384,
     chatPrice: { input: 0.1, output: 0.1 },
-    initialTemperature: 0.75, // Z.ai doc default for GLM-4-32B
+    initialTemperature: 0.75,
+    hidden: true,
   },
 
 ];
@@ -214,15 +247,15 @@ const _knownZAIModels: ManualMappings = [
 /// This is the primary source; the list API is unreliable.
 const _zaiCuratedModelIds: string[] = [
   // Text: GLM-5 series
-  'glm-5',
+  'glm-5', 'glm-5-code',
   // Text: GLM-4.7 series
   'glm-4.7', 'glm-4.7-flash', 'glm-4.7-flashx',
   // Vision: GLM-4.6V series
   'glm-4.6v', 'glm-4.6v-flash', 'glm-4.6v-flashx',
   // Text: GLM-4.6
   'glm-4.6',
-  // Vision: GLM-4.5V
-  'glm-4.5v',
+  // Vision: GLM-OCR, GLM-4.5V
+  'glm-ocr', 'glm-4.5v',
   // Text: GLM-4.5 series
   'glm-4.5', 'glm-4.5-air', 'glm-4.5-x', 'glm-4.5-airx', 'glm-4.5-flash',
   // Text: GLM-4 special
