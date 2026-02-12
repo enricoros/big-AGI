@@ -37,6 +37,7 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 | Perplexity | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
 | TogetherAI | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
 | xAI        |            |                  |                   |           |           |               |
+| Z.ai       | ✅          | ✅                | Img: ✅            | ✅         | Yes + 📦  | Thinking mode |
 | Ollama (2) | ❌ (broken) | ?                |                   |           |           |               |
 
 Notes:
