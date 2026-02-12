@@ -47,7 +47,7 @@ import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from '
 import { tlusApiHeuristic, tlusApiTryParse } from './openai/models/tlusapi.models';
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
-import { zaiInjectMissingModels, zaiModelFilter, zaiModelSort, zaiModelToModelDescription } from './openai/models/zai.models';
+import { zaiCuratedModelDescriptions, zaiDiscoverModels, zaiModelSort } from './openai/models/zai.models';
 
 
 // -- Dispatch types --
@@ -294,6 +294,30 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         convertToDescriptions: (response) => lmStudioModelsToModelDescriptions(response.models),
       });
 
+    case 'zai':
+      // [Z.ai]: curated models as primary source; list API is unreliable/abandoned.
+      // Optimistically try the API for 0-day model discovery, but never fail on it.
+      return createDispatch({
+        fetchModels: async (): Promise<string[]> => {
+          try {
+            const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
+            _wire?.logRequest('GET', url, headers);
+            const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: 'OpenAI/Zai', signal });
+            _wire?.logResponse(wireModels);
+            return (wireModels?.data || []).map((m: { id: string }) => m.id);
+          } catch (error) {
+            // API is unreliable - log and continue with curated list only
+            console.warn('[Z.ai] Models list API failed, using curated models only:', (error as Error)?.message || error);
+            return [];
+          }
+        },
+        convertToDescriptions: (apiModelIds) => {
+          const curated = zaiCuratedModelDescriptions();
+          const discovered = zaiDiscoverModels(apiModelIds);
+          return [...curated, ...discovered].sort(zaiModelSort);
+        },
+      });
+
     case 'alibaba':
     case 'azure':
     case 'deepseek':
@@ -305,7 +329,6 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'openpipe':
     case 'openrouter':
     case 'togetherai':
-    case 'zai':
       return createDispatch({
 
         // [OpenAI-compatible dialects]: openAI-style fetch models list
@@ -435,13 +458,6 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .map(openRouterModelToModelDescription)
                 .filter(desc => !!desc)
                 .reduce(openRouterInjectVariants, []);
-
-            case 'zai':
-              return zaiInjectMissingModels(
-                maybeModels
-                  .filter(({ id }) => zaiModelFilter(id))
-                  .map(({ id }) => zaiModelToModelDescription(id)),
-              ).sort(zaiModelSort);
 
             default:
               const _exhaustiveCheck: never = dialect;
