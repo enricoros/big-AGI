@@ -26,6 +26,7 @@ import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon
 import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon';
 import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
 import { XAIIcon } from '~/common/components/icons/vendors/XAIIcon';
+import { ZAIIcon } from '~/common/components/icons/vendors/ZAIIcon';
 
 
 /**
@@ -51,6 +52,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   perplexity: PerplexityIcon,
   togetherai: TogetherIcon,
   xai: XAIIcon,
+  zai: ZAIIcon,
 };
 
 

@@ -47,6 +47,7 @@ import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from '
 import { tlusApiHeuristic, tlusApiTryParse } from './openai/models/tlusapi.models';
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
+import { zaiInjectMissingModels, zaiModelFilter, zaiModelSort, zaiModelToModelDescription } from './openai/models/zai.models';
 
 
 // -- Dispatch types --
@@ -304,6 +305,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'openpipe':
     case 'openrouter':
     case 'togetherai':
+    case 'zai':
       return createDispatch({
 
         // [OpenAI-compatible dialects]: openAI-style fetch models list
@@ -433,6 +435,13 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .map(openRouterModelToModelDescription)
                 .filter(desc => !!desc)
                 .reduce(openRouterInjectVariants, []);
+
+            case 'zai':
+              return zaiInjectMissingModels(
+                maybeModels
+                  .filter(({ id }) => zaiModelFilter(id))
+                  .map(({ id }) => zaiModelToModelDescription(id)),
+              ).sort(zaiModelSort);
 
             default:
               const _exhaustiveCheck: never = dialect;
