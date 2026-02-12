@@ -1,4 +1,4 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -7,10 +7,16 @@ import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 // Interfaces for Z.ai models
 // - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5)
+// - Text-only models strip images (Z.ai API rejects image parts on non-vision models)
 // - Ref: https://docs.z.ai/guides/capabilities/thinking-mode
-const _IF_Chat = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json];
-const _IF_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning];
+const _IF_Chat = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_HOTFIX_StripImages];
+const _IF_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_StripImages];
 const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning];
+
+// Parameter specs for Z.ai models
+// - Z.ai thinking maps from effort: 'none' → disabled, anything else → enabled
+// - Z.ai only supports binary enabled/disabled, so we expose 'none' and 'high'
+const _PS_Reasoning = [{ paramId: 'llmEffort' as const, enumValues: ['none', 'high'] }];
 
 // [Z.ai] Known Models - Manual Mappings
 // Also used for prefix-matching 0-day API-discovered models
@@ -18,7 +24,7 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, L
 const _knownZAIModels: ManualMappings = [
 
   // GLM-5 Series - Flagship (Agentic Engineering)
-  // 200K context, 128K output. Thinking activated by default.
+  // 200K context, 128K output. Thinking compulsory when enabled (default: enabled).
   {
     idPrefix: 'glm-5',
     label: 'GLM-5',
@@ -26,11 +32,13 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 204800, // 200K
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1, output: 3.2, cache: { cType: 'oai-ac', read: 0.2 } },
+    initialTemperature: 1.0, // Z.ai default for GLM-5
   },
 
   // GLM-4.7 Series
-  // 128K context, 128K output. Thinking activated by default.
+  // 128K context, 128K output. Thinking compulsory when enabled (default: enabled).
   {
     idPrefix: 'glm-4.7',
     label: 'GLM-4.7',
@@ -38,7 +46,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072, // 128K
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
+    initialTemperature: 1.0,
   },
   {
     idPrefix: 'glm-4.7-flashx',
@@ -47,7 +57,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.07, output: 0.4, cache: { cType: 'oai-ac', read: 0.01 } },
+    initialTemperature: 1.0,
   },
   {
     idPrefix: 'glm-4.7-flash',
@@ -56,11 +68,13 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 'free', output: 'free' },
+    initialTemperature: 1.0,
   },
 
   // GLM-4.6V Series (Vision + Reasoning)
-  // 128K context, 32K output. Hybrid thinking by default.
+  // 128K context, 32K output. Hybrid thinking (auto-determines whether to think).
   {
     idPrefix: 'glm-4.6v-flashx',
     label: 'GLM-4.6V FlashX',
@@ -68,7 +82,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.04, output: 0.4, cache: { cType: 'oai-ac', read: 0.004 } },
+    initialTemperature: 0.8, // Z.ai default for vision models
   },
   {
     idPrefix: 'glm-4.6v-flash',
@@ -77,7 +93,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 'free', output: 'free' },
+    initialTemperature: 0.8,
   },
   {
     idPrefix: 'glm-4.6v',
@@ -86,11 +104,13 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.3, output: 0.9, cache: { cType: 'oai-ac', read: 0.05 } },
+    initialTemperature: 0.8,
   },
 
   // GLM-4.6 Text
-  // 128K context, 128K output. Hybrid thinking by default.
+  // 128K context, 128K output. Hybrid thinking (auto-determines whether to think).
   {
     idPrefix: 'glm-4.6',
     label: 'GLM-4.6',
@@ -98,7 +118,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
+    initialTemperature: 1.0,
   },
 
   // GLM-4.5V (Vision + Reasoning)
@@ -110,7 +132,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 98304, // 96K
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 16384,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 1.8, cache: { cType: 'oai-ac', read: 0.11 } },
+    initialTemperature: 0.8, // Z.ai default for vision models
   },
 
   // GLM-4.5 Text Series
@@ -122,7 +146,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 'free', output: 'free' },
+    initialTemperature: 0.6, // Z.ai default for GLM-4.5
   },
   {
     idPrefix: 'glm-4.5-airx',
@@ -131,7 +157,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1.1, output: 4.5, cache: { cType: 'oai-ac', read: 0.22 } },
+    initialTemperature: 0.6,
   },
   {
     idPrefix: 'glm-4.5-air',
@@ -140,7 +168,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.2, output: 1.1, cache: { cType: 'oai-ac', read: 0.03 } },
+    initialTemperature: 0.6,
   },
   {
     idPrefix: 'glm-4.5-x',
@@ -149,7 +179,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 2.2, output: 8.9, cache: { cType: 'oai-ac', read: 0.45 } },
+    initialTemperature: 0.6,
   },
   {
     idPrefix: 'glm-4.5',
@@ -158,7 +190,9 @@ const _knownZAIModels: ManualMappings = [
     contextWindow: 98304,
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
+    initialTemperature: 0.6,
   },
 
   // GLM-4 Special Models (no thinking support)
@@ -170,6 +204,7 @@ const _knownZAIModels: ManualMappings = [
     interfaces: _IF_Chat,
     maxCompletionTokens: 16384,
     chatPrice: { input: 0.1, output: 0.1 },
+    initialTemperature: 0.75, // Z.ai doc default for GLM-4-32B
   },
 
 ];
