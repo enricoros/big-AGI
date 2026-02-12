@@ -1,4 +1,4 @@
-import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -143,7 +143,7 @@ const _knownZAIModels: ManualMappings = [
     label: 'GLM-OCR (Vision, OCR)',
     description: 'Specialized OCR model for text extraction from images and documents.',
     contextWindow: 131072,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_HOTFIX_NoWebP],
     maxCompletionTokens: 4096,
     chatPrice: { input: 0.03, output: 0.03 },
     initialTemperature: 0.8,
