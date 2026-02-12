@@ -125,6 +125,10 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     return !!this.terminationReason;
   }
 
+  get hasExplicitTokenStopReason(): boolean {
+    return this.tokenStopReason !== undefined;
+  }
+
   setRpcTerminatingIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
     this._addIssue(issueId, issueText, serverLog);
     this.setEnded('issue-rpc');
