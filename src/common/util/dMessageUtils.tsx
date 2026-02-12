@@ -494,6 +494,20 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (model.includes('grok-beta')) return 'Grok Beta';
     if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
   }
+  // [Z.ai]
+  if (model.startsWith('glm-')) {
+    return model
+      .replace('glm-', 'GLM-')
+      .replace('ocr', 'OCR')
+      .replace(/(\d)v/, '$1 V')   // vision suffix: 4.6v → 4.6 V
+      .replace('-flashx', ' FlashX')
+      .replace('-flash', ' Flash')
+      .replace('-airx', ' AirX')
+      .replace('-air', ' Air')
+      .replace('-code', ' Code')
+      .replace(/-x$/, ' X')
+      .replace(/-32b.*$/, ' 32B');
+  }
   // [FireworksAI]
   if (model.includes('accounts/')) {
     const index = model.indexOf('accounts/');
