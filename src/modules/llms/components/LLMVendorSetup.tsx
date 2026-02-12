@@ -23,6 +23,7 @@ import { OpenRouterServiceSetup } from '../vendors/openrouter/OpenRouterServiceS
 import { PerplexityServiceSetup } from '../vendors/perplexity/PerplexityServiceSetup';
 import { TogetherAIServiceSetup } from '../vendors/togetherai/TogetherAIServiceSetup';
 import { XAIServiceSetup } from '../vendors/xai/XAIServiceSetup';
+import { ZAIServiceSetup } from '~/modules/llms/vendors/zai/ZAIServiceSetup';
 
 
 /**
@@ -48,6 +49,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   perplexity: PerplexityServiceSetup,
   togetherai: TogetherAIServiceSetup,
   xai: XAIServiceSetup,
+  zai: ZAIServiceSetup,
 } as const;
 
 

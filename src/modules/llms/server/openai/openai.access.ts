@@ -4,8 +4,8 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 14 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
- * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai
+ * Supports 15 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
+ * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai, zai
  */
 
 import * as z from 'zod/v4';
@@ -33,6 +33,7 @@ const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
+const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
 
 
 // -- Centralized OpenAI-compatible API Paths --
@@ -112,7 +113,7 @@ export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai', 'openpipe',
-    'openrouter', 'perplexity', 'togetherai', 'xai',
+    'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   oaiKey: z.string().trim(),
@@ -406,6 +407,24 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${xaiKey}`,
         },
         url: DEFAULT_XAI_HOST + apiPath,
+      };
+
+    case 'zai':
+      // Z.ai uses /paas/v4/ instead of standard /v1/, the HOST contains up to /api/paas, then we remap /v1 -> /v4
+      let zaiKey = access.oaiKey || '';
+      const zaiHost = llmsFixupHost(access.oaiHost || DEFAULT_ZAI_HOST, apiPath);
+      const zaiPath = apiPath.replace('/v1', '/v4');
+
+      zaiKey = llmsRandomKeyFromMultiKey(zaiKey);
+      if (!zaiKey || !zaiHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Z.ai API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${zaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        url: zaiHost + zaiPath,
       };
 
   }

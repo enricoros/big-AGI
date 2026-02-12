@@ -199,6 +199,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     delete payload.reasoning_effort;
   }
 
+  // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher)
+  // Ref: https://docs.z.ai/guides/capabilities/thinking-mode
+  if (openAIDialect === 'zai' && model.vndOaiReasoningEffort) {
+    if (model.vndOaiReasoningEffort !== 'none' && model.vndOaiReasoningEffort !== 'high')
+      throw new Error(`Z.ai GLM only supports reasoning effort 'none' or 'high', got '${model.vndOaiReasoningEffort}'`);
+    payload.thinking = { type: model.vndOaiReasoningEffort === 'none' ? 'disabled' : 'enabled' };
+    delete payload.reasoning_effort;
+  }
+
   // [Moonshot] Kimi's $web_search builtin function
   if (openAIDialect === 'moonshot' && model.vndMoonshotWebSearch === 'auto' && !skipWebSearchDueToCustomTools)
     payload.tools = [...(payload.tools || []), {

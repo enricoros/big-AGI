@@ -29,7 +29,8 @@ How to set up AI models and features in big-AGI.
     [OpenPipe](https://app.openpipe.ai/settings),
     [Perplexity](https://www.perplexity.ai/settings/api),
     [TogetherAI](https://api.together.xyz/settings/api-keys),
-    [xAI](http://x.ai/api)
+    [xAI](http://x.ai/api),
+    [Z.ai](https://z.ai/)
   - **[Azure OpenAI](config-azure-openai.md)** guide
   - **FireworksAI** ([API keys](https://fireworks.ai/account/api-keys), via custom OpenAI endpoint: https://api.fireworks.ai/inference)
   - **[OpenRouter](config-openrouter.md)** guide

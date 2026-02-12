@@ -6,7 +6,7 @@ Client-Side Fetch (CSF) enables direct browser-to-API communication, bypassing t
 
 CSF is implemented as an opt-in setting stored as `csf: boolean` in each vendor's service settings. The vendor interface exposes `csfAvailable?: (setup) => boolean` to determine if CSF can be enabled (typically checking if an API key or host is configured). The actual execution happens in `aix.client.direct-chatGenerate.ts` which dynamically imports when CSF is active, making direct fetch calls using the same wire protocols as the server.
 
-All 16 supported vendors (OpenAI, Anthropic, Gemini, Ollama, LocalAI, Deepseek, Groq, Mistral, xAI, OpenRouter, Perplexity, Together AI, Alibaba, Moonshot, OpenPipe, LM Studio) support CSF. Cloud vendors require CORS support from the API provider (all tested vendors return `access-control-allow-origin: *`). Local vendors (Ollama, LocalAI, LM Studio) require CORS to be enabled on the local server.
+All 17 supported vendors (OpenAI, Anthropic, Gemini, Ollama, LocalAI, Deepseek, Groq, Mistral, xAI, OpenRouter, Perplexity, Together AI, Alibaba, Moonshot, OpenPipe, LM Studio, Z.ai) support CSF. Cloud vendors require CORS support from the API provider (all tested vendors return `access-control-allow-origin: *`). Local vendors (Ollama, LocalAI, LM Studio) require CORS to be enabled on the local server.
 
 ## UI
 
