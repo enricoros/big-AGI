@@ -285,6 +285,7 @@ export function LLMParametersEditor(props: {
     llmVndXaiWebSearch,
     llmVndXaiXSearch,
     llmVndXaiXSearchHandles,
+    llmVndZaiReasoningEffort,
   } = allParameters;
 
 
@@ -652,6 +653,19 @@ export function LLMParametersEditor(props: {
     {/*    options={_moonshotWebSearchOptions}*/}
     {/*  />*/}
     {/*)}*/}
+
+    {showParam('llmVndZaiReasoningEffort') && (
+      <FormSelectControl
+        title='Thinking'
+        tooltip='Enable thinking mode for GLM models'
+        value={llmVndZaiReasoningEffort ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndZaiReasoningEffort');
+          else onChangeParameter({ llmVndZaiReasoningEffort: value });
+        }}
+        options={_moonReasoningEffortOptions}
+      />
+    )}
 
     {showParam('llmVndPerplexitySearchMode') && (
       <FormSelectControl

@@ -488,6 +488,16 @@ export const DModelParameterRegistry = {
     // initialValue: '', // empty = no filter
   },
 
+  // Z.ai-specific parameters
+
+  llmVndZaiReasoningEffort: _enumDef({
+    label: 'Reasoning Effort',
+    type: 'enum',
+    description: 'Controls thinking mode for GLM models. High enables thinking (default), none disables it.',
+    values: ['none', 'high'],
+    // No initialValue - undefined means high (thinking enabled, the default for GLM-4.5+)
+  }),
+
 } as const satisfies Record<string, _ParameterRegistryEntry>;
 
 

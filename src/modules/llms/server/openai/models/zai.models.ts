@@ -16,7 +16,7 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, L
 // Parameter specs for Z.ai models
 // - Z.ai thinking maps from effort: 'none' → disabled, anything else → enabled
 // - Z.ai only supports binary enabled/disabled, so we expose 'none' and 'high'
-const _PS_Reasoning = [{ paramId: 'llmEffort' as const, enumValues: ['none', 'high'] }];
+const _PS_Reasoning = [{ paramId: 'llmVndZaiReasoningEffort' as const }];
 
 // [Z.ai] Known Models - Manual Mappings
 // Also used for prefix-matching 0-day API-discovered models

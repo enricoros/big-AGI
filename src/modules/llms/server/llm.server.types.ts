@@ -122,6 +122,8 @@ const ModelParameterSpec_schema = z.object({
     'llmVndXaiWebSearch',
     'llmVndXaiXSearch',
     'llmVndXaiXSearchHandles',
+    // Z.ai
+    'llmVndZaiReasoningEffort',
   ] satisfies DModelParameterId[]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
