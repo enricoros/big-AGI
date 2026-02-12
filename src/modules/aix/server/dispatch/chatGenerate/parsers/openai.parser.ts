@@ -195,7 +195,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
       // delta: Reasoning Content [Deepseek, 2025-01-20]
       let deltaHasReasoning = false;
-      if (typeof delta.reasoning_content === 'string') {
+      if (typeof delta.reasoning_content === 'string' && (delta.reasoning_content || !delta.content)) {
 
         pt.appendReasoningText(delta.reasoning_content);
         deltaHasReasoning = true;
