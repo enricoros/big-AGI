@@ -218,6 +218,9 @@ async function* _consumeDispatchStream(
         demuxedEvents = dispatchDemuxer.flushRemaining();
         _d.profiler?.measureEnd('demux');
 
+        if (demuxedEvents.length > 0)
+          console.warn(`[AIX] ${_d.prettyDialect}: stream closed with ${demuxedEvents.length} recovered event(s) from demuxer buffer`);
+
       } else {
 
         // 2. Decode the chunk - does Not throw (see the constructor for why)
