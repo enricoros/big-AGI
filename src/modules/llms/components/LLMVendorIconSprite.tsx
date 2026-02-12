@@ -11,7 +11,7 @@ import type { ModelVendorId } from '../vendors/vendors.registry';
 import { PhRobot } from '~/common/components/icons/phosphor/PhRobot';
 
 // Symbol IDs for each vendor — generated from the vendor registry
-const VI: Record<ModelVendorId, string> = {
+const VI: Record<ModelVendorId, string> & { zai: string } = {
   alibaba: 'vi-alibaba',
   anthropic: 'vi-anthropic',
   azure: 'vi-azure',
@@ -29,6 +29,7 @@ const VI: Record<ModelVendorId, string> = {
   perplexity: 'vi-perplexity',
   togetherai: 'vi-togetherai',
   xai: 'vi-xai',
+  zai: 'vi-zai',
 } as const;
 
 
@@ -215,6 +216,14 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
         <symbol id={VI.xai} viewBox='0 0 24 24'>
           <g fill='currentColor'>
           <path d='m3.005 8.858 8.783 12.544h3.904L6.908 8.858zm3.9 6.967L3 21.402h3.907l1.951-2.788zM16.585 2l-6.75 9.64 1.953 2.79L20.492 2zm.707 5.965v13.437h3.2V3.395z' />
+          </g>
+        </symbol>
+
+        <symbol id={VI.zai} viewBox='0 0 30 30'>
+          <g fill='currentColor' strokeWidth={0}>
+          <path d='M15.47,7.1l-1.3,1.85c-0.2,0.29-0.54,0.47-0.9,0.47h-7.1V7.09C6.16,7.1,15.47,7.1,15.47,7.1z' />
+          <polygon points='24.3,7.1 13.14,22.91 5.7,22.91 16.86,7.1' />
+          <path d='M14.53,22.91l1.31-1.86c0.2-0.29,0.54-0.47,0.9-0.47h7.09v2.33H14.53z' />
           </g>
         </symbol>
       </defs>
