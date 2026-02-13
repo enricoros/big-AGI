@@ -570,7 +570,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
-        return pt.setEnded('done-dialect');
+        return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
       case 'error':

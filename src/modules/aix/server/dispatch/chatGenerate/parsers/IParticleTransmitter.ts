@@ -3,15 +3,20 @@ import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 
 export type ParticleServerLogLevel = false | 'srv-log' | 'srv-warn';
 
+export type ParticleCGDialectEndReason = Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>;
+
 export interface IParticleTransmitter {
 
   // Parser-initiated Control //
 
   /** Set the end reason - only use for 'done-dialect' to signal a dialect-close */
-  setEnded(reason: Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>): void;
+  setDialectEnded(reason: ParticleCGDialectEndReason): void;
 
-  /** End the current part and flush it */
+  /** End the current part and flush it, which also calls `setDialectEnded('issue-dialct')` */
   setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
+
+  /** Communicates the finish reason to the client - Data only, this does not do Control, like the above */
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
 
 
   // Parts data //
@@ -82,9 +87,6 @@ export interface IParticleTransmitter {
 
   /** Communicates the upstream response handle, for remote control/resumability */
   setUpstreamHandle(handle: string, type: 'oai-responses'): void;
-
-  /** Communicates the finish reason to the client */
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
 
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
   updateMetrics(update: Partial<AixWire_Particles.CGSelectMetrics>): void;

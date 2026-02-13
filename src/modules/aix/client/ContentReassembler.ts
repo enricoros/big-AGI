@@ -96,7 +96,7 @@ export class ContentReassembler {
       console.log('-> aix.p: abort-client');
 
     // NOTE: this doesn't go to the debugger anymore - as we only publish external particles to the debugger
-    await this.#reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+    await this.#reassembleParticle({ cg: 'end', terminationReason: 'abort-client', tokenStopReason: 'client-abort-signal' });
   }
 
   async setClientExcepted(errorAsText: string, errorHint?: DMessageErrorPart['hint']): Promise<void> {
@@ -106,7 +106,7 @@ export class ContentReassembler {
     this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText, issueHint: errorHint });
 
     // NOTE: this doesn't go to the debugger anymore - as we only publish external particles to the debugger
-    await this.#reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
+    await this.#reassembleParticle({ cg: 'end', terminationReason: 'issue-rpc', tokenStopReason: 'cg-issue' });
   }
 
   async setClientRetrying(strategy: 'reconnect' | 'resume', errorMessage: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string) {
@@ -410,7 +410,7 @@ export class ContentReassembler {
     // Break text accumulation, as we have a full audio part in the middle
     this.currentTextFragmentIndex = null;
 
-    const { mimeType, a_b64: base64Data, label, generator, durationMs } = particle;
+    const { mimeType, a_b64: base64Data, label, /*generator,*/ durationMs } = particle;
     const safeLabel = label || 'Generated Audio';
 
     try {
@@ -638,7 +638,7 @@ export class ContentReassembler {
 
   /// Rest of the data ///
 
-  private onCGEnd({ reason: _reason /* Redundant: no information */, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
+  private onCGEnd({ terminationReason, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
 
     // NOTE: no new info in particle.reason
     // - abort-client: user abort (already captured in the stop reason)

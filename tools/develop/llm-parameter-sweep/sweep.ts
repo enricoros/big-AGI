@@ -16,7 +16,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
-import type { IParticleTransmitter, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
+import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
 import { listModelsRunDispatch } from '~/modules/llms/server/listModels.dispatch';
 import { createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
@@ -287,7 +287,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   get hasError(): boolean { return this.dialectIssue !== null; }
 
   // Parser-initiated Control
-  setEnded(reason: 'done-dialect' | 'issue-dialect'): void {
+  setDialectEnded(reason: ParticleCGDialectEndReason): void {
     this.endReason = reason;
   }
 
