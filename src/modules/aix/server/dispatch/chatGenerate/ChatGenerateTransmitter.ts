@@ -100,7 +100,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     // Termination
     if (this.terminationReason) {
       // NOTE: we used to infer the stop reason, now we mandate it - or else is undefined, and we leave it to the reassembler to decide
-      // const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-rpc';
+      // const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-dispatch-rpc';
       this.transmissionQueue.push({
         cg: 'end',
         terminationReason: this.terminationReason,
@@ -162,7 +162,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   setDispatchEnded(reason: Extract<AixWire_Particles.CGEndReason,
     | 'done-dispatch-closed'    // stream ended
     | 'done-dispatch-aborted'   // stream aborted (abort signal)
-    | 'issue-rpc'               // issues in one of 4 dispatch stages: prepare, fetch, read, parse - see below
+    | 'issue-dispatch-rpc'      // issues in one of 4 dispatch stages: prepare, fetch, read, parse - see below
   >) {
     if (SERVER_DEBUG_WIRE)
       console.log('|terminate-dispatch|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
@@ -178,7 +178,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     | 'dispatch-parse'
   >, issueText: string, serverLog: ParticleServerLogLevel) {
     this._addIssue(issueId, issueText, serverLog);
-    this.setDispatchEnded('issue-rpc');
+    this.setDispatchEnded('issue-dispatch-rpc');
   }
 
 

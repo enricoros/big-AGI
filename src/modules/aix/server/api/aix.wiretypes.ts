@@ -649,20 +649,18 @@ export namespace AixWire_Particles {
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
   export type CGEndReason =     // the reason for the end of the chat generation
-    | 'abort-client'            // (set by the Reassembler on the client side) user aborted before the end of stream
     | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sends the 'message_stop' event
     | 'done-dispatch-aborted'   // this shall never see the light of day, as it was a reaction to the intake being aborted first
-    | 'done-dispatch-closed'    // dispatch connection closed
+    | 'done-dispatch-closed'    // dispatch connection closed, which is not a 'good' ending reason, as logic should have ended it with done-dialect/issue-dialect
     | 'issue-dialect'           // [1] ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
-    | 'issue-rpc';              // [2] ended because of an issue
+    | 'issue-dispatch-rpc';     // [2] ended because of an issue
 
   export type CGIssueId =
     | 'dialect-issue'           // [1] when end reason = 'issue-dialect'
-    | 'dispatch-prepare'        // [2] when end reason = 'issue-rpc', 4 phases of GC dispatch
+    | 'dispatch-prepare'        // [2] when end reason = 'issue-dispatch-rpc', 4 phases of GC dispatch
     | 'dispatch-fetch'          // [2] "
     | 'dispatch-read'           // [2] "
-    | 'dispatch-parse'          // [2] "
-    | 'client-read';            // the aix client encountered an unexpected error (e.g. tRPC)
+    | 'dispatch-parse';         // [2] "
 
   export type GCTokenStopReason =
     | 'ok'                      // clean, including reaching 'stop sequences'
@@ -670,7 +668,6 @@ export namespace AixWire_Particles {
     | 'ok-pause_continue'       // clean, but paused (e.g. Anthropic server tools like web search) - requires continuation
     // premature:
     | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
-    | 'client-abort-signal'     // the client aborted - likely a user/auto initiation
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
     | 'filter-refusal'          // safety refusal filter (e.g. Anthropic safety concerns)

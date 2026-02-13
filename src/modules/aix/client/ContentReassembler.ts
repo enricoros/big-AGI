@@ -1,5 +1,6 @@
 import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 
+import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
@@ -40,6 +41,10 @@ export class ContentReassembler {
 
   // reassembly state (plus the ext. accumulator)
   private currentTextFragmentIndex: number | null = null;
+
+  // raw termination data (set during stream or by client, classified at finalization)
+  private _terminationReason?: 'done-client-aborted' | 'issue-client-rpc' | AixWire_Particles.CGEndReason;
+  private _tokenStopReasonWire?: AixWire_Particles.GCTokenStopReason;
 
 
   constructor(
@@ -84,9 +89,12 @@ export class ContentReassembler {
 
   finalizeAccumulator(): void {
 
-    // Perform all the latest operations
-    const hasAborted = !!this.accumulator.genTokenStopReason;
-    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
+    // Classify termination
+    this.accumulator.legacyGenTokenStopReason = this._deriveTokenStopReason();
+
+    // Metrics
+    const hadIssues = !!this.accumulator.legacyGenTokenStopReason;
+    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hadIssues);
 
     // [SUDO] Debugging, finalize the frame
     if (this.debuggerFrameId)
@@ -95,22 +103,31 @@ export class ContentReassembler {
   }
 
 
-  async setClientAborted(): Promise<void> {
+  setClientAborted(): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p: abort-client');
 
-    // NOTE: this doesn't go to the debugger anymore - as we only publish external particles to the debugger
-    await this.#reassembleParticle({ cg: 'end', terminationReason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+    // normal user cancellation does not require error fragments
+
+    if (this._terminationReason)
+      console.warn(`⚠️ [ContentReassembler] setClientAborted: overriding server termination '${this._terminationReason}' (wire stop: ${this._tokenStopReasonWire ?? 'none'})`);
+
+    this._terminationReason = 'done-client-aborted';
+    this._tokenStopReasonWire = undefined; // reset, as we assume we can't know (alt: jsut leave it)
   }
 
-  async setClientExcepted(errorAsText: string, errorHint?: DMessageErrorPart['hint']): Promise<void> {
+  setClientExcepted(errorAsText: string, errorHint?: DMessageErrorPart['hint']): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p: issue:', errorAsText);
 
-    this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText, issueHint: errorHint });
+    // add the error fragment with the given message
+    this._appendErrorFragment(errorAsText, errorHint);
 
-    // NOTE: this doesn't go to the debugger anymore - as we only publish external particles to the debugger
-    await this.#reassembleParticle({ cg: 'end', terminationReason: 'issue-rpc', tokenStopReason: 'cg-issue' });
+    if (this._terminationReason)
+      console.warn(`⚠️ [ContentReassembler] setClientExcepted: overriding server termination '${this._terminationReason}' (wire stop: ${this._tokenStopReasonWire ?? 'none'})`);
+
+    this._terminationReason = 'issue-client-rpc';
+    this._tokenStopReasonWire = undefined; // reset, as we can't assume we know (alt: jsut leave it)
   }
 
   async setClientRetrying(strategy: 'reconnect' | 'resume', errorMessage: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string) {
@@ -486,7 +503,7 @@ export class ContentReassembler {
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline audio to DBlobs:', { label: safeLabel, error, mimeType, size: base64Data.length });
       // Add an error fragment instead
-      this.accumulator.fragments.push(createErrorContentFragment(`Failed to process audio: ${error?.message || 'Unknown error'}`, 'aix-audio-processing'));
+      this._appendErrorFragment(`Failed to process audio: ${error?.message || 'Unknown error'}`, 'aix-audio-processing');
     }
   }
 
@@ -642,51 +659,85 @@ export class ContentReassembler {
 
   /// Rest of the data ///
 
+  /**
+   * Stores raw termination data from the wire - classification deferred to finalizeAccumulator()
+   */
   private onCGEnd({ terminationReason, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
+    this._terminationReason = terminationReason;
+    this._tokenStopReasonWire = tokenStopReason;
+  }
 
-    // Store the end reason for diagnostics
-    // - abort-client: user abort (already captured in the stop reason)
-    // - done-*: IMPORTANT:  'done-dialect' from 'done-dispatch-closed' from 'done-dispatch-aborted'
-    // - issue-*: issue (already captured in the 'issue' particle, and stop reason is 'cg-issue')
-    this.accumulator.genEndReason = terminationReason;
+  /**
+   * Cross-references both raw termination inputs to derive the DMessage-level tokenStopReason.
+   * Called once at finalization - the single place where wire-level → UI-level classification happens.
+   */
+  private _deriveTokenStopReason(): DMessageGenerator['tokenStopReason'] | undefined {
+    const wire = this._tokenStopReasonWire;
 
-    // handle the token stop reason
-    switch (tokenStopReason) {
-      // undefined
+    // First handle client terminations
+    if (this._terminationReason === 'done-client-aborted')
+      return 'client-abort'; // client-side abort is a 'successful' termination with an incomplete message
+    if (this._terminationReason === 'issue-client-rpc') {
+      // error fragment already appended
+      // issue on the client-side, such as interrupted server connection
+      return 'issue';
+    }
+
+    // if the dialect parser explicitly set a stop reason, map it to the DMessageGenerator tokenStopReason enum
+    if (wire) {
+      const mapAixStopToDmessageGeneratorStop: Record<AixWire_Particles.GCTokenStopReason, DMessageGenerator['tokenStopReason'] | undefined> = {
+        // normal completions
+        'ok': undefined,
+        'ok-tool_invocations': undefined,
+        'ok-pause_continue': undefined,
+        // issues: dialect, dispatch, or client
+        'cg-issue': 'issue',
+        // interruptions
+        'out-of-tokens': 'out-of-tokens',
+        'filter-content': 'filter',
+        'filter-recitation': 'filter',
+        'filter-refusal': 'filter',
+      } as const;
+      if (wire in mapAixStopToDmessageGeneratorStop)
+        return mapAixStopToDmessageGeneratorStop[wire];
+      console.warn(`[ContentReassembler] Unmapped tokenStopReason from wire: ${wire}. Fallling back to terminationReason.`);
+    }
+
+    // fall back to terminationReason
+    switch (this._terminationReason) {
       case undefined:
-        // no stop reason provided - decide what to do here - merely breaking would mean 'ok' ...
-        break;
+        // SEVERE - AIX BUG: don't even know why we terminated
+        console.warn(`⚠️ [ContentReassembler] finished without 'terminationReason' - possible missing 'end' particle. No tokenStopReason can be derived.`);
+        this._appendErrorFragment('Message may be incomplete: missing completion signal.');
+        return undefined;
 
-      // normal stop
-      case 'ok':                    // content
-      case 'ok-tool_invocations':   // content + tool invocation
-      case 'ok-pause_continue':     // [Anthropic] server tools (e.g. web search) - successful pause, requires continuation
-        break;
+      case 'done-dialect':
+        // Normal completions: we DO expect a tokenStopReason
+        console.warn(`⚠️ [ContentReassembler] termination by dialect without 'tokenStopReason' - possible dialect parser issue. assuming ok`);
+        this._appendErrorFragment('Message may be incomplete: missing finish reason.');
+        return undefined;
 
-      case 'client-abort-signal':
-        this.accumulator.genTokenStopReason = 'client-abort';
-        break;
+      case 'done-dispatch-closed':
+        // Stream EOF before completion
+        console.warn(`⚠️ [ContentReassembler] done-dispatch-closed without tokenStopReason - possible truncation`);
+        this._appendErrorFragment('Message may be truncated: stream ended before completion.');
+        return undefined;
 
-      case 'out-of-tokens':
-        this.accumulator.genTokenStopReason = 'out-of-tokens';
-        break;
+      case 'done-dispatch-aborted':
+        // Dispatch connection may have been severed
+        console.warn(`⚠️ [ContentReassembler] done-dispatch-aborted - stream was aborted, likely due to connection issues. assuming client abort.`);
+        this._appendErrorFragment('Message may be incomplete: AI provider stream was aborted, likely due to connection issues.');
+        return 'client-abort';
 
-      case 'cg-issue':              // error fragment already added before
-        this.accumulator.genTokenStopReason = 'issue';
-        break;
+      case 'issue-dialect':
+      case 'issue-dispatch-rpc':
+        // error messages already added
+        return 'issue';
 
-      case 'filter-content':        // inline text message shall have been added
-      case 'filter-recitation':     // inline text message shall have been added
-      case 'filter-refusal':        // [Anthropic] model refused due to safety (same semantic as filtering)
-        this.accumulator.genTokenStopReason = 'filter';
-        break;
-
-      // unexpected
       default:
-        // noinspection JSUnusedLocalSymbols
-        const _exhaustiveCheck: never = tokenStopReason;
-        this._appendReassemblyDevError(`Unexpected token stop reason: ${tokenStopReason}`);
-        break;
+        const _exhaustiveCheck: never = this._terminationReason;
+        console.warn(`⚠️ [ContentReassembler] unmapped termination reason: ${this._terminationReason} - no tokenStopReason can be derived.`);
+        return undefined;
     }
   }
 
@@ -701,8 +752,7 @@ export class ContentReassembler {
         return;
       }
     }
-    this.accumulator.fragments.push(createErrorContentFragment(issueText, issueHint));
-    this.currentTextFragmentIndex = null;
+    this._appendErrorFragment(issueText, issueHint);
   }
 
   private onRetryReset({ rScope, rShallClear, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'retry-reset' }>): void {
@@ -710,8 +760,10 @@ export class ContentReassembler {
     if (rShallClear) {
       this.currentTextFragmentIndex = null;
       this.accumulator.fragments = [];
-      delete this.accumulator.genTokenStopReason;
-      delete this.accumulator.genEndReason;
+      delete this.accumulator.legacyGenTokenStopReason;
+      // reset private termination state
+      this._terminationReason = undefined;
+      this._tokenStopReasonWire = undefined;
       // keep metrics/model/handle intact - may be useful for debugging retries
 
       // discard any pending particles from the failed attempt
@@ -759,7 +811,11 @@ export class ContentReassembler {
       if (excess > 0)
         errorText = ellipsizeMiddle(errorText, ELLIPSIZE_DEV_ISSUE_MESSAGES - truncationMessage.length, truncationMessage);
     }
-    this.accumulator.fragments.push(createErrorContentFragment((omitPrefix ? '' : 'AIX Content Reassembler: ') + errorText));
+    this._appendErrorFragment((omitPrefix ? '' : 'AIX Content Reassembler: ') + errorText);
+  }
+
+  private _appendErrorFragment(errorText: string, errorHint?: DMessageErrorPart['hint']): void {
+    this.accumulator.fragments.push(createErrorContentFragment(errorText, errorHint));
     this.currentTextFragmentIndex = null;
   }
 
