@@ -23,6 +23,22 @@ const RETRY_PROFILES = {
 
 type RetryProfile = typeof RETRY_PROFILES[keyof typeof RETRY_PROFILES];
 
+/**
+ * 429 errors matching these patterns are NOT retried — they indicate permanent
+ * conditions (billing, quota, access) that won't resolve on their own.
+ * Tested against the full TRPCFetcherError.message (which includes the module prefix).
+ */
+const _429_RETRY_DENYLIST: { test: string | RegExp; label: string }[] = [
+  // Quota/billing exhausted — user needs to add credits or upgrade plan
+  { test: /quota|billing/i, label: 'quota/billing' },
+  // [OpenAI] Request too large for model's TPM limit — e.g. "Request too large for o3 ... Limit 30000, Requested 56108"
+  { test: /request too large|limit \d+, requested \d+/i, label: 'request-too-large' },
+  // [Anthropic research preview] Zero rate limit — org doesn't have access to the model
+  { test: 'rate limit of 0 input tokens per minute', label: 'zero-rate-limit (no model access)' },
+  // [Z.ai] Insufficient balance — prepaid credits exhausted
+  { test: 'Insufficient balance or no resource package', label: 'insufficient-balance (Z.ai)' },
+];
+
 
 /**
  * Determines if a dispatch error is retryable and which profile to use.
@@ -37,32 +53,13 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
   if (error.category === 'http' && error.httpStatus) {
     // 429 Too Many Requests: distinguish quota errors (don't retry) from rate limits (retry)
     if (error.httpStatus === 429) {
-      const isQuotaError = /quota|billing/i.test(error.message);
-      if (isQuotaError) {
+      // Denylist: 429 errors that should NOT be retried (user action required, or request won't change)
+      const denyMatch = _429_RETRY_DENYLIST.find(({ test }) =>
+        typeof test === 'string' ? error.message.includes(test) : test.test(error.message),
+      );
+      if (denyMatch) {
         if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[fetchers.retrier] Detected quota/billing error - will not retry`);
-        return null; // Don't retry quota/billing errors - user needs to upgrade plan
-      }
-      // Don't retry "request too large" errors - request size won't change
-      // e.g. "Request too large for o3 ... on tokens per min (TPM): Limit 30000, Requested 56108"
-      const isRequestTooLarge = /request too large|limit \d+, requested \d+/i.test(error.message);
-      if (isRequestTooLarge) {
-        if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[fetchers.retrier] Detected request-too-large error - will not retry`);
-        return null;
-      }
-      // Don't retry messages starting with 'Insufficient balance ...'
-      const isInsufficientBalance = /^insufficient balance/i.test(error.message);
-      if (isInsufficientBalance) {
-        if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[fetchers.retrier] Detected insufficient balance error - will not retry`);
-        return null;
-      }
-      // Don't retry zero-limit errors - org doesn't have access to this model (e.g. Anthropic fast mode research preview)
-      const isZeroLimit = /rate limit of 0 input tokens per minute/.test(error.message);
-      if (isZeroLimit) {
-        if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[fetchers.retrier] Detected zero rate limit (no model access) - will not retry`);
+          console.log(`[fetchers.retrier] 429 not retryable: ${denyMatch.label}`);
         return null;
       }
       return RETRY_PROFILES.server; // Retry temporary rate limits
