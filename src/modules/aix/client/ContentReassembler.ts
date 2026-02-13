@@ -648,6 +648,11 @@ export class ContentReassembler {
 
     // handle the token stop reason
     switch (tokenStopReason) {
+      // undefined
+      case undefined:
+        // no stop reason provided - decide what to do here - merely breaking would mean 'ok' ...
+        break;
+
       // normal stop
       case 'ok':                    // content
       case 'ok-tool_invocations':   // content + tool invocation

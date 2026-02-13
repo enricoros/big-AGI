@@ -169,7 +169,7 @@ async function* _consumeDispatchUnified(
       if (!chatGenerateTx.hasExplicitTokenStopReason)
         console.warn(`[AIX] _consumeDispatchUnified: ${_d.prettyDialect}: stream closed (done-dispatch-closed) without provider termination signal - response may be truncated`);
 
-      chatGenerateTx.setDispatchEnded('done-dispatch-closed');
+      chatGenerateTx.setDispatchEnded('done-dispatch-closed'); // not a a good end reason, means we didn't receive a logic end
     }
 
   } catch (error: any) {
@@ -305,7 +305,7 @@ async function* _consumeDispatchStream(
       if (!chatGenerateTx.hasExplicitTokenStopReason)
         console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: stream closed (done-dispatch-closed) without provider termination signal - response may be truncated`);
 
-      chatGenerateTx.setDispatchEnded('done-dispatch-closed');
+      chatGenerateTx.setDispatchEnded('done-dispatch-closed'); // not a a good end reason, means we didn't receive a logic end
       break; // outer do {}
     }
 

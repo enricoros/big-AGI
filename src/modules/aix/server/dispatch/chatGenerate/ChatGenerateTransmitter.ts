@@ -99,11 +99,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
     // Termination
     if (this.terminationReason) {
-      const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-rpc';
+      // NOTE: we used to infer the stop reason, now we mandate it - or else is undefined, and we leave it to the reassembler to decide
+      // const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-rpc';
       this.transmissionQueue.push({
         cg: 'end',
         terminationReason: this.terminationReason,
-        tokenStopReason: this.tokenStopReason || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
+        tokenStopReason: this.tokenStopReason, // See NOTE above - || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
       });
       // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
       // this.terminationReason = null;

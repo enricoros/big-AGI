@@ -639,7 +639,7 @@ export namespace AixWire_Particles {
 
   export type ChatControlOp =
   // | { cg: 'start' } // not really used for now
-    | { cg: 'end', terminationReason: CGEndReason, tokenStopReason: GCTokenStopReason }
+    | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */ }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rShallClear: boolean, reason: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
