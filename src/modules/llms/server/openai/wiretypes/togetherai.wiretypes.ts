@@ -7,7 +7,7 @@ export const wireTogetherAIListOutputSchema = z.array(z.object({
   id: z.string(),
   object: z.literal('model'),
   created: z.number(),
-  type: z.string(), // e.g., 'chat', 'language', 'image', 'embedding'
+  type: z.string().nullish(), // e.g., 'chat', 'language', 'image', 'embedding'
   running: z.boolean(),
   display_name: z.string(),
 
