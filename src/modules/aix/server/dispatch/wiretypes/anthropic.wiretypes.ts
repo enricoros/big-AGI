@@ -425,7 +425,7 @@ export namespace AnthropicWire_Blocks {
   export function TextBlock(text: string, debugSender: string): z.infer<typeof TextBlock_schema> {
     // HOTFIX - is we are here, issues have already happened, and we can't let this stay
     if (hotFixAntShipNoEmptyTextBlocks && !text) {
-      console.warn(`[Anthropic] ⚠️ Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
+      console.log(`[Anthropic] Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
       text = '\n';
     }
     return { type: 'text', text };

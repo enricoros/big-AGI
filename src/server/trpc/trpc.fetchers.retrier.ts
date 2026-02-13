@@ -179,7 +179,7 @@ export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSi
 
         attemptNumber++;
         if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[fetchers.retrier] 🔄 Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
+          console.log(`[fetchers.retrier] 🔄 -> Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
 
         // let the caller know about the retry attempt
         onRetry?.({
