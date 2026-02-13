@@ -766,6 +766,9 @@ async function _aixChatGenerateContent_LL(
       for await (const particle of particleStream)
         reassembler.enqueueWireParticle(particle);
 
+      // [CSF] generators end cleanly on abort (unlike tRPC which throws) - route to catch
+      abortSignal.throwIfAborted();
+
       // stop the deadline decimator before the await, as we're done basically
       sendContentUpdate?.stop?.();
 

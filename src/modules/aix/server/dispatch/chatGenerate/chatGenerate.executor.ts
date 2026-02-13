@@ -119,8 +119,13 @@ async function* _connectToDispatch(
     return dispatchResponse;
 
   } catch (error: any) {
-    // Handle expected dispatch abortion while the first fetch hasn't even completed - both TRPCError (for RPC conversion) and TRPCFetcherError (for direct fetch)
-    if (error && (error?.name === 'TRPCError' /* tRPC */ || error?.name === 'TRPCFetcherError') && intakeAbortSignal.aborted) {
+
+    // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error
+    // if (intakeAbortSignal.aborted && error && error?.name === 'TRPCFetcherError' /* CSF */)
+    //   throw new DOMException('CSF aborted in dispatch-fetch', 'AbortError');
+
+    // tRPC: handle expected dispatch abortion while the first fetch hasn't even completed
+    if (intakeAbortSignal.aborted && error && (error?.name === 'TRPCError' /* tRPC */ || error?.name === 'TRPCFetcherError' /* CSF */)) {
       chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
       yield* chatGenerateTx.flushParticles();
       return null; // signal caller to exit
@@ -242,9 +247,14 @@ async function* _consumeDispatchStream(
       }
 
     } catch (error: any) {
-      // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
-      // TODO: check if 'AbortError' is also a cause. Seems like ResponseAborted is NextJS vs signal driven.
-      if (error && (error?.name === 'ResponseAborted' /* tRPC */ || error?.name === 'AbortError' /* CSF */)) {
+
+      // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error
+      // if (/*intakeAbortSignal.aborted &&*/ error && error?.name === 'AbortError' /* CSF */)
+      //   throw new DOMException('CSF aborted in dispatch-read', 'AbortError');
+
+      // tRPC: handle expected dispatch stream abortion - nothing to do, as the intake is already closed
+      // NOTE: Seems like ResponseAborted is NextJS vs signal driven.
+      if (/*intakeAbortSignal.aborted &&*/ error && (error?.name === 'ResponseAborted' /* tRPC */ || error?.name === 'AbortError' /* CSF */)) {
         chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
         break; // outer do {}
       }

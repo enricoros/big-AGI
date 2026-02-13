@@ -60,7 +60,11 @@ export class ContentReassembler {
 
   enqueueWireParticle(op: AixWire_Particles.ChatGenerateOp): void {
     if (this.#wireIsAborted) {
-      // console.log('Dropped particle due to abort:', op);
+      // WARN about dropping particles; note that this should not happen besides CSF 'end' particles,
+      //      which are ignored anyways becuse we hande end with the '.throwIfAborted()' outside here
+      const isEndParticle = 'cg' in op && op.cg === 'end';
+      if (!isEndParticle)
+        console.log('⚠️ [ContentReassembler] enqueueWireParticle: received particle after wire abortion, ignoring', op);
       return;
     }
 
