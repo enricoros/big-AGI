@@ -115,8 +115,8 @@ export namespace OpenAIWire_ContentParts {
       z.enum(['reasoning.summary', 'reasoning.text', 'reasoning.encrypted']),
       z.string(),
     ]),
-    text: z.string().optional(), // Actual reasoning text (for 'text' type)
-    summary: z.string().optional(), // Summary of reasoning (for 'summary' type)
+    text: z.string().nullish(), // Actual reasoning text (for 'text' type)
+    summary: z.string().nullish(), // Summary of reasoning (for 'summary' type)
     // we don't use these for now:
     // signature: z.string().nullable().optional(), // Signature verification (for 'text' type)
     // // 'encrypted' type has 'data' field - indicates reasoning happened but not returned

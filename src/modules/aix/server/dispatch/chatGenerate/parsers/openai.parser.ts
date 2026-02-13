@@ -206,9 +206,12 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
         for (const reasoningDetail of delta.reasoning_details) {
           // Extract text from reasoning blocks based on type
-          if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
-            pt.appendReasoningText(reasoningDetail.text);
-            deltaHasReasoning = true;
+          if (reasoningDetail.type === 'reasoning.text') {
+            if (typeof reasoningDetail.text === 'string') {
+              pt.appendReasoningText(reasoningDetail.text);
+              deltaHasReasoning = true;
+            }
+            // else: empty reasoning chunk, e.g. "{ type: 'reasoning.text' }", skip
           }
           // Summaries can also be shown as reasoning
           else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
@@ -474,8 +477,10 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       // [OpenRouter, 2025-01-20] Handle structured reasoning_details
       if (Array.isArray(message.reasoning_details)) {
         for (const reasoningDetail of message.reasoning_details) {
-          if (reasoningDetail.type === 'reasoning.text' && typeof reasoningDetail.text === 'string') {
-            pt.appendReasoningText(reasoningDetail.text);
+          if (reasoningDetail.type === 'reasoning.text') {
+            if (typeof reasoningDetail.text === 'string')
+              pt.appendReasoningText(reasoningDetail.text);
+            // else: empty reasoning chunk, e.g. "{ type: 'reasoning.text' }", skip
           } else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
             // pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
             pt.appendReasoningText(reasoningDetail.summary);
