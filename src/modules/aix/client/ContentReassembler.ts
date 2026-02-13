@@ -640,10 +640,11 @@ export class ContentReassembler {
 
   private onCGEnd({ terminationReason, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
 
-    // NOTE: no new info in particle.reason
+    // Store the end reason for diagnostics
     // - abort-client: user abort (already captured in the stop reason)
-    // - done-*: normal termination (no info)
+    // - done-*: IMPORTANT:  'done-dialect' from 'done-dispatch-closed' from 'done-dispatch-aborted'
     // - issue-*: issue (already captured in the 'issue' particle, and stop reason is 'cg-issue')
+    this.accumulator.genEndReason = terminationReason;
 
     // handle the token stop reason
     switch (tokenStopReason) {
@@ -701,6 +702,7 @@ export class ContentReassembler {
       this.currentTextFragmentIndex = null;
       this.accumulator.fragments = [];
       delete this.accumulator.genTokenStopReason;
+      delete this.accumulator.genEndReason;
       // keep metrics/model/handle intact - may be useful for debugging retries
 
       // discard any pending particles from the failed attempt

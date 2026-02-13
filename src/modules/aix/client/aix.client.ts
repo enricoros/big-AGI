@@ -579,6 +579,14 @@ export interface AixChatGenerateContent_LL {
   genModelName?: string;
   genUpstreamHandle?: DMessageGenerator['upstreamHandle'];
   genTokenStopReason?: DMessageGenerator['tokenStopReason'];
+
+  // diagnostics: the CGEndReason from the server's `cg: 'end'` particle
+  // - 'done-dialect': provider sent explicit termination (e.g. [DONE], message_stop, finishReason:STOP)
+  // - 'done-dispatch-closed': stream EOF without provider termination - may be normal or may indicate truncation
+  // - 'done-dispatch-aborted': client/system abort
+  // - 'issue-*': error during dispatch or parsing
+  // - 'abort-client': client abort
+  genEndReason?: AixWire_Particles.CGEndReason;
 }
 
 /**
