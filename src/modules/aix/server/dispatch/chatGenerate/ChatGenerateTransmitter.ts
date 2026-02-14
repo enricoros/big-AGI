@@ -5,7 +5,7 @@ import { objectDeepCloneWithStringLimit, objectEstimateJsonSize } from '~/common
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
-import type { IParticleTransmitter, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
+import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
 
 
 // configuration
@@ -99,11 +99,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
     // Termination
     if (this.terminationReason) {
-      const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-rpc';
+      // NOTE: we used to infer the stop reason, now we mandate it - or else is undefined, and we leave it to the reassembler to decide
+      // const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-dispatch-rpc';
       this.transmissionQueue.push({
         cg: 'end',
-        reason: this.terminationReason,
-        tokenStopReason: this.tokenStopReason || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
+        terminationReason: this.terminationReason,
+        tokenStopReason: this.tokenStopReason, // See NOTE above - || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
       });
       // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
       // this.terminationReason = null;
@@ -125,10 +126,10 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     return !!this.terminationReason;
   }
 
-  setRpcTerminatingIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
-    this._addIssue(issueId, issueText, serverLog);
-    this.setEnded('issue-rpc');
+  get hasExplicitTokenStopReason(): boolean {
+    return this.tokenStopReason !== undefined;
   }
+
 
   addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body?: object) {
     // Ellipsize individual strings in the body object (e.g., base64 images) to reduce debug packet size
@@ -155,19 +156,40 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
 
-  /// IPartTransmitter
+  /// Dispatch termination
 
-  /** Set the end reason (NOTE: more comprehensive than just the IPartTransmitter.setEnded['reason'])*/
-  setEnded(reason: AixWire_Particles.CGEndReason) {
+  /** Set the end reason (NOTE: does not overlap with dialect-initiated end: IParticleTransmitter.setDialectEnded['reason']) */
+  setDispatchEnded(reason: Extract<AixWire_Particles.CGEndReason,
+    | 'done-dispatch-closed'    // stream ended
+    | 'done-dispatch-aborted'   // stream aborted (abort signal)
+    | 'issue-dispatch-rpc'      // issues in one of 4 dispatch stages: prepare, fetch, read, parse - see below
+  >) {
     if (SERVER_DEBUG_WIRE)
-      console.log('|terminate|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
+      console.log('|terminate-dispatch|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
+    if (this.terminationReason)
+      console.warn(`[AIX] setDispatchEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
     this.terminationReason = reason;
   }
 
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
+  setDispatchRpcTerminatingIssue(issueId: Extract<AixWire_Particles.CGIssueId,
+    | 'dispatch-prepare'
+    | 'dispatch-fetch'
+    | 'dispatch-read'
+    | 'dispatch-parse'
+  >, issueText: string, serverLog: ParticleServerLogLevel) {
+    this._addIssue(issueId, issueText, serverLog);
+    this.setDispatchEnded('issue-dispatch-rpc');
+  }
+
+
+  /// IPartTransmitter
+
+  setDialectEnded(reason: ParticleCGDialectEndReason) {
     if (SERVER_DEBUG_WIRE)
-      console.log('|token-stop|', reason);
-    this.tokenStopReason = reason;
+      console.log('|terminate-dialect|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
+    if (this.terminationReason)
+      console.warn(`[AIX] setDialectEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
+    this.terminationReason = reason;
   }
 
   /**
@@ -176,8 +198,17 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
    */
   setDialectTerminatingIssue(dialectText: string, symbol: string | null, _serverLog: ParticleServerLogLevel = false) {
     this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, _serverLog);
-    this.setEnded('issue-dialect');
+    this.setDialectEnded('issue-dialect');
   }
+
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
+    if (SERVER_DEBUG_WIRE)
+      console.log('|token-stop|', reason);
+    if (this.tokenStopReason)
+      console.warn(`[AIX] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
+    this.tokenStopReason = reason;
+  }
+
 
   /** Closes the current part, also flushing it out */
   endMessagePart() {

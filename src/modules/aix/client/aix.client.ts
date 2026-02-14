@@ -539,8 +539,8 @@ function _llToDMessageGuts(src: AixChatGenerateContent_LL, dest: AixChatGenerate
     dest.generator.name = src.genModelName;
   if (src.genUpstreamHandle)
     dest.generator.upstreamHandle = src.genUpstreamHandle;
-  if (src.genTokenStopReason)
-    dest.generator.tokenStopReason = src.genTokenStopReason;
+  if (src.legacyGenTokenStopReason)
+    dest.generator.tokenStopReason = src.legacyGenTokenStopReason;
 }
 
 function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, debugCostSource: string) {
@@ -578,7 +578,7 @@ export interface AixChatGenerateContent_LL {
   genMetricsLg?: DMetricsChatGenerate_Lg;
   genModelName?: string;
   genUpstreamHandle?: DMessageGenerator['upstreamHandle'];
-  genTokenStopReason?: DMessageGenerator['tokenStopReason'];
+  legacyGenTokenStopReason?: DMessageGenerator['tokenStopReason'];
 }
 
 /**
@@ -758,6 +758,9 @@ async function _aixChatGenerateContent_LL(
       for await (const particle of particleStream)
         reassembler.enqueueWireParticle(particle);
 
+      // [CSF] generators end cleanly on abort (unlike tRPC which throws) - route to catch
+      abortSignal.throwIfAborted();
+
       // stop the deadline decimator before the await, as we're done basically
       sendContentUpdate?.stop?.();
 
@@ -782,10 +785,10 @@ async function _aixChatGenerateContent_LL(
 
         // NOT retryable: e.g. client-abort, or missing handle
         if (errorType === 'client-aborted')
-          await reassembler.setClientAborted().catch(console.error /* never */);
+          reassembler.setClientAborted();
         else {
           const errorHint: DMessageErrorPart['hint'] = `aix-${errorType}`; // MUST MATCH our `aixClassifyStreamingError` hints with 'aix-<type>' in DMessageErrorPart
-          await reassembler.setClientExcepted(errorMessage, errorHint).catch(console.error);
+          reassembler.setClientExcepted(errorMessage, errorHint);
         }
         // ... fall through (traditional single path)
 
@@ -805,7 +808,7 @@ async function _aixChatGenerateContent_LL(
           continue; // -> Loop
 
         // user-aborted during retry-backoff
-        await reassembler.setClientAborted().catch(console.error);
+        reassembler.setClientAborted();
         // ... fall through (aborted during backoff)
 
       }

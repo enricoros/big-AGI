@@ -40,7 +40,7 @@ export async function* executeChatGenerate(
     dispatch = dispatchCreatorFn();
   } catch (error: any) {
     // log but don't warn on the server console, this is typically a service configuration issue (e.g. a missing password will throw here)
-    chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, 'srv-log');
+    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, 'srv-log');
     yield* chatGenerateTx.flushParticles();
     return; // exit
   }
@@ -119,9 +119,14 @@ async function* _connectToDispatch(
     return dispatchResponse;
 
   } catch (error: any) {
-    // Handle expected dispatch abortion while the first fetch hasn't even completed - both TRPCError (for RPC conversion) and TRPCFetcherError (for direct fetch)
-    if (error && (error?.name === 'TRPCError' /* tRPC */ || error?.name === 'TRPCFetcherError') && intakeAbortSignal.aborted) {
-      chatGenerateTx.setEnded('done-dispatch-aborted');
+
+    // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error
+    // if (intakeAbortSignal.aborted && error && error?.name === 'TRPCFetcherError' /* CSF */)
+    //   throw new DOMException('CSF aborted in dispatch-fetch', 'AbortError');
+
+    // tRPC: handle expected dispatch abortion while the first fetch hasn't even completed
+    if (intakeAbortSignal.aborted && error && (error?.name === 'TRPCError' /* tRPC */ || error?.name === 'TRPCFetcherError' /* CSF */)) {
+      chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
       yield* chatGenerateTx.flushParticles();
       return null; // signal caller to exit
     }
@@ -130,7 +135,7 @@ async function* _connectToDispatch(
     const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
     const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${request.url}]` : '';
 
-    chatGenerateTx.setRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, _d.consoleLogErrors);
+    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, _d.consoleLogErrors);
     yield* chatGenerateTx.flushParticles();
     return null; // signal caller to exit
   }
@@ -162,14 +167,21 @@ async function* _consumeDispatchUnified(
     dispatchParserNS(chatGenerateTx, dispatchBody, undefined, parseContext);
     _d.profiler?.measureEnd('parse-full');
 
-    // Normal termination with no more data
-    chatGenerateTx.setEnded('done-dispatch-closed');
+    // Handle the case where the Dialect hansn't signaled the end of generation
+    if (!chatGenerateTx.isEnded) {
+
+      // dialects shall send a token stop reason before 'normal' stream close - otherwise it's a protocol 'bug' or an unexpected truncation (which needs investigation)
+      if (!chatGenerateTx.hasExplicitTokenStopReason)
+        console.warn(`[AIX] _consumeDispatchUnified: ${_d.prettyDialect}: stream closed (done-dispatch-closed) without provider termination signal - response may be truncated`);
+
+      chatGenerateTx.setDispatchEnded('done-dispatch-closed'); // not a a good end reason, means we didn't receive a logic end
+    }
 
   } catch (error: any) {
     if (dispatchBody === undefined)
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
+      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
     else
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(dispatchBody, 'aix.parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
+      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(dispatchBody, 'aix.parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
   }
 }
 
@@ -207,8 +219,7 @@ async function* _consumeDispatchStream(
       // Handle normal dispatch stream closure (no more data, AI Service closed the stream)
       if (done) {
 
-        // we used to `chatGenerateTx.setEnded('done-dispatch-closed');` here and break out of the processing loop,
-        // but there may be recoverable events in the demuxer's buffer
+        // mark as ended,
         isFinalIteration = true;
 
         // 2. Decode nothing new
@@ -219,7 +230,7 @@ async function* _consumeDispatchStream(
         _d.profiler?.measureEnd('demux');
 
         if (demuxedEvents.length > 0)
-          console.warn(`[AIX] ${_d.prettyDialect}: stream closed with ${demuxedEvents.length} recovered event(s) from demuxer buffer`);
+          console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: stream closed with ${demuxedEvents.length} recovered event(s) from demuxer buffer`);
 
       } else {
 
@@ -236,15 +247,20 @@ async function* _consumeDispatchStream(
       }
 
     } catch (error: any) {
-      // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
-      // TODO: check if 'AbortError' is also a cause. Seems like ResponseAborted is NextJS vs signal driven.
-      if (error && (error?.name === 'ResponseAborted' /* tRPC */ || error?.name === 'AbortError' /* CSF */)) {
-        chatGenerateTx.setEnded('done-dispatch-aborted');
+
+      // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error
+      // if (/*intakeAbortSignal.aborted &&*/ error && error?.name === 'AbortError' /* CSF */)
+      //   throw new DOMException('CSF aborted in dispatch-read', 'AbortError');
+
+      // tRPC: handle expected dispatch stream abortion - nothing to do, as the intake is already closed
+      // NOTE: Seems like ResponseAborted is NextJS vs signal driven.
+      if (/*intakeAbortSignal.aborted &&*/ error && (error?.name === 'ResponseAborted' /* tRPC */ || error?.name === 'AbortError' /* CSF */)) {
+        chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
         break; // outer do {}
       }
 
       // Handle abnormal stream termination; print to the server console as well (important to debug)
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
+      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
       break; // outer do {}
     }
 
@@ -255,19 +271,19 @@ async function* _consumeDispatchStream(
       // ignore events post termination
       if (chatGenerateTx.isEnded) {
         // DEV-only message to fix dispatch protocol parsing -- warning on, because this is important and a sign of a bug
-        console.warn('[chatGenerateContent] Received event after termination:', demuxedItem);
+        console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: received stream event after termination. ignoring.`, demuxedItem);
         break; // inner for {}, will break outer
       }
 
       // ignore unknown stream events
       if (demuxedItem.type !== 'event') {
-        // console.log(`[chatGenerateContent] Ignoring non-event stream item of type "${demuxedItem.type}" with data:`, demuxedItem.data);
+        // console.log(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: ignoring non-event stream item of type "${demuxedItem.type}".`, demuxedItem.data);
         continue; // inner for {}
       }
 
       // [OpenAI] Special: stream termination marker
       if (demuxedItem.data === '[DONE]') {
-        chatGenerateTx.setEnded('done-dialect');
+        chatGenerateTx.setDialectEnded('done-dialect'); // OpenAI ChatCompletions
         break; // inner for {}, then outer do
       }
 
@@ -287,14 +303,19 @@ async function* _consumeDispatchStream(
         if (error instanceof RequestRetryError) throw error;
 
         // Handle parsing issue (likely a schema break); print it to the server console as well
-        chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(demuxedItem.data, 'aix.service-parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
+        chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(demuxedItem.data, 'aix.service-parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
         break; // inner for {}, then outer do
       }
     }
 
-    // 6. Normal stream end - if didn't end in a connection or event parsing error
+    // 6. Stream end - Handle the case where the Dialect hansn't signaled the end of generation
     if (isFinalIteration && !chatGenerateTx.isEnded) {
-      chatGenerateTx.setEnded('done-dispatch-closed');
+
+      // dialects shall send a token stop reason before 'normal' stream close - otherwise it's a protocol 'bug' or an unexpected truncation (which needs investigation)
+      if (!chatGenerateTx.hasExplicitTokenStopReason)
+        console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: stream closed (done-dispatch-closed) without provider termination signal - response may be truncated`);
+
+      chatGenerateTx.setDispatchEnded('done-dispatch-closed'); // not a a good end reason, means we didn't receive a logic end
       break; // outer do {}
     }
 

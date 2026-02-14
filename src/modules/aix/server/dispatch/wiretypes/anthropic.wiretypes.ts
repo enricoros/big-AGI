@@ -425,7 +425,7 @@ export namespace AnthropicWire_Blocks {
   export function TextBlock(text: string, debugSender: string): z.infer<typeof TextBlock_schema> {
     // HOTFIX - is we are here, issues have already happened, and we can't let this stay
     if (hotFixAntShipNoEmptyTextBlocks && !text) {
-      console.warn(`[Anthropic] ⚠️ Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
+      console.log(`[Anthropic] Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
       text = '\n';
     }
     return { type: 'text', text };
@@ -792,7 +792,7 @@ export namespace AnthropicWire_API_Message_Create {
     service_tier: z.enum(['auto', 'standard_only']).optional(),
 
     /**
-     * If you want to include a system prompt, you can use the top-level system parameter — there is no "system" role for input messages in the Messages API.
+     * If you want to include a system prompt, you can use the top-level system parameter - there is no "system" role for input messages in the Messages API.
      */
     system: z.array(AnthropicWire_Blocks.TextBlock_schema).optional(), // NOTE: we force ourselves to always write the array representation
     // system: z.union([z.string(), z.array(AnthropicWire_Blocks.TextBlock_schema)]).optional(),

@@ -323,6 +323,9 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
           if (metrics)
             pt.updateMetrics(metrics);
         }
+
+        // -> End of the response
+        pt.setDialectEnded('done-dialect'); // OpenAI Responses: 'response.completed'
         break;
 
       case 'response.failed':
