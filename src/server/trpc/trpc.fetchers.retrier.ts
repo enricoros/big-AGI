@@ -24,18 +24,18 @@ const RETRY_PROFILES = {
 type RetryProfile = typeof RETRY_PROFILES[keyof typeof RETRY_PROFILES];
 
 /**
- * 429 errors matching these patterns are NOT retried — they indicate permanent
+ * 429 errors matching these patterns are NOT retried - they indicate permanent
  * conditions (billing, quota, access) that won't resolve on their own.
  * Tested against the full TRPCFetcherError.message (which includes the module prefix).
  */
 const _429_RETRY_DENYLIST: { test: string | RegExp; label: string }[] = [
-  // Quota/billing exhausted — user needs to add credits or upgrade plan
+  // Quota/billing exhausted - user needs to add credits or upgrade plan
   { test: /quota|billing/i, label: 'quota/billing' },
-  // [OpenAI] Request too large for model's TPM limit — e.g. "Request too large for o3 ... Limit 30000, Requested 56108"
+  // [OpenAI] Request too large for model's TPM limit - e.g. "Request too large for o3 ... Limit 30000, Requested 56108"
   { test: /request too large|limit \d+, requested \d+/i, label: 'request-too-large' },
-  // [Anthropic research preview] Zero rate limit — org doesn't have access to the model
+  // [Anthropic research preview] Zero rate limit - org doesn't have access to the model
   { test: 'rate limit of 0 input tokens per minute', label: 'zero-rate-limit (no model access)' },
-  // [Z.ai] Insufficient balance — prepaid credits exhausted
+  // [Z.ai] Insufficient balance - prepaid credits exhausted
   { test: 'Insufficient balance or no resource package', label: 'insufficient-balance (Z.ai)' },
 ];
 

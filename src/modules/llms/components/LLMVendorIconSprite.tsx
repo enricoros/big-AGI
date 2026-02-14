@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED — do not edit the symbol definitions or VI entries manually.
+ * AUTO-GENERATED - do not edit the symbol definitions or VI entries manually.
  * Source of truth: individual vendor icon files in src/modules/llms/components/
  *
  * Regenerate: npm run gen:icon-sprites
@@ -10,8 +10,8 @@ import type { ModelVendorId } from '../vendors/vendors.registry';
 
 import { PhRobot } from '~/common/components/icons/phosphor/PhRobot';
 
-// Symbol IDs for each vendor — generated from the vendor registry
-const VI: Record<ModelVendorId, string> & { zai: string } = {
+// Symbol IDs for each vendor - generated from the vendor registry
+const VI: Record<ModelVendorId, string> = {
   alibaba: 'vi-alibaba',
   anthropic: 'vi-anthropic',
   azure: 'vi-azure',
@@ -35,7 +35,7 @@ const VI: Record<ModelVendorId, string> & { zai: string } = {
 
 /**
  * Memoized SVG sprite with all vendor icon `<symbol>` definitions.
- * Mount once in the app root (ProviderTheming) — all `<use href="#vi-...">` references resolve from here.
+ * Mount once in the app root (ProviderTheming) - all `<use href="#vi-...">` references resolve from here.
  *
  * Joy's SvgIcon sets CSS `fill: currentColor` which overrides `fill='none'` props. To match,
  * all `<g>` wrappers use `fill='currentColor'`. Paths with explicit `fill='none'` still override.
@@ -236,7 +236,7 @@ const _spriteContainerSx: React.CSSProperties = { position: 'absolute', width: 0
 
 /**
  * Lightweight vendor icon using SVG sprite `<use href>`.
- * Near-zero per-instance cost — no Emotion/styled-components.
+ * Near-zero per-instance cost - no Emotion/styled-components.
  *
  * Uses Joy's CSS custom properties (--Icon-fontSize, --Icon-margin, --Icon-color)
  * so parent components (ListItemDecorator, etc.) control sizing automatically.
@@ -271,7 +271,7 @@ export function LLMVendorIconSprite({ vendorId /*, sx, className*/ }: {
   );
 }
 
-// Matches Joy's SvgIcon base styles — uses the same CSS custom properties
+// Matches Joy's SvgIcon base styles - uses the same CSS custom properties
 // const _lwBaseSx: React.CSSProperties = {
 //   width: '1em',
 //   height: '1em',

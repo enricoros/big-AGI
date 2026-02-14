@@ -145,7 +145,7 @@ function stripQuotes(s: string): string {
 // ── Step 4: Generate output by replacing template placeholders ────────────────
 
 function generateFromTemplate(vendors: VendorEntry[], symbols: string[]): string {
-  // Template lines are prefixed with '// ' (or just '//') to avoid linter/tsc processing — strip them
+  // Template lines are prefixed with '// ' (or just '//') to avoid linter/tsc processing - strip them
   const template = readFileSync(TEMPLATE_FILE, 'utf-8')
     .split('\n').map(l => l.startsWith('// ') ? l.slice(3) : l === '//' ? '' : l).join('\n');
 

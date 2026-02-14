@@ -1276,7 +1276,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
     ?.filter(spec => _ORT_OAI_PARAM_ALLOWLIST.has(spec.paramId))
     .map(spec => ({ ...spec }));
 
-  // initialTemperature: not set — OpenAI models use the global fallback (0.5);
+  // initialTemperature: not set - OpenAI models use the global fallback (0.5);
   // NoTemperature models are handled client-side via LLM_IF_HOTFIX_NoTemperature (not propagated to OR)
   return { interfaces, parameterSpecs };
 }

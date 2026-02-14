@@ -140,7 +140,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
               // NOTE: no range validation for integer/float types yet. If added, be aware that
               // llmVndAntThinkingBudget uses initialValue: -1 (out of range [1024, 65536]) as a
-              // sentinel for adaptive thinking mode on hidden params — range checks must skip hidden params.
+              // sentinel for adaptive thinking mode on hidden params - range checks must skip hidden params.
             }
           }
 

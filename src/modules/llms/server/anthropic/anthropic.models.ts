@@ -399,6 +399,6 @@ export function llmOrtAntLookup_ThinkingVariants(orModelName: string): OrtVendor
     ?.filter((spec) => _ORT_ANT_PARAM_ALLOWLIST.has(spec.paramId))
     .map((spec) => ({ ...spec }));
 
-  // initialTemperature: not set — Anthropic models use the global fallback (0.5)
+  // initialTemperature: not set - Anthropic models use the global fallback (0.5)
   return { interfaces, parameterSpecs };
 }
