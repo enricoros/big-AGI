@@ -302,6 +302,9 @@ export class ContentReassembler {
           case 'set-model':
             this.onModelName(op);
             break;
+          case 'set-provider-infra':
+            this.onProviderInfra(op);
+            break;
           case 'set-upstream-handle':
             this.onResponseHandle(op);
             break;
@@ -789,6 +792,10 @@ export class ContentReassembler {
 
   private onModelName({ name }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-model' }>): void {
     this.accumulator.genModelName = name;
+  }
+
+  private onProviderInfra({ label }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-provider-infra' }>): void {
+    this.accumulator.genProviderInfraLabel = label;
   }
 
   private onResponseHandle({ handle }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-upstream-handle' }>): void {

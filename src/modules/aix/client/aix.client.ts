@@ -537,6 +537,8 @@ function _llToDMessageGuts(src: AixChatGenerateContent_LL, dest: AixChatGenerate
     dest.generator.metrics = metricsChatGenerateLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
   if (src.genModelName)
     dest.generator.name = src.genModelName;
+  if (src.genProviderInfraLabel)
+    dest.generator.providerInfraLabel = src.genProviderInfraLabel;
   if (src.genUpstreamHandle)
     dest.generator.upstreamHandle = src.genUpstreamHandle;
   if (src.legacyGenTokenStopReason)
@@ -577,6 +579,7 @@ export interface AixChatGenerateContent_LL {
   // pieces of generator
   genMetricsLg?: DMetricsChatGenerate_Lg;
   genModelName?: string;
+  genProviderInfraLabel?: string;
   genUpstreamHandle?: DMessageGenerator['upstreamHandle'];
   legacyGenTokenStopReason?: DMessageGenerator['tokenStopReason'];
 }

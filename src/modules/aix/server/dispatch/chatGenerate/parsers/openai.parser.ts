@@ -41,6 +41,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
   let processedSearchResultUrls = new Set<string>();
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
+  // [OpenRouter] Provider routing info - extracted from raw JSON before Zod strips it
+  let openRouterProviderInfraSent = false;
+
   // Supporting structure to accumulate the assistant message
   const accumulator: {
     content: string | null;
@@ -87,6 +90,12 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       // NOTE: these sort of messages have no useful data and would break the parser here
       // console.log('AIX: OpenAI-dispatch: missing-choices chunk skipped', chunkData);
       return;
+    }
+
+    // [OpenRouter] Extract provider routing info (before Zod parsing strips unknown fields)
+    if (!openRouterProviderInfraSent && typeof chunkData?.provider === 'string' && chunkData.provider) {
+      openRouterProviderInfraSent = true;
+      pt.setProviderInfraLabel(chunkData.provider);
     }
 
     const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(chunkData);
@@ -408,6 +417,10 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
     // [OpenAI] we don't know yet if warning messages are sent in non-streaming - for now we log
     if (completeData.warning)
       console.log('AIX: OpenAI-dispatch-NS warning:', completeData.warning);
+
+    // [OpenRouter] Extract provider routing info (before Zod parsing strips unknown fields)
+    if (typeof completeData?.provider === 'string' && completeData.provider)
+      pt.setProviderInfraLabel(completeData.provider);
 
     // Parse the complete response
 

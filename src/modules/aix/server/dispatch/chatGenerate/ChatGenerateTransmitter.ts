@@ -494,6 +494,14 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       this._queueParticleS();
   }
 
+  /** Communicates the provider name to the client (e.g., OpenRouter provider routing) */
+  setProviderInfraLabel(label: string) {
+    this.transmissionQueue.push({
+      cg: 'set-provider-infra',
+      label: label,
+    });
+  }
+
   /** Communicates the upstream response handle, for remote control/resumability */
   setUpstreamHandle(handle: string, _type: 'oai-responses' /* the only one for now, used for type safety */) {
     if (SERVER_DEBUG_WIRE)
