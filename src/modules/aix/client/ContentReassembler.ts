@@ -718,7 +718,7 @@ export class ContentReassembler {
         return undefined;
 
       case 'done-dispatch-closed':
-        // Stream EOF before completion
+        // Stream EOF before completion - the fact we have finish reason indicates the message had the token stop reason but the protocol didn't have a [DONE] or similar
         console.warn(`⚠️ [ContentReassembler] done-dispatch-closed without tokenStopReason - possible truncation`);
         this._appendErrorFragment('Message may be truncated: stream ended before completion.');
         return undefined;
