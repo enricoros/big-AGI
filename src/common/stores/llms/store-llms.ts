@@ -261,7 +261,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
           // strip away user parameters and user label
           const {
             userParameters,
-            // userLabel, // not resetting the name for now
+            userLabel, // service-wide reset includes resetting the name
             // userContextTokens, userMaxOutputTokens, userPricing, ...
             ...rest
           } = llm;
