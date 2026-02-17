@@ -6,7 +6,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { DLLMId, getLLMLabel } from '~/common/stores/llms/llms.types';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -70,7 +70,7 @@ export function Fusion(props: {
   }, [isFusing]);
 
   // more derived
-  const llmLabel = llmOrNull?.label || 'Model unknown';
+  const llmLabel = llmOrNull ? getLLMLabel(llmOrNull) : 'Model unknown';
 
   // handlers
   const handleFusionCopyToClipboard = React.useCallback(() => {

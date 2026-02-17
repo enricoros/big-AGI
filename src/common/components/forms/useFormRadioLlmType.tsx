@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMLabel } from '~/common/stores/llms/llms.types';
 import { useLLMs } from '~/common/stores/llms/llms.hooks';
 
 import type { FormRadioOption } from './FormRadioControl';
@@ -20,8 +20,8 @@ export function useFormRadioLlmType(label: string, runModelId: DLLMId | null, in
   const hidden = !runLLM || !utilLLM || runLLM === utilLLM;
 
   const options = React.useMemo((): FormRadioOption<LlmType>[] => [
-    { label: runLLM?.label ?? '[missing llm]', value: 'run' },
-    { label: utilLLM?.label ?? '[missing util llm]', value: 'util' },
+    { label: runLLM ? getLLMLabel(runLLM) : '[missing llm]', value: 'run' },
+    { label: utilLLM ? getLLMLabel(utilLLM) : '[missing util llm]', value: 'util' },
   ], [runLLM, utilLLM]);
 
   const [llmType, component] = useFormRadio<LlmType>(initialModelType, options, label, hidden);

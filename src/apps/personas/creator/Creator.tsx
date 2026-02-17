@@ -12,6 +12,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { agiUuid } from '~/common/util/idUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { getLLMLabel } from '~/common/stores/llms/llms.types';
 import { useFormEditTextArray } from '~/common/components/forms/useFormEditTextArray';
 import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
@@ -255,7 +256,7 @@ export function Creator(props: { display: boolean }) {
           Embodying Persona ...
         </Typography>
         <Typography level='title-sm' sx={{ mt: 1 }}>
-          Using: {personaLlm?.label}
+          Using: {personaLlm ? getLLMLabel(personaLlm) : 'Loading model...'}
         </Typography>
       </Box>
       <Box>
