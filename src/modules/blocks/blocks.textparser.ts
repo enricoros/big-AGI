@@ -22,7 +22,9 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // codeBlock: /`{3,}([\S\x20]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
     // This is way more promising, but will either not perform a partial match (no match at all) or match a single line
     // codeBlock: /^( {0,3})`{3,}([^\n`]*)\n([\s\S]*?)(?:\n^\1`{3,}[^\S\n]*(?=\n|$))?/gm,
-    codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g,
+    // GFM spec: closing fence must start on its own line and be followed only by optional spaces
+    // Ref: https://github.github.com/gfm/#fenced-code-blocks (examples 89-117)
+    codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(\n`{3,}[ ]*(?=\n|$)|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
   };
@@ -61,7 +63,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
         // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
         const blockCode: string = match[2].replace(/[\t ]+$/, '');
         const blockEnd: string = match[3];
-        blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
+        blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.includes('```') });
         break;
 
       case 'htmlCodeBlock':
