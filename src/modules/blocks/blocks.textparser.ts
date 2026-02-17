@@ -22,6 +22,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // codeBlock: /`{3,}([\S\x20]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
     // This is way more promising, but will either not perform a partial match (no match at all) or match a single line
     // codeBlock: /^( {0,3})`{3,}([^\n`]*)\n([\s\S]*?)(?:\n^\1`{3,}[^\S\n]*(?=\n|$))?/gm,
+    // codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ ]*(?:\n|$))|$)/g, // #983
     codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
