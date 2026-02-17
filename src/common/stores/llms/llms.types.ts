@@ -74,6 +74,14 @@ export type DLLMMaxOutputTokens = number | null;
 
 
 /**
+ * Returns the effective display label for a model, respecting user overrides.
+ * If the user has set a custom name via userLabel, that takes precedence over the vendor label.
+ */
+export function getLLMLabel(llm: DLLM): string {
+  return llm.userLabel ?? llm.label;
+}
+
+/**
  * Computes the effective visibility of a model, respecting user overrides.
  * Returns true if the model should be hidden from UI selectors.
  *

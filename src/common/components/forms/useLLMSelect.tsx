@@ -12,7 +12,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
-import { DLLM, DLLMId, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMLabel, LLM_IF_OAI_Reasoning, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { ListItemGroupCollapser } from '~/common/components/ListItemGroupCollapser';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { StarIconUnstyled, StarredNoXL2 } from '~/common/components/StarIcons';
@@ -229,7 +229,8 @@ export function useLLMSelect(
         return acc;
 
       let features = '';
-      const isNotSymlink = !llm.label.startsWith('🔗');
+      const isNotSymlink = !llm.label.startsWith('🔗'); // getLLMLabel exception: need access to the base
+      const llmLabel = getLLMLabel(llm);
       const seemsFree = isLLMChatFree_cached(llm);
       if (isNotSymlink) {
         // check features
@@ -255,7 +256,7 @@ export function useLLMSelect(
           value={llm.id}
           // Disabled to avoid regenerating the memo too frequently
           // sx={llm.id === llmId ? { fontWeight: 'md' } : undefined}
-          label={llm.label}
+          label={llmLabel}
         >
           {!noIcons && (
             <ListItemDecorator>
@@ -264,7 +265,7 @@ export function useLLMSelect(
           )}
           {/*<Tooltip title={llm.description}>*/}
 
-          <div className='agi-ellipsize'>{llm.label}</div>
+          <div className='agi-ellipsize'>{llmLabel}</div>
 
           {/* Features Chips - sync with `ModelsList.tsx` */}
           {!!features && !showModelOptions && <Chip size='sm' color={seemsFree ? 'success' : undefined} variant='plain' sx={_styles.chips}>{features.trim().replace(' ', ' ')}</Chip>}

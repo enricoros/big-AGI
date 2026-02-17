@@ -243,8 +243,13 @@ export const useModelsStore = create<LlmsStore>()(persist(
       set(({ llms }) => ({
         llms: llms.map((llm: DLLM): DLLM => {
           if (llm.id !== id) return llm;
-          // strip away just the user parameters
-          const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
+          // strip away user parameters and user label
+          const {
+            userParameters,
+            // userLabel, // not resetting the name for now
+            // userContextTokens, userMaxOutputTokens, userPricing, ...
+            ...rest
+          } = llm;
           return rest;
         }),
       })),
@@ -253,8 +258,13 @@ export const useModelsStore = create<LlmsStore>()(persist(
       set(({ llms }) => ({
         llms: llms.map((llm: DLLM): DLLM => {
           if (llm.sId !== serviceId) return llm;
-          // strip away just the user parameters
-          const { userParameters /*, userContextTokens, userMaxOutputTokens, userPricing, ...*/, ...rest } = llm;
+          // strip away user parameters and user label
+          const {
+            userParameters,
+            // userLabel, // not resetting the name for now
+            // userContextTokens, userMaxOutputTokens, userPricing, ...
+            ...rest
+          } = llm;
           return rest;
         }),
       })),
