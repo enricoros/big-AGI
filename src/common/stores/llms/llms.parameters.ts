@@ -69,7 +69,7 @@ interface _EnumParamDef<V extends string = string> extends _ParamDefBase {
   readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
 }
 
-/** Zero-cost identity function — TS infers V from `values` only: NoInfer constrains fallback/initial. */
+/** Zero-cost identity function - TS infers V from `values` only: NoInfer constrains fallback/initial. */
 function _enumDef<const V extends string>(def: _EnumParamDef<V>): _EnumParamDef<V> {
   return def;
 }

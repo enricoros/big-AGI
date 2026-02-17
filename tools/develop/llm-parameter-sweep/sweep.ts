@@ -321,6 +321,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
 
   // Non-parts data
   setModelName(_modelName: string): void { /* no-op */ }
+  setProviderInfraLabel(_label: string): void { /* no-op */ }
   setUpstreamHandle(_handle: string, _type: 'oai-responses'): void { /* no-op */ }
   setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void { this.tokenStopReason = reason; }
   updateMetrics(_update: Partial<AixWire_Particles.CGSelectMetrics>): void { /* no-op */ }

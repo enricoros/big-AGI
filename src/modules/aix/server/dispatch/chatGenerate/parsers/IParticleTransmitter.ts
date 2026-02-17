@@ -85,6 +85,9 @@ export interface IParticleTransmitter {
   /** Communicates the model name to the client */
   setModelName(modelName: string): void;
 
+  /** Communicates the provider name to the client (e.g., OpenRouter provider routing) */
+  setProviderInfraLabel(label: string): void;
+
   /** Communicates the upstream response handle, for remote control/resumability */
   setUpstreamHandle(handle: string, type: 'oai-responses'): void;
 

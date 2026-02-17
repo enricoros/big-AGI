@@ -644,6 +644,7 @@ export namespace AixWire_Particles {
     | { cg: 'retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rShallClear: boolean, reason: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
+    | { cg: 'set-provider-infra', label: string }
     | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses', responseId: string, expiresAt: number | null } }
     | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };

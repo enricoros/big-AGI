@@ -258,6 +258,7 @@ export function useMessageAvatarLabel(
       tooltip: complexity === 'minimal' ? null : (
         <Box sx={tooltipSx}>
           {VendorIcon ? <Box sx={tooltipIconContainerSx}><VendorIcon />{generator.name}</Box> : <div>{generator.name}</div>}
+          {generator.providerInfraLabel && <div>{vendorId} -&gt; via &lsquo;{generator.providerInfraLabel}&rsquo;</div>}
           {(modelId && complexity === 'extra') && <div>{modelId}</div>}
           {metrics && <div>{metrics}</div>}
           {stopReason && <div>{stopReason}</div>}
