@@ -14,9 +14,9 @@ import { hasKeys } from '~/common/util/objectUtils';
 
 import type { DModelDomainId } from './model.domains.types';
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
+import { DModelParameterRegistry, LLMS_ImplicitParamIds } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
-import { DModelParameterRegistry, LLMS_ImplicitParamIds } from './llms.parameters';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
 import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
 import { getDomainModelConfiguration } from './hooks/useModelDomain';
@@ -130,12 +130,22 @@ export const useModelsStore = create<LlmsStore>()(persist(
                 continue;
               }
 
-              // for enum types, validate the value is still in the allowed values (e.g., 'medium' was removed from thinkingLevel)
+              // for enum types, validate the value is still in the allowed values
               const regDef = DModelParameterRegistry[paramId];
-              if (regDef && regDef.type === 'enum' && 'values' in regDef) {
+              if (regDef && regDef.type === 'enum' && 'values' in regDef && Array.isArray(regDef.values)) {
                 const currentValue = result.userParameters[paramId];
-                if (currentValue && typeof currentValue === 'string' && !(regDef.values as readonly string[]).includes(currentValue))
-                  delete result.userParameters[paramId]; // reset to default (undefined)
+                if (currentValue && typeof currentValue === 'string') {
+                  // reset to default - parameter definition does not contain this value anymore
+                  if (!(regDef.values as ReadonlyArray<string>).includes(currentValue)) {
+                    delete result.userParameters[paramId];
+                    console.log(`[DEV] Resetting '${paramId}' for '${llm.id}' because '${currentValue}' is no longer supported.`);
+                  }
+                  // reset to default - model parameter spec does not allow this value anymore
+                  else if (paramSpec.enumValues?.length && !paramSpec.enumValues.includes(currentValue)) {
+                    delete result.userParameters[paramId];
+                    console.log(`[DEV] Resetting '${paramId}' for '${llm.id}' because '${currentValue}' is no longer allowed for the model.`);
+                  }
+                }
               }
 
               // NOTE: no range validation for integer/float types yet. If added, be aware that
