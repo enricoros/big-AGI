@@ -96,21 +96,25 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // Thinking models: thinking budget and show thoughts
-  if (model.vndGeminiShowThoughts === true || model.vndGeminiThinkingBudget !== undefined || model.vndGeminiThinkingLevel) {
+  const thinkingLevel = model.effort ?? model.vndGeminiThinkingLevel;
+  if (thinkingLevel === 'none' || thinkingLevel === 'xhigh' || thinkingLevel === 'max') // domain validation
+    throw new Error(`Gemini API does not support '${thinkingLevel}' thinking level`);
+
+  if (thinkingLevel || model.vndGeminiThinkingBudget !== undefined || model.vndGeminiShowThoughts === true) {
     const thinkingConfig: Exclude<TRequest['generationConfig'], undefined>['thinkingConfig'] = {};
 
     // This shows mainly 'summaries' of thoughts, and we enable it for most cases where thinking is requested
-    if (model.vndGeminiShowThoughts || (model.vndGeminiThinkingBudget ?? 0) > 1 || model.vndGeminiThinkingLevel === 'high' || model.vndGeminiThinkingLevel === 'medium')
+    if (thinkingLevel || (model.vndGeminiThinkingBudget ?? 0) > 1 || model.vndGeminiShowThoughts === true)
       thinkingConfig.includeThoughts = true;
 
     // [Gemini 3, 2025-11-18] Thinking Level (replaces thinkingBudget for Gemini 3)
     // CRITICAL: Cannot use both thinkingLevel and thinkingBudget (400 error)
-    if (model.vndGeminiThinkingLevel) {
-      // - Gemini 3 Pro: supports 'high', 'low'
+    if (thinkingLevel) {
       // - Gemini 3 Flash: supports 'high', 'medium', 'low', 'minimal'
-      thinkingConfig.thinkingLevel = model.vndGeminiThinkingLevel;
+      // - Gemini 3 Pro: supports 'high', 'low'
+      thinkingConfig.thinkingLevel = thinkingLevel;
     }
-    // [Gemini 2.x] Thinking Budget (0 disables thinking explicitly)
+    // [Gemini 2.x] Thinking Budget (0 disables thinking explicitly) - mutually exclusive with thinkingLevel
     else if (model.vndGeminiThinkingBudget !== undefined) {
       if (model.vndGeminiThinkingBudget > 0)
         thinkingConfig.includeThoughts = true;

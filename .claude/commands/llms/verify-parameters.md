@@ -40,13 +40,13 @@ and need to be carefully updated, otherwise thousands of clients may break.
 
 | Dialect | Sweep Key | Model paramId |
 |---------|-----------|---------------|
-| OpenAI | `oai-reasoning-effort` | `llmVndOaiReasoningEffort*` (multiple variants) |
+| OpenAI | `oai-reasoning-effort` | `llmEffort` |
 | OpenAI | `oai-verbosity` | `llmVndOaiVerbosity` |
 | OpenAI | `oai-image-generation` | `llmVndOaiImageGeneration` |
 | OpenAI | `oai-web-search` | `llmVndOaiWebSearchContext` |
-| Anthropic | `ant-effort` | `llmVndAntEffort` |
+| Anthropic | `ant-effort` | `llmEffort` |
 | Anthropic | `ant-thinking-budget` | `llmVndAntThinkingBudget` |
-| Gemini | `gemini-thinking-level` | `llmVndGeminiThinkingLevel*` |
+| Gemini | `gemini-thinking-level` | `llmEffort` |
 | Gemini | `gemini-thinking-budget` | `llmVndGeminiThinkingBudget` |
 | xAI | `xai-web-search` | `llmVndXaiWebSearch` |
 

@@ -449,9 +449,18 @@ export namespace AixWire_API {
      */
     strictToolInvocations: z.boolean().optional(),
 
+    // Unified effort parameter (replaces vendor-specific effort params)
+    effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(),
+
+    // NOTE: kept for backward compatibility during the migration; and they flow into effort - REMOVE for 2.0.5
+    vndAntEffort: z.enum(['low', 'medium', 'high', 'max']).optional(),
+    vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(), // new param
+    vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
+    vndOaiReasoningSummary: z.enum(['none', 'detailed']).optional(),
+    vndGeminiShowThoughts: z.boolean().optional(),
+
     // Anthropic
     vndAnt1MContext: z.boolean().optional(),
-    vndAntEffort: z.enum(['low', 'medium', 'high', 'max']).optional(),
     vndAntInfSpeed: z.enum(['fast']).optional(),
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
@@ -465,10 +474,7 @@ export namespace AixWire_API {
     vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
     vndGeminiImageSize: z.enum(['1K', '2K', '4K']).optional(),
     vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
-    vndGeminiShowThoughts: z.boolean().optional(),
-    vndGeminiThinkingBudget: z.number().optional(), // old param
-    // Gemini 3 thinking level: Pro supports high/low, Flash supports all 4 levels
-    vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(), // new param
+    vndGeminiThinkingBudget: z.number().optional(), // -1 for 'adaptive'
     vndGeminiUrlContext: z.enum(['auto']).optional(),
     // Moonshot
     vndMoonshotWebSearch: z.enum(['auto']).optional(),
@@ -476,8 +482,6 @@ export namespace AixWire_API {
     vndOaiCodeInterpreter: z.enum(['off', 'auto']).optional(),
     vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
     vndOaiResponsesAPI: z.boolean().optional(),
-    vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
-    vndOaiReasoningSummary: z.enum(['none', 'detailed']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),

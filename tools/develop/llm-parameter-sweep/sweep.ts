@@ -42,8 +42,8 @@ const SWEEP_DEFINITIONS = [
     name: 'oai-reasoning-effort',
     description: 'OpenAI reasoning_effort values',
     applicability: { type: 'dialects', dialects: ['openai', 'azure', 'openrouter'] },
-    applyToModel: (value) => ({ vndOaiReasoningEffort: value }),
-    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'] satisfies AixAPI_Model['vndOaiReasoningEffort'][],
+    applyToModel: (value) => ({ effort: value }),
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max' /* OpenRouter-only? */] satisfies AixAPI_Model['effort'][],
     neuteredValues: ['medium'], // medium is the default, so only-medium means no real support
     mode: 'enumerate',
   }),
@@ -85,8 +85,8 @@ const SWEEP_DEFINITIONS = [
     name: 'ant-effort',
     description: 'Anthropic output_config.effort values',
     applicability: { type: 'dialects', dialects: ['anthropic'] },
-    applyToModel: (value) => ({ vndAntEffort: value }),
-    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndAntEffort'][],
+    applyToModel: (value) => ({ effort: value }),
+    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['effort'][],
     mode: 'enumerate',
   }),
 
@@ -112,10 +112,8 @@ const SWEEP_DEFINITIONS = [
     name: 'gemini-thinking-level',
     description: 'Gemini thinkingConfig.thinkingLevel values',
     applicability: { type: 'dialects', dialects: ['gemini'] },
-    applyToModel: (value) => value
-      ? { vndGeminiThinkingLevel: value, vndGeminiShowThoughts: true }
-      : {}, // { vndGeminiShowThoughts: true }, // null = dynamic mode, don't set level
-    values: ['minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['vndGeminiThinkingLevel'] | null)[],
+    applyToModel: (value) => value ? { effort: value } : {}, // null = dynamic mode, don't set level
+    values: ['minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['effort'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -140,8 +138,8 @@ const SWEEP_DEFINITIONS = [
     name: 'xai-reasoning-effort',
     description: 'xAI reasoning.effort values',
     applicability: { type: 'dialects', dialects: ['xai'] },
-    applyToModel: (value) => ({ vndOaiReasoningEffort: value }),
-    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndOaiReasoningEffort'][],
+    applyToModel: (value) => ({ effort: value }),
+    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['effort'][],
     mode: 'enumerate',
   }),
 

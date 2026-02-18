@@ -167,7 +167,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiThinkingLevel' /* 2-level thinking for Gemini 3 Pro (high, low) */ },
+      { paramId: 'llmEffort', enumValues: ['low', 'high']},
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -216,7 +216,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30FlashPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiThinkingLevel4' /* 4-level thinking for Gemini 3 Flash (high, medium, low, minimal) */ },
+      { paramId: 'llmEffort', enumValues: ['minimal', 'low', 'medium', 'high']},
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -793,7 +793,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 
   return {
     id: modelId,
-    label: label, // + (knownModel?.isNewest ? ' 🌟' : ''),
+    label: label,
     // created: ...
     // updated: ...
     description: descriptionLong,
@@ -860,7 +860,7 @@ const _ORT_GEM_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 ] as const);
 
 const _ORT_GEM_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
-  'llmVndGeminiThinkingBudget', 'llmVndGeminiThinkingLevel', 'llmVndGeminiThinkingLevel4', // OR supports Gemini thinking
+  'llmVndGeminiThinkingBudget', 'llmEffort', // OR supports Gemini thinking (unified effort)
   'llmVndGeminiAspectRatio', 'llmVndGeminiImageSize', // OR supports Gemini image generation
 ] as const satisfies DModelParameterId[]);
 

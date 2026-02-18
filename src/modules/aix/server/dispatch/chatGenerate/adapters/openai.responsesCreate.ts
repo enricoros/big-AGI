@@ -73,12 +73,8 @@ export function aixToOpenAIResponses(
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIResponsesToolChoice(chatGenerate.toolsPolicy),
     // parallel_tool_calls: undefined, // response if unset: true
 
-    // Operations Config
-    reasoning: !model.vndOaiReasoningEffort ? undefined : {
-      effort: model.vndOaiReasoningEffort,
-      // 'none' = omit (for unverified orgs), 'detailed' = explicit, undefined = default per model
-      ...(model.vndOaiReasoningSummary !== 'none' ? { summary: model.vndOaiReasoningSummary } : {}),
-    },
+    // Operations Config - use unified effort, fall back to deprecated field
+    // reasoning: ... below
 
     // Output Config
     // text: ... below
@@ -116,6 +112,21 @@ export function aixToOpenAIResponses(
       },
     };
 
+
+  // Reasoning
+  const reasoningEffort = model.effort ?? model.vndOaiReasoningEffort;
+  if (reasoningEffort === 'max') // domain validation
+    throw new Error(`OpenAI Responses API does not support '${reasoningEffort}' reasoning effort`);
+
+  if (reasoningEffort) {
+    payload.reasoning = {
+      effort: reasoningEffort,
+    };
+    // include detailed reasoning summaries, unless the user has asked to bypass the OpenAI Org verification (via the forceNoStream flag)
+    if (reasoningEffort !== 'none' && !model.forceNoStream)
+      payload.reasoning.summary = 'detailed';
+  }
+
   // GPT-5 Verbosity: Add to existing text config or create new one
   if (model.vndOaiVerbosity) {
     payload.text = {
@@ -142,7 +153,8 @@ export function aixToOpenAIResponses(
       // [2025-11-18] Azure OpenAI still doesn't support web search tool yet - confirmed
       // [2025-09-12] Azure OpenAI doesn't support web search tool yet, and we also remove the "parameter" so we shall not come here
       console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
-    } else if (payload.reasoning?.effort === 'minimal') {
+    } else if (reasoningEffort === 'none' || reasoningEffort === 'minimal') {
+      // FIXME: validate if this is still the case
       // Web search is not supported when the reasoning effort is 'minimal'
       // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
     } else {

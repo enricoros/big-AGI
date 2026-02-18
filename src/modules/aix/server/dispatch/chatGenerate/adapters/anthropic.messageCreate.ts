@@ -171,10 +171,13 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
   // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
-  if (model.vndAntEffort /*&& model.vndAntEffort !== 'high'*/)
+  const reasoningEffort = model.effort ?? model.vndAntEffort;
+  if (reasoningEffort) {
+    if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh') throw new Error(`Anthropic API does not support '${reasoningEffort}' effort level`);
     payload.output_config = {
-      effort: model.vndAntEffort,
+      effort: reasoningEffort,
     };
+  }
 
   // [Anthropic, 2026-01-29 GA] Structured Outputs - JSON output format (now in output_config.format)
   if (model.strictJsonOutput) {

@@ -76,10 +76,9 @@ const ModelParameterSpec_schema = z.object({
   paramId: z.enum([
     'llmTopP',
     'llmForceNoStream',
+    'llmEffort', // unified effort
     // Anthropic
     'llmVndAnt1MContext',
-    'llmVndAntEffort',
-    'llmVndAntEffortMax',
     'llmVndAntInfSpeed',
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
@@ -92,19 +91,11 @@ const ModelParameterSpec_schema = z.object({
     'llmVndGeminiGoogleSearch',
     'llmVndGeminiImageSize',
     'llmVndGeminiMediaResolution',
-    'llmVndGeminiShowThoughts',
     'llmVndGeminiThinkingBudget',
-    'llmVndGeminiThinkingLevel',
-    'llmVndGeminiThinkingLevel4',
     // 'llmVndGeminiUrlContext',
     // Moonshot
-    'llmVndMoonReasoningEffort',
     'llmVndMoonshotWebSearch',
     // OpenAI
-    'llmVndOaiReasoningEffort',
-    'llmVndOaiReasoningEffort4',
-    'llmVndOaiReasoningEffort52',
-    'llmVndOaiReasoningEffort52Pro',
     'llmVndOaiRestoreMarkdown',
     'llmVndOaiVerbosity',
     'llmVndOaiWebSearchContext',
@@ -122,13 +113,12 @@ const ModelParameterSpec_schema = z.object({
     'llmVndXaiWebSearch',
     'llmVndXaiXSearch',
     'llmVndXaiXSearchHandles',
-    // Z.ai
-    'llmVndZaiReasoningEffort',
   ] satisfies DModelParameterId[]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
   initialValue: z.number().or(z.string()).or(z.boolean()).nullable().optional(),
   // special params
+  enumValues: z.array(z.string()).optional(), // restrict enum values for this model
   rangeOverride: z.tuple([z.number(), z.number()]).optional(), // [min, max]
 });
 

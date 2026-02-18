@@ -120,14 +120,37 @@ export const DModelParameterRegistry = {
   },
 
   /**
+   * Unified 'reasoning' effort parameter for all vendors. The full superset of all possible effort levels.
+   * Each model declares its own subset via `enumValues` in its parameterSpec.
+   *
+   * Mapping to vendor-native values is done in adapters (the only place with vendor knowledge):
+   * - Anthropic: output_config.effort
+   * - OpenAI: reasoning_effort (ChatCompletions) / reasoning.effort (Responses)
+   * - Gemini: thinkingConfig.thinkingLevel (depending on model: low/high, minimal/low/medium/high, ...)
+   * - Moonshot/ZAI: thinking.type (none->disabled, high->enabled)
+   * - Perplexity: reasoning_effort
+   * - etc.
+   */
+  llmEffort: _enumDef({
+    label: 'Reasoning Effort',
+    type: 'enum',
+    description: 'Controls reasoning depth and effort level.',
+    values: [
+      // all values (max includes) sorted in ascending order of effort
+      'none', 'minimal', 'low', 'medium', 'high', 'xhigh', // OpenAI/common
+      'max', // Anthropic only, for now
+    ],
+    // No initialValue - undefined means vendor default (usually high or medium, could be different such as none)
+  }),
+
+  /**
    * First introduced as a user-configurable parameter for the 'Verification' required by o3.
    * [2025-04-16] Adding parameter to disable streaming for o3, and possibly more models.
    *
    * [2026-01-21] OpenAI Responses API: Reasoning Summaries require organization verification.
    * Per OpenAI docs, both streaming AND reasoning summaries require org verification for GPT-5/5.1/5.2.
    *  - https://help.openai.com/en/articles/10362446-api-model-availability-by-usage-tier-and-verification-status
-   *  - Rather than adding a separate param, we piggyback on llmForceNoStream.
-   *  - AIX Wire type `vndOaiReasoningSummary` is derived from `llmForceNoStream` in aix.client.ts.
+   *  - Rather than adding a separate param, we piggyback on llmForceNoStream
    */
   llmForceNoStream: {
     label: 'Disable Streaming',
@@ -136,28 +159,15 @@ export const DModelParameterRegistry = {
     // initialValue: false, // we don't need the initial value here, will be assumed off
   },
 
+
+  // Anthropic-specific
+
   llmVndAnt1MContext: {
     label: '1M Context Window (Beta)',
     type: 'boolean',
     description: 'Enable 1M token context window with premium pricing for >200K input tokens',
     // No initialValue - undefined means off (e.g. default 200K context window)
   },
-
-  llmVndAntEffortMax: _enumDef({ // introduced with Claude Opus 4.6; this adds the 'max' level on top of llmVndAntEffort
-    label: 'Effort',
-    type: 'enum',
-    description: 'Controls thinking depth. max = deepest reasoning with no constraints, high = default.',
-    values: ['low', 'medium', 'high', 'max'],
-    // No initialValue - undefined means high effort (default)
-  }),
-
-  llmVndAntEffort: _enumDef({
-    label: 'Effort',
-    type: 'enum',
-    description: 'Controls token usage vs. thoroughness trade-off. Works alongside thinking budget.',
-    values: ['low', 'medium', 'high'],
-    // No initialValue - undefined means high effort (default, equivalent to omitting the parameter)
-  }),
 
   llmVndAntInfSpeed: _enumDef({
     label: 'Fast Mode',
@@ -176,6 +186,8 @@ export const DModelParameterRegistry = {
   },
 
   /**
+   * NOTE: this is being phased out with Opus 4.6 in favor of llmEffort ('low', 'medium', 'high', 'max')
+   *
    * Important: when this is set to anything other than nullish, it enables Adaptive(-1)/Extended(int > 1024) thinking,
    * and as a side effect **disables the temperature** in the requests (even when tunneled through OpenRouter). So this
    * control must disable the UI controls for temperature in both the side panel and the model configuration dialog.
@@ -214,6 +226,9 @@ export const DModelParameterRegistry = {
   //   values: ['regex', 'bm25'],
   //   // No initialValue - undefined means off (tool search disabled)
   // },
+
+
+  // Gemini-specific
 
   llmVndGeminiAspectRatio: _enumDef({ // implies: LLM_IF_Outputs_Image
     label: 'Aspect Ratio',
@@ -264,13 +279,6 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined: "If unspecified, the model uses optimal defaults based on the media type." (Images: high, PDFs: medium, Videos: low/medium (rec: high for OCR))
   }),
 
-  llmVndGeminiShowThoughts: {
-    label: 'Show Thoughts',
-    type: 'boolean',
-    description: 'Show Gemini\'s reasoning process',
-    // initialValue: true, // no initial value
-  },
-
   llmVndGeminiThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer',
@@ -284,22 +292,6 @@ export const DModelParameterRegistry = {
     description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
   },
 
-  llmVndGeminiThinkingLevel: _enumDef({
-    label: 'Thinking Level',
-    type: 'enum',
-    description: 'Controls internal reasoning depth for Gemini 3 Pro. When unset, the model decides dynamically.',
-    values: ['high', 'low'],
-    // No initialValue - undefined means 'dynamic', which for Gemini Pro is the same as 'high'
-  }),
-
-  llmVndGeminiThinkingLevel4: _enumDef({
-    label: 'Thinking Level',
-    type: 'enum',
-    description: 'Controls internal reasoning depth for Gemini 3 Flash. When unset, the model decides dynamically.',
-    values: ['high', 'medium', 'low', 'minimal'],
-    // No initialValue - undefined means 'dynamic'
-  }),
-
   // NOTE: we don't have this as a parameter, as for now we use it in tandem with llmVndGeminiGoogleSearch
   // llmVndGeminiUrlContext: {
   //   label: 'URL Context',
@@ -309,15 +301,8 @@ export const DModelParameterRegistry = {
   //   // No initialValue - undefined means off
   // },
 
-  // Moonshot-specific parameters
 
-  llmVndMoonReasoningEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Controls thinking depth for Kimi K2.5. High enables extended multi-step reasoning (default).',
-    values: ['none', 'high'],
-    // No initialValue - undefined means high (thinking enabled, the default for K2.5)
-  }),
+  // Moonshot-specific parameters
 
   llmVndMoonshotWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
@@ -327,45 +312,8 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off
   }),
 
-  // OpenAI-specific parameters
-  // Reasoning effort levels per model:
-  // - GPT-5: minimal, low, medium (default), high
-  // - GPT-5.1: none (default), low, medium, high
-  // - GPT-5.2: none (default), low, medium, high, xhigh
-  // - GPT-5.2 Pro: medium (default), high, xhigh
 
-  llmVndOaiReasoningEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for OpenAI reasoning models',
-    values: ['low', 'medium', 'high'],
-    requiredFallback: 'medium',
-  }),
-
-  llmVndOaiReasoningEffort4: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for OpenAI advanced reasoning models',
-    values: ['minimal', 'low', 'medium', 'high'],
-    requiredFallback: 'medium',
-  }),
-
-  llmVndOaiReasoningEffort52: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for GPT-5.2 models. When unset, defaults to none (fast responses).',
-    values: ['none', 'low', 'medium', 'high', 'xhigh'],
-    // No requiredFallback - unset = none (the default for GPT-5.2)
-    // No initialValue - starts undefined, which the UI should display as "none"
-  }),
-
-  llmVndOaiReasoningEffort52Pro: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for GPT-5.2 Pro. Defaults to medium.',
-    values: ['medium', 'high', 'xhigh'],
-    // No requiredFallback - unset = medium (the default for GPT-5.2 Pro)
-  }),
+  // OpenAI-specific
 
   llmVndOaiRestoreMarkdown: {
     label: 'Restore Markdown',
@@ -418,17 +366,8 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off (same as 'off')
   }),
 
-  // Perplexity-specific parameters
 
-  // llmVndPerplexityReasoningEffort - we reuse the OpenAI reasoning effort parameter
-
-  llmVndPerplexityDateFilter: _enumDef({
-    label: 'Date Range',
-    type: 'enum',
-    description: 'Filter results by publication date',
-    values: ['unfiltered', '1m', '3m', '6m', '1y'],
-    // requiredFallback: 'unfiltered',
-  }),
+  // OpenRouter-specific
 
   llmVndOrtWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
@@ -438,6 +377,17 @@ export const DModelParameterRegistry = {
     // No initialValue - undefined means off
   }),
 
+
+  // Perplexity-specific parameters
+
+  llmVndPerplexityDateFilter: _enumDef({
+    label: 'Date Range',
+    type: 'enum',
+    description: 'Filter results by publication date',
+    values: ['unfiltered', '1m', '3m', '6m', '1y'],
+    // requiredFallback: 'unfiltered',
+  }),
+
   llmVndPerplexitySearchMode: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Search Mode',
     type: 'enum',
@@ -445,6 +395,7 @@ export const DModelParameterRegistry = {
     values: ['default', 'academic'],
     // requiredFallback: 'default', // or leave unset for "unspecified"
   }),
+
 
   // xAI-specific parameters
 
@@ -487,16 +438,6 @@ export const DModelParameterRegistry = {
     description: 'Filter X search to specific handles (comma-separated, e.g. @elonmusk, @xai)',
     // initialValue: '', // empty = no filter
   },
-
-  // Z.ai-specific parameters
-
-  llmVndZaiReasoningEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Controls thinking mode for GLM models. High enables thinking (default), none disables it.',
-    values: ['none', 'high'],
-    // No initialValue - undefined means high (thinking enabled, the default for GLM-4.5+)
-  }),
 
 } as const satisfies Record<string, _ParameterRegistryEntry>;
 
@@ -554,6 +495,12 @@ interface DModelParameterSpec<T extends DModelParameterId> {
    * Used by llmVndGeminiThinkingBudget to allow different ranges for different models.
    */
   rangeOverride?: [number, number];
+  /**
+   * (optional) For enum params: restrict which values from the registry are allowed for this model.
+   * The UI will only show these values. Analogous to rangeOverride for numeric params.
+   * Example: llmEffort registry has 7 values, but a specific model may only support ['low', 'medium', 'high'].
+   */
+  enumValues?: readonly string[];
 }
 
 
