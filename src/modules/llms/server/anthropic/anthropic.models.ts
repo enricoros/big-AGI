@@ -140,7 +140,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // Claude 4.6 models
   {
     id: 'claude-opus-4-6', // Active
-    label: 'Claude Opus 4.6', // 🌟
+    label: 'Claude Opus 4.6',
     description: 'Most intelligent model for building agents and coding, with adaptive thinking',
     contextWindow: 200000,
     maxCompletionTokens: 128000,
@@ -162,7 +162,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
   {
     id: 'claude-sonnet-4-6', // Active
-    label: 'Claude Sonnet 4.6', // 🌟
+    label: 'Claude Sonnet 4.6',
     description: 'Best combination of speed and intelligence for everyday tasks',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
@@ -219,7 +219,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
   {
     id: 'claude-haiku-4-5-20251001', // Active
-    label: 'Claude Haiku 4.5', // 🌟
+    label: 'Claude Haiku 4.5',
     description: 'Fastest model with exceptional speed and performance',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
@@ -392,7 +392,7 @@ const _ORT_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 ] as const);
 // NOTE: llmVndAntInfSpeed intentionally NOT included - fast mode not available through OpenRouter
 const _ORT_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
-  'llmVndAntEffort', 'llmVndAntEffortMax',
+  'llmEffort', // unified effort
   'llmVndAntThinkingBudget',
 ] as const satisfies DModelParameterId[]);
 
