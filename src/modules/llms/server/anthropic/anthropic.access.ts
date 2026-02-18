@@ -82,7 +82,6 @@ export type AnthropicHeaderOptions = {
   modelIdForBetaFeatures?: string;
   vndAntWebFetch?: boolean;
   vndAnt1MContext?: boolean;
-  vndAntEffort?: boolean; // [Anthropic, effort-2025-11-24]
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
   enableFastMode?: boolean; // [Anthropic, fast-mode-2026-02-01]
@@ -172,10 +171,6 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   // [Anthropic, fast-mode-2026-02-01] Fast inference mode
   if (options?.enableFastMode)
     betaFeatures.push('fast-mode-2026-02-01');
-
-  // [Anthropic, 2025-11-24] Add beta feature for effort parameter (Claude Opus 4.5+)
-  if (options?.vndAntEffort)
-    betaFeatures.push('effort-2025-11-24');
 
   // [Anthropic, 2025-11-24] Add beta feature for Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
   // Same beta header covers both features: tool discovery and programmatic calling from code execution

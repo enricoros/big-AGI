@@ -63,7 +63,6 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         modelIdForBetaFeatures: model.id,
         vndAntWebFetch: model.vndAntWebFetch === 'auto',
         vndAnt1MContext: model.vndAnt1MContext === true,
-        vndAntEffort: !!model.vndAntEffort,
         enableSkills: !!model.vndAntSkills,
         enableFastMode: model.vndAntInfSpeed === 'fast',
         enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
