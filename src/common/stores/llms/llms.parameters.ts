@@ -35,39 +35,40 @@ type _ParameterRegistryEntry =
   | _BooleanParamDef
   | _EnumParamDef;
 
-interface _ParamDefBase {
+interface _ParamDefBase<TSingleValue> {
+  // UI data
   readonly label: string;
   readonly description: string;
+  // Optionally write this value to the model's initialParameters, unles the Spec overrides it
+  // or the parameter is already set (e.g. by the implicit fallbacks).
+  readonly writeFactoryValue?: TSingleValue;
+  // we could use this (but not yet) to display the 'actual' value that the upstream will use by not passing any value to this parameter (although this may be different per model)
+  // readonly undefinedAs?: TSingleValue;
 }
 
-interface _IntegerParamDef extends _ParamDefBase {
+interface _IntegerParamDef extends _ParamDefBase<number | null> {
   readonly type: 'integer';
   readonly range?: readonly [number, number];
   readonly nullable?: { readonly meaning: string };
-  readonly initialValue?: number | null;
 }
 
-interface _FloatParamDef extends _ParamDefBase {
+interface _FloatParamDef extends _ParamDefBase<number | null> {
   readonly type: 'float';
   readonly range?: readonly [number, number];
   readonly nullable?: { readonly meaning: string };
-  readonly initialValue?: number | null;
 }
 
-interface _StringParamDef extends _ParamDefBase {
+interface _StringParamDef extends _ParamDefBase<string> {
   readonly type: 'string';
-  readonly initialValue?: string;
 }
 
-interface _BooleanParamDef extends _ParamDefBase {
+interface _BooleanParamDef extends _ParamDefBase<boolean> {
   readonly type: 'boolean';
-  readonly initialValue?: boolean;
 }
 
-interface _EnumParamDef<V extends string = string> extends _ParamDefBase {
+interface _EnumParamDef<V extends string = string> extends _ParamDefBase<NoInfer<V>> {
   readonly type: 'enum';
   readonly values: readonly V[];
-  readonly initialValue?: NoInfer<V>;
   /** Per-value pricing multiplier. When the parameter is set to a value listed here, model pricing is multiplied. */
   readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
 }
@@ -82,13 +83,14 @@ function _enumDef<const V extends string>(def: _EnumParamDef<V>): _EnumParamDef<
 
 export const DModelParameterRegistry = {
 
-  /// Common parameters, normally available in all models ///
+  /// Common 'implicit' parameters, available to all models ///
   // Note: we still use pre-v2 names for compatibility and ease of migration
 
   llmRef: {
     label: 'Model ID',
     type: 'string',
     description: 'Upstream model reference',
+    // cannot be undefined, and cannot be changed by the user
   },
 
   llmResponseTokens: {
@@ -98,6 +100,7 @@ export const DModelParameterRegistry = {
     nullable: {
       meaning: 'Explicitly avoid sending max_tokens to upstream API',
     },
+    // due to implicit, when undefined we apply the runtime fallback
   },
 
   llmTemperature: {
@@ -108,6 +111,7 @@ export const DModelParameterRegistry = {
     nullable: {
       meaning: 'Explicitly avoid sending temperature to upstream API',
     },
+    // due to implicit, when undefined we apply the runtime fallback
   },
 
   /// Extended parameters, specific to certain models/vendors
@@ -117,6 +121,7 @@ export const DModelParameterRegistry = {
     type: 'float',
     description: 'Nucleus sampling threshold',
     range: [0.0, 1.0],
+    // when undefined is omitted from the requests (default)
   },
 
   /**
@@ -140,7 +145,7 @@ export const DModelParameterRegistry = {
       'none', 'minimal', 'low', 'medium', 'high', 'xhigh', // OpenAI/common
       'max', // Anthropic only, for now
     ],
-    // No initialValue - undefined means vendor default (usually high or medium, could be different such as none)
+    // undefined means vendor default (usually high or medium, could be different such as none)
   }),
 
   /**
@@ -156,7 +161,7 @@ export const DModelParameterRegistry = {
     label: 'Disable Streaming',
     type: 'boolean',
     description: 'Disables streaming for this model',
-    // initialValue: false, // we don't need the initial value here, will be assumed off
+    // undefined means streaming is not disabled
   },
 
 
@@ -166,7 +171,7 @@ export const DModelParameterRegistry = {
     label: '1M Context Window (Beta)',
     type: 'boolean',
     description: 'Enable 1M token context window with premium pricing for >200K input tokens',
-    // No initialValue - undefined means off (e.g. default 200K context window)
+    // undefined means off (e.g. default 200K context window)
   },
 
   llmVndAntInfSpeed: _enumDef({
@@ -175,14 +180,15 @@ export const DModelParameterRegistry = {
     description: 'Accelerated inference (~2.5x faster output) at 6x pricing. Preview access required.',
     values: ['fast'],
     enumPriceMultiplier: { fast: 6 },
-    // No initialValue - undefined means standard speed (omitted from request)
+    // undefined means standard speed (omitted from request)
   }),
 
   llmVndAntSkills: {
     label: 'Document Skills',
     type: 'string',
     description: 'Comma-separated skills (xlsx,pptx,pdf,docx)',
-    initialValue: '', // empty string = disabled
+    writeFactoryValue: '', // empty string = disabled
+    // undefined is not allowed, as the writeFactoryValue would ensure a non-undefined value
   },
 
   /**
@@ -197,10 +203,11 @@ export const DModelParameterRegistry = {
     type: 'integer',
     description: 'Budget for extended thinking',
     range: [1024, 65536],
-    initialValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
+    writeFactoryValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
     nullable: { // null means to not turn on thinking at all, and it's the user-overridden equivalent to the param missing
       meaning: 'Disable extended thinking',
     },
+    // undefined means model default
   },
 
   llmVndAntWebFetch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -208,7 +215,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable fetching content from web pages and PDFs',
     values: ['auto', 'off'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   llmVndAntWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -216,7 +223,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable web search for real-time information',
     values: ['auto', 'off'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   // llmVndAntToolSearch: { // Not user set
@@ -224,7 +231,7 @@ export const DModelParameterRegistry = {
   //   type: 'enum',
   //   description: 'Search algorithm for discovering tools on-demand (regex=pattern-based, bm25=natural language)',
   //   values: ['regex', 'bm25'],
-  //   // No initialValue - undefined means off (tool search disabled)
+  //   // undefined means off (tool search disabled)
   // },
 
 
@@ -235,7 +242,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls the aspect ratio of generated images',
     values: ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'],
-    // No initial value - when undefined, the model decides the aspect ratio
+    // when undefined, the model decides the aspect ratio
   }),
 
   llmVndGeminiCodeExecution: _enumDef({
@@ -243,7 +250,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable automatic Python code generation and execution by the model',
     values: ['auto'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
   llmVndGeminiComputerUse: _enumDef({
@@ -251,7 +258,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Environment type for Computer Use tool (required for Computer Use model)',
     values: ['browser'],
-    initialValue: 'browser',
+    // undefined means off
   }),
 
   llmVndGeminiGoogleSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -259,7 +266,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable Google Search grounding with optional time filter',
     values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
   llmVndGeminiImageSize: _enumDef({ // implies: LLM_IF_Outputs_Image - [Gemini, 2025-11-20] Nano Banana launch
@@ -267,7 +274,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls the resolution of generated images',
     values: ['1K', '2K', '4K'],
-    // No initial value - when undefined, the model decides the image size
+    // when undefined, the model decides the image size
   }),
 
   llmVndGeminiMediaResolution: _enumDef({
@@ -275,20 +282,20 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls vision processing quality for multimodal inputs. Higher resolution improves text reading and detail identification but increases token usage.',
     values: ['mr_high', 'mr_medium', 'mr_low'],
-    // No initialValue - undefined: "If unspecified, the model uses optimal defaults based on the media type." (Images: high, PDFs: medium, Videos: low/medium (rec: high for OCR))
+    // undefined: "If unspecified, the model uses optimal defaults based on the media type." (Images: high, PDFs: medium, Videos: low/medium (rec: high for OCR))
   }),
 
   llmVndGeminiThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer',
+    description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
     /**
      * can be overwritten, as gemini models seem to have different ranges which also does not include 0
      * - value = 0 disables thinking
      * - value = undefined means 'auto thinking budget'.
      */
     range: [0, 24576],
-    // initialValue: unset, // auto-budgeting
-    description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
+    // when undefined, the model chooses automatically
   },
 
   // NOTE: we don't have this as a parameter, as for now we use it in tandem with llmVndGeminiGoogleSearch
@@ -297,7 +304,7 @@ export const DModelParameterRegistry = {
   //   type: 'enum',
   //   description: 'Enable fetching and analyzing content from URLs provided in prompts (up to 20 URLs, 34MB each)',
   //   values: ['auto'],
-  //   // No initialValue - undefined means off
+  //   // undefined means off
   // },
 
 
@@ -308,7 +315,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable Kimi\'s $web_search builtin function for real-time web search ($0.005 per search)',
     values: ['auto'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
 
@@ -318,7 +325,8 @@ export const DModelParameterRegistry = {
     label: 'Restore Markdown',
     type: 'boolean',
     description: 'Restore Markdown formatting in the output',
-    initialValue: true,
+    // we used to have the writeFactoryValue to true, but we don't basically use/want this anymore
+    // undefined means off
   },
 
   llmVndOaiVerbosity: _enumDef({
@@ -326,6 +334,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls response length and detail level',
     values: ['low', 'medium', 'high'],
+    // undefined means model default
   }),
 
   llmVndOaiWebSearchContext: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -333,6 +342,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Amount of context retrieved from the web',
     values: ['low', 'medium', 'high'],
+    // undefined means *off* (no web search context provided)
   }),
 
   llmVndOaiWebSearchGeolocation: {
@@ -343,15 +353,15 @@ export const DModelParameterRegistry = {
     label: 'Add User Location (Geolocation API)',
     type: 'boolean',
     description: 'Approximate location for search results',
-    initialValue: false,
+    // undefined means no geolocation data included in search requests
   },
 
   llmVndOaiImageGeneration: _enumDef({ // implies: LLM_IF_Outputs_Image
     label: 'Image Generation',
     type: 'enum',
     description: 'Image generation mode and quality',
-    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */],
-    // No initialValue - defaults to undefined (off)
+    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */], // our values, not upstream's
+    // undefined means no image generation
   }),
 
   llmVndOaiCodeInterpreter: _enumDef({
@@ -359,7 +369,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Python code execution ($0.03/container)',
     values: ['off', 'auto'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
 
@@ -370,7 +380,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable OpenRouter web search (uses native search for OpenAI/Anthropic, Exa for others)',
     values: ['auto'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
 
@@ -381,6 +391,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Filter results by publication date',
     values: ['unfiltered', '1m', '3m', '6m', '1y'],
+    // undefined means unfiltered
   }),
 
   llmVndPerplexitySearchMode: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -388,6 +399,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Type of sources to search',
     values: ['default', 'academic'],
+    // undefined means default
   }),
 
 
@@ -398,7 +410,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable server-side code execution by the model',
     values: ['off', 'auto'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   llmVndXaiSearchInterval: _enumDef({
@@ -406,7 +418,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Search in this interval',
     values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'],
-    // No initialValue - undefined means unfiltered
+    // undefined means unfiltered
   }),
 
   llmVndXaiWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -414,7 +426,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable web search for real-time information',
     values: ['off', 'auto'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   llmVndXaiXSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -422,15 +434,15 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable X/Twitter search for social media content',
     values: ['off', 'auto'],
-    // NOTE: disabling or this could be slow
-    // initialValue: 'auto', // we default to 'auto' for our users, as they may expect "X search" out of the box
+    // NOTE: disabling or this could be slow: writeFactoryValue: 'auto', // we default to 'auto' for our users, as they may expect "X search" out of the box
+    // undefined means off (same as 'off')
   }),
 
   llmVndXaiXSearchHandles: {
     label: 'X Handles Filter',
     type: 'string',
     description: 'Filter X search to specific handles (comma-separated, e.g. @elonmusk, @xai)',
-    // initialValue: '', // empty = no filter
+    // undefined means no filter (same as '')
   },
 
 } as const satisfies Record<string, _ParameterRegistryEntry>;
@@ -515,11 +527,11 @@ export function applyModelParameterSpecsInitialValues(destValues: DModelParamete
       continue;
     }
 
-    // 2. (if present) apply Registry[paramId].initialValue
+    // 2. (if present) apply Registry[paramId].writeFactoryValue
     const registryDef = DModelParameterRegistry[paramId];
     if (registryDef) {
-      if ('initialValue' in registryDef && registryDef.initialValue !== undefined)
-        destValues[paramId] = registryDef.initialValue as DModelParameterValue<typeof paramId>;
+      if ('writeFactoryValue' in registryDef && registryDef.writeFactoryValue !== undefined)
+        destValues[paramId] = registryDef.writeFactoryValue as DModelParameterValue<typeof paramId>;
     } else
       console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
   }
