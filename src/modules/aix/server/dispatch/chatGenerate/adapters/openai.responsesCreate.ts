@@ -37,11 +37,13 @@ export function aixToOpenAIResponses(
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
 
   // [OpenAI] Vendor-specific model checks
-  const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
-  const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
 
-  const hotFixNoTemperature = isOpenAIOFamily && !isOpenAIChatGPT;
+  // NOTE: we do not use this anymore - LLM_IF_HOTFIX_NoTemperature works in definition, UI, and client calls
+  // const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+  // const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+  const forceNoTemperature = false;  // isOpenAIOFamily && !isOpenAIChatGPT;
+
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
 
   const isDialectAzure = openAIDialect === 'azure';
@@ -61,7 +63,7 @@ export function aixToOpenAIResponses(
     // Model configuration
     model: model.id,
     max_output_tokens: model.maxTokens ?? undefined, // response if unset: null
-    temperature: !hotFixNoTemperature ? model.temperature ?? undefined : undefined,
+    temperature: !forceNoTemperature ? model.temperature ?? undefined : undefined,
     // top_p: ... below (alternative to temperature)
 
     // Input
@@ -123,7 +125,10 @@ export function aixToOpenAIResponses(
       effort: reasoningEffort,
     };
     // include detailed reasoning summaries, unless the user has asked to bypass the OpenAI Org verification (via the forceNoStream flag)
-    if (reasoningEffort !== 'none' && !model.forceNoStream)
+    const specialExclusions = [
+      'o1-pro', // found manually: unsupported parameter: 'reasoning.summary' is not supported with the 'o1-pro-2025-03-19' model
+    ].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+    if (reasoningEffort !== 'none' && !model.forceNoStream && !specialExclusions)
       payload.reasoning.summary = 'detailed';
   }
 
