@@ -12,6 +12,7 @@ import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { getLLMLabel } from '~/common/stores/llms/llms.types';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
@@ -117,7 +118,7 @@ export function FlattenerModal(props: {
       return setErrorMessage('No style selected');
 
     setSelectedStyle(flattenStyle);
-    setSelectedLLMLabel(llm.label);
+    setSelectedLLMLabel(getLLMLabel(llm));
     setErrorMessage(null);
 
     // start (auto-abort previous and at unmount)

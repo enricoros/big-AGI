@@ -8,7 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DLLM, DLLMId, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMLabel, isLLMVisible } from '~/common/stores/llms/llms.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -65,7 +65,7 @@ function LLMDropdown(props: {
         return true;
 
       // filter-out models that don't contain the search string
-      if (lcFilterString && !llm.label.toLowerCase().includes(lcFilterString))
+      if (lcFilterString && !getLLMLabel(llm).toLowerCase().includes(lcFilterString))
         return false;
 
       // filter-out hidden models from the dropdown
@@ -89,7 +89,7 @@ function LLMDropdown(props: {
 
       // add the model item
       llmItems[llm.id] = {
-        title: llm.label,
+        title: getLLMLabel(llm),
         ...(llm.userStarred ? { symbol: '⭐' } : {}),
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };

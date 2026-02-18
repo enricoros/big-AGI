@@ -544,9 +544,9 @@ function _prettyAnthropicModelName(modelId: string): string | null {
                   : subStr.includes('-3') ? '3'
                     : '?';
 
-  if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
-  if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;
-  if (subStr.includes(`-haiku`)) return `Claude ${version} Haiku`;
+  if (subStr.includes(`-opus`)) return `Claude Opus ${version}`;
+  if (subStr.includes(`-sonnet`)) return `Claude Sonnet ${version}`;
+  if (subStr.includes(`-haiku`)) return `Claude Haiku ${version}`;
 
   return `Claude ${version}`;
 }

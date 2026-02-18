@@ -116,7 +116,7 @@ export function ModelsConfiguratorModal(props: {
     showPromisedOverlay('llms-reset-parameters', {}, ({ onResolve, onUserReject }) =>
       <ConfirmationModal
         open onClose={onUserReject} onPositive={() => onResolve(true)}
-        confirmationText={`Reset all user-customized model parameters for ${activeService?.label ?? 'this service'}? All settings such as temperature, reasoning effort, etc. will be reverted to defaults.`}
+        confirmationText={`Reset all user-customized model parameters and names for ${activeService?.label ?? 'this service'}? All settings such as temperature, reasoning effort, etc. will be reverted to defaults.`}
         positiveActionText='Reset'
       />,
     ).then(() => llmsStoreActions().resetServiceUserParameters(activeServiceId)).catch(() => null /* ignore closure */);

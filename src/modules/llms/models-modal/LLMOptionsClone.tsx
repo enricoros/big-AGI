@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Alert, Box, Button, FormControl, Input, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { DLLMId, getLLMLabel } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -32,7 +32,7 @@ export function LLMOptionsClone(preps: {
   const cloneIdExists = useLLMExists(candidateCloneId);
 
   // derived 2
-  const llmLabel = llm ? llm.label : 'Unknown Model';
+  const llmLabel = llm ? getLLMLabel(llm) : 'Unknown Model';
 
   // validation
   const variantRegex = /^[a-z0-9-]+$/i;
@@ -69,7 +69,7 @@ export function LLMOptionsClone(preps: {
       hideBottomClose
     >
       <Typography level='body-sm' sx={{ mb: 2 }}>
-        Create a copy of <b>{llm.label}</b> with independent settings.
+        Create a copy of <b>{llmLabel}</b> with independent settings.
       </Typography>
 
       <FormControl sx={{ mb: 2 }}>
@@ -77,7 +77,7 @@ export function LLMOptionsClone(preps: {
         <Input
           autoFocus
           variant='outlined'
-          placeholder={`${llm.label} (Copy)`}
+          placeholder={`${llmLabel} (Copy)`}
           value={cloneLabel}
           onChange={(e) => setCloneLabel(e.target.value)}
           sx={{ backgroundColor: 'background.popup' }}

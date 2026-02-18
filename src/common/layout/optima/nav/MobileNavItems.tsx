@@ -146,13 +146,16 @@ export function MobileNavItems(props: { currentApp?: NavItemApp }) {
           Models
         </Button>
 
-        {/* HARDCODED: Discord */}
-        <BringTheLove
-          text={navItems.links[0].name}
-          icon={navItems.links[0].icon}
-          link={navItems.links[0].href}
-          sx={_styles.button}
-        />
+        {/* External links (e.g. Discord) */}
+        {navItems.links.slice(0 /* take up to 1 element, which is Discord */, 1).map((link) => (
+          <BringTheLove
+            key={link.name}
+            text={link.name}
+            icon={link.icon}
+            link={link.href}
+            sx={_styles.button}
+          />
+        ))}
       </Box>
 
     </Sheet>

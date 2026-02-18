@@ -19,7 +19,7 @@ const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 
 // Anthropic Parameters Semantics:
 // - llmVndAnt1MContext         only available on select models
-// - llmVndAntEffort            since 4.5: low/medium/high (3 levels). Since 4.6: +max (4 levels, 'max' is 4.6-exclusive). Check if future models expand support.
+// - llmVndAntEffort            since 4.5: low/medium/high (3 levels). Since Opus 4.6: +max (4 levels, 'max' is Opus 4.6-exclusive). Sonnet 4.6 supports low/medium/high only.
 // - llmVndAntSkills            2026-02-06: seems GA to any model now: a parameter spec for user/UI configurability
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking, was used for manual control of thinking up to 4.5, we pre-default it to 16384 and the user can set it to another value or null to turn thinking off
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
@@ -42,6 +42,15 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     description: 'Claude Opus 4.6 with adaptive thinking mode for the most complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* adaptive */ }, { paramId: 'llmVndAntEffortMax' }, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntInfSpeed' }],
+    // benchmark: { cbaElo: ... }, // TBD
+  },
+
+  'claude-sonnet-4-6': {
+    idVariant: 'thinking',
+    label: 'Claude Sonnet 4.6 (Adaptive)',
+    description: 'Claude Sonnet 4.6 with adaptive thinking mode for balanced speed and intelligence',
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* adaptive */ }, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }],
     // benchmark: { cbaElo: ... }, // TBD
   },
 
@@ -151,6 +160,28 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     },
     // benchmark: { cbaElo: ... }, // TBD
   },
+  {
+    id: 'claude-sonnet-4-6', // Active
+    label: 'Claude Sonnet 4.6', // 🌟
+    description: 'Best combination of speed and intelligence for everyday tasks',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_TOOLS, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAnt1MContext' }],
+    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    // Cache pricing also tiered: write 1.25× input, read 0.10× input
+    chatPrice: {
+      input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
+      output: [{ upTo: 200000, price: 15 }, { upTo: null, price: 22.50 }],
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }],
+        write: [{ upTo: 200000, price: 3.75 }, { upTo: null, price: 7.50 }],
+        duration: 300,
+      },
+    },
+    // benchmark: { cbaElo: ... }, // TBD
+  },
 
   // Claude 4.5 models
   {
@@ -166,8 +197,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
   {
     id: 'claude-sonnet-4-5-20250929', // Active
-    label: 'Claude Sonnet 4.5', // 🌟
-    description: 'Best model for complex agents and coding, with the highest intelligence across most tasks',
+    label: 'Claude Sonnet 4.5',
+    description: 'Previous best combination of speed and intelligence for complex agents and coding',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],

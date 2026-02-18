@@ -3,7 +3,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { DLLM, DLLMId } from '../llms.types';
 import type { DModelsServiceId } from '../llms.service.types';
 import { findModelsServiceOrNull } from '../store-llms';
-import { isLLMVisible } from '../llms.types';
+import { getLLMLabel, isLLMVisible } from '../llms.types';
 
 
 /**
@@ -27,7 +27,7 @@ export function filterLLMsForDropdown(
     if (options.starredOnly && !llm.userStarred) return false;
 
     // Filter by search string
-    if (lcSearch && !llm.label.toLowerCase().includes(lcSearch)) return false;
+    if (lcSearch && !getLLMLabel(llm).toLowerCase().includes(lcSearch)) return false;
 
     // Show visible models, or all if actively searching
     return lcSearch ? true : isLLMVisible(llm);
