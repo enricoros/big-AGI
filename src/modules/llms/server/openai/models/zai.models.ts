@@ -17,7 +17,7 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, L
 // - Z.ai thinking maps from effort: 'none' → disabled, anything else → enabled
 // - Z.ai only supports binary enabled/disabled, so we expose 'none' and 'high'
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmEffort', enumValues: ['none', 'high'] },
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
 
 

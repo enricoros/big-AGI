@@ -171,7 +171,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
   // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
-  const reasoningEffort = model.effort ?? model.vndAntEffort;
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndAntEffort;
   if (reasoningEffort) {
     if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh') throw new Error(`Anthropic API does not support '${reasoningEffort}' effort level`);
     payload.output_config = {

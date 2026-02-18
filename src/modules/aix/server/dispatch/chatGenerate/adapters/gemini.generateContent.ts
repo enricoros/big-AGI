@@ -96,15 +96,15 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // Thinking models: thinking budget and show thoughts
-  const thinkingLevel = model.effort ?? model.vndGeminiThinkingLevel;
+  const thinkingLevel = model.reasoningEffort; // ?? model.vndGeminiThinkingLevel;
   if (thinkingLevel === 'none' || thinkingLevel === 'xhigh' || thinkingLevel === 'max') // domain validation
     throw new Error(`Gemini API does not support '${thinkingLevel}' thinking level`);
 
-  if (thinkingLevel || model.vndGeminiThinkingBudget !== undefined || model.vndGeminiShowThoughts === true) {
+  if (thinkingLevel || model.vndGeminiThinkingBudget !== undefined /*|| model.vndGeminiShowThoughts === true*/) {
     const thinkingConfig: Exclude<TRequest['generationConfig'], undefined>['thinkingConfig'] = {};
 
     // This shows mainly 'summaries' of thoughts, and we enable it for most cases where thinking is requested
-    if (thinkingLevel || (model.vndGeminiThinkingBudget ?? 0) > 1 || model.vndGeminiShowThoughts === true)
+    if (thinkingLevel || (model.vndGeminiThinkingBudget ?? 0) > 1 /*|| model.vndGeminiShowThoughts === true*/)
       thinkingConfig.includeThoughts = true;
 
     // [Gemini 3, 2025-11-18] Thinking Level (replaces thinkingBudget for Gemini 3)

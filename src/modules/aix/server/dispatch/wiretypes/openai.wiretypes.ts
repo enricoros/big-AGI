@@ -336,7 +336,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // https://openrouter.ai/docs/api/reference/parameters#verbosity
     verbosity: z.enum([
       'low', 'medium', 'high',
-      'max', // [OpenRouter, 2026-02-06] Anthropic-through-openrouter has its llmEffort mapped to 'verbosity'
+      'max', // [OpenRouter, 2026-02-06] Anthropic-through-openrouter has its effort mapped to 'verbosity'
     ]).optional(), // 'max' is Opus 4.6 only
     // [OpenRouter, 2025-11-11] Unified reasoning parameter for all models
     reasoning: z.object({

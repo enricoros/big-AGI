@@ -431,8 +431,6 @@ export namespace AixWire_API {
     topP: z.number().min(0).max(1).optional(),
     forceNoStream: z.boolean().optional(),
 
-    // Cross-vendor Structured Outputs
-
     /**
      * Constrain model response to a JSON schema for data extraction. Response will be valid JSON. Schema limitations vary by vendor.
      * Supported: Anthropic (output_format), OpenAI (response_format), Gemini (responseSchema)
@@ -449,53 +447,6 @@ export namespace AixWire_API {
      */
     strictToolInvocations: z.boolean().optional(),
 
-    // Unified effort parameter (replaces vendor-specific effort params)
-    effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(),
-
-    // NOTE: kept for backward compatibility during the migration; and they flow into effort - REMOVE for 2.0.5
-    vndAntEffort: z.enum(['low', 'medium', 'high', 'max']).optional(),
-    vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(), // new param
-    vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
-    vndOaiReasoningSummary: z.enum(['none', 'detailed']).optional(),
-    vndGeminiShowThoughts: z.boolean().optional(),
-
-    // Anthropic
-    vndAnt1MContext: z.boolean().optional(),
-    vndAntInfSpeed: z.enum(['fast']).optional(),
-    vndAntSkills: z.string().optional(),
-    vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
-    vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
-    vndAntWebFetch: z.enum(['auto']).optional(),
-    vndAntWebSearch: z.enum(['auto']).optional(),
-    // Gemini
-    vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
-    vndGeminiCodeExecution: z.enum(['auto']).optional(),
-    vndGeminiComputerUse: z.enum(['browser']).optional(),
-    vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
-    vndGeminiImageSize: z.enum(['1K', '2K', '4K']).optional(),
-    vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
-    vndGeminiThinkingBudget: z.number().optional(), // -1 for 'adaptive'
-    vndGeminiUrlContext: z.enum(['auto']).optional(),
-    // Moonshot
-    vndMoonshotWebSearch: z.enum(['auto']).optional(),
-    // OpenAI
-    vndOaiCodeInterpreter: z.enum(['off', 'auto']).optional(),
-    vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
-    vndOaiResponsesAPI: z.boolean().optional(),
-    vndOaiRestoreMarkdown: z.boolean().optional(),
-    vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
-    vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
-    // OpenRouter
-    vndOrtWebSearch: z.enum(['auto']).optional(),
-    // Perplexity
-    vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
-    vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
-    // xAI
-    vndXaiCodeExecution: z.enum(['off', 'auto']).optional(),
-    vndXaiSearchInterval: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
-    vndXaiWebSearch: z.enum(['off', 'auto']).optional(),
-    vndXaiXSearch: z.enum(['off', 'auto']).optional(),
-    vndXaiXSearchHandles: z.string().optional(),
     /**
      * [OpenAI, 2025-03-11] This is the generic version of the `web_search_options.user_location` field
      * This AIX field mimics on purpose: https://platform.openai.com/docs/api-reference/chat/create
@@ -506,6 +457,66 @@ export namespace AixWire_API {
       country: z.string().optional(),   // two-letter ISO country code of the user, e.g. US
       timezone: z.string().optional(),  // IANA timezone of the user, e.g. America/Los_Angeles
     }).optional(),
+
+
+    // Cross-provider unified (but with semantic specialization) options
+
+    /**
+     * Union of all the possible reasoning effort values. Different dispatches will validate the
+     * domain (subset) of values they support, but the client can send any of them and let the server handle it.
+     */
+    reasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(),
+    // REMOVE for 2.0.5: we used to have the parameters below - here for doc purposes only - parsing doesn't break if they are set (backward comp)
+    // vndAntEffort: z.enum(['low', 'medium', 'high', 'max']).optional(),
+    // vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(), // new param
+    // vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
+    // vndOaiReasoningSummary: z.enum(['none', 'detailed']).optional(),
+    // vndGeminiShowThoughts: z.boolean().optional(),
+
+    // Anthropic
+    vndAnt1MContext: z.boolean().optional(),
+    vndAntInfSpeed: z.enum(['fast']).optional(),
+    vndAntSkills: z.string().optional(),
+    vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
+    vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
+    vndAntWebFetch: z.enum(['auto']).optional(),
+    vndAntWebSearch: z.enum(['auto']).optional(),
+
+    // Gemini
+    vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+    vndGeminiCodeExecution: z.enum(['auto']).optional(),
+    vndGeminiComputerUse: z.enum(['browser']).optional(),
+    vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
+    vndGeminiImageSize: z.enum(['1K', '2K', '4K']).optional(),
+    vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
+    vndGeminiThinkingBudget: z.number().optional(), // -1 for 'adaptive'
+    vndGeminiUrlContext: z.enum(['auto']).optional(),
+
+    // Moonshot
+    vndMoonshotWebSearch: z.enum(['auto']).optional(),
+
+    // OpenAI
+    vndOaiCodeInterpreter: z.enum(['off', 'auto']).optional(),
+    vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
+    vndOaiResponsesAPI: z.boolean().optional(),
+    vndOaiRestoreMarkdown: z.boolean().optional(),
+    vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
+    vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
+
+    // OpenRouter
+    vndOrtWebSearch: z.enum(['auto']).optional(),
+
+    // Perplexity
+    vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
+    vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
+
+    // xAI
+    vndXaiCodeExecution: z.enum(['off', 'auto']).optional(),
+    vndXaiSearchInterval: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
+    vndXaiWebSearch: z.enum(['off', 'auto']).optional(),
+    vndXaiXSearch: z.enum(['off', 'auto']).optional(),
+    vndXaiXSearchHandles: z.string().optional(),
+
   });
 
   /// Resume Handle

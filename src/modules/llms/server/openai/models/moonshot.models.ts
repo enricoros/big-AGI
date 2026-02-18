@@ -20,7 +20,7 @@ const IF_K2_5 = [
 ];
 
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmEffort', enumValues: ['none', 'high'] },
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
 
 

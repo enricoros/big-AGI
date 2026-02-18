@@ -167,7 +167,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmEffort', enumValues: ['low', 'high']},
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'high']},
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -216,7 +216,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30FlashPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmEffort', enumValues: ['minimal', 'low', 'medium', 'high']},
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high']},
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -860,7 +860,7 @@ const _ORT_GEM_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 ] as const);
 
 const _ORT_GEM_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
-  'llmVndGeminiThinkingBudget', 'llmEffort', // OR supports Gemini thinking (unified effort)
+  'llmVndGeminiThinkingBudget', 'llmVndGemEffort', // OR supports Gemini thinking
   'llmVndGeminiAspectRatio', 'llmVndGeminiImageSize', // OR supports Gemini image generation
 ] as const satisfies DModelParameterId[]);
 

@@ -76,7 +76,11 @@ const ModelParameterSpec_schema = z.object({
   paramId: z.enum([
     'llmTopP',
     'llmForceNoStream',
-    'llmEffort', // unified effort
+    // Vendor-specific effort params (converge to unified `effort` wire field)
+    'llmVndAntEffort',
+    'llmVndGemEffort',
+    'llmVndOaiEffort',
+    'llmVndMiscEffort',
     // Anthropic
     'llmVndAnt1MContext',
     'llmVndAntInfSpeed',

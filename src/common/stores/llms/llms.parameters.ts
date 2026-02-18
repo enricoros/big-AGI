@@ -83,8 +83,7 @@ function _enumDef<const V extends string>(def: _EnumParamDef<V>): _EnumParamDef<
 
 export const DModelParameterRegistry = {
 
-  /// Common 'implicit' parameters, available to all models ///
-  // Note: we still use pre-v2 names for compatibility and ease of migration
+  // -- Common 'implicit' parameters, available to all models --
 
   llmRef: {
     label: 'Model ID',
@@ -114,7 +113,7 @@ export const DModelParameterRegistry = {
     // due to implicit, when undefined we apply the runtime fallback
   },
 
-  /// Extended parameters, specific to certain models/vendors
+  // -- Extended parameters, specific to certain models/vendors --
 
   llmTopP: {
     label: 'Top P',
@@ -123,30 +122,6 @@ export const DModelParameterRegistry = {
     range: [0.0, 1.0],
     // when undefined is omitted from the requests (default)
   },
-
-  /**
-   * Unified 'reasoning' effort parameter for all vendors. The full superset of all possible effort levels.
-   * Each model declares its own subset via `enumValues` in its parameterSpec.
-   *
-   * Mapping to vendor-native values is done in adapters (the only place with vendor knowledge):
-   * - Anthropic: output_config.effort
-   * - OpenAI: reasoning_effort (ChatCompletions) / reasoning.effort (Responses)
-   * - Gemini: thinkingConfig.thinkingLevel (depending on model: low/high, minimal/low/medium/high, ...)
-   * - Moonshot/ZAI: thinking.type (none->disabled, high->enabled)
-   * - Perplexity: reasoning_effort
-   * - etc.
-   */
-  llmEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Controls reasoning depth and effort level.',
-    values: [
-      // all values (max includes) sorted in ascending order of effort
-      'none', 'minimal', 'low', 'medium', 'high', 'xhigh', // OpenAI/common
-      'max', // Anthropic only, for now
-    ],
-    // undefined means vendor default (usually high or medium, could be different such as none)
-  }),
 
   /**
    * First introduced as a user-configurable parameter for the 'Verification' required by o3.
@@ -163,6 +138,46 @@ export const DModelParameterRegistry = {
     description: 'Disables streaming for this model',
     // undefined means streaming is not disabled
   },
+
+
+  // -- 'Effort' unified semantic specialization --
+
+  /**
+   * Vendor-specific effort parameters. Each vendor has its own effort param with vendor-contextual
+   * labels and descriptions. Models declare their subset via `enumValues` in parameterSpec.
+   * All converge to the unified `effort` wire field in aix.client.ts.
+   */
+  llmVndAntEffort: _enumDef({
+    label: 'Effort',
+    type: 'enum',
+    description: 'Controls reasoning depth. Works alongside thinking budget.',
+    values: ['low', 'medium', 'high', 'max'],
+    // undefined means high effort (default)
+  }),
+
+  llmVndGemEffort: _enumDef({
+    label: 'Thinking Level',
+    type: 'enum',
+    description: 'Controls internal reasoning depth. When unset, the model decides dynamically.',
+    values: ['minimal', 'low', 'medium', 'high'],
+    // undefined means dynamic (model decides)
+  }),
+
+  llmVndOaiEffort: _enumDef({
+    label: 'Reasoning Effort',
+    type: 'enum',
+    description: 'Controls how much effort the model spends on reasoning.',
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+    // undefined means vendor default
+  }),
+
+  llmVndMiscEffort: _enumDef({
+    label: 'Thinking',
+    type: 'enum',
+    description: 'Enable or disable extended thinking mode.',
+    values: ['none', 'high'],
+    // undefined means vendor default (usually 'high', i.e. thinking enabled)
+  }),
 
 
   // Anthropic-specific
@@ -192,7 +207,8 @@ export const DModelParameterRegistry = {
   },
 
   /**
-   * NOTE: this is being phased out with Opus 4.6 in favor of llmEffort ('low', 'medium', 'high', 'max')
+   * NOTE: this is being phased out with Opus 4.6 in favor of llmVndAntEffort, while this is implicitly
+   *       adaptive if missing (as-if we had our custom sentinel value of -1).
    *
    * Important: when this is set to anything other than nullish, it enables Adaptive(-1)/Extended(int > 1024) thinking,
    * and as a side effect **disables the temperature** in the requests (even when tunneled through OpenRouter). So this
@@ -504,7 +520,7 @@ interface DModelParameterSpec<T extends DModelParameterId> {
   /**
    * (optional) For enum params: restrict which values from the registry are allowed for this model.
    * The UI will only show these values. Analogous to rangeOverride for numeric params.
-   * Example: llmEffort registry has 7 values, but a specific model may only support ['low', 'medium', 'high'].
+   * Example: llmVndOaiEffort registry has 6 values, but a specific model may only support ['low', 'medium', 'high'].
    */
   enumValues?: readonly string[];
 }

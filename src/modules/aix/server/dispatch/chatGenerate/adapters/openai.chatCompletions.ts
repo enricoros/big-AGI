@@ -139,11 +139,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   }
 
   // [OpenAI] Vendor-specific reasoning effort
-  const reasoningEffort = model.effort ?? model.vndOaiReasoningEffort;
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
   if (reasoningEffort
     && openAIDialect !== 'openrouter' // OpenRouter has its own channeling of this
-    && openAIDialect !== 'moonshot' // MoonShot maps to none->disabled / high->enabled
-    && openAIDialect !== 'zai' // Z.ai maps like MoonShot
+    && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // MoonShot maps to none->disabled / high->enabled
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
     if (reasoningEffort === 'max') // domain validation
@@ -153,7 +152,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
   // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher) - https://docs.z.ai/guides/capabilities/thinking-mode
-  if (reasoningEffort && (openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
+  if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
     if (reasoningEffort !== 'none' && reasoningEffort !== 'high') // domain validation
       throw new Error(`${openAIDialect} only supports reasoning effort 'none' or 'high', got '${reasoningEffort}'`);
 
@@ -246,7 +245,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     const isTunneledGemini = model.id.startsWith('google/');
     if (isTunneledAnt) {
       // Effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
-      const antEffort = model.effort ?? model.vndAntEffort;
+      const antEffort = model.reasoningEffort; // ?? model.vndAntEffort;
       if (antEffort) {
         if (antEffort === 'none' || antEffort === 'minimal' || antEffort === 'xhigh') // domain validation
           throw new Error(`OpenRouter->Anthropic API does not support '${antEffort}' reasoning effort`);
@@ -261,10 +260,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       if (model.vndAntThinkingBudget === 'adaptive') {
         payload.reasoning = { enabled: true };
         delete payload.temperature;
-      } else if (model.vndAntThinkingBudget) {
+      } else if (typeof model.vndAntThinkingBudget === 'number') {
         payload.reasoning = { enabled: true, max_tokens: model.vndAntThinkingBudget };
         delete payload.temperature;
-      } else {
+      } else /* null or undefined */ {
         // NOTE: with thinking disabled (null), we can still use temperature, so we don't delete it
         //       see the note on llms.parameters.ts: 'llmVndAntThinkingBudget'
       }
@@ -274,7 +273,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       if (model.vndGeminiThinkingBudget !== undefined) {
         payload.reasoning = { enabled: true, max_tokens: model.vndGeminiThinkingBudget };
       } else {
-        const gemEffort = model.effort ?? model.vndGeminiThinkingLevel;
+        const gemEffort = model.reasoningEffort; // ?? model.vndGeminiThinkingLevel;
         if (gemEffort) {
           if (gemEffort === 'none' || gemEffort === 'xhigh' || gemEffort === 'max') // domain validation
             throw new Error(`OpenRouter->Gemini API does not support '${gemEffort}' reasoning effort`);

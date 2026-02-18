@@ -95,7 +95,7 @@ export function aixToXAIResponses(
   }
 
   // Reasoning
-  const reasoningEffort = model.effort ?? model.vndOaiReasoningEffort;
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
   if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh' || reasoningEffort === 'max') // domain validation
     throw new Error(`XAI Responses API does not support reasoning effort '${reasoningEffort}'`);
 

@@ -152,7 +152,10 @@ const _knownXAIChatModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Pre4, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Pre4,
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
+      ...XAI_PAR_Pre4,
+    ],
     chatPrice: { input: 0.3, output: 0.5, cache: { cType: 'oai-ac', read: 0.075 } },
     benchmark: { cbaElo: 1357 }, // grok-3-mini-beta
   },

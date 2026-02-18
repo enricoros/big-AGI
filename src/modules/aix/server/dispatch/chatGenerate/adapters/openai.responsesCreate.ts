@@ -116,7 +116,7 @@ export function aixToOpenAIResponses(
 
 
   // Reasoning
-  const reasoningEffort = model.effort ?? model.vndOaiReasoningEffort;
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
   if (reasoningEffort === 'max') // domain validation
     throw new Error(`OpenAI Responses API does not support '${reasoningEffort}' reasoning effort`);
 

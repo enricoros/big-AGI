@@ -18,7 +18,7 @@ const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 
 
 // Anthropic Parameters Semantics:
-// - llmEffort                  unified effort: each model declares its subset via enumValues
+// - llmVndAntEffort             Anthropic effort: each model declares its subset via enumValues
 // - llmVndAnt1MContext         only available on select models
 // - llmVndAntSkills            2026-02-06: seems GA to any model now: a parameter spec for user/UI configurability
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking, was used for manual control of thinking up to 4.5, we pre-default it to 16384 and the user can set it to another value or null to turn thinking off
@@ -43,7 +43,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive */ },
-      { paramId: 'llmEffort', enumValues: ['low', 'medium', 'high', 'max'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       { paramId: 'llmVndAnt1MContext' },
       { paramId: 'llmVndAntInfSpeed' },
       ...ANT_TOOLS,
@@ -58,7 +58,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive */ },
-      { paramId: 'llmEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndAnt1MContext' },
       ...ANT_TOOLS,
     ],
@@ -73,7 +73,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget' },
-      { paramId: 'llmEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       ...ANT_TOOLS,
     ],
     benchmark: { cbaElo: 1468 }, // claude-opus-4-5-20251101-thinking-32k
@@ -181,7 +181,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 128000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
-      { paramId: 'llmEffort', enumValues: ['low', 'medium', 'high', 'max'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       { paramId: 'llmVndAnt1MContext' },
       { paramId: 'llmVndAntInfSpeed' },
       ...ANT_TOOLS,
@@ -208,7 +208,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
-      { paramId: 'llmEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndAnt1MContext' },
       ...ANT_TOOLS,
     ],
@@ -236,7 +236,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
-      { paramId: 'llmEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       ...ANT_TOOLS,
     ],
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
@@ -445,7 +445,7 @@ const _ORT_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 ] as const);
 // NOTE: llmVndAntInfSpeed intentionally NOT included - fast mode not available through OpenRouter
 const _ORT_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
-  'llmEffort', // unified effort
+  'llmVndAntEffort', // Anthropic effort
   'llmVndAntThinkingBudget',
 ] as const satisfies DModelParameterId[]);
 
