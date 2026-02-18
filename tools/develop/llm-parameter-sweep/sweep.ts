@@ -18,8 +18,8 @@ import * as path from 'node:path';
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
+import { ChatGenerateDispatch, createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { listModelsRunDispatch } from '~/modules/llms/server/listModels.dispatch';
-import { createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 
@@ -43,7 +43,7 @@ const SWEEP_DEFINITIONS = [
     description: 'OpenAI reasoning_effort values',
     applicability: { type: 'dialects', dialects: ['openai', 'azure', 'openrouter'] },
     applyToModel: (value) => ({ effort: value }),
-    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max' /* OpenRouter-only? */] satisfies AixAPI_Model['effort'][],
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh' /*, 'max'*/ /* OpenRouter-only? */] satisfies AixAPI_Model['effort'][],
     neuteredValues: ['medium'], // medium is the default, so only-medium means no real support
     mode: 'enumerate',
   }),
@@ -86,7 +86,7 @@ const SWEEP_DEFINITIONS = [
     description: 'Anthropic output_config.effort values',
     applicability: { type: 'dialects', dialects: ['anthropic'] },
     applyToModel: (value) => ({ effort: value }),
-    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['effort'][],
+    values: ['low', 'medium', 'high', 'max'] satisfies AixAPI_Model['effort'][],
     mode: 'enumerate',
   }),
 
@@ -407,16 +407,10 @@ async function testParameterValue(
   const chatGenerate = createMinimalChatRequest();
 
   // Build vendor-specific HTTP request via the AIX dispatch system
-  const dispatch = createChatGenerateDispatch(
-    access,
-    model,
-    chatGenerate,
-    false, // streaming = false
-    false, // enableResumability = false
-  );
+  let dispatch: ChatGenerateDispatch | undefined;
 
   // Capture request body for --debug output
-  const debugRequestBody = 'body' in dispatch.request ? JSON.stringify(dispatch.request.body) /*, null, 2)*/ : undefined;
+  const debugRequestBody = dispatch && 'body' in dispatch.request ? JSON.stringify(dispatch.request.body) /*, null, 2)*/ : undefined;
 
   // Helper to build result with common fields
   const makeResult = (fields: Omit<TestResult, 'sweepName' | 'paramValue' | 'debugRequestBody'>): TestResult => ({
@@ -426,6 +420,28 @@ async function testParameterValue(
     debugRequestBody,
     ...fields,
   });
+
+
+  // Create the dispatch, which may throw when building the reuest (e.g. parameter range incompatibility)
+  try {
+    dispatch = createChatGenerateDispatch(
+      access,
+      model,
+      chatGenerate,
+      false, // streaming = false
+      false, // enableResumability = false
+    );
+  } catch (error: any) {
+    // Exception during request creation - likely parameter incompatibility with the model/dialect
+    return makeResult({
+      outcome: 'fail',
+      errorCategory: 'dialect',
+      errorMessage: error?.message ? String(error.message).slice(0, 300) : String(error).slice(0, 300),
+      verboseLogs: [`Exception creating request: ${error?.message || String(error)}`],
+      durationMs: Date.now() - startTime,
+    });
+  }
+
 
   try {
     // Execute the request
