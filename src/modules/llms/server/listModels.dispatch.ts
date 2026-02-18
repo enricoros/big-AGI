@@ -8,7 +8,7 @@ import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
-import { llmsAutoImplyInterfaces } from './models.mappings';
+import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces } from './models.mappings';
 
 
 // protocol: Anthropic
@@ -71,8 +71,14 @@ function createDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<
 export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
-  return dispatch.convertToDescriptions(wireModels)
+  const models = dispatch.convertToDescriptions(wireModels)
     .map(llmsAutoImplyInterfaces); // auto-inject implied IFs from parameterSpecs
+
+  // DEV: validate parameterSpecs (enumValues ⊆ registry values, paramId existence)
+  if (process.env.NODE_ENV === 'development')
+    models.forEach(llmDevValidateParameterSpecs_DEV);
+
+  return models;
 }
 
 
