@@ -18,7 +18,7 @@
  * Implicit common parameters always supported by all models, not listed in parameterSpecs.
  * Must be preserved during model refresh operations.
  */
-export const LLMImplicitParamersRuntimeFallback = {
+export const LLMImplicitParametersRuntimeFallback = {
   // llmRef: '' // disabled: we know this can't have a fallback value in the registry
   llmResponseTokens: 8192,
   llmTemperature: 0.5,
@@ -39,7 +39,7 @@ interface _ParamDefBase<TSingleValue> {
   // UI data
   readonly label: string;
   readonly description: string;
-  // Optionally write this value to the model's initialParameters, unles the Spec overrides it
+  // Optionally write this value to the model's initialParameters, unless the Spec overrides it
   // or the parameter is already set (e.g. by the implicit fallbacks).
   readonly writeFactoryValue?: TSingleValue;
   // we could use this (but not yet) to display the 'actual' value that the upstream will use by not passing any value to this parameter (although this may be different per model)
@@ -556,7 +556,7 @@ export function applyModelParameterSpecsInitialValues(destValues: DModelParamete
 
 export function getAllModelParameterValues(initialParameters: undefined | DModelParameterValues, userParameters?: DModelParameterValues): DModelParameterValues {
   return {
-    ...LLMImplicitParamersRuntimeFallback,
+    ...LLMImplicitParametersRuntimeFallback,
     ...initialParameters,
     ...userParameters,
   };

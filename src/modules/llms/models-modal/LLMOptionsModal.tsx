@@ -18,7 +18,7 @@ import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-op
 import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { LLMImplicitParamersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
+import { LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -138,7 +138,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
         updates.initialParameters = {
           ...llm.initialParameters,
           llmTemperature: enable ? null
-            : LLMImplicitParamersRuntimeFallback.llmTemperature,
+            : LLMImplicitParametersRuntimeFallback.llmTemperature,
         };
         const { llmTemperature: _, ...otherUserParameters } = { ...llm.userParameters };
         updates.userParameters = otherUserParameters;

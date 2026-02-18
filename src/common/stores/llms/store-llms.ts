@@ -15,7 +15,7 @@ import { hasKeys } from '~/common/util/objectUtils';
 import type { DModelDomainId } from './model.domains.types';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
-import { DModelParameterId, DModelParameterRegistry, DModelParameterValues, LLMImplicitParamersRuntimeFallback } from './llms.parameters';
+import { DModelParameterId, DModelParameterRegistry, DModelParameterValues, LLMImplicitParametersRuntimeFallback } from './llms.parameters';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
 import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
 import { getDomainModelConfiguration } from './hooks/useModelDomain';
@@ -119,7 +119,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
               const paramId = key as DModelParameterId;
 
               // keep implicit common parameters (always supported, not in parameterSpecs)
-              if (paramId in LLMImplicitParamersRuntimeFallback)
+              if (paramId in LLMImplicitParametersRuntimeFallback)
                 continue;
 
               // remove parameters no longer in spec
