@@ -7,7 +7,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
-import { DModelParameterId, DModelParameterRegistry, DModelParameterSpecAny, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterId, DModelParameterRegistry, DModelParameterSpecAny, DModelParameterValues, getAllModelParameterValues, LLMImplicitParamersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -203,7 +203,7 @@ export function LLMParametersEditor(props: {
   // current values: { ...fallback, ...baseline, ...user }
   const allParameters = getAllModelParameterValues(props.baselineParameters, props.parameters);
   const {
-    llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, // fallback for undefined, result is number | null
+    llmResponseTokens = LLMImplicitParamersRuntimeFallback.llmResponseTokens, // fallback for undefined, result is number | null
     llmTemperature, // null: no temperature, number: temperature value, undefined: shall not happen, we treat is similarly to null
     llmEffort,
     llmForceNoStream,

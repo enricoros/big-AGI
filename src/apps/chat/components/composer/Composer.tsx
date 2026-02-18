@@ -35,7 +35,7 @@ import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardU
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
+import { getModelParameterValueWithFallback } from '~/common/stores/llms/llms.parameters';
 import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -234,7 +234,7 @@ export function Composer(props: {
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
-  const tokensResponseMax = getModelParameterValueOrThrow('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0;
+  const tokensResponseMax = getModelParameterValueWithFallback('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0 /* if null, assume 0*/;
   const tokenLimit = getLLMContextTokens(props.chatLLM) ?? 0;
   const tokenChatPricing = React.useMemo(() => llmChatPricing_adjusted(props.chatLLM), [props.chatLLM]);
 

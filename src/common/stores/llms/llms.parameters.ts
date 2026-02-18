@@ -14,10 +14,16 @@
  */
 
 
-// shared constants
-export const FALLBACK_LLM_PARAM_RESPONSE_TOKENS = 4096;
-export const FALLBACK_LLM_PARAM_TEMPERATURE = 0.5;
-// const FALLBACK_LLM_PARAM_REF_UNKNOWN = 'unknown_id';
+/**
+ * Implicit common parameters always supported by all models, not listed in parameterSpecs.
+ * Must be preserved during model refresh operations.
+ */
+export const LLMImplicitParamersRuntimeFallback = {
+  // llmRef: '' // disabled: we know this can't have a fallback value in the registry
+  llmResponseTokens: 8192,
+  llmTemperature: 0.5,
+  // llmTopP: 1.0,
+} as const satisfies DModelParameterValues;
 
 
 /// Registry Entry Types (for compile-time validation)
@@ -38,7 +44,6 @@ interface _IntegerParamDef extends _ParamDefBase {
   readonly type: 'integer';
   readonly range?: readonly [number, number];
   readonly nullable?: { readonly meaning: string };
-  readonly requiredFallback?: number;
   readonly initialValue?: number | null;
 }
 
@@ -46,7 +51,6 @@ interface _FloatParamDef extends _ParamDefBase {
   readonly type: 'float';
   readonly range?: readonly [number, number];
   readonly nullable?: { readonly meaning: string };
-  readonly requiredFallback?: number;
   readonly initialValue?: number | null;
 }
 
@@ -63,7 +67,6 @@ interface _BooleanParamDef extends _ParamDefBase {
 interface _EnumParamDef<V extends string = string> extends _ParamDefBase {
   readonly type: 'enum';
   readonly values: readonly V[];
-  readonly requiredFallback?: NoInfer<V>;
   readonly initialValue?: NoInfer<V>;
   /** Per-value pricing multiplier. When the parameter is set to a value listed here, model pricing is multiplied. */
   readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
@@ -95,7 +98,6 @@ export const DModelParameterRegistry = {
     nullable: {
       meaning: 'Explicitly avoid sending max_tokens to upstream API',
     },
-    requiredFallback: FALLBACK_LLM_PARAM_RESPONSE_TOKENS,   // if required and not specified/user overridden, use this value
   },
 
   llmTemperature: {
@@ -106,7 +108,6 @@ export const DModelParameterRegistry = {
     nullable: {
       meaning: 'Explicitly avoid sending temperature to upstream API',
     },
-    requiredFallback: FALLBACK_LLM_PARAM_TEMPERATURE,
   },
 
   /// Extended parameters, specific to certain models/vendors
@@ -116,7 +117,6 @@ export const DModelParameterRegistry = {
     type: 'float',
     description: 'Nucleus sampling threshold',
     range: [0.0, 1.0],
-    requiredFallback: 1.0,
   },
 
   /**
@@ -252,7 +252,6 @@ export const DModelParameterRegistry = {
     description: 'Environment type for Computer Use tool (required for Computer Use model)',
     values: ['browser'],
     initialValue: 'browser',
-    // requiredFallback: 'browser', // See `const _requiredParamId: DModelParameterId[]` in llms.parameters.ts for why custom params don't have required values at AIX invocation...
   }),
 
   llmVndGeminiGoogleSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -327,7 +326,6 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls response length and detail level',
     values: ['low', 'medium', 'high'],
-    requiredFallback: 'medium',
   }),
 
   llmVndOaiWebSearchContext: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -335,7 +333,6 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Amount of context retrieved from the web',
     values: ['low', 'medium', 'high'],
-    requiredFallback: 'medium',
   }),
 
   llmVndOaiWebSearchGeolocation: {
@@ -355,7 +352,6 @@ export const DModelParameterRegistry = {
     description: 'Image generation mode and quality',
     values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */],
     // No initialValue - defaults to undefined (off)
-    // No requiredFallback - this is optional
   }),
 
   llmVndOaiCodeInterpreter: _enumDef({
@@ -385,7 +381,6 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Filter results by publication date',
     values: ['unfiltered', '1m', '3m', '6m', '1y'],
-    // requiredFallback: 'unfiltered',
   }),
 
   llmVndPerplexitySearchMode: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -393,7 +388,6 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Type of sources to search',
     values: ['default', 'academic'],
-    // requiredFallback: 'default', // or leave unset for "unspecified"
   }),
 
 
@@ -532,28 +526,9 @@ export function applyModelParameterSpecsInitialValues(destValues: DModelParamete
 }
 
 
-/**
- * Implicit common parameters always supported by all models, not listed in parameterSpecs.
- * Must be preserved during model refresh operations.
- */
-export const LLMS_ImplicitParamIds: readonly DModelParameterId[] = [
-  // 'llmRef', // disabled: we know this can't have a fallback value in the registry
-  'llmResponseTokens', // DModelParameterRegistry.llmResponseTokens.requiredFallback = FALLBACK_LLM_PARAM_RESPONSE_TOKENS
-  'llmTemperature', // DModelParameterRegistry.llmTemperature.requiredFallback = FALLBACK_LLM_PARAM_TEMPERATURE
-];
-
 export function getAllModelParameterValues(initialParameters: undefined | DModelParameterValues, userParameters?: DModelParameterValues): DModelParameterValues {
-
-  // fallback values
-  const fallbackParameters: DModelParameterValues = {};
-  for (const requiredParamId of LLMS_ImplicitParamIds) {
-    if ('requiredFallback' in DModelParameterRegistry[requiredParamId])
-      fallbackParameters[requiredParamId] = DModelParameterRegistry[requiredParamId].requiredFallback as DModelParameterValue<typeof requiredParamId>;
-  }
-
-  // accumulate initial and user values
   return {
-    ...fallbackParameters,
+    ...LLMImplicitParamersRuntimeFallback,
     ...initialParameters,
     ...userParameters,
   };
@@ -563,11 +538,11 @@ export function getAllModelParameterValues(initialParameters: undefined | DModel
 /**
  * NOTE: this is actually only used for `llmResponseTokens` from the Composer for now (!)
  */
-export function getModelParameterValueOrThrow<T extends DModelParameterId>(
+export function getModelParameterValueWithFallback<T extends DModelParameterId>(
   paramId: T,
   initialValues: undefined | DModelParameterValues,
   userValues: undefined | DModelParameterValues,
-  fallbackValue: undefined | DModelParameterValue<T>,
+  fallbackValue: DModelParameterValue<T>,
 ): DModelParameterValue<T> {
 
   // check user values first
@@ -583,14 +558,5 @@ export function getModelParameterValueOrThrow<T extends DModelParameterId>(
   }
 
   // then try provided fallback
-  if (fallbackValue !== undefined) return fallbackValue;
-
-  // finally the global registry fallback
-  const paramDef = DModelParameterRegistry[paramId];
-  if ('requiredFallback' in paramDef && paramDef.requiredFallback !== undefined)
-    return paramDef.requiredFallback as DModelParameterValue<T>;
-
-  // if we're here, we couldn't find a value
-  // [DANGER] VERY DANGEROUS, but shall NEVER happen
-  throw new Error(`getModelParameterValue: missing required parameter '${paramId}'`);
+  return fallbackValue;
 }

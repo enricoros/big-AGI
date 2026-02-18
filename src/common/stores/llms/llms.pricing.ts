@@ -131,7 +131,7 @@ export function llmChatPricing_adjusted(llm: DLLM | null): DPricingChatGenerate 
  * Scans parameterSpecs for enum parameters with enumPriceMultiplier in the registry.
  * For each, resolves the effective value (user > initial) and if it matches a multiplier key, accumulates it.
  *
- * Note: does NOT consult `requiredFallback` - any enum with enumPriceMultiplier must have its
+ * Note: any enum with enumPriceMultiplier must have its
  * effective default in initialParameters (via spec or registry `initialValue`).
  */
 function _computePriceMultiplier(parameterSpecs: DModelParameterSpecAny[], initialParameters: DModelParameterValues | undefined, userParameters: DModelParameterValues | undefined): number {

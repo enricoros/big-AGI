@@ -14,9 +14,8 @@ The LLM parameters system operates across five layers that transform parameters 
 The `DModelParameterRegistry` defines all available parameters with their constraints and metadata. Each parameter includes type information, validation rules, and default behavior.
 
 **Default Value System**: The registry supports multiple default mechanisms:
-- `initialValue` - Parameter's base default (e.g., `llmVndOaiRestoreMarkdown: true`)
-- `requiredFallback` - Fallback for required parameters (e.g., `llmTemperature: 0.5`)
 - `nullable` - Parameters that can be explicitly null to skip API transmission
+- `initialValue` - Parameter's base default (e.g., `llmVndOaiRestoreMarkdown: true`)
 
 ### Layer 2: Model Specifications
 **File**: `src/modules/llms/server/llm.server.types.ts`
@@ -48,7 +47,7 @@ Shows only parameters that are:
 - Not marked as `hidden`
 
 **Value Resolution**: Both UIs use `getAllModelParameterValues()` to merge:
-1. **Fallback values** - Required parameters get their `requiredFallback` values
+1. **Fallback values** - Implicit parameters get their `runtimeFallback` values
 2. **Initial values** - Model's `initialParameters` (populated during model creation)
 3. **User values** - User's `userParameters` (highest priority)
 
