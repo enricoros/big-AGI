@@ -158,9 +158,8 @@ export function aixToOpenAIResponses(
       // [2025-11-18] Azure OpenAI still doesn't support web search tool yet - confirmed
       // [2025-09-12] Azure OpenAI doesn't support web search tool yet, and we also remove the "parameter" so we shall not come here
       console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
-    } else if (reasoningEffort === 'none' || reasoningEffort === 'minimal') {
-      // FIXME: validate if this is still the case
-      // Web search is not supported when the reasoning effort is 'minimal'
+    } else if (reasoningEffort === 'minimal') {
+      // 2026-02-17: Validated: Web search is not supported when the reasoning effort is 'minimal'
       // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
     } else {
 

@@ -176,8 +176,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Hosted tools
   // [OpenAI] Vendor-specific web search context and/or geolocation
-  // NOTE: OpenAI doesn't support web search with minimal/none reasoning effort
-  const skipWebSearchDueToMinimalReasoning = reasoningEffort === 'none' || reasoningEffort === 'minimal';
+  // NOTE: OpenAI doesn't support web search with minimal reasoning effort (see LLMParametersEditor for more details)
+  const skipWebSearchDueToMinimalReasoning = reasoningEffort === 'minimal';
   if ((model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning && !skipWebSearchDueToCustomTools) {
     payload.web_search_options = {};
     if (model.vndOaiWebSearchContext)

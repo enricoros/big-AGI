@@ -276,8 +276,10 @@ export function LLMParametersEditor(props: {
   const gemTBSpec = modelParamSpec['llmVndGeminiThinkingBudget'];
   const gemTBMinMax = gemTBSpec?.rangeOverride || defGemTB.range;
 
-  // Check if web search should be disabled due to minimal/none reasoning effort
-  const isOaiReasoningEffortMinimal = llmEffort === 'minimal' || llmEffort === 'none';
+  // check if web search should be disabled
+  // 2026-02-17: NOTE: formerly we checked for `llmEffort === 'minimal' || llmEffort === 'none'`, but seems to be working now
+  //             Now this seems to be still the case for llmEffort === 'minimal' (gpt 5.0 and before), 5.1/5.2 work even with 'none'
+  const oaiSkipSearchOnMinimalEffort = llmEffort === 'minimal';
 
   return <>
 
@@ -547,8 +549,8 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndOaiWebSearchContext') && (
       <FormSelectControl
         title='Web Search'
-        tooltip={isOaiReasoningEffortMinimal ? 'Web search is not compatible with minimal reasoning effort' : 'Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI). For GPT-5 models, Default=OFF.'}
-        disabled={isOaiReasoningEffortMinimal}
+        tooltip={oaiSkipSearchOnMinimalEffort ? 'Web search is not compatible with minimal reasoning effort' : 'Controls how much context is retrieved from the web (low = default for Perplexity, medium = default for OpenAI). For GPT-5 models, Default=OFF.'}
+        disabled={oaiSkipSearchOnMinimalEffort}
         value={llmVndOaiWebSearchContext ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value)
@@ -564,8 +566,8 @@ export function LLMParametersEditor(props: {
       <FormSwitchControl
         title='Add User Location'
         description='Use approximate location for better search results'
-        tooltip={isOaiReasoningEffortMinimal ? 'Web search geolocation is not compatible with minimal reasoning effort' : 'When enabled, uses browser geolocation API to provide approximate location data to improve search results relevance'}
-        disabled={isOaiReasoningEffortMinimal}
+        tooltip={oaiSkipSearchOnMinimalEffort ? 'Web search geolocation is not compatible with minimal reasoning effort' : 'When enabled, uses browser geolocation API to provide approximate location data to improve search results relevance'}
+        disabled={oaiSkipSearchOnMinimalEffort}
         checked={!!llmVndOaiWebSearchGeolocation}
         onChange={checked => {
           if (!checked)
