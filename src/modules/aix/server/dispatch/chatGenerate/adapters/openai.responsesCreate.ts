@@ -166,7 +166,9 @@ export function aixToOpenAIResponses(
       // Add the web search tool to the request
       if (!payload.tools?.length)
         payload.tools = [];
-      const webSearchTool: TRequestTool = {
+      const webSearchTool: TRequestTool = model.id.includes('-deep-research') ? {
+        type: 'web_search_preview', // HOTFIX for deep research models, which only seem to support the outdated 'web_search_preview' tool
+      } : {
         type: 'web_search',
         search_context_size: model.vndOaiWebSearchContext ?? undefined,
         user_location: model.userGeolocation && {
