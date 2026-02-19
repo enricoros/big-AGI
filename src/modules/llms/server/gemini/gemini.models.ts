@@ -38,6 +38,9 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   // 2026-01-15: model shut down, superseded by gemini-2.5-flash-image
   'models/gemini-2.5-flash-image-preview',
 
+  // 2026-02-17: model shut down, superseded by gemini-2.5-flash (stable)
+  'models/gemini-2.5-flash-preview-09-2025',
+
   // 2025-02-09 update: as of now they cleared the list, so we restart
   // 2024-12-10: name of models that are not what they say they are (e.g. 1114 is actually 1121 as of )
   'models/gemini-1.5-flash-8b-exp-0924', // replaced by non-free
@@ -145,6 +148,15 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
+
+// Gemini Thinking Control (as of 2026-02-18):
+// - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) — NOT thinkingBudget.
+//   Supported levels: Pro=['low','high'], Flash=['minimal','low','medium','high']. Default is 'high' (dynamic).
+//   Pro does not support disabling thinking. Flash's 'minimal' does not guarantee thinking is off.
+// - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) — NOT thinkingLevel.
+//   Budget=0 disables thinking (Flash/Flash-Lite only; Pro cannot disable). Undefined = auto.
+// Note: the parameter sweep shows thinkingBudget accepted on Gemini 3, but the official docs
+// prescribe thinkingLevel for Gemini 3. We follow the docs — do NOT add thinkingBudget to Gemini 3 models.
 // NOTE: LLM_IF_Outputs_Image is auto-implied by llmsAutoImplyInterfaces() from image parameterSpecs (llmVndGeminiAspectRatio, llmVndGeminiImageSize)
 
 
