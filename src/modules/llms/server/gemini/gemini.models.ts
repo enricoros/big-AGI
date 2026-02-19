@@ -75,7 +75,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Jan 29, 2026)
+// Pricing based on https://ai.google.dev/pricing (Feb 18, 2026)
 
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
@@ -84,8 +84,8 @@ const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
 };
 
 const gemini30ProImagePricing: ModelDescriptionSchema['chatPrice'] = {
-  input: 2.00, // text input (flat rate, no tiers)
-  output: 12.00, // text/thinking output (flat rate, no tiers)
+  input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }], // text input uses tiered pricing same as 3 Pro
+  output: [{ upTo: 200000, price: 12.00 }, { upTo: null, price: 18.00 }], // text/thinking output uses tiered pricing same as 3 Pro
   // NOTE: Additional image-specific pricing (not yet supported in schema):
   // - Image input: $0.0011/image (560 tokens = $0.067/image)
   // - Image output: $0.134/image (1K/2K, 1120 tokens) or $0.24/image (4K, 2000 tokens)
@@ -134,7 +134,7 @@ const gemini25ProPreviewTTSPricing: ModelDescriptionSchema['chatPrice'] = {
 const gemini20FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10, // text/image/video; audio is $0.70 but we don't differentiate yet
   output: 0.40,
-  // Implicit caching is only available in 2.5 models for now. cache: { cType: 'oai-ac', read: 0.025 }, // text/image/video; audio is $0.175 but we don't differentiate yet
+  cache: { cType: 'oai-ac', read: 0.025 }, // text/image/video; audio is $0.175 but we don't differentiate yet
   // Image generation pricing: 0.039 - Image output is priced at $30 per 1,000,000 tokens. Output images up to 1024x1024px consume 1290 tokens and are equivalent to $0.039 per image.
 };
 
@@ -290,8 +290,10 @@ const _knownGeminiModels: ({
     // Note: 128K input context, 64K output context
   },
 
-  // 2.5 Flash Preview 09-2025 - DEPRECATED: shutdown February 17, 2026
+  // 2.5 Flash Preview 09-2025 - SHUT DOWN February 17, 2026
+  // Superseded by 'models/gemini-2.5-flash' (stable)
   {
+    hidden: true, // shut down February 17, 2026
     id: 'models/gemini-2.5-flash-preview-09-2025',
     labelOverride: 'Gemini 2.5 Flash Preview 09-2025',
     isPreview: true,
