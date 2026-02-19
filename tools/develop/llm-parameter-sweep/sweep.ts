@@ -370,8 +370,9 @@ function modelOverridesFromInterfaces(interfaces: string[]): Partial<AixAPI_Mode
     overrides.vndOaiResponsesAPI = true;
 
   // Client-side HotFixes
-  if (interfaces.includes('hotfix-no-temperature'))
-    overrides.temperature = null;
+  // 2026-02-18: NOTE: disabling this, as we may be actually testing the temperature
+  // if (interfaces.includes('hotfix-no-temperature'))
+  //   overrides.temperature = null;
 
   return overrides;
 }
