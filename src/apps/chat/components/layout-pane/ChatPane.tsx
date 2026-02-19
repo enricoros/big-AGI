@@ -6,6 +6,8 @@ import AddIcon from '@mui/icons-material/Add';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -20,7 +22,7 @@ import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVert
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
-import { optimaActions } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaToggleChromeless, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
 import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
@@ -56,6 +58,7 @@ export function ChatPane(props: {
   const { canAddPane, isMultiPane } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
+  const isChromeless = useOptimaChromeless();
 
   const { isArchived, setArchived } = useChatStore(useShallow((state) => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
@@ -146,6 +149,11 @@ export function ChatPane(props: {
             : (isMultiPane ? 'Unsplit' : 'Split Right')}
         </ListItemButton>
       </ListItem>
+
+      <ListItemButton onClick={optimaToggleChromeless}>
+        <ListItemDecorator>{isChromeless ? <FullscreenExitIcon /> : <FullscreenIcon />}</ListItemDecorator>
+        {isChromeless ? 'Exit Chrome-less' : 'Chrome-less'}
+      </ListItemButton>
 
     </OptimaPanelGroupedList>
 

@@ -9,6 +9,7 @@ import type { NavItemApp } from '~/common/app.nav';
 // import { MobileNav } from './MobileNav';
 import { OptimaBar } from '~/common/layout/optima/bar/OptimaBar';
 import { optimaHasMOTD, OptimaMOTD } from '~/common/layout/optima/OptimaMOTD';
+import { useOptimaChromeless } from '~/common/layout/optima/useOptima';
 
 
 const pageCoreSx: SxProps = {
@@ -33,45 +34,74 @@ const pageCoreBarSx: SxProps = {
   zIndex: themeZIndexPageBar,
 };
 
+const barCollapsibleOpenSx: SxProps = {
+  display: 'grid',
+  gridTemplateRows: '1fr',
+  transition: 'grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+};
+
+const barCollapsibleClosedSx: SxProps = {
+  display: 'grid',
+  gridTemplateRows: '0fr',
+  transition: 'grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+};
+
+const barCollapsibleInnerStyle: React.CSSProperties = {
+  minHeight: 0,
+  overflow: 'hidden',
+  contain: 'paint',
+};
+
 const pageCoreMobileNavSx: SxProps = {
   flex: 0,
 };
 
 
-export const PageCore = (props: {
+export function PageCore(props: {
   component: React.ElementType,
   currentApp?: NavItemApp,
   isFull: boolean,
   isMobile: boolean,
   children: React.ReactNode,
-}) =>
-  <Box
-    component={props.component}
-    sx={props.currentApp?.pageBrighter ? pageCoreBrighterSx : props.isFull ? pageCoreFullSx : pageCoreSx}
-  >
+}) {
 
-    {/* Optional deployment MOTD */}
-    {optimaHasMOTD && <OptimaMOTD />}
+  // external state
+  const isChromeless = useOptimaChromeless();
 
-    {/* Responsive page bar (pluggable App Center Items and App Menu) */}
-    <OptimaBar
-      component='header'
-      currentApp={props.currentApp}
-      isMobile={props.isMobile}
-      sx={pageCoreBarSx}
-    />
+  return (
+    <Box
+      component={props.component}
+      sx={props.currentApp?.pageBrighter ? pageCoreBrighterSx : props.isFull ? pageCoreFullSx : pageCoreSx}
+    >
 
-    {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
-    {props.children}
+      {/* Optional deployment MOTD */}
+      {optimaHasMOTD && <OptimaMOTD />}
 
-    {/* [Mobile] Nav bar at the bottom */}
-    {/*{!!props.isMobile && (*/}
-    {/*  <MobileNav*/}
-    {/*    component='nav'*/}
-    {/*    currentApp={props.currentApp}*/}
-    {/*    hideOnFocusMode*/}
-    {/*    sx={pageCoreMobileNavSx}*/}
-    {/*  />*/}
-    {/*)}*/}
+      {/* Responsive page bar (pluggable App Center Items and App Menu) - collapsible for chromeless mode */}
+      <Box sx={isChromeless ? barCollapsibleClosedSx : barCollapsibleOpenSx}>
+        <div style={barCollapsibleInnerStyle}>
+          <OptimaBar
+            component='header'
+            currentApp={props.currentApp}
+            isMobile={props.isMobile}
+            sx={pageCoreBarSx}
+          />
+        </div>
+      </Box>
 
-  </Box>;
+      {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
+      {props.children}
+
+      {/* [Mobile] Nav bar at the bottom */}
+      {/*{!!props.isMobile && (*/}
+      {/*  <MobileNav*/}
+      {/*    component='nav'*/}
+      {/*    currentApp={props.currentApp}*/}
+      {/*    hideOnFocusMode*/}
+      {/*    sx={pageCoreMobileNavSx}*/}
+      {/*  />*/}
+      {/*)}*/}
+
+    </Box>
+  );
+}

@@ -2,7 +2,10 @@ import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, useTheme } from '@mui/joy';
+import { Box, IconButton, useTheme } from '@mui/joy';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import MenuIcon from '@mui/icons-material/Menu';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 
@@ -32,7 +35,7 @@ import { createErrorContentFragment, createTextContentFragment, DMessageAttachme
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
-import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaExitChromeless, optimaOpenDrawer, optimaOpenModels, optimaOpenPanel, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
@@ -117,6 +120,26 @@ const composerOpenMobileSx: SxProps = {
 // const composerClosedSx: SxProps = {
 //   display: 'none',
 // };
+
+
+// Chromeless mode floating buttons
+const chromelessFloatingButtonsSx: SxProps = {
+  position: 'fixed',
+  top: '0.5rem',
+  right: '0.5rem',
+  zIndex: 25,
+  display: 'flex',
+  gap: 0.5,
+  opacity: 0.55,
+  transition: 'opacity 0.2s',
+  '&:hover': { opacity: 1 },
+};
+
+const chromelessButtonSx: SxProps = {
+  backdropFilter: 'blur(6px)',
+  backgroundColor: 'background.popup',
+  boxShadow: 'xs',
+};
 
 
 // Lazy-loaded Modals
@@ -214,8 +237,11 @@ export function AppChat() {
     return activeFolder?.id ?? null;
   });
 
+  // Chromeless mode
+  const isChromeless = useOptimaChromeless();
+
   // Composer Auto-hiding
-  const forceComposerHide = !!beamOpenStoreInFocusedPane /* || !focusedPaneConversationId */; // auto-hide when no chat (the 'please select a conversation...' state) doesn't feel good
+  const forceComposerHide = isChromeless || !!beamOpenStoreInFocusedPane /* || !focusedPaneConversationId */; // auto-hide when no chat (the 'please select a conversation...' state) doesn't feel good
   const composerAutoHide = useComposerAutoHide(forceComposerHide, composerHasContent);
 
   // Window actions
@@ -774,7 +800,22 @@ export function AppChat() {
     </Box>
 
     {/* Hover zone for auto-hide */}
-    {!forceComposerHide && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
+    {!isChromeless && !forceComposerHide && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
+
+    {/* Chromeless mode floating buttons */}
+    {isChromeless && (
+      <Box sx={chromelessFloatingButtonsSx}>
+        <IconButton size='sm' variant='soft' color='neutral' onClick={optimaOpenDrawer} sx={chromelessButtonSx} aria-label='Open Drawer'>
+          <MenuIcon />
+        </IconButton>
+        <IconButton size='sm' variant='soft' color='neutral' onClick={optimaOpenPanel} sx={chromelessButtonSx} aria-label='Open Menu'>
+          <MoreVertIcon />
+        </IconButton>
+        <IconButton size='sm' variant='soft' color='neutral' onClick={optimaExitChromeless} sx={chromelessButtonSx} aria-label='Exit Chrome-less'>
+          <FullscreenExitIcon />
+        </IconButton>
+      </Box>
+    )}
 
     {/* Diagrams */}
     {!!diagramConfig && (
