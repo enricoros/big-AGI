@@ -18,7 +18,15 @@ import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useModelQuickKeys } from '~/common/stores/llms/hooks/useModelQuickKeys';
 import { useUIComplexityMode } from '~/common/stores/store-ui';
+
+
+const _quickKeySymbols: Record<string, string> = {
+  '1': '\u2460', '2': '\u2461', '3': '\u2462',
+  '4': '\u2463', '5': '\u2464', '6': '\u2465',
+  '7': '\u2466', '8': '\u2467', '9': '\u2468',
+};
 
 
 function LLMDropdown(props: {
@@ -26,6 +34,7 @@ function LLMDropdown(props: {
   llms: ReadonlyArray<DLLM>,
   chatLlmId: undefined | DLLMId | null,
   setChatLlmId: (llmId: DLLMId | null) => void,
+  quickKeysByLlmId: ReadonlyMap<DLLMId, string>,
   placeholder?: string,
 }) {
 
@@ -87,10 +96,16 @@ function LLMDropdown(props: {
         sepCount++;
       }
 
+      // build the symbol: quick key indicator and/or star
+      const quickKeySlot = props.quickKeysByLlmId.get(llm.id);
+      const quickKeySymbol = quickKeySlot ? _quickKeySymbols[quickKeySlot] || '' : '';
+      const starSymbol = llm.userStarred ? '⭐' : '';
+      const combinedSymbol = [quickKeySymbol, starSymbol].filter(Boolean).join('');
+
       // add the model item
       llmItems[llm.id] = {
         title: getLLMLabel(llm),
-        ...(llm.userStarred ? { symbol: '⭐' } : {}),
+        ...(combinedSymbol ? { symbol: combinedSymbol } : {}),
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };
     }
@@ -111,7 +126,7 @@ function LLMDropdown(props: {
 
     // otherwise update the cache and return the new items
     return stabilizeLlmOptions.current = llmItems;
-  }, [chatLlmId, llms, filterString]);
+  }, [chatLlmId, llms, filterString, props.quickKeysByLlmId]);
 
 
   // "Model Options" button (only on the active item)
@@ -213,10 +228,11 @@ export function useChatLLMDropdown(dropdownRef: React.Ref<OptimaBarControlMethod
   // external state
   const llms = useAllLLMs();
   const { domainModelId: chatLLMId, assignDomainModelId: setChatLLMId } = useModelDomain('primaryChat');
+  const { quickKeysByLlmId } = useModelQuickKeys();
 
   const chatLLMDropdown = React.useMemo(() => {
-    return <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />;
-  }, [chatLLMId, dropdownRef, llms, setChatLLMId]);
+    return <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} quickKeysByLlmId={quickKeysByLlmId} />;
+  }, [chatLLMId, dropdownRef, llms, quickKeysByLlmId, setChatLLMId]);
 
   return { chatLLMId, chatLLMDropdown };
 }

@@ -12,9 +12,15 @@ import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_adjusted
 
 /// LLMs Assignments Slice
 
+// Quick key slot numbers: '1' through '9'
+export type DModelQuickKeySlot = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+
 export interface LlmsAssignmentsState {
 
   modelAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>;
+
+  // Ctrl+1-9 quick key model slots
+  modelQuickKeys: Partial<Record<DModelQuickKeySlot, DLLMId>>;
 
 }
 
@@ -25,6 +31,8 @@ export interface LlmsAssignmentsActions {
 
   autoReassignDomainModel: (domainId: DModelDomainId, ifNotPresent: boolean, ifNotVisible: boolean) => void;
 
+  setModelQuickKey: (slot: DModelQuickKeySlot, llmId: DLLMId | null) => void;
+
 }
 
 
@@ -34,6 +42,7 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
 
   // init state
   modelAssignments: {},
+  modelQuickKeys: {},
 
   // actions
   assignDomainModelConfiguration: (config) =>
@@ -99,6 +108,21 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
         },
       }));
   },
+
+  setModelQuickKey: (slot, llmId) =>
+    _set(state => {
+      const newQuickKeys = { ...state.modelQuickKeys };
+      if (llmId) {
+        // remove this llmId from any other slot first (one model = one slot)
+        for (const key of Object.keys(newQuickKeys) as DModelQuickKeySlot[])
+          if (newQuickKeys[key] === llmId)
+            delete newQuickKeys[key];
+        newQuickKeys[slot] = llmId;
+      } else {
+        delete newQuickKeys[slot];
+      }
+      return { modelQuickKeys: newQuickKeys };
+    }),
 
 });
 

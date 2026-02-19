@@ -30,7 +30,9 @@ import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSna
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getChatLLMId, llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
+import type { DModelQuickKeySlot } from '~/common/stores/llms/store-llms-domains_slice';
+import { getModelQuickKeyLlmId } from '~/common/stores/llms/hooks/useModelQuickKeys';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
@@ -547,6 +549,34 @@ export function AppChat() {
     optimaActions().openModelOptions(chatLLMId);
   }, []);
 
+  // Model Quick Keys: Ctrl+1-9 to switch, Ctrl+Shift+1-9 to assign
+  const handleModelQuickKeySwitch = React.useCallback((slot: DModelQuickKeySlot) => {
+    const llmId = getModelQuickKeyLlmId(slot);
+    if (!llmId) {
+      addSnackbar({ key: 'quick-key-empty', message: `No model assigned to Ctrl+${slot}. Use Ctrl+Shift+${slot} to assign the current model.`, type: 'issue', overrides: { autoHideDuration: 3000 } });
+      return;
+    }
+    // verify the model exists
+    const llm = llmsStoreState().llms.find(m => m.id === llmId);
+    if (!llm) {
+      addSnackbar({ key: 'quick-key-missing', message: `Model for Ctrl+${slot} no longer available.`, type: 'issue', overrides: { autoHideDuration: 3000 } });
+      return;
+    }
+    llmsStoreActions().assignDomainModelId('primaryChat', llmId);
+    addSnackbar({ key: 'quick-key-switch', message: `Ctrl+${slot}: ${llm.userLabel ?? llm.label}`, type: 'success', overrides: { autoHideDuration: 2000 } });
+  }, []);
+
+  const handleModelQuickKeyAssign = React.useCallback((slot: DModelQuickKeySlot) => {
+    const currentLLMId = getChatLLMId();
+    if (!currentLLMId) {
+      addSnackbar({ key: 'quick-key-no-model', message: 'No model selected to assign.', type: 'issue', overrides: { autoHideDuration: 3000 } });
+      return;
+    }
+    const llm = llmsStoreState().llms.find(m => m.id === currentLLMId);
+    llmsStoreActions().setModelQuickKey(slot, currentLLMId);
+    addSnackbar({ key: 'quick-key-assign', message: `Ctrl+${slot} → ${llm?.userLabel ?? llm?.label ?? currentLLMId}`, type: 'success', overrides: { autoHideDuration: 2000 } });
+  }, []);
+
   const handleMoveFocus = React.useCallback((direction: number, wholeList?: boolean) => {
     // find the parent list
     let messageListElement: HTMLElement | null;
@@ -607,7 +637,12 @@ export function AppChat() {
     { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+    // model quick keys: Ctrl+1-9 to switch, Ctrl+Shift+1-9 to assign
+    ...(['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const).flatMap(slot => [
+      { key: slot, ctrl: true, action: () => handleModelQuickKeySwitch(slot) },
+      { key: slot, ctrl: true, shift: true, action: () => handleModelQuickKeyAssign(slot) },
+    ]),
+  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleModelQuickKeyAssign, handleModelQuickKeySwitch, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   return <>
