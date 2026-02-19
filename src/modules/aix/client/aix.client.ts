@@ -23,6 +23,7 @@ import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
 import { aixClientDebuggerGetRBO } from './debugger/memstore-aix-client-debugger';
+import { aixRateGate_acquire, aixRateGate_estimateInputTokens } from './aix.client.rateGate';
 import { withDecimator } from './withDecimator';
 
 
@@ -347,6 +348,16 @@ export async function aixChatGenerateText_Simple(
     : new AbortController().signal; // since this is a 'simple' low-stakes API, we can 'ignore' the abort signal and not enforce it with the caller
 
 
+  // apply user-configured rate limits (RPM/TPM) — queues if over limit
+  await aixRateGate_acquire(
+    llm.id,
+    aixRateGate_estimateInputTokens(aixChatGenerate),
+    llmParameters.llmRateLimitRPM,
+    llmParameters.llmRateLimitTPM,
+    abortSignal,
+  );
+
+
   // Aix Low-Level Chat Generation - does not throw, but may return an error in the final text
   const ll = await _aixChatGenerateContent_LL(
     aixAccess,
@@ -510,6 +521,15 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
     // console.log('[DEV] Aix non-abortable operation:', { aixContext, llmId });
     clientOptions.abortSignal = new AbortController().signal;
   }
+
+  // apply user-configured rate limits (RPM/TPM) — queues if over limit
+  await aixRateGate_acquire(
+    llm.id,
+    aixRateGate_estimateInputTokens(aixChatGenerate),
+    llmParameters.llmRateLimitRPM,
+    llmParameters.llmRateLimitTPM,
+    clientOptions.abortSignal,
+  );
 
   // Aix Low-Level Chat Generation
   const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,

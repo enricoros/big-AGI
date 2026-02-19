@@ -850,5 +850,40 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {/* Rate Limiting — Expert section */}
+    {isExtra && !props.simplified && (
+      <FormTextField
+        autoCompleteId='rate-limit-rpm'
+        title='Rate Limit: RPM'
+        description={allParameters.llmRateLimitRPM ? `${allParameters.llmRateLimitRPM} req/min` : 'No limit'}
+        tooltip='Max requests per minute for this model. Queues excess requests to prevent rate limit errors. Useful for Beam scatter with many rays.'
+        placeholder='e.g. 60'
+        value={allParameters.llmRateLimitRPM != null ? String(allParameters.llmRateLimitRPM) : ''}
+        onChange={(value) => {
+          const num = parseInt(value, 10);
+          if (!value.trim() || isNaN(num) || num < 1) onRemoveParameter('llmRateLimitRPM');
+          else onChangeParameter({ llmRateLimitRPM: num });
+        }}
+        inputSx={{ maxWidth: 140 }}
+      />
+    )}
+
+    {isExtra && !props.simplified && (
+      <FormTextField
+        autoCompleteId='rate-limit-tpm'
+        title='Rate Limit: TPM'
+        description={allParameters.llmRateLimitTPM ? `${(allParameters.llmRateLimitTPM / 1000).toFixed(0)}K tok/min` : 'No limit'}
+        tooltip='Max input tokens per minute for this model. Uses rough estimation (chars/4). Queues excess requests to prevent rate limit errors. Useful for Beam scatter with large contexts.'
+        placeholder='e.g. 1000000'
+        value={allParameters.llmRateLimitTPM != null ? String(allParameters.llmRateLimitTPM) : ''}
+        onChange={(value) => {
+          const num = parseInt(value, 10);
+          if (!value.trim() || isNaN(num) || num < 1000) onRemoveParameter('llmRateLimitTPM');
+          else onChangeParameter({ llmRateLimitTPM: num });
+        }}
+        inputSx={{ maxWidth: 140 }}
+      />
+    )}
+
   </>;
 }
