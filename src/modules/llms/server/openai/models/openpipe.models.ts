@@ -10,6 +10,26 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
 
   // OpenAI models: pass-through at standard OpenAI rates
   {
+    id: 'gpt-4.1-2025-04-14',
+    label: '💾➜ GPT-4.1 (2025-04-14)',
+    description: 'Flagship GPT model for complex tasks. Major improvements on coding, instruction following, and long context with 1M token context window.',
+    contextWindow: 1047576,
+    maxCompletionTokens: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4.1-2025-04-14')?.chatPrice,
+    benchmark: { cbaElo: 1413 },
+  },
+  {
+    id: 'gpt-4.1-mini-2025-04-14',
+    label: '💾➜ GPT-4.1 Mini (2025-04-14)',
+    description: 'Balanced for intelligence, speed, and cost. Matches or exceeds GPT-4o in intelligence while reducing latency and cost.',
+    contextWindow: 1047576,
+    maxCompletionTokens: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4.1-mini-2025-04-14')?.chatPrice,
+    benchmark: { cbaElo: 1382 },
+  },
+  {
     id: 'gpt-4o-mini-2024-07-18',
     label: '💾➜ GPT-4o Mini (2024-07-18)',
     description: 'Affordable model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo.',
@@ -112,6 +132,15 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
   },
 
+  // Hosted inference models - Qwen 2 series
+  {
+    id: 'Qwen/Qwen2-VL-7B-Instruct',
+    label: '💾 Qwen 2 · VL 7B Instruct',
+    description: 'Alibaba Qwen 2 Vision-Language 7B Instruct - multimodal model for text and image understanding',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+  },
+
   // Hosted inference models - Qwen 2.5 series
   {
     id: 'Qwen/Qwen2.5-1.5B-Instruct',
@@ -143,11 +172,64 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
   },
   {
+    id: 'Qwen/Qwen2.5-Coder-7B-Instruct',
+    label: '💾 Qwen 2.5 · Coder 7B Instruct',
+    description: 'Alibaba Qwen 2.5 Coder 7B Instruct - specialized for code generation and understanding',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+  {
     id: 'Qwen/Qwen2.5-Coder-32B-Instruct',
     label: '💾 Qwen 2.5 · Coder 32B Instruct',
     description: 'Alibaba Qwen 2.5 Coder 32B Instruct - specialized for code generation and understanding',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+  },
+
+  // Hosted inference models - Qwen 3 series (base models for fine-tuning)
+  {
+    id: 'Qwen/Qwen3-8B',
+    label: '💾 Qwen 3 · 8B Base',
+    description: 'Alibaba Qwen 3 8B base model for fine-tuning - supports thinking and non-thinking modes',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'Qwen/Qwen3-14B',
+    label: '💾 Qwen 3 · 14B Base',
+    description: 'Alibaba Qwen 3 14B base model for fine-tuning - supports thinking and non-thinking modes',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+
+  // Hosted inference models - Google Gemma 3 series
+  {
+    id: 'google/gemma-3-1b-it',
+    label: '💾 Gemma 3 · 1B IT',
+    description: 'Google Gemma 3 1B instruction-tuned - lightweight text-only model',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'google/gemma-3-4b-it',
+    label: '💾 Gemma 3 · 4B IT',
+    description: 'Google Gemma 3 4B instruction-tuned - efficient multimodal model with 128K context',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+  },
+  {
+    id: 'google/gemma-3-12b-it',
+    label: '💾 Gemma 3 · 12B IT',
+    description: 'Google Gemma 3 12B instruction-tuned - balanced multimodal model with 128K context',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+  },
+  {
+    id: 'google/gemma-3-27b-it',
+    label: '💾 Gemma 3 · 27B IT',
+    description: 'Google Gemma 3 27B instruction-tuned - largest Gemma 3 multimodal model with 128K context',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
   },
 
   // Hosted inference models - Mistral series
@@ -168,7 +250,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
 
 ];
 const openPipeModelFamilyOrder = [
-  'gpt-4o', 'gpt-3.5-turbo', 'gemini', 'meta-llama/Llama-3.3', 'meta-llama/Llama-3.2', 'meta-llama/Meta-Llama-3.1', 'meta-llama/Llama-3.1', 'meta-llama', 'Qwen', 'mistralai', '',
+  'gpt-4.1', 'gpt-4o', 'gpt-3.5-turbo', 'gemini', 'meta-llama/Llama-3.3', 'meta-llama/Llama-3.2', 'meta-llama/Meta-Llama-3.1', 'meta-llama/Llama-3.1', 'meta-llama', 'Qwen/Qwen3', 'Qwen/Qwen2.5', 'Qwen/Qwen2', 'Qwen', 'google/gemma', 'mistralai', '',
 ];
 
 export function openPipeModelDescriptions() {
