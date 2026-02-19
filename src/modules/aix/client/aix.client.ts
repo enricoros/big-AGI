@@ -247,11 +247,15 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
 
   }
 
-  // TODO: check something beyond this return status (as exceptions almost never happen here)
-  // - e.g. the generator.aix may have error/token stop codes
+  // Derive outcome: client-abort wins (user intent), then errors/issues, then success
+  const tokenStopReason = lastDMessage.generator?.tokenStopReason;
+  const outcome: StreamMessageStatus['outcome'] =
+    tokenStopReason === 'client-abort' ? 'aborted'
+      : (errorMessage || tokenStopReason === 'issue') ? 'errored'
+        : 'success';
 
   return {
-    outcome: errorMessage ? 'errored' : lastDMessage.generator?.tokenStopReason === 'client-abort' ? 'aborted' : 'success',
+    outcome,
     lastDMessage: lastDMessage,
     errorMessage: errorMessage || undefined,
   };
