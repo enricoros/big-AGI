@@ -37,6 +37,24 @@ const SWEEP_DEFINITIONS = [
     mode: 'enumerate',
   }),
 
+  // OpenAI: temperature with/without reasoning
+  defineSweep({
+    name: 'oai-temperature-think-high',
+    description: 'Temperature parameter acceptance range',
+    applicability: { type: 'all' },
+    applyToModel: (value) => ({ temperature: value, reasoningEffort: 'high' }),
+    values: [0, 0.5, 1.0, 1.5, 2.0],
+    mode: 'enumerate',
+  }),
+  defineSweep({
+    name: 'oai-temperature-think-none',
+    description: 'Temperature parameter acceptance range',
+    applicability: { type: 'all' },
+    applyToModel: (value) => ({ temperature: value, reasoningEffort: 'none' }),
+    values: [0, 0.5, 1.0, 1.5, 2.0],
+    mode: 'enumerate',
+  }),
+
   // OpenAI: reasoning effort (Chat Completions + Responses API)
   defineSweep({
     name: 'oai-reasoning-effort',
