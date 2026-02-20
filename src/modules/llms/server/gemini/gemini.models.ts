@@ -75,7 +75,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Feb 18, 2026)
+// Pricing based on https://ai.google.dev/pricing (Feb 19, 2026)
 
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
@@ -87,8 +87,8 @@ const gemini30ProImagePricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }], // text input uses tiered pricing same as 3 Pro
   output: [{ upTo: 200000, price: 12.00 }, { upTo: null, price: 18.00 }], // text/thinking output uses tiered pricing same as 3 Pro
   // NOTE: Additional image-specific pricing (not yet supported in schema):
-  // - Image input: $0.0011/image (560 tokens = $0.067/image)
-  // - Image output: $0.134/image (1K/2K, 1120 tokens) or $0.24/image (4K, 2000 tokens)
+  // - Image input: $2.00/MTok ($0.0011/image)
+  // - Image output: $120.00/MTok ($0.134/image 1K/2K, $0.24/image 4K)
 };
 
 const gemini30FlashPricing: ModelDescriptionSchema['chatPrice'] = {
@@ -149,9 +149,9 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 
-// Gemini Thinking Control (as of 2026-02-18):
+// Gemini Thinking Control (as of 2026-02-19):
 // - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) — NOT thinkingBudget.
-//   Supported levels: Pro=['low','high'], Flash=['minimal','low','medium','high']. Default is 'high' (dynamic).
+//   Supported levels: 3.1 Pro=['low','medium','high'], 3 Pro=['low','high'], Flash=['minimal','low','medium','high']. Default is 'high' (dynamic).
 //   Pro does not support disabling thinking. Flash's 'minimal' does not guarantee thinking is off.
 // - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) — NOT thinkingLevel.
 //   Budget=0 disables thinking (Flash/Flash-Lite only; Pro cannot disable). Undefined = auto.
@@ -170,6 +170,41 @@ const _knownGeminiModels: ({
 } & Pick<ModelDescriptionSchema, 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
   /// Generation 3.0
+
+  // 3.1 Pro (Preview) - Released February 19, 2026
+  // First "point one" update - introduces 'medium' thinking level, improved agentic coding
+  {
+    id: 'models/gemini-3.1-pro-preview',
+    labelOverride: 'Gemini 3.1 Pro Preview',
+    isPreview: true,
+    chatPrice: gemini30ProPricing, // same pricing as 3 Pro
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high']}, // adds 'medium' vs 3 Pro's ['low', 'high']
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
+    ],
+    benchmark: undefined, // too new for CBA ELO (released Feb 19, 2026)
+  },
+  // 3.1 Pro (Preview) - Custom Tools variant - Released February 19, 2026
+  // Better at prioritizing custom tools for users building with a mix of bash and tools
+  {
+    hidden: true, // specialized variant for custom tool prioritization
+    id: 'models/gemini-3.1-pro-preview-customtools',
+    labelOverride: 'Gemini 3.1 Pro Preview (Custom Tools)',
+    isPreview: true,
+    chatPrice: gemini30ProPricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high']},
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
+    benchmark: undefined,
+  },
 
   // 3.0 Pro (Preview) - Released November 18, 2025
   {
@@ -308,7 +343,6 @@ const _knownGeminiModels: ({
   },
   // 2.5 Flash
   {
-    hidden: true, // yielding to 'models/gemini-2.5-flash-preview-09-2025', which is more recent
     id: 'models/gemini-2.5-flash',
     labelOverride: 'Gemini 2.5 Flash',
     deprecated: '2026-06-17',
@@ -471,10 +505,10 @@ const _knownGeminiModels: ({
     isPreview: true,
   },
 
-  // 2.0 Flash
+  // 2.0 Flash - DEPRECATED: shutdown June 1, 2026 (announced Feb 18, 2026)
   {
     id: 'models/gemini-2.0-flash-001',
-    deprecated: '2026-03-31',
+    deprecated: '2026-06-01',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiGoogleSearch' }],
@@ -483,7 +517,7 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemini-2.0-flash',
     symLink: 'models/gemini-2.0-flash-001',
-    deprecated: '2026-03-31',
+    deprecated: '2026-06-01',
     // copied from symlink
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
@@ -491,19 +525,19 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1361 }, // gemini-2.0-flash
   },
 
-  // 2.0 Flash Lite
+  // 2.0 Flash Lite - DEPRECATED: shutdown June 1, 2026 (announced Feb 18, 2026)
   {
     id: 'models/gemini-2.0-flash-lite',
     chatPrice: gemini20FlashLitePricing,
     symLink: 'models/gemini-2.0-flash-lite-001',
-    deprecated: '2026-03-31',
+    deprecated: '2026-06-01',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
     benchmark: { cbaElo: 1310 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-001',
     chatPrice: gemini20FlashLitePricing,
-    deprecated: '2026-03-31',
+    deprecated: '2026-06-01',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
     benchmark: { cbaElo: 1310 },
   },
@@ -650,6 +684,7 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 
 const _sortOderIdPrefix: string[] = [
+  'models/gemini-3.1-pro-preview',
   'models/gemini-3-pro-preview',
   'models/gemini-3-pro-image-preview',
   'models/nano-banana-pro-preview',
