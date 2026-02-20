@@ -16,6 +16,11 @@ export interface DModelsService<TServiceSettings extends object = {}> {
 
   // service-specific
   setup: Partial<TServiceSettings>;
+
+  // Common rate limiting — applies as defaults to all models in this service.
+  // Per-model parameters (llmRateLimitRPM/TPM) take priority when set.
+  rateLimitRPM?: number | null; // max requests per minute
+  rateLimitTPM?: number | null; // max input tokens per minute
 }
 
 export type DModelsServiceId = string;

@@ -140,6 +140,33 @@ export const DModelParameterRegistry = {
   },
 
 
+  // -- Rate Limiting (user-configurable, implicit) --
+
+  /**
+   * User-configurable rate limits to prevent hitting provider rate limits,
+   * especially during Beam scatter with large contexts.
+   * These are implicit (available to all models) but only apply when set.
+   * Per-service rate limits on DModelsService take lower priority.
+   */
+  llmRateLimitRPM: {
+    label: 'Rate Limit: RPM',
+    type: 'integer',
+    description: 'Max requests per minute for this model. Queues excess requests.',
+    range: [1, 10000],
+    nullable: { meaning: 'No request rate limit (default)' },
+    // undefined means no limit
+  },
+
+  llmRateLimitTPM: {
+    label: 'Rate Limit: TPM',
+    type: 'integer',
+    description: 'Max input tokens per minute for this model. Queues excess requests. Uses rough estimation.',
+    range: [1000, 100000000],
+    nullable: { meaning: 'No token rate limit (default)' },
+    // undefined means no limit
+  },
+
+
   // -- 'Effort' unified semantic specialization --
 
   /**

@@ -23,11 +23,38 @@ import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
 import { aixClientDebuggerGetRBO } from './debugger/memstore-aix-client-debugger';
+import { type AixRateLimitConfig, aixRateGate_acquire, aixRateGate_estimateInputTokens } from './aix.client.rateGate';
 import { withDecimator } from './withDecimator';
 
 
 // configuration
 export const DEBUG_PARTICLES = false;
+
+
+/**
+ * Compute rate limit config from per-model parameters and per-service settings.
+ * Per-model params take priority over per-service settings.
+ * Returns null if no limits are configured.
+ */
+function _computeRateLimitConfig(
+  llm: DLLM,
+  llmParameters: DModelParameterValues,
+  serviceRateLimitRPM: number | null | undefined,
+  serviceRateLimitTPM: number | null | undefined,
+  aixChatGenerate: AixAPIChatGenerate_Request,
+): AixRateLimitConfig | null {
+  // per-model > per-service > no limit
+  const maxRPM = llmParameters.llmRateLimitRPM ?? serviceRateLimitRPM ?? null;
+  const maxTPM = llmParameters.llmRateLimitTPM ?? serviceRateLimitTPM ?? null;
+  if (maxRPM === null && maxTPM === null)
+    return null;
+  return {
+    gateKey: `${llm.sId}:${llm.id}`,
+    estimatedInputTokens: aixRateGate_estimateInputTokens(aixChatGenerate),
+    maxRPM,
+    maxTPM,
+  };
+}
 
 
 export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['name'], ref: string | '_DEV_'): AixAPI_Context_ChatGenerate {
@@ -302,7 +329,7 @@ export async function aixChatGenerateText_Simple(
 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
-  const { transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<object, AixAPI_Access>(llm.sId);
+  const { service, transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<object, AixAPI_Access>(llm.sId);
 
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
@@ -347,6 +374,9 @@ export async function aixChatGenerateText_Simple(
     : new AbortController().signal; // since this is a 'simple' low-stakes API, we can 'ignore' the abort signal and not enforce it with the caller
 
 
+  // rate limit config: per-model params > per-service settings > no limit
+  const rateLimit = _computeRateLimitConfig(llm, llmParameters, service.rateLimitRPM, service.rateLimitTPM, aixChatGenerate);
+
   // Aix Low-Level Chat Generation - does not throw, but may return an error in the final text
   const ll = await _aixChatGenerateContent_LL(
     aixAccess,
@@ -356,6 +386,7 @@ export async function aixChatGenerateText_Simple(
     aixStreaming,
     abortSignal,
     clientOptions?.throttleParallelThreads ?? 0,
+    rateLimit,
     !aixStreaming ? undefined : async (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
       _llToText(ll, state);
       if (onTextStreamUpdate && state.text !== null)
@@ -474,7 +505,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
-  const { transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
+  const { service, transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
@@ -511,8 +542,12 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
     clientOptions.abortSignal = new AbortController().signal;
   }
 
+  // rate limit config: per-model params > per-service settings > no limit
+  const rateLimit = _computeRateLimitConfig(llm, llmParameters, service.rateLimitRPM, service.rateLimitTPM, aixChatGenerate);
+
   // Aix Low-Level Chat Generation
   const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
+    rateLimit,
     async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
@@ -637,9 +672,15 @@ async function _aixChatGenerateContent_LL(
   // others
   abortSignal: AbortSignal,
   throttleParallelThreads: number | undefined,
+  // rate limiting: user-configurable TPM/RPM limits (applied before dispatch, outside the retry loop)
+  rateLimit: AixRateLimitConfig | null,
   // optional streaming callback: not fired until the first piece of content
   onGenerateContentUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => MaybePromise<void>,
 ): Promise<AixChatGenerateContent_LL> {
+
+  // apply user-configurable rate limits — queues if over limit, respects AbortSignal
+  if (rateLimit)
+    await aixRateGate_acquire(rateLimit, abortSignal);
 
   // Inspector support - can be requested by the client, but granted on the server side
   const inspectorEnabled = getAixInspectorEnabled();
