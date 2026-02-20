@@ -140,6 +140,25 @@ export const DModelParameterRegistry = {
   },
 
 
+  // -- Rate limiting (client-side, per-model) --
+
+  llmRateLimitRPM: {
+    label: 'Rate Limit: RPM',
+    type: 'integer',
+    description: 'Maximum requests per minute for this model',
+    range: [1, 10000],
+    // undefined means no rate limit
+  },
+
+  llmRateLimitTPM: {
+    label: 'Rate Limit: TPM',
+    type: 'integer',
+    description: 'Maximum input tokens per minute for this model',
+    range: [1000, 100000000],
+    // undefined means no rate limit
+  },
+
+
   // -- 'Effort' unified semantic specialization --
 
   /**

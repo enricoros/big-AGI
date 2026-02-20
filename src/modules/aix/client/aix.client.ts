@@ -19,6 +19,7 @@ import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '../server/api/aix.wiretypes';
 
 import { AixStreamRetry } from './aix.client.retry';
+import { type AixRateLimitConfig, aixRateGate_acquire, aixRateGate_estimateInputTokens, aixRateGate_notifyRequestComplete } from './aix.client.rateGate';
 import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
@@ -347,8 +348,10 @@ export async function aixChatGenerateText_Simple(
     : new AbortController().signal; // since this is a 'simple' low-stakes API, we can 'ignore' the abort signal and not enforce it with the caller
 
 
-  // Aix Low-Level Chat Generation - does not throw, but may return an error in the final text
-  const ll = await _aixChatGenerateContent_LL(
+  // Aix Low-Level Chat Generation (rate-gated) - does not throw, but may return an error in the final text
+  const ll = await _aixChatGenerateContent_LL_gated(
+    _computeRateLimitConfig(llmParameters),
+    llm.id,
     aixAccess,
     aixModel,
     aixChatGenerate,
@@ -511,8 +514,11 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
     clientOptions.abortSignal = new AbortController().signal;
   }
 
-  // Aix Low-Level Chat Generation
-  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
+  // Aix Low-Level Chat Generation (rate-gated)
+  const llAccumulator = await _aixChatGenerateContent_LL_gated(
+    _computeRateLimitConfig(llmParameters),
+    llm.id,
+    aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
     async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
@@ -571,6 +577,61 @@ function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, d
   const inputTokens = (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0);
   const outputTokens = (m?.TOut || 0) /* + (m?.TOutR || 0) THIS IS A BREAKDOWN, IT'S ALREADY IN */;
   metricsStoreAddChatGenerate(costs, inputTokens, outputTokens, llm, debugCostSource);
+}
+
+
+/** Compute rate limit config from model parameters (null = no limiting) */
+function _computeRateLimitConfig(params: DModelParameterValues): AixRateLimitConfig | null {
+  const maxRPM = params.llmRateLimitRPM ?? null;
+  const maxTPM = params.llmRateLimitTPM ?? null;
+  if (maxRPM === null && maxTPM === null)
+    return null;
+  return { maxRPM, maxTPM };
+}
+
+/**
+ * Pass-through proxy for _LL that applies rate limiting.
+ * Acquires the rate gate (if configured), calls _LL, then feeds actual
+ * token counts back to the gate for accuracy and to signal queued requests.
+ *
+ * When no rate limits are configured, passes through directly to _LL.
+ */
+async function _aixChatGenerateContent_LL_gated(
+  // Rate gate configuration (null = no gating, pass through directly)
+  rateLimitConfig: AixRateLimitConfig | null,
+  gateKey: string,
+  // All _LL parameters (forwarded transparently)
+  aixAccess: AixAPI_Access,
+  aixModel: AixAPI_Model,
+  aixChatGenerate: AixAPIChatGenerate_Request,
+  aixContext: AixAPI_Context_ChatGenerate,
+  aixStreaming: boolean,
+  abortSignal: AbortSignal,
+  throttleParallelThreads: number | undefined,
+  onGenerateContentUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => MaybePromise<void>,
+): Promise<AixChatGenerateContent_LL> {
+
+  // Determine if rate limiting is active (any condition configured)
+  const hasLimits = !!rateLimitConfig && (rateLimitConfig.maxRPM !== null || rateLimitConfig.maxTPM !== null);
+
+  // Estimate tokens and acquire gate (may queue/wait if limits exceeded)
+  const estimatedTokens = hasLimits ? aixRateGate_estimateInputTokens(aixChatGenerate) : 0;
+  if (hasLimits)
+    await aixRateGate_acquire(gateKey, rateLimitConfig!, estimatedTokens, abortSignal);
+
+  // Call _LL (the actual low-level function)
+  const result = await _aixChatGenerateContent_LL(
+    aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming,
+    abortSignal, throttleParallelThreads, onGenerateContentUpdate,
+  );
+
+  // Feed back actual input tokens to the gate (improves accuracy, signals queued requests)
+  if (hasLimits) {
+    const actualInputTokens = result.genMetricsLg?.TIn;
+    aixRateGate_notifyRequestComplete(gateKey, estimatedTokens, actualInputTokens);
+  }
+
+  return result;
 }
 
 
