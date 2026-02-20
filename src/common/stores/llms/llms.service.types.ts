@@ -7,7 +7,7 @@ import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 /**
  * Models Service - configured to be a unique origin of models (data object, stored)
  */
-export interface DModelsService<TServiceSettings extends object = {}> {
+export interface DModelsService<TServiceSettings extends Record<string, any> = {}> {
   id: DModelsServiceId;
   label: string;
 
