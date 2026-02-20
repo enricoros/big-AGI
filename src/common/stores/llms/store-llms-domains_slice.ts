@@ -10,11 +10,21 @@ import { createDModelConfiguration, DModelConfiguration } from './modelconfigura
 import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_adjusted } from './llms.pricing';
 
 
+/// Quick Key Slots (1-9) for Ctrl+Number model switching
+
+export type DModelQuickKeySlot = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+
+export const MODEL_QUICK_KEY_SLOTS: DModelQuickKeySlot[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+
 /// LLMs Assignments Slice
 
 export interface LlmsAssignmentsState {
 
   modelAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>;
+
+  // Quick key assignments: slot -> model ID
+  modelQuickKeys: Partial<Record<DModelQuickKeySlot, DLLMId>>;
 
 }
 
@@ -25,6 +35,8 @@ export interface LlmsAssignmentsActions {
 
   autoReassignDomainModel: (domainId: DModelDomainId, ifNotPresent: boolean, ifNotVisible: boolean) => void;
 
+  setModelQuickKey: (slot: DModelQuickKeySlot, llmId: DLLMId | null) => void;
+
 }
 
 
@@ -34,6 +46,7 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
 
   // init state
   modelAssignments: {},
+  modelQuickKeys: {},
 
   // actions
   assignDomainModelConfiguration: (config) =>
@@ -66,6 +79,27 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
           [domainId]: createDModelConfiguration(domainId, llmId, undefined),
         },
       };
+    }),
+
+  setModelQuickKey: (slot, llmId) =>
+    _set(state => {
+      const newQuickKeys = { ...state.modelQuickKeys };
+
+      // if clearing, remove the slot
+      if (!llmId) {
+        delete newQuickKeys[slot];
+        return { modelQuickKeys: newQuickKeys };
+      }
+
+      // remove any existing slot for this model (one model = one slot)
+      for (const key of Object.keys(newQuickKeys) as DModelQuickKeySlot[]) {
+        if (newQuickKeys[key] === llmId)
+          delete newQuickKeys[key];
+      }
+
+      // assign
+      newQuickKeys[slot] = llmId;
+      return { modelQuickKeys: newQuickKeys };
     }),
 
   autoReassignDomainModel: (domainId, ifNotPresent, ifNotVisible) => {

@@ -21,9 +21,10 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { DModelQuickKeySlot, MODEL_QUICK_KEY_SLOTS } from '~/common/stores/llms/store-llms-domains_slice';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
 import { useLLM, useModelsServices } from '~/common/stores/llms/llms.hooks';
 
@@ -117,7 +118,8 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
   const [showOverrides, setshowOverrides] = React.useState(!!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined);
   const [cloneDialogOpen, setCloneDialogOpen] = React.useState(false);
   const domainAssignments = useModelDomains();
-  const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
+  const modelQuickKeys = useModelsStore(state => state.modelQuickKeys);
+  const { removeLLM, updateLLM, assignDomainModelId, setModelQuickKey, resetLLMUserParameters } = llmsStoreActions();
 
   const handleResetParameters = React.useCallback(() => {
     llm?.id && resetLLMUserParameters(llm?.id);
@@ -430,6 +432,27 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
                     sx={isActive ? undefined : _styles.multiSelectButton}
                   >
                     {domainSpec.confLabel}
+                  </Button>
+                </Tooltip>
+              );
+            })}
+          </ButtonGroup>
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+          <FormLabelStart title='Quick Key' description='Ctrl +' sx={{ minWidth: 80 }} />
+          <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
+            {MODEL_QUICK_KEY_SLOTS.map(slot => {
+              const isActive = modelQuickKeys[slot] === llm.id;
+              const isOccupied = !!modelQuickKeys[slot] && modelQuickKeys[slot] !== llm.id;
+              return (
+                <Tooltip arrow placement='top' key={slot} title={isOccupied ? `Ctrl+${slot} is assigned to another model` : `Ctrl+${slot} to switch to this model`}>
+                  <Button
+                    variant={isActive ? 'solid' : undefined}
+                    onClick={() => setModelQuickKey(slot, isActive ? null : llm.id)}
+                    sx={isActive ? undefined : { ...(_styles.multiSelectButton), ...(isOccupied ? { opacity: 0.5 } : {}) }}
+                  >
+                    {slot}
                   </Button>
                 </Tooltip>
               );

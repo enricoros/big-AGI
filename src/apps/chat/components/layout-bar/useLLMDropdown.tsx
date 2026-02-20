@@ -7,8 +7,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DModelQuickKeySlot } from '~/common/stores/llms/store-llms-domains_slice';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, getLLMLabel, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -35,6 +37,7 @@ function LLMDropdown(props: {
   // external state
   const uiComplexityMode = useUIComplexityMode();
   const showSymbols = uiComplexityMode !== 'minimal';
+  const modelQuickKeys = useModelsStore(state => state.modelQuickKeys);
 
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
@@ -54,6 +57,14 @@ function LLMDropdown(props: {
   // dropdown items - cached
   const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>(undefined);
 
+  // Build reverse map: llmId -> quick key slot
+  const quickKeyByLlmId = React.useMemo(() => {
+    const map: Partial<Record<DLLMId, DModelQuickKeySlot>> = {};
+    for (const [slot, llmId] of Object.entries(modelQuickKeys) as [DModelQuickKeySlot, DLLMId][])
+      if (llmId) map[llmId] = slot;
+    return map;
+  }, [modelQuickKeys]);
+
   const llmDropdownItems: OptimaDropdownItems = React.useMemo(() => {
     const llmItems: OptimaDropdownItems = {};
     let prevServiceId: DModelsServiceId | null = null;
@@ -72,6 +83,9 @@ function LLMDropdown(props: {
       return lcFilterString ? true : isLLMVisible(llm);
     });
 
+    // circled number symbols for quick key indicators
+    const circledNumbers: Record<DModelQuickKeySlot, string> = { '1': '①', '2': '②', '3': '③', '4': '④', '5': '⑤', '6': '⑥', '7': '⑦', '8': '⑧', '9': '⑨' };
+
     for (const llm of filteredLLMs) {
       // add separators when changing services
       if (!prevServiceId || llm.sId !== prevServiceId) {
@@ -87,10 +101,15 @@ function LLMDropdown(props: {
         sepCount++;
       }
 
-      // add the model item
+      // add the model item, with quick key indicator if assigned
+      const quickKeySlot = quickKeyByLlmId[llm.id];
+      const quickKeySymbol = quickKeySlot ? circledNumbers[quickKeySlot] : '';
+      const starSymbol = llm.userStarred ? '⭐' : '';
+      const symbol = [quickKeySymbol, starSymbol].filter(Boolean).join(' ') || undefined;
+
       llmItems[llm.id] = {
         title: getLLMLabel(llm),
-        ...(llm.userStarred ? { symbol: '⭐' } : {}),
+        ...(symbol ? { symbol } : {}),
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };
     }
@@ -111,7 +130,7 @@ function LLMDropdown(props: {
 
     // otherwise update the cache and return the new items
     return stabilizeLlmOptions.current = llmItems;
-  }, [chatLlmId, llms, filterString]);
+  }, [chatLlmId, llms, filterString, quickKeyByLlmId]);
 
 
   // "Model Options" button (only on the active item)

@@ -23,6 +23,7 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + Shift + V | Attach clipboard (better than Ctrl + V) |
 | Ctrl + M         | Microphone (voice typing)               |
 | Ctrl + L         | Change Model                            |
+| Ctrl + 1-9       | Switch to Quick Key model               |
 | Ctrl + P         | Change Persona                          |
 | **Chats**        |                                         |
 | Ctrl + O         | Open Chat ...                           |

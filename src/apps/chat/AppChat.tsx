@@ -18,7 +18,7 @@ import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaB
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { ErrorBoundary } from '~/common/components/ErrorBoundary';
-import { getLLMContextTokens, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { getLLMContextTokens, getLLMLabel, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { OptimaDrawerIn, OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/PanelResizeInset';
 import { Release } from '~/common/app.release';
@@ -30,7 +30,8 @@ import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSna
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getChatLLMId, useModelsStore } from '~/common/stores/llms/store-llms';
+import type { DModelQuickKeySlot } from '~/common/stores/llms/store-llms-domains_slice';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
@@ -586,6 +587,16 @@ export function AppChat() {
     targetElement.scrollIntoView({ behavior: 'smooth', block: snapToBottom ? 'end' : 'start' });
   }, []);
 
+  const handleQuickKeySwitch = React.useCallback((slot: DModelQuickKeySlot) => {
+    const { modelQuickKeys, llms, assignDomainModelId } = useModelsStore.getState();
+    const llmId = modelQuickKeys[slot];
+    if (!llmId) return;
+    const llm = llms.find(m => m.id === llmId);
+    if (!llm) return;
+    assignDomainModelId('primaryChat', llmId);
+    addSnackbar({ key: 'quick-model-switch', message: `Ctrl+${slot} · ${getLLMLabel(llm)}`, type: 'center-title' });
+  }, []);
+
   useGlobalShortcuts('AppChat', React.useMemo(() => [
     // focused conversation
     { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
@@ -607,7 +618,17 @@ export function AppChat() {
     { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+    // quick model switching (Ctrl+1 through Ctrl+9)
+    { key: '1', ctrl: true, action: () => handleQuickKeySwitch('1') },
+    { key: '2', ctrl: true, action: () => handleQuickKeySwitch('2') },
+    { key: '3', ctrl: true, action: () => handleQuickKeySwitch('3') },
+    { key: '4', ctrl: true, action: () => handleQuickKeySwitch('4') },
+    { key: '5', ctrl: true, action: () => handleQuickKeySwitch('5') },
+    { key: '6', ctrl: true, action: () => handleQuickKeySwitch('6') },
+    { key: '7', ctrl: true, action: () => handleQuickKeySwitch('7') },
+    { key: '8', ctrl: true, action: () => handleQuickKeySwitch('8') },
+    { key: '9', ctrl: true, action: () => handleQuickKeySwitch('9') },
+  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, handleQuickKeySwitch, isFocusedChatEmpty]));
 
 
   return <>
