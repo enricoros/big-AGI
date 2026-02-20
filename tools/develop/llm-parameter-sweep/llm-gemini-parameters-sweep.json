@@ -28,10 +28,6 @@
     "gemini-thinking-budget": [0,1024,16384,24576],
     "temperature-range": [0,2]
   },
-  "models/gemini-2.5-flash-preview-09-2025": {
-    "gemini-thinking-budget": [0,1024,16384,24576],
-    "temperature-range": [0,2]
-  },
   "models/gemini-2.5-flash-preview-tts": {
     "temperature-range": [0,2]
   },

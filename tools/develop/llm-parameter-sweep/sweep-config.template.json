@@ -6,8 +6,9 @@
   "vendors": {
     "openai": {
       "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-      "modelFilter": ["gpt-4o", "o1", "o3"],
-      "sweeps": ["temperature", "oai-reasoning-effort", "oai-verbosity", "oai-image-generation", "oai-web-search"]
+      "modelFilter": ["gpt-5", "o"],
+      "sweeps": ["temperature", "oai-temperature-think-high", "oai-temperature-think-none", "oai-reasoning-effort", "oai-verbosity", "oai-image-generation", "oai-web-search"],
+      "baseModelOverrides": { "maxTokens": 4096 }
     },
     "anthropic": {
       "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
@@ -21,12 +22,12 @@
     },
     "xai": {
       "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-      "sweeps": ["temperature", "xai-reasoning-effort"],
-      "baseModelOverrides": { "maxTokens": 512 }
+      "sweeps": ["temperature", "xai-reasoning-effort", "xai-web-search"],
+      "baseModelOverrides": { "maxTokens": 2048 }
     },
     "openrouter": {
       "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
-      "modelFilter": "anthropic/claude",
+      "modelFilter": ["anthropic/claude", "openai/gpt-5", "google/gemini"],
       "__AUTO_IGNORE_sweeps": ["temperature", "oai-reasoning-effort"]
     }
   }

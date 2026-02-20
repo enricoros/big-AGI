@@ -14,10 +14,16 @@
  */
 
 
-// shared constants
-export const FALLBACK_LLM_PARAM_RESPONSE_TOKENS = 4096;
-export const FALLBACK_LLM_PARAM_TEMPERATURE = 0.5;
-// const FALLBACK_LLM_PARAM_REF_UNKNOWN = 'unknown_id';
+/**
+ * Implicit common parameters always supported by all models, not listed in parameterSpecs.
+ * Must be preserved during model refresh operations.
+ */
+export const LLMImplicitParametersRuntimeFallback = {
+  // llmRef: '' // disabled: we know this can't have a fallback value in the registry
+  llmResponseTokens: 8192,
+  llmTemperature: 0.5,
+  // llmTopP: 1.0,
+} as const satisfies DModelParameterValues;
 
 
 /// Registry Entry Types (for compile-time validation)
@@ -29,42 +35,40 @@ type _ParameterRegistryEntry =
   | _BooleanParamDef
   | _EnumParamDef;
 
-interface _ParamDefBase {
+interface _ParamDefBase<TSingleValue> {
+  // UI data
   readonly label: string;
   readonly description: string;
+  // Optionally write this value to the model's initialParameters, unless the Spec overrides it
+  // or the parameter is already set (e.g. by the implicit fallbacks).
+  readonly writeFactoryValue?: TSingleValue;
+  // we could use this (but not yet) to display the 'actual' value that the upstream will use by not passing any value to this parameter (although this may be different per model)
+  // readonly undefinedAs?: TSingleValue;
 }
 
-interface _IntegerParamDef extends _ParamDefBase {
+interface _IntegerParamDef extends _ParamDefBase<number | null> {
   readonly type: 'integer';
   readonly range?: readonly [number, number];
   readonly nullable?: { readonly meaning: string };
-  readonly requiredFallback?: number;
-  readonly initialValue?: number | null;
 }
 
-interface _FloatParamDef extends _ParamDefBase {
+interface _FloatParamDef extends _ParamDefBase<number | null> {
   readonly type: 'float';
   readonly range?: readonly [number, number];
   readonly nullable?: { readonly meaning: string };
-  readonly requiredFallback?: number;
-  readonly initialValue?: number | null;
 }
 
-interface _StringParamDef extends _ParamDefBase {
+interface _StringParamDef extends _ParamDefBase<string> {
   readonly type: 'string';
-  readonly initialValue?: string;
 }
 
-interface _BooleanParamDef extends _ParamDefBase {
+interface _BooleanParamDef extends _ParamDefBase<boolean> {
   readonly type: 'boolean';
-  readonly initialValue?: boolean;
 }
 
-interface _EnumParamDef<V extends string = string> extends _ParamDefBase {
+interface _EnumParamDef<V extends string = string> extends _ParamDefBase<NoInfer<V>> {
   readonly type: 'enum';
   readonly values: readonly V[];
-  readonly requiredFallback?: NoInfer<V>;
-  readonly initialValue?: NoInfer<V>;
   /** Per-value pricing multiplier. When the parameter is set to a value listed here, model pricing is multiplied. */
   readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
 }
@@ -79,13 +83,13 @@ function _enumDef<const V extends string>(def: _EnumParamDef<V>): _EnumParamDef<
 
 export const DModelParameterRegistry = {
 
-  /// Common parameters, normally available in all models ///
-  // Note: we still use pre-v2 names for compatibility and ease of migration
+  // -- Common 'implicit' parameters, available to all models --
 
   llmRef: {
     label: 'Model ID',
     type: 'string',
     description: 'Upstream model reference',
+    // cannot be undefined, and cannot be changed by the user
   },
 
   llmResponseTokens: {
@@ -95,7 +99,7 @@ export const DModelParameterRegistry = {
     nullable: {
       meaning: 'Explicitly avoid sending max_tokens to upstream API',
     },
-    requiredFallback: FALLBACK_LLM_PARAM_RESPONSE_TOKENS,   // if required and not specified/user overridden, use this value
+    // due to implicit, when undefined we apply the runtime fallback
   },
 
   llmTemperature: {
@@ -106,17 +110,17 @@ export const DModelParameterRegistry = {
     nullable: {
       meaning: 'Explicitly avoid sending temperature to upstream API',
     },
-    requiredFallback: FALLBACK_LLM_PARAM_TEMPERATURE,
+    // due to implicit, when undefined we apply the runtime fallback
   },
 
-  /// Extended parameters, specific to certain models/vendors
+  // -- Extended parameters, specific to certain models/vendors --
 
   llmTopP: {
     label: 'Top P',
     type: 'float',
     description: 'Nucleus sampling threshold',
     range: [0.0, 1.0],
-    requiredFallback: 1.0,
+    // when undefined is omitted from the requests (default)
   },
 
   /**
@@ -126,38 +130,64 @@ export const DModelParameterRegistry = {
    * [2026-01-21] OpenAI Responses API: Reasoning Summaries require organization verification.
    * Per OpenAI docs, both streaming AND reasoning summaries require org verification for GPT-5/5.1/5.2.
    *  - https://help.openai.com/en/articles/10362446-api-model-availability-by-usage-tier-and-verification-status
-   *  - Rather than adding a separate param, we piggyback on llmForceNoStream.
-   *  - AIX Wire type `vndOaiReasoningSummary` is derived from `llmForceNoStream` in aix.client.ts.
+   *  - Rather than adding a separate param, we piggyback on llmForceNoStream
    */
   llmForceNoStream: {
     label: 'Disable Streaming',
     type: 'boolean',
     description: 'Disables streaming for this model',
-    // initialValue: false, // we don't need the initial value here, will be assumed off
+    // undefined means streaming is not disabled
   },
+
+
+  // -- 'Effort' unified semantic specialization --
+
+  /**
+   * Vendor-specific effort parameters. Each vendor has its own effort param with vendor-contextual
+   * labels and descriptions. Models declare their subset via `enumValues` in parameterSpec.
+   * All converge to the unified `effort` wire field in aix.client.ts.
+   */
+  llmVndAntEffort: _enumDef({
+    label: 'Effort',
+    type: 'enum',
+    description: 'Controls reasoning depth. Works alongside thinking budget.',
+    values: ['low', 'medium', 'high', 'max'],
+    // undefined means high effort (default)
+  }),
+
+  llmVndGemEffort: _enumDef({
+    label: 'Thinking Level',
+    type: 'enum',
+    description: 'Controls internal reasoning depth. When unset, the model decides dynamically.',
+    values: ['minimal', 'low', 'medium', 'high'],
+    // undefined means dynamic (model decides)
+  }),
+
+  llmVndOaiEffort: _enumDef({
+    label: 'Reasoning Effort',
+    type: 'enum',
+    description: 'Controls how much effort the model spends on reasoning.',
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+    // undefined means vendor default
+  }),
+
+  llmVndMiscEffort: _enumDef({
+    label: 'Thinking',
+    type: 'enum',
+    description: 'Enable or disable extended thinking mode.',
+    values: ['none', 'high'],
+    // undefined means vendor default (usually 'high', i.e. thinking enabled)
+  }),
+
+
+  // Anthropic-specific
 
   llmVndAnt1MContext: {
     label: '1M Context Window (Beta)',
     type: 'boolean',
     description: 'Enable 1M token context window with premium pricing for >200K input tokens',
-    // No initialValue - undefined means off (e.g. default 200K context window)
+    // undefined means off (e.g. default 200K context window)
   },
-
-  llmVndAntEffortMax: _enumDef({ // introduced with Claude Opus 4.6; this adds the 'max' level on top of llmVndAntEffort
-    label: 'Effort',
-    type: 'enum',
-    description: 'Controls thinking depth. max = deepest reasoning with no constraints, high = default.',
-    values: ['low', 'medium', 'high', 'max'],
-    // No initialValue - undefined means high effort (default)
-  }),
-
-  llmVndAntEffort: _enumDef({
-    label: 'Effort',
-    type: 'enum',
-    description: 'Controls token usage vs. thoroughness trade-off. Works alongside thinking budget.',
-    values: ['low', 'medium', 'high'],
-    // No initialValue - undefined means high effort (default, equivalent to omitting the parameter)
-  }),
 
   llmVndAntInfSpeed: _enumDef({
     label: 'Fast Mode',
@@ -165,17 +195,21 @@ export const DModelParameterRegistry = {
     description: 'Accelerated inference (~2.5x faster output) at 6x pricing. Preview access required.',
     values: ['fast'],
     enumPriceMultiplier: { fast: 6 },
-    // No initialValue - undefined means standard speed (omitted from request)
+    // undefined means standard speed (omitted from request)
   }),
 
   llmVndAntSkills: {
     label: 'Document Skills',
     type: 'string',
     description: 'Comma-separated skills (xlsx,pptx,pdf,docx)',
-    initialValue: '', // empty string = disabled
+    writeFactoryValue: '', // empty string = disabled
+    // undefined is not allowed, as the writeFactoryValue would ensure a non-undefined value
   },
 
   /**
+   * NOTE: this is being phased out with Opus 4.6 in favor of llmVndAntEffort, while this is implicitly
+   *       adaptive if missing (as-if we had our custom sentinel value of -1).
+   *
    * Important: when this is set to anything other than nullish, it enables Adaptive(-1)/Extended(int > 1024) thinking,
    * and as a side effect **disables the temperature** in the requests (even when tunneled through OpenRouter). So this
    * control must disable the UI controls for temperature in both the side panel and the model configuration dialog.
@@ -185,10 +219,11 @@ export const DModelParameterRegistry = {
     type: 'integer',
     description: 'Budget for extended thinking',
     range: [1024, 65536],
-    initialValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
+    writeFactoryValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
     nullable: { // null means to not turn on thinking at all, and it's the user-overridden equivalent to the param missing
       meaning: 'Disable extended thinking',
     },
+    // undefined means model default
   },
 
   llmVndAntWebFetch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -196,7 +231,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable fetching content from web pages and PDFs',
     values: ['auto', 'off'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   llmVndAntWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -204,7 +239,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable web search for real-time information',
     values: ['auto', 'off'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   // llmVndAntToolSearch: { // Not user set
@@ -212,15 +247,18 @@ export const DModelParameterRegistry = {
   //   type: 'enum',
   //   description: 'Search algorithm for discovering tools on-demand (regex=pattern-based, bm25=natural language)',
   //   values: ['regex', 'bm25'],
-  //   // No initialValue - undefined means off (tool search disabled)
+  //   // undefined means off (tool search disabled)
   // },
+
+
+  // Gemini-specific
 
   llmVndGeminiAspectRatio: _enumDef({ // implies: LLM_IF_Outputs_Image
     label: 'Aspect Ratio',
     type: 'enum',
     description: 'Controls the aspect ratio of generated images',
     values: ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'],
-    // No initial value - when undefined, the model decides the aspect ratio
+    // when undefined, the model decides the aspect ratio
   }),
 
   llmVndGeminiCodeExecution: _enumDef({
@@ -228,7 +266,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable automatic Python code generation and execution by the model',
     values: ['auto'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
   llmVndGeminiComputerUse: _enumDef({
@@ -236,8 +274,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Environment type for Computer Use tool (required for Computer Use model)',
     values: ['browser'],
-    initialValue: 'browser',
-    // requiredFallback: 'browser', // See `const _requiredParamId: DModelParameterId[]` in llms.parameters.ts for why custom params don't have required values at AIX invocation...
+    // undefined means off
   }),
 
   llmVndGeminiGoogleSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -245,7 +282,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable Google Search grounding with optional time filter',
     values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
   llmVndGeminiImageSize: _enumDef({ // implies: LLM_IF_Outputs_Image - [Gemini, 2025-11-20] Nano Banana launch
@@ -253,7 +290,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls the resolution of generated images',
     values: ['1K', '2K', '4K'],
-    // No initial value - when undefined, the model decides the image size
+    // when undefined, the model decides the image size
   }),
 
   llmVndGeminiMediaResolution: _enumDef({
@@ -261,44 +298,21 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls vision processing quality for multimodal inputs. Higher resolution improves text reading and detail identification but increases token usage.',
     values: ['mr_high', 'mr_medium', 'mr_low'],
-    // No initialValue - undefined: "If unspecified, the model uses optimal defaults based on the media type." (Images: high, PDFs: medium, Videos: low/medium (rec: high for OCR))
+    // undefined: "If unspecified, the model uses optimal defaults based on the media type." (Images: high, PDFs: medium, Videos: low/medium (rec: high for OCR))
   }),
-
-  llmVndGeminiShowThoughts: {
-    label: 'Show Thoughts',
-    type: 'boolean',
-    description: 'Show Gemini\'s reasoning process',
-    // initialValue: true, // no initial value
-  },
 
   llmVndGeminiThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer',
+    description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
     /**
      * can be overwritten, as gemini models seem to have different ranges which also does not include 0
      * - value = 0 disables thinking
      * - value = undefined means 'auto thinking budget'.
      */
     range: [0, 24576],
-    // initialValue: unset, // auto-budgeting
-    description: 'Budget for extended thinking. 0 disables thinking. If not set, the model chooses automatically.',
+    // when undefined, the model chooses automatically
   },
-
-  llmVndGeminiThinkingLevel: _enumDef({
-    label: 'Thinking Level',
-    type: 'enum',
-    description: 'Controls internal reasoning depth for Gemini 3 Pro. When unset, the model decides dynamically.',
-    values: ['high', 'low'],
-    // No initialValue - undefined means 'dynamic', which for Gemini Pro is the same as 'high'
-  }),
-
-  llmVndGeminiThinkingLevel4: _enumDef({
-    label: 'Thinking Level',
-    type: 'enum',
-    description: 'Controls internal reasoning depth for Gemini 3 Flash. When unset, the model decides dynamically.',
-    values: ['high', 'medium', 'low', 'minimal'],
-    // No initialValue - undefined means 'dynamic'
-  }),
 
   // NOTE: we don't have this as a parameter, as for now we use it in tandem with llmVndGeminiGoogleSearch
   // llmVndGeminiUrlContext: {
@@ -306,72 +320,29 @@ export const DModelParameterRegistry = {
   //   type: 'enum',
   //   description: 'Enable fetching and analyzing content from URLs provided in prompts (up to 20 URLs, 34MB each)',
   //   values: ['auto'],
-  //   // No initialValue - undefined means off
+  //   // undefined means off
   // },
 
-  // Moonshot-specific parameters
 
-  llmVndMoonReasoningEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Controls thinking depth for Kimi K2.5. High enables extended multi-step reasoning (default).',
-    values: ['none', 'high'],
-    // No initialValue - undefined means high (thinking enabled, the default for K2.5)
-  }),
+  // Moonshot-specific parameters
 
   llmVndMoonshotWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
     description: 'Enable Kimi\'s $web_search builtin function for real-time web search ($0.005 per search)',
     values: ['auto'],
-    // No initialValue - undefined means off
+    // undefined means off
   }),
 
-  // OpenAI-specific parameters
-  // Reasoning effort levels per model:
-  // - GPT-5: minimal, low, medium (default), high
-  // - GPT-5.1: none (default), low, medium, high
-  // - GPT-5.2: none (default), low, medium, high, xhigh
-  // - GPT-5.2 Pro: medium (default), high, xhigh
 
-  llmVndOaiReasoningEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for OpenAI reasoning models',
-    values: ['low', 'medium', 'high'],
-    requiredFallback: 'medium',
-  }),
-
-  llmVndOaiReasoningEffort4: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for OpenAI advanced reasoning models',
-    values: ['minimal', 'low', 'medium', 'high'],
-    requiredFallback: 'medium',
-  }),
-
-  llmVndOaiReasoningEffort52: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for GPT-5.2 models. When unset, defaults to none (fast responses).',
-    values: ['none', 'low', 'medium', 'high', 'xhigh'],
-    // No requiredFallback - unset = none (the default for GPT-5.2)
-    // No initialValue - starts undefined, which the UI should display as "none"
-  }),
-
-  llmVndOaiReasoningEffort52Pro: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Constrains effort on reasoning for GPT-5.2 Pro. Defaults to medium.',
-    values: ['medium', 'high', 'xhigh'],
-    // No requiredFallback - unset = medium (the default for GPT-5.2 Pro)
-  }),
+  // OpenAI-specific
 
   llmVndOaiRestoreMarkdown: {
     label: 'Restore Markdown',
     type: 'boolean',
     description: 'Restore Markdown formatting in the output',
-    initialValue: true,
+    // we used to have the writeFactoryValue to true, but we don't basically use/want this anymore
+    // undefined means off
   },
 
   llmVndOaiVerbosity: _enumDef({
@@ -379,7 +350,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Controls response length and detail level',
     values: ['low', 'medium', 'high'],
-    requiredFallback: 'medium',
+    // undefined means model default
   }),
 
   llmVndOaiWebSearchContext: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -387,7 +358,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Amount of context retrieved from the web',
     values: ['low', 'medium', 'high'],
-    requiredFallback: 'medium',
+    // undefined means *off* (no web search context provided)
   }),
 
   llmVndOaiWebSearchGeolocation: {
@@ -398,16 +369,15 @@ export const DModelParameterRegistry = {
     label: 'Add User Location (Geolocation API)',
     type: 'boolean',
     description: 'Approximate location for search results',
-    initialValue: false,
+    // undefined means no geolocation data included in search requests
   },
 
   llmVndOaiImageGeneration: _enumDef({ // implies: LLM_IF_Outputs_Image
     label: 'Image Generation',
     type: 'enum',
     description: 'Image generation mode and quality',
-    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */],
-    // No initialValue - defaults to undefined (off)
-    // No requiredFallback - this is optional
+    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */], // our values, not upstream's
+    // undefined means no image generation
   }),
 
   llmVndOaiCodeInterpreter: _enumDef({
@@ -415,27 +385,29 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Python code execution ($0.03/container)',
     values: ['off', 'auto'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
-  // Perplexity-specific parameters
 
-  // llmVndPerplexityReasoningEffort - we reuse the OpenAI reasoning effort parameter
-
-  llmVndPerplexityDateFilter: _enumDef({
-    label: 'Date Range',
-    type: 'enum',
-    description: 'Filter results by publication date',
-    values: ['unfiltered', '1m', '3m', '6m', '1y'],
-    // requiredFallback: 'unfiltered',
-  }),
+  // OpenRouter-specific
 
   llmVndOrtWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
     description: 'Enable OpenRouter web search (uses native search for OpenAI/Anthropic, Exa for others)',
     values: ['auto'],
-    // No initialValue - undefined means off
+    // undefined means off
+  }),
+
+
+  // Perplexity-specific parameters
+
+  llmVndPerplexityDateFilter: _enumDef({
+    label: 'Date Range',
+    type: 'enum',
+    description: 'Filter results by publication date',
+    values: ['unfiltered', '1m', '3m', '6m', '1y'],
+    // undefined means unfiltered
   }),
 
   llmVndPerplexitySearchMode: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -443,8 +415,9 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Type of sources to search',
     values: ['default', 'academic'],
-    // requiredFallback: 'default', // or leave unset for "unspecified"
+    // undefined means default
   }),
+
 
   // xAI-specific parameters
 
@@ -453,7 +426,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable server-side code execution by the model',
     values: ['off', 'auto'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   llmVndXaiSearchInterval: _enumDef({
@@ -461,7 +434,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Search in this interval',
     values: ['unfiltered', '1d', '1w', '1m', '6m', '1y'],
-    // No initialValue - undefined means unfiltered
+    // undefined means unfiltered
   }),
 
   llmVndXaiWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -469,7 +442,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable web search for real-time information',
     values: ['off', 'auto'],
-    // No initialValue - undefined means off (same as 'off')
+    // undefined means off (same as 'off')
   }),
 
   llmVndXaiXSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
@@ -477,26 +450,16 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Enable X/Twitter search for social media content',
     values: ['off', 'auto'],
-    // NOTE: disabling or this could be slow
-    // initialValue: 'auto', // we default to 'auto' for our users, as they may expect "X search" out of the box
+    // NOTE: disabling or this could be slow: writeFactoryValue: 'auto', // we default to 'auto' for our users, as they may expect "X search" out of the box
+    // undefined means off (same as 'off')
   }),
 
   llmVndXaiXSearchHandles: {
     label: 'X Handles Filter',
     type: 'string',
     description: 'Filter X search to specific handles (comma-separated, e.g. @elonmusk, @xai)',
-    // initialValue: '', // empty = no filter
+    // undefined means no filter (same as '')
   },
-
-  // Z.ai-specific parameters
-
-  llmVndZaiReasoningEffort: _enumDef({
-    label: 'Reasoning Effort',
-    type: 'enum',
-    description: 'Controls thinking mode for GLM models. High enables thinking (default), none disables it.',
-    values: ['none', 'high'],
-    // No initialValue - undefined means high (thinking enabled, the default for GLM-4.5+)
-  }),
 
 } as const satisfies Record<string, _ParameterRegistryEntry>;
 
@@ -554,6 +517,12 @@ interface DModelParameterSpec<T extends DModelParameterId> {
    * Used by llmVndGeminiThinkingBudget to allow different ranges for different models.
    */
   rangeOverride?: [number, number];
+  /**
+   * (optional) For enum params: restrict which values from the registry are allowed for this model.
+   * The UI will only show these values. Analogous to rangeOverride for numeric params.
+   * Example: llmVndOaiEffort registry has 6 values, but a specific model may only support ['low', 'medium', 'high'].
+   */
+  enumValues?: readonly string[];
 }
 
 
@@ -574,39 +543,20 @@ export function applyModelParameterSpecsInitialValues(destValues: DModelParamete
       continue;
     }
 
-    // 2. (if present) apply Registry[paramId].initialValue
+    // 2. (if present) apply Registry[paramId].writeFactoryValue
     const registryDef = DModelParameterRegistry[paramId];
     if (registryDef) {
-      if ('initialValue' in registryDef && registryDef.initialValue !== undefined)
-        destValues[paramId] = registryDef.initialValue as DModelParameterValue<typeof paramId>;
+      if ('writeFactoryValue' in registryDef && registryDef.writeFactoryValue !== undefined)
+        destValues[paramId] = registryDef.writeFactoryValue as DModelParameterValue<typeof paramId>;
     } else
       console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
   }
 }
 
 
-/**
- * Implicit common parameters always supported by all models, not listed in parameterSpecs.
- * Must be preserved during model refresh operations.
- */
-export const LLMS_ImplicitParamIds: readonly DModelParameterId[] = [
-  // 'llmRef', // disabled: we know this can't have a fallback value in the registry
-  'llmResponseTokens', // DModelParameterRegistry.llmResponseTokens.requiredFallback = FALLBACK_LLM_PARAM_RESPONSE_TOKENS
-  'llmTemperature', // DModelParameterRegistry.llmTemperature.requiredFallback = FALLBACK_LLM_PARAM_TEMPERATURE
-];
-
 export function getAllModelParameterValues(initialParameters: undefined | DModelParameterValues, userParameters?: DModelParameterValues): DModelParameterValues {
-
-  // fallback values
-  const fallbackParameters: DModelParameterValues = {};
-  for (const requiredParamId of LLMS_ImplicitParamIds) {
-    if ('requiredFallback' in DModelParameterRegistry[requiredParamId])
-      fallbackParameters[requiredParamId] = DModelParameterRegistry[requiredParamId].requiredFallback as DModelParameterValue<typeof requiredParamId>;
-  }
-
-  // accumulate initial and user values
   return {
-    ...fallbackParameters,
+    ...LLMImplicitParametersRuntimeFallback,
     ...initialParameters,
     ...userParameters,
   };
@@ -616,11 +566,11 @@ export function getAllModelParameterValues(initialParameters: undefined | DModel
 /**
  * NOTE: this is actually only used for `llmResponseTokens` from the Composer for now (!)
  */
-export function getModelParameterValueOrThrow<T extends DModelParameterId>(
+export function getModelParameterValueWithFallback<T extends DModelParameterId>(
   paramId: T,
   initialValues: undefined | DModelParameterValues,
   userValues: undefined | DModelParameterValues,
-  fallbackValue: undefined | DModelParameterValue<T>,
+  fallbackValue: DModelParameterValue<T>,
 ): DModelParameterValue<T> {
 
   // check user values first
@@ -636,14 +586,5 @@ export function getModelParameterValueOrThrow<T extends DModelParameterId>(
   }
 
   // then try provided fallback
-  if (fallbackValue !== undefined) return fallbackValue;
-
-  // finally the global registry fallback
-  const paramDef = DModelParameterRegistry[paramId];
-  if ('requiredFallback' in paramDef && paramDef.requiredFallback !== undefined)
-    return paramDef.requiredFallback as DModelParameterValue<T>;
-
-  // if we're here, we couldn't find a value
-  // [DANGER] VERY DANGEROUS, but shall NEVER happen
-  throw new Error(`getModelParameterValue: missing required parameter '${paramId}'`);
+  return fallbackValue;
 }

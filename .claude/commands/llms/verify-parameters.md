@@ -38,17 +38,17 @@ Example parameter mapping. Note that new parameters may have been added to both 
 The objective of the sweep is to hint at model definition values, but the model definitions are what matters for Big-AGI,
 and need to be carefully updated, otherwise thousands of clients may break.
 
-| Dialect | Sweep Key | Model paramId |
-|---------|-----------|---------------|
-| OpenAI | `oai-reasoning-effort` | `llmVndOaiReasoningEffort*` (multiple variants) |
-| OpenAI | `oai-verbosity` | `llmVndOaiVerbosity` |
-| OpenAI | `oai-image-generation` | `llmVndOaiImageGeneration` |
-| OpenAI | `oai-web-search` | `llmVndOaiWebSearchContext` |
-| Anthropic | `ant-effort` | `llmVndAntEffort` |
-| Anthropic | `ant-thinking-budget` | `llmVndAntThinkingBudget` |
-| Gemini | `gemini-thinking-level` | `llmVndGeminiThinkingLevel*` |
-| Gemini | `gemini-thinking-budget` | `llmVndGeminiThinkingBudget` |
-| xAI | `xai-web-search` | `llmVndXaiWebSearch` |
+| Dialect   | Sweep Key                | Model paramId                |
+|-----------|--------------------------|------------------------------|
+| OpenAI    | `oai-reasoning-effort`   | `llmVndOaiEffort`            |
+| OpenAI    | `oai-verbosity`          | `llmVndOaiVerbosity`         |
+| OpenAI    | `oai-image-generation`   | `llmVndOaiImageGeneration`   |
+| OpenAI    | `oai-web-search`         | `llmVndOaiWebSearchContext`  |
+| Anthropic | `ant-effort`             | `llmVndAntEffort`            |
+| Anthropic | `ant-thinking-budget`    | `llmVndAntThinkingBudget`    |
+| Gemini    | `gemini-thinking-level`  | `llmVndGemEffort`            |
+| Gemini    | `gemini-thinking-budget` | `llmVndGeminiThinkingBudget` |
+| xAI       | `xai-web-search`         | `llmVndXaiWebSearch`         |
 
 ## Output
 

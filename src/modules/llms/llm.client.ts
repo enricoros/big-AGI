@@ -2,7 +2,7 @@ import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/Go
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
-import { applyModelParameterSpecsInitialValues, DModelParameterSpecAny, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
+import { applyModelParameterSpecsInitialValues, DModelParameterSpecAny, LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { isLLMChatPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
@@ -120,7 +120,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
       llmTemperature: // number | null
         d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null
           : d.initialTemperature !== undefined ? d.initialTemperature
-            : FALLBACK_LLM_PARAM_TEMPERATURE,
+            : LLMImplicitParametersRuntimeFallback.llmTemperature,
     },
 
     // references

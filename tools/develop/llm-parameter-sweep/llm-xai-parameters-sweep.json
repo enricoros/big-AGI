@@ -1,45 +1,28 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
-  "_evaluated": "Evaluated: temperature, xai-reasoning-effort, xai-web-search. If missing, the parameter is not supported by that model.",
-  "grok-2-vision-1212": {
-    "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"]
-  },
-  "grok-3": {
-    "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"]
-  },
+  "_evaluated": "Evaluated: xai-reasoning-effort, xai-web-search. If missing, the parameter is not supported by that model.",
   "grok-3-mini": {
     "temperature-range": [0,2],
     "xai-reasoning-effort": ["low","medium","high"]
   },
   "grok-4-0709": {
     "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-1-fast-non-reasoning": {
     "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-1-fast-reasoning": {
     "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-fast-non-reasoning": {
     "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-fast-reasoning": {
     "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"],
     "xai-tools": ["xai-web-search"]
-  },
-  "grok-code-fast-1": {
-    "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"]
   }
 }

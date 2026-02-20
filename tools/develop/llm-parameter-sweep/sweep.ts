@@ -18,8 +18,8 @@ import * as path from 'node:path';
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
+import { ChatGenerateDispatch, createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { listModelsRunDispatch } from '~/modules/llms/server/listModels.dispatch';
-import { createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 
@@ -37,13 +37,31 @@ const SWEEP_DEFINITIONS = [
     mode: 'enumerate',
   }),
 
+  // OpenAI: temperature with/without reasoning
+  defineSweep({
+    name: 'oai-temperature-think-high',
+    description: 'Temperature parameter acceptance range',
+    applicability: { type: 'all' },
+    applyToModel: (value) => ({ temperature: value, reasoningEffort: 'high' }),
+    values: [0, 0.5, 1.0, 1.5, 2.0],
+    mode: 'enumerate',
+  }),
+  defineSweep({
+    name: 'oai-temperature-think-none',
+    description: 'Temperature parameter acceptance range',
+    applicability: { type: 'all' },
+    applyToModel: (value) => ({ temperature: value, reasoningEffort: 'none' }),
+    values: [0, 0.5, 1.0, 1.5, 2.0],
+    mode: 'enumerate',
+  }),
+
   // OpenAI: reasoning effort (Chat Completions + Responses API)
   defineSweep({
     name: 'oai-reasoning-effort',
     description: 'OpenAI reasoning_effort values',
     applicability: { type: 'dialects', dialects: ['openai', 'azure', 'openrouter'] },
-    applyToModel: (value) => ({ vndOaiReasoningEffort: value }),
-    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'] satisfies AixAPI_Model['vndOaiReasoningEffort'][],
+    applyToModel: (value) => ({ reasoningEffort: value }),
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh' /*, 'max'*/ /* OpenRouter-only? */] satisfies AixAPI_Model['reasoningEffort'][],
     neuteredValues: ['medium'], // medium is the default, so only-medium means no real support
     mode: 'enumerate',
   }),
@@ -85,8 +103,8 @@ const SWEEP_DEFINITIONS = [
     name: 'ant-effort',
     description: 'Anthropic output_config.effort values',
     applicability: { type: 'dialects', dialects: ['anthropic'] },
-    applyToModel: (value) => ({ vndAntEffort: value }),
-    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndAntEffort'][],
+    applyToModel: (value) => ({ reasoningEffort: value }),
+    values: ['low', 'medium', 'high', 'max'] satisfies AixAPI_Model['reasoningEffort'][],
     mode: 'enumerate',
   }),
 
@@ -112,10 +130,8 @@ const SWEEP_DEFINITIONS = [
     name: 'gemini-thinking-level',
     description: 'Gemini thinkingConfig.thinkingLevel values',
     applicability: { type: 'dialects', dialects: ['gemini'] },
-    applyToModel: (value) => value
-      ? { vndGeminiThinkingLevel: value, vndGeminiShowThoughts: true }
-      : {}, // { vndGeminiShowThoughts: true }, // null = dynamic mode, don't set level
-    values: ['minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['vndGeminiThinkingLevel'] | null)[],
+    applyToModel: (value) => value ? { reasoningEffort: value } : {}, // null = dynamic mode, don't set level
+    values: ['minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['reasoningEffort'] | null)[],
     mode: 'enumerate',
   }),
 
@@ -140,8 +156,8 @@ const SWEEP_DEFINITIONS = [
     name: 'xai-reasoning-effort',
     description: 'xAI reasoning.effort values',
     applicability: { type: 'dialects', dialects: ['xai'] },
-    applyToModel: (value) => ({ vndOaiReasoningEffort: value }),
-    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndOaiReasoningEffort'][],
+    applyToModel: (value) => ({ reasoningEffort: value }),
+    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['reasoningEffort'][],
     mode: 'enumerate',
   }),
 
@@ -372,8 +388,9 @@ function modelOverridesFromInterfaces(interfaces: string[]): Partial<AixAPI_Mode
     overrides.vndOaiResponsesAPI = true;
 
   // Client-side HotFixes
-  if (interfaces.includes('hotfix-no-temperature'))
-    overrides.temperature = null;
+  // 2026-02-18: NOTE: disabling this, as we may be actually testing the temperature
+  // if (interfaces.includes('hotfix-no-temperature'))
+  //   overrides.temperature = null;
 
   return overrides;
 }
@@ -409,16 +426,10 @@ async function testParameterValue(
   const chatGenerate = createMinimalChatRequest();
 
   // Build vendor-specific HTTP request via the AIX dispatch system
-  const dispatch = createChatGenerateDispatch(
-    access,
-    model,
-    chatGenerate,
-    false, // streaming = false
-    false, // enableResumability = false
-  );
+  let dispatch: ChatGenerateDispatch | undefined;
 
   // Capture request body for --debug output
-  const debugRequestBody = 'body' in dispatch.request ? JSON.stringify(dispatch.request.body) /*, null, 2)*/ : undefined;
+  const debugRequestBody = dispatch && 'body' in dispatch.request ? JSON.stringify(dispatch.request.body) /*, null, 2)*/ : undefined;
 
   // Helper to build result with common fields
   const makeResult = (fields: Omit<TestResult, 'sweepName' | 'paramValue' | 'debugRequestBody'>): TestResult => ({
@@ -428,6 +439,28 @@ async function testParameterValue(
     debugRequestBody,
     ...fields,
   });
+
+
+  // Create the dispatch, which may throw when building the reuest (e.g. parameter range incompatibility)
+  try {
+    dispatch = createChatGenerateDispatch(
+      access,
+      model,
+      chatGenerate,
+      false, // streaming = false
+      false, // enableResumability = false
+    );
+  } catch (error: any) {
+    // Exception during request creation - likely parameter incompatibility with the model/dialect
+    return makeResult({
+      outcome: 'fail',
+      errorCategory: 'dialect',
+      errorMessage: error?.message ? String(error.message).slice(0, 300) : String(error).slice(0, 300),
+      verboseLogs: [`Exception creating request: ${error?.message || String(error)}`],
+      durationMs: Date.now() - startTime,
+    });
+  }
+
 
   try {
     // Execute the request

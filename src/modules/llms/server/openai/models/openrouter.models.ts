@@ -187,14 +187,16 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       if (DEV_DEBUG_OPENROUTER_MODELS && !antLookup && ['anthropic/claude-3.5-sonnet'].every(silence => !model.id.startsWith(silence)))
         console.log('[DEV] openRouterModelToModelDescription: unknown Anthropic model:', model.id);
 
-      // 0-day
+      // 0-day: non-indexed models only — indexed ones use native definitions via llmOrtAntLookup.
+      // OR sweep shows effort on all Anthropic models because OR translates reasoning_effort internally;
+      // the native API only supports effort on select models — trust the manual definitions for those.
       if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndAntThinkingBudget')) {
         DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: unexpected ${antLookup ? 'KNOWN' : 'unknown'} Anthropic reasoning model:`, model.id);
         parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget' }); // configurable thinking budget
-        if (!parameterSpecs.some(p => p.paramId.startsWith('llmVndAntEffort')))
-          parameterSpecs.push({ paramId: 'llmVndAntEffortMax' }); // try to enable the broader support
+        if (!parameterSpecs.some(p => p.paramId === 'llmVndAntEffort'))
+          parameterSpecs.push({ paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] }); // 'max' is Opus 4.6-only and not available through OpenRouter
       }
-     break;
+      break;
 
     case model.id.startsWith('google/'):
       const gemLookup = llmOrtGemLookup(llmRef);
@@ -203,10 +205,12 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       if (DEV_DEBUG_OPENROUTER_MODELS && !gemLookup && ['google/gemma-', 'google/gemini-2.5-pro-preview-05-06'].every(silence => !model.id.startsWith(silence)))
         console.log('[DEV] openRouterModelToModelDescription: unknown Gemini model:', model.id);
 
-      // 0-day: reasoning models get default thinking budget if not inherited
-      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndGeminiThinkingBudget' || p.paramId === 'llmVndGeminiThinkingLevel' || p.paramId === 'llmVndGeminiThinkingLevel4')) {
+      // 0-day: non-indexed models only — indexed ones use native definitions via llmOrtGemLookup.
+      // OR sweep shows effort on all Gemini models because OR translates reasoning_effort internally;
+      // the native API uses thinkingLevel (discrete) or thinkingBudget (integer) depending on generation.
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndGeminiThinkingBudget' || p.paramId === 'llmVndGemEffort')) {
         // DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: tagging ${gemLookup ? 'KNOWN' : 'unknown'} Gemini reasoning model:`, model.id);
-        parameterSpecs.push({ paramId: 'llmVndGeminiThinkingLevel4' }); // fallback
+        parameterSpecs.push({ paramId: 'llmVndGemEffort' }); // use the latest known Gemini effort (thinking) levels superset
         // parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' }); // fallback with default range
       }
 
@@ -228,18 +232,19 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       if (DEV_DEBUG_OPENROUTER_MODELS && !oaiLookup && ['openai/gpt-oss', 'openai/gpt-3.5'].every(silence => !model.id.startsWith(silence)))
         console.log('[DEV] openRouterModelToModelDescription: unknown OpenAI model:', model.id);
 
-      // 0-day: reasoning models get default 3-level effort if not inherited
-      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId.startsWith('llmVndOaiReasoning'))) {
+      // 0-day: non-indexed models only — indexed ones use native definitions via llmOrtOaiLookup.
+      // OR sweep may show broader effort ranges than the native API supports (OR adds levels internally).
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndOaiEffort')) {
         // console.log('[DEV] openRouterModelToModelDescription: unexpected OpenAI reasoning model:', model.id);
-        parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
+        parameterSpecs.push({ paramId: 'llmVndOaiEffort' }); // latest known OpenAI effort levels superset
       }
       break;
 
     case model.id.startsWith('x-ai/') || model.id.startsWith('moonshotai/') || model.id.startsWith('z-ai/') || model.id.startsWith('deepseek/'):
-      // 0-day: xAI/Grok models get default reasoning effort if not inherited
-      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId.startsWith('llmVndOaiReasoning'))) {
+      // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek models get default reasoning effort if not inherited
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndMiscEffort')) {
         // console.log('[DEV] openRouterModelToModelDescription: unexpected xAI/Grok/DeepSeek reasoning model:', model.id);
-        parameterSpecs.push({ paramId: 'llmVndOaiReasoningEffort' });
+        parameterSpecs.push({ paramId: 'llmVndMiscEffort' }); // binary thinking for these vendors
       }
       break;
 

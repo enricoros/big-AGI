@@ -1,7 +1,7 @@
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 
 // configuration
@@ -16,13 +16,16 @@ const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANT
     idVariant: 'academic',
     label: 'Sonar Deep Research (Academic)',
     description: 'Expert-level research model with academic sources only. Searches scholarly databases, peer-reviewed papers, and academic publications. 128k context.',
+    interfaces: [
+      LLM_IF_HOTFIX_NoStream, // seems to be required for medium/academic
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning,
+    ],
     parameterSpecs: [
       // Fixed parameters for academic search
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium', hidden: true },
       { paramId: 'llmVndPerplexitySearchMode', initialValue: 'academic', hidden: true },
-      { paramId: 'llmForceNoStream', initialValue: true, hidden: true },
       // Free parameters
-      // { paramId: 'llmVndOaiReasoningEffort', initialValue: 'medium' },
+      // { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'], initialValue: 'medium' },
       { paramId: 'llmVndPerplexityDateFilter' },
     ],
   },
@@ -40,7 +43,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
-      { paramId: 'llmVndOaiReasoningEffort' }, // REUSE!
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
       { paramId: 'llmVndPerplexityDateFilter' },

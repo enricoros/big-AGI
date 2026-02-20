@@ -94,6 +94,19 @@ export function aixToXAIResponses(
     payload.top_p = model.topP;
   }
 
+  // Reasoning
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
+  if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh' || reasoningEffort === 'max') // domain validation
+    throw new Error(`XAI Responses API does not support reasoning effort '${reasoningEffort}'`);
+
+  if (reasoningEffort) {
+    payload.reasoning = {
+      effort: reasoningEffort,
+      // generate_summary: unsupported
+      // summary: unsupported, defaults to 'detailed'
+    };
+  }
+
   // Add include options for reasoning and specialized for tool sources
   if (AIX_XAI_ADD_ENCRYPTED_REASONING)
     payload.include = [...(payload.include || []), 'reasoning.encrypted_content'];

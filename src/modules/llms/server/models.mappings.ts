@@ -1,5 +1,6 @@
 import type { DModelInterfaceV1 } from '~/common/stores/llms/llms.types';
 import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterRegistry } from '~/common/stores/llms/llms.parameters';
 import { LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
@@ -76,6 +77,36 @@ export function llmDevCheckModels_DEV(vendor: string, apiIds: string[], knownIds
     const unknown = filtered.filter(a => !knownIds.includes(a));
     if (unknown.length)
       console.log(`[DEV] ${vendor}: unknown models (add): [ ${unknown.join(', ')} ]`);
+  }
+}
+
+// -- Dev parameterSpecs validation --
+
+/**
+ * DEV: Validates parameterSpecs for a model description.
+ * - Checks that each paramId exists in the DModelParameterRegistry
+ * - For enum params with enumValues, checks that enumValues ⊆ registry.values
+ */
+export function llmDevValidateParameterSpecs_DEV(model: ModelDescriptionSchema): void {
+  if (!model.parameterSpecs?.length) return;
+
+  for (const spec of model.parameterSpecs) {
+    const paramId = spec.paramId;
+    const regDef = DModelParameterRegistry[paramId];
+
+    // check paramId exists in registry
+    if (!regDef) {
+      console.warn(`[DEV] Model '${model.id}': unknown paramId '${paramId}' in parameterSpecs`);
+      continue;
+    }
+
+    // for enum params with enumValues, check containment
+    if (regDef.type === 'enum' && 'values' in regDef && spec.enumValues) {
+      const registryValues = regDef.values as ReadonlyArray<string>;
+      const invalid = spec.enumValues.filter(v => !registryValues.includes(v));
+      if (invalid.length)
+        console.warn(`[DEV] Model '${model.id}': paramId '${paramId}' has enumValues not in registry: [${invalid.join(', ')}] (valid: [${registryValues.join(', ')}])`);
+    }
   }
 }
 

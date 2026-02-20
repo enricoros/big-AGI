@@ -13,12 +13,9 @@ The LLM parameters system operates across five layers that transform parameters 
 
 The `DModelParameterRegistry` defines all available parameters with their constraints and metadata. Each parameter includes type information, validation rules, and default behavior.
 
-**Example**: `llmVndOaiReasoningEffort4` defines a 4-value enum with 'medium' as the required fallback.
-
 **Default Value System**: The registry supports multiple default mechanisms:
-- `initialValue` - Parameter's base default (e.g., `llmVndOaiRestoreMarkdown: true`)
-- `requiredFallback` - Fallback for required parameters (e.g., `llmTemperature: 0.5`)
 - `nullable` - Parameters that can be explicitly null to skip API transmission
+- `initialValue` - Parameter's base default (e.g., `llmVndOaiRestoreMarkdown: true`)
 
 ### Layer 2: Model Specifications
 **File**: `src/modules/llms/server/llm.server.types.ts`
@@ -27,7 +24,6 @@ Models declare which parameters they support through `parameterSpecs` arrays. Ea
 
 ```typescript
 parameterSpecs: [
-  { paramId: 'llmVndOaiReasoningEffort4' },
   { paramId: 'llmVndAntThinkingBudget', initialValue: 1024 }, // Override default
   { paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [0, 8192] }, // Custom range
 ]
@@ -51,20 +47,14 @@ Shows only parameters that are:
 - Not marked as `hidden`
 
 **Value Resolution**: Both UIs use `getAllModelParameterValues()` to merge:
-1. **Fallback values** - Required parameters get their `requiredFallback` values
+1. **Fallback values** - Implicit parameters get their `runtimeFallback` values
 2. **Initial values** - Model's `initialParameters` (populated during model creation)
 3. **User values** - User's `userParameters` (highest priority)
 
 ### Layer 4: AIX Translation
 **File**: `src/modules/aix/client/aix.client.ts`
 
-The AIX client transforms DLLM parameters to wire protocol format. This layer handles parameter precedence rules and name transformations:
-
-```
-// Parameter precedence: newer 4-value version takes priority over 3-value
-...((llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort) ?
-  { vndOaiReasoningEffort: llmVndOaiReasoningEffort4 || llmVndOaiReasoningEffort } : {})
-```
+The AIX client transforms DLLM parameters to wire protocol format. This layer handles parameter precedence rules and name transformations.
 
 **Client Options**: The system supports parameter overrides through `llmOptionsOverride` and complete replacement via `llmUserParametersReplacement`.
 
@@ -73,7 +63,7 @@ The AIX client transforms DLLM parameters to wire protocol format. This layer ha
 
 Server-side adapters translate AIX parameters to vendor APIs. Each vendor may interpret parameters differently:
 
-- **OpenAI**: `vndOaiReasoningEffort` → `reasoning_effort`
+- **OpenAI**: `vndEffort` → `reasoning_effort`
 - **Perplexity**: Reuses OpenAI parameter format
 - **OpenAI Responses API**: Maps to structured reasoning config with additional logic
 
@@ -117,7 +107,6 @@ Some vendors use model variants to enable features, for instance:
 ## Migration and Compatibility
 
 The architecture supports parameter evolution:
-- **Version Coexistence**: Both `llmVndOaiReasoningEffort` and `llmVndOaiReasoningEffort4` exist simultaneously
 - **Precedence Rules**: Newer parameters take priority during AIX translation
 - **Graceful Degradation**: Unknown parameters log warnings but don't break functionality
 

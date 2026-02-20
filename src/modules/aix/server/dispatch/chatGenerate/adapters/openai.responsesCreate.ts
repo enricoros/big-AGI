@@ -37,11 +37,13 @@ export function aixToOpenAIResponses(
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
 
   // [OpenAI] Vendor-specific model checks
-  const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
-  const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
   const isOpenAIComputerUse = model.id.includes('computer-use');
 
-  const hotFixNoTemperature = isOpenAIOFamily && !isOpenAIChatGPT;
+  // NOTE: we do not use this anymore - LLM_IF_HOTFIX_NoTemperature works in definition, UI, and client calls
+  // const isOpenAIOFamily = ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+  // const isOpenAIChatGPT = ['gpt-5-chat'].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+  const forceNoTemperature = false;  // isOpenAIOFamily && !isOpenAIChatGPT;
+
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
 
   const isDialectAzure = openAIDialect === 'azure';
@@ -61,7 +63,7 @@ export function aixToOpenAIResponses(
     // Model configuration
     model: model.id,
     max_output_tokens: model.maxTokens ?? undefined, // response if unset: null
-    temperature: !hotFixNoTemperature ? model.temperature ?? undefined : undefined,
+    temperature: !forceNoTemperature ? model.temperature ?? undefined : undefined,
     // top_p: ... below (alternative to temperature)
 
     // Input
@@ -73,12 +75,8 @@ export function aixToOpenAIResponses(
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIResponsesToolChoice(chatGenerate.toolsPolicy),
     // parallel_tool_calls: undefined, // response if unset: true
 
-    // Operations Config
-    reasoning: !model.vndOaiReasoningEffort ? undefined : {
-      effort: model.vndOaiReasoningEffort,
-      // 'none' = omit (for unverified orgs), 'detailed' = explicit, undefined = default per model
-      ...(model.vndOaiReasoningSummary !== 'none' ? { summary: model.vndOaiReasoningSummary } : {}),
-    },
+    // Operations Config - use unified effort, fall back to deprecated field
+    // reasoning: ... below
 
     // Output Config
     // text: ... below
@@ -116,6 +114,24 @@ export function aixToOpenAIResponses(
       },
     };
 
+
+  // Reasoning
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
+  if (reasoningEffort === 'max') // domain validation
+    throw new Error(`OpenAI Responses API does not support '${reasoningEffort}' reasoning effort`);
+
+  if (reasoningEffort) {
+    payload.reasoning = {
+      effort: reasoningEffort,
+    };
+    // include detailed reasoning summaries, unless the user has asked to bypass the OpenAI Org verification (via the forceNoStream flag)
+    const specialExclusions = [
+      'o1-pro', // found manually: unsupported parameter: 'reasoning.summary' is not supported with the 'o1-pro-2025-03-19' model
+    ].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
+    if (reasoningEffort !== 'none' && !model.forceNoStream && !specialExclusions)
+      payload.reasoning.summary = 'detailed';
+  }
+
   // GPT-5 Verbosity: Add to existing text config or create new one
   if (model.vndOaiVerbosity) {
     payload.text = {
@@ -142,15 +158,17 @@ export function aixToOpenAIResponses(
       // [2025-11-18] Azure OpenAI still doesn't support web search tool yet - confirmed
       // [2025-09-12] Azure OpenAI doesn't support web search tool yet, and we also remove the "parameter" so we shall not come here
       console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
-    } else if (payload.reasoning?.effort === 'minimal') {
-      // Web search is not supported when the reasoning effort is 'minimal'
+    } else if (reasoningEffort === 'minimal') {
+      // 2026-02-17: Validated: Web search is not supported when the reasoning effort is 'minimal'
       // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
     } else {
 
       // Add the web search tool to the request
       if (!payload.tools?.length)
         payload.tools = [];
-      const webSearchTool: TRequestTool = {
+      const webSearchTool: TRequestTool = model.id.includes('-deep-research') ? {
+        type: 'web_search_preview', // HOTFIX for deep research models, which only seem to support the outdated 'web_search_preview' tool
+      } : {
         type: 'web_search',
         search_context_size: model.vndOaiWebSearchContext ?? undefined,
         user_location: model.userGeolocation && {

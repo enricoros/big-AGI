@@ -139,9 +139,27 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   }
 
   // [OpenAI] Vendor-specific reasoning effort
-  if (model.vndOaiReasoningEffort) {
-    payload.reasoning_effort = model.vndOaiReasoningEffort;
+  const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
+  if (reasoningEffort
+    && openAIDialect !== 'openrouter' // OpenRouter has its own channeling of this
+    && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // MoonShot maps to none->disabled / high->enabled
+    && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
+  ) {
+    if (reasoningEffort === 'max') // domain validation
+      throw new Error(`OpenAI ChatCompletions API does not support '${reasoningEffort}' reasoning effort`);
+    payload.reasoning_effort = reasoningEffort;
   }
+
+  // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
+  // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher) - https://docs.z.ai/guides/capabilities/thinking-mode
+  if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
+    if (reasoningEffort !== 'none' && reasoningEffort !== 'high') // domain validation
+      throw new Error(`${openAIDialect} only supports reasoning effort 'none' or 'high', got '${reasoningEffort}'`);
+
+    payload.thinking = { type: reasoningEffort === 'none' ? 'disabled' : 'enabled' };
+  }
+
+
   // [OpenAI, 2026-02-04] Verbosity control - official OpenAI parameter (low/medium/high, default: medium)
   if (model.vndOaiVerbosity) {
     // [OpenRouter, 2025-01-20] Also supported via OpenRouter for Anthropic Claude Opus 4.5, GPT-5 family
@@ -157,8 +175,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Hosted tools
   // [OpenAI] Vendor-specific web search context and/or geolocation
-  // NOTE: OpenAI doesn't support web search with minimal reasoning effort
-  const skipWebSearchDueToMinimalReasoning = model.vndOaiReasoningEffort === 'minimal';
+  // NOTE: OpenAI doesn't support web search with minimal reasoning effort (see LLMParametersEditor for more details)
+  const skipWebSearchDueToMinimalReasoning = reasoningEffort === 'minimal';
   if ((model.vndOaiWebSearchContext || model.userGeolocation) && !skipWebSearchDueToMinimalReasoning && !skipWebSearchDueToCustomTools) {
     payload.web_search_options = {};
     if (model.vndOaiWebSearchContext)
@@ -188,25 +206,6 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       // search_prompt: undefined, // could be configurable in the future
     }];
 
-  // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
-  if (openAIDialect === 'moonshot' && model.vndOaiReasoningEffort) {
-    if (model.vndOaiReasoningEffort !== 'none' && model.vndOaiReasoningEffort !== 'high')
-      throw new Error(`Moonshot Kimi K2.5 only supports reasoning effort 'none' or 'high', got '${model.vndOaiReasoningEffort}'`);
-
-    payload.thinking = { type: model.vndOaiReasoningEffort === 'none' ? 'disabled' : 'enabled' };
-
-    // Remove OpenAI-style reasoning_effort if it was set
-    delete payload.reasoning_effort;
-  }
-
-  // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher)
-  // Ref: https://docs.z.ai/guides/capabilities/thinking-mode
-  if (openAIDialect === 'zai' && model.vndOaiReasoningEffort) {
-    if (model.vndOaiReasoningEffort !== 'none' && model.vndOaiReasoningEffort !== 'high')
-      throw new Error(`Z.ai GLM only supports reasoning effort 'none' or 'high', got '${model.vndOaiReasoningEffort}'`);
-    payload.thinking = { type: model.vndOaiReasoningEffort === 'none' ? 'disabled' : 'enabled' };
-    delete payload.reasoning_effort;
-  }
 
   // [Moonshot] Kimi's $web_search builtin function
   if (openAIDialect === 'moonshot' && model.vndMoonshotWebSearch === 'auto' && !skipWebSearchDueToCustomTools)
@@ -220,8 +219,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [Perplexity] Vendor-specific extensions for search models
   if (openAIDialect === 'perplexity') {
     // Reasoning effort (reuses OpenAI parameter)
-    if (model.vndOaiReasoningEffort) {
-      payload.reasoning_effort = model.vndOaiReasoningEffort;
+    if (reasoningEffort) {
+      if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh' || reasoningEffort === 'max') // domain validation
+        throw new Error(`Perplexity does not support '${reasoningEffort}' reasoning effort`);
+      payload.reasoning_effort = reasoningEffort satisfies 'low' | 'medium' | 'high'; // TS narrowing of the 3 values supported by Perplexity
     }
 
     // Search mode (academic filter)
@@ -239,41 +240,53 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [OpenRouter, 2025-11-11] Unified reasoning parameter - supports both token-based and effort-based control
   if (openAIDialect === 'openrouter') {
 
-    // Anthropic via OpenRouter
-    // ref: https://openrouter.ai/docs/guides/guides/model-migrations/claude-4-6-opus
-    if (model.vndAntThinkingBudget !== undefined) {
+    // Anthropic via OpenRouter - incl: https://openrouter.ai/docs/guides/guides/model-migrations/claude-4-6-opus
+    const isTunneledAnt = model.id.startsWith('anthropic/');
+    const isTunneledGemini = model.id.startsWith('google/');
+    if (isTunneledAnt) {
+      // Effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
+      const antEffort = model.reasoningEffort; // ?? model.vndAntEffort;
+      if (antEffort) {
+        if (antEffort === 'none' || antEffort === 'minimal' || antEffort === 'xhigh') // domain validation
+          throw new Error(`OpenRouter->Anthropic API does not support '${antEffort}' reasoning effort`);
+        payload.verbosity = antEffort;
+      }
+
+      // Thinking budget -> OpenRouter reasoning
       // vndAntThinkingBudget's presence indicates a user preference:
       // - 'adaptive': adaptive thinking (4.6+) - reasoning enabled, no explicit budget
       // - a number: explicit token budget (1024-32000)
       // - null: disable thinking (don't set reasoning field)
       if (model.vndAntThinkingBudget === 'adaptive') {
-        payload.reasoning = {
-          enabled: true,
-        };
+        payload.reasoning = { enabled: true };
         delete payload.temperature;
-      } else if (model.vndAntThinkingBudget !== null) {
-        payload.reasoning = {
-          max_tokens: model.vndAntThinkingBudget,
-        };
+      } else if (typeof model.vndAntThinkingBudget === 'number') {
+        payload.reasoning = { enabled: true, max_tokens: model.vndAntThinkingBudget };
         delete payload.temperature;
-      } else {
-        // NOTE: with thinking disabled, we can still use temperature, so we don't delete it
+      } else /* null or undefined */ {
+        // NOTE: with thinking disabled (null), we can still use temperature, so we don't delete it
         //       see the note on llms.parameters.ts: 'llmVndAntThinkingBudget'
       }
     }
-    // Anthropic effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
-    if (model.vndAntEffort)
-      payload.verbosity = model.vndAntEffort;
-
     // Gemini via OpenRouter - budget-based (2.5) or level-based (3.0+)
-    else if (model.vndGeminiThinkingBudget !== undefined)
-      payload.reasoning = { max_tokens: model.vndGeminiThinkingBudget ?? 8192 };
-    else if (model.vndGeminiThinkingLevel)
-      payload.reasoning = { effort: model.vndGeminiThinkingLevel };
-
-    // OpenAI via OpenRouter - all effort levels including 'none' and 'minimal' are valid
-    else if (model.vndOaiReasoningEffort)
-      payload.reasoning = { effort: model.vndOaiReasoningEffort };
+    else if (isTunneledGemini) {
+      if (model.vndGeminiThinkingBudget !== undefined) {
+        payload.reasoning = { enabled: true, max_tokens: model.vndGeminiThinkingBudget };
+      } else {
+        const gemEffort = model.reasoningEffort; // ?? model.vndGeminiThinkingLevel;
+        if (gemEffort) {
+          if (gemEffort === 'none' || gemEffort === 'xhigh' || gemEffort === 'max') // domain validation
+            throw new Error(`OpenRouter->Gemini API does not support '${gemEffort}' reasoning effort`);
+          payload.reasoning = { enabled: true, effort: gemEffort };
+        }
+      }
+    }
+    // OpenAI-compatible (including deepseek, moonshotai, x-ai, z-ai) via OpenRouter - all effort levels including 'none' and 'minimal' are valid (not max, that's just for Anthropic via verbosity)
+    else if (reasoningEffort) {
+      if (reasoningEffort === 'max') // domain validation
+        throw new Error(`OpenRouter->OpenAI API does not support '${reasoningEffort}' reasoning effort`);
+      payload.reasoning = { enabled: reasoningEffort !== 'none', effort: reasoningEffort };
+    }
 
     // FIX double-reasoning request - remove reasoning_effort after transferring it to reasoning (unless already set)
     if (payload.reasoning_effort) {
