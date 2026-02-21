@@ -12,6 +12,7 @@ import { AzureServiceSetup } from '../vendors/azure/AzureServiceSetup';
 import { DeepseekAIServiceSetup } from '../vendors/deepseek/DeepseekAIServiceSetup';
 import { GeminiServiceSetup } from '../vendors/gemini/GeminiServiceSetup';
 import { GroqServiceSetup } from '../vendors/groq/GroqServiceSetup';
+import { LLMAPIServiceSetup } from '../vendors/llmapi/LLMAPIServiceSetup';
 import { LMStudioServiceSetup } from '../vendors/lmstudio/LMStudioServiceSetup';
 import { LocalAIServiceSetup } from '../vendors/localai/LocalAIServiceSetup';
 import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
@@ -38,6 +39,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   deepseek: DeepseekAIServiceSetup,
   googleai: GeminiServiceSetup,
   groq: GroqServiceSetup,
+  llmapi: LLMAPIServiceSetup,
   lmstudio: LMStudioServiceSetup,
   localai: LocalAIServiceSetup,
   mistral: MistralServiceSetup,

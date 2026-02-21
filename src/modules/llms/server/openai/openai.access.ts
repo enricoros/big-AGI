@@ -4,7 +4,7 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 15 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
+ * Supports 16 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, llmapi, lmstudio,
  * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai, zai
  */
 
@@ -22,6 +22,7 @@ import type { RequestAccessValues } from '../llm.server.types';
 const DEFAULT_ALIBABA_HOST = 'https://dashscope-intl.aliyuncs.com/compatible-mode';
 const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
+const DEFAULT_LLMAPI_HOST = 'https://api.llmapi.ai';
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
@@ -111,7 +112,7 @@ export type OpenAIDialects = OpenAIAccessSchema['dialect'];
 export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
-    'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
+    'alibaba', 'azure', 'deepseek', 'groq', 'llmapi', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai', 'openpipe',
     'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
   ]),
@@ -186,6 +187,25 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${groqKey}`,
         },
         url: groqHost + apiPath,
+      };
+
+    case 'llmapi':
+      let llmapiKey = access.oaiKey || env.LLMAPI_API_KEY || '';
+      const llmapiHost = llmsFixupHost(access.oaiHost || DEFAULT_LLMAPI_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      llmapiKey = llmsRandomKeyFromMultiKey(llmapiKey);
+
+      if (!llmapiKey)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing LLM API Key. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${llmapiKey}`,
+        },
+        url: llmapiHost + apiPath,
       };
 
     case 'lmstudio':

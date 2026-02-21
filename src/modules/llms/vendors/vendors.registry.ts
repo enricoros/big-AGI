@@ -6,6 +6,7 @@ import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorDeepseek } from './deepseek/deepseekai.vendor';
 import { ModelVendorGemini } from './gemini/gemini.vendor';
 import { ModelVendorGroq } from './groq/groq.vendor';
+import { ModelVendorLLMAPI } from './llmapi/llmapi.vendor';
 import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
@@ -29,6 +30,7 @@ export type ModelVendorId =
   | 'deepseek'
   | 'googleai'
   | 'groq'
+  | 'llmapi'
   | 'lmstudio'
   | 'localai'
   | 'mistral'
@@ -51,6 +53,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   deepseek: ModelVendorDeepseek,
   googleai: ModelVendorGemini,
   groq: ModelVendorGroq,
+  llmapi: ModelVendorLLMAPI,
   lmstudio: ModelVendorLMStudio,
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,

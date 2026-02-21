@@ -62,6 +62,9 @@ export const env = createEnv({
     // LLM: Groq
     GROQ_API_KEY: z.string().optional(),
 
+    // LLM: LLM API (llmapi.ai)
+    LLMAPI_API_KEY: z.string().optional(),
+
     // LLM: LocalAI
     LOCALAI_API_HOST: z.url().optional(),
     LOCALAI_API_KEY: z.string().optional(),

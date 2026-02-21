@@ -14,6 +14,7 @@ export interface BackendCapabilities {
   hasLlmDeepseek: boolean;
   hasLlmGemini: boolean;
   hasLlmGroq: boolean;
+  hasLlmLLMAPI: boolean;
   hasLlmLocalAIHost: boolean;
   hasLlmLocalAIKey: boolean;
   hasLlmMistral: boolean;
@@ -55,6 +56,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmDeepseek: false,
     hasLlmGemini: false,
     hasLlmGroq: false,
+    hasLlmLLMAPI: false,
     hasLlmLocalAIHost: false,
     hasLlmLocalAIKey: false,
     hasLlmMistral: false,
