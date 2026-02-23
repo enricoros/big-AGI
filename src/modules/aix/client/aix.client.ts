@@ -9,7 +9,6 @@ import { apiStream } from '~/common/util/trpc.client';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
-import { getLabsDevNoStreaming } from '~/common/stores/store-ux-labs';
 import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
@@ -22,7 +21,7 @@ import { AixStreamRetry } from './aix.client.retry';
 import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
-import { aixClientDebuggerGetRBO } from './debugger/memstore-aix-client-debugger';
+import { aixClientDebuggerGetRBO, getAixDebuggerNoStreaming } from './debugger/memstore-aix-client-debugger';
 import { withDecimator } from './withDecimator';
 
 
@@ -727,7 +726,7 @@ async function _aixChatGenerateContent_LL(
           aixModel,
           aixChatGenerate,
           aixContext,
-          getLabsDevNoStreaming() ? false : aixStreaming,
+          getAixDebuggerNoStreaming() ? false : aixStreaming,
           aixConnectionOptions,
           abortSignal,
         );
@@ -739,7 +738,7 @@ async function _aixChatGenerateContent_LL(
           model: aixModel,
           chatGenerate: aixChatGenerate,
           context: aixContext,
-          streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
+          streaming: getAixDebuggerNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
           connectionOptions: aixConnectionOptions,
         }, { signal: abortSignal });
 

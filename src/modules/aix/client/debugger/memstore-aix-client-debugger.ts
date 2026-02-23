@@ -93,6 +93,8 @@ interface AixClientDebuggerState {
   frames: AixClientDebugger.Frame[];
   activeFrameId: AixFrameId | null;
   maxFrames: number;
+  // AIX force disable streaming for all requests (separate from per-model llmForceNoStream)
+  aixNoStreaming: boolean;
   // AIX next payload override - JSON string injected into requests after validation
   requestBodyOverrideJson: string;
 }
@@ -120,6 +122,7 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
   frames: [],
   activeFrameId: null,
   maxFrames: DEFAULT_FRAMES_COUNT,
+  aixNoStreaming: false,
   requestBodyOverrideJson: '',
 
 
@@ -203,4 +206,12 @@ export function aixClientDebuggerSetRBO(json: string) {
 
 export function aixClientDebuggerGetRBO(): string {
   return useAixClientDebuggerStore.getState().requestBodyOverrideJson;
+}
+
+export function getAixDebuggerNoStreaming(): boolean {
+  return useAixClientDebuggerStore.getState().aixNoStreaming;
+}
+
+export function toggleAixDebuggerNoStreaming(): void {
+  useAixClientDebuggerStore.setState(state => ({ aixNoStreaming: !state.aixNoStreaming }));
 }
