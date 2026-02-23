@@ -32,7 +32,7 @@ export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: n
     return { getDocument: null };
   });
   if (!getDocument) {
-    console.log('pdfToText: [dev] pdfjs-dist loading skipped');
+    console.log('[DEV] pdfToText: pdfjs-dist loading skipped');
     return { text: '', pageCount: 0, avgCharsPerPage: 0 };
   }
   const pdf = await getDocument({ data: pdfBuffer }).promise;
@@ -110,7 +110,7 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
     return { getDocument: null };
   });
   if (!getDocument) {
-    console.log('pdfToImageDataURLs: [dev] pdfjs-dist loading skipped');
+    console.log('[DEV] pdfToImageDataURLs: pdfjs-dist loading skipped');
     return [];
   }
   const pdf = await getDocument({ data: pdfBuffer }).promise;
