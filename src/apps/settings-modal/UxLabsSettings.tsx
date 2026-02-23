@@ -37,7 +37,6 @@ export function UxLabsSettings() {
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsDevMode, setLabsDevMode,
-    labsDevNoStreaming, setLabsDevNoStreaming,
   } = useUXLabsStore();
 
   return <>
@@ -48,13 +47,6 @@ export function UxLabsSettings() {
       <FormSwitchControl
         title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Developer Mode</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
         checked={labsDevMode} onChange={setLabsDevMode}
-      />
-    )}
-
-    {labsDevMode && (
-      <FormSwitchControl
-        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Disable Streaming</>} description={labsDevNoStreaming ? 'Enabled' : 'Disabled'}
-        checked={labsDevNoStreaming} onChange={setLabsDevNoStreaming}
       />
     )}
 
