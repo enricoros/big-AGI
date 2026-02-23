@@ -3,14 +3,12 @@ import * as React from 'react';
 import { FormControl, ListDivider, Switch } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import EngineeringIcon from '@mui/icons-material/Engineering';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
-import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import type { ChatThinkingPolicy, TokenCountingMethod } from '../chat/store-app-chat';
@@ -85,8 +83,6 @@ export function AppChatSettingsAI() {
     tokenCountingMethod, setTokenCountingMethod,
   } = useChatAutoAI();
 
-  const labsDevMode = useLabsDevMode();
-
   const showModelIcons = false; // useUIComplexityMode() === 'extra';
 
   // callbacks
@@ -140,15 +136,6 @@ export function AppChatSettingsAI() {
       description='Image captioning'
       tooltip='Vision model used to generate text descriptions of images when the Caption (Text) attachment option is selected.'
     />
-
-    {labsDevMode && (
-      <FormControlDomainModel
-        domainId='primaryChat'
-        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Last used model</>}
-        description='Chat fallback model'
-        tooltip='The last used chat model, used as default for new conversations. This is a development setting used to test out auto-detection of the most fitting initial chat model.'
-      />
-    )}
 
     <FormSelectControl
       title='Token Counting'

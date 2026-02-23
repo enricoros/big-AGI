@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { Is } from '~/common/util/pwaUtils';
 
 
 // UX Labs Experiments
@@ -35,11 +34,6 @@ interface UXLabsStore {
   labsShowShortcutBar: boolean;
   setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => void;
 
-  // [DEV MODE] only shown on localhost
-
-  labsDevMode: boolean;
-  setLabsDevMode: (labsDevMode: boolean) => void;
-
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -70,11 +64,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsShowShortcutBar: true,
       setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => set({ labsShowShortcutBar }),
 
-      // [DEV MODE] - maybe move them from here
-
-      labsDevMode: false,
-      setLabsDevMode: (labsDevMode: boolean) => set({ labsDevMode }),
-
     }),
     {
       name: 'app-ux-labs',
@@ -95,13 +84,5 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
 export function getUXLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
-}
-
-export function useLabsDevMode() {
-  return useUXLabsStore((state) => state.labsDevMode) && Is.Deployment.Localhost;
-}
-
-export function getLabsDevMode() {
-  return useUXLabsStore.getState().labsDevMode && Is.Deployment.Localhost;
 }
 

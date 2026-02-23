@@ -6,7 +6,6 @@ import AddIcon from '@mui/icons-material/Add';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
-import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -20,9 +19,7 @@ import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVert
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
-import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
-import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
@@ -55,7 +52,6 @@ export function ChatPane(props: {
   // external state
   const { canAddPane, isMultiPane } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
-  const labsDevMode = useLabsDevMode();
 
   const { isArchived, setArchived } = useChatStore(useShallow((state) => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
@@ -212,16 +208,6 @@ export function ChatPane(props: {
         {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
       </ListItemButton>
     </OptimaPanelGroupedList>
-
-    {/* [DEV] Development */}
-    {labsDevMode && (
-      <OptimaPanelGroupedList title='[Developers]'>
-        <MenuItem onClick={optimaActions().openAIXDebugger}>
-          <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
-          AIX: Show Last Request...
-        </MenuItem>
-      </OptimaPanelGroupedList>
-    )}
 
   </>;
 }

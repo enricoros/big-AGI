@@ -31,8 +31,6 @@ export function EnhancedRenderCodeMenu(props: {
 }) {
 
   // state
-  // const { showPromisedOverlay } = useOverlayComponents();
-  // const labsDevMode = useLabsDevMode();
   const { labsEnhanceCodeLiveFile, setLabsEnhanceCodeLiveFile } = useUXLabsStore(useShallow(state => ({
     // labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
     // setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
@@ -146,14 +144,6 @@ export function EnhancedRenderCodeMenu(props: {
         <ListItemDecorator>{(labsEnhanceCodeLiveFile && liveFileSupported) && <CheckRoundedIcon />}</ListItemDecorator>
         {liveFileSupported ? 'LiveFile Patch' : 'LiveFile - No Browser Support'}
       </MenuItem>
-
-      {/*{labsDevMode && (*/}
-      {/*  // A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems*/}
-      {/*  <MenuItem onClick={toggleEnhanceCodeBlocks}>*/}
-      {/*    <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>*/}
-      {/*    [DEV] Enhanced Code Blocks*/}
-      {/*  </MenuItem>*/}
-      {/*)}*/}
 
     </CloseablePopup>
   );

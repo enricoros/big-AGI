@@ -4,14 +4,12 @@ import { FormControl, Switch, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CodeIcon from '@mui/icons-material/Code';
 import EditNoteIcon from '@mui/icons-material/EditNote';
-import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
-import { Is } from '~/common/util/pwaUtils';
 import { Link } from '~/common/components/Link';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
@@ -29,21 +27,9 @@ export function UxLabsSettings() {
     labsShowCost, setLabsShowCost,
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
-    labsDevMode, setLabsDevMode,
   } = useUXLabsStore();
 
   return <>
-
-    {/* [DEV MODE] Settings */}
-
-    {(Is.Deployment.Localhost || labsDevMode) && (
-      <FormSwitchControl
-        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Developer Mode</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
-        checked={labsDevMode} onChange={setLabsDevMode}
-      />
-    )}
-
-    {/* Non-Graduated Settings */}
 
     <FormSwitchControl
       title={<><CodeIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Enhance Legacy Code</>} description={labsEnhanceCodeBlocks ? 'Auto-Enhance' : 'Disabled'}
