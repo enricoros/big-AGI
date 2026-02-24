@@ -48,11 +48,11 @@ function _platformModifier(mod: string): string {
   if (!Is.OS.MacOS) return mod;
   switch (mod) {
     case 'Ctrl':
-      return '\u2303';
+      return '⌃';
     case 'Shift':
-      return '\u21E7';
+      return '⇧';
     case 'Alt':
-      return '\u2325';
+      return '⌥';
     default:
       return mod;
   }
@@ -61,15 +61,15 @@ function _platformModifier(mod: string): string {
 function _displayKey(key: string): string {
   switch (key) {
     case 'ArrowUp':
-      return '\u2191';
+      return '↑';
     case 'ArrowDown':
-      return '\u2193';
+      return '↓';
     case 'ArrowLeft':
-      return '\u2190';
+      return '←';
     case 'ArrowRight':
-      return '\u2192';
+      return '→';
     case 'Backspace':
-      return '\u232B';
+      return '⌫';
     default:
       return key.length === 1 ? key.toUpperCase() : key;
   }
