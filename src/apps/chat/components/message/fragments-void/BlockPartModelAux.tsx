@@ -18,7 +18,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 
 
 // configuration
-const ENABLE_MARKDOWN_DETECTION = false;
+const ENABLE_MARKDOWN_DETECTION = true;
 // const REASONING_COLOR = '#ca74b8'; // '#f22a85' (folder-aligned), '#ca74b8' (emoji-aligned)
 const REASONING_COLOR: ColorPaletteProp = 'success';
 const ANTHROPIC_REDACTED_EXPLAINER = //  https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#example-streaming-with-redacted-thinking
@@ -29,7 +29,7 @@ const _styles = {
 
   block: {
     mx: 1.5,
-  } as const,
+  },
 
   chip: {
     px: 1.5,
@@ -38,24 +38,24 @@ const _styles = {
     outline: '1px solid',
     outlineColor: `${REASONING_COLOR}.solidBg`, // .outlinedBorder
     boxShadow: `1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
-  } as const,
+  },
 
   chipDisabled: {
     px: 1.5,
     py: 0.375,
     my: '1px', // to not crop the outline on mobile, or on beam
-  } as const,
+  },
 
   chipIcon: {
     fontSize: '1rem',
     mr: 0.5,
-  } as const,
+  },
 
   chipIconPending: {
     fontSize: '1rem',
     mr: 0.5,
     animation: `${animationSpinHalfPause} 2s ease-in-out infinite`,
-  } as const,
+  },
 
   chipExpanded: {
     mt: '1px', // need to copy the `chip` mt
@@ -63,14 +63,14 @@ const _styles = {
     py: 0.375,
     // borderRadius: 'sm',
     // transition: 'border-radius 0.2s ease-in-out',
-  } as const,
+  },
 
   text: {
-    borderRadius: '12px',
+    borderRadius: 'sm', // was: 12px
     border: '1px solid',
     borderColor: `${REASONING_COLOR}.outlinedColor`,
     backgroundColor: `rgb(var(--joy-palette-${REASONING_COLOR}-lightChannel) / 15%)`, // similar to success.50
-    boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
+    // boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
     mt: 1,
     p: 1,
 
@@ -81,13 +81,19 @@ const _styles = {
     // layout
     display: 'flex',
     flexDirection: 'column',
-  } as const,
+  },
+
+  textUndoWhitespace: {
+    // for markdown content, we want to allow it to control the whitespace and line breaks, so we undo the plain text styles that break on whitespace
+    overflowWrap: 'normal',
+    whiteSpace: 'normal',
+  },
 
   buttonInline: {
     outline: 'none',
     // borderRadius: 'sm',
     // fontSize: 'xs',
-  } as const,
+  },
 
 } as const;
 
@@ -97,6 +103,8 @@ function _maybeMarkdownReasoning(trimmed: string): boolean {
   // const trimmed = text.trimStart();
   return trimmed.startsWith('**')
     || trimmed.startsWith('# ')
+    // || trimmed.startsWith('* ')
+    // || trimmed.startsWith('- ')
     || /^#{2,6}\s/.test(trimmed);
 }
 
@@ -124,8 +132,12 @@ export function BlockPartModelAux(props: {
 
   // memo
   const scaledTypographySx = useScaledTypographySx(adjustContentScaling(props.contentScaling, -1), false, false);
-  const textSx = React.useMemo(() => ({ ..._styles.text, ...scaledTypographySx }), [scaledTypographySx]);
   const maybeMarkdown = React.useMemo(() => !ENABLE_MARKDOWN_DETECTION || neverExpanded ? false : _maybeMarkdownReasoning(props.auxText), [neverExpanded, props.auxText]);
+  const textSx = React.useMemo(() => ({
+    ..._styles.text,
+    ...scaledTypographySx,
+    ...(maybeMarkdown ? _styles.textUndoWhitespace : {}),
+  }), [maybeMarkdown, scaledTypographySx]);
 
   let typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
@@ -200,7 +212,7 @@ export function BlockPartModelAux(props: {
         Show {typeText}
       </Chip>
 
-      {expanded && (showInline || showDelete) && !!props.auxText && (
+      {expanded && !props.messagePendingIncomplete && (showInline || showDelete) && !!props.auxText && (
         <Box sx={{ display: 'flex', gap: 1 }}>
 
           {/* Make inline */}
@@ -208,10 +220,10 @@ export function BlockPartModelAux(props: {
             color={REASONING_COLOR}
             variant='soft'
             size='sm'
-            disabled={!onFragmentReplace || props.messagePendingIncomplete}
+            disabled={!onFragmentReplace /* || props.messagePendingIncomplete */}
             onClick={!onFragmentReplace ? undefined : handleInline}
             endDecorator={<TextFieldsIcon />}
-            sx={(!onFragmentReplace || props.messagePendingIncomplete) ? _styles.chipDisabled : _styles.chip}
+            sx={(!onFragmentReplace /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
           >
             Make Regular Text
           </Chip>}
@@ -221,10 +233,10 @@ export function BlockPartModelAux(props: {
             color={REASONING_COLOR}
             variant='soft'
             size='sm'
-            disabled={!onFragmentDelete || props.messagePendingIncomplete}
+            disabled={!onFragmentDelete /* || props.messagePendingIncomplete */}
             onClick={!onFragmentDelete ? undefined : handleDelete}
             endDecorator={<DeleteOutlineIcon />}
-            sx={(!onFragmentDelete || props.messagePendingIncomplete) ? _styles.chipDisabled : _styles.chip}
+            sx={(!onFragmentDelete /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
           >
             Delete
           </Chip>}
