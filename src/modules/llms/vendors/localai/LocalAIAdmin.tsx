@@ -124,7 +124,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
   // state
   const [installModels, setInstallModels] = React.useState<{ galleryName: string; modelName: string; }[]>([]);
   const [showVoiceModels, setShowVoiceModels] = React.useState(false);
-  const parentRef = React.useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = React.useState<HTMLDivElement | null>(null);
 
   // external state
   const { data, error } = apiQuery.llmOpenAI.dialectLocalAI_galleryModelsAvailable.useQuery({ access: props.access }, {
@@ -141,7 +141,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
   // virtualizer
   const virtualizer = useVirtualizer({
     count: filteredModels.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize: () => 40, // Fixed row height
     overscan: 5,
   });
@@ -206,7 +206,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
               }}
             >
               <Box
-                ref={parentRef}
+                ref={setScrollElement}
                 sx={{
                   height: '500px',
                   overflow: 'auto',
