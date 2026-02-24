@@ -189,6 +189,7 @@ export class DebugWireLogger {
     console.log(
       `\n[${this.label}:${this.distinct}] <- #${this.sequenceNumber} (${elapsedMs} ms):`,
       objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, 8192),
+      // JSON.stringify(objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, 8192), null, 2),
     );
   }
 
