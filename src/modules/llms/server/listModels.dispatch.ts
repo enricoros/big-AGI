@@ -48,6 +48,7 @@ import { tlusApiHeuristic, tlusApiTryParse } from './openai/models/tlusapi.model
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
 import { zaiCuratedModelDescriptions, zaiDiscoverModels, zaiModelSort } from './openai/models/zai.models';
+import { llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
 
 
 // -- Dispatch types --
@@ -322,6 +323,19 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           const discovered = zaiDiscoverModels(apiModelIds);
           return [...curated, ...discovered].sort(zaiModelSort);
         },
+      });
+
+    case 'llmapi':
+      // [LLM API]: OpenAI-compatible gateway; /v1/models does not require auth but we pass headers anyway
+      return createDispatch({
+        fetchModels: async () => {
+          const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
+          _wire?.logRequest('GET', url, headers);
+          const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: 'LLM API', signal });
+          _wire?.logResponse(wireModels);
+          return wireModels;
+        },
+        convertToDescriptions: (wireModels) => llmapiModelsToModelDescriptions(wireModels),
       });
 
     case 'alibaba':

@@ -34,6 +34,7 @@ const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
 const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
+const DEFAULT_LLMAPI_HOST = 'https://internal.llmapi.ai';
 
 
 // -- Centralized OpenAI-compatible API Paths --
@@ -113,7 +114,7 @@ export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai', 'openpipe',
-    'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
+    'openrouter', 'perplexity', 'togetherai', 'xai', 'zai', 'llmapi',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   oaiKey: z.string().trim(),
@@ -426,6 +427,24 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         },
         url: zaiHost + zaiPath,
       };
+
+    case 'llmapi': {
+      // LLM API: OpenAI-compatible gateway; base URL is https://internal.llmapi.ai/v1
+      let llmapiKey = access.oaiKey || '';
+      const llmapiHost = llmsFixupHost(access.oaiHost || DEFAULT_LLMAPI_HOST, apiPath);
+
+      llmapiKey = llmsRandomKeyFromMultiKey(llmapiKey);
+      if (!llmapiKey)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing LLM API Key. Add it on the UI (Models Setup).' });
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${llmapiKey}`,
+          'Content-Type': 'application/json',
+        },
+        url: llmapiHost + apiPath,
+      };
+    }
 
   }
 }

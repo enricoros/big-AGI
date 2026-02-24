@@ -18,6 +18,7 @@ import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
 import { ModelVendorXAI } from './xai/xai.vendor';
 import { ModelVendorZAI } from './zai/zai.vendor';
+import { ModelVendorLLMAPI } from './llmapi/llmapi.vendor';
 
 import type { IModelVendor } from './IModelVendor';
 
@@ -41,6 +42,7 @@ export type ModelVendorId =
   | 'togetherai'
   | 'xai'
   | 'zai'
+  | 'llmapi'
   ;
 
 /** Global: Vendor Instances Registry **/
@@ -63,6 +65,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   togetherai: ModelVendorTogetherAI,
   xai: ModelVendorXAI,
   zai: ModelVendorZAI,
+  llmapi: ModelVendorLLMAPI,
 } as Record<string, IModelVendor>;
 
 

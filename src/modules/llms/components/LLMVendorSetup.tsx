@@ -24,6 +24,7 @@ import { PerplexityServiceSetup } from '../vendors/perplexity/PerplexityServiceS
 import { TogetherAIServiceSetup } from '../vendors/togetherai/TogetherAIServiceSetup';
 import { XAIServiceSetup } from '../vendors/xai/XAIServiceSetup';
 import { ZAIServiceSetup } from '~/modules/llms/vendors/zai/ZAIServiceSetup';
+import { LLMAPIServiceSetup } from '~/modules/llms/vendors/llmapi/LLMAPIServiceSetup';
 
 
 /**
@@ -50,6 +51,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   togetherai: TogetherAIServiceSetup,
   xai: XAIServiceSetup,
   zai: ZAIServiceSetup,
+  llmapi: LLMAPIServiceSetup,
 } as const;
 
 

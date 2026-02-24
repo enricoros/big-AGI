@@ -27,6 +27,7 @@ import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon
 import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
 import { XAIIcon } from '~/common/components/icons/vendors/XAIIcon';
 import { ZAIIcon } from '~/common/components/icons/vendors/ZAIIcon';
+import { LLMAPIIcon } from '~/common/components/icons/vendors/LLMAPIIcon';
 
 
 /**
@@ -53,6 +54,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   togetherai: TogetherIcon,
   xai: XAIIcon,
   zai: ZAIIcon,
+  llmapi: LLMAPIIcon,
 };
 
 
