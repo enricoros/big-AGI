@@ -15,25 +15,165 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
   if (imageBkInputs)
     return imageBkInputs;
 
+  // Phase 1: Parse fenced code blocks with stack-based state tracking
+  const phase1Blocks = _parseFencedBlocks(text);
+
+  // Phase 2: Extract HTML/SVG blocks from markdown segments
+  const blocks: RenderBlockInputs = [];
+  for (const block of phase1Blocks) {
+    if (block.bkt === 'md-bk')
+      _extractHtmlSvgBlocks(block.content, blocks);
+    else
+      blocks.push(block);
+  }
+
+  return blocks;
+}
+
+
+// Fence line detection: matches lines starting with 3+ backticks or tildes
+const _fenceLineRegex = /^(`{3,}|~{3,})(.*)/;
+
+/**
+ * Phase 1: Line-by-line stateful parser with stack-based fence depth tracking.
+ *
+ * Classification of fence lines:
+ * - FENCE_INFO (```python):  single-word after fence → always an opening signal
+ * - FENCE_PURE (```):        only whitespace after fence → close at depth > 0, open at depth 0
+ * - FENCE_DIRTY (```Text..): multi-word after fence → dirty close at depth > 0, plain text at depth 0
+ *
+ * Stack rules:
+ * - Openings push {char, len} onto the stack
+ * - Closes pop if fence char and length (≥ opening) match the top of stack
+ * - Only level-0 blocks are emitted; nested fences become content of the outer block
+ */
+function _parseFencedBlocks(text: string): RenderBlockInputs {
+  const lines = text.split('\n');
+  const blocks: RenderBlockInputs = [];
+
+  // Stack of open fence blocks: each entry tracks the fence character and length
+  const stack: { fenceChar: string; fenceLen: number }[] = [];
+
+  // Accumulation buffers
+  let mdLines: string[] = [];   // markdown text lines (depth 0)
+  let codeLines: string[] = []; // code content lines (depth > 0)
+  let codeTitle = '';            // info string of the outermost code block
+
+  // Flush accumulated markdown lines as a md-bk block
+  const flushMarkdown = () => {
+    if (mdLines.length > 0) {
+      const content = mdLines.join('\n');
+      if (content)
+        blocks.push({ bkt: 'md-bk', content });
+      mdLines = [];
+    }
+  };
+
+  // Emit a code-bk block from accumulated code lines
+  const emitCodeBlock = (isPartial: boolean) => {
+    // Trim trailing whitespace-only characters from the last line, preserving leading spaces
+    let code = codeLines.join('\n');
+    code = code.replace(/[\t ]+$/, '');
+    blocks.push({
+      bkt: 'code-bk',
+      title: codeTitle,
+      code,
+      lines: countLines(code),
+      isPartial,
+    });
+    codeLines = [];
+    codeTitle = '';
+  };
+
+  for (const line of lines) {
+    const depth = stack.length;
+    const fenceMatch = line.match(_fenceLineRegex);
+
+    if (depth === 0) {
+      // --- At top level: looking for code block openings ---
+      if (fenceMatch) {
+        const fenceStr = fenceMatch[1];
+        const afterFence = fenceMatch[2].trim();
+        // Single non-whitespace token = info string (language tag); empty = pure fence
+        const isSingleToken = afterFence !== '' && !/\s/.test(afterFence);
+
+        if (afterFence === '' || isSingleToken) {
+          // Opening fence: flush any preceding markdown and start a code block
+          flushMarkdown();
+          stack.push({ fenceChar: fenceStr[0], fenceLen: fenceStr.length });
+          codeTitle = afterFence;
+          codeLines = [];
+        } else {
+          // Multi-word text after backticks at depth 0 → not a fence, just markdown
+          mdLines.push(line);
+        }
+      } else {
+        mdLines.push(line);
+      }
+    } else {
+      // --- Inside a code block: looking for closes or nested opens ---
+      if (fenceMatch) {
+        const fenceStr = fenceMatch[1];
+        const fenceChar = fenceStr[0];
+        const fenceLen = fenceStr.length;
+        const afterFence = fenceMatch[2].trim();
+        const isSingleToken = afterFence !== '' && !/\s/.test(afterFence);
+        const top = stack[stack.length - 1];
+
+        if (isSingleToken) {
+          // Single-word info string → nested opening (e.g., ```json inside ```markdown)
+          // Track depth so the outer block absorbs this content
+          stack.push({ fenceChar, fenceLen });
+          codeLines.push(line);
+        } else if (fenceChar === top.fenceChar && fenceLen >= top.fenceLen) {
+          // Fence matches the top of stack → close attempt (pure or dirty)
+          stack.pop();
+          if (stack.length === 0) {
+            // Back to depth 0: emit the code block
+            emitCodeBlock(false);
+            // For dirty closes, trailing text becomes the start of the next markdown block
+            if (afterFence)
+              mdLines.push(afterFence);
+          } else {
+            // Still nested: this closing fence is content of the outer block
+            codeLines.push(line);
+          }
+        } else {
+          // Fence doesn't match top of stack (wrong char or too short) → just content
+          codeLines.push(line);
+        }
+      } else {
+        // Regular text line inside code block
+        codeLines.push(line);
+      }
+    }
+  }
+
+  // End of text: flush remaining state
+  if (stack.length > 0)
+    emitCodeBlock(true);
+  flushMarkdown();
+
+  return blocks;
+}
+
+
+/**
+ * Phase 2: Extract HTML document and SVG blocks from markdown text segments.
+ * Splits a markdown text into sub-blocks, extracting `<!DOCTYPE html>...</html>`
+ * and `<svg ...>...</svg>` as code-bk blocks.
+ */
+function _extractHtmlSvgBlocks(text: string, blocks: RenderBlockInputs): void {
   const regexPatterns = {
-    // was: \w\x20\\.+-_ for tge filename, but was missing too much
-    // REVERTED THIS: was: (`{3,}\n?|$), but was matching backticks within blocks. so now it must end with a newline or stop
-    // This was the longest in use, and still we're based on it
-    // codeBlock: /`{3,}([\S\x20]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
-    // This is way more promising, but will either not perform a partial match (no match at all) or match a single line
-    // codeBlock: /^( {0,3})`{3,}([^\n`]*)\n([\s\S]*?)(?:\n^\1`{3,}[^\S\n]*(?=\n|$))?/gm,
-    // codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ ]*(?:\n|$))|$)/g, // #983
-    codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
   };
 
-  const blocks: RenderBlockInputs = [];
   let lastIndex = 0;
 
   while (true) {
 
-    // find the first match (if any) trying all the regexes
+    // Find the earliest match across all patterns
     let match: RegExpExecArray | null = null;
     let matchType: keyof typeof regexPatterns | null = null;
     let earliestMatchIndex: number | null = null;
@@ -51,20 +191,12 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     if (match === null)
       break;
 
-    // anything leftover before the match is text
+    // Text before the match
     if (match.index > lastIndex)
       blocks.push({ bkt: 'md-bk', content: text.slice(lastIndex, match.index) });
 
-    // add the block
+    // Emit the matched block
     switch (matchType) {
-      case 'codeBlock':
-        const blockTitle: string = (match[1] || '').trim();
-        // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
-        const blockCode: string = match[2].replace(/[\t ]+$/, '');
-        const blockEnd: string = match[3];
-        blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
-        break;
-
       case 'htmlCodeBlock':
         const preMatchHtml: string = `<!DOCTYPE html>${match[1]}</html>`;
         blocks.push({ bkt: 'code-bk', title: 'html', code: preMatchHtml, lines: countLines(preMatchHtml), isPartial: false });
@@ -75,13 +207,10 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
         break;
     }
 
-    // advance the pointer
     lastIndex = match.index + match[0].length;
   }
 
-  // remainder is text
+  // Remainder (or entire text if no matches) is markdown text
   if (lastIndex < text.length)
     blocks.push({ bkt: 'md-bk', content: text.slice(lastIndex) });
-
-  return blocks;
 }
