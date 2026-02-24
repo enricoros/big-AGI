@@ -13,9 +13,19 @@ export const enhancedCodePanelTitleTooltipSx: SxProps = {
   alignItems: 'center',
   columnGap: 2,
   rowGap: 1,
+  // labels
   '& > :nth-of-type(odd)': {
     color: 'text.tertiary',
     fontSize: 'xs',
+  },
+  // values
+  '& > :nth-of-type(even)': {
+    // fontWeight: 'bold',
+    color: 'text.primary',
+    // agi-ellipsize
+    // whiteSpace: 'nowrap',
+    // textOverflow: 'ellipsis',
+    overflow: 'hidden',
   },
 };
 
