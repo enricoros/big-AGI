@@ -32,7 +32,7 @@ export function SetupFormRefetchButton(props: {
         color={props.error ? 'warning' : 'primary'}
         disabled={props.disabled}
         loading={props.loading}
-        endDecorator={<RefreshIcon />}
+        startDecorator={<RefreshIcon />}
         onClick={props.refetch}
         sx={{ minWidth: 120, ml: 'auto' }}
       >

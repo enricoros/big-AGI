@@ -494,7 +494,7 @@ export function ModelsConfiguratorModal(props: {
             // '--ListItem-paddingY': '0rem', // items are smaller
             backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
             // borderRadius: 'md',
-            // boxShadow: 'inset 0px 2px 4px -2px rgba(0, 0, 0, 0.2)',
+            // boxShadow: 'inset 0px 2px 2px -2px rgba(0, 0, 0, 0.2)',
 
             // absorb the card pad
             mx: 'calc(-1 * var(--Card-padding, 1rem))',
