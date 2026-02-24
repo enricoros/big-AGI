@@ -263,8 +263,8 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
                             <Button
                               size='sm'
                               color='neutral'
-                              disabled={installModels.some(p => p.galleryName === model.gallery.name && p.modelName === model.name)}
-                              onClick={() => model.name && handleAppendInstall(model.gallery.name, model.name)}
+                              disabled={!model.gallery?.name || installModels.some(p => p.galleryName === model.gallery?.name && p.modelName === model.name)}
+                              onClick={() => model.name && model.gallery?.name && handleAppendInstall(model.gallery.name, model.name)}
                               sx={{ minWidth: 'auto', minHeight: 'auto', px: 1, py: 0.25 }}
                             >
                               Install

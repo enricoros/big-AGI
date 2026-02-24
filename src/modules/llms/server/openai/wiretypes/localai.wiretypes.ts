@@ -21,11 +21,11 @@ export const wireLocalAIModelsAvailableOutputSchema = z.array(z.object({
     sha256: z.string().optional(), // often empty
   })).optional(),
 
-  // Metadata
+  // Metadata - gallery has omitempty in upstream Go struct, so it may be absent
   gallery: z.object({
     url: z.string(),
     name: z.string(),
-  }),
+  }).optional(),
 
   installed: z.boolean().optional(),
 }));
