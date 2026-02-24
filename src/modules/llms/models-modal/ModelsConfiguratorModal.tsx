@@ -214,7 +214,7 @@ export function ModelsConfiguratorModal(props: {
       return (
         <Box sx={{ flex: 1, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
           <Dropdown open={mainMenuOpen} onOpenChange={handleMainMenuOpenChange}>
-            <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', sx: { backgroundColor: 'background.surface' } } }}>
+            <MenuButton slots={{ root: IconButton }} /* slotProps={{ root: { variant: 'plain' } }} */>
               <MoreVertIcon sx={{ fontSize: 'xl' }} />
             </MenuButton>
             <Menu placement='bottom-start' disablePortal sx={{ minWidth: 280 }}>
@@ -444,7 +444,7 @@ export function ModelsConfiguratorModal(props: {
         </AppBreadcrumbs>
       )}
       open onClose={optimaActions().closeModels}
-      darkBottomClose={!isTabWizard}
+      // darkBottomClose={!isTabWizard}
       hideBottomClose={isTabWizard}
       startButton={isTabWizard ? wizardButtons : startButton}
       closeText={isTabWizard ? 'Done' : undefined}
@@ -454,7 +454,6 @@ export function ModelsConfiguratorModal(props: {
       fullscreen={isMobile ? 'button' : undefined} // NOTE: was disabled because on mobile there's one screen with a stretch issue - but can't reproduce
     >
 
-      {isTabWizard && <Divider />}
       {isTabWizard && (
         <ModelsWizard
           isMobile={isMobile}
@@ -476,7 +475,6 @@ export function ModelsConfiguratorModal(props: {
         </Box>
       )}
 
-      {isTabSetup && hasLLMs && <Divider />}
       {isTabSetup && hasLLMs && (
         <ModelsList
           filterServiceId={showAllServices ? null : activeServiceId}
@@ -484,25 +482,34 @@ export function ModelsConfiguratorModal(props: {
           onOpenLLMOptions={optimaActions().openModelOptions}
           sx={{
             // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
-            minHeight: '8rem',
+            minHeight: '10rem',
             overflowY: 'auto',
 
-            // style (list variant=outlined)
-            '--ListItem-paddingY': '0rem',
-            '--ListItem-paddingRight': '0.5rem', // instead of 0.75
+            // bottom border
+            borderTop: '1px solid',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+
+            // style: edge-to-edge band (negative margin pattern, like ModelsWizard)
+            // '--ListItem-paddingY': '0rem', // items are smaller
             backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
-            borderRadius: 'md',
+            // borderRadius: 'md',
+            // boxShadow: 'inset 0px 2px 4px -2px rgba(0, 0, 0, 0.2)',
+
+            // absorb the card pad
+            mx: 'calc(-1 * var(--Card-padding, 1rem))',
+            // py: 1,
+            '--ListItem-paddingLeft': '1.25rem',
+            '--ListItem-paddingRight': '1rem',
 
             // [mobile] a bit less padding
-            '@media (max-width: 900px)': {
-              '--ListItem-paddingLeft': '0.5rem',
-              '--ListItem-paddingRight': '0.25rem',
-            },
+            // '@media (max-width: 900px)': {
+            //   '--ListItem-paddingLeft': '0.5rem',
+            //   '--ListItem-paddingRight': '0.25rem',
+            // },
           }}
         />
       )}
-
-      <Divider sx={{ visibility: 'hidden', height: 0 }} />
 
     </GoodModal>
   );

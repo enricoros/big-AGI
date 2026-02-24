@@ -331,11 +331,11 @@ export function ModelsList(props: {
   }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId, props.showHiddenModels]);
 
   return (
-    <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
+    <List size={!isMobile ? undefined : 'sm'} sx={props.sx}>
       {modelItems.length > 0 ? modelItems : (
         <ListItem sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Typography level='body-sm' mx={2}>
-            Please complete the configuration and refresh the models list.
+          <Typography level='body-sm' mx={2} textAlign='center'>
+            Please complete the configuration<br />and refresh the models.
           </Typography>
           {/*<Skeleton variant='rectangular' animation={false} height={24} width={160} />*/}
           {/*<Skeleton variant='rectangular' animation={false} height={24} width={120} />*/}

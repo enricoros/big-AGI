@@ -44,8 +44,11 @@ interface WizardProvider {
 const _styles = {
 
   container: {
-    margin: 'calc(-1 * var(--Card-padding, 1rem))',
+    mx: 'calc(-1 * var(--Card-padding, 1rem))',
     padding: 'var(--Card-padding)',
+    borderTop: '1px solid',
+    borderBottom: '1px solid',
+    borderColor: 'divider',
     // paddingRight: 'calc(1.5 * var(--Card-padding))',
     // background: 'linear-gradient(135deg, var(--joy-palette-primary-500), var(--joy-palette-primary-700))',
     // background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
