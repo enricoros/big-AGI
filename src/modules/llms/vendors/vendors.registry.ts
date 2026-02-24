@@ -2,6 +2,7 @@ import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 
 import { ModelVendorAlibaba } from './alibaba/alibaba.vendor';
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
+import { ModelVendorBedrock } from './bedrock/bedrock.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorDeepseek } from './deepseek/deepseekai.vendor';
 import { ModelVendorGemini } from './gemini/gemini.vendor';
@@ -25,6 +26,7 @@ import type { IModelVendor } from './IModelVendor';
 export type ModelVendorId =
   | 'alibaba'
   | 'anthropic'
+  | 'bedrock'
   | 'azure'
   | 'deepseek'
   | 'googleai'
@@ -47,6 +49,7 @@ export type ModelVendorId =
 const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   alibaba: ModelVendorAlibaba,
   anthropic: ModelVendorAnthropic,
+  bedrock: ModelVendorBedrock,
   azure: ModelVendorAzure,
   deepseek: ModelVendorDeepseek,
   googleai: ModelVendorGemini,

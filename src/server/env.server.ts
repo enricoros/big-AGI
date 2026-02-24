@@ -53,6 +53,12 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string().optional(),
     ANTHROPIC_API_HOST: z.url().optional(),
 
+    // LLM: AWS Bedrock
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    AWS_SESSION_TOKEN: z.string().optional(),
+    AWS_BEDROCK_REGION: z.string().optional(),
+
     // LLM: Deepseek AI
     DEEPSEEK_API_KEY: z.string().optional(),
 

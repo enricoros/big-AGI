@@ -4,6 +4,7 @@ import * as z from 'zod/v4';
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
 import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
+import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.access';
 import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
@@ -415,6 +416,7 @@ export namespace AixWire_API {
 
   export const Access_schema = z.discriminatedUnion('dialect', [
     anthropicAccessSchema,
+    bedrockAccessSchema,
     geminiAccessSchema,
     ollamaAccessSchema,
     openAIAccessSchema,
@@ -472,6 +474,9 @@ export namespace AixWire_API {
     // vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
     // vndOaiReasoningSummary: z.enum(['none', 'detailed']).optional(),
     // vndGeminiShowThoughts: z.boolean().optional(),
+
+    // AWS Bedrock
+    vndAwsInvokeAPI: z.enum(['invoke-anthropic', 'converse']).optional(),
 
     // Anthropic
     vndAnt1MContext: z.boolean().optional(),

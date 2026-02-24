@@ -15,6 +15,10 @@ import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces } from './mod
 import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
+// protocol: Bedrock
+import { bedrockControlPlaneURL, bedrockSignRequest } from './bedrock/bedrock.access';
+import { bedrockModelsToDescriptions, BedrockWire_API_Models_List } from './bedrock/bedrock.models';
+
 // protocol: Gemini
 import { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiAccess } from './gemini/gemini.access';
@@ -471,6 +475,36 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           }
         },
       });
+
+    case 'bedrock': {
+      return createDispatch({
+        fetchModels: async () => {
+          const region = access.bedrockRegion || 'us-west-2';
+
+          // Fetch both Foundation Models and Inference Profiles in parallel
+          const [fmHeaders, ipHeaders] = await Promise.all([
+            bedrockSignRequest(access, bedrockControlPlaneURL(region, '/foundation-models?byInferenceType=ON_DEMAND'), undefined, 'GET'),
+            bedrockSignRequest(access, bedrockControlPlaneURL(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000'), undefined, 'GET'),
+          ]);
+
+          const [fmResponse, ipResponse] = await Promise.all([
+            fetchJsonOrTRPCThrow({ url: bedrockControlPlaneURL(region, '/foundation-models?byInferenceType=ON_DEMAND'), headers: fmHeaders, name: 'Bedrock/FM', signal }),
+            fetchJsonOrTRPCThrow({ url: bedrockControlPlaneURL(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000'), headers: ipHeaders, name: 'Bedrock/IP', signal }),
+          ]);
+
+          _wire?.logResponse(fmResponse);
+          _wire?.logResponse(ipResponse);
+
+          return {
+            foundationModels: BedrockWire_API_Models_List.FoundationModelsResponse_schema.parse(fmResponse),
+            inferenceProfiles: BedrockWire_API_Models_List.InferenceProfilesResponse_schema.parse(ipResponse),
+          };
+        },
+        convertToDescriptions: ({ foundationModels, inferenceProfiles }) => {
+          return bedrockModelsToDescriptions(foundationModels, inferenceProfiles);
+        },
+      });
+    }
 
     default:
       const _exhaustiveCheck: never = dialect;

@@ -10,6 +10,7 @@ export interface BackendCapabilities {
   // llms
   hasLlmAlibaba: boolean;
   hasLlmAnthropic: boolean;
+  hasLlmBedrock: boolean;
   hasLlmAzureOpenAI: boolean;
   hasLlmDeepseek: boolean;
   hasLlmGemini: boolean;
@@ -51,6 +52,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     // initial values
     hasLlmAlibaba: false,
     hasLlmAnthropic: false,
+    hasLlmBedrock: false,
     hasLlmAzureOpenAI: false,
     hasLlmDeepseek: false,
     hasLlmGemini: false,

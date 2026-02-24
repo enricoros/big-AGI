@@ -27,6 +27,8 @@ export type ChatGenerateDispatch = {
   request: ChatGenerateDispatchRequest;
   demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
+  /** Optional TransformStream to convert the response body before demuxing (e.g. AWS EventStream binary → SSE text) */
+  responseBodyTransform?: TransformStream<Uint8Array, Uint8Array>;
 };
 
 export type ChatGenerateDispatchRequest =
@@ -43,9 +45,10 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
 // -- Specialized Implementations -- Core of Server-side AI Vendors abstraction --
 
 /**
- * Specializes to the correct vendor a request for chat generation
+ * Specializes to the correct vendor a request for chat generation.
+ * Returns a Promise to support async operations like SigV4 signing (Bedrock).
  */
-export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): ChatGenerateDispatch {
+export async function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): Promise<ChatGenerateDispatch> {
 
   const { dialect } = access;
   switch (dialect) {
@@ -125,6 +128,57 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         // chatGenerateParse: createDispatchParserOllama(),
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
+
+    case 'bedrock': {
+
+      // Dual-path: invoke-anthropic (default for Anthropic models) or converse (non-Anthropic, stub)
+      const invokeAPI = model.vndAwsInvokeAPI || 'invoke-anthropic';
+
+      if (invokeAPI === 'converse') {
+        // Converse API path - stub: not yet implemented
+        throw new Error('[Bedrock] Converse API is not yet implemented. Use Anthropic models with the InvokeModel API (invoke-anthropic).');
+      }
+
+      // invoke-anthropic: Use native Anthropic Messages API body format
+      // 100% reuse of the existing Anthropic adapter and parser
+
+      // Build the body (identical to Anthropic direct API)
+      const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
+      bedrockAnthropicBody.anthropic_version = 'bedrock-2023-05-31';
+
+      // Move beta features to request body (Bedrock uses body field, not header)
+      const bedrockBetaFeatures: string[] = [];
+      if (model.vndAnt1MContext)
+        bedrockBetaFeatures.push('context-1m-2025-08-07');
+      if (bedrockBetaFeatures.length)
+        bedrockAnthropicBody.anthropic_beta = bedrockBetaFeatures;
+
+      // Build the URL and sign the request (async - SigV4 uses SubtleCrypto)
+      const { bedrockSignRequest, bedrockRuntimeURL } = await import('~/modules/llms/server/bedrock/bedrock.access');
+      const region = access.bedrockRegion || 'us-west-2';
+      const bedrockUrl = bedrockRuntimeURL(region, model.id, streaming);
+      const signedHeaders = await bedrockSignRequest(access, bedrockUrl, bedrockAnthropicBody, 'POST');
+
+      // For streaming: use EventStream → SSE transform so downstream sees standard SSE
+      let responseBodyTransform: TransformStream<Uint8Array, Uint8Array> | undefined;
+      if (streaming) {
+        const { createEventStreamToSSETransform } = await import('../stream.demuxer.aws-eventstream');
+        responseBodyTransform = createEventStreamToSSETransform();
+      }
+
+      return {
+        request: {
+          url: bedrockUrl,
+          headers: signedHeaders,
+          method: 'POST',
+          body: bedrockAnthropicBody,
+        },
+        demuxerFormat: streaming ? 'fast-sse' : null,
+        // 100% reuse of Anthropic parser - EventStream transform makes it look like SSE
+        chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+        responseBodyTransform,
+      };
+    }
 
     default:
       const _exhaustiveCheck: never = dialect;
@@ -223,6 +277,7 @@ export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHa
     // fallthrough
     case 'alibaba':
     case 'anthropic':
+    case 'bedrock':
     case 'deepseek':
     case 'gemini':
     case 'groq':

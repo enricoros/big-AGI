@@ -642,7 +642,7 @@ async function _aixChatGenerateContent_LL(
 
   // Inspector support - can be requested by the client, but granted on the server side
   const inspectorEnabled = getAixInspectorEnabled();
-  const inspectorTransport = inspectorEnabled ? aixAccess.clientSideFetch ? 'csf' as const : 'trpc' as const : undefined;
+  const inspectorTransport = inspectorEnabled ? ('clientSideFetch' in aixAccess && aixAccess.clientSideFetch) ? 'csf' as const : 'trpc' as const : undefined;
   const inspectorContext = inspectorEnabled ? { contextName: aixContext.name, contextRef: aixContext.ref } : undefined;
 
   // [DEV] Inspector - request body override
@@ -673,7 +673,7 @@ async function _aixChatGenerateContent_LL(
 
   // [CSF] Pre-load client-side executor if needed
   let clientSideChatGenerate: typeof import('./aix.client.direct-chatGenerate').clientSideChatGenerate | undefined = undefined;
-  if (aixAccess.clientSideFetch)
+  if ('clientSideFetch' in aixAccess && aixAccess.clientSideFetch)
     try {
       clientSideChatGenerate = (await import('./aix.client.direct-chatGenerate')).clientSideChatGenerate;
     } catch (error) {
