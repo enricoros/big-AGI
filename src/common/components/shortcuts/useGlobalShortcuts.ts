@@ -19,14 +19,18 @@ export const ShortcutKey = {
   PageDown: 'PageDown',
 };
 
-export interface ShortcutObject {
+/** Base key-combo definition shared by registration and catalog. */
+export interface ShortcutDefinition {
   key: string;
   ctrl?: boolean;
   shift?: boolean;
-  // altForNonMac?: boolean;
+  alt?: boolean;
+  description?: string;
+}
+
+export interface ShortcutObject extends ShortcutDefinition {
   disabled?: boolean;
   action: (() => void) | '_specialPrintShortcuts';
-  description?: string;
   endDecoratorIcon?: typeof SvgIcon;
   level?: number; // if set, it will exclusively show icons at that level of priority and hide the others
 }
