@@ -73,7 +73,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    {showAdvanced && <Divider sx={{ mx: 4, my: 1 }}>Advanced</Divider>}
+    {showAdvanced && <Divider>Advanced</Divider>}
 
     {showAdvanced && <FormTextField
       autoCompleteId='openai-service-name'

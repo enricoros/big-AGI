@@ -123,10 +123,10 @@ const _geminiGoogleSearchOptions = [
 ] as const;
 
 const _geminiMediaResolutionOptions = [
-  { value: 'mr_high', label: 'High', description: 'Best quality, higher token usage' },
-  { value: 'mr_medium', label: 'Medium', description: 'Balanced quality and cost' },
-  { value: 'mr_low', label: 'Low', description: 'Faster, lower cost' },
-  { value: _UNSPECIFIED, label: 'Auto', description: 'Model decides based on media' },
+  { value: 'mr_high', label: 'High', description: 'Best quality' },
+  { value: 'mr_medium', label: 'Medium', description: 'Balanced' },
+  { value: 'mr_low', label: 'Low', description: 'Fast' },
+  { value: _UNSPECIFIED, label: 'Auto', description: 'Default' },
 ] as const;
 
 const _antWebSearchOptions = [
