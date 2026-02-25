@@ -7,7 +7,12 @@ import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 
 
-export interface IModelVendor<TServiceSettings extends Record<string, any> = {}, TAccess = AixAPI_Access> {
+type ServiceSettingsBase = {
+  csf?: boolean,
+  [key: string]: any,
+};
+
+export interface IModelVendor<TServiceSettings extends ServiceSettingsBase = {}, TAccess = AixAPI_Access> {
   readonly id: ModelVendorId;
   readonly name: string;
   readonly displayRank: number; // [10...] Foundation Models, [30...] 3rd party Clouds, [40...] Aggregators, [50...] Local Models
