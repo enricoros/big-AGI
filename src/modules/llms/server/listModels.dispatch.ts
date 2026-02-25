@@ -61,7 +61,7 @@ export type ListModelsDispatch<TWireModels = any> = {
  * Helper to create a dispatch with proper type inference.
  * TypeScript will infer TWireModels from fetchModels return type and enforce it in convertToDescriptions.
  */
-function createDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<T> {
+function createListModelsDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<T> {
   return dispatch;
 }
 
@@ -103,7 +103,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
   switch (dialect) {
 
     case 'anthropic': {
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => {
           const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.models}?limit=1000`, {/* ... no options for list ... */ });
           _wire?.logRequest('GET', url, headers);
@@ -161,7 +161,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     }
 
     case 'gemini': {
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => {
           const { headers, url } = geminiAccess(access, null, GeminiWire_API_Models_List.getPath, false);
           _wire?.logRequest('GET', url, headers);
@@ -193,7 +193,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     }
 
     case 'ollama': {
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => {
           const { headers, url } = ollamaAccess(access, '/api/tags');
           _wire?.logRequest('GET', url, headers);
@@ -281,21 +281,21 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
     case 'perplexity':
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/getting-started/pricing#sonar-models-chat-completions)
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => null,
         convertToDescriptions: () => perplexityHardcodedModelDescriptions().reduce(perplexityInjectVariants, []),
       });
 
     case 'xai':
       // [xAI]: custom models listing
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => xaiFetchModelDescriptions(access),
         convertToDescriptions: models => models.sort(xaiModelSort),
       });
 
     case 'lmstudio':
       // [LM Studio]: custom models listing with native API
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => lmStudioFetchModels(access),
         convertToDescriptions: (response) => lmStudioModelsToModelDescriptions(response.models),
       });
@@ -303,7 +303,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'zai':
       // [Z.ai]: curated models as primary source; list API is unreliable/abandoned.
       // Optimistically try the API for 0-day model discovery, but never fail on it.
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async (): Promise<string[]> => {
           try {
             const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
@@ -335,7 +335,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'openpipe':
     case 'openrouter':
     case 'togetherai':
-      return createDispatch({
+      return createListModelsDispatch({
 
         // [OpenAI-compatible dialects]: openAI-style fetch models list
         fetchModels: async () => {
