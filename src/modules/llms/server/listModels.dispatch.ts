@@ -15,6 +15,10 @@ import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces } from './mod
 import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
+// protocol: Bedrock
+import { bedrockAccessAsync, bedrockURLControlPlane, bedrockServerConfig } from './bedrock/bedrock.access';
+import { bedrockModelsToDescriptions, BedrockWire_API_Models_List } from './bedrock/bedrock.models';
+
 // protocol: Gemini
 import { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiAccess } from './gemini/gemini.access';
@@ -157,6 +161,46 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
             // inject thinking variants using the centralized variant system
             .reduce(anthropicInjectVariants, []);
         },
+      });
+    }
+
+    case 'bedrock': {
+      return createListModelsDispatch({
+        fetchModels: async () => {
+
+          // construct URLs by region
+          const { region } = bedrockServerConfig(access);
+          const fmUrl = bedrockURLControlPlane(region, '/foundation-models?byInferenceType=ON_DEMAND');
+          const ipUrl = bedrockURLControlPlane(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000');
+
+          // sign and fetch both lists in parallel - and unbreak on failure
+          const [fmResponse, ipResponse] = await Promise.all([
+            // Foundation Models
+            bedrockAccessAsync(access, 'GET', fmUrl, undefined)
+              .then(fmAccess => fetchJsonOrTRPCThrow({ ...fmAccess, signal, name: 'Bedrock/FM' }))
+              .catch(error => {
+                console.warn('[Bedrock] Foundation Models list failed:', (error as Error)?.message || error);
+                return { modelSummaries: [] };
+              }),
+            // Inference Profiles
+            bedrockAccessAsync(access, 'GET', ipUrl, undefined)
+              .then(ipAccess => fetchJsonOrTRPCThrow({ ...ipAccess, signal, name: 'Bedrock/IP' }))
+              .catch(error => {
+                console.warn('[Bedrock] Inference Profiles list failed:', (error as Error)?.message || error);
+                return { inferenceProfileSummaries: [] };
+              }),
+          ]);
+
+          _wire?.logResponse(fmResponse);
+          _wire?.logResponse(ipResponse);
+
+          return {
+            foundationModels: BedrockWire_API_Models_List.FoundationModelsResponse_schema.parse(fmResponse),
+            inferenceProfiles: BedrockWire_API_Models_List.InferenceProfilesResponse_schema.parse(ipResponse),
+          };
+        },
+        convertToDescriptions: ({ foundationModels, inferenceProfiles }) =>
+          bedrockModelsToDescriptions(foundationModels, inferenceProfiles),
       });
     }
 

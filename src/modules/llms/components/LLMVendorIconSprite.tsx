@@ -15,6 +15,7 @@ const VI: Record<ModelVendorId, string> = {
   alibaba: 'vi-alibaba',
   anthropic: 'vi-anthropic',
   azure: 'vi-azure',
+  bedrock: 'vi-bedrock',
   deepseek: 'vi-deepseek',
   googleai: 'vi-googleai',
   groq: 'vi-groq',
@@ -63,6 +64,16 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
           <path stroke='none' d='M0 0h24v24H0z' fill='none' />
           <path d='M6 7.5l-4 9.5h4l6 -15z' />
           <path d='M22 20l-7 -15l-3 7l4 5l-8 3z' />
+          </g>
+        </symbol>
+
+        <symbol id={VI.bedrock} viewBox='0 0 24 24'>
+          <g fill='currentColor' stroke='none'>
+          {/* AWS-style smile arrow mark */}
+          <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z' fillOpacity={0.3} />
+          <path d='M7.5 14.5c0 0 1.5 3 4.5 3s4.5-3 4.5-3' fill='none' stroke='currentColor' strokeWidth={1.8} strokeLinecap='round' />
+          <path d='M17 11l1.5-2.5L17 6' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' strokeLinejoin='round' />
+          <path d='M6 8.5h12' fill='none' stroke='currentColor' strokeWidth={1.5} strokeLinecap='round' />
           </g>
         </symbol>
 

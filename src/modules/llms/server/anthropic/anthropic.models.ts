@@ -440,6 +440,54 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
 }
 
 
+// -- Anthropic-through-Bedrock models lookup --
+
+/** Find a hardcoded Anthropic model definition by its Bedrock model ID. */
+export function llmBedrockFindAnthropicModel(bedrockBaseId: string): (ModelDescriptionSchema & { isLegacy?: boolean }) | undefined {
+  const anthropicId = _llmBedrockToAnthropicModelId(bedrockBaseId);
+  if (!anthropicId) return undefined;
+  return hardcodedAnthropicModels.find(m => m.id === anthropicId);
+}
+
+function _llmBedrockToAnthropicModelId(bedrockBaseId: string): string | undefined {
+  if (!bedrockBaseId.startsWith('anthropic.')) return undefined;
+  // e.g. anthropic.claude-opus-4-6-v1 -> claude-opus-4-6; anthropic.claude-opus-4-5-20251101-v1:0   -> claude-opus-4-5-20251101
+  return bedrockBaseId.slice('anthropic.'.length).replace(/-v\d+(:\d+)?$/, '');
+}
+
+// Bedrock supports these interfaces (no Anthropic web tools)
+const _BEDROCK_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
+  LLM_IF_ANT_PromptCaching,
+] as const);
+
+// NOTE: llmVndAntInfSpeed not available on Bedrock, llmVndAntWebFetch/llmVndAntSkills not available
+const _BEDROCK_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  // supported
+  'llmVndAnt1MContext',
+  'llmVndAntEffort',
+  'llmVndAntThinkingBudget',
+  // Not supported by Bedrock
+  // 'llmVndAntInfSpeed', // Bad Request - speed: Extra inputs are not permitted
+  // 'llmVndAntSkills', // code execution is not supported: https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool#platform-availability
+  // 'llmVndAntWebFetch', // Bad Request - tools.0: Input tag 'web_fetch_20250910' found using 'type' does not match any of the expected tags: 'bash_20250124', 'custom', 'text_editor_20250124', 'text_editor_20250429', 'text_editor_20250728', 'web_search_20250305'
+  // 'llmVndAntWebSearch', // Bedrock should support web search, but we get 'Bad Request' if the 'web_search_20250305' tool is added
+] as const satisfies DModelParameterId[]);
+
+/** Strip unsupported interfaces and params from an Anthropic model for Bedrock */
+export function llmBedrockStripAnthropicMDS(model: ModelDescriptionSchema): ModelDescriptionSchema {
+  if (!model.parameterSpecs && !model.interfaces.some(i => !_BEDROCK_ANT_IF_ALLOWLIST.has(i)))
+    return model; // nothing to filter
+  return {
+    ...model,
+    interfaces: model.interfaces.filter(i => _BEDROCK_ANT_IF_ALLOWLIST.has(i)),
+    ...(model.parameterSpecs ? {
+      parameterSpecs: model.parameterSpecs.filter(spec => _BEDROCK_ANT_PARAM_ALLOWLIST.has(spec.paramId)),
+    } : {}),
+  };
+}
+
+
 // -- Anthropic-through-OpenRouter Vendor Lookup --
 
 const _ORT_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
