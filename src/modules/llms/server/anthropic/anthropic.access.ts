@@ -54,6 +54,9 @@ const ANTHROPIC_HEADERS_CORS = {
 
 const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
 
+  // See this for a full index:
+  //   https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/beta/beta.ts#L256
+
   // Known SDK beta headers (for reference, not all used):
   //   prompt-caching-2024-07-31        -- GA: no longer needed
   //   pdfs-2024-09-25                  -- GA: no longer needed
@@ -166,28 +169,28 @@ export function anthropicBetaFeatures(options?: AnthropicHeaderOptions): string[
   if (options?.vndAnt1MContext)
     betaFeatures.push('context-1m-2025-08-07');
 
+  // Add beta feature for code execution (required for Skills)
+  if (options?.enableCodeExecution || options?.enableSkills)
+    betaFeatures.push('code-execution-2025-08-25');
+
   // Add beta features for Skills API
   if (options?.enableSkills) {
     betaFeatures.push('skills-2025-10-02');
     betaFeatures.push('files-api-2025-04-14'); // For file downloads
   }
 
-  // Add beta feature for code execution (required for Skills)
-  if (options?.enableCodeExecution || options?.enableSkills)
-    betaFeatures.push('code-execution-2025-08-25');
-
-  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
-  if (options?.enableFastMode)
-    betaFeatures.push('fast-mode-2026-02-01');
+  // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
+  if (options?.enableStrictOutputs)
+    betaFeatures.push('structured-outputs-2025-11-13');
 
   // [Anthropic, 2025-11-24] Add beta feature for Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
   // Same beta header covers both features: tool discovery and programmatic calling from code execution
   if (options?.enableToolSearch || options?.enableProgrammaticToolCalling)
     betaFeatures.push('advanced-tool-use-2025-11-20');
 
-  // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
-  if (options?.enableStrictOutputs)
-    betaFeatures.push('structured-outputs-2025-11-13');
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
+  if (options?.enableFastMode)
+    betaFeatures.push('fast-mode-2026-02-01');
 
   return betaFeatures;
 }
