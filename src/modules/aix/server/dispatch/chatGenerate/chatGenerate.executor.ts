@@ -58,7 +58,7 @@ export async function* executeChatGenerate(
   if (!streaming)
     yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
   else
-    yield* _consumeDispatchStream(dispatchResponse, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+    yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
 
   // Tack profiling particles if generated
   if (_d.profiler) {
@@ -191,6 +191,7 @@ async function* _consumeDispatchUnified(
  */
 async function* _consumeDispatchStream(
   dispatchResponse: Response,
+  dispatchBodyTransform: AixDemuxers.StreamBodyTransform,
   dispatchDemuxerFormat: AixDemuxers.StreamDemuxerFormat,
   dispatchParser: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
@@ -198,7 +199,8 @@ async function* _consumeDispatchStream(
   parseContext?: { retriesAvailable: boolean },
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
-  const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
+  // Body reader with optional transform (e.g. AWS EventStream binary -> SSE text)
+  const dispatchReader = AixDemuxers.applyBodyTransformer(dispatchResponse.body || createEmptyReadableStream(), dispatchBodyTransform).getReader();
   const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> " " (U+FFFD) */ });
   const dispatchDemuxer = AixDemuxers.createStreamDemuxer(dispatchDemuxerFormat);
 

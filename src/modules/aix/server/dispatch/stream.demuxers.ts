@@ -1,7 +1,20 @@
+import { createEventStreamToSSETransform } from './stream.demuxer.aws-eventstream';
 import { createFastEventSourceDemuxer } from './stream.demuxer.fastsse';
 
 
 export namespace AixDemuxers {
+
+  export type StreamBodyTransform = 'aws-eventstream-binary' | null;
+
+  export function applyBodyTransformer(responseBody: ReadableStream<Uint8Array<ArrayBuffer>>, transform: StreamBodyTransform) {
+    switch (transform) {
+      case 'aws-eventstream-binary':
+        return responseBody.pipeThrough(createEventStreamToSSETransform());
+      case null:
+        return responseBody;
+    }
+  }
+
 
   /**
    * The format of the stream: 'sse' or 'json-nl'
