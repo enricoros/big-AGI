@@ -29,6 +29,10 @@ AZURE_OPENAI_API_ENDPOINT=
 AZURE_OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ANTHROPIC_API_HOST=
+BEDROCK_ACCESS_KEY_ID=
+BEDROCK_SECRET_ACCESS_KEY=
+BEDROCK_SESSION_TOKEN=
+BEDROCK_REGION=
 DEEPSEEK_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
@@ -100,7 +104,11 @@ requiring the user to enter an API key
 | `AZURE_OPENAI_API_VERSION`  | API version for traditional deployment-based endpoints                                                          | Optional, defaults to '2025-04-01-preview'                       |
 | `AZURE_DEPLOYMENTS_API_VERSION` | API version for the deployments listing endpoint                                                            | Optional, defaults to '2023-03-15-preview'                       |
 | `ANTHROPIC_API_KEY`         | The API key for Anthropic                                                                                      | Optional                                                          |
-| `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, to enable platforms such as AWS Bedrock                     | Optional                                                          |
+| `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, for proxies or custom endpoints                             | Optional                                                          |
+| `BEDROCK_ACCESS_KEY_ID`     | AWS IAM Access Key ID for Bedrock (Claude models via AWS)                                                      | Optional, but if set `BEDROCK_SECRET_ACCESS_KEY` must also be set  |
+| `BEDROCK_SECRET_ACCESS_KEY` | AWS IAM Secret Access Key for Bedrock                                                                          | Optional, but if set `BEDROCK_ACCESS_KEY_ID` must also be set      |
+| `BEDROCK_SESSION_TOKEN`     | AWS Session Token for temporary/STS credentials                                                                | Optional                                                          |
+| `BEDROCK_REGION`            | AWS region for Bedrock (e.g., `us-east-1`, `us-west-2`, `eu-west-1`)                                          | Optional, defaults to `us-east-1`                                 |
 | `DEEPSEEK_API_KEY`          | The API key for Deepseek AI                                                                                    | Optional                                                          |
 | `GEMINI_API_KEY`            | The API key for Google AI's Gemini                                                                             | Optional                                                          |
 | `GROQ_API_KEY`              | The API key for Groq Cloud                                                                                     | Optional                                                          |
