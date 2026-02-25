@@ -1,4 +1,4 @@
-import { ANTHROPIC_API_PATHS, anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
+import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures, AnthropicHeaderOptions } from '~/modules/llms/server/anthropic/anthropic.access';
 import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
@@ -45,7 +45,7 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
 /**
  * Specializes to the correct vendor a request for chat generation
  */
-export async function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean,): Promise<ChatGenerateDispatch> {
+export async function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): Promise<ChatGenerateDispatch> {
 
   const { dialect } = access;
   switch (dialect) {
@@ -59,17 +59,9 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           ),
       ) ?? false;
 
-      const anthropicRequest = anthropicAccess(access, ANTHROPIC_API_PATHS.messages, {
-        modelIdForBetaFeatures: model.id,
-        vndAntWebFetch: model.vndAntWebFetch === 'auto',
-        vndAnt1MContext: model.vndAnt1MContext === true,
-        enableSkills: !!model.vndAntSkills,
-        enableFastMode: model.vndAntInfSpeed === 'fast',
-        enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
-        enableToolSearch: !!model.vndAntToolSearch,
-        enableProgrammaticToolCalling: usesProgrammaticToolCalling,
-        // enableCodeExecution: ...
-      });
+      const anthropicRequest = anthropicAccess(access, ANTHROPIC_API_PATHS.messages,
+        _anthropicBetaOptionsFromModel(model, usesProgrammaticToolCalling),
+      );
 
       // Build the request body from model + chat parameters
       const anthropicBody = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
@@ -189,6 +181,21 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       };
 
   }
+}
+
+/** Used by both Anthropic direct and Bedrock dispatch paths. */
+function _anthropicBetaOptionsFromModel(model: AixAPI_Model, usesProgrammaticToolCalling: boolean): AnthropicHeaderOptions {
+  return {
+    modelIdForBetaFeatures: model.id,
+    vndAntWebFetch: model.vndAntWebFetch === 'auto',
+    vndAnt1MContext: model.vndAnt1MContext === true,
+    enableSkills: !!model.vndAntSkills,
+    enableFastMode: model.vndAntInfSpeed === 'fast',
+    enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
+    enableToolSearch: !!model.vndAntToolSearch,
+    enableProgrammaticToolCalling: usesProgrammaticToolCalling,
+    // enableCodeExecution: ...
+  };
 }
 
 
