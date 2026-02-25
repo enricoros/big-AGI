@@ -443,7 +443,7 @@ async function testParameterValue(
 
   // Create the dispatch, which may throw when building the reuest (e.g. parameter range incompatibility)
   try {
-    dispatch = createChatGenerateDispatch(
+    dispatch = await createChatGenerateDispatch(
       access,
       model,
       chatGenerate,

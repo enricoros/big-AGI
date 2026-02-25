@@ -42,7 +42,7 @@ export class RequestRetryError extends Error {
  * Retries entire operation when RequestRetryError is thrown (e.g., Anthropic overloaded_error).
  */
 export async function* executeChatGenerateWithRetry(
-  dispatchCreatorFn: () => ChatGenerateDispatch,
+  dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   streaming: boolean,
   abortSignal: AbortSignal,
   _d: AixDebugObject,

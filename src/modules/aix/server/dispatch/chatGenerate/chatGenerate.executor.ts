@@ -24,7 +24,7 @@ import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
  * Can be called directly from server-side code or wrapped in retry logic, batching, etc.
  */
 export async function* executeChatGenerate(
-  dispatchCreatorFn: () => ChatGenerateDispatch,
+  dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   streaming: boolean,
   intakeAbortSignal: AbortSignal,
   _d: AixDebugObject,
@@ -37,7 +37,7 @@ export async function* executeChatGenerate(
   // Create dispatch with error handling
   let dispatch: ChatGenerateDispatch;
   try {
-    dispatch = dispatchCreatorFn();
+    dispatch = await dispatchCreatorFn();
   } catch (error: any) {
     // log but don't warn on the server console, this is typically a service configuration issue (e.g. a missing password will throw here)
     chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, 'srv-log');

@@ -45,7 +45,7 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
 /**
  * Specializes to the correct vendor a request for chat generation
  */
-export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): ChatGenerateDispatch {
+export async function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean,): Promise<ChatGenerateDispatch> {
 
   const { dialect } = access;
   switch (dialect) {
@@ -196,7 +196,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
  * Specializes to the correct vendor a request for resuming chat generation (OpenAI Responses API only).
  * Constructs a GET request to retrieve and stream a response by its ID.
  */
-export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHandle: AixAPI_ResumeHandle, streaming: boolean): ChatGenerateDispatch {
+export async function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHandle: AixAPI_ResumeHandle, streaming: boolean): Promise<ChatGenerateDispatch> {
 
   const { dialect } = access;
   switch (dialect) {
