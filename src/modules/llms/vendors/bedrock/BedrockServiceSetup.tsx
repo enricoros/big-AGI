@@ -50,7 +50,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
         <ClaudeCrabIcon sx={{ fontSize: '2rem', mt: 0.5 }} />
         <Box sx={{ flex: 1 }}>
           Access Claude models through your <Link color='neutral' href='https://aws.amazon.com/bedrock/' level='body-sm' target='_blank'>AWS Bedrock</Link> account.
-          Requires an IAM Access Key with Bedrock permissions, and does not support search.
+          Requires an IAM Access Key with Bedrock permissions - Bedrock does not support search.
           {showSetupInstructions && (
             <Typography level='body-xs' component='ol' sx={{ pl: 2, mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
               <li>Open the <Link href='https://console.aws.amazon.com/iam/' target='_blank'>AWS IAM Console</Link></li>
