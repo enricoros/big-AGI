@@ -43,7 +43,7 @@ It comes packed with **world-class features** like Beam, and is praised for its 
 
 ### What makes Big-AGI different:
 
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.5, Nano Banana Pro, Kimi K2.5 or GPT 5.2 -
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.6, Nano Banana Pro, Kimi K2.5 or GPT 5.2 -
 **Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
