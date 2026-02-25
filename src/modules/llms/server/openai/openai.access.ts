@@ -34,7 +34,7 @@ const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
 const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
-const DEFAULT_LLMAPI_HOST = 'https://internal.llmapi.ai';
+const DEFAULT_LLMAPI_HOST = 'https://api.llmapi.ai';
 
 
 // -- Centralized OpenAI-compatible API Paths --
@@ -429,7 +429,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'llmapi': {
-      // LLM API: OpenAI-compatible gateway; base URL is https://internal.llmapi.ai/v1
+      // LLM API: OpenAI-compatible gateway; base URL is https://api.llmapi.ai/v1
       let llmapiKey = access.oaiKey || '';
       const llmapiHost = llmsFixupHost(access.oaiHost || DEFAULT_LLMAPI_HOST, apiPath);
 
