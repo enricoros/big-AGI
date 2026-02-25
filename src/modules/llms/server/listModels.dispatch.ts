@@ -173,23 +173,23 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           const fmUrl = bedrockURLControlPlane(region, '/foundation-models?byInferenceType=ON_DEMAND');
           const ipUrl = bedrockURLControlPlane(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000');
 
-          // sign and fetch both lists in parallel - and unbreak on failure
-          const [fmResponse, ipResponse] = await Promise.all([
+          // sign and fetch both lists in parallel - degrade gracefully if one fails, throw if both fail
+          const [fmResult, ipResult] = await Promise.allSettled([
             // Foundation Models
             bedrockAccessAsync(access, 'GET', fmUrl, undefined)
-              .then(fmAccess => fetchJsonOrTRPCThrow({ ...fmAccess, signal, name: 'Bedrock/FM' }))
-              .catch(error => {
-                console.warn('[Bedrock] Foundation Models list failed:', (error as Error)?.message || error);
-                return { modelSummaries: [] };
-              }),
+              .then(fmAccess => fetchJsonOrTRPCThrow({ ...fmAccess, signal, name: 'Bedrock/FM' })),
             // Inference Profiles
             bedrockAccessAsync(access, 'GET', ipUrl, undefined)
-              .then(ipAccess => fetchJsonOrTRPCThrow({ ...ipAccess, signal, name: 'Bedrock/IP' }))
-              .catch(error => {
-                console.warn('[Bedrock] Inference Profiles list failed:', (error as Error)?.message || error);
-                return { inferenceProfileSummaries: [] };
-              }),
+              .then(ipAccess => fetchJsonOrTRPCThrow({ ...ipAccess, signal, name: 'Bedrock/IP' })),
           ]);
+
+          // if both failed, throw the first error so the user sees it
+          if (fmResult.status === 'rejected' && ipResult.status === 'rejected')
+            throw fmResult.reason;
+
+          // degrade gracefully if only one failed
+          const fmResponse = fmResult.status === 'fulfilled' ? fmResult.value : { modelSummaries: [] };
+          const ipResponse = ipResult.status === 'fulfilled' ? ipResult.value : { inferenceProfileSummaries: [] };
 
           _wire?.logResponse(fmResponse);
           _wire?.logResponse(ipResponse);
