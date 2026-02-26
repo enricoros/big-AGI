@@ -17,14 +17,20 @@ npm run build  # next build runs compile+lint+types but stops at first type-erro
 # npm run stripe:listen                 # Listen for Stripe webhooks
 ```
 
-## Development Environment
+## Project & Repository Structure
 
-- Dev servers may be running on ports 3000, 3001, 3002, or 3003 (not always this app - other projects may occupy these ports). Never start or stop dev servers, let the user do it.
-- For runtime debugging, use `mcp__chrome-devtools` if present to launch a controlled Chrome instance against the running dev server - useful for console errors, network inspection, and React devtree.
+**Product tiers** (independent, non-VC-funded): **Open** (self-host, MIT) · **Free** (big-agi.com) · **Pro** (paid, includes Sync + backup). All tiers use the user's own API keys.
 
 ## Architecture Overview
 
-Big-AGI is a Next.js 15 application with a modular architecture built for advanced AI interactions. The codebase follows a three-layer structure with distinct separation of concerns.
+Big-AGI is a Next.js 15 application with a modular architecture built for advanced AI interactions.
+
+Dev servers may be running on ports 3000, 3001, 3002, or 3003 (not always this app - other projects may occupy these ports). Never start or stop dev servers, let the user do it.
+
+### Git/GitHub remotes
+The `gh` command is available to interact with GitHub from the terminal, but **NEVER PUSH TO ANY BRANCH**. The user manages all 'write' git operations.
+- `opensource` -> `enricoros/big-AGI` (public, default branch: `main`, MIT) - community issues/PRs/releases
+- `private` -> `big-agi/big-agi-private` (private, default branch: `dev`) - main dev repo with `dev`->`staging`->`prod` pipeline
 
 ### Core Directory Structure
 
@@ -46,7 +52,7 @@ The directory structure is as follows:
 ### Key Technologies
 
 - **Frontend**: Next.js 15, React 18, Material-UI Joy, Emotion (CSS-in-JS)
-- **State Management**: Zustand with localStorge/IndexedDB (single cell) persistence
+- **State Management**: Zustand with localStorage/IndexedDB (single cell) persistence
 - **API Layer**: tRPC with TanStack React Query for type-safe communication
 - **Runtime**: Edge Runtime for AI operations, Node.js for data processing
 
@@ -66,20 +72,20 @@ Modules in `/src/modules/` provide reusable business logic:
 - **`aix/`** - AI communication framework for real-time streaming
 - **`beam/`** - Multi-model AI reasoning system (scatter/gather pattern)
 - **`blocks/`** - Content rendering (markdown, code, images, etc.)
-- **`llms/`** - Language model abstraction supporting 19 vendors
+- **`llms/`** - Language model abstraction supporting 20+ vendors
 
 ### Key Subsystems & Their Patterns
 
-#### 1. AIX - Real-time AI Communication
+#### AIX - Real-time AI Communication
 **Location**: `/src/modules/aix/`
 **Pattern**: Client-server streaming architecture with provider abstraction
 
-- **Client** → tRPC → **Server** → **AI Providers**
+- **Client** -> tRPC -> **Server** -> **AI Providers**
 - Handles streaming/non-streaming responses with batching and error recovery
-- Particle-based streaming: `AixWire_Particles` → `ContentReassembler` → `DMessage`
+- Particle-based streaming: `AixWire_Particles` -> `ContentReassembler` -> `DMessage`
 - Provider-agnostic through adapter pattern (OpenAI, Anthropic, Gemini protocols)
 
-#### 3. Beam - Multi-Model Reasoning
+#### Beam - Multi-Model Reasoning
 **Location**: `/src/modules/beam/`
 **Pattern**: Scatter/Gather for parallel AI processing
 
@@ -88,13 +94,13 @@ Modules in `/src/modules/` provide reusable business logic:
 - Real-time UI updates via vanilla Zustand stores
 - BeamStore per conversation via ConversationHandler
 
-#### 4. Conversation Management
+#### Conversation Management
 **Location**: `/src/common/stores/chat/` and `/src/common/chat-overlay/`
 **Pattern**: Overlay architecture with handler per conversation
 
 - `ConversationHandler` orchestrates chat, beam, ephemerals
 - Per-chat stores: `PerChatOverlayStore` + `BeamStore`
-- Message structure: `DMessage` → `DMessageFragment[]`
+- Message structure: `DMessage` -> `DMessageFragment[]`
 - Supports multi-pane with independent conversation states
 
 ### Storage System
@@ -147,18 +153,18 @@ Located in `/src/common/layout/optima/`
 ### User Flows & Interdependencies
 
 #### Chat Message Flow
-1. User input → `Composer` → `DMessage` creation
-2. `ConversationHandler.messageAppend()` → Store update
-3. `_handleExecute()` / `ConversationHandler.executeChatMessages()` → AIX client request
-4. AIX streaming → `ContentReassembler` → UI updates
-5. Zustand auto-persistence → IndexedDB
+1. User input -> `Composer` -> `DMessage` creation
+2. `ConversationHandler.messageAppend()` -> Store update
+3. `_handleExecute()` / `ConversationHandler.executeChatMessages()` -> AIX client request
+4. AIX streaming -> `ContentReassembler` -> UI updates
+5. Zustand auto-persistence -> IndexedDB
 
 #### Beam Multi-Model Flow
-1. User triggers Beam → `BeamStore.open()` state update
+1. User triggers Beam -> `BeamStore.open()` state update
 2. Scatter: Parallel `aixChatGenerateContent()` to N models
-3. Real-time ray updates → UI progress
-4. Gather: User selects fusion → Combined output
-5. Result → New message in conversation
+3. Real-time ray updates -> UI progress
+4. Gather: User selects fusion -> Combined output
+5. Result -> New message in conversation
 
 ### Development Patterns
 
@@ -207,7 +213,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 4. Add environment variables to the vendor's server file and `/src/server/env.server.ts` (if server-side keys needed)
 
 ### Debugging Storage Issues
-- Check IndexedDB: DevTools → Application → IndexedDB → `app-chats`
+- Check IndexedDB: DevTools -> Application -> IndexedDB -> `app-chats`
 - Monitor Zustand state: Use Zustand DevTools
 - Check migration logs in console during rehydration
 
