@@ -39,6 +39,7 @@ import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
+import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
@@ -481,6 +482,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [Novita] special case for model enumeration
               if (novitaHeuristic(oaiHost))
                 return novitaModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [LLM API] OpenAI-compatible gateway with rich model metadata
+              if (llmapiHeuristic(oaiHost))
+                return llmapiModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [FastChat] make the best of the little info
               if (fastAPIHeuristic(maybeModels))
