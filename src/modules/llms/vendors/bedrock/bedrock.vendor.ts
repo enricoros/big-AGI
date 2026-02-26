@@ -37,7 +37,7 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
     bedrockAccessKeyId: '',
     bedrockSecretAccessKey: '',
     bedrockSessionToken: '',
-    bedrockRegion: 'us-west-2',
+    bedrockRegion: 'us-east-1',
     csf: false,
   }),
 
@@ -55,7 +55,7 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
       bedrockSecretAccessKey: partialSetup?.bedrockSecretAccessKey || '',
       bedrockSessionToken: partialSetup?.bedrockSessionToken || null,
     }),
-    bedrockRegion: partialSetup?.bedrockRegion || 'us-west-2',
+    bedrockRegion: partialSetup?.bedrockRegion || 'us-east-1',
     clientSideFetch: _csfBedrockAvailable(partialSetup) && !!partialSetup?.csf,
   }),
 
