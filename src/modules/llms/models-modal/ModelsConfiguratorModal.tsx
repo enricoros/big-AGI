@@ -16,11 +16,13 @@ import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { PhGift } from '~/common/components/icons/phosphor/PhGift';
+import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
+import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useAllServicesDCStatus } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
-import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
+import { useHasFreeLLMs, useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -76,7 +78,7 @@ export function ModelsConfiguratorModal(props: {
 
 
   // active service with fallback to the last added service
-  const activeServiceId = confServiceId
+  const activeServiceId: string | null = confServiceId
     ?? modelsServices[modelsServices.length - 1]?.id
     ?? null;
 
@@ -86,6 +88,7 @@ export function ModelsConfiguratorModal(props: {
   const hasAnyServices = !!modelsServices.length;
   const isTabWizard = tab === 'wizard';
   const isTabSetup = tab === 'setup';
+  const activeHasFreeLLMs = useHasFreeLLMs(activeServiceId);
   // const isTabDefaults = tab === 'defaults';
 
 
@@ -164,6 +167,20 @@ export function ModelsConfiguratorModal(props: {
 
   const handleShowAllModels = React.useCallback(() => {
     llmsStoreActions().setServiceModelsHidden(activeServiceId, false);
+  }, [activeServiceId]);
+
+  const handleShowOnlyFree = React.useCallback(() => {
+    const updates = llmsStoreState().llms
+      .filter(llm => llm.sId === activeServiceId)
+      .map(llm => ({ id: llm.id, partial: { userHidden: !isLLMChatFree_cached(llm) } }));
+    llmsStoreActions().updateLLMs(updates);
+  }, [activeServiceId]);
+
+  const handleShowOnlyPaid = React.useCallback(() => {
+    const updates = llmsStoreState().llms
+      .filter(llm => llm.sId === activeServiceId)
+      .map(llm => ({ id: llm.id, partial: { userHidden: isLLMChatFree_cached(llm) } }));
+    llmsStoreActions().updateLLMs(updates);
   }, [activeServiceId]);
 
   const handleRemoveClones = React.useCallback(() => {
@@ -298,6 +315,16 @@ export function ModelsConfiguratorModal(props: {
               <ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>
               Hide All
             </MenuItem>
+            {activeHasFreeLLMs && <ListDivider />}
+            {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyFree}>
+              <ListItemDecorator><PhGift /></ListItemDecorator>
+              Only Free
+            </MenuItem>}
+            {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyPaid}>
+              <ListItemDecorator />
+              Only Paid
+            </MenuItem>}
+            <ListDivider />
             <MenuItem onClick={handleResetVisibility}>
               <ListItemDecorator><RestoreIcon /></ListItemDecorator>
               Reset Default Visibility
@@ -308,7 +335,7 @@ export function ModelsConfiguratorModal(props: {
       );
 
     return undefined;
-  }, [activeService?.label, dcAllEnabled, dcHasEligible, dcMenuAnchor, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsHidden, setStarredOnTop, showModelsHidden, starredOnTop, visMenuAnchor]);
+  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcMenuAnchor, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsHidden, setStarredOnTop, showModelsHidden, starredOnTop, visMenuAnchor]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
@@ -359,7 +386,7 @@ export function ModelsConfiguratorModal(props: {
     setShowExplainer(true);
   }, []);
 
-  const handleDismissExplainer = React.useCallback((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
+  const handleDismissExplainer = React.useCallback((_event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
     // hide for both the 'x' button and close
     setShowExplainer(false);
 
