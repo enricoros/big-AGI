@@ -16,7 +16,7 @@ import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Bedrock
-import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLControlPlane } from './bedrock/bedrock.access';
+import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLControlPlane, bedrockURLMantle } from './bedrock/bedrock.access';
 import { bedrockModelsToDescriptions, BedrockWire_API_Models_List } from './bedrock/bedrock.models';
 
 // protocol: Gemini
@@ -172,35 +172,42 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           const region = bedrockResolveRegion(access);
           const fmUrl = bedrockURLControlPlane(region, '/foundation-models?byInferenceType=ON_DEMAND');
           const ipUrl = bedrockURLControlPlane(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000');
+          const mantleUrl = bedrockURLMantle(region, '/v1/models');
 
-          // sign and fetch both lists in parallel - degrade gracefully if one fails, throw if both fail
-          const [fmResult, ipResult] = await Promise.allSettled([
+          // sign and fetch all lists in parallel - each fails independently
+          const [fmResult, ipResult, mantleIdsResult] = await Promise.allSettled([
             // Foundation Models
             bedrockAccessAsync(access, 'GET', fmUrl, undefined)
               .then(fmAccess => fetchJsonOrTRPCThrow({ ...fmAccess, signal, name: 'Bedrock/FM' })),
             // Inference Profiles
             bedrockAccessAsync(access, 'GET', ipUrl, undefined)
               .then(ipAccess => fetchJsonOrTRPCThrow({ ...ipAccess, signal, name: 'Bedrock/IP' })),
+            // Mantle Models
+            bedrockAccessAsync(access, 'GET', mantleUrl, undefined)
+              .then(mantleAccess => fetchJsonOrTRPCThrow({ ...mantleAccess, signal, name: 'Bedrock/Mantle' })),
           ]);
 
-          // if both failed, throw the first error so the user sees it
+          // if both FM and IP failed, throw the first error so the user sees it
           if (fmResult.status === 'rejected' && ipResult.status === 'rejected')
             throw fmResult.reason;
 
-          // degrade gracefully if only one failed
+          // degrade gracefully if any failed
           const fmResponse = fmResult.status === 'fulfilled' ? fmResult.value : { modelSummaries: [] };
           const ipResponse = ipResult.status === 'fulfilled' ? ipResult.value : { inferenceProfileSummaries: [] };
+          const mantleResponse = mantleIdsResult.status === 'fulfilled' ? mantleIdsResult.value : { data: [] };
 
           _wire?.logResponse(fmResponse);
           _wire?.logResponse(ipResponse);
+          _wire?.logResponse(mantleResponse);
 
           return {
             foundationModels: BedrockWire_API_Models_List.FoundationModelsResponse_schema.parse(fmResponse),
             inferenceProfiles: BedrockWire_API_Models_List.InferenceProfilesResponse_schema.parse(ipResponse),
+            mantleModelIds: BedrockWire_API_Models_List.MantleModelsResponse_schema.parse(mantleResponse),
           };
         },
-        convertToDescriptions: ({ foundationModels, inferenceProfiles }) =>
-          bedrockModelsToDescriptions(foundationModels, inferenceProfiles),
+        convertToDescriptions: ({ foundationModels, inferenceProfiles, mantleModelIds }) =>
+          bedrockModelsToDescriptions(foundationModels, inferenceProfiles, mantleModelIds),
       });
     }
 

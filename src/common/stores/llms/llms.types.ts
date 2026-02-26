@@ -144,10 +144,10 @@ export type DModelInterfaceV1 =
   | 'oai-chat-vision'
   | 'oai-chat-reasoning'
   | 'ant-prompt-caching'
+  | 'gem-code-execution'
   | 'oai-prompt-caching'
   | 'oai-realtime'
   | 'oai-responses'
-  | 'gem-code-execution'
   | 'outputs-audio'            // TEMP: ui flag - supports audio output (e.g., text-to-speech)
   | 'outputs-image'            // TEMP: ui flag - supports image output (image generation)
   | 'outputs-no-text'          // disable text outputs (used in conjunction with alt-outputs) - assumed off
@@ -174,9 +174,9 @@ export const LLM_IF_Outputs_Image: DModelInterfaceV1 = 'outputs-image';
 export const LLM_IF_Outputs_NoText: DModelInterfaceV1 = 'outputs-no-text';
 export const LLM_IF_Tools_WebSearch: DModelInterfaceV1 = 'tools-web-search';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
+export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
 export const LLM_IF_OAI_PromptCaching: DModelInterfaceV1 = 'oai-prompt-caching';
 export const LLM_IF_OAI_Responses: DModelInterfaceV1 = 'oai-responses';
-export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
 export const LLM_IF_HOTFIX_NoStream: DModelInterfaceV1 = 'hotfix-no-stream';
 export const LLM_IF_HOTFIX_NoTemperature: DModelInterfaceV1 = 'hotfix-no-temperature';
 export const LLM_IF_HOTFIX_NoWebP: DModelInterfaceV1 = 'hotfix-no-webp';

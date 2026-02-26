@@ -51,6 +51,7 @@ export function aixCreateModelFromLLMOptions(
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
     llmVndAntEffort, llmVndGemEffort, llmVndOaiEffort, llmVndMiscEffort,
     llmVndAnt1MContext, llmVndAntInfSpeed, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebFetch, llmVndAntWebSearch,
+    llmVndBedrockAPI,
     llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiThinkingBudget,
     // llmVndMoonshotWebSearch,
     llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration, llmVndOaiCodeInterpreter,
@@ -116,6 +117,9 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch } : {}),
     ...(llmVndAntWebSearch === 'auto' ? { vndAntWebSearch: llmVndAntWebSearch } : {}),
+
+    // Bedrock
+    ...(llmVndBedrockAPI ? { vndBedrockAPI: llmVndBedrockAPI } : {}),
 
     // Gemini
     ...(llmVndGeminiAspectRatio ? { vndGeminiAspectRatio: llmVndGeminiAspectRatio } : {}),

@@ -485,7 +485,7 @@ export namespace AixWire_API {
     vndAntWebSearch: z.enum(['auto']).optional(),
 
     // Bedrock
-    vndBedrockInvokeAPI: z.enum(['invoke-anthropic', 'converse']).optional(),
+    vndBedrockAPI: z.enum(['converse', 'invoke-anthropic', 'mantle']).optional(),
 
     // Gemini
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),

@@ -1,6 +1,6 @@
 import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures, AnthropicHeaderOptions } from '~/modules/llms/server/anthropic/anthropic.access';
 import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
-import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
+import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
@@ -84,38 +84,61 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     }
 
     case 'bedrock': {
+      switch (model.vndBedrockAPI) {
 
-      // [Bedrock, 2026-02-24] we only support the Invoke API for Anthropic models
-      const invokeAPI = model.vndBedrockInvokeAPI ?? 'invoke-anthropic';
-      if (invokeAPI === 'converse')
-        throw new Error('[Bedrock] Converse API is not yet implemented. Use Anthropic models with the InvokeModel API (invoke-anthropic).');
+        case 'converse':
+          // No plans of implementing this yet - throwing below
+          break;
 
-      const region = bedrockResolveRegion(access);
-      const url = bedrockURLRuntime(region, model.id, streaming);
+        // [Bedrock Invoke] Anthropic-native InvokeModel API
+        case 'invoke-anthropic':
+          const invokeUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, streaming);
 
-      // body
-      const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
-      delete bedrockAnthropicBody.model; // model in path
-      delete bedrockAnthropicBody.stream; // streaming behavior in path
-      // headers['anthropic-version'] -> body
-      bedrockAnthropicBody.anthropic_version = 'bedrock-2023-05-31';
-      // headers['anthropic-beta'] -> body
-      bedrockAnthropicBody.anthropic_beta = anthropicBetaFeatures(
-        _anthropicBetaOptionsFromModel(model /* note that .id won't match, and it's okay, we don't need per model customizations */, false /* hardcoded */),
-      );
-      if (!bedrockAnthropicBody.anthropic_beta?.length)
-        delete bedrockAnthropicBody.anthropic_beta;
+          // body
+          const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
+          delete bedrockAnthropicBody.model; // model in path
+          delete bedrockAnthropicBody.stream; // streaming behavior in path
+          // headers['anthropic-version'] -> body
+          bedrockAnthropicBody.anthropic_version = 'bedrock-2023-05-31';
+          // headers['anthropic-beta'] -> body
+          bedrockAnthropicBody.anthropic_beta = anthropicBetaFeatures(
+            _anthropicBetaOptionsFromModel(model /* note that .id won't match, and it's okay, we don't need per model customizations */, false /* hardcoded */),
+          );
+          if (!bedrockAnthropicBody.anthropic_beta?.length)
+            delete bedrockAnthropicBody.anthropic_beta;
 
-      return {
-        request: {
-          ...await bedrockAccessAsync(access, 'POST', url, bedrockAnthropicBody),
-          method: 'POST',
-          body: bedrockAnthropicBody,
-        },
-        bodyTransform: streaming ? 'aws-eventstream-binary' : null,
-        demuxerFormat: streaming ? 'fast-sse' : null,
-        chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
-      };
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', invokeUrl, bedrockAnthropicBody),
+              method: 'POST',
+              body: bedrockAnthropicBody,
+            },
+            bodyTransform: streaming ? 'aws-eventstream-binary' : null,
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+          };
+
+        // [Bedrock Mantle] OpenAI Chat Completions-compatible API for non-Anthropic models
+        case 'mantle':
+          const mantleUrl = bedrockURLMantle(bedrockResolveRegion(access), '/v1/chat/completions');
+          const mantleBody = aixToOpenAIChatCompletions('openai', model, chatGenerate, streaming);
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', mantleUrl, mantleBody),
+              method: 'POST',
+              body: mantleBody,
+            },
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
+          };
+
+        default:
+          const _exhaustiveCheck: never = model.vndBedrockAPI;
+        // fallthrough, then throw
+        case undefined:
+          break;
+      }
+      throw new Error(`Unsupported '${model.vndBedrockAPI}' API.`);
     }
 
     case 'gemini':

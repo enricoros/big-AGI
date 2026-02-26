@@ -251,6 +251,17 @@ export const DModelParameterRegistry = {
   // },
 
 
+  // Bedrock-specific
+
+  llmVndBedrockAPI: _enumDef({
+    label: 'Bedrock API',
+    type: 'enum',
+    description: 'Bedrock invocation API for this model',
+    values: ['converse', 'invoke-anthropic', 'mantle'],
+    // undefined is not accepted when this parameter is used
+  }),
+
+
   // Gemini-specific
 
   llmVndGeminiAspectRatio: _enumDef({ // implies: LLM_IF_Outputs_Image
@@ -549,7 +560,7 @@ export function applyModelParameterSpecsInitialValues(destValues: DModelParamete
       if ('writeFactoryValue' in registryDef && registryDef.writeFactoryValue !== undefined)
         destValues[paramId] = registryDef.writeFactoryValue as DModelParameterValue<typeof paramId>;
     } else
-      console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
+      console.warn(`applyModelParameterSpecsInitialValues: unknown parameter id '${paramId}'`);
   }
 }
 

@@ -72,7 +72,7 @@ Server-side adapters translate AIX parameters to vendor APIs. Each vendor may in
 When a model is loaded:
 
 1. **Model Creation**: `modelDescriptionToDLLM()` creates the DLLM with empty `initialParameters`
-2. **Initial Value Application**: `applyModelParameterInitialValues()` populates initial values from:
+2. **Initial Value Application**: `applyModelParameterSpecsInitialValues()` populates initial values from:
    - Model spec `initialValue` (highest priority)
    - Registry `initialValue` (fallback)
 3. **Runtime Resolution**: `getAllModelParameterValues()` creates final parameter set:

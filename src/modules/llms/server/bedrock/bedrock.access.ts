@@ -81,13 +81,17 @@ export function bedrockResolveRegion(access: BedrockAccessSchema): string {
 
 // --- URLs ---
 
+export function bedrockURLControlPlane(region: string, path: string): string {
+  return `https://bedrock.${region}.amazonaws.com${path}`;
+}
+
+export function bedrockURLMantle(region: string, path: string): string {
+  return `https://bedrock-mantle.${region}.api.aws${path}`;
+}
+
 export function bedrockURLRuntime(region: string, modelId: string, streaming: boolean): string {
   const action = streaming ? 'invoke-with-response-stream' : 'invoke';
   return `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(modelId)}/${action}`;
-}
-
-export function bedrockURLControlPlane(region: string, path: string): string {
-  return `https://bedrock.${region}.amazonaws.com${path}`;
 }
 
 

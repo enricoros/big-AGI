@@ -16,6 +16,29 @@ import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { anthropicInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
 import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
+
+
+// --- Suppression Rules ---
+
+const SKIP_FM_ID_CONTAINS = ['rerank'];
+const SKIP_IP_ID_STARTSWITH = ['stability.'];
+
+// Known Mantle-only models (no matching foundation model) — override heuristics with accurate metadata
+const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true }> = {
+  'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
+  'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 131072, out: 16384 },
+  'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 16384 },
+  'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 16384 },
+  'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
+  'qwen.qwen3-235b-a22b-2507': { label: 'Qwen3 235B A22B', ctx: 131072, out: 16384 },
+  'qwen.qwen3-coder-30b-a3b-instruct': { label: 'Qwen3 Coder 30B', ctx: 131072, out: 16384 },
+  'qwen.qwen3-coder-480b-a35b-instruct': { label: 'Qwen3 Coder 480B', ctx: 131072, out: 16384 },
+  'qwen.qwen3-coder-next': { label: 'Qwen3 Coder Next', ctx: 131072, out: 16384 },
+  'qwen.qwen3-next-80b-a3b-instruct': { label: 'Qwen3 Next 80B', ctx: 131072, out: 16384 },
+  'qwen.qwen3-vl-235b-a22b-instruct': { label: 'Qwen3 VL 235B', ctx: 131072, out: 16384, vision: true },
+  'zai.glm-4.6': { label: 'GLM 4.6', ctx: 131072, out: 16384 },
+} as const;
 
 
 // --- Bedrock API Wire Types ---
@@ -68,6 +91,17 @@ export namespace BedrockWire_API_Models_List {
     nextToken: z.string().optional().nullable(),
   });
 
+  // ListMantleModels response (OpenAI-compatible /v1/models from Bedrock Mantle)
+
+  export const MantleModelsResponse_schema = z.object({
+    data: z.array(z.object({
+      id: z.string(),
+      object: z.string().optional(),
+      created: z.number().optional(),
+      owned_by: z.string().optional(),
+    })),
+  });
+
 }
 
 
@@ -101,14 +135,21 @@ function _seemsAnthropicBedrockModel(bedrockModelId: string): boolean {
 export function bedrockModelsToDescriptions(
   foundationModels: z.infer<typeof BedrockWire_API_Models_List.FoundationModelsResponse_schema>,
   inferenceProfiles: z.infer<typeof BedrockWire_API_Models_List.InferenceProfilesResponse_schema>,
+  mantleModels: z.infer<typeof BedrockWire_API_Models_List.MantleModelsResponse_schema>,
 ): ModelDescriptionSchema[] {
 
-  // Collect unique model IDs from both sources
+  // Get the IDs for the Mantle models
+  const mantleModelIds = new Set(mantleModels.data.map(m => m.id));
+  let remainingMantleModelIds = new Set(mantleModelIds); // to track which Mantle models are not matched to foundation/inference profiles
+
+  // Collect unique model definitions from all sources
   const modelMap = new Map<string, {
     id: string;
     label: string;
     provider: string;
-    isInferenceProfile: boolean;
+    hasMantle: boolean;
+    isLegacy: boolean;
+    isProfile: boolean;
     streaming: boolean;
     converseMaxTokens: number | null;
     converseImageTypes: string[]
@@ -116,96 +157,167 @@ export function bedrockModelsToDescriptions(
 
   // Foundation Models
   for (const fm of foundationModels.modelSummaries) {
-    // exclude legacy models
-    if (fm.modelLifecycle?.status === 'LEGACY') continue;
+    const baseId = fm.modelId; // e.g. 'google.gemma-3-4b-it', 'moonshotai.kimi-k2.5'
+    const hasMantle = mantleModelIds.has(baseId);
 
-    // excludes embedding, image gen, video gen, speech-only
+    // exclusion by pattern
+    if (SKIP_FM_ID_CONTAINS.some(s => baseId.includes(s))) continue;
+
+    // excludes non text->text, such as embedding, image gen, video gen, speech-only
     if (!fm.inputModalities?.includes('TEXT') || !fm.outputModalities?.includes('TEXT')) continue;
 
-    // denylist '..match..'
-    if (['rerank'].some(match => fm.modelId.includes(match))) continue;
-
-    modelMap.set(fm.modelId, {
-      id: fm.modelId,
+    modelMap.set(baseId, {
+      id: baseId,
       label: fm.modelName,
       provider: fm.providerName,
-      isInferenceProfile: false,
+      hasMantle,
+      isLegacy: fm.modelLifecycle?.status === 'LEGACY',
+      isProfile: false,
       streaming: fm.responseStreamingSupported ?? true,
       converseMaxTokens: fm.converse?.maxTokensMaximum ?? null,
       converseImageTypes: fm.converse?.userImageTypesSupported ?? [],
     });
+
+    // mark as used in mantle
+    if (hasMantle)
+      remainingMantleModelIds.delete(baseId);
   }
 
-  // Inference Profiles
+  // Inference Profiles - important to come AFTER the base models, so we can resolve some attributes, if needed
   for (const ip of inferenceProfiles.inferenceProfileSummaries) {
     // exclude legacy models
     if (ip.status && ip.status !== 'ACTIVE') continue;
 
     // denylist 'start..'
     const baseId = _stripRegionPrefix(ip.inferenceProfileId);
-    if (['stability.'].some(start => baseId.startsWith(start))) continue;
+    if (SKIP_IP_ID_STARTSWITH.some(s => baseId.startsWith(s))) continue;
+    const hasMantle = mantleModelIds.has(baseId);
 
     // check if there's a matching foundation model (not anthropic, we map them differently)
     const foundationMeta = modelMap.get(baseId);
-    // if (!_seemsAnthropicBedrockModel(ip.inferenceProfileId) && !foundationMeta)
-    //   console.log('[Bedrock] No matching foundation model for inference profile', ip.inferenceProfileId);
 
     modelMap.set(ip.inferenceProfileId, {
       id: ip.inferenceProfileId,
       label: ip.inferenceProfileName,
       provider: _extractProvider(ip.inferenceProfileId),
-      isInferenceProfile: true,
+      hasMantle,
+      isLegacy: ip.status === 'LEGACY',
+      isProfile: true,
       streaming: foundationMeta?.streaming ?? true,
       converseMaxTokens: foundationMeta?.converseMaxTokens ?? null,
       converseImageTypes: foundationMeta?.converseImageTypes ?? [],
     });
+
+    // mark as used in mantle
+    if (hasMantle)
+      remainingMantleModelIds.delete(baseId);
   }
+
+
+  // Fuse foundationModels + inferenceProfiles into unified ModelDescriptionSchema definitions
+  // - Anthropic models get enriched with hardcoded metadata, plus 0-day
+  // - non-anthropic models get basic descriptions based on Bedrock metadata, plus mantle/converse markers
 
   // -> ModelDescriptionSchema[], with Anthropic thinking variants injected inline
   const descriptions: ModelDescriptionSchema[] = [];
-  for (const [modelId, meta] of modelMap) {
+  const symbolMantle = ''; // '🐘'; 'Ⓜ️'
+  const bedrockAPIAnthropic = { paramId: 'llmVndBedrockAPI', initialValue: 'invoke-anthropic' } as const satisfies DModelParameterSpecAny;
+  const bedrockAPIConverse = { paramId: 'llmVndBedrockAPI', initialValue: 'converse' } as const satisfies DModelParameterSpecAny;
+  const bedrockAPIMantle = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle' } as const satisfies DModelParameterSpecAny;
+  for (const [modelId, modelMeta] of modelMap) {
+    if (_seemsAnthropicBedrockModel(modelId)) {
 
-    // Known Anthropic models: enrich with hardcoded definitions + inject thinking variants
-    const antModel = llmBedrockFindAnthropicModel(_stripRegionPrefix(modelId));
-    if (antModel) {
-      const isProfile = !!_extractRegionPrefix(modelId);
-      // Inject variants (returns [variant, base] or [base] if no variant)
-      const withVariants = anthropicInjectVariants([], antModel);
-      for (const variant of withVariants) {
-        const label = isProfile ? _profileLabel(variant.label, modelId) : variant.label;
-        descriptions.push({ ...variant, id: modelId, label });
+      // Anthropic models
+      const antModel = llmBedrockFindAnthropicModel(_stripRegionPrefix(modelId));
+
+      // Known Anthropic: enrich with hardcoded definitions + inject thinking variants
+      if (antModel) {
+        for (const variant of anthropicInjectVariants([], antModel))
+          descriptions.push(llmBedrockStripAnthropicMDS({ // Filter to the subset of Anthropic params supported
+            ...variant,
+            id: modelId,
+            description: `${variant.description}${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
+            label: `${modelMeta.isLegacy ? '🕰️ ' : '' /*🅰️*/}${!modelMeta.isProfile ? variant.label : _labelFromProfile(variant.label, modelId)}`,
+            parameterSpecs: [...(variant.parameterSpecs || []), bedrockAPIAnthropic], // NOTE: FILTER MUST ALLOW THIS PARAM TOO!
+          }));
       }
-      continue;
-    }
+      // Unknown Anthropic: 0-day model, not in our hardcoded DB
+      else {
+        descriptions.push({
+          id: modelId,
+          label: `${modelMeta.isLegacy ? '🕰️ ' : ''}${!modelMeta.isProfile ? modelMeta.label : _labelFromProfile(modelMeta.label, modelId)} [?]`,
+          description: `${modelMeta.provider} model ${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
+          hidden: modelMeta.isLegacy || modelId.includes('.claude-3-'),
+          // default assumptions
+          contextWindow: 200000,
+          maxCompletionTokens: 64000,
+          interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+          parameterSpecs: [bedrockAPIAnthropic],
+        });
+      }
 
-    // Unknown models - these will NOT be accessible, hence the '🚧'. We show them just in case, but maybe we shall not
-    const isAnthropic = _seemsAnthropicBedrockModel(modelId);
-    const hasVision = meta.converseImageTypes.length > 0;
+    } else {
+
+      // Non-Anthropic models - may call them via mantle (if hasMantle)
+      const hasVision = modelMeta.converseImageTypes.length > 0;
+      const isMantle = modelMeta.hasMantle;
+      let label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
+      descriptions.push({
+        id: modelId,
+        label: `${isMantle ? symbolMantle : '🚧 '}${label.startsWith(modelMeta.provider) ? '' : (modelMeta.provider + ' ')}${label}`,
+        description: `${modelMeta.provider} model via ${isMantle ? 'OpenAI-Compatible' : 'Unsupported'} API ${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
+        contextWindow: modelMeta.converseMaxTokens ?? null,
+        interfaces: hasVision ? [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision] : [LLM_IF_OAI_Chat],
+        parameterSpecs: [isMantle ? bedrockAPIMantle : bedrockAPIConverse],
+        hidden: !isMantle, // only if it runs through mantle
+      });
+
+    }
+  }
+
+  // -> Add remaining Mantle-only models (not matched to any FM/IP)
+  for (const mantleId of remainingMantleModelIds) {
+    const known = KNOWN_MANTLE_ONLY[mantleId];
+    const provider = _extractMantleProvider(mantleId);
+    const interfaces = [LLM_IF_OAI_Chat];
+    if (known?.vision) interfaces.push(LLM_IF_OAI_Vision);
     descriptions.push({
-      id: modelId,
-      label: '🚧 ' + (meta.isInferenceProfile ? _profileLabel(meta.label, modelId) : meta.label),
-      description: `${meta.provider} model on AWS Bedrock${isAnthropic ? '' : ' (Converse API)'}`,
-      contextWindow: isAnthropic ? 200000 : (meta.converseMaxTokens ? meta.converseMaxTokens * 2 : 32768),
-      maxCompletionTokens: isAnthropic ? 64000 : (meta.converseMaxTokens ?? 4096),
-      interfaces:
-        isAnthropic ? [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching]
-          : hasVision ? [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision]
-            : [LLM_IF_OAI_Chat],
-      hidden: true, // not in our known models DB — hide until verified usable
+      id: mantleId,
+      label: `${symbolMantle}${known?.label ?? labelForMantle(mantleId, provider)}${known ? '' : ' [?]'}`,
+      description: `${provider} model via OpenAI-Compatible API on AWS Bedrock Mantle`,
+      contextWindow: known?.ctx ?? 131072,
+      maxCompletionTokens: known?.out ?? 16384,
+      interfaces,
+      parameterSpecs: [bedrockAPIMantle],
+      hidden: true, // we know it can run, but we don't have models details
     });
   }
 
-  // Filter interfaces and params to Bedrock-supported subset, then sort
-  const filtered = descriptions.map(llmBedrockStripAnthropicMDS);
-  filtered.sort(_bedrockModelSort);
-  return filtered;
+  return descriptions.sort(_bedrockModelSort);
 }
 
 
 // --- Helpers ---
 
+// Extract provider name from Mantle model ID (e.g., 'mistral.model-name' -> 'Mistral')
+function _extractMantleProvider(modelId: string): string {
+  const parts = modelId.split('.');
+  return !parts[0] ? 'Unknown' : parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+}
+
+// Build a display label from a Mantle model ID
+function labelForMantle(modelId: string, provider: string): string {
+  const parts = modelId.split('.');
+  const modelPart = parts.slice(1).join('.') || modelId;
+  // clean up: remove common suffixes, improve readability
+  const cleanLabel = modelPart
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  return `${provider} ${cleanLabel}`;
+}
+
 /** Build a profile label: strip redundant region prefix from name, append `· Region` suffix (omit for global) */
-function _profileLabel(name: string, modelId: string): string {
+function _labelFromProfile(name: string, modelId: string): string {
   const prefix = _extractRegionPrefix(modelId) ?? 'regional';
   // Strip leading "US ", "GLOBAL ", etc. from the AWS-provided name
   const cleanName = name.replace(/^(US|EU|GLOBAL|JP|APAC)\s+/i, '');
@@ -223,14 +335,19 @@ function _extractProvider(profileId: string): string {
   return parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : 'Unknown';
 }
 
-/** Sort: Anthropic first, then family > class > variant (thinking before plain) > region */
+/** Sort: Anthropic first, then non-Anthropic by provider > label */
 function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
   const aIsAnt = _seemsAnthropicBedrockModel(a.id);
   const bIsAnt = _seemsAnthropicBedrockModel(b.id);
-  if (aIsAnt && !bIsAnt) return -1;
-  if (!aIsAnt && bIsAnt) return 1;
+  if (aIsAnt !== bIsAnt) return aIsAnt ? -1 : 1;
 
-  // Within Anthropic: sort by family precedence
+  // --- Non-Anthropic: 🚧-prefixed labels last, then provider, then label ---
+  if (!aIsAnt)
+    return (a.label.startsWith('🚧') ? 1 : 0) - (b.label.startsWith('🚧') ? 1 : 0)
+      || _extractMantleProvider(a.id).localeCompare(_extractMantleProvider(b.id))
+      || a.label.localeCompare(b.label);
+
+  // --- Anthropic: family > class > variant > region ---
   const familyPrecedence = ['-4-7-', '-4-6', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
   const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
 
@@ -245,11 +362,10 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
   const classB = getClassIdx(b.id);
   if (classA !== classB) return (classA === -1 ? 999 : classA) - (classB === -1 ? 999 : classB);
 
-  // Thinking/adaptive variants before plain (idVariant present = variant)
+  // Thinking/adaptive variants before plain
   const aIsVariant = !!a.idVariant;
   const bIsVariant = !!b.idVariant;
-  if (aIsVariant && !bIsVariant) return -1;
-  if (!aIsVariant && bIsVariant) return 1;
+  if (aIsVariant !== bIsVariant) return aIsVariant ? -1 : 1;
 
   // Prefer global > us > eu > regional
   const prefixOrder = ['global', 'us', 'eu', 'jp', 'apac'];

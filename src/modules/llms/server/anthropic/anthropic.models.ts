@@ -463,6 +463,8 @@ const _BEDROCK_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 
 // NOTE: llmVndAntInfSpeed not available on Bedrock, llmVndAntWebFetch/llmVndAntSkills not available
 const _BEDROCK_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  // bedrock params to not strip
+  'llmVndBedrockAPI',
   // supported
   'llmVndAnt1MContext',
   'llmVndAntEffort',
