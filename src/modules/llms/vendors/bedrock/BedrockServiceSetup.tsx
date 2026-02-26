@@ -26,9 +26,10 @@ const _styles = {
     gap: 'var(--Card-padding, 1rem)',
   },
   iamSectionDimmed: {
-    opacity: 0.5,
-    pointerEvents: 'none',
-    transition: 'opacity 0.2s',
+    display: 'none',
+    // opacity: 0.5,
+    // pointerEvents: 'none',
+    // transition: 'opacity 0.2s',
   },
 } as const;
 
@@ -108,10 +109,10 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='ABSK...'
     />
 
-    <Divider>or</Divider>
+    {!hasBearer && <Divider>or</Divider>}
 
     {/* IAM credentials - side by side on md+, stacked on mobile, dimmed when bearer is active */}
-    <Box sx={hasBearer ? _styles.iamSectionDimmed : undefined}>
+    {!hasBearer && <Box sx={hasBearer ? _styles.iamSectionDimmed : undefined}>
       <Box sx={_styles.iamGrid}>
         <FormInputKey
           autoCompleteId='bedrock-access-key-id' label='AWS Access Key ID'
@@ -133,7 +134,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
           placeholder='wJalr...'
         />
       </Box>
-    </Box>
+    </Box>}
 
 
     <BedrockRegionAutocomplete
