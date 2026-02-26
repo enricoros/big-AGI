@@ -80,7 +80,7 @@ export function AixDebuggerFrame(props: {
         <div>Date</div>
         <div>{new Date(frame.timestamp).toLocaleString()}</div>
         <div>-&gt; URL:</div>
-        <div className='agi-ellipsize'>{frame.url || 'No URL data available'}</div>
+        <div className='agi-ellipsize'>{decodeURIComponent(frame.url) || 'No URL data available'}</div>
         <div>Context:</div>
         <Chip variant={isConversation ? 'soft' : 'solid'} color='primary'>{contextName}</Chip>
         <div>Reference:</div>
