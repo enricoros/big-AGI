@@ -1,33 +1,31 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance to Claude Code when working with code in this repository.
 
-## Development Commands
+
+## Architecture Overview
+
+Big-AGI is a Next.js 15 application with a sophisticated modular architecture built for professional AI interactions.
+
+### Development Commands
+
+Dev servers may be already running on ports 3000, 3001, 3002, or 3003 (not always this app - other projects may occupy these ports). Never start or stop dev servers, let the user do it.
 
 ```bash
 # Validate (~5s, safe while dev server runs, do NOT use `next build` ~45s for same checks)
 tsc --noEmit --pretty && npm run lint # Type check (~3.5s) + ESLint (~2s)
 eslint src/path/to/file.ts           # Lint specific file
 
-# Full build (~60s+, only when suspecting runtime/bundle issues)                                                                                                                                                                        
-npm run build  # next build runs compile+lint+types but stops at first type-error file; tsc shows all at once        
+# Full build (~60s+, only when suspecting runtime/bundle issues)
+npm run build  # next build runs compile+lint+types but stops at first type-error file; tsc shows all at once
 
 # Database & External Services
 # npm run supabase:local-update-types   # Generate TypeScript types
 # npm run stripe:listen                 # Listen for Stripe webhooks
 ```
 
-## Project & Repository Structure
-
-**Product tiers** (independent, non-VC-funded): **Open** (self-host, MIT) · **Free** (big-agi.com) · **Pro** (paid, includes Sync + backup). All tiers use the user's own API keys.
-
-## Architecture Overview
-
-Big-AGI is a Next.js 15 application with a modular architecture built for advanced AI interactions.
-
-Dev servers may be running on ports 3000, 3001, 3002, or 3003 (not always this app - other projects may occupy these ports). Never start or stop dev servers, let the user do it.
-
 ### Git/GitHub remotes
+
 The `gh` command is available to interact with GitHub from the terminal, but **NEVER PUSH TO ANY BRANCH**. The user manages all 'write' git operations.
 - `opensource` -> `enricoros/big-AGI` (public, default branch: `main`, MIT) - community issues/PRs/releases
 - `private` -> `big-agi/big-agi-private` (private, default branch: `dev`) - main dev repo with `dev`->`staging`->`prod` pipeline
@@ -56,7 +54,7 @@ The directory structure is as follows:
 - **API Layer**: tRPC with TanStack React Query for type-safe communication
 - **Runtime**: Edge Runtime for AI operations, Node.js for data processing
 
-### Apps Architecture Pattern
+### "Apps" Architecture Pattern
 
 Each app in `/src/apps/` is a self-contained feature module:
 - Main component (`App*.tsx`)
@@ -103,6 +101,15 @@ Modules in `/src/modules/` provide reusable business logic:
 - Message structure: `DMessage` -> `DMessageFragment[]`
 - Supports multi-pane with independent conversation states
 
+#### Layout System ("Optima")
+
+The Optima layout system provides:
+- **Responsive design** adapting desktop/mobile
+- **Drawer(left)/Toolbar/Panel(right)** composition
+- **Portal-based rendering** for flexible component placement
+
+Located in `/src/common/layout/optima/`
+
 ### Storage System
 
 Big-AGI uses a local-first architecture with Zustand + IndexedDB:
@@ -110,7 +117,6 @@ Big-AGI uses a local-first architecture with Zustand + IndexedDB:
 - **localStorage** for persistent settings/all storage (via Zustand persist middleware)
 - **IndexedDB** for persistent chat-only storage (via Zustand persist middleware) on a single key-val cell
 - **Local-first** architecture with offline capability
-- **Migration system** for upgrading data structures across versions
 
 Key storage patterns:
 - Stores use `createIDBPersistStorage()` for IndexedDB persistence
@@ -121,16 +127,6 @@ Key storage patterns:
 Located in `/src/common/stores/` with stores like:
 - `chat/store-chats.ts`: Conversations and messages
 - `llms/store-llms.ts`: Model configurations
-
-### Layout System ("Optima")
-
-The Optima layout system provides:
-- **Responsive design** adapting desktop/mobile
-- **Drawer/Panel/Toolbar** composition
-- **Split-pane support** for multi-conversation views
-- **Portal-based rendering** for flexible component placement
-
-Located in `/src/common/layout/optima/`
 
 ### State Management Patterns
 
@@ -168,36 +164,29 @@ Located in `/src/common/layout/optima/`
 
 ### Development Patterns
 
+#### TypeScript & Code Quality
+- Type-safe through strict TypeScript interfaces
+- Clear interface-first approach for modules and components
+- Use latest TypeScript 5.9+ features
+- Use forward-looking patterns to minimize future refactors (e.g., discriminated unions, `satisfies` operator, as const assertions)
+- Type guards and exhaustiveChecks for robustness
+- Type inference where possible
+- Runtime validation with Zod schemas for API inputs/outputs (usually server-side, with the client importing as types the inferred types)
+
 #### Module Integration
-- Each module exports its functionality through index files
 - Modules register with central registries (e.g., `vendors.registry.ts`)
 - Configuration objects define module behavior
-- Type-safe integration through strict TypeScript interfaces
-
-#### Component Patterns
-- **Controlled components** with clear prop interfaces
-- **Hook-based logic** extraction for reusability
-- **Portal rendering** for overlays and modals
-- **Suspense boundaries** for async operations
 
 #### API Patterns
 - **tRPC routers** for type-safe API endpoints
 - **Zod schemas** for runtime validation
-- **Middleware** for request/response processing
-- **Edge functions** for performance-critical AI operations
+- **tRPC procedures middleware** for authorization and logging (authorization is on a httpOnly cookie)
+- **Edge functions** for performance-critical operations
 
-## Security Considerations
-
-- API keys stored client-side in localStorage (user-provided)
-- Server-side API keys in environment variables only
+#### Security Considerations
+- API keys in environment variables only (server-side); on the client they're in localStorage for now, but we want to move away from this
 - XSS protection through proper content escaping
-- No credential transmission to third parties
 
-## Knowledge Base
-
-Architecture and system documentation is available in the `/kb/` knowledge base:
-
-@kb/KB.md
 
 ## Common Development Tasks
 
@@ -206,41 +195,11 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 - Type-check with `tsc --noEmit`
 - Test critical user flows manually
 
-### Adding a New LLM Vendor
-1. Create vendor in `/src/modules/llms/vendors/[vendor]/`
-2. Implement `IModelVendor` interface
-3. Register in `vendors.registry.ts`
-4. Add environment variables to the vendor's server file and `/src/server/env.server.ts` (if server-side keys needed)
-
 ### Debugging Storage Issues
 - Check IndexedDB: DevTools -> Application -> IndexedDB -> `app-chats`
 - Monitor Zustand state: Use Zustand DevTools
 - Check migration logs in console during rehydration
 
-## Code Examples
-
-### AIX Streaming Pattern
-```typescript
-// Efficient streaming with decimation
-aixChatGenerateContent_DMessage_FromConversation(
-  llmId,
-  chatHistory,
-  { abortSignal, throttleParallelThreads: 1 },
-  async (update, isDone) => {
-    // Real-time UI updates
-  }
-);
-```
-
-### Model Registry Pattern
-```typescript
-// Registry pattern for extensibility
-const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
-  openai: ModelVendorOpenAI,
-  anthropic: ModelVendorAnthropic,
-  // ... 17 more vendors
-};
-```
 
 ## Server Architecture
 
@@ -263,3 +222,9 @@ Centralized server for data processing operations:
 Located at `/src/server/trpc/trpc.router-cloud.ts`
 
 **Key Pattern**: Edge runtime for AI (fast, distributed), Cloud runtime for data ops (centralized, Node.js)
+
+@kb/KB.md
+
+@kb/vision-inlined.md
+
+As a side note, the product tiers (independent, non-VC-funded) are: **Open** (self-host, MIT) · **Free** (big-agi.com) · **Pro** (paid, includes Sync + backup). All tiers use the user's own API keys.

@@ -1,12 +1,12 @@
-# Knowledge Base
+## Knowledge Base
 
-Internal documentation for Big-AGI architecture and systems, for use by AI agents and developers.
+Architecture and system documentation is available in the `/kb/` knowledge base, for use by AI agents and developers.
 
 **Structure:**
+- `/kb/KB.md` - Already in context: this text
+- `/kb/vision-inlined.md` - Already in context (next section): long-term vision and north stars
 - `/kb/modules/` - Core business logic (e.g. AIX)
 - `/kb/systems/` - Infrastructure (routing, startup)
-
-## Index
 
 ### Modules Documentation
 
@@ -23,16 +23,16 @@ Internal documentation for Big-AGI architecture and systems, for use by AI agent
 - **[app-routing.md](systems/app-routing.md)** - Next.js routing, provider stack, and display state hierarchy
 - **[LLM-parameters-system.md](systems/LLM-parameters-system.md)** - Language model parameter flow across the system
 
-## Guidelines
+### KB Guidelines
 
-### Writing Style
+#### Writing Style
 
 - **Direct and factual** - No marketing language
 - **Present tense** - "AIX handles streaming" not "AIX will handle"
 - **Active voice** - "The system processes" not "Processing is done by"
 - **Concrete examples** - Show actual code/config when helpful, briefly
 
-### Maintenance
+#### Maintenance
 
-- Remove outdated information when detected!
+- Remove outdated knowledge base information when detected
 - Keep cross-references current when files move
