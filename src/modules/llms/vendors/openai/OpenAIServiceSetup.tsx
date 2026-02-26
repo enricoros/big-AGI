@@ -19,7 +19,7 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOpenAI } from './openai.vendor';
-import { OpenAIHostAutocomplete } from './OpenAIHostAutocomplete';
+import { findMatchingOpenAIAutoProvider, OpenAIHostAutocomplete } from './OpenAIHostAutocomplete';
 
 
 // avoid repeating it all over
@@ -44,6 +44,17 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
+
+
+  // [effect] auto-update the service label when a known provider host is selected
+  React.useEffect(() => {
+    const match = findMatchingOpenAIAutoProvider(oaiHost);
+    if (match)
+      updateLabel(match.label);
+    else if (!oaiHost)
+      updateLabel(''); // resets to vendor default when host is cleared
+  }, [oaiHost, updateLabel]);
+
 
   // fetch models
   const { isFetching, refetch, isError, error } =
