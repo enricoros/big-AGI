@@ -89,8 +89,11 @@ export function bedrockURLMantle(region: string, path: string): string {
   return `https://bedrock-mantle.${region}.api.aws${path}`;
 }
 
-export function bedrockURLRuntime(region: string, modelId: string, streaming: boolean): string {
-  const action = streaming ? 'invoke-with-response-stream' : 'invoke';
+export function bedrockURLRuntime(region: string, modelId: string, api: 'converse' | 'invoke', streaming: boolean): string {
+  const action =
+    api === 'converse' ? (streaming ? 'converse-stream' : 'converse')
+      : api === 'invoke' ? (streaming ? 'invoke-with-response-stream' : 'invoke')
+        : 'UNSUPPORTED_API';
   return `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(modelId)}/${action}`;
 }
 

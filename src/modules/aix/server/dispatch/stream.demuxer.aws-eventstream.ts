@@ -228,6 +228,18 @@ export function createEventStreamToSSETransform(): TransformStream<Uint8Array, U
           continue;
         }
 
+        // Handle Converse stream events (payload is direct JSON, not base64-wrapped)
+        if (eventType === 'messageStart' || eventType === 'contentBlockStart'
+          || eventType === 'contentBlockDelta' || eventType === 'contentBlockStop'
+          || eventType === 'messageStop' || eventType === 'metadata') {
+          const payloadJson = decoder.decode(frame.payload);
+          if (DEBUG_TRANSFORM)
+            console.log(`[EventStream] frame #${_dbg_frameCount}: converse event ${eventType} (${bytesConsumed}B)`, payloadJson.slice(0, 120));
+          const sse = `event: ${eventType}\ndata: ${payloadJson}\n\n`;
+          controller.enqueue(encoder.encode(sse));
+          continue;
+        }
+
         // Unknown event type - log and skip
         if (DEBUG_TRANSFORM || eventType)
           console.warn(`[EventStream] frame #${_dbg_frameCount}: unknown event type: ${eventType}, message type: ${messageType}`);

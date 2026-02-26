@@ -10,6 +10,7 @@ import type { AixDemuxers } from '../stream.demuxers';
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
 import { aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
+import { aixToBedrockConverse } from './adapters/bedrock.converse';
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
@@ -17,6 +18,7 @@ import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
+import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
@@ -86,13 +88,25 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'bedrock': {
       switch (model.vndBedrockAPI) {
 
-        case 'converse':
-          // No plans of implementing this yet - throwing below
-          break;
+        // [Bedrock Converse] Bedrock-native API, preferred for Amazon models and useful in others too
+        case 'converse': {
+          const converseUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, 'converse', streaming);
+          const converseBody = aixToBedrockConverse(model, chatGenerate);
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', converseUrl, converseBody),
+              method: 'POST' as const,
+              body: converseBody,
+            },
+            bodyTransform: streaming ? 'aws-eventstream-binary' : null,
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createBedrockConverseStreamParser() : createBedrockConverseParserNS(),
+          };
+        }
 
         // [Bedrock Invoke] Anthropic-native InvokeModel API
         case 'invoke-anthropic':
-          const invokeUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, streaming);
+          const invokeUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, 'invoke', streaming);
 
           // body
           const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate(model, chatGenerate, streaming);

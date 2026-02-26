@@ -268,22 +268,25 @@ export function bedrockModelsToDescriptions(
 
     } else {
 
-      // Non-Anthropic models - may call them via mantle (if hasMantle)
+      // Non-Anthropic models - may call them via mantle (if hasMantle) or converse (if not legacy)
       const isMantle = modelMeta.hasMantle;
+      const isConverseCapable = !modelMeta.isLegacy;
       const interfaces = [LLM_IF_OAI_Chat];
       if (modelMeta.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
       if (modelMeta.inputImage) interfaces.push(LLM_IF_OAI_Vision);
+      if (isConverseCapable && !isMantle) interfaces.push(LLM_IF_OAI_Fn); // Converse models support toolConfig
       if (modelMeta.outputAudio) interfaces.push(LLM_IF_Outputs_Audio);
       if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
       let label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
+      const apiLabel = isMantle ? 'OpenAI-Compatible' : isConverseCapable ? 'Converse' : 'Unsupported';
       descriptions.push({
         id: modelId,
-        label: `${isMantle ? symbolMantle : '🚧 '}${label.startsWith(modelMeta.provider) ? '' : (modelMeta.provider + ' ')}${label}`,
-        description: `${modelMeta.provider} model via ${isMantle ? 'OpenAI-Compatible' : 'Unsupported'} API ${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
+        label: `${isMantle || isConverseCapable ? symbolMantle : '🚧 '}${label.startsWith(modelMeta.provider) ? '' : (modelMeta.provider + ' ')}${label}`,
+        description: `${modelMeta.provider} model via ${apiLabel} API${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
         contextWindow: modelMeta.converseMaxTokens ?? null,
         interfaces,
         parameterSpecs: [isMantle ? bedrockAPIMantle : bedrockAPIConverse],
-        hidden: !isMantle, // only if it runs through mantle
+        hidden: !(isMantle || isConverseCapable), // show if mantle or converse-capable
       });
 
     }
