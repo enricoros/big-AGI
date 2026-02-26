@@ -53,7 +53,8 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string().optional(),
     ANTHROPIC_API_HOST: z.url().optional(),
 
-    // LLM: AWS Bedrock (using 2 or 3 auth values)
+    // LLM: AWS Bedrock (bearer token OR IAM credentials)
+    BEDROCK_BEARER_TOKEN: z.string().optional(), // Bedrock long-term API key (ABSK...) - takes priority over IAM credentials; short-term keys only work for runtime, not model listing
     BEDROCK_ACCESS_KEY_ID: z.string().optional(),
     BEDROCK_SECRET_ACCESS_KEY: z.string().optional(),
     BEDROCK_SESSION_TOKEN: z.string().optional(), // required with the other 2 on corporate accounts sometimes

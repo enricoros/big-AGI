@@ -5,10 +5,12 @@ import type { IModelVendor } from '../IModelVendor';
 
 
 // validation
+export const isValidBedrockBearerToken = (key?: string) => !!key && key.length >= 20;
 export const isValidBedrockAccessKeyId = (key?: string) => !!key && key.length >= 16;
 export const isValidBedrockSecretAccessKey = (key?: string) => !!key && key.length >= 16;
 
 export interface DBedrockServiceSettings {
+  bedrockBearerToken: string;
   bedrockAccessKeyId: string;
   bedrockSecretAccessKey: string;
   bedrockSessionToken: string;
@@ -31,6 +33,7 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
 
   // functions
   initializeSetup: () => ({
+    bedrockBearerToken: '',
     bedrockAccessKeyId: '',
     bedrockSecretAccessKey: '',
     bedrockSessionToken: '',
@@ -40,9 +43,18 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
 
   getTransportAccess: (partialSetup): BedrockAccessSchema => ({
     dialect: 'bedrock',
-    bedrockAccessKeyId: partialSetup?.bedrockAccessKeyId || '',
-    bedrockSecretAccessKey: partialSetup?.bedrockSecretAccessKey || '',
-    bedrockSessionToken: partialSetup?.bedrockSessionToken || null,
+    // bearer token takes priority; don't send IAM credentials alongside it
+    ...(partialSetup?.bedrockBearerToken ? {
+      bedrockBearerToken: partialSetup.bedrockBearerToken,
+      bedrockAccessKeyId: '',
+      bedrockSecretAccessKey: '',
+      bedrockSessionToken: null,
+    } : {
+      bedrockBearerToken: '',
+      bedrockAccessKeyId: partialSetup?.bedrockAccessKeyId || '',
+      bedrockSecretAccessKey: partialSetup?.bedrockSecretAccessKey || '',
+      bedrockSessionToken: partialSetup?.bedrockSessionToken || null,
+    }),
     bedrockRegion: partialSetup?.bedrockRegion || 'us-west-2',
     clientSideFetch: _csfBedrockAvailable(partialSetup) && !!partialSetup?.csf,
   }),
@@ -53,5 +65,5 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
 };
 
 function _csfBedrockAvailable(s?: Partial<DBedrockServiceSettings>) {
-  return !!s?.bedrockAccessKeyId && !!s?.bedrockSecretAccessKey;
+  return !!s?.bedrockBearerToken || (!!s?.bedrockAccessKeyId && !!s?.bedrockSecretAccessKey);
 }

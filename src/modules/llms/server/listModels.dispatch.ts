@@ -16,7 +16,7 @@ import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Bedrock
-import { bedrockAccessAsync, bedrockURLControlPlane, bedrockServerConfig } from './bedrock/bedrock.access';
+import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLControlPlane } from './bedrock/bedrock.access';
 import { bedrockModelsToDescriptions, BedrockWire_API_Models_List } from './bedrock/bedrock.models';
 
 // protocol: Gemini
@@ -169,7 +169,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         fetchModels: async () => {
 
           // construct URLs by region
-          const { region } = bedrockServerConfig(access);
+          const region = bedrockResolveRegion(access);
           const fmUrl = bedrockURLControlPlane(region, '/foundation-models?byInferenceType=ON_DEMAND');
           const ipUrl = bedrockURLControlPlane(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000');
 

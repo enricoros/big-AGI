@@ -1,8 +1,6 @@
 import * as React from 'react';
 
-import { Autocomplete, AutocompleteOption, Box, FormControl, FormHelperText, FormLabel, Typography } from '@mui/joy';
-
-import { Link } from '~/common/components/Link';
+import { Autocomplete, AutocompleteOption, Box, FormControl, FormLabel, Typography } from '@mui/joy';
 
 
 interface BedrockRegion {
@@ -76,11 +74,11 @@ export function BedrockRegionAutocomplete(props: {
     <FormControl>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <FormLabel>
-          AWS Region
+          AWS Models Region
         </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          see <Link level='body-sm' href='https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html' target='_blank'>regions</Link>
-        </FormHelperText>
+        {/*<FormHelperText sx={{ display: 'block' }}>*/}
+        {/*  see <Link level='body-sm' href='https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html' target='_blank'>regions</Link>*/}
+        {/*</FormHelperText>*/}
       </Box>
       <Autocomplete<BedrockRegion, false, false, true>
         freeSolo

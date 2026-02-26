@@ -29,6 +29,7 @@ AZURE_OPENAI_API_ENDPOINT=
 AZURE_OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ANTHROPIC_API_HOST=
+BEDROCK_BEARER_TOKEN=
 BEDROCK_ACCESS_KEY_ID=
 BEDROCK_SECRET_ACCESS_KEY=
 BEDROCK_SESSION_TOKEN=
@@ -105,6 +106,7 @@ requiring the user to enter an API key
 | `AZURE_DEPLOYMENTS_API_VERSION` | API version for the deployments listing endpoint                                                            | Optional, defaults to '2023-03-15-preview'                       |
 | `ANTHROPIC_API_KEY`         | The API key for Anthropic                                                                                      | Optional                                                          |
 | `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, for proxies or custom endpoints                             | Optional                                                          |
+| `BEDROCK_BEARER_TOKEN`      | Bedrock long-term API key (`ABSK...`). Takes priority over IAM credentials. Short-term keys only work for runtime, not model listing | Optional                                                          |
 | `BEDROCK_ACCESS_KEY_ID`     | AWS IAM Access Key ID for Bedrock (Claude models via AWS)                                                      | Optional, but if set `BEDROCK_SECRET_ACCESS_KEY` must also be set  |
 | `BEDROCK_SECRET_ACCESS_KEY` | AWS IAM Secret Access Key for Bedrock                                                                          | Optional, but if set `BEDROCK_ACCESS_KEY_ID` must also be set      |
 | `BEDROCK_SESSION_TOKEN`     | AWS Session Token for temporary/STS credentials                                                                | Optional                                                          |

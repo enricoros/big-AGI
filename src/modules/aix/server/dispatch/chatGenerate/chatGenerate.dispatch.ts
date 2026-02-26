@@ -1,6 +1,6 @@
 import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures, AnthropicHeaderOptions } from '~/modules/llms/server/anthropic/anthropic.access';
 import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
-import { bedrockAccessAsync, bedrockServerConfig, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
+import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
@@ -90,7 +90,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       if (invokeAPI === 'converse')
         throw new Error('[Bedrock] Converse API is not yet implemented. Use Anthropic models with the InvokeModel API (invoke-anthropic).');
 
-      const region = bedrockServerConfig(access).region;
+      const region = bedrockResolveRegion(access);
       const url = bedrockURLRuntime(region, model.id, streaming);
 
       // body
