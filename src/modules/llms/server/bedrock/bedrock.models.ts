@@ -15,7 +15,7 @@ import * as z from 'zod/v4';
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { anthropicInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 
 
@@ -25,7 +25,7 @@ const SKIP_FM_ID_CONTAINS = ['rerank'];
 const SKIP_IP_ID_STARTSWITH = ['stability.'];
 
 // Known Mantle-only models (no matching foundation model) — override heuristics with accurate metadata
-const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true }> = {
+const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 131072, out: 16384 },
   'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 16384 },
@@ -152,7 +152,11 @@ export function bedrockModelsToDescriptions(
     isProfile: boolean;
     streaming: boolean;
     converseMaxTokens: number | null;
-    converseImageTypes: string[]
+    // capabilities detected from FM metadata
+    reasoning: boolean;
+    inputImage: boolean;
+    outputAudio: boolean;
+    outputImage: boolean;
   }>();
 
   // Foundation Models
@@ -175,7 +179,10 @@ export function bedrockModelsToDescriptions(
       isProfile: false,
       streaming: fm.responseStreamingSupported ?? true,
       converseMaxTokens: fm.converse?.maxTokensMaximum ?? null,
-      converseImageTypes: fm.converse?.userImageTypesSupported ?? [],
+      reasoning: !!fm.converse?.reasoningSupported?.embedded,
+      inputImage: fm.inputModalities?.includes('IMAGE') || !!fm.converse?.userImageTypesSupported?.length,
+      outputAudio: fm.outputModalities?.includes('SPEECH') ?? false,
+      outputImage: fm.outputModalities?.includes('IMAGE') ?? false,
     });
 
     // mark as used in mantle
@@ -205,7 +212,10 @@ export function bedrockModelsToDescriptions(
       isProfile: true,
       streaming: foundationMeta?.streaming ?? true,
       converseMaxTokens: foundationMeta?.converseMaxTokens ?? null,
-      converseImageTypes: foundationMeta?.converseImageTypes ?? [],
+      reasoning: foundationMeta?.reasoning ?? false,
+      inputImage: foundationMeta?.inputImage ?? false,
+      outputAudio: foundationMeta?.outputAudio ?? false,
+      outputImage: foundationMeta?.outputImage ?? false,
     });
 
     // mark as used in mantle
@@ -259,15 +269,19 @@ export function bedrockModelsToDescriptions(
     } else {
 
       // Non-Anthropic models - may call them via mantle (if hasMantle)
-      const hasVision = modelMeta.converseImageTypes.length > 0;
       const isMantle = modelMeta.hasMantle;
+      const interfaces = [LLM_IF_OAI_Chat];
+      if (modelMeta.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
+      if (modelMeta.inputImage) interfaces.push(LLM_IF_OAI_Vision);
+      if (modelMeta.outputAudio) interfaces.push(LLM_IF_Outputs_Audio);
+      if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
       let label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
       descriptions.push({
         id: modelId,
         label: `${isMantle ? symbolMantle : '🚧 '}${label.startsWith(modelMeta.provider) ? '' : (modelMeta.provider + ' ')}${label}`,
         description: `${modelMeta.provider} model via ${isMantle ? 'OpenAI-Compatible' : 'Unsupported'} API ${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
         contextWindow: modelMeta.converseMaxTokens ?? null,
-        interfaces: hasVision ? [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision] : [LLM_IF_OAI_Chat],
+        interfaces,
         parameterSpecs: [isMantle ? bedrockAPIMantle : bedrockAPIConverse],
         hidden: !isMantle, // only if it runs through mantle
       });
@@ -281,6 +295,7 @@ export function bedrockModelsToDescriptions(
     const provider = _extractMantleProvider(mantleId);
     const interfaces = [LLM_IF_OAI_Chat];
     if (known?.vision) interfaces.push(LLM_IF_OAI_Vision);
+    if (known?.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
     descriptions.push({
       id: mantleId,
       label: `${symbolMantle}${known?.label ?? labelForMantle(mantleId, provider)}${known ? '' : ' [?]'}`,
