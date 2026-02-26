@@ -205,7 +205,7 @@ export function bedrockModelsToDescriptions(
 
     modelMap.set(ip.inferenceProfileId, {
       id: ip.inferenceProfileId,
-      label: ip.inferenceProfileName,
+      label: ip.inferenceProfileName + (foundationMeta ? '' : ' [?]'),
       provider: _extractProvider(ip.inferenceProfileId),
       hasMantle,
       isLegacy: ip.status === 'LEGACY',
@@ -352,14 +352,16 @@ function _extractProvider(profileId: string): string {
 
 /** Sort: Anthropic first, then non-Anthropic by provider > label */
 function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
-  const aIsAnt = _seemsAnthropicBedrockModel(a.id);
-  const bIsAnt = _seemsAnthropicBedrockModel(b.id);
+  const aId = _stripRegionPrefix(a.id);
+  const bId = _stripRegionPrefix(b.id);
+  const aIsAnt = _seemsAnthropicBedrockModel(aId);
+  const bIsAnt = _seemsAnthropicBedrockModel(bId);
   if (aIsAnt !== bIsAnt) return aIsAnt ? -1 : 1;
 
   // --- Non-Anthropic: 🚧-prefixed labels last, then provider, then label ---
   if (!aIsAnt)
     return (a.label.startsWith('🚧') ? 1 : 0) - (b.label.startsWith('🚧') ? 1 : 0)
-      || _extractMantleProvider(a.id).localeCompare(_extractMantleProvider(b.id))
+      || _extractMantleProvider(aId).localeCompare(_extractMantleProvider(bId))
       || a.label.localeCompare(b.label);
 
   // --- Anthropic: family > class > variant > region ---
@@ -369,12 +371,12 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
   const getFamilyIdx = (id: string) => familyPrecedence.findIndex(f => id.includes(f));
   const getClassIdx = (id: string) => classPrecedence.findIndex(c => id.includes(c));
 
-  const familyA = getFamilyIdx(a.id);
-  const familyB = getFamilyIdx(b.id);
+  const familyA = getFamilyIdx(aId);
+  const familyB = getFamilyIdx(bId);
   if (familyA !== familyB) return (familyA === -1 ? 999 : familyA) - (familyB === -1 ? 999 : familyB);
 
-  const classA = getClassIdx(a.id);
-  const classB = getClassIdx(b.id);
+  const classA = getClassIdx(aId);
+  const classB = getClassIdx(bId);
   if (classA !== classB) return (classA === -1 ? 999 : classA) - (classB === -1 ? 999 : classB);
 
   // Thinking/adaptive variants before plain
