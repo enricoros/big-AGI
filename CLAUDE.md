@@ -207,10 +207,13 @@ The server uses a split architecture with two tRPC routers:
 
 ### Edge Network (`trpc.router-edge`)
 Distributed edge runtime for low-latency AI operations:
-- **AIX** - AI streaming and communication
-- **LLM Routers** - Direct vendor integrations (OpenAI, Anthropic, Gemini, Ollama)
-- **Speex** - Unified TTS router (ElevenLabs, Inworld, and other TTS vendors)
+- **AIX** [1] - AI streaming and communication
+- **LLM Routers** [1] - Vendor-specific operations such as list models (OpenAI, Anthropic, Gemini, Ollama)
+- **Speex** [1] - Unified TTS router (ElevenLabs, Inworld, and other TTS vendors)
 - **External Services** - Google Search, YouTube transcripts
+
+[1]: also supports client-side fetch (CSF) via client-side inclusion (rebundling with stubs),
+for direct browser-to-API communication when possible (CORS), to reduce latency and network barriers
 
 Located at `/src/server/trpc/trpc.router-edge.ts`
 
