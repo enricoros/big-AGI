@@ -143,7 +143,6 @@ export type DModelInterfaceV1 =
   | 'ant-tools-search'
   | 'oai-chat-vision'
   | 'oai-chat-reasoning'
-  | 'oai-complete'
   | 'ant-prompt-caching'
   | 'oai-prompt-caching'
   | 'oai-realtime'
@@ -174,7 +173,6 @@ export const LLM_IF_Outputs_Audio: DModelInterfaceV1 = 'outputs-audio';
 export const LLM_IF_Outputs_Image: DModelInterfaceV1 = 'outputs-image';
 export const LLM_IF_Outputs_NoText: DModelInterfaceV1 = 'outputs-no-text';
 export const LLM_IF_Tools_WebSearch: DModelInterfaceV1 = 'tools-web-search';
-export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
 export const LLM_IF_OAI_PromptCaching: DModelInterfaceV1 = 'oai-prompt-caching';
 export const LLM_IF_OAI_Responses: DModelInterfaceV1 = 'oai-responses';
@@ -213,8 +211,6 @@ export const LLMS_ALL_INTERFACES = [
   LLM_IF_HOTFIX_StripImages,  // remove images from input (e.g. o3-mini-2025-01-31)
   LLM_IF_HOTFIX_StripSys0,    // strip system instruction (e.g. Gemini Image Generation 2025-03-13), excludes Sys0ToUsr0
   LLM_IF_HOTFIX_Sys0ToUsr0,   // downgrade system to user messages for this model (e.g. o1-mini-2024-09-12)
-  // old/unused
-  LLM_IF_OAI_Complete,        // UNUSED - older text completion, pre-chats
 ] as const;
 
 // Future changes?
