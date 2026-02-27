@@ -386,9 +386,14 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
       // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
       if (finish_reason) {
-        const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
-        if (tokenStopReason !== null)
-          pt.setTokenStopReason(tokenStopReason);
+        // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
+        if (finish_reason === 'network_error')
+          pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-warn');
+        else {
+          const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+          if (tokenStopReason !== null)
+            pt.setTokenStopReason(tokenStopReason);
+        }
       }
 
       // Note: not needed anymore - Workaround for implementations that don't send the [DONE] event
@@ -522,9 +527,14 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       } // .choices.tool_calls[]
 
       // Token Stop Reason - expected to be set
-      const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
-      if (tokenStopReason !== null)
-        pt.setTokenStopReason(tokenStopReason);
+      // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
+      if (finish_reason === 'network_error')
+        pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-log');
+      else {
+        const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+        if (tokenStopReason !== null)
+          pt.setTokenStopReason(tokenStopReason);
+      }
 
       // [OpenAI, 2025-03-11] message: Annotations[].url_citation
       if (message.annotations !== undefined) {
@@ -631,7 +641,7 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
   }
 
   // Developers: show more finish reasons (not under flag for now, so we can add to the supported set)
-  console.log('AIX: OpenAI-dispatch unexpected finish_reason:', finish_reason);
+  console.warn('AIX: OpenAI-dispatch unexpected finish_reason:', finish_reason);
   return null;
 }
 
