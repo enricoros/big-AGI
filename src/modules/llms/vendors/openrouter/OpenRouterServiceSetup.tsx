@@ -2,13 +2,10 @@ import * as React from 'react';
 
 import { Box, Button, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
-import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
-import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
@@ -16,7 +13,6 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
-import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
@@ -29,7 +25,7 @@ import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor
 export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceHasVisibleLLMs, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorOpenRouter);
 
   // derived state
@@ -57,27 +53,6 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     window.open(oauthUrl, '_self');
     // ...bye / see you soon at the callback location...
   };
-
-  const handleHIdeNonFreeLLMs = () => {
-    const { llms } = llmsStoreState();
-    const { updateLLMs } = llmsStoreActions();
-    const updates = llms
-      .filter(llm => llm.sId === props.serviceId)
-      .map(llm => {
-        const isFree = isLLMChatFree_cached(llm);
-        return { id: llm.id, partial: { userHidden: !isFree } };
-      });
-    updateLLMs(updates);
-  };
-
-  const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
-    const { llms } = llmsStoreState();
-    const { updateLLMs } = llmsStoreActions();
-    const updates = llms
-      .filter(llm => llm.sId === props.serviceId)
-      .map(llm => ({ id: llm.id, partial: { userHidden: !visible } }));
-    updateLLMs(updates);
-  }, [props.serviceId]);
 
   return <>
 
@@ -148,23 +123,6 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced}
-      leftButton={
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          <Button
-            color='neutral' variant='outlined' size='sm'
-            onClick={handleHIdeNonFreeLLMs}
-          >
-            Only Free <PhGift sx={{ ml: 1, color: 'success.softColor' }} />
-          </Button>
-          <Button
-            color='neutral' variant='outlined' size='sm'
-            onClick={() => handleSetVisibilityAll(!serviceHasVisibleLLMs)}
-            endDecorator={serviceHasVisibleLLMs ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
-          >
-            {serviceHasVisibleLLMs ? 'Hide' : 'Show'} All
-          </Button>
-        </Box>
-      }
     />
 
     {isError && <InlineError error={error} />}

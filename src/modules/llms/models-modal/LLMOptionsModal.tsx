@@ -313,7 +313,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
       startButton={
         <Dropdown>
           <TooltipOutlined title='More...' placement='top-start'>
-            <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft' } }}>
+            <MenuButton slots={{ root: IconButton }} /*slotProps={{ root: { variant: 'soft' } }}*/>
               <MoreVertIcon sx={{ fontSize: 'xl' }} />
             </MenuButton>
           </TooltipOutlined>

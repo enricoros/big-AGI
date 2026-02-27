@@ -4,23 +4,15 @@ import { FormControl, Switch, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CodeIcon from '@mui/icons-material/Code';
 import EditNoteIcon from '@mui/icons-material/EditNote';
-import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
-import TitleIcon from '@mui/icons-material/Title';
-
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
-import { Is } from '~/common/util/pwaUtils';
 import { Link } from '~/common/components/Link';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
-
-
-// uncomment for more settings
-export const DEV_MODE_SETTINGS = false;
 
 
 export function UxLabsSettings() {
@@ -30,35 +22,14 @@ export function UxLabsSettings() {
   const {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
     labsCameraDesktop, setLabsCameraDesktop,
-    labsChatBarAlt, setLabsChatBarAlt,
     labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks,
     labsHighPerformance, setLabsHighPerformance,
     labsShowCost, setLabsShowCost,
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
-    labsDevMode, setLabsDevMode,
-    labsDevNoStreaming, setLabsDevNoStreaming,
   } = useUXLabsStore();
 
   return <>
-
-    {/* [DEV MODE] Settings */}
-
-    {(Is.Deployment.Localhost || labsDevMode) && (
-      <FormSwitchControl
-        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Developer Mode</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
-        checked={labsDevMode} onChange={setLabsDevMode}
-      />
-    )}
-
-    {labsDevMode && (
-      <FormSwitchControl
-        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Disable Streaming</>} description={labsDevNoStreaming ? 'Enabled' : 'Disabled'}
-        checked={labsDevNoStreaming} onChange={setLabsDevNoStreaming}
-      />
-    )}
-
-    {/* Non-Graduated Settings */}
 
     <FormSwitchControl
       title={<><CodeIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Enhance Legacy Code</>} description={labsEnhanceCodeBlocks ? 'Auto-Enhance' : 'Disabled'}
@@ -82,11 +53,6 @@ export function UxLabsSettings() {
               endDecorator={labsHighPerformance ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
-
-    {DEV_MODE_SETTINGS && <FormSwitchControl
-      title={<><TitleIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Chat Title</>} description={labsChatBarAlt === 'title' ? 'Show Title' : 'Show Models'}
-      checked={labsChatBarAlt === 'title'} onChange={(on) => setLabsChatBarAlt(on ? 'title' : false)}
-    />}
 
     {!isMobile && <FormSwitchControl
       title={<><ScreenshotMonitorIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} /> Screen Capture</>} description={labsAttachScreenCapture ? 'Enabled' : 'Disabled'}

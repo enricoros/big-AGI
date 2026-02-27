@@ -39,18 +39,23 @@ export const ANTHROPIC_API_PATHS = {
 } as const;
 
 
-const DEFAULT_ANTHROPIC_HEADERS = {
+const ANTHROPIC_HEADERS_VERSION = {
   // Latest version hasn't changed (as of Feb 2025)
   'anthropic-version': '2023-06-01',
 
-  // Enable CORS for browsers - we don't use this on server
-  // 'anthropic-dangerous-direct-browser-access': 'true',
-
-  // Used for instance by Claude Code - shall we set it
+  // Used for instance by Claude Code - shall we set it?
   // 'x-app': 'big-agi',
 } as const;
 
+const ANTHROPIC_HEADERS_CORS = {
+  // CORS header to allow browser access to Anthropic API servers
+  'anthropic-dangerous-direct-browser-access': 'true',
+} as const;
+
 const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
+
+  // See this for a full index:
+  //   https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/beta/beta.ts#L256
 
   // Known SDK beta headers (for reference, not all used):
   //   prompt-caching-2024-07-31        -- GA: no longer needed
@@ -121,15 +126,19 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
     anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
   }
 
-  // [CSF] add CORS-allow header if client-side fetch
-  if (access.clientSideFetch)
-    options = { ...options, clientSideFetch: true };
+  // Beta features
+  const betaFeatures = anthropicBetaFeatures(options);
 
   return {
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      ..._anthropicHeaders(options),
+      // anthropic-version
+      ...ANTHROPIC_HEADERS_VERSION,
+      // [CSF] add CORS-allow header to allow browser access to Anthropic API servers
+      ...(access.clientSideFetch && ANTHROPIC_HEADERS_CORS),
+      // Beta features
+      ...(betaFeatures.length && { 'anthropic-beta': betaFeatures.join(',') }),
       'X-API-Key': anthropicKey,
       ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
     },
@@ -138,9 +147,11 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
 }
 
 
-function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, string> {
-
-  // accumulate the beta features
+/**
+ * Build the list of Anthropic beta feature strings from options.
+ * Used by both the direct Anthropic path (as header) and Bedrock path (as body field).
+ */
+export function anthropicBetaFeatures(options?: AnthropicHeaderOptions): string[] {
   const betaFeatures = [...DEFAULT_ANTHROPIC_BETA_FEATURES];
   if (options?.modelIdForBetaFeatures) {
     // string search (.includes) within the keys, to be more resilient to modelId changes/prefixing
@@ -158,34 +169,28 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   if (options?.vndAnt1MContext)
     betaFeatures.push('context-1m-2025-08-07');
 
+  // Add beta feature for code execution (required for Skills)
+  if (options?.enableCodeExecution || options?.enableSkills)
+    betaFeatures.push('code-execution-2025-08-25');
+
   // Add beta features for Skills API
   if (options?.enableSkills) {
     betaFeatures.push('skills-2025-10-02');
     betaFeatures.push('files-api-2025-04-14'); // For file downloads
   }
 
-  // Add beta feature for code execution (required for Skills)
-  if (options?.enableCodeExecution || options?.enableSkills)
-    betaFeatures.push('code-execution-2025-08-25');
-
-  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
-  if (options?.enableFastMode)
-    betaFeatures.push('fast-mode-2026-02-01');
+  // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
+  if (options?.enableStrictOutputs)
+    betaFeatures.push('structured-outputs-2025-11-13');
 
   // [Anthropic, 2025-11-24] Add beta feature for Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
   // Same beta header covers both features: tool discovery and programmatic calling from code execution
   if (options?.enableToolSearch || options?.enableProgrammaticToolCalling)
     betaFeatures.push('advanced-tool-use-2025-11-20');
 
-  // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
-  if (options?.enableStrictOutputs)
-    betaFeatures.push('structured-outputs-2025-11-13');
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
+  if (options?.enableFastMode)
+    betaFeatures.push('fast-mode-2026-02-01');
 
-  return {
-    ...DEFAULT_ANTHROPIC_HEADERS,
-    // CORS: allow browser access to Anthropic API servers
-    ...(options?.clientSideFetch ? { 'anthropic-dangerous-direct-browser-access': 'true' } : {}),
-    // Beta features
-    ...(betaFeatures.length ? { 'anthropic-beta': betaFeatures.join(',') } : {}),
-  };
+  return betaFeatures;
 }

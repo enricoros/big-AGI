@@ -15,6 +15,10 @@ import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces } from './mod
 import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
+// protocol: Bedrock
+import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLControlPlane, bedrockURLMantle } from './bedrock/bedrock.access';
+import { bedrockModelsToDescriptions, BedrockWire_API_Models_List } from './bedrock/bedrock.models';
+
 // protocol: Gemini
 import { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiAccess } from './gemini/gemini.access';
@@ -35,6 +39,7 @@ import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
+import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
@@ -61,7 +66,7 @@ export type ListModelsDispatch<TWireModels = any> = {
  * Helper to create a dispatch with proper type inference.
  * TypeScript will infer TWireModels from fetchModels return type and enforce it in convertToDescriptions.
  */
-function createDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<T> {
+function createListModelsDispatch<T>(dispatch: ListModelsDispatch<T>): ListModelsDispatch<T> {
   return dispatch;
 }
 
@@ -103,7 +108,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
   switch (dialect) {
 
     case 'anthropic': {
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => {
           const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.models}?limit=1000`, {/* ... no options for list ... */ });
           _wire?.logRequest('GET', url, headers);
@@ -160,8 +165,55 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       });
     }
 
+    case 'bedrock': {
+      return createListModelsDispatch({
+        fetchModels: async () => {
+
+          // construct URLs by region
+          const region = bedrockResolveRegion(access);
+          const fmUrl = bedrockURLControlPlane(region, '/foundation-models?byInferenceType=ON_DEMAND');
+          const ipUrl = bedrockURLControlPlane(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000');
+          const mantleUrl = bedrockURLMantle(region, '/v1/models');
+
+          // sign and fetch all lists in parallel - each fails independently
+          const [fmResult, ipResult, mantleIdsResult] = await Promise.allSettled([
+            // Foundation Models
+            bedrockAccessAsync(access, 'GET', fmUrl, undefined)
+              .then(fmAccess => fetchJsonOrTRPCThrow({ ...fmAccess, signal, name: 'Bedrock/FM' })),
+            // Inference Profiles
+            bedrockAccessAsync(access, 'GET', ipUrl, undefined)
+              .then(ipAccess => fetchJsonOrTRPCThrow({ ...ipAccess, signal, name: 'Bedrock/IP' })),
+            // Mantle Models
+            bedrockAccessAsync(access, 'GET', mantleUrl, undefined)
+              .then(mantleAccess => fetchJsonOrTRPCThrow({ ...mantleAccess, signal, name: 'Bedrock/Mantle' })),
+          ]);
+
+          // if both FM and IP failed, throw the first error so the user sees it
+          if (fmResult.status === 'rejected' && ipResult.status === 'rejected')
+            throw fmResult.reason;
+
+          // degrade gracefully if any failed
+          const fmResponse = fmResult.status === 'fulfilled' ? fmResult.value : { modelSummaries: [] };
+          const ipResponse = ipResult.status === 'fulfilled' ? ipResult.value : { inferenceProfileSummaries: [] };
+          const mantleResponse = mantleIdsResult.status === 'fulfilled' ? mantleIdsResult.value : { data: [] };
+
+          _wire?.logResponse(fmResponse);
+          _wire?.logResponse(ipResponse);
+          _wire?.logResponse(mantleResponse);
+
+          return {
+            foundationModels: BedrockWire_API_Models_List.FoundationModelsResponse_schema.parse(fmResponse),
+            inferenceProfiles: BedrockWire_API_Models_List.InferenceProfilesResponse_schema.parse(ipResponse),
+            mantleModelIds: BedrockWire_API_Models_List.MantleModelsResponse_schema.parse(mantleResponse),
+          };
+        },
+        convertToDescriptions: ({ foundationModels, inferenceProfiles, mantleModelIds }) =>
+          bedrockModelsToDescriptions(foundationModels, inferenceProfiles, mantleModelIds),
+      });
+    }
+
     case 'gemini': {
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => {
           const { headers, url } = geminiAccess(access, null, GeminiWire_API_Models_List.getPath, false);
           _wire?.logRequest('GET', url, headers);
@@ -193,7 +245,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     }
 
     case 'ollama': {
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => {
           const { headers, url } = ollamaAccess(access, '/api/tags');
           _wire?.logRequest('GET', url, headers);
@@ -281,21 +333,21 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
     case 'perplexity':
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/getting-started/pricing#sonar-models-chat-completions)
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => null,
         convertToDescriptions: () => perplexityHardcodedModelDescriptions().reduce(perplexityInjectVariants, []),
       });
 
     case 'xai':
       // [xAI]: custom models listing
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => xaiFetchModelDescriptions(access),
         convertToDescriptions: models => models.sort(xaiModelSort),
       });
 
     case 'lmstudio':
       // [LM Studio]: custom models listing with native API
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async () => lmStudioFetchModels(access),
         convertToDescriptions: (response) => lmStudioModelsToModelDescriptions(response.models),
       });
@@ -303,7 +355,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'zai':
       // [Z.ai]: curated models as primary source; list API is unreliable/abandoned.
       // Optimistically try the API for 0-day model discovery, but never fail on it.
-      return createDispatch({
+      return createListModelsDispatch({
         fetchModels: async (): Promise<string[]> => {
           try {
             const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
@@ -335,7 +387,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'openpipe':
     case 'openrouter':
     case 'togetherai':
-      return createDispatch({
+      return createListModelsDispatch({
 
         // [OpenAI-compatible dialects]: openAI-style fetch models list
         fetchModels: async () => {
@@ -430,6 +482,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [Novita] special case for model enumeration
               if (novitaHeuristic(oaiHost))
                 return novitaModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [LLM API] OpenAI-compatible gateway with rich model metadata
+              if (llmapiHeuristic(oaiHost))
+                return llmapiModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [FastChat] make the best of the little info
               if (fastAPIHeuristic(maybeModels))

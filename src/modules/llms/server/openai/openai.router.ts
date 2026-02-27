@@ -296,7 +296,14 @@ export const llmOpenAIRouter = createTRPCRouter({
     .input(listModelsInputSchema)
     .query(async ({ input: { access } }) => {
       const wireLocalAIModelsAvailable = await openaiGETOrThrow(access, '/models/available');
-      return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable).filter(model => !!model.name);
+      try {
+        return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable).filter(model => !!model.name);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: 'UNPROCESSABLE_CONTENT',
+          message: `[LocalAI gallery issue]: The gallery response format is not compatible. ${error?.message || 'Schema validation failed.'}`,
+        });
+      }
     }),
 
   /* [LocalAI] Download a model from a Model Gallery */

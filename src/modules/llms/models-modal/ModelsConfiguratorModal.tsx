@@ -3,19 +3,26 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Checkbox, CircularProgress, Divider, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import RestoreIcon from '@mui/icons-material/Restore';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import { CloseablePopup, joyKeepPopup } from '~/common/components/CloseablePopup';
+
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { PhGift } from '~/common/components/icons/phosphor/PhGift';
+import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
+import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { optimaActions } from '~/common/layout/optima/useOptima';
-import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
+import { useAllServicesDCStatus } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
+import { useHasFreeLLMs, useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -52,16 +59,26 @@ export function ModelsConfiguratorModal(props: {
   const [unsavedWizardProviders, setUnsavedWizardProviders] = React.useState<Set<string>>(new Set());
   const showAllServices = false;
 
+  // state - menus
+  const [mainMenuOpen, setMainMenuOpen] = React.useState(false);
+  const [dcMenuAnchor, setDcMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [visMenuAnchor, setVisMenuAnchor] = React.useState<HTMLElement | null>(null);
+
   // external state
   const isMobile = useIsMobile();
   const hasLLMs = useHasLLMs();
   const { showPromisedOverlay } = useOverlayComponents();
-  const [showModelsHidden, setShowModelsHidden] = useUIPreferencesStore(useShallow((state) => [state.showModelsHidden, state.setShowModelsHidden]));
-  const [modelsStarredOnTop, setModelsStarredOnTop] = useUIPreferencesStore(useShallow((state) => [state.modelsStarredOnTop, state.setModelsStarredOnTop]));
+  const { showModelsHidden, setShowModelsHidden, starredOnTop, setStarredOnTop } = useUIPreferencesStore(useShallow(state => ({
+    showModelsHidden: state.showModelsHidden,
+    setShowModelsHidden: state.setShowModelsHidden,
+    starredOnTop: state.modelsStarredOnTop,
+    setStarredOnTop: state.setModelsStarredOnTop,
+  })));
+  const { dcStatus, dcHasEligible, dcAllEnabled, dcNoneEnabled, handleEnableAllDC, handleDisableAllDC } = useAllServicesDCStatus(modelsServices);
 
 
   // active service with fallback to the last added service
-  const activeServiceId = confServiceId
+  const activeServiceId: string | null = confServiceId
     ?? modelsServices[modelsServices.length - 1]?.id
     ?? null;
 
@@ -71,6 +88,7 @@ export function ModelsConfiguratorModal(props: {
   const hasAnyServices = !!modelsServices.length;
   const isTabWizard = tab === 'wizard';
   const isTabSetup = tab === 'setup';
+  const activeHasFreeLLMs = useHasFreeLLMs(activeServiceId);
   // const isTabDefaults = tab === 'defaults';
 
 
@@ -110,6 +128,17 @@ export function ModelsConfiguratorModal(props: {
 
   // Menu handlers
 
+  const handleMainMenuOpenChange = React.useCallback((_event: React.SyntheticEvent | null, newOpen: boolean) => {
+    // submenu is open, stay open
+    if (!newOpen && (dcMenuAnchor || visMenuAnchor)) return;
+    setMainMenuOpen(newOpen);
+    // close submenus when main closes
+    if (!newOpen) {
+      setDcMenuAnchor(null);
+      setVisMenuAnchor(null);
+    }
+  }, [dcMenuAnchor, visMenuAnchor]);
+
   const { isFetching: isRefreshing, refetch: handleRefreshModels } = useLlmUpdateModels(false, activeService ?? null);
 
   const handleResetAllParameters = React.useCallback(() => {
@@ -138,6 +167,20 @@ export function ModelsConfiguratorModal(props: {
 
   const handleShowAllModels = React.useCallback(() => {
     llmsStoreActions().setServiceModelsHidden(activeServiceId, false);
+  }, [activeServiceId]);
+
+  const handleShowOnlyFree = React.useCallback(() => {
+    const updates = llmsStoreState().llms
+      .filter(llm => llm.sId === activeServiceId)
+      .map(llm => ({ id: llm.id, partial: { userHidden: !isLLMChatFree_cached(llm) } }));
+    llmsStoreActions().updateLLMs(updates);
+  }, [activeServiceId]);
+
+  const handleShowOnlyPaid = React.useCallback(() => {
+    const updates = llmsStoreState().llms
+      .filter(llm => llm.sId === activeServiceId)
+      .map(llm => ({ id: llm.id, partial: { userHidden: isLLMChatFree_cached(llm) } }));
+    llmsStoreActions().updateLLMs(updates);
   }, [activeServiceId]);
 
   const handleRemoveClones = React.useCallback(() => {
@@ -177,7 +220,8 @@ export function ModelsConfiguratorModal(props: {
   // start button
   const startButton = React.useMemo(() => {
     if (isTabWizard)
-      return <Button variant='outlined' color='neutral' onClick={handleShowAdvanced} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'More Services' : 'More Services'}</Button>;
+      return undefined;
+
     // return <Badge size='sm' badgeContent='14 Services' color='neutral' variant='outlined'><Button variant='outlined' color='neutral' onClick={handleShowAdvanced}>{isMobile ? 'Advanced' : 'Switch to Advanced'}</Button></Badge>;
     if (!hasAnyServices)
       return <Button variant='outlined' color='neutral' onClick={handleShowWizard} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'Quick Setup' : 'Quick Setup'}</Button>;
@@ -185,81 +229,113 @@ export function ModelsConfiguratorModal(props: {
     // Service-level 3-dots menu when we have LLMs
     if (isTabSetup && hasLLMs)
       return (
-        <Dropdown>
-          <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', sx: { backgroundColor: 'background.surface' } } }}>
-            <MoreVertIcon sx={{ fontSize: 'xl' }} />
-          </MenuButton>
-          <Menu placement='bottom-start' disablePortal sx={{ minWidth: 240 }}>
+        <Box sx={{ flex: 1, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
+          <Dropdown open={mainMenuOpen} onOpenChange={handleMainMenuOpenChange}>
+            <MenuButton slots={{ root: IconButton }} /* slotProps={{ root: { variant: 'plain' } }} */>
+              <MoreVertIcon sx={{ fontSize: 'xl' }} />
+            </MenuButton>
+            <Menu placement='bottom-start' disablePortal sx={{ minWidth: 280 }}>
 
-            {/* Service Name Header */}
-            {/*<ListItem sx={{ '--ListItem-minHeight': '2.5rem' }}>*/}
-            {/*  <ListItemDecorator><LLMVendorIconSprite vendorId={activeService?.vId} /></ListItemDecorator>*/}
-            {/*  <div>{activeService?.label ?? ''}</div>*/}
-            {/*</ListItem>*/}
-            {/*<ListDivider sx={{ mt: 0 }} />*/}
+              {/*{dcHasEligible && <Typography level='body-sm' textAlign='center' my={1}>All services</Typography>}*/}
+              {dcHasEligible && (
+                <MenuItem onClick={joyKeepPopup((event) => setDcMenuAnchor(dcMenuAnchor ? null : event.currentTarget))}>
+                  <ListItemDecorator />
+                  {/*<ListItemDecorator><ArrowForwardRoundedIcon /></ListItemDecorator>*/}
+                  All Services
+                  {/*<Box sx={{ color: 'text.tertiary' }}>({modelsServices.length})</Box>*/}
+                  <KeyboardArrowRightIcon sx={{ ml: 'auto' }} />
+                </MenuItem>
+              )}
 
-            {/* Refresh Models */}
-            <MenuItem disabled={isRefreshing} onClick={handleRefreshModels}>
-              <ListItemDecorator>
-                {isRefreshing ? <CircularProgress size='sm' /> : <RefreshIcon />}
-              </ListItemDecorator>
-              {isRefreshing ? 'Refreshing...' : 'Refresh Models'}
+              {/* X Models */}
+              <ListDivider />
+              {/*<Typography level='body-sm' textAlign='center' my={2}>{activeService?.label ?? 'Service'} models</Typography>*/}
+
+              {/* Refresh Models */}
+              <MenuItem disabled={isRefreshing} onClick={handleRefreshModels}>
+                <ListItemDecorator>
+                  {isRefreshing ? <CircularProgress size='sm' /> : <RefreshIcon />}
+                </ListItemDecorator>
+                {isRefreshing ? 'Refreshing...' : <>Update {activeService?.label ?? ''} Models</>}
+              </MenuItem>
+
+              {/* Reset All Parameters */}
+              <MenuItem onClick={handleResetAllParameters}>
+                <ListItemDecorator><RestoreIcon /></ListItemDecorator>
+                Remove Customizations
+              </MenuItem>
+
+              {/* Remove Cloned Models */}
+              <MenuItem onClick={handleRemoveClones}>
+                <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+                Remove Duplicated Models
+              </MenuItem>
+
+              <MenuItem onClick={joyKeepPopup((event: any) => setVisMenuAnchor(visMenuAnchor ? null : event.currentTarget))}>
+                <ListItemDecorator />
+                Visibility
+                <KeyboardArrowRightIcon sx={{ ml: 'auto' }} />
+              </MenuItem>
+
+              <ListDivider />
+
+              {/* View toggles */}
+              <MenuItem onClick={joyKeepPopup(() => setShowModelsHidden(!showModelsHidden))}>
+                <ListItemDecorator><Checkbox color='neutral' checked={showModelsHidden} /></ListItemDecorator>
+                View Hidden Models
+              </MenuItem>
+              <MenuItem onClick={joyKeepPopup(() => setStarredOnTop(!starredOnTop))}>
+                <ListItemDecorator><Checkbox color='neutral' checked={starredOnTop} /></ListItemDecorator>
+                View Starred on Top
+              </MenuItem>
+
+            </Menu>
+          </Dropdown>
+
+          {/* DC submenu */}
+          {!!dcMenuAnchor && <CloseablePopup menu anchorEl={dcMenuAnchor} onClose={() => setDcMenuAnchor(null)} placement='right-start' zIndex={themeZIndexOverMobileDrawer} minWidth={220}>
+            <ListDivider>Direct Connection {dcStatus.enabled}/{dcStatus.eligible}</ListDivider>
+            <MenuItem disabled={dcAllEnabled} onClick={handleEnableAllDC}>
+              {/*<ListItemDecorator><VisibilityIcon /></ListItemDecorator>*/}
+              Enable for all
             </MenuItem>
-
-            {/* Reset All Parameters */}
-            <MenuItem disabled={false /* */} onClick={handleResetAllParameters}>
-              <ListItemDecorator><RestoreIcon /></ListItemDecorator>
-              Reset Customizations
+            <MenuItem disabled={dcNoneEnabled} onClick={handleDisableAllDC}>
+              {/*<ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>*/}
+              Disable for all
             </MenuItem>
+          </CloseablePopup>}
 
-            {/* Remove Cloned Models */}
-            <MenuItem disabled={false /* unnecessary: !hasClones */} onClick={handleRemoveClones}>
-              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-              Remove Duplicate Models
-            </MenuItem>
-
-            <ListDivider />
-
-            {/* Visibility actions */}
+          {/* Visibility submenu */}
+          {!!visMenuAnchor && <CloseablePopup menu anchorEl={visMenuAnchor} onClose={() => setVisMenuAnchor(null)} placement='right-start' zIndex={themeZIndexOverMobileDrawer}>
             <MenuItem onClick={handleShowAllModels}>
               <ListItemDecorator><VisibilityIcon /></ListItemDecorator>
-              Show All Models
+              Show All
             </MenuItem>
             <MenuItem onClick={handleHideAllModels}>
               <ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>
-              Hide All Models
+              Hide All
             </MenuItem>
+            {activeHasFreeLLMs && <ListDivider />}
+            {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyFree}>
+              <ListItemDecorator><PhGift /></ListItemDecorator>
+              Only Free
+            </MenuItem>}
+            {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyPaid}>
+              <ListItemDecorator />
+              Only Paid
+            </MenuItem>}
+            <ListDivider />
             <MenuItem onClick={handleResetVisibility}>
               <ListItemDecorator><RestoreIcon /></ListItemDecorator>
-              Reset Visibility
+              Reset Default Visibility
             </MenuItem>
+          </CloseablePopup>}
 
-            <ListDivider />
-
-            {/* View toggles */}
-            <MenuItem onClick={() => setShowModelsHidden(!showModelsHidden)}>
-              <ListItemDecorator><Checkbox color='neutral' checked={showModelsHidden} /></ListItemDecorator>
-              Show Hidden Models
-            </MenuItem>
-            {/*<MenuItem onClick={() => setModelsStarredOnTop(!modelsStarredOnTop)}>*/}
-            {/*  <ListItemDecorator><Checkbox color='neutral' checked={modelsStarredOnTop} /></ListItemDecorator>*/}
-            {/*  Starred on Top*/}
-            {/*</MenuItem>*/}
-
-            {/*<ListDivider />*/}
-
-            {/* Delete Service */}
-            {/*<MenuItem color='danger' disabled={!activeServiceId} onClick={(event) => handleDeleteService(activeServiceId, event.shiftKey)}>*/}
-            {/*  <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>*/}
-            {/*  Delete Service*/}
-            {/*</MenuItem>*/}
-
-          </Menu>
-        </Dropdown>
+        </Box>
       );
 
     return undefined;
-  }, [handleHideAllModels, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAdvanced, handleShowAllModels, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, setShowModelsHidden, showModelsHidden]);
+  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcMenuAnchor, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsHidden, setStarredOnTop, showModelsHidden, starredOnTop, visMenuAnchor]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
@@ -274,7 +350,10 @@ export function ModelsConfiguratorModal(props: {
 
     return (
       <Box sx={{ display: 'flex', width: '100%', gap: 1, justifyContent: 'space-between', alignItems: 'center' }}>
-        {startButton}
+        {/* more services */}
+        <Button variant='outlined' color='neutral' onClick={handleShowAdvanced} sx={{ backgroundColor: 'background.popup' }}>
+          {isMobile ? 'More Services' : 'More Services'}
+        </Button>
 
         {/* unsaved warning */}
         {hasUnsavedChanges && (
@@ -295,7 +374,7 @@ export function ModelsConfiguratorModal(props: {
         </Button>
       </Box>
     );
-  }, [hasLLMs, unsavedWizardProviders, isMobile, isTabWizard, startButton]);
+  }, [hasLLMs, unsavedWizardProviders, isMobile, isTabWizard, handleShowAdvanced]);
 
 
   // Explainer section
@@ -307,7 +386,7 @@ export function ModelsConfiguratorModal(props: {
     setShowExplainer(true);
   }, []);
 
-  const handleDismissExplainer = React.useCallback((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
+  const handleDismissExplainer = React.useCallback((_event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
     // hide for both the 'x' button and close
     setShowExplainer(false);
 
@@ -392,7 +471,7 @@ export function ModelsConfiguratorModal(props: {
         </AppBreadcrumbs>
       )}
       open onClose={optimaActions().closeModels}
-      darkBottomClose={!isTabWizard}
+      // darkBottomClose={!isTabWizard}
       hideBottomClose={isTabWizard}
       startButton={isTabWizard ? wizardButtons : startButton}
       closeText={isTabWizard ? 'Done' : undefined}
@@ -402,7 +481,6 @@ export function ModelsConfiguratorModal(props: {
       fullscreen={isMobile ? 'button' : undefined} // NOTE: was disabled because on mobile there's one screen with a stretch issue - but can't reproduce
     >
 
-      {isTabWizard && <Divider />}
       {isTabWizard && (
         <ModelsWizard
           isMobile={isMobile}
@@ -424,7 +502,6 @@ export function ModelsConfiguratorModal(props: {
         </Box>
       )}
 
-      {isTabSetup && hasLLMs && <Divider />}
       {isTabSetup && hasLLMs && (
         <ModelsList
           filterServiceId={showAllServices ? null : activeServiceId}
@@ -432,25 +509,34 @@ export function ModelsConfiguratorModal(props: {
           onOpenLLMOptions={optimaActions().openModelOptions}
           sx={{
             // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
-            minHeight: '8rem',
+            minHeight: '10rem',
             overflowY: 'auto',
 
-            // style (list variant=outlined)
-            '--ListItem-paddingY': '0rem',
-            '--ListItem-paddingRight': '0.5rem', // instead of 0.75
+            // bottom border
+            borderTop: '1px solid',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+
+            // style: edge-to-edge band (negative margin pattern, like ModelsWizard)
+            // '--ListItem-paddingY': '0rem', // items are smaller
             backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
-            borderRadius: 'md',
+            // borderRadius: 'md',
+            // boxShadow: 'inset 0px 2px 2px -2px rgba(0, 0, 0, 0.2)',
+
+            // absorb the card pad
+            mx: 'calc(-1 * var(--Card-padding, 1rem))',
+            // py: 1,
+            '--ListItem-paddingLeft': '1.25rem',
+            '--ListItem-paddingRight': '1rem',
 
             // [mobile] a bit less padding
-            '@media (max-width: 900px)': {
-              '--ListItem-paddingLeft': '0.5rem',
-              '--ListItem-paddingRight': '0.25rem',
-            },
+            // '@media (max-width: 900px)': {
+            //   '--ListItem-paddingLeft': '0.5rem',
+            //   '--ListItem-paddingRight': '0.25rem',
+            // },
           }}
         />
       )}
-
-      <Divider sx={{ visibility: 'hidden', height: 0 }} />
 
     </GoodModal>
   );

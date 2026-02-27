@@ -356,6 +356,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
                 // OpenAI sends PCM16 audio data that needs to be converted to WAV
                 const a = openaiConvertPCM16ToWAV(acc.data);
                 pt.appendAudioInline(a.mimeType, a.base64Data, acc.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
+                // Audio models don't send finish_reason; treat successful audio completion as 'ok'
+                pt.setTokenStopReason('ok');
               } catch (error) {
                 console.warn('[OpenAI] Failed to process streaming audio:', error);
                 pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');

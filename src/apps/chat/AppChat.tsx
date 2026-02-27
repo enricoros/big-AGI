@@ -4,8 +4,6 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, useTheme } from '@mui/joy';
 
-import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
-
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
@@ -40,8 +38,6 @@ import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
-import { useUXLabsStore } from '~/common/stores/store-ux-labs';
-
 import { ChatPane } from './components/layout-pane/ChatPane';
 import { ChatBarBeam } from './components/layout-bar/ChatBarBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
@@ -150,8 +146,6 @@ export function AppChat() {
   const isZenMode = useUIComplexityIsMinimal();
 
   const intent = useRouterQuery<Partial<AppChatIntent>>();
-
-  const showAltTitleBar = useUXLabsStore(state => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
 
   const { domainModelId: chatLLMId } = useModelDomain('primaryChat');
   const chatLLM = useLLM(chatLLMId) ?? null;
@@ -463,7 +457,7 @@ export function AppChat() {
 
   // Pluggable Optima components
 
-  const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
+  const barAltTitle = null;
 
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
       ? <ChatBarBeam conversationTitle={focusedChatTitle ?? 'No Chat'} beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />

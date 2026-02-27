@@ -10,6 +10,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { AixDebuggerFrame } from './AixDebuggerFrame';
+import { DebugAdvancedOptions } from './DebugAdvancedOptions';
 import { DebugPayloadOverride } from './DebugPayloadOverride';
 import { aixClientDebuggerActions, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
@@ -103,10 +104,12 @@ export function AixDebuggerDialog(props: {
   const isMobile = useIsMobile();
   const hasInspector = useUIPreferencesStore(state => state.aixInspector);
   const hasInjectorJson = useAixClientDebuggerStore(state => !!state.requestBodyOverrideJson);
+  const hasAdvancedActive = useAixClientDebuggerStore(state => state.aixNoStreaming);
   const { frames, activeFrameId, maxFrames } = useDebouncedAixDebuggerStore();
 
   // local state
   const [showInjector, setShowInjector] = React.useState(hasInjectorJson);
+  const [showAdvanced, setShowAdvanced] = React.useState(hasAdvancedActive);
 
   // derived state
   const activeFrame = frames.find(f => f.id === activeFrameId) ?? null;
@@ -134,6 +137,10 @@ export function AixDebuggerDialog(props: {
     // }
   }, []);
 
+  const handleToggleAdvanced = React.useCallback(() => {
+    setShowAdvanced(on => !on);
+  }, []);
+
 
   return (
     <GoodModal
@@ -156,18 +163,28 @@ export function AixDebuggerDialog(props: {
         </Box>
       }
       startButton={
-        <Button
-          disabled={!hasInspector}
-          variant={showInjector ? 'solid' : willInjectJson ? 'soft' : 'plain'}
-          color={willInjectJson ? 'warning' : 'neutral'}
-          size='sm'
-          onClick={handleToggleInjector}
-          startDecorator={<KeyboardDoubleArrowDownIcon sx={{ transition: 'transform 0.2s', transform: showInjector ? 'rotate(0deg)' : 'rotate(180deg)' }} />}
-          endDecorator={!hasInjectorJson ? null : <Chip size='sm' color='warning' variant={showInjector ? 'soft' : 'solid'}>Active</Chip>}
-          // sx={{ gap: 1 }}
-        >
-          {isMobile ? 'Inject' : 'AI Injector'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            size='sm'
+            color={willInjectJson ? 'warning' : 'neutral'}
+            variant={showInjector ? 'solid' : willInjectJson ? 'soft' : 'plain'}
+            disabled={!hasInspector}
+            onClick={handleToggleInjector}
+            startDecorator={<KeyboardDoubleArrowDownIcon sx={{ transition: 'transform 0.2s', transform: showInjector ? 'rotate(0deg)' : 'rotate(180deg)' }} />}
+            endDecorator={!hasInjectorJson ? null : <Chip size='sm' color='warning' variant={showInjector ? 'soft' : 'solid'}>Active</Chip>}
+          >
+            {isMobile ? 'Inject' : 'AI Injector'}
+          </Button>
+          <Button
+            size='sm'
+            color={hasAdvancedActive ? 'warning' : 'neutral'}
+            variant={showAdvanced ? 'solid' : hasAdvancedActive ? 'soft' : 'plain'}
+            onClick={handleToggleAdvanced}
+            startDecorator={<KeyboardDoubleArrowDownIcon sx={{ transition: 'transform 0.2s', transform: showAdvanced ? 'rotate(0deg)' : 'rotate(180deg)' }} />}
+          >
+            {isMobile ? 'Adv' : 'Advanced'}
+          </Button>
+        </Box>
       }
       sx={{ maxWidth: undefined }}
     >
@@ -268,6 +285,9 @@ export function AixDebuggerDialog(props: {
 
       {/* Debug Payload Override */}
       {showInjector && <DebugPayloadOverride />}
+
+      {/* Advanced Options */}
+      {showAdvanced && <DebugAdvancedOptions />}
 
     </GoodModal>
   );

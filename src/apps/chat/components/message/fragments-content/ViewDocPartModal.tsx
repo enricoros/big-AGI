@@ -23,9 +23,19 @@ const propGridSx: SxProps = {
   alignItems: 'center',
   columnGap: 2,
   rowGap: 1,
+  // labels
   '& > :nth-of-type(odd)': {
     color: 'text.secondary',
     fontSize: 'xs',
+  },
+  // values
+  '& > :nth-of-type(even)': {
+    // fontWeight: 'bold',
+    color: 'text.primary',
+    // agi-ellipsize
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
 };
 

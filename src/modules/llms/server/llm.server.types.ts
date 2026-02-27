@@ -88,6 +88,8 @@ const ModelParameterSpec_schema = z.object({
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',
     'llmVndAntWebSearch',
+    // Bedrock
+    'llmVndBedrockAPI',
     // Gemini
     'llmVndGeminiAspectRatio',
     'llmVndGeminiCodeExecution',

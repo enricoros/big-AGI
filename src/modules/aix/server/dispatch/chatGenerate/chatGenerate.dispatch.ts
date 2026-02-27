@@ -1,5 +1,6 @@
-import { ANTHROPIC_API_PATHS, anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
+import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures, AnthropicHeaderOptions } from '~/modules/llms/server/anthropic/anthropic.access';
 import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
+import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
@@ -9,6 +10,7 @@ import type { AixDemuxers } from '../stream.demuxers';
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
 import { aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
+import { aixToBedrockConverse } from './adapters/bedrock.converse';
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
@@ -16,6 +18,7 @@ import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
+import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
@@ -25,6 +28,7 @@ import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from '
 
 export type ChatGenerateDispatch = {
   request: ChatGenerateDispatchRequest;
+  bodyTransform?: AixDemuxers.StreamBodyTransform;
   demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
 };
@@ -45,7 +49,7 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
 /**
  * Specializes to the correct vendor a request for chat generation
  */
-export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): ChatGenerateDispatch {
+export async function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, enableResumability: boolean): Promise<ChatGenerateDispatch> {
 
   const { dialect } = access;
   switch (dialect) {
@@ -59,17 +63,9 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ),
       ) ?? false;
 
-      const anthropicRequest = anthropicAccess(access, ANTHROPIC_API_PATHS.messages, {
-        modelIdForBetaFeatures: model.id,
-        vndAntWebFetch: model.vndAntWebFetch === 'auto',
-        vndAnt1MContext: model.vndAnt1MContext === true,
-        enableSkills: !!model.vndAntSkills,
-        enableFastMode: model.vndAntInfSpeed === 'fast',
-        enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
-        enableToolSearch: !!model.vndAntToolSearch,
-        enableProgrammaticToolCalling: usesProgrammaticToolCalling,
-        // enableCodeExecution: ...
-      });
+      const anthropicRequest = anthropicAccess(access, ANTHROPIC_API_PATHS.messages,
+        _anthropicBetaOptionsFromModel(model, usesProgrammaticToolCalling),
+      );
 
       // Build the request body from model + chat parameters
       const anthropicBody = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
@@ -87,6 +83,76 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
+    }
+
+    case 'bedrock': {
+      switch (model.vndBedrockAPI) {
+
+        // [Bedrock Converse] Bedrock-native API, preferred for Amazon models and useful in others too
+        case 'converse': {
+          const converseUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, 'converse', streaming);
+          const converseBody = aixToBedrockConverse(model, chatGenerate);
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', converseUrl, converseBody),
+              method: 'POST' as const,
+              body: converseBody,
+            },
+            bodyTransform: streaming ? 'aws-eventstream-binary' : null,
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createBedrockConverseStreamParser() : createBedrockConverseParserNS(),
+          };
+        }
+
+        // [Bedrock Invoke] Anthropic-native InvokeModel API
+        case 'invoke-anthropic':
+          const invokeUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, 'invoke', streaming);
+
+          // body
+          const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
+          delete bedrockAnthropicBody.model; // model in path
+          delete bedrockAnthropicBody.stream; // streaming behavior in path
+          // headers['anthropic-version'] -> body
+          bedrockAnthropicBody.anthropic_version = 'bedrock-2023-05-31';
+          // headers['anthropic-beta'] -> body
+          bedrockAnthropicBody.anthropic_beta = anthropicBetaFeatures(
+            _anthropicBetaOptionsFromModel(model /* note that .id won't match, and it's okay, we don't need per model customizations */, false /* hardcoded */),
+          );
+          if (!bedrockAnthropicBody.anthropic_beta?.length)
+            delete bedrockAnthropicBody.anthropic_beta;
+
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', invokeUrl, bedrockAnthropicBody),
+              method: 'POST',
+              body: bedrockAnthropicBody,
+            },
+            bodyTransform: streaming ? 'aws-eventstream-binary' : null,
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+          };
+
+        // [Bedrock Mantle] OpenAI Chat Completions-compatible API for non-Anthropic models
+        case 'mantle':
+          const mantleUrl = bedrockURLMantle(bedrockResolveRegion(access), '/v1/chat/completions');
+          const mantleBody = aixToOpenAIChatCompletions('openai', model, chatGenerate, streaming);
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', mantleUrl, mantleBody),
+              method: 'POST',
+              body: mantleBody,
+            },
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
+          };
+
+        default:
+          const _exhaustiveCheck: never = model.vndBedrockAPI;
+        // fallthrough, then throw
+        case undefined:
+          break;
+      }
+      throw new Error(`Unsupported '${model.vndBedrockAPI}' API.`);
     }
 
     case 'gemini':
@@ -191,12 +257,27 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
   }
 }
 
+/** Used by both Anthropic direct and Bedrock dispatch paths. */
+function _anthropicBetaOptionsFromModel(model: AixAPI_Model, usesProgrammaticToolCalling: boolean): AnthropicHeaderOptions {
+  return {
+    modelIdForBetaFeatures: model.id,
+    vndAntWebFetch: model.vndAntWebFetch === 'auto',
+    vndAnt1MContext: model.vndAnt1MContext === true,
+    enableSkills: !!model.vndAntSkills,
+    enableFastMode: model.vndAntInfSpeed === 'fast',
+    enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations, // [Anthropic, 2025-11-13] for both JSON output and grammar-constrained tool invocations inputs
+    enableToolSearch: !!model.vndAntToolSearch,
+    enableProgrammaticToolCalling: usesProgrammaticToolCalling,
+    // enableCodeExecution: ...
+  };
+}
+
 
 /**
  * Specializes to the correct vendor a request for resuming chat generation (OpenAI Responses API only).
  * Constructs a GET request to retrieve and stream a response by its ID.
  */
-export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHandle: AixAPI_ResumeHandle, streaming: boolean): ChatGenerateDispatch {
+export async function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHandle: AixAPI_ResumeHandle, streaming: boolean): Promise<ChatGenerateDispatch> {
 
   const { dialect } = access;
   switch (dialect) {
@@ -223,6 +304,7 @@ export function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHa
     // fallthrough
     case 'alibaba':
     case 'anthropic':
+    case 'bedrock':
     case 'deepseek':
     case 'gemini':
     case 'groq':

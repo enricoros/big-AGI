@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { Box, Button, Chip, Textarea, Typography } from '@mui/joy';
-import DataObjectIcon from '@mui/icons-material/DataObject';
 
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -60,7 +59,7 @@ export function DebugPayloadOverride() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {isActive && <Chip size='sm' color='warning' variant='solid'>Active</Chip>}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }} color={error ? 'danger.softColor' : hasLocalChanges ? 'primary.plainColor' : undefined} fontSize='sm' fontWeight='md' lineHeight='sm'>
-          <DataObjectIcon sx={{ fontSize: 'md' }} />
+          {/*<DataObjectIcon sx={{ fontSize: 'md' }} />*/}
           {error || (hasLocalChanges ? 'WARNING: Unsaved changes' : 'JSON request injection')}
         </Box>
       </Box>
@@ -68,7 +67,7 @@ export function DebugPayloadOverride() {
       <Box sx={{ display: 'flex', gap: 1 }}>
 
         <Textarea
-          placeholder='{"experimental_field": "value"}'
+          placeholder='{"field": "value"}'
           value={localJson}
           onChange={(e) => setLocalJson(e.target.value)}
           error={!!error}

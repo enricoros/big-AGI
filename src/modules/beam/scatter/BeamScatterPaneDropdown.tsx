@@ -7,7 +7,7 @@ import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRena
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
-import { DEV_MODE_SETTINGS } from '../../../apps/settings-modal/UxLabsSettings';
+
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 
@@ -172,7 +172,7 @@ export function BeamScatterDropdown(props: {
           Response Numbers
         </MenuItem>
 
-        <ListItem onClick={DEV_MODE_SETTINGS ? () => handleClearLastConfig() : undefined}>
+        <ListItem>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
 

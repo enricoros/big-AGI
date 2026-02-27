@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { Is } from '~/common/util/pwaUtils';
 
 
 // UX Labs Experiments
@@ -16,9 +15,6 @@ interface UXLabsStore {
 
   labsCameraDesktop: boolean;
   setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
-
-  labsChatBarAlt: false | 'title',
-  setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => void;
 
   labsEnhanceCodeBlocks: boolean;
   setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => void;
@@ -38,14 +34,6 @@ interface UXLabsStore {
   labsShowShortcutBar: boolean;
   setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => void;
 
-  // [DEV MODE] only shown on localhost
-
-  labsDevMode: boolean;
-  setLabsDevMode: (labsDevMode: boolean) => void;
-
-  labsDevNoStreaming: boolean;
-  setLabsDevNoStreaming: (labsDevNoStreaming: boolean) => void;
-
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -57,9 +45,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsCameraDesktop: false,
       setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
-
-      labsChatBarAlt: false,
-      setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => set({ labsChatBarAlt }),
 
       labsEnhanceCodeBlocks: true,
       setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => set({ labsEnhanceCodeBlocks }),
@@ -78,14 +63,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsShowShortcutBar: true,
       setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => set({ labsShowShortcutBar }),
-
-      // [DEV MODE] - maybe move them from here
-
-      labsDevMode: false,
-      setLabsDevMode: (labsDevMode: boolean) => set({ labsDevMode }),
-
-      labsDevNoStreaming: false,
-      setLabsDevNoStreaming: (labsDevNoStreaming: boolean) => set({ labsDevNoStreaming }),
 
     }),
     {
@@ -109,16 +86,3 @@ export function getUXLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
 }
 
-export function useLabsDevMode() {
-  return useUXLabsStore((state) => state.labsDevMode) && Is.Deployment.Localhost;
-}
-
-export function getLabsDevMode() {
-  return useUXLabsStore.getState().labsDevMode && Is.Deployment.Localhost;
-}
-
-export function getLabsDevNoStreaming() {
-  // returns true if in dev mode and no streaming is active
-  const { labsDevMode, labsDevNoStreaming } = useUXLabsStore.getState();
-  return labsDevMode && labsDevNoStreaming;
-}

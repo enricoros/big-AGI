@@ -12,6 +12,19 @@ const Popup = styled(Popper)({
 
 
 /**
+ * Use this for submenus on any Menu/Popup, to prevent the parent popup from closing when clicking on this item. e.g.
+ * <MenuItem onClick={joyKeepPopup(() => setShowModelsHidden(!showModelsHidden))}> ...
+ */
+export function joyKeepPopup<TEvent extends React.MouseEvent>(fn: (event: TEvent) => void) {
+  return (event: TEvent) => {
+    // the key to not close the popup when activating this menu item - REV ENG
+    (event as any).defaultMuiPrevented = true;
+    fn(event);
+  };
+}
+
+
+/**
  * Workaround to the Menu in Joy 5-beta.0.
  *
  * This component addresses major changes in the Menu component in Joy 5-beta.0:

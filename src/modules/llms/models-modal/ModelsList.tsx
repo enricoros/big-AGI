@@ -9,7 +9,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
-import { DLLM, DLLMId, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { STAR_EMOJI, StarredToggle, starredToggleStyle } from '~/common/components/StarIcons';
@@ -155,7 +155,6 @@ export const ModelItem = React.memo(function ModelItem(props: {
         // Ignored
         case LLM_IF_OAI_Json:
         case LLM_IF_OAI_Fn:
-        case LLM_IF_OAI_Complete:
         case LLM_IF_GEM_CodeExecution:
           return null;
       }
@@ -331,11 +330,11 @@ export function ModelsList(props: {
   }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId, props.showHiddenModels]);
 
   return (
-    <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
+    <List size={!isMobile ? undefined : 'sm'} sx={props.sx}>
       {modelItems.length > 0 ? modelItems : (
         <ListItem sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Typography level='body-sm' mx={2}>
-            Please complete the configuration and refresh the models list.
+          <Typography level='body-sm' mx={2} textAlign='center'>
+            Please complete the configuration<br />and refresh the models.
           </Typography>
           {/*<Skeleton variant='rectangular' animation={false} height={24} width={160} />*/}
           {/*<Skeleton variant='rectangular' animation={false} height={24} width={120} />*/}

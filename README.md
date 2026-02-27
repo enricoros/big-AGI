@@ -37,13 +37,13 @@ You need to think broader, decide faster, and build with confidence, then you ne
 It comes packed with **world-class features** like Beam, and is praised for its **best-in-class AI chat UX**.
 **As an independent, non-VC-funded project, Pro subscriptions at $10.99/mo fund development for everyone, including the free and open-source tiers.**
 
-![LLM Vendors](https://img.shields.io/badge/19+_LLM_Services-500+_Models-black?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=purple)&nbsp;
+![LLM Vendors](https://img.shields.io/badge/20+_LLM_Services-500+_Models-black?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=purple)&nbsp;
 [![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/beam)&nbsp;
 [![Feature Inspector](https://img.shields.io/badge/Expert_Mode-AI_Inspector-000?style=for-the-badge&labelColor=purple)](https://big-agi.com/inspector)
 
 ### What makes Big-AGI different:
 
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.5, Nano Banana Pro, Kimi K2.5 or GPT 5.2 -
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.6, Nano Banana Pro, Kimi K2.5 or GPT 5.2 -
 **Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
@@ -313,7 +313,7 @@ For full details and former releases, check out the [archived versions changelog
 ## 👉 Supported Models & Integrations
 
 Delightful UX with latest models exclusive features like Beam for **multi-model AI validation**.
-> ![LLM Vendors](https://img.shields.io/badge/19_LLM_Services-500+_Models-black?style=for-the-badge&logo=openai&logoColor=white&labelColor=purple)&nbsp;
+> ![LLM Vendors](https://img.shields.io/badge/20_LLM_Services-500+_Models-black?style=for-the-badge&logo=openai&logoColor=white&labelColor=purple)&nbsp;
 > [![Feature Beam](https://img.shields.io/badge/AI--Validation-BEAM-000?style=for-the-badge&logo=anthropic&labelColor=purple)](https://big-agi.com/beam)
 
 | ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![500+ AI Models](https://img.shields.io/badge/500%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
@@ -324,13 +324,13 @@ Delightful UX with latest models exclusive features like Beam for **multi-model 
 
 ### AI Models & Vendors
 
-Configure 100s of AI models from 19+ providers:
+Configure 100s of AI models from 20+ providers:
 
 | **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                                                                                                             |
 |:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Opensource Servers  | [LocalAI](https://localai.io/) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                                                                                                                  |
 | Local Servers       | [LM Studio](https://lmstudio.ai/) (non-open)                                                                                                                                                                                                                                                                                                                                                    |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Anthropic](https://anthropic.com) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                                                                             |
+| Multimodal services | [Anthropic](https://anthropic.com) · [AWS Bedrock](https://aws.amazon.com/bedrock/) · [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                             |
 | LLM services        | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [Moonshot](https://www.moonshot.cn/) · [OpenPipe](https://openpipe.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) · [Z.ai](https://z.ai/) |
 | Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                                                                                                          |
 | Speech services     | [ElevenLabs](https://elevenlabs.io) · [Inworld](https://inworld.ai) · [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech) · LocalAI · Browser (Web Speech API)                                                                                                                                                                                                                 |

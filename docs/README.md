@@ -21,6 +21,7 @@ How to set up AI models and features in big-AGI.
   - Easy API key configuration:
     [Alibaba](https://bailian.console.alibabacloud.com/?apiKey=1#/api-key),
     [Anthropic](https://console.anthropic.com/settings/keys),
+    [AWS Bedrock](https://console.aws.amazon.com/bedrock/),
     [Deepseek](https://platform.deepseek.com/api_keys),
     [Google Gemini](https://aistudio.google.com/app/apikey),
     [Groq](https://console.groq.com/keys),

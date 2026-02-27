@@ -24,7 +24,7 @@ import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
  * Can be called directly from server-side code or wrapped in retry logic, batching, etc.
  */
 export async function* executeChatGenerate(
-  dispatchCreatorFn: () => ChatGenerateDispatch,
+  dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   streaming: boolean,
   intakeAbortSignal: AbortSignal,
   _d: AixDebugObject,
@@ -37,7 +37,7 @@ export async function* executeChatGenerate(
   // Create dispatch with error handling
   let dispatch: ChatGenerateDispatch;
   try {
-    dispatch = dispatchCreatorFn();
+    dispatch = await dispatchCreatorFn();
   } catch (error: any) {
     // log but don't warn on the server console, this is typically a service configuration issue (e.g. a missing password will throw here)
     chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, 'srv-log');
@@ -58,7 +58,7 @@ export async function* executeChatGenerate(
   if (!streaming)
     yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
   else
-    yield* _consumeDispatchStream(dispatchResponse, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+    yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
 
   // Tack profiling particles if generated
   if (_d.profiler) {
@@ -191,6 +191,7 @@ async function* _consumeDispatchUnified(
  */
 async function* _consumeDispatchStream(
   dispatchResponse: Response,
+  dispatchBodyTransform: AixDemuxers.StreamBodyTransform,
   dispatchDemuxerFormat: AixDemuxers.StreamDemuxerFormat,
   dispatchParser: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
@@ -198,7 +199,8 @@ async function* _consumeDispatchStream(
   parseContext?: { retriesAvailable: boolean },
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
-  const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
+  // Body reader with optional transform (e.g. AWS EventStream binary -> SSE text)
+  const dispatchReader = AixDemuxers.applyBodyTransformer(dispatchResponse.body || createEmptyReadableStream(), dispatchBodyTransform).getReader();
   const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> " " (U+FFFD) */ });
   const dispatchDemuxer = AixDemuxers.createStreamDemuxer(dispatchDemuxerFormat);
 
