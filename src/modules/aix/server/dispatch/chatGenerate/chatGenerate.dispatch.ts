@@ -196,6 +196,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       const _exhaustiveCheck: never = dialect;
     // fallthrough
     case 'alibaba':
+    case 'avian':
     case 'azure':
     case 'deepseek':
     case 'groq':
@@ -304,6 +305,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     // fallthrough
     case 'alibaba':
     case 'anthropic':
+    case 'avian':
     case 'bedrock':
     case 'deepseek':
     case 'gemini':

@@ -41,6 +41,9 @@ export const env = createEnv({
     ALIBABA_API_HOST: z.url().optional(),
     ALIBABA_API_KEY: z.string().optional(),
 
+    // LLM: Avian
+    AVIAN_API_KEY: z.string().optional(),
+
     // LLM: Azure OpenAI
     AZURE_OPENAI_API_ENDPOINT: z.url().optional(),
     AZURE_OPENAI_API_KEY: z.string().optional(),

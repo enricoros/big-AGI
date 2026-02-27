@@ -4,7 +4,7 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 15 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
+ * Supports 16 OpenAI-compatible dialects: alibaba, avian, azure, deepseek, groq, lmstudio,
  * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai, zai
  */
 
@@ -20,6 +20,7 @@ import type { RequestAccessValues } from '../llm.server.types';
 
 // configuration
 const DEFAULT_ALIBABA_HOST = 'https://dashscope-intl.aliyuncs.com/compatible-mode';
+const DEFAULT_AVIAN_HOST = 'https://api.avian.io';
 const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
@@ -111,7 +112,7 @@ export type OpenAIDialects = OpenAIAccessSchema['dialect'];
 export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
-    'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
+    'alibaba', 'avian', 'azure', 'deepseek', 'groq', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai', 'openpipe',
     'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
   ]),
@@ -145,6 +146,24 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Accept': 'application/json',
         },
         url: alibabaOaiHost + apiPath,
+      };
+
+    case 'avian':
+      let avianKey = access.oaiKey || env.AVIAN_API_KEY || '';
+      const avianHost = llmsFixupHost(access.oaiHost || DEFAULT_AVIAN_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      avianKey = llmsRandomKeyFromMultiKey(avianKey);
+
+      if (!avianKey || !avianHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Avian API Key. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${avianKey}`,
+          'Content-Type': 'application/json',
+        },
+        url: avianHost + apiPath,
       };
 
     case 'azure':

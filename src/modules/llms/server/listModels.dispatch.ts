@@ -33,6 +33,7 @@ import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { llmsHostnameMatches, OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
+import { avianModelFilter, avianModelSort, avianModelToModelDescription } from './openai/models/avian.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
@@ -377,6 +378,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       });
 
     case 'alibaba':
+    case 'avian':
     case 'azure':
     case 'deepseek':
     case 'groq':
@@ -432,6 +434,12 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .filter(({ id }) => alibabaModelFilter(id))
                 .map(({ id, created }) => alibabaModelToModelDescription(id, created))
                 .sort(alibabaModelSort);
+
+            case 'avian':
+              return maybeModels
+                .filter(({ id }) => avianModelFilter(id))
+                .map(({ id, created }) => avianModelToModelDescription(id, created))
+                .sort(avianModelSort);
 
             case 'azure':
               const azureOpenAIDeployments = azureParseFromDeploymentsAPI(maybeModels);

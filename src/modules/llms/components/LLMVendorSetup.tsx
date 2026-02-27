@@ -8,6 +8,7 @@ import { findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
 // direct imports for all vendor setup components - NOTE: we could lazy load if this becomes a performance issue
 import { AlibabaServiceSetup } from '../vendors/alibaba/AlibabaServiceSetup';
 import { AnthropicServiceSetup } from '../vendors/anthropic/AnthropicServiceSetup';
+import { AvianServiceSetup } from '../vendors/avian/AvianServiceSetup';
 import { AzureServiceSetup } from '../vendors/azure/AzureServiceSetup';
 import { BedrockServiceSetup } from '../vendors/bedrock/BedrockServiceSetup';
 import { DeepseekAIServiceSetup } from '../vendors/deepseek/DeepseekAIServiceSetup';
@@ -35,6 +36,7 @@ import { ZAIServiceSetup } from '~/modules/llms/vendors/zai/ZAIServiceSetup';
 const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ serviceId: DModelsServiceId }>> = {
   alibaba: AlibabaServiceSetup,
   anthropic: AnthropicServiceSetup,
+  avian: AvianServiceSetup,
   azure: AzureServiceSetup,
   bedrock: BedrockServiceSetup,
   deepseek: DeepseekAIServiceSetup,

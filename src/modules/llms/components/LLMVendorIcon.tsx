@@ -11,6 +11,7 @@ import { PhRobot } from '~/common/components/icons/phosphor/PhRobot';
 // direct imports for all vendor icons - given we use them frequently, we won't consider lazy loading them
 import { AlibabaCloudIcon } from '~/common/components/icons/vendors/AlibabaCloudIcon';
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
+import { AvianIcon } from '~/common/components/icons/vendors/AvianIcon';
 import { AzureIcon } from '~/common/components/icons/vendors/AzureIcon';
 import { BedrockIcon } from '~/common/components/icons/vendors/BedrockIcon';
 import { DeepseekIcon } from '~/common/components/icons/vendors/DeepseekIcon';
@@ -38,6 +39,7 @@ import { ZAIIcon } from '~/common/components/icons/vendors/ZAIIcon';
 const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> = {
   alibaba: AlibabaCloudIcon,
   anthropic: AnthropicIcon,
+  avian: AvianIcon,
   azure: AzureIcon,
   bedrock: BedrockIcon,
   deepseek: DeepseekIcon,
