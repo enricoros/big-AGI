@@ -850,5 +850,41 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+
+    {/* Rate Limiting (Extra complexity mode, implicit — available to all models) */}
+    {isExtra && !props.simplified && (
+      <FormTextField
+        autoCompleteId='rate-limit-rpm'
+        title='Rate Limit: RPM'
+        description='Requests/min'
+        tooltip='Maximum requests per minute for this model. Useful for Beam scatter with many rays. Leave empty for no limit.'
+        placeholder='No limit'
+        value={allParameters.llmRateLimitRPM != null ? String(allParameters.llmRateLimitRPM) : ''}
+        onChange={(value) => {
+          const n = parseInt(value, 10);
+          if (!value.trim() || isNaN(n) || n <= 0) onRemoveParameter('llmRateLimitRPM');
+          else onChangeParameter({ llmRateLimitRPM: n });
+        }}
+        inputSx={{ maxWidth: 140 }}
+      />
+    )}
+
+    {isExtra && !props.simplified && (
+      <FormTextField
+        autoCompleteId='rate-limit-tpm'
+        title='Rate Limit: TPM'
+        description='Tokens/min'
+        tooltip='Maximum input tokens per minute for this model. Useful for preventing provider rate limit errors during Beam scatter. Leave empty for no limit.'
+        placeholder='No limit'
+        value={allParameters.llmRateLimitTPM != null ? String(allParameters.llmRateLimitTPM) : ''}
+        onChange={(value) => {
+          const n = parseInt(value, 10);
+          if (!value.trim() || isNaN(n) || n <= 0) onRemoveParameter('llmRateLimitTPM');
+          else onChangeParameter({ llmRateLimitTPM: n });
+        }}
+        inputSx={{ maxWidth: 140 }}
+      />
+    )}
+
   </>;
 }

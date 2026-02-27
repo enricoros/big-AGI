@@ -472,6 +472,23 @@ export const DModelParameterRegistry = {
     // undefined means no filter (same as '')
   },
 
+
+  // -- Rate limiting (implicit, available to all models) --
+
+  llmRateLimitRPM: {
+    label: 'Rate Limit: RPM',
+    type: 'integer',
+    description: 'Maximum requests per minute for this model (for Beam scatter rate limiting)',
+    // undefined means no RPM limit
+  },
+
+  llmRateLimitTPM: {
+    label: 'Rate Limit: TPM',
+    type: 'integer',
+    description: 'Maximum input tokens per minute for this model (for Beam scatter rate limiting)',
+    // undefined means no TPM limit
+  },
+
 } as const satisfies Record<string, _ParameterRegistryEntry>;
 
 

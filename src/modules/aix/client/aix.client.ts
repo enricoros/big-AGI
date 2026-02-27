@@ -22,6 +22,7 @@ import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
 import { aixClientDebuggerGetRBO, getAixDebuggerNoStreaming } from './debugger/memstore-aix-client-debugger';
+import { estimateInputTokens, withGating } from './aix.client.rateGate';
 import { withDecimator } from './withDecimator';
 
 
@@ -351,19 +352,25 @@ export async function aixChatGenerateText_Simple(
 
 
   // Aix Low-Level Chat Generation - does not throw, but may return an error in the final text
-  const ll = await _aixChatGenerateContent_LL(
-    aixAccess,
-    aixModel,
-    aixChatGenerate,
-    aixContext,
-    aixStreaming,
+  const ll = await withGating(
+    llm.id,
+    _computeRateLimitConfig(llmParameters),
     abortSignal,
-    clientOptions?.throttleParallelThreads ?? 0,
-    !aixStreaming ? undefined : async (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
-      _llToText(ll, state);
-      if (onTextStreamUpdate && state.text !== null)
-        await onTextStreamUpdate(state.text, false, state.generator);
-    },
+    estimateInputTokens(aixChatGenerate),
+    () => _aixChatGenerateContent_LL(
+      aixAccess,
+      aixModel,
+      aixChatGenerate,
+      aixContext,
+      aixStreaming,
+      abortSignal,
+      clientOptions?.throttleParallelThreads ?? 0,
+      !aixStreaming ? undefined : async (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
+        _llToText(ll, state);
+        if (onTextStreamUpdate && state.text !== null)
+          await onTextStreamUpdate(state.text, false, state.generator);
+      },
+    ),
   );
 
   // Mark as complete
@@ -514,15 +521,24 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
     clientOptions.abortSignal = new AbortController().signal;
   }
 
-  // Aix Low-Level Chat Generation
-  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
-    async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
-      if (isDone) return; // optimization, as there aren't branches between here and the final update below
-      if (onStreamingUpdate) {
-        _llToDMessageGuts(ll, dMessage);
-        await onStreamingUpdate(dMessage, false);
-      }
-    },
+  // capture after NON_ABORTABLE narrowing (TypeScript doesn't narrow inside closures)
+  const abortSignal = clientOptions.abortSignal;
+
+  // Aix Low-Level Chat Generation — gated by user-configurable RPM/TPM limits
+  const llAccumulator = await withGating(
+    llm.id,
+    _computeRateLimitConfig(llmParameters),
+    abortSignal,
+    estimateInputTokens(aixChatGenerate),
+    () => _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal, clientOptions.throttleParallelThreads ?? 0,
+      async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
+        if (isDone) return; // optimization, as there aren't branches between here and the final update below
+        if (onStreamingUpdate) {
+          _llToDMessageGuts(ll, dMessage);
+          await onStreamingUpdate(dMessage, false);
+        }
+      },
+    ),
   );
 
   // Mark as complete
@@ -574,6 +590,16 @@ function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, d
   const inputTokens = (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0);
   const outputTokens = (m?.TOut || 0) /* + (m?.TOutR || 0) THIS IS A BREAKDOWN, IT'S ALREADY IN */;
   metricsStoreAddChatGenerate(costs, inputTokens, outputTokens, llm, debugCostSource);
+}
+
+
+/** Derives rate limit config from model parameters. Returns null if no limits are configured. */
+function _computeRateLimitConfig(llmParameters: DModelParameterValues): import('./aix.client.rateGate').AixRateLimitConfig | null {
+  const maxRPM = llmParameters.llmRateLimitRPM ?? null;
+  const maxTPM = llmParameters.llmRateLimitTPM ?? null;
+  if (maxRPM === null && maxTPM === null)
+    return null;
+  return { maxRPM, maxTPM };
 }
 
 
