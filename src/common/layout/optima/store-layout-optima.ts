@@ -16,7 +16,7 @@ export type ModelOptionsContext = 'full' | 'parameters';
 interface OptimaState {
 
   // modes
-  // isFocusedMode: boolean; // when active, the Mobile App menu is not displayed
+  isChromeless: boolean; // when active, the top bar and composer are hidden, with floating buttons
 
   // panes
   drawerIsOpen: boolean;
@@ -62,7 +62,7 @@ const modalsClosedState = {
 const initialState: OptimaState = {
 
   // modes
-  // isFocusedMode: false,
+  isChromeless: false,
 
   // panes
   drawerIsOpen: initialDrawerOpen(),
@@ -81,7 +81,7 @@ const initialState: OptimaState = {
 
 export interface OptimaActions {
 
-  // setIsFocusedMode: (isFocusedMode: boolean) => void;
+  setChromeless: (isChromeless: boolean) => void;
 
   closeDrawer: () => void;
   openDrawer: () => void;
@@ -168,7 +168,7 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
 
   ...initialState,
 
-  // setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
+  setChromeless: (isChromeless) => _set({ isChromeless }),
 
   closeDrawer: () => {
     // prevent accidental immediate close (e.g. double-click, animation protection)

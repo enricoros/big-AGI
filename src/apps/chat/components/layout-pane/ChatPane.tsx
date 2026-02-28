@@ -13,6 +13,7 @@ import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutl
 import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { ChromelessItemButton } from '~/common/layout/optima/ChromelessItemButton';
 import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHorizontal';
 import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconSplitHorizontalRemove';
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
@@ -37,6 +38,7 @@ function VariformPaneFrame() {
 
 
 export function ChatPane(props: {
+  isMobile: boolean,
   conversationId: DConversationId | null,
   disableItems: boolean,
   hasConversations: boolean,
@@ -142,6 +144,8 @@ export function ChatPane(props: {
             : (isMultiPane ? 'Unsplit' : 'Split Right')}
         </ListItemButton>
       </ListItem>
+
+      {props.isMobile && <ChromelessItemButton />}
 
     </OptimaPanelGroupedList>
 

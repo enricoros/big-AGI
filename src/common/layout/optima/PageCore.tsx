@@ -5,10 +5,13 @@ import { Box } from '@mui/joy';
 
 import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import type { NavItemApp } from '~/common/app.nav';
+import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
 // import { MobileNav } from './MobileNav';
 import { OptimaBar } from '~/common/layout/optima/bar/OptimaBar';
 import { optimaHasMOTD, OptimaMOTD } from '~/common/layout/optima/OptimaMOTD';
+import { ChromelessFloatingButtons } from './ChromelessFloatingButtons';
+import { useOptimaChromeless } from './useOptima';
 
 
 const pageCoreSx: SxProps = {
@@ -44,8 +47,12 @@ export const PageCore = (props: {
   isFull: boolean,
   isMobile: boolean,
   children: React.ReactNode,
-}) =>
-  <Box
+}) => {
+
+  // external state
+  const isChromeless = useOptimaChromeless();
+
+  return <Box
     component={props.component}
     sx={props.currentApp?.pageBrighter ? pageCoreBrighterSx : props.isFull ? pageCoreFullSx : pageCoreSx}
   >
@@ -53,13 +60,17 @@ export const PageCore = (props: {
     {/* Optional deployment MOTD */}
     {optimaHasMOTD && <OptimaMOTD />}
 
-    {/* Responsive page bar (pluggable App Center Items and App Menu) */}
-    <OptimaBar
-      component='header'
-      currentApp={props.currentApp}
-      isMobile={props.isMobile}
-      sx={pageCoreBarSx}
-    />
+    {/* Responsive page bar (pluggable App Center Items and App Menu) - collapsible for chromeless mode */}
+    <ExpanderControlledBox expanded={!isChromeless}>
+      <OptimaBar
+        component='header'
+        currentApp={props.currentApp}
+        isMobile={props.isMobile}
+        sx={pageCoreBarSx}
+      />
+    </ExpanderControlledBox>
+    {/* Chromeless alternative to the OptimaBar */}
+    {isChromeless && <ChromelessFloatingButtons />}
 
     {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
     {props.children}
@@ -75,3 +86,4 @@ export const PageCore = (props: {
     {/*)}*/}
 
   </Box>;
+};
