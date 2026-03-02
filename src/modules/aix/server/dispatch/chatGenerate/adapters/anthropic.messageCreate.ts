@@ -7,6 +7,8 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, appr
 
 
 // configuration
+const DEFAULT_WEB_FETCH_MAX_USES = 5;
+const DEFAULT_WEB_SEARCH_MAX_USES = 10;
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
 const hotFixDisableThinkingWhenToolsForced = true; // "Thinking may not be enabled when tool_choice forces tool use."
@@ -216,7 +218,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       hostedTools.push({
         type: 'web_search_20250305',
         name: 'web_search',
-        max_uses: 10, // Allow up to 10 progressive searches // FIXME: HARDCODED
+        max_uses: model.vndAntWebSearchMaxUses ?? DEFAULT_WEB_SEARCH_MAX_USES, // Allow up to 10 searches by default
         // Pass user geolocation for location-aware search results
         ...(model.userGeolocation ? {
           user_location: { type: 'approximate' as const, ...model.userGeolocation },
@@ -229,7 +231,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       hostedTools.push({
         type: 'web_fetch_20250910',
         name: 'web_fetch',
-        max_uses: 5, // Allow up to 5 fetches
+        max_uses: model.vndAntWebFetchMaxUses ?? DEFAULT_WEB_FETCH_MAX_USES, // Allow up to 5 fetches by default
         citations: { enabled: true }, // Enable citations
       });
     }

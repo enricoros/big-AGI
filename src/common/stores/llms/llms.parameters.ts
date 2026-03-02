@@ -234,6 +234,14 @@ export const DModelParameterRegistry = {
     // undefined means off (same as 'off')
   }),
 
+  llmVndAntWebFetchMaxUses: {
+    label: 'Web Fetch Max Uses',
+    type: 'integer',
+    description: 'Maximum number of web page fetches per response',
+    range: [1, 50],
+    // undefined means default
+  },
+
   llmVndAntWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
@@ -241,6 +249,14 @@ export const DModelParameterRegistry = {
     values: ['auto', 'off'],
     // undefined means off (same as 'off')
   }),
+
+  llmVndAntWebSearchMaxUses: {
+    label: 'Web Search Max Uses',
+    type: 'integer',
+    description: 'Maximum number of web searches per response',
+    range: [1, 50],
+    // undefined means default
+  },
 
   // llmVndAntToolSearch: { // Not user set
   //   label: 'Tool Search',

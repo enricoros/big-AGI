@@ -87,7 +87,9 @@ const ModelParameterSpec_schema = z.object({
     'llmVndAntSkills',
     'llmVndAntThinkingBudget',
     'llmVndAntWebFetch',
+    'llmVndAntWebFetchMaxUses',
     'llmVndAntWebSearch',
+    'llmVndAntWebSearchMaxUses',
     // Bedrock
     'llmVndBedrockAPI',
     // Gemini

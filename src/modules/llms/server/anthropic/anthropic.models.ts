@@ -25,9 +25,11 @@ const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndAntWebSearch' },
-  { paramId: 'llmVndAntWebFetch' },
   { paramId: 'llmVndAntSkills' },
+  { paramId: 'llmVndAntWebFetch' },
+  { paramId: 'llmVndAntWebFetchMaxUses' },
+  { paramId: 'llmVndAntWebSearch' },
+  { paramId: 'llmVndAntWebSearchMaxUses' },
 ] as const;
 
 
