@@ -41,7 +41,9 @@ import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.ro
 import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
+import { supportsCameraCapture } from '~/common/components/camera/useCameraCapture';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
+import { useCameraCaptureDialog } from '~/common/components/camera/useCameraCaptureDialog';
 import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -62,7 +64,7 @@ import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-en
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
 
-import { ButtonAttachCameraMemo, useCameraCaptureModalDialog } from './buttons/ButtonAttachCamera';
+import { ButtonAttachCameraMemo } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachGoogleDriveMemo } from './buttons/ButtonAttachGoogleDrive';
 import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
@@ -606,7 +608,13 @@ export function Composer(props: {
     void attachAppendFile('camera', file);
   }, [attachAppendFile]);
 
-  const { openCamera, cameraCaptureComponent } = useCameraCaptureModalDialog(handleAttachCameraImage);
+  const { openCameraCapture } = useCameraCaptureDialog();
+
+  const handleOpenCamera = React.useCallback(async () => {
+    await openCameraCapture().then((file) => {
+      file && handleAttachCameraImage(file);
+    });
+  }, [openCameraCapture, handleAttachCameraImage]);
 
   const handleAttachScreenCapture = React.useCallback((file: File) => {
     void attachAppendFile('screencapture', file);
@@ -784,7 +792,7 @@ export function Composer(props: {
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor === 'danger' ? 'danger' : showTint || micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
 
                 {/* Responsive Camera OCR button */}
-                {showChatAttachments && <ButtonAttachCameraMemo color={showTint} isMobile onOpenCamera={openCamera} />}
+                {showChatAttachments && <ButtonAttachCameraMemo color={showTint} isMobile onOpenCamera={handleOpenCamera} />}
 
                 {/* [mobile] Attach file button (in draw with image mode)  */}
                 {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
@@ -851,7 +859,7 @@ export function Composer(props: {
                 {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo color={showTint} onAttachScreenCapture={handleAttachScreenCapture} />}
 
                 {/* Responsive Camera OCR button */}
-                {labsCameraDesktop && <ButtonAttachCameraMemo color={showTint} onOpenCamera={openCamera} />}
+                {labsCameraDesktop && supportsCameraCapture() && <ButtonAttachCameraMemo color={showTint} onOpenCamera={handleOpenCamera} />}
 
               </Box>)}
 
@@ -1136,9 +1144,6 @@ export function Composer(props: {
 
       {/* Execution Mode Menu */}
       {chatExecuteMenuComponent}
-
-      {/* Camera (when open) */}
-      {cameraCaptureComponent}
 
       {/* Google Drive Picker (when open) */}
       {googleDrivePickerComponent}

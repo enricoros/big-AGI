@@ -15,7 +15,8 @@ import { InlineError } from '~/common/components/InlineError';
 import { Is } from '~/common/util/pwaUtils';
 import { animationBackgroundCameraFlash } from '~/common/util/animUtils';
 import { downloadVideoFrame, renderVideoFrameAsFile } from '~/common/util/videoUtils';
-import { useCameraCapture } from '~/common/components/useCameraCapture';
+
+import { useCameraCapture } from './useCameraCapture';
 
 
 // configuration
