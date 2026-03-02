@@ -180,6 +180,11 @@ export type AttachmentDraftConverterType =
 // 3. Output - this is done via DMessageAttachmentFragment[], to be directly compatible with our data
 
 
+// Actions on attachment drafts
+
+export type AttachmentDraftsAction = 'inline-text' | 'copy-text';
+
+
 /*export type AttachmentDraftPreview = {
   renderer: 'noPreview',
   title: string; // A title for the preview

@@ -1,32 +1,22 @@
 import * as React from 'react';
 
-import { Box, CircularProgress, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
-
+import type { DMessageDocPart, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
-import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
-import type { DMessageDocPart, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
+import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftsAction } from '../attachment.types';
+import type { AttachmentDraftsStoreApi } from '../store-attachment-drafts_slice';
+import type { AttachmentEnrichmentSummary, IAttachmentEnrichment } from '../llm-enrichment/attachment.enrichment';
 
-import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
-
-import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
-import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
-import { LLMAttachmentMenu } from './LLMAttachmentMenu';
-import { LLMAttachmentsPromptsButtonMemo } from './LLMAttachmentsPromptsButton';
-import { ViewDocPartModal } from '../../message/fragments-content/ViewDocPartModal';
-
-
-export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
+import { AttachmentDraftButtonMemo } from './AttachmentDraftButton';
+import { AttachmentDraftMenu } from './AttachmentDraftMenu';
 
 
 const _style = {
@@ -62,15 +52,21 @@ const _style = {
 
 
 /**
- * Renderer of attachment drafts, with menus, etc.
+ * Generic renderer of attachment drafts, with menus, etc.
+ * Portable across Composer, ChatMessage edit, FollowUps, etc.
  */
-export function LLMAttachmentsList(props: {
-  agiAttachmentPrompts?: AgiAttachmentPromptsData,
+export function AttachmentDraftsList(props: {
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
-  canInlineSomeFragments: boolean,
-  llmAttachmentDrafts: LLMAttachmentDraft[],
-  onAttachmentDraftsAction?: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
+  attachmentDrafts: AttachmentDraft[],
+  enrichment?: IAttachmentEnrichment,
+  enrichmentSummary?: AttachmentEnrichmentSummary,
   buttonsCanWrap?: boolean,
+  onAttachmentDraftsAction?: (attachmentDraftId: AttachmentDraftId | null, actionId: AttachmentDraftsAction) => void,
+  // optional rendering props
+  startDecorator?: React.ReactNode,
+  renderDocViewer?: (docPart: DMessageDocPart, onClose: () => void) => React.ReactNode,
+  renderImageViewer?: (imageRefPart: DMessageImageRefPart, onClose: () => void) => React.ReactNode,
+  renderOverallMenuExtra?: () => React.ReactNode,
 }) {
 
   // state
@@ -82,15 +78,20 @@ export function LLMAttachmentsList(props: {
 
   // derived state
 
-  const { agiAttachmentPrompts, canInlineSomeFragments, llmAttachmentDrafts } = props;
-  const hasAttachments = llmAttachmentDrafts.length >= 1;
+  const { attachmentDrafts, enrichmentSummary } = props;
+  const canInlineSomeFragments = enrichmentSummary?.anyInlinable ?? false;
+  const hasAttachments = attachmentDrafts.length >= 1;
+
+  // ref to optimize
+  const attachmentDraftsRef = React.useRef(attachmentDrafts);
+  attachmentDraftsRef.current = attachmentDrafts;
 
   // derived item menu state
 
   const itemMenuAnchor = draftMenu?.anchor;
   const itemMenuAttachmentDraftId = draftMenu?.attachmentDraftId;
-  const itemMenuAttachmentDraft = itemMenuAttachmentDraftId ? llmAttachmentDrafts.find(la => la.attachmentDraft.id === draftMenu.attachmentDraftId) : undefined;
-  const itemMenuIndex = itemMenuAttachmentDraft ? llmAttachmentDrafts.indexOf(itemMenuAttachmentDraft) : -1;
+  const itemMenuAttachmentDraft = itemMenuAttachmentDraftId ? attachmentDrafts.find(a => a.id === draftMenu.attachmentDraftId) : undefined;
+  const itemMenuIndex = itemMenuAttachmentDraft ? attachmentDrafts.indexOf(itemMenuAttachmentDraft) : -1;
 
 
   // overall menu
@@ -100,10 +101,10 @@ export function LLMAttachmentsList(props: {
   const handleOverallMenuHide = React.useCallback(() => setOverallMenuAnchor(null), []);
 
   const handleOverallMenuToggle = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.shiftKey && console.log('llmAttachmentDrafts', llmAttachmentDrafts);
+    event.shiftKey && console.log('llmAttachmentDrafts', attachmentDraftsRef.current);
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
-  }, [llmAttachmentDrafts]);
+  }, []);
 
   const handleOverallCopyText = React.useCallback(() => {
     handleOverallMenuHide();
@@ -121,13 +122,13 @@ export function LLMAttachmentsList(props: {
         open onClose={onUserReject} onPositive={() => onResolve(true)}
         title='Confirm Removal'
         positiveActionText='Remove All'
-        confirmationText={`This action will remove all (${llmAttachmentDrafts.length}) attachments. Do you want to proceed?`}
+        confirmationText={`This action will remove all (${attachmentDraftsRef.current.length}) attachments. Do you want to proceed?`}
       />,
     )) {
       handleOverallMenuHide();
       props.attachmentDraftsStoreApi.getState().removeAllAttachmentDrafts();
     }
-  }, [handleOverallMenuHide, llmAttachmentDrafts.length, props.attachmentDraftsStoreApi, showPromisedOverlay]);
+  }, [handleOverallMenuHide, props.attachmentDraftsStoreApi, showPromisedOverlay]);
 
 
   // item menu
@@ -139,7 +140,7 @@ export function LLMAttachmentsList(props: {
     setDraftMenu(prev => prev?.attachmentDraftId === attachmentDraftId ? null : { anchor, attachmentDraftId });
   }, [handleOverallMenuHide]);
 
-  const handleDraftAction = React.useCallback((attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => {
+  const handleDraftAction = React.useCallback((attachmentDraftId: AttachmentDraftId, actionId: AttachmentDraftsAction) => {
     // pass-through, but close the menu as well, as the action is destructive for the caller
     handleDraftMenuHide();
     onAttachmentDraftsAction?.(attachmentDraftId, actionId);
@@ -174,19 +175,18 @@ export function LLMAttachmentsList(props: {
       {/* Horizontally scrollable */}
       <Box sx={!props.buttonsCanWrap ? _style.barScrollX : _style.barWraps}>
 
-        {/* AI Suggestion Button */}
-        {(!!agiAttachmentPrompts && (agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData)) && (
-          <LLMAttachmentsPromptsButtonMemo data={agiAttachmentPrompts} />
-        )}
+        {/* Slot: before buttons (e.g. AI Suggestion Button) */}
+        {props.startDecorator}
 
         {/* Attachment Buttons */}
-        {llmAttachmentDrafts.map((llmAttachment) =>
-          <LLMAttachmentButtonMemo
-            key={llmAttachment.attachmentDraft.id}
-            llmAttachment={llmAttachment}
-            menuShown={llmAttachment.attachmentDraft.id === itemMenuAttachmentDraftId}
+        {attachmentDrafts.map((draft) =>
+          <AttachmentDraftButtonMemo
+            key={draft.id}
+            draft={draft}
+            enrichment={props.enrichment}
+            menuShown={draft.id === itemMenuAttachmentDraftId}
             onToggleMenu={handleDraftMenuToggle}
-            onViewImageRefPart={handleViewImageRefPart}
+            onViewImageRefPart={!props.renderImageViewer ? undefined : handleViewImageRefPart}
           />,
         )}
 
@@ -207,28 +207,25 @@ export function LLMAttachmentsList(props: {
 
 
     {/* Image Viewer Modal - when opening attachment images */}
-    {!!viewerImageRefPart && (
-      <ViewImageRefPartModal imageRefPart={viewerImageRefPart} onClose={handleCloseImageViewer} />
-    )}
+    {!!viewerImageRefPart && props.renderImageViewer?.(viewerImageRefPart, handleCloseImageViewer)}
 
     {/* Text Viewer Modal */}
-    {!!viewerDocPart && (
-      <ViewDocPartModal docPart={viewerDocPart} onClose={handleCloseDocPartViewer} />
-    )}
+    {!!viewerDocPart && props.renderDocViewer?.(viewerDocPart, handleCloseDocPartViewer)}
 
 
-    {/* Single LLM Attachment Draft Menu */}
+    {/* Single Attachment Draft Menu */}
     {!!itemMenuAnchor && !!itemMenuAttachmentDraft && !!props.attachmentDraftsStoreApi && (
-      <LLMAttachmentMenu
+      <AttachmentDraftMenu
         attachmentDraftsStoreApi={props.attachmentDraftsStoreApi}
-        llmAttachmentDraft={itemMenuAttachmentDraft}
+        draft={itemMenuAttachmentDraft}
+        enrichment={props.enrichment}
         menuAnchor={itemMenuAnchor}
         isPositionFirst={itemMenuIndex === 0}
-        isPositionLast={itemMenuIndex === llmAttachmentDrafts.length - 1}
+        isPositionLast={itemMenuIndex === attachmentDrafts.length - 1}
         onClose={handleDraftMenuHide}
         onDraftAction={!onAttachmentDraftsAction ? undefined : handleDraftAction}
-        onViewDocPart={handleViewDocPart}
-        onViewImageRefPart={handleViewImageRefPart}
+        onViewDocPart={!props.renderDocViewer ? undefined : handleViewDocPart}
+        onViewImageRefPart={!props.renderImageViewer ? undefined : handleViewImageRefPart}
       />
     )}
 
@@ -241,14 +238,8 @@ export function LLMAttachmentsList(props: {
         minWidth={200}
         placement='top-start'
       >
-        {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
-        {!!agiAttachmentPrompts && (
-          <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
-            <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
-            What can I do?
-          </MenuItem>
-        )}
-        {!!agiAttachmentPrompts && <ListDivider />}
+        {/* Slot: extra overall menu items (e.g. "What can I do?") */}
+        {props.renderOverallMenuExtra?.()}
 
         {!!onAttachmentDraftsAction && <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
@@ -262,7 +253,7 @@ export function LLMAttachmentsList(props: {
 
         <MenuItem onClick={handleOverallClear}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
-          Remove All{llmAttachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {llmAttachmentDrafts.length} attachments</span> : null}
+          Remove All{attachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {attachmentDrafts.length} attachments</span> : null}
         </MenuItem>
       </CloseablePopup>
     )}

@@ -27,7 +27,7 @@ import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
+import type { IAttachmentEnrichment } from '../llm-enrichment/attachment.enrichment';
 
 
 const ATTACHMENT_MIN_STYLE = {
@@ -120,7 +120,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'unhandled': TextureIcon,
 };
 
-function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void) {
+function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, onViewImageRefPart?: (imageRefPart: DMessageImageRefPart) => void) {
   const activeConverters = attachmentDraft.converters.filter(c => c.isActive);
   if (activeConverters.length === 0)
     return null;
@@ -139,7 +139,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
       outputSingleImageRefDBlobs = [fragment.part.dataRef];
   }
 
-  const handleViewFirstImage = (e: React.MouseEvent) => {
+  const handleViewFirstImage = !onViewImageRefPart ? undefined : (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const fragment = attachmentDraft.outputFragments[0];
@@ -224,17 +224,19 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
 }
 
 
-export const LLMAttachmentButtonMemo = React.memo(LLMAttachmentButton);
+export const AttachmentDraftButtonMemo = React.memo(AttachmentDraftButton);
 
-function LLMAttachmentButton(props: {
-  llmAttachment: LLMAttachmentDraft,
+function AttachmentDraftButton(props: {
+  draft: AttachmentDraft,
+  enrichment?: IAttachmentEnrichment,
   menuShown: boolean,
   onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
-  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void,
+  onViewImageRefPart?: (imageRefPart: DMessageImageRefPart) => void,
 }) {
 
   // derived state
-  const { attachmentDraft: draft, llmSupportsAllFragments } = props.llmAttachment;
+  const { draft, enrichment } = props;
+  const llmSupportsAllFragments = enrichment?.isCompatible(draft) ?? true;
 
   const isInputLoading = draft.inputLoading;
   const isInputError = !!draft.inputError;

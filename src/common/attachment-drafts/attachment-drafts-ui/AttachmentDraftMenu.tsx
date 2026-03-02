@@ -21,10 +21,9 @@ import { humanReadableBytes } from '~/common/util/textUtils';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
-import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
-import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
-import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
+import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftsAction } from '../attachment.types';
+import type { AttachmentDraftsStoreApi } from '../store-attachment-drafts_slice';
+import type { IAttachmentEnrichment } from '../llm-enrichment/attachment.enrichment';
 
 
 // configuration
@@ -49,16 +48,17 @@ const actionButtonsSx: SxProps = {
 };
 
 
-export function LLMAttachmentMenu(props: {
+export function AttachmentDraftMenu(props: {
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
-  llmAttachmentDraft: LLMAttachmentDraft,
+  draft: AttachmentDraft,
+  enrichment?: IAttachmentEnrichment,
   menuAnchor: HTMLAnchorElement,
   isPositionFirst: boolean,
   isPositionLast: boolean,
   onClose: () => void,
-  onDraftAction?: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
-  onViewDocPart: (docPart: DMessageDocPart) => void,
-  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
+  onDraftAction?: (attachmentDraftId: AttachmentDraftId, actionId: AttachmentDraftsAction) => void,
+  onViewDocPart?: (docPart: DMessageDocPart) => void,
+  onViewImageRefPart?: (imageRefPart: DMessageImageRefPart) => void
 }) {
 
   // state
@@ -72,12 +72,10 @@ export function LLMAttachmentMenu(props: {
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
 
-  const {
-    attachmentDraft: draft,
-    llmSupportsAllFragments,
-    llmSupportsTextFragments,
-    llmTokenCountApprox,
-  } = props.llmAttachmentDraft;
+  const { draft, enrichment } = props;
+  const llmSupportsAllFragments = enrichment?.isCompatible(draft) ?? true;
+  const llmSupportsTextFragments = enrichment?.supportsTextInline(draft) ?? false;
+  const llmTokenCountApprox = enrichment?.estimateTokens(draft) ?? null;
 
   const {
     id: draftId,
@@ -145,13 +143,13 @@ export function LLMAttachmentMenu(props: {
   const handleViewImageRefPart = React.useCallback((event: React.MouseEvent, imageRefPart: DMessageImageRefPart) => {
     event.preventDefault();
     event.stopPropagation();
-    onViewImageRefPart(imageRefPart);
+    onViewImageRefPart?.(imageRefPart);
   }, [onViewImageRefPart]);
 
   const handleViewDocPart = React.useCallback((event: React.MouseEvent, docPart: DMessageDocPart) => {
     event.preventDefault();
     event.stopPropagation();
-    onViewDocPart(docPart);
+    onViewDocPart?.(docPart);
   }, [onViewDocPart]);
 
   const canHaveDetails = !!draftInput && !isConverting;
@@ -344,7 +342,7 @@ export function LLMAttachmentMenu(props: {
               <Typography level='body-sm' textColor='success.softColor' sx={{ display: 'flex', alignItems: 'center' }}>
                 Input: {draftInput.urlImage.mimeType} · {draftInput.urlImage.width}x{draftInput.urlImage.height}{!draftInput.urlImage.imgDataUrl?.length ? '' : ` · ${humanReadableBytes(draftInput.urlImage.imgDataUrl.length)}`}
                 &nbsp;
-                <Chip component='span' size='sm' color='success' variant='soft' startDecorator={<VisibilityIcon />} onClick={(event) => {
+                {!!onViewImageRefPart && <Chip component='span' size='sm' color='success' variant='soft' startDecorator={<VisibilityIcon />} onClick={(event) => {
                   if (draftInput?.urlImage?.imgDataUrl) {
                     // Invoke the viewer but with a virtual 'temp' part description to see this preview image
                     handleViewImageRefPart(event, {
@@ -360,7 +358,7 @@ export function LLMAttachmentMenu(props: {
                   }
                 }} sx={{ ml: 'auto' }}>
                   view input
-                </Chip>
+                </Chip>}
               </Typography>
             )}
 
@@ -390,9 +388,9 @@ export function LLMAttachmentMenu(props: {
                         {/*  copy*/}
                         {/*</Chip>*/}
                         <ButtonGroup size='sm' color='primary' variant='outlined' sx={actionButtonsSx}>
-                          <Button startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />} onClick={(event) => handleViewDocPart(event, part)}>
+                          {!!onViewDocPart && <Button startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />} onClick={(event) => handleViewDocPart(event, part)}>
                             view
-                          </Button>
+                          </Button>}
                           <Button onClick={(event) => handleCopyToClipboard(event, part.data.text)}/* endDecorator={<ContentCopyIcon />} */>
                             copy
                           </Button>
@@ -419,12 +417,12 @@ export function LLMAttachmentMenu(props: {
                         {/*  del*/}
                         {/*</Chip>}*/}
                         <ButtonGroup size='sm' color='primary' variant='outlined' sx={actionButtonsSx}>
-                          <Button
+                          {!!onViewImageRefPart && <Button
                             startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />}
                             onClick={(event) => handleViewImageRefPart(event, legacyImageRefPart)}
                           >
                             view
-                          </Button>
+                          </Button>}
                           {isOutputMultiple && (
                             <Button
                               color='warning'
