@@ -26,6 +26,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageId, DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -53,11 +54,10 @@ import { providerCommands } from './actile/providerCommands';
 import { providerStarredMessages, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
-import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
-import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
+import type { AttachmentDraftId, AttachmentDraftsAction } from '~/common/attachment-drafts/attachment.types';
+import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
-import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
+import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
 
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
@@ -205,7 +205,7 @@ export function Composer(props: {
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile, showChatAttachments === 'only-images');
 
   // attachments derived state
-  const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
+  const { enrichment: attEnrichment, summary: attEnrichSummary } = useAttachmentDraftsEnrichment(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
 
   // drag/drop
   const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } = useComposerDragDrop(!props.isMobile, attachAppendDataTransfer);
@@ -230,7 +230,7 @@ export function Composer(props: {
   // tokens derived state
 
   const tokensComposerTextDebounced = useTextTokenCount(composeText, props.chatLLM, 800, 1600);
-  let tokensComposer = (tokensComposerTextDebounced ?? 0) + (llmAttachmentDraftsCollection.llmTokenCountApprox || 0);
+  let tokensComposer = (tokensComposerTextDebounced ?? 0) + (attEnrichSummary.totalTokensApprox || 0);
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
@@ -274,7 +274,7 @@ export function Composer(props: {
   // Confirmation Modals
 
   const confirmProceedIfAttachmentsNotSupported = React.useCallback(async (): Promise<boolean> => {
-    if (llmAttachmentDraftsCollection.canAttachAllFragments) return true;
+    if (attEnrichSummary.allCompatible) return true;
     return await showPromisedOverlay('composer-unsupported-attachments', { rejectWithValue: false }, ({ onResolve, onUserReject }) => (
       <ConfirmationModal
         open
@@ -286,7 +286,7 @@ export function Composer(props: {
         title='Attachment Compatibility Notice'
       />
     ));
-  }, [llmAttachmentDraftsCollection.canAttachAllFragments, showPromisedOverlay]);
+  }, [attEnrichSummary.allCompatible, showPromisedOverlay]);
 
 
   // Primary button
@@ -631,7 +631,7 @@ export function Composer(props: {
 
   // Attachments Down
 
-  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
+  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: AttachmentDraftsAction) => {
     switch (action) {
       case 'copy-text':
         const copyFragments = attachmentsTakeFragmentsByType('doc', attachmentDraftIdOrAll, false);
@@ -698,7 +698,7 @@ export function Composer(props: {
 
   const sendButtonColor: ColorPaletteProp =
     assistantAbortible ? 'warning'
-      : !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
+      : !attEnrichSummary.allCompatible ? 'warning'
         : chatExecuteModeSendColor;
 
   const sendButtonLabel = chatExecuteModeSendLabel;
@@ -712,7 +712,7 @@ export function Composer(props: {
               : <TelegramIcon />;
 
   const beamButtonColor: ColorPaletteProp | undefined =
-    !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
+    !attEnrichSummary.allCompatible ? 'warning'
       : undefined;
 
   const showTint: ColorPaletteProp | undefined = isDraw ? 'warning' : isReAct ? 'success' : undefined;
@@ -1000,11 +1000,12 @@ export function Composer(props: {
 
               {/* Render any Attachments & menu items */}
               {!!conversationOverlayStore && showChatAttachments && (
-                <LLMAttachmentsList
-                  agiAttachmentPrompts={agiAttachmentPrompts}
+                <ComposerAttachmentDraftsList
                   attachmentDraftsStoreApi={conversationOverlayStore}
-                  canInlineSomeFragments={llmAttachmentDraftsCollection.canInlineSomeFragments}
-                  llmAttachmentDrafts={llmAttachmentDraftsCollection.llmAttachmentDrafts}
+                  attachmentDrafts={attachmentDrafts}
+                  enrichment={attEnrichment}
+                  enrichmentSummary={attEnrichSummary}
+                  agiAttachmentPrompts={agiAttachmentPrompts}
                   onAttachmentDraftsAction={handleAttachmentDraftsAction}
                 />
               )}
