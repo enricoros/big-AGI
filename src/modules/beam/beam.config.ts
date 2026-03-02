@@ -16,9 +16,9 @@ export const SCATTER_COLOR = 'neutral' as const;
 export const SCATTER_DEBUG_STATE = false;
 export const SCATTER_PLACEHOLDER = '🖊️ ...'; // 💫 ..., 🖊️ ...
 export const SCATTER_RAY_DEF = 2;
-export const SCATTER_RAY_MAX = 8;
+export const SCATTER_RAY_MAX = 24;
 export const SCATTER_RAY_MIN = 1;
-export const SCATTER_RAY_PRESETS = [2, 4, 8];
+export const SCATTER_RAY_PRESETS = [2, 4, 8, 16];
 export const SCATTER_RAY_SHOW_DRAG_HANDLE = false;
 
 // configuration [BEAM Gather]
