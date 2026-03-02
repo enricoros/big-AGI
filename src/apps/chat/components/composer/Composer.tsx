@@ -64,11 +64,11 @@ import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-en
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
 
-import { ButtonAttachCameraMemo } from './buttons/ButtonAttachCamera';
-import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
-import { ButtonAttachGoogleDriveMemo } from './buttons/ButtonAttachGoogleDrive';
-import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
-import { ButtonAttachWebMemo } from './buttons/ButtonAttachWeb';
+import { ButtonAttachCameraMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachCamera';
+import { ButtonAttachClipboardMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachClipboard';
+import { ButtonAttachGoogleDriveMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachGoogleDrive';
+import { ButtonAttachScreenCaptureMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachScreenCapture';
+import { ButtonAttachWebMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachWeb';
 import { hasGoogleDriveCapability, useGoogleDrivePicker } from '~/common/attachment-drafts/useGoogleDrivePicker';
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
@@ -84,7 +84,7 @@ import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
 import { useTextTokenCount } from './tokens/useTextTokenCounter';
-import { useWebInputModal } from './WebInputModal';
+import { useWebInputModal } from '~/common/attachment-drafts/attachment-sources/WebInputModal';
 
 
 // configuration
