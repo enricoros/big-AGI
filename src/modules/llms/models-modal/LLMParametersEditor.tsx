@@ -243,7 +243,9 @@ export function LLMParametersEditor(props: {
     llmVndAntSkills,
     llmVndAntThinkingBudget,
     llmVndAntWebFetch,
+    llmVndAntWebFetchMaxUses,
     llmVndAntWebSearch,
+    llmVndAntWebSearchMaxUses,
     llmVndGemEffort,
     llmVndGeminiAspectRatio,
     llmVndGeminiCodeExecution,
@@ -458,6 +460,18 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {showParam('llmVndAntWebSearchMaxUses') && (
+      <FormSliderControl
+        title='Search Max Uses' ariaLabel='Anthropic Web Search Max Uses'
+        description='Per response'
+        min={1} max={50} step={1} defaultValue={10}
+        disabled={llmVndAntWebSearch !== 'auto'}
+        valueLabelDisplay={props.parameters?.llmVndAntWebSearchMaxUses !== undefined ? 'on' : 'auto'}
+        value={llmVndAntWebSearchMaxUses ?? 10}
+        onChange={value => onChangeParameter({ llmVndAntWebSearchMaxUses: value })}
+      />
+    )}
+
     {showParam('llmVndAntWebFetch') && (
       <FormSelectControl
         title='Web Fetch'
@@ -468,6 +482,18 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndAntWebFetch: value });
         }}
         options={_antWebFetchOptions}
+      />
+    )}
+
+    {showParam('llmVndAntWebFetchMaxUses') && (
+      <FormSliderControl
+        title='Fetch Max Uses' ariaLabel='Anthropic Web Fetch Max Uses'
+        description='Per response'
+        min={1} max={50} step={1} defaultValue={5}
+        disabled={llmVndAntWebFetch !== 'auto'}
+        valueLabelDisplay={props.parameters?.llmVndAntWebFetchMaxUses !== undefined ? 'on' : 'auto'}
+        value={llmVndAntWebFetchMaxUses ?? 5}
+        onChange={value => onChangeParameter({ llmVndAntWebFetchMaxUses: value })}
       />
     )}
 
