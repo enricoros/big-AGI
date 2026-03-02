@@ -57,19 +57,19 @@ import { providerStarredMessages, StarredMessageItem } from './actile/providerSt
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId, AttachmentDraftsAction } from '~/common/attachment-drafts/attachment.types';
-import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
-import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
-import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
-
-import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
-import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
-
 import { ButtonAttachCameraMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachClipboard';
 import { ButtonAttachGoogleDriveMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachGoogleDrive';
 import { ButtonAttachScreenCaptureMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachScreenCapture';
 import { ButtonAttachWebMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachWeb';
-import { hasGoogleDriveCapability, useGoogleDrivePicker } from '~/common/attachment-drafts/useGoogleDrivePicker';
+import { hasGoogleDriveCapability, useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
+import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
+import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
+import { useWebAttachmentModal } from '~/common/attachment-drafts/attachment-sources/useWebAttachmentModal';
+
+import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
+import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
+
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
 import { ButtonGroupDrawRepeat } from './buttons/ButtonGroupDrawRepeat';
@@ -77,6 +77,7 @@ import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
+import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { ComposerTextAreaDrawActions } from './textarea/ComposerTextAreaDrawActions';
 import { StatusBarMemo } from '../StatusBar';
@@ -84,7 +85,6 @@ import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
 import { useTextTokenCount } from './tokens/useTextTokenCounter';
-import { useWebInputModal } from '~/common/attachment-drafts/attachment-sources/WebInputModal';
 
 
 // configuration
@@ -632,7 +632,7 @@ export function Composer(props: {
     links.forEach(link => void attachAppendUrl('input-link', link.url));
   }, [attachAppendUrl]);
 
-  const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebLinks, composeText);
+  const { openWebInputDialog, webInputDialogComponent } = useWebAttachmentModal(handleAttachWebLinks, composeText);
 
   const { openGoogleDrivePicker, googleDrivePickerComponent } = useGoogleDrivePicker(attachAppendCloudFile, isMobile);
 
