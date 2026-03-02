@@ -259,7 +259,7 @@ function WebInputModal(props: {
 }
 
 
-export function useWebInputModal(onAttachWebLinks: (urls: WebInputData[]) => void, composerText?: string) {
+export function useWebAttachmentModal(onAttachWebLinks: (urls: WebInputData[]) => void, composerText?: string) {
 
   // state
   const [open, setOpen] = React.useState(false);

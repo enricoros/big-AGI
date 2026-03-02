@@ -10,7 +10,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 
-import type { AttachmentStoreCloudInput } from './useAttachmentDrafts';
+import type { AttachmentStoreCloudInput } from '../useAttachmentDrafts';
 
 
 // configuration
