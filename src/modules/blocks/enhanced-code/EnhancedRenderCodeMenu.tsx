@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { fileSave } from 'browser-fs-access';
-import { useShallow } from 'zustand/react/shallow';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
@@ -11,9 +9,7 @@ import SaveAsOutlinedIcon from '@mui/icons-material/SaveAsOutlined';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { reverseLookupMdTitle, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
-import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { getCodeCollapseManager } from './codeCollapseManager';
 
@@ -31,12 +27,7 @@ export function EnhancedRenderCodeMenu(props: {
 }) {
 
   // state
-  const { labsEnhanceCodeLiveFile, setLabsEnhanceCodeLiveFile } = useUXLabsStore(useShallow(state => ({
-    // labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
-    // setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
-    labsEnhanceCodeLiveFile: state.labsEnhanceCodeLiveFile,
-    setLabsEnhanceCodeLiveFile: state.setLabsEnhanceCodeLiveFile,
-  })));
+  // const { showPromisedOverlay } = useOverlayComponents();
 
 
   // handlers
@@ -100,13 +91,6 @@ export function EnhancedRenderCodeMenu(props: {
   //   ).then(() => setLabsEnhanceCodeBlocks(false)).catch(() => null /* ignore closure */);
   // }, [labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks, showPromisedOverlay]);
 
-  const toggleEnhanceCodeLiveFile = React.useCallback(() => {
-    setLabsEnhanceCodeLiveFile(!labsEnhanceCodeLiveFile);
-  }, [labsEnhanceCodeLiveFile, setLabsEnhanceCodeLiveFile]);
-
-  const liveFileSupported = isLiveFileSupported();
-
-
   return (
     <CloseablePopup
       menu anchorEl={props.anchor} onClose={props.onClose}
@@ -136,13 +120,6 @@ export function EnhancedRenderCodeMenu(props: {
       <MenuItem onClick={handleSaveAs}>
         <ListItemDecorator><SaveAsOutlinedIcon /></ListItemDecorator>
         Save As ...
-      </MenuItem>
-
-      <ListDivider />
-
-      <MenuItem onClick={toggleEnhanceCodeLiveFile} disabled={!liveFileSupported}>
-        <ListItemDecorator>{(labsEnhanceCodeLiveFile && liveFileSupported) && <CheckRoundedIcon />}</ListItemDecorator>
-        {liveFileSupported ? 'LiveFile Patch' : 'LiveFile - No Browser Support'}
       </MenuItem>
 
     </CloseablePopup>
