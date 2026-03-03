@@ -7,7 +7,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { getUXLabsHighPerformance } from '~/common/stores/store-ux-labs';
+import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI, getIsNotificationEnabledForModel } from '../store-app-chat';
@@ -52,7 +52,7 @@ export async function runPersonaOnConversationHead(
     },
   );
 
-  const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
+  const parallelViewCount = getLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat, chatThinkingPolicy } = getChatAutoAI();
