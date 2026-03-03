@@ -460,17 +460,33 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndAntWebSearchMaxUses') && (
+    {showParam('llmVndAntWebSearchMaxUses') && llmVndAntWebSearch === 'auto' && <Box sx={{ ml: 2, mt: -1 }}>
       <FormSliderControl
-        title='Search Max Uses' ariaLabel='Anthropic Web Search Max Uses'
-        description='Per response'
-        min={1} max={50} step={1} defaultValue={10}
-        disabled={llmVndAntWebSearch !== 'auto'}
-        valueLabelDisplay={props.parameters?.llmVndAntWebSearchMaxUses !== undefined ? 'on' : 'auto'}
+        title='Max Searches' ariaLabel='Anthropic Web Search Max Uses'
+        description={llmVndAntWebSearchMaxUses === undefined ? 'Default' : `Per step (${llmVndAntWebSearchMaxUses})`}
+        disabled={llmVndAntWebSearchMaxUses === undefined}
+        min={1} max={50} step={1}
         value={llmVndAntWebSearchMaxUses ?? 10}
+        valueLabelDisplay={llmVndAntWebSearchMaxUses !== undefined ? 'auto' : 'off'}
         onChange={value => onChangeParameter({ llmVndAntWebSearchMaxUses: value })}
+        startAdornment={
+          <Tooltip arrow disableInteractive title={llmVndAntWebSearchMaxUses === undefined ? 'Enable limit' : 'Reset to default'}>
+            <IconButton
+              // size='sm'
+              variant={llmVndAntWebSearchMaxUses === undefined ? 'soft' : 'plain'}
+              onClick={() => {
+                if (llmVndAntWebSearchMaxUses !== undefined) onRemoveParameter('llmVndAntWebSearchMaxUses');
+                else onChangeParameter({ llmVndAntWebSearchMaxUses: 10 });
+              }}
+              sx={{ ml: 'auto', mr: 1 }}
+            >
+              <ClearIcon />
+            </IconButton>
+          </Tooltip>
+        }
+        sliderSx={{ maxWidth: 148 }}
       />
-    )}
+    </Box>}
 
     {showParam('llmVndAntWebFetch') && (
       <FormSelectControl
@@ -485,17 +501,33 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {showParam('llmVndAntWebFetchMaxUses') && (
+    {showParam('llmVndAntWebFetchMaxUses') && llmVndAntWebFetch === 'auto' && <Box sx={{ ml: 2, mt: -1 }}>
       <FormSliderControl
-        title='Fetch Max Uses' ariaLabel='Anthropic Web Fetch Max Uses'
-        description='Per response'
-        min={1} max={50} step={1} defaultValue={5}
-        disabled={llmVndAntWebFetch !== 'auto'}
-        valueLabelDisplay={props.parameters?.llmVndAntWebFetchMaxUses !== undefined ? 'on' : 'auto'}
+        title='Max Fetches' ariaLabel='Anthropic Web Fetch Max Uses'
+        description={llmVndAntWebFetchMaxUses === undefined ? 'Default' : `Per step (${llmVndAntWebFetchMaxUses})`}
+        disabled={llmVndAntWebFetchMaxUses === undefined}
+        min={1} max={50} step={1}
+        valueLabelDisplay={llmVndAntWebFetchMaxUses !== undefined ? 'auto' : 'off'}
         value={llmVndAntWebFetchMaxUses ?? 5}
         onChange={value => onChangeParameter({ llmVndAntWebFetchMaxUses: value })}
+        startAdornment={
+          <Tooltip arrow disableInteractive title={llmVndAntWebFetchMaxUses === undefined ? 'Enable limit' : 'Reset to default'}>
+            <IconButton
+              // size='sm'
+              variant={llmVndAntWebFetchMaxUses === undefined ? 'soft' : 'plain'}
+              onClick={() => {
+                if (llmVndAntWebFetchMaxUses !== undefined) onRemoveParameter('llmVndAntWebFetchMaxUses');
+                else onChangeParameter({ llmVndAntWebFetchMaxUses: 5 });
+              }}
+              sx={{ ml: 'auto', mr: 1 }}
+            >
+              <ClearIcon />
+            </IconButton>
+          </Tooltip>
+        }
+        sliderSx={{ maxWidth: 148 }}
       />
-    )}
+    </Box>}
 
     {showParam('llmVndAnt1MContext') && (
       <FormSwitchControl
