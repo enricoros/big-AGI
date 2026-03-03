@@ -4,6 +4,7 @@ import { FormControl, Switch, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
+import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -23,6 +24,7 @@ export function UxLabsSettings() {
     labsShowCost, setLabsShowCost,
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
+    labsComposerAttachmentsInline, setLabsComposerAttachmentsInline,
   } = useUXLabsStore();
 
   return <>
@@ -59,6 +61,11 @@ export function UxLabsSettings() {
       title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Shortcuts Bar</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
       checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
     />}
+
+    <FormSwitchControl
+      title={<><AttachFileRoundedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Attachment Buttons</>} description={labsComposerAttachmentsInline ? 'Enabled' : 'Disabled'}
+      checked={labsComposerAttachmentsInline} onChange={setLabsComposerAttachmentsInline}
+    />
 
     <FormSwitchControl
       title={<><EditNoteIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Auto-hide input</>} description={labsAutoHideComposer ? 'Hover to show' : 'Always visible'}

@@ -28,6 +28,9 @@ interface UXLabsStore {
   labsShowShortcutBar: boolean;
   setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => void;
 
+  labsComposerAttachmentsInline: boolean;
+  setLabsComposerAttachmentsInline: (labsComposerAttachmentsInline: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -51,6 +54,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsShowShortcutBar: true,
       setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => set({ labsShowShortcutBar }),
+
+      labsComposerAttachmentsInline: false,
+      setLabsComposerAttachmentsInline: (labsComposerAttachmentsInline: boolean) => set({ labsComposerAttachmentsInline }),
 
     }),
     {

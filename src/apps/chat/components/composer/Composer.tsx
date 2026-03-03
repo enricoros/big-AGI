@@ -136,7 +136,8 @@ export function Composer(props: {
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
   const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
-  const { labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
+  const { labsComposerAttachmentsInline, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
+    labsComposerAttachmentsInline: state.labsComposerAttachmentsInline,
     labsShowCost: state.labsShowCost,
     labsShowShortcutBar: state.labsShowShortcutBar,
   })));
@@ -816,8 +817,9 @@ export function Composer(props: {
 
                 {/* [desktop] Attachment Sources: dropdown menu or inline buttons */}
                 <AttachmentSourcesMemo
-                  mode='inline-buttons'
-                  color={showTint}
+                  mode={!labsComposerAttachmentsInline ? 'menu-rich' : 'inline-buttons'}
+                  color={!labsComposerAttachmentsInline ? (showTint || 'neutral') : showTint}
+                  richButtonStandOut={!isText && !isAppend}
                   canBrowse={hasComposerBrowseCapability}
                   hasScreenCapture={supportsScreenCapture}
                   hasCamera={supportsCameraCapture()}
