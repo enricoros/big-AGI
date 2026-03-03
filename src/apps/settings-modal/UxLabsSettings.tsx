@@ -3,7 +3,6 @@ import * as React from 'react';
 import { FormControl, Switch, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 import EditNoteIcon from '@mui/icons-material/EditNote';
-import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -21,7 +20,6 @@ export function UxLabsSettings() {
   const {
     labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks,
     labsHighPerformance, setLabsHighPerformance,
-    labsShowCost, setLabsShowCost,
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsComposerAttachmentsInline, setLabsComposerAttachmentsInline,
@@ -51,11 +49,6 @@ export function UxLabsSettings() {
               endDecorator={labsHighPerformance ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
-
-    <FormSwitchControl
-      title={<><LocalAtmOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Cost of messages</>} description={labsShowCost ? 'Show when available' : 'Disabled'}
-      checked={labsShowCost} onChange={setLabsShowCost}
-    />
 
     {!isMobile && <FormSwitchControl
       title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Shortcuts Bar</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
@@ -87,7 +80,7 @@ export function UxLabsSettings() {
         {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/354' target='_blank'>Call AGI</Link>
         {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link>
         {' · '}<Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link>
-        {' · '}Imagine · Chat Search · Text Tools · LLM Overheat · Screen Capture · Webcam
+        {' · '}Imagine · Chat Search · Text Tools · LLM Overheat · Screen Capture · Webcam · Cost Estimation
       </Typography>
     </FormControl>
 

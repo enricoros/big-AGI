@@ -136,9 +136,8 @@ export function Composer(props: {
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
   const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
-  const { labsComposerAttachmentsInline, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
+  const { labsComposerAttachmentsInline, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsComposerAttachmentsInline: state.labsComposerAttachmentsInline,
-    labsShowCost: state.labsShowCost,
     labsShowShortcutBar: state.labsShowShortcutBar,
   })));
   const timeToShowTips = useLogicSherpaStore(state => state.usageCount >= SHOW_TIPS_AFTER_RELOADS);
@@ -901,7 +900,7 @@ export function Composer(props: {
                   )}
 
                   {!showChatInReferenceTo && !isDraw && tokenLimit > 0 && (
-                    <TokenBadgeMemo hideBelowDollars={0.01} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                    <TokenBadgeMemo showCost hideBelowDollars={0.01} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 
                 </Box>
