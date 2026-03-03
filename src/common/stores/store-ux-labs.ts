@@ -10,9 +10,6 @@ import { persist } from 'zustand/middleware';
 //  - Chat Mode: Follow-Ups; moved to Chat Advanced UI
 interface UXLabsStore {
 
-  labsEnhanceCodeLiveFile: boolean;
-  setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => void;
-
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
 
@@ -30,9 +27,6 @@ interface UXLabsStore {
 export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
-
-      labsEnhanceCodeLiveFile: false,
-      setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => set({ labsEnhanceCodeLiveFile }),
 
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
