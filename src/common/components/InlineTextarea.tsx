@@ -42,8 +42,7 @@ export function InlineTextarea(props: {
     if (e.key === 'Enter') {
       if (e.nativeEvent.isComposing)
         return;
-      const shiftOrAlt = e.shiftKey || e.altKey;
-      if (enterIsNewline ? shiftOrAlt : !shiftOrAlt) {
+      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         e.preventDefault();
         props.onEdit(text);
       }
