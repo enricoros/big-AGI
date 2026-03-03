@@ -136,9 +136,7 @@ export function Composer(props: {
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
   const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
-  const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
-    labsAttachScreenCapture: state.labsAttachScreenCapture,
-    labsCameraDesktop: state.labsCameraDesktop,
+  const { labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsShowCost: state.labsShowCost,
     labsShowShortcutBar: state.labsShowShortcutBar,
   })));
@@ -663,7 +661,7 @@ export function Composer(props: {
       if (supportsClipboardRead())
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
       // Future: keep reactive state here to support Live Screen Capture and more
-      // if (labsAttachScreenCapture && supportsScreenCapture)
+      // if (supportsScreenCapture)
       //   composerShortcuts.push({ key: 's', ctrl: true, shift: true, action: openScreenCaptureDialog, description: 'Attach Screen Capture' });
     }
     if (recognitionState.isActive) {
@@ -816,13 +814,13 @@ export function Composer(props: {
             {isDesktop && showChatAttachments && (
               <Box sx={{ flexGrow: 0, display: 'grid', gap: 0.5, alignSelf: 'flex-start' }}>
 
-                {/* [desktop] Attachment Sources: inline buttons */}
+                {/* [desktop] Attachment Sources: dropdown menu or inline buttons */}
                 <AttachmentSourcesMemo
                   mode='inline-buttons'
                   color={showTint}
                   canBrowse={hasComposerBrowseCapability}
-                  hasScreenCapture={labsAttachScreenCapture && supportsScreenCapture}
-                  hasCamera={labsCameraDesktop && supportsCameraCapture()}
+                  hasScreenCapture={supportsScreenCapture}
+                  hasCamera={supportsCameraCapture()}
                   onlyImages={showChatAttachments === 'only-images'}
                   onAttachClipboard={attachAppendClipboardItems}
                   onAttachFiles={handleAttachFiles}
