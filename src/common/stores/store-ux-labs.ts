@@ -58,7 +58,7 @@ export const useUXLabsStore = create<UXLabsStore>()(
   ),
 );
 
-export function getUXLabsHighPerformance() {
+export function getLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
 }
 

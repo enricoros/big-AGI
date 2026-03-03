@@ -9,7 +9,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getIsMobile } from '~/common/components/useMatchMedia';
-import { getUXLabsHighPerformance } from '~/common/stores/store-ux-labs';
+import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
@@ -109,7 +109,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     gatherSystemInstruction,
     gatherHistory,
     'beam-gather', inputs.contextRef,
-    { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : 1 },
+    { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getLabsHighPerformance() ? 0 : 1 },
     onMessageUpdated,
   ).then((status) => {
 
