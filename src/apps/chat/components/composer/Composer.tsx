@@ -2,9 +2,8 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
-import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import type { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, Textarea, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
@@ -57,14 +56,10 @@ import { providerStarredMessages, StarredMessageItem } from './actile/providerSt
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId, AttachmentDraftsAction } from '~/common/attachment-drafts/attachment.types';
-import { ButtonAttachCameraMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachCamera';
-import { ButtonAttachClipboardMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachClipboard';
-import { ButtonAttachGoogleDriveMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachGoogleDrive';
-import { ButtonAttachScreenCaptureMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachScreenCapture';
-import { ButtonAttachWebMemo } from '~/common/attachment-drafts/attachment-sources/ButtonAttachWeb';
-import { hasGoogleDriveCapability, useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
+import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sources/AttachmentSources';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
+import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
 import { useWebAttachmentModal } from '~/common/attachment-drafts/attachment-sources/useWebAttachmentModal';
 
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
@@ -791,42 +786,24 @@ export function Composer(props: {
                 {/* [mobile] Mic button */}
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor === 'danger' ? 'danger' : showTint || micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
 
-                {/* Responsive Camera OCR button */}
-                {showChatAttachments && <ButtonAttachCameraMemo color={showTint} isMobile onOpenCamera={handleOpenCamera} />}
-
                 {/* [mobile] Attach file button (in draw with image mode)  */}
                 {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
 
-                {/* [mobile] [+] button */}
+                {/* [mobile] [+] attachment sources menu */}
                 {showChatAttachments === true && (
-                  <Dropdown>
-                    <MenuButton slots={{ root: IconButton }}>
-                      <AddCircleOutlineIcon />
-                    </MenuButton>
-                    <Menu>
-
-                      {/* Responsive Open Files button */}
-                      <MenuItem>
-                        <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
-                      </MenuItem>
-
-                      {/* Responsive Web button */}
-                      <MenuItem>
-                        <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />
-                      </MenuItem>
-
-                      {/* Responsive Google Drive button */}
-                      {hasGoogleDriveCapability && <MenuItem>
-                        <ButtonAttachGoogleDriveMemo onOpenGoogleDrivePicker={openGoogleDrivePicker} fullWidth />
-                      </MenuItem>}
-
-                      {/* Responsive Paste button */}
-                      {supportsClipboardRead() && <MenuItem>
-                        <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />
-                      </MenuItem>}
-
-                    </Menu>
-                  </Dropdown>
+                  <AttachmentSourcesMemo
+                    mode='menu-compact'
+                    canBrowse={hasComposerBrowseCapability}
+                    hasScreenCapture={false}
+                    hasCamera={true}
+                    onlyImages={false}
+                    onAttachClipboard={attachAppendClipboardItems}
+                    onAttachFiles={handleAttachFiles}
+                    onAttachScreenCapture={handleAttachScreenCapture}
+                    onOpenCamera={handleOpenCamera}
+                    onOpenGoogleDrivePicker={openGoogleDrivePicker}
+                    onOpenWebInput={openWebInputDialog}
+                  />
                 )}
 
                 {/* [Mobile] MultiChat button */}
@@ -837,31 +814,26 @@ export function Composer(props: {
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
             {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1, alignSelf: 'flex-start' }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: 0.5, alignSelf: 'flex-start' }}>
 
-                {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
-                {/*  Attach*/}
-                {/*</FormHelperText>*/}
+                {/* [desktop] Attachment Sources: inline buttons */}
+                <AttachmentSourcesMemo
+                  mode='inline-buttons'
+                  color={showTint}
+                  canBrowse={hasComposerBrowseCapability}
+                  hasScreenCapture={labsAttachScreenCapture && supportsScreenCapture}
+                  hasCamera={labsCameraDesktop && supportsCameraCapture()}
+                  onlyImages={showChatAttachments === 'only-images'}
+                  onAttachClipboard={attachAppendClipboardItems}
+                  onAttachFiles={handleAttachFiles}
+                  onAttachScreenCapture={handleAttachScreenCapture}
+                  onOpenCamera={handleOpenCamera}
+                  onOpenGoogleDrivePicker={openGoogleDrivePicker}
+                  onOpenWebInput={openWebInputDialog}
+                />
 
-                {/* Responsive Open Files button */}
-                <ButtonAttachFilesMemo color={showTint} onAttachFiles={handleAttachFiles} fullWidth multiple />
-
-                {/* Responsive Web button */}
-                {showChatAttachments !== 'only-images' && <ButtonAttachWebMemo color={showTint} disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />}
-
-                {/* Responsive Google Drive button */}
-                {hasGoogleDriveCapability && showChatAttachments !== 'only-images' && <ButtonAttachGoogleDriveMemo color={showTint} onOpenGoogleDrivePicker={openGoogleDrivePicker} />}
-
-                {/* Responsive Paste button */}
-                {supportsClipboardRead() && showChatAttachments !== 'only-images' && <ButtonAttachClipboardMemo color={showTint} onAttachClipboard={attachAppendClipboardItems} />}
-
-                {/* Responsive Screen Capture button */}
-                {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo color={showTint} onAttachScreenCapture={handleAttachScreenCapture} />}
-
-                {/* Responsive Camera OCR button */}
-                {labsCameraDesktop && supportsCameraCapture() && <ButtonAttachCameraMemo color={showTint} onOpenCamera={handleOpenCamera} />}
-
-              </Box>)}
+              </Box>
+            )}
 
 
             {/* Top: Textarea & Mic & Overlays, Bottom, Attachment Drafts */}
