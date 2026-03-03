@@ -29,6 +29,10 @@ const BoxCollapser = styled(Box)({
 });
 
 const BoxCollapsee = styled(Box)({
+  /**
+   * FIX: the absence of this made the ChatPanelModelParameters content overflow on the horizontal
+   */
+  minWidth: 0,
   minHeight: 0,
 });
 
