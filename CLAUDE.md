@@ -188,6 +188,9 @@ Located in `/src/common/stores/` with stores like:
 - API keys in environment variables only (server-side); on the client they're in localStorage for now, but we want to move away from this
 - XSS protection through proper content escaping
 
+#### Writing Style
+- **Never use emdashes (—).** Use normal dashes (-) instead, in all generated text, code comments, and documentation.
+
 
 ## Common Development Tasks
 
