@@ -266,6 +266,13 @@ export class ConversationHandler {
         this.messageAppend(newMessage);
       }
 
+      // post-result: strip reasoning traces per user's thinking policy (issue #1003)
+      const { chatThinkingPolicy } = getChatAutoAI();
+      if (chatThinkingPolicy === 'last-only')
+        this.historyStripThinking(1);
+      else if (chatThinkingPolicy === 'discard-all')
+        this.historyStripThinking(0);
+
       // close beam
       terminateKeepingSettings();
     };
