@@ -84,11 +84,29 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
   return <>
 
+    {/* Electron: wrap in a flex column so the title bar spacer pushes content down */}
+    {Is.Electron && (
+      <div style={{
+        height: 38,
+        background: '#3a3a3c',
+        flexShrink: 0,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        borderBottom: '1px solid #2a2a2c',
+      } as any} ref={(el) => { if (el) el.style.setProperty('-webkit-app-region', 'drag'); }} />
+    )}
+
     {/* Global Warnings */}
     {translationWarning}
     {pwaDesktopModeWarning}
 
-    <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
+    <PanelGroup direction='horizontal' id='root-layout' style={{
+      ...(isMobile ? undoPanelGroupSx : undefined),
+      ...(Is.Electron ? { marginTop: 38, height: 'calc(100vh - 38px)' } : undefined),
+    }}>
 
 
       {/* Desktop: 4 horizontal sections: Nav | Drawer | Page | Panel */}

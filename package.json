@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate --no-hints",
+    "postinstall": "prisma generate --no-hints && node scripts/patch-electron-plist.js",
     "gen:icon-sprites": "node tools/develop/gen-icon-sprites/generate-llm-sprites.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",

@@ -3,13 +3,22 @@ const { spawn } = require('child_process');
 const path = require('path');
 const net = require('net');
 
+// Set app name and userData path (prevents "Electron" folder in Application Support)
+app.setName('big-AGI');
+const appData = app.getPath('appData');
+app.setPath('userData', path.join(appData, 'big-AGI'));
+
 // Keep references to prevent garbage collection
 let tray = null;
 let mainWindow = null;
 let serverProcess = null;
 let serverPort = null;
 
-// macOS: hide dock icon (menu bar app only)
+// Resolve icon paths once
+const appIconPath = path.join(__dirname, '..', 'public', 'icons', 'icon-512x512.png');
+const trayIconSource = path.join(__dirname, '..', 'public', 'icons', 'icon-192x192.png');
+
+// macOS: pure menu bar app — never show dock icon
 if (process.platform === 'darwin') {
   app.dock.hide();
 }
@@ -100,7 +109,7 @@ function createWindow() {
     width: Math.min(1200, width),
     height: Math.min(800, height),
     titleBarStyle: 'hidden',
-    trafficLightPosition: { x: 12, y: 12 },
+    trafficLightPosition: { x: 12, y: 13 },
     frame: false,
     show: false,
     webPreferences: {
@@ -120,9 +129,6 @@ function createWindow() {
     // Don't quit — hide to tray instead
     e.preventDefault();
     mainWindow.hide();
-    if (process.platform === 'darwin') {
-      app.dock.hide();
-    }
   });
 }
 
@@ -136,14 +142,8 @@ function toggleWindow() {
   }
   if (mainWindow.isVisible()) {
     mainWindow.hide();
-    if (process.platform === 'darwin') {
-      app.dock.hide();
-    }
   } else {
     mainWindow.show();
-    if (process.platform === 'darwin') {
-      app.dock.show();
-    }
     mainWindow.focus();
   }
 }
@@ -152,12 +152,9 @@ function toggleWindow() {
  * Create the system tray icon and context menu.
  */
 function createTray() {
-  // Use the 32x32 favicon as tray icon (will be rendered as template on macOS)
-  const iconPath = path.join(__dirname, '..', 'public', 'icons', 'favicon-32x32.png');
-  let trayIcon = nativeImage.createFromPath(iconPath);
-  // Resize to 16x16 for menu bar and mark as template (macOS dark/light mode support)
-  trayIcon = trayIcon.resize({ width: 16, height: 16 });
-  trayIcon.setTemplateImage(true);
+  // Use the 192x192 icon resized to 18x18 for crisp menu bar rendering (colored, not template)
+  let trayIcon = nativeImage.createFromPath(trayIconSource);
+  trayIcon = trayIcon.resize({ width: 18, height: 18 });
 
   tray = new Tray(trayIcon);
   tray.setToolTip('big-AGI');
