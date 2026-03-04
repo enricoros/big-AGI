@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Sheet } from '@mui/joy';
 
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
@@ -25,6 +26,34 @@ import { ViewImageRefPartModal } from './fragments-content/ViewImageRefPartModal
 export interface EditModeAttachmentsHandle {
   takeAllFragments: () => Promise<DMessageAttachmentFragment[]>;
 }
+
+
+const _styles = {
+  box: {
+    overflow: 'hidden',
+    p: 0.5,
+
+    // looks - exactly from BoxTextArea - the Text editor
+    boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
+    outline: '1px solid',
+    outlineColor: 'var(--joy-palette-warning-solidBg)',
+    borderRadius: 'sm',
+
+    // layout
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 1,
+
+    // shade to the buttons inside this > div > div > button
+    '& > div > div > button': {
+      // backgroundColor: 'warning.softActiveBg',
+      borderColor: 'warning.outlinedBorder',
+      borderRadius: 'sm',
+      boxShadow: 'sm',
+    },
+  },
+} as const satisfies Record<string, SxProps>;
 
 
 /**
@@ -87,14 +116,15 @@ export const ChatMessageEditAttachments = React.forwardRef<EditModeAttachmentsHa
 
     return <>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+      <Sheet color='warning' variant='soft' sx={_styles.box}>
 
         {/* [+] Attachment Sources menu */}
         <AttachmentSourcesMemo
-          mode='menu-compact'
-          canBrowse={browseCapability.inComposer}
+          mode='menu-message'
+          canBrowse={browseCapability.mayWork}
           hasScreenCapture={supportsScreenCapture}
           hasCamera={supportsCameraCapture()}
+          // onlyImages={showAttachOnlyImages}
           onAttachClipboard={attachAppendClipboardItems}
           onAttachFiles={handleAttachFiles}
           onAttachScreenCapture={handleAttachScreenCapture}
@@ -104,7 +134,7 @@ export const ChatMessageEditAttachments = React.forwardRef<EditModeAttachmentsHa
         />
 
         {/* Attachment Drafts list */}
-        {attachmentDrafts.length > 0 && (
+        {attachmentDrafts.length > 0 ? (
           <AttachmentDraftsList
             attachmentDraftsStoreApi={storeApiRef.current!}
             attachmentDrafts={attachmentDrafts}
@@ -112,9 +142,9 @@ export const ChatMessageEditAttachments = React.forwardRef<EditModeAttachmentsHa
             renderDocViewer={renderDocViewer}
             renderImageViewer={renderImageViewer}
           />
-        )}
+        ) : null}
 
-      </Box>
+      </Sheet>
 
       {/* Modal portals */}
       {webInputDialogComponent}

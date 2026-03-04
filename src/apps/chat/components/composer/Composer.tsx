@@ -753,16 +753,16 @@ export function Composer(props: {
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor === 'danger' ? 'danger' : showTint || micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
 
                 {/* [mobile] Attach file button (in draw with image mode)  */}
-                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
+                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} multiple />}
 
                 {/* [mobile] [+] attachment sources menu */}
                 {showChatAttachments === true && (
                   <AttachmentSourcesMemo
                     mode='menu-compact'
                     canBrowse={hasComposerBrowseCapability}
-                    hasScreenCapture={false}
-                    hasCamera={true}
-                    onlyImages={false}
+                    hasScreenCapture={supportsScreenCapture}
+                    hasCamera={supportsCameraCapture()}
+                    onlyImages={false /* because if yes, we only show the attach files above */}
                     onAttachClipboard={attachAppendClipboardItems}
                     onAttachFiles={handleAttachFiles}
                     onAttachScreenCapture={handleAttachScreenCapture}
