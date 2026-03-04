@@ -420,12 +420,14 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             autoTitle,
+            updated: Date.now(),
           }),
 
       setUserTitle: (conversationId: DConversationId, userTitle: string) =>
         _get()._editConversation(conversationId,
           {
             userTitle,
+            updated: Date.now(),
             ...(!userTitle && { autoTitle: undefined }), // clear autotitle when clearing usertitle
           }),
 
