@@ -29,6 +29,10 @@ function notifyOnlyImages(item: any) {
 export type AttachmentStoreCloudInput = Omit<Extract<AttachmentDraftSource, { media: 'cloud' }>, 'media' | 'origin'>;
 
 
+/** Inferred return type — used by composable source handler hooks. */
+export type AttachmentDraftsApi = ReturnType<typeof useAttachmentDrafts>;
+
+
 /**
  * @param attachmentsStoreApi A Per-Chat or standalone Attachment Drafts store.
  * @param enableLoadURLsOnPaste Only used if invoking attachAppendDataTransfer or attachAppendClipboardItems.
