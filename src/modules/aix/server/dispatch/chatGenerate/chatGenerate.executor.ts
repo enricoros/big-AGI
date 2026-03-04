@@ -11,7 +11,7 @@ import { AixDebugObject } from './chatGenerate.debug';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
-import { RequestRetryError } from './chatGenerate.retrier';
+import { PauseTurnContinuation, RequestRetryError } from './chatGenerate.retrier';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
 
@@ -178,6 +178,9 @@ async function* _consumeDispatchUnified(
     }
 
   } catch (error: any) {
+    // pass-through pause_turn continuations for operation-level handling
+    if (error instanceof PauseTurnContinuation) throw error;
+
     if (dispatchBody === undefined)
       chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
     else
@@ -301,8 +304,8 @@ async function* _consumeDispatchStream(
           yield* chatGenerateTx.emitParticles();
 
       } catch (error: any) {
-        // special: pass-through ONLY our retriable errors, for full operation-level retry - these are thrown by Parsers to remand reconnection
-        if (error instanceof RequestRetryError) throw error;
+        // special: pass-through our retriable errors and pause_turn continuations - thrown by Parsers for operation-level handling
+        if (error instanceof RequestRetryError || error instanceof PauseTurnContinuation) throw error;
 
         // Handle parsing issue (likely a schema break); print it to the server console as well
         chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(demuxedItem.data, 'aix.service-parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');

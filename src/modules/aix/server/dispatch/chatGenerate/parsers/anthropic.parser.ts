@@ -7,7 +7,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
-import { RequestRetryError } from '../chatGenerate.retrier';
+import { PauseTurnContinuation, RequestRetryError } from '../chatGenerate.retrier';
 
 
 // configuration
@@ -570,6 +570,17 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
+
+        // [Anthropic, pause_turn] If stop_reason was 'pause_turn', throw PauseTurnContinuation
+        // to signal the retrier to continue with accumulated content blocks.
+        // responseMessage.stop_reason is set by Object.assign(responseMessage, delta) in message_delta.
+        if (responseMessage?.stop_reason === 'pause_turn') {
+          const containerId = responseMessage.container?.id;
+          // The raw content blocks in responseMessage.content have been accumulated during streaming
+          // and include all server_tool_use, tool results, text, thinking, etc.
+          throw new PauseTurnContinuation(responseMessage.content, containerId);
+        }
+
         return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -639,12 +650,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
+    const responseData = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
     const {
       model,
       content,
       stop_reason,
       usage,
-    } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
+    } = responseData;
 
     // -> Model
     if (model)
@@ -892,6 +904,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       // set separator flag when server tools complete (text after tools needs visual separation)
       if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
         needsTextSeparator = hotFixAntInjectToolsTextSpacer;
+    }
+
+    // [Anthropic, pause_turn] If stop_reason is 'pause_turn', throw PauseTurnContinuation
+    if (stop_reason === 'pause_turn') {
+      const containerId = responseData.container?.id;
+      throw new PauseTurnContinuation(content, containerId);
     }
 
     // -> Token Stop Reason
