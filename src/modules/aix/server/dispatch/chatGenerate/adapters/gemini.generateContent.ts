@@ -15,7 +15,10 @@ const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 const GEMINI_BYPASS_THOUGHT_SIGNATURE = 'context_engineering_is_the_way_to_go';
 const MODELS_REQUIRING_THOUGHT_SIGNATURE = [
   'nano-banana-pro',
-  'gemini-3-pro-image-preview',
+  // preview, e.g.:
+  // 'gemini-3.1-flash-image-preview',
+  // 'gemini-3-pro-image-preview',
+  '-image-preview', // catch-all for image (nano banana) preview models
 ] as const;
 
 
@@ -229,7 +232,8 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   }
 
   // [Gemini, 2025-08-18] URL Context: add tool when enabled
-  if (model.vndGeminiUrlContext === 'auto' && !isFamilyNanoBanana && !skipHostedToolsDueToCustomTools) {
+  const disableUrlContext = isFamilyNanoBanana /* Nano Bananas don't fetch */ || skipHostedToolsDueToCustomTools;
+  if (model.vndGeminiUrlContext === 'auto' && !disableUrlContext) {
     if (!payload.tools) payload.tools = [];
 
     // Build the URL Context tool configuration (empty object)
