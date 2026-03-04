@@ -5,13 +5,13 @@ import { useShallow } from 'zustand/react/shallow';
 import { Release } from '~/common/app.release';
 import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '~/common/util/storageUtils';
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
-import { reconfigureBackendModels } from './reconfigureBackendModels';
 import { isBrowser } from '~/common/util/pwaUtils';
+
+import { reconfigureBackendModels } from './reconfigureBackendModels';
 
 
 // configuration
 const DEBUG_SUCCESS_STORAGE_STATS = false;
-
 
 
 // Sherpa State: navigation thought the app, remembers the counters for progressive disclosure of complex features
@@ -79,7 +79,7 @@ export async function sherpaReconfigureBackendModels() {
   return reconfigureBackendModels(
     useLogicSherpaStore.getState().lastLlmReconfigHash,
     (hash: string) => useLogicSherpaStore.setState({ lastLlmReconfigHash: hash }),
-    true, true
+    true, true,
   );
 }
 
