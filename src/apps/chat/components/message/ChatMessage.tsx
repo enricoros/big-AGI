@@ -52,6 +52,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
+import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
@@ -179,6 +180,7 @@ export function ChatMessage(props: {
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
+  const attachmentsEditRef = React.useRef<EditModeAttachmentsHandle>(null);
 
   // external state
   const { adjContentScaling, disableMarkdown, doubleClickToEdit, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
@@ -278,14 +280,25 @@ export function ChatMessage(props: {
   }, [handleFragmentDelete, handleFragmentReplace, messageFragments]);
 
   const handleApplyAllEdits = React.useCallback(async (withControl: boolean) => {
-    const state = textContentEditState || {};
+    // 0. take state, including new attachment drafts BEFORE clearing state
+    const fragmentsEdits = textContentEditState || {};
+    const newFragments = await attachmentsEditRef.current?.takeAllFragments() ?? [];
+
+    // 1. clear edit state (unmounts EditModeAttachments, triggers cleanup)
     setTextContentEditState(null);
-    for (const [fragmentId, editedText] of Object.entries(state))
+
+    // 2A. apply text fragment edits
+    for (const [fragmentId, editedText] of Object.entries(fragmentsEdits))
       handleApplyEdit(fragmentId, editedText);
-    // if the user pressed Ctrl, we begin a regeneration from here
+
+    // 2B. append new attachment fragments
+    for (const fragment of newFragments)
+      onMessageFragmentAppend?.(messageId, fragment);
+
+    // 3. if the user pressed Ctrl, we begin a regeneration from here
     if (withControl && onMessageAssistantFrom)
       await onMessageAssistantFrom(messageId, 0);
-  }, [handleApplyEdit, messageId, onMessageAssistantFrom, textContentEditState]);
+  }, [handleApplyEdit, messageId, onMessageAssistantFrom, onMessageFragmentAppend, textContentEditState]);
 
   const handleEditsApplyClicked = React.useCallback(() => handleApplyAllEdits(false), [handleApplyAllEdits]);
 
@@ -833,6 +846,14 @@ export function ChatMessage(props: {
               disableMarkdownText={disableMarkdown}
               onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
               onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
+            />
+          )}
+
+          {/* [Edit Mode] Add new attachments (right below the Document Fragments) */}
+          {isEditingText && !!onMessageFragmentAppend && (
+            <ChatMessageEditAttachments
+              ref={attachmentsEditRef}
+              isMobile={props.isMobile}
             />
           )}
 
