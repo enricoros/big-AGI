@@ -9,6 +9,10 @@ import { createVariantInjector, ModelVariantMap } from '../llm.server.variants';
 import { llmDevCheckModels_DEV } from '../models.mappings';
 
 
+// Note: these model definitions are shared across Anthropic API, OpenRouter, and AWS Bedrock.
+// Bedrock may support older/retired models longer than the Anthropic API, so we keep
+// retired models in this file rather than removing them immediately. Removal is manual.
+
 // configuration
 const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 
@@ -337,16 +341,16 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 3.7 models
   {
-    id: 'claude-3-7-sonnet-20250219', // Deprecated | Deprecated: October 28, 2025 | Retiring: February 19, 2026 | Replacement: claude-opus-4-6
-    label: 'Claude Sonnet 3.7 [Deprecated]',
-    description: 'High-performance model with early extended thinking. Deprecated October 28, 2025, retiring February 19, 2026.',
+    id: 'claude-3-7-sonnet-20250219', // Retired | Deprecated: October 28, 2025 | Retired: February 19, 2026 | Replacement: claude-opus-4-6
+    label: 'Claude Sonnet 3.7 [Retired]',
+    description: 'High-performance model with early extended thinking. Retired February 19, 2026.',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1372 }, // claude-3-7-sonnet-20250219
-    hidden: true, // deprecated
+    hidden: true, // retired
     isLegacy: true,
   },
 
@@ -354,31 +358,32 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // retired: 'claude-3-5-sonnet-20241022'
   // retired: 'claude-3-5-sonnet-20240620'
   {
-    id: 'claude-3-5-haiku-20241022', // Deprecated | Deprecated: December 19, 2025 | Retiring: February 19, 2026
-    label: 'Claude Haiku 3.5 [Deprecated]',
-    description: 'Intelligence at blazing speeds. Deprecated December 19, 2025, retiring February 19, 2026.',
+    id: 'claude-3-5-haiku-20241022', // Retired | Deprecated: December 19, 2025 | Retired: February 19, 2026
+    label: 'Claude Haiku 3.5 [Retired]',
+    description: 'Intelligence at blazing speeds. Retired February 19, 2026.',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 0.80, output: 4.00, cache: { cType: 'ant-bp', read: 0.08, write: 1.00, duration: 300 } },
     benchmark: { cbaElo: 1324 }, // claude-3-5-haiku-20241022
-    hidden: true, // deprecated
+    hidden: true, // retired
     isLegacy: true,
   },
 
   // Claude 3 models
   // retired: 'claude-3-opus-20240229' - Retired January 5, 2026
   {
-    hidden: true, // yield to successors
-    id: 'claude-3-haiku-20240307', // Active
-    label: 'Claude Haiku 3',
-    description: 'Fast and compact model for near-instant responsiveness',
+    hidden: true, // deprecated
+    id: 'claude-3-haiku-20240307', // Deprecated | Deprecated: February 19, 2026 | Retiring: April 20, 2026 | Replacement: claude-haiku-4-5-20251001
+    label: 'Claude Haiku 3 [Deprecated]',
+    description: 'Fast and compact model for near-instant responsiveness. Deprecated February 19, 2026, retiring April 20, 2026.',
     contextWindow: 200000,
     maxCompletionTokens: 4096,
     interfaces: IF_4,
     chatPrice: { input: 0.25, output: 1.25, cache: { cType: 'ant-bp', read: 0.03, write: 0.30, duration: 300 } },
     benchmark: { cbaElo: 1262 }, // claude-3-haiku-20240307
+    isLegacy: true,
   },
 
   // Legacy/Retired models
@@ -475,7 +480,9 @@ const _BEDROCK_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   // 'llmVndAntInfSpeed', // Bad Request - speed: Extra inputs are not permitted
   // 'llmVndAntSkills', // code execution is not supported: https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool#platform-availability
   // 'llmVndAntWebFetch', // Bad Request - tools.0: Input tag 'web_fetch_20250910' found using 'type' does not match any of the expected tags: 'bash_20250124', 'custom', 'text_editor_20250124', 'text_editor_20250429', 'text_editor_20250728', 'web_search_20250305'
+  // 'llmVndAntWebFetchMaxUses', // requires llmVndAntWebFetch to be supported
   // 'llmVndAntWebSearch', // Bedrock should support web search, but we get 'Bad Request' if the 'web_search_20250305' tool is added
+  // 'llmVndAntWebSearchMaxUses', // requires llmVndAntWebSearch to be supported
 ] as const satisfies DModelParameterId[]);
 
 /** Strip unsupported interfaces and params from an Anthropic model for Bedrock */
