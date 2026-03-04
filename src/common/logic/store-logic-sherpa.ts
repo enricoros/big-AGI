@@ -6,6 +6,7 @@ import { Release } from '~/common/app.release';
 import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '~/common/util/storageUtils';
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
 import { reconfigureBackendModels } from './reconfigureBackendModels';
+import { isBrowser } from '~/common/util/pwaUtils';
 
 
 // configuration
@@ -46,8 +47,9 @@ export const useLogicSherpaStore = create<SherpaStore>()(
   ),
 );
 
-// increment the usage count
-useLogicSherpaStore.setState((state) => ({ usageCount: (state.usageCount || 0) + 1 }));
+// increment the usage count (client-only — localStorage is unavailable during SSR)
+if (isBrowser)
+  useLogicSherpaStore.setState((state) => ({ usageCount: (state.usageCount || 0) + 1 }));
 
 
 /// News Navigation
