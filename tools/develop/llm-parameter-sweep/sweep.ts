@@ -754,15 +754,22 @@ function saveDialectResults(dialect: string, dialectResults: DialectReultsByMode
       const newModelIds = Object.keys(dialectResults);
       const updatedCount = newModelIds.filter(id => id in existing).length;
       const addedCount = newModelIds.length - updatedCount;
-      // Shallow merge: new models overwrite, existing models are preserved
-      dialectResults = { ...existing, ...dialectResults };
+      // Merge preserving scan order: new models first (in scan order), then remaining old models
+      const merged: DialectReultsByModel = {};
+      for (const id of newModelIds)
+        merged[id] = dialectResults[id];
+      for (const id of Object.keys(existing)) {
+        if (!(id in merged))
+          merged[id] = existing[id];
+      }
+      dialectResults = merged;
       console.log(`${COLORS.dim}Merging into existing file (${Object.keys(existing).length} existing, ${updatedCount} updated, ${addedCount} added -> ${Object.keys(dialectResults).length} total)${COLORS.reset}`);
     }
   }
 
-  // Sort keys for stable output
+  // Preserve scan order for model keys; sort sweep keys alphabetically within each model
   const sorted: DialectReultsByModel = {};
-  for (const model of Object.keys(dialectResults).sort()) {
+  for (const model of Object.keys(dialectResults)) {
     sorted[model] = {};
     for (const sweep of Object.keys(dialectResults[model]).sort()) {
       sorted[model][sweep] = dialectResults[model][sweep];
@@ -832,7 +839,14 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
       }
 
       // Special case: temperature with contiguous range from 0 -> use range [min, max]
-      if (sweepName === 'temperature' || sweepName === 'oai-temperature-think-high' || sweepName === 'oai-temperature-think-none') {
+      const collapsibleNumberRanges = [
+        'temperature',
+        // provider-specific
+        'ant-thinking-budget',
+        'gemini-thinking-budget',
+        'oai-temperature-think-high', 'oai-temperature-think-none',
+      ];
+      if (collapsibleNumberRanges.includes(sweepName)) {
         const numericPassing = passingValues.filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
         const numericTested = sweepResults.map(r => r.paramValue).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
         // Check if passing values form a contiguous prefix of tested values (no gaps)
