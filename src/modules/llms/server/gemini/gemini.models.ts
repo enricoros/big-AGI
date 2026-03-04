@@ -193,7 +193,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing, // same pricing as 3 Pro
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high']}, // adds 'medium' vs 3 Pro's ['low', 'high']
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // adds 'medium' vs 3 Pro's ['low', 'high']
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -211,7 +211,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high']},
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -228,6 +228,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini31FlashImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
       { paramId: 'llmVndGeminiImageSize' },
@@ -244,7 +245,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini31FlashLitePricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high']},
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -264,7 +265,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['low', 'high']},
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'high'] },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -313,7 +314,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30FlashPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high']},
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -332,7 +333,10 @@ const _knownGeminiModels: ({
     chatPrice: gemini25ProPricing,
     interfaces: IF_25,
     parameterSpecs: [
-      { paramId: 'llmVndGeminiThinkingBudget', rangeOverride: [128, 32768] /* does not support 0 which would turn thinking off */ },
+      {
+        paramId: 'llmVndGeminiThinkingBudget',
+        rangeOverride: [128, 32768], // does not support 0 which would turn thinking off - NOTE: 2026-03-04: verified 128, while the sweep min is 1024, this model accepts 128 too
+      },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
     benchmark: { cbaElo: 1450 }, // gemini-2.5-pro
