@@ -1,10 +1,8 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
-import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import type { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, Textarea, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
@@ -26,6 +24,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageId, DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -40,7 +39,9 @@ import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.ro
 import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
+import { supportsCameraCapture } from '~/common/components/camera/useCameraCapture';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
+import { useAttachHandler_CameraOpen, useAttachHandler_Files, useAttachHandler_PasteIntercept, useAttachHandler_ScreenCapture, useAttachHandler_UrlWebLinks } from '~/common/attachment-drafts/attachment-sources/useAttachmentSourceHandlers';
 import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -53,21 +54,15 @@ import { providerCommands } from './actile/providerCommands';
 import { providerStarredMessages, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
-import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
-import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
+import type { AttachmentDraftId, AttachmentDraftsAction } from '~/common/attachment-drafts/attachment.types';
+import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sources/AttachmentSources';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
-import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
+import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
+import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
 
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
 
-import { ButtonAttachCameraMemo, useCameraCaptureModalDialog } from './buttons/ButtonAttachCamera';
-import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
-import { ButtonAttachGoogleDriveMemo } from './buttons/ButtonAttachGoogleDrive';
-import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
-import { ButtonAttachWebMemo } from './buttons/ButtonAttachWeb';
-import { hasGoogleDriveCapability, useGoogleDrivePicker } from '~/common/attachment-drafts/useGoogleDrivePicker';
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
 import { ButtonGroupDrawRepeat } from './buttons/ButtonGroupDrawRepeat';
@@ -75,6 +70,7 @@ import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
+import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { ComposerTextAreaDrawActions } from './textarea/ComposerTextAreaDrawActions';
 import { StatusBarMemo } from '../StatusBar';
@@ -82,7 +78,6 @@ import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
 import { useTextTokenCount } from './tokens/useTextTokenCounter';
-import { useWebInputModal } from './WebInputModal';
 
 
 // configuration
@@ -139,10 +134,8 @@ export function Composer(props: {
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
   const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
-  const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
-    labsAttachScreenCapture: state.labsAttachScreenCapture,
-    labsCameraDesktop: state.labsCameraDesktop,
-    labsShowCost: state.labsShowCost,
+  const { labsComposerAttachmentsInline, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
+    labsComposerAttachmentsInline: state.labsComposerAttachmentsInline,
     labsShowShortcutBar: state.labsShowShortcutBar,
   })));
   const timeToShowTips = useLogicSherpaStore(state => state.usageCount >= SHOW_TIPS_AFTER_RELOADS);
@@ -205,7 +198,7 @@ export function Composer(props: {
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile, showChatAttachments === 'only-images');
 
   // attachments derived state
-  const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
+  const { enrichment: attEnrichment, summary: attEnrichSummary } = useAttachmentDraftsEnrichment(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
 
   // drag/drop
   const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } = useComposerDragDrop(!props.isMobile, attachAppendDataTransfer);
@@ -230,7 +223,7 @@ export function Composer(props: {
   // tokens derived state
 
   const tokensComposerTextDebounced = useTextTokenCount(composeText, props.chatLLM, 800, 1600);
-  let tokensComposer = (tokensComposerTextDebounced ?? 0) + (llmAttachmentDraftsCollection.llmTokenCountApprox || 0);
+  let tokensComposer = (tokensComposerTextDebounced ?? 0) + (attEnrichSummary.totalTokensApprox || 0);
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
@@ -274,7 +267,7 @@ export function Composer(props: {
   // Confirmation Modals
 
   const confirmProceedIfAttachmentsNotSupported = React.useCallback(async (): Promise<boolean> => {
-    if (llmAttachmentDraftsCollection.canAttachAllFragments) return true;
+    if (attEnrichSummary.allCompatible) return true;
     return await showPromisedOverlay('composer-unsupported-attachments', { rejectWithValue: false }, ({ onResolve, onUserReject }) => (
       <ConfirmationModal
         open
@@ -286,7 +279,7 @@ export function Composer(props: {
         title='Attachment Compatibility Notice'
       />
     ));
-  }, [llmAttachmentDraftsCollection.canAttachAllFragments, showPromisedOverlay]);
+  }, [attEnrichSummary.allCompatible, showPromisedOverlay]);
 
 
   // Primary button
@@ -595,43 +588,19 @@ export function Composer(props: {
   const handleToggleMinimized = React.useCallback(() => setIsMinimized(hide => !hide), []);
 
 
-  // Attachment Up
+  // Attachments Up
 
-  const handleAttachCtrlV = React.useCallback(async (event: React.ClipboardEvent) => {
-    if (await attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
-      event.preventDefault();
-  }, [attachAppendDataTransfer]);
-
-  const handleAttachCameraImage = React.useCallback((file: FileWithHandle) => {
-    void attachAppendFile('camera', file);
-  }, [attachAppendFile]);
-
-  const { openCamera, cameraCaptureComponent } = useCameraCaptureModalDialog(handleAttachCameraImage);
-
-  const handleAttachScreenCapture = React.useCallback((file: File) => {
-    void attachAppendFile('screencapture', file);
-  }, [attachAppendFile]);
-
-  const handleAttachFiles = React.useCallback(async (files: FileWithHandle[], errorMessage: string | null) => {
-    if (errorMessage)
-      addSnackbar({ key: 'attach-files-open-fail', message: `Unable to open files: ${errorMessage}`, type: 'issue' });
-    for (let file of files)
-      await attachAppendFile('file-open', file)
-        .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Unable to attach the file "${file.name}" (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
-  }, [attachAppendFile]);
-
-  const handleAttachWebLinks = React.useCallback(async (links: { url: string }[]) => {
-    links.forEach(link => void attachAppendUrl('input-link', link.url));
-  }, [attachAppendUrl]);
-
-  const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebLinks, composeText);
-
+  const handleAttachCtrlV = useAttachHandler_PasteIntercept(attachAppendDataTransfer);
+  const handleAttachFiles = useAttachHandler_Files(attachAppendFile);
+  const handleOpenCamera = useAttachHandler_CameraOpen(attachAppendFile);
+  const handleAttachScreenCapture = useAttachHandler_ScreenCapture(attachAppendFile);
+  const { openWebInputDialog, webInputDialogComponent } = useAttachHandler_UrlWebLinks(attachAppendUrl, composeText);
   const { openGoogleDrivePicker, googleDrivePickerComponent } = useGoogleDrivePicker(attachAppendCloudFile, isMobile);
 
 
   // Attachments Down
 
-  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
+  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: AttachmentDraftsAction) => {
     switch (action) {
       case 'copy-text':
         const copyFragments = attachmentsTakeFragmentsByType('doc', attachmentDraftIdOrAll, false);
@@ -660,7 +629,7 @@ export function Composer(props: {
       if (supportsClipboardRead())
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
       // Future: keep reactive state here to support Live Screen Capture and more
-      // if (labsAttachScreenCapture && supportsScreenCapture)
+      // if (supportsScreenCapture)
       //   composerShortcuts.push({ key: 's', ctrl: true, shift: true, action: openScreenCaptureDialog, description: 'Attach Screen Capture' });
     }
     if (recognitionState.isActive) {
@@ -698,7 +667,7 @@ export function Composer(props: {
 
   const sendButtonColor: ColorPaletteProp =
     assistantAbortible ? 'warning'
-      : !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
+      : !attEnrichSummary.allCompatible ? 'warning'
         : chatExecuteModeSendColor;
 
   const sendButtonLabel = chatExecuteModeSendLabel;
@@ -712,7 +681,7 @@ export function Composer(props: {
               : <TelegramIcon />;
 
   const beamButtonColor: ColorPaletteProp | undefined =
-    !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
+    !attEnrichSummary.allCompatible ? 'warning'
       : undefined;
 
   const showTint: ColorPaletteProp | undefined = isDraw ? 'warning' : isReAct ? 'success' : undefined;
@@ -783,42 +752,24 @@ export function Composer(props: {
                 {/* [mobile] Mic button */}
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor === 'danger' ? 'danger' : showTint || micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
 
-                {/* Responsive Camera OCR button */}
-                {showChatAttachments && <ButtonAttachCameraMemo color={showTint} isMobile onOpenCamera={openCamera} />}
-
                 {/* [mobile] Attach file button (in draw with image mode)  */}
-                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} fullWidth multiple />}
+                {showChatAttachments === 'only-images' && <ButtonAttachFilesMemo color={showTint} isMobile onAttachFiles={handleAttachFiles} multiple />}
 
-                {/* [mobile] [+] button */}
+                {/* [mobile] [+] attachment sources menu */}
                 {showChatAttachments === true && (
-                  <Dropdown>
-                    <MenuButton slots={{ root: IconButton }}>
-                      <AddCircleOutlineIcon />
-                    </MenuButton>
-                    <Menu>
-
-                      {/* Responsive Open Files button */}
-                      <MenuItem>
-                        <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
-                      </MenuItem>
-
-                      {/* Responsive Web button */}
-                      <MenuItem>
-                        <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />
-                      </MenuItem>
-
-                      {/* Responsive Google Drive button */}
-                      {hasGoogleDriveCapability && <MenuItem>
-                        <ButtonAttachGoogleDriveMemo onOpenGoogleDrivePicker={openGoogleDrivePicker} fullWidth />
-                      </MenuItem>}
-
-                      {/* Responsive Paste button */}
-                      {supportsClipboardRead() && <MenuItem>
-                        <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />
-                      </MenuItem>}
-
-                    </Menu>
-                  </Dropdown>
+                  <AttachmentSourcesMemo
+                    mode='menu-compact'
+                    canBrowse={hasComposerBrowseCapability}
+                    hasScreenCapture={supportsScreenCapture}
+                    hasCamera={supportsCameraCapture()}
+                    onlyImages={false /* because if yes, we only show the attach files above */}
+                    onAttachClipboard={attachAppendClipboardItems}
+                    onAttachFiles={handleAttachFiles}
+                    onAttachScreenCapture={handleAttachScreenCapture}
+                    onOpenCamera={handleOpenCamera}
+                    onOpenGoogleDrivePicker={openGoogleDrivePicker}
+                    onOpenWebInput={openWebInputDialog}
+                  />
                 )}
 
                 {/* [Mobile] MultiChat button */}
@@ -829,31 +780,27 @@ export function Composer(props: {
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
             {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1, alignSelf: 'flex-start' }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: 0.5, alignSelf: 'flex-start' }}>
 
-                {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
-                {/*  Attach*/}
-                {/*</FormHelperText>*/}
+                {/* [desktop] Attachment Sources: dropdown menu or inline buttons */}
+                <AttachmentSourcesMemo
+                  mode={!labsComposerAttachmentsInline ? 'menu-rich' : 'inline-buttons'}
+                  color={!labsComposerAttachmentsInline ? (showTint || 'neutral') : showTint}
+                  richButtonStandOut={!isText && !isAppend}
+                  canBrowse={hasComposerBrowseCapability}
+                  hasScreenCapture={supportsScreenCapture}
+                  hasCamera={supportsCameraCapture()}
+                  onlyImages={showChatAttachments === 'only-images'}
+                  onAttachClipboard={attachAppendClipboardItems}
+                  onAttachFiles={handleAttachFiles}
+                  onAttachScreenCapture={handleAttachScreenCapture}
+                  onOpenCamera={handleOpenCamera}
+                  onOpenGoogleDrivePicker={openGoogleDrivePicker}
+                  onOpenWebInput={openWebInputDialog}
+                />
 
-                {/* Responsive Open Files button */}
-                <ButtonAttachFilesMemo color={showTint} onAttachFiles={handleAttachFiles} fullWidth multiple />
-
-                {/* Responsive Web button */}
-                {showChatAttachments !== 'only-images' && <ButtonAttachWebMemo color={showTint} disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />}
-
-                {/* Responsive Google Drive button */}
-                {hasGoogleDriveCapability && showChatAttachments !== 'only-images' && <ButtonAttachGoogleDriveMemo color={showTint} onOpenGoogleDrivePicker={openGoogleDrivePicker} />}
-
-                {/* Responsive Paste button */}
-                {supportsClipboardRead() && showChatAttachments !== 'only-images' && <ButtonAttachClipboardMemo color={showTint} onAttachClipboard={attachAppendClipboardItems} />}
-
-                {/* Responsive Screen Capture button */}
-                {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo color={showTint} onAttachScreenCapture={handleAttachScreenCapture} />}
-
-                {/* Responsive Camera OCR button */}
-                {labsCameraDesktop && <ButtonAttachCameraMemo color={showTint} onOpenCamera={openCamera} />}
-
-              </Box>)}
+              </Box>
+            )}
 
 
             {/* Top: Textarea & Mic & Overlays, Bottom, Attachment Drafts */}
@@ -921,7 +868,7 @@ export function Composer(props: {
                   )}
 
                   {!showChatInReferenceTo && !isDraw && tokenLimit > 0 && (
-                    <TokenBadgeMemo hideBelowDollars={0.01} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                    <TokenBadgeMemo showCost hideBelowDollars={0.01} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 
                 </Box>
@@ -1000,11 +947,12 @@ export function Composer(props: {
 
               {/* Render any Attachments & menu items */}
               {!!conversationOverlayStore && showChatAttachments && (
-                <LLMAttachmentsList
-                  agiAttachmentPrompts={agiAttachmentPrompts}
+                <ComposerAttachmentDraftsList
                   attachmentDraftsStoreApi={conversationOverlayStore}
-                  canInlineSomeFragments={llmAttachmentDraftsCollection.canInlineSomeFragments}
-                  llmAttachmentDrafts={llmAttachmentDraftsCollection.llmAttachmentDrafts}
+                  attachmentDrafts={attachmentDrafts}
+                  enrichment={attEnrichment}
+                  enrichmentSummary={attEnrichSummary}
+                  agiAttachmentPrompts={agiAttachmentPrompts}
                   onAttachmentDraftsAction={handleAttachmentDraftsAction}
                 />
               )}
@@ -1135,9 +1083,6 @@ export function Composer(props: {
 
       {/* Execution Mode Menu */}
       {chatExecuteMenuComponent}
-
-      {/* Camera (when open) */}
-      {cameraCaptureComponent}
 
       {/* Google Drive Picker (when open) */}
       {googleDrivePickerComponent}

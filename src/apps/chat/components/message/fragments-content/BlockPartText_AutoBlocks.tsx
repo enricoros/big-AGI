@@ -27,7 +27,6 @@ export function BlockPartText_AutoBlocks(props: {
   isMobile: boolean,
   fitScreen: boolean,
   disableMarkdownText: boolean,
-  enhanceCodeBlocks: boolean,
   renderAsWordsDiff?: WordsDiff,
 
   showUnsafeHtmlCode?: boolean,
@@ -75,7 +74,7 @@ export function BlockPartText_AutoBlocks(props: {
       isMobile={props.isMobile}
       showUnsafeHtmlCode={props.showUnsafeHtmlCode}
       renderAsWordsDiff={props.renderAsWordsDiff}
-      codeRenderVariant={props.enhanceCodeBlocks ? 'enhanced' : 'outlined'}
+      codeRenderVariant='enhanced' // was: { props.enhanceCodeBlocks ? 'enhanced' : 'outlined' }
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       onContextMenu={props.onContextMenu}

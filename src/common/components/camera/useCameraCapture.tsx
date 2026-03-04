@@ -7,6 +7,14 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import { Is } from '~/common/util/pwaUtils';
 
 
+/**
+ * Check if camera capture is supported in the current browser - only check for support not presence of camera.
+ */
+export function supportsCameraCapture(): boolean {
+  return !!(navigator?.mediaDevices?.getUserMedia);
+}
+
+
 // we need to use local state to avoid race conditions with start/stops (triggered by react/strict mode)
 let currMediaStream: MediaStream | null = null;
 

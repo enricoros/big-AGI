@@ -8,7 +8,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 // [EDITORIAL] Anthropic Default Skills
 const DEFAULT_SKILLS = [
   { id: 'xlsx', label: 'Excel' },
-  { id: 'pptx', label: 'PowerPoint' },
+  { id: 'pptx', label: 'PPT' },
   { id: 'pdf', label: 'PDF' },
   { id: 'docx', label: 'Word' },
 ] as const;

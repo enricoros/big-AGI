@@ -10,23 +10,8 @@ import { persist } from 'zustand/middleware';
 //  - Chat Mode: Follow-Ups; moved to Chat Advanced UI
 interface UXLabsStore {
 
-  labsAttachScreenCapture: boolean;
-  setLabsAttachScreenCapture: (labsAttachScreenCapture: boolean) => void;
-
-  labsCameraDesktop: boolean;
-  setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
-
-  labsEnhanceCodeBlocks: boolean;
-  setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => void;
-
-  labsEnhanceCodeLiveFile: boolean;
-  setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => void;
-
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
-
-  labsShowCost: boolean;
-  setLabsShowCost: (labsShowCost: boolean) => void;
 
   labsAutoHideComposer: boolean;
   setLabsAutoHideComposer: (labsAutoHideComposer: boolean) => void;
@@ -34,29 +19,17 @@ interface UXLabsStore {
   labsShowShortcutBar: boolean;
   setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => void;
 
+  labsComposerAttachmentsInline: boolean;
+  setLabsComposerAttachmentsInline: (labsComposerAttachmentsInline: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
 
-      labsAttachScreenCapture: true,
-      setLabsAttachScreenCapture: (labsAttachScreenCapture: boolean) => set({ labsAttachScreenCapture }),
-
-      labsCameraDesktop: false,
-      setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
-
-      labsEnhanceCodeBlocks: true,
-      setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => set({ labsEnhanceCodeBlocks }),
-
-      labsEnhanceCodeLiveFile: false,
-      setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => set({ labsEnhanceCodeLiveFile }),
-
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
-
-      labsShowCost: true, // release 1.16.0 with this enabled by default
-      setLabsShowCost: (labsShowCost: boolean) => set({ labsShowCost }),
 
       labsAutoHideComposer: false,
       setLabsAutoHideComposer: (labsAutoHideComposer: boolean) => set({ labsAutoHideComposer }),
@@ -64,25 +37,22 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsShowShortcutBar: true,
       setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => set({ labsShowShortcutBar }),
 
+      labsComposerAttachmentsInline: false,
+      setLabsComposerAttachmentsInline: (labsComposerAttachmentsInline: boolean) => set({ labsComposerAttachmentsInline }),
+
     }),
     {
       name: 'app-ux-labs',
 
       // Migrations:
-      // - 1: turn on the screen capture by default
+      // - 1: turn on the screen capture by default (subsequently removed)
       version: 1,
-      migrate: (state: any, fromVersion: number): UXLabsStore => {
-        // 0 -> 1: turn on the screen capture by default
-        if (state && fromVersion < 1 && !state.labsAttachScreenCapture)
-          return { ...state, labsAttachScreenCapture: true };
-        return state;
-      },
 
     },
   ),
 );
 
-export function getUXLabsHighPerformance() {
+export function getLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
 }
 

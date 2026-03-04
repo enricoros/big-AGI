@@ -6,8 +6,6 @@ import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 
 import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
 
-import { CameraCaptureModal } from '../CameraCaptureModal';
-
 
 export const ButtonAttachCameraMemo = React.memo(ButtonAttachCamera);
 
@@ -43,24 +41,4 @@ function ButtonAttachCamera(props: {
       </Button>
     </Tooltip>
   );
-}
-
-export function useCameraCaptureModalDialog(onAttachImageStable: (file: File) => void) {
-
-  // state
-  const [open, setOpen] = React.useState(false);
-
-  const openCamera = React.useCallback(() => setOpen(true), []);
-
-  const cameraCaptureComponent = React.useMemo(() => open && (
-    <CameraCaptureModal
-      onCloseModal={() => setOpen(false)}
-      onAttachImage={onAttachImageStable}
-    />
-  ), [open, onAttachImageStable]);
-
-  return {
-    openCamera,
-    cameraCaptureComponent,
-  };
 }
