@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { FileWithHandle } from 'browser-fs-access';
 
 import type { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, Textarea, Typography } from '@mui/joy';
@@ -42,7 +41,7 @@ import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { supportsCameraCapture } from '~/common/components/camera/useCameraCapture';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
-import { useCameraCaptureDialog } from '~/common/components/camera/useCameraCaptureDialog';
+import { useAttachHandler_CameraOpen, useAttachHandler_Files, useAttachHandler_PasteIntercept, useAttachHandler_ScreenCapture, useAttachHandler_UrlWebLinks } from '~/common/attachment-drafts/attachment-sources/useAttachmentSourceHandlers';
 import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -60,7 +59,6 @@ import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sou
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
 import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
-import { useWebAttachmentModal } from '~/common/attachment-drafts/attachment-sources/useWebAttachmentModal';
 
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
@@ -590,43 +588,13 @@ export function Composer(props: {
   const handleToggleMinimized = React.useCallback(() => setIsMinimized(hide => !hide), []);
 
 
-  // Attachment Up
+  // Attachments Up
 
-  const handleAttachCtrlV = React.useCallback(async (event: React.ClipboardEvent) => {
-    if (await attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
-      event.preventDefault();
-  }, [attachAppendDataTransfer]);
-
-  const handleAttachCameraImage = React.useCallback((file: FileWithHandle) => {
-    void attachAppendFile('camera', file);
-  }, [attachAppendFile]);
-
-  const { openCameraCapture } = useCameraCaptureDialog();
-
-  const handleOpenCamera = React.useCallback(async () => {
-    await openCameraCapture().then((file) => {
-      file && handleAttachCameraImage(file);
-    });
-  }, [openCameraCapture, handleAttachCameraImage]);
-
-  const handleAttachScreenCapture = React.useCallback((file: File) => {
-    void attachAppendFile('screencapture', file);
-  }, [attachAppendFile]);
-
-  const handleAttachFiles = React.useCallback(async (files: FileWithHandle[], errorMessage: string | null) => {
-    if (errorMessage)
-      addSnackbar({ key: 'attach-files-open-fail', message: `Unable to open files: ${errorMessage}`, type: 'issue' });
-    for (let file of files)
-      await attachAppendFile('file-open', file)
-        .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Unable to attach the file "${file.name}" (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
-  }, [attachAppendFile]);
-
-  const handleAttachWebLinks = React.useCallback(async (links: { url: string }[]) => {
-    links.forEach(link => void attachAppendUrl('input-link', link.url));
-  }, [attachAppendUrl]);
-
-  const { openWebInputDialog, webInputDialogComponent } = useWebAttachmentModal(handleAttachWebLinks, composeText);
-
+  const handleAttachCtrlV = useAttachHandler_PasteIntercept(attachAppendDataTransfer);
+  const handleAttachFiles = useAttachHandler_Files(attachAppendFile);
+  const handleOpenCamera = useAttachHandler_CameraOpen(attachAppendFile);
+  const handleAttachScreenCapture = useAttachHandler_ScreenCapture(attachAppendFile);
+  const { openWebInputDialog, webInputDialogComponent } = useAttachHandler_UrlWebLinks(attachAppendUrl, composeText);
   const { openGoogleDrivePicker, googleDrivePickerComponent } = useGoogleDrivePicker(attachAppendCloudFile, isMobile);
 
 
