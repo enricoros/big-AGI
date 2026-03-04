@@ -850,7 +850,7 @@ export function ChatMessage(props: {
           )}
 
           {/* [Edit Mode] Add new attachments (right below the Document Fragments) */}
-          {isEditingText && !!onMessageFragmentAppend && (
+          {isEditingText && !fromAssistant && !!onMessageFragmentAppend && (
             <ChatMessageEditAttachments
               ref={attachmentsEditRef}
               isMobile={props.isMobile}
