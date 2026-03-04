@@ -475,18 +475,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     label: 'Computer Use Preview',
     symLink: 'computer-use-preview-2025-03-11',
   },
-  {
-    hidden: true, // yield to more capable
-    idPrefix: 'codex-mini-latest',
-    label: 'Codex Mini Latest',
-    description: 'Fast reasoning model optimized for the Codex CLI. A fine-tuned version of o4-mini for low-latency code Q&A and editing.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
-    chatPrice: { input: 1.5, cache: { cType: 'oai-ac', read: 0.375 }, output: 6 },
-    isLegacy: true, // Deprecated January 16, 2026.
-  },
+  // codex-mini-latest: removed, shut down February 12, 2026
 
 
   /// Reasoning models - o-series
@@ -787,17 +776,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     label: 'GPT-4o',
     symLink: 'gpt-4o-2024-08-06',
   },
-  {
-    idPrefix: 'chatgpt-4o-latest',
-    label: 'ChatGPT-4o Latest',
-    description: 'The chatgpt-4o-latest model version continuously points to the version of GPT-4o used in ChatGPT, and is updated frequently.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // does not support Tools
-    chatPrice: { input: 5, output: 15 },
-    benchmark: { cbaElo: 1443 }, // chatgpt-4o-latest-20250326
-    isLegacy: true, // Deprecated February 17, 2026.
-  },
+  // chatgpt-4o-latest: removed, shut down February 17, 2026
 
   // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
@@ -1059,6 +1038,8 @@ const openAIModelsDenyList: string[] = [
   'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
 
   // [OpenAI Deprecations] Explicitly deny shut-down model IDs that we removed
+  'codex-mini-latest', // shut down February 12, 2026
+  'chatgpt-4o-latest', // shut down February 17, 2026
   // 'gpt-4.5-preview',
   // 'o1-preview',
   // 'gpt-4-32k',
