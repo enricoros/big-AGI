@@ -117,7 +117,7 @@ const SWEEP_DEFINITIONS = [
       vndAntThinkingBudget: value,
       maxTokens: 16384,
     }),
-    values: [1024, 8192, 16384, 32768, 65535],
+    values: [1024, 8192, 16384, 32768, 65536],
     mode: 'enumerate',
   }),
 
