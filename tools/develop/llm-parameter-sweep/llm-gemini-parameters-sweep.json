@@ -52,6 +52,26 @@
     "gemini-thinking-level": ["low","high"],
     "temperature-range": [0,2]
   },
+  "models/gemini-3.1-flash-image-preview": {
+    "gemini-thinking-budget": [0,1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["minimal","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.1-flash-lite-preview": {
+    "gemini-thinking-budget": [0,1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.1-pro-preview": {
+    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.1-pro-preview-customtools": {
+    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
   "models/gemma-3-12b-it": {
     "temperature-range": [0,2]
   },

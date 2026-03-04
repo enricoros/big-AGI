@@ -832,14 +832,14 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
       }
 
       // Special case: temperature with contiguous range from 0 -> use range [min, max]
-      if (sweepName === 'temperature') {
+      if (sweepName === 'temperature' || sweepName === 'oai-temperature-think-high' || sweepName === 'oai-temperature-think-none') {
         const numericPassing = passingValues.filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
         const numericTested = sweepResults.map(r => r.paramValue).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
         // Check if passing values form a contiguous prefix of tested values (no gaps)
         const isContiguousFromStart = numericPassing.length >= 2 &&
           numericPassing.every((v, i) => v === numericTested[i]);
         if (isContiguousFromStart) {
-          modelResults['temperature-range'] = [numericPassing[0], numericPassing[numericPassing.length - 1]];
+          modelResults[`${sweepName}-range`] = [numericPassing[0], numericPassing[numericPassing.length - 1]];
           continue;
         }
       }
