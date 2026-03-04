@@ -73,6 +73,60 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // - "Structured Outputs" is LLM_IF_OAI_Json
 export const _knownOpenAIChatModels: ManualMappings = [
 
+  /// GPT-5.3 series
+
+  // GPT-5.3 Codex - Released February 5, 2026
+  {
+    idPrefix: 'gpt-5.3-codex',
+    label: 'GPT-5.3 Codex',
+    description: 'Most capable agentic coding model. Combines frontier coding performance of GPT-5.2-Codex with reasoning and professional knowledge of GPT-5.2. ~25% faster.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'] },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
+    // benchmark: TBD
+  },
+
+  // GPT-5.3 Codex Spark - Research preview, text-only, optimized for real-time coding iteration
+  {
+    hidden: true, // Research preview, ChatGPT Pro only - API access limited to design partners
+    idPrefix: 'gpt-5.3-codex-spark',
+    label: 'GPT-5.3 Codex Spark',
+    description: 'Text-only research preview optimized for real-time coding iteration. Delivers 1000+ tokens/sec on low-latency hardware.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmForceNoStream' },
+    ],
+    // chatPrice: TBD - separate usage limits, not standard token pricing
+    // benchmark: TBD
+  },
+
+  // GPT-5.3 Chat Latest - Released March 4, 2026
+  {
+    idPrefix: 'gpt-5.3-chat-latest',
+    label: 'GPT-5.3 Instant',
+    description: 'GPT-5.3 model powering ChatGPT. Points to the GPT-5.3 Instant snapshot currently used in ChatGPT.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+    ],
+    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
+    // benchmark: TBD
+  },
+
+
   /// GPT-5.2 series - Released December 11, 2025
 
   // GPT-5.2
@@ -382,40 +436,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     idPrefix: 'gpt-5-nano',
     label: 'GPT-5 Nano',
     symLink: 'gpt-5-nano-2025-08-07',
-  },
-
-  /// GPT-5.3 Codex - Released February 5, 2026
-  {
-    idPrefix: 'gpt-5.3-codex',
-    label: 'GPT-5.3 Codex',
-    description: 'Most capable agentic coding model. Combines frontier coding performance of GPT-5.2-Codex with reasoning and professional knowledge of GPT-5.2. ~25% faster.',
-    contextWindow: 400000,
-    maxCompletionTokens: 128000,
-    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'] },
-      { paramId: 'llmVndOaiWebSearchContext' },
-      { paramId: 'llmForceNoStream' },
-    ],
-    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
-    // benchmark: TBD
-  },
-
-  // GPT-5.3 Codex Spark - Research preview, text-only, optimized for real-time coding iteration
-  {
-    hidden: true, // Research preview, ChatGPT Pro only - API access limited to design partners
-    idPrefix: 'gpt-5.3-codex-spark',
-    label: 'GPT-5.3 Codex Spark',
-    description: 'Text-only research preview optimized for real-time coding iteration. Delivers 1000+ tokens/sec on low-latency hardware.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
-      { paramId: 'llmForceNoStream' },
-    ],
-    // chatPrice: TBD - separate usage limits, not standard token pricing
-    // benchmark: TBD
   },
 
 
@@ -1092,8 +1112,12 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 const _manualOrderingIdPrefixes = [
   // GPT-5.3
+  'gpt-5.3-20',
+  'gpt-5.3-pro-20',
+  'gpt-5.3-pro',
   'gpt-5.3-codex-spark',
   'gpt-5.3-codex',
+  'gpt-5.3-chat-latest',
   // GPT-5.2
   'gpt-5.2-20',
   'gpt-5.2-pro-20',
@@ -1280,6 +1304,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
   // typemap to known models
   const ortOaiRefMap: Record<string, string | null> = {
     // renames
+    'gpt-5.3-chat': 'gpt-5.3-chat-latest',
     'gpt-5.2-chat': 'gpt-5.2-chat-latest',
     'gpt-5.1-chat': 'gpt-5.1-chat-latest',
     'gpt-5-chat': 'gpt-5-chat-latest',
