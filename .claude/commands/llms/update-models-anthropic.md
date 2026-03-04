@@ -20,12 +20,12 @@ Reference files (for context only, do not modify):
 **Discovering feature docs:** The release notes and models overview markdown
 contain inline links to feature-specific pages (thinking modes, effort,
 context windows, what's-new pages, etc.). When a new capability is
-referenced, follow those links — append `.md` to get markdown. Examples of
+referenced, follow those links - append `.md` to get markdown. Examples of
 pages you might discover this way:
-- `about-claude/models/whats-new-claude-*` — per-generation changes
-- `build-with-claude/extended-thinking` — thinking budget configuration
-- `build-with-claude/effort` — effort parameter levels
-- `build-with-claude/adaptive-thinking` — adaptive thinking mode
+- `about-claude/models/whats-new-claude-*` - per-generation changes
+- `build-with-claude/extended-thinking` - thinking budget configuration
+- `build-with-claude/effort` - effort parameter levels
+- `build-with-claude/adaptive-thinking` - adaptive thinking mode
 
 **Fallback web pages** (crawl if `.md` paths break or structure changes):
 - https://platform.claude.com/docs/en/about-claude/models/overview

@@ -47,7 +47,7 @@ export const useLogicSherpaStore = create<SherpaStore>()(
   ),
 );
 
-// increment the usage count (client-only — localStorage is unavailable during SSR)
+// increment the usage count (client-only - localStorage is unavailable during SSR)
 if (isBrowser)
   useLogicSherpaStore.setState((state) => ({ usageCount: (state.usageCount || 0) + 1 }));
 

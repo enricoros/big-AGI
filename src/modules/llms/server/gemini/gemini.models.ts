@@ -163,13 +163,13 @@ const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Jso
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 
 // Gemini Thinking Control (as of 2026-02-19):
-// - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) — NOT thinkingBudget.
+// - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) - NOT thinkingBudget.
 //   Supported levels: 3.1 Pro=['low','medium','high'], 3 Pro=['low','high'], Flash=['minimal','low','medium','high']. Default is 'high' (dynamic).
 //   Pro does not support disabling thinking. Flash's 'minimal' does not guarantee thinking is off.
-// - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) — NOT thinkingLevel.
+// - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) - NOT thinkingLevel.
 //   Budget=0 disables thinking (Flash/Flash-Lite only; Pro cannot disable). Undefined = auto.
 // Note: the parameter sweep shows thinkingBudget accepted on Gemini 3, but the official docs
-// prescribe thinkingLevel for Gemini 3. We follow the docs — do NOT add thinkingBudget to Gemini 3 models.
+// prescribe thinkingLevel for Gemini 3. We follow the docs - do NOT add thinkingBudget to Gemini 3 models.
 // NOTE: LLM_IF_Outputs_Image is auto-implied by llmsAutoImplyInterfaces() from image parameterSpecs (llmVndGeminiAspectRatio, llmVndGeminiImageSize)
 
 

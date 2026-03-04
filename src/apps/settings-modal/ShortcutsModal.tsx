@@ -77,7 +77,7 @@ function _displayKey(key: string): string {
 
 /**
  * Build a set of fingerprints from currently registered shortcuts for active detection.
- * Fingerprint: `key_lowercase:ctrl:shift` — matches the global handler resolution.
+ * Fingerprint: `key_lowercase:ctrl:shift` - matches the global handler resolution.
  */
 function _buildActiveFingerprints(): Set<string> {
   const allShortcuts = useGlobalShortcutsStore.getState().getAllShortcuts();
