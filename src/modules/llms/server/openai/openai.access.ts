@@ -308,6 +308,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       return {
         headers: {
           'Content-Type': 'application/json',
+          'HTTP-Referer': BaseProduct.ProductURL,
           ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
           ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
           ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
