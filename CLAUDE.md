@@ -34,6 +34,7 @@ The `gh` command is available to interact with GitHub from the terminal, but **N
 
 You are started from the root of the repository (i.e. where the git folder is or scripts should be run from).
 **ISSUE ALL COMMANDS FROM THE ROOT, OMITTING 'cd' COMMANDS. DO NOT CHAIN CD AND OTHER COMMANDS**
+**NEVER RUN COMPOUND `cd` COMMANDS LIKE `cd some-folder && command` - ONLY RUN `command` FROM THE ROOT, ALWAYS.**
 The directory structure is as follows:
 
 ```
