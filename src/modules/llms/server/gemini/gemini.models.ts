@@ -75,7 +75,20 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Feb 19, 2026)
+// Pricing based on https://ai.google.dev/pricing (Mar 4, 2026)
+
+const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
+  output: 1.50,
+  cache: { cType: 'oai-ac', read: 0.025 }, // text/image/video; audio is $0.05 but we don't differentiate yet
+};
+
+const gemini31FlashImagePricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.50, // text/image input
+  output: 3.00, // text/thinking output
+  // NOTE: Additional image-specific pricing (not yet supported in schema):
+  // - Image output: $60.00/MTok ($0.045/image 0.5K, $0.067/image 1K, $0.101/image 2K, $0.151/image 4K)
+};
 
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
@@ -169,7 +182,7 @@ const _knownGeminiModels: ({
   // _delete removed - models are now physically removed from the list instead of marked for deletion
 } & Pick<ModelDescriptionSchema, 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
-  /// Generation 3.0
+  /// Generation 3.1
 
   // 3.1 Pro (Preview) - Released February 19, 2026
   // First "point one" update - introduces 'medium' thinking level, improved agentic coding
@@ -206,11 +219,48 @@ const _knownGeminiModels: ({
     benchmark: undefined,
   },
 
-  // 3.0 Pro (Preview) - Released November 18, 2025
+  // 3.1 Flash Image Preview - Released February 26, 2026
+  // aka "Nano Banana 2" - high-efficiency image generation optimized for speed and high-volume use cases
+  {
+    id: 'models/gemini-3.1-flash-image-preview',
+    labelOverride: 'Nano Banana 2',
+    isPreview: true,
+    chatPrice: gemini31FlashImagePricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+
+  // 3.1 Flash-Lite (Preview) - Released March 3, 2026
+  // First Flash-Lite model in the Gemini 3 series - cost-efficient, high-throughput
+  {
+    id: 'models/gemini-3.1-flash-lite-preview',
+    labelOverride: 'Gemini 3.1 Flash-Lite Preview',
+    isPreview: true,
+    chatPrice: gemini31FlashLitePricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high']},
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
+    benchmark: undefined, // too new (released March 3, 2026)
+  },
+
+
+  /// Generation 3.0
+
+  // 3.0 Pro (Preview) - Released November 18, 2025; DEPRECATED: shutdown March 9, 2026
   {
     id: 'models/gemini-3-pro-preview',
     labelOverride: 'Gemini 3 Pro Preview',
     isPreview: true,
+    deprecated: '2026-03-09',
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -685,6 +735,11 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 const _sortOderIdPrefix: string[] = [
   'models/gemini-3.1-pro-preview',
+  'models/gemini-3.1-pro-preview-customtools',
+  'models/gemini-3.1-flash-image-preview',
+  'models/gemini-3.1-flash-preview',
+  'models/gemini-3.1-',
+  'models/gemini-3.1',
   'models/gemini-3-pro-preview',
   'models/gemini-3-pro-image-preview',
   'models/nano-banana-pro-preview',
