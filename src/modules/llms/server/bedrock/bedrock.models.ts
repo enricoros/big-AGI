@@ -24,7 +24,7 @@ import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 const SKIP_FM_ID_CONTAINS = ['rerank'];
 const SKIP_IP_ID_STARTSWITH = ['stability.'];
 
-// Known Mantle-only models (no matching foundation model) — override heuristics with accurate metadata
+// Known Mantle-only models (no matching foundation model) - override heuristics with accurate metadata
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 131072, out: 16384 },

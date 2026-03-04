@@ -24,8 +24,8 @@ const _style = {
 /**
  * Compact numeric input field with label and optional description.
  * Supports undefined (unset/default) state with a toggle button:
- * - undefined: input disabled, X button pressed (soft) — input shows empty
- * - number: input active, X button flat (plain) — pressing X clears to undefined
+ * - undefined: input disabled, X button pressed (soft) - input shows empty
+ * - number: input active, X button flat (plain) - pressing X clears to undefined
  */
 export function FormNumberInput(props: {
   title: string,

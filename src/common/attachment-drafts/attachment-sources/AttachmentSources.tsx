@@ -147,8 +147,8 @@ function AutoDownloadToggle(props: { delay?: number }) {
  * Portable attachment sources component.
  *
  * Three modes:
- * - **menu-compact**: Mobile-style — icon trigger, simple MenuItems (no descriptions/animations)
- * - **menu-rich**: Desktop-style — labeled button trigger, rich items with descriptions and animations
+ * - **menu-compact**: Mobile-style - icon trigger, simple MenuItems (no descriptions/animations)
+ * - **menu-rich**: Desktop-style - labeled button trigger, rich items with descriptions and animations
  * - **inline-buttons**: Individual source buttons rendered inline (no dropdown)
  */
 export const AttachmentSourcesMemo = React.memo(AttachmentSources);
@@ -174,7 +174,7 @@ function AttachmentSources(props: {
   onOpenWebInput: () => void,
 }) {
 
-  // state (screen capture — used in menu modes where the component handles the capture)
+  // state (screen capture - used in menu modes where the component handles the capture)
   const [capturingScreen, setCapturingScreen] = React.useState(false);
   const [screenCaptureError, setScreenCaptureError] = React.useState<string | null>(null);
 
@@ -201,7 +201,7 @@ function AttachmentSources(props: {
   }, [onAttachScreenCapture]);
 
 
-  // inline-buttons mode — individual buttons rendered flat (no dropdown)
+  // inline-buttons mode - individual buttons rendered flat (no dropdown)
   if (props.mode === 'inline-buttons')
     return <>
 
@@ -234,7 +234,7 @@ function AttachmentSources(props: {
     </>;
 
 
-  // menu-compact mode (mobile) — simple icon trigger with flat menu items
+  // menu-compact mode (mobile) - simple icon trigger with flat menu items
   if (props.mode === 'menu-compact' || props.mode === 'menu-message') {
     const isMessage = props.mode === 'menu-message';
     return <>
@@ -321,7 +321,7 @@ function AttachmentSources(props: {
   }
 
 
-  // menu-rich mode (desktop) — labeled button trigger with animated, descriptive menu items
+  // menu-rich mode (desktop) - labeled button trigger with animated, descriptive menu items
   return (
     <Dropdown>
       <MenuButton
