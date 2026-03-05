@@ -34,6 +34,7 @@ The `gh` command is available to interact with GitHub from the terminal, but **N
 
 You are started from the root of the repository (i.e. where the git folder is or scripts should be run from).
 **ISSUE ALL COMMANDS FROM THE ROOT, OMITTING 'cd' COMMANDS. DO NOT CHAIN CD AND OTHER COMMANDS**
+**NEVER RUN COMPOUND `cd` COMMANDS LIKE `cd some-folder && command` - ONLY RUN `command` FROM THE ROOT, ALWAYS.**
 The directory structure is as follows:
 
 ```
@@ -186,6 +187,9 @@ Located in `/src/common/stores/` with stores like:
 #### Security Considerations
 - API keys in environment variables only (server-side); on the client they're in localStorage for now, but we want to move away from this
 - XSS protection through proper content escaping
+
+#### Writing Style
+- **Never use emdashes (—).** Use normal dashes (-) instead, in all generated text, code comments, and documentation.
 
 
 ## Common Development Tasks
