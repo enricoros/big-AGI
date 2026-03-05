@@ -27,6 +27,25 @@ export function OptimaPanelGroupGutter(props: { children?: React.ReactNode }) {
 }
 
 
+// Next styles
+const _styles = {
+  // outer container
+  boxMTAuto: {
+    mt: 'auto',
+  },
+  boxCollapsed: {
+    mb: -2.5, // absorb the gap to the next element when collapsed
+  },
+
+  // unfold icon
+  unfoldIcon: {
+    mr: 0,
+    color: 'neutral.softColor',
+    fontSize: 'md',
+  },
+} as const satisfies Record<string, SxProps>;
+
+
 // Header
 
 const headerSx: SxProps = {
@@ -120,7 +139,7 @@ export function OptimaPanelGroupedList(props: {
   const isMobile = useIsMobile();
   const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
   const smallerContentScaling = adjustContentScaling(contentScaling, -1);
-  
+
   // persistent collapse state
   const persistentCollapsed = useUIPanelGroupCollapsed(props.persistentCollapsibleId || null);
 
@@ -147,7 +166,7 @@ export function OptimaPanelGroupedList(props: {
   }, [isControlled, onToggleExpanded, props.persistentCollapsibleId, isExpanded]);
 
   return (
-    <Box sx={props.marginTopAuto ? { marginTop: 'auto' } : undefined}>
+    <Box sx={props.marginTopAuto ? _styles.boxMTAuto : isExpanded ? undefined : _styles.boxCollapsed}>
 
       {/* Header */}
       {(!!props.title || isCollapsible) && (
@@ -159,7 +178,7 @@ export function OptimaPanelGroupedList(props: {
         >
           {props.startDecorator}
           <Box fontSize={smallerContentScaling} sx={headerTitleSx}>{props.title}</Box>
-          {isCollapsible && props.hideExpandedCheckbox && !isExpanded && <UnfoldMoreIcon sx={{ mr: 0, color: 'neutral.softColor', fontSize: 'md' }} />}
+          {isCollapsible && props.hideExpandedCheckbox && !isExpanded && <UnfoldMoreIcon sx={_styles.unfoldIcon} />}
           {isCollapsible && !props.hideExpandedCheckbox && (
             <Checkbox
               size='md' variant='outlined' color='neutral'
