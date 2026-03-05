@@ -79,7 +79,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <ClaudeCrabIcon sx={{ fontSize: '2rem', mt: 0.5 }} />
         <Box sx={{ flex: 1 }}>
-          Access Claude models through your <Link color='neutral' href='https://aws.amazon.com/bedrock/' level='body-sm' target='_blank'>AWS Bedrock</Link> account
+          Access Amazong Nova, Claude, and many more models through your <Link color='neutral' href='https://aws.amazon.com/bedrock/' level='body-sm' target='_blank'>AWS Bedrock</Link> account
           using a long-term <strong>API Key</strong> or <strong>IAM credentials</strong>.
           {showSetupInstructions && (
             <Typography level='body-xs' component='ol' sx={{ pl: 2, mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
