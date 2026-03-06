@@ -1,3 +1,4 @@
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 import type { SpeexWire_VoiceOption } from './protocols/rpc/rpc.wiretypes';
@@ -145,6 +146,7 @@ export interface SpeexSpeakTextOptions {
   // future-ui
   label?: string;        // UNUSED: For NorthBridge queue display
   personaUid?: string;   // UNUSED: For NorthBridge queue icon / controls (if the audio came from a persona)
+  conversationId?: DConversationId; // UNUSED: For NorthBridge "go to source" navigation
 }
 
 export type SpeexSpeakTextResult = {
