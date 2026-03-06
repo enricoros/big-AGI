@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { FileWithHandle } from 'browser-fs-access';
 
+import type { CameraLiveStream } from '~/common/components/camera/useCameraCapture';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { useCameraCaptureDialog } from '~/common/components/camera/useCameraCaptureDialog';
 
@@ -19,20 +20,30 @@ type _HandleWebLinks = (links: { url: string }[]) => void;
 
 
 /**
- * Returns a handler that opens the camera capture dialog and appends the captured file.
+ * Returns a handler that opens the camera capture dialog and appends the captured files.
  */
-export function useAttachHandler_CameraOpen(attachAppendFile: AttachmentDraftsApi['attachAppendFile']) {
+export function useAttachHandler_CameraOpen(
+  attachAppendFile: AttachmentDraftsApi['attachAppendFile'],
+  handleLiveStream?: (stream: CameraLiveStream) => void
+): _HandleCameraOpen {
 
   // external state
   const { openCameraCapture } = useCameraCaptureDialog(); // -> showPromisedOverlay
 
   return React.useCallback<_HandleCameraOpen>(async () => {
 
-    const imageFile = await openCameraCapture();
-    if (imageFile)
+    const result = await openCameraCapture({ allowMultiCapture: true, allowLiveFeed: !!handleLiveStream });
+    if (!result) return; // user dismissed the dialog without capturing anything
+
+    // append all captured images
+    for (const imageFile of result.images)
       void attachAppendFile('camera', imageFile);
 
-  }, [openCameraCapture, attachAppendFile]);
+    // handle live stream if provided
+    if (result.liveStream)
+      handleLiveStream?.(result.liveStream);
+
+  }, [attachAppendFile, handleLiveStream, openCameraCapture]);
 }
 
 /**
