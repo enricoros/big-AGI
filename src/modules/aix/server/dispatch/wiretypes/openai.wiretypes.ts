@@ -1421,7 +1421,7 @@ export namespace OpenAIWire_Responses_Tools {
       z.object({
         type: z.literal('auto'),
         file_ids: z.array(z.string()).optional(), // uploaded file IDs to make available
-        memory_limit: z.string().optional(), // e.g., "512m", "1g", "2g", "4g", "8g"
+        memory_limit: z.string().optional(), // e.g., "1g", "4g", "16g", "64g"
       }),
     ]).nullish(), // optional - if omitted, auto mode is used
   });
