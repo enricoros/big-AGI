@@ -461,7 +461,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
-  sendVoidPlaceholder(mot: 'search-web' | 'gen-image', text: string) {
+  sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string) {
     // Don't end message part - placeholders should not interfere with content flow
     this.transmissionQueue.push({
       p: 'vp',
