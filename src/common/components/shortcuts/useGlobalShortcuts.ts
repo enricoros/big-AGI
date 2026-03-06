@@ -30,6 +30,7 @@ export interface ShortcutDefinition {
 
 export interface ShortcutObject extends ShortcutDefinition {
   disabled?: boolean;
+  skipIfInput?: boolean; // skip if a text input, textarea, contenteditable (or child thereof) is focused
   action: (() => void) | '_specialPrintShortcuts';
   endDecoratorIcon?: typeof SvgIcon;
   level?: number; // if set, it will exclusively show icons at that level of priority and hide the others
