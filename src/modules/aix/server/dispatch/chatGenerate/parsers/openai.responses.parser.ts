@@ -265,6 +265,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       // level 1. Lifecycle events
 
+      // 1.0. Request queued (background/async or under load) - response.created will follow
+      case 'response.queued':
+        R.setResponse(eventType, event.response);
+        break;
+
       // 1.1. First event, with the response substrate
       case 'response.created':
 
@@ -670,7 +675,6 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // case 'response.mcp_list_tools.failed':
         // case 'response.custom_tool_call_input.delta':
         // case 'response.custom_tool_call_input.done':
-        // case 'response.queued':
         // FIXME: if we're here, we prob needed to implement the part
         aixResilientUnknownValue('OpenAI-Responses', 'eventType', eventType);
         break;
