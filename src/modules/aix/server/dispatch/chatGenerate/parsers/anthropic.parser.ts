@@ -7,6 +7,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { DispatchContinuationSignal, type DispatchContinuation } from '../chatGenerate.continuation';
 import { RequestRetryError } from '../chatGenerate.retrier';
 
 
@@ -570,6 +571,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
+
+        // [Anthropic] pause_turn: server tools need more turns - throw continuation signal
+        if (responseMessage?.stop_reason === 'pause_turn') {
+          throw new DispatchContinuationSignal(
+            _createAnthropicPauseTurnContinuation(responseMessage.content, responseMessage.container?.id),
+          );
+        }
+
         return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -644,6 +653,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       content,
       stop_reason,
       usage,
+      container,
     } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
 
     // -> Model
@@ -894,6 +904,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
+    // [Anthropic] pause_turn: server tools need more turns - throw continuation signal
+    if (stop_reason === 'pause_turn') {
+      throw new DispatchContinuationSignal(
+        _createAnthropicPauseTurnContinuation(content, container?.id),
+      );
+    }
+
     // -> Token Stop Reason
     const tokenStopReason = _fromAnthropicStopReason(stop_reason);
     if (tokenStopReason !== null)
@@ -954,4 +971,44 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
       console.warn(`_fromAnthropicStopReason: unknown stop reason: ${stopReason}`);
       return null;
   }
+}
+
+
+/**
+ * Creates an Anthropic-specific DispatchContinuation for `pause_turn` stop reason.
+ *
+ * When Anthropic server tools (web_search, web_fetch, Skills) exhaust the iteration limit,
+ * the response returns `stop_reason: "pause_turn"`. The continuation appends the accumulated
+ * assistant content blocks to the messages and passes the container ID for stateful tools.
+ *
+ * Multi-turn: if a trailing assistant message already exists (from a prior continuation),
+ * the new content blocks are appended to it rather than creating a duplicate.
+ */
+function _createAnthropicPauseTurnContinuation(
+  accumulatedContent: AnthropicWire_API_Message_Create.Response['content'],
+  containerId: string | undefined | null,
+): DispatchContinuation {
+  return {
+    reason: 'pause_turn',
+    mutateBody(body) {
+      const messages = body.messages as { role: string; content: unknown }[];
+
+      // Check if the last message is already an assistant message (from prior continuation)
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant' && Array.isArray(lastMessage.content)) {
+        // Extend existing assistant message with new content blocks
+        lastMessage.content = [...lastMessage.content, ...accumulatedContent];
+      } else {
+        // Append new assistant message with accumulated content
+        messages.push({ role: 'assistant', content: [...accumulatedContent] });
+      }
+
+      return {
+        ...body,
+        messages,
+        // Container ID: response returns object { id, expires_at, skills }, request expects string ID
+        ...(containerId ? { container: containerId } : {}),
+      };
+    },
+  };
 }
