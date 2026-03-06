@@ -305,7 +305,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
             // NEW NOTE:
             // 'STOP' seems to only be sent at the end now
-            pt.setTokenStopReason('ok')
+            pt.setTokenStopReason('ok');
             pt.setDialectEnded('done-dialect'); // Gemini: generation finished successfully
             break;
 
@@ -353,10 +353,10 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
               'MISSING_THOUGHT_SIGNATURE': ['cg-issue', 'Generation stopped: request has at least one Gemini thought signature missing', null],
               'FINISH_REASON_UNSPECIFIED': ['cg-issue', 'Generation stopped and no reason was given', null],
             } as const;
-            const reason = reasonMap[candidate0.finishReason];
+            const reason = reasonMap[candidate0.finishReason] || ['cg-issue', `Generation stopped due to unknown reason: ${candidate0.finishReason || 'reason unknown'}`, null];
             pt.setTokenStopReason(reason[0]);
             // append finishMessage if available for more context
-            const issueMessage = candidate0.finishMessage ? `${reason[1]}: ${candidate0.finishMessage}` : reason[1];
+            const issueMessage = candidate0.finishMessage ? `${reason[1]}. ${candidate0.finishReason}: ${candidate0.finishMessage}.` : reason[1];
             return pt.setDialectTerminatingIssue(issueMessage, reason[2], false);
 
           default:
