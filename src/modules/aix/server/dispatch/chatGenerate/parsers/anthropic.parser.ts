@@ -7,6 +7,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { DispatchMutationSignal, type DispatchBodyMutation } from '../chatGenerate.dispatchMutation';
 import { RequestRetryError } from '../chatGenerate.retrier';
 
 
@@ -570,6 +571,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
+
+        // Detect pause_turn: throw mutation signal to continue with accumulated content
+        if (responseMessage?.stop_reason === 'pause_turn') {
+          throw new DispatchMutationSignal(
+            _createAnthropicPauseTurnMutation(responseMessage.content, responseMessage.container?.id),
+          );
+        }
+
         return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -644,6 +653,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       content,
       stop_reason,
       usage,
+      container,
     } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
 
     // -> Model
@@ -894,6 +904,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
+    // Detect pause_turn: throw mutation signal to continue with accumulated content
+    if (stop_reason === 'pause_turn') {
+      throw new DispatchMutationSignal(
+        _createAnthropicPauseTurnMutation(content, container?.id),
+      );
+    }
+
     // -> Token Stop Reason
     const tokenStopReason = _fromAnthropicStopReason(stop_reason);
     if (tokenStopReason !== null)
@@ -954,4 +971,48 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
       console.warn(`_fromAnthropicStopReason: unknown stop reason: ${stopReason}`);
       return null;
   }
+}
+
+
+/**
+ * Creates a DispatchBodyMutation for Anthropic's pause_turn continuation.
+ *
+ * When applied to the original body, appends a new assistant message with
+ * the content blocks from this turn. When chained (multi-turn), detects
+ * an existing trailing assistant message and extends it rather than adding
+ * a duplicate - this accumulates content across pause_turn turns correctly.
+ *
+ * Per Anthropic spec (https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons#pause-turn):
+ * - Messages: [...original_messages, { role: 'assistant', content: accumulated_blocks }]
+ * - Container: response `{ id, expires_at }` -> request `container: id` (string)
+ */
+function _createAnthropicPauseTurnMutation(
+  contentBlocks: AnthropicWire_API_Message_Create.Response['content'],
+  containerId: string | undefined,
+): DispatchBodyMutation {
+  return {
+    reason: 'pause_turn',
+    mutateBody(body: Record<string, unknown>): Record<string, unknown> {
+      const messages = [...(body.messages as Array<{ role: string; content: unknown[] }>)];
+      const lastMessage = messages[messages.length - 1];
+
+      if (lastMessage?.role === 'assistant') {
+        // Multi-turn: extend existing assistant message from prior pause_turn
+        messages[messages.length - 1] = {
+          ...lastMessage,
+          content: [...lastMessage.content, ...contentBlocks],
+        };
+      } else {
+        // First pause_turn: append new assistant message after all original messages
+        messages.push({ role: 'assistant', content: contentBlocks });
+      }
+
+      return {
+        ...body,
+        messages,
+        // Container: response returns { id, expires_at }, request takes string ID
+        ...(containerId ? { container: containerId } : {}),
+      };
+    },
+  };
 }

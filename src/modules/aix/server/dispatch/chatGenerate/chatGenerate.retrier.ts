@@ -4,7 +4,7 @@ import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
-import { executeChatGenerate } from './chatGenerate.executor';
+import { withDispatchMutation } from './chatGenerate.dispatchMutation';
 
 
 // configuration
@@ -54,7 +54,7 @@ export async function* executeChatGenerateWithRetry(
   while (true) {
     try {
 
-      yield* executeChatGenerate(dispatchCreatorFn, streaming, abortSignal, _d, {
+      yield* withDispatchMutation(dispatchCreatorFn, streaming, abortSignal, _d, {
         retriesAvailable: attemptNumber < maxAttempts,
       });
 
