@@ -7,6 +7,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { DispatchMutationSignal, type DispatchBodyMutation } from '../chatGenerate.dispatchMutation';
 import { RequestRetryError } from '../chatGenerate.retrier';
 
 
@@ -569,7 +570,15 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
-        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_stop: stop_reason=${responseMessage?.stop_reason || 'none'}`);
+
+        // [Anthropic] pause_turn: server tools need more iterations - throw to trigger continuation
+        if (responseMessage?.stop_reason === 'pause_turn') {
+          throw new DispatchMutationSignal(
+            _createAnthropicPauseTurnMutation(responseMessage.content, responseMessage.container?.id),
+          );
+        }
+
         return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -894,6 +903,15 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
+    // [Anthropic] pause_turn: server tools need more iterations - throw to trigger continuation
+    if (stop_reason === 'pause_turn') {
+      // Parse container from the full response for the continuation
+      const fullResponse = JSON.parse(fullData);
+      throw new DispatchMutationSignal(
+        _createAnthropicPauseTurnMutation(content, fullResponse.container?.id),
+      );
+    }
+
     // -> Token Stop Reason
     const tokenStopReason = _fromAnthropicStopReason(stop_reason);
     if (tokenStopReason !== null)
@@ -920,6 +938,28 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       }
       pt.updateMetrics(metricsUpdate);
     }
+  };
+}
+
+
+/**
+ * Creates a dispatch body mutation for Anthropic pause_turn continuation.
+ * Sends accumulated content blocks back as an assistant message and preserves the container ID.
+ */
+function _createAnthropicPauseTurnMutation(accumulatedContent: unknown[], containerId?: string): DispatchBodyMutation {
+  return {
+    reason: 'pause_turn',
+    mutateBody(body: Record<string, unknown>): Record<string, unknown> {
+      const messages = body.messages as any[];
+      return {
+        ...body,
+        messages: [
+          messages[0], // original user message
+          { role: 'assistant', content: accumulatedContent },
+        ],
+        ...(containerId ? { container: containerId } : {}),
+      };
+    },
   };
 }
 
