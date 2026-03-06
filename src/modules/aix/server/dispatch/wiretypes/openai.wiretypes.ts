@@ -1159,9 +1159,10 @@ export namespace OpenAIWire_Responses_Items {
       'generating', // 2025-09-30: seen on OpenAI for `image_generation_call` items
       'in_progress', 'completed', 'incomplete',
     ]).optional(),
-    // NOTE: we also see the following in the image_generation_call item
+    // Echoed configuration from the tool request - used to infer mime type for the result
+    output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
+    // NOTE: we also see the following echoed in the image_generation_call item
     // background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
-    // output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
     // quality: z.enum(['auto', 'high', 'medium', 'low']).optional(),
   });
 
