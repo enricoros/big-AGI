@@ -14,6 +14,7 @@ import { FormLabelStart } from './FormLabelStart';
 const _styles = {
 
   control: {
+    flexGrow: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
   } as const,
