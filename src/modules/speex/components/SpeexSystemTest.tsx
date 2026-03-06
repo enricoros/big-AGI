@@ -61,6 +61,7 @@ export function SpeexSystemTest() {
       customText,
       undefined,
       {
+        label: 'System test',
         maxChunkLength,
         disableUnspeakable: noCleanup,
         rpcDisableStreaming: noStreaming,

@@ -1,3 +1,4 @@
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 import type { SpeexWire_VoiceOption } from './protocols/rpc/rpc.wiretypes';
@@ -141,10 +142,12 @@ export interface SpeexSpeakTextOptions {
   maxChunkLength?: false | number; // max characters per chunk, default 500
   // text cleanup
   disableUnspeakable?: boolean; // disable removal of non-speakable text (e.g., URLs, emails)
+  disableUnmarkdown?: boolean;  // disable markdown cleanup (e.g., remove **bold** and _italics_ markers)
   disableCharLimit?: boolean; // disable character limit enforcement (e.g., 5000 chars)
   // future-ui
   label?: string;        // UNUSED: For NorthBridge queue display
   personaUid?: string;   // UNUSED: For NorthBridge queue icon / controls (if the audio came from a persona)
+  conversationId?: DConversationId; // UNUSED: For NorthBridge "go to source" navigation
 }
 
 export type SpeexSpeakTextResult = {

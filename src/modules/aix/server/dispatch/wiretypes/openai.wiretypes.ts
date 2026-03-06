@@ -1159,9 +1159,10 @@ export namespace OpenAIWire_Responses_Items {
       'generating', // 2025-09-30: seen on OpenAI for `image_generation_call` items
       'in_progress', 'completed', 'incomplete',
     ]).optional(),
-    // NOTE: we also see the following in the image_generation_call item
+    // Echoed configuration from the tool request - used to infer mime type for the result
+    output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
+    // NOTE: we also see the following echoed in the image_generation_call item
     // background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
-    // output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
     // quality: z.enum(['auto', 'high', 'medium', 'low']).optional(),
   });
 
@@ -1421,7 +1422,7 @@ export namespace OpenAIWire_Responses_Tools {
       z.object({
         type: z.literal('auto'),
         file_ids: z.array(z.string()).optional(), // uploaded file IDs to make available
-        memory_limit: z.string().optional(), // e.g., "512m", "1g", "2g", "4g", "8g"
+        memory_limit: z.string().optional(), // e.g., "1g", "4g", "16g", "64g"
       }),
     ]).nullish(), // optional - if omitted, auto mode is used
   });
@@ -1885,10 +1886,10 @@ export namespace OpenAIWire_API_Responses {
 
   // Streaming > Control? > Response queued
 
-  // const ResponseQueuedEvent_schema = _BaseEvent_schema.extend({
-  //   type: z.literal('response.queued'),
-  //   response: Response_schema,
-  // });
+  const ResponseQueuedEvent_schema = _BaseEvent_schema.extend({
+    type: z.literal('response.queued'),
+    response: Response_schema,
+  });
 
   // [XAI] Streaming: TBA: https://docs.x.ai/docs/guides/tools/overview#tool-call-function-names-vs-usage-categories
 
@@ -1924,7 +1925,7 @@ export namespace OpenAIWire_API_Responses {
     ResponseCompletedEvent_schema,
     ResponseFailedEvent_schema,
     ResponseIncompleteEvent_schema,
-    // ResponseQueuedEvent_schema,
+    ResponseQueuedEvent_schema,
 
     // Output item events
     OutputItemAddedEvent_schema,
