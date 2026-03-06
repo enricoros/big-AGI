@@ -1,12 +1,13 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, Option, Select, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, ModalSlotsAndSlotProps, Option, Select, SelectSlotsAndSlotProps, Sheet, Tooltip, Typography, } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CameraEnhanceIcon from '@mui/icons-material/CameraEnhance';
 import CameraFrontIcon from '@mui/icons-material/CameraFront';
 import CameraRearIcon from '@mui/icons-material/CameraRear';
 import DownloadIcon from '@mui/icons-material/Download';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import FlipCameraAndroidOutlinedIcon from '@mui/icons-material/FlipCameraAndroidOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -16,6 +17,7 @@ import { Is } from '~/common/util/pwaUtils';
 import { animationBackgroundCameraFlash } from '~/common/util/animUtils';
 import { downloadVideoFrame, renderVideoFrameAsFile } from '~/common/util/videoUtils';
 
+import type { CameraCaptureResult } from './useCameraCapture';
 import { useCameraCapture } from './useCameraCapture';
 
 
@@ -25,66 +27,150 @@ const FLASH_DURATION_MS = 600;
 const ADD_COOLDOWN_MS = 300;
 
 
-const captureButtonContainerSx: SxProps = {
-  display: 'flex',
-  gap: 1,
-  justifyContent: 'space-between',
-  alignItems: 'center',
-};
-
-const captureButtonGroupSx: SxProps = {
-  '--ButtonGroup-separatorColor': 'none !important',
-  // '--ButtonGroup-separatorSize': '2px',
-  borderRadius: '3rem',
-  // boxShadow: 'md',
-  boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
-};
-
-const captureButtonSx: SxProps = {
-  backgroundColor: 'neutral.solidHoverBg',
-  pl: 3.25,
-  pr: 4.5,
-  py: 1.5,
-  minWidth: { md: 200 },
-  '&:hover': {
-    backgroundColor: 'neutral.plainHoverColor',
+const _modalSlotProps: ModalSlotsAndSlotProps['slotProps'] = {
+  backdrop: {
+    sx: {
+      backdropFilter: 'none', // using none because this is heavy
+      // backdropFilter: 'blur(4px)',
+      // backgroundColor: 'rgba(11 13 14 / 0.75)',
+      backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.67)',
+    },
   },
-};
+} as const;
 
-const addButtonSx: SxProps = {
-  pl: 2.5,
-  pr: 2,
-};
+const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
+  listbox: {
+    size: 'md'
+  },
+} as const;
+
+const _styles = {
+
+  modal: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  container: {
+    display: 'flex', flexDirection: 'column', m: 1,
+    borderRadius: 'md', overflow: 'hidden',
+    boxShadow: 'lg',
+  },
+
+  topBar: {
+    p: 1,
+    backgroundColor: 'neutral.800',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+
+  topBarLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+  },
+
+  cameraSelect: {
+    background: 'transparent',
+  },
+
+  videoContainer: {
+    position: 'relative',
+    backgroundColor: 'background.level3',
+  },
+
+  infoOverlay: {
+    position: 'absolute', inset: 0, zIndex: 1,
+    background: 'rgba(0,0,0,0.5)', color: 'white',
+    whiteSpace: 'pre', overflowY: 'scroll',
+  },
+
+  bottomBar: {
+    p: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1,
+  },
+
+  captureButtonContainer: {
+    display: 'flex',
+    gap: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  captureButtonGroup: {
+    '--ButtonGroup-separatorColor': 'none !important',
+    // '--ButtonGroup-separatorSize': '2px',
+    borderRadius: '3rem',
+    // boxShadow: 'md',
+    boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+  },
+
+  addButton: {
+    pl: 2.5,
+    pr: 2,
+  },
+
+  captureButton: {
+    backgroundColor: 'neutral.solidHoverBg',
+    pl: 3.25,
+    pr: 4.5,
+    py: 1.5,
+    minWidth: { md: 200 },
+    '&:hover': {
+      backgroundColor: 'neutral.plainHoverColor',
+    },
+  },
+
+  recButton: {
+    pl: 2,
+    pr: 2.5,
+  },
+
+} as const satisfies Record<string, SxProps>;
 
 
 export function CameraCaptureModal(props: {
-  onCloseModal: () => void;
-  onAttachImage: (file: File) => void;
-  // onOCR: (ocrText: string) => void }
+  allowMultiCapture?: boolean;
+  allowLiveFeed?: boolean;
+  // allowOcr?: boolean;
+  onDone: (result: CameraCaptureResult | null) => void;
 }) {
 
   // state
   const [showInfo, setShowInfo] = React.useState(false);
   const [isFlashing, setIsFlashing] = React.useState(false); // For flash effect
   const [isAddButtonDisabled, setIsAddButtonDisabled] = React.useState(false); // Cooldown state
+  const [capturedCount, setCapturedCount] = React.useState(0);
+  const capturedImagesRef = React.useRef<File[]>([]);
 
   // external state
   const {
     videoRef,
-    cameras, cameraIdx, setCameraIdx,
-    zoomControl, info, error,
-    resetVideo,
+    cameras,
+    cameraIdx,
+    setCameraIdx,
+    detachStream,
+    zoomControl,
+    info,
+    error,
   } = useCameraCapture();
 
 
   // derived state
-  const { onCloseModal, onAttachImage } = props;
+  const { allowMultiCapture, allowLiveFeed, onDone } = props;
 
 
-  const stopAndClose = React.useCallback(() => {
-    resetVideo();
-    onCloseModal();
-  }, [onCloseModal, resetVideo]);
+  // single exit point: gather results and close (stream cleanup happens via effect on unmount)
+  const _resolveAndClose = React.useCallback((extraImage: undefined | File, includeLiveStream: boolean) => {
+    const images = capturedImagesRef.current;
+    if (extraImage)
+      images.push(extraImage);
+    const liveStream = includeLiveStream ? detachStream() ?? undefined : undefined;
+    onDone(images.length > 0 || liveStream ? { images, liveStream } : null);
+  }, [detachStream, onDone]);
 
 
   const handleFlashEffect = React.useCallback((cooldownMs: number) => {
@@ -108,28 +194,39 @@ export function CameraCaptureModal(props: {
     try {
       // handleFlashEffect(0); // Trigger flash
       const file = await renderVideoFrameAsFile(videoRef.current, 'camera', 'image/jpeg', 0.95);
-      onAttachImage(file);
-      stopAndClose();
+      // resolve adding this file and with no livestream
+      _resolveAndClose(file, false);
     } catch (error) {
-      console.error('Error capturing video frame:', error);
+      console.warn('[CameraCapture] Error capturing video frame:', error);
     }
-  }, [onAttachImage, stopAndClose, videoRef]);
+  }, [_resolveAndClose, videoRef]);
 
   const handleVideoAddClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
     try {
       handleFlashEffect(ADD_COOLDOWN_MS); // Trigger flash and cooldown
       const file = await renderVideoFrameAsFile(videoRef.current, 'camera', 'image/jpeg', 0.95);
-      onAttachImage(file);
+      capturedImagesRef.current.push(file);
+      setCapturedCount(c => c + 1);
     } catch (error) {
-      console.error('Error capturing video frame:', error);
+      console.warn('[CameraCapture] Error capturing video frame:', error);
     }
-  }, [handleFlashEffect, onAttachImage, videoRef]);
+  }, [handleFlashEffect, videoRef]);
 
   const handleVideoDownloadClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
     await downloadVideoFrame(videoRef.current, 'camera', 'image/jpeg', 0.98).catch(alert);
   }, [videoRef]);
+
+  const handleStartLiveFeedClicked = React.useCallback(() => {
+    // resolve with the detached livestream, and no extra images
+    _resolveAndClose(undefined, true);
+  }, [_resolveAndClose]);
+
+  const handleCloseModal = React.useCallback(() => {
+    // resolve with no extra images, no livestream - baseline just closes
+    _resolveAndClose(undefined, false);
+  }, [_resolveAndClose]);
 
 
   // Reduced set of cameras
@@ -206,49 +303,60 @@ export function CameraCaptureModal(props: {
   }, [cameraIdx, displayCameras, setCameraIdx]);
 
 
+  const cameraButtons = React.useMemo(() => {
+    const btns: React.ReactNode[] = [];
+    if (allowMultiCapture)
+      btns.push(
+        <Tooltip key='add' disableInteractive arrow placement='top' title='Add to message'>
+          <IconButton size='sm' disabled={isAddButtonDisabled} onClick={handleVideoAddClicked} sx={_styles.addButton}>
+            <AddRoundedIcon />{capturedCount ? <Box sx={{ fontSize: 'xs', ml: 0.5 }}>{capturedCount}</Box> : null}
+          </IconButton>
+        </Tooltip>,
+      );
+    btns.push(
+      <Button key='snap' size='lg' onClick={handleVideoSnapClicked} endDecorator={<CameraEnhanceIcon />} sx={_styles.captureButton}>
+        Capture
+      </Button>,
+    );
+    if (allowLiveFeed && !capturedCount)
+      btns.push(
+        <Tooltip key='live' disableInteractive arrow placement='top' title='Start live feed'>
+          <IconButton
+            size='sm'
+            color='danger'
+            disabled={cameraIdx === -1}
+            onClick={handleStartLiveFeedClicked}
+            sx={_styles.recButton}
+          >
+            <FiberManualRecordIcon />
+          </IconButton>
+        </Tooltip>,
+      );
+    return btns;
+  }, [allowLiveFeed, allowMultiCapture, cameraIdx, capturedCount, handleStartLiveFeedClicked, handleVideoAddClicked, handleVideoSnapClicked, isAddButtonDisabled]);
+
+
   return (
     <Modal
       open
-      onClose={stopAndClose}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      slotProps={{
-        backdrop: {
-          sx: {
-            backdropFilter: 'none', // using none because this is heavy
-            // backdropFilter: 'blur(4px)',
-            // backgroundColor: 'rgba(11 13 14 / 0.75)',
-            backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.67)',
-          },
-        },
-      }}
+      onClose={handleCloseModal}
+      slotProps={_modalSlotProps}
+      sx={_styles.modal}
     >
 
-      <Box sx={{
-        display: 'flex', flexDirection: 'column', m: 1,
-        borderRadius: 'md', overflow: 'hidden',
-        boxShadow: 'lg',
-      }}>
+      <Box sx={_styles.container}>
 
         {/* Top bar */}
-        <Sheet variant='solid' invertedColors={true} sx={{
-          p: 1,
-          backgroundColor: 'neutral.800',
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Sheet variant='solid' invertedColors={true} sx={_styles.topBar}>
+          <Box sx={_styles.topBarLeft}>
             <Select
               size='sm'
               variant={displayCameras.length > 1 ? 'soft' : 'plain'}
               color='neutral'
               value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
               indicator={<KeyboardArrowDownIcon />}
-              sx={{ background: 'transparent' }}
-              slotProps={{ listbox: { size: 'md' } }}
+              sx={_styles.cameraSelect}
+              slotProps={_selectSlotProps}
             >
               {(!displayCameras.length || DEBUG_NO_CAMERA_OPTION) && (
                 <Option key='video-dev-none' value={-1}>
@@ -275,11 +383,11 @@ export function CameraCaptureModal(props: {
             )}
           </Box>
 
-          <ModalClose size='lg' onClick={stopAndClose} sx={{ position: 'static' }} />
+          <ModalClose size='lg' onClick={handleCloseModal} sx={{ position: 'static' }} />
         </Sheet>
 
         {/* (main) Video */}
-        <Box sx={{ position: 'relative', backgroundColor: 'background.level3' }}>
+        <Box sx={_styles.videoContainer}>
           <video
             ref={videoRef} autoPlay playsInline
             style={{
@@ -302,12 +410,7 @@ export function CameraCaptureModal(props: {
           )}
 
           {showInfo && !!info && (
-            <Typography
-              sx={{
-                position: 'absolute', inset: 0, zIndex: 1, /* camera info on top of video */
-                background: 'rgba(0,0,0,0.5)', color: 'white',
-                whiteSpace: 'pre', overflowY: 'scroll',
-              }}>
+            <Typography sx={_styles.infoOverlay}>
               {info}
             </Typography>
           )}
@@ -316,22 +419,14 @@ export function CameraCaptureModal(props: {
         </Box>
 
         {/* Bottom controls (zoom, download) & progress */}
-        <Sheet
-          variant='soft'
-          sx={{
-            p: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-          }}
-        >
+        <Sheet variant='soft' sx={_styles.bottomBar}>
           {!!error && <InlineError error={error} />}
 
           {zoomControl}
 
           {/*{ocrProgress !== null && <LinearProgress color='primary' determinate value={100 * ocrProgress} sx={{ px: 2 }} />}*/}
 
-          <Box paddingBottom={zoomControl ? 1 : undefined} sx={captureButtonContainerSx}>
+          <Box paddingBottom={zoomControl ? 1 : undefined} sx={_styles.captureButtonContainer}>
 
             {/* Info */}
             <IconButton disabled={!info} onClick={() => setShowInfo((prev) => !prev)}>
@@ -343,15 +438,8 @@ export function CameraCaptureModal(props: {
             {/*</Button>*/}
 
             {/* Capture */}
-            <ButtonGroup variant='solid' sx={captureButtonGroupSx}>
-              <Tooltip disableInteractive arrow placement='top' title='Add to message'>
-                <IconButton size='sm' disabled={isAddButtonDisabled} onClick={handleVideoAddClicked} sx={addButtonSx}>
-                  <AddRoundedIcon />
-                </IconButton>
-              </Tooltip>
-              <Button size='lg' onClick={handleVideoSnapClicked} endDecorator={<CameraEnhanceIcon />} sx={captureButtonSx}>
-                Capture
-              </Button>
+            <ButtonGroup variant='solid' sx={_styles.captureButtonGroup}>
+              {cameraButtons}
             </ButtonGroup>
 
             {/* Download */}
