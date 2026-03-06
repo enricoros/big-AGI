@@ -74,7 +74,7 @@ function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) 
       const result = await speakText(
         SPEEX_PREVIEW_TEXT,
         { engineId: engineId },
-        { rpcDisableStreaming: !SPEEX_PREVIEW_STREAM },
+        { label: 'Engine preview', rpcDisableStreaming: !SPEEX_PREVIEW_STREAM },
         signal,
       );
       if (!result.success && !signal.aborted) throw new Error(result.errorText || 'Preview failed');
