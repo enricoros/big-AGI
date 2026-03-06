@@ -45,6 +45,22 @@ export function speex_textCleanupUnspoken(inputText: string): string {
   return text.trim();
 }
 
+/**
+ * Strips inline markdown formatting while preserving text content.
+ * Safe with LLM-generated text - uses word-boundary-aware matching to avoid false positives (e.g. math `2 * 3`).
+ */
+export function speex_textStripMarkdown(inputText: string): string {
+  let text = inputText;
+  text = text.replace(/\*{1,3}([^\s*](?:[^*]*[^\s*])?)\*{1,3}/g, '$1'); // ***bold italic***, **bold**, *italic*
+  text = text.replace(/~~([^\s~](?:[^~]*[^\s~])?)~~/g, '$1');          // ~~strikethrough~~
+  text = text.replace(/`([^`\n]+)`/g, '$1');                      // `inline code`
+  text = text.replace(/^#{1,6}\s+/gm, '');                        // # headings
+  text = text.replace(/\[([^\]]+)]\([^)]*\)/g, '$1');             // [link text](url) -> link text
+  text = text.replace(/^\s*[-*+]\s+/gm, '');                      // - bullet lists
+  text = text.replace(/^\s*\d+\.\s+/gm, '');                      // 1. numbered lists
+  return text;
+}
+
 
 // --- Text Chunking ---
 

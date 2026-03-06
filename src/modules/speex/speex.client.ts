@@ -12,7 +12,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { DSpeexEngineAny, SpeexSpeakTextOptions, SpeexSpeakTextResult, SpeexSynthesizeOptions, SpeexSynthesizeResult, SpeexVoiceSelector } from './speex.types';
 import { speexFindEngineById, speexFindGlobalEngine, speexFindValidEngineByType } from './store-module-speex';
-import { speex_splitTextIntoChunks, speex_textApplyCharLimit, speex_textCleanupUnspoken } from './speex.processing';
+import { speex_splitTextIntoChunks, speex_textApplyCharLimit, speex_textCleanupUnspoken, speex_textStripMarkdown } from './speex.processing';
 
 import { SPEEX_DEBUG } from './speex.config';
 import { speexSynthesize_RPC } from './protocols/rpc/rpc.client';
@@ -49,6 +49,8 @@ export async function speakText(
   // preprocess text unless disabled
   if (!options?.disableUnspeakable)
     inputText = speex_textCleanupUnspoken(inputText);
+  if (!options?.disableUnmarkdown)
+    inputText = speex_textStripMarkdown(inputText);
   if (!options?.disableCharLimit)
     inputText = speex_textApplyCharLimit(inputText);
 

@@ -142,6 +142,7 @@ export interface SpeexSpeakTextOptions {
   maxChunkLength?: false | number; // max characters per chunk, default 500
   // text cleanup
   disableUnspeakable?: boolean; // disable removal of non-speakable text (e.g., URLs, emails)
+  disableUnmarkdown?: boolean;  // disable markdown cleanup (e.g., remove **bold** and _italics_ markers)
   disableCharLimit?: boolean; // disable character limit enforcement (e.g., 5000 chars)
   // future-ui
   label?: string;        // UNUSED: For NorthBridge queue display
