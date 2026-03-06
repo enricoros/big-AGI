@@ -1885,10 +1885,10 @@ export namespace OpenAIWire_API_Responses {
 
   // Streaming > Control? > Response queued
 
-  // const ResponseQueuedEvent_schema = _BaseEvent_schema.extend({
-  //   type: z.literal('response.queued'),
-  //   response: Response_schema,
-  // });
+  const ResponseQueuedEvent_schema = _BaseEvent_schema.extend({
+    type: z.literal('response.queued'),
+    response: Response_schema,
+  });
 
   // [XAI] Streaming: TBA: https://docs.x.ai/docs/guides/tools/overview#tool-call-function-names-vs-usage-categories
 
@@ -1924,7 +1924,7 @@ export namespace OpenAIWire_API_Responses {
     ResponseCompletedEvent_schema,
     ResponseFailedEvent_schema,
     ResponseIncompleteEvent_schema,
-    // ResponseQueuedEvent_schema,
+    ResponseQueuedEvent_schema,
 
     // Output item events
     OutputItemAddedEvent_schema,
