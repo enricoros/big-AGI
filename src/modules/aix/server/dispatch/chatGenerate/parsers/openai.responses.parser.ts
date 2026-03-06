@@ -406,7 +406,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             // Create inline image with base64 data
             if (igResult)
               pt.appendImageInline(
-                'image/png', // default mime type
+                _imageGenerationMimeType(doneItem), // infer from output_format echoed in the item
                 igResult,
                 igRevisedPrompt || 'Generated image',
                 'gpt-image-1', // generator
@@ -888,7 +888,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
           // Create inline image with base64 data
           if (igResult)
             pt.appendImageInline(
-              'image/png', // default mime type
+              _imageGenerationMimeType(oItem), // infer from output_format echoed in the item
               igResult,
               igRevisedPrompt || 'Generated image',
               'gpt-image-1', // generator
@@ -1027,6 +1027,22 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
       if (annotation)
         console.log(`[DEV] AIX: Unknown annotation type: ${annotation.type}`, { annotation });
       break;
+  }
+}
+
+/**
+ * Infers the mime type from the image_generation_call output item's output_format field.
+ * The API echoes the output_format in the done item (e.g. 'png', 'webp', 'jpeg').
+ */
+function _imageGenerationMimeType(item: { output_format?: string }): string {
+  switch ((item as any).output_format) {
+    case 'webp':
+      return 'image/webp';
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+    default:
+      return 'image/png';
   }
 }
 
