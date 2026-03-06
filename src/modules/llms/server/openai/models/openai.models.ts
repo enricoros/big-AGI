@@ -12,6 +12,23 @@ import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } 
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: ModelVariantMap = {
 
+  // GPT-5.4 with reasoning disabled (non-thinking) - supports temperature control
+  'gpt-5.4-2026-03-05': {
+    idVariant: '::thinking-none',
+    label: 'GPT-5.4 (No-thinking)',
+    hidden: true, // hidden by default as redundant, user can unhide in settings
+    description: 'Supports temperature control for creative applications. GPT-5.4 with reasoning disabled (reasoning_effort=none).',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching], // NO LLM_IF_OAI_Reasoning, NO LLM_IF_HOTFIX_NoTemperature
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'none', hidden: true }, // factory 'none', not changeable
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+  },
+
   // GPT-5.2 with reasoning disabled (non-thinking) - supports temperature control
   // Per https://platform.openai.com/docs/guides/latest-model#gpt-5-2-parameter-compatibility
   // temperature, top_p, logprobs are only supported when reasoning_effort=none
@@ -72,6 +89,58 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // NOTES:
 // - "Structured Outputs" is LLM_IF_OAI_Json
 export const _knownOpenAIChatModels: ManualMappings = [
+
+  /// GPT-5.4 series - Released March 5, 2026
+
+  // GPT-5.4
+  {
+    idPrefix: 'gpt-5.4-2026-03-05',
+    label: 'GPT-5.4 (2026-03-05)',
+    description: 'Most capable and efficient frontier model for professional work. Native computer use, improved reasoning, coding, and agentic workflows with 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 0.25 }, output: 15 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.4',
+    label: 'GPT-5.4',
+    symLink: 'gpt-5.4-2026-03-05',
+  },
+
+  // GPT-5.4 Pro
+  {
+    idPrefix: 'gpt-5.4-pro-2026-03-05',
+    label: 'GPT-5.4 Pro (2026-03-05)',
+    description: 'Most capable model for complex tasks. Uses more compute for smarter, more precise responses on difficult problems.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 272000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['medium', 'high', 'xhigh'] },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 30, output: 180 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.4-pro',
+    label: 'GPT-5.4 Pro',
+    symLink: 'gpt-5.4-pro-2026-03-05',
+  },
+
 
   /// GPT-5.3 series
 
@@ -1067,6 +1136,9 @@ const openAIModelsDenyList: string[] = [
   // STT models: /v1/audio/transcriptions, /v1/audio/translations
   'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', // FIXME: support these
 
+  // Image-focused chat models (non-standard image output pricing)
+  'gpt-5-image', 'gpt-5-image-mini',
+
   // Image models: /v1/images/generations
   'gpt-image-1.5', 'chatgpt-image-latest', 'gpt-image-1', 'gpt-image-1-mini', 'dall-e-3', 'dall-e-2',
 
@@ -1094,6 +1166,12 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5.4
+  'gpt-5.4-20',
+  'gpt-5.4-pro-20',
+  'gpt-5.4-pro',
+  'gpt-5.4-chat-latest',
+  'gpt-5.4',
   // GPT-5.3
   'gpt-5.3-20',
   'gpt-5.3-pro-20',
@@ -1287,6 +1365,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
   // typemap to known models
   const ortOaiRefMap: Record<string, string | null> = {
     // renames
+    'gpt-5.4-chat': 'gpt-5.4-2026-03-05', // no chat-latest yet, map to snapshot
     'gpt-5.3-chat': 'gpt-5.3-chat-latest',
     'gpt-5.2-chat': 'gpt-5.2-chat-latest',
     'gpt-5.1-chat': 'gpt-5.1-chat-latest',

@@ -2,6 +2,21 @@
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: oai-image-generation, oai-reasoning-effort, oai-temperature-think-high, oai-temperature-think-none, oai-verbosity, oai-web-search, temperature. If missing, the parameter is not supported by that model.",
   "_modelFilter": "gpt-5, o",
+  "gpt-5.4-2026-03-05": {
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
+  "gpt-5.4-pro-2026-03-05": {
+    "oai-reasoning-effort": ["medium","high","xhigh"],
+    "oai-temperature-think-high": [1],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
   "gpt-5.3-codex": {
     "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
     "oai-temperature-think-high": [1],
