@@ -22,7 +22,7 @@ import { MobileDrawer } from './drawer/MobileDrawer';
 import { MobilePanel } from './panel/MobilePanel';
 import { Modals } from './Modals';
 import { PageWrapper } from './PageWrapper';
-import { optimaActions, optimaOpenModels, optimaOpenPreferences } from './useOptima';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, optimaTogglePanel } from './useOptima';
 
 
 // this undoes the PanelGroup styling on mobile, as it's not needed
@@ -80,6 +80,9 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     // Shortcuts
     { key: Is.OS.MacOS ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
     { key: 'h', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
+    // Layout
+    { key: '(', ctrl: true, shift: true, action: () => optimaToggleDrawer() },
+    { key: ')', ctrl: true, shift: true, action: () => optimaTogglePanel() },
   ], []));
 
   return <>

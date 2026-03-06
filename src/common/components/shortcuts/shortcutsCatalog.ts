@@ -53,4 +53,11 @@ export const shortcutsCatalog: ShortcutCatalogCategory[] = [
       { key: '/', ctrl: true, shift: true, description: 'Shortcuts' },
     ],
   },
+  {
+    label: 'Layout',
+    items: [
+      { key: '(', ctrl: true, shift: true, description: 'Toggle left drawer' },
+      { key: ')', ctrl: true, shift: true, description: 'Toggle right panel' },
+    ],
+  },
 ] as const;
