@@ -305,11 +305,28 @@ export function CameraCaptureModal(props: {
 
   const cameraButtons = React.useMemo(() => {
     const btns: React.ReactNode[] = [];
+
+    // After first capture: [wide +] [Done (N)] - no confusing Capture
+    if (capturedCount > 0) {
+      btns.push(
+        <Button key='add' size='lg' disabled={isAddButtonDisabled} onClick={handleVideoAddClicked} endDecorator={<CameraEnhanceIcon />} sx={{ ..._styles.captureButton, minWidth: 'unset', '--Button-gap': '0.25rem', px: 5 }}>
+          +
+        </Button>,
+      );
+      btns.push(
+        <Button key='done' size='lg' variant='soft' onClick={handleCloseModal} sx={{ px: 3, py: 1.5 }}>
+          Attach {capturedCount}
+        </Button>,
+      );
+      return btns;
+    }
+
+    // Before any captures: [+] [Capture] [Live?]
     if (allowMultiCapture)
       btns.push(
         <Tooltip key='add' disableInteractive arrow placement='top' title='Add to message'>
           <IconButton size='sm' disabled={isAddButtonDisabled} onClick={handleVideoAddClicked} sx={_styles.addButton}>
-            <AddRoundedIcon />{capturedCount ? <Box sx={{ fontSize: 'xs', ml: 0.5 }}>{capturedCount}</Box> : null}
+            <AddRoundedIcon />
           </IconButton>
         </Tooltip>,
       );
@@ -318,7 +335,7 @@ export function CameraCaptureModal(props: {
         Capture
       </Button>,
     );
-    if (allowLiveFeed && !capturedCount)
+    if (allowLiveFeed)
       btns.push(
         <Tooltip key='live' disableInteractive arrow placement='top' title='Start live feed'>
           <IconButton
@@ -333,7 +350,7 @@ export function CameraCaptureModal(props: {
         </Tooltip>,
       );
     return btns;
-  }, [allowLiveFeed, allowMultiCapture, cameraIdx, capturedCount, handleStartLiveFeedClicked, handleVideoAddClicked, handleVideoSnapClicked, isAddButtonDisabled]);
+  }, [allowLiveFeed, allowMultiCapture, cameraIdx, capturedCount, handleCloseModal, handleStartLiveFeedClicked, handleVideoAddClicked, handleVideoSnapClicked, isAddButtonDisabled]);
 
 
   return (
