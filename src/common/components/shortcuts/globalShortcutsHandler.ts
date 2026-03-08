@@ -37,6 +37,10 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
       (shortcut.shift && !event.shiftKey) || (!shortcut.shift && event.shiftKey))
       continue;
 
+    // Skip if a text input element is focused and the shortcut opts into this guard
+    if (shortcut.skipIfInput && _isTextInputFocused())
+      continue;
+
     // Execute the action (and prevent the default browser action)
     event.preventDefault();
     event.stopPropagation();
@@ -65,4 +69,23 @@ function _uninstallGlobalShortcutHandler() {
     window.removeEventListener('keydown', _handleGlobalShortcutKeyDown);
     isHandlerInstalled = false;
   }
+}
+
+/** Returns true if the active element (or an ancestor with focus) is a text input, textarea, or contenteditable. */
+function _isTextInputFocused(): boolean {
+  const el = document.activeElement;
+  if (!el || el === document.body)
+    return false;
+  if (el instanceof HTMLInputElement && (el.type === 'text' || el.type === 'search' || el.type === 'url' || el.type === 'email' || el.type === 'password' || el.type === 'number' || el.type === 'tel'))
+    return true;
+  if (el instanceof HTMLTextAreaElement)
+    return true;
+  // check the element and its ancestors for contenteditable
+  let node: Element | null = el;
+  while (node) {
+    if (node instanceof HTMLElement && node.isContentEditable)
+      return true;
+    node = node.parentElement;
+  }
+  return false;
 }
