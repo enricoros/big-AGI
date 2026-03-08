@@ -4,8 +4,8 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 15 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
- * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai, zai
+ * Supports 16 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
+ * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, tensorix, togetherai, xai, zai
  */
 
 import * as z from 'zod/v4';
@@ -31,6 +31,7 @@ const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENPIPE_HOST = 'https://app.openpipe.ai/api';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
+const DEFAULT_TENSORIX_HOST = 'https://api.tensorix.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
 const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
@@ -113,7 +114,7 @@ export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai', 'openpipe',
-    'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
+    'openrouter', 'perplexity', 'tensorix', 'togetherai', 'xai', 'zai',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   oaiKey: z.string().trim(),
@@ -407,6 +408,23 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${xaiKey}`,
         },
         url: DEFAULT_XAI_HOST + apiPath,
+      };
+
+    case 'tensorix':
+      // https://docs.tensorix.ai - OpenAI-compatible API
+      let tensorixKey = access.oaiKey || env.TENSORIX_API_KEY || '';
+      const tensorixHost = llmsFixupHost(access.oaiHost || DEFAULT_TENSORIX_HOST, apiPath);
+
+      tensorixKey = llmsRandomKeyFromMultiKey(tensorixKey);
+      if (!tensorixKey || !tensorixHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Tensorix API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${tensorixKey}`,
+          'Content-Type': 'application/json',
+        },
+        url: tensorixHost + apiPath,
       };
 
     case 'zai':
