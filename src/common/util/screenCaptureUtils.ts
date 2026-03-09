@@ -3,11 +3,22 @@ import { renderVideoFrameAsFile } from '~/common/util/videoUtils';
 
 
 // Check if the browser supports screen capture
-export const supportsScreenCapture = isBrowser && !!navigator.mediaDevices?.getDisplayMedia;
+export const supportsScreenCapture = isBrowser && (
+  !!navigator.mediaDevices?.getDisplayMedia || Is.Electron
+);
 
 
 export async function takeScreenCapture(): Promise<File | null> {
-  if (!supportsScreenCapture) return null;
+  // Electron-native path: silent capture via desktopCapturer (no picker dialog)
+  if (Is.Electron && (window as any).electronAPI?.captureScreen) {
+    const dataUrl: string | null = await (window as any).electronAPI.captureScreen();
+    if (!dataUrl) return null;
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], 'capture.png', { type: 'image/png' });
+  }
+
+  if (!navigator.mediaDevices?.getDisplayMedia) return null;
 
   // detect a browser issue
   const startTime = Date.now();

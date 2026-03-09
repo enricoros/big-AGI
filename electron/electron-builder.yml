@@ -1,0 +1,28 @@
+appId: com.big-agi.desktop
+productName: big-AGI
+copyright: Copyright © 2024 Enrico Ros
+
+directories:
+  output: dist-electron
+
+files:
+  - electron/**/*
+  - .next/standalone/**/*
+  - .next/static/**/*
+  - public/**/*
+
+extraResources:
+  - from: .next/static
+    to: .next/standalone/.next/static
+  - from: public
+    to: .next/standalone/public
+
+mac:
+  target:
+    - dmg
+    - zip
+  icon: public/icons/icon-1024x1024.png
+  category: public.app-category.productivity
+
+dmg:
+  title: big-AGI

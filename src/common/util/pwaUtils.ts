@@ -10,6 +10,7 @@ const _safeUA = isBrowser ? window.navigator?.userAgent.toLowerCase() || '' : ''
 // Frontend Environment Classification
 export const Is = {
   Desktop: !/mobile|android|iphone|ipad|ipod/.test(_safeUA),
+  Electron: isBrowser && (_safeUA.includes('electron') || !!(window as any).electronAPI),
   Browser: {
     Chrome: _safeUA.includes('chrome') || _safeUA.includes('crios'),
     get Safari() {
@@ -96,12 +97,12 @@ export function generateDeviceName(): string {
   else if (Is.Browser.Safari) browser = 'Safari';
   else browser = 'Browser';
 
-  // Check for PWA status
+  // Check for PWA or Electron status
   const isPwaInstalled = isPwa();
-  const pwaIndicator = isPwaInstalled ? ' (App)' : '';
+  const suffix = Is.Electron ? ' (Desktop)' : isPwaInstalled ? ' (App)' : '';
 
   // Format the name based on platform and browser
-  return `${platform} ${browser}${pwaIndicator}`;
+  return `${platform} ${browser}${suffix}`;
 }
 
 /// Web Share ///

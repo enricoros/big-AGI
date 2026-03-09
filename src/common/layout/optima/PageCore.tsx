@@ -5,6 +5,7 @@ import { Box } from '@mui/joy';
 
 import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import type { NavItemApp } from '~/common/app.nav';
+import { Is } from '~/common/util/pwaUtils';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
 // import { MobileNav } from './MobileNav';
@@ -14,10 +15,13 @@ import { ChromelessFloatingButtons } from './ChromelessFloatingButtons';
 import { useOptimaChromeless } from './useOptima';
 
 
+// Electron title bar height (must match OptimaLayout.tsx)
+const electronTitleBarHeight = Is.Electron ? 38 : 0;
+
 const pageCoreSx: SxProps = {
   // background: 'url(/images/big-agi-background-3.png) no-repeat center bottom fixed',
   backgroundColor: themeBgApp,
-  height: '100dvh',
+  height: electronTitleBarHeight ? `calc(100dvh - ${electronTitleBarHeight}px)` : '100dvh',
   display: 'flex', flexDirection: 'column',
   transition: 'background-color 0.5s cubic-bezier(.17,.84,.44,1)',
 };

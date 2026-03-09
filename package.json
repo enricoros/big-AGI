@@ -11,13 +11,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate --no-hints",
+    "postinstall": "prisma generate --no-hints && node scripts/patch-electron-plist.js",
     "gen:icon-sprites": "node tools/develop/gen-icon-sprites/generate-llm-sprites.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "vercel:env:pull": "npx vercel env pull .env.development.local",
-    "sharp:win32_x64": "npm install --os=win32 --cpu=x64 sharp"
+    "sharp:win32_x64": "npm install --os=win32 --cpu=x64 sharp",
+    "electron:dev": "cross-env BIG_AGI_BUILD=standalone next build && electron electron/main.js",
+    "electron:build": "cross-env BIG_AGI_BUILD=standalone next build",
+    "electron:pack": "electron-builder --config electron/electron-builder.yml"
   },
+  "main": "electron/main.js",
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
   },
@@ -95,7 +99,9 @@
     "prettier": "^3.8.1",
     "prisma": "~5.22.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8"
   },
   "engines": {
     "node": "^24.0.0 || ^22.0.0 || ^20.0.0"
