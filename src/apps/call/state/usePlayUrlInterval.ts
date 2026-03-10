@@ -13,10 +13,11 @@ export function usePlayUrlInterval(url: string | null, firstDelay: number = 0, r
   React.useEffect(() => {
     if (!url) return;
 
+    const abortController = new AbortController();
     let timer2: any = null;
 
     const playFirstTime = () => {
-      const playAudio = () => AudioPlayer.playUrl(url);
+      const playAudio = () => AudioPlayer.playUrl(url, abortController.signal);
       void playAudio();
       timer2 = repeatMs > 0 ? setInterval(playAudio, repeatMs) : null;
     };
@@ -25,8 +26,8 @@ export function usePlayUrlInterval(url: string | null, firstDelay: number = 0, r
 
     return () => {
       clearTimeout(timer1);
-      if (timer2)
-        clearInterval(timer2);
+      timer2 && clearInterval(timer2);
+      abortController?.abort();
     };
   }, [firstDelay, repeatMs, url]);
 }
