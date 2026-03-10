@@ -1,6 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { MaybePromise } from '~/common/types/useful.types';
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageGenerator, messageSetGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -717,6 +718,11 @@ async function _aixChatGenerateContent_LL(
       inspectorTransport,
       inspectorContext,
       abortSignal,
+      (audio) => {
+        const audioUrl = URL.createObjectURL(audio.blob);
+        void AudioPlayer.playUrl(audioUrl, { label: audio.label || 'AI Audio' })
+          .finally(() => URL.revokeObjectURL(audioUrl));
+      },
     );
 
     try {
