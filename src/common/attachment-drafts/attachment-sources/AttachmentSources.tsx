@@ -184,6 +184,7 @@ function AttachmentSources(props: {
   mode: 'menu-compact' | 'menu-rich' | 'inline-buttons' | 'menu-message',
   color?: ColorPaletteProp, // menu-rich and inline-buttons
   richButtonStandOut?: boolean, // menu-rich only
+  menuButton?: React.ReactNode, // custom MenuButton trigger for menu-compact/menu-message modes
   // source availability - note that hasGoogleDriveCapability is local
   canBrowse: boolean, // whether browsing is available (for Web button and showing the auto-attach toggle)
   hasCamera: boolean,
@@ -271,7 +272,7 @@ function AttachmentSources(props: {
     return <>
 
       <Dropdown>
-        {!isMessage ? (
+        {props.menuButton ? props.menuButton : !isMessage ? (
           <MenuButton slots={{ root: IconButton }}>
             <AddRoundedIcon />
           </MenuButton>
