@@ -10,6 +10,7 @@ import { apiStream } from '~/common/util/trpc.client';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
+import { getLabsLosslessImages } from '~/common/stores/store-ux-labs';
 import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
@@ -717,6 +718,7 @@ async function _aixChatGenerateContent_LL(
       sendContentUpdate,
       inspectorTransport,
       inspectorContext,
+      getLabsLosslessImages(),
       abortSignal,
       (audio) => {
         const audioUrl = URL.createObjectURL(audio.blob);

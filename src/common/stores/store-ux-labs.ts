@@ -22,6 +22,9 @@ interface UXLabsStore {
   labsComposerAttachmentsInline: boolean;
   setLabsComposerAttachmentsInline: (labsComposerAttachmentsInline: boolean) => void;
 
+  labsLosslessImages: boolean;
+  setLabsPreserveLosslessImages: (labsLosslessImages: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -40,6 +43,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsComposerAttachmentsInline: false,
       setLabsComposerAttachmentsInline: (labsComposerAttachmentsInline: boolean) => set({ labsComposerAttachmentsInline }),
 
+      labsLosslessImages: false,
+      setLabsPreserveLosslessImages: (labsLosslessImages: boolean) => set({ labsLosslessImages }),
+
     }),
     {
       name: 'app-ux-labs',
@@ -56,3 +62,6 @@ export function getLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
 }
 
+export function getLabsLosslessImages() {
+  return useUXLabsStore.getState().labsLosslessImages;
+}
