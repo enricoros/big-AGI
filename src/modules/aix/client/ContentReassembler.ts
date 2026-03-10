@@ -53,6 +53,7 @@ export class ContentReassembler {
     inspectorTransport?: AixClientDebugger.Transport,
     inspectorContext?: AixClientDebugger.Context,
     private readonly wireAbortSignal?: AbortSignal,
+    private readonly onInlineAudio?: (audio: { blob: Blob; mimeType: string; label: string; durationMs?: number }) => void,
   ) {
 
     // [SUDO] Debugging the request, last-write-wins for the global (displayed in the UI)
@@ -439,30 +440,10 @@ export class ContentReassembler {
 
     try {
 
-      // create blob and play audio - this will throw on malformed data
+      // create blob from base64 - this will throw on malformed data
       const audioBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'ContentReassembler.onAppendInlineAudio');
-      const audioUrl = URL.createObjectURL(audioBlob);
 
-      // Play the audio
-      const audio = new Audio(audioUrl);
-
-      // Clean up when audio ends or errors
-      const cleanup = () => {
-        URL.revokeObjectURL(audioUrl);
-        audio.removeEventListener('ended', cleanup);
-        audio.removeEventListener('error', cleanup);
-        audio.src = ''; // Release audio element reference
-      };
-      audio.addEventListener('ended', cleanup);
-      audio.addEventListener('error', cleanup);
-
-      // Play and handle immediate errors
-      audio.play().catch(error => {
-        console.warn('[Audio] Failed to play generated audio:', error);
-        cleanup();
-      });
-
-      // TEMP: show a label instead of adding the model part
+      // show a label in the message (audio fragment persistence deferred to future work)
       this.accumulator.fragments.push(createTextContentFragment(`Generated audio ▶ \`${safeLabel}\`${durationMs ? ` (${Math.round(durationMs / 10) / 100}s)` : ''}`));
 
       // Add the audio to the DBlobs DB
@@ -502,6 +483,9 @@ export class ContentReassembler {
       // );
 
       // this.accumulator.fragments.push(audioContentFragment);
+
+      // notify caller for NorthBridge-coordinated playback
+      this.onInlineAudio?.({ blob: audioBlob, mimeType, label: safeLabel, durationMs });
 
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline audio to DBlobs:', { label: safeLabel, error, mimeType, size: base64Data.length });
