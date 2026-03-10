@@ -1,19 +1,15 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, IconButton, Sheet } from '@mui/joy';
+import { Box, Sheet } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
-import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
-
-import { Link } from '~/common/components/Link';
 
 import type { RenderBlockInputs } from '../blocks.types';
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, StyledOverlayButton } from '../OverlayButton';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx } from '../OverlayButton';
 
 
 /// Heuristics to parse Markdown images (as URLs) ///
@@ -79,7 +75,6 @@ export const RenderImageURL = (props: {
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
   const [deleteArmed, setDeleteArmed] = React.useState(false);
   const [regenArmed, setRegenArmed] = React.useState(false);
-  const [showDalleAlert, setShowDalleAlert] = React.useState(true);
 
   // Effect
   React.useEffect(() => {
@@ -124,177 +119,150 @@ export const RenderImageURL = (props: {
     setRegenArmed(armed => !armed);
   }, [handleImageRegenerate, regenArmed]);
 
+  const handleImageClick = React.useCallback((e: React.MouseEvent) => {
+    if (onViewImage) {
+      e.stopPropagation();
+      handleViewImage(e);
+    } else if (props.imageURL?.startsWith('http')) {
+      e.stopPropagation();
+      window.open(props.imageURL, '_blank', 'noopener,noreferrer');
+    }
+  }, [onViewImage, handleViewImage, props.imageURL]);
+
 
   // derived state
   const isCard = props.variant === 'attachment-card';
+  const isImageClickable = !props.disabled && (!!onViewImage || (!!props.imageURL && props.imageURL.startsWith('http')));
+
+  // Only show regeneration in modal context (when not showing a viewer button)
+  const showRegenerate = !!onImageRegenerate && !onViewImage;
   const isOnButton = props.variant === 'attachment-button';
-  const isTempDalleUrl = props.imageURL?.startsWith('https://oaidalle') || false;
 
 
   return (
-    <Box>
+    <Sheet
+      color={isCard ? 'primary' : undefined}
+      variant={isCard ? 'outlined' : 'solid'}
+      aria-disabled={props.disabled}
+      onClick={props.onClick}
+      className={props.className}
+      sx={{
+        // style
+        mx: isOnButton ? undefined : 1.5,  // 1.5 like the other 'Render*' components
+        minWidth: isOnButton ? 20 : 256,
+        minHeight: isOnButton ? 20 : 128,
+        boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'sm',
 
-      <Sheet
-        color={isCard ? 'primary' : undefined}
-        variant={isCard ? 'outlined' : 'solid'}
-        aria-disabled={props.disabled}
-        onClick={props.onClick}
-        className={props.className}
-        sx={{
-          // style
-          mx: isOnButton ? undefined : 1.5,  // 1.5 like the other 'Render*' components
-          minWidth: isOnButton ? 20 : 256,
-          minHeight: isOnButton ? 20 : 128,
-          boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'sm',
+        // enable anchoring
+        position: 'relative',
 
-          // enable anchoring
-          position: 'relative',
+        // resizeable image
+        '& picture': { display: 'flex', justifyContent: 'center' },
+        '& img': { maxWidth: '100%', maxHeight: '100%', filter: props.disabled ? 'grayscale(100%)' : undefined },
+        [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
+        '&:hover .overlay-text': overlayButtonsActiveSx,
 
-          // resizeable image
-          '& picture': { display: 'flex', justifyContent: 'center' },
-          '& img': { maxWidth: '100%', maxHeight: '100%', filter: props.disabled ? 'grayscale(100%)' : undefined },
-          [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
-          '&:hover .overlay-text': overlayButtonsActiveSx,
+        // layout
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
 
-          // layout
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+        // this shall apply font scaling and maybe margins, not much
+        ...props.scaledImageSx,
+      }}
+    >
 
-          // this shall apply font scaling and maybe margins, not much
-          ...props.scaledImageSx,
-        }}
-      >
+      {/* Image and Overlay - clickable to view/maximize */}
+      <Box sx={{ position: 'relative', cursor: isImageClickable ? 'pointer' : undefined }} onClick={isImageClickable ? handleImageClick : undefined}>
 
-        {/* Image and Overlay */}
-        <Box sx={{ position: 'relative' }}>
-
-          {/* Image / Loading Indicator */}
-          {props.imageURL ? (
-            <picture>
-              <img src={props.imageURL} alt={props.expandableText ? `Generated Image: ${props.expandableText}` : 'Generated Image'} />
-            </picture>
-          ) : (
-            <Box
-              sx={{
-                flex: 1,
-                p: { xs: 1, md: 3 },
-                overflowWrap: 'anywhere',
-                whiteSpace: 'break-spaces',
-                display: 'block',
-              }}
-            >
-              {loadingTimeout ? 'Image Missing' : 'Loading...'}
-            </Box>
-          )}
-
-          {/* [overlay] Description */}
-          {!!props.overlayText && (
-            <Box className='overlay-text' sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: `rgba(0 0 0 / 0.85)`,
-              // backgroundColor: `rgba(${theme.vars.palette.neutral.darkChannel} / 0.85)`,
-              p: { xs: 1, md: 2 },
-              opacity: infoOpen ? 1 : 0,
-              transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',
-            }}>
-              {props.overlayText}
-            </Box>
-          )}
-        </Box>
-
-        {/* Bottom Expander: information */}
-        {!!props.expandableText && infoOpen && (
-          <Box sx={{
-            p: { xs: 1, md: 2 },
-            overflowWrap: 'anywhere',
-            whiteSpace: 'break-spaces',
-          }}>
-            {props.expandableText}
+        {/* Image / Loading Indicator */}
+        {props.imageURL ? (
+          <picture>
+            <img src={props.imageURL} alt={props.expandableText ? `Generated Image: ${props.expandableText}` : 'Generated Image'} />
+          </picture>
+        ) : (
+          <Box
+            sx={{
+              flex: 1,
+              p: { xs: 1, md: 3 },
+              overflowWrap: 'anywhere',
+              whiteSpace: 'break-spaces',
+              display: 'block',
+            }}
+          >
+            {loadingTimeout ? 'Image Missing' : 'Loading...'}
           </Box>
         )}
 
-        {/* [overlay] Buttons (RenderImage) */}
-        {!props.disabled && <Box className={overlayButtonsClassName} sx={overlayButtonsGridSx}>
+        {/* [overlay] Description */}
+        {!!props.overlayText && (
+          <Box className='overlay-text' sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: `rgba(0 0 0 / 0.85)`,
+            // backgroundColor: `rgba(${theme.vars.palette.neutral.darkChannel} / 0.85)`,
+            p: { xs: 1, md: 2 },
+            opacity: infoOpen ? 1 : 0,
+            transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',
+          }}>
+            {props.overlayText}
+          </Box>
+        )}
+      </Box>
 
-          {!!props.expandableText && (
-            <OverlayButton tooltip={infoOpen ? 'Hide Prompt' : 'Show Prompt'} variant={infoOpen ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
-              <InfoOutlinedIcon />
-            </OverlayButton>
-          )}
-
-          {!!props.imageURL && (
-            props.onViewImage ? (
-              <OverlayButton tooltip='View Image' variant='outlined' color={isCard ? 'primary' : undefined} onClick={handleViewImage} sx={{ gridRow: '1', gridColumn: '2' }}>
-                <ZoomOutMapIcon />
-              </OverlayButton>
-            ) : props.imageURL.startsWith('http') ? (
-              <StyledOverlayButton variant='outlined' color={isCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.expandableText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
-                <ZoomOutMapIcon />
-              </StyledOverlayButton>
-            ) : <span />
-          )}
-
-
-          {/* Deletion */}
-
-          {deleteArmed && !regenArmed && (
-            <OverlayButton tooltip='Confirm Deletion' placement='bottom' variant='outlined' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '1' }}>
-              <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
-            </OverlayButton>
-          )}
-
-          {!!onImageDelete && !regenArmed && (
-            <OverlayButton tooltip={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} placement='bottom' variant={deleteArmed ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
-              {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-            </OverlayButton>
-          )}
-
-          {!!onImageRegenerate && !deleteArmed && (
-            <OverlayButton tooltip={regenArmed ? 'Cancel Regeneration' : 'Draw again with the present configuration'} placement='bottom' variant={regenArmed ? 'solid' : 'outlined'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
-              {regenArmed
-                ? <CloseRoundedIcon />
-                : <ReplayIcon />
-              }
-            </OverlayButton>
-          )}
-
-          {/* Regenerate [armed, arming] buttons */}
-          {regenArmed && !deleteArmed && (
-            <OverlayButton tooltip='Confirm Regeneration' placement='bottom' variant='outlined' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
-              <ReplayIcon sx={{ color: 'success.solidBg' }} />
-            </OverlayButton>
-          )}
-
-        </Box>}
-      </Sheet>
-
-
-      {/* (Remove in 2025) Dalle Warning notice */}
-      {isTempDalleUrl && showDalleAlert && (
-        <Alert
-          variant='soft' color='neutral'
-          startDecorator={<WarningRoundedIcon />}
-          endDecorator={
-            <IconButton variant='soft' aria-label='Close Alert' onClick={() => setShowDalleAlert(on => !on)} sx={{ my: -0.5 }}>
-              <CloseRoundedIcon />
-            </IconButton>
-          }
-          sx={{
-            mx: 0.5,
-            ...props.scaledImageSx,
-          }}
-        >
-          <div>
-            <strong>Please Save Locally</strong> · OpenAI will delete this image link from their servers one hour after creation.
-          </div>
-        </Alert>
+      {/* Bottom Expander: information */}
+      {!!props.expandableText && infoOpen && (
+        <Box sx={{
+          p: { xs: 1, md: 2 },
+          overflowWrap: 'anywhere',
+          whiteSpace: 'break-spaces',
+        }}>
+          {props.expandableText}
+        </Box>
       )}
 
-    </Box>
+      {/* [overlay] Buttons (RenderImage) */}
+      {!props.disabled && <Box className={overlayButtonsClassName} sx={overlayButtonsGridSx}>
+
+        {/* Info toggle */}
+        {!!props.expandableText && (
+          <OverlayButton tooltip={infoOpen ? 'Hide Prompt' : 'Show Prompt'} variant={infoOpen ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
+            <InfoOutlinedIcon />
+          </OverlayButton>
+        )}
+
+        {/* Delete toggle/cancel */}
+        {!!onImageDelete && !regenArmed && (
+          <OverlayButton tooltip={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} placement='bottom' variant={deleteArmed ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '1', gridColumn: '2' }}>
+            {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+          </OverlayButton>
+        )}
+
+        {/* Delete confirm (armed) */}
+        {deleteArmed && !regenArmed && (
+          <OverlayButton tooltip='Confirm Deletion' placement='bottom' variant='outlined' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '2' }}>
+            <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+          </OverlayButton>
+        )}
+
+        {/* Regenerate toggle/cancel - only in modal context (click image to view inline) */}
+        {showRegenerate && !deleteArmed && (
+          <OverlayButton tooltip={regenArmed ? 'Cancel Regeneration' : 'Draw again'} placement='bottom' variant={regenArmed ? 'solid' : 'outlined'} onClick={handleToggleRegenArmed} sx={{ gridRow: onImageDelete ? '2' : '1', gridColumn: onImageDelete ? '1' : '2' }}>
+            {regenArmed ? <CloseRoundedIcon /> : <ReplayIcon />}
+          </OverlayButton>
+        )}
+
+        {/* Regenerate confirm (armed) */}
+        {regenArmed && !deleteArmed && (
+          <OverlayButton tooltip='Confirm Regeneration' placement='bottom' variant='outlined' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
+            <ReplayIcon sx={{ color: 'success.solidBg' }} />
+          </OverlayButton>
+        )}
+
+      </Box>}
+    </Sheet>
   );
 };
