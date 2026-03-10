@@ -3,6 +3,8 @@ export namespace AudioPlayer {
   /**
    * Plays an audio file from a URL. Resolves when playback ends.
    * If a signal is provided and aborted, playback stops and the promise resolves.
+   *
+   * @throws If there's an error during playback (e.g. network error, unsupported format), the promise will reject.
    */
   export function playUrl(url: string, signal?: AbortSignal): Promise<void> {
     if (signal?.aborted || !url) return Promise.resolve();

@@ -17,8 +17,8 @@ export function usePlayUrlInterval(url: string | null, firstDelay: number = 0, r
     let timer2: any = null;
 
     const playFirstTime = () => {
-      const playAudio = () => AudioPlayer.playUrl(url, abortController.signal);
-      void playAudio();
+      const playAudio = () => void AudioPlayer.playUrl(url, abortController.signal).catch(() => {/* autoplay may be blocked */});
+      playAudio();
       timer2 = repeatMs > 0 ? setInterval(playAudio, repeatMs) : null;
     };
 

@@ -127,7 +127,7 @@ export function Telephone(props: {
 
   // pickup / hangup
   React.useEffect(() => {
-    !isRinging && AudioPlayer.playUrl(isConnected ? '/sounds/chat-begin.mp3' : '/sounds/chat-end.mp3');
+    !isRinging && void AudioPlayer.playUrl(isConnected ? '/sounds/chat-begin.mp3' : '/sounds/chat-end.mp3').catch(() => {/* autoplay may be blocked */});
   }, [isRinging, isConnected]);
 
   // ringtone

@@ -721,6 +721,7 @@ async function _aixChatGenerateContent_LL(
       (audio) => {
         const audioUrl = URL.createObjectURL(audio.blob);
         void AudioPlayer.playUrl(audioUrl)
+          .catch(error => console.log('[AIX] Failed to play audio:', { error }))
           .finally(() => URL.revokeObjectURL(audioUrl));
       },
     );
