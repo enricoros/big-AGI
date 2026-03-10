@@ -54,8 +54,8 @@ export async function speakText(
   if (!options?.disableCharLimit)
     inputText = speex_textApplyCharLimit(inputText);
 
-  // chunk text unless disabled
-  const chunks = options?.maxChunkLength === false || options?.maxChunkLength === 0 ? [inputText]
+  // chunk text unless disabled (skip chunking when returning audio to avoid fragmented base64)
+  const chunks = options?.rpcReturnAudio || options?.maxChunkLength === false || options?.maxChunkLength === 0 ? [inputText]
     : speex_splitTextIntoChunks(inputText, options?.maxChunkLength /* 500 if missing */);
   if (!chunks.length) {
     chunkedCallbacks?.onComplete?.(false);
@@ -65,6 +65,7 @@ export async function speakText(
   let chunksSpoken = 0;
   let currentHandle: _SpeexSpeakHandle | null = null;
   let firstError: { errorType: SpeexSpeakTextResult['errorType'], errorText: string } | undefined;
+  const audioBase64Chunks: string[] = [];
 
   // wire up abort to stop current playback
   const onAbort = () => currentHandle?.stop();
@@ -80,7 +81,7 @@ export async function speakText(
       };
       chunkedCallbacks?.onChunkStart?.(progress);
 
-      currentHandle = speakRawText_withHandle(chunkText, voiceSelector, options);
+      currentHandle = _speakRawText_withHandle(chunkText, voiceSelector, options);
 
       // wait for both playback and synthesis to complete
       const [playbackCompleted, synthesisResult] = await Promise.all([
@@ -99,6 +100,10 @@ export async function speakText(
         chunkedCallbacks?.onChunkError?.(new Error(synthesisResult.errorText), progress);
         break;
       }
+
+      // collect audio base64 if returned
+      if (synthesisResult.audioBase64)
+        audioBase64Chunks.push(synthesisResult.audioBase64);
 
       // check if stopped or aborted
       if (!playbackCompleted || signal?.aborted)
@@ -120,6 +125,8 @@ export async function speakText(
     chunksSpoken,
     totalChunks: chunks.length,
     ...firstError,
+    // forward audio base64 if returned (rpcReturnAudio disables chunking, so at most 1 entry)
+    ...(audioBase64Chunks.length ? { audioBase64: audioBase64Chunks[0] } : undefined),
   };
 }
 
@@ -158,7 +165,7 @@ interface _SpeexSpeakHandle {
  * handle.stop();
  * ```
  */
-export function speakRawText_withHandle(
+function _speakRawText_withHandle(
   rawText: string, // this won't be processed - use speakText for chunking, cleanup, etc.
   voiceSelector: SpeexVoiceSelector,
   rpcOptions?: SpeexSynthesizeOptions,
