@@ -3,7 +3,7 @@ export namespace AudioPlayer {
   /**
    * Plays an audio file from a URL (e.g. an MP3 file).
    */
-  export async function playUrl(url: string): Promise<void> {
+  export async function playUrl(url: string, nbOpts?: any): Promise<void> {
     return new Promise((resolve, reject) => {
       const audio = new Audio(url);
       audio.onended = () => resolve();
