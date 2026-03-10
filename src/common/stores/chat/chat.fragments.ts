@@ -724,6 +724,12 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 /// Editor Helpers - Fragment Editing
 
+/** Sets the originId on a single fragment (mutates in place). */
+export function fragmentSetOriginId<T extends DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment>(fragment: T, originId: DMessageContentFragment['originId']): T {
+  fragment.originId = originId;
+  return fragment;
+}
+
 /** Creates a new array of fragments with a specific originId assigned to each. */
 export function fragmentsSetOriginId(fragments: ReadonlyArray<Readonly<DMessageFragment>>, originId: DMessageContentFragment['originId']): Readonly<DMessageFragment>[] {
 
