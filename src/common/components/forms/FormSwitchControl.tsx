@@ -15,10 +15,11 @@ export function FormSwitchControl(props: {
   size?: 'sm' | 'md' | 'lg',
   disabled?: boolean,
   tooltip?: React.ReactNode,
+  tooltipWarning?: boolean,
 }) {
   return (
     <FormControl size={props.size} orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title={props.title} description={props.description} tooltip={props.tooltip} />
+      <FormLabelStart title={props.title} description={props.description} tooltip={props.tooltip} tooltipWarning={props.tooltipWarning} />
       <Switch
         checked={props.checked}
         onChange={event => props.onChange(event.target.checked)}

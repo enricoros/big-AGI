@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 
 
@@ -8,15 +9,16 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
  * @param firstDelay The delay before the first play, in milliseconds.
  * @param repeatMs The delay between each repeat, in milliseconds. If 0, the sound will only play once.
  */
-export function usePlayUrl(url: string | null, firstDelay: number = 0, repeatMs: number = 0) {
+export function usePlayUrlInterval(url: string | null, firstDelay: number = 0, repeatMs: number = 0) {
   React.useEffect(() => {
     if (!url) return;
 
+    const abortController = new AbortController();
     let timer2: any = null;
 
     const playFirstTime = () => {
-      const playAudio = () => AudioPlayer.playUrl(url);
-      void playAudio();
+      const playAudio = () => void AudioPlayer.playUrl(url, abortController.signal).catch(() => {/* autoplay may be blocked */});
+      playAudio();
       timer2 = repeatMs > 0 ? setInterval(playAudio, repeatMs) : null;
     };
 
@@ -24,8 +26,8 @@ export function usePlayUrl(url: string | null, firstDelay: number = 0, repeatMs:
 
     return () => {
       clearTimeout(timer1);
-      if (timer2)
-        clearInterval(timer2);
+      timer2 && clearInterval(timer2);
+      abortController?.abort();
     };
   }, [firstDelay, repeatMs, url]);
 }

@@ -157,6 +157,7 @@ export type SpeexSpeakTextResult = {
   totalChunks: number;   // total chunks
   errorType?: SpeexSpeakResultErrorType;
   errorText?: string;
+  audioBase64?: string;  // concatenated base64 audio from all chunks (only if rpcReturnAudio was set)
 };
 
 export type SpeexSpeakResultErrorType = 'tts-no-engine' | 'tts-unconfigured' | 'tts-error' | 'tts-exception' | 'tts-playback-disabled';

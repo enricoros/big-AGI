@@ -82,7 +82,7 @@ export class AudioAutoPlayer {
       // combine all chunks and play
       const combined = combine_ArrayBuffers_To_Uint8Array(this.chunksAccumulator).buffer;
       this.chunksAccumulator = []; // Clear after combining
-      AudioPlayer.playAudioFull(combined).finally(() => {
+      AudioPlayer.playFullBuffer(combined).finally(() => {
         if (!this.isStopped)
           this.playbackEndResolve?.();
       });
@@ -107,7 +107,7 @@ export class AudioAutoPlayer {
       console.warn('[DEV] AudioAutoPlayer: playFullBuffer called twice');
 
     this.isPlayingFullBuffer = true;
-    AudioPlayer.playAudioFull(buffer).finally(() => {
+    AudioPlayer.playFullBuffer(buffer).finally(() => {
       if (!this.isStopped)
         this.playbackEndResolve?.();
     });

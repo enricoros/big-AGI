@@ -39,10 +39,13 @@ export function RenderImageRefDBlob(props: {
 
   // hook: async image regeneration
 
-  const { label: imageItemLabel, origin: imageItemOrigin } = imageItem || {};
+  const { /*label: imageItemLabel,*/ origin: imageItemOrigin } = imageItem || {};
   // const _recreationWidth = imageItemMetadata?.width || props.imageWidth;
   // const _recreationHeight = imageItemMetadata?.height || props.imageHeight;
-  const recreationPrompt = ((imageItemOrigin?.ot === 'generated') ? imageItemOrigin.prompt : undefined) || imageItemLabel || props.imageAltText;
+
+  // NOTE: we used to fallback to the Label, but often the label is not the regeneration prompt... (e.g. "Gemini Generated Image")
+  // const recreationPrompt = ((imageItemOrigin?.ot === 'generated') ? imageItemOrigin.prompt : undefined) || imageItemLabel || props.imageAltText;
+  const recreationPrompt = (imageItemOrigin?.ot === 'generated') ? (imageItemOrigin.prompt || undefined) : undefined;
 
   const { isFetching: isRegenerating, refetch: handleImageRegenerate } = useQuery({
     enabled: false,

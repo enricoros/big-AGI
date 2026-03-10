@@ -182,7 +182,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 mPart.inlineData.data,
                 'Gemini Generated Image',
                 'Gemini',
-                '',
+                '', // IMPORTANT: we don't have the prompt with Gemini - set it to empty
               );
             } else if (mPart.inlineData.mimeType.startsWith('audio/')) {
               try {

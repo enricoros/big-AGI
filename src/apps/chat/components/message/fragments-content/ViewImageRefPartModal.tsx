@@ -4,16 +4,17 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button } from '@mui/joy';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
+import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob';
+import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
+
 import { getImageAsset } from '~/common/stores/blob/dblobs-portability';
 
-import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageContentFragment, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-
-import { BlockPartImageRef } from './BlockPartImageRef';
-import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 
 
 const imageViewerModalSx: SxProps = {
@@ -28,10 +29,11 @@ const imageViewerContainerSx: SxProps = {
   maxHeight: '80vh',
   overflow: 'auto',
 
-  // pre-compensate the Block > Render Items 1.5 margin
-  m: -1.5,
+  // pre-compensate the RenderImageRefDBlob > Sheet's 1.5 (BlocksContainer-alike) margin
+  mx: -1.5,
+  // add some margin to unclip the Sheet's shadow
   '& > div': {
-    pt: 1.5,
+    mb: 0.5,
   },
 };
 
@@ -39,6 +41,8 @@ const imageViewerContainerSx: SxProps = {
 export function ViewImageRefPartModal(props: {
   imageRefPart: DMessageImageRefPart,
   onClose: () => void,
+  onDeleteFragment?: () => void,
+  onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
 }) {
 
   // state
@@ -49,7 +53,7 @@ export function ViewImageRefPartModal(props: {
   const isMobile = useIsMobile();
 
   // derived state
-  const { dataRef, altText } = props.imageRefPart;
+  const { dataRef, altText, width, height } = props.imageRefPart;
   const isDBlob = dataRef.reftype === 'dblob';
 
   // handlers
@@ -133,11 +137,27 @@ export function ViewImageRefPartModal(props: {
       sx={imageViewerModalSx}
     >
       <Box sx={imageViewerContainerSx}>
-        <BlockPartImageRef
-          disableViewer={true /* we're in the Modal, we won't pop this up anymore */}
-          imageRefPart={props.imageRefPart}
-          contentScaling='sm'
-        />
+        {dataRef.reftype === 'dblob' ? (
+          <RenderImageRefDBlob
+            dataRefDBlobAssetId={dataRef.dblobAssetId}
+            dataRefMimeType={dataRef.mimeType}
+            dataRefBytesSize={dataRef.bytesSize}
+            imageAltText={altText}
+            imageWidth={width}
+            imageHeight={height}
+            onDeleteFragment={props.onDeleteFragment}
+            onReplaceFragment={props.onReplaceFragment}
+            // onViewImage={} we're already viewing the image in the dialog
+            // scaledImageSx={} we reset scale in this dialog
+            variant='content-part'
+          />
+        ) : dataRef.reftype === 'url' ? (
+          <RenderImageURL
+            imageURL={dataRef.url}
+            expandableText={altText}
+            variant='content-part'
+          />
+        ) : 'ViewImageRefPartModal: unknown reftype'}
       </Box>
     </GoodModal>
   );

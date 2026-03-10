@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box } from '@mui/joy';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob';
@@ -78,17 +77,15 @@ export function BlockPartImageRef(props: {
           scaledImageSx={scaledImageSx}
           variant='content-part'
         />
-      ) : (
-        <Box>
-          ContentPartImageRef: unknown reftype
-        </Box>
-      )}
+      ) : 'BlockPartImageRef: unknown reftype'}
 
       {/* Image viewer modal */}
       {!props.disableViewer && viewingImageRefPart && (
         <ViewImageRefPartModal
           imageRefPart={viewingImageRefPart}
           onClose={() => setViewingImageRefPart(null)}
+          onDeleteFragment={onFragmentDelete ? handleDeleteFragment : undefined}
+          onReplaceFragment={onFragmentReplace ? handleReplaceFragment : undefined}
         />
       )}
 
