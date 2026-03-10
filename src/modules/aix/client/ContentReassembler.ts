@@ -52,6 +52,7 @@ export class ContentReassembler {
     private readonly onAccumulatorUpdated?: () => MaybePromise<void>,
     inspectorTransport?: AixClientDebugger.Transport,
     inspectorContext?: AixClientDebugger.Context,
+    private readonly skipImageCompression?: boolean,
     private readonly wireAbortSignal?: AbortSignal,
     private readonly onInlineAudio?: (audio: { blob: Blob; mimeType: string; label: string; durationMs?: number }) => void,
   ) {
@@ -508,7 +509,7 @@ export class ContentReassembler {
       let inputImage = await convert_Base64WithMimeType_To_Blob(inputBase64, inputType, 'ContentReassembler.onAppendInlineImage');
 
       // perform resize/type conversion if desired, and find the image dimensions
-      const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && inputType === 'image/png';
+      const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && !this.skipImageCompression && inputType === 'image/png';
       const { blob: imageBlob, height: imageHeight, width: imageWidth } = await imageBlobTransform(inputImage, {
         convertToMimeType: shallConvert ? PLATFORM_IMAGE_MIMETYPE : undefined,
         convertToLossyQuality: GENERATED_IMAGES_COMPRESSION_QUALITY,

@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import { FormControl, Switch, Typography } from '@mui/joy';
+import { FormControl, Typography } from '@mui/joy';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import SpeedIcon from '@mui/icons-material/Speed';
+
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
@@ -18,6 +20,7 @@ export function UxLabsSettings() {
   const isMobile = useIsMobile();
   const {
     labsHighPerformance, setLabsHighPerformance,
+    labsLosslessImages, setLabsPreserveLosslessImages,
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsComposerAttachmentsInline, setLabsComposerAttachmentsInline,
@@ -25,23 +28,27 @@ export function UxLabsSettings() {
 
   return <>
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart
-        title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Unlock Refresh</>}
-        description={labsHighPerformance ? 'Unlocked' : 'Default'}
-        tooltipWarning={labsHighPerformance}
-        tooltip={<>
-          Unlocks the maximum UI refresh rate for Chats and Beams, and will draw every single token as they come in.
-          <hr />
-          THIS MAY CAUSE HIGH CPU USAGE, BATTERY DRAIN, AND STUTTERING WITH FAST MODELS.
-          <hr />
-          Default: OFF
-        </>}
-      />
-      <Switch checked={labsHighPerformance} onChange={event => setLabsHighPerformance(event.target.checked)}
-              endDecorator={labsHighPerformance ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
+    <FormSwitchControl
+      title={<><ImageOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Lossless Images</>} description={labsLosslessImages ? 'Large storage use' : 'Compress'}
+      tooltipWarning={labsLosslessImages}
+      tooltip={<>
+        Preserves the original lossless PNG format for AI-generated images instead of compressing them to WebP/JPEG.
+        <hr />
+        WARNING: PNG images can be very large (e.g. 10-20MB each in high quality modes in Gemini Nano Banana models). This will use significantly more storage.
+      </>}
+      checked={labsLosslessImages} onChange={setLabsPreserveLosslessImages}
+    />
+
+    <FormSwitchControl
+      title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Unlock Refresh</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
+      tooltipWarning={labsHighPerformance}
+      tooltip={<>
+        Unlocks the maximum UI refresh rate for Chats and Beams, and will draw every single token as they come in.
+        <hr />
+        THIS MAY CAUSE HIGH CPU USAGE, BATTERY DRAIN, AND STUTTERING WITH FAST MODELS.
+      </>}
+      checked={labsHighPerformance} onChange={setLabsHighPerformance}
+    />
 
     {!isMobile && <FormSwitchControl
       title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Shortcuts Bar</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
