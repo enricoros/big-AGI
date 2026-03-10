@@ -720,7 +720,7 @@ async function _aixChatGenerateContent_LL(
       abortSignal,
       (audio) => {
         const audioUrl = URL.createObjectURL(audio.blob);
-        void AudioPlayer.playUrl(audioUrl, { label: audio.label || 'AI Audio' })
+        void AudioPlayer.playUrl(audioUrl)
           .finally(() => URL.revokeObjectURL(audioUrl));
       },
     );

@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 
 
@@ -8,7 +9,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
  * @param firstDelay The delay before the first play, in milliseconds.
  * @param repeatMs The delay between each repeat, in milliseconds. If 0, the sound will only play once.
  */
-export function usePlayUrl(url: string | null, firstDelay: number = 0, repeatMs: number = 0) {
+export function usePlayUrlInterval(url: string | null, firstDelay: number = 0, repeatMs: number = 0) {
   React.useEffect(() => {
     if (!url) return;
 

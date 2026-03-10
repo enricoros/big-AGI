@@ -22,7 +22,6 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
-import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
@@ -31,7 +30,7 @@ import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments'
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { usePlayUrl } from '~/common/util/audio/usePlayUrl';
+import { usePlayUrlInterval } from './state/usePlayUrlInterval';
 
 import type { AppCallIntent } from './AppCall';
 import { CallAvatar } from './components/CallAvatar';
@@ -132,7 +131,7 @@ export function Telephone(props: {
   }, [isRinging, isConnected]);
 
   // ringtone
-  usePlayUrl(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
+  usePlayUrlInterval(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
 
 
   /// Shortcuts

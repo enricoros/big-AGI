@@ -68,7 +68,7 @@ export function SpeexVoiceSelect(props: {
     enabled: !!previewUrl,
     queryKey: ['speex-voice-preview', previewUrl],
     queryFn: async ({ signal }) =>
-      AudioPlayer.playUrl(previewUrl!, { label: `Voice Preview${selectedVoice?.name ? ` (${selectedVoice.name})` : ''}`, signal }),
+      AudioPlayer.playUrl(previewUrl!),
   });
 
 
