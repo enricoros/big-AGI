@@ -19,6 +19,7 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
   caption: string,
   convertToMimeType: false | CommonImageMimeTypes,
   resizeMode: false | LLMImageResizeMode,
+  scopeId: DBlobDBScopeId = 'attachment-drafts',
 ): Promise<DMessageAttachmentFragment | null> {
 
   // convert to Blobs if needed
@@ -49,7 +50,7 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
     });
 
     // add the image to the DBlobs DB
-    const dblobAssetId = await addDBImageAsset('attachment-drafts', imageBlob, {
+    const dblobAssetId = await addDBImageAsset(scopeId, imageBlob, {
       label: title ? 'Image: ' + title : 'Image',
       metadata: {
         width: imageWidth,
