@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, ModalSlotsAndSlotProps, Option, Select, SelectSlotsAndSlotProps, Sheet, Tooltip, Typography, } from '@mui/joy';
+import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, ModalSlotsAndSlotProps, Option, Select, SelectSlotsAndSlotProps, Sheet, Tooltip, Typography } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CameraEnhanceIcon from '@mui/icons-material/CameraEnhance';
 import CameraFrontIcon from '@mui/icons-material/CameraFront';
@@ -40,7 +40,7 @@ const _modalSlotProps: ModalSlotsAndSlotProps['slotProps'] = {
 
 const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
   listbox: {
-    size: 'md'
+    size: 'md',
   },
 } as const;
 
@@ -124,7 +124,14 @@ const _styles = {
     },
   },
 
-  recButton: {
+  recButtonLarge: {
+    pl: 3.25,
+    pr: 4.5,
+    py: 1.5,
+    minWidth: { md: 200 },
+  },
+
+  recButtonRight: {
     pl: 2,
     pr: 2.5,
   },
@@ -135,6 +142,7 @@ const _styles = {
 export function CameraCaptureModal(props: {
   allowMultiCapture?: boolean;
   allowLiveFeed?: boolean;
+  liveFeedOnly?: boolean;
   // allowOcr?: boolean;
   onDone: (result: CameraCaptureResult | null) => void;
 }) {
@@ -160,7 +168,7 @@ export function CameraCaptureModal(props: {
 
 
   // derived state
-  const { allowMultiCapture, allowLiveFeed, onDone } = props;
+  const { allowMultiCapture, allowLiveFeed, liveFeedOnly, onDone } = props;
 
 
   // single exit point: gather results and close (stream cleanup happens via effect on unmount)
@@ -306,6 +314,16 @@ export function CameraCaptureModal(props: {
   const cameraButtons = React.useMemo(() => {
     const btns: React.ReactNode[] = [];
 
+    // Live-feed-only mode: single prominent red Record button
+    if (liveFeedOnly) {
+      btns.push(
+        <Button key='rec' size='lg' color='danger' disabled={cameraIdx === -1} onClick={handleStartLiveFeedClicked} endDecorator={<FiberManualRecordIcon />} sx={_styles.recButtonLarge}>
+          Record
+        </Button>,
+      );
+      return btns;
+    }
+
     // After first capture: [wide +] [Done (N)] - no confusing Capture
     if (capturedCount > 0) {
       btns.push(
@@ -343,14 +361,14 @@ export function CameraCaptureModal(props: {
             color='danger'
             disabled={cameraIdx === -1}
             onClick={handleStartLiveFeedClicked}
-            sx={_styles.recButton}
+            sx={_styles.recButtonRight}
           >
             <FiberManualRecordIcon />
           </IconButton>
         </Tooltip>,
       );
     return btns;
-  }, [allowLiveFeed, allowMultiCapture, cameraIdx, capturedCount, handleCloseModal, handleStartLiveFeedClicked, handleVideoAddClicked, handleVideoSnapClicked, isAddButtonDisabled]);
+  }, [allowLiveFeed, allowMultiCapture, liveFeedOnly, cameraIdx, capturedCount, handleCloseModal, handleStartLiveFeedClicked, handleVideoAddClicked, handleVideoSnapClicked, isAddButtonDisabled]);
 
 
   return (
