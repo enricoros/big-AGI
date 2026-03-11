@@ -15,6 +15,7 @@ import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { takeScreenCapture } from '~/common/util/screenCaptureUtils';
 
@@ -61,19 +62,21 @@ const _style = {
 
 
 // Live feed record button - returns null if onClick is undefined
-function LiveFeedButton(props: { isActive: boolean, onClick: () => void }) {
+function LiveFeedButton(props: { isActive: boolean, tooltip: string, onClick: () => void }) {
   return (
-    <IconButton
-      size='sm'
-      variant={props.isActive ? 'solid' : 'soft'}
-      color='danger'
-      onClick={(e) => {
-        e.stopPropagation();
-        props.onClick();
-      }}
-    >
-      <FiberManualRecordIcon sx={{ fontSize: 16 }} />
-    </IconButton>
+    <TooltipOutlined title={props.tooltip} placement='top'>
+      <IconButton
+        size='sm'
+        variant={props.isActive ? 'solid' : 'soft'}
+        color='danger'
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onClick();
+        }}
+      >
+        <FiberManualRecordIcon sx={{ fontSize: 16 }} />
+      </IconButton>
+    </TooltipOutlined>
   );
 }
 
@@ -338,7 +341,7 @@ function AttachmentSources(props: {
               icon={<ScreenshotMonitorIcon />}
               disabled={capturingScreen}
               onClick={handleTakeScreenCapture}
-              endAction={!isMessage && props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} onClick={props.onStartLiveScreenFeed} />}
+              endAction={!isMessage && props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Stream screen to chat' onClick={props.onStartLiveScreenFeed} />}
             />
           )}
 
@@ -354,7 +357,7 @@ function AttachmentSources(props: {
               icon={<CameraAltOutlinedIcon />}
               description='Capture photos with optional OCR'
               onClick={props.onOpenCamera}
-              endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} onClick={props.onStartLiveCameraFeed} />}
+              endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Stream camera to chat' onClick={props.onStartLiveCameraFeed} />}
             />
           )}
 
@@ -503,7 +506,7 @@ function AttachmentSources(props: {
             disabled={capturingScreen}
             color={screenCaptureError ? 'danger' : undefined}
             delay={0.08}
-            endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} onClick={props.onStartLiveScreenFeed} />}
+            endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Stream screen to chat' onClick={props.onStartLiveScreenFeed} />}
           />
         )}
 
@@ -515,7 +518,7 @@ function AttachmentSources(props: {
             description='Capture photos with optional OCR'
             onClick={props.onOpenCamera}
             delay={0.1}
-            endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} onClick={props.onStartLiveCameraFeed} />}
+            endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Stream camera to chat' onClick={props.onStartLiveCameraFeed} />}
           />
         )}
 
