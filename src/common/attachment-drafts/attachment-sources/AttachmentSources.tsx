@@ -192,11 +192,6 @@ function AttachmentSources(props: {
   hasScreenCapture: boolean,
   // configuration
   onlyImages?: boolean, // makes clipboard/drive/web unavailable
-  // live feeds - end action buttons (presence if the callback is set, active state if the boolean is true)
-  hasActiveCameraFeed?: boolean,
-  hasActiveScreenFeed?: boolean,
-  onStartLiveCameraFeed?: () => void,
-  onStartLiveScreenFeed?: () => void,
   // callbacks
   onAttachClipboard: () => void,
   onAttachFiles: (files: FileWithHandle[], errorMessage: string | null) => void,
@@ -204,6 +199,11 @@ function AttachmentSources(props: {
   onOpenCamera: () => void,
   onOpenGoogleDrivePicker?: () => void, // optional because requires additional external setup (e.g. user-storage of tokens)
   onOpenWebInput: () => void,
+  // live feeds - end action buttons (presence if the callback is set, active state if the boolean is true)
+  hasActiveCameraFeed?: boolean,
+  hasActiveScreenFeed?: boolean,
+  onStartLiveCameraFeed?: () => void,
+  onStartLiveScreenFeed?: () => void,
 }) {
 
   // state (screen capture - used in menu modes where the component handles the capture)
