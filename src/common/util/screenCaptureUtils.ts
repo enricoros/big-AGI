@@ -2,11 +2,24 @@ import { Is, isBrowser } from './pwaUtils';
 import { renderVideoFrameAsFile } from '~/common/util/videoUtils';
 
 
-// Check if the browser supports screen capture
+// cache if the browser supports screen capture
 export const supportsScreenCapture = isBrowser && !!navigator.mediaDevices?.getDisplayMedia;
 
 
-export async function takeScreenCapture(): Promise<File | null> {
+export interface ScreenCaptureStream {
+  stream: MediaStream;
+  label: string;    // e.g. "Screen 1", window title, tab name
+  width?: number;
+  height?: number;
+  frameRate?: number;
+}
+
+
+/**
+ * Opens a screen capture stream (shows the browser's screen picker).
+ * Returns stream + track metadata, or null if the user canceled.
+ */
+export async function startScreenCaptureStream(): Promise<ScreenCaptureStream | null> {
   if (!supportsScreenCapture) return null;
 
   // detect a browser issue
@@ -31,6 +44,23 @@ export async function takeScreenCapture(): Promise<File | null> {
     throw error;
   }
 
+  // extract track metadata
+  const videoTrack = mediaStream.getVideoTracks()?.[0];
+  const settings = videoTrack?.getSettings();
+  return {
+    stream: mediaStream,
+    label: videoTrack?.label || 'Screen',
+    ...(settings?.width && settings?.height ? { width: settings.width, height: settings.height } : {}),
+    ...(settings?.frameRate ? { frameRate: settings.frameRate } : {}),
+  };
+}
+
+
+export async function takeScreenCapture(): Promise<File | null> {
+  const capture = await startScreenCaptureStream();
+  if (!capture) return null;
+  const mediaStream = capture.stream;
+
   // connect a video element to the media stream, to capture a frame
   const video: HTMLVideoElement = document.createElement('video');
   video.srcObject = mediaStream;
@@ -45,14 +75,11 @@ export async function takeScreenCapture(): Promise<File | null> {
   // short timeout to ensure the video frame is ready
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  // capture a frame (or throw)
+  // capture a frame (cleanup always runs)
   try {
-    const file = await renderVideoFrameAsFile(video, 'capture', 'image/png');
+    return await renderVideoFrameAsFile(video, 'capture', 'image/png');
+  } finally {
     _stopScreenCaptureStream(mediaStream, video);
-    return file;
-  } catch (error) {
-    _stopScreenCaptureStream(mediaStream, video);
-    throw error;
   }
 }
 
