@@ -125,8 +125,7 @@ const _styles = {
   },
 
   recButtonLarge: {
-    pl: 3.25,
-    pr: 4.5,
+    px: 4,
     py: 1.5,
     minWidth: { md: 200 },
   },
@@ -317,8 +316,8 @@ export function CameraCaptureModal(props: {
     // Live-feed-only mode: single prominent red Record button
     if (liveFeedOnly) {
       btns.push(
-        <Button key='rec' size='lg' color='danger' disabled={cameraIdx === -1} onClick={handleStartLiveFeedClicked} endDecorator={<FiberManualRecordIcon />} sx={_styles.recButtonLarge}>
-          Record
+        <Button key='rec' size='md' color='danger' disabled={cameraIdx === -1} onClick={handleStartLiveFeedClicked} endDecorator={<FiberManualRecordIcon />} sx={_styles.recButtonLarge}>
+          Live Capture
         </Button>,
       );
       return btns;
