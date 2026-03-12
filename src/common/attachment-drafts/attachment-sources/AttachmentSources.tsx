@@ -351,7 +351,7 @@ function AttachmentSources(props: {
               Icon={ScreenshotMonitorIcon}
               disabled={capturingScreen}
               onClick={handleTakeScreenCapture}
-              endAction={!isMessage && props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Screen capture' onClick={props.onStartLiveScreenFeed} />}
+              endAction={!isMessage && props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Screen chat' onClick={props.onStartLiveScreenFeed} />}
             />
           )}
 
@@ -367,7 +367,7 @@ function AttachmentSources(props: {
               Icon={CameraAltOutlinedIcon}
               description='Capture photos with optional OCR'
               onClick={props.onOpenCamera}
-              endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera capture' onClick={props.onStartLiveCameraFeed} />}
+              endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera chat' onClick={props.onStartLiveCameraFeed} />}
             />
           )}
 
@@ -516,7 +516,7 @@ function AttachmentSources(props: {
             disabled={capturingScreen}
             color={screenCaptureError ? 'danger' : undefined}
             delay={0.08}
-            endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Stream capture' onClick={props.onStartLiveScreenFeed} />}
+            endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Screen chat' onClick={props.onStartLiveScreenFeed} />}
           />
         )}
 
@@ -528,7 +528,7 @@ function AttachmentSources(props: {
             description='Capture photos with optional OCR'
             onClick={props.onOpenCamera}
             delay={0.1}
-            endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera capture' onClick={props.onStartLiveCameraFeed} />}
+            endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera chat' onClick={props.onStartLiveCameraFeed} />}
           />
         )}
 
