@@ -2,6 +2,7 @@ import * as React from 'react';
 import { keyframes } from '@emotion/react';
 import type { FileWithHandle } from 'browser-fs-access';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Checkbox, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AddToDriveRoundedIcon from '@mui/icons-material/AddToDriveRounded';
@@ -42,23 +43,30 @@ const _style = {
     py: 0.5, // was 1
     minHeight: 60,
     // minHeight: '3.25rem', // now 52, was 60
-  } as const,
+  },
   menuItemContent: {
     display: 'flex',
     flexDirection: 'column',
     gap: 0.125,
-  } as const,
+  },
   menuItemName: {
     typography: 'title-sm',
     fontWeight: 600,
     // fontSize: '15px',
-  } as const,
+  },
   menuItemDescription: {
     fontSize: 'xs',
     color: 'text.tertiary',
-    fontWeight: 400,
-  } as const,
-};
+    // fontWeight: 400,
+  },
+  liveFeedButton: {
+    ml: 1,
+    // outline: '1px solid transparent',
+    // '&:hover': {
+    //   outlineColor: 'currentColor',
+    // },
+  },
+} as const satisfies Record<string, SxProps>;
 
 
 // Live feed record button - returns null if onClick is undefined
@@ -67,14 +75,16 @@ function LiveFeedButton(props: { isActive: boolean, tooltip: string, onClick: ()
     <TooltipOutlined title={props.tooltip} placement='top'>
       <IconButton
         size='sm'
-        variant={props.isActive ? 'solid' : 'soft'}
+        variant={props.isActive ? 'solid' : 'outlined'}
         color='danger'
         onClick={(e) => {
           e.stopPropagation();
           props.onClick();
         }}
+        sx={_style.liveFeedButton}
       >
         <FiberManualRecordIcon sx={{ fontSize: 16 }} />
+        {/*{props.isActive ? <AddRoundedIcon sx={{ fontSize: 18 }} /> : <FiberManualRecordIcon sx={{ fontSize: 16 }} />}*/}
       </IconButton>
     </TooltipOutlined>
   );
@@ -292,7 +302,7 @@ function AttachmentSources(props: {
             Attach
           </MenuButton>
         )}
-        <Menu sx={{ '--List-padding': '0.5rem' }}>
+        <Menu sx={{ '--List-padding': '0.5rem' /* menu-compact or menu-message */ }}>
 
           {/* Files */}
           {/*<MenuItem onClick={handleAttachFilePicker}>*/}
@@ -341,7 +351,7 @@ function AttachmentSources(props: {
               icon={<ScreenshotMonitorIcon />}
               disabled={capturingScreen}
               onClick={handleTakeScreenCapture}
-              endAction={!isMessage && props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Stream screen to chat' onClick={props.onStartLiveScreenFeed} />}
+              endAction={!isMessage && props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Screen capture' onClick={props.onStartLiveScreenFeed} />}
             />
           )}
 
@@ -357,7 +367,7 @@ function AttachmentSources(props: {
               icon={<CameraAltOutlinedIcon />}
               description='Capture photos with optional OCR'
               onClick={props.onOpenCamera}
-              endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Stream camera to chat' onClick={props.onStartLiveCameraFeed} />}
+              endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera capture' onClick={props.onStartLiveCameraFeed} />}
             />
           )}
 
@@ -439,7 +449,7 @@ function AttachmentSources(props: {
           <RichMenuItem
             name='Web'
             icon={<LanguageRoundedIcon />}
-            description='Import from websites, including screenshots'
+            description='Import web pages, including screenshots'
             onClick={props.onOpenWebInput}
             disabled={!props.canBrowse}
             delay={0.02}
@@ -506,7 +516,7 @@ function AttachmentSources(props: {
             disabled={capturingScreen}
             color={screenCaptureError ? 'danger' : undefined}
             delay={0.08}
-            endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Stream screen to chat' onClick={props.onStartLiveScreenFeed} />}
+            endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Stream capture' onClick={props.onStartLiveScreenFeed} />}
           />
         )}
 
@@ -518,7 +528,7 @@ function AttachmentSources(props: {
             description='Capture photos with optional OCR'
             onClick={props.onOpenCamera}
             delay={0.1}
-            endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Stream camera to chat' onClick={props.onStartLiveCameraFeed} />}
+            endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera capture' onClick={props.onStartLiveCameraFeed} />}
           />
         )}
 
