@@ -17,6 +17,9 @@ const _knownDeepseekChatModels: ManualMappings = [
     description: 'Reasoning model with Chain-of-Thought capabilities, 128K context length. Supports JSON output and function calling.',
     contextWindow: 131072, // 128K
     interfaces: [...IF_3, LLM_IF_OAI_Reasoning],
+    // parameterSpecs: [
+    //   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] }, // not supported: this model is reasoning only
+    // ],
     maxCompletionTokens: 32768, // default, max: 65536
     chatPrice: { input: 0.28, output: 0.42, cache: { cType: 'oai-ac', read: 0.028 } },
     benchmark: { cbaElo: 1412 }, //deepseek-v3.2-exp-thinking
