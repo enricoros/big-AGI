@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, Radio, RadioGroup } from '@mui/joy';
 
 import type { Immutable } from '~/common/types/immutable.types';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 import { FormLabelStart } from './FormLabelStart';
 
@@ -11,8 +12,13 @@ export type FormRadioOption<T extends string> = {
   value: T,
   label: string | React.JSX.Element,
   description?: string,
+  tooltip?: string | React.JSX.Element,
   disabled?: boolean
 };
+
+export function optionWithTooltip(tooltip: Immutable<string | React.JSX.Element> | undefined, element: React.JSX.Element): React.JSX.Element {
+  return tooltip ? <TooltipOutlined size='sm' key={element.key} title={tooltip}>{element}</TooltipOutlined> : element;
+}
 
 
 export const FormRadioControl = <TValue extends string>(props: {
@@ -38,9 +44,9 @@ export const FormRadioControl = <TValue extends string>(props: {
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.value && props.onChange(event.target.value as TValue)}
         sx={{ flexWrap: 'wrap', gap: 1 }}
       >
-        {props.options.map((option) =>
+        {props.options.map((option) => optionWithTooltip(option.tooltip,
           <Radio key={'opt-' + option.value} value={option.value} label={option.label} disabled={option.disabled || props.disabled} />,
-        )}
+        ))}
       </RadioGroup>
     </FormControl>
   );

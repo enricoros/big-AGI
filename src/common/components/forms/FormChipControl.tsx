@@ -4,8 +4,8 @@ import { Box, Chip, ColorPaletteProp, FormControl } from '@mui/joy';
 
 import type { Immutable } from '~/common/types/immutable.types';
 
-import type { FormRadioOption } from './FormRadioControl';
 import { FormLabelStart } from './FormLabelStart';
+import { FormRadioOption, optionWithTooltip } from './FormRadioControl';
 
 
 const _styles = {
@@ -68,7 +68,7 @@ export const FormChipControl = <TValue extends string>(props: {
     <FormControl orientation='horizontal' disabled={props.disabled} sx={_styles.control}>
       {(!!props.title || !!description) && <FormLabelStart title={props.title} description={description} tooltip={props.tooltip} />}
       <Box sx={props.alignEnd ? _styles.chipGroupEnd : _styles.chipGroup}>
-        {props.options.map((option) => (
+        {props.options.map((option) => optionWithTooltip(option.tooltip,
           <Chip
             key={'opt-' + option.value}
             color={props.color}
@@ -80,7 +80,7 @@ export const FormChipControl = <TValue extends string>(props: {
             sx={_styles.chip}
           >
             {option.label}
-          </Chip>
+          </Chip>,
         ))}
       </Box>
     </FormControl>
