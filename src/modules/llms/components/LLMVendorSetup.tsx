@@ -22,6 +22,7 @@ import { OpenAIServiceSetup } from '../vendors/openai/OpenAIServiceSetup';
 import { OpenPipeServiceSetup } from '../vendors/openpipe/OpenPipeServiceSetup';
 import { OpenRouterServiceSetup } from '../vendors/openrouter/OpenRouterServiceSetup';
 import { PerplexityServiceSetup } from '../vendors/perplexity/PerplexityServiceSetup';
+import { TensorixServiceSetup } from '../vendors/tensorix/TensorixServiceSetup';
 import { TogetherAIServiceSetup } from '../vendors/togetherai/TogetherAIServiceSetup';
 import { XAIServiceSetup } from '../vendors/xai/XAIServiceSetup';
 import { ZAIServiceSetup } from '~/modules/llms/vendors/zai/ZAIServiceSetup';
@@ -49,6 +50,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   openpipe: OpenPipeServiceSetup,
   openrouter: OpenRouterServiceSetup,
   perplexity: PerplexityServiceSetup,
+  tensorix: TensorixServiceSetup,
   togetherai: TogetherAIServiceSetup,
   xai: XAIServiceSetup,
   zai: ZAIServiceSetup,
