@@ -60,9 +60,9 @@ const optionBoldSx: SxProps = {
 } as const;
 
 
-// "**text** -> text
+// '1. **text**' -> '1. text', or: **text** -> text
 function _stripMarkdownBold(text: string): { text: string; isBold: boolean } {
-  const stripped = text.replace(/^(\*{2,})(.+)\1$/, '$2');
+  const stripped = text.replace(/(\*{2,})(.+)\1$/, '$2');
   return { text: stripped, isBold: stripped !== text };
 }
 
