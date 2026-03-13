@@ -164,7 +164,7 @@ export function gatherStopFusion(fusion: BFusion): BFusion {
   fusion.fusingAbortController?.abort('Merge Stopped');
   return {
     ...fusion,
-    ...(fusion.stage === 'fusing' ? { status: 'stopped' /* speculative as the abort shall do the same */ } : {}),
+    ...(fusion.stage === 'fusing' ? { stage: 'stopped' /* optimistic as the abort shall do the same */ } : {}),
     fusingAbortController: undefined,
   };
 }
