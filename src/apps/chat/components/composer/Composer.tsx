@@ -170,8 +170,8 @@ export function Composer(props: {
   const chatLLMSupportsImages = !!props.chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
 
   // don't load URLs if the user is typing a command or there's no capability
-  const hasComposerBrowseCapability = useBrowseCapability().inComposer;
-  const enableLoadURLsInComposer = hasComposerBrowseCapability && !composeText.startsWith('/');
+  const browseCapability = useBrowseCapability();
+  const enableLoadURLsInComposer = browseCapability.inComposer && !composeText.startsWith('/');
 
   // user message for attachments
   const { onConversationBeamEdit, onConversationsImportFromFiles } = props;
@@ -759,7 +759,7 @@ export function Composer(props: {
                 {showChatAttachments === true && (
                   <AttachmentSourcesMemo
                     mode='menu-compact'
-                    canBrowse={hasComposerBrowseCapability}
+                    canBrowse={browseCapability.mayWork}
                     hasScreenCapture={supportsScreenCapture}
                     hasCamera={supportsCameraCapture()}
                     onlyImages={false /* because if yes, we only show the attach files above */}
@@ -787,7 +787,7 @@ export function Composer(props: {
                   mode={!labsComposerAttachmentsInline ? 'menu-rich' : 'inline-buttons'}
                   color={!labsComposerAttachmentsInline ? (showTint || 'neutral') : showTint}
                   richButtonStandOut={!isText && !isAppend}
-                  canBrowse={hasComposerBrowseCapability}
+                  canBrowse={browseCapability.mayWork}
                   hasScreenCapture={supportsScreenCapture}
                   hasCamera={supportsCameraCapture()}
                   onlyImages={showChatAttachments === 'only-images'}
