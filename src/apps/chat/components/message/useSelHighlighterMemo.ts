@@ -35,7 +35,7 @@ const APPLY_HTML_STRIKE = (text: string) => `<del>${text}</del>`;
 const APPLY_MD_STRONG = (text: string) => wrapWithMarkdownSyntax(text, '**');
 const APPLY_CUT = (_text: string) => ''; // Cut removes the text entirely
 
-type HighlightTool = 'highlight' | 'strike' | 'strong' | 'cut';
+export type HighlightTool = 'highlight' | 'strike' | 'strong' | 'cut';
 
 
 // -- Matcher algorithms --
