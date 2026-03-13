@@ -36,7 +36,7 @@ const optionGroupSx: SxProps = {
   flexDirection: 'column',
   alignItems: 'flex-start',
   gap: 0,
-};
+} as const;
 
 const optionSx: SxProps = {
   // style
@@ -52,7 +52,19 @@ const optionSx: SxProps = {
 
   // layout
   justifyContent: 'flex-start',
-};
+} as const;
+
+const optionBoldSx: SxProps = {
+  ...optionSx,
+  fontWeight: 'lg',
+} as const;
+
+
+// "**text** -> text
+function _stripMarkdownBold(text: string): { text: string; isBold: boolean } {
+  const stripped = text.replace(/^(\*{2,})(.+)\1$/, '$2');
+  return { text: stripped, isBold: stripped !== text };
+}
 
 
 export function optionsExtractFromFragments_dangerModifyFragment(enabled: boolean, fragments: InterleavedFragment[]): { fragments: InterleavedFragment[], options: string[] } {
@@ -164,21 +176,25 @@ export function BlockOpOptions(props: {
   options: string[],
   onContinue: (continueText: null | string) => void,
 }) {
-  const buttonSx = React.useMemo(() => ({ ...optionSx, fontSize: props.contentScaling }), [props.contentScaling]);
+  const normalSx = React.useMemo(() => ({ ...optionSx, fontSize: props.contentScaling }), [props.contentScaling]);
+  const boldSx = React.useMemo(() => ({ ...optionBoldSx, fontSize: props.contentScaling }), [props.contentScaling]);
   return (
     <Box sx={optionGroupSx}>
-      {props.options.map((option, index) => (
-        <Button
-          key={index}
-          color={OPTION_ACTIVE_COLOR}
-          variant='soft'
-          size={props.contentScaling === 'md' ? 'md' : 'sm'}
-          onClick={() => props.onContinue(option.endsWith('?') ? option.slice(0, -1) : option)}
-          sx={buttonSx}
-        >
-          {option}
-        </Button>
-      ))}
+      {props.options.map((option, index) => {
+        const { text, isBold } = _stripMarkdownBold(option);
+        return (
+          <Button
+            key={index}
+            color={OPTION_ACTIVE_COLOR}
+            variant='soft'
+            size={props.contentScaling === 'md' ? 'md' : 'sm'}
+            onClick={() => props.onContinue(text.endsWith('?') ? text.slice(0, -1) : text)}
+            sx={isBold ? boldSx : normalSx}
+          >
+            {text}
+          </Button>
+        );
+      })}
     </Box>
   );
 }
