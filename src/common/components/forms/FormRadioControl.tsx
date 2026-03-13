@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-import { FormControl, Radio, RadioGroup } from '@mui/joy';
+import { Box, FormControl, Radio, RadioGroup, Tooltip } from '@mui/joy';
 
 import type { Immutable } from '~/common/types/immutable.types';
-import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 import { FormLabelStart } from './FormLabelStart';
 
@@ -16,8 +15,18 @@ export type FormRadioOption<T extends string> = {
   disabled?: boolean
 };
 
-export function optionWithTooltip(tooltip: Immutable<string | React.JSX.Element> | undefined, element: React.JSX.Element): React.JSX.Element {
-  return tooltip ? <TooltipOutlined size='sm' key={element.key} title={tooltip}>{element}</TooltipOutlined> : element;
+/**
+ * Wraps an element in a Tooltip if provided. Uses Joy Tooltip directly (not
+ * TooltipOutlined) so the child element remains the direct child of its parent
+ * for CSS selector purposes (e.g. ButtonGroup's :first-child/:last-child).
+ */
+export function optionWithTooltip(tooltip: undefined | string | React.JSX.Element, element: React.JSX.Element): React.JSX.Element {
+  if (!tooltip) return element;
+  return (
+    <Tooltip key={element.key} title={<Box sx={{ p: 1 }}>{tooltip}</Box>} variant='outlined' arrow disableInteractive placement='top'>
+      {element}
+    </Tooltip>
+  );
 }
 
 
