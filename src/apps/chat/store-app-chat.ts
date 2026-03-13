@@ -50,6 +50,9 @@ interface AppChatStore {
 
   clearFilters: () => void;
 
+  filterHasBeamOpen: boolean;
+  toggleFilterHasBeamOpen: () => void;
+
   filterHasDocFragments: boolean;
   toggleFilterHasDocFragments: () => void;
 
@@ -120,7 +123,10 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     // Chat UI
 
-    clearFilters: () => _set({ filterIsArchived: false, filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
+    clearFilters: () => _set({ filterIsArchived: false, filterHasBeamOpen: false, filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
+
+    filterHasBeamOpen: false,
+    toggleFilterHasBeamOpen: () => _set(({ filterHasBeamOpen }) => ({ filterHasBeamOpen: !filterHasBeamOpen })),
 
     filterHasDocFragments: false,
     toggleFilterHasDocFragments: () => _set(({ filterHasDocFragments }) => ({ filterHasDocFragments: !filterHasDocFragments })),
@@ -232,6 +238,7 @@ export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] 
 
 export function useChatDrawerFilters() {
   return useAppChatStore(useShallow(state => ({
+    filterHasBeamOpen: state.filterHasBeamOpen,
     filterHasDocFragments: state.filterHasDocFragments,
     filterHasImageAssets: state.filterHasImageAssets,
     filterHasStars: state.filterHasStars,
@@ -239,6 +246,7 @@ export function useChatDrawerFilters() {
     showPersonaIcons: state.showPersonaIcons2,
     showRelativeSize: state.showRelativeSize,
     clearFilters: state.clearFilters,
+    toggleFilterHasBeamOpen: state.toggleFilterHasBeamOpen,
     toggleFilterHasDocFragments: state.toggleFilterHasDocFragments,
     toggleFilterHasImageAssets: state.toggleFilterHasImageAssets,
     toggleFilterHasStars: state.toggleFilterHasStars,
