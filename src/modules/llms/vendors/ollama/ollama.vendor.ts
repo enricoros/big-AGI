@@ -38,6 +38,8 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
 
 };
 
-function _csfOllamaAvailable(s?: Partial<DOllamaServiceSettings>) {
-  return !!s?.ollamaHost;
+function _csfOllamaAvailable(_s?: Partial<DOllamaServiceSettings>) {
+  // always available for local vendors - CSF falls back to DEFAULT_OLLAMA_HOST (http://127.0.0.1:11434)
+  // was: return !!s?.ollamaHost;
+  return true;
 }
