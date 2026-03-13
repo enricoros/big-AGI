@@ -49,6 +49,12 @@ const _style = {
     flexDirection: 'column',
     gap: 0.125,
   },
+  menuItemContentDisabled: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0.125,
+    opacity: 0.5,
+  },
   menuItemName: {
     typography: 'title-sm',
     fontWeight: 600,
@@ -115,7 +121,7 @@ function RichMenuItem(props: {
       <ListItemDecorator>
         <props.Icon />
       </ListItemDecorator>
-      <Box sx={_style.menuItemContent}>
+      <Box sx={props.disabled ? _style.menuItemContentDisabled : _style.menuItemContent}>
         <Box sx={_style.menuItemName}>
           {props.name}
         </Box>
