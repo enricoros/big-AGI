@@ -99,12 +99,8 @@ export function OptionalPostHogAnalytics() {
           // capture_pageview: false, // we used to handle this manually, but changed to the 'defaults' option which captures pageviews automatically
           // capture_pageleave: true, // we used to track goodbyes, now included in 'defaults'
           person_profiles: 'identified_only',
+          remote_config_refresh_interval_ms: 0, // no background refreshes. Flags only update on page load or manual `reloadFeatureFlags()` calls.
           disable_surveys: true, // disable surveys
-
-          // disable feature flags; at most we'd check them at boot for surveys
-          advanced_disable_feature_flags: true,
-          advanced_only_evaluate_survey_feature_flags: true,
-
           debug: Release.IsNodeDevBuild, // enable debug mode in development (was: `loaded: (ph) => if (Release.IsNodeDevBuild) ph.debug();`)
         });
 
