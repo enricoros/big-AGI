@@ -12,6 +12,7 @@ const largePaneSx: SxProps = {
 
 export function TooltipOutlined(props: {
   title: React.ReactNode;
+  size?: TooltipProps['size'];
   color?: TooltipProps['color'];
   variant?: TooltipProps['variant'];
   placement?: TooltipProps['placement'];
@@ -22,6 +23,7 @@ export function TooltipOutlined(props: {
 }) {
   return (
     <Tooltip
+      size={props.size}
       title={props.title}
       color={props.color}
       enterDelay={props.slowEnter ? 600 : 0}

@@ -140,7 +140,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
                     console.log(`[DEV] Resetting '${paramId}' for '${llm.id}' because '${currentValue}' is no longer supported.`);
                   }
                   // reset to default - model parameter spec does not allow this value anymore
-                  else if (paramSpec.enumValues?.length && !paramSpec.enumValues.includes(currentValue)) {
+                  else if (paramSpec.enumValues?.length && !(paramSpec.enumValues as readonly string[]).includes(currentValue)) {
                     delete result.userParameters[paramId];
                     console.log(`[DEV] Resetting '${paramId}' for '${llm.id}' because '${currentValue}' is no longer allowed for the model.`);
                   }

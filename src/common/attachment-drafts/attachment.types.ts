@@ -93,7 +93,12 @@ export type AttachmentDraftSource = {
   egoFragmentsInputData: DraftEgoFragmentsInputData;
 };
 
-export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentDraftSourceOriginDTO;
+export type AttachmentDraftSourceOriginFile =
+  | 'camera' | 'screencapture'
+  | 'live-feed-camera' | 'live-feed-screen'
+  | 'file-open'
+  | 'clipboard-read'
+  | AttachmentDraftSourceOriginDTO;
 
 export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 

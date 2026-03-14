@@ -5,8 +5,8 @@ import { Button, ButtonGroup, ColorPaletteProp, FormControl } from '@mui/joy';
 
 import type { Immutable } from '~/common/types/immutable.types';
 
-import type { FormRadioOption } from './FormRadioControl';
 import { FormLabelStart } from './FormLabelStart';
+import { FormRadioOption, optionWithTooltip } from './FormRadioControl';
 
 
 // configuration
@@ -90,7 +90,7 @@ export const FormChipGroupControl = <TValue extends string>(props: {
         variant={rvSolid ? 'outlined' : 'soft'} // we customize per-button - use 'soft' or 'outlined + bcolor + per-item'
         sx={_styles.group}
       >
-        {props.options.map((option) => (
+        {props.options.map((option) => optionWithTooltip(option.tooltip,
           <Button
             aria-pressed={option === active}
             key={option.value}
@@ -102,7 +102,7 @@ export const FormChipGroupControl = <TValue extends string>(props: {
             sx={props.size === 'sm' ? _styles.btnSm : _styles.btn}
           >
             {option.label}
-          </Button>
+          </Button>,
         ))}
       </ButtonGroup>
 

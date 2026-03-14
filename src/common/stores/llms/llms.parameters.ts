@@ -533,7 +533,7 @@ export type DModelParameterSpecAny = {
  * Note: This is the client-side TypeScript definition that matches
  * ModelParameterSpec_schema in `llm.server.types.ts`.
  */
-interface DModelParameterSpec<T extends DModelParameterId> {
+export interface DModelParameterSpec<T extends DModelParameterId> {
   paramId: T;
   required?: boolean;
   hidden?: boolean;
@@ -549,7 +549,7 @@ interface DModelParameterSpec<T extends DModelParameterId> {
    * The UI will only show these values. Analogous to rangeOverride for numeric params.
    * Example: llmVndOaiEffort registry has 6 values, but a specific model may only support ['low', 'medium', 'high'].
    */
-  enumValues?: readonly string[];
+  enumValues?: readonly DModelParameterValue<T>[];
 }
 
 

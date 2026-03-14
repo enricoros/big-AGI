@@ -172,7 +172,10 @@ function _getInnerTextFromFloatingElement(element: HTMLElement, fallback: string
   element.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;white-space:pre-wrap';
   document.body.appendChild(element);
   try {
-    return element.innerText || fallback;
+    const text = element.innerText || fallback;
+    // Nested block elements (wrapper divs, markdown-body, etc.) each add a \n via innerText,
+    // multiplying newlines beyond the intended paragraph breaks - collapse 3+ to 2 and trim edges
+    return text.replace(/\n{3,}/g, '\n\n').trim();
   } finally {
     element.remove();
   }

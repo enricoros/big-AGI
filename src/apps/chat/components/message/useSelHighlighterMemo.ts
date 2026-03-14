@@ -1,7 +1,9 @@
 import * as React from 'react';
 
 import type { DMessageId } from '~/common/stores/chat/chat.message';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+
 import { wrapWithMarkdownSyntax } from '~/modules/blocks/markdown/markdown.wrapper';
 
 import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
@@ -33,7 +35,7 @@ const APPLY_HTML_STRIKE = (text: string) => `<del>${text}</del>`;
 const APPLY_MD_STRONG = (text: string) => wrapWithMarkdownSyntax(text, '**');
 const APPLY_CUT = (_text: string) => ''; // Cut removes the text entirely
 
-type HighlightTool = 'highlight' | 'strike' | 'strong' | 'cut';
+export type HighlightTool = 'highlight' | 'strike' | 'strong' | 'cut';
 
 
 // -- Matcher algorithms --
@@ -170,6 +172,10 @@ export function useSelHighlighterMemo(
 
           // Tool application function
           acc = (tool: HighlightTool) => {
+
+            // Copy to clipboard before cutting
+            if (tool === 'cut')
+              copyToClipboard(selText, 'Cut text');
 
             // Apply the tool to the inner text
             const selProcessed =

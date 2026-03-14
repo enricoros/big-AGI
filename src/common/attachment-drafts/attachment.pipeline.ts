@@ -459,6 +459,11 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
         case 'drop':
           fileTitle = source.refPath || _lowCollisionRefString('Dropped File', 6);
           break;
+        case 'live-feed-camera':
+        case 'live-feed-screen':
+          fileCaption = sourceOrigin === 'live-feed-camera' ? 'Live Camera' : 'Live Screen';
+          fileTitle = source.refPath || _lowCollisionRefString(fileCaption, 6);
+          break;
         default:
           const _exhaustiveCheck: never = sourceOrigin;
           fileTitle = 'File';
