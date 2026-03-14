@@ -292,6 +292,17 @@ function ChatDrawer(props: {
     toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize,
   ]);
 
+  const displayNavItems = React.useMemo(() => {
+    if (renderLimit === Infinity || renderLimit >= renderNavItems.length) return renderNavItems;
+
+    // return sliced if it contains the active conversation
+    const sliced = renderNavItems.slice(0, renderLimit);
+    if (!props.activeConversationId || sliced.some(i => i.type === 'nav-item-chat-data' && i.conversationId === props.activeConversationId)) return sliced;
+
+    // include the active conversation if it's beyond the fold
+    const activeItem = renderNavItems.find((i, idx) => idx >= renderLimit && i.type === 'nav-item-chat-data' && i.conversationId === props.activeConversationId);
+    return activeItem ? [...sliced, activeItem] : sliced;
+  }, [renderNavItems, renderLimit, props.activeConversationId]);
 
   return <>
 
@@ -380,7 +391,7 @@ function ChatDrawer(props: {
 
       {/* Chat Titles List (shrink as half the rate as the Folders List) */}
       <Box sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
-        {renderNavItems.slice(0, renderLimit).map((item, idx) => item.type === 'nav-item-chat-data' ? (
+        {displayNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
               item={item}
