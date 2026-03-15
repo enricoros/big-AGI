@@ -9,6 +9,7 @@ import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 /// Conversation
 
 export type DConversationParticipantSpeakWhen = 'every-turn' | 'when-mentioned';
+export type DConversationTurnTerminationMode = 'round-robin-per-human' | 'continuous';
 
 export interface DConversationParticipant {
   id: string;
@@ -39,6 +40,7 @@ export interface DConversation {
   // there should be the concept of the audience of the current head
   systemPurposeId: SystemPurposeId;   // primary AI participant persona for backward compatibility
   participants?: DConversationParticipant[]; // persistent AI participant roster, primary participant first
+  turnTerminationMode?: DConversationTurnTerminationMode;
 
   // when updated is null, we don't have messages yet (timestamps as Date.now())
   created: number;                    // creation timestamp
@@ -177,6 +179,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
       createHumanConversationParticipant(),
       createAssistantConversationParticipant(systemPurposeId || defaultSystemPurposeId),
     ],
+    turnTerminationMode: 'round-robin-per-human',
     // @deprecated
     tokenCount: 0,
 
@@ -216,6 +219,7 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
     ...(conversation.participants?.length ? {
       participants: conversation.participants.map(participant => ({ ...participant })),
     } : {}),
+    turnTerminationMode: conversation.turnTerminationMode ?? 'round-robin-per-human',
     tokenCount: conversation.tokenCount,
 
     created: conversation.created,

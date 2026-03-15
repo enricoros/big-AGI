@@ -22,6 +22,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageId, DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { DConversationId, DConversationParticipant } from '~/common/stores/chat/chat.conversation';
@@ -47,6 +48,7 @@ import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/stor
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
+import { getParticipantAccentColor } from '~/common/util/dMessageUtils';
 
 import type { ActileItem } from './actile/ActileProvider';
 import { providerAttachmentLabels } from './actile/providerAttachmentLabels';
@@ -110,7 +112,7 @@ export function Composer(props: {
   capabilityHasT2IEdit: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, sendMode: 'steer' | 'queue', chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
   onConversationBeamEdit: (conversationId: DConversationId, editMessageId?: DMessageId) => Promise<void>;
   onConversationsImportFromFiles: (files: File[]) => Promise<void>;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
@@ -142,16 +144,19 @@ export function Composer(props: {
   })));
   const timeToShowTips = useLogicSherpaStore(state => state.usageCount >= SHOW_TIPS_AFTER_RELOADS);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
-
+  const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
+  const { novel: explainCtrlEnter, touch: touchCtrlEnter } = useUICounter('composer-ctrl-enter');
+  const { novel: explainCtrlShiftEnter, touch: touchCtrlShiftEnter } = useUICounter('composer-ctrl-shift-enter');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const composerQuickButton = useUIPreferencesStore(state => state.composerQuickButton);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
+  const { assistantAbortible, systemPurposeId, turnTerminationMode, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.targetConversationId);
     return {
       assistantAbortible: conversation ? !!conversation._abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
+      turnTerminationMode: conversation?.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
       tokenCount: conversation ? conversation.tokenCount : 0,
       abortConversationTemp: state.abortConversationTemp,
     };
@@ -166,6 +171,7 @@ export function Composer(props: {
   // composer-overlay: for the in-reference-to state, comes from the conversation overlay
   const allowInReferenceTo = chatExecuteMode === 'generate-content';
   const inReferenceTo = useChatComposerOverlayStore(conversationOverlayStore, store => allowInReferenceTo ? store.inReferenceTo : null);
+  const composerDraftText = useChatComposerOverlayStore(conversationOverlayStore, store => store.composerDraftText);
 
   // LLM-derived
   const noLLM = !props.chatLLM;
@@ -214,17 +220,21 @@ export function Composer(props: {
   const { composerTextAreaRef, targetConversationId, onAction, onTextImagine } = props;
   const assistantParticipants = React.useMemo(() => (props.participants ?? []).filter(participant => participant.kind === 'assistant'), [props.participants]);
   const mentionOnlyParticipants = React.useMemo(() => assistantParticipants.filter(participant => participant.speakWhen === 'when-mentioned' && !!participant.name?.trim()), [assistantParticipants]);
+  const hasAllMention = React.useMemo(() => /(^|[^\w])@all(?=$|[^\w])/i.test(composeText.trim()), [composeText]);
   const mentionedParticipants = React.useMemo(() => {
     const currentText = composeText.trim();
     if (!currentText)
       return [] as DConversationParticipant[];
+
+    if (hasAllMention)
+      return mentionOnlyParticipants;
 
     return mentionOnlyParticipants.filter(participant => {
       const participantName = participant.name.trim();
       const escapedName = participantName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       return new RegExp(`(^|[^\\w])@${escapedName}(?=$|[^\\w])`, 'i').test(currentText);
     });
-  }, [composeText, mentionOnlyParticipants]);
+  }, [composeText, hasAllMention, mentionOnlyParticipants]);
   const isMobile = props.isMobile;
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
@@ -278,6 +288,16 @@ export function Composer(props: {
     if (inReferenceTo?.length)
       setTimeout(() => composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
   }, [composerTextAreaRef, inReferenceTo]);
+  React.useEffect(() => {
+    if (!composerDraftText)
+      return;
+
+    setComposeText(current => current
+      ? `${current}${/\s$/.test(current) ? '' : ' '}${composerDraftText}`
+      : composerDraftText);
+    conversationOverlayStore?.getState().clearComposerDraftText();
+    setTimeout(() => composerTextAreaRef.current?.focus(), 1);
+  }, [composerDraftText, composerTextAreaRef, conversationOverlayStore]);
 
 
   // Confirmation Modals
@@ -306,7 +326,7 @@ export function Composer(props: {
     handleInReferenceToClear();
   }, [attachmentsRemoveAll, handleInReferenceToClear, setComposeText]);
 
-  const _handleSendActionUnguarded = React.useCallback(async (_chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
+  const _handleSendActionUnguarded = React.useCallback(async (sendMode: 'steer' | 'queue', _chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
 
     // await user confirmation (or rejection) if attachments are not supported
@@ -340,15 +360,15 @@ export function Composer(props: {
     const metadata = inReferenceTo?.length ? { inReferenceTo: inReferenceTo } : undefined;
 
     // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
-    const enqueued = onAction(targetConversationId, _chatExecuteMode, fragments, metadata);
+    const enqueued = onAction(targetConversationId, sendMode, _chatExecuteMode, fragments, metadata);
     if (enqueued)
       _handleClearText();
     return enqueued;
   }, [targetConversationId, confirmProceedIfAttachmentsNotSupported, composerTextSuffix, props.capabilityHasT2IEdit, inReferenceTo, onAction, _handleClearText, attachmentsTakeAllFragments]);
 
-  const handleSendAction = React.useCallback(async (chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
+  const handleSendAction = React.useCallback(async (sendMode: 'steer' | 'queue', chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     setSendStarted(true);
-    const enqueued = await _handleSendActionUnguarded(chatExecuteMode, composerText);
+    const enqueued = await _handleSendActionUnguarded(sendMode, chatExecuteMode, composerText);
     setSendStarted(false);
     return enqueued;
   }, [_handleSendActionUnguarded, setSendStarted]);
@@ -377,7 +397,7 @@ export function Composer(props: {
       void AudioGenerator.chatAutoSend();
       // void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3');
       // }
-      void handleSendAction(chatExecuteMode, nextText); // fire/forget
+      void handleSendAction('steer', chatExecuteMode, nextText); // fire/forget
     } else {
       // if scheduled for send but not sent, clear the send state
       if (result.flagSendOnDone)
@@ -441,7 +461,7 @@ export function Composer(props: {
   const handleAppendTextAndSend = React.useCallback(async (appendText: string) => {
     const newText = composeText ? `${composeText} ${appendText}` : appendText;
     setComposeText(newText);
-    await handleSendAction(chatExecuteMode, newText);
+    await handleSendAction('steer', chatExecuteMode, newText);
   }, [chatExecuteMode, composeText, handleSendAction, setComposeText]);
 
   const handleFinishMicAndSend = React.useCallback(() => {
@@ -451,18 +471,18 @@ export function Composer(props: {
     }
   }, [sendStarted, toggleRecognition]);
 
-  const handleSendClicked = React.useCallback(async () => {
+  const handleSendClicked = React.useCallback(async (sendMode: 'steer' | 'queue' = 'steer'): Promise<boolean> => {
     // Auto-send as soon as the mic is done
     if (recognitionState.isActive) {
       handleFinishMicAndSend();
-      return;
+      return false;
     }
     // Safety option
     if (micIsRunning) {
       addSnackbar({ key: 'chat-mic-running', message: 'Please wait for the microphone to finish.', type: 'info' });
-      return;
+      return false;
     }
-    await handleSendAction(chatExecuteMode, composeText); // 'chat/write/...' button
+    return await handleSendAction(sendMode, chatExecuteMode, composeText); // 'chat/write/...' button
   }, [chatExecuteMode, composeText, handleFinishMicAndSend, handleSendAction, micIsRunning, recognitionState.isActive]);
 
   const handleSendTextBeamClicked = React.useCallback(async () => {
@@ -471,7 +491,7 @@ export function Composer(props: {
       return;
     }
     if (composeText) {
-      await handleSendAction('beam-content', composeText); // 'beam' button
+      await handleSendAction('steer', 'beam-content', composeText); // 'beam' button
     } else {
       if (targetConversationId)
         void onConversationBeamEdit(targetConversationId); // beam-edit conversation
@@ -574,23 +594,38 @@ export function Composer(props: {
     if (actileInterceptKeydown(e))
       return;
 
+    if ((e.key === 'Backspace' || e.key === 'Delete') && !composeText && inReferenceTo?.length) {
+      handleInReferenceToClear();
+      return e.preventDefault();
+    }
+
     // Enter: primary action
     if (e.key === 'Enter') {
       // Skip if composing (e.g., CJK input methods) - issue #784
       if (e.nativeEvent.isComposing)
         return;
 
-      // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey && !e.metaKey && !e.ctrlKey) {
-        if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
-          e.stopPropagation();
+        if (await handleSendAction('steer', 'append-user', composeText)) // 'alt+enter' -> write
+          touchAltEnter();
         return e.preventDefault();
       }
 
-      // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
-      if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
+      // Ctrl (Windows) + Enter: queue the message behind the current turn
+      if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        if (await handleSendClicked('queue')) {
+          touchCtrlEnter();
           e.stopPropagation();
+        }
+        return e.preventDefault();
+      }
+
+      // Ctrl + Shift + Enter: steer the current turn once it finishes the current response chunk
+      if (e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey) {
+        if (await handleSendClicked('steer')) {
+          touchCtrlShiftEnter();
+          e.stopPropagation();
+        }
         return e.preventDefault();
       }
 
@@ -598,13 +633,12 @@ export function Composer(props: {
       if (e.shiftKey)
         touchShiftEnter();
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
-        if (!assistantAbortible)
-          await handleSendAction(chatExecuteMode, composeText); // enter -> send
+        await handleSendClicked('steer'); // enter -> steer/send
         return e.preventDefault();
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchShiftEnter]);
+  }, [actileInterceptKeydown, composeText, enterIsNewline, handleInReferenceToClear, handleSendAction, handleSendClicked, inReferenceTo?.length, touchAltEnter, touchCtrlEnter, touchCtrlShiftEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -703,7 +737,22 @@ export function Composer(props: {
       : !attEnrichSummary.allCompatible ? 'warning'
         : chatExecuteModeSendColor;
 
-  const sendButtonLabel = chatExecuteModeSendLabel;
+  const sendButtonLabel = isText && assistantParticipants.length > 1
+    ? turnTerminationMode === 'continuous'
+      ? 'Start loop'
+      : 'Send to room'
+    : chatExecuteModeSendLabel;
+  const showQueueSendAction = isText && assistantAbortible;
+  const primarySendButtonLabel = showQueueSendAction ? 'Queue message' : sendButtonLabel;
+  const turnModeChip = isText && assistantParticipants.length > 1
+    ? {
+      color: turnTerminationMode === 'continuous' ? 'warning' as const : 'neutral' as const,
+      label: turnTerminationMode === 'continuous' ? 'Continuous agents' : 'Human-led with mention follow-ups',
+      helper: turnTerminationMode === 'continuous'
+        ? 'Agents will keep taking turns until you stop them.'
+        : 'A human message starts an ordered pass; agent @mentions can extend the room until no follow-ups remain.',
+    }
+    : null;
 
   const sendButtonIcon =
     micContinuation ? null
@@ -732,7 +781,7 @@ export function Composer(props: {
         : isTextBeam ? 'Combine insights from multiple AI models...'
           : showChatInReferenceTo ? 'Chat about this...'
             : mentionOnlyParticipants.length
-              ? `Message the room… Mention ${mentionOnlyParticipants.slice(0, 2).map(participant => `@${participant.name.trim()}`).join(' or ')} to trigger mention-only agents.`
+              ? `Message the room…\nMention ${mentionOnlyParticipants.slice(0, 2).map(participant => `@${participant.name.trim()}`).join(' or ')} to trigger mention-only agents.`
               : 'Message the room')
     + (isDesktop ? ` · drop ${props.isDeveloperMode ? 'source' : 'files'}` : '')
     + ` · ${placeholderAction}`
@@ -742,6 +791,10 @@ export function Composer(props: {
   if (isDesktop && timeToShowTips && !isDraw) {
     if (explainShiftEnter)
       textPlaceholder += !enterIsNewline ? '\n\n⏎ Shift + Enter to add a new line' : '\n\n➤ Shift + Enter to send';
+    else if (explainCtrlEnter)
+      textPlaceholder += platformAwareKeystrokes('\n\n⏳ Tip: Ctrl + Enter queues your message');
+    else if (explainCtrlShiftEnter)
+      textPlaceholder += platformAwareKeystrokes('\n\n➤ Tip: Ctrl + Shift + Enter steers next');
   }
 
   const stableGridSx: SxProps = React.useMemo(() => ({
@@ -881,6 +934,9 @@ export function Composer(props: {
                         enterKeyHint: enterIsNewline ? 'enter' : 'send',
                         sx: {
                           ...(recognitionState.isAvailable && { pr: { md: 5 } }),
+                          '&::placeholder': {
+                            whiteSpace: 'pre-line',
+                          },
                           // mb: 0.5, // no need; the outer container already has enough p (for TokenProgressbar)
                         },
                         ref: composerTextAreaRef,
@@ -906,18 +962,19 @@ export function Composer(props: {
                 {mentionOnlyParticipants.length > 0 && !isDraw && !showChatInReferenceTo && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, px: 0.5, pt: 0.5, pb: 0.25 }}>
                     <Typography level='body-xs' sx={{ color: 'text.tertiary', mr: 0.5 }}>
-                      Mention-only agents:
+                      Mention-only agents{hasAllMention ? ' · @all active' : ''}:
                     </Typography>
                     {mentionOnlyParticipants.map(participant => {
                       const isMentioned = mentionedParticipants.some(mentioned => mentioned.id === participant.id);
+                      const participantAccentColor = getParticipantAccentColor(participant.name);
                       return (
                         <Chip
                           key={participant.id}
                           size='sm'
                           variant={isMentioned ? 'solid' : 'soft'}
-                          color={isMentioned ? 'primary' : 'neutral'}
+                          color={participantAccentColor}
                           onClick={() => setComposeText(current => `${current}${current && !/\s$/.test(current) ? ' ' : ''}@${participant.name} `)}
-                          sx={{ cursor: 'pointer' }}
+                          sx={{ cursor: 'pointer', opacity: isMentioned ? 1 : 0.9 }}
                         >
                           @{participant.name}
                         </Chip>
@@ -1034,6 +1091,17 @@ export function Composer(props: {
                 )}
 
                 {/* Responsive Send/Stop buttons */}
+                <Box sx={{ display: 'grid', gap: 0.5, flexGrow: 1 }}>
+                  {isMobile && turnModeChip && (
+                    <Chip
+                      size='sm'
+                      variant='soft'
+                      color={turnModeChip.color}
+                      sx={{ alignSelf: 'stretch', justifyContent: 'center' }}
+                    >
+                      {turnModeChip.label}
+                    </Chip>
+                  )}
                 <ButtonGroup
                   variant={sendButtonVariant}
                   color={sendButtonColor}
@@ -1043,23 +1111,22 @@ export function Composer(props: {
                     boxShadow: (isMobile && sendButtonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${sendButtonColor}-mainChannel) / 20%)`,
                   }}
                 >
-                  {!assistantAbortible ? (
-                    <Button
-                      key='composer-act'
-                      fullWidth
-                      disabled={noConversation /* || noLLM*/}
-                      loading={sendStarted}
-                      loadingPosition='end'
-                      onClick={handleSendClicked}
-                      endDecorator={sendButtonIcon}
-                      sx={{ '--Button-gap': '1rem' }}
-                    >
-                      {micContinuation && 'Voice '}{sendButtonLabel}
-                    </Button>
-                  ) : (
+                  <Button
+                    key='composer-act'
+                    fullWidth
+                    disabled={noConversation /* || noLLM*/}
+                    loading={sendStarted}
+                    loadingPosition='end'
+                    onClick={() => void handleSendClicked()}
+                    endDecorator={sendButtonIcon}
+                    sx={{ '--Button-gap': '1rem' }}
+                  >
+                    {micContinuation && 'Voice '}{primarySendButtonLabel}
+                  </Button>
+
+                  {assistantAbortible && (
                     <Button
                       key='composer-stop'
-                      fullWidth
                       variant='soft'
                       disabled={noConversation}
                       onClick={handleStopClicked}
@@ -1094,6 +1161,12 @@ export function Composer(props: {
                     <ExpandLessIcon />
                   </IconButton>
                 </ButtonGroup>
+                {turnModeChip && !isMobile && (
+                  <Typography level='body-xs' sx={{ color: 'text.tertiary', px: 0.5 }}>
+                    {turnModeChip.helper}
+                  </Typography>
+                )}
+                </Box>
 
                 {/* [desktop] secondary-top buttons */}
                 {isDesktop && showChatExtras && !assistantAbortible && (
@@ -1115,6 +1188,17 @@ export function Composer(props: {
 
               {/* [desktop] secondary bottom-buttons (aligned to bottom for now, and mutually exclusive) */}
               {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
+
+                {turnModeChip && (
+                  <Chip
+                    size='sm'
+                    variant='soft'
+                    color={turnModeChip.color}
+                    sx={{ justifyContent: 'center' }}
+                  >
+                    {turnModeChip.label}
+                  </Chip>
+                )}
 
                 {/* [desktop] Call secondary button */}
                 {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM || assistantAbortible} onClick={handleCallClicked} />}

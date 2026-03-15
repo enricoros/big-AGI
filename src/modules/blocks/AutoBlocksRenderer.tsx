@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { ContentScaling } from '~/common/app.theme';
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 import { BlocksContainer } from './BlocksContainers';
@@ -61,6 +62,8 @@ export function AutoBlocksRenderer(props: {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
+  onAppendMention?: (mentionText: string) => void;
+  participants?: DConversationParticipant[];
 
   /**
    * If defined, this is a function that will replace the first occurrence of
@@ -134,6 +137,8 @@ export function AutoBlocksRenderer(props: {
                 key={'txt-bk-' + index}
                 content={bkInput.content}
                 sx={scaledTypographySx}
+                onAppendMention={props.onAppendMention}
+                participants={props.participants}
               />
             ) : (
               // Keep in sync with ScaledMarkdownRenderer
@@ -142,6 +147,8 @@ export function AutoBlocksRenderer(props: {
                 content={bkInput.content}
                 disablePreprocessor={optimizeDisableProcessorsOnLast}
                 sx={scaledTypographySx}
+                onAppendMention={props.onAppendMention}
+                participants={props.participants}
               />
             );
 

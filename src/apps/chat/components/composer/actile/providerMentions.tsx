@@ -20,15 +20,24 @@ export const providerMentions = (
 
   fetchItems: async (): ActileProviderItems => ({
     searchPrefix: '@',
-    items: participants
-      .filter(participant => participant.kind === 'assistant' && !!participant.name?.trim())
-      .map(participant => ({
-        key: participant.id,
+    items: [
+      {
+        key: 'all-agents',
         providerKey: 'pmention',
-        label: `@${participant.name.trim()}`,
-        description: participant.speakWhen === 'when-mentioned' ? 'Mention-only agent' : 'Agent',
+        label: '@all',
+        description: 'Mention all agents',
         Icon: SmartToyOutlinedIcon as never,
-      } satisfies ActileItem)),
+      } satisfies ActileItem,
+      ...participants
+        .filter(participant => participant.kind === 'assistant' && !!participant.name?.trim())
+        .map(participant => ({
+          key: participant.id,
+          providerKey: 'pmention',
+          label: `@${participant.name.trim()}`,
+          description: participant.speakWhen === 'when-mentioned' ? 'Mention-only agent' : 'Agent',
+          Icon: SmartToyOutlinedIcon as never,
+        } satisfies ActileItem)),
+    ],
   }),
 
   onItemSelect: (item) => onMentionSelect(item as ActileItem, '@'),

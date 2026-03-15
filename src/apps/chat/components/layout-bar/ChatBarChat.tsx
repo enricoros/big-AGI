@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Chip, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import { Box, Button, Chip, Divider, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
 
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -13,10 +13,12 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { createAssistantConversationParticipant, DConversationParticipant, generateAssistantParticipantName } from '~/common/stores/chat/chat.conversation';
+import { createAssistantConversationParticipant, DConversationParticipant, DConversationTurnTerminationMode, generateAssistantParticipantName } from '~/common/stores/chat/chat.conversation';
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
+import { getParticipantAccentColor } from '~/common/util/dMessageUtils';
 
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
@@ -27,10 +29,12 @@ export function ChatBarChat(props: {
   conversationId: DConversationId | null;
   llmDropdownRef: React.Ref<OptimaBarControlMethods>;
   personaDropdownRef: React.Ref<OptimaBarControlMethods>;
+  onConversationSaveAgentGroup: (conversationId: DConversationId, name?: string, existingId?: string | null) => string | null;
 }) {
 
   // state
   const [participantsAnchorEl, setParticipantsAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [agentGroupNameDraft, setAgentGroupNameDraft] = React.useState('');
   const [draftPersonaId, setDraftPersonaId] = React.useState<SystemPurposeId | ''>('');
   const [draftLlmId, setDraftLlmId] = React.useState<string>('');
   const [expandedParticipantId, setExpandedParticipantId] = React.useState<string | null>(null);
@@ -46,15 +50,20 @@ export function ChatBarChat(props: {
   const { chatLLMDropdown, chatLLMId } = useChatLLMDropdown(props.llmDropdownRef);
   const { personaDropdown } = usePersonaIdDropdown(props.conversationId, props.personaDropdownRef);
   const { folderDropdown } = useFolderDropdown(props.conversationId);
-  const { participants, messages, systemPurposeId, setParticipants } = useChatStore(useShallow(state => {
+  const { participants, messages, systemPurposeId, turnTerminationMode, setParticipants, setTurnTerminationMode } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       participants: conversation?.participants ?? [],
       messages: conversation?.messages ?? [],
       systemPurposeId: conversation?.systemPurposeId ?? null,
+      turnTerminationMode: conversation?.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
       setParticipants: state.setParticipants,
+      setTurnTerminationMode: state.setTurnTerminationMode,
     };
   }));
+  const { savedAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
+    savedAgentGroups: state.savedAgentGroups,
+  })));
   const { llms: visibleLLMs } = useVisibleLLMs(chatLLMId ?? null, false, true);
 
   // derived state
@@ -108,6 +117,16 @@ export function ChatBarChat(props: {
   })), [assistantParticipants, latestAssistantMessage, latestUserMessage, nextToSpeakParticipantId, participantMentionPattern, spokenThisTurnParticipantIds]);
   const participantPersonaOptions = React.useMemo(() => Object.entries(SystemPurposes) as [SystemPurposeId, (typeof SystemPurposes)[SystemPurposeId]][], []);
   const selectedParticipantLlm = React.useMemo(() => visibleLLMs.find(llm => llm.id === draftLlmId) ?? null, [draftLlmId, visibleLLMs]);
+  const activeConversationGroupId = React.useMemo(() => {
+    if (!props.conversationId)
+      return null;
+
+    const activeParticipants = assistantParticipants.map(participant => ({ ...participant }));
+    return savedAgentGroups.find(group =>
+      group.turnTerminationMode === turnTerminationMode
+      && JSON.stringify(group.participants) === JSON.stringify(activeParticipants)
+    )?.id ?? null;
+  }, [assistantParticipants, props.conversationId, savedAgentGroups, turnTerminationMode]);
   const canManageParticipants = !!props.conversationId;
   const canRemoveAssistant = assistantParticipants.length > 1;
 
@@ -117,8 +136,15 @@ export function ChatBarChat(props: {
       setDraftLlmId('');
       setExpandedParticipantId(null);
       setParticipantDrafts({});
+      setAgentGroupNameDraft('');
+      return;
     }
-  }, [participantsAnchorEl, systemPurposeId]);
+
+    const activeGroup = activeConversationGroupId
+      ? savedAgentGroups.find(group => group.id === activeConversationGroupId) ?? null
+      : null;
+    setAgentGroupNameDraft(activeGroup?.name ?? `Agents ${Math.max(assistantParticipants.length, 1)}`);
+  }, [activeConversationGroupId, assistantParticipants.length, participantsAnchorEl, savedAgentGroups, systemPurposeId]);
 
   const handleParticipantsToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     if (!canManageParticipants)
@@ -132,6 +158,16 @@ export function ChatBarChat(props: {
 
     setParticipants(props.conversationId, participants.filter(participant => participant.id !== participantId));
   }, [canRemoveAssistant, participants, props.conversationId, setParticipants]);
+
+  const handleClearAgents = React.useCallback(() => {
+    if (!props.conversationId)
+      return;
+
+    const humanParticipants = participants.filter(participant => participant.kind === 'human');
+    setParticipants(props.conversationId, humanParticipants);
+    setExpandedParticipantId(null);
+    setParticipantDrafts({});
+  }, [participants, props.conversationId, setParticipants]);
 
   const handleParticipantUpdate = React.useCallback((participantId: string, update: Partial<DConversationParticipant>) => {
     if (!props.conversationId)
@@ -230,6 +266,12 @@ export function ChatBarChat(props: {
     setParticipants(props.conversationId, [...humanParticipants, ...reorderedAssistants]);
   }, [participants, props.conversationId, setParticipants]);
 
+  const handleTurnTerminationModeChange = React.useCallback((_event: React.SyntheticEvent | null, value: string | null) => {
+    if (!props.conversationId || (value !== 'round-robin-per-human' && value !== 'continuous'))
+      return;
+    setTurnTerminationMode(props.conversationId, value);
+  }, [props.conversationId, setTurnTerminationMode]);
+
   const handleParticipantAdd = React.useCallback(() => {
     if (!props.conversationId || !draftPersonaId)
       return;
@@ -244,6 +286,21 @@ export function ChatBarChat(props: {
     setDraftLlmId('');
     setExpandedParticipantId(nextParticipant.id);
   }, [assistantParticipants, draftLlmId, draftPersonaId, participants, props.conversationId, setParticipants]);
+
+  const handleSaveAgentGroup = React.useCallback(() => {
+    if (!props.conversationId)
+      return;
+
+    const normalizedName = agentGroupNameDraft.trim() || `Agents ${Math.max(assistantParticipants.length, 1)}`;
+    const savedId = props.onConversationSaveAgentGroup(
+      props.conversationId,
+      normalizedName,
+      activeConversationGroupId,
+    );
+
+    if (savedId)
+      setAgentGroupNameDraft(normalizedName);
+  }, [activeConversationGroupId, agentGroupNameDraft, assistantParticipants.length, props]);
 
   return <>
 
@@ -269,20 +326,57 @@ export function ChatBarChat(props: {
       onClose={handleParticipantsClose}
       noAutoFocus
       placement='bottom-start'
-      maxWidth={420}
-      minWidth={320}
+      maxWidth={560}
+      minWidth={420}
       sx={{ p: 1.25, display: 'grid', gap: 1.25 }}
     >
-      <Stack direction='row' spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Stack spacing={0.25}>
-          <Typography level='title-sm'>Agents</Typography>
-          <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
-            {assistantParticipants.length} configured · ordered top to bottom
-          </Typography>
+      <Box sx={{ display: 'grid', gap: 1, p: 1.1, borderRadius: 'xl', backgroundColor: 'background.level1', border: '1px solid', borderColor: 'divider' }}>
+        <Stack direction='row' spacing={1} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <Stack spacing={0.35}>
+            <Typography level='title-md'>Agents</Typography>
+            <Typography level='body-sm' sx={{ color: 'text.tertiary' }}>
+              {assistantParticipants.length} configured · ordered top to bottom
+            </Typography>
+          </Stack>
+          <Stack direction='row' spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <Button size='sm' variant='soft' color='primary' disabled={!props.conversationId} onClick={handleSaveAgentGroup}>
+              {activeConversationGroupId ? 'Update group' : 'Save group'}
+            </Button>
+            <Button size='sm' variant='soft' color='danger' disabled={!assistantParticipants.length} onClick={handleClearAgents}>
+              Clear agents
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
 
-      <Stack spacing={0.75}>
+        <Box sx={{ display: 'grid', gap: 0.5 }}>
+          <Typography level='body-sm'>Group name</Typography>
+          <Input
+            size='sm'
+            value={agentGroupNameDraft}
+            onChange={event => setAgentGroupNameDraft(event.target.value)}
+            placeholder={`Agents ${Math.max(assistantParticipants.length, 1)}`}
+          />
+        </Box>
+
+        <Box sx={{ display: 'grid', gap: 0.5 }}>
+          <Typography level='body-sm'>Turn termination</Typography>
+          <Select
+            size='sm'
+            value={turnTerminationMode}
+            onChange={handleTurnTerminationModeChange}
+          >
+            <Option value='round-robin-per-human'>Human message → agents pass → @mentions can continue</Option>
+            <Option value='continuous'>Human starts → agents continue until stopped</Option>
+          </Select>
+          <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
+            {turnTerminationMode === 'continuous'
+              ? 'Agents keep taking turns until you stop the room.'
+              : 'Each human message starts an ordered pass; agent @mentions can keep the room going until no follow-ups remain.'}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Stack spacing={1}>
         {assistantParticipants.map((participant, index) => {
           const personaTitle = participant.personaId ? SystemPurposes[participant.personaId]?.title ?? participant.personaId : 'No persona';
           const llmLabel = participant.llmId ? (visibleLLMs.find(llm => llm.id === participant.llmId)?.label ?? participant.llmId) : 'Chat model';
@@ -297,69 +391,68 @@ export function ChatBarChat(props: {
           const isCustomPersonaSelected = personaDraftValue === 'Custom';
           const hasCustomPrompt = isCustomPersonaSelected && !!customPromptDraft.trim();
           const speakWhenDraftValue = participantDraft?.speakWhen ?? participant.speakWhen ?? 'every-turn';
+          const participantAccentColor = getParticipantAccentColor(participant.name);
           return (
             <Box
               key={participant.id}
               sx={{
                 display: 'grid',
-                gap: 0.75,
-                px: 1,
-                py: 1,
-                borderRadius: 'lg',
+                gap: 0.9,
+                p: 1,
+                borderRadius: 'xl',
                 border: '1px solid',
-                borderColor: isExpanded ? 'primary.outlinedBorder' : 'divider',
-                backgroundColor: isExpanded ? 'background.level1' : 'background.body',
-                boxShadow: isExpanded ? 'sm' : 'xs',
+                borderColor: isExpanded ? `${participantAccentColor}.outlinedBorder` : 'divider',
+                backgroundColor: isExpanded ? 'background.level1' : 'background.surface',
+                transition: 'box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease',
+                '&:hover': {
+                  boxShadow: 'sm',
+                  borderColor: isExpanded ? `${participantAccentColor}.outlinedBorder` : 'neutral.outlinedHoverBorder',
+                },
               }}
             >
-              <Box
-                onClick={() => handleExpandedParticipantChange(participant.id)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
-                  <Chip
-                    size='sm'
-                    variant={isExpanded ? 'solid' : 'soft'}
-                    color={isExpanded ? 'primary' : 'neutral'}
-                    sx={{ minWidth: 36, justifyContent: 'center', fontVariantNumeric: 'tabular-nums' }}
-                  >
-                    {index + 1}
-                  </Chip>
+              <Stack direction='row' spacing={1} sx={{ alignItems: 'flex-start' }}>
+                <Chip size='sm' variant='soft' color='neutral' sx={{ minWidth: 32, justifyContent: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                  {index + 1}
+                </Chip>
 
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                      <Typography level='title-sm'>{participant.name}</Typography>
-                      <Chip size='sm' variant='soft' color={participantStatus?.isNextToSpeak ? 'primary' : participantStatus?.spokeThisTurn ? 'success' : 'neutral'}>
-                        {participantStatus?.isNextToSpeak ? 'Next' : participantStatus?.spokeThisTurn ? 'Done' : summaryLabel}
-                      </Chip>
-                      {hasCustomPrompt && <Chip size='sm' variant='soft' color='warning'>Custom prompt</Chip>}
-                      {participantStatus?.spokeLast && <Chip size='sm' variant='soft'>Latest</Chip>}
-                      {participantStatus?.wasMentioned && <Chip size='sm' variant='soft' color='primary'>@mentioned</Chip>}
-                    </Stack>
-                    <Typography level='body-xs' sx={{ color: 'text.tertiary', mt: 0.35 }}>
-                      {personaTitle} · {llmLabel}
-                    </Typography>
-                    <Typography level='body-xs' sx={{ color: participantStatus?.isNextToSpeak ? 'primary.600' : 'text.tertiary', mt: 0.2 }}>
-                      {participantStatus?.reason ?? 'Ready'}
-                    </Typography>
-                  </Box>
+                <Box
+                  onClick={() => handleExpandedParticipantChange(participant.id)}
+                  sx={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
+                >
+                  <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Typography level='title-sm'>{participant.name}</Typography>
+                    <Chip size='sm' variant='soft' color={participantAccentColor}>{summaryLabel}</Chip>
+                    {participantStatus?.isNextToSpeak && <Chip size='sm' variant='soft' color='primary'>Next</Chip>}
+                    {participantStatus?.spokeThisTurn && <Chip size='sm' variant='soft' color='success'>Done</Chip>}
+                    {participantStatus?.spokeLast && <Chip size='sm' variant='soft'>Latest</Chip>}
+                    {participantStatus?.wasMentioned && <Chip size='sm' variant='soft' color='primary'>@mentioned</Chip>}
+                    {hasCustomPrompt && <Chip size='sm' variant='soft' color='warning'>Custom prompt</Chip>}
+                  </Stack>
 
-                  <Button
-                    size='sm'
-                    variant={isExpanded ? 'soft' : 'plain'}
-                    color='neutral'
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleExpandedParticipantChange(participant.id);
-                    }}
-                  >
-                    {isExpanded ? 'Close' : 'Edit'}
-                  </Button>
-                </Stack>
-              </Box>
+                  <Typography level='body-sm' sx={{ color: 'text.secondary', mt: 0.35 }}>
+                    {personaTitle} · {llmLabel}
+                  </Typography>
+                  <Typography level='body-xs' sx={{ color: participantStatus?.isNextToSpeak ? 'primary.600' : 'text.tertiary', mt: 0.15 }}>
+                    {participantStatus?.reason ?? 'Ready'}
+                  </Typography>
+                </Box>
+
+                <Button
+                  size='sm'
+                  variant={isExpanded ? 'soft' : 'plain'}
+                  color={isExpanded ? participantAccentColor : 'neutral'}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleExpandedParticipantChange(participant.id);
+                  }}
+                >
+                  {isExpanded ? 'Close' : 'Edit'}
+                </Button>
+              </Stack>
 
               {isExpanded && (
-                <Box sx={{ display: 'grid', gap: 0.9, pt: 0.5, pl: { xs: 0, sm: 5.5 }, borderTop: '1px solid', borderColor: 'divider' }}>
+                <Box sx={{ display: 'grid', gap: 0.9 }}>
+                  <Divider />
                   <Input
                     size='sm'
                     value={aliasDraft}
@@ -373,7 +466,7 @@ export function ChatBarChat(props: {
                     }}
                     placeholder='Agent alias'
                   />
-                  <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: { xs: '1fr', sm: 'minmax(8rem, 1fr) minmax(9rem, 1fr) minmax(8rem, 1fr)' } }}>
+                  <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: { xs: '1fr', md: 'minmax(8rem, 1fr) minmax(9rem, 1fr) minmax(8rem, 1fr)' } }}>
                     <Select
                       size='sm'
                       value={personaDraftValue}
@@ -440,9 +533,9 @@ export function ChatBarChat(props: {
         })}
       </Stack>
 
-      <Box sx={{ display: 'grid', gap: 0.75, p: 1, borderRadius: 'lg', border: '1px dashed', borderColor: 'divider', backgroundColor: 'background.level1' }}>
+      <Box sx={{ display: 'grid', gap: 0.75, p: 1, borderRadius: 'xl', border: '1px dashed', borderColor: 'divider', backgroundColor: 'background.level1' }}>
         <Typography level='body-sm'>Add another agent</Typography>
-        <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: { xs: '1fr', sm: 'minmax(10rem, 1fr) minmax(10rem, 1fr) auto' } }}>
+        <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: { xs: '1fr', md: 'minmax(10rem, 1fr) minmax(10rem, 1fr) auto' } }}>
           <Select
             placeholder='Persona'
             value={draftPersonaId || null}
@@ -467,7 +560,7 @@ export function ChatBarChat(props: {
           </Select>
 
           <Button size='sm' onClick={handleParticipantAdd} disabled={!draftPersonaId} startDecorator={<SmartToyOutlinedIcon />}>
-            Add
+            Add agent
           </Button>
         </Box>
         <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>

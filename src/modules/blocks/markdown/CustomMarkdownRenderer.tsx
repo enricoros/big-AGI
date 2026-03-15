@@ -10,6 +10,8 @@ import { remarkMark } from 'remark-mark-highlight';
 
 import { Box, Chip } from '@mui/joy';
 
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
+import { findParticipantMentions, getParticipantMentionSx } from '~/common/util/dMessageUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
@@ -27,6 +29,48 @@ function DelRenderer({ children }: { children: React.ReactNode }) {
 function MarkRenderer({ children }: { children: React.ReactNode }) {
   // Mark by default has a yellow background, but we want to set a custom class here, so we can style it
   return <mark className='agi-highlight'>{children}</mark>;
+}
+
+function ParagraphRenderer(props: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
+  const { children, onAppendMention, participants, ...rest } = props;
+  return <p {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</p>;
+}
+
+function ListItemRenderer(props: React.LiHTMLAttributes<HTMLLIElement> & { children?: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
+  const { children, onAppendMention, participants, ...rest } = props;
+  return <li {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</li>;
+}
+
+function SpanRenderer(props: React.HTMLAttributes<HTMLSpanElement> & { children?: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
+  const { children, onAppendMention, participants, ...rest } = props;
+  return <span {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</span>;
+}
+
+function MentionRenderer(props: { children: React.ReactNode; onAppendMention?: (mentionText: string) => void }) {
+  const mentionText = React.Children.toArray(props.children).join('').trim();
+  if (!mentionText.startsWith('@'))
+    return <>{props.children}</>;
+
+  const mentionName = mentionText.slice(1).trim();
+  if (!mentionName)
+    return <>{props.children}</>;
+
+  if (props.onAppendMention)
+    return (
+      <button
+        type='button'
+        onClick={() => props.onAppendMention?.(`@${mentionName}`)}
+        style={getParticipantMentionSx(mentionName, true) as React.CSSProperties}
+      >
+        {props.children}
+      </button>
+    );
+
+  return (
+    <span style={getParticipantMentionSx(mentionName) as React.CSSProperties}>
+      {props.children}
+    </span>
+  );
 }
 
 
@@ -198,15 +242,21 @@ function generateMarkdownTableFromData(tableData: any[]): string {
 }
 
 
-// shared components for the markdown renderer
-
-const reactMarkdownComponents = {
-  a: CustomARenderer, // override the link renderer to add target="_blank"
-  del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
-  mark: MarkRenderer, // renders the <mark> tag (==highlight==)
-  table: TableRenderer, // override the table renderer to show the download CSV links and Copy Markdown button
-  // math/inlineMath components are not needed, rehype-katex handles this automatically
-} as ReactMarkdownComponents;
+function createReactMarkdownComponents(
+  participants?: DConversationParticipant[],
+  onAppendMention?: (mentionText: string) => void,
+): ReactMarkdownComponents {
+  return {
+    a: CustomARenderer, // override the link renderer to add target="_blank"
+    del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
+    mark: MarkRenderer, // renders the <mark> tag (==highlight==)
+    table: TableRenderer, // override the table renderer to show the download CSV links and Copy Markdown button
+    p: (props) => <ParagraphRenderer {...props} onAppendMention={onAppendMention} participants={participants} />,
+    li: (props) => <ListItemRenderer {...props} onAppendMention={onAppendMention} participants={participants} />,
+    span: (props) => <SpanRenderer {...props} onAppendMention={onAppendMention} participants={participants} />,
+    // math/inlineMath components are not needed, rehype-katex handles this automatically
+  } as ReactMarkdownComponents;
+}
 
 const remarkPluginsStable: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
@@ -225,6 +275,55 @@ const remarkPluginsStable: UnifiedPluggable[] = [
 const rehypePluginsStable: UnifiedPluggable[] = [
   rehypeKatex, // KaTeX
 ];
+
+const mentionRegex = /(^|[^\w])(@[\p{L}\p{N}][\p{L}\p{N} -]*)/gu;
+function withMentionHighlighting(
+  node: React.ReactNode,
+  participants?: DConversationParticipant[],
+  onAppendMention?: (mentionText: string) => void,
+): React.ReactNode {
+  if (typeof node === 'string') {
+    const mentionMatches = findParticipantMentions(node, participants);
+    if (!mentionMatches.length)
+      return node;
+
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+
+    for (const mentionMatch of mentionMatches) {
+      if (mentionMatch.mentionStart > lastIndex)
+        parts.push(node.slice(lastIndex, mentionMatch.mentionStart));
+
+      parts.push(
+        <MentionRenderer key={`${mentionMatch.mentionStart}-${mentionMatch.mentionText}`} onAppendMention={onAppendMention}>
+          {mentionMatch.mentionText}
+        </MentionRenderer>,
+      );
+
+      lastIndex = mentionMatch.mentionEnd;
+    }
+
+    if (lastIndex < node.length)
+      parts.push(node.slice(lastIndex));
+
+    return <>{parts}</>;
+  }
+
+  if (Array.isArray(node))
+    return node.map((child, index) => <React.Fragment key={index}>{withMentionHighlighting(child, participants, onAppendMention)}</React.Fragment>);
+
+  if (!React.isValidElement(node))
+    return node;
+
+  if (typeof node.type === 'string' && (node.type === 'code' || node.type === 'pre' || node.type === 'a'))
+    return node;
+
+  const children = (node.props as { children?: React.ReactNode } | undefined)?.children;
+  if (!children)
+    return node;
+
+  return React.cloneElement(node, undefined, withMentionHighlighting(children, participants, onAppendMention));
+}
 
 
 let warnedAboutLength = false;
@@ -274,7 +373,12 @@ function preprocessMarkdown(markdownText: string) {
   }
 }
 
-export default function CustomMarkdownRenderer(props: { content: string, disablePreprocessor?: boolean }) {
+export default function CustomMarkdownRenderer(props: { content: string, disablePreprocessor?: boolean, onAppendMention?: (mentionText: string) => void, participants?: DConversationParticipant[] }) {
+  const reactMarkdownComponents = React.useMemo(
+    () => createReactMarkdownComponents(props.participants, props.onAppendMention),
+    [props.onAppendMention, props.participants],
+  );
+
   return (
     <ReactMarkdown
       components={reactMarkdownComponents}

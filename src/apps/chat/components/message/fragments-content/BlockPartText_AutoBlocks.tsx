@@ -4,6 +4,7 @@ import type { WordsDiff } from '~/modules/blocks/wordsdiff/RenderWordsDiff';
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
@@ -34,6 +35,8 @@ export function BlockPartText_AutoBlocks(props: {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
+  onAppendMention?: (mentionText: string) => void;
+  participants?: DConversationParticipant[];
 
 }) {
 
@@ -79,6 +82,8 @@ export function BlockPartText_AutoBlocks(props: {
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
+      onAppendMention={props.onAppendMention}
+      participants={props.participants}
       setText={!props.setEditedText ? undefined : handleSetText}
     />
   );

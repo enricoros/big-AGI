@@ -2,6 +2,7 @@ import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
+import type { ColorPaletteProp } from '@mui/joy/styles';
 import { Avatar, Box } from '@mui/joy';
 import Face6Icon from '@mui/icons-material/Face6';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActiveOutlined';
@@ -14,6 +15,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 import { llmsGetVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import type { DMessage, DMessageAuthor, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
 import type { UIComplexityMode } from '~/common/app.theme';
 import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
@@ -77,6 +79,176 @@ const tooltipMetricsGridSx: SxProps = {
   columnGap: 1,
   rowGap: 0.5,
 };
+
+const participantAccentColors = ['primary', 'success', 'warning', 'danger'] as const satisfies readonly ColorPaletteProp[];
+const participantAccentMentionSxByColor: Record<ColorPaletteProp, React.CSSProperties> = {
+  primary: { color: 'var(--joy-palette-primary-softColor)', backgroundColor: 'var(--joy-palette-primary-softBg)' },
+  success: { color: 'var(--joy-palette-success-softColor)', backgroundColor: 'var(--joy-palette-success-softBg)' },
+  warning: { color: 'var(--joy-palette-warning-softColor)', backgroundColor: 'var(--joy-palette-warning-softBg)' },
+  danger: { color: 'var(--joy-palette-danger-softColor)', backgroundColor: 'var(--joy-palette-danger-softBg)' },
+  neutral: { color: 'var(--joy-palette-neutral-softColor)', backgroundColor: 'var(--joy-palette-neutral-softBg)' },
+};
+
+function normalizeParticipantAccentKey(name: string | null | undefined): string {
+  return (name ?? '').trim().toLowerCase();
+}
+
+export function getParticipantAccentColor(name: string | null | undefined): ColorPaletteProp {
+  const normalizedName = normalizeParticipantAccentKey(name);
+  if (!normalizedName)
+    return 'neutral';
+
+  let hash = 0;
+  for (let index = 0; index < normalizedName.length; index++)
+    hash = ((hash << 5) - hash + normalizedName.charCodeAt(index)) | 0;
+
+  return participantAccentColors[Math.abs(hash) % participantAccentColors.length] ?? 'neutral';
+}
+
+export function getParticipantMentionSx(name: string | null | undefined, clickable = false): SxProps {
+  const color = getParticipantAccentColor(name);
+
+  return {
+    ...participantAccentMentionSxByColor[color],
+    display: 'inline-flex',
+    alignItems: 'center',
+    border: 'none',
+    borderRadius: '0.5rem',
+    paddingInline: '0.3em',
+    paddingBlock: '0.05em',
+    font: 'inherit',
+    fontWeight: 600,
+    lineHeight: 'inherit',
+    textDecoration: 'none',
+    verticalAlign: 'baseline',
+    boxShadow: clickable ? 'sm' : undefined,
+    cursor: clickable ? 'pointer' : 'inherit',
+    transition: 'background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease',
+    '&:hover': clickable ? {
+      filter: 'saturate(1.1)',
+      boxShadow: 'md',
+    } : undefined,
+    '&:active': clickable ? {
+      transform: 'translateY(1px)',
+    } : undefined,
+  } satisfies SxProps;
+}
+const genericParticipantMentionRegex = /(^|[^\w])(@all(?=$|[^\w])|@[\p{L}\p{N}]+(?:[- ][\p{Lu}\p{N}][\p{L}\p{N}]*)*)/gu;
+
+export interface ParticipantMentionMatch {
+  mentionText: string;
+  mentionName: string;
+  mentionStart: number;
+  mentionEnd: number;
+}
+
+export function escapeParticipantMentionToken(token: string): string {
+  return token.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeParticipantMentionName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function isMentionBoundaryChar(char: string | undefined): boolean {
+  return !char || /[\s.,!?;:)}\]"'”’،。！？]/u.test(char);
+}
+
+function collectGenericParticipantMentions(text: string): ParticipantMentionMatch[] {
+  const matches: ParticipantMentionMatch[] = [];
+  let match: RegExpExecArray | null;
+
+  genericParticipantMentionRegex.lastIndex = 0;
+  while ((match = genericParticipantMentionRegex.exec(text)) !== null) {
+    const mentionText = match[2] ?? '';
+    if (!mentionText)
+      continue;
+
+    const matchStart = match.index;
+    const mentionStart = matchStart + ((match[0] ?? '').length - mentionText.length);
+    const mentionName = mentionText.slice(1).trim();
+    if (!mentionName)
+      continue;
+
+    matches.push({
+      mentionText,
+      mentionName,
+      mentionStart,
+      mentionEnd: mentionStart + mentionText.length,
+    });
+  }
+
+  genericParticipantMentionRegex.lastIndex = 0;
+  return matches;
+}
+
+function getRosterMentionNames(participants?: readonly DConversationParticipant[] | null): string[] {
+  if (!participants?.length)
+    return [];
+
+  return Array.from(new Set(
+    participants
+      .filter(participant => participant.kind === 'assistant')
+      .map(participant => participant.name.trim())
+      .filter(Boolean),
+  ));
+}
+
+export function findParticipantMentions(text: string, participants?: readonly DConversationParticipant[] | null): ParticipantMentionMatch[] {
+  const rosterMentionNames = getRosterMentionNames(participants)
+    .sort((a, b) => b.length - a.length || a.localeCompare(b));
+
+  if (!rosterMentionNames.length)
+    return collectGenericParticipantMentions(text);
+
+  const normalizedRoster = rosterMentionNames.map(name => ({
+    rawName: name,
+    normalizedName: normalizeParticipantMentionName(name),
+  }));
+
+  const matches: ParticipantMentionMatch[] = [];
+
+  for (let index = 0; index < text.length; index++) {
+    if (text[index] !== '@')
+      continue;
+
+    const previousChar = index > 0 ? text[index - 1] : undefined;
+    if (previousChar && /[\p{L}\p{N}_]/u.test(previousChar))
+      continue;
+
+    const afterAt = text.slice(index + 1);
+    const normalizedAfterAt = normalizeParticipantMentionName(afterAt);
+
+    if (normalizedAfterAt.startsWith('all') && isMentionBoundaryChar(afterAt[3])) {
+      matches.push({
+        mentionText: '@all',
+        mentionName: 'all',
+        mentionStart: index,
+        mentionEnd: index + 4,
+      });
+      index += 3;
+      continue;
+    }
+
+    const matchedRosterName = normalizedRoster.find(({ normalizedName }) =>
+      normalizedAfterAt.startsWith(normalizedName) && isMentionBoundaryChar(afterAt[normalizedName.length]),
+    );
+
+    if (!matchedRosterName)
+      continue;
+
+    const mentionText = `@${matchedRosterName.rawName}`;
+    matches.push({
+      mentionText,
+      mentionName: matchedRosterName.rawName,
+      mentionStart: index,
+      mentionEnd: index + mentionText.length,
+    });
+    index += mentionText.length - 1;
+  }
+
+  return matches;
+}
 
 
 /** Whole message background color, based on the message role and state */

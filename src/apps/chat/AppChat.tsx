@@ -29,10 +29,12 @@ import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvid
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import type { SystemPurposeId } from '../../data';
-import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getConversation, getConversationParticipants, getConversationSystemPurposeId, useChatStore, useConversation } from '~/common/stores/chat/store-chats';
+import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
+import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
@@ -240,8 +242,17 @@ export function AppChat() {
 
   // Execution
 
-  const handleExecuteAndOutcome = React.useCallback(async (chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, callerNameDebug: string) => {
-    const outcome = await _handleExecute(chatExecuteMode, conversationId, callerNameDebug);
+  type QueuedConversationSend = {
+    mode: 'steer' | 'queue';
+    chatExecuteMode: ChatExecuteMode;
+    fragments: DMessageFragment[];
+    metadata?: DMessageMetadata;
+  };
+
+  const queuedConversationSendsRef = React.useRef<Map<DConversationId, QueuedConversationSend[]>>(new Map());
+  const drainingConversationIdsRef = React.useRef<Set<DConversationId>>(new Set());
+
+  const reportExecuteOutcome = React.useCallback((outcome: Awaited<ReturnType<typeof _handleExecute>>) => {
     if (outcome === 'err-no-chatllm')
       optimaOpenModels();
     else if (outcome === 'err-t2i-unconfigured')
@@ -255,7 +266,73 @@ export function AppChat() {
     return outcome === true;
   }, []);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
+  const drainQueuedConversationSends = React.useCallback(async (conversationId: DConversationId) => {
+    if (drainingConversationIdsRef.current.has(conversationId))
+      return;
+
+    drainingConversationIdsRef.current.add(conversationId);
+    try {
+      while (true) {
+        const queuedItems = queuedConversationSendsRef.current.get(conversationId);
+        const nextQueuedItem = queuedItems?.[0];
+        if (!nextQueuedItem) {
+          queuedConversationSendsRef.current.delete(conversationId);
+          break;
+        }
+
+        const conversation = getConversation(conversationId);
+        if (!conversation) {
+          queuedItems?.shift();
+          if (!queuedItems?.length)
+            queuedConversationSendsRef.current.delete(conversationId);
+          continue;
+        }
+
+        const isBusy = !!conversation._abortController;
+        if (isBusy && nextQueuedItem.mode !== 'steer')
+          break;
+
+        queuedItems?.shift();
+        if (!queuedItems?.length)
+          queuedConversationSendsRef.current.delete(conversationId);
+
+        if (isBusy && nextQueuedItem.mode === 'steer')
+          conversation._abortController?.abort('steer-message');
+
+        const conversationParticipants = getConversationParticipants(conversation.id);
+        const humanParticipant = conversationParticipants.find(participant => participant.kind === 'human') ?? null;
+        const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(nextQueuedItem.fragments, true));
+        userMessage.metadata = duplicateDMessageMetadata({
+          ...(nextQueuedItem.metadata ? duplicateDMessageMetadata(nextQueuedItem.metadata) : {}),
+          ...(humanParticipant ? {
+            author: {
+              participantId: humanParticipant.id,
+              participantName: humanParticipant.name,
+              personaId: null,
+              llmId: null,
+            },
+          } : {}),
+        });
+
+        ConversationsManager.getHandler(conversation.id).messageAppend(userMessage);
+        const outcome = await _handleExecute(nextQueuedItem.chatExecuteMode, conversation.id, `chat-composer-${nextQueuedItem.mode}`);
+        reportExecuteOutcome(outcome);
+      }
+    } finally {
+      drainingConversationIdsRef.current.delete(conversationId);
+    }
+  }, [reportExecuteOutcome]);
+
+  const handleExecuteAndOutcome = React.useCallback(async (chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, callerNameDebug: string) => {
+    try {
+      const outcome = await _handleExecute(chatExecuteMode, conversationId, callerNameDebug);
+      return reportExecuteOutcome(outcome);
+    } finally {
+      void drainQueuedConversationSends(conversationId);
+    }
+  }, [drainQueuedConversationSends, reportExecuteOutcome]);
+
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, sendMode: 'steer' | 'queue', chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
 
     // [multicast] send the message to all the panes
     const uniqueConversationIds = willMulticast
@@ -275,9 +352,35 @@ export function AppChat() {
       // create the user:message
       // NOTE: this can lead to multiple chat messages with data refs that are referring to the same dblobs,
       //       however, we already got transferred ownership of the dblobs at this point.
-      const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(fragments, true)); // [chat] create user:message to send per-chat
+      const duplicatedFragments = duplicateDMessageFragments(fragments, true);
+      const duplicatedMetadata = metadata ? duplicateDMessageMetadata(metadata) : undefined;
+
+      if (conversation._abortController) {
+        const queuedItems = queuedConversationSendsRef.current.get(conversation.id) ?? [];
+        if (sendMode === 'steer') {
+          const firstQueuedIndex = queuedItems.findIndex(item => item.mode === 'queue');
+          const steerInsertIndex = firstQueuedIndex >= 0 ? firstQueuedIndex : queuedItems.length;
+          queuedItems.splice(steerInsertIndex, 0, {
+            mode: sendMode,
+            chatExecuteMode,
+            fragments: duplicatedFragments,
+            metadata: duplicatedMetadata,
+          });
+        } else
+          queuedItems.push({
+            mode: sendMode,
+            chatExecuteMode,
+            fragments: duplicatedFragments,
+            metadata: duplicatedMetadata,
+          });
+        queuedConversationSendsRef.current.set(conversation.id, queuedItems);
+        void drainQueuedConversationSends(conversation.id);
+        continue;
+      }
+
+      const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(duplicatedFragments, true)); // [chat] create user:message to send per-chat
       userMessage.metadata = duplicateDMessageMetadata({
-        ...(metadata ? duplicateDMessageMetadata(metadata) : {}),
+        ...(duplicatedMetadata ? duplicateDMessageMetadata(duplicatedMetadata) : {}),
         ...(humanParticipant ? {
           author: {
             participantId: humanParticipant.id,
@@ -295,7 +398,7 @@ export function AppChat() {
     }
 
     return true;
-  }, [paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
+  }, [drainQueuedConversationSends, paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
     await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-content'
@@ -357,12 +460,17 @@ export function AppChat() {
 
   // Chat actions
 
-  const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle: boolean, isIncognito: boolean) => {
+  const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle: boolean, isIncognito: boolean, agentGroupSnapshot?: DAgentGroupSnapshot | null) => {
 
     // create conversation (or recycle the existing top-of-stack empty conversation)
     const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito)
       ? recycleNewConversationId
-      : prependNewConversation(getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
+      : prependNewConversation(agentGroupSnapshot?.systemPurposeId ?? getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
+
+    if (agentGroupSnapshot && conversationId) {
+      useChatStore.getState().setParticipants(conversationId, agentGroupSnapshot.participants.map(participant => ({ ...participant })));
+      useChatStore.getState().setTurnTerminationMode(conversationId, agentGroupSnapshot.turnTerminationMode);
+    }
 
     // switch the focused pane to the new conversation
     handleOpenConversationInFocusedPane(conversationId);
@@ -376,6 +484,31 @@ export function AppChat() {
       composerTextAreaRef.current?.focus();
 
   }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
+
+  const handleConversationSaveAgentGroup = React.useCallback((conversationId: DConversationId, name?: string, existingId?: string | null) => {
+    const conversation = getConversation(conversationId);
+    if (!conversation)
+      return null;
+
+    const participants = getConversationParticipants(conversationId)
+      .filter(participant => participant.kind === 'assistant')
+      .map(participant => ({ ...participant }));
+    const nextId = useChatAgentGroupsStore.getState().saveAgentGroup({
+      name: name?.trim() || `Agents ${Math.max(participants.length, 1)}`,
+      systemPurposeId: conversation.systemPurposeId,
+      turnTerminationMode: conversation.turnTerminationMode ?? 'round-robin-per-human',
+      participants,
+    }, existingId);
+
+    addSnackbar({
+      key: existingId ? 'agent-group-updated' : 'agent-group-saved',
+      message: existingId ? 'Saved group updated.' : 'Saved group created.',
+      type: 'success',
+      overrides: { autoHideDuration: 2500 },
+    });
+
+    return nextId;
+  }, []);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -478,9 +611,9 @@ export function AppChat() {
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
       ? <ChatBarBeam conversationTitle={focusedChatTitle ?? 'No Chat'} beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
       : (barAltTitle === null)
-        ? <ChatBarChat conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} />
+        ? <ChatBarChat conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} onConversationSaveAgentGroup={handleConversationSaveAgentGroup} />
         : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
-    , [barAltTitle, beamOpenStoreInFocusedPane, focusedChatTitle, focusedPaneConversationId, isMobile],
+    , [barAltTitle, beamOpenStoreInFocusedPane, focusedChatTitle, focusedPaneConversationId, handleConversationSaveAgentGroup, isMobile],
   );
 
 
@@ -498,12 +631,13 @@ export function AppChat() {
         onConversationActivate={handleOpenConversationInFocusedPane}
         onConversationBranch={handleConversationBranch}
         onConversationNew={handleConversationNewInFocusedPane}
+        onConversationSaveAgentGroup={handleConversationSaveAgentGroup}
         onConversationsDelete={handleDeleteConversations}
         onConversationsExportDialog={handleConversationExport}
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, disableNewButton, focusedChatBeamOpen, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, paneUniqueConversationIds],
+    [activeFolderId, disableNewButton, focusedChatBeamOpen, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleConversationSaveAgentGroup, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, paneUniqueConversationIds],
   );
 
   const focusedChatPanelContent = React.useMemo(() => !focusedPaneConversationId ? null :

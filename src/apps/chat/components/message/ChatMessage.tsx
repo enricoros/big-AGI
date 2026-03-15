@@ -45,7 +45,8 @@ import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
-import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { avatarIconSx, getParticipantAccentColor, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
@@ -171,6 +172,8 @@ export function ChatMessage(props: {
   onTextDiagram?: (messageId: string, text: string) => Promise<void>,
   onTextImagine?: (text: string) => Promise<void>,
   onTextSpeak?: (text: string) => Promise<void>,
+  onAppendMention?: (mentionText: string) => void,
+  participants?: DConversationParticipant[],
   sx?: SxProps,
 }) {
 
@@ -215,6 +218,10 @@ export function ChatMessage(props: {
   const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
   const messageAuthorPersonaTitle = messageAuthorPersonaId ? SystemPurposes[messageAuthorPersonaId]?.title ?? messageAuthorPersonaId : null;
   const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
+  const messageAuthorAccentColor = React.useMemo(() => getParticipantAccentColor(messageAuthorName), [messageAuthorName]);
+  const handleAppendMention = React.useCallback((mentionText: string) => {
+    props.onAppendMention?.(mentionText);
+  }, [props]);
 
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
@@ -234,6 +241,8 @@ export function ChatMessage(props: {
   const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, interleavedFragments.filter(f => f.ft === 'content'), fromAssistant, props.onMessageFragmentReplace);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
+  const wholeMessageText = fragmentFlattenedText.trim();
+  const canReplyToWholeMessage = !!props.onAddInReferenceTo && wholeMessageText.length >= BUBBLE_MIN_TEXT_LENGTH;
   const isSpecialT2I = textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
   const couldDiagram = textSubject.length >= 100 && !isSpecialT2I;
   const couldImagine = textSubject.length >= 3 && !isSpecialT2I;
@@ -415,11 +424,37 @@ export function ChatMessage(props: {
   const handleOpsAddInReferenceTo = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onAddInReferenceTo && textSubject.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
-      onAddInReferenceTo({ mrt: 'dmsg', mText: textSubject.trim(), mRole: messageRole /*, messageId*/ });
+      onAddInReferenceTo({
+        mrt: 'dmsg',
+        mText: textSubject.trim(),
+        mRole: messageRole /*, messageId*/,
+        ...(fromAssistant && messageMetadata?.author?.participantId ? { mAuthorParticipantId: messageMetadata.author.participantId } : {}),
+        ...(fromAssistant && messageAuthorName ? { mAuthorParticipantName: messageAuthorName } : {}),
+        ...(fromAssistant ? { mCarryAuthorMention: true } : {}),
+      });
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
     }
+  };
+
+  const handleOpsAddWholeMessageInReferenceTo = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canReplyToWholeMessage)
+      return;
+
+    onAddInReferenceTo?.({
+      mrt: 'dmsg',
+      mText: wholeMessageText,
+      mRole: messageRole /*, messageId*/,
+      ...(fromAssistant && messageMetadata?.author?.participantId ? { mAuthorParticipantId: messageMetadata.author.participantId } : {}),
+      ...(fromAssistant && messageAuthorName ? { mAuthorParticipantName: messageAuthorName } : {}),
+      ...(fromAssistant ? { mCarryAuthorMention: true } : {}),
+    });
+    handleCloseOpsMenu();
+    closeContextMenu();
+    closeBubble();
   };
 
   const handleOpsSpeak = async (e: React.MouseEvent) => {
@@ -769,9 +804,52 @@ export function ChatMessage(props: {
           {/* Assistant author identity */}
           {fromAssistant && !!messageAuthorName && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mx: 0.5, mb: -0.5 }}>
-              <Chip size='sm' variant='soft' color='primary'>
-                {messageAuthorName}
-              </Chip>
+              <Tooltip
+                arrow
+                disableInteractive
+                title={props.onAppendMention ? `Click to mention @${messageAuthorName}` : ''}
+              >
+                <Chip
+                  size='sm'
+                  variant='soft'
+                  color={messageAuthorAccentColor}
+                  onClick={() => handleAppendMention(`@${messageAuthorName}`)}
+                  endDecorator={<AlternateEmailIcon sx={{ fontSize: 'sm' }} />}
+                  sx={{
+                    cursor: props.onAppendMention ? 'pointer' : 'default',
+                    transition: 'transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease',
+                    boxShadow: 'xs',
+                    '&:hover': props.onAppendMention ? {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'sm',
+                      filter: 'saturate(1.15)',
+                    } : undefined,
+                    '&:active': props.onAppendMention ? {
+                      transform: 'translateY(0)',
+                      boxShadow: 'xs',
+                    } : undefined,
+                  }}
+                >
+                  {messageAuthorName}
+                </Chip>
+              </Tooltip>
+              {canReplyToWholeMessage && (
+                <Tooltip arrow disableInteractive title={props.hasInReferenceTo ? 'Reply to this message too' : 'Reply to this message'}>
+                  <IconButton
+                    size='sm'
+                    variant='soft'
+                    color='primary'
+                    onClick={handleOpsAddWholeMessageInReferenceTo}
+                    sx={{
+                      '--Icon-fontSize': '1.1rem',
+                      borderRadius: '999px',
+                      boxShadow: 'xs',
+                    }}
+                  >
+                    {props.hasInReferenceTo ? <ReplyAllRoundedIcon /> : <ReplyRoundedIcon />}
+                  </IconButton>
+                </Tooltip>
+              )}
               {messageAuthorPersonaTitle && (
                 <Typography level='body-xs' sx={{ color: 'text.secondary' }}>
                   {messageAuthorPersonaTitle}
@@ -857,6 +935,8 @@ export function ChatMessage(props: {
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
+            onAppendMention={props.onAppendMention}
+            participants={props.participants}
           />
 
           {/* Document Fragments */}

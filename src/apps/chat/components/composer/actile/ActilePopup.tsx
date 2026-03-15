@@ -15,6 +15,9 @@ export function ActilePopup(props: {
   onItemClick: (item: ActileItem) => void,
 }) {
 
+  const anchorWidth = props.anchorEl?.getBoundingClientRect().width ?? 0;
+  const popupMinWidth = Math.max(320, Math.ceil(anchorWidth));
+
   // We need to keep track of the overall item index to correctly match with activeItemIndex
   const itemIndices = React.useMemo(() => {
     const indices: { providerKey: string, itemKey: string, isActive: boolean }[] = [];
@@ -36,10 +39,11 @@ export function ActilePopup(props: {
     <CloseablePopup
       menu anchorEl={props.anchorEl} onClose={props.onClose}
       maxHeightGapPx={320}
-      minWidth={320}
+      minWidth={popupMinWidth}
       noBottomPadding
       noAutoFocus={true /* we control keyboard navigation */}
       noTopPadding
+      sx={{ width: popupMinWidth, maxWidth: 'min(90vw, 42rem)', boxSizing: 'border-box' }}
     >
 
       {!props.itemsByProvider.length && (

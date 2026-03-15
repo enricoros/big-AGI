@@ -69,6 +69,7 @@ export namespace V4ToHeadConverters {
       assistantParticipants.push(createAssistantConversationParticipant(c.systemPurposeId));
 
     c.participants = [humanParticipant, ...assistantParticipants];
+    c.turnTerminationMode = c.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human';
   }
 
 

@@ -3,13 +3,14 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { SystemPurposeId } from '../../../data';
 
-import type { DConversationId, DConversationParticipant } from '~/common/stores/chat/chat.conversation';
+import type { DConversationId, DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
-import { getConversationParticipants } from '~/common/stores/chat/store-chats';
+import { getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { textToDrawCommand } from '../commands/CommandsDraw';
@@ -20,14 +21,97 @@ import { runPersonaOnConversationHead } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
 
 
-function wasParticipantMentioned(message: DMessage | null, participant: DConversationParticipant): boolean {
-  const participantName = participant.name?.trim();
-  if (!message || message.role !== 'user' || !participantName)
+function escapeMentionToken(mention: string): string {
+  return mention.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function findMentionMatchIndex(messageText: string, mention: string): number | null {
+  const normalizedMention = mention.trim();
+  if (!normalizedMention)
+    return null;
+
+  const explicitMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])@${escapeMentionToken(normalizedMention)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
+  const explicitMatch = explicitMentionRegex.exec(messageText);
+  if (explicitMatch)
+    return explicitMatch.index + ((explicitMatch[0] ?? '').length - (`@${normalizedMention}`).length);
+
+  const bareMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeMentionToken(normalizedMention)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
+  const bareMatch = bareMentionRegex.exec(messageText);
+  if (bareMatch)
+    return bareMatch.index + ((bareMatch[0] ?? '').length - normalizedMention.length);
+
+  return null;
+}
+
+function hasMentionToken(message: DMessage | null, mention: string): boolean {
+  if (!message)
     return false;
 
-  const escapedName = participantName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const mentionRegex = new RegExp(`(^|[^\\w])@${escapedName}(?=$|[^\\w])`, 'i');
-  return message.fragments.some(fragment => isTextContentFragment(fragment) && mentionRegex.test(fragment.part.text));
+  return message.fragments.some(fragment => isTextContentFragment(fragment) && findMentionMatchIndex(fragment.part.text, mention) !== null);
+}
+
+function getMentionedParticipants(
+  message: DMessage | null,
+  participants: DConversationParticipant[],
+  excludeParticipantIds: ReadonlySet<string> = new Set(),
+): DConversationParticipant[] {
+  if (!message)
+    return [];
+
+  const messageText = messageFragmentsReduceText(message.fragments).trim();
+  const implicitReplyParticipants = (message.metadata?.inReferenceTo ?? [])
+    .filter(reference => reference.mCarryAuthorMention !== false)
+    .map(reference => {
+      const participantId = reference.mAuthorParticipantId?.trim() || null;
+      if (participantId)
+        return participants.find(participant => participant.id === participantId) ?? null;
+
+      const participantName = reference.mAuthorParticipantName?.trim() || null;
+      if (!participantName)
+        return null;
+
+      return participants.find(participant => participant.name?.trim() === participantName) ?? null;
+    })
+    .filter((participant): participant is DConversationParticipant => !!participant && !excludeParticipantIds.has(participant.id));
+
+  const implicitReplyParticipantIds = new Set(implicitReplyParticipants.map(participant => participant.id));
+  if (!messageText)
+    return implicitReplyParticipants;
+
+  const allMentionMatch = new RegExp(`(^|[^\\p{L}\\p{N}])@all(?=$|[^\\p{L}\\p{N}])`, 'iu').exec(messageText);
+  const explicitMentions = participants
+    .filter(participant => !excludeParticipantIds.has(participant.id) && !!participant.name?.trim())
+    .map(participant => {
+      const matchIndex = findMentionMatchIndex(messageText, participant.name ?? '');
+      return matchIndex !== null ? { participant, index: matchIndex } : null;
+    })
+    .filter((entry): entry is { participant: DConversationParticipant; index: number } => !!entry)
+    .sort((a, b) => a.index - b.index)
+    .map(entry => entry.participant);
+
+  const mergedExplicitMentions = [
+    ...implicitReplyParticipants,
+    ...explicitMentions.filter(participant => !implicitReplyParticipantIds.has(participant.id)),
+  ];
+
+  if (!allMentionMatch)
+    return mergedExplicitMentions;
+
+  const explicitMentionIds = new Set(mergedExplicitMentions.map(participant => participant.id));
+  const remainingParticipants = participants.filter(participant => !excludeParticipantIds.has(participant.id) && !explicitMentionIds.has(participant.id));
+  return [...mergedExplicitMentions, ...remainingParticipants];
+}
+
+function wasParticipantMentioned(message: DMessage | null, participant: DConversationParticipant): boolean {
+  return getMentionedParticipants(message, [participant]).length > 0;
+}
+
+function hasStopToken(message: DMessage | null): boolean {
+  if (!message)
+    return false;
+
+  const messageText = messageFragmentsReduceText(message.fragments).trim();
+  return /(^|[^\p{L}\p{N}])@stop(?=$|[^\p{L}\p{N}])/iu.test(messageText);
 }
 
 function buildMultiAgentCoordinationMessage(participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage {
@@ -56,10 +140,204 @@ function buildMultiAgentCoordinationMessage(participants: DConversationParticipa
 
 function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage[] {
   const participantHistory = [...sourceHistory];
-  participantHistory.unshift(buildMultiAgentCoordinationMessage(participants, activeParticipant));
   ConversationHandler.inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
+
+  const coordinationMessage = buildMultiAgentCoordinationMessage(participants, activeParticipant);
+  const systemMessage = participantHistory.find(message => message.role === 'system') ?? null;
+  const systemTextFragment = systemMessage?.fragments.find(isTextContentFragment) ?? null;
+  const coordinationTextFragment = coordinationMessage.fragments.find(isTextContentFragment) ?? null;
+
+  if (systemMessage && systemTextFragment && coordinationTextFragment) {
+    systemTextFragment.part.text = `${systemTextFragment.part.text.trim()}\n\n${coordinationTextFragment.part.text}`;
+  } else {
+    participantHistory.unshift(coordinationMessage);
+  }
+
   ConversationHandler.inlineUpdateAutoPromptCaching(participantHistory);
   return participantHistory;
+}
+
+function getRunnableParticipants(participants: DConversationParticipant[], latestUserMessage: DMessage | null): DConversationParticipant[] {
+  return participants.filter(participant => {
+    if (!participant.personaId)
+      return false;
+    return participant.speakWhen !== 'when-mentioned' || wasParticipantMentioned(latestUserMessage, participant);
+  });
+}
+
+function mergeParticipantsInRosterOrder(
+  roster: DConversationParticipant[],
+  primaryParticipants: DConversationParticipant[],
+  extraParticipants: DConversationParticipant[],
+): DConversationParticipant[] {
+  const primaryIds = new Set(primaryParticipants.map(participant => participant.id));
+  const extraIds = new Set(extraParticipants.map(participant => participant.id));
+  return roster.filter(participant => primaryIds.has(participant.id) || extraIds.has(participant.id));
+}
+
+function getAssistantMessagesSinceLatestUser(messages: Readonly<DMessage[]>, latestUserMessageId: string | null): DMessage[] {
+  if (!latestUserMessageId)
+    return [];
+
+  const latestUserIndex = messages.findIndex(message => message.id === latestUserMessageId);
+  if (latestUserIndex < 0)
+    return [];
+
+  return messages.slice(latestUserIndex + 1)
+    .filter(message => message.role === 'assistant' && !!message.metadata?.author?.participantId);
+}
+
+function getParticipantsRemainingThisTurn(messages: Readonly<DMessage[]>, latestUserMessageId: string | null, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+  if (!latestUserMessageId)
+    return runnableParticipants;
+
+  const spokenParticipantIds = new Set(getAssistantMessagesSinceLatestUser(messages, latestUserMessageId)
+    .map(message => message.metadata?.author?.participantId)
+    .filter((participantId): participantId is string => !!participantId));
+
+  return runnableParticipants.filter(participant => !spokenParticipantIds.has(participant.id));
+}
+
+function getContinuousParticipants(messages: Readonly<DMessage[]>, latestUserMessageId: string | null, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+  if (!latestUserMessageId || runnableParticipants.length <= 1)
+    return runnableParticipants;
+
+  const assistantMessagesThisTurn = getAssistantMessagesSinceLatestUser(messages, latestUserMessageId);
+  const latestAssistantParticipantId = assistantMessagesThisTurn.at(-1)?.metadata?.author?.participantId ?? null;
+  if (!latestAssistantParticipantId)
+    return runnableParticipants;
+
+  const latestSpeakerIndex = runnableParticipants.findIndex(participant => participant.id === latestAssistantParticipantId);
+  if (latestSpeakerIndex < 0)
+    return runnableParticipants;
+
+  return [
+    ...runnableParticipants.slice(latestSpeakerIndex + 1),
+    ...runnableParticipants.slice(0, latestSpeakerIndex + 1),
+  ];
+}
+
+async function runParticipantSequence(
+  cHandler: ConversationHandler,
+  conversationId: DConversationId,
+  participantsInOrder: DConversationParticipant[],
+  allAssistantParticipants: DConversationParticipant[],
+  defaultChatLlmId: DLLMId,
+  turnTerminationMode: DConversationTurnTerminationMode,
+  latestUserMessageId: string | null,
+): Promise<boolean> {
+  if (!participantsInOrder.length)
+    return false;
+
+  const sharedAbortController = new AbortController();
+  cHandler.setAbortController(sharedAbortController, 'chat-persona-multi');
+
+  try {
+    const results: boolean[] = [];
+    const participantCount = participantsInOrder.length;
+    let continuousTurnCount = 0;
+    let pendingMentionedParticipantIds: string[] = [];
+    let allowRoundRobinMentionContinuation = false;
+
+    while (!sharedAbortController.signal.aborted) {
+      const historyForTurn = cHandler.historyViewHeadOrThrow(`chat-persona-multi-${continuousTurnCount}`) as Readonly<DMessage[]>;
+      const latestUserMessage = [...historyForTurn].reverse().find(message => message.role === 'user') ?? null;
+      if (hasStopToken(latestUserMessage)) {
+        sharedAbortController.abort('@stop');
+        break;
+      }
+      const participantsForPassBase = turnTerminationMode === 'continuous'
+        ? getContinuousParticipants(historyForTurn, latestUserMessageId, participantsInOrder)
+        : allowRoundRobinMentionContinuation
+          ? participantsInOrder
+          : getParticipantsRemainingThisTurn(historyForTurn, latestUserMessageId, participantsInOrder);
+
+      const queuedMentionedParticipants = pendingMentionedParticipantIds
+        .map(participantId => participantsForPassBase.find(participant => participant.id === participantId) ?? null)
+        .filter((participant): participant is DConversationParticipant => !!participant);
+      const queuedMentionedParticipantIds = new Set(queuedMentionedParticipants.map(participant => participant.id));
+      const participantsForPass = [
+        ...queuedMentionedParticipants,
+        ...participantsForPassBase.filter(participant => !queuedMentionedParticipantIds.has(participant.id)),
+      ];
+      pendingMentionedParticipantIds = [];
+
+      if (!participantsForPass.length)
+        break;
+
+      let madeProgressThisPass = false;
+
+      for (const participant of participantsForPass) {
+        if (sharedAbortController.signal.aborted)
+          break;
+
+        const participantPersonaId = participant.personaId;
+        const participantLlmId = participant.llmId ?? defaultChatLlmId;
+        if (!participantPersonaId || !participantLlmId)
+          continue;
+
+        const sourceHistory = cHandler.historyViewHeadOrThrow(`chat-persona-multi-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>;
+        const participantHistory = preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
+        const didSucceed = await runPersonaOnConversationHead(participantLlmId, conversationId, participantPersonaId, true, sharedAbortController, participant, participantHistory);
+        results.push(didSucceed);
+        madeProgressThisPass = true;
+
+        if (sharedAbortController.signal.aborted)
+          break;
+
+        const updatedHistory = cHandler.historyViewHeadOrThrow(`chat-persona-multi-after-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>;
+        const latestAssistantMessage = [...updatedHistory].reverse().find(message => message.role === 'assistant' && message.metadata?.author?.participantId === participant.id) ?? null;
+        const mentionedParticipants = getMentionedParticipants(latestAssistantMessage, allAssistantParticipants, new Set([participant.id]));
+        if (!mentionedParticipants.length)
+          continue;
+
+        if (turnTerminationMode === 'continuous') {
+          pendingMentionedParticipantIds = [
+            ...mentionedParticipants.map(mentionedParticipant => mentionedParticipant.id),
+            ...pendingMentionedParticipantIds.filter(participantId => !mentionedParticipants.some(mentionedParticipant => mentionedParticipant.id === participantId)),
+          ];
+          break;
+        }
+
+        allowRoundRobinMentionContinuation = true;
+        pendingMentionedParticipantIds = [
+          ...mentionedParticipants.map(mentionedParticipant => mentionedParticipant.id),
+          ...pendingMentionedParticipantIds.filter(participantId => !mentionedParticipants.some(mentionedParticipant => mentionedParticipant.id === participantId)),
+        ];
+
+        const currentParticipantIndex = participantsForPass.indexOf(participant);
+        if (currentParticipantIndex < 0)
+          continue;
+
+        const trailingParticipants = participantsForPass.slice(currentParticipantIndex + 1);
+        const trailingParticipantIds = new Set(trailingParticipants.map(trailingParticipant => trailingParticipant.id));
+        const followUpParticipants = mentionedParticipants;
+        if (!followUpParticipants.length)
+          continue;
+
+        const followUpParticipantIds = new Set(followUpParticipants.map(followUpParticipant => followUpParticipant.id));
+        const reorderedTrailingParticipants = [
+          ...followUpParticipants,
+          ...trailingParticipants.filter(trailingParticipant => !followUpParticipantIds.has(trailingParticipant.id)),
+        ];
+        participantsForPass.splice(currentParticipantIndex + 1, trailingParticipants.length, ...reorderedTrailingParticipants);
+      }
+
+      if ((turnTerminationMode !== 'continuous' && !allowRoundRobinMentionContinuation) || !madeProgressThisPass)
+        break;
+
+      if (turnTerminationMode !== 'continuous' && pendingMentionedParticipantIds.length === 0)
+        break;
+
+      continuousTurnCount++;
+      if (participantCount <= 1 && continuousTurnCount >= 1)
+        break;
+    }
+
+    return results.some(Boolean);
+  } finally {
+    cHandler.clearAbortController('chat-persona-multi');
+  }
 }
 
 export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, executeCallerNameDebug: string) {
@@ -69,6 +347,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   const primaryParticipant = assistantParticipants[0] ?? null;
   const chatLLMId = primaryParticipant?.llmId ?? getChatLLMId();
   const systemPurposeId = primaryParticipant?.personaId ?? null;
+  const turnTerminationMode = getConversationTurnTerminationMode(conversationId);
 
   // Handle missing conversation
   if (!conversationId)
@@ -106,46 +385,29 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   switch (chatExecuteMode) {
     case 'generate-content': {
       const latestUserMessage = [...initialHistory].reverse().find(message => message.role === 'user') ?? null;
-      const runnableParticipants = assistantParticipants.filter(participant => {
-        if (!participant.personaId)
-          return false;
-        return participant.speakWhen !== 'when-mentioned' || wasParticipantMentioned(latestUserMessage, participant);
-      });
+      if (hasStopToken(latestUserMessage)) {
+        cHandler.clearAbortController('chat-persona-stop-token');
+        return true;
+      }
+      const runnableParticipants = getRunnableParticipants(assistantParticipants, latestUserMessage);
+      const directlyMentionedParticipants = getMentionedParticipants(latestUserMessage, assistantParticipants);
+      const participantsForTurn = mergeParticipantsInRosterOrder(assistantParticipants, runnableParticipants, directlyMentionedParticipants);
 
-      if (!runnableParticipants.length) {
+      if (!participantsForTurn.length) {
         cHandler.messageAppendAssistantText('No agent was triggered for this turn. Mention an agent with @alias, or set it to speak every turn.', 'issue');
         return false;
       }
 
-      if (runnableParticipants.length > 1) {
-        const sharedAbortController = new AbortController();
-        cHandler.setAbortController(sharedAbortController, 'chat-persona-multi');
-        try {
-          const results = [] as boolean[];
+      if (participantsForTurn.length > 1 || turnTerminationMode === 'continuous')
+        return await runParticipantSequence(cHandler, conversationId, participantsForTurn, assistantParticipants, chatLLMId, turnTerminationMode, latestUserMessage?.id ?? null);
 
-          for (const participant of runnableParticipants) {
-            const participantPersonaId = participant.personaId;
-            const participantLlmId = participant.llmId ?? chatLLMId;
-            if (!participantPersonaId || !participantLlmId)
-              continue;
-
-            const sourceHistory = cHandler.historyViewHeadOrThrow(`chat-persona-multi-${participant.id}`) as Readonly<DMessage[]>;
-            const participantHistory = preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, runnableParticipants, participant);
-            results.push(await runPersonaOnConversationHead(participantLlmId, conversationId, participantPersonaId, true, sharedAbortController, participant, participantHistory));
-          }
-          return results.some(Boolean);
-        } finally {
-          cHandler.clearAbortController('chat-persona-multi');
-        }
-      }
-
-      const soleParticipant = runnableParticipants[0] ?? primaryParticipant;
+      const soleParticipant = participantsForTurn[0] ?? primaryParticipant;
       const soleParticipantPersonaId = soleParticipant?.personaId ?? systemPurposeId;
       const soleParticipantLlmId = soleParticipant?.llmId ?? chatLLMId;
       if (!soleParticipant || !soleParticipantPersonaId || !soleParticipantLlmId)
         return 'err-no-persona';
 
-      const participantHistory = preparePersonaHistory(initialHistory, soleParticipantLlmId, soleParticipantPersonaId, runnableParticipants, soleParticipant);
+      const participantHistory = preparePersonaHistory(initialHistory, soleParticipantLlmId, soleParticipantPersonaId, participantsForTurn, soleParticipant);
       return await runPersonaOnConversationHead(soleParticipantLlmId, conversationId, soleParticipantPersonaId, false, undefined, soleParticipant, participantHistory);
     }
 

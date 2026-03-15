@@ -10,6 +10,9 @@ interface ComposerOverlayState {
   // list of all the references that the composer is holding to, before sending them out in the next message
   inReferenceTo: DMetaReferenceItem[];
 
+  // text requested externally for the composer (e.g. clicking an @mention in the chat)
+  composerDraftText: string;
+
 }
 
 export interface ComposerOverlayStore extends ComposerOverlayState {
@@ -17,6 +20,10 @@ export interface ComposerOverlayStore extends ComposerOverlayState {
   addInReferenceTo: (item: DMetaReferenceItem) => void;
   removeInReferenceTo: (item: DMetaReferenceItem) => void;
   clearInReferenceTo: () => void;
+
+  setComposerDraftText: (text: string) => void;
+  appendComposerDraftText: (text: string) => void;
+  clearComposerDraftText: () => void;
 
 }
 
@@ -32,6 +39,7 @@ export const createComposerOverlayStoreSlice: StateCreator<ComposerOverlayStore,
 
   // init state
   inReferenceTo: [],
+  composerDraftText: '',
 
   // actions
   addInReferenceTo: (item) => _set(state => ({
@@ -43,5 +51,17 @@ export const createComposerOverlayStoreSlice: StateCreator<ComposerOverlayStore,
   })),
 
   clearInReferenceTo: () => _set({ inReferenceTo: [] }),
+
+  setComposerDraftText: (text) => _set({ composerDraftText: text }),
+
+  appendComposerDraftText: (text) => _set(state => ({
+    composerDraftText: !text
+      ? state.composerDraftText
+      : state.composerDraftText
+        ? `${state.composerDraftText}${/\s$/.test(state.composerDraftText) ? '' : ' '}${text}`
+        : text,
+  })),
+
+  clearComposerDraftText: () => _set({ composerDraftText: '' }),
 
 });

@@ -5,6 +5,7 @@ import { Box, Button } from '@mui/joy';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
 import { DMessageContentFragment, DMessageFragmentId, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
@@ -60,6 +61,7 @@ export function ContentFragments(props: {
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
   showUnsafeHtmlCode?: boolean,
+  participants?: DConversationParticipant[],
 
   textEditsState: ChatMessageTextPartEditState | null,
   setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
@@ -73,6 +75,7 @@ export function ContentFragments(props: {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
+  onAppendMention?: (mentionText: string) => void;
 
 }) {
 
@@ -240,6 +243,7 @@ export function ContentFragments(props: {
             enableRestart={enableRestartFromEdit}
             editedText={props.textEditsState[fId]}
             setEditedText={props.setEditedText}
+            participants={props.participants}
             onSubmit={props.onEditsApply}
             onEscapePressed={props.onEditsCancel}
             // endDecorator='Shift+Enter to save · Ctrl+Shift+Enter to restart · Escape to cancel'
@@ -337,6 +341,8 @@ export function ContentFragments(props: {
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               onContextMenu={props.onContextMenu}
               onDoubleClick={props.onDoubleClick}
+              onAppendMention={props.onAppendMention}
+              participants={props.participants}
             />
           );
 

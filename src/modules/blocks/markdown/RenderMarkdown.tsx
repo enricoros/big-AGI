@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, styled } from '@mui/joy';
 
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
@@ -23,14 +24,14 @@ const RenderMarkdownBox = styled(Box)({
 
 const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
-export function RenderMarkdown(props: { content: string; disablePreprocessor?: boolean, sx?: SxProps; }) {
+export function RenderMarkdown(props: { content: string; disablePreprocessor?: boolean, sx?: SxProps; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[]; }) {
   return (
     <RenderMarkdownBox
       className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
       sx={props.sx}
     >
       <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer content={props.content} disablePreprocessor={props.disablePreprocessor} />
+        <DynamicMarkdownRenderer content={props.content} disablePreprocessor={props.disablePreprocessor} onAppendMention={props.onAppendMention} participants={props.participants} />
       </React.Suspense>
     </RenderMarkdownBox>
   );

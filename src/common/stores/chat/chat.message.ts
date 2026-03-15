@@ -110,6 +110,9 @@ export interface DMetaReferenceItem {
   mrt: 'dmsg';                        // for future type discrimination
   mText: string;
   mRole: DMessageRole;
+  mAuthorParticipantId?: string;
+  mAuthorParticipantName?: string;
+  mCarryAuthorMention?: boolean;
   // messageId?: string;
 }
 

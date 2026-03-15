@@ -16,7 +16,7 @@ import { workspaceForConversationIdentity } from '~/common/stores/workspace/work
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
-import { conversationTitle, createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant, DConversation, DConversationId, DConversationParticipant, DConversationParticipantSpeakWhen, duplicateDConversation } from './chat.conversation';
+import { conversationTitle, createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant, DConversation, DConversationId, DConversationParticipant, DConversationParticipantSpeakWhen, DConversationTurnTerminationMode, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 
@@ -52,6 +52,7 @@ export interface ChatActions {
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setParticipants: (cId: DConversationId, participants: DConversationParticipant[]) => void;
+  setTurnTerminationMode: (cId: DConversationId, mode: DConversationTurnTerminationMode) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
@@ -454,6 +455,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           };
         }),
 
+      setTurnTerminationMode: (conversationId: DConversationId, mode: DConversationTurnTerminationMode) =>
+        _get()._editConversation(conversationId, {
+          turnTerminationMode: mode,
+        }),
+
       setAutoTitle: (conversationId: DConversationId, autoTitle: string) =>
         _get()._editConversation(conversationId,
           {
@@ -646,6 +652,12 @@ export function getConversationParticipants(conversationId: DConversationId | nu
         return a.kind === 'human' ? -1 : 1;
       return 0;
     });
+}
+
+export function getConversationTurnTerminationMode(conversationId: DConversationId | null): DConversationTurnTerminationMode {
+  return getConversation(conversationId)?.turnTerminationMode === 'continuous'
+    ? 'continuous'
+    : 'round-robin-per-human';
 }
 
 

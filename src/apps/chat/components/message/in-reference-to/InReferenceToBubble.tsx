@@ -77,7 +77,14 @@ export function InReferenceToBubble(props: {
   return (
     <Box className={props.className} sx={!variantMessage ? bubbleComposerSx : inlineMessageBubbleSx}>
 
-      <Tooltip disableInteractive arrow title='Referring to this assistant text' placement='top'>
+      <Tooltip
+        disableInteractive
+        arrow
+        title={props.item.mAuthorParticipantName
+          ? `Replying to @${props.item.mAuthorParticipantName}`
+          : 'Referring to this assistant text'}
+        placement='top'
+      >
         <ReplyRoundedIcon sx={{
           color: variantMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',
           fontSize: 'xl',

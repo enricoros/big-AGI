@@ -65,6 +65,8 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
           setItemsByProvider(results.map(result => ({ provider: result.provider, items: result.items })));
           setActiveSearchString(results[0].searchPrefix); // Assuming all search prefixes are the same
           setActiveItemIndex(0);
+        } else {
+          handleClose();
         }
       }).catch(error => {
         handleClose();
@@ -72,6 +74,8 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
       });
       return true;
     }
+
+    handleClose();
     return false;
   }, [handleClose, providers]);
 
@@ -93,6 +97,9 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
         handleEnterKey();
       } else if (key === 'Backspace') {
         handleClose();
+      } else if (key === ' ' && totalItems === 0) {
+        handleClose();
+        return false;
       } else if (key.length === 1 && !ctrlKey && !metaKey) {
         setActiveSearchString((prev) => prev + key);
         setActiveItemIndex(0);
@@ -107,7 +114,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   }, [actileInterceptTextChange, handleClose, handleEnterKey, popupOpen, totalItems]);
 
   const actileComponent = React.useMemo(() => {
-    return !popupOpen ? null : (
+    return !popupOpen || totalItems <= 0 ? null : (
       <ActilePopup
         anchorEl={anchorRef.current}
         onClose={handleClose}
@@ -117,7 +124,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
         onItemClick={handlePopupItemClicked}
       />
     );
-  }, [activeItemIndex, activeItemsByProvider, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen]);
+  }, [activeItemIndex, activeItemsByProvider, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen, totalItems]);
 
   return {
     actileComponent,

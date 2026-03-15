@@ -20,7 +20,8 @@ import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from 
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
-import { useChatStore } from '~/common/stores/chat/store-chats';
+import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
+import { getConversationParticipants, useChatStore } from '~/common/stores/chat/store-chats';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
@@ -48,7 +49,7 @@ export function ChatMessageList(props: {
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string, addSplitPane: boolean) => void,
   onConversationExecuteHistory: (conversationId: DConversationId) => Promise<void>,
-  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
+  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean, agentGroupSnapshot?: DAgentGroupSnapshot | null) => void,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
@@ -71,6 +72,7 @@ export function ChatMessageList(props: {
       historyTokenCount: conversation ? conversation.tokenCount : 0,
     };
   }));
+  const participants = getConversationParticipants(props.conversationId);
   const { _composerInReferenceToCount, ephemerals } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
@@ -194,6 +196,10 @@ export function ChatMessageList(props: {
 
   const handleAddInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
     conversationHandler?.overlayActions.addInReferenceTo(item);
+  }, [conversationHandler]);
+
+  const handleAppendMention = React.useCallback((mentionText: string) => {
+    conversationHandler?.overlayActions.appendComposerDraftText(mentionText);
   }, [conversationHandler]);
 
   const handleTextDiagram = React.useCallback(async (messageId: DMessageId, text: string) => {
@@ -380,6 +386,8 @@ export function ChatMessageList(props: {
               onTextDiagram={handleTextDiagram}
               onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
               onTextSpeak={handleTextSpeak}
+              onAppendMention={handleAppendMention}
+              participants={participants}
             />
 
           );

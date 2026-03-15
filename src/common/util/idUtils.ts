@@ -6,6 +6,7 @@ type UidScope =
   | 'beam-fusion'
   | 'beam-preset-config'
   | 'beam-ray'
+  | 'chat-agent-group'
   | 'chat-block'
   | 'chat-dconversation'
   | 'chat-dmessage'

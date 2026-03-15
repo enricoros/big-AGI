@@ -32,7 +32,7 @@ Current date: {{LocaleNow}}
 {{RenderSVG}}
 {{PreferTables}}
 `,
-    symbol: '🧠',
+    symbol: '🤖',
     examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
     call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },

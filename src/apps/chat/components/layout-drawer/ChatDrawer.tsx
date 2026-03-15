@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
@@ -16,6 +17,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
+import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
@@ -69,7 +72,8 @@ function ChatDrawer(props: {
   focusedChatBeamOpen: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
-  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
+  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean, agentGroupSnapshot?: DAgentGroupSnapshot | null) => void,
+  onConversationSaveAgentGroup: (conversationId: DConversationId, name?: string, existingId?: string | null) => string | null,
   onConversationsDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
   onConversationsExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationsImportDialog: () => void,
@@ -77,8 +81,14 @@ function ChatDrawer(props: {
 }) {
 
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
+  const { savedAgentGroups, renameAgentGroup, deleteAgentGroup } = useChatAgentGroupsStore(useShallow(state => ({
+    savedAgentGroups: state.savedAgentGroups,
+    renameAgentGroup: state.renameAgentGroup,
+    deleteAgentGroup: state.deleteAgentGroup,
+  })));
 
-  // local state
+  const [editingGroupId, setEditingGroupId] = React.useState<string | null>(null);
+
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
   const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
   const [searchDepth, setSearchDepth] = React.useState<ChatSearchDepth>('attachments'); // default: full search
@@ -127,6 +137,23 @@ function ChatDrawer(props: {
     if (getIsMobile())
       optimaCloseDrawer();
   }, [newButtonDontRecycle, onConversationNew]);
+
+  const handleAgentGroupLoad = React.useCallback((agentGroupSnapshot: DAgentGroupSnapshot) => {
+    onConversationNew(true, false, agentGroupSnapshot);
+    setEditingGroupId(null);
+    if (getIsMobile())
+      optimaCloseDrawer();
+  }, [onConversationNew]);
+
+  const handleAgentGroupRename = React.useCallback((groupId: string, name: string) => {
+    renameAgentGroup(groupId, name);
+    setEditingGroupId(null);
+  }, [renameAgentGroup]);
+
+  const handleAgentGroupDelete = React.useCallback((groupId: string) => {
+    deleteAgentGroup(groupId);
+    setEditingGroupId(current => current === groupId ? null : current);
+  }, [deleteAgentGroup]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
@@ -190,7 +217,132 @@ function ChatDrawer(props: {
   }, [debouncedSearchQuery]);
 
 
-  // memoize the group dropdown
+  const sortedSavedAgentGroups = React.useMemo(() =>
+    [...savedAgentGroups].sort((a, b) => b.updatedAt - a.updatedAt),
+  [savedAgentGroups]);
+
+  const groupedNewButton = React.useMemo(() => {
+    const canLoadGroups = sortedSavedAgentGroups.length > 0;
+
+    return (
+      <Dropdown>
+        <Box sx={{ display: 'flex', width: '100%' }}>
+          <Button
+            // variant='outlined'
+            variant={disableNewButton ? undefined : 'soft'}
+            disabled={disableNewButton}
+            onClick={handleButtonNew}
+            sx={{
+              flex: 1,
+              justifyContent: 'flex-start',
+              padding: '0px 0.75rem',
+              border: '1px solid',
+              borderColor: 'neutral.outlinedBorder',
+              borderRadius: 'sm 0 0 sm',
+              borderRight: 0,
+              '--ListItemDecorator-size': 'calc(2.5rem - 1px)',
+            }}
+          >
+            <ListItemDecorator><AddIcon sx={{ fontSize: '' }} /></ListItemDecorator>
+            New chat
+          </Button>
+          <MenuButton
+            slots={{ root: IconButton }}
+            slotProps={{ root: {
+              variant: disableNewButton ? 'plain' : 'soft',
+              disabled: disableNewButton && !canLoadGroups,
+              'aria-label': 'Load saved agent group',
+              sx: {
+                border: '1px solid',
+                borderColor: 'neutral.outlinedBorder',
+                borderRadius: '0 sm sm 0',
+                minWidth: '2.75rem',
+              },
+            } }}
+          >
+            <KeyboardArrowDownIcon />
+          </MenuButton>
+        </Box>
+
+        <Menu placement='bottom-start' sx={{ minWidth: 260, zIndex: themeZIndexOverMobileDrawer }}>
+          <MenuItem onClick={() => onConversationNew(newButtonDontRecycle, false)}>
+            <ListItemDecorator><AddIcon /></ListItemDecorator>
+            New chat
+          </MenuItem>
+          <MenuItem onClick={() => onConversationNew(newButtonDontRecycle, true)}>
+            <ListItemDecorator><AddIcon /></ListItemDecorator>
+            New incognito chat
+          </MenuItem>
+
+          <ListDivider />
+          <ListItem>
+            <Typography level='body-sm'>{'Saved agent groups'}</Typography>
+          </ListItem>
+
+          {!canLoadGroups ? (
+            <ListItem>
+              <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>No saved groups yet</Typography>
+            </ListItem>
+          ) : sortedSavedAgentGroups.map(group => (
+            <MenuItem
+              key={group.id}
+              onClick={() => editingGroupId === group.id ? undefined : handleAgentGroupLoad(group)}
+              sx={{ alignItems: 'stretch' }}
+            >
+              <ListItemDecorator><AddIcon /></ListItemDecorator>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {editingGroupId === group.id ? (
+                  <input
+                    autoFocus
+                    defaultValue={group.name}
+                    onBlur={event => handleAgentGroupRename(group.id, event.currentTarget.value)}
+                    onClick={event => event.stopPropagation()}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleAgentGroupRename(group.id, (event.currentTarget as HTMLInputElement).value);
+                      } else if (event.key === 'Escape') {
+                        event.preventDefault();
+                        setEditingGroupId(null);
+                      }
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                ) : (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                    <Typography level='body-sm' noWrap sx={{ flex: 1 }}>{group.name}</Typography>
+                    <Button
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={event => {
+                        event.stopPropagation();
+                        setEditingGroupId(group.id);
+                      }}
+                    >
+                      Rename
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='plain'
+                      color='danger'
+                      onClick={event => {
+                        event.stopPropagation();
+                        handleAgentGroupDelete(group.id);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
+      </Dropdown>
+    );
+  }, [disableNewButton, editingGroupId, handleAgentGroupDelete, handleAgentGroupLoad, handleAgentGroupRename, handleButtonNew, newButtonDontRecycle, onConversationNew, sortedSavedAgentGroups]);
+
   const { isSearching } = isDrawerSearching(debouncedSearchQuery);
   const groupingComponent = React.useMemo(() => (
     <Dropdown>
@@ -363,29 +515,7 @@ function ChatDrawer(props: {
         />
 
         {/* New Chat Button */}
-        <Button
-          // variant='outlined'
-          variant={disableNewButton ? undefined : 'soft'}
-          disabled={disableNewButton}
-          onClick={handleButtonNew}
-          sx={{
-            // ...PageDrawerTallItemSx,
-            justifyContent: 'flex-start',
-            padding: '0px 0.75rem',
-
-            // style
-            border: '1px solid',
-            borderColor: 'neutral.outlinedBorder',
-            borderRadius: 'sm',
-            '--ListItemDecorator-size': 'calc(2.5rem - 1px)', // compensate for the border
-            // backgroundColor: 'background.popup',
-            // boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'xs',
-            // transition: 'box-shadow 0.2s',
-          }}
-        >
-          <ListItemDecorator><AddIcon sx={{ fontSize: '' }} /></ListItemDecorator>
-          New chat
-        </Button>
+        {groupedNewButton}
 
       </Box>
 
