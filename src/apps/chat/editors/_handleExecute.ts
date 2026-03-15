@@ -280,7 +280,7 @@ async function runParticipantSequence(
         const participantHistory = preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
         const didSucceed = await runPersonaOnConversationHead(participantLlmId, conversationId, participantPersonaId, true, sharedAbortController, participant, participantHistory);
         results.push(didSucceed);
-        madeProgressThisPass = true;
+        madeProgressThisPass = madeProgressThisPass || didSucceed;
 
         if (sharedAbortController.signal.aborted)
           break;

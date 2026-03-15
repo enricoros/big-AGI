@@ -439,8 +439,14 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
       setParticipants: (conversationId: DConversationId, participants: DConversationParticipant[]) =>
         _get()._editConversation(conversationId, conversation => {
-          const nextParticipants = participants.length
-            ? participants.map(participant => ({ ...participant }))
+          const providedParticipants = participants.map(participant => ({ ...participant }));
+          const humanParticipants = providedParticipants.filter(participant => participant.kind === 'human');
+          const assistantParticipants = providedParticipants.filter(participant => participant.kind === 'assistant');
+          const nextParticipants = providedParticipants.length
+            ? [
+              ...(humanParticipants.length ? humanParticipants : [createHumanConversationParticipant(conversation.userSymbol || 'You')]),
+              ...assistantParticipants,
+            ]
             : [
               createHumanConversationParticipant(conversation.userSymbol || 'You'),
               createAssistantConversationParticipant(conversation.systemPurposeId),
