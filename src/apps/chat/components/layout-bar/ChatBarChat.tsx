@@ -3,9 +3,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Chip, Divider, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
 
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -38,6 +37,9 @@ export function ChatBarChat(props: {
   const [draftPersonaId, setDraftPersonaId] = React.useState<SystemPurposeId | ''>('');
   const [draftLlmId, setDraftLlmId] = React.useState<string>('');
   const [expandedParticipantId, setExpandedParticipantId] = React.useState<string | null>(null);
+  const [draggedParticipantId, setDraggedParticipantId] = React.useState<string | null>(null);
+  const [dropTargetParticipantId, setDropTargetParticipantId] = React.useState<string | null>(null);
+  const [dropTargetEdge, setDropTargetEdge] = React.useState<'before' | 'after' | null>(null);
   const [participantDrafts, setParticipantDrafts] = React.useState<Record<string, {
     name: string;
     personaId: SystemPurposeId | null;
@@ -249,22 +251,71 @@ export function ChatBarChat(props: {
     setExpandedParticipantId(null);
   }, [handleParticipantDraftCommit, participantDrafts]);
 
-  const handleParticipantMove = React.useCallback((participantId: string, direction: -1 | 1) => {
-    if (!props.conversationId)
+  const handleParticipantReorder = React.useCallback((draggedParticipantId: string, targetParticipantId: string, edge: 'before' | 'after') => {
+    if (!props.conversationId || draggedParticipantId === targetParticipantId)
       return;
 
     const humanParticipants = participants.filter(participant => participant.kind === 'human');
     const assistantParticipants = participants.filter(participant => participant.kind === 'assistant');
-    const index = assistantParticipants.findIndex(participant => participant.id === participantId);
-    const nextIndex = index + direction;
-    if (index < 0 || nextIndex < 0 || nextIndex >= assistantParticipants.length)
+    const draggedIndex = assistantParticipants.findIndex(participant => participant.id === draggedParticipantId);
+    const targetIndex = assistantParticipants.findIndex(participant => participant.id === targetParticipantId);
+    if (draggedIndex < 0 || targetIndex < 0)
       return;
 
     const reorderedAssistants = [...assistantParticipants];
-    const [movedParticipant] = reorderedAssistants.splice(index, 1);
-    reorderedAssistants.splice(nextIndex, 0, movedParticipant);
+    const [draggedParticipant] = reorderedAssistants.splice(draggedIndex, 1);
+    const adjustedTargetIndex = reorderedAssistants.findIndex(participant => participant.id === targetParticipantId);
+    if (adjustedTargetIndex < 0)
+      return;
+
+    const insertionIndex = edge === 'before' ? adjustedTargetIndex : adjustedTargetIndex + 1;
+    reorderedAssistants.splice(insertionIndex, 0, draggedParticipant);
     setParticipants(props.conversationId, [...humanParticipants, ...reorderedAssistants]);
   }, [participants, props.conversationId, setParticipants]);
+
+  const resetParticipantDragState = React.useCallback(() => {
+    setDraggedParticipantId(null);
+    setDropTargetParticipantId(null);
+    setDropTargetEdge(null);
+  }, []);
+
+  const handleParticipantDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', participantId);
+    setDraggedParticipantId(participantId);
+    setDropTargetParticipantId(participantId);
+    setDropTargetEdge('before');
+  }, []);
+
+  const handleParticipantDragOver = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
+    if (!draggedParticipantId)
+      return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const pointerOffset = event.clientY - bounds.top;
+    const edge = pointerOffset < bounds.height / 2 ? 'before' : 'after';
+
+    setDropTargetParticipantId(participantId);
+    setDropTargetEdge(edge);
+  }, [draggedParticipantId]);
+
+  const handleParticipantDrop = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
+    event.preventDefault();
+
+    const sourceParticipantId = draggedParticipantId || event.dataTransfer.getData('text/plain');
+    const edge = dropTargetParticipantId === participantId ? (dropTargetEdge ?? 'before') : 'before';
+    if (sourceParticipantId)
+      handleParticipantReorder(sourceParticipantId, participantId, edge);
+
+    resetParticipantDragState();
+  }, [draggedParticipantId, dropTargetEdge, dropTargetParticipantId, handleParticipantReorder, resetParticipantDragState]);
+
+  const handleParticipantDragEnd = React.useCallback(() => {
+    resetParticipantDragState();
+  }, [resetParticipantDragState]);
 
   const handleTurnTerminationModeChange = React.useCallback((_event: React.SyntheticEvent | null, value: string | null) => {
     if (!props.conversationId || (value !== 'round-robin-per-human' && value !== 'continuous'))
@@ -335,7 +386,7 @@ export function ChatBarChat(props: {
           <Stack spacing={0.35}>
             <Typography level='title-md'>Agents</Typography>
             <Typography level='body-sm' sx={{ color: 'text.tertiary' }}>
-              {assistantParticipants.length} configured · ordered top to bottom
+              {assistantParticipants.length} configured · drag to reorder
             </Typography>
           </Stack>
           <Stack direction='row' spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -392,9 +443,16 @@ export function ChatBarChat(props: {
           const hasCustomPrompt = isCustomPersonaSelected && !!customPromptDraft.trim();
           const speakWhenDraftValue = participantDraft?.speakWhen ?? participant.speakWhen ?? 'every-turn';
           const participantAccentColor = getParticipantAccentColor(participant.name);
+          const isDragged = draggedParticipantId === participant.id;
+          const isDropTarget = dropTargetParticipantId === participant.id && draggedParticipantId !== participant.id;
           return (
             <Box
               key={participant.id}
+              draggable
+              onDragStart={(event) => handleParticipantDragStart(event, participant.id)}
+              onDragOver={(event) => handleParticipantDragOver(event, participant.id)}
+              onDrop={(event) => handleParticipantDrop(event, participant.id)}
+              onDragEnd={handleParticipantDragEnd}
               sx={{
                 display: 'grid',
                 gap: 0.9,
@@ -404,6 +462,30 @@ export function ChatBarChat(props: {
                 borderColor: isExpanded ? `${participantAccentColor}.outlinedBorder` : 'divider',
                 backgroundColor: isExpanded ? 'background.level1' : 'background.surface',
                 transition: 'box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease',
+                position: 'relative',
+                cursor: 'grab',
+                opacity: isDragged ? 0.55 : 1,
+                boxShadow: isDropTarget ? 'md' : undefined,
+                '&::before': isDropTarget && dropTargetEdge === 'before' ? {
+                  content: '""',
+                  position: 'absolute',
+                  left: 12,
+                  right: 12,
+                  top: -4,
+                  height: 3,
+                  borderRadius: 999,
+                  backgroundColor: 'primary.500',
+                } : undefined,
+                '&::after': isDropTarget && dropTargetEdge === 'after' ? {
+                  content: '""',
+                  position: 'absolute',
+                  left: 12,
+                  right: 12,
+                  bottom: -4,
+                  height: 3,
+                  borderRadius: 999,
+                  backgroundColor: 'primary.500',
+                } : undefined,
                 '&:hover': {
                   boxShadow: 'sm',
                   borderColor: isExpanded ? `${participantAccentColor}.outlinedBorder` : 'neutral.outlinedHoverBorder',
@@ -437,17 +519,32 @@ export function ChatBarChat(props: {
                   </Typography>
                 </Box>
 
-                <Button
-                  size='sm'
-                  variant={isExpanded ? 'soft' : 'plain'}
-                  color={isExpanded ? participantAccentColor : 'neutral'}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleExpandedParticipantChange(participant.id);
-                  }}
-                >
-                  {isExpanded ? 'Close' : 'Edit'}
-                </Button>
+                <Stack direction='row' spacing={0.25} sx={{ alignItems: 'center' }}>
+                  <IconButton
+                    aria-label='Delete'
+                    size='sm'
+                    variant='plain'
+                    color='neutral'
+                    disabled={!canRemoveAssistant}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleParticipantRemove(participant.id);
+                    }}
+                  >
+                    <DeleteOutlineIcon />
+                  </IconButton>
+                  <Button
+                    size='sm'
+                    variant={isExpanded ? 'soft' : 'plain'}
+                    color={isExpanded ? participantAccentColor : 'neutral'}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleExpandedParticipantChange(participant.id);
+                    }}
+                  >
+                    {isExpanded ? 'Close' : 'Edit'}
+                  </Button>
+                </Stack>
               </Stack>
 
               {isExpanded && (
@@ -505,27 +602,6 @@ export function ChatBarChat(props: {
                     onBlur={() => handleParticipantDraftCommit(participant.id)}
                     placeholder='Optional custom prompt/persona instructions'
                   />}
-
-                  <Stack direction='row' spacing={0.5} sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Stack direction='row' spacing={0.25}>
-                      <IconButton size='sm' variant='plain' disabled={index === 0} onClick={() => handleParticipantMove(participant.id, -1)}>
-                        <ArrowUpwardIcon />
-                      </IconButton>
-                      <IconButton size='sm' variant='plain' disabled={index === assistantParticipants.length - 1} onClick={() => handleParticipantMove(participant.id, 1)}>
-                        <ArrowDownwardIcon />
-                      </IconButton>
-                    </Stack>
-                    <Button
-                      size='sm'
-                      color='danger'
-                      disabled={!canRemoveAssistant}
-                      onClick={() => handleParticipantRemove(participant.id)}
-                      startDecorator={<CloseIcon />}
-                      variant='plain'
-                    >
-                      Remove
-                    </Button>
-                  </Stack>
                 </Box>
               )}
             </Box>

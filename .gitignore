@@ -55,4 +55,8 @@ next-env.d.ts
 /src/modules/3rdparty/aider/scratch*
 
 # Ignore temporary CC files
+# Ignore temporary CC files
 /tmpclaude*
+
+# Local git worktrees
+/.worktrees/
