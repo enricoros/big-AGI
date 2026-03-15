@@ -1,6 +1,5 @@
 /**
  * Server-side environment variables centralized access and validation.
- * Replaced with env.client-mock.ts on client builds via webpack.
  */
 // [client-side] throw immediately if imported
 if (typeof window !== 'undefined')

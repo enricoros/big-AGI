@@ -1,6 +1,6 @@
 import { createTRPCRouter } from './trpc.server';
 
-// Edge routers
+// Main application routers
 import { aixRouter } from '~/modules/aix/server/api/aix.router';
 import { backendRouter } from '~/modules/backend/backend.router';
 import { googleSearchRouter } from '~/modules/google/search.router';
@@ -13,7 +13,7 @@ import { speexRouter } from '~/modules/speex/protocols/rpc/rpc.router';
 import { youtubeRouter } from '~/modules/youtube/youtube.router';
 
 /**
- * Primary rooter, and will be sitting on an Edge Runtime.
+ * Primary application router served through the main tRPC endpoint.
  */
 export const appRouterEdge = createTRPCRouter({
   aix: aixRouter,
