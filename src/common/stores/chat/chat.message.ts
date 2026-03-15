@@ -79,10 +79,19 @@ export interface DMessageAuthor {
   llmId?: DLLMId | null;
 }
 
+export interface DMessageConsensusMetadata {
+  kind: 'deliberation' | 'result';
+  phaseId: string;
+  passIndex: number;
+  action?: 'agree' | 'dont_agree';
+  agreedResponse?: string;
+}
+
 export interface DMessageMetadata {
   author?: DMessageAuthor;
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
   entangled?: DMessageEntangled; // entangled messages info
+  consensus?: DMessageConsensusMetadata; // consensus-mode deliberation/result state
   /**
    * Per-turn chat routing overrides captured when a user message is sent.
    * These allow one conversation to mix different models/personas across turns,
@@ -258,6 +267,9 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
     } : {}),
     ...(metadata.entangled ? {
       entangled: { ...metadata.entangled },
+    } : {}),
+    ...(metadata.consensus ? {
+      consensus: { ...metadata.consensus },
     } : {}),
     ...(metadata.routing ? {
       routing: { ...metadata.routing },

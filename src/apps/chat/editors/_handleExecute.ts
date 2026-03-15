@@ -1,15 +1,25 @@
+import * as z from 'zod/v4';
+
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { SystemPurposeId } from '../../../data';
 
+import { agiCustomId, agiUuid } from '~/common/util/idUtils';
+
 import type { DConversationId, DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { duplicateDMessage } from '~/common/stores/chat/chat.message';
+import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
+import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
+import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessage_FromDMessageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
@@ -72,6 +82,338 @@ function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlm
 }
 
 
+function getConsensusParticipantsRemaining(_messages: Readonly<DMessage[]>, _latestUserMessageId: string | null, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+  return runnableParticipants;
+}
+const CONSENSUS_AIX_CONTEXT_NAME = 'conversation';
+const CONSENSUS_AGREE_TOOL_NAME = 'agree';
+const CONSENSUS_DONT_AGREE_TOOL_NAME = 'dont_agree';
+const CONSENSUS_MAX_PASSES = 12;
+const CONSENSUS_TRANSCRIPT_PREFIX = '[Consensus deliberation]';
+const consensusActionInputSchema = z.object({
+  response: z.string().min(1).describe('The exact final response that should be shown to the user when agreement is reached.'),
+  rationale: z.string().optional().describe('Optional short explanation of why you agree or what still needs to change.'),
+});
+
+type ConsensusToolAction = 'agree' | 'dont_agree';
+
+type ConsensusAgreement = {
+  participant: DConversationParticipant;
+  action: ConsensusToolAction;
+  response: string;
+  rationale: string;
+  deliberationText: string;
+};
+
+function getConsensusTextSignature(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function isConsensusDeliberationMessage(message: Pick<DMessage, 'metadata'> | null | undefined): boolean {
+  return message?.metadata?.consensus?.kind === 'deliberation';
+}
+
+function getConsensusVisibleTranscript(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
+  return messages.filter(message => {
+    const consensus = message.metadata?.consensus;
+    return consensus?.kind === 'deliberation' && consensus.phaseId === phaseId;
+  });
+}
+
+function getConsensusWorkingHistory(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
+  return messages
+    .filter(message => !isConsensusDeliberationMessage(message) || message.metadata?.consensus?.phaseId === phaseId)
+    .map(message => duplicateDMessage(message, false));
+}
+
+function stripConsensusTranscriptPrefix(text: string): string {
+  return text.replace(/^\[Consensus deliberation\]\s*/i, '').trim();
+}
+
+function getConsensusResponsePrompt(activeParticipant: DConversationParticipant): DMessage {
+  const instruction = [
+    'Consensus mode is active.',
+    'You are in a shared deliberation room with the other agents.',
+    'You may talk to every other agent through normal assistant messages in the visible deliberation transcript.',
+    'Use @mentions when you want to address a specific agent, and use @all when speaking to everyone.',
+    `Every deliberation turn must end with exactly one tool call: either ${CONSENSUS_AGREE_TOOL_NAME} or ${CONSENSUS_DONT_AGREE_TOOL_NAME}.`,
+    `Call ${CONSENSUS_AGREE_TOOL_NAME} only when you agree with the exact final user-facing response.`,
+    `Call ${CONSENSUS_DONT_AGREE_TOOL_NAME} when you think the final response still needs changes before it can be shown to the user.`,
+    'Put the exact proposed final response in the tool response field every time.',
+    'Before the tool call, write a concise deliberation message for the other agents describing your position or requested edits.',
+    'Do not output the final user-facing answer directly to the user. The visible text is only deliberation among agents.',
+    `Prefix your deliberation text with ${CONSENSUS_TRANSCRIPT_PREFIX} so it can be shown in the deliberation panel.`,
+    `Current agent: ${activeParticipant.name}.`,
+  ].join('\n');
+
+  const message = createDMessageTextContent('system', instruction);
+  message.updated = message.created;
+  return message;
+}
+
+function prepareConsensusHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage[] {
+  const participantHistory = preparePersonaHistory(sourceHistory, assistantLlmId, purposeId, participants, activeParticipant);
+  const consensusMessage = getConsensusResponsePrompt(activeParticipant);
+  const systemMessage = participantHistory.find(message => message.role === 'system') ?? null;
+  const systemTextFragment = systemMessage?.fragments.find(isTextContentFragment) ?? null;
+  const consensusTextFragment = consensusMessage.fragments.find(isTextContentFragment) ?? null;
+
+  if (systemMessage && systemTextFragment && consensusTextFragment)
+    systemTextFragment.part.text = `${systemTextFragment.part.text.trim()}\n\n${consensusTextFragment.part.text}`;
+  else
+    participantHistory.unshift(consensusMessage);
+
+  return participantHistory;
+}
+
+function getAssistantMessageForParticipantSinceLatestUser(messages: Readonly<DMessage[]>, latestUserMessageId: string | null, participantId: string): DMessage | null {
+  return [...getAssistantMessagesSinceLatestUser(messages, latestUserMessageId)]
+    .reverse()
+    .find(message => message.metadata?.author?.participantId === participantId) ?? null;
+}
+
+function getConsensusToolInvocation(fragments: DMessage['fragments'], debugLabel: string): { action: ConsensusToolAction; argsObject: object } {
+  let invocation: { name: string; args: string } | null = null;
+  let invocationCount = 0;
+
+  for (const fragment of fragments) {
+    if (!isContentFragment(fragment) || fragment.part.pt !== 'tool_invocation' || fragment.part.invocation.type !== 'function_call')
+      continue;
+
+    if (fragment.part.invocation.name !== CONSENSUS_AGREE_TOOL_NAME && fragment.part.invocation.name !== CONSENSUS_DONT_AGREE_TOOL_NAME)
+      continue;
+
+    invocationCount++;
+    invocation = {
+      name: fragment.part.invocation.name,
+      args: fragment.part.invocation.args,
+    };
+  }
+
+  if (!invocation || invocationCount !== 1)
+    throw new Error(`AIX: Expected exactly one consensus tool invocation (${debugLabel}).`);
+
+  if (!invocation.args)
+    throw new Error(`AIX: Missing consensus function arguments (${debugLabel}).`);
+
+  return {
+    action: invocation.name === CONSENSUS_AGREE_TOOL_NAME ? 'agree' : 'dont_agree',
+    argsObject: JSON.parse(invocation.args),
+  };
+}
+
+async function getConsensusAgreement(
+  llmId: DLLMId,
+  conversationId: DConversationId,
+  participantHistory: Readonly<DMessage[]>,
+  abortSignal: AbortSignal,
+  phaseId: string,
+  passIndex: number,
+  participant: DConversationParticipant,
+): Promise<ConsensusAgreement> {
+  const { chatSystemInstruction, chatHistory } = splitSystemMessageFromHistory(participantHistory);
+  const aixChatGenerate: AixAPIChatGenerate_Request = {
+    systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
+    chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistory),
+    tools: [
+      aixFunctionCallTool({
+        name: CONSENSUS_AGREE_TOOL_NAME,
+        description: 'Use this when you agree on the exact final response that should be shown to the user.',
+        inputSchema: consensusActionInputSchema,
+      }),
+      aixFunctionCallTool({
+        name: CONSENSUS_DONT_AGREE_TOOL_NAME,
+        description: 'Use this when you do not yet agree on the final response and want deliberation to continue.',
+        inputSchema: consensusActionInputSchema,
+      }),
+    ],
+    toolsPolicy: { type: 'any' },
+  };
+
+  const { fragments } = await aixChatGenerateContent_DMessage_orThrow(
+    llmId,
+    aixChatGenerate,
+    aixCreateChatGenerateContext(CONSENSUS_AIX_CONTEXT_NAME, `${conversationId}::consensus::${phaseId}::${participant.id}::${passIndex}`),
+    false,
+    {
+      abortSignal,
+      llmOptionsOverride: { llmTemperature: 0 },
+    },
+  );
+
+  const { action, argsObject } = getConsensusToolInvocation(fragments, `consensus-${conversationId}-${llmId}-${participant.id}-${passIndex}`);
+  const { response, rationale } = consensusActionInputSchema.parse(argsObject);
+  const deliberationText = fragments
+    .filter(isTextContentFragment)
+    .map(fragment => stripConsensusTranscriptPrefix(fragment.part.text))
+    .join('\n\n')
+    .trim();
+
+  return {
+    participant,
+    action,
+    response: response.trim(),
+    rationale: rationale?.trim() || '',
+    deliberationText,
+  };
+}
+
+function createConsensusDeliberationMessage(
+  participant: DConversationParticipant,
+  participantLlmId: DLLMId,
+  phaseId: string,
+  passIndex: number,
+  action: ConsensusToolAction,
+  deliberationText: string,
+  response: string,
+): DMessage {
+  const visibleText = deliberationText.trim() || `${action === 'agree' ? 'agree' : 'dont_agree'}: ${response}`;
+  const message = createDMessageTextContent('assistant', visibleText);
+  message.metadata = {
+    ...message.metadata,
+    author: {
+      participantId: participant.id,
+      participantName: participant.name,
+      personaId: participant.personaId,
+      llmId: participant.llmId ?? participantLlmId,
+    },
+    consensus: {
+      kind: 'deliberation',
+      phaseId,
+      passIndex,
+      action,
+      agreedResponse: response,
+    },
+  };
+  message.updated = message.created;
+  return message;
+}
+
+function didParticipantsReachConsensus(agreements: Readonly<ConsensusAgreement[]>, participants: DConversationParticipant[]): boolean {
+  if (!participants.length || agreements.length !== participants.length)
+    return false;
+
+  if (agreements.some(agreement => agreement.action !== 'agree'))
+    return false;
+
+  const signatures = agreements.map(agreement => getConsensusTextSignature(agreement.response)).filter(Boolean);
+  return signatures.length === participants.length && new Set(signatures).size === 1;
+}
+
+function appendConsensusResult(cHandler: ConversationHandler, agreedResponse: string, participants: DConversationParticipant[], phaseId: string, passIndex: number): void {
+  const finalMessage = createDMessageTextContent('assistant', agreedResponse);
+  finalMessage.metadata = {
+    ...finalMessage.metadata,
+    author: {
+      participantId: participants.map(participant => participant.id).join('|'),
+      participantName: 'Consensus',
+      personaId: null,
+      llmId: null,
+    },
+    consensus: {
+      kind: 'result',
+      phaseId,
+      passIndex,
+      action: 'agree',
+      agreedResponse,
+    },
+  };
+  cHandler.messageAppend(finalMessage);
+}
+
+async function runConsensusSequence(
+  cHandler: ConversationHandler,
+  conversationId: DConversationId,
+  participantsInOrder: DConversationParticipant[],
+  defaultChatLlmId: DLLMId,
+  latestUserMessageId: string | null,
+): Promise<boolean> {
+  if (!participantsInOrder.length)
+    return false;
+
+  const phaseId = `consensus-${agiCustomId(12)}`;
+  const sharedAbortController = new AbortController();
+  cHandler.setAbortController(sharedAbortController, 'chat-persona-consensus');
+
+  try {
+    const results: boolean[] = [];
+
+    for (let passIndex = 0; passIndex < CONSENSUS_MAX_PASSES && !sharedAbortController.signal.aborted; passIndex++) {
+      const currentConversationHistory = cHandler.historyViewHeadOrThrow(`chat-persona-consensus-pass-${passIndex}`) as Readonly<DMessage[]>;
+      const latestUserMessage = [...currentConversationHistory].reverse().find(message => message.role === 'user') ?? null;
+      if (hasStopToken(latestUserMessage)) {
+        sharedAbortController.abort('@stop');
+        break;
+      }
+
+      const participantsForPass = getConsensusParticipantsRemaining(currentConversationHistory, latestUserMessageId, participantsInOrder);
+      if (!participantsForPass.length)
+        break;
+
+      const agreements: ConsensusAgreement[] = [];
+      let madeProgressThisPass = false;
+
+      for (const participant of participantsForPass) {
+        if (sharedAbortController.signal.aborted)
+          break;
+
+        const participantPersonaId = participant.personaId;
+        const participantLlmId = participant.llmId ?? defaultChatLlmId;
+        if (!participantPersonaId || !participantLlmId)
+          continue;
+
+        const sourceHistory = getConsensusWorkingHistory(cHandler.historyViewHeadOrThrow(`chat-persona-consensus-source-${participant.id}-${passIndex}`), phaseId);
+        const participantHistory = prepareConsensusHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
+
+        try {
+          const agreement = await getConsensusAgreement(
+            participantLlmId,
+            conversationId,
+            participantHistory,
+            sharedAbortController.signal,
+            phaseId,
+            passIndex,
+            participant,
+          );
+          agreements.push(agreement);
+          results.push(true);
+          madeProgressThisPass = true;
+
+          const deliberationMessage = createConsensusDeliberationMessage(
+            participant,
+            participantLlmId,
+            phaseId,
+            passIndex,
+            agreement.action,
+            agreement.deliberationText,
+            agreement.response,
+          );
+          cHandler.messageAppend(deliberationMessage);
+        } catch {
+          results.push(false);
+        }
+      }
+
+      if (didParticipantsReachConsensus(agreements, participantsForPass)) {
+        const agreedResponse = agreements[0]?.response ?? null;
+        if (agreedResponse)
+          appendConsensusResult(cHandler, agreedResponse, participantsForPass, phaseId, passIndex);
+        return results.length >= participantsForPass.length && agreements.length === participantsForPass.length && results.every(Boolean);
+      }
+
+      if (!madeProgressThisPass)
+        break;
+    }
+
+    return false;
+  } finally {
+    cHandler.clearAbortController('chat-persona-consensus');
+  }
+}
+
 async function runParticipantSequence(
   cHandler: ConversationHandler,
   conversationId: DConversationId,
@@ -133,9 +475,9 @@ async function runParticipantSequence(
 
         const sourceHistory = cHandler.historyViewHeadOrThrow(`chat-persona-multi-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>;
         const participantHistory = preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
-        const didSucceed = await runPersonaOnConversationHead(participantLlmId, conversationId, participantPersonaId, true, sharedAbortController, participant, participantHistory);
-        results.push(didSucceed);
-        madeProgressThisPass = madeProgressThisPass || didSucceed;
+        const result = await runPersonaOnConversationHead(participantLlmId, conversationId, participantPersonaId, true, sharedAbortController, participant, participantHistory);
+        results.push(result.success);
+        madeProgressThisPass = madeProgressThisPass || result.success;
 
         if (sharedAbortController.signal.aborted)
           break;
@@ -253,8 +595,10 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         return false;
       }
 
-      if (participantsForTurn.length > 1 || turnTerminationMode === 'continuous')
-        return await runParticipantSequence(cHandler, conversationId, participantsForTurn, assistantParticipants, chatLLMId, turnTerminationMode, latestUserMessage?.id ?? null);
+      if (participantsForTurn.length > 1 || turnTerminationMode === 'continuous' || turnTerminationMode === 'consensus')
+        return turnTerminationMode === 'consensus'
+          ? await runConsensusSequence(cHandler, conversationId, participantsForTurn, chatLLMId, latestUserMessage?.id ?? null)
+          : await runParticipantSequence(cHandler, conversationId, participantsForTurn, assistantParticipants, chatLLMId, turnTerminationMode, latestUserMessage?.id ?? null);
 
       const soleParticipant = participantsForTurn[0] ?? primaryParticipant;
       const soleParticipantPersonaId = soleParticipant?.personaId ?? systemPurposeId;
@@ -263,7 +607,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         return 'err-no-persona';
 
       const participantHistory = preparePersonaHistory(initialHistory, soleParticipantLlmId, soleParticipantPersonaId, participantsForTurn, soleParticipant);
-      return await runPersonaOnConversationHead(soleParticipantLlmId, conversationId, soleParticipantPersonaId, false, undefined, soleParticipant, participantHistory);
+      return (await runPersonaOnConversationHead(soleParticipantLlmId, conversationId, soleParticipantPersonaId, false, undefined, soleParticipant, participantHistory)).success;
     }
 
     case 'beam-content':

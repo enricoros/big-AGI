@@ -8,7 +8,8 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
+import type { DMessage } from '~/common/stores/chat/chat.message';
+import { MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
@@ -25,6 +26,11 @@ export interface PersonaProcessorInterface {
 }
 
 
+export interface PersonaRunResult {
+  success: boolean;
+  finalMessage: AixChatGenerateContent_DMessageGuts;
+}
+
 /**
  * The main "chat" function.
  * @returns `true` if the operation was successful, `false` otherwise.
@@ -37,35 +43,45 @@ export async function runPersonaOnConversationHead(
   sharedAbortController?: AbortController,
   participant?: DConversationParticipant,
   sourceHistory?: Readonly<DMessage[]>,
-): Promise<boolean> {
+  createPlaceholder: boolean = true,
+): Promise<PersonaRunResult> {
 
   const cHandler = ConversationsManager.getHandler(conversationId);
 
   const _history = sourceHistory ?? cHandler.historyViewHeadOrThrow('runPersonaOnConversationHead') as Readonly<DMessage[]>;
   if (_history.length === 0)
-    return false;
+    return {
+      success: false,
+      finalMessage: {
+        fragments: [],
+        generator: { mgt: 'named', name: assistantLlmId },
+        pendingIncomplete: false,
+      },
+    };
 
   // split pre dynamic-personas
   let { chatSystemInstruction, chatHistory } = splitSystemMessageFromHistory(_history);
 
   // assistant response placeholder
   const isNotifyEnabled = getIsNotificationEnabledForModel(assistantLlmId);
-  const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
-    CHATGENERATE_RESPONSE_PLACEHOLDER,
-    {
-      purposeId: systemPurposeId,
-      generator: { mgt: 'named', name: assistantLlmId },
-      metadata: {
-        author: {
-          participantId: participant?.id || `${systemPurposeId}::${assistantLlmId}`,
-          participantName: participant?.name || systemPurposeId,
-          personaId: participant?.personaId ?? systemPurposeId,
-          llmId: participant?.llmId ?? assistantLlmId,
+  const { assistantMessageId } = createPlaceholder
+    ? cHandler.messageAppendAssistantPlaceholder(
+      CHATGENERATE_RESPONSE_PLACEHOLDER,
+      {
+        purposeId: systemPurposeId,
+        generator: { mgt: 'named', name: assistantLlmId },
+        metadata: {
+          author: {
+            participantId: participant?.id || `${systemPurposeId}::${assistantLlmId}`,
+            participantName: participant?.name || systemPurposeId,
+            personaId: participant?.personaId ?? systemPurposeId,
+            llmId: participant?.llmId ?? assistantLlmId,
+          },
         },
+        ...(isNotifyEnabled ? { userFlags: [MESSAGE_FLAG_NOTIFY_COMPLETE] } : {}),
       },
-      ...(isNotifyEnabled ? { userFlags: [MESSAGE_FLAG_NOTIFY_COMPLETE] } : {}),
-    },
-  );
+    )
+    : { assistantMessageId: null as string | null };
 
   const parallelViewCount = getLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
 
@@ -109,7 +125,8 @@ export async function runPersonaOnConversationHead(
         delete (deepCopy as any).fragments;
 
       // update the message
-      cHandler.messageEdit(assistantMessageId, deepCopy, messageComplete, false);
+      if (assistantMessageId)
+        cHandler.messageEdit(assistantMessageId, deepCopy, messageComplete, false);
 
       // if requested, speak the message
       autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
@@ -121,18 +138,22 @@ export async function runPersonaOnConversationHead(
 
   // final message update (needed only in case of error)
   const lastDeepCopy = structuredClone(messageStatus.lastDMessage);
-  if (messageStatus.outcome === 'errored')
+  if (messageStatus.outcome === 'errored' && assistantMessageId)
     cHandler.messageEdit(assistantMessageId, lastDeepCopy, true, false);
 
   // special case: if the last message was aborted and had no content, delete it
   if (messageWasInterruptedAtStart(lastDeepCopy)) {
-    cHandler.messagesDelete([assistantMessageId]);
+    if (assistantMessageId)
+      cHandler.messagesDelete([assistantMessageId]);
     // NOTE: ok to exit here, as the abort was already done
-    return false;
+    return {
+      success: false,
+      finalMessage: lastDeepCopy,
+    };
   }
 
   // notify when complete, if set
-  if (cHandler.messageHasUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE)) {
+  if (assistantMessageId && cHandler.messageHasUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE)) {
     cHandler.messageSetUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE, false, false);
     AudioGenerator.chatNotifyResponse();
   }
@@ -150,7 +171,7 @@ export async function runPersonaOnConversationHead(
     void autoConversationTitle(conversationId, false);
   }
 
-  if (!hasBeenAborted && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
+  if (!hasBeenAborted && assistantMessageId && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
     void autoChatFollowUps(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   const chatThinkingPolicy = getChatThinkingPolicy();
@@ -160,5 +181,8 @@ export async function runPersonaOnConversationHead(
     cHandler.historyStripThinking(0);
 
   // return true if this succeeded
-  return messageStatus.outcome === 'success';
+  return {
+    success: messageStatus.outcome === 'success',
+    finalMessage: lastDeepCopy,
+  };
 }

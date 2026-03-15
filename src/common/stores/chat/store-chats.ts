@@ -663,7 +663,9 @@ export function getConversationParticipants(conversationId: DConversationId | nu
 export function getConversationTurnTerminationMode(conversationId: DConversationId | null): DConversationTurnTerminationMode {
   return getConversation(conversationId)?.turnTerminationMode === 'continuous'
     ? 'continuous'
-    : 'round-robin-per-human';
+    : getConversation(conversationId)?.turnTerminationMode === 'consensus'
+      ? 'consensus'
+      : 'round-robin-per-human';
 }
 
 

@@ -58,7 +58,11 @@ export function ChatBarChat(props: {
       participants: conversation?.participants ?? [],
       messages: conversation?.messages ?? [],
       systemPurposeId: conversation?.systemPurposeId ?? null,
-      turnTerminationMode: conversation?.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
+      turnTerminationMode: conversation?.turnTerminationMode === 'continuous'
+        ? 'continuous'
+        : conversation?.turnTerminationMode === 'consensus'
+          ? 'consensus'
+          : 'round-robin-per-human',
       setParticipants: state.setParticipants,
       setTurnTerminationMode: state.setTurnTerminationMode,
     };
@@ -318,7 +322,7 @@ export function ChatBarChat(props: {
   }, [resetParticipantDragState]);
 
   const handleTurnTerminationModeChange = React.useCallback((_event: React.SyntheticEvent | null, value: string | null) => {
-    if (!props.conversationId || (value !== 'round-robin-per-human' && value !== 'continuous'))
+    if (!props.conversationId || (value !== 'round-robin-per-human' && value !== 'continuous' && value !== 'consensus'))
       return;
     setTurnTerminationMode(props.conversationId, value);
   }, [props.conversationId, setTurnTerminationMode]);
@@ -418,11 +422,14 @@ export function ChatBarChat(props: {
           >
             <Option value='round-robin-per-human'>Human message → agents pass → @mentions can continue</Option>
             <Option value='continuous'>Human starts → agents continue until stopped</Option>
+            <Option value='consensus'>Human message → all triggered agents must agree → one reply</Option>
           </Select>
           <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
             {turnTerminationMode === 'continuous'
               ? 'Agents keep taking turns until you stop the room.'
-              : 'Each human message starts an ordered pass; agent @mentions can keep the room going until no follow-ups remain.'}
+              : turnTerminationMode === 'consensus'
+                ? 'Triggered agents deliberate privately and only a shared answer is shown when they match.'
+                : 'Each human message starts an ordered pass; agent @mentions can keep the room going until no follow-ups remain.'}
           </Typography>
         </Box>
       </Box>

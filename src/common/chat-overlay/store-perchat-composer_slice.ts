@@ -13,6 +13,9 @@ interface ComposerOverlayState {
   // text requested externally for the composer (e.g. clicking an @mention in the chat)
   composerDraftText: string;
 
+  // whether hidden consensus deliberation messages are shown in the transcript
+  showConsensusDeliberation: boolean;
+
 }
 
 export interface ComposerOverlayStore extends ComposerOverlayState {
@@ -24,6 +27,9 @@ export interface ComposerOverlayStore extends ComposerOverlayState {
   setComposerDraftText: (text: string) => void;
   appendComposerDraftText: (text: string) => void;
   clearComposerDraftText: () => void;
+
+  setShowConsensusDeliberation: (show: boolean) => void;
+  toggleShowConsensusDeliberation: () => void;
 
 }
 
@@ -40,6 +46,7 @@ export const createComposerOverlayStoreSlice: StateCreator<ComposerOverlayStore,
   // init state
   inReferenceTo: [],
   composerDraftText: '',
+  showConsensusDeliberation: false,
 
   // actions
   addInReferenceTo: (item) => _set(state => ({
@@ -63,5 +70,11 @@ export const createComposerOverlayStoreSlice: StateCreator<ComposerOverlayStore,
   })),
 
   clearComposerDraftText: () => _set({ composerDraftText: '' }),
+
+  setShowConsensusDeliberation: (show) => _set({ showConsensusDeliberation: show }),
+
+  toggleShowConsensusDeliberation: () => _set(state => ({
+    showConsensusDeliberation: !state.showConsensusDeliberation,
+  })),
 
 });

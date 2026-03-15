@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, List } from '@mui/joy';
+import { Box, Button, List } from '@mui/joy';
 
 import type { SystemPurposeExample } from '../../../data';
 
@@ -73,9 +73,11 @@ export function ChatMessageList(props: {
     };
   }));
   const participants = getConversationParticipants(props.conversationId);
-  const { _composerInReferenceToCount, ephemerals } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
+  const { _composerInReferenceToCount, ephemerals, showConsensusDeliberation, toggleShowConsensusDeliberation } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
+    showConsensusDeliberation: state.showConsensusDeliberation,
+    toggleShowConsensusDeliberation: state.toggleShowConsensusDeliberation,
   })));
 
   // derived state
@@ -320,17 +322,40 @@ export function ChatMessageList(props: {
   // no content: show the persona selector
 
   const filteredMessages = excludeSystemMessages(conversationMessages, showSystemMessages);
+  const visibleMessages = filteredMessages.filter(message => {
+    const consensus = message.metadata?.consensus;
+    if (consensus?.kind === 'result')
+      return false;
+    if (consensus?.kind === 'deliberation')
+      return showConsensusDeliberation;
+    return true;
+  });
 
 
-  if (!filteredMessages.length)
+  if (!visibleMessages.length)
     return (
       <Box sx={{ ...props.sx }}>
         <PersonaSelector conversationId={conversationId} isMobile={props.isMobile} runExample={handleRunExample} />
       </Box>
     );
 
+  const hasConsensusDeliberation = filteredMessages.some(message => message.metadata?.consensus?.kind === 'deliberation');
+
   return (
     <List role='chat-messages-list' sx={listSx} onCopy={clipboardInterceptCtrlCForCleanup}>
+
+      {hasConsensusDeliberation && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px: 2, pt: 1, pb: 0.5 }}>
+          <Button
+            size='sm'
+            variant={showConsensusDeliberation ? 'solid' : 'soft'}
+            color='neutral'
+            onClick={toggleShowConsensusDeliberation}
+          >
+            {showConsensusDeliberation ? 'Hide deliberation' : 'Show deliberation'}
+          </Button>
+        </Box>
+      )}
 
       {props.isMessageSelectionMode && (
         <MessagesSelectionHeader
@@ -344,7 +369,7 @@ export function ChatMessageList(props: {
         />
       )}
 
-      {filteredMessages.map((message, idx) => {
+      {visibleMessages.map((message, idx) => {
 
           // Optimization: only memo complete components, or we'd be memoizing garbage
           const ChatMessageMemoOrNot = !message.pendingIncomplete ? ChatMessageMemo : ChatMessage;
@@ -367,7 +392,7 @@ export function ChatMessageList(props: {
               fitScreen={props.fitScreen}
               hasInReferenceTo={composerHasInReferenceto}
               isMobile={props.isMobile}
-              isBottom={idx === filteredMessages.length - 1}
+              isBottom={idx === visibleMessages.length - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
               showAntPromptCaching={props.chatLLMAntPromptCaching}

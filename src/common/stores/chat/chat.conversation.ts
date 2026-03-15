@@ -9,7 +9,7 @@ import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 /// Conversation
 
 export type DConversationParticipantSpeakWhen = 'every-turn' | 'when-mentioned';
-export type DConversationTurnTerminationMode = 'round-robin-per-human' | 'continuous';
+export type DConversationTurnTerminationMode = 'round-robin-per-human' | 'continuous' | 'consensus';
 
 export interface DConversationParticipant {
   id: string;

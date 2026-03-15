@@ -156,7 +156,11 @@ export function Composer(props: {
     return {
       assistantAbortible: conversation ? !!conversation._abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
-      turnTerminationMode: conversation?.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
+      turnTerminationMode: conversation?.turnTerminationMode === 'continuous'
+        ? 'continuous'
+        : conversation?.turnTerminationMode === 'consensus'
+          ? 'consensus'
+          : 'round-robin-per-human',
       tokenCount: conversation ? conversation.tokenCount : 0,
       abortConversationTemp: state.abortConversationTemp,
     };
@@ -740,17 +744,29 @@ export function Composer(props: {
   const sendButtonLabel = isText && assistantParticipants.length > 1
     ? turnTerminationMode === 'continuous'
       ? 'Start loop'
-      : 'Send to room'
+      : turnTerminationMode === 'consensus'
+        ? 'Seek consensus'
+        : 'Send to room'
     : chatExecuteModeSendLabel;
   const showQueueSendAction = isText && assistantAbortible;
   const primarySendButtonLabel = showQueueSendAction ? 'Queue message' : sendButtonLabel;
   const turnModeChip = isText && assistantParticipants.length > 1
     ? {
-      color: turnTerminationMode === 'continuous' ? 'warning' as const : 'neutral' as const,
-      label: turnTerminationMode === 'continuous' ? 'Continuous agents' : 'Human-led with mention follow-ups',
+      color: turnTerminationMode === 'continuous'
+        ? 'warning' as const
+        : turnTerminationMode === 'consensus'
+          ? 'primary' as const
+          : 'neutral' as const,
+      label: turnTerminationMode === 'continuous'
+        ? 'Continuous agents'
+        : turnTerminationMode === 'consensus'
+          ? 'Consensus agents'
+          : 'Human-led with mention follow-ups',
       helper: turnTerminationMode === 'continuous'
         ? 'Agents will keep taking turns until you stop them.'
-        : 'A human message starts an ordered pass; agent @mentions can extend the room until no follow-ups remain.',
+        : turnTerminationMode === 'consensus'
+          ? 'Triggered agents must converge on the same reply before anything is shown.'
+          : 'A human message starts an ordered pass; agent @mentions can extend the room until no follow-ups remain.',
     }
     : null;
 
