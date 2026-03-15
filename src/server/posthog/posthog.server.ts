@@ -1,5 +1,6 @@
 /**
  * PostHog server-side client for error tracking
+ * Replaced with posthog.client-mock.ts on client builds via webpack.
  */
 // [client-side] throw immediately if imported
 if (typeof window !== 'undefined')

@@ -18,7 +18,7 @@ import { reactQueryClientSingleton } from '../app.queryclient';
 
 
 // configuration
-const VERCEL_WORKAROUND_MAIN_1MB_PAYLOAD_LIMIT = true;
+const VERCEL_WORKAROUND_EDGE_1MB_PAYLOAD_LIMIT = true;
 
 
 const enableLoggerLink = (opts: any) => {
@@ -27,9 +27,9 @@ const enableLoggerLink = (opts: any) => {
 };
 
 
-/// Main APIs: async, query, and stream
+/// Edge APIs: async, query, and stream
 
-/** Typesafe async/await hooks for the main tRPC API */
+/** Typesafe async/await hooks for the the Edge-Runtime API */
 export const apiAsync = createTRPCClient<AppRouterEdge>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
@@ -40,7 +40,7 @@ export const apiAsync = createTRPCClient<AppRouterEdge>({
   ],
 });
 
-/** Typesafe React Query hooks for the main tRPC API */
+/** Typesafe React Query hooks for the tRPC Edge-Runtime API */
 export const apiQuery = createTRPCNext<AppRouterEdge>({
   config() {
     return {
@@ -91,7 +91,7 @@ export const apiStream = createTRPCClient<AppRouterEdge>({
        * limit on Vercel, we need to limit the number of items in the stream to 1, to err on the side of
        * safety.
        */
-      ...(VERCEL_WORKAROUND_MAIN_1MB_PAYLOAD_LIMIT && { maxItems: 1 }),
+      ...(VERCEL_WORKAROUND_EDGE_1MB_PAYLOAD_LIMIT && { maxItems: 1 }),
     }),
   ],
 });

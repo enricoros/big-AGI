@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import type { WebpackConfigContext } from 'next/dist/server/config-shared';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
@@ -46,6 +47,51 @@ let nextConfig: NextConfig = {
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
   // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
   serverExternalPackages: ['puppeteer-core'],
+
+  webpack: (config: any, { isServer, webpack /*, dev, nextRuntime*/ }: WebpackConfigContext) => {
+    // @mui/joy: anything material gets redirected to Joy
+    config.resolve.alias['@mui/material'] = '@mui/joy';
+
+    // @dqbd/tiktoken: enable asynchronous WebAssembly
+    config.experiments = {
+      asyncWebAssembly: true,
+      layers: true,
+    };
+
+    // client-side bundling
+    if (!isServer) {
+      /**
+       * AIX client-side
+       * We replace certain server-only modules with client-side mocks, to reuse the exact same imports
+       * while avoiding importing server-only code which would break the build or break at runtime.
+       */
+      const serverToClientMocks: ReadonlyArray<[RegExp, string]> = [
+        [/\/posthog\.server/, '/posthog.client-mock'],
+        [/\/env\.server/, '/env.client-mock'],
+      ];
+      config.plugins = [
+        ...config.plugins,
+        ...serverToClientMocks.map(([pattern, replacement]) =>
+          new webpack.NormalModuleReplacementPlugin(pattern, (resource: any) => {
+            // console.log(' 🧠 [WEBPACK REPLACEMENT]:', resource.request, '->', resource.request.replace(pattern, replacement));
+            resource.request = resource.request.replace(pattern, replacement);
+          }),
+        ),
+      ];
+
+      // cosmetic: fix warnings for (absent!) top-level awaits in the browser (https://github.com/vercel/next.js/issues/64792)
+      config.output.environment = { ...config.output.environment, asyncFunction: true };
+    }
+
+    // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
+    // noinspection JSUnresolvedReference
+    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize) {
+      // noinspection JSUnresolvedReference
+      config.optimization.splitChunks.minSize = 40 * 1024;
+    }
+
+    return config;
+  },
 
   // Optional Analytics > PostHog
   skipTrailingSlashRedirect: true, // required to support PostHog trailing slash API requests
