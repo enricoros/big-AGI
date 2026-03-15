@@ -38,6 +38,7 @@ export function ChatBarChat(props: {
     name: string;
     personaId: SystemPurposeId | null;
     llmId: string | null;
+    customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
   }>>({});
 
@@ -145,6 +146,7 @@ export function ChatBarChat(props: {
     name: string;
     personaId: SystemPurposeId | null;
     llmId: string | null;
+    customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
   }>) => {
     const participant = participants.find(participant => participant.id === participantId);
@@ -157,6 +159,7 @@ export function ChatBarChat(props: {
         name: current[participantId]?.name ?? participant.name,
         personaId: current[participantId]?.personaId ?? participant.personaId ?? null,
         llmId: current[participantId]?.llmId ?? participant.llmId ?? null,
+        customPrompt: current[participantId]?.customPrompt ?? participant.customPrompt ?? '',
         speakWhen: current[participantId]?.speakWhen ?? participant.speakWhen ?? 'every-turn',
         ...update,
       },
@@ -173,6 +176,7 @@ export function ChatBarChat(props: {
     const hasChanges = nextName !== participant.name
       || (draft.personaId ?? null) !== (participant.personaId ?? null)
       || (draft.llmId ?? null) !== (participant.llmId ?? null)
+      || (draft.customPrompt.trim() || '') !== (participant.customPrompt ?? '')
       || (draft.speakWhen ?? 'every-turn') !== (participant.speakWhen ?? 'every-turn');
 
     if (hasChanges)
@@ -180,6 +184,7 @@ export function ChatBarChat(props: {
         name: nextName,
         personaId: draft.personaId ?? null,
         llmId: draft.llmId ?? null,
+        customPrompt: draft.customPrompt.trim() || undefined,
         speakWhen: draft.speakWhen ?? 'every-turn',
       });
 
@@ -288,6 +293,9 @@ export function ChatBarChat(props: {
           const aliasDraft = participantDraft?.name ?? participant.name;
           const personaDraftValue = participantDraft?.personaId ?? participant.personaId ?? null;
           const llmDraftValue = participantDraft?.llmId ?? participant.llmId ?? '';
+          const customPromptDraft = participantDraft?.customPrompt ?? participant.customPrompt ?? '';
+          const isCustomPersonaSelected = personaDraftValue === 'Custom';
+          const hasCustomPrompt = isCustomPersonaSelected && !!customPromptDraft.trim();
           const speakWhenDraftValue = participantDraft?.speakWhen ?? participant.speakWhen ?? 'every-turn';
           return (
             <Box
@@ -324,6 +332,7 @@ export function ChatBarChat(props: {
                       <Chip size='sm' variant='soft' color={participantStatus?.isNextToSpeak ? 'primary' : participantStatus?.spokeThisTurn ? 'success' : 'neutral'}>
                         {participantStatus?.isNextToSpeak ? 'Next' : participantStatus?.spokeThisTurn ? 'Done' : summaryLabel}
                       </Chip>
+                      {hasCustomPrompt && <Chip size='sm' variant='soft' color='warning'>Custom prompt</Chip>}
                       {participantStatus?.spokeLast && <Chip size='sm' variant='soft'>Latest</Chip>}
                       {participantStatus?.wasMentioned && <Chip size='sm' variant='soft' color='primary'>@mentioned</Chip>}
                     </Stack>
@@ -395,6 +404,14 @@ export function ChatBarChat(props: {
                       <Option value='when-mentioned'>Only @mentioned</Option>
                     </Select>
                   </Box>
+
+                  {isCustomPersonaSelected && <Input
+                    size='sm'
+                    value={customPromptDraft}
+                    onChange={(event) => handleParticipantDraftChange(participant.id, { customPrompt: event.target.value })}
+                    onBlur={() => handleParticipantDraftCommit(participant.id)}
+                    placeholder='Optional custom prompt/persona instructions'
+                  />}
 
                   <Stack direction='row' spacing={0.5} sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Stack direction='row' spacing={0.25}>

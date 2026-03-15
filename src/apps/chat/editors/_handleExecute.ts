@@ -57,7 +57,7 @@ function buildMultiAgentCoordinationMessage(participants: DConversationParticipa
 function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage[] {
   const participantHistory = [...sourceHistory];
   participantHistory.unshift(buildMultiAgentCoordinationMessage(participants, activeParticipant));
-  ConversationHandler.inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId);
+  ConversationHandler.inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
   ConversationHandler.inlineUpdateAutoPromptCaching(participantHistory);
   return participantHistory;
 }

@@ -51,7 +51,7 @@ export class ConversationHandler {
 
   // Conversation Management
 
-  static inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined, purposeId: SystemPurposeId | null): void {
+  static inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined, purposeId: SystemPurposeId | null, customPrompt?: string | null): void {
     // TODO: HACK: find the persona identiy separately from the "first system message"
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
 
@@ -59,11 +59,15 @@ export class ConversationHandler {
       ? history.splice(systemMessageIndex, 1)[0]
       : createDMessageEmpty('system'); // [chat] new system:'' (non updated)
 
+    const extraInstruction = customPrompt?.trim() || '';
+
     // TODO: move this to a proper persona identity management
     // Update the system message with the current persona's message, if formerly unset
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
-      const systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
+      let systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
+      if (extraInstruction)
+        systemMessageText = `${systemMessageText.trim()}\n\nAdditional agent instructions:\n${extraInstruction}`;
       systemMessage.fragments = [createTextContentFragment(systemMessageText)];
 
       // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)

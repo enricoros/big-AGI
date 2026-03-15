@@ -50,6 +50,9 @@ export namespace V4ToHeadConverters {
             name: typeof participant.name === 'string' && participant.name ? participant.name : (participant.kind === 'human' ? 'You' : (participant.personaId || c.systemPurposeId)),
             personaId: participant.kind === 'assistant' ? (participant.personaId || c.systemPurposeId) : null,
             llmId: participant.llmId ?? null,
+            ...(participant.kind === 'assistant' && typeof participant.customPrompt === 'string' && participant.customPrompt.trim() ? {
+              customPrompt: participant.customPrompt,
+            } : {}),
             ...(participant.kind === 'assistant' ? {
               speakWhen: participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn',
             } : {}),

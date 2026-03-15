@@ -16,6 +16,7 @@ export interface DConversationParticipant {
   name: string;
   personaId: SystemPurposeId | null;
   llmId: DLLMId | null;
+  customPrompt?: string;
   speakWhen?: DConversationParticipantSpeakWhen;
 }
 
