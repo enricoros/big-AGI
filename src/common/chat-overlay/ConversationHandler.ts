@@ -2,6 +2,7 @@ import type { StoreApi } from 'zustand';
 
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
+import type { SystemPurposeId } from '../../data';
 import { SystemPurposes } from '../../data';
 
 import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
@@ -50,8 +51,7 @@ export class ConversationHandler {
 
   // Conversation Management
 
-  static inlineUpdatePurposeInHistory(conversationId: DConversationId, history: DMessage[], assistantLlmId: DLLMId | undefined): void {
-    const purposeId = getConversationSystemPurposeId(conversationId);
+  static inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined, purposeId: SystemPurposeId | null): void {
     // TODO: HACK: find the persona identiy separately from the "first system message"
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
 

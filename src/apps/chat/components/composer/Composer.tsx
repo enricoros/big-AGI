@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, Textarea, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Chip, Grid, IconButton, Option, Select, Textarea, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
@@ -24,17 +24,18 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageId, DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { DConversationId, DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
-import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getModelParameterValueWithFallback } from '~/common/stores/llms/llms.parameters';
+import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -50,6 +51,7 @@ import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 import type { ActileItem } from './actile/ActileProvider';
 import { providerAttachmentLabels } from './actile/providerAttachmentLabels';
 import { providerCommands } from './actile/providerCommands';
+import { providerMentions } from './actile/providerMentions';
 import { providerStarredMessages, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
@@ -103,6 +105,7 @@ export function Composer(props: {
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement | null>;
   targetConversationId: DConversationId | null;
+  participants?: DConversationParticipant[];
   capabilityHasT2I: boolean;
   capabilityHasT2IEdit: boolean;
   isMulticast: boolean | null;
@@ -153,6 +156,7 @@ export function Composer(props: {
       abortConversationTemp: state.abortConversationTemp,
     };
   }));
+  const { llms: visibleLLMs } = useVisibleLLMs(props.chatLLM?.id ?? null, false, true);
 
   // external overlay state (extra conversationId-dependent state)
   const conversationOverlayStore = props.targetConversationId
@@ -208,6 +212,19 @@ export function Composer(props: {
   // derived state
 
   const { composerTextAreaRef, targetConversationId, onAction, onTextImagine } = props;
+  const assistantParticipants = React.useMemo(() => (props.participants ?? []).filter(participant => participant.kind === 'assistant'), [props.participants]);
+  const mentionOnlyParticipants = React.useMemo(() => assistantParticipants.filter(participant => participant.speakWhen === 'when-mentioned' && !!participant.name?.trim()), [assistantParticipants]);
+  const mentionedParticipants = React.useMemo(() => {
+    const currentText = composeText.trim();
+    if (!currentText)
+      return [] as DConversationParticipant[];
+
+    return mentionOnlyParticipants.filter(participant => {
+      const participantName = participant.name.trim();
+      const escapedName = participantName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(^|[^\\w])@${escapedName}(?=$|[^\\w])`, 'i').test(currentText);
+    });
+  }, [composeText, mentionOnlyParticipants]);
   const isMobile = props.isMobile;
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
@@ -216,6 +233,7 @@ export function Composer(props: {
 
   const micIsRunning = !!speechInterimResult;
   // more mic way below, as we use complex hooks
+
 
 
   // tokens derived state
@@ -500,6 +518,24 @@ export function Composer(props: {
     }
   }, [composerTextAreaRef, setComposeText]);
 
+  const onActileMentionPaste = React.useCallback(({ label }: ActileItem, searchPrefix: string) => {
+    if (composerTextAreaRef.current) {
+      const textArea = composerTextAreaRef.current;
+      const currentText = textArea.value;
+      const cursorPos = textArea.selectionStart;
+      const textUntilCursor = currentText.slice(0, cursorPos);
+      const mentionMatch = textUntilCursor.match(/(^|\s)@[\w-]*$/i);
+      if (!mentionMatch)
+        return;
+
+      const mentionStart = cursorPos - mentionMatch[0].length + (mentionMatch[0].startsWith(' ') ? 1 : 0);
+      setComposeText((prevText) => prevText.substring(0, mentionStart) + label + ' ' + prevText.substring(cursorPos));
+
+      const newCursorPos = mentionStart + label.length + 1;
+      setTimeout(() => composerTextAreaRef.current?.setSelectionRange(newCursorPos, newCursorPos), 0);
+    }
+  }, [composerTextAreaRef, setComposeText]);
+
   const onActileEmbedMessage = React.useCallback(async ({ conversationId, messageId }: StarredMessageItem) => {
     // get the message
     const cHandler = ConversationsManager.getHandler(conversationId);
@@ -519,8 +555,9 @@ export function Composer(props: {
   const actileProviders = React.useMemo(() => [
     providerAttachmentLabels(conversationOverlayStore, onActileCommandPaste),
     providerCommands(onActileCommandPaste),
+    providerMentions(assistantParticipants, onActileMentionPaste),
     providerStarredMessages(onActileEmbedMessage),
-  ], [conversationOverlayStore, onActileCommandPaste, onActileEmbedMessage]);
+  ], [assistantParticipants, conversationOverlayStore, onActileCommandPaste, onActileEmbedMessage, onActileMentionPaste]);
 
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, composerTextAreaRef);
 
@@ -690,16 +727,17 @@ export function Composer(props: {
   }, [props.capabilityHasT2I]);
 
   let textPlaceholder: string =
-    isDraw ? 'Describe what you would like to see...'
+    (isDraw ? 'Describe what you would like to see...'
       : isReAct ? 'Ask a multi-step reasoning question...'
         : isTextBeam ? 'Combine insights from multiple AI models...'
           : showChatInReferenceTo ? 'Chat about this...'
-            : 'Type'
-            + (props.isDeveloperMode ? ' · attach code' : '')
-            + (isDesktop ? ` · drop ${props.isDeveloperMode ? 'source' : 'files'}` : '')
-            + ` · ${placeholderAction}`
-            + (recognitionState.isAvailable ? ' · ramble' : '')
-            + '...';
+            : mentionOnlyParticipants.length
+              ? `Message the room… Mention ${mentionOnlyParticipants.slice(0, 2).map(participant => `@${participant.name.trim()}`).join(' or ')} to trigger mention-only agents.`
+              : 'Message the room')
+    + (isDesktop ? ` · drop ${props.isDeveloperMode ? 'source' : 'files'}` : '')
+    + ` · ${placeholderAction}`
+    + (recognitionState.isAvailable ? ' · ramble' : '')
+    + '...';
 
   if (isDesktop && timeToShowTips && !isDraw) {
     if (explainShiftEnter)
@@ -864,6 +902,29 @@ export function Composer(props: {
                   )}
 
                 </Box>
+
+                {mentionOnlyParticipants.length > 0 && !isDraw && !showChatInReferenceTo && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, px: 0.5, pt: 0.5, pb: 0.25 }}>
+                    <Typography level='body-xs' sx={{ color: 'text.tertiary', mr: 0.5 }}>
+                      Mention-only agents:
+                    </Typography>
+                    {mentionOnlyParticipants.map(participant => {
+                      const isMentioned = mentionedParticipants.some(mentioned => mentioned.id === participant.id);
+                      return (
+                        <Chip
+                          key={participant.id}
+                          size='sm'
+                          variant={isMentioned ? 'solid' : 'soft'}
+                          color={isMentioned ? 'primary' : 'neutral'}
+                          onClick={() => setComposeText(current => `${current}${current && !/\s$/.test(current) ? ' ' : ''}@${participant.name} `)}
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          @{participant.name}
+                        </Chip>
+                      );
+                    })}
+                  </Box>
+                )}
 
                 {/* Mic & Mic Continuation Buttons */}
                 {recognitionState.isAvailable && (

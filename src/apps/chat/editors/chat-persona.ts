@@ -2,8 +2,10 @@ import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateConten
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
-import { DConversationId, splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
+import { DConversationId, DConversationParticipant, splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
+import type { SystemPurposeId } from '../../../data';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
@@ -30,11 +32,16 @@ export interface PersonaProcessorInterface {
 export async function runPersonaOnConversationHead(
   assistantLlmId: DLLMId,
   conversationId: DConversationId,
+  systemPurposeId: SystemPurposeId,
+  keepAbortController: boolean = false,
+  sharedAbortController?: AbortController,
+  participant?: DConversationParticipant,
+  sourceHistory?: Readonly<DMessage[]>,
 ): Promise<boolean> {
 
   const cHandler = ConversationsManager.getHandler(conversationId);
 
-  const _history = cHandler.historyViewHeadOrThrow('runPersonaOnConversationHead') as Readonly<DMessage[]>;
+  const _history = sourceHistory ?? cHandler.historyViewHeadOrThrow('runPersonaOnConversationHead') as Readonly<DMessage[]>;
   if (_history.length === 0)
     return false;
 
@@ -46,8 +53,16 @@ export async function runPersonaOnConversationHead(
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     CHATGENERATE_RESPONSE_PLACEHOLDER,
     {
-      purposeId: chatSystemInstruction?.purposeId,
+      purposeId: systemPurposeId,
       generator: { mgt: 'named', name: assistantLlmId },
+      metadata: {
+        author: {
+          participantId: participant?.id || `${systemPurposeId}::${assistantLlmId}`,
+          participantName: participant?.name || systemPurposeId,
+          personaId: participant?.personaId ?? systemPurposeId,
+          llmId: participant?.llmId ?? assistantLlmId,
+        },
+      },
       ...(isNotifyEnabled ? { userFlags: [MESSAGE_FLAG_NOTIFY_COMPLETE] } : {}),
     },
   );
@@ -61,8 +76,9 @@ export async function runPersonaOnConversationHead(
   const autoSpeaker: PersonaProcessorInterface | null = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;
 
   // when an abort controller is set, the UI switches to the "stop" mode
-  const abortController = new AbortController();
-  cHandler.setAbortController(abortController, 'chat-persona');
+  const abortController = sharedAbortController ?? new AbortController();
+  if (!keepAbortController)
+    cHandler.setAbortController(abortController, 'chat-persona');
 
   // stream the assistant's messages directly to the state store
   const messageStatus = await aixChatGenerateContent_DMessage_FromConversation(
@@ -80,6 +96,13 @@ export async function runPersonaOnConversationHead(
 
       // deep copy the object to avoid partial updates
       let deepCopy = structuredClone(messageOverwrite);
+
+      const firstTextFragment = deepCopy.fragments?.find(isTextContentFragment);
+      if (participant?.name && firstTextFragment?.part.text.startsWith('[')) {
+        const escapedName = participant.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const visibleSpeakerPrefix = new RegExp(`^\\[${escapedName}(?:\\s·[^\\]]+)?\\]\\s*\\n?`, 'i');
+        firstTextFragment.part.text = firstTextFragment.part.text.replace(visibleSpeakerPrefix, '');
+      }
 
       // [Cosmetic Logic] if the content hasn't come yet, don't replace the fragments to still show the placeholder
       if (!messageComplete && deepCopy.pendingIncomplete && deepCopy.fragments?.length === 0)
@@ -119,7 +142,8 @@ export async function runPersonaOnConversationHead(
 
   // clear to send, again
   // FIXME: race condition? (for sure!)
-  cHandler.clearAbortController('chat-persona');
+  if (!keepAbortController)
+    cHandler.clearAbortController('chat-persona');
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set

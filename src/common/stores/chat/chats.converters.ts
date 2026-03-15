@@ -8,7 +8,7 @@ import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 
-import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
+import { createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
 import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isPlaceholderPart, isTextContentFragment, isVoidFragment } from './chat.fragments';
 
@@ -35,6 +35,37 @@ export namespace V4ToHeadConverters {
 
     for (const message of c.messages)
       inMemHeadCleanDMessage(message, validLiveFileIDs);
+
+    const rawParticipants = Array.isArray(c.participants) ? c.participants as any[] : [];
+    const upgradedParticipants = rawParticipants
+      .map(participant => {
+        if (!participant)
+          return null;
+        if (participant.kind === 'human' || participant.kind === 'assistant')
+          return {
+            ...participant,
+            id: typeof participant.id === 'string' ? participant.id : (participant.kind === 'human'
+              ? createHumanConversationParticipant(typeof participant.name === 'string' ? participant.name : 'You').id
+              : createAssistantConversationParticipant(participant.personaId || c.systemPurposeId, participant.llmId ?? null, typeof participant.name === 'string' ? participant.name : (participant.personaId || c.systemPurposeId)).id),
+            name: typeof participant.name === 'string' && participant.name ? participant.name : (participant.kind === 'human' ? 'You' : (participant.personaId || c.systemPurposeId)),
+            personaId: participant.kind === 'assistant' ? (participant.personaId || c.systemPurposeId) : null,
+            llmId: participant.llmId ?? null,
+            ...(participant.kind === 'assistant' ? {
+              speakWhen: participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn',
+            } : {}),
+          };
+        if (participant.personaId)
+          return createAssistantConversationParticipant(participant.personaId, participant.llmId ?? null);
+        return null;
+      })
+      .filter(Boolean);
+
+    const humanParticipant = upgradedParticipants.find(participant => participant.kind === 'human') ?? createHumanConversationParticipant(c.userSymbol || 'You');
+    const assistantParticipants = upgradedParticipants.filter(participant => participant.kind === 'assistant');
+    if (!assistantParticipants.length)
+      assistantParticipants.push(createAssistantConversationParticipant(c.systemPurposeId));
+
+    c.participants = [humanParticipant, ...assistantParticipants];
   }
 
 

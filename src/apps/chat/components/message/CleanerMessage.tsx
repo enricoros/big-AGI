@@ -210,8 +210,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
-    return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false, false);
-  }, [isUserMessageSkipped, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole]);
+    return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, props.message.metadata?.author, !!messagePendingIncomplete, isUserMessageSkipped, false, false);
+  }, [isUserMessageSkipped, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole, props.message.metadata?.author]);
 
   const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) =>
     props.onToggleSelected && props.onToggleSelected(messageId, event.target.checked);

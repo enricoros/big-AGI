@@ -3,7 +3,7 @@ import type { FunctionComponent } from 'react';
 export interface ActileProvider<TItem extends ActileItem = ActileItem> {
 
   // Unique key for the provider
-  readonly key: 'pcmd' | 'pstrmsg' | 'pattlbl';
+  readonly key: 'pcmd' | 'pstrmsg' | 'pattlbl' | 'pmention';
 
   // Label for display
   get label(): string;

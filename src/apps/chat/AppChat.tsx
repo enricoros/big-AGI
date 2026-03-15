@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
+
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import type { SxProps } from '@mui/joy/styles/types';
@@ -26,10 +28,11 @@ import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/u
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
+import type { SystemPurposeId } from '../../data';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationParticipants, getConversationSystemPurposeId, useChatStore, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
@@ -266,12 +269,24 @@ export function AppChat() {
 
     // we loop to handle both the normal and multicast modes
     for (const conversation of uniqueConverations) {
+      const conversationParticipants = getConversationParticipants(conversation.id);
+      const humanParticipant = conversationParticipants.find(participant => participant.kind === 'human') ?? null;
 
       // create the user:message
       // NOTE: this can lead to multiple chat messages with data refs that are referring to the same dblobs,
       //       however, we already got transferred ownership of the dblobs at this point.
       const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(fragments, true)); // [chat] create user:message to send per-chat
-      if (metadata) userMessage.metadata = duplicateDMessageMetadata(metadata);
+      userMessage.metadata = duplicateDMessageMetadata({
+        ...(metadata ? duplicateDMessageMetadata(metadata) : {}),
+        ...(humanParticipant ? {
+          author: {
+            participantId: humanParticipant.id,
+            participantName: humanParticipant.name,
+            personaId: null,
+            llmId: null,
+          },
+        } : {}),
+      });
 
       ConversationsManager.getHandler(conversation.id).messageAppend(userMessage); // [chat] append user message in each conversation
 
@@ -754,9 +769,10 @@ export function AppChat() {
           chatLLM={chatLLM}
           composerTextAreaRef={composerTextAreaRef}
           targetConversationId={focusedPaneConversationId}
+          participants={getConversation(focusedPaneConversationId)?.participants ?? []}
           capabilityHasT2I={capabilityHasT2I}
           capabilityHasT2IEdit={capabilityHasT2IEdit}
-          isMulticast={!isMultiConversationId ? null : isComposerMulticast}
+          isMulticast={isMultiConversationId ? isComposerMulticast : null}
           isDeveloperMode={isFocusedChatDeveloper}
           onAction={handleComposerAction}
           onConversationBeamEdit={handleMessageBeamLastInFocusedPane}

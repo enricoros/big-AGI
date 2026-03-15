@@ -16,7 +16,7 @@ import { workspaceForConversationIdentity } from '~/common/stores/workspace/work
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
-import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
+import { conversationTitle, createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant, DConversation, DConversationId, DConversationParticipant, DConversationParticipantSpeakWhen, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 
@@ -51,6 +51,7 @@ export interface ChatActions {
   replaceMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
+  setParticipants: (cId: DConversationId, participants: DConversationParticipant[]) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
@@ -411,10 +412,47 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       },
 
       setSystemPurposeId: (conversationId: DConversationId, personaId: SystemPurposeId) =>
-        _get()._editConversation(conversationId,
-          {
+        _get()._editConversation(conversationId, conversation => {
+          const currentParticipants = conversation.participants?.length
+            ? conversation.participants.map(participant => ({ ...participant }))
+            : [
+              createHumanConversationParticipant(conversation.userSymbol || 'You'),
+              createAssistantConversationParticipant(conversation.systemPurposeId),
+            ];
+
+          const primaryAssistantIndex = currentParticipants.findIndex(participant => participant.kind === 'assistant');
+          if (primaryAssistantIndex >= 0)
+            currentParticipants[primaryAssistantIndex] = {
+              ...currentParticipants[primaryAssistantIndex],
+              personaId,
+              name: personaId,
+            };
+          else
+            currentParticipants.push(createAssistantConversationParticipant(personaId));
+
+          return {
             systemPurposeId: personaId,
-          }),
+            participants: currentParticipants,
+          };
+        }),
+
+      setParticipants: (conversationId: DConversationId, participants: DConversationParticipant[]) =>
+        _get()._editConversation(conversationId, conversation => {
+          const nextParticipants = participants.length
+            ? participants.map(participant => ({ ...participant }))
+            : [
+              createHumanConversationParticipant(conversation.userSymbol || 'You'),
+              createAssistantConversationParticipant(conversation.systemPurposeId),
+            ];
+
+          const primaryAssistant = nextParticipants.find(participant => participant.kind === 'assistant' && !!participant.personaId)
+            ?? createAssistantConversationParticipant(conversation.systemPurposeId);
+
+          return {
+            participants: nextParticipants,
+            systemPurposeId: primaryAssistant.personaId ?? conversation.systemPurposeId,
+          };
+        }),
 
       setAutoTitle: (conversationId: DConversationId, autoTitle: string) =>
         _get()._editConversation(conversationId,
@@ -583,6 +621,31 @@ export function getConversation(conversationId: DConversationId | null): DConver
 
 export function getConversationSystemPurposeId(conversationId: DConversationId | null): SystemPurposeId | null {
   return getConversation(conversationId)?.systemPurposeId || null;
+}
+
+export function getConversationParticipants(conversationId: DConversationId | null): DConversationParticipant[] {
+  const conversation = getConversation(conversationId);
+  if (!conversation) return [];
+
+  const participants = conversation.participants?.length
+    ? conversation.participants
+    : [
+      createHumanConversationParticipant(conversation.userSymbol || 'You'),
+      createAssistantConversationParticipant(conversation.systemPurposeId),
+    ];
+
+  return participants
+    .map((participant): DConversationParticipant => ({
+      ...participant,
+      ...(participant.kind === 'assistant' ? {
+        speakWhen: (participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn') as DConversationParticipantSpeakWhen,
+      } : {}),
+    }))
+    .sort((a, b) => {
+      if (a.kind !== b.kind)
+        return a.kind === 'human' ? -1 : 1;
+      return 0;
+    });
 }
 
 

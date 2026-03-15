@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, Chip, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -31,6 +31,8 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
+
+import { SystemPurposes } from '../../../../data';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
@@ -209,6 +211,10 @@ export function ChatMessage(props: {
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
   const messageHasBeenEdited = !!messageUpdated;
+  const messageAuthorName = messageMetadata?.author?.participantName?.trim() || null;
+  const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
+  const messageAuthorPersonaTitle = messageAuthorPersonaId ? SystemPurposes[messageAuthorPersonaId]?.title ?? messageAuthorPersonaId : null;
+  const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
 
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
@@ -672,8 +678,8 @@ export function ChatMessage(props: {
   const showAvatarIcon = !props.hideAvatar && !zenMode;
   const messageGeneratorName = messageGenerator?.name;
   const messageAvatarIcon = React.useMemo(
-    () => !showAvatarIcon ? null : makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, isUserNotifyComplete, true),
-    [isUserMessageSkipped, isUserNotifyComplete, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
+    () => !showAvatarIcon ? null : makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, messageMetadata?.author, !!messagePendingIncomplete, isUserMessageSkipped, isUserNotifyComplete, true),
+    [isUserMessageSkipped, isUserNotifyComplete, messageGeneratorName, messageMetadata?.author, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
   );
 
   const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
@@ -759,6 +765,25 @@ export function ChatMessage(props: {
 
         {/* V-Fragments: Image Attachments | Content | Doc Attachments */}
         <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={fragmentsListSx}>
+
+          {/* Assistant author identity */}
+          {fromAssistant && !!messageAuthorName && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mx: 0.5, mb: -0.5 }}>
+              <Chip size='sm' variant='soft' color='primary'>
+                {messageAuthorName}
+              </Chip>
+              {messageAuthorPersonaTitle && (
+                <Typography level='body-xs' sx={{ color: 'text.secondary' }}>
+                  {messageAuthorPersonaTitle}
+                </Typography>
+              )}
+              {messageAuthorLlmId && (
+                <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
+                  {messageAuthorLlmId}
+                </Typography>
+              )}
+            </Box>
+          )}
 
           {/* (optional) Message date */}
           {(props.showBlocksDate === true && !!(messageUpdated || messageCreated)) && (

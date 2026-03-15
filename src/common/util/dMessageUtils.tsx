@@ -14,7 +14,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 import { llmsGetVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 
 import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
-import type { DMessage, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageAuthor, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
 import type { UIComplexityMode } from '~/common/app.theme';
 import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -102,6 +102,7 @@ export function makeMessageAvatarIcon(
   messageRole: DMessageRole | string,
   messageGeneratorName: string | undefined,
   messagePurposeId: SystemPurposeId | string | undefined,
+  messageAuthor: DMessageAuthor | undefined,
   messageIncomplete: boolean,
   messageFlagAixSkip: boolean,
   messageFlaxNotifyComplete: boolean,
@@ -153,7 +154,7 @@ export function makeMessageAvatarIcon(
           />;
 
         // Purpose image (if present)
-        const purposeImage = SystemPurposes[messagePurposeId as SystemPurposeId]?.imageUri ?? undefined;
+        const purposeImage = SystemPurposes[(messageAuthor?.personaId ?? messagePurposeId) as SystemPurposeId]?.imageUri ?? undefined;
         if (purposeImage)
           return <Avatar
             variant='plain'
@@ -175,7 +176,7 @@ export function makeMessageAvatarIcon(
       // if (messageIncomplete)
 
       // purpose symbol (if present)
-      const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
+      const symbol = SystemPurposes[(messageAuthor?.personaId ?? messagePurposeId) as SystemPurposeId]?.symbol;
       if (symbol)
         return <Box sx={{
           fontSize: '24px',
@@ -196,12 +197,12 @@ export function makeMessageAvatarIcon(
 
 /** Message avatar label and tooltip, based on the message generator and state */
 export function useMessageAvatarLabel(
-  messageParts: Pick<DMessage, 'generator' | 'pendingIncomplete' | 'created' | 'updated'> | undefined,
+  messageParts: Pick<DMessage, 'generator' | 'pendingIncomplete' | 'created' | 'updated' | 'metadata'> | undefined,
   complexity: UIComplexityMode,
 ): { label: React.ReactNode; tooltip: React.ReactNode } {
 
   // we do this for performance reasons, to only limit re-renders to these parts of the message
-  const { generator, pendingIncomplete, created, updated } = messageParts || {};
+  const { generator, pendingIncomplete, created, updated, metadata } = messageParts || {};
 
   // OPTIMIZATION - THIS COULD BACKFIRE - THE ICON MAY NOT BE UPDATED AS OFTEN AS WE NEED
   // -> we will only trigger updates on: updated, pendingIncomplete changes, name changes
@@ -221,16 +222,18 @@ export function useMessageAvatarLabel(
     const generator = laggedGeneratorRef.current;
     if (!generator) {
       return {
-        label: 'unk-model',
-        tooltip: null,
+        label: metadata?.author?.participantName || 'unk-model',
+        tooltip: metadata?.author?.participantName || null,
       };
     }
 
     // incomplete: just the name
+    const authorName = metadata?.author?.participantName?.trim() || null;
     const prettyName = prettyShortChatModelName(generatorName);
+    const labelPrefix = authorName && authorName !== prettyName ? `${authorName} · ` : '';
     if (pendingIncomplete)
       return {
-        label: prettyName,
+        label: `${labelPrefix}${prettyName}`,
         tooltip: (!created || complexity === 'minimal') ? null : (
           <Box sx={tooltipSx}>
             <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
@@ -241,8 +244,8 @@ export function useMessageAvatarLabel(
     // named generator: nothing else to do there
     if (generator.mgt === 'named')
       return {
-        label: prettyName,
-        tooltip: prettyName !== generator.name ? generator.name : null,
+        label: `${labelPrefix}${prettyName}`,
+        tooltip: prettyName !== generator.name ? `${authorName ? `${authorName} · ` : ''}${generator.name}` : (authorName || null),
       };
 
     // aix generator: details galore
@@ -254,7 +257,7 @@ export function useMessageAvatarLabel(
 
     // aix tooltip: more details
     return {
-      label: (stopReason && complexity !== 'minimal') ? <>{prettyName} <small>({stopReason})</small></> : prettyName,
+      label: (stopReason && complexity !== 'minimal') ? <>{labelPrefix}{prettyName} <small>({stopReason})</small></> : `${labelPrefix}${prettyName}`,
       tooltip: complexity === 'minimal' ? null : (
         <Box sx={tooltipSx}>
           {VendorIcon ? <Box sx={tooltipIconContainerSx}><VendorIcon />{generator.name}</Box> : <div>{generator.name}</div>}
@@ -266,7 +269,7 @@ export function useMessageAvatarLabel(
         </Box>
       ),
     };
-  }, [complexity, created, generatorName, pendingIncomplete, updated]);
+  }, [complexity, created, generatorName, metadata?.author?.participantName, pendingIncomplete, updated]);
 }
 
 function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode: UIComplexityMode): React.ReactNode {

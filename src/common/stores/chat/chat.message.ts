@@ -5,6 +5,7 @@ import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragm
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { SystemPurposeId } from '../../../data';
 import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 
 
@@ -71,9 +72,23 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 
 // Message > Metadata
 
+export interface DMessageAuthor {
+  participantId: string;
+  participantName?: string;
+  personaId?: SystemPurposeId | null;
+  llmId?: DLLMId | null;
+}
+
 export interface DMessageMetadata {
+  author?: DMessageAuthor;
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
   entangled?: DMessageEntangled; // entangled messages info
+  /**
+   * Per-turn chat routing overrides captured when a user message is sent.
+   * These allow one conversation to mix different models/personas across turns,
+   * while preserving the exact selection for regenerate/replay flows.
+   */
+  routing?: DMessageRouting;
   /**
    * Initially intended recipients of this message.
    * Defaults to `undefined` i.e. the current persona for the active operation (chat, beam, etc).
@@ -81,6 +96,13 @@ export interface DMessageMetadata {
    */
   initialRecipients?: DMessageRecipientPersona[];
   // NOTE: if adding fields, manually update `duplicateDMessageMetadata`
+}
+
+export interface DMessageRouting {
+  llmId?: DLLMId | null;
+  systemPurposeId?: SystemPurposeId | null;
+  llmIds?: (DLLMId | null)[];
+  systemPurposeIds?: SystemPurposeId[];
 }
 
 /** A textual reference to a text snipped, by a certain role. */
@@ -225,11 +247,17 @@ export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean
 export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
   // NOTE: update this function when adding metadata fields
   return {
+    ...(metadata.author ? {
+      author: { ...metadata.author },
+    } : {}),
     ...(metadata.inReferenceTo ? {
       inReferenceTo: metadata.inReferenceTo.map(refItem => ({ ...refItem })),
     } : {}),
     ...(metadata.entangled ? {
       entangled: { ...metadata.entangled },
+    } : {}),
+    ...(metadata.routing ? {
+      routing: { ...metadata.routing },
     } : {}),
     ...(metadata.initialRecipients?.length ? {
       initialRecipients: metadata.initialRecipients.map(recipient => ({ ...recipient })),

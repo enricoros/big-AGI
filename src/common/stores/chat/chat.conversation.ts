@@ -1,11 +1,23 @@
-import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
+import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../../data';
 
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 
 
 /// Conversation
+
+export type DConversationParticipantSpeakWhen = 'every-turn' | 'when-mentioned';
+
+export interface DConversationParticipant {
+  id: string;
+  kind: 'human' | 'assistant';
+  name: string;
+  personaId: SystemPurposeId | null;
+  llmId: DLLMId | null;
+  speakWhen?: DConversationParticipantSpeakWhen;
+}
 
 export interface DConversation {
   id: DConversationId;                // unique identifier for this conversation
@@ -24,7 +36,8 @@ export interface DConversation {
 
   // TODO: [x Head] - this should be the system purpose of current head of the conversation
   // there should be the concept of the audience of the current head
-  systemPurposeId: SystemPurposeId;   // system purpose of this conversation
+  systemPurposeId: SystemPurposeId;   // primary AI participant persona for backward compatibility
+  participants?: DConversationParticipant[]; // persistent AI participant roster, primary participant first
 
   // when updated is null, we don't have messages yet (timestamps as Date.now())
   created: number;                    // creation timestamp
@@ -44,9 +57,106 @@ export interface DConversation {
 }
 
 export type DConversationId = string;
+const AGENT_ALIAS_ADJECTIVES = [
+  'Amber',
+  'Brisk',
+  'Clever',
+  'Delta',
+  'Echo',
+  'Fuzzy',
+  'Golden',
+  'Helix',
+  'Iris',
+  'Jade',
+  'Keen',
+  'Lunar',
+  'Mosaic',
+  'Nova',
+  'Onyx',
+  'Pixel',
+  'Quartz',
+  'Rapid',
+  'Solar',
+  'Turbo',
+  'Ultra',
+  'Velvet',
+  'Wired',
+  'Xeno',
+  'Yonder',
+  'Zen',
+] as const;
+
+const AGENT_ALIAS_NOUNS = [
+  'Arrow',
+  'Beacon',
+  'Circuit',
+  'Drift',
+  'Engine',
+  'Falcon',
+  'Glyph',
+  'Harbor',
+  'Index',
+  'Junction',
+  'Kernel',
+  'Lantern',
+  'Matrix',
+  'Node',
+  'Orbit',
+  'Pulse',
+  'Quill',
+  'Radar',
+  'Signal',
+  'Tensor',
+  'Unit',
+  'Vector',
+  'Wave',
+  'Yield',
+  'Zenith',
+] as const;
 
 
-// helpers - creation
+export function createHumanConversationParticipant(name: string = 'You'): DConversationParticipant {
+  return {
+    id: agiUuid('chat-participant-human'),
+    kind: 'human',
+    name,
+    personaId: null,
+    llmId: null,
+  };
+}
+
+export function createAssistantConversationParticipant(personaId: SystemPurposeId, llmId: DLLMId | null = null, name?: string, speakWhen: DConversationParticipantSpeakWhen = 'every-turn'): DConversationParticipant {
+  return {
+    id: agiUuid('chat-participant-assistant'),
+    kind: 'assistant',
+    name: name || generateAssistantParticipantName(personaId),
+    personaId,
+    llmId,
+    speakWhen,
+  };
+}
+
+export function generateAssistantParticipantName(personaId: SystemPurposeId, existingNames: string[] = []): string {
+  const normalizedExistingNames = new Set(existingNames.map(name => name.trim().toLowerCase()).filter(Boolean));
+  const aliasPoolSize = AGENT_ALIAS_ADJECTIVES.length * AGENT_ALIAS_NOUNS.length;
+
+  for (let attempt = 0; attempt < aliasPoolSize; attempt++) {
+    const adjective = AGENT_ALIAS_ADJECTIVES[Math.floor(Math.random() * AGENT_ALIAS_ADJECTIVES.length)];
+    const noun = AGENT_ALIAS_NOUNS[Math.floor(Math.random() * AGENT_ALIAS_NOUNS.length)];
+    const candidate = `${adjective} ${noun}`;
+    if (!normalizedExistingNames.has(candidate.toLowerCase()))
+      return candidate;
+  }
+
+  const personaTitle = SystemPurposes[personaId]?.title || personaId;
+  for (let suffix = 2; suffix < 100; suffix++) {
+    const candidate = `${personaTitle} ${suffix}`;
+    if (!normalizedExistingNames.has(candidate.toLowerCase()))
+      return candidate;
+  }
+
+  return `${personaTitle} ${agiUuid('chat-participant-assistant').slice(0, 4)}`;
+}
 
 export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
   return {
@@ -62,6 +172,10 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
 
     // @deprecated
     systemPurposeId: systemPurposeId || defaultSystemPurposeId,
+    participants: [
+      createHumanConversationParticipant(),
+      createAssistantConversationParticipant(systemPurposeId || defaultSystemPurposeId),
+    ],
     // @deprecated
     tokenCount: 0,
 
@@ -98,6 +212,9 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
     ...(conversation.isArchived !== undefined ? { isArchived: conversation.isArchived } : {}), // copy archival state if set
 
     systemPurposeId: conversation.systemPurposeId,
+    ...(conversation.participants?.length ? {
+      participants: conversation.participants.map(participant => ({ ...participant })),
+    } : {}),
     tokenCount: conversation.tokenCount,
 
     created: conversation.created,
