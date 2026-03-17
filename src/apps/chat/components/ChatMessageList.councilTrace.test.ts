@@ -246,6 +246,80 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
 
   assert.equal(sharedTrace?.rounds[1]?.sharedReasons?.label, 'Shared with next round');
 
+  let draftingWorkflow = createCouncilSessionState({
+    phaseId: 'phase-drafting',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 4,
+  });
+  draftingWorkflow = recordCouncilProposal(draftingWorkflow, {
+    proposalId: 'drafting-proposal-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Drafting round one.',
+  });
+  draftingWorkflow = applyCouncilReviewBallots(draftingWorkflow, [
+    { reviewerParticipantId: 'critic', decision: 'reject', reason: 'Drafting reason.' },
+    { reviewerParticipantId: 'writer', decision: 'accept' },
+  ]);
+
+  const draftingTrace = buildCouncilTraceRenderPlan({
+    messages: [
+      createCouncilMessage({ id: 'drafting-proposal-1', text: 'Drafting round one.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-drafting', passIndex: 0 }),
+    ],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'running',
+      phaseId: 'phase-drafting',
+      passIndex: 1,
+      workflowState: draftingWorkflow,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  assert.equal(draftingTrace?.rounds[1]?.sharedReasons?.label, 'Shared with next round');
+
+  let interruptedWithProposalWorkflow = createCouncilSessionState({
+    phaseId: 'phase-interrupted-proposal',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 4,
+  });
+  interruptedWithProposalWorkflow = recordCouncilProposal(interruptedWithProposalWorkflow, {
+    proposalId: 'interrupted-proposal-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Interrupted round one.',
+  });
+  interruptedWithProposalWorkflow = applyCouncilReviewBallots(interruptedWithProposalWorkflow, [
+    { reviewerParticipantId: 'critic', decision: 'reject', reason: 'Interrupted shared reason.' },
+    { reviewerParticipantId: 'writer', decision: 'accept' },
+  ]);
+  interruptedWithProposalWorkflow = recordCouncilProposal(interruptedWithProposalWorkflow, {
+    proposalId: 'interrupted-proposal-2',
+    leaderParticipantId: 'leader',
+    proposalText: 'Interrupted round two.',
+  });
+
+  const interruptedWithProposalTrace = buildCouncilTraceRenderPlan({
+    messages: [
+      createCouncilMessage({ id: 'interrupted-proposal-1', text: 'Interrupted round one.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-interrupted-proposal', passIndex: 0 }),
+      createCouncilMessage({ id: 'interrupted-proposal-2', text: 'Interrupted round two.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-interrupted-proposal', passIndex: 1 }),
+    ],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'interrupted',
+      phaseId: 'phase-interrupted-proposal',
+      passIndex: 1,
+      workflowState: interruptedWithProposalWorkflow,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  assert.equal(interruptedWithProposalTrace?.rounds[1]?.sharedReasons?.label, 'Shared with next round');
+
   let queuedWorkflow = createCouncilSessionState({
     phaseId: 'phase-queued',
     leaderParticipantId: 'leader',

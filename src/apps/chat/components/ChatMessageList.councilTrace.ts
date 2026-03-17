@@ -125,6 +125,8 @@ function deriveSharedReasons(
   const nextRound = workflowState.rounds.find(entry => entry.roundIndex === roundIndex + 1);
   if (nextRound?.proposalText)
     return { label: 'Shared with next round', reasons };
+  if (nextRound && overlayCouncilSession.status !== 'interrupted')
+    return { label: 'Shared with next round', reasons };
   if (nextRound)
     return { label: 'Queued for next round', reasons };
   return {
