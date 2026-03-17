@@ -28,6 +28,7 @@ import { getParticipantAccentColor } from '~/common/util/dMessageUtils';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
 import { buildCouncilTraceRenderPlan, type CouncilTraceRenderItem } from './ChatMessageList.councilTrace';
+import { getCouncilVisibleMessages } from './ChatMessageList.visibility';
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { CouncilTraceMessage } from './message/CouncilTraceMessage';
@@ -389,17 +390,6 @@ function getConsensusGroupColumnWidth(messageCount: number): string {
   if (messageCount === 3)
     return 'minmax(17rem, 1fr)';
   return 'minmax(15rem, 1fr)';
-}
-
-function getCouncilVisibleMessages(messages: Readonly<DMessage[]>, showSystemMessages: boolean) {
-  return messages.filter(message => {
-    const channel = normalizeMessageChannel(message);
-
-    if (message.role === 'system')
-      return showSystemMessages || channel.channel === 'public-board' || channel.channel === 'system';
-
-    return channel.channel === 'public-board' || channel.channel === 'system';
-  });
 }
 
 export function ChatMessageList(props: {

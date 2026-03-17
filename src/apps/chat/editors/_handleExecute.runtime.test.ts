@@ -10,7 +10,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { _handleExecute, runConsensusSequence } from './_handleExecute';
 import type { ChatExecutionRuntime, ChatExecutionRuntimeRunPersonaParams, ChatExecutionSession } from './chat-execution.runtime';
-import { createCouncilSessionState, recordCouncilProposal } from './_handleExecute.consensus';
+import { applyCouncilReviewBallots, createCouncilSessionState, recordCouncilProposal } from './_handleExecute.consensus';
 
 
 const TEST_LLM_ID = 'test-llm';
@@ -352,4 +352,104 @@ test('handleExecute can complete a fresh no-model council run end to end', async
   assert.equal(councilSession.status, 'completed');
   assert.equal(councilSession.workflowState?.status, 'accepted');
   assert.equal(councilSession.workflowState?.finalResponse, 'Draft two with caveat.');
+});
+
+test('handleExecute ignores stale resumable council state after a new user turn', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const [human, leader, critic, writer] = participants;
+
+  const userMessageOne = completeMessage(createDMessageTextContent('user', 'First request.'));
+  const proposalMessage = completeMessage(createDMessageTextContent('assistant', 'Draft one.'));
+  proposalMessage.metadata = {
+    author: {
+      participantId: leader.id,
+      participantName: leader.name,
+      personaId: leader.personaId,
+      llmId: leader.llmId,
+    },
+    councilChannel: { channel: 'public-board' },
+    consensus: {
+      kind: 'deliberation',
+      phaseId: 'phase-stale',
+      passIndex: 0,
+      action: 'proposal',
+      leaderParticipantId: leader.id,
+    },
+  };
+  const criticBallotMessage = completeMessage(createDMessageTextContent('assistant', 'Reject'));
+  criticBallotMessage.metadata = {
+    author: {
+      participantId: critic.id,
+      participantName: critic.name,
+      personaId: critic.personaId,
+      llmId: critic.llmId,
+    },
+    councilChannel: { channel: 'public-board' },
+    consensus: {
+      kind: 'deliberation',
+      phaseId: 'phase-stale',
+      passIndex: 0,
+      action: 'reject',
+      reason: 'Missing the caveat.',
+      leaderParticipantId: leader.id,
+    },
+  };
+  const userMessageTwo = completeMessage(createDMessageTextContent('user', 'Second request.'));
+  userMessageTwo.metadata = {
+    author: {
+      participantId: human.id,
+      participantName: human.name,
+    },
+  };
+
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-stale',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: proposalMessage.id,
+    leaderParticipantId: leader.id,
+    proposalText: 'Draft one.',
+  });
+  workflowState = {
+    ...applyCouncilReviewBallots(workflowState, [
+      { reviewerParticipantId: critic.id, decision: 'reject', reason: 'Missing the caveat.' },
+      { reviewerParticipantId: writer.id, decision: 'accept' },
+    ]),
+    status: 'drafting',
+  };
+
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessageOne, proposalMessage, criticBallotMessage, userMessageTwo],
+    councilSession: {
+      status: 'interrupted',
+      executeMode: 'generate-content',
+      mode: 'consensus',
+      phaseId: 'phase-stale',
+      passIndex: 1,
+      workflowState,
+      canResume: true,
+      interruptionReason: 'page-unload',
+      updatedAt: Date.now(),
+    },
+  });
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Fresh proposal for the second request.']],
+    [critic.id, ['[[accept]]']],
+    [writer.id, ['[[accept]]']],
+  ]));
+
+  const result = await _handleExecute('generate-content', conversationId, 'runtime-test', runtime);
+
+  assert.equal(result, true);
+  assert.deepEqual(runtime.callLog, [leader.id, critic.id, writer.id]);
+
+  const messages = useChatStore.getState().historyView(conversationId) ?? [];
+  const resultMessage = messages.findLast(message => message.metadata?.consensus?.kind === 'result') ?? null;
+  assert.ok(resultMessage);
+  assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Fresh proposal for the second request.');
 });
