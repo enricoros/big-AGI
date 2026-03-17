@@ -10,7 +10,7 @@ import {
   recordCouncilProposal,
 } from '../editors/_handleExecute.consensus';
 
-import { buildCouncilTraceRenderItem } from './ChatMessageList.councilTrace';
+import { buildCouncilTraceRenderPlan } from './ChatMessageList.councilTrace';
 
 
 const participants: DConversationParticipant[] = [
@@ -81,7 +81,7 @@ test('accepted council workflow inserts a trace item immediately before the fina
     { reviewerParticipantId: 'writer', decision: 'accept' },
   ]);
 
-  const traceItem = buildCouncilTraceRenderItem({
+  const traceItem = buildCouncilTraceRenderPlan({
     messages: [
       createCouncilMessage({ id: 'proposal-1', text: 'Round one proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', passIndex: 0 }),
       createCouncilMessage({ id: 'proposal-2', text: 'Round two proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', passIndex: 1 }),
@@ -97,7 +97,7 @@ test('accepted council workflow inserts a trace item immediately before the fina
       canResume: true,
       updatedAt: 100,
     },
-  });
+  }).traceItem;
 
   assert.ok(traceItem);
   assert.deepEqual(traceItem.placement, {
@@ -130,7 +130,7 @@ test('interrupted council workflow anchors the trace after the current phase whe
     { reviewerParticipantId: 'writer', decision: 'accept' },
   ]);
 
-  const traceItem = buildCouncilTraceRenderItem({
+  const traceItem = buildCouncilTraceRenderPlan({
     messages: [
       createCouncilMessage({ id: 'proposal-1', text: 'Round one proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', passIndex: 0 }),
     ],
@@ -144,7 +144,7 @@ test('interrupted council workflow anchors the trace after the current phase whe
       canResume: true,
       updatedAt: 100,
     },
-  });
+  }).traceItem;
 
   assert.ok(traceItem);
   assert.deepEqual(traceItem.placement, {
@@ -153,12 +153,54 @@ test('interrupted council workflow anchors the trace after the current phase whe
   });
 });
 
+test('exhausted council workflow anchors the trace after the current phase when no final result exists', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-exhausted',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 1,
+  });
+
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-exhausted-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Final attempt proposal.',
+  });
+
+  workflowState = applyCouncilReviewBallots(workflowState, [
+    { reviewerParticipantId: 'critic', decision: 'reject', reason: 'Still missing a caveat.' },
+    { reviewerParticipantId: 'writer', decision: 'accept' },
+  ]);
+
+  const traceItem = buildCouncilTraceRenderPlan({
+    messages: [
+      createCouncilMessage({ id: 'proposal-exhausted-1', text: 'Final attempt proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-exhausted', passIndex: 0 }),
+    ],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'stopped',
+      phaseId: 'phase-exhausted',
+      passIndex: 0,
+      workflowState,
+      canResume: false,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  assert.ok(traceItem);
+  assert.deepEqual(traceItem.placement, {
+    mode: 'after-phase',
+    phaseId: 'phase-exhausted',
+  });
+});
+
 test('workflow state absence omits the council trace entirely', () => {
-  const traceItem = buildCouncilTraceRenderItem({
+  const traceItem = buildCouncilTraceRenderPlan({
     messages: [],
     participants,
     councilSession: createIdleCouncilSessionState(),
-  });
+  }).traceItem;
 
   assert.equal(traceItem, null);
 });
@@ -185,7 +227,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
     proposalText: 'Shared round two.',
   });
 
-  const sharedTrace = buildCouncilTraceRenderItem({
+  const sharedTrace = buildCouncilTraceRenderPlan({
     messages: [
       createCouncilMessage({ id: 'shared-proposal-1', text: 'Shared round one.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-shared', passIndex: 0 }),
       createCouncilMessage({ id: 'shared-proposal-2', text: 'Shared round two.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-shared', passIndex: 1 }),
@@ -200,7 +242,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
       canResume: true,
       updatedAt: 100,
     },
-  });
+  }).traceItem;
 
   assert.equal(sharedTrace?.rounds[1]?.sharedReasons?.label, 'Shared with next round');
 
@@ -220,7 +262,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
     { reviewerParticipantId: 'writer', decision: 'accept' },
   ]);
 
-  const queuedTrace = buildCouncilTraceRenderItem({
+  const queuedTrace = buildCouncilTraceRenderPlan({
     messages: [
       createCouncilMessage({ id: 'queued-proposal-1', text: 'Queued round one.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-queued', passIndex: 0 }),
     ],
@@ -234,7 +276,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
       canResume: true,
       updatedAt: 100,
     },
-  });
+  }).traceItem;
 
   assert.equal(queuedTrace?.rounds[1]?.sharedReasons?.label, 'Queued for next round');
 
@@ -254,7 +296,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
     { reviewerParticipantId: 'writer', decision: 'accept' },
   ]);
 
-  const finalTrace = buildCouncilTraceRenderItem({
+  const finalTrace = buildCouncilTraceRenderPlan({
     messages: [
       createCouncilMessage({ id: 'final-proposal-1', text: 'Final round one.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-final', passIndex: 0 }),
     ],
@@ -268,7 +310,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
       canResume: false,
       updatedAt: 100,
     },
-  });
+  }).traceItem;
 
   assert.equal(finalTrace?.rounds[0]?.sharedReasons?.label, 'Final rejection reasons');
 });
@@ -292,7 +334,7 @@ test('reviewer cards follow reviewer participant order and preserve verbatim rej
     { reviewerParticipantId: 'writer', decision: 'accept' },
   ]);
 
-  const traceItem = buildCouncilTraceRenderItem({
+  const traceItem = buildCouncilTraceRenderPlan({
     messages: [
       createCouncilMessage({ id: 'proposal-1', text: 'Round one proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', passIndex: 0 }),
     ],
@@ -306,7 +348,7 @@ test('reviewer cards follow reviewer participant order and preserve verbatim rej
       canResume: true,
       updatedAt: 100,
     },
-  });
+  }).traceItem;
 
   assert.deepEqual(traceItem?.rounds[1]?.reviewerCards.map(card => ({
     participantId: card.participantId,

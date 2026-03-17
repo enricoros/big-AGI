@@ -47,11 +47,23 @@ export type CouncilTraceRenderItem = {
   summaryStatus: 'accepted' | 'reviewing' | 'awaiting-leader-revision' | 'interrupted' | 'exhausted';
 };
 
-export function buildCouncilTraceRenderItem(params: {
+type BuildCouncilTraceRenderParams = {
   messages: readonly DMessage[];
   participants: readonly DConversationParticipant[];
   councilSession: OverlayCouncilSessionState;
-}): CouncilTraceRenderItem | null {
+};
+
+export type CouncilTraceRenderPlan = {
+  traceItem: CouncilTraceRenderItem | null;
+};
+
+export function buildCouncilTraceRenderPlan(params: BuildCouncilTraceRenderParams): CouncilTraceRenderPlan {
+  return {
+    traceItem: buildCouncilTraceRenderItem(params),
+  };
+}
+
+export function buildCouncilTraceRenderItem(params: BuildCouncilTraceRenderParams): CouncilTraceRenderItem | null {
   const workflowState = params.councilSession.workflowState;
   const phaseId = params.councilSession.phaseId ?? workflowState?.phaseId ?? null;
   if (!workflowState || !phaseId)
