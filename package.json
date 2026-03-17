@@ -9,6 +9,7 @@
     "dev": "next dev",
     "dev-debug": "cross-env NODE_OPTIONS='--inspect' next dev",
     "dev-https": "next dev --experimental-https",
+    "test": "tsx --test",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

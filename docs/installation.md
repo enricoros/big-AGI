@@ -31,7 +31,11 @@ add your own models, or run your own instance, follow the steps below.
    ```bash
    npm install
    ```
-3. Run the development server:
+3. Run the focused regression tests when changing chat behavior or store logic:
+   ```bash
+   npm test
+   ```
+4. Run the development server:
    ```bash
    npm run dev
    ```
