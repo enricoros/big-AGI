@@ -21,6 +21,8 @@ Expose the full stateful Council workflow in the chat transcript without duplica
 - Rejection reasons are shown verbatim.
 - Shared rejection reasons are shown as the exact reasons carried into the next Leader draft.
 - Within an expanded round, all agents are displayed side-by-side on desktop/tablet and stacked on mobile.
+- Accepted Council runs render the trace immediately before the final assistant response.
+- In-progress, interrupted, or exhausted Council runs render the trace as the last Council transcript artifact for the active phase because there is no final assistant response to anchor against.
 
 ## Recommended Approach
 
@@ -34,7 +36,9 @@ This replaces the current generic deliberation toggle for Council runs with a ri
 
 ### Transcript Placement
 
-- Insert `Council trace` as a standalone transcript item immediately before the final assistant response of the accepted Council phase.
+- Insert `Council trace` as a standalone transcript item for the Council phase.
+- For accepted phases, place it immediately before the final assistant response.
+- For drafting, reviewing, interrupted, or exhausted phases without a final assistant response, place it after the latest Council artifact for that phase.
 - Keep the final assistant response in the normal chat bubble flow.
 - Do not render a duplicated `final adopted response` section inside the trace.
 
@@ -51,6 +55,13 @@ When collapsed, the trace shows:
   - `Round 2 rejected by 2 reviewers`
 
 The collapsed card should read as a compact audit artifact, not as another assistant message.
+
+Canonical collapsed status wording:
+- `Accepted`
+- `Reviewing`
+- `Awaiting leader revision`
+- `Interrupted`
+- `Exhausted`
 
 ### Expanded Trace Card
 
@@ -96,8 +107,13 @@ Accepted ballots stay compact. Rejected ballots expand vertically to make the re
 ### Shared Rejection Reasons Block
 
 If a round contains one or more rejections, render a full-width block below the grid:
-- label: `Shared with next round`
-- ordered list of the exact rejection reasons carried forward to the next Leader prompt
+- label:
+  - `Shared with next round` when a subsequent round exists
+  - `Queued for next round` when the session is interrupted during drafting before the next proposal exists
+  - `Final rejection reasons` when the session is exhausted with no next round
+- ordered list of the exact rejection reasons associated with that round outcome:
+  - carried forward to the next Leader prompt when another round exists or is queued
+  - preserved as the terminal rejection record when the session is exhausted
 
 This block makes the stateful feedback loop explicit instead of leaving users to infer it from reviewer cards alone.
 
@@ -133,6 +149,7 @@ The existing pass-based column layout for raw deliberation messages should not b
 
 - render side-by-side grid columns for the Leader plus reviewers
 - size columns evenly within each round, with the Leader column allowed slightly more width if needed
+- preserve side-by-side comparison by placing the round board inside a horizontally scrollable container when reviewer count or viewport width would otherwise crush the cards
 
 ### Mobile
 
@@ -156,11 +173,22 @@ Primary fields:
 - `rounds[].ballots`
 - `rounds[].sharedRejectionReasons`
 
+Ballot shape required by the trace:
+- `reviewerParticipantId`
+- `decision`
+- `reason`
+
+Rendering expectations derived from that shape:
+- reviewer ordering follows `reviewerParticipantIds`
+- `decision === accept` renders an accept card with no reason body
+- `decision === reject` renders the verbatim `reason`
+- a missing ballot for a configured reviewer in an active round renders as pending only when workflow state explicitly represents an incomplete review stage; otherwise the UI should not invent ballots
+
 Supporting transcript data remains useful for:
 - phase/result placement in the transcript
-- fallback rendering if workflow state is absent or partial
+- identifying the relevant Council phase boundary in the visible message list
 
-The UI should prefer structured workflow state whenever available and only fall back to transcript inference when strictly necessary.
+The UI should prefer structured workflow state whenever available. If workflow state is absent, the UI should not synthesize a full trace from transcript messages; it should leave the normal messages unchanged and omit the trace entirely.
 
 ## Error Handling
 
@@ -193,6 +221,7 @@ The UI should prefer structured workflow state whenever available and only fall 
 
 - trace is omitted when workflow state is unavailable
 - final assistant response still renders normally without the trace
+- interrupted or exhausted sessions render the trace without requiring a final assistant response anchor
 
 ## Non-Goals
 
