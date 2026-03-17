@@ -1,42 +1,203 @@
-import * as z from 'zod/v4';
-
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getChatAutoAI } from '../store-app-chat';
 
 import type { SystemPurposeId } from '../../../data';
+import { SystemPurposes } from '../../../data';
 
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 
 import type { DConversationId, DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
-import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
-import type { DMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageTextContent, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageCouncilChannel } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { duplicateDMessage } from '~/common/stores/chat/chat.message';
-import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
-import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { createTextContentFragment, isContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
-import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
-import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
-import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessage_FromDMessageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
+import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
-import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
-import { runImageGenerationUpdatingState } from './image-generate';
-import { runPersonaOnConversationHead } from './chat-persona';
 import {
-  getContinuousParticipants,
-  getMentionedParticipants,
-  getParticipantsRemainingThisTurn,
-  getRunnableParticipants,
-  hasStopToken,
-  mergeParticipantsInRosterOrder,
-} from './_handleExecute.multiAgent';
-import { runReActUpdatingState } from './react-tangent';
+  applyCouncilReviewBallots,
+  classifyCouncilReviewBallotFragments,
+  classifyConsensusTextFragments,
+  CONSENSUS_TRANSCRIPT_PREFIX,
+  createCouncilSessionState,
+  evaluateConsensusPass,
+  extractCouncilProposalText,
+  getConsensusResumePassIndex,
+  hydrateCouncilSessionFromTranscriptEntries,
+  recordCouncilProposal,
+} from './_handleExecute.consensus';
+import type { ConsensusProtocolAction, CouncilSessionState } from './_handleExecute.consensus';
+import type { PersonaRunOptions } from './chat-persona';
+import type { ChatExecutionRuntime, ChatExecutionSession } from './chat-execution.runtime';
+
+
+async function inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined, purposeId: SystemPurposeId | null, customPrompt?: string | null): Promise<void> {
+  const systemMessageIndex = history.findIndex(message => message.role === 'system');
+
+  let systemMessage: DMessage = systemMessageIndex >= 0
+    ? history.splice(systemMessageIndex, 1)[0]
+    : createDMessageEmpty('system');
+
+  const extraInstruction = customPrompt?.trim() || '';
+  if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
+    systemMessage.purposeId = purposeId;
+    let systemMessageText = SystemPurposes[purposeId].systemMessage;
+    try {
+      const { bareBonesPromptMixer } = await import('~/modules/persona/pmix/pmix');
+      systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
+    } catch {
+      // Node-only tests do not load the Next font pipeline used by the prompt mixer.
+    }
+    if (extraInstruction)
+      systemMessageText = `${systemMessageText.trim()}\n\nAdditional agent instructions:\n${extraInstruction}`;
+    systemMessage.fragments = [createTextContentFragment(systemMessageText)];
+
+    if (purposeId === 'Custom')
+      systemMessage.updated = Date.now();
+
+    systemMessage = { ...systemMessage };
+  }
+
+  history.unshift(systemMessage);
+}
+
+function inlineUpdateAutoPromptCaching(history: DMessage[]): void {
+  let setAuto = getChatAutoAI().autoVndAntBreakpoints;
+  if (setAuto && history.length > 0) {
+    const { gt1000 } = history.reduce((acc, message) => {
+      if (acc.gt1000)
+        return acc;
+      acc.tokens += message.tokenCount || 0;
+      acc.gt1000 = acc.tokens > 1000;
+      return acc;
+    }, { tokens: 0, gt1000: false });
+    setAuto = gt1000;
+  }
+
+  let breakpointsRemaining = 2;
+  for (let index = history.length - 1; index >= 0; index--) {
+    if (!setAuto) {
+      if (messageHasUserFlag(history[index], MESSAGE_FLAG_VND_ANT_CACHE_AUTO))
+        history[index] = { ...history[index], userFlags: messageSetUserFlag(history[index], MESSAGE_FLAG_VND_ANT_CACHE_AUTO, false) };
+      continue;
+    }
+
+    const isSystemInstruction = index === 0 && history[index].role === 'system';
+    if (!isSystemInstruction && history[index].role !== 'user')
+      continue;
+
+    let autoState = --breakpointsRemaining >= 0 || isSystemInstruction;
+    if (autoState && messageHasUserFlag(history[index], MESSAGE_FLAG_VND_ANT_CACHE_USER))
+      autoState = false;
+    if (autoState !== messageHasUserFlag(history[index], MESSAGE_FLAG_VND_ANT_CACHE_AUTO))
+      history[index] = { ...history[index], userFlags: messageSetUserFlag(history[index], MESSAGE_FLAG_VND_ANT_CACHE_AUTO, autoState) };
+  }
+}
+
+async function resolveChatExecutionRuntime(runtime?: ChatExecutionRuntime): Promise<ChatExecutionRuntime> {
+  if (runtime)
+    return runtime;
+  const { getDefaultChatExecutionRuntime } = await import('./chat-execution.runtime.default');
+  return getDefaultChatExecutionRuntime();
+}
+
+function escapeMentionToken(mention: string): string {
+  return mention.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function findMentionMatchIndex(messageText: string, mention: string): number | null {
+  const normalizedMention = mention.trim();
+  if (!normalizedMention)
+    return null;
+
+  const explicitMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])@${escapeMentionToken(normalizedMention)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
+  const explicitMatch = explicitMentionRegex.exec(messageText);
+  if (explicitMatch)
+    return explicitMatch.index + ((explicitMatch[0] ?? '').length - (`@${normalizedMention}`).length);
+
+  const bareMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeMentionToken(normalizedMention)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
+  const bareMatch = bareMentionRegex.exec(messageText);
+  if (bareMatch)
+    return bareMatch.index + ((bareMatch[0] ?? '').length - normalizedMention.length);
+
+  return null;
+}
+
+function hasMentionToken(message: DMessage | null, mention: string): boolean {
+  if (!message)
+    return false;
+
+  return message.fragments.some(fragment => isTextContentFragment(fragment) && findMentionMatchIndex(fragment.part.text, mention) !== null);
+}
+
+function getMentionedParticipants(
+  message: DMessage | null,
+  participants: DConversationParticipant[],
+  excludeParticipantIds: ReadonlySet<string> = new Set(),
+): DConversationParticipant[] {
+  if (!message)
+    return [];
+
+  const messageText = messageFragmentsReduceText(message.fragments).trim();
+  const implicitReplyParticipants = (message.metadata?.inReferenceTo ?? [])
+    .filter(reference => reference.mCarryAuthorMention !== false)
+    .map(reference => {
+      const participantId = reference.mAuthorParticipantId?.trim() || null;
+      if (participantId)
+        return participants.find(participant => participant.id === participantId) ?? null;
+
+      const participantName = reference.mAuthorParticipantName?.trim() || null;
+      if (!participantName)
+        return null;
+
+      return participants.find(participant => participant.name?.trim() === participantName) ?? null;
+    })
+    .filter((participant): participant is DConversationParticipant => !!participant && !excludeParticipantIds.has(participant.id));
+
+  const implicitReplyParticipantIds = new Set(implicitReplyParticipants.map(participant => participant.id));
+  if (!messageText)
+    return implicitReplyParticipants;
+
+  const allMentionMatch = new RegExp(`(^|[^\\p{L}\\p{N}])@all(?=$|[^\\p{L}\\p{N}])`, 'iu').exec(messageText);
+  const explicitMentions = participants
+    .filter(participant => !excludeParticipantIds.has(participant.id) && !!participant.name?.trim())
+    .map(participant => {
+      const matchIndex = findMentionMatchIndex(messageText, participant.name ?? '');
+      return matchIndex !== null ? { participant, index: matchIndex } : null;
+    })
+    .filter((entry): entry is { participant: DConversationParticipant; index: number } => !!entry)
+    .sort((a, b) => a.index - b.index)
+    .map(entry => entry.participant);
+
+  const mergedExplicitMentions = [
+    ...implicitReplyParticipants,
+    ...explicitMentions.filter(participant => !implicitReplyParticipantIds.has(participant.id)),
+  ];
+
+  if (!allMentionMatch)
+    return mergedExplicitMentions;
+
+  const explicitMentionIds = new Set(mergedExplicitMentions.map(participant => participant.id));
+  const remainingParticipants = participants.filter(participant => !excludeParticipantIds.has(participant.id) && !explicitMentionIds.has(participant.id));
+  return [...mergedExplicitMentions, ...remainingParticipants];
+}
+
+function wasParticipantMentioned(message: DMessage | null, participant: DConversationParticipant): boolean {
+  return getMentionedParticipants(message, [participant]).length > 0;
+}
+
+function hasStopToken(message: DMessage | null): boolean {
+  if (!message)
+    return false;
+
+  const messageText = messageFragmentsReduceText(message.fragments).trim();
+  return /(^|[^\p{L}\p{N}])@stop(?=$|[^\p{L}\p{N}])/iu.test(messageText);
+}
 
 function buildMultiAgentCoordinationMessage(participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage {
   const assistantLines = participants
@@ -62,9 +223,9 @@ function buildMultiAgentCoordinationMessage(participants: DConversationParticipa
   return message;
 }
 
-function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage[] {
+async function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): Promise<DMessage[]> {
   const participantHistory = [...sourceHistory];
-  ConversationHandler.inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
+  await inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
 
   const coordinationMessage = buildMultiAgentCoordinationMessage(participants, activeParticipant);
   const systemMessage = participantHistory.find(message => message.role === 'system') ?? null;
@@ -77,39 +238,263 @@ function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlm
     participantHistory.unshift(coordinationMessage);
   }
 
-  ConversationHandler.inlineUpdateAutoPromptCaching(participantHistory);
+  inlineUpdateAutoPromptCaching(participantHistory);
   return participantHistory;
 }
 
 
-function getConsensusParticipantsRemaining(_messages: Readonly<DMessage[]>, _latestUserMessageId: string | null, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
-  return runnableParticipants;
+function findConsensusPlaceholderMessageId(
+  messages: Readonly<DMessage[]>,
+  phaseId: string,
+  passIndex: number,
+  participantId: string,
+): string | null {
+  return [...messages]
+    .reverse()
+    .find(message => {
+      const consensus = message.metadata?.consensus;
+      return message.role === 'assistant'
+        && !!message.pendingIncomplete
+        && consensus?.kind === 'deliberation'
+        && consensus.phaseId === phaseId
+        && consensus.passIndex === passIndex
+        && message.metadata?.author?.participantId === participantId;
+    })?.id ?? null;
 }
-const CONSENSUS_AIX_CONTEXT_NAME = 'conversation';
-const CONSENSUS_AGREE_TOOL_NAME = 'agree';
-const CONSENSUS_DONT_AGREE_TOOL_NAME = 'dont_agree';
+
+function getConsensusParticipantsRemaining(messages: Readonly<DMessage[]>, phaseId: string, passIndex: number, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+  const spokenParticipantIds = new Set(messages
+    .filter(message => {
+      const consensus = message.metadata?.consensus;
+      return message.role === 'assistant'
+        && consensus?.kind === 'deliberation'
+        && consensus.phaseId === phaseId
+        && consensus.passIndex === passIndex
+        && !!message.metadata?.author?.participantId;
+    })
+    .map(message => message.metadata?.author?.participantId)
+    .filter((participantId): participantId is string => !!participantId));
+
+  return runnableParticipants.filter(participant => !spokenParticipantIds.has(participant.id));
+}
+
+function getConsensusSpokenParticipantIdsByPass(messages: Readonly<DMessage[]>, phaseId: string): Map<number, Set<string>> {
+  return messages.reduce((spokenByPass, message) => {
+    const consensus = message.metadata?.consensus;
+    const participantId = message.metadata?.author?.participantId;
+    if (message.role !== 'assistant'
+      || consensus?.kind !== 'deliberation'
+      || consensus.phaseId !== phaseId
+      || typeof consensus.passIndex !== 'number'
+      || !participantId)
+      return spokenByPass;
+
+    const spokenParticipantIds = spokenByPass.get(consensus.passIndex) ?? new Set<string>();
+    spokenParticipantIds.add(participantId);
+    spokenByPass.set(consensus.passIndex, spokenParticipantIds);
+    return spokenByPass;
+  }, new Map<number, Set<string>>());
+}
+
+function normalizeCouncilChannel(channel: DMessageCouncilChannel | null | undefined): DMessageCouncilChannel {
+  return channel?.channel
+    ? {
+      ...channel,
+      ...(channel.directParticipantIds ? { directParticipantIds: [...channel.directParticipantIds] } : {}),
+      ...(channel.visibleToParticipantIds ? { visibleToParticipantIds: [...channel.visibleToParticipantIds] } : {}),
+    }
+    : { channel: 'public-board' };
+}
+
+function describeCouncilChannel(councilChannel: DMessageCouncilChannel, participants: DConversationParticipant[], conversationId: DConversationId): string {
+  void participants;
+  void conversationId;
+
+  if (councilChannel.channel === 'public-board')
+    return 'the public council board';
+
+  if (councilChannel.channel === 'direct') {
+    const directNames = (councilChannel.directParticipantIds ?? [])
+      .map(participantId => participants.find(participant => participant.id === participantId)?.name ?? null)
+      .filter((name): name is string => !!name);
+    return directNames.length ? `direct chat (${directNames.join(' · ')})` : 'that direct chat';
+  }
+
+  return 'that council thread';
+}
+
+function messageMatchesCouncilChannel(message: DMessage, councilChannel: DMessageCouncilChannel): boolean {
+  const messageChannel = normalizeCouncilChannel(message.metadata?.councilChannel);
+
+  if (councilChannel.channel === 'public-board')
+    return messageChannel.channel === 'public-board';
+
+  if (councilChannel.channel === 'direct') {
+    if (messageChannel.channel !== 'direct')
+      return false;
+    const threadParticipantIds = new Set(councilChannel.directParticipantIds ?? []);
+    return (messageChannel.directParticipantIds ?? []).some(participantId => threadParticipantIds.has(participantId));
+  }
+
+  return messageChannel.channel === councilChannel.channel;
+}
+
+function getParticipantsForCouncilChannel(
+  participants: DConversationParticipant[],
+  councilChannel: DMessageCouncilChannel,
+  conversationId: DConversationId,
+): DConversationParticipant[] {
+  void conversationId;
+
+  if (councilChannel.channel === 'public-board')
+    return participants;
+
+  if (councilChannel.channel === 'direct') {
+    const directIds = new Set(councilChannel.directParticipantIds ?? []);
+    return participants.filter(participant => directIds.has(participant.id));
+  }
+
+  return participants;
+}
+
+function getHistoryForCouncilChannel(messages: Readonly<DMessage[]>, councilChannel: DMessageCouncilChannel): DMessage[] {
+  return messages
+    .filter(message => message.role === 'system' || messageMatchesCouncilChannel(message, councilChannel))
+    .map(message => duplicateDMessage(message, false));
+}
+const CONSENSUS_PUBLIC_BOARD_CHANNEL: DMessageCouncilChannel = { channel: 'public-board' };
 const CONSENSUS_MAX_PASSES = 12;
-const CONSENSUS_TRANSCRIPT_PREFIX = '[Consensus deliberation]';
-const consensusActionInputSchema = z.object({
-  response: z.string().min(1).describe('The exact final response that should be shown to the user when agreement is reached.'),
-  rationale: z.string().optional().describe('Optional short explanation of why you agree or what still needs to change.'),
-});
 
-type ConsensusToolAction = 'agree' | 'dont_agree';
-
-type ConsensusAgreement = {
+type ConsensusPassAction = {
   participant: DConversationParticipant;
-  action: ConsensusToolAction;
+  action: ConsensusProtocolAction;
+  messageId: string;
   response: string;
-  rationale: string;
   deliberationText: string;
 };
 
-function getConsensusTextSignature(text: string): string {
-  return text
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+type ConsensusDeliberation = {
+  participant: DConversationParticipant;
+  action: ConsensusProtocolAction;
+  deliberationText: string;
+  response: string;
+  assistantMessageId: string | null;
+};
+
+type CouncilRunInterruption = 'paused' | 'stopped' | 'interrupted';
+
+function getCouncilInterruption(abortController: AbortController): { status: CouncilRunInterruption; reason: string } | null {
+  if (!abortController.signal.aborted)
+    return null;
+
+  const rawReason = typeof abortController.signal.reason === 'string'
+    ? abortController.signal.reason.trim()
+    : '';
+
+  if (rawReason === '@pause')
+    return { status: 'paused', reason: rawReason };
+  if (rawReason === '@stop' || rawReason === 'stop' || rawReason === 'chat-stop')
+    return { status: 'stopped', reason: rawReason || 'chat-stop' };
+  return { status: 'interrupted', reason: rawReason || 'aborted' };
+}
+
+function setCouncilSessionRunning(
+  session: ChatExecutionSession,
+  executeMode: ChatExecuteMode,
+  mode: DConversationTurnTerminationMode,
+  phaseId: string | null,
+  passIndex: number | null,
+  workflowState: CouncilSessionState | null = null,
+): void {
+  const nextSession = {
+    status: 'running' as const,
+    executeMode,
+    mode,
+    phaseId,
+    passIndex,
+    workflowState,
+    canResume: false,
+    interruptionReason: null,
+  };
+  session.updateCouncilSession(nextSession);
+  session.persistCouncilSession(null);
+}
+
+function finalizeCouncilSession(
+  session: ChatExecutionSession,
+  interruption: { status: CouncilRunInterruption; reason: string } | null,
+  mode: DConversationTurnTerminationMode,
+  phaseId: string | null,
+  passIndex: number | null,
+  workflowState: CouncilSessionState | null = null,
+): void {
+  if (interruption) {
+    const resumableSession = {
+      status: interruption.status,
+      executeMode: 'generate-content' as const,
+      mode,
+      phaseId,
+      passIndex,
+      workflowState,
+      canResume: interruption.status !== 'stopped',
+      interruptionReason: interruption.reason,
+      updatedAt: Date.now(),
+    };
+    session.updateCouncilSession(resumableSession);
+    session.persistCouncilSession(resumableSession.canResume
+      ? {
+          status: resumableSession.status === 'paused' ? 'paused' : 'interrupted',
+          executeMode: resumableSession.executeMode,
+          mode: resumableSession.mode,
+          phaseId: resumableSession.phaseId,
+          passIndex: resumableSession.passIndex,
+          workflowState: resumableSession.workflowState,
+          canResume: resumableSession.canResume,
+          interruptionReason: resumableSession.interruptionReason,
+          updatedAt: resumableSession.updatedAt,
+        }
+      : null);
+    return;
+  }
+
+  session.setCouncilSession({
+    ...createIdleCouncilSessionState(),
+    status: 'completed',
+    executeMode: 'generate-content',
+    mode,
+    phaseId,
+    passIndex,
+    workflowState,
+    canResume: false,
+    interruptionReason: null,
+    updatedAt: Date.now(),
+  });
+  session.persistCouncilSession(null);
+}
+
+function beginCouncilSession(
+  session: ChatExecutionSession,
+  mode: DConversationTurnTerminationMode,
+  phaseId: string | null = null,
+  workflowState: CouncilSessionState | null = null,
+): void {
+  session.setCouncilSession({
+    ...createIdleCouncilSessionState(),
+    status: 'running',
+    executeMode: 'generate-content',
+    mode,
+    phaseId,
+    passIndex: workflowState?.roundIndex ?? 0,
+    workflowState,
+    canResume: false,
+    interruptionReason: null,
+    updatedAt: Date.now(),
+  });
+  session.persistCouncilSession(null);
+}
+
+function getConsensusLeaderParticipant(participants: DConversationParticipant[]): DConversationParticipant | null {
+  return participants.find(participant => participant.isLeader) ?? participants[0] ?? null;
 }
 
 function isConsensusDeliberationMessage(message: Pick<DMessage, 'metadata'> | null | undefined): boolean {
@@ -123,49 +508,102 @@ function getConsensusVisibleTranscript(messages: Readonly<DMessage[]>, phaseId: 
   });
 }
 
-function getConsensusWorkingHistory(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
+function getCouncilSourceHistory(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
   return messages
-    .filter(message => !isConsensusDeliberationMessage(message) || message.metadata?.consensus?.phaseId === phaseId)
+    .filter(message => {
+      const consensus = message.metadata?.consensus;
+      if (!consensus)
+        return true;
+      return consensus.phaseId !== phaseId;
+    })
     .map(message => duplicateDMessage(message, false));
 }
 
-function stripConsensusTranscriptPrefix(text: string): string {
-  return text.replace(/^\[Consensus deliberation\]\s*/i, '').trim();
-}
+function appendCouncilInstruction(history: DMessage[], instructionLines: string[]): DMessage[] {
+  const instruction = instructionLines.join('\n');
+  const councilMessage = createDMessageTextContent('system', instruction);
+  councilMessage.updated = councilMessage.created;
 
-function getConsensusResponsePrompt(activeParticipant: DConversationParticipant): DMessage {
-  const instruction = [
-    'Consensus mode is active.',
-    'You are in a shared deliberation room with the other agents.',
-    'You may talk to every other agent through normal assistant messages in the visible deliberation transcript.',
-    'Use @mentions when you want to address a specific agent, and use @all when speaking to everyone.',
-    `Every deliberation turn must end with exactly one tool call: either ${CONSENSUS_AGREE_TOOL_NAME} or ${CONSENSUS_DONT_AGREE_TOOL_NAME}.`,
-    `Call ${CONSENSUS_AGREE_TOOL_NAME} only when you agree with the exact final user-facing response.`,
-    `Call ${CONSENSUS_DONT_AGREE_TOOL_NAME} when you think the final response still needs changes before it can be shown to the user.`,
-    'Put the exact proposed final response in the tool response field every time.',
-    'Before the tool call, write a concise deliberation message for the other agents describing your position or requested edits.',
-    'Do not output the final user-facing answer directly to the user. The visible text is only deliberation among agents.',
-    `Prefix your deliberation text with ${CONSENSUS_TRANSCRIPT_PREFIX} so it can be shown in the deliberation panel.`,
-    `Current agent: ${activeParticipant.name}.`,
-  ].join('\n');
-
-  const message = createDMessageTextContent('system', instruction);
-  message.updated = message.created;
-  return message;
-}
-
-function prepareConsensusHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage[] {
-  const participantHistory = preparePersonaHistory(sourceHistory, assistantLlmId, purposeId, participants, activeParticipant);
-  const consensusMessage = getConsensusResponsePrompt(activeParticipant);
-  const systemMessage = participantHistory.find(message => message.role === 'system') ?? null;
+  const systemMessage = history.find(message => message.role === 'system') ?? null;
   const systemTextFragment = systemMessage?.fragments.find(isTextContentFragment) ?? null;
-  const consensusTextFragment = consensusMessage.fragments.find(isTextContentFragment) ?? null;
+  const councilTextFragment = councilMessage.fragments.find(isTextContentFragment) ?? null;
 
-  if (systemMessage && systemTextFragment && consensusTextFragment)
-    systemTextFragment.part.text = `${systemTextFragment.part.text.trim()}\n\n${consensusTextFragment.part.text}`;
-  else
-    participantHistory.unshift(consensusMessage);
+  if (systemMessage && systemTextFragment && councilTextFragment) {
+    systemTextFragment.part.text = `${systemTextFragment.part.text.trim()}\n\n${councilTextFragment.part.text}`;
+    return history;
+  }
 
+  history.unshift(councilMessage);
+  return history;
+}
+
+async function prepareCouncilLeaderHistory(
+  sourceHistory: Readonly<DMessage[]>,
+  assistantLlmId: DLLMId,
+  purposeId: SystemPurposeId,
+  participants: DConversationParticipant[],
+  activeParticipant: DConversationParticipant,
+  rejectionReasons: readonly string[],
+  roundIndex: number,
+): Promise<DMessage[]> {
+  const participantHistory = [...sourceHistory];
+  await inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
+
+  const reviewerNames = participants
+    .filter(participant => participant.kind === 'assistant' && participant.id !== activeParticipant.id)
+    .map(participant => participant.name);
+
+  const instruction = [
+    'Stateful Council mode is active.',
+    'You are the Leader.',
+    'Reviewers are isolated from each other and will only return Accept or Reject(reason).',
+    'Write the single best user-facing answer that addresses the original user request.',
+    'Output only the proposal text. Do not add labels, explanations, or reviewer instructions.',
+    `Current round: ${roundIndex + 1}.`,
+    `Current agent: ${activeParticipant.name}.`,
+    reviewerNames.length ? `Reviewers: ${reviewerNames.join(', ')}.` : 'There are no reviewers.',
+    rejectionReasons.length
+      ? `Prior rejection reasons:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`
+      : 'Prior rejection reasons: none.',
+  ];
+
+  appendCouncilInstruction(participantHistory, instruction);
+  inlineUpdateAutoPromptCaching(participantHistory);
+  return participantHistory;
+}
+
+async function prepareCouncilReviewerHistory(
+  sourceHistory: Readonly<DMessage[]>,
+  assistantLlmId: DLLMId,
+  purposeId: SystemPurposeId,
+  activeParticipant: DConversationParticipant,
+  leaderParticipant: DConversationParticipant,
+  proposalText: string,
+  rejectionReasons: readonly string[],
+  roundIndex: number,
+): Promise<DMessage[]> {
+  const participantHistory = [...sourceHistory];
+  await inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
+
+  const instruction = [
+    'Stateful Council mode is active.',
+    'You are an isolated reviewer.',
+    `Leader: ${leaderParticipant.name}.`,
+    'You cannot communicate with other reviewers during this round.',
+    'Review the current Leader proposal against the user request.',
+    'Return exactly one of the following forms and nothing else:',
+    '[[accept]]',
+    '[[reject]] <reason>',
+    'If you reject, provide one concise reason. Do not rewrite the answer.',
+    `Current round: ${roundIndex + 1}.`,
+    `Current proposal:\n${proposalText}`,
+    rejectionReasons.length
+      ? `Shared rejection reasons from earlier rounds:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`
+      : 'Shared rejection reasons from earlier rounds: none.',
+  ];
+
+  appendCouncilInstruction(participantHistory, instruction);
+  inlineUpdateAutoPromptCaching(participantHistory);
   return participantHistory;
 }
 
@@ -175,102 +613,74 @@ function getAssistantMessageForParticipantSinceLatestUser(messages: Readonly<DMe
     .find(message => message.metadata?.author?.participantId === participantId) ?? null;
 }
 
-function getConsensusToolInvocation(fragments: DMessage['fragments'], debugLabel: string): { action: ConsensusToolAction; argsObject: object } {
-  let invocation: { name: string; args: string } | null = null;
-  let invocationCount = 0;
 
-  for (const fragment of fragments) {
-    if (!isContentFragment(fragment) || fragment.part.pt !== 'tool_invocation' || fragment.part.invocation.type !== 'function_call')
-      continue;
-
-    if (fragment.part.invocation.name !== CONSENSUS_AGREE_TOOL_NAME && fragment.part.invocation.name !== CONSENSUS_DONT_AGREE_TOOL_NAME)
-      continue;
-
-    invocationCount++;
-    invocation = {
-      name: fragment.part.invocation.name,
-      args: fragment.part.invocation.args,
-    };
-  }
-
-  if (!invocation || invocationCount !== 1)
-    throw new Error(`AIX: Expected exactly one consensus tool invocation (${debugLabel}).`);
-
-  if (!invocation.args)
-    throw new Error(`AIX: Missing consensus function arguments (${debugLabel}).`);
-
-  return {
-    action: invocation.name === CONSENSUS_AGREE_TOOL_NAME ? 'agree' : 'dont_agree',
-    argsObject: JSON.parse(invocation.args),
-  };
-}
-
-async function getConsensusAgreement(
+async function runCouncilLeaderProposal(
+  runtime: ChatExecutionRuntime,
+  session: ChatExecutionSession,
   llmId: DLLMId,
   conversationId: DConversationId,
-  participantHistory: Readonly<DMessage[]>,
-  abortSignal: AbortSignal,
-  phaseId: string,
-  passIndex: number,
   participant: DConversationParticipant,
-): Promise<ConsensusAgreement> {
-  const { chatSystemInstruction, chatHistory } = splitSystemMessageFromHistory(participantHistory);
-  const aixChatGenerate: AixAPIChatGenerate_Request = {
-    systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
-    chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistory),
-    tools: [
-      aixFunctionCallTool({
-        name: CONSENSUS_AGREE_TOOL_NAME,
-        description: 'Use this when you agree on the exact final response that should be shown to the user.',
-        inputSchema: consensusActionInputSchema,
-      }),
-      aixFunctionCallTool({
-        name: CONSENSUS_DONT_AGREE_TOOL_NAME,
-        description: 'Use this when you do not yet agree on the final response and want deliberation to continue.',
-        inputSchema: consensusActionInputSchema,
-      }),
-    ],
-    toolsPolicy: { type: 'any' },
-  };
-
-  const { fragments } = await aixChatGenerateContent_DMessage_orThrow(
-    llmId,
-    aixChatGenerate,
-    aixCreateChatGenerateContext(CONSENSUS_AIX_CONTEXT_NAME, `${conversationId}::consensus::${phaseId}::${participant.id}::${passIndex}`),
-    false,
-    {
-      abortSignal,
-      llmOptionsOverride: { llmTemperature: 0 },
-    },
-  );
-
-  const { action, argsObject } = getConsensusToolInvocation(fragments, `consensus-${conversationId}-${llmId}-${participant.id}-${passIndex}`);
-  const { response, rationale } = consensusActionInputSchema.parse(argsObject);
-  const deliberationText = fragments
-    .filter(isTextContentFragment)
-    .map(fragment => stripConsensusTranscriptPrefix(fragment.part.text))
-    .join('\n\n')
-    .trim();
-
-  return {
+  participantHistory: Readonly<DMessage[]>,
+  sharedAbortController: AbortController,
+): Promise<string> {
+  const { finalMessage } = await runtime.runPersona({
+    assistantLlmId: llmId,
+    conversationId,
+    systemPurposeId: participant.personaId!,
+    keepAbortController: true,
+    sharedAbortController,
     participant,
-    action,
-    response: response.trim(),
-    rationale: rationale?.trim() || '',
-    deliberationText,
-  };
+    sourceHistory: participantHistory,
+    createPlaceholder: false,
+    session,
+  });
+
+  return extractCouncilProposalText((finalMessage.fragments ?? [])
+    .filter(isTextContentFragment)
+    .map(fragment => fragment.part.text));
 }
 
-function createConsensusDeliberationMessage(
+async function runCouncilReviewerBallot(
+  runtime: ChatExecutionRuntime,
+  session: ChatExecutionSession,
+  llmId: DLLMId,
+  conversationId: DConversationId,
+  participant: DConversationParticipant,
+  participantHistory: Readonly<DMessage[]>,
+  sharedAbortController: AbortController,
+) {
+  const { finalMessage } = await runtime.runPersona({
+    assistantLlmId: llmId,
+    conversationId,
+    systemPurposeId: participant.personaId!,
+    keepAbortController: true,
+    sharedAbortController,
+    participant,
+    sourceHistory: participantHistory,
+    createPlaceholder: false,
+    session,
+  });
+
+  return classifyCouncilReviewBallotFragments((finalMessage.fragments ?? [])
+    .filter(isTextContentFragment)
+    .map(fragment => fragment.part.text), participant.id);
+}
+
+function createCouncilRoundMessage(
   participant: DConversationParticipant,
   participantLlmId: DLLMId,
   phaseId: string,
-  passIndex: number,
-  action: ConsensusToolAction,
-  deliberationText: string,
-  response: string,
+  roundIndex: number,
+  action: 'proposal' | 'accept' | 'reject',
+  text: string,
+  leaderParticipantId: string,
+  reason?: string,
 ): DMessage {
-  const visibleText = deliberationText.trim() || `${action === 'agree' ? 'agree' : 'dont_agree'}: ${response}`;
+  const visibleText = action === 'proposal'
+    ? text
+    : action === 'accept'
+      ? 'Accept'
+      : `Reject: ${reason || 'review failed'}`;
   const message = createDMessageTextContent('assistant', visibleText);
   message.metadata = {
     ...message.metadata,
@@ -280,164 +690,322 @@ function createConsensusDeliberationMessage(
       personaId: participant.personaId,
       llmId: participant.llmId ?? participantLlmId,
     },
+    councilChannel: CONSENSUS_PUBLIC_BOARD_CHANNEL,
+    initialRecipients: [{ rt: 'public-board' }],
     consensus: {
       kind: 'deliberation',
       phaseId,
-      passIndex,
+      passIndex: roundIndex,
+      provisional: false,
       action,
-      agreedResponse: response,
+      agreedResponse: action === 'proposal' ? text : undefined,
+      leaderParticipantId,
+      reason: action === 'reject' ? reason || 'review failed' : undefined,
     },
   };
   message.updated = message.created;
   return message;
 }
 
-function didParticipantsReachConsensus(agreements: Readonly<ConsensusAgreement[]>, participants: DConversationParticipant[]): boolean {
-  if (!participants.length || agreements.length !== participants.length)
-    return false;
-
-  if (agreements.some(agreement => agreement.action !== 'agree'))
-    return false;
-
-  const signatures = agreements.map(agreement => getConsensusTextSignature(agreement.response)).filter(Boolean);
-  return signatures.length === participants.length && new Set(signatures).size === 1;
+function createCouncilNotificationMessage(phaseId: string, roundIndex: number, text: string): DMessage {
+  const message = createDMessageTextContent('system', text);
+  message.metadata = {
+    ...message.metadata,
+    councilChannel: { channel: 'system' },
+    consensus: {
+      kind: 'notification',
+      phaseId,
+      passIndex: roundIndex,
+    },
+  };
+  message.updated = message.created;
+  return message;
 }
 
-function appendConsensusResult(cHandler: ConversationHandler, agreedResponse: string, participants: DConversationParticipant[], phaseId: string, passIndex: number): void {
+function appendCouncilAcceptedResult(session: ChatExecutionSession, agreedResponse: string, leaderParticipant: DConversationParticipant, phaseId: string, roundIndex: number): void {
   const finalMessage = createDMessageTextContent('assistant', agreedResponse);
   finalMessage.metadata = {
     ...finalMessage.metadata,
     author: {
-      participantId: participants.map(participant => participant.id).join('|'),
-      participantName: 'Consensus',
-      personaId: null,
-      llmId: null,
+      participantId: leaderParticipant.id,
+      participantName: leaderParticipant.name,
+      personaId: leaderParticipant.personaId ?? null,
+      llmId: leaderParticipant.llmId ?? null,
     },
     consensus: {
       kind: 'result',
       phaseId,
-      passIndex,
+      passIndex: roundIndex,
       action: 'agree',
       agreedResponse,
+      leaderParticipantId: leaderParticipant.id,
     },
   };
-  cHandler.messageAppend(finalMessage);
+  session.messageAppend(finalMessage);
 }
 
-async function runConsensusSequence(
-  cHandler: ConversationHandler,
+export async function runConsensusSequence(
+  session: ChatExecutionSession,
   conversationId: DConversationId,
   participantsInOrder: DConversationParticipant[],
   defaultChatLlmId: DLLMId,
   latestUserMessageId: string | null,
+  initialCouncilState: CouncilSessionState | null = null,
+  runtime?: ChatExecutionRuntime,
 ): Promise<boolean> {
+  void latestUserMessageId;
+
   if (!participantsInOrder.length)
     return false;
 
-  const phaseId = `consensus-${agiCustomId(12)}`;
-  const sharedAbortController = new AbortController();
-  cHandler.setAbortController(sharedAbortController, 'chat-persona-consensus');
+  const phaseId = initialCouncilState?.phaseId ?? `consensus-${agiCustomId(12)}`;
+  const resolvedRuntime = await resolveChatExecutionRuntime(runtime);
+  const sharedAbortController = resolvedRuntime.createAbortController();
+  const leaderParticipant = getConsensusLeaderParticipant(participantsInOrder);
+  if (!leaderParticipant)
+    return false;
+  const reviewerParticipants = participantsInOrder.filter(participant => participant.id !== leaderParticipant?.id && participant.kind === 'assistant' && !!participant.personaId);
+  let currentCouncilState: CouncilSessionState = initialCouncilState ?? createCouncilSessionState({
+    phaseId,
+    leaderParticipantId: leaderParticipant.id,
+    reviewerParticipantIds: reviewerParticipants.map(participant => participant.id),
+    maxRounds: CONSENSUS_MAX_PASSES,
+  });
+  session.setAbortController(sharedAbortController, 'chat-persona-consensus');
+  beginCouncilSession(session, 'consensus', phaseId, currentCouncilState);
 
   try {
-    const results: boolean[] = [];
-
-    for (let passIndex = 0; passIndex < CONSENSUS_MAX_PASSES && !sharedAbortController.signal.aborted; passIndex++) {
-      const currentConversationHistory = cHandler.historyViewHeadOrThrow(`chat-persona-consensus-pass-${passIndex}`) as Readonly<DMessage[]>;
+    while (!sharedAbortController.signal.aborted && (currentCouncilState.status === 'drafting' || currentCouncilState.status === 'reviewing')) {
+      const roundIndex = currentCouncilState.roundIndex;
+      setCouncilSessionRunning(session, 'generate-content', 'consensus', phaseId, roundIndex, currentCouncilState);
+      const currentConversationHistory = session.historyViewHeadOrThrow(`chat-persona-consensus-round-${roundIndex}`) as Readonly<DMessage[]>;
       const latestUserMessage = [...currentConversationHistory].reverse().find(message => message.role === 'user') ?? null;
       if (hasStopToken(latestUserMessage)) {
         sharedAbortController.abort('@stop');
         break;
       }
 
-      const participantsForPass = getConsensusParticipantsRemaining(currentConversationHistory, latestUserMessageId, participantsInOrder);
-      if (!participantsForPass.length)
+      if (!leaderParticipant.personaId)
         break;
 
-      const agreements: ConsensusAgreement[] = [];
-      let madeProgressThisPass = false;
+      const leaderLlmId = leaderParticipant.llmId ?? defaultChatLlmId;
+      if (!leaderLlmId)
+        break;
 
-      for (const participant of participantsForPass) {
+      const councilSourceHistory = getCouncilSourceHistory(currentConversationHistory, phaseId);
+      if (currentCouncilState.status === 'drafting') {
+        const leaderHistory = await prepareCouncilLeaderHistory(
+          councilSourceHistory,
+          leaderLlmId,
+          leaderParticipant.personaId,
+          participantsInOrder,
+          leaderParticipant,
+          currentCouncilState.rounds[currentCouncilState.roundIndex]?.sharedRejectionReasons ?? [],
+          currentCouncilState.roundIndex,
+        );
+        const proposalText = await runCouncilLeaderProposal(
+          resolvedRuntime,
+          session,
+          leaderLlmId,
+          conversationId,
+          leaderParticipant,
+          leaderHistory,
+          sharedAbortController,
+        );
         if (sharedAbortController.signal.aborted)
           break;
 
-        const participantPersonaId = participant.personaId;
-        const participantLlmId = participant.llmId ?? defaultChatLlmId;
-        if (!participantPersonaId || !participantLlmId)
+        if (!proposalText.trim()) {
+          session.messageAppend(createCouncilNotificationMessage(
+            phaseId,
+            roundIndex,
+            'Leader failed to produce a valid proposal. Council will stop.',
+          ));
+          return false;
+        }
+
+        currentCouncilState = recordCouncilProposal(currentCouncilState, {
+          proposalId: `${phaseId}-proposal-${roundIndex + 1}`,
+          leaderParticipantId: leaderParticipant.id,
+          proposalText,
+        });
+        session.messageAppend(createCouncilRoundMessage(
+          leaderParticipant,
+          leaderLlmId,
+          phaseId,
+          roundIndex,
+          'proposal',
+          proposalText,
+          leaderParticipant.id,
+        ));
+        setCouncilSessionRunning(session, 'generate-content', 'consensus', phaseId, roundIndex, currentCouncilState);
+      }
+
+      const activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
+      const proposalText = activeRound?.proposalText?.trim() ?? '';
+      if (!proposalText)
+        return false;
+
+      let ballots = [...(activeRound?.ballots ?? [])];
+      const reviewedParticipantIds = new Set(ballots.map(ballot => ballot.reviewerParticipantId));
+
+      for (const reviewer of reviewerParticipants) {
+        if (sharedAbortController.signal.aborted)
+          break;
+        if (reviewedParticipantIds.has(reviewer.id))
           continue;
 
-        const sourceHistory = getConsensusWorkingHistory(cHandler.historyViewHeadOrThrow(`chat-persona-consensus-source-${participant.id}-${passIndex}`), phaseId);
-        const participantHistory = prepareConsensusHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
-
-        try {
-          const agreement = await getConsensusAgreement(
-            participantLlmId,
-            conversationId,
-            participantHistory,
-            sharedAbortController.signal,
-            phaseId,
-            passIndex,
-            participant,
-          );
-          agreements.push(agreement);
-          results.push(true);
-          madeProgressThisPass = true;
-
-          const deliberationMessage = createConsensusDeliberationMessage(
-            participant,
-            participantLlmId,
-            phaseId,
-            passIndex,
-            agreement.action,
-            agreement.deliberationText,
-            agreement.response,
-          );
-          cHandler.messageAppend(deliberationMessage);
-        } catch {
-          results.push(false);
+        const reviewerLlmId = reviewer.llmId ?? defaultChatLlmId;
+        let ballot;
+        if (!reviewer.personaId || !reviewerLlmId) {
+          ballot = {
+            reviewerParticipantId: reviewer.id,
+            decision: 'reject' as const,
+            reason: 'review failed',
+          };
+        } else {
+          try {
+            const reviewerHistory = await prepareCouncilReviewerHistory(
+              councilSourceHistory,
+              reviewerLlmId,
+              reviewer.personaId,
+              reviewer,
+              leaderParticipant,
+              proposalText,
+              currentCouncilState.rounds[currentCouncilState.roundIndex]?.sharedRejectionReasons ?? [],
+              currentCouncilState.roundIndex,
+            );
+            ballot = await runCouncilReviewerBallot(
+              resolvedRuntime,
+              session,
+              reviewerLlmId,
+              conversationId,
+              reviewer,
+              reviewerHistory,
+              sharedAbortController,
+            );
+          } catch {
+            if (sharedAbortController.signal.aborted)
+              break;
+            ballot = {
+              reviewerParticipantId: reviewer.id,
+              decision: 'reject' as const,
+              reason: 'review failed',
+            };
+          }
         }
+
+        if (sharedAbortController.signal.aborted)
+          break;
+
+        ballots = [...ballots, ballot];
+        reviewedParticipantIds.add(reviewer.id);
+        session.messageAppend(createCouncilRoundMessage(
+          reviewer,
+          reviewerLlmId ?? defaultChatLlmId ?? '',
+          phaseId,
+          roundIndex,
+          ballot.decision,
+          proposalText,
+          leaderParticipant.id,
+          ballot.reason,
+        ));
+
+        currentCouncilState = {
+          ...currentCouncilState,
+          status: 'reviewing',
+          rounds: currentCouncilState.rounds.map(round => round.roundIndex !== roundIndex
+            ? round
+            : {
+                ...round,
+                ballots,
+              }),
+          updatedAt: Date.now(),
+        };
+        setCouncilSessionRunning(session, 'generate-content', 'consensus', phaseId, roundIndex, currentCouncilState);
       }
 
-      if (didParticipantsReachConsensus(agreements, participantsForPass)) {
-        const agreedResponse = agreements[0]?.response ?? null;
-        if (agreedResponse)
-          appendConsensusResult(cHandler, agreedResponse, participantsForPass, phaseId, passIndex);
-        return results.length >= participantsForPass.length && agreements.length === participantsForPass.length && results.every(Boolean);
-      }
-
-      if (!madeProgressThisPass)
+      if (sharedAbortController.signal.aborted)
         break;
+
+      currentCouncilState = applyCouncilReviewBallots(currentCouncilState, ballots);
+      if (currentCouncilState.status === 'accepted') {
+        if (currentCouncilState.finalResponse)
+          appendCouncilAcceptedResult(session, currentCouncilState.finalResponse, leaderParticipant, phaseId, roundIndex);
+        return !sharedAbortController.signal.aborted;
+      }
+
+      if (currentCouncilState.status === 'exhausted') {
+        const rejectionReasons = ballots.reduce<string[]>((reasons, ballot) => {
+          if (ballot.decision === 'reject' && ballot.reason)
+            reasons.push(ballot.reason);
+          return reasons;
+        }, []);
+        session.messageAppend(createCouncilNotificationMessage(
+          phaseId,
+          roundIndex,
+          rejectionReasons.length
+            ? `Council exhausted after ${roundIndex + 1} rounds. Final rejection reasons:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`
+            : `Council exhausted after ${roundIndex + 1} rounds.`,
+        ));
+        return false;
+      }
+
+      const rejectionReasons = ballots.reduce<string[]>((reasons, ballot) => {
+        if (ballot.decision === 'reject' && ballot.reason)
+          reasons.push(ballot.reason);
+        return reasons;
+      }, []);
+      if (rejectionReasons.length) {
+        session.messageAppend(createCouncilNotificationMessage(
+          phaseId,
+          roundIndex,
+          `Round ${roundIndex + 1} rejected. Rejection reasons:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`,
+        ));
+      }
     }
 
     return false;
   } finally {
-    cHandler.clearAbortController('chat-persona-consensus');
+    const interruption = getCouncilInterruption(sharedAbortController);
+    session.clearAbortController('chat-persona-consensus');
+    finalizeCouncilSession(session, interruption, 'consensus', phaseId, currentCouncilState.roundIndex, currentCouncilState);
   }
 }
 
 async function runParticipantSequence(
-  cHandler: ConversationHandler,
+  session: ChatExecutionSession,
   conversationId: DConversationId,
   participantsInOrder: DConversationParticipant[],
   allAssistantParticipants: DConversationParticipant[],
   defaultChatLlmId: DLLMId,
   turnTerminationMode: DConversationTurnTerminationMode,
   latestUserMessageId: string | null,
+  councilChannel: DMessageCouncilChannel,
+  runtime?: ChatExecutionRuntime,
 ): Promise<boolean> {
   if (!participantsInOrder.length)
     return false;
 
-  const sharedAbortController = new AbortController();
-  cHandler.setAbortController(sharedAbortController, 'chat-persona-multi');
+  const resolvedRuntime = await resolveChatExecutionRuntime(runtime);
+  const sharedAbortController = resolvedRuntime.createAbortController();
+  session.setAbortController(sharedAbortController, 'chat-persona-multi');
+  beginCouncilSession(session, turnTerminationMode);
+
+  let continuousTurnCount = 0;
 
   try {
     const results: boolean[] = [];
     const participantCount = participantsInOrder.length;
-    let continuousTurnCount = 0;
     let pendingMentionedParticipantIds: string[] = [];
     let allowRoundRobinMentionContinuation = false;
 
     while (!sharedAbortController.signal.aborted) {
-      const historyForTurn = cHandler.historyViewHeadOrThrow(`chat-persona-multi-${continuousTurnCount}`) as Readonly<DMessage[]>;
+      setCouncilSessionRunning(session, 'generate-content', turnTerminationMode, null, continuousTurnCount);
+      const historyForTurn = getHistoryForCouncilChannel(
+        session.historyViewHeadOrThrow(`chat-persona-multi-${continuousTurnCount}`) as Readonly<DMessage[]>,
+        councilChannel,
+      );
       const latestUserMessage = [...historyForTurn].reverse().find(message => message.role === 'user') ?? null;
       if (hasStopToken(latestUserMessage)) {
         sharedAbortController.abort('@stop');
@@ -473,16 +1041,31 @@ async function runParticipantSequence(
         if (!participantPersonaId || !participantLlmId)
           continue;
 
-        const sourceHistory = cHandler.historyViewHeadOrThrow(`chat-persona-multi-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>;
-        const participantHistory = preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
-        const result = await runPersonaOnConversationHead(participantLlmId, conversationId, participantPersonaId, true, sharedAbortController, participant, participantHistory);
+        const sourceHistory = getHistoryForCouncilChannel(
+          session.historyViewHeadOrThrow(`chat-persona-multi-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>,
+          councilChannel,
+        );
+        const participantHistory = await preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
+        const result = await resolvedRuntime.runPersona({
+          assistantLlmId: participantLlmId,
+          conversationId,
+          systemPurposeId: participantPersonaId,
+          keepAbortController: true,
+          sharedAbortController,
+          participant,
+          sourceHistory: participantHistory,
+          createPlaceholder: true,
+          messageChannel: councilChannel,
+          session,
+        });
         results.push(result.success);
+
         madeProgressThisPass = madeProgressThisPass || result.success;
 
         if (sharedAbortController.signal.aborted)
           break;
 
-        const updatedHistory = cHandler.historyViewHeadOrThrow(`chat-persona-multi-after-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>;
+        const updatedHistory = session.historyViewHeadOrThrow(`chat-persona-multi-after-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>;
         const latestAssistantMessage = [...updatedHistory].reverse().find(message => message.role === 'assistant' && message.metadata?.author?.participantId === participant.id) ?? null;
         const mentionedParticipants = getMentionedParticipants(latestAssistantMessage, allAssistantParticipants, new Set([participant.id]));
         if (!mentionedParticipants.length)
@@ -507,7 +1090,6 @@ async function runParticipantSequence(
           continue;
 
         const trailingParticipants = participantsForPass.slice(currentParticipantIndex + 1);
-        const trailingParticipantIds = new Set(trailingParticipants.map(trailingParticipant => trailingParticipant.id));
         const followUpParticipants = mentionedParticipants;
         if (!followUpParticipants.length)
           continue;
@@ -533,11 +1115,14 @@ async function runParticipantSequence(
 
     return results.some(Boolean);
   } finally {
-    cHandler.clearAbortController('chat-persona-multi');
+    const interruption = getCouncilInterruption(sharedAbortController);
+    session.clearAbortController('chat-persona-multi');
+    finalizeCouncilSession(session, interruption, turnTerminationMode, null, continuousTurnCount);
   }
 }
 
-export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, executeCallerNameDebug: string) {
+export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, executeCallerNameDebug: string, runtime?: ChatExecutionRuntime) {
+  const resolvedRuntime = await resolveChatExecutionRuntime(runtime);
 
   const participants = getConversationParticipants(conversationId);
   const assistantParticipants = participants.filter(participant => participant.kind === 'assistant' && !!participant.personaId);
@@ -550,8 +1135,8 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   if (!conversationId)
     return 'err-no-conversation';
 
-  const cHandler = ConversationsManager.getHandler(conversationId);
-  const initialHistory = cHandler.historyViewHeadOrThrow('handle-execute-' + executeCallerNameDebug) as Readonly<DMessage[]>;
+  const session = resolvedRuntime.getSession(conversationId);
+  const initialHistory = session.historyViewHeadOrThrow('handle-execute-' + executeCallerNameDebug) as Readonly<DMessage[]>;
 
   // Handle unconfigured
   if (!chatLLMId || !chatExecuteMode)
@@ -566,39 +1151,92 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
 
   // execute a command, if the last message has one
-  if (lastMessage.role === 'user') {
-    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, lastMessage, cHandler, chatLLMId);
+  if (lastMessage.role === 'user' && isTextContentFragment(firstFragment) && firstFragment.part.text.trimStart().startsWith('/')) {
+    const { _handleExecuteCommand, RET_NO_CMD } = await import('./_handleExecuteCommand');
+    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, lastMessage, session, chatLLMId);
     if (cmdRC !== RET_NO_CMD) return cmdRC;
   }
 
   // get the system purpose (note: we don't react to it, or it would invalidate half UI components..)
   // TODO: change this massively
   if (!systemPurposeId) {
-    cHandler.messageAppendAssistantText('Issue: no Persona selected.', 'issue');
+    session.messageAppendAssistantText('Issue: no Persona selected.', 'issue');
     return 'err-no-persona';
   }
 
   // synchronous long-duration tasks, which update the state as they go
   switch (chatExecuteMode) {
     case 'generate-content': {
-      const latestUserMessage = [...initialHistory].reverse().find(message => message.role === 'user') ?? null;
+      const requestedCouncilChannel = normalizeCouncilChannel(lastMessage.metadata?.councilChannel);
+      const historyForRequestedChannel = getHistoryForCouncilChannel(initialHistory, requestedCouncilChannel);
+      const latestUserMessage = [...historyForRequestedChannel].reverse().find(message => message.role === 'user') ?? null;
+      const resumeSession = turnTerminationMode === 'consensus'
+        ? session.getCouncilSession()
+        : createIdleCouncilSessionState();
       if (hasStopToken(latestUserMessage)) {
-        cHandler.clearAbortController('chat-persona-stop-token');
+        session.clearAbortController('chat-persona-stop-token');
         return true;
       }
-      const runnableParticipants = getRunnableParticipants(assistantParticipants, latestUserMessage);
-      const directlyMentionedParticipants = getMentionedParticipants(latestUserMessage, assistantParticipants);
-      const participantsForTurn = mergeParticipantsInRosterOrder(assistantParticipants, runnableParticipants, directlyMentionedParticipants);
+      const assistantParticipantsForChannel = getParticipantsForCouncilChannel(assistantParticipants, requestedCouncilChannel, conversationId);
+      const runnableParticipants = getRunnableParticipants(assistantParticipantsForChannel, latestUserMessage);
+      const directlyMentionedParticipants = getMentionedParticipants(latestUserMessage, assistantParticipantsForChannel);
+      const participantsForTurn = mergeParticipantsInRosterOrder(assistantParticipantsForChannel, runnableParticipants, directlyMentionedParticipants);
 
       if (!participantsForTurn.length) {
-        cHandler.messageAppendAssistantText('No agent was triggered for this turn. Mention an agent with @alias, or set it to speak every turn.', 'issue');
+        session.messageAppendAssistantText(`No agent was triggered in ${describeCouncilChannel(requestedCouncilChannel, participants, conversationId)}. Mention an agent with @alias, or set it to speak every turn.`, 'issue');
         return false;
       }
 
-      if (participantsForTurn.length > 1 || turnTerminationMode === 'continuous' || turnTerminationMode === 'consensus')
-        return turnTerminationMode === 'consensus'
-          ? await runConsensusSequence(cHandler, conversationId, participantsForTurn, chatLLMId, latestUserMessage?.id ?? null)
-          : await runParticipantSequence(cHandler, conversationId, participantsForTurn, assistantParticipants, chatLLMId, turnTerminationMode, latestUserMessage?.id ?? null);
+      const effectiveTurnTerminationMode = requestedCouncilChannel.channel !== 'public-board' && turnTerminationMode === 'consensus'
+        ? 'round-robin-per-human'
+        : turnTerminationMode;
+      const initialCouncilState = effectiveTurnTerminationMode === 'consensus' && resumeSession.canResume
+        ? resumeSession.workflowState ?? (() => {
+            const resumePhaseId = resumeSession.phaseId?.trim() || null;
+            const leaderParticipant = getConsensusLeaderParticipant(participantsForTurn);
+            if (!resumePhaseId || !leaderParticipant)
+              return null;
+
+            const reviewerParticipants = participantsForTurn.filter(participant =>
+              participant.id !== leaderParticipant.id && participant.kind === 'assistant' && !!participant.personaId);
+            return hydrateCouncilSessionFromTranscriptEntries({
+              phaseId: resumePhaseId,
+              leaderParticipantId: leaderParticipant.id,
+              reviewerParticipantIds: reviewerParticipants.map(participant => participant.id),
+              maxRounds: CONSENSUS_MAX_PASSES,
+              entries: historyForRequestedChannel
+                .filter(message => {
+                  const consensus = message.metadata?.consensus;
+                  return consensus?.kind === 'deliberation' && consensus.phaseId === resumePhaseId;
+                })
+                .map(message => ({
+                  roundIndex: message.metadata?.consensus?.passIndex ?? 0,
+                  participantId: message.metadata?.author?.participantId ?? '',
+                  action: message.metadata?.consensus?.action === 'accept'
+                    ? 'accept'
+                    : message.metadata?.consensus?.action === 'reject'
+                      ? 'reject'
+                      : 'proposal',
+                  messageId: message.id,
+                  text: messageFragmentsReduceText(message.fragments).trim(),
+                  reason: message.metadata?.consensus?.reason,
+                })),
+            });
+          })()
+        : null;
+
+      if (participantsForTurn.length > 1 || effectiveTurnTerminationMode === 'continuous' || effectiveTurnTerminationMode === 'consensus')
+        return effectiveTurnTerminationMode === 'consensus'
+          ? await runConsensusSequence(
+            session,
+            conversationId,
+            participantsForTurn,
+            chatLLMId,
+            latestUserMessage?.id ?? null,
+            initialCouncilState,
+            resolvedRuntime,
+          )
+          : await runParticipantSequence(session, conversationId, participantsForTurn, assistantParticipantsForChannel, chatLLMId, effectiveTurnTerminationMode, latestUserMessage?.id ?? null, requestedCouncilChannel, resolvedRuntime);
 
       const soleParticipant = participantsForTurn[0] ?? primaryParticipant;
       const soleParticipantPersonaId = soleParticipant?.personaId ?? systemPurposeId;
@@ -606,13 +1244,23 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       if (!soleParticipant || !soleParticipantPersonaId || !soleParticipantLlmId)
         return 'err-no-persona';
 
-      const participantHistory = preparePersonaHistory(initialHistory, soleParticipantLlmId, soleParticipantPersonaId, participantsForTurn, soleParticipant);
-      return (await runPersonaOnConversationHead(soleParticipantLlmId, conversationId, soleParticipantPersonaId, false, undefined, soleParticipant, participantHistory)).success;
+      const participantHistory = await preparePersonaHistory(historyForRequestedChannel, soleParticipantLlmId, soleParticipantPersonaId, participantsForTurn, soleParticipant);
+      return (await resolvedRuntime.runPersona({
+        assistantLlmId: soleParticipantLlmId,
+        conversationId,
+        systemPurposeId: soleParticipantPersonaId,
+        keepAbortController: false,
+        participant: soleParticipant,
+        sourceHistory: participantHistory,
+        createPlaceholder: true,
+        messageChannel: requestedCouncilChannel,
+        session,
+      })).success;
     }
 
     case 'beam-content':
-      const updatedInputHistory = cHandler.historyViewHeadOrThrow('chat-beam-execute');
-      cHandler.beamInvoke(updatedInputHistory, [], null);
+      const updatedInputHistory = session.historyViewHeadOrThrow('chat-beam-execute');
+      session.beamInvoke(updatedInputHistory, [], null);
       return true;
 
     case 'append-user':
@@ -623,7 +1271,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       if (!isTextContentFragment(firstFragment))
         return false;
       const imagePrompt = firstFragment.part.text;
-      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
+      session.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
 
       // use additional image fragments as image inputs
       const imageInputFragments = lastMessage.fragments.slice(1)
@@ -631,15 +1279,15 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
           isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
         ));
 
-      return await runImageGenerationUpdatingState(cHandler, imagePrompt, imageInputFragments);
+      return await (await import('./image-generate')).runImageGenerationUpdatingState(session, imagePrompt, imageInputFragments);
 
     case 'react-content':
       // verify we were called with a single DMessageTextContent
       if (!isTextContentFragment(firstFragment))
         return false;
       const reactPrompt = firstFragment.part.text;
-      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
-      return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId, lastMessage.id);
+      session.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
+      return await (await import('./react-tangent')).runReActUpdatingState(session, reactPrompt, chatLLMId, lastMessage.id);
 
     default:
       console.log('Chat execute: issue running', chatExecuteMode, conversationId, lastMessage);

@@ -55,11 +55,14 @@ type BuildCouncilTraceRenderParams = {
 
 export type CouncilTraceRenderPlan = {
   traceItem: CouncilTraceRenderItem | null;
+  showLegacyDeliberationToggle: boolean;
 };
 
 export function buildCouncilTraceRenderPlan(params: BuildCouncilTraceRenderParams): CouncilTraceRenderPlan {
+  const traceItem = buildCouncilTraceRenderItem(params);
   return {
-    traceItem: buildCouncilTraceRenderItem(params),
+    traceItem,
+    showLegacyDeliberationToggle: !traceItem,
   };
 }
 

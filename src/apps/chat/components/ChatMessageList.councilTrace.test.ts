@@ -196,13 +196,14 @@ test('exhausted council workflow anchors the trace after the current phase when 
 });
 
 test('workflow state absence omits the council trace entirely', () => {
-  const traceItem = buildCouncilTraceRenderPlan({
+  const plan = buildCouncilTraceRenderPlan({
     messages: [],
     participants,
     councilSession: createIdleCouncilSessionState(),
-  }).traceItem;
+  });
 
-  assert.equal(traceItem, null);
+  assert.equal(plan.traceItem, null);
+  assert.equal(plan.showLegacyDeliberationToggle, true);
 });
 
 test('shared rejection reason labels reflect whether the round feeds a next round, waits for one, or terminates', () => {
@@ -433,4 +434,38 @@ test('reviewer cards follow reviewer participant order and preserve verbatim rej
     { participantId: 'critic', decision: 'reject', reason: 'Use the exact caveat.' },
   ]);
   assert.deepEqual(traceItem?.rounds[0]?.reviewerCards, []);
+});
+
+test('trace plans disable the legacy deliberation toggle when a structured trace exists', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-toggle',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 4,
+  });
+
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-toggle-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Toggle proposal.',
+  });
+
+  const plan = buildCouncilTraceRenderPlan({
+    messages: [
+      createCouncilMessage({ id: 'proposal-toggle-1', text: 'Toggle proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-toggle', passIndex: 0 }),
+    ],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'running',
+      phaseId: 'phase-toggle',
+      passIndex: 0,
+      workflowState,
+      canResume: true,
+      updatedAt: 100,
+    },
+  });
+
+  assert.ok(plan.traceItem);
+  assert.equal(plan.showLegacyDeliberationToggle, false);
 });

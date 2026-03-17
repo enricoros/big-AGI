@@ -17,6 +17,9 @@ by release.
 - **Image Generation** and editing with Nano Banana and gpt-image-1
 - **Web Search** with citations for supported models
 - **UI** & Mobile UI overhaul with peeking and side panels
+- Agent roster editor now collapses expanded cards to a safe single-column layout inside the popup to prevent overlap
+- Council mode now shows a collapsible trace before the final answer, with round-by-round proposals, reviewer verdicts, and verbatim rejection reasons
+- Next launch scripts now quarantine a broken `.next` tree before running so stale manifests/chunks do not crash startup
 - And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
 - Built for the future, madly optimized
 
