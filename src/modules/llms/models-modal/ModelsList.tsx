@@ -215,7 +215,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
         )) : <>
           {props.chipChat && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>chat</Chip>}
           {props.chipCode && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>code</Chip>}
-          {props.chipFast && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>util</Chip>}
+          {props.chipFast && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>fast</Chip>}
         </>}
 
         {/* Features Chips - sync with `useLLMSelect.tsx` */}
@@ -281,7 +281,7 @@ export function ModelsList(props: {
 
     // derived
     const primaryChatLlmId = domainAssignments['primaryChat']?.modelId;
-    // const codeApplyLlmId = domainAssignments['codeApply']?.modelId;
+    const codeApplyLlmId = domainAssignments['codeApply']?.modelId;
     const fastUtilLlmId = domainAssignments['fastUtil']?.modelId;
 
     // generate the list items, prepending headers when necessary
@@ -316,7 +316,7 @@ export function ModelsList(props: {
           serviceLabel={serviceLabel}
           vendor={vendor}
           chipChat={llm.id === primaryChatLlmId}
-          chipCode={false /* do not show the CODE chip for now, to not confuse users llm.id === codeApplyLlmId*/}
+          chipCode={llm.id === codeApplyLlmId}
           chipFast={llm.id === fastUtilLlmId}
           isMobile={isMobile}
           onModelClicked={handleModelClicked}
