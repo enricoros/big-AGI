@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, FormHelperText, Typography } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 
 import { ExpanderControlledBox } from './ExpanderControlledBox';
@@ -11,7 +12,6 @@ const _styles = {
 
   header: {
     // style
-    // borderRadius: 'sm',
     // borderBottom: '1px solid',
     // borderBottomColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.05)',
 
@@ -41,15 +41,22 @@ const _styles = {
   },
 
   headerTextWrapper: {
-    flexGrow: 1,
+    // flexGrow: 1,
     display: 'flex',
     flexDirection: 'column',
     gap: 0.25,
     // mb: 0.5,
   },
 
+  aeDivider: {
+    flex: 1,
+    height: '1px',
+    backgroundColor: 'divider',
+    ml: 0.25,
+  },
+
   aeHeaderIcon: {
-    mr: 0,
+    // mr: 0,
     color: 'neutral.softColor',
     fontSize: 'md',
   },
@@ -94,7 +101,6 @@ export function ExpanderSection(props: {
 
   return <>
 
-    {/* Clickable header */}
     <Box
       aria-expanded={isExpanded}
       onClick={isCollapsible ? handleToggle : undefined}
@@ -108,7 +114,12 @@ export function ExpanderSection(props: {
         {!!description && <FormHelperText>{description}</FormHelperText>}
       </Box>
 
-      {isCollapsible && !isExpanded && <UnfoldMoreIcon sx={_styles.aeHeaderIcon} />}
+      {isCollapsible && !isExpanded && <Box sx={_styles.aeDivider} />}
+
+      {isCollapsible && (isExpanded
+          ? <UnfoldMoreIcon sx={_styles.aeHeaderIcon} />
+          : <KeyboardArrowDownIcon sx={_styles.aeHeaderIcon} />
+      )}
     </Box>
 
     {/* Content - always mounted, animated from 0 to height */}
