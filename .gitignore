@@ -52,6 +52,7 @@ next-env.d.ts
 .idea/
 /artifacts/
 /.worktrees/
+/docs/superpowers/
 
 # Ingore k8s/env-secret.yaml
 ./k8s/env-secret.yaml

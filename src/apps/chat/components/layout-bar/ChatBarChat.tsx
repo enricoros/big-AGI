@@ -451,8 +451,8 @@ export function ChatBarChat(props: {
     setExpandedParticipantId(participantId);
   }, [expandedParticipantId, handleParticipantDraftCommit]);
 
-  const handleParticipantMove = React.useCallback((participantId: string, direction: -1 | 1) => {
-    if (!props.conversationId)
+  const handleParticipantReorder = React.useCallback((draggedParticipantId: string, targetParticipantId: string, edge: 'before' | 'after') => {
+    if (!props.conversationId || draggedParticipantId === targetParticipantId)
       return;
 
     const humanParticipants = participants.filter(participant => participant.kind === 'human');
@@ -465,11 +465,75 @@ export function ChatBarChat(props: {
     const reorderedAssistants = [...assistantParticipants];
     const [draggedParticipant] = reorderedAssistants.splice(draggedIndex, 1);
     const adjustedTargetIndex = reorderedAssistants.findIndex(participant => participant.id === targetParticipantId);
-    if (adjustedTargetIndex < 0)
+    if (!draggedParticipant || adjustedTargetIndex < 0)
       return;
 
     const insertionIndex = edge === 'before' ? adjustedTargetIndex : adjustedTargetIndex + 1;
     reorderedAssistants.splice(insertionIndex, 0, draggedParticipant);
+    setParticipants(props.conversationId, [...humanParticipants, ...reorderedAssistants]);
+  }, [participants, props.conversationId, setParticipants]);
+
+  const resetParticipantDragState = React.useCallback(() => {
+    setDraggedParticipantId(null);
+    setDropTargetParticipantId(null);
+    setDropTargetEdge(null);
+  }, []);
+
+  const handleParticipantDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', participantId);
+    setDraggedParticipantId(participantId);
+    setDropTargetParticipantId(participantId);
+    setDropTargetEdge('before');
+  }, []);
+
+  const handleParticipantDragOver = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
+    if (!draggedParticipantId)
+      return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const pointerOffset = event.clientY - bounds.top;
+    const edge = pointerOffset < bounds.height / 2 ? 'before' : 'after';
+
+    setDropTargetParticipantId(participantId);
+    setDropTargetEdge(edge);
+  }, [draggedParticipantId]);
+
+  const handleParticipantDrop = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
+    event.preventDefault();
+
+    const sourceParticipantId = draggedParticipantId || event.dataTransfer.getData('text/plain');
+    const edge = dropTargetParticipantId === participantId ? (dropTargetEdge ?? 'before') : 'before';
+    if (sourceParticipantId)
+      handleParticipantReorder(sourceParticipantId, participantId, edge);
+
+    resetParticipantDragState();
+  }, [draggedParticipantId, dropTargetEdge, dropTargetParticipantId, handleParticipantReorder, resetParticipantDragState]);
+
+  const handleParticipantDragEnd = React.useCallback(() => {
+    resetParticipantDragState();
+  }, [resetParticipantDragState]);
+
+  const handleParticipantMove = React.useCallback((participantId: string, direction: -1 | 1) => {
+    if (!props.conversationId)
+      return;
+
+    const humanParticipants = participants.filter(participant => participant.kind === 'human');
+    const assistantParticipants = participants.filter(participant => participant.kind === 'assistant');
+    const participantIndex = assistantParticipants.findIndex(participant => participant.id === participantId);
+    const targetIndex = participantIndex + direction;
+    if (participantIndex < 0 || targetIndex < 0 || targetIndex >= assistantParticipants.length)
+      return;
+
+    const reorderedAssistants = [...assistantParticipants];
+    const [movedParticipant] = reorderedAssistants.splice(participantIndex, 1);
+    if (!movedParticipant)
+      return;
+
+    reorderedAssistants.splice(targetIndex, 0, movedParticipant);
     setParticipants(props.conversationId, [...humanParticipants, ...reorderedAssistants]);
   }, [participants, props.conversationId, setParticipants]);
 
