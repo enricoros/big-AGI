@@ -13,7 +13,12 @@ import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imagineProm
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import {
+  sanitizeCouncilTraceAutoCollapsePreviousRounds,
+  sanitizeCouncilTraceAutoExpandNewestRound,
+  type DConversation,
+  type DConversationId,
+} from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
@@ -24,15 +29,16 @@ import { PanelResizeInset } from '~/common/components/PanelResizeInset';
 import { Release } from '~/common/app.release';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
+import { ScrollToTopButton } from '~/common/scroll-to-bottom/ScrollToTopButton';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import type { SystemPurposeId } from '../../data';
-import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationParticipants, getConversationSystemPurposeId, useChatStore, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationCouncilMaxRounds, getConversationParticipants, getConversationSystemPurposeId, getConversationTurnTerminationMode, useChatStore, useConversation } from '~/common/stores/chat/store-chats';
 import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
@@ -58,6 +64,8 @@ import { usePanesManager } from './components/panes/store-panes-manager';
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
 
 import { _handleExecute } from './editors/_handleExecute';
+import { getConversationToFocusAfterDeletion } from './AppChat.delete';
+import { enqueueConversationSend, getQueuedConversationDrainAction, type QueuedConversationSend } from './AppChat.queue';
 
 
 // what to say when a chat is new and has no title
@@ -242,13 +250,6 @@ export function AppChat() {
 
   // Execution
 
-  type QueuedConversationSend = {
-    mode: 'steer' | 'queue';
-    chatExecuteMode: ChatExecuteMode;
-    fragments: DMessageFragment[];
-    metadata?: DMessageMetadata;
-  };
-
   const queuedConversationSendsRef = React.useRef<Map<DConversationId, QueuedConversationSend[]>>(new Map());
   const drainingConversationIdsRef = React.useRef<Set<DConversationId>>(new Set());
 
@@ -288,15 +289,20 @@ export function AppChat() {
           continue;
         }
 
-        const isBusy = !!conversation._abortController;
-        if (isBusy && nextQueuedItem.mode !== 'steer')
+        const drainAction = getQueuedConversationDrainAction({
+          hasConversation: true,
+          isBusy: !!conversation._abortController,
+          turnTerminationMode: getConversationTurnTerminationMode(conversation.id),
+          nextQueuedMode: nextQueuedItem.mode,
+        });
+        if (drainAction === 'wait')
           break;
 
         queuedItems?.shift();
         if (!queuedItems?.length)
           queuedConversationSendsRef.current.delete(conversationId);
 
-        if (isBusy && nextQueuedItem.mode === 'steer')
+        if (drainAction === 'abort-active-and-process')
           conversation._abortController?.abort('steer-message');
 
         const conversationParticipants = getConversationParticipants(conversation.id);
@@ -332,6 +338,10 @@ export function AppChat() {
     }
   }, [drainQueuedConversationSends, reportExecuteOutcome]);
 
+  const handleResumeCouncilSession = React.useCallback(async (conversationId: DConversationId) => {
+    return await handleExecuteAndOutcome('generate-content', conversationId, 'chat-council-resume');
+  }, [handleExecuteAndOutcome]);
+
   const handleComposerAction = React.useCallback((conversationId: DConversationId, sendMode: 'steer' | 'queue', chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
 
     // [multicast] send the message to all the panes
@@ -357,23 +367,14 @@ export function AppChat() {
 
       if (conversation._abortController) {
         const queuedItems = queuedConversationSendsRef.current.get(conversation.id) ?? [];
-        if (sendMode === 'steer') {
-          const firstQueuedIndex = queuedItems.findIndex(item => item.mode === 'queue');
-          const steerInsertIndex = firstQueuedIndex >= 0 ? firstQueuedIndex : queuedItems.length;
-          queuedItems.splice(steerInsertIndex, 0, {
-            mode: sendMode,
-            chatExecuteMode,
-            fragments: duplicatedFragments,
-            metadata: duplicatedMetadata,
-          });
-        } else
-          queuedItems.push({
-            mode: sendMode,
-            chatExecuteMode,
-            fragments: duplicatedFragments,
-            metadata: duplicatedMetadata,
-          });
-        queuedConversationSendsRef.current.set(conversation.id, queuedItems);
+        queuedConversationSendsRef.current.set(conversation.id, enqueueConversationSend({
+          queuedItems,
+          sendMode,
+          turnTerminationMode: getConversationTurnTerminationMode(conversation.id),
+          chatExecuteMode,
+          fragments: duplicatedFragments,
+          metadata: duplicatedMetadata,
+        }));
         void drainQueuedConversationSends(conversation.id);
         continue;
       }
@@ -468,8 +469,13 @@ export function AppChat() {
       : prependNewConversation(agentGroupSnapshot?.systemPurposeId ?? getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
 
     if (agentGroupSnapshot && conversationId) {
+      useChatStore.getState().setSystemPurposeId(conversationId, agentGroupSnapshot.systemPurposeId);
       useChatStore.getState().setParticipants(conversationId, agentGroupSnapshot.participants.map(participant => ({ ...participant })));
       useChatStore.getState().setTurnTerminationMode(conversationId, agentGroupSnapshot.turnTerminationMode);
+      useChatStore.getState().setCouncilMaxRounds(conversationId, agentGroupSnapshot.councilMaxRounds ?? getConversationCouncilMaxRounds(focusedPaneConversationId));
+      useChatStore.getState().setCouncilTraceAutoCollapsePreviousRounds(conversationId, sanitizeCouncilTraceAutoCollapsePreviousRounds(agentGroupSnapshot.councilTraceAutoCollapsePreviousRounds));
+      useChatStore.getState().setCouncilTraceAutoExpandNewestRound(conversationId, sanitizeCouncilTraceAutoExpandNewestRound(agentGroupSnapshot.councilTraceAutoExpandNewestRound));
+      useChatStore.getState()._editConversation(conversationId, { agentGroupId: agentGroupSnapshot.id });
     }
 
     // switch the focused pane to the new conversation
@@ -497,8 +503,13 @@ export function AppChat() {
       name: name?.trim() || `Agents ${Math.max(participants.length, 1)}`,
       systemPurposeId: conversation.systemPurposeId,
       turnTerminationMode: conversation.turnTerminationMode ?? 'round-robin-per-human',
+      councilMaxRounds: getConversationCouncilMaxRounds(conversationId),
+      councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(conversation.councilTraceAutoCollapsePreviousRounds),
+      councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(conversation.councilTraceAutoExpandNewestRound),
       participants,
     }, existingId);
+
+    useChatStore.getState()._editConversation(conversationId, { agentGroupId: nextId });
 
     addSnackbar({
       key: existingId ? 'agent-group-updated' : 'agent-group-saved',
@@ -508,6 +519,33 @@ export function AppChat() {
     });
 
     return nextId;
+  }, []);
+
+  const handleConversationLoadAgentGroup = React.useCallback((conversationId: DConversationId, agentGroupSnapshot: DAgentGroupSnapshot) => {
+    const conversation = getConversation(conversationId);
+    if (!conversation)
+      return false;
+
+    const humanParticipants = getConversationParticipants(conversationId)
+      .filter(participant => participant.kind === 'human')
+      .map(participant => ({ ...participant }));
+
+    useChatStore.getState().setSystemPurposeId(conversationId, agentGroupSnapshot.systemPurposeId);
+    useChatStore.getState().setParticipants(conversationId, [...humanParticipants, ...agentGroupSnapshot.participants.map(participant => ({ ...participant }))]);
+    useChatStore.getState().setTurnTerminationMode(conversationId, agentGroupSnapshot.turnTerminationMode);
+    useChatStore.getState().setCouncilMaxRounds(conversationId, agentGroupSnapshot.councilMaxRounds ?? getConversationCouncilMaxRounds(conversationId));
+    useChatStore.getState().setCouncilTraceAutoCollapsePreviousRounds(conversationId, sanitizeCouncilTraceAutoCollapsePreviousRounds(agentGroupSnapshot.councilTraceAutoCollapsePreviousRounds));
+    useChatStore.getState().setCouncilTraceAutoExpandNewestRound(conversationId, sanitizeCouncilTraceAutoExpandNewestRound(agentGroupSnapshot.councilTraceAutoExpandNewestRound));
+    useChatStore.getState()._editConversation(conversationId, { agentGroupId: agentGroupSnapshot.id });
+
+    addSnackbar({
+      key: 'agent-group-loaded',
+      message: `Loaded group: ${agentGroupSnapshot.name}`,
+      type: 'success',
+      overrides: { autoHideDuration: 2500 },
+    });
+
+    return true;
   }, []);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
@@ -595,13 +633,18 @@ export function AppChat() {
 
     // perform deletion, and return the next (or a new) conversation
     const nextConversationId = deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
+    const conversationToFocus = getConversationToFocusAfterDeletion({
+      deletedConversationIds: conversationIds,
+      focusedConversationId: focusedPaneConversationId,
+      nextConversationId,
+    });
 
-    // switch the focused pane to the new conversation - NOTE: this makes the assumption that deletion had impact on the focused pane
-    handleOpenConversationInFocusedPane(nextConversationId);
+    // only move focus when the deleted set included the focused chat
+    handleOpenConversationInFocusedPane(conversationToFocus);
 
     // run GC for dblobs in this conversation
     void gcChatImageAssets(); // fire/forget
-  }, [showPromisedOverlay, deleteConversations, handleOpenConversationInFocusedPane]);
+  }, [showPromisedOverlay, deleteConversations, focusedPaneConversationId, handleOpenConversationInFocusedPane]);
 
 
   // Pluggable Optima components
@@ -611,9 +654,9 @@ export function AppChat() {
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
       ? <ChatBarBeam conversationTitle={focusedChatTitle ?? 'No Chat'} beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
       : (barAltTitle === null)
-        ? <ChatBarChat conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} onConversationSaveAgentGroup={handleConversationSaveAgentGroup} />
+        ? <ChatBarChat conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} onConversationSaveAgentGroup={handleConversationSaveAgentGroup} onConversationLoadAgentGroup={handleConversationLoadAgentGroup} />
         : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
-    , [barAltTitle, beamOpenStoreInFocusedPane, focusedChatTitle, focusedPaneConversationId, handleConversationSaveAgentGroup, isMobile],
+    , [barAltTitle, beamOpenStoreInFocusedPane, focusedChatTitle, focusedPaneConversationId, handleConversationLoadAgentGroup, handleConversationSaveAgentGroup, isMobile],
   );
 
 
@@ -877,7 +920,12 @@ export function AppChat() {
               )}
 
               {/* Visibility and actions are handled via Context */}
-              <ScrollToBottomButton />
+              {(isMobile || _paneBeamIsOpen) && (
+                <>
+                  <ScrollToTopButton />
+                  <ScrollToBottomButton />
+                </>
+              )}
 
             </ScrollToBottom>
 
@@ -909,6 +957,7 @@ export function AppChat() {
           isMulticast={isMultiConversationId ? isComposerMulticast : null}
           isDeveloperMode={isFocusedChatDeveloper}
           onAction={handleComposerAction}
+          onResumeCouncilSession={handleResumeCouncilSession}
           onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
           onConversationsImportFromFiles={handleConversationsImportFromFiles}
           onTextImagine={handleImagineFromText}

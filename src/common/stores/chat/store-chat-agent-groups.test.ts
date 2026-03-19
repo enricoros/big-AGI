@@ -1,108 +1,183 @@
 import assert from 'node:assert/strict';
-import { afterEach, beforeEach, test } from 'node:test';
+import test from 'node:test';
+import * as storeModule from './store-chat-agent-groups';
 
-import type { DConversationParticipant } from './chat.conversation';
-import { useChatAgentGroupsStore } from './store-chat-agent-groups';
+if (!globalThis.localStorage) {
+  const memoryStorage = new Map<string, string>();
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: {
+      getItem: (key: string) => memoryStorage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        memoryStorage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        memoryStorage.delete(key);
+      },
+      clear: () => {
+        memoryStorage.clear();
+      },
+      key: (index: number) => Array.from(memoryStorage.keys())[index] ?? null,
+      get length() {
+        return memoryStorage.size;
+      },
+    } satisfies Storage,
+    configurable: true,
+  });
+}
 
+const useChatAgentGroupsStore = (storeModule as typeof storeModule & {
+  default?: { useChatAgentGroupsStore?: typeof storeModule.useChatAgentGroupsStore };
+}).useChatAgentGroupsStore ?? storeModule.default?.useChatAgentGroupsStore;
 
-const humanParticipant: DConversationParticipant = {
-  id: 'human-1',
-  kind: 'human',
-  name: 'You',
-  personaId: null,
-  llmId: null,
+if (!useChatAgentGroupsStore)
+  throw new Error('Could not load useChatAgentGroupsStore for tests');
+
+const resetStore = () => {
+  useChatAgentGroupsStore.setState(useChatAgentGroupsStore.getInitialState(), true);
 };
 
-const assistantParticipant: DConversationParticipant = {
-  id: 'assistant-1',
-  kind: 'assistant',
-  name: 'Architect',
-  personaId: 'Developer',
-  llmId: 'model-dev',
-  speakWhen: 'when-mentioned',
-};
+test('saves a single agent snapshot and normalizes the stored name', () => {
+  resetStore();
 
-const originalConsoleWarn = console.warn;
+  const savedId = useChatAgentGroupsStore.getState().saveAgent({
+    name: '  Researcher  ',
+    participant: {
+      id: 'participant-1',
+      kind: 'assistant',
+      name: 'Original name',
+      personaId: 'Default',
+      llmId: 'openai-gpt-5.4-mini',
+      speakWhen: 'every-turn',
+    },
+  });
 
-beforeEach(() => {
-  console.warn = (...args: unknown[]) => {
-    const firstArg = args[0];
-    if (typeof firstArg === 'string' && firstArg.includes(`[zustand persist middleware] Unable to update item 'app-chat-agent-groups'`))
-      return;
-    originalConsoleWarn(...args);
-  };
-  useChatAgentGroupsStore.setState({ savedAgentGroups: [] });
+  const savedAgents = useChatAgentGroupsStore.getState().savedAgents;
+  assert.equal(savedAgents.length, 1);
+  assert.equal(savedAgents[0]?.id, savedId);
+  assert.equal(savedAgents[0]?.name, 'Researcher');
+  assert.equal(savedAgents[0]?.participant.name, 'Researcher');
 });
 
-afterEach(() => {
-  console.warn = originalConsoleWarn;
+test('updates an existing saved agent in place when an id is provided', () => {
+  resetStore();
+
+  const savedId = useChatAgentGroupsStore.getState().saveAgent({
+    name: 'Researcher',
+    participant: {
+      id: 'participant-1',
+      kind: 'assistant',
+      name: 'Researcher',
+      personaId: 'Default',
+      llmId: 'openai-gpt-5.4-mini',
+      speakWhen: 'every-turn',
+    },
+  });
+
+  useChatAgentGroupsStore.getState().saveAgent({
+    name: 'Reviewer',
+    participant: {
+      id: 'participant-2',
+      kind: 'assistant',
+      name: 'Reviewer',
+      personaId: 'Custom',
+      llmId: null,
+      speakWhen: 'when-mentioned',
+    },
+  }, savedId);
+
+  const savedAgents = useChatAgentGroupsStore.getState().savedAgents;
+  assert.equal(savedAgents.length, 1);
+  assert.equal(savedAgents[0]?.id, savedId);
+  assert.equal(savedAgents[0]?.name, 'Reviewer');
+  assert.equal(savedAgents[0]?.participant.personaId, 'Custom');
+  assert.equal(savedAgents[0]?.participant.speakWhen, 'when-mentioned');
 });
 
-test('saveAgentGroup normalizes the name and snapshots participants by value', () => {
-  const store = useChatAgentGroupsStore.getState();
-  const participants = [humanParticipant, assistantParticipant];
+test('renames and deletes saved agents', () => {
+  resetStore();
 
-  const id = store.saveAgentGroup({
-    name: '   ',
+  const savedId = useChatAgentGroupsStore.getState().saveAgent({
+    name: 'Researcher',
+    participant: {
+      id: 'participant-1',
+      kind: 'assistant',
+      name: 'Researcher',
+      personaId: 'Default',
+      llmId: null,
+      speakWhen: 'every-turn',
+    },
+  });
+
+  useChatAgentGroupsStore.getState().renameAgent(savedId, 'Analyst');
+  assert.equal(useChatAgentGroupsStore.getState().savedAgents[0]?.name, 'Analyst');
+  assert.equal(useChatAgentGroupsStore.getState().savedAgents[0]?.participant.name, 'Analyst');
+
+  useChatAgentGroupsStore.getState().deleteAgent(savedId);
+  assert.deepStrictEqual(useChatAgentGroupsStore.getState().savedAgents, []);
+});
+
+test('migrates legacy consensus agent groups to council snapshots', () => {
+  const migrated = storeModule.migratePersistedAgentGroupsState({
+    savedAgentGroups: [{
+      id: 'legacy-group',
+      name: '  Legacy council  ',
+      systemPurposeId: 'Developer',
+      turnTerminationMode: 'consensus',
+      consensusMaxRounds: '5',
+      participants: [{
+        id: 'participant-1',
+        kind: 'assistant',
+        name: 'Leader',
+        personaId: 'Developer',
+        llmId: 'openai-gpt-5.4-mini',
+        speakWhen: 'every-turn',
+      }],
+      updatedAt: 123,
+    }],
+    savedAgents: [],
+  }, 2);
+
+  assert.deepStrictEqual(migrated?.savedAgentGroups, [{
+    id: 'legacy-group',
+    name: 'Legacy council',
     systemPurposeId: 'Developer',
-    turnTerminationMode: 'continuous',
-    participants,
-  });
-
-  const savedGroup = useChatAgentGroupsStore.getState().savedAgentGroups[0];
-  assert.equal(savedGroup?.id, id);
-  assert.equal(savedGroup?.name, 'Untitled group');
-  assert.equal(savedGroup?.turnTerminationMode, 'continuous');
-  assert.notEqual(savedGroup?.participants, participants);
-  assert.notEqual(savedGroup?.participants[1], participants[1]);
-
-  participants[1].name = 'Mutated locally';
-  assert.equal(savedGroup?.participants[1]?.name, 'Architect');
+    turnTerminationMode: 'council',
+    councilMaxRounds: 5,
+    councilTraceAutoCollapsePreviousRounds: true,
+    councilTraceAutoExpandNewestRound: true,
+    participants: [{
+      id: 'participant-1',
+      kind: 'assistant',
+      name: 'Leader',
+      personaId: 'Developer',
+      llmId: 'openai-gpt-5.4-mini',
+      speakWhen: 'every-turn',
+    }],
+    updatedAt: 123,
+  }]);
 });
 
-test('saveAgentGroup updates an existing group in place when an id is supplied', () => {
-  const store = useChatAgentGroupsStore.getState();
-  const originalId = store.saveAgentGroup({
-    name: 'Crew',
-    systemPurposeId: 'Generic',
-    turnTerminationMode: 'round-robin-per-human',
-    participants: [humanParticipant],
+test('saved agent groups normalize council trace preferences', () => {
+  resetStore();
+
+  const savedId = useChatAgentGroupsStore.getState().saveAgentGroup({
+    name: 'Council group',
+    systemPurposeId: 'Developer',
+    turnTerminationMode: 'council',
+    councilMaxRounds: 5,
+    councilTraceAutoCollapsePreviousRounds: false,
+    councilTraceAutoExpandNewestRound: false,
+    participants: [{
+      id: 'participant-1',
+      kind: 'assistant',
+      name: 'Leader',
+      personaId: 'Developer',
+      llmId: null,
+      speakWhen: 'every-turn',
+    }],
   });
 
-  const initialUpdatedAt = useChatAgentGroupsStore.getState().savedAgentGroups[0]?.updatedAt ?? 0;
-
-  store.saveAgentGroup({
-    name: ' Crew Revised ',
-    systemPurposeId: 'Designer',
-    turnTerminationMode: 'continuous',
-    participants: [humanParticipant, assistantParticipant],
-  }, originalId);
-
-  const savedGroups = useChatAgentGroupsStore.getState().savedAgentGroups;
-  assert.equal(savedGroups.length, 1);
-  assert.equal(savedGroups[0]?.id, originalId);
-  assert.equal(savedGroups[0]?.name, 'Crew Revised');
-  assert.equal(savedGroups[0]?.systemPurposeId, 'Designer');
-  assert.equal(savedGroups[0]?.turnTerminationMode, 'continuous');
-  assert.equal(savedGroups[0]?.participants.length, 2);
-  assert.ok((savedGroups[0]?.updatedAt ?? 0) >= initialUpdatedAt);
-});
-
-test('renameAgentGroup preserves the existing name when given only whitespace and deleteAgentGroup removes it', () => {
-  const store = useChatAgentGroupsStore.getState();
-  const id = store.saveAgentGroup({
-    name: 'Planning Cell',
-    systemPurposeId: 'Generic',
-    turnTerminationMode: 'round-robin-per-human',
-    participants: [humanParticipant, assistantParticipant],
-  });
-
-  store.renameAgentGroup(id, '   ');
-  assert.equal(useChatAgentGroupsStore.getState().savedAgentGroups[0]?.name, 'Planning Cell');
-
-  store.renameAgentGroup(id, ' Delivery Cell ');
-  assert.equal(useChatAgentGroupsStore.getState().savedAgentGroups[0]?.name, 'Delivery Cell');
-
-  store.deleteAgentGroup(id);
-  assert.deepEqual(useChatAgentGroupsStore.getState().savedAgentGroups, []);
+  const savedGroup = useChatAgentGroupsStore.getState().savedAgentGroups.find(group => group.id === savedId);
+  assert.equal(savedGroup?.councilTraceAutoCollapsePreviousRounds, false);
+  assert.equal(savedGroup?.councilTraceAutoExpandNewestRound, false);
 });

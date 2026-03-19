@@ -11,6 +11,7 @@ export interface ActileProvider<TItem extends ActileItem = ActileItem> {
   // Interface for the provider
   fastCheckTriggerText: (trailingText: string) => boolean;
   fetchItems: () => ActileProviderItems<TItem>;
+  filterItems?: (items: ActileItem[], search: string) => ActileItem[];
   onItemSelect: (item: ActileItem) => void;
 
 }

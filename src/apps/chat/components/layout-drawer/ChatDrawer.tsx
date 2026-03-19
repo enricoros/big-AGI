@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { fileOpen, fileSave } from 'browser-fs-access';
+
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
@@ -19,6 +21,7 @@ import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
+import { buildAgentGroupTransferFile, getAgentGroupTransferFilename, parseAgentGroupTransferFile } from '~/common/stores/chat/store-chat-agent-groups.transfer';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
@@ -28,6 +31,8 @@ import { OPTIMA_DRAWER_BACKGROUND } from '~/common/layout/optima/optima.config';
 import { OptimaDrawerHeader } from '~/common/layout/optima/drawer/OptimaDrawerHeader';
 import { OptimaDrawerList } from '~/common/layout/optima/drawer/OptimaDrawerList';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
@@ -81,10 +86,11 @@ function ChatDrawer(props: {
 }) {
 
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
-  const { savedAgentGroups, renameAgentGroup, deleteAgentGroup } = useChatAgentGroupsStore(useShallow(state => ({
+  const { savedAgentGroups, renameAgentGroup, deleteAgentGroup, importAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
     savedAgentGroups: state.savedAgentGroups,
     renameAgentGroup: state.renameAgentGroup,
     deleteAgentGroup: state.deleteAgentGroup,
+    importAgentGroups: state.importAgentGroups,
   })));
 
   const [editingGroupId, setEditingGroupId] = React.useState<string | null>(null);
@@ -154,6 +160,66 @@ function ChatDrawer(props: {
     deleteAgentGroup(groupId);
     setEditingGroupId(current => current === groupId ? null : current);
   }, [deleteAgentGroup]);
+
+  const saveAgentGroupsToFile = React.useCallback(async (groupsToExport: DAgentGroupSnapshot[], groupName?: string) => {
+    const payload = buildAgentGroupTransferFile(groupsToExport);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const exportedAtLabel = prettyTimestampForFilenames(false);
+
+    await fileSave(blob, {
+      fileName: getAgentGroupTransferFilename({
+        groupName,
+        exportedAtLabel,
+      }),
+      extensions: ['.json'],
+    }).then(() => {
+      addSnackbar({
+        key: groupName ? `agent-group-export-ok-${groupName}` : 'agent-groups-export-ok',
+        message: groupName ? `"${groupName}" exported.` : 'Agent groups exported.',
+        type: 'success',
+      });
+    }).catch((error: any) => {
+      if (error?.name !== 'AbortError')
+        addSnackbar({
+          key: groupName ? `agent-group-export-fail-${groupName}` : 'agent-groups-export-fail',
+          message: `Could not export ${groupName ? `"${groupName}"` : 'agent groups'}. ${error?.message || ''}`.trim(),
+          type: 'issue',
+        });
+    });
+  }, []);
+
+  const handleAgentGroupsExport = React.useCallback(async () => {
+    await saveAgentGroupsToFile(savedAgentGroups);
+  }, [saveAgentGroupsToFile, savedAgentGroups]);
+
+  const handleAgentGroupExport = React.useCallback(async (group: DAgentGroupSnapshot) => {
+    await saveAgentGroupsToFile([group], group.name);
+  }, [saveAgentGroupsToFile]);
+
+  const handleAgentGroupsImport = React.useCallback(async (mode: 'single' | 'all') => {
+    try {
+      const file = await fileOpen({
+        description: mode === 'single' ? 'Agent Group JSON' : 'Agent Groups JSON',
+        mimeTypes: ['application/json'],
+        extensions: ['.json'],
+        multiple: false,
+      });
+
+      if (!file)
+        return;
+
+      const importedSnapshots = parseAgentGroupTransferFile(await file.text(), mode);
+      const importedCount = importAgentGroups(importedSnapshots);
+      addSnackbar({
+        key: 'agent-groups-import-ok',
+        message: importedCount === 1 ? '1 agent group imported.' : `${importedCount} agent groups imported.`,
+        type: 'success',
+      });
+    } catch (error: any) {
+      if (error?.name !== 'AbortError')
+        addSnackbar({ key: 'agent-groups-import-fail', message: `Could not import agent groups. ${error?.message || ''}`.trim(), type: 'issue' });
+    }
+  }, [importAgentGroups]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
@@ -278,6 +344,19 @@ function ChatDrawer(props: {
           <ListItem>
             <Typography level='body-sm'>{'Saved agent groups'}</Typography>
           </ListItem>
+          <MenuItem onClick={handleAgentGroupsExport} disabled={!sortedSavedAgentGroups.length}>
+            <ListItemDecorator><FileDownloadOutlinedIcon /></ListItemDecorator>
+            Export all groups
+          </MenuItem>
+          <MenuItem onClick={() => handleAgentGroupsImport('single')}>
+            <ListItemDecorator><FileUploadOutlinedIcon /></ListItemDecorator>
+            Import 1 group
+          </MenuItem>
+          <MenuItem onClick={() => handleAgentGroupsImport('all')}>
+            <ListItemDecorator><FileUploadOutlinedIcon /></ListItemDecorator>
+            Import all groups
+          </MenuItem>
+          <ListDivider />
 
           {!canLoadGroups ? (
             <ListItem>
@@ -317,6 +396,17 @@ function ChatDrawer(props: {
                       color='neutral'
                       onClick={event => {
                         event.stopPropagation();
+                        void handleAgentGroupExport(group);
+                      }}
+                    >
+                      Export
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={event => {
+                        event.stopPropagation();
                         setEditingGroupId(group.id);
                       }}
                     >
@@ -341,7 +431,7 @@ function ChatDrawer(props: {
         </Menu>
       </Dropdown>
     );
-  }, [disableNewButton, editingGroupId, handleAgentGroupDelete, handleAgentGroupLoad, handleAgentGroupRename, handleButtonNew, newButtonDontRecycle, onConversationNew, sortedSavedAgentGroups]);
+  }, [disableNewButton, editingGroupId, handleAgentGroupDelete, handleAgentGroupExport, handleAgentGroupLoad, handleAgentGroupRename, handleAgentGroupsExport, handleAgentGroupsImport, handleButtonNew, newButtonDontRecycle, onConversationNew, sortedSavedAgentGroups]);
 
   const { isSearching } = isDrawerSearching(debouncedSearchQuery);
   const groupingComponent = React.useMemo(() => (

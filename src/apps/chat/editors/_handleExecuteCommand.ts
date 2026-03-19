@@ -1,17 +1,17 @@
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
-import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createTextContentFragment, DMessageFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 
 import { extractChatCommand, helpPrettyChatCommands } from '../commands/commands.registry';
 import { runImageGenerationUpdatingState } from './image-generate';
 import { runReActUpdatingState } from './react-tangent';
+import type { ChatExecutionSession } from './chat-execution.runtime';
 
 
 export const RET_NO_CMD = 'no-cmd';
 
 
-export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessageFirstFragment: DMessageFragment, lastMessage: Readonly<DMessage>, cHandler: ConversationHandler, chatLLMId: DLLMId) {
+export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessageFirstFragment: DMessageFragment, lastMessage: Readonly<DMessage>, cHandler: ChatExecutionSession, chatLLMId: DLLMId) {
 
   // commands must have a first Content DMessageTextPart
   if (!isTextContentFragment(lastMessageFirstFragment))

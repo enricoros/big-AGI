@@ -7,8 +7,19 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
+import { sanitizeModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 
-import { createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant, DConversation, type DConversationId } from './chat.conversation';
+import {
+  createAssistantConversationParticipant,
+  createDConversation,
+  createHumanConversationParticipant,
+  DConversation,
+  sanitizeConversationTurnTerminationMode,
+  sanitizeCouncilMaxRounds,
+  sanitizeCouncilTraceAutoCollapsePreviousRounds,
+  sanitizeCouncilTraceAutoExpandNewestRound,
+  type DConversationId,
+} from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
 import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isPlaceholderPart, isTextContentFragment, isVoidFragment } from './chat.fragments';
 
@@ -41,6 +52,7 @@ export namespace V4ToHeadConverters {
       .map(participant => {
         if (!participant)
           return null;
+        const reasoningEffort = sanitizeModelReasoningEffort(participant.reasoningEffort);
         if (participant.kind === 'human' || participant.kind === 'assistant')
           return {
             ...participant,
@@ -50,11 +62,17 @@ export namespace V4ToHeadConverters {
             name: typeof participant.name === 'string' && participant.name ? participant.name : (participant.kind === 'human' ? 'You' : (participant.personaId || c.systemPurposeId)),
             personaId: participant.kind === 'assistant' ? (participant.personaId || c.systemPurposeId) : null,
             llmId: participant.llmId ?? null,
+            ...(participant.kind === 'assistant' && typeof participant.accentHue === 'number' && Number.isFinite(participant.accentHue) ? {
+              accentHue: Math.round((((participant.accentHue % 360) + 360) % 360)),
+            } : {}),
             ...(participant.kind === 'assistant' && typeof participant.customPrompt === 'string' && participant.customPrompt.trim() ? {
               customPrompt: participant.customPrompt,
             } : {}),
             ...(participant.kind === 'assistant' ? {
               speakWhen: participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn',
+              ...(reasoningEffort ? {
+                reasoningEffort,
+              } : {}),
             } : {}),
           };
         if (participant.personaId)
@@ -69,11 +87,28 @@ export namespace V4ToHeadConverters {
       assistantParticipants.push(createAssistantConversationParticipant(c.systemPurposeId));
 
     c.participants = [humanParticipant, ...assistantParticipants];
-    c.turnTerminationMode = c.turnTerminationMode === 'continuous'
-      ? 'continuous'
-      : c.turnTerminationMode === 'consensus'
-        ? 'consensus'
-        : 'round-robin-per-human';
+    c.turnTerminationMode = sanitizeConversationTurnTerminationMode((c as any).turnTerminationMode);
+    c.councilMaxRounds = sanitizeCouncilMaxRounds((c as any).consensusMaxRounds ?? (c as any).councilMaxRounds);
+    c.councilTraceAutoCollapsePreviousRounds = sanitizeCouncilTraceAutoCollapsePreviousRounds((c as any).councilTraceAutoCollapsePreviousRounds);
+    c.councilTraceAutoExpandNewestRound = sanitizeCouncilTraceAutoExpandNewestRound((c as any).councilTraceAutoExpandNewestRound);
+    delete (c as any).consensusMaxRounds;
+
+    if (c.councilSession) {
+      c.councilSession.mode = c.councilSession.mode == null
+        ? null
+        : sanitizeConversationTurnTerminationMode(c.councilSession.mode);
+      const status = c.councilSession.status;
+      const isResumableStatus = status === 'paused' || status === 'interrupted';
+      const isTerminalStatus = status === 'completed' || status === 'stopped';
+      if ((!isResumableStatus && !isTerminalStatus) || (isResumableStatus && !c.councilSession.canResume))
+        c.councilSession = null;
+    }
+
+    c.councilOpLog = Array.isArray(c.councilOpLog)
+      ? c.councilOpLog
+          .filter(op => !!op && typeof op === 'object' && typeof (op as any).opId === 'string' && typeof (op as any).type === 'string')
+          .sort((a, b) => a.sequence - b.sequence || a.createdAt - b.createdAt)
+      : undefined;
   }
 
 
@@ -147,6 +182,11 @@ export namespace V4ToHeadConverters {
 
     // run dev upgrades
     dev_inMemHeadUpgradeDMessage(m);
+
+    if (m.metadata?.consensus && !m.metadata.council)
+      m.metadata.council = { ...m.metadata.consensus };
+    if (m.metadata && 'consensus' in m.metadata)
+      delete m.metadata.consensus;
 
   }
 

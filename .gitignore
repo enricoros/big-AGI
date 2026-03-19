@@ -17,6 +17,10 @@
 
 # next.js
 /.next/
+/.next.corrupt-*/
+/.next.corrupt-manual-*/
+/.next.pre-fix-backup-*/
+/.next.watchdog-*/
 /dist/
 /out/
 
@@ -55,8 +59,4 @@ next-env.d.ts
 /src/modules/3rdparty/aider/scratch*
 
 # Ignore temporary CC files
-# Ignore temporary CC files
 /tmpclaude*
-
-# Local git worktrees
-/.worktrees/

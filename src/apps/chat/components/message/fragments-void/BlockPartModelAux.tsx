@@ -16,6 +16,8 @@ import { animationSpinHalfPause } from '~/common/util/animUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
+import { extractReasoningTitles, type ReasoningRenderSequenceItem } from './BlockPartModelAux.reasoning';
+
 
 // configuration
 const ENABLE_MARKDOWN_DETECTION = true;
@@ -95,6 +97,25 @@ const _styles = {
     // fontSize: 'xs',
   },
 
+  titlePreviewRow: {
+    mt: 0.75,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 0.5,
+    alignItems: 'center',
+  },
+
+  titlePreviewBadge: {
+    px: 1,
+    py: 0.375,
+    borderRadius: '999px',
+    border: '1px solid',
+    borderColor: `${REASONING_COLOR}.outlinedBorder`,
+    backgroundColor: `rgb(var(--joy-palette-${REASONING_COLOR}-lightChannel) / 12%)`,
+    color: `${REASONING_COLOR}.plainColor`,
+    lineHeight: 1.2,
+  },
+
 } as const;
 
 
@@ -119,13 +140,18 @@ export function BlockPartModelAux(props: {
   zenMode: boolean,
   contentScaling: ContentScaling,
   isLastFragment: boolean,
+  defaultExpanded?: boolean,
+  collapsedInlineChildren?: React.ReactNode,
+  expandedInlineChildren?: React.ReactNode,
+  expandedSequence?: ReasoningRenderSequenceItem[],
+  expandedSequenceNodeMap?: Record<string, React.ReactNode>,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
 
   // state
-  const [neverExpanded, setNeverExpanded] = React.useState(true);
-  const [expanded, setExpanded] = React.useState(false);
+  const [neverExpanded, setNeverExpanded] = React.useState(!props.defaultExpanded);
+  const [expanded, setExpanded] = React.useState(!!props.defaultExpanded);
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
@@ -133,11 +159,16 @@ export function BlockPartModelAux(props: {
   // memo
   const scaledTypographySx = useScaledTypographySx(adjustContentScaling(props.contentScaling, -1), false, false);
   const maybeMarkdown = React.useMemo(() => !ENABLE_MARKDOWN_DETECTION || neverExpanded ? false : _maybeMarkdownReasoning(props.auxText), [neverExpanded, props.auxText]);
+  const streamedReasoningTitles = React.useMemo(
+    () => props.auxType === 'reasoning' ? extractReasoningTitles(props.auxText) : [],
+    [props.auxText, props.auxType],
+  );
   const textSx = React.useMemo(() => ({
     ..._styles.text,
     ...scaledTypographySx,
     ...(maybeMarkdown ? _styles.textUndoWhitespace : {}),
   }), [maybeMarkdown, scaledTypographySx]);
+  const hasExpandedSequence = !!props.expandedSequence?.length;
 
   let typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
@@ -195,22 +226,24 @@ export function BlockPartModelAux(props: {
 
     {/* Chip to expand/collapse */}
     <Box data-agi-no-copy /* do not copy these buttons */ sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
-      <Chip
-        color={props.isLastFragment ? REASONING_COLOR : 'neutral'}
-        variant={expanded ? 'solid' : 'soft'}
-        size='sm'
-        onClick={handleToggleExpanded}
-        sx={expanded ? _styles.chipExpanded : props.isLastFragment ? _styles.chip : _styles.chipDisabled}
-        startDecorator={
-          <AllInclusiveIcon
-            sx={(props.messagePendingIncomplete && !expanded && props.isLastFragment) ? _styles.chipIconPending : _styles.chipIcon}
-            /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
-          />
-        }
-        // startDecorator='🧠'
-      >
-        Show {typeText}
-      </Chip>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center', flex: 1, minWidth: 0 }}>
+        <Chip
+          color={props.isLastFragment ? REASONING_COLOR : 'neutral'}
+          variant={expanded ? 'solid' : 'soft'}
+          size='sm'
+          onClick={handleToggleExpanded}
+          sx={expanded ? _styles.chipExpanded : props.isLastFragment ? _styles.chip : _styles.chipDisabled}
+          startDecorator={
+            <AllInclusiveIcon
+              sx={(props.messagePendingIncomplete && !expanded && props.isLastFragment) ? _styles.chipIconPending : _styles.chipIcon}
+              /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
+            />
+          }
+          // startDecorator='🧠'
+        >
+          Show {typeText}
+        </Chip>
+      </Box>
 
       {expanded && !props.messagePendingIncomplete && (showInline || showDelete) && !!props.auxText && (
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -245,23 +278,81 @@ export function BlockPartModelAux(props: {
       )}
     </Box>
 
+    {!expanded && !!streamedReasoningTitles.length && (
+      <Box sx={_styles.titlePreviewRow}>
+        {streamedReasoningTitles.map((title, index) => (
+          <Typography
+            key={`${props.fragmentId}-reasoning-title-${index}`}
+            level='body-xs'
+            sx={_styles.titlePreviewBadge}
+          >
+            {title}
+          </Typography>
+        ))}
+      </Box>
+    )}
+
+    {!expanded && !!props.collapsedInlineChildren && (
+      <Box data-agi-no-copy sx={_styles.titlePreviewRow}>
+        {props.collapsedInlineChildren}
+      </Box>
+    )}
+
     {/* Controlled Box */}
     <ExpanderControlledBox expanded={expanded}>
 
       {!neverExpanded && (
-        (ENABLE_MARKDOWN_DETECTION && maybeMarkdown) ? (
+        hasExpandedSequence ? (
           <Box sx={textSx}>
-            <RenderMarkdown content={props.auxText} sx={{ ...scaledTypographySx, marginInline: '0!important' /* to override what's default in this component */ }} />
+            <Box sx={{ display: 'grid', gap: 1 }}>
+              {props.expandedSequence!.map(sequenceItem => {
+                if (sequenceItem.type === 'hosted-web-group')
+                  return (
+                    <Box key={sequenceItem.key} data-agi-no-copy sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
+                      {props.expandedSequenceNodeMap?.[sequenceItem.key] ?? null}
+                    </Box>
+                  );
+
+                const itemMaybeMarkdown = !ENABLE_MARKDOWN_DETECTION ? false : _maybeMarkdownReasoning(sequenceItem.text);
+                return itemMaybeMarkdown ? (
+                  <RenderMarkdown
+                    key={sequenceItem.key}
+                    content={sequenceItem.text}
+                    sx={{ ...scaledTypographySx, marginInline: '0!important' }}
+                  />
+                ) : (
+                  <Typography key={sequenceItem.key} sx={{ ...scaledTypographySx, whiteSpace: 'break-spaces', overflowWrap: 'anywhere' }}>
+                    {sequenceItem.text}
+                  </Typography>
+                );
+              })}
+            </Box>
             {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
           </Box>
         ) : (
-          <Typography sx={textSx}>
-            <span>
+          (ENABLE_MARKDOWN_DETECTION && maybeMarkdown) ? (
+          <Box sx={textSx}>
+            <RenderMarkdown content={props.auxText} sx={{ ...scaledTypographySx, marginInline: '0!important' /* to override what's default in this component */ }} />
+            {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
+            {expanded && !!props.expandedInlineChildren && (
+              <Box data-agi-no-copy sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
+                {props.expandedInlineChildren}
+              </Box>
+            )}
+          </Box>
+        ) : (
+          <Box sx={textSx}>
+            <Typography>
               {props.auxText}
               {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
-            </span>
-          </Typography>
-        )
+            </Typography>
+            {expanded && !!props.expandedInlineChildren && (
+              <Box data-agi-no-copy sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
+                {props.expandedInlineChildren}
+              </Box>
+            )}
+          </Box>
+        ))
       )}
 
     </ExpanderControlledBox>

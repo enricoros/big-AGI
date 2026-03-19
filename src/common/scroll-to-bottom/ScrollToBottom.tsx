@@ -37,6 +37,15 @@ const USER_STICKY_MARGIN = 60;
 // during the 'booting' timeout, scrolls happen instantly instead of smoothly
 const BOOTING_TIMEOUT = 400;
 
+export function isScrollViewportAtBottom(args: {
+  scrollHeight: number;
+  scrollTop: number;
+  offsetHeight: number;
+  stickyMargin?: number;
+}): boolean {
+  return args.scrollHeight - args.scrollTop <= args.offsetHeight + (args.stickyMargin ?? USER_STICKY_MARGIN);
+}
+
 
 function DebugBorderBox(props: { heightPx: number, color: string }) {
   return (
@@ -79,6 +88,7 @@ export function ScrollToBottom(props: {
   const [state, setState] = React.useState<ScrollToBottomState>({
     stickToBottom: props.stickToBottomInitial || false,
     booting: props.bootToBottom || false,
+    atTop: !props.bootToBottom ? true : undefined,
     atBottom: undefined,
   });
 
@@ -173,11 +183,15 @@ export function ScrollToBottom(props: {
           console.log('   -> large enough window', entries.length);
 
         // update state only if this changed
-        if (stateRef.current.atBottom !== true)
-          setState(state => ({ ...state, atBottom: true }));
+        if (stateRef.current.atBottom !== true || stateRef.current.atTop !== true)
+          setState(state => ({ ...state, atTop: true, atBottom: true }));
       }
 
-      if (entries.length > 0 && stateRef.current.stickToBottom)
+      if (entries.length > 0 && stateRef.current.stickToBottom && isScrollViewportAtBottom({
+        scrollHeight: scrollable.scrollHeight,
+        scrollTop: scrollable.scrollTop,
+        offsetHeight: scrollable.offsetHeight,
+      }))
         doScrollToBottom();
     });
 
@@ -206,15 +220,21 @@ export function ScrollToBottom(props: {
       }
 
       // compute intersections
-      const atBottom = scrollable.scrollHeight - scrollable.scrollTop <= scrollable.offsetHeight + USER_STICKY_MARGIN;
+      const atTop = scrollable.scrollTop <= 1;
+      const atBottom = isScrollViewportAtBottom({
+        scrollHeight: scrollable.scrollHeight,
+        scrollTop: scrollable.scrollTop,
+        offsetHeight: scrollable.offsetHeight,
+      });
 
       // assume this is = to the user intention
       const stickToBottom = atBottom;
 
       // update state only if anything changed
-      setState(state => state.stickToBottom !== stickToBottom || state.atBottom !== atBottom
+      setState(state => state.stickToBottom !== stickToBottom || state.atBottom !== atBottom || state.atTop !== atTop
         ? {
           ...state,
+          atTop,
           stickToBottom: props.disableAutoStick ? (state.stickToBottom && stickToBottom) : stickToBottom,
           atBottom,
         }
@@ -271,6 +291,20 @@ export function ScrollToBottom(props: {
       doScrollToBottom();
   }, [doScrollToBottom]);
 
+  const scrollToTop = React.useCallback(() => {
+    const scrollable = scrollableElementRef.current;
+    if (!scrollable)
+      return;
+
+    isProgrammaticScroll.current = true;
+    setState(state => ({
+      ...state,
+      atTop: true,
+      stickToBottom: false,
+    }));
+    scrollable.scrollTo({ top: 0, behavior: scrollBehavior });
+  }, [scrollBehavior]);
+
   const skipNextAutoScroll = React.useCallback(() => {
     skipNextScrollCounter.current += 2;
     if (DEBUG_SCROLL_TO_BOTTOM)
@@ -296,6 +330,7 @@ export function ScrollToBottom(props: {
       ...state,
       notifyBooting,
       setStickToBottom,
+      scrollToTop,
       skipNextAutoScroll,
     }}>
       {/* Scrollable v-maxed */}

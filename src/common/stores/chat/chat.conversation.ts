@@ -1,6 +1,7 @@
 import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../../data';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { DModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
@@ -9,7 +10,67 @@ import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 /// Conversation
 
 export type DConversationParticipantSpeakWhen = 'every-turn' | 'when-mentioned';
-export type DConversationTurnTerminationMode = 'round-robin-per-human' | 'continuous' | 'consensus';
+export type DConversationTurnTerminationMode = 'round-robin-per-human' | 'continuous' | 'council';
+export type DConversationTurnTerminationModeLegacy = DConversationTurnTerminationMode | 'consensus';
+export type DPersistedCouncilSessionStatus = 'paused' | 'interrupted' | 'stopped' | 'completed';
+
+export const DEFAULT_COUNCIL_MAX_ROUNDS = null;
+export const MIN_COUNCIL_MAX_ROUNDS = 1;
+export const MAX_COUNCIL_MAX_ROUNDS = 99;
+export const DEFAULT_COUNCIL_TRACE_AUTO_COLLAPSE_PREVIOUS_ROUNDS = true;
+export const DEFAULT_COUNCIL_TRACE_AUTO_EXPAND_NEWEST_ROUND = true;
+
+export function sanitizeCouncilMaxRounds(value: unknown): number | null {
+  if (value == null || value === '')
+    return DEFAULT_COUNCIL_MAX_ROUNDS;
+
+  const parsedValue = typeof value === 'string' && value.trim()
+    ? Number(value)
+    : typeof value === 'number'
+      ? value
+      : NaN;
+
+  if (!Number.isFinite(parsedValue))
+    return DEFAULT_COUNCIL_MAX_ROUNDS;
+
+  return Math.min(MAX_COUNCIL_MAX_ROUNDS, Math.max(MIN_COUNCIL_MAX_ROUNDS, Math.round(parsedValue)));
+}
+
+export function resolveCouncilMaxRounds(value: unknown): number {
+  return sanitizeCouncilMaxRounds(value) ?? Number.POSITIVE_INFINITY;
+}
+
+export function sanitizeCouncilTraceAutoCollapsePreviousRounds(value: unknown): boolean {
+  return typeof value === 'boolean'
+    ? value
+    : DEFAULT_COUNCIL_TRACE_AUTO_COLLAPSE_PREVIOUS_ROUNDS;
+}
+
+export function sanitizeCouncilTraceAutoExpandNewestRound(value: unknown): boolean {
+  return typeof value === 'boolean'
+    ? value
+    : DEFAULT_COUNCIL_TRACE_AUTO_EXPAND_NEWEST_ROUND;
+}
+
+export function sanitizeConversationTurnTerminationMode(value: unknown): DConversationTurnTerminationMode {
+  if (value === 'continuous')
+    return 'continuous';
+  if (value === 'council' || value === 'consensus')
+    return 'council';
+  return 'round-robin-per-human';
+}
+
+export interface DPersistedCouncilSession {
+  status: DPersistedCouncilSessionStatus;
+  executeMode: 'generate-content' | null;
+  mode: DConversationTurnTerminationMode | null;
+  phaseId: string | null;
+  passIndex: number | null;
+  workflowState?: import('../../../apps/chat/editors/_handleExecute.council').CouncilSessionState | null;
+  canResume: boolean;
+  interruptionReason: string | null;
+  updatedAt: number | null;
+}
 
 export interface DConversationParticipant {
   id: string;
@@ -17,8 +78,11 @@ export interface DConversationParticipant {
   name: string;
   personaId: SystemPurposeId | null;
   llmId: DLLMId | null;
+  accentHue?: number;
   customPrompt?: string;
   speakWhen?: DConversationParticipantSpeakWhen;
+  reasoningEffort?: DModelReasoningEffort;
+  isLeader?: boolean;
 }
 
 export interface DConversation {
@@ -41,6 +105,12 @@ export interface DConversation {
   systemPurposeId: SystemPurposeId;   // primary AI participant persona for backward compatibility
   participants?: DConversationParticipant[]; // persistent AI participant roster, primary participant first
   turnTerminationMode?: DConversationTurnTerminationMode;
+  councilMaxRounds?: number | null;
+  councilTraceAutoCollapsePreviousRounds?: boolean;
+  councilTraceAutoExpandNewestRound?: boolean;
+  agentGroupId?: string | null;
+  councilSession?: DPersistedCouncilSession | null;
+  councilOpLog?: import('../../../apps/chat/editors/_handleExecute.council.log').CouncilOp[] | null;
 
   // when updated is null, we don't have messages yet (timestamps as Date.now())
   created: number;                    // creation timestamp
@@ -128,14 +198,17 @@ export function createHumanConversationParticipant(name: string = 'You'): DConve
   };
 }
 
-export function createAssistantConversationParticipant(personaId: SystemPurposeId, llmId: DLLMId | null = null, name?: string, speakWhen: DConversationParticipantSpeakWhen = 'every-turn'): DConversationParticipant {
+export function createAssistantConversationParticipant(personaId: SystemPurposeId, llmId: DLLMId | null = null, name?: string, speakWhen: DConversationParticipantSpeakWhen = 'every-turn', isLeader: boolean = false, accentHue?: number, reasoningEffort?: DModelReasoningEffort): DConversationParticipant {
   return {
     id: agiUuid('chat-participant-assistant'),
     kind: 'assistant',
     name: name || generateAssistantParticipantName(personaId),
     personaId,
     llmId,
+    accentHue,
     speakWhen,
+    reasoningEffort,
+    isLeader,
   };
 }
 
@@ -177,7 +250,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
     systemPurposeId: systemPurposeId || defaultSystemPurposeId,
     participants: [
       createHumanConversationParticipant(),
-      createAssistantConversationParticipant(systemPurposeId || defaultSystemPurposeId),
+      createAssistantConversationParticipant(systemPurposeId || defaultSystemPurposeId, null, undefined, 'every-turn', true),
     ],
     turnTerminationMode: 'round-robin-per-human',
     // @deprecated
@@ -219,7 +292,14 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
     ...(conversation.participants?.length ? {
       participants: conversation.participants.map(participant => ({ ...participant })),
     } : {}),
+    ...(conversation.agentGroupId !== undefined ? { agentGroupId: conversation.agentGroupId } : {}),
+    ...(conversation.councilOpLog?.length ? {
+      councilOpLog: structuredClone(conversation.councilOpLog),
+    } : {}),
     turnTerminationMode: conversation.turnTerminationMode ?? 'round-robin-per-human',
+    councilMaxRounds: sanitizeCouncilMaxRounds(conversation.councilMaxRounds),
+    councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(conversation.councilTraceAutoCollapsePreviousRounds),
+    councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(conversation.councilTraceAutoExpandNewestRound),
     tokenCount: conversation.tokenCount,
 
     created: conversation.created,

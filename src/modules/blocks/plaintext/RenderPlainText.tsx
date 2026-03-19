@@ -33,12 +33,12 @@ function renderTextWithMentions(
         key={`${mentionMatch.mentionStart}-${mentionMatch.mentionName}`}
         type='button'
         onClick={() => onAppendMention(`@${mentionMatch.mentionName}`)}
-        style={getParticipantMentionSx(mentionMatch.mentionName, true) as React.CSSProperties}
+        style={getParticipantMentionSx(mentionMatch.mentionName, true, participants) as React.CSSProperties}
       >
         {mentionMatch.mentionText}
       </button>
     ) : (
-      <span key={`${mentionMatch.mentionStart}-${mentionMatch.mentionName}`} style={getParticipantMentionSx(mentionMatch.mentionName) as React.CSSProperties}>
+      <span key={`${mentionMatch.mentionStart}-${mentionMatch.mentionName}`} style={getParticipantMentionSx(mentionMatch.mentionName, false, participants) as React.CSSProperties}>
         {mentionMatch.mentionText}
       </span>
     ));

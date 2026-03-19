@@ -12,9 +12,9 @@
 
 ## File Structure
 
-- Modify: `src/apps/chat/editors/_handleExecute.consensus.ts`
+- Modify: `src/apps/chat/editors/_handleExecute.council.ts`
   Responsibility: extend council workflow types to support agent turn records and streamed event storage.
-- Modify: `src/apps/chat/editors/_handleExecute.consensus.test.ts`
+- Modify: `src/apps/chat/editors/_handleExecute.council.test.ts`
   Responsibility: protocol/state tests for richer freeform output plus terminal markers.
 - Modify: `src/apps/chat/editors/_handleExecute.ts`
   Responsibility: stream Leader and reviewer turn events, run reviewers concurrently after proposal finalization, and retain completed workflow state for trace replay.
@@ -42,8 +42,8 @@
 ### Task 1: Add failing protocol/state tests for richer freeform council output
 
 **Files:**
-- Modify: `src/apps/chat/editors/_handleExecute.consensus.test.ts`
-- Modify: `src/apps/chat/editors/_handleExecute.consensus.ts`
+- Modify: `src/apps/chat/editors/_handleExecute.council.test.ts`
+- Modify: `src/apps/chat/editors/_handleExecute.council.ts`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -56,7 +56,7 @@ Cover:
 
 - [ ] **Step 2: Run the focused test file to verify it fails**
 
-Run: `node --import tsx --test src/apps/chat/editors/_handleExecute.consensus.test.ts`
+Run: `node --import tsx --test src/apps/chat/editors/_handleExecute.council.test.ts`
 Expected: FAIL with missing types/helpers and failing assertions.
 
 - [ ] **Step 3: Implement minimal workflow-state additions**
@@ -69,13 +69,13 @@ Add:
 
 - [ ] **Step 4: Re-run the focused protocol/state tests**
 
-Run: `node --import tsx --test src/apps/chat/editors/_handleExecute.consensus.test.ts`
+Run: `node --import tsx --test src/apps/chat/editors/_handleExecute.council.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/apps/chat/editors/_handleExecute.consensus.ts src/apps/chat/editors/_handleExecute.consensus.test.ts
+git add src/apps/chat/editors/_handleExecute.council.ts src/apps/chat/editors/_handleExecute.council.test.ts
 git commit -m "feat: extend council workflow state for live turn traces"
 ```
 
@@ -253,7 +253,7 @@ git commit -m "feat: integrate live council trace into transcript"
 - [ ] **Step 1: Run focused council/UI tests**
 
 Run:
-`node --import tsx --test src/apps/chat/components/ChatMessageList.councilTrace.test.ts src/apps/chat/components/message/CouncilTraceMessage.layout.test.ts src/apps/chat/components/message/CouncilTraceMessage.test.tsx src/apps/chat/editors/_handleExecute.consensus.test.ts src/apps/chat/editors/_handleExecute.runtime.test.ts`
+`node --import tsx --test src/apps/chat/components/ChatMessageList.councilTrace.test.ts src/apps/chat/components/message/CouncilTraceMessage.layout.test.ts src/apps/chat/components/message/CouncilTraceMessage.test.tsx src/apps/chat/editors/_handleExecute.council.test.ts src/apps/chat/editors/_handleExecute.runtime.test.ts`
 
 Expected: PASS
 

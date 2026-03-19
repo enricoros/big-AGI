@@ -26,6 +26,8 @@ import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { CHAT_NOVEL_TITLE } from '../../AppChat';
+import { shouldAutoDisarmDeleteArm } from './ChatDrawerItem.delete';
+import { getChatTitleEditorSx, getDeleteConfirmButtonProps, getInactiveChatConfirmDeleteButtonSx, getInactiveChatDeleteButtonSx, getInactiveChatMainButtonSx, getInactiveChatRowShellSx } from './ChatDrawerItem.layout';
 
 
 // set to true to display the conversation IDs
@@ -118,12 +120,18 @@ function ChatDrawerItem(props: {
   const isNew = messageCount === 0;
 
 
-  // [effect] auto-disarm when inactive
-  const shallClose = deleteArmed && !isActive;
+  // [effect] auto-disarm only after an armed active row becomes inactive
+  const wasActiveRef = React.useRef(isActive);
+  const shallClose = shouldAutoDisarmDeleteArm({
+    deleteArmed,
+    isActive,
+    wasActive: wasActiveRef.current,
+  });
   React.useEffect(() => {
     if (shallClose)
       setDeleteArmed(false);
-  }, [shallClose]);
+    wasActiveRef.current = isActive;
+  }, [isActive, shallClose]);
 
 
   // Activate
@@ -183,16 +191,19 @@ function ChatDrawerItem(props: {
 
   const { onConversationDeleteNoConfirmation } = props;
   const handleDeleteButtonShow = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
     // special case: if 'Shift' is pressed, delete immediately
     if (event.shiftKey) { // immediately delete:conversation
-      event.stopPropagation();
       onConversationDeleteNoConfirmation(conversationId);
       return;
     }
     setDeleteArmed(true);
   }, [conversationId, onConversationDeleteNoConfirmation]);
 
-  const handleDeleteButtonHide = React.useCallback(() => setDeleteArmed(false), []);
+  const handleDeleteButtonHide = React.useCallback((event?: React.MouseEvent) => {
+    event?.stopPropagation();
+    setDeleteArmed(false);
+  }, []);
 
   const handleConversationDelete = React.useCallback((event: React.MouseEvent) => {
     if (deleteArmed) {
@@ -205,6 +216,7 @@ function ChatDrawerItem(props: {
 
   const personaSymbol = userSymbol || SystemPurposes[systemPurposeId]?.symbol || '❓';
   const personaImageURI = SystemPurposes[systemPurposeId]?.imageUri ?? undefined;
+  const deleteConfirmButtonProps = getDeleteConfirmButtonProps();
 
 
   const progress = props.bottomBarBasis ? 100 * (searchFrequency || messageCount) / props.bottomBarBasis : 0;
@@ -271,10 +283,7 @@ function ChatDrawerItem(props: {
         initialText={title}
         onEdit={handleTitleEditChange}
         onCancel={handleTitleEditCancel}
-        sx={{
-          flexGrow: 1,
-          ml: -1.5, mr: -0.5,
-        }}
+        sx={getChatTitleEditorSx(isActive)}
       />
     )}
 
@@ -329,6 +338,7 @@ function ChatDrawerItem(props: {
         backgroundColor: isActive ? 'neutral.solidActiveBg' : 'neutral.softBg',
         borderRadius: 'md',
         mx: '0.25rem',
+        my: '0.1875rem',
         '&:hover > button': {
           opacity: 1, // fade in buttons when hovering, but by default wash them out a bit
         },
@@ -421,8 +431,8 @@ function ChatDrawerItem(props: {
             {/*{!searchFrequency && <>*/}
             {deleteArmed && (
               <Tooltip color='danger' arrow disableInteractive title='Confirm Deletion'>
-                <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1, mr: 0.5 }}>
-                  <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+                <FadeInButton key='btn-del' size='sm' onClick={handleConversationDelete} {...deleteConfirmButtonProps}>
+                  <DeleteForeverIcon />
                 </FadeInButton>
               </Tooltip>
             )}
@@ -454,29 +464,53 @@ function ChatDrawerItem(props: {
   ) : (
 
     // Inactive Conversation - click to activate
-    <ListItem
-      // sx={{ '--ListItem-minHeight': '2.75rem' }}
-    >
+    <Sheet className='chat-drawer-item-shell' variant='plain' sx={getInactiveChatRowShellSx(isIncognito)}>
+      <ListItem sx={{ alignItems: 'center', gap: 0.5, px: 'calc(var(--ListItem-paddingX) - 0.25rem)', position: 'relative' }}>
 
-      <ListItemButton
-        onClick={handleConversationActivate}
-        sx={{
-          border: 'none', // there's a default border of 1px and invisible.. hmm
-          position: 'relative', // for the progress bar
-          borderRadius: 'sm', // OPTIMA_NAV_RADIUS, // sync with the optima radius, because they need to match
-          ...isIncognito && {
-            filter: 'contrast(0)',
-          },
-        }}
-      >
+        <ListItemButton
+          onClick={handleConversationActivate}
+          sx={getInactiveChatMainButtonSx(isIncognito, deleteArmed)}
+        >
 
-        {titleRowComponent}
+          {titleRowComponent}
 
-        {/* Optional progress bar, underlay */}
-        {progressBarFixedComponent}
+          {/* Optional progress bar, underlay */}
+          {progressBarFixedComponent}
 
-      </ListItemButton>
+        </ListItemButton>
 
-    </ListItem>
+        {deleteArmed && (
+          <Tooltip color='danger' arrow disableInteractive title='Confirm Deletion'>
+            <FadeInButton
+              aria-label='Confirm Deletion'
+              key='btn-del-inactive'
+              size='sm'
+              onClick={handleConversationDelete}
+              {...deleteConfirmButtonProps}
+              sx={{
+                ...deleteConfirmButtonProps.sx,
+                ...getInactiveChatConfirmDeleteButtonSx(),
+              }}
+            >
+              <DeleteForeverIcon />
+            </FadeInButton>
+          </Tooltip>
+        )}
+
+        <Tooltip arrow disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
+          <FadeInButton
+            aria-label={deleteArmed ? 'Cancel Delete' : 'Delete'}
+            className='chat-drawer-item-delete-button'
+            key='btn-arm-inactive'
+            size='sm'
+            onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow}
+            sx={getInactiveChatDeleteButtonSx(deleteArmed)}
+          >
+            {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+          </FadeInButton>
+        </Tooltip>
+
+      </ListItem>
+    </Sheet>
   );
 }

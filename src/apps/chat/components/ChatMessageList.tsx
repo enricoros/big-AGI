@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Chip, List, ListItem } from '@mui/joy';
 
-import type { SystemPurposeExample } from '../../../data';
+import type { SystemPurposeExample, SystemPurposeId } from '../../../data';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import { speakText } from '~/modules/speex/speex.client';
@@ -13,6 +13,7 @@ import type { ConversationHandler } from '~/common/chat-overlay/ConversationHand
 import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
+import { PerfProfiler } from '~/common/components/perf/PerfProfiler';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
@@ -22,36 +23,61 @@ import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
-import { useChatStore } from '~/common/stores/chat/store-chats';
+import {
+  getConversationCouncilTraceAutoCollapsePreviousRounds,
+  getConversationCouncilTraceAutoExpandNewestRound,
+  useChatStore,
+} from '~/common/stores/chat/store-chats';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { getParticipantAccentColor } from '~/common/util/dMessageUtils';
+import { perfMeasureSync } from '~/common/util/perfRegistry';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
-import { buildCouncilTraceRenderPlan, type CouncilTraceRenderItem } from './ChatMessageList.councilTrace';
+import {
+  getChatMessageListContainerSx,
+  getChatMessageListConversationOverlayMode,
+  getChatMessageListMinimapOverlaySx,
+  shouldShowConversationMinimapTrack,
+} from './ChatMessageList.layout';
+import { ConversationMinimap } from './ConversationMinimap';
+import { getCouncilGroupLabel, getNextAutoExpandedCouncilGroupKeys } from './ChatMessageList.council';
+import { buildCouncilTraceRenderPlan } from './ChatMessageList.councilTrace';
+import {
+  countVisibleRenderEntryUnits,
+  type CouncilGroupEntry,
+  type CouncilTraceVisibleEntry,
+  type GroupedVisibleEntry,
+  type GroupedVisibleRenderEntry,
+  type MessageDecoratorKind,
+  type RenderedGroupMessageEntry,
+  sliceVisibleRenderEntriesFromEnd,
+  type VisibleRenderEntry,
+} from './ChatMessageList.windowing';
 import { getCouncilVisibleMessages } from './ChatMessageList.visibility';
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { CouncilTraceMessage } from './message/CouncilTraceMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
+import { useChatAutoSuggestHTMLUI, useChatShowConversationMinimap, useChatShowSystemMessages } from '../store-app-chat';
 
 
 const stableNoMessages: DMessage[] = [];
-const stableNoParticipants = [] as const;
+const stableNoParticipants: DConversationParticipant[] = [];
 const stableNoRenderEntries: GroupedVisibleRenderEntry[] = [];
 const stableNoVisibleEntries = [] as VisibleRenderEntry[];
 const stableNoGroupMessages: RenderedGroupMessageEntry[] = [];
 const publicBoardChannel = { channel: 'public-board' } as const;
-const consensusGroupBoxSx = { display: 'grid', gap: 1, px: 2, pt: 0.5, pb: 0.75 } as const;
-const consensusGroupHeaderSx = { display: 'flex', justifyContent: 'center' } as const;
-const consensusGroupHeaderControlsSx = { display: 'inline-flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', justifyContent: 'center' } as const;
-const consensusGroupColumnsSx = {
+const INITIAL_VISIBLE_ENTRY_UNITS = 48;
+const councilGroupBoxSx = { display: 'grid', gap: 1, px: 2, pt: 0.5, pb: 0.75 } as const;
+const councilGroupHeaderSx = { display: 'flex', justifyContent: 'center' } as const;
+const councilGroupHeaderControlsSx = { display: 'inline-flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', justifyContent: 'center' } as const;
+const councilGroupColumnsSx = {
   display: 'grid',
   gap: 1,
   alignItems: 'start',
 } as const;
-const consensusMessageColumnBaseSx = {
+const councilMessageColumnBaseSx = {
   minWidth: 0,
   borderRadius: 'lg',
   border: '1px solid',
@@ -59,28 +85,97 @@ const consensusMessageColumnBaseSx = {
   overflow: 'hidden',
 } as const;
 
+export function getRenderableConversationParticipants(params: {
+  conversationId: DConversationId | null;
+  participants: DConversationParticipant[] | null | undefined;
+  userSymbol?: string | null;
+  systemPurposeId?: SystemPurposeId | null;
+}): DConversationParticipant[] {
+  const { conversationId, participants, userSymbol, systemPurposeId } = params;
+
+  if (!participants?.length) {
+    if (!conversationId || !systemPurposeId)
+      return stableNoParticipants;
+
+    return [
+      {
+        id: `human:${conversationId}`,
+        kind: 'human',
+        name: userSymbol || 'You',
+        personaId: null,
+        llmId: null,
+      },
+      {
+        id: `assistant:${conversationId}`,
+        kind: 'assistant',
+        name: systemPurposeId,
+        personaId: systemPurposeId,
+        llmId: null,
+        speakWhen: 'every-turn',
+        isLeader: true,
+      },
+    ];
+  }
+
+  let requiresNormalization = false;
+  let sawAssistant = false;
+
+  for (const participant of participants) {
+    if (participant.kind === 'assistant') {
+      sawAssistant = true;
+      if (participant.speakWhen !== 'every-turn' && participant.speakWhen !== 'when-mentioned') {
+        requiresNormalization = true;
+        break;
+      }
+      continue;
+    }
+
+    if (sawAssistant) {
+      requiresNormalization = true;
+      break;
+    }
+  }
+
+  if (!requiresNormalization)
+    return participants;
+
+  return participants
+    .map<DConversationParticipant>(participant => participant.kind === 'assistant'
+      ? {
+        ...participant,
+        speakWhen: participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn',
+      }
+      : participant,
+    )
+    .sort((a, b) => {
+      if (a.kind !== b.kind)
+        return a.kind === 'human' ? -1 : 1;
+      return 0;
+    });
+}
+
 function normalizeMessageChannel(message: DMessage) {
   const channel = message.metadata?.councilChannel;
   return channel?.channel === 'system' ? channel : publicBoardChannel;
 }
 
-function getConsensusGroupLabel(messages: DMessage[]): string {
+function getCouncilMessageGroupLabel(messages: DMessage[]): string {
   if (!messages.length)
     return '';
-  const passIndex = messages[0]?.metadata?.consensus?.passIndex ?? 0;
-  return `Pass ${passIndex + 1}`;
+  const passIndex = messages[0]?.metadata?.council?.passIndex ?? 0;
+  return getCouncilGroupLabel(passIndex);
 }
 
-function groupVisibleConsensusMessages(messages: DMessage[]): GroupedVisibleEntry[] {
+function groupVisibleCouncilMessages(messages: DMessage[]): GroupedVisibleEntry[] {
   const grouped: GroupedVisibleEntry[] = [];
 
   for (const message of messages) {
-    const consensus = message.metadata?.consensus;
-    if (consensus?.kind === 'deliberation' && typeof consensus.passIndex === 'number') {
+    const council = message.metadata?.council;
+    if (council?.kind === 'deliberation' && typeof council.passIndex === 'number') {
       const lastEntry = grouped[grouped.length - 1];
       if (lastEntry?.kind === 'group') {
-        const lastPassIndex = lastEntry.messages[0]?.metadata?.consensus?.passIndex;
-        if (lastPassIndex === consensus.passIndex) {
+        const lastPassIndex = lastEntry.messages[0]?.metadata?.council?.passIndex;
+        if (lastPassIndex === council.passIndex) {
           lastEntry.messages.push(message);
           continue;
         }
@@ -88,10 +183,10 @@ function groupVisibleConsensusMessages(messages: DMessage[]): GroupedVisibleEntr
 
       grouped.push({
         kind: 'group',
-        key: `consensus-pass-${consensus.phaseId}-${consensus.passIndex}`,
-        label: getConsensusGroupLabel([message]),
+        key: `council-pass-${council.phaseId}-${council.passIndex}`,
+        label: getCouncilMessageGroupLabel([message]),
         messages: [message],
-        passIndex: consensus.passIndex,
+        passIndex: council.passIndex,
       });
       continue;
     }
@@ -101,43 +196,6 @@ function groupVisibleConsensusMessages(messages: DMessage[]): GroupedVisibleEntr
 
   return grouped;
 }
-
-type MessageDecoratorKind = 'leader' | 'provisional' | 'system';
-
-type ConsensusGroupEntry = {
-  kind: 'group';
-  key: string;
-  label: string;
-  messages: DMessage[];
-  passIndex: number;
-};
-
-type SingleMessageEntry = {
-  kind: 'message';
-  key: string;
-  message: DMessage;
-};
-
-type GroupedVisibleEntry = ConsensusGroupEntry | SingleMessageEntry;
-
-type RenderedGroupMessageEntry = {
-  message: DMessage;
-  topDecoratorKind: MessageDecoratorKind | undefined;
-  topDecoratorCompact: true;
-  topDecoratorFirst: boolean;
-};
-
-type GroupedVisibleRenderEntry =
-  | (ConsensusGroupEntry & { renderedMessages: RenderedGroupMessageEntry[] })
-  | (SingleMessageEntry & { topDecoratorKind: MessageDecoratorKind | undefined });
-
-type CouncilTraceVisibleEntry = {
-  kind: 'council-trace';
-  key: string;
-  trace: CouncilTraceRenderItem;
-};
-
-type VisibleRenderEntry = GroupedVisibleRenderEntry | CouncilTraceVisibleEntry;
 
 function areRenderedGroupMessagesEqual(prev: ReadonlyArray<RenderedGroupMessageEntry>, next: ReadonlyArray<RenderedGroupMessageEntry>): boolean {
   if (prev === next)
@@ -158,8 +216,8 @@ function areRenderedGroupMessagesEqual(prev: ReadonlyArray<RenderedGroupMessageE
   return true;
 }
 
-const ConsensusGroupEntryView = React.memo(function ConsensusGroupEntryView(props: {
-  entry: ConsensusGroupEntry & { renderedMessages: RenderedGroupMessageEntry[] };
+const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
+  entry: CouncilGroupEntry & { renderedMessages: RenderedGroupMessageEntry[] };
   isExpanded: boolean;
   onToggleExpanded: (groupKey: string) => void;
   isMessageSelectionMode: boolean;
@@ -231,19 +289,20 @@ const ConsensusGroupEntryView = React.memo(function ConsensusGroupEntryView(prop
   const groupVariant = isExpanded ? 'solid' : 'soft';
   const groupBorderColor = isExpanded ? 'primary.outlinedBorder' : 'divider';
   const columnsSx = React.useMemo(() => ({
-    ...consensusGroupColumnsSx,
+    ...councilGroupColumnsSx,
     gridTemplateColumns: {
       xs: '1fr',
-      md: `repeat(${entry.messages.length}, ${getConsensusGroupColumnWidth(entry.messages.length)})`,
+      md: `repeat(${entry.messages.length}, ${getCouncilGroupColumnWidth(entry.messages.length)})`,
     },
   }), [entry.messages.length]);
   const renderedMessages = React.useMemo(() => entry.renderedMessages, [entry.renderedMessages]);
 
   return (
-    <ListItem sx={{ display: 'block', px: 0, py: 0 }}>
-      <Box sx={consensusGroupBoxSx}>
-        <Box sx={consensusGroupHeaderSx}>
-          <Box sx={consensusGroupHeaderControlsSx}>
+    <PerfProfiler id='CouncilGroupEntryView'>
+      <ListItem data-chat-minimap-entry='group' sx={{ display: 'block', px: 0, py: 0 }}>
+        <Box sx={councilGroupBoxSx}>
+        <Box sx={councilGroupHeaderSx}>
+          <Box sx={councilGroupHeaderControlsSx}>
             <Chip size='sm' variant={groupVariant} color={groupTone}>
               {entry.label} · {entry.messages.length} draft{entry.messages.length === 1 ? '' : 's'}
             </Chip>
@@ -263,7 +322,7 @@ const ConsensusGroupEntryView = React.memo(function ConsensusGroupEntryView(prop
               const ChatMessageMemoOrNot = !message.pendingIncomplete ? ChatMessageMemo : ChatMessage;
 
               return (
-                <Box key={`group-column-${message.id}`} sx={{ ...consensusMessageColumnBaseSx, borderColor: groupBorderColor }}>
+                <Box key={`group-column-${message.id}`} sx={{ ...councilMessageColumnBaseSx, borderColor: groupBorderColor }}>
                   {isMessageSelectionMode ? (
                     <CleanerMessage
                       key={'sel-' + message.id}
@@ -309,8 +368,9 @@ const ConsensusGroupEntryView = React.memo(function ConsensusGroupEntryView(prop
             })}
           </Box>
         )}
-      </Box>
-    </ListItem>
+        </Box>
+      </ListItem>
+    </PerfProfiler>
   );
 }, (prevProps, nextProps) => {
   return prevProps.entry.key === nextProps.entry.key
@@ -354,17 +414,17 @@ function getMessageDecoratorKind(message: DMessage): MessageDecoratorKind | unde
     return 'system';
   if (messageChannel.channel !== 'public-board')
     return undefined;
-  if (message.metadata?.consensus?.kind !== 'deliberation')
+  if (message.metadata?.council?.kind !== 'deliberation')
     return undefined;
-  if (message.metadata?.consensus?.leaderParticipantId === message.metadata?.author?.participantId)
+  if (message.metadata?.council?.leaderParticipantId === message.metadata?.author?.participantId)
     return 'leader';
-  if (message.metadata?.consensus?.provisional)
+  if (message.metadata?.council?.provisional)
     return 'provisional';
   return undefined;
 }
 
 function getGroupedVisibleRenderEntries(messages: DMessage[]): GroupedVisibleRenderEntry[] {
-  return groupVisibleConsensusMessages(messages).map(entry => {
+  return groupVisibleCouncilMessages(messages).map(entry => {
     if (entry.kind === 'group') {
       return {
         ...entry,
@@ -384,7 +444,7 @@ function getGroupedVisibleRenderEntries(messages: DMessage[]): GroupedVisibleRen
   });
 }
 
-function getConsensusGroupColumnWidth(messageCount: number): string {
+function getCouncilGroupColumnWidth(messageCount: number): string {
   if (messageCount >= 4)
     return 'minmax(19rem, 1fr)';
   if (messageCount === 3)
@@ -411,69 +471,60 @@ export function ChatMessageList(props: {
   sx?: SxProps,
 }) {
 
+  const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine } = props;
+
   // state
   const [isImagining, setIsImagining] = React.useState(false);
   const [isSpeaking, setIsSpeaking] = React.useState(false);
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
-  const [expandedConsensusGroupKeys, setExpandedConsensusGroupKeys] = React.useState<Set<string>>(new Set());
+  const [expandedCouncilGroupKeys, setExpandedCouncilGroupKeys] = React.useState<Set<string>>(new Set());
+  const [visibleEntryUnitLimit, setVisibleEntryUnitLimit] = React.useState<number | null>(INITIAL_VISIBLE_ENTRY_UNITS);
+  const previousLatestCouncilGroupKeyRef = React.useRef<string | null>(null);
+  const previousConversationIdRef = React.useRef<DConversationId | null>(null);
+  const listRef = React.useRef<HTMLUListElement | null>(null);
 
   // external state
   const { notifyBooting } = useScrollToBottom();
   const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
-  const conversation = useChatStore(React.useCallback(({ conversations }) =>
-    conversations.find(conversation => conversation.id === props.conversationId) ?? null,
-  [props.conversationId]));
-  const conversationMessages = conversation?.messages ?? stableNoMessages;
-  const historyTokenCount = conversation?.tokenCount ?? 0;
+  const [showConversationMinimap] = useChatShowConversationMinimap();
+  const {
+    conversationMessages,
+    historyTokenCount,
+    storedParticipants,
+    conversationUserSymbol,
+    conversationSystemPurposeId,
+    councilTraceAutoCollapsePreviousRounds,
+    councilTraceAutoExpandNewestRound,
+  } = useChatStore(useShallow(React.useCallback(({ conversations }) => {
+    const conversation = conversations.find(item => item.id === props.conversationId) ?? null;
+    return {
+      conversationMessages: conversation?.messages ?? stableNoMessages,
+      historyTokenCount: conversation?.tokenCount ?? 0,
+      storedParticipants: conversation?.participants ?? null,
+      conversationUserSymbol: conversation?.userSymbol ?? null,
+      conversationSystemPurposeId: conversation?.systemPurposeId ?? null,
+      councilTraceAutoCollapsePreviousRounds: getConversationCouncilTraceAutoCollapsePreviousRounds(props.conversationId),
+      councilTraceAutoExpandNewestRound: getConversationCouncilTraceAutoExpandNewestRound(props.conversationId),
+    };
+  }, [props.conversationId])));
   const participants = React.useMemo<DConversationParticipant[]>(() => {
-    const rawParticipants = conversation?.participants?.length
-      ? conversation.participants
-      : conversation
-        ? [
-          {
-            id: `human:${conversation.id}`,
-            kind: 'human' as const,
-            name: conversation.userSymbol || 'You',
-            personaId: null,
-            llmId: null,
-          },
-          {
-            id: `assistant:${conversation.id}`,
-            kind: 'assistant' as const,
-            name: conversation.systemPurposeId,
-            personaId: conversation.systemPurposeId,
-            llmId: null,
-            speakWhen: 'every-turn' as const,
-            isLeader: true,
-          },
-        ]
-        : stableNoParticipants;
-
-    return rawParticipants
-      .map<DConversationParticipant>(participant => participant.kind === 'assistant'
-        ? {
-          ...participant,
-          speakWhen: participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn',
-        }
-        : participant,
-      )
-      .sort((a, b) => {
-        if (a.kind !== b.kind)
-          return a.kind === 'human' ? -1 : 1;
-        return 0;
-      });
-  }, [conversation]);
-  const { _composerInReferenceToCount, ephemerals, showConsensusDeliberation, toggleShowConsensusDeliberation, councilSession } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
+    return getRenderableConversationParticipants({
+      conversationId,
+      participants: storedParticipants,
+      userSymbol: conversationUserSymbol,
+      systemPurposeId: conversationSystemPurposeId,
+    });
+  }, [conversationId, conversationSystemPurposeId, conversationUserSymbol, storedParticipants]);
+  const { _composerInReferenceToCount, ephemerals, showCouncilDeliberation, toggleShowCouncilDeliberation, councilSession } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
-    showConsensusDeliberation: state.showConsensusDeliberation,
-    toggleShowConsensusDeliberation: state.toggleShowConsensusDeliberation,
+    showCouncilDeliberation: state.showCouncilDeliberation,
+    toggleShowCouncilDeliberation: state.toggleShowCouncilDeliberation,
     councilSession: state.councilSession,
   })));
 
   // derived state
-  const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine } = props;
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
   const composerHasInReferenceto = _composerInReferenceToCount > 0;
   const humanParticipantIds = React.useMemo(() => new Set(participants.filter(participant => participant.kind === 'human').map(participant => participant.id)), [participants]);
@@ -691,9 +742,10 @@ export function ChatMessageList(props: {
 
 
   // style memo
+  const containerSx: SxProps = React.useMemo(() => getChatMessageListContainerSx(props.sx), [props.sx]);
+  const minimapOverlaySx: SxProps = React.useMemo(() => getChatMessageListMinimapOverlaySx(), []);
   const listSx: SxProps = React.useMemo(() => ({
     p: 0,
-    ...props.sx,
 
     // we added these after removing the minSize={20} (%) from the containing panel.
     minWidth: '18rem',
@@ -705,32 +757,75 @@ export function ChatMessageList(props: {
     // layout
     display: 'flex',
     flexDirection: 'column',
-  }), [props.sx]);
+  }), []);
 
-  const filteredMessages = React.useMemo(() => getCouncilVisibleMessages(conversationMessages, showSystemMessages), [conversationMessages, showSystemMessages]);
-  const hasConsensusDeliberation = React.useMemo(() => filteredMessages.some(message => message.metadata?.consensus?.kind === 'deliberation'), [filteredMessages]);
-  const councilTracePlan = React.useMemo(() => buildCouncilTraceRenderPlan({
-    messages: filteredMessages,
-    participants,
-    councilSession,
-  }), [councilSession, filteredMessages, participants]);
+  const filteredMessages = React.useMemo(() => perfMeasureSync(
+    'derive:ChatMessageList.getCouncilVisibleMessages',
+    () => getCouncilVisibleMessages(conversationMessages, showSystemMessages),
+  ), [conversationMessages, showSystemMessages]);
+  const hasCouncilDeliberation = React.useMemo(() => filteredMessages.some(message => message.metadata?.council?.kind === 'deliberation'), [filteredMessages]);
+  const councilTracePlan = React.useMemo(() => perfMeasureSync(
+    'derive:ChatMessageList.buildCouncilTraceRenderPlan',
+    () => buildCouncilTraceRenderPlan({
+      messages: filteredMessages,
+      participants,
+      councilSession,
+      autoCollapsePreviousRounds: councilTraceAutoCollapsePreviousRounds,
+      autoExpandNewestRound: councilTraceAutoExpandNewestRound,
+    }),
+  ), [councilSession, councilTraceAutoCollapsePreviousRounds, councilTraceAutoExpandNewestRound, filteredMessages, participants]);
   const councilTraceItem = councilTracePlan.traceItem;
-  const consensusGroupKeys = React.useMemo(() => getGroupedVisibleRenderEntries(filteredMessages)
-    .filter((entry): entry is ConsensusGroupEntry & { renderedMessages: RenderedGroupMessageEntry[] } => entry.kind === 'group')
-    .map(entry => entry.key), [filteredMessages]);
-  const latestConsensusGroupKey = consensusGroupKeys.length ? consensusGroupKeys[consensusGroupKeys.length - 1] : null;
+  const groupedVisibleRenderEntries = React.useMemo(() => perfMeasureSync(
+    'derive:ChatMessageList.getGroupedVisibleRenderEntries',
+    () => {
+      if (!filteredMessages.length)
+        return stableNoRenderEntries;
+
+      const nextVisibleMessages = filteredMessages.filter(message => {
+        const council = message.metadata?.council;
+        if (council?.kind === 'deliberation')
+          return councilTracePlan.showLegacyDeliberationToggle ? showCouncilDeliberation : false;
+        return true;
+      });
+
+      if (!nextVisibleMessages.length)
+        return stableNoRenderEntries;
+
+      return getGroupedVisibleRenderEntries(nextVisibleMessages);
+    },
+  ), [councilTracePlan.showLegacyDeliberationToggle, filteredMessages, showCouncilDeliberation]);
+  const latestCouncilGroupKey = React.useMemo(() => {
+    for (let index = groupedVisibleRenderEntries.length - 1; index >= 0; index--) {
+      const entry = groupedVisibleRenderEntries[index];
+      if (entry?.kind === 'group')
+        return entry.key;
+    }
+    return null;
+  }, [groupedVisibleRenderEntries]);
   React.useEffect(() => {
-    if (!showConsensusDeliberation || councilTraceItem || !latestConsensusGroupKey)
+    const nextAutoExpandedKeys = getNextAutoExpandedCouncilGroupKeys({
+      previousLatestCouncilGroupKey: previousLatestCouncilGroupKeyRef.current,
+      latestCouncilGroupKey,
+      showCouncilDeliberation,
+      hasCouncilTrace: !!councilTraceItem,
+    });
+
+    if (!showCouncilDeliberation || councilTraceItem || !latestCouncilGroupKey)
       return;
 
-    setExpandedConsensusGroupKeys(prev => {
-      if (prev.size === 1 && prev.has(latestConsensusGroupKey))
-        return prev;
-      return new Set([latestConsensusGroupKey]);
-    });
-  }, [councilTraceItem, latestConsensusGroupKey, showConsensusDeliberation]);
-  const handleToggleConsensusGroupExpanded = React.useCallback((groupKey: string) => {
-    setExpandedConsensusGroupKeys(prev => {
+    previousLatestCouncilGroupKeyRef.current = latestCouncilGroupKey;
+    if (!nextAutoExpandedKeys)
+      return;
+
+    setExpandedCouncilGroupKeys(prev =>
+      prev.size === nextAutoExpandedKeys.size
+        && [...nextAutoExpandedKeys].every(key => prev.has(key))
+        ? prev
+        : nextAutoExpandedKeys,
+    );
+  }, [councilTraceItem, latestCouncilGroupKey, showCouncilDeliberation]);
+  const handleToggleCouncilGroupExpanded = React.useCallback((groupKey: string) => {
+    setExpandedCouncilGroupKeys(prev => {
       const next = new Set(prev);
       if (next.has(groupKey))
         next.delete(groupKey);
@@ -739,51 +834,86 @@ export function ChatMessageList(props: {
       return next;
     });
   }, []);
-  const groupedVisibleRenderEntries = React.useMemo(() => {
-    if (!filteredMessages.length)
-      return stableNoRenderEntries;
+  const visibleRenderEntries = React.useMemo<VisibleRenderEntry[]>(() => perfMeasureSync(
+    'derive:ChatMessageList.visibleRenderEntries',
+    () => {
+      if (!groupedVisibleRenderEntries.length && !councilTraceItem)
+        return stableNoVisibleEntries;
 
-    const nextVisibleMessages = filteredMessages.filter(message => {
-      const consensus = message.metadata?.consensus;
-      if (consensus?.kind === 'deliberation')
-        return councilTracePlan.showLegacyDeliberationToggle ? showConsensusDeliberation : false;
-      return true;
-    });
+      if (!councilTraceItem)
+        return groupedVisibleRenderEntries;
 
-    if (!nextVisibleMessages.length)
-      return stableNoRenderEntries;
+      const traceEntry: CouncilTraceVisibleEntry = {
+        kind: 'council-trace',
+        key: `council-trace-${councilTraceItem.phaseId}`,
+        trace: councilTraceItem,
+      };
 
-    return getGroupedVisibleRenderEntries(nextVisibleMessages);
-  }, [councilTracePlan.showLegacyDeliberationToggle, filteredMessages, showConsensusDeliberation]);
-  const visibleRenderEntries = React.useMemo<VisibleRenderEntry[]>(() => {
-    if (!groupedVisibleRenderEntries.length && !councilTraceItem)
-      return stableNoVisibleEntries;
+      if (councilTraceItem.placement.mode === 'after-phase')
+        return [...groupedVisibleRenderEntries, traceEntry];
 
-    if (!councilTraceItem)
-      return groupedVisibleRenderEntries;
-
-    const traceEntry: CouncilTraceVisibleEntry = {
-      kind: 'council-trace',
-      key: `council-trace-${councilTraceItem.phaseId}`,
-      trace: councilTraceItem,
-    };
-
-    if (councilTraceItem.placement.mode === 'after-phase')
-      return [...groupedVisibleRenderEntries, traceEntry];
-
-    const nextEntries: VisibleRenderEntry[] = [];
-    let inserted = false;
-    for (const entry of groupedVisibleRenderEntries) {
-      if (!inserted && entry.kind === 'message' && entry.message.id === councilTraceItem.placement.anchorMessageId) {
-        nextEntries.push(traceEntry);
-        inserted = true;
+      const nextEntries: VisibleRenderEntry[] = [];
+      let inserted = false;
+      for (const entry of groupedVisibleRenderEntries) {
+        if (!inserted && entry.kind === 'message' && entry.message.id === councilTraceItem.placement.anchorMessageId) {
+          nextEntries.push(traceEntry);
+          inserted = true;
+        }
+        nextEntries.push(entry);
       }
-      nextEntries.push(entry);
+
+      return inserted ? nextEntries : [...groupedVisibleRenderEntries, traceEntry];
+    },
+  ), [councilTraceItem, groupedVisibleRenderEntries]);
+  const totalVisibleRenderEntryUnits = React.useMemo(
+    () => visibleRenderEntries.reduce((count, entry) => count + countVisibleRenderEntryUnits(entry), 0),
+    [visibleRenderEntries],
+  );
+  React.useEffect(() => {
+    if (props.isMessageSelectionMode) {
+      setVisibleEntryUnitLimit(null);
+      return;
     }
 
-    return inserted ? nextEntries : [...groupedVisibleRenderEntries, traceEntry];
-  }, [councilTraceItem, groupedVisibleRenderEntries]);
+    if (totalVisibleRenderEntryUnits <= INITIAL_VISIBLE_ENTRY_UNITS)
+      setVisibleEntryUnitLimit(null);
+  }, [props.isMessageSelectionMode, totalVisibleRenderEntryUnits]);
+  React.useEffect(() => {
+    if (!conversationId)
+      return;
+    if (previousConversationIdRef.current === conversationId)
+      return;
+
+    previousConversationIdRef.current = conversationId;
+
+    setVisibleEntryUnitLimit(totalVisibleRenderEntryUnits > INITIAL_VISIBLE_ENTRY_UNITS
+      ? INITIAL_VISIBLE_ENTRY_UNITS
+      : null);
+  }, [conversationId, totalVisibleRenderEntryUnits]);
+  const renderedVisibleEntries = React.useMemo(
+    () => visibleEntryUnitLimit === null
+      ? visibleRenderEntries
+      : sliceVisibleRenderEntriesFromEnd(visibleRenderEntries, visibleEntryUnitLimit),
+    [visibleEntryUnitLimit, visibleRenderEntries],
+  );
+  const hasDeferredOlderEntries = renderedVisibleEntries.length < visibleRenderEntries.length;
+  const renderedVisibleEntryUnits = React.useMemo(
+    () => renderedVisibleEntries.reduce((count, entry) => count + countVisibleRenderEntryUnits(entry), 0),
+    [renderedVisibleEntries],
+  );
   const visibleMessageCount = React.useMemo(() => visibleRenderEntries.reduce((count, entry) => count + (entry.kind === 'group' ? entry.messages.length : 1), 0), [visibleRenderEntries]);
+  const showConversationMinimapTrack = React.useMemo(() => shouldShowConversationMinimapTrack({
+    showConversationMinimap,
+    hasDeferredOlderEntries,
+    renderedEntryUnits: renderedVisibleEntryUnits,
+  }), [hasDeferredOlderEntries, renderedVisibleEntryUnits, showConversationMinimap]);
+  const conversationOverlayMode = getChatMessageListConversationOverlayMode({
+    isMobile: props.isMobile,
+    isMessageSelectionMode: props.isMessageSelectionMode,
+    showConversationMinimap,
+    showConversationMinimapTrack,
+    visibleMessageCount,
+  });
 
 
   // no conversation: sine qua non
@@ -800,17 +930,24 @@ export function ChatMessageList(props: {
     );
 
   return (
-    <List role='chat-messages-list' sx={listSx} onCopy={clipboardInterceptCtrlCForCleanup}>
+    <PerfProfiler id='ChatMessageList'>
+      <Box sx={containerSx}>
+      {conversationOverlayMode !== 'hidden' && (
+        <Box sx={minimapOverlaySx}>
+          <ConversationMinimap listRef={listRef} showTrack={showConversationMinimapTrack} />
+        </Box>
+      )}
+      <List ref={listRef} role='chat-messages-list' sx={listSx} onCopy={clipboardInterceptCtrlCForCleanup}>
 
-      {hasConsensusDeliberation && councilTracePlan.showLegacyDeliberationToggle && (
+      {hasCouncilDeliberation && councilTracePlan.showLegacyDeliberationToggle && (
         <Box sx={{ display: 'flex', justifyContent: 'center', px: 2, pt: 1, pb: 0.5 }}>
           <Button
             size='sm'
-            variant={showConsensusDeliberation ? 'solid' : 'soft'}
+            variant={showCouncilDeliberation ? 'solid' : 'soft'}
             color='neutral'
-            onClick={toggleShowConsensusDeliberation}
+            onClick={toggleShowCouncilDeliberation}
           >
-            {showConsensusDeliberation ? 'Hide deliberation' : 'Show deliberation'}
+            {showCouncilDeliberation ? 'Hide deliberation' : 'Show deliberation'}
           </Button>
         </Box>
       )}
@@ -827,17 +964,37 @@ export function ChatMessageList(props: {
         />
       )}
 
-      {visibleRenderEntries.map((entry, idx) => {
+      {hasDeferredOlderEntries && !props.isMessageSelectionMode && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px: 2, pt: 1, pb: 0.5 }}>
+          <Button
+            size='sm'
+            variant='soft'
+            color='neutral'
+            onClick={() => setVisibleEntryUnitLimit(null)}
+          >
+            Load older messages
+          </Button>
+        </Box>
+      )}
+
+      {renderedVisibleEntries.map((entry, idx) => {
           if (entry.kind === 'council-trace')
-            return <CouncilTraceMessage key={entry.key} trace={entry.trace} />;
+            return (
+              <CouncilTraceMessage
+                key={entry.key}
+                trace={entry.trace}
+                autoCollapsePreviousRounds={councilTraceAutoCollapsePreviousRounds}
+                autoExpandNewestRound={councilTraceAutoExpandNewestRound}
+              />
+            );
 
           if (entry.kind === 'group') {
             return (
-              <ConsensusGroupEntryView
+              <CouncilGroupEntryView
                 key={entry.key}
                 entry={entry}
-                isExpanded={expandedConsensusGroupKeys.has(entry.key)}
-                onToggleExpanded={handleToggleConsensusGroupExpanded}
+                isExpanded={expandedCouncilGroupKeys.has(entry.key)}
+                onToggleExpanded={handleToggleCouncilGroupExpanded}
                 isMessageSelectionMode={props.isMessageSelectionMode}
                 historyTokenCount={historyTokenCount}
                 remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
@@ -884,37 +1041,36 @@ export function ChatMessageList(props: {
             />
 
           ) : (
-
-            <ChatMessageMemoOrNot
-              key={'msg-' + message.id}
-              message={message}
-              fitScreen={props.fitScreen}
-              hasInReferenceTo={composerHasInReferenceto}
-              isMobile={props.isMobile}
-              isBottom={idx === visibleRenderEntries.length - 1}
-              isImagining={isImagining}
-              isSpeaking={isSpeaking}
-              showAntPromptCaching={props.chatLLMAntPromptCaching}
-              showUnsafeHtmlCode={danger_experimentalHtmlWebUi}
-              topDecoratorKind={entry.topDecoratorKind}
-              onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
-              onMessageAssistantFrom={handleMessageAssistantFrom}
-              onMessageBeam={handleMessageBeam}
-              onMessageBranch={handleMessageBranch}
-              onMessageContinue={handleMessageContinue}
-              onMessageDelete={handleMessageDelete}
-              onMessageFragmentAppend={handleMessageAppendFragment}
-              onMessageFragmentDelete={handleMessageDeleteFragment}
-              onMessageFragmentReplace={handleMessageReplaceFragment}
-              onMessageToggleUserFlag={handleMessageToggleUserFlag}
-              onMessageTruncate={handleMessageTruncate}
-              onTextDiagram={handleTextDiagram}
-              onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
-              onTextSpeak={handleTextSpeak}
-              onAppendMention={handleAppendMention}
-              participants={participants}
-            />
-
+            <PerfProfiler key={'msg-' + message.id} id='ChatMessageRow'>
+              <ChatMessageMemoOrNot
+                message={message}
+                fitScreen={props.fitScreen}
+                hasInReferenceTo={composerHasInReferenceto}
+                isMobile={props.isMobile}
+                isBottom={idx === renderedVisibleEntries.length - 1}
+                isImagining={isImagining}
+                isSpeaking={isSpeaking}
+                showAntPromptCaching={props.chatLLMAntPromptCaching}
+                showUnsafeHtmlCode={danger_experimentalHtmlWebUi}
+                topDecoratorKind={entry.topDecoratorKind}
+                onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
+                onMessageAssistantFrom={handleMessageAssistantFrom}
+                onMessageBeam={handleMessageBeam}
+                onMessageBranch={handleMessageBranch}
+                onMessageContinue={handleMessageContinue}
+                onMessageDelete={handleMessageDelete}
+                onMessageFragmentAppend={handleMessageAppendFragment}
+                onMessageFragmentDelete={handleMessageDeleteFragment}
+                onMessageFragmentReplace={handleMessageReplaceFragment}
+                onMessageToggleUserFlag={handleMessageToggleUserFlag}
+                onMessageTruncate={handleMessageTruncate}
+                onTextDiagram={handleTextDiagram}
+                onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
+                onTextSpeak={handleTextSpeak}
+                onAppendMention={handleAppendMention}
+                participants={participants}
+              />
+            </PerfProfiler>
           );
         },
       )}
@@ -931,6 +1087,8 @@ export function ChatMessageList(props: {
         />
       )}
 
-    </List>
+      </List>
+      </Box>
+    </PerfProfiler>
   );
 }

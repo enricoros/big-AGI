@@ -1,5 +1,9 @@
+import * as z from 'zod/v4';
+
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import type { DModelParameterValues } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterRegistry, findModelReasoningEffortParamSpec, MODEL_REASONING_EFFORT_PARAM_IDS } from '~/common/stores/llms/llms.parameters';
+import { findLLMOrThrow, getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getChatAutoAI } from '../store-app-chat';
 
 import type { SystemPurposeId } from '../../../data';
@@ -7,31 +11,48 @@ import { SystemPurposes } from '../../../data';
 
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 
-import type { DConversationId, DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
+import { DEFAULT_COUNCIL_MAX_ROUNDS, resolveCouncilMaxRounds } from '~/common/stores/chat/chat.conversation';
+import type { DConversationId, DConversationParticipant, DPersistedCouncilSession, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { createDMessageEmpty, createDMessageTextContent, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import type { DMessage, DMessageCouncilChannel } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { duplicateDMessage } from '~/common/stores/chat/chat.message';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
-import { getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { getConversationCouncilMaxRounds, getConversationCouncilOpLog, getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
+import { findParticipantMentionMatchIndex } from '~/common/util/dMessageUtils';
+import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
 import {
   applyCouncilReviewBallots,
+  appendCouncilAgentTurnEvent,
   classifyCouncilReviewBallotFragments,
-  classifyConsensusTextFragments,
-  CONSENSUS_TRANSCRIPT_PREFIX,
+  COUNCIL_REVIEW_ANALYSIS_MISSING_REASON,
+  COUNCIL_REVIEW_FAILED_REASON,
+  COUNCIL_REVIEW_VERDICT_MISSING_REASON,
+  deriveCouncilReviewerFallbackReason,
+  COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL,
+  COUNCIL_INVALID_PROPOSAL_TEXT,
+  classifyCouncilTextFragments,
+  COUNCIL_TRANSCRIPT_PREFIX,
   createCouncilSessionState,
-  evaluateConsensusPass,
+  doesCouncilRoundNeedLeaderProposal,
+  evaluateCouncilPass,
   extractCouncilProposalText,
-  getConsensusResumePassIndex,
+  getCouncilResumePassIndex,
   hydrateCouncilSessionFromTranscriptEntries,
+  recordCouncilAgentMessageSnapshot,
   recordCouncilProposal,
-} from './_handleExecute.consensus';
-import type { ConsensusProtocolAction, CouncilSessionState } from './_handleExecute.consensus';
+  recordCouncilReviewerTurn,
+  recordCouncilReviewerVote,
+} from './_handleExecute.council';
+import type { CouncilProtocolAction, CouncilBallotRecord, CouncilSessionState } from './_handleExecute.council';
+import { appendCouncilOps, createCouncilOp } from './_handleExecute.council.log';
+import type { CouncilOp } from './_handleExecute.council.log';
+import { reduceCouncilOps, replayCouncilOpLog } from './_handleExecute.council.reducer';
 import type { PersonaRunOptions } from './chat-persona';
 import type { ChatExecutionRuntime, ChatExecutionSession } from './chat-execution.runtime';
 
@@ -106,26 +127,8 @@ async function resolveChatExecutionRuntime(runtime?: ChatExecutionRuntime): Prom
   return getDefaultChatExecutionRuntime();
 }
 
-function escapeMentionToken(mention: string): string {
-  return mention.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function findMentionMatchIndex(messageText: string, mention: string): number | null {
-  const normalizedMention = mention.trim();
-  if (!normalizedMention)
-    return null;
-
-  const explicitMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])@${escapeMentionToken(normalizedMention)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
-  const explicitMatch = explicitMentionRegex.exec(messageText);
-  if (explicitMatch)
-    return explicitMatch.index + ((explicitMatch[0] ?? '').length - (`@${normalizedMention}`).length);
-
-  const bareMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeMentionToken(normalizedMention)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
-  const bareMatch = bareMentionRegex.exec(messageText);
-  if (bareMatch)
-    return bareMatch.index + ((bareMatch[0] ?? '').length - normalizedMention.length);
-
-  return null;
+  return findParticipantMentionMatchIndex(messageText, mention);
 }
 
 function hasMentionToken(message: DMessage | null, mention: string): boolean {
@@ -199,7 +202,13 @@ function hasStopToken(message: DMessage | null): boolean {
   return /(^|[^\p{L}\p{N}])@stop(?=$|[^\p{L}\p{N}])/iu.test(messageText);
 }
 
-function buildMultiAgentCoordinationMessage(participants: DConversationParticipant[], activeParticipant: DConversationParticipant): DMessage {
+function getMultiAgentCoordinationInstructionLines(
+  participants: DConversationParticipant[],
+  activeParticipant: DConversationParticipant,
+  options?: {
+    includeExitLoopInstruction?: boolean;
+  },
+): string[] {
   const assistantLines = participants
     .filter(participant => participant.kind === 'assistant' && participant.personaId)
     .map((participant, index) => {
@@ -208,26 +217,52 @@ function buildMultiAgentCoordinationMessage(participants: DConversationParticipa
       return `${index + 1}. ${participant.name} — ${participant.personaId}${participant.llmId ? ` — model ${participant.llmId}` : ''} — ${speakMode}${activeMarker}`;
     });
 
-  const instruction = [
+  return [
     'You are participating in a multi-agent group chat.',
     'Other assistant messages in the conversation were written by other agents in the same room, not by the user.',
     'Read the latest user request and the prior assistant replies before answering.',
     'Do not treat prior assistant replies as pasted transcript or quoted input from the user.',
     'Avoid repeating the same answer when another agent already covered it; instead continue, refine, or add a distinct contribution.',
+    'Use @mentions to ask other agents to continue when the room supports mention follow-ups.',
+    'You can @mention any agent by the roster names shown below, including slash aliases from their display names.',
+    'Use @all to bring in every other agent, and do not @mention yourself.',
+    ...(options?.includeExitLoopInstruction ? [
+      'If you decide the loop should end after your reply, call the Exit_loop tool.',
+      'Only call Exit_loop in the same turn where you provide the final visible reply for the user; do not call it from reasoning-only output or while handing off to another agent.',
+    ] : []),
     'Current agent roster and speaking order:',
     ...assistantLines,
-  ].join('\n');
+  ];
+}
+
+function buildMultiAgentCoordinationMessage(
+  participants: DConversationParticipant[],
+  activeParticipant: DConversationParticipant,
+  options?: {
+    includeExitLoopInstruction?: boolean;
+  },
+): DMessage {
+  const instruction = getMultiAgentCoordinationInstructionLines(participants, activeParticipant, options).join('\n');
 
   const message = createDMessageTextContent('system', instruction);
   message.updated = message.created;
   return message;
 }
 
-async function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assistantLlmId: DLLMId, purposeId: SystemPurposeId, participants: DConversationParticipant[], activeParticipant: DConversationParticipant): Promise<DMessage[]> {
+async function preparePersonaHistory(
+  sourceHistory: Readonly<DMessage[]>,
+  assistantLlmId: DLLMId,
+  purposeId: SystemPurposeId,
+  participants: DConversationParticipant[],
+  activeParticipant: DConversationParticipant,
+  options?: {
+    includeExitLoopInstruction?: boolean;
+  },
+): Promise<DMessage[]> {
   const participantHistory = [...sourceHistory];
   await inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
 
-  const coordinationMessage = buildMultiAgentCoordinationMessage(participants, activeParticipant);
+  const coordinationMessage = buildMultiAgentCoordinationMessage(participants, activeParticipant, options);
   const systemMessage = participantHistory.find(message => message.role === 'system') ?? null;
   const systemTextFragment = systemMessage?.fragments.find(isTextContentFragment) ?? null;
   const coordinationTextFragment = coordinationMessage.fragments.find(isTextContentFragment) ?? null;
@@ -242,8 +277,128 @@ async function preparePersonaHistory(sourceHistory: Readonly<DMessage[]>, assist
   return participantHistory;
 }
 
+function getParticipantLlmUserParametersReplacement(
+  assistantLlmId: DLLMId,
+  participant: DConversationParticipant | undefined,
+  baseUserParameters: DModelParameterValues | undefined,
+): DModelParameterValues | undefined {
+  const reasoningEffort = participant?.reasoningEffort;
+  if (!reasoningEffort)
+    return baseUserParameters;
 
-function findConsensusPlaceholderMessageId(
+  let llm;
+  try {
+    llm = findLLMOrThrow(assistantLlmId);
+  } catch {
+    return baseUserParameters;
+  }
+
+  const effortSpec = findModelReasoningEffortParamSpec(llm.parameterSpecs);
+  if (!effortSpec)
+    return baseUserParameters;
+
+  const allowedValues = new Set((effortSpec.enumValues as readonly string[] | undefined)
+    ?? DModelParameterRegistry[effortSpec.paramId].values);
+  if (!allowedValues.has(reasoningEffort))
+    return baseUserParameters;
+
+  const nextUserParameters = {
+    ...(baseUserParameters ?? llm.userParameters ?? {}),
+  };
+  for (const paramId of MODEL_REASONING_EFFORT_PARAM_IDS)
+    delete nextUserParameters[paramId];
+  nextUserParameters[effortSpec.paramId] = reasoningEffort;
+  return nextUserParameters;
+}
+
+function withParticipantRunOptions(
+  assistantLlmId: DLLMId,
+  participant: DConversationParticipant | undefined,
+  runOptions: PersonaRunOptions | undefined,
+): PersonaRunOptions | undefined {
+  const llmUserParametersReplacement = getParticipantLlmUserParametersReplacement(
+    assistantLlmId,
+    participant,
+    runOptions?.llmUserParametersReplacement,
+  );
+
+  if (!llmUserParametersReplacement)
+    return runOptions;
+
+  return {
+    ...runOptions,
+    llmUserParametersReplacement,
+  };
+}
+
+function getRunnableParticipants(participants: DConversationParticipant[], latestUserMessage: DMessage | null): DConversationParticipant[] {
+  return participants.filter(participant => {
+    if (!participant.personaId)
+      return false;
+    return participant.speakWhen !== 'when-mentioned' || wasParticipantMentioned(latestUserMessage, participant);
+  });
+}
+
+function mergeParticipantsInRosterOrder(
+  roster: DConversationParticipant[],
+  primaryParticipants: DConversationParticipant[],
+  extraParticipants: DConversationParticipant[],
+): DConversationParticipant[] {
+  const primaryIds = new Set(primaryParticipants.map(participant => participant.id));
+  const extraIds = new Set(extraParticipants.map(participant => participant.id));
+  return roster.filter(participant => primaryIds.has(participant.id) || extraIds.has(participant.id));
+}
+
+function getAssistantMessagesSinceLatestUser(messages: Readonly<DMessage[]>, latestUserMessageId: string | null): DMessage[] {
+  if (!latestUserMessageId)
+    return [];
+
+  const latestUserIndex = messages.findIndex(message => message.id === latestUserMessageId);
+  if (latestUserIndex < 0)
+    return [];
+
+  return messages.slice(latestUserIndex + 1)
+    .filter(message => message.role === 'assistant' && !!message.metadata?.author?.participantId);
+}
+
+function isIncompleteAssistantMessage(message: DMessage): boolean {
+  return message.role === 'assistant'
+    && !!message.metadata?.author?.participantId
+    && (!!message.pendingIncomplete || message.updated === null);
+}
+
+function getParticipantsRemainingThisTurn(messages: Readonly<DMessage[]>, latestUserMessageId: string | null, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+  if (!latestUserMessageId)
+    return runnableParticipants;
+
+  const spokenParticipantIds = new Set(getAssistantMessagesSinceLatestUser(messages, latestUserMessageId)
+    .filter(message => !isIncompleteAssistantMessage(message))
+    .map(message => message.metadata?.author?.participantId)
+    .filter((participantId): participantId is string => !!participantId));
+
+  return runnableParticipants.filter(participant => !spokenParticipantIds.has(participant.id));
+}
+
+function getContinuousParticipants(messages: Readonly<DMessage[]>, latestUserMessageId: string | null, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+  if (!latestUserMessageId || runnableParticipants.length <= 1)
+    return runnableParticipants;
+
+  const assistantMessagesThisTurn = getAssistantMessagesSinceLatestUser(messages, latestUserMessageId);
+  const latestAssistantParticipantId = assistantMessagesThisTurn.at(-1)?.metadata?.author?.participantId ?? null;
+  if (!latestAssistantParticipantId)
+    return runnableParticipants;
+
+  const latestSpeakerIndex = runnableParticipants.findIndex(participant => participant.id === latestAssistantParticipantId);
+  if (latestSpeakerIndex < 0)
+    return runnableParticipants;
+
+  return [
+    ...runnableParticipants.slice(latestSpeakerIndex + 1),
+    ...runnableParticipants.slice(0, latestSpeakerIndex + 1),
+  ];
+}
+
+function findCouncilPlaceholderMessageId(
   messages: Readonly<DMessage[]>,
   phaseId: string,
   passIndex: number,
@@ -252,24 +407,24 @@ function findConsensusPlaceholderMessageId(
   return [...messages]
     .reverse()
     .find(message => {
-      const consensus = message.metadata?.consensus;
+      const council = message.metadata?.council;
       return message.role === 'assistant'
         && !!message.pendingIncomplete
-        && consensus?.kind === 'deliberation'
-        && consensus.phaseId === phaseId
-        && consensus.passIndex === passIndex
+        && council?.kind === 'deliberation'
+        && council.phaseId === phaseId
+        && council.passIndex === passIndex
         && message.metadata?.author?.participantId === participantId;
     })?.id ?? null;
 }
 
-function getConsensusParticipantsRemaining(messages: Readonly<DMessage[]>, phaseId: string, passIndex: number, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
+function getCouncilParticipantsRemaining(messages: Readonly<DMessage[]>, phaseId: string, passIndex: number, runnableParticipants: DConversationParticipant[]): DConversationParticipant[] {
   const spokenParticipantIds = new Set(messages
     .filter(message => {
-      const consensus = message.metadata?.consensus;
+      const council = message.metadata?.council;
       return message.role === 'assistant'
-        && consensus?.kind === 'deliberation'
-        && consensus.phaseId === phaseId
-        && consensus.passIndex === passIndex
+        && council?.kind === 'deliberation'
+        && council.phaseId === phaseId
+        && council.passIndex === passIndex
         && !!message.metadata?.author?.participantId;
     })
     .map(message => message.metadata?.author?.participantId)
@@ -278,20 +433,20 @@ function getConsensusParticipantsRemaining(messages: Readonly<DMessage[]>, phase
   return runnableParticipants.filter(participant => !spokenParticipantIds.has(participant.id));
 }
 
-function getConsensusSpokenParticipantIdsByPass(messages: Readonly<DMessage[]>, phaseId: string): Map<number, Set<string>> {
+function getCouncilSpokenParticipantIdsByPass(messages: Readonly<DMessage[]>, phaseId: string): Map<number, Set<string>> {
   return messages.reduce((spokenByPass, message) => {
-    const consensus = message.metadata?.consensus;
+    const council = message.metadata?.council;
     const participantId = message.metadata?.author?.participantId;
     if (message.role !== 'assistant'
-      || consensus?.kind !== 'deliberation'
-      || consensus.phaseId !== phaseId
-      || typeof consensus.passIndex !== 'number'
+      || council?.kind !== 'deliberation'
+      || council.phaseId !== phaseId
+      || typeof council.passIndex !== 'number'
       || !participantId)
       return spokenByPass;
 
-    const spokenParticipantIds = spokenByPass.get(consensus.passIndex) ?? new Set<string>();
+    const spokenParticipantIds = spokenByPass.get(council.passIndex) ?? new Set<string>();
     spokenParticipantIds.add(participantId);
-    spokenByPass.set(consensus.passIndex, spokenParticipantIds);
+    spokenByPass.set(council.passIndex, spokenParticipantIds);
     return spokenByPass;
   }, new Map<number, Set<string>>());
 }
@@ -311,7 +466,7 @@ function describeCouncilChannel(councilChannel: DMessageCouncilChannel, particip
   void conversationId;
 
   if (councilChannel.channel === 'public-board')
-    return 'the public council board';
+    return 'the public room';
 
   if (councilChannel.channel === 'direct') {
     const directNames = (councilChannel.directParticipantIds ?? [])
@@ -357,31 +512,215 @@ function getParticipantsForCouncilChannel(
   return participants;
 }
 
+function getExplicitRecipientParticipants(
+  participants: DConversationParticipant[],
+  message: DMessage | null,
+): {
+  participants: DConversationParticipant[];
+  hasExplicitParticipantRecipients: boolean;
+} {
+  const initialRecipients = message?.metadata?.initialRecipients ?? [];
+  const participantRecipientIds = initialRecipients
+    .filter((recipient): recipient is Extract<typeof recipient, { rt: 'participant' }> => recipient.rt === 'participant')
+    .map(recipient => recipient.participantId)
+    .filter(Boolean);
+
+  if (!participantRecipientIds.length || participantRecipientIds.length !== initialRecipients.length) {
+    return {
+      participants,
+      hasExplicitParticipantRecipients: false,
+    };
+  }
+
+  const participantRecipientIdSet = new Set(participantRecipientIds);
+  return {
+    participants: participants.filter(participant => participantRecipientIdSet.has(participant.id)),
+    hasExplicitParticipantRecipients: true,
+  };
+}
+
 function getHistoryForCouncilChannel(messages: Readonly<DMessage[]>, councilChannel: DMessageCouncilChannel): DMessage[] {
   return messages
     .filter(message => message.role === 'system' || messageMatchesCouncilChannel(message, councilChannel))
     .map(message => duplicateDMessage(message, false));
 }
-const CONSENSUS_PUBLIC_BOARD_CHANNEL: DMessageCouncilChannel = { channel: 'public-board' };
-const CONSENSUS_MAX_PASSES = 12;
+const COUNCIL_PUBLIC_BOARD_CHANNEL: DMessageCouncilChannel = { channel: 'public-board' };
+const COUNCIL_MAX_PASSES = DEFAULT_COUNCIL_MAX_ROUNDS ?? Number.POSITIVE_INFINITY;
 
-type ConsensusPassAction = {
+type CouncilPassAction = {
   participant: DConversationParticipant;
-  action: ConsensusProtocolAction;
+  action: CouncilProtocolAction;
   messageId: string;
   response: string;
   deliberationText: string;
 };
 
-type ConsensusDeliberation = {
+type CouncilDeliberation = {
   participant: DConversationParticipant;
-  action: ConsensusProtocolAction;
+  action: CouncilProtocolAction;
   deliberationText: string;
   response: string;
   assistantMessageId: string | null;
+  messageFragments: DMessage['fragments'];
+  messagePendingIncomplete: boolean;
+};
+
+type CouncilReviewerTurnResult = {
+  ballot: ReturnType<typeof classifyCouncilReviewBallotFragments>;
+  fragmentTexts: string[];
+  messageFragments: DMessage['fragments'];
+  messagePendingIncomplete: boolean;
 };
 
 type CouncilRunInterruption = 'paused' | 'stopped' | 'interrupted';
+
+function isCouncilInterruptionResumable(interruption: { status: CouncilRunInterruption; reason: string } | null): boolean {
+  if (!interruption)
+    return false;
+  if (interruption.status === 'paused' || interruption.status === 'interrupted')
+    return true;
+  if (interruption.status === 'stopped')
+    return interruption.reason !== COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL;
+  return false;
+}
+
+const councilReviewerAcceptTool = {
+  name: 'Accept',
+  description: 'Accept the current leader proposal.',
+  inputSchema: z.object({}),
+} as const;
+
+const councilReviewerRejectTool = {
+  name: 'Reject',
+  description: 'Reject the current leader proposal.',
+  inputSchema: z.object({
+    reason: z.string().trim().min(1).optional(),
+  }),
+} as const;
+
+const exitLoopTool = {
+  name: 'Exit_loop',
+  description: 'Stop the current agents loop after your reply.',
+  inputSchema: z.object({}),
+} as const;
+
+function createCouncilReviewerBallotRequestTransform() {
+  return (request: Parameters<NonNullable<PersonaRunOptions['requestTransform']>>[0]) => {
+    const existingTools = request.tools ?? [];
+    const existingToolNames = new Set(
+      existingTools.flatMap(tool => tool.type === 'function_call' ? [tool.function_call.name] : []),
+    );
+
+    const reviewerBallotTools = [
+      !existingToolNames.has(councilReviewerAcceptTool.name) ? aixFunctionCallTool(councilReviewerAcceptTool) : null,
+      !existingToolNames.has(councilReviewerRejectTool.name) ? aixFunctionCallTool(councilReviewerRejectTool) : null,
+    ].filter(tool => tool !== null);
+
+    return {
+      ...request,
+      tools: [...existingTools, ...reviewerBallotTools],
+    };
+  };
+}
+
+function createExitLoopRequestTransform() {
+  return (request: Parameters<NonNullable<PersonaRunOptions['requestTransform']>>[0]) => {
+    const existingTools = request.tools ?? [];
+    const existingToolNames = new Set(
+      existingTools.flatMap(tool => tool.type === 'function_call' ? [tool.function_call.name] : []),
+    );
+
+    const loopTools = [
+      !existingToolNames.has(exitLoopTool.name) ? aixFunctionCallTool(exitLoopTool) : null,
+    ].filter(tool => tool !== null);
+
+    return {
+      ...request,
+      tools: [...existingTools, ...loopTools],
+    };
+  };
+}
+
+function hasExitLoopToolInvocation(fragments: DMessage['fragments'] | null | undefined): boolean {
+  return (fragments ?? []).some(fragment =>
+    fragment.ft === 'content'
+    && isToolInvocationPart(fragment.part)
+    && fragment.part.invocation.type === 'function_call'
+    && fragment.part.invocation.name === exitLoopTool.name,
+  );
+}
+
+const EXIT_LOOP_META_ONLY_TEXT_PATTERN = /\b(?:i(?:'m| am)\s+thinking\s+about|maybe(?:\s+i)?\s+(?:could|should|might)|i(?:\s+\w+){0,3}\s+need\s+to\s+make\s+sure|i(?:\s+\w+){0,3}\s+might\s+(?:consider|be)|i(?:\s+\w+){0,3}\s+could\s+mention|if\s+(?:we(?:'re| are)|i(?:'m| am))\s+(?:concluding|closing|ending)|let\s+the\s+room\s+continue|another\s+pass|final\s+answer\s+might\s+be\s+better|call\s+exit_loop|exit_loop|@mention|@\w+|finaliz(?:e|ing)\b)/iu;
+
+function normalizeExitLoopReplyText(text: string): string {
+  return text
+    .replace(/[*_`#>\[\]()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getExitLoopReplyTextUnits(text: string): string[] {
+  return text
+    .replace(/\r/g, '')
+    .split(/\n+/)
+    .flatMap(line => line.split(/(?<=[.!?])\s+/u))
+    .map(normalizeExitLoopReplyText)
+    .filter(Boolean);
+}
+
+function isMetaOnlyExitLoopReplyText(text: string): boolean {
+  const normalized = normalizeExitLoopReplyText(text);
+  return !!normalized && EXIT_LOOP_META_ONLY_TEXT_PATTERN.test(normalized);
+}
+
+function hasVisibleExitLoopReplyContent(fragments: DMessage['fragments'] | null | undefined): boolean {
+  return (fragments ?? []).some(fragment =>
+    isTextContentFragment(fragment)
+    && getExitLoopReplyTextUnits(fragment.part.text).some(textUnit => !isMetaOnlyExitLoopReplyText(textUnit)),
+  );
+}
+
+function extractCouncilReviewerBallotFromToolInvocation(
+  fragments: DMessage['fragments'],
+  reviewerParticipantId: string,
+): ReturnType<typeof classifyCouncilReviewBallotFragments> {
+  const invocationFragment = [...fragments]
+    .reverse()
+    .find(fragment => fragment.ft === 'content' && isToolInvocationPart(fragment.part) && fragment.part.invocation.type === 'function_call');
+  const invocation = invocationFragment?.ft === 'content' && isToolInvocationPart(invocationFragment.part) && invocationFragment.part.invocation.type === 'function_call'
+    ? invocationFragment.part.invocation
+    : null;
+
+  if (!invocation)
+    throw new Error(COUNCIL_REVIEW_VERDICT_MISSING_REASON);
+
+  const rawArgs = invocation.args?.trim() || '{}';
+  let parsedArgs: unknown;
+  try {
+    parsedArgs = JSON.parse(rawArgs);
+  } catch {
+    throw new Error(COUNCIL_REVIEW_VERDICT_MISSING_REASON);
+  }
+
+  if (invocation.name === councilReviewerAcceptTool.name) {
+    councilReviewerAcceptTool.inputSchema.parse(parsedArgs);
+    return {
+      reviewerParticipantId,
+      decision: 'accept',
+    };
+  }
+
+  if (invocation.name === councilReviewerRejectTool.name) {
+    const { reason } = councilReviewerRejectTool.inputSchema.parse(parsedArgs);
+    return {
+      reviewerParticipantId,
+      decision: 'reject',
+      ...(reason ? { reason } : {}),
+    };
+  }
+
+  throw new Error(COUNCIL_REVIEW_VERDICT_MISSING_REASON);
+}
 
 function getCouncilInterruption(abortController: AbortController): { status: CouncilRunInterruption; reason: string } | null {
   if (!abortController.signal.aborted)
@@ -393,9 +732,218 @@ function getCouncilInterruption(abortController: AbortController): { status: Cou
 
   if (rawReason === '@pause')
     return { status: 'paused', reason: rawReason };
-  if (rawReason === '@stop' || rawReason === 'stop' || rawReason === 'chat-stop')
+  if (rawReason === '@stop' || rawReason === '@exit-loop' || rawReason === 'stop' || rawReason === 'chat-stop')
     return { status: 'stopped', reason: rawReason || 'chat-stop' };
   return { status: 'interrupted', reason: rawReason || 'aborted' };
+}
+
+const COUNCIL_REVIEWER_META_INTENT_PATTERN = /\b(i(?:\s+\w+){0,2}\s+need to|i(?:\s+\w+){0,2}\s+have to|i(?:\s+\w+){0,2}\s+must|i(?:\s+\w+){0,2}\s+should|i(?:'| a)?ll|i will|i am going to|i'm going to|let me|our focus is|my focus is|it(?:'| i)?s important|important to|voy a|necesito|tengo que|debo|quiero|me enfocar[ée]|har[ée])\b/i;
+const COUNCIL_REVIEWER_INVESTIGATION_PATTERN = /\b(inspect|evaluate|analy[sz]e|assess|check|verify|review|look into|look up|search|research|compare|validate|inspecting|evaluating|analy[sz]ing|checking|verifying|reviewing|searching|researching|comparing|validating|revisar|verificar|comprobar|buscar|investigar|analizar|evaluar|comparar|validar|inspeccionar|revisando|verificando|comprobando|buscando|investigando|analizando|evaluando|comparando|validando)\b/i;
+const COUNCIL_REVIEWER_EXECUTED_FINDING_PATTERN = /\b(found|confirmed|verified|checked|reviewed|searched|researched|compared|validated|shows|showed|indicates|indicated|cites|contains|contained|includes|included|states|stated|demonstrates|demonstrated|he comprobado|he verificado|he revisado|he encontrado|he comparado|he validado|muestra|mostr[oó]|indica|indic[oó]|cita|cit[oó]|contiene|conten[ií]a|incluye|incluy[oó]|afirma|afirm[oó]|confirma|confirm[oó]|demuestra|demostr[oó])\b/i;
+
+function hasCouncilReviewerNonBallotToolActivity(fragments: DMessage['fragments'] | null | undefined): boolean {
+  for (const fragment of fragments ?? []) {
+    if (fragment.ft !== 'content')
+      continue;
+
+    if (isToolInvocationPart(fragment.part) && fragment.part.invocation.type === 'function_call') {
+      if (fragment.part.invocation.name !== councilReviewerAcceptTool.name && fragment.part.invocation.name !== councilReviewerRejectTool.name)
+        return true;
+      continue;
+    }
+
+    if (isToolResponseFunctionCallPart(fragment.part)) {
+      if (fragment.part.response.name !== councilReviewerAcceptTool.name && fragment.part.response.name !== councilReviewerRejectTool.name)
+        return true;
+    }
+  }
+
+  return false;
+}
+
+function getCouncilReviewerAnalysisTexts(fragments: DMessage['fragments'] | null | undefined): string[] {
+  return (fragments ?? [])
+    .filter(isTextContentFragment)
+    .map(fragment => fragment.part.text.trim())
+    .filter(text => !!text && !/^accept$/i.test(text) && !/^reject(?::|\b)/i.test(text));
+}
+
+function isCouncilReviewerHeadingText(text: string): boolean {
+  const plainText = text
+    .replace(/[*_`#>\-\[\]()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return !!plainText
+    && !/[.!?:]/.test(plainText)
+    && plainText.split(/\s+/).length <= 8;
+}
+
+function isCouncilReviewerMetaOnlyIntentText(text: string): boolean {
+  return COUNCIL_REVIEWER_META_INTENT_PATTERN.test(text)
+    && COUNCIL_REVIEWER_INVESTIGATION_PATTERN.test(text)
+    && !COUNCIL_REVIEWER_EXECUTED_FINDING_PATTERN.test(text);
+}
+
+function isRetryableCouncilReviewerBallot(
+  ballot: CouncilSessionState['rounds'][number]['reviewerVotes'][string]['ballot'] | null | undefined,
+  messageFragments: DMessage['fragments'] | null | undefined,
+  reason: string | null | undefined,
+): boolean {
+  if (!ballot)
+    return false;
+
+  if (ballot.decision === 'accept')
+    return false;
+
+  return reason === COUNCIL_REVIEW_FAILED_REASON
+    || reason === COUNCIL_REVIEW_VERDICT_MISSING_REASON
+    || reason === COUNCIL_REVIEW_ANALYSIS_MISSING_REASON;
+}
+
+function isRetryableCouncilReviewerVote(vote: CouncilSessionState['rounds'][number]['reviewerVotes'][string] | null | undefined): boolean {
+  return isRetryableCouncilReviewerBallot(vote?.ballot, vote?.messageFragments, vote?.reason ?? vote?.ballot.reason ?? null);
+}
+
+function createCouncilOpLogFromSessionState(
+  workflowState: CouncilSessionState,
+  conversationId: DConversationId,
+  latestUserMessageId: string | null,
+): CouncilOp[] {
+  let councilOpLog: CouncilOp[] = [
+    createCouncilOp([], 'session_started', {
+      leaderParticipantId: workflowState.leaderParticipantId,
+      reviewerParticipantIds: [...workflowState.reviewerParticipantIds],
+      maxRounds: workflowState.maxRounds,
+      latestUserMessageId,
+    }, {
+      phaseId: workflowState.phaseId,
+      conversationId,
+      createdAt: workflowState.rounds[0]?.leaderProposal?.createdAt
+        ?? workflowState.rounds[0]?.reviewerPlans[workflowState.reviewerParticipantIds[0] ?? '']?.createdAt
+        ?? workflowState.updatedAt,
+    }),
+  ];
+
+  for (const round of workflowState.rounds.sort((a, b) => a.roundIndex - b.roundIndex)) {
+    if (round.leaderProposal?.proposalText) {
+      councilOpLog = appendCouncilOps(councilOpLog, [
+        createCouncilOp(councilOpLog, 'leader_turn_committed', {
+          roundIndex: round.roundIndex,
+          participantId: round.leaderParticipantId,
+          proposalId: round.leaderProposal.proposalId,
+          proposalText: round.leaderProposal.proposalText,
+          deliberationText: round.leaderTurn?.deliberationText ?? '',
+          messageFragments: round.leaderProposal.messageFragments,
+          messagePendingIncomplete: round.leaderProposal.messagePendingIncomplete,
+        }, {
+          phaseId: workflowState.phaseId,
+          conversationId,
+          createdAt: round.leaderProposal.createdAt,
+        }),
+      ]);
+    }
+
+    for (const reviewerParticipantId of workflowState.reviewerParticipantIds) {
+      const reviewerPlan = round.reviewerPlans[reviewerParticipantId] ?? null;
+      if (reviewerPlan?.planText) {
+        councilOpLog = appendCouncilOps(councilOpLog, [
+          createCouncilOp(councilOpLog, 'reviewer_plan_committed', {
+            roundIndex: round.roundIndex,
+            participantId: reviewerParticipantId,
+            planText: reviewerPlan.planText,
+            messageFragments: reviewerPlan.messageFragments,
+            messagePendingIncomplete: reviewerPlan.messagePendingIncomplete,
+          }, {
+            phaseId: workflowState.phaseId,
+            conversationId,
+            createdAt: reviewerPlan.createdAt,
+          }),
+        ]);
+      }
+
+      const reviewerVote = round.reviewerVotes[reviewerParticipantId] ?? null;
+      if (reviewerVote) {
+        councilOpLog = appendCouncilOps(councilOpLog, [
+          createCouncilOp(councilOpLog, 'reviewer_vote_committed', {
+            roundIndex: round.roundIndex,
+            participantId: reviewerParticipantId,
+            decision: reviewerVote.ballot.decision,
+            reason: reviewerVote.reason,
+            fragmentTexts: reviewerVote.messageFragments
+              .filter(isTextContentFragment)
+              .map(fragment => fragment.part.text),
+            messageFragments: reviewerVote.messageFragments,
+            messagePendingIncomplete: reviewerVote.messagePendingIncomplete,
+          }, {
+            phaseId: workflowState.phaseId,
+            conversationId,
+            createdAt: reviewerVote.createdAt,
+          }),
+        ]);
+      }
+    }
+
+    const isRoundComplete = round.phase === 'completed'
+      || !!round.completedAt
+      || (workflowState.status === 'accepted' && round.proposalId === workflowState.acceptedProposalId)
+      || (workflowState.status === 'exhausted' && round.roundIndex === workflowState.roundIndex);
+    if (isRoundComplete) {
+      const rejectionReasons = round.ballots
+        .filter((ballot): ballot is typeof ballot & { decision: 'reject'; reason: string } => ballot.decision === 'reject' && !!ballot.reason)
+        .map(ballot => ballot.reason);
+      councilOpLog = appendCouncilOps(councilOpLog, [
+        createCouncilOp(councilOpLog, 'round_completed', {
+          roundIndex: round.roundIndex,
+          outcome: rejectionReasons.length ? 'revise' : 'accepted',
+          rejectionReasons,
+        }, {
+          phaseId: workflowState.phaseId,
+          conversationId,
+          createdAt: round.completedAt ?? round.reviewerVotes[workflowState.reviewerParticipantIds[0] ?? '']?.createdAt ?? workflowState.updatedAt,
+        }),
+      ]);
+    }
+  }
+
+  if (workflowState.status === 'accepted' && workflowState.acceptedProposalId && workflowState.finalResponse) {
+    councilOpLog = appendCouncilOps(councilOpLog, [
+      createCouncilOp(councilOpLog, 'session_accepted', {
+        roundIndex: workflowState.roundIndex,
+        proposalId: workflowState.acceptedProposalId,
+        finalResponse: workflowState.finalResponse,
+      }, {
+        phaseId: workflowState.phaseId,
+        conversationId,
+        createdAt: workflowState.updatedAt,
+      }),
+    ]);
+  } else if (workflowState.status === 'exhausted') {
+    councilOpLog = appendCouncilOps(councilOpLog, [
+      createCouncilOp(councilOpLog, 'session_exhausted', {
+        roundIndex: workflowState.roundIndex,
+      }, {
+        phaseId: workflowState.phaseId,
+        conversationId,
+        createdAt: workflowState.updatedAt,
+      }),
+    ]);
+  }
+
+  return councilOpLog;
+}
+
+function appendCommittedCouncilOps(params: {
+  session: ChatExecutionSession;
+  councilOpLog: CouncilOp[];
+  nextOps: CouncilOp[];
+}): { councilOpLog: CouncilOp[]; workflowState: CouncilSessionState } {
+  const councilOpLog = appendCouncilOps(params.councilOpLog, params.nextOps);
+  const workflowState = reduceCouncilOps(councilOpLog);
+  if (!workflowState)
+    throw new Error('Failed to replay council op log after commit');
+  params.session.persistCouncilState(null, councilOpLog);
+  return { councilOpLog, workflowState };
 }
 
 function setCouncilSessionRunning(
@@ -417,7 +965,6 @@ function setCouncilSessionRunning(
     interruptionReason: null,
   };
   session.updateCouncilSession(nextSession);
-  session.persistCouncilSession(null);
 }
 
 function finalizeCouncilSession(
@@ -427,37 +974,40 @@ function finalizeCouncilSession(
   phaseId: string | null,
   passIndex: number | null,
   workflowState: CouncilSessionState | null = null,
+  councilOpLog: CouncilOp[] = [],
 ): void {
   if (interruption) {
-    const resumableSession = {
+    const canResume = isCouncilInterruptionResumable(interruption);
+    const interruptedSession = {
       status: interruption.status,
       executeMode: 'generate-content' as const,
       mode,
       phaseId,
       passIndex,
       workflowState,
-      canResume: interruption.status !== 'stopped',
+      canResume,
       interruptionReason: interruption.reason,
       updatedAt: Date.now(),
     };
-    session.updateCouncilSession(resumableSession);
-    session.persistCouncilSession(resumableSession.canResume
+    session.updateCouncilSession(interruptedSession);
+    const persistedInterruptionSession = mode === 'council' || interruptedSession.canResume
       ? {
-          status: resumableSession.status === 'paused' ? 'paused' : 'interrupted',
-          executeMode: resumableSession.executeMode,
-          mode: resumableSession.mode,
-          phaseId: resumableSession.phaseId,
-          passIndex: resumableSession.passIndex,
-          workflowState: resumableSession.workflowState,
-          canResume: resumableSession.canResume,
-          interruptionReason: resumableSession.interruptionReason,
-          updatedAt: resumableSession.updatedAt,
+          status: interruptedSession.status,
+          executeMode: interruptedSession.executeMode,
+          mode: interruptedSession.mode,
+          phaseId: interruptedSession.phaseId,
+          passIndex: interruptedSession.passIndex,
+          workflowState: interruptedSession.workflowState,
+          canResume: interruptedSession.canResume,
+          interruptionReason: interruptedSession.interruptionReason,
+          updatedAt: interruptedSession.updatedAt,
         }
-      : null);
+      : null;
+    session.persistCouncilState(persistedInterruptionSession, councilOpLog);
     return;
   }
 
-  session.setCouncilSession({
+  const completedSession = {
     ...createIdleCouncilSessionState(),
     status: 'completed',
     executeMode: 'generate-content',
@@ -468,8 +1018,21 @@ function finalizeCouncilSession(
     canResume: false,
     interruptionReason: null,
     updatedAt: Date.now(),
-  });
-  session.persistCouncilSession(null);
+  };
+  session.setCouncilSession(completedSession);
+  session.persistCouncilState(mode === 'council'
+    ? {
+        status: 'completed',
+        executeMode: completedSession.executeMode,
+        mode: completedSession.mode,
+        phaseId: completedSession.phaseId,
+        passIndex: completedSession.passIndex,
+        workflowState: completedSession.workflowState,
+        canResume: false,
+        interruptionReason: null,
+        updatedAt: completedSession.updatedAt,
+      }
+    : null, councilOpLog);
 }
 
 function beginCouncilSession(
@@ -490,33 +1053,213 @@ function beginCouncilSession(
     interruptionReason: null,
     updatedAt: Date.now(),
   });
-  session.persistCouncilSession(null);
 }
 
-function getConsensusLeaderParticipant(participants: DConversationParticipant[]): DConversationParticipant | null {
+function getCouncilLeaderParticipant(participants: DConversationParticipant[]): DConversationParticipant | null {
   return participants.find(participant => participant.isLeader) ?? participants[0] ?? null;
 }
 
-function isConsensusDeliberationMessage(message: Pick<DMessage, 'metadata'> | null | undefined): boolean {
-  return message?.metadata?.consensus?.kind === 'deliberation';
+function isCouncilDeliberationMessage(message: Pick<DMessage, 'metadata'> | null | undefined): boolean {
+  return message?.metadata?.council?.kind === 'deliberation';
 }
 
-function getConsensusVisibleTranscript(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
+function getCouncilVisibleTranscript(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
   return messages.filter(message => {
-    const consensus = message.metadata?.consensus;
-    return consensus?.kind === 'deliberation' && consensus.phaseId === phaseId;
+    const council = message.metadata?.council;
+    return council?.kind === 'deliberation' && council.phaseId === phaseId;
   });
 }
 
 function getCouncilSourceHistory(messages: Readonly<DMessage[]>, phaseId: string): DMessage[] {
   return messages
     .filter(message => {
-      const consensus = message.metadata?.consensus;
-      if (!consensus)
+      const council = message.metadata?.council;
+      if (!council)
         return true;
-      return consensus.phaseId !== phaseId;
+      return council.phaseId !== phaseId;
     })
     .map(message => duplicateDMessage(message, false));
+}
+
+function createCouncilHistoryMessage(params: {
+  participant: DConversationParticipant;
+  participantLlmId: DLLMId | null;
+  phaseId: string;
+  roundIndex: number;
+  messageFragments?: DMessage['fragments'];
+  fallbackText?: string | null;
+  alwaysAppendFallbackText?: boolean;
+  pendingIncomplete?: boolean;
+  action?: 'proposal' | 'accept' | 'reject';
+  reason?: string | null;
+}): DMessage {
+  const message = createDMessageEmpty('assistant');
+  const nextFragments = params.messageFragments?.length
+    ? structuredClone(params.messageFragments)
+    : [];
+  const hasVisibleText = nextFragments.some(fragment => isTextContentFragment(fragment) && !!fragment.part.text.trim());
+  if ((params.alwaysAppendFallbackText || !hasVisibleText) && params.fallbackText?.trim())
+    nextFragments.push(createTextContentFragment(params.fallbackText.trim()));
+  message.fragments = nextFragments;
+  message.metadata = {
+    ...message.metadata,
+    author: {
+      participantId: params.participant.id,
+      participantName: params.participant.name,
+      personaId: params.participant.personaId ?? null,
+      llmId: params.participant.llmId ?? params.participantLlmId,
+    },
+    councilChannel: COUNCIL_PUBLIC_BOARD_CHANNEL,
+    initialRecipients: [{ rt: 'public-board' }],
+    council: {
+      kind: 'deliberation',
+      phaseId: params.phaseId,
+      passIndex: params.roundIndex,
+      provisional: false,
+      ...(params.action ? { action: params.action } : {}),
+      ...(params.action === 'proposal' && params.fallbackText?.trim() ? { agreedResponse: params.fallbackText.trim() } : {}),
+      ...(params.action === 'reject' && params.reason?.trim() ? { reason: params.reason.trim() } : {}),
+    },
+  };
+  if (params.pendingIncomplete)
+    message.pendingIncomplete = true;
+  message.updated = message.created;
+  return message;
+}
+
+function appendPriorCouncilRoundsToHistory(
+  sourceHistory: Readonly<DMessage[]>,
+  councilOps: readonly CouncilOp[],
+  phaseId: string,
+  participants: readonly DConversationParticipant[],
+  roundIndex: number,
+): DMessage[] {
+  const participantHistory = [...sourceHistory];
+  if (roundIndex <= 0)
+    return participantHistory;
+
+  const participantsById = new Map(participants.map(participant => [participant.id, participant]));
+
+  for (const op of councilOps) {
+    if (op.phaseId !== phaseId)
+      continue;
+
+    if (op.type === 'leader_turn_committed') {
+      if (op.payload.roundIndex >= roundIndex)
+        continue;
+      const leaderParticipant = participantsById.get(op.payload.participantId);
+      if (!leaderParticipant)
+        continue;
+      participantHistory.push(createCouncilHistoryMessage({
+        participant: leaderParticipant,
+        participantLlmId: leaderParticipant.llmId ?? null,
+        phaseId,
+        roundIndex: op.payload.roundIndex,
+        messageFragments: op.payload.messageFragments,
+        fallbackText: op.payload.proposalText,
+        pendingIncomplete: op.payload.messagePendingIncomplete,
+        action: 'proposal',
+      }));
+      continue;
+    }
+
+    if (op.type === 'reviewer_plan_committed') {
+      if (op.payload.roundIndex >= roundIndex)
+        continue;
+      const reviewerParticipant = participantsById.get(op.payload.participantId);
+      if (!reviewerParticipant)
+        continue;
+      participantHistory.push(createCouncilHistoryMessage({
+        participant: reviewerParticipant,
+        participantLlmId: reviewerParticipant.llmId ?? null,
+        phaseId,
+        roundIndex: op.payload.roundIndex,
+        messageFragments: op.payload.messageFragments,
+        fallbackText: op.payload.planText,
+        pendingIncomplete: op.payload.messagePendingIncomplete,
+      }));
+      continue;
+    }
+
+    if (op.type !== 'reviewer_vote_committed' || op.payload.roundIndex >= roundIndex)
+      continue;
+
+    const reviewerParticipant = participantsById.get(op.payload.participantId);
+    if (!reviewerParticipant)
+      continue;
+    participantHistory.push(createCouncilHistoryMessage({
+      participant: reviewerParticipant,
+      participantLlmId: reviewerParticipant.llmId ?? null,
+      phaseId,
+      roundIndex: op.payload.roundIndex,
+      messageFragments: op.payload.messageFragments,
+      fallbackText: op.payload.decision === 'accept'
+        ? 'Accept'
+        : op.payload.reason?.trim() ? `Reject: ${op.payload.reason.trim()}` : 'Reject',
+      alwaysAppendFallbackText: true,
+      pendingIncomplete: op.payload.messagePendingIncomplete,
+      action: op.payload.decision,
+      reason: op.payload.reason,
+    }));
+  }
+
+  return participantHistory;
+}
+
+function appendCurrentRoundProposalToHistory(
+  participantHistory: DMessage[],
+  phaseId: string,
+  workflowState: CouncilSessionState,
+  participants: readonly DConversationParticipant[],
+  roundIndex: number,
+): DMessage[] {
+  const round = workflowState.rounds[roundIndex];
+  const leaderProposal = round?.leaderProposal ?? null;
+  if (!leaderProposal?.proposalText)
+    return participantHistory;
+
+  const leaderParticipant = participants.find(participant => participant.id === leaderProposal.leaderParticipantId);
+  if (!leaderParticipant)
+    return participantHistory;
+
+  participantHistory.push(createCouncilHistoryMessage({
+    participant: leaderParticipant,
+    participantLlmId: leaderParticipant.llmId ?? null,
+    phaseId,
+    roundIndex,
+    messageFragments: leaderProposal.messageFragments,
+    fallbackText: leaderProposal.proposalText,
+    pendingIncomplete: leaderProposal.messagePendingIncomplete,
+    action: 'proposal',
+  }));
+  return participantHistory;
+}
+
+function getCouncilFragmentTexts(message: Pick<DMessage, 'fragments'> | { fragments?: DMessage['fragments'] }): string[] {
+  return (message.fragments ?? [])
+    .filter(isTextContentFragment)
+    .map(fragment => fragment.part.text);
+}
+
+function createCouncilTextStreamObserver(params: {
+  participantId: string;
+  role: 'leader' | 'reviewer';
+  roundIndex: number;
+  isLeader: boolean;
+  onMessageSnapshot: (message: Pick<DMessage, 'fragments' | 'pendingIncomplete'>) => void;
+  onTextSnapshot: (text: string) => void;
+}): NonNullable<PersonaRunOptions['onStreamUpdate']> {
+  let lastSnapshot = '';
+
+  return (message) => {
+    params.onMessageSnapshot(message);
+    const visibleText = classifyCouncilTextFragments(getCouncilFragmentTexts(message), params.isLeader).deliberationText.trim();
+    if (!visibleText || visibleText === lastSnapshot)
+      return;
+
+    lastSnapshot = visibleText;
+    params.onTextSnapshot(visibleText);
+  };
 }
 
 function appendCouncilInstruction(history: DMessage[], instructionLines: string[]): DMessage[] {
@@ -537,8 +1280,28 @@ function appendCouncilInstruction(history: DMessage[], instructionLines: string[
   return history;
 }
 
+function getCouncilLeaderRoundInstructionLines(rejectionReasons: readonly string[], roundIndex: number): string[] {
+  if (roundIndex <= 0)
+    return [];
+
+  return [
+    `You are revising the council proposal for round ${roundIndex + 1}.`,
+    'Previous reviewers did not accept the earlier draft. Produce a revised proposal that addresses their objections directly.',
+    ...(rejectionReasons.length
+      ? [
+          'Shared rejection reasons to address:',
+          ...rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`),
+        ]
+      : [
+          'Review the prior council transcript in this context and fix the issues raised before proposing again.',
+        ]),
+  ];
+}
+
 async function prepareCouncilLeaderHistory(
   sourceHistory: Readonly<DMessage[]>,
+  councilOps: readonly CouncilOp[],
+  workflowState: CouncilSessionState,
   assistantLlmId: DLLMId,
   purposeId: SystemPurposeId,
   participants: DConversationParticipant[],
@@ -546,60 +1309,45 @@ async function prepareCouncilLeaderHistory(
   rejectionReasons: readonly string[],
   roundIndex: number,
 ): Promise<DMessage[]> {
-  const participantHistory = [...sourceHistory];
+  const participantHistory = appendPriorCouncilRoundsToHistory(sourceHistory, councilOps, workflowState.phaseId, participants, roundIndex);
   await inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
-
-  const reviewerNames = participants
-    .filter(participant => participant.kind === 'assistant' && participant.id !== activeParticipant.id)
-    .map(participant => participant.name);
-
-  const instruction = [
-    'Stateful Council mode is active.',
-    'You are the Leader.',
-    'Reviewers are isolated from each other and will only return Accept or Reject(reason).',
-    'Write the single best user-facing answer that addresses the original user request.',
-    'Output only the proposal text. Do not add labels, explanations, or reviewer instructions.',
-    `Current round: ${roundIndex + 1}.`,
-    `Current agent: ${activeParticipant.name}.`,
-    reviewerNames.length ? `Reviewers: ${reviewerNames.join(', ')}.` : 'There are no reviewers.',
-    rejectionReasons.length
-      ? `Prior rejection reasons:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`
-      : 'Prior rejection reasons: none.',
-  ];
-
-  appendCouncilInstruction(participantHistory, instruction);
+  appendCouncilInstruction(
+    participantHistory,
+    getMultiAgentCoordinationInstructionLines(participants, activeParticipant),
+  );
+  const leaderRoundInstructions = getCouncilLeaderRoundInstructionLines(rejectionReasons, roundIndex);
+  if (leaderRoundInstructions.length)
+    appendCouncilInstruction(participantHistory, leaderRoundInstructions);
   inlineUpdateAutoPromptCaching(participantHistory);
   return participantHistory;
 }
 
 async function prepareCouncilReviewerHistory(
   sourceHistory: Readonly<DMessage[]>,
+  councilOps: readonly CouncilOp[],
+  workflowState: CouncilSessionState,
   assistantLlmId: DLLMId,
   purposeId: SystemPurposeId,
   activeParticipant: DConversationParticipant,
-  leaderParticipant: DConversationParticipant,
+  _leaderParticipant: DConversationParticipant,
   proposalText: string,
-  rejectionReasons: readonly string[],
+  participants: DConversationParticipant[],
+  _rejectionReasons: readonly string[],
   roundIndex: number,
 ): Promise<DMessage[]> {
-  const participantHistory = [...sourceHistory];
+  const participantHistory = appendPriorCouncilRoundsToHistory(sourceHistory, councilOps, workflowState.phaseId, participants, roundIndex);
+  appendCurrentRoundProposalToHistory(participantHistory, workflowState.phaseId, workflowState, participants, roundIndex);
   await inlineUpdatePurposeInHistory(participantHistory, assistantLlmId, purposeId, activeParticipant.customPrompt);
+  appendCouncilInstruction(
+    participantHistory,
+    getMultiAgentCoordinationInstructionLines(participants, activeParticipant),
+  );
 
   const instruction = [
-    'Stateful Council mode is active.',
-    'You are an isolated reviewer.',
-    `Leader: ${leaderParticipant.name}.`,
-    'You cannot communicate with other reviewers during this round.',
-    'Review the current Leader proposal against the user request.',
-    'Return exactly one of the following forms and nothing else:',
-    '[[accept]]',
-    '[[reject]] <reason>',
-    'If you reject, provide one concise reason. Do not rewrite the answer.',
-    `Current round: ${roundIndex + 1}.`,
-    `Current proposal:\n${proposalText}`,
-    rejectionReasons.length
-      ? `Shared rejection reasons from earlier rounds:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`
-      : 'Shared rejection reasons from earlier rounds: none.',
+    `Analyze the current Leader proposal:\n${proposalText}`,
+    'Then return your verdict by calling exactly one tool:',
+    `- ${councilReviewerAcceptTool.name}`,
+    `- ${councilReviewerRejectTool.name}`,
   ];
 
   appendCouncilInstruction(participantHistory, instruction);
@@ -613,6 +1361,129 @@ function getAssistantMessageForParticipantSinceLatestUser(messages: Readonly<DMe
     .find(message => message.metadata?.author?.participantId === participantId) ?? null;
 }
 
+export interface MultiAgentResumePlan {
+  pendingParticipantsInOrder: DConversationParticipant[];
+  existingAssistantMessageId: string | null;
+  existingAssistantParticipantId: string | null;
+  interruptionReason: string | null;
+  updatedAt: number;
+  passIndex: number;
+}
+
+export function inferMultiAgentResumePlan(params: {
+  messages: Readonly<DMessage[]>;
+  latestUserMessage: DMessage | null;
+  latestUserMessageId: string | null;
+  participantsInOrder: DConversationParticipant[];
+  turnTerminationMode: Exclude<DConversationTurnTerminationMode, 'council'>;
+  persistedSession?: Pick<DPersistedCouncilSession, 'canResume' | 'interruptionReason' | 'updatedAt' | 'passIndex'> | null;
+}): MultiAgentResumePlan | null {
+  const {
+    messages,
+    latestUserMessage,
+    latestUserMessageId,
+    participantsInOrder,
+    turnTerminationMode,
+    persistedSession = null,
+  } = params;
+
+  const assistantMessages = getAssistantMessagesSinceLatestUser(messages, latestUserMessageId);
+  const incompleteAssistantMessage = [...assistantMessages].reverse().find(isIncompleteAssistantMessage) ?? null;
+  const incompleteAssistantParticipantId = incompleteAssistantMessage?.metadata?.author?.participantId ?? null;
+
+  const initialTriggeredParticipants = mergeParticipantsInRosterOrder(
+    participantsInOrder,
+    getRunnableParticipants(participantsInOrder, latestUserMessage),
+    getMentionedParticipants(latestUserMessage, participantsInOrder),
+  );
+
+  const completedParticipantIds = new Set(
+    assistantMessages
+      .filter(message => !isIncompleteAssistantMessage(message))
+      .map(message => message.metadata?.author?.participantId)
+      .filter((participantId): participantId is string => !!participantId),
+  );
+
+  let outstandingMentionedParticipantIds: string[] = [];
+  for (const assistantMessage of assistantMessages) {
+    const authorParticipantId = assistantMessage.metadata?.author?.participantId ?? null;
+    if (authorParticipantId)
+      outstandingMentionedParticipantIds = outstandingMentionedParticipantIds.filter(participantId => participantId !== authorParticipantId);
+
+    const mentionedParticipantIds = getMentionedParticipants(
+      assistantMessage,
+      participantsInOrder,
+      authorParticipantId ? new Set([authorParticipantId]) : new Set(),
+    )
+      .map(participant => participant.id)
+      .filter(participantId => participantId !== authorParticipantId);
+
+    if (mentionedParticipantIds.length) {
+      outstandingMentionedParticipantIds = [
+        ...mentionedParticipantIds,
+        ...outstandingMentionedParticipantIds.filter(participantId => !mentionedParticipantIds.includes(participantId)),
+      ];
+    }
+  }
+
+  const orderedPendingParticipantIds: string[] = [];
+  const pushPendingParticipantId = (participantId: string | null | undefined) => {
+    if (!participantId || orderedPendingParticipantIds.includes(participantId))
+      return;
+    orderedPendingParticipantIds.push(participantId);
+  };
+
+  pushPendingParticipantId(incompleteAssistantParticipantId);
+  outstandingMentionedParticipantIds.forEach(pushPendingParticipantId);
+
+  if (turnTerminationMode === 'continuous') {
+    const rotatedParticipants = assistantMessages.length
+      ? getContinuousParticipants(messages, latestUserMessageId, participantsInOrder)
+      : initialTriggeredParticipants.length
+        ? initialTriggeredParticipants
+        : participantsInOrder;
+    rotatedParticipants.forEach(participant => pushPendingParticipantId(participant.id));
+  } else {
+    initialTriggeredParticipants
+      .filter(participant => participant.id === incompleteAssistantParticipantId || !completedParticipantIds.has(participant.id))
+      .forEach(participant => pushPendingParticipantId(participant.id));
+  }
+
+  const canResumeFromPersistedStart = !!persistedSession?.canResume
+    && assistantMessages.length === 0
+    && !!latestUserMessage
+    && (persistedSession.updatedAt ?? 0) >= latestUserMessage.created;
+
+  if (!orderedPendingParticipantIds.length && canResumeFromPersistedStart) {
+    const bootstrapParticipants = turnTerminationMode === 'continuous'
+      ? (initialTriggeredParticipants.length ? initialTriggeredParticipants : participantsInOrder)
+      : initialTriggeredParticipants;
+    bootstrapParticipants.forEach(participant => pushPendingParticipantId(participant.id));
+  }
+
+  const pendingParticipantsInOrder = orderedPendingParticipantIds
+    .map(participantId => participantsInOrder.find(participant => participant.id === participantId) ?? null)
+    .filter((participant): participant is DConversationParticipant => !!participant);
+
+  if (!pendingParticipantsInOrder.length)
+    return null;
+
+  const latestAssistantMessage = assistantMessages.at(-1) ?? null;
+  return {
+    pendingParticipantsInOrder,
+    existingAssistantMessageId: incompleteAssistantMessage?.id ?? null,
+    existingAssistantParticipantId: incompleteAssistantParticipantId,
+    interruptionReason: incompleteAssistantMessage ? 'page-unload' : persistedSession?.interruptionReason ?? 'recovered-from-transcript',
+    updatedAt: incompleteAssistantMessage?.updated
+      ?? incompleteAssistantMessage?.created
+      ?? latestAssistantMessage?.updated
+      ?? latestAssistantMessage?.created
+      ?? persistedSession?.updatedAt
+      ?? Date.now(),
+    passIndex: persistedSession?.passIndex ?? Math.max(assistantMessages.length - 1, 0),
+  };
+}
+
 
 async function runCouncilLeaderProposal(
   runtime: ChatExecutionRuntime,
@@ -622,8 +1493,9 @@ async function runCouncilLeaderProposal(
   participant: DConversationParticipant,
   participantHistory: Readonly<DMessage[]>,
   sharedAbortController: AbortController,
-): Promise<string> {
-  const { finalMessage } = await runtime.runPersona({
+  runOptions?: PersonaRunOptions,
+): Promise<CouncilDeliberation> {
+  const { finalMessage, assistantMessageId } = await runtime.runPersona({
     assistantLlmId: llmId,
     conversationId,
     systemPurposeId: participant.personaId!,
@@ -632,12 +1504,20 @@ async function runCouncilLeaderProposal(
     participant,
     sourceHistory: participantHistory,
     createPlaceholder: false,
+    runOptions: withParticipantRunOptions(llmId, participant, runOptions),
     session,
   });
 
-  return extractCouncilProposalText((finalMessage.fragments ?? [])
-    .filter(isTextContentFragment)
-    .map(fragment => fragment.part.text));
+  const result = classifyCouncilTextFragments(getCouncilFragmentTexts(finalMessage), true);
+  return {
+    participant,
+    action: result.action,
+    deliberationText: result.deliberationText,
+    response: result.response || extractCouncilProposalText(getCouncilFragmentTexts(finalMessage)),
+    assistantMessageId,
+    messageFragments: finalMessage.fragments,
+    messagePendingIncomplete: !!finalMessage.pendingIncomplete,
+  };
 }
 
 async function runCouncilReviewerBallot(
@@ -648,7 +1528,8 @@ async function runCouncilReviewerBallot(
   participant: DConversationParticipant,
   participantHistory: Readonly<DMessage[]>,
   sharedAbortController: AbortController,
-) {
+  runOptions?: PersonaRunOptions,
+): Promise<CouncilReviewerTurnResult> {
   const { finalMessage } = await runtime.runPersona({
     assistantLlmId: llmId,
     conversationId,
@@ -658,12 +1539,38 @@ async function runCouncilReviewerBallot(
     participant,
     sourceHistory: participantHistory,
     createPlaceholder: false,
+    runOptions: withParticipantRunOptions(llmId, participant, runOptions),
     session,
   });
 
-  return classifyCouncilReviewBallotFragments((finalMessage.fragments ?? [])
-    .filter(isTextContentFragment)
-    .map(fragment => fragment.part.text), participant.id);
+  const fragmentTexts = getCouncilFragmentTexts(finalMessage);
+  let ballot: ReturnType<typeof extractCouncilReviewerBallotFromToolInvocation>;
+  try {
+    ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
+  } catch (error) {
+    const fallbackReason = deriveCouncilReviewerFallbackReason(fragmentTexts);
+    const explicitErrorReason = error instanceof Error && error.message.trim()
+      ? error.message.trim()
+      : '';
+    ballot = {
+      reviewerParticipantId: participant.id,
+      decision: 'reject',
+      reason: (explicitErrorReason === COUNCIL_REVIEW_VERDICT_MISSING_REASON || explicitErrorReason === COUNCIL_REVIEW_ANALYSIS_MISSING_REASON)
+        ? explicitErrorReason
+        : (fallbackReason && fallbackReason !== COUNCIL_REVIEW_FAILED_REASON
+        ? fallbackReason
+        : explicitErrorReason)
+        || fallbackReason
+        || 'review failed',
+    };
+  }
+
+  return {
+    ballot,
+    fragmentTexts,
+    messageFragments: finalMessage.fragments,
+    messagePendingIncomplete: !!finalMessage.pendingIncomplete,
+  };
 }
 
 function createCouncilRoundMessage(
@@ -680,7 +1587,7 @@ function createCouncilRoundMessage(
     ? text
     : action === 'accept'
       ? 'Accept'
-      : `Reject: ${reason || 'review failed'}`;
+      : reason ? `Reject: ${reason}` : 'Reject';
   const message = createDMessageTextContent('assistant', visibleText);
   message.metadata = {
     ...message.metadata,
@@ -690,9 +1597,9 @@ function createCouncilRoundMessage(
       personaId: participant.personaId,
       llmId: participant.llmId ?? participantLlmId,
     },
-    councilChannel: CONSENSUS_PUBLIC_BOARD_CHANNEL,
+    councilChannel: COUNCIL_PUBLIC_BOARD_CHANNEL,
     initialRecipients: [{ rt: 'public-board' }],
-    consensus: {
+    council: {
       kind: 'deliberation',
       phaseId,
       passIndex: roundIndex,
@@ -700,7 +1607,7 @@ function createCouncilRoundMessage(
       action,
       agreedResponse: action === 'proposal' ? text : undefined,
       leaderParticipantId,
-      reason: action === 'reject' ? reason || 'review failed' : undefined,
+      reason: action === 'reject' ? reason : undefined,
     },
   };
   message.updated = message.created;
@@ -712,7 +1619,7 @@ function createCouncilNotificationMessage(phaseId: string, roundIndex: number, t
   message.metadata = {
     ...message.metadata,
     councilChannel: { channel: 'system' },
-    consensus: {
+    council: {
       kind: 'notification',
       phaseId,
       passIndex: roundIndex,
@@ -732,7 +1639,7 @@ function appendCouncilAcceptedResult(session: ChatExecutionSession, agreedRespon
       personaId: leaderParticipant.personaId ?? null,
       llmId: leaderParticipant.llmId ?? null,
     },
-    consensus: {
+    council: {
       kind: 'result',
       phaseId,
       passIndex: roundIndex,
@@ -744,11 +1651,12 @@ function appendCouncilAcceptedResult(session: ChatExecutionSession, agreedRespon
   session.messageAppend(finalMessage);
 }
 
-export async function runConsensusSequence(
+export async function runCouncilSequence(
   session: ChatExecutionSession,
   conversationId: DConversationId,
   participantsInOrder: DConversationParticipant[],
   defaultChatLlmId: DLLMId,
+  maxRounds: number = COUNCIL_MAX_PASSES,
   latestUserMessageId: string | null,
   initialCouncilState: CouncilSessionState | null = null,
   runtime?: ChatExecutionRuntime,
@@ -758,27 +1666,93 @@ export async function runConsensusSequence(
   if (!participantsInOrder.length)
     return false;
 
-  const phaseId = initialCouncilState?.phaseId ?? `consensus-${agiCustomId(12)}`;
+  const phaseId = initialCouncilState?.phaseId ?? `council-${agiCustomId(12)}`;
   const resolvedRuntime = await resolveChatExecutionRuntime(runtime);
   const sharedAbortController = resolvedRuntime.createAbortController();
-  const leaderParticipant = getConsensusLeaderParticipant(participantsInOrder);
+  const leaderParticipant = getCouncilLeaderParticipant(participantsInOrder);
   if (!leaderParticipant)
     return false;
   const reviewerParticipants = participantsInOrder.filter(participant => participant.id !== leaderParticipant?.id && participant.kind === 'assistant' && !!participant.personaId);
-  let currentCouncilState: CouncilSessionState = initialCouncilState ?? createCouncilSessionState({
+  let currentCouncilOps = getConversationCouncilOpLog(conversationId)
+    .filter(op => op.phaseId === phaseId);
+  const resumedFromExistingCouncilLog = currentCouncilOps.length > 0 || !!initialCouncilState;
+  if (!currentCouncilOps.length && initialCouncilState)
+    currentCouncilOps = createCouncilOpLogFromSessionState(initialCouncilState, conversationId, latestUserMessageId);
+  if (!currentCouncilOps.length) {
+    currentCouncilOps = [
+      createCouncilOp([], 'session_started', {
+        leaderParticipantId: leaderParticipant.id,
+        reviewerParticipantIds: reviewerParticipants.map(participant => participant.id),
+        maxRounds,
+        latestUserMessageId,
+      }, {
+        phaseId,
+        conversationId,
+      }),
+    ];
+  }
+  const currentCouncilReplay = replayCouncilOpLog(currentCouncilOps);
+  if (resumedFromExistingCouncilLog && currentCouncilReplay.canResume) {
+    const resumed = appendCommittedCouncilOps({
+      session,
+      councilOpLog: currentCouncilOps,
+      nextOps: [
+        createCouncilOp(currentCouncilOps, 'session_resumed', {
+          reason: currentCouncilReplay.interruptionReason,
+        }, {
+          phaseId,
+          conversationId,
+        }),
+      ],
+    });
+    currentCouncilOps = resumed.councilOpLog;
+  } else {
+    session.persistCouncilState(null, currentCouncilOps);
+  }
+  let currentCouncilState: CouncilSessionState = reduceCouncilOps(currentCouncilOps) ?? initialCouncilState ?? createCouncilSessionState({
     phaseId,
     leaderParticipantId: leaderParticipant.id,
     reviewerParticipantIds: reviewerParticipants.map(participant => participant.id),
-    maxRounds: CONSENSUS_MAX_PASSES,
+    maxRounds,
   });
-  session.setAbortController(sharedAbortController, 'chat-persona-consensus');
-  beginCouncilSession(session, 'consensus', phaseId, currentCouncilState);
+  const syncCouncilRuntimeMaxRounds = () => {
+    const latestMaxRounds = resolveCouncilMaxRounds(getConversationCouncilMaxRounds(conversationId));
+    const sessionStartedOpIndex = currentCouncilOps.findIndex(op => op.type === 'session_started' && op.phaseId === phaseId);
+
+    if (sessionStartedOpIndex >= 0) {
+      const sessionStartedOp = currentCouncilOps[sessionStartedOpIndex];
+      if (sessionStartedOp?.type === 'session_started' && sessionStartedOp.payload.maxRounds !== latestMaxRounds) {
+        const nextSessionStartedOp: CouncilOp<'session_started'> = {
+          ...sessionStartedOp,
+          payload: {
+            ...sessionStartedOp.payload,
+            maxRounds: latestMaxRounds,
+          },
+        };
+        currentCouncilOps = [...currentCouncilOps];
+        currentCouncilOps[sessionStartedOpIndex] = nextSessionStartedOp;
+      }
+    }
+
+    if (currentCouncilState.maxRounds !== latestMaxRounds) {
+      currentCouncilState = {
+        ...currentCouncilState,
+        maxRounds: latestMaxRounds,
+        updatedAt: Date.now(),
+      };
+    }
+  };
+  syncCouncilRuntimeMaxRounds();
+  let forcedCouncilInterruption: { status: CouncilRunInterruption; reason: string } | null = null;
+  session.setAbortController(sharedAbortController, 'chat-persona-council');
+  beginCouncilSession(session, 'council', phaseId, currentCouncilState);
 
   try {
     while (!sharedAbortController.signal.aborted && (currentCouncilState.status === 'drafting' || currentCouncilState.status === 'reviewing')) {
+      syncCouncilRuntimeMaxRounds();
       const roundIndex = currentCouncilState.roundIndex;
-      setCouncilSessionRunning(session, 'generate-content', 'consensus', phaseId, roundIndex, currentCouncilState);
-      const currentConversationHistory = session.historyViewHeadOrThrow(`chat-persona-consensus-round-${roundIndex}`) as Readonly<DMessage[]>;
+      setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+      const currentConversationHistory = session.historyViewHeadOrThrow(`chat-persona-council-round-${roundIndex}`) as Readonly<DMessage[]>;
       const latestUserMessage = [...currentConversationHistory].reverse().find(message => message.role === 'user') ?? null;
       if (hasStopToken(latestUserMessage)) {
         sharedAbortController.abort('@stop');
@@ -793,17 +1767,25 @@ export async function runConsensusSequence(
         break;
 
       const councilSourceHistory = getCouncilSourceHistory(currentConversationHistory, phaseId);
-      if (currentCouncilState.status === 'drafting') {
+      const sharedRejectionReasons = currentCouncilState.rounds[currentCouncilState.roundIndex]?.sharedRejectionReasons ?? [];
+      let activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
+      let proposalText = activeRound?.proposalText?.trim() ?? '';
+      let leaderProposalPromise: Promise<CouncilDeliberation>;
+      const needsLeaderProposal = doesCouncilRoundNeedLeaderProposal(activeRound);
+
+      if (currentCouncilState.status === 'drafting' || needsLeaderProposal) {
         const leaderHistory = await prepareCouncilLeaderHistory(
           councilSourceHistory,
+          currentCouncilOps,
+          currentCouncilState,
           leaderLlmId,
           leaderParticipant.personaId,
           participantsInOrder,
           leaderParticipant,
-          currentCouncilState.rounds[currentCouncilState.roundIndex]?.sharedRejectionReasons ?? [],
+          sharedRejectionReasons,
           currentCouncilState.roundIndex,
         );
-        const proposalText = await runCouncilLeaderProposal(
+        leaderProposalPromise = runCouncilLeaderProposal(
           resolvedRuntime,
           session,
           leaderLlmId,
@@ -811,165 +1793,346 @@ export async function runConsensusSequence(
           leaderParticipant,
           leaderHistory,
           sharedAbortController,
+          {
+            onStreamUpdate: createCouncilTextStreamObserver({
+              participantId: leaderParticipant.id,
+              role: 'leader',
+              roundIndex,
+              isLeader: true,
+              onMessageSnapshot: (message) => {
+                currentCouncilState = recordCouncilAgentMessageSnapshot(currentCouncilState, {
+                  roundIndex,
+                  participantId: leaderParticipant.id,
+                  role: 'leader',
+                  messageFragments: message.fragments,
+                  messagePendingIncomplete: message.pendingIncomplete,
+                });
+                setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+              },
+              onTextSnapshot: (text) => {
+                currentCouncilState = appendCouncilAgentTurnEvent(currentCouncilState, {
+                  roundIndex,
+                  participantId: leaderParticipant.id,
+                  role: 'leader',
+                  event: {
+                    type: 'text-output',
+                    createdAt: Date.now(),
+                    text,
+                  },
+                });
+                setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+              },
+            }),
+          },
         );
-        if (sharedAbortController.signal.aborted)
-          break;
+      } else {
+        leaderProposalPromise = Promise.resolve({
+          participant: leaderParticipant,
+          action: 'proposal',
+          deliberationText: activeRound?.leaderTurn?.deliberationText ?? '',
+          response: proposalText,
+          assistantMessageId: null,
+          messageFragments: activeRound?.leaderTurn?.messageFragments ?? [],
+          messagePendingIncomplete: activeRound?.leaderTurn?.messagePendingIncomplete ?? false,
+        });
+      }
 
+      const leaderTurn = await leaderProposalPromise;
+      if (sharedAbortController.signal.aborted)
+        break;
+
+      if (currentCouncilState.status === 'drafting' || needsLeaderProposal) {
+        proposalText = leaderTurn.response.trim();
         if (!proposalText.trim()) {
+          const committedStop = appendCommittedCouncilOps({
+            session,
+            councilOpLog: currentCouncilOps,
+            nextOps: [
+              createCouncilOp(currentCouncilOps, 'session_stopped', {
+                reason: COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL,
+              }, {
+                phaseId,
+                conversationId,
+              }),
+            ],
+          });
+          currentCouncilOps = committedStop.councilOpLog;
+          currentCouncilState = committedStop.workflowState;
+          forcedCouncilInterruption = {
+            status: 'stopped',
+            reason: COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL,
+          };
           session.messageAppend(createCouncilNotificationMessage(
             phaseId,
             roundIndex,
-            'Leader failed to produce a valid proposal. Council will stop.',
+            `${COUNCIL_INVALID_PROPOSAL_TEXT} Council will stop.`,
           ));
           return false;
         }
 
-        currentCouncilState = recordCouncilProposal(currentCouncilState, {
-          proposalId: `${phaseId}-proposal-${roundIndex + 1}`,
-          leaderParticipantId: leaderParticipant.id,
-          proposalText,
+        const committedProposal = appendCommittedCouncilOps({
+          session,
+          councilOpLog: currentCouncilOps,
+          nextOps: [
+            createCouncilOp(currentCouncilOps, 'leader_turn_committed', {
+              roundIndex,
+              participantId: leaderParticipant.id,
+              proposalId: `${phaseId}-proposal-${roundIndex + 1}`,
+              proposalText,
+              deliberationText: leaderTurn.deliberationText,
+              messageFragments: structuredClone(leaderTurn.messageFragments),
+              messagePendingIncomplete: leaderTurn.messagePendingIncomplete,
+            }, {
+              phaseId,
+              conversationId,
+            }),
+          ],
         });
-        session.messageAppend(createCouncilRoundMessage(
-          leaderParticipant,
-          leaderLlmId,
-          phaseId,
-          roundIndex,
-          'proposal',
-          proposalText,
-          leaderParticipant.id,
-        ));
-        setCouncilSessionRunning(session, 'generate-content', 'consensus', phaseId, roundIndex, currentCouncilState);
+        currentCouncilOps = committedProposal.councilOpLog;
+        currentCouncilState = committedProposal.workflowState;
+        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+        activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
       }
 
-      const activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
-      const proposalText = activeRound?.proposalText?.trim() ?? '';
+      proposalText = currentCouncilState.rounds[currentCouncilState.roundIndex]?.proposalText?.trim() ?? proposalText;
       if (!proposalText)
         return false;
 
-      let ballots = [...(activeRound?.ballots ?? [])];
-      const reviewedParticipantIds = new Set(ballots.map(ballot => ballot.reviewerParticipantId));
-
-      for (const reviewer of reviewerParticipants) {
-        if (sharedAbortController.signal.aborted)
-          break;
-        if (reviewedParticipantIds.has(reviewer.id))
-          continue;
-
-        const reviewerLlmId = reviewer.llmId ?? defaultChatLlmId;
-        let ballot;
-        if (!reviewer.personaId || !reviewerLlmId) {
-          ballot = {
-            reviewerParticipantId: reviewer.id,
-            decision: 'reject' as const,
-            reason: 'review failed',
-          };
-        } else {
-          try {
-            const reviewerHistory = await prepareCouncilReviewerHistory(
-              councilSourceHistory,
-              reviewerLlmId,
-              reviewer.personaId,
-              reviewer,
-              leaderParticipant,
-              proposalText,
-              currentCouncilState.rounds[currentCouncilState.roundIndex]?.sharedRejectionReasons ?? [],
-              currentCouncilState.roundIndex,
-            );
-            ballot = await runCouncilReviewerBallot(
-              resolvedRuntime,
-              session,
-              reviewerLlmId,
-              conversationId,
-              reviewer,
-              reviewerHistory,
-              sharedAbortController,
-            );
-          } catch {
-            if (sharedAbortController.signal.aborted)
-              break;
-            ballot = {
-              reviewerParticipantId: reviewer.id,
-              decision: 'reject' as const,
-              reason: 'review failed',
-            };
-          }
-        }
-
-        if (sharedAbortController.signal.aborted)
-          break;
-
-        ballots = [...ballots, ballot];
-        reviewedParticipantIds.add(reviewer.id);
-        session.messageAppend(createCouncilRoundMessage(
-          reviewer,
-          reviewerLlmId ?? defaultChatLlmId ?? '',
-          phaseId,
-          roundIndex,
-          ballot.decision,
-          proposalText,
-          leaderParticipant.id,
-          ballot.reason,
-        ));
-
+      activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
+      if (activeRound?.phase === 'reviewer-plans') {
         currentCouncilState = {
           ...currentCouncilState,
-          status: 'reviewing',
-          rounds: currentCouncilState.rounds.map(round => round.roundIndex !== roundIndex
+          rounds: currentCouncilState.rounds.map(round => round.roundIndex !== currentCouncilState.roundIndex
             ? round
             : {
                 ...round,
-                ballots,
+                phase: 'reviewer-votes',
               }),
           updatedAt: Date.now(),
         };
-        setCouncilSessionRunning(session, 'generate-content', 'consensus', phaseId, roundIndex, currentCouncilState);
+        activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
       }
 
       if (sharedAbortController.signal.aborted)
         break;
 
-      currentCouncilState = applyCouncilReviewBallots(currentCouncilState, ballots);
+      activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
+      if (activeRound?.phase === 'reviewer-votes') {
+        const pendingVoteReviewers = reviewerParticipants.filter(reviewer => {
+          const reviewerVote = activeRound?.reviewerVotes[reviewer.id] ?? null;
+          return !reviewerVote || isRetryableCouncilReviewerVote(reviewerVote);
+        });
+        let newBallots: CouncilBallotRecord[] = [];
+        try {
+          newBallots = await Promise.all(pendingVoteReviewers.map(async (reviewer) => {
+            if (sharedAbortController.signal.aborted)
+              throw new Error('aborted');
+
+            const reviewerLlmId = reviewer.llmId ?? defaultChatLlmId;
+
+            let reviewerResult: CouncilReviewerTurnResult = {
+              ballot: {
+                reviewerParticipantId: reviewer.id,
+                decision: 'reject',
+                reason: 'review failed',
+              },
+              fragmentTexts: [],
+              messageFragments: [],
+              messagePendingIncomplete: false,
+            };
+
+            if (reviewer.personaId && reviewerLlmId) {
+              try {
+                const reviewerHistory = await prepareCouncilReviewerHistory(
+                  councilSourceHistory,
+                  currentCouncilOps,
+                  currentCouncilState,
+                  reviewerLlmId,
+                  reviewer.personaId,
+                  reviewer,
+                  leaderParticipant,
+                  proposalText,
+                  participantsInOrder,
+                  sharedRejectionReasons,
+                  currentCouncilState.roundIndex,
+                );
+                reviewerResult = await runCouncilReviewerBallot(
+                  resolvedRuntime,
+                  session,
+                  reviewerLlmId,
+                  conversationId,
+                  reviewer,
+                  reviewerHistory,
+                  sharedAbortController,
+                  {
+                    requestTransform: createCouncilReviewerBallotRequestTransform(),
+                    onStreamUpdate: createCouncilTextStreamObserver({
+                      participantId: reviewer.id,
+                      role: 'reviewer',
+                      roundIndex,
+                      isLeader: false,
+                      onMessageSnapshot: (message) => {
+                        currentCouncilState = recordCouncilAgentMessageSnapshot(currentCouncilState, {
+                          roundIndex,
+                          participantId: reviewer.id,
+                          role: 'reviewer',
+                          messageFragments: message.fragments,
+                          messagePendingIncomplete: message.pendingIncomplete,
+                        });
+                        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+                      },
+                      onTextSnapshot: (text) => {
+                        currentCouncilState = appendCouncilAgentTurnEvent(currentCouncilState, {
+                          roundIndex,
+                          participantId: reviewer.id,
+                          role: 'reviewer',
+                          event: {
+                            type: 'text-output',
+                            createdAt: Date.now(),
+                            text,
+                          },
+                        });
+                        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+                      },
+                    }),
+                  },
+                );
+              } catch {
+                if (sharedAbortController.signal.aborted)
+                  throw new Error('aborted');
+                const reviewerTurnSnapshot = currentCouncilState.rounds[roundIndex]?.reviewerTurns[reviewer.id] ?? null;
+                const snapshotFragmentTexts = getCouncilFragmentTexts({ fragments: reviewerTurnSnapshot?.messageFragments ?? [] });
+                reviewerResult = {
+                  ballot: {
+                    reviewerParticipantId: reviewer.id,
+                    decision: 'reject',
+                    reason: deriveCouncilReviewerFallbackReason(snapshotFragmentTexts),
+                  },
+                  fragmentTexts: snapshotFragmentTexts,
+                  messageFragments: reviewerTurnSnapshot?.messageFragments ?? [],
+                  messagePendingIncomplete: reviewerTurnSnapshot?.messagePendingIncomplete ?? false,
+                };
+              }
+            }
+
+            if (sharedAbortController.signal.aborted)
+              throw new Error('aborted');
+
+            const committedVote = appendCommittedCouncilOps({
+              session,
+              councilOpLog: currentCouncilOps,
+              nextOps: [
+                createCouncilOp(currentCouncilOps, 'reviewer_vote_committed', {
+                  roundIndex,
+                  participantId: reviewer.id,
+                  decision: reviewerResult.ballot.decision,
+                  reason: reviewerResult.ballot.decision === 'reject' ? reviewerResult.ballot.reason ?? null : null,
+                  fragmentTexts: [...reviewerResult.fragmentTexts],
+                  messageFragments: structuredClone(reviewerResult.messageFragments),
+                  messagePendingIncomplete: reviewerResult.messagePendingIncomplete,
+                }, {
+                  phaseId,
+                  conversationId,
+                }),
+              ],
+            });
+            currentCouncilOps = committedVote.councilOpLog;
+            currentCouncilState = committedVote.workflowState;
+            setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+
+            return reviewerResult.ballot;
+          }));
+        } catch (error) {
+          if (sharedAbortController.signal.aborted)
+            break;
+          throw error;
+        }
+
+        if (sharedAbortController.signal.aborted)
+          break;
+
+        const ballots = reviewerParticipants
+          .map(reviewer => currentCouncilState.rounds[currentCouncilState.roundIndex]?.reviewerVotes[reviewer.id]?.ballot ?? null)
+          .filter((ballot): ballot is NonNullable<typeof ballot> => !!ballot);
+        void newBallots;
+        syncCouncilRuntimeMaxRounds();
+        const roundCompletionOps: CouncilOp[] = [
+          createCouncilOp(currentCouncilOps, 'round_completed', {
+            roundIndex,
+            outcome: ballots.some(ballot => ballot.decision === 'reject') ? 'revise' : 'accepted',
+            rejectionReasons: ballots
+              .filter((ballot): ballot is typeof ballot & { decision: 'reject'; reason: string } => ballot.decision === 'reject' && !!ballot.reason)
+              .map(ballot => ballot.reason),
+          }, {
+            phaseId,
+            conversationId,
+          }),
+        ];
+        const projectedAfterRound = reduceCouncilOps(appendCouncilOps(currentCouncilOps, roundCompletionOps));
+        if (projectedAfterRound?.status === 'accepted' && projectedAfterRound.acceptedProposalId && projectedAfterRound.finalResponse) {
+          roundCompletionOps.push(createCouncilOp(appendCouncilOps(currentCouncilOps, roundCompletionOps), 'session_accepted', {
+            roundIndex: projectedAfterRound.roundIndex,
+            proposalId: projectedAfterRound.acceptedProposalId,
+            finalResponse: projectedAfterRound.finalResponse,
+          }, {
+            phaseId,
+            conversationId,
+          }));
+        } else if (projectedAfterRound?.status === 'exhausted') {
+          roundCompletionOps.push(createCouncilOp(appendCouncilOps(currentCouncilOps, roundCompletionOps), 'session_exhausted', {
+            roundIndex: projectedAfterRound.roundIndex,
+          }, {
+            phaseId,
+            conversationId,
+          }));
+        }
+        const committedRound = appendCommittedCouncilOps({
+          session,
+          councilOpLog: currentCouncilOps,
+          nextOps: roundCompletionOps,
+        });
+        currentCouncilOps = committedRound.councilOpLog;
+        currentCouncilState = committedRound.workflowState;
+      }
+
       if (currentCouncilState.status === 'accepted') {
         if (currentCouncilState.finalResponse)
           appendCouncilAcceptedResult(session, currentCouncilState.finalResponse, leaderParticipant, phaseId, roundIndex);
         return !sharedAbortController.signal.aborted;
       }
 
-      if (currentCouncilState.status === 'exhausted') {
-        const rejectionReasons = ballots.reduce<string[]>((reasons, ballot) => {
-          if (ballot.decision === 'reject' && ballot.reason)
-            reasons.push(ballot.reason);
-          return reasons;
-        }, []);
-        session.messageAppend(createCouncilNotificationMessage(
-          phaseId,
-          roundIndex,
-          rejectionReasons.length
-            ? `Council exhausted after ${roundIndex + 1} rounds. Final rejection reasons:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`
-            : `Council exhausted after ${roundIndex + 1} rounds.`,
-        ));
+      if (currentCouncilState.status === 'exhausted')
         return false;
-      }
-
-      const rejectionReasons = ballots.reduce<string[]>((reasons, ballot) => {
-        if (ballot.decision === 'reject' && ballot.reason)
-          reasons.push(ballot.reason);
-        return reasons;
-      }, []);
-      if (rejectionReasons.length) {
-        session.messageAppend(createCouncilNotificationMessage(
-          phaseId,
-          roundIndex,
-          `Round ${roundIndex + 1} rejected. Rejection reasons:\n${rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}`,
-        ));
-      }
     }
 
     return false;
   } finally {
-    const interruption = getCouncilInterruption(sharedAbortController);
-    session.clearAbortController('chat-persona-consensus');
-    finalizeCouncilSession(session, interruption, 'consensus', phaseId, currentCouncilState.roundIndex, currentCouncilState);
+    const interruption = forcedCouncilInterruption ?? getCouncilInterruption(sharedAbortController);
+    if (interruption && interruption !== forcedCouncilInterruption) {
+      const interruptionType = interruption.status === 'paused'
+        ? 'session_paused'
+        : interruption.status === 'stopped'
+          ? 'session_stopped'
+          : null;
+      if (interruptionType) {
+        const interruptedCommit = appendCommittedCouncilOps({
+          session,
+          councilOpLog: currentCouncilOps,
+          nextOps: [
+            createCouncilOp(currentCouncilOps, interruptionType, {
+              reason: interruption.reason,
+            }, {
+              phaseId,
+              conversationId,
+            }),
+          ],
+        });
+        currentCouncilOps = interruptedCommit.councilOpLog;
+        currentCouncilState = interruptedCommit.workflowState;
+      }
+    }
+    session.clearAbortController('chat-persona-council');
+    finalizeCouncilSession(session, interruption, 'council', phaseId, currentCouncilState.roundIndex, currentCouncilState, currentCouncilOps);
   }
 }
 
@@ -983,6 +2146,7 @@ async function runParticipantSequence(
   latestUserMessageId: string | null,
   councilChannel: DMessageCouncilChannel,
   runtime?: ChatExecutionRuntime,
+  resumePlan?: Pick<MultiAgentResumePlan, 'pendingParticipantsInOrder' | 'existingAssistantMessageId' | 'existingAssistantParticipantId'> | null,
 ): Promise<boolean> {
   if (!participantsInOrder.length)
     return false;
@@ -991,14 +2155,24 @@ async function runParticipantSequence(
   const sharedAbortController = resolvedRuntime.createAbortController();
   session.setAbortController(sharedAbortController, 'chat-persona-multi');
   beginCouncilSession(session, turnTerminationMode);
+  const leaderParticipant = turnTerminationMode === 'continuous'
+    ? getCouncilLeaderParticipant(allAssistantParticipants)
+    : null;
 
   let continuousTurnCount = 0;
+  let continuousLoopIndex = 0;
 
   try {
     const results: boolean[] = [];
     const participantCount = participantsInOrder.length;
     let pendingMentionedParticipantIds: string[] = [];
     let allowRoundRobinMentionContinuation = false;
+    let continuousLoopSpokenParticipantIds = new Set<string>();
+    let initialParticipantsForPassOverride = resumePlan?.pendingParticipantsInOrder?.length
+      ? [...resumePlan.pendingParticipantsInOrder]
+      : null;
+    let resumeIncompleteAssistantMessageId = resumePlan?.existingAssistantMessageId ?? null;
+    let resumeIncompleteAssistantParticipantId = resumePlan?.existingAssistantParticipantId ?? null;
 
     while (!sharedAbortController.signal.aborted) {
       setCouncilSessionRunning(session, 'generate-content', turnTerminationMode, null, continuousTurnCount);
@@ -1011,14 +2185,18 @@ async function runParticipantSequence(
         sharedAbortController.abort('@stop');
         break;
       }
-      const participantsForPassBase = turnTerminationMode === 'continuous'
-        ? getContinuousParticipants(historyForTurn, latestUserMessageId, participantsInOrder)
-        : allowRoundRobinMentionContinuation
-          ? participantsInOrder
-          : getParticipantsRemainingThisTurn(historyForTurn, latestUserMessageId, participantsInOrder);
+      const participantsForPassBase = initialParticipantsForPassOverride?.length
+        ? initialParticipantsForPassOverride
+        : turnTerminationMode === 'continuous'
+          ? getContinuousParticipants(historyForTurn, latestUserMessageId, participantsInOrder)
+            .filter(participant => !continuousLoopSpokenParticipantIds.has(participant.id))
+          : allowRoundRobinMentionContinuation
+            ? participantsInOrder
+            : getParticipantsRemainingThisTurn(historyForTurn, latestUserMessageId, participantsInOrder);
+      initialParticipantsForPassOverride = null;
 
       const queuedMentionedParticipants = pendingMentionedParticipantIds
-        .map(participantId => participantsForPassBase.find(participant => participant.id === participantId) ?? null)
+        .map(participantId => participantsForPassBase.find(participant => participant.id === participantId) ?? participantsInOrder.find(participant => participant.id === participantId) ?? allAssistantParticipants.find(participant => participant.id === participantId) ?? null)
         .filter((participant): participant is DConversationParticipant => !!participant);
       const queuedMentionedParticipantIds = new Set(queuedMentionedParticipants.map(participant => participant.id));
       const participantsForPass = [
@@ -1027,8 +2205,14 @@ async function runParticipantSequence(
       ];
       pendingMentionedParticipantIds = [];
 
-      if (!participantsForPass.length)
+      if (!participantsForPass.length) {
+        if (turnTerminationMode === 'continuous' && participantCount > 1 && continuousLoopSpokenParticipantIds.size > 0) {
+          continuousLoopIndex++;
+          continuousLoopSpokenParticipantIds = new Set<string>();
+          continue;
+        }
         break;
+      }
 
       let madeProgressThisPass = false;
 
@@ -1045,7 +2229,19 @@ async function runParticipantSequence(
           session.historyViewHeadOrThrow(`chat-persona-multi-${participant.id}-${continuousTurnCount}`) as Readonly<DMessage[]>,
           councilChannel,
         );
-        const participantHistory = await preparePersonaHistory(sourceHistory, participantLlmId, participantPersonaId, participantsInOrder, participant);
+        const canLeaderExitLoop = turnTerminationMode === 'continuous'
+          && leaderParticipant?.id === participant.id
+          && continuousLoopIndex > 0;
+        const participantHistory = await preparePersonaHistory(
+          sourceHistory,
+          participantLlmId,
+          participantPersonaId,
+          allAssistantParticipants,
+          participant,
+          {
+            includeExitLoopInstruction: canLeaderExitLoop,
+          },
+        );
         const result = await resolvedRuntime.runPersona({
           assistantLlmId: participantLlmId,
           conversationId,
@@ -1056,11 +2252,31 @@ async function runParticipantSequence(
           sourceHistory: participantHistory,
           createPlaceholder: true,
           messageChannel: councilChannel,
+          runOptions: withParticipantRunOptions(participantLlmId, participant, {
+            ...(resumeIncompleteAssistantMessageId && resumeIncompleteAssistantParticipantId === participant.id
+              ? { existingAssistantMessageId: resumeIncompleteAssistantMessageId }
+              : {}),
+            ...(canLeaderExitLoop
+              ? { requestTransform: createExitLoopRequestTransform() }
+              : {}),
+          }),
           session,
         });
+        if (resumeIncompleteAssistantParticipantId === participant.id) {
+          resumeIncompleteAssistantMessageId = null;
+          resumeIncompleteAssistantParticipantId = null;
+        }
         results.push(result.success);
+        if (turnTerminationMode === 'continuous')
+          continuousLoopSpokenParticipantIds.add(participant.id);
 
         madeProgressThisPass = madeProgressThisPass || result.success;
+
+        if (canLeaderExitLoop
+          && hasExitLoopToolInvocation(result.finalMessage.fragments)
+          && hasVisibleExitLoopReplyContent(result.finalMessage.fragments)) {
+          sharedAbortController.abort('@exit-loop');
+        }
 
         if (sharedAbortController.signal.aborted)
           break;
@@ -1168,9 +2384,12 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   switch (chatExecuteMode) {
     case 'generate-content': {
       const requestedCouncilChannel = normalizeCouncilChannel(lastMessage.metadata?.councilChannel);
-      const historyForRequestedChannel = getHistoryForCouncilChannel(initialHistory, requestedCouncilChannel);
-      const latestUserMessage = [...historyForRequestedChannel].reverse().find(message => message.role === 'user') ?? null;
-      const resumeSession = turnTerminationMode === 'consensus'
+      const sourceHistoryForRequestedChannel = initialHistory.filter(message =>
+        message.role === 'system' || messageMatchesCouncilChannel(message, requestedCouncilChannel),
+      );
+      const historyForRequestedChannel = sourceHistoryForRequestedChannel.map(message => duplicateDMessage(message, false));
+      const latestUserMessage = [...sourceHistoryForRequestedChannel].reverse().find(message => message.role === 'user') ?? null;
+      const resumeSession = turnTerminationMode === 'council'
         ? session.getCouncilSession()
         : createIdleCouncilSessionState();
       if (hasStopToken(latestUserMessage)) {
@@ -1178,22 +2397,50 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         return true;
       }
       const assistantParticipantsForChannel = getParticipantsForCouncilChannel(assistantParticipants, requestedCouncilChannel, conversationId);
-      const runnableParticipants = getRunnableParticipants(assistantParticipantsForChannel, latestUserMessage);
+      const targetedParticipants = getExplicitRecipientParticipants(assistantParticipantsForChannel, latestUserMessage);
+      const participantsForRequestedTurn = targetedParticipants.participants;
+      const runnableParticipants = getRunnableParticipants(targetedParticipants.participants, latestUserMessage);
       const directlyMentionedParticipants = getMentionedParticipants(latestUserMessage, assistantParticipantsForChannel);
+      const participantsRequestedInOrder = mergeParticipantsInRosterOrder(assistantParticipantsForChannel, participantsForRequestedTurn, directlyMentionedParticipants);
       const participantsForTurn = mergeParticipantsInRosterOrder(assistantParticipantsForChannel, runnableParticipants, directlyMentionedParticipants);
+      const effectiveTurnTerminationMode = (requestedCouncilChannel.channel !== 'public-board' || targetedParticipants.hasExplicitParticipantRecipients) && turnTerminationMode === 'council'
+        ? 'round-robin-per-human'
+        : turnTerminationMode;
+      const persistedResumeSession = session.getCouncilSession().canResume ? session.getCouncilSession() : null;
+      const multiAgentResumePlan = effectiveTurnTerminationMode !== 'council'
+        ? inferMultiAgentResumePlan({
+            messages: sourceHistoryForRequestedChannel,
+            latestUserMessage,
+            latestUserMessageId: latestUserMessage?.id ?? null,
+            participantsInOrder: participantsRequestedInOrder,
+            turnTerminationMode: effectiveTurnTerminationMode,
+            persistedSession: persistedResumeSession,
+          })
+        : null;
+      const effectiveParticipantsForTurn = multiAgentResumePlan?.pendingParticipantsInOrder.length
+        ? multiAgentResumePlan.pendingParticipantsInOrder
+        : participantsForTurn;
 
-      if (!participantsForTurn.length) {
+      if (!effectiveParticipantsForTurn.length) {
         session.messageAppendAssistantText(`No agent was triggered in ${describeCouncilChannel(requestedCouncilChannel, participants, conversationId)}. Mention an agent with @alias, or set it to speak every turn.`, 'issue');
         return false;
       }
 
-      const effectiveTurnTerminationMode = requestedCouncilChannel.channel !== 'public-board' && turnTerminationMode === 'consensus'
-        ? 'round-robin-per-human'
-        : turnTerminationMode;
-      const initialCouncilState = effectiveTurnTerminationMode === 'consensus' && resumeSession.canResume
-        ? resumeSession.workflowState ?? (() => {
+      const councilMaxRounds = resolveCouncilMaxRounds(getConversationCouncilMaxRounds(conversationId));
+      const councilOpLog = getConversationCouncilOpLog(conversationId);
+      const councilSessionStartedOp = councilOpLog.find(op => op.type === 'session_started') ?? null;
+      const councilOpReplay = effectiveTurnTerminationMode === 'council'
+        && (!latestUserMessage
+          || !councilSessionStartedOp
+          || councilSessionStartedOp.payload.latestUserMessageId === latestUserMessage.id
+          || !councilSessionStartedOp.payload.latestUserMessageId
+        )
+        ? replayCouncilOpLog(councilOpLog)
+        : null;
+      const initialCouncilState = effectiveTurnTerminationMode === 'council' && (councilOpReplay?.canResume || resumeSession.canResume)
+        ? councilOpReplay?.workflowState ?? resumeSession.workflowState ?? (() => {
             const resumePhaseId = resumeSession.phaseId?.trim() || null;
-            const leaderParticipant = getConsensusLeaderParticipant(participantsForTurn);
+            const leaderParticipant = getCouncilLeaderParticipant(participantsForTurn);
             if (!resumePhaseId || !leaderParticipant)
               return null;
 
@@ -1203,48 +2450,69 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
               phaseId: resumePhaseId,
               leaderParticipantId: leaderParticipant.id,
               reviewerParticipantIds: reviewerParticipants.map(participant => participant.id),
-              maxRounds: CONSENSUS_MAX_PASSES,
+              maxRounds: councilMaxRounds,
               entries: historyForRequestedChannel
                 .filter(message => {
-                  const consensus = message.metadata?.consensus;
-                  return consensus?.kind === 'deliberation' && consensus.phaseId === resumePhaseId;
+                  const council = message.metadata?.council;
+                  return council?.kind === 'deliberation' && council.phaseId === resumePhaseId;
                 })
                 .map(message => ({
-                  roundIndex: message.metadata?.consensus?.passIndex ?? 0,
+                  roundIndex: message.metadata?.council?.passIndex ?? 0,
                   participantId: message.metadata?.author?.participantId ?? '',
-                  action: message.metadata?.consensus?.action === 'accept'
+                  action: message.metadata?.council?.action === 'accept'
                     ? 'accept'
-                    : message.metadata?.consensus?.action === 'reject'
+                    : message.metadata?.council?.action === 'reject'
                       ? 'reject'
                       : 'proposal',
                   messageId: message.id,
                   text: messageFragmentsReduceText(message.fragments).trim(),
-                  reason: message.metadata?.consensus?.reason,
+                  reason: message.metadata?.council?.reason,
                 })),
             });
           })()
         : null;
 
-      if (participantsForTurn.length > 1 || effectiveTurnTerminationMode === 'continuous' || effectiveTurnTerminationMode === 'consensus')
-        return effectiveTurnTerminationMode === 'consensus'
-          ? await runConsensusSequence(
+      if (effectiveParticipantsForTurn.length > 1 || effectiveTurnTerminationMode === 'continuous' || effectiveTurnTerminationMode === 'council' || !!multiAgentResumePlan)
+        return effectiveTurnTerminationMode === 'council'
+          ? await runCouncilSequence(
             session,
             conversationId,
-            participantsForTurn,
+            effectiveParticipantsForTurn,
             chatLLMId,
+            councilMaxRounds,
             latestUserMessage?.id ?? null,
             initialCouncilState,
             resolvedRuntime,
           )
-          : await runParticipantSequence(session, conversationId, participantsForTurn, assistantParticipantsForChannel, chatLLMId, effectiveTurnTerminationMode, latestUserMessage?.id ?? null, requestedCouncilChannel, resolvedRuntime);
+          : await runParticipantSequence(
+            session,
+            conversationId,
+            effectiveParticipantsForTurn,
+            assistantParticipantsForChannel,
+            chatLLMId,
+            effectiveTurnTerminationMode,
+            latestUserMessage?.id ?? null,
+            requestedCouncilChannel,
+            resolvedRuntime,
+            multiAgentResumePlan,
+          );
 
-      const soleParticipant = participantsForTurn[0] ?? primaryParticipant;
+      const soleParticipant = effectiveParticipantsForTurn[0] ?? primaryParticipant;
       const soleParticipantPersonaId = soleParticipant?.personaId ?? systemPurposeId;
       const soleParticipantLlmId = soleParticipant?.llmId ?? chatLLMId;
       if (!soleParticipant || !soleParticipantPersonaId || !soleParticipantLlmId)
         return 'err-no-persona';
 
-      const participantHistory = await preparePersonaHistory(historyForRequestedChannel, soleParticipantLlmId, soleParticipantPersonaId, participantsForTurn, soleParticipant);
+      const participantHistory = await preparePersonaHistory(
+        historyForRequestedChannel,
+        soleParticipantLlmId,
+        soleParticipantPersonaId,
+        assistantParticipantsForChannel,
+        soleParticipant,
+        {
+          includeExitLoopInstruction: false,
+        },
+      );
       return (await resolvedRuntime.runPersona({
         assistantLlmId: soleParticipantLlmId,
         conversationId,
@@ -1254,6 +2522,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         sourceHistory: participantHistory,
         createPlaceholder: true,
         messageChannel: requestedCouncilChannel,
+        runOptions: withParticipantRunOptions(soleParticipantLlmId, soleParticipant, undefined),
         session,
       })).success;
     }

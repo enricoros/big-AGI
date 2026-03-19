@@ -80,6 +80,9 @@ interface AppChatStore {
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
+  showConversationMinimap: boolean;
+  setShowConversationMinimap: (showConversationMinimap: boolean) => void;
+
   // other chat-specific configuration
 
   notificationEnabledModelIds: DLLMId[];
@@ -155,6 +158,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     showSystemMessages: false,
     setShowSystemMessages: (showSystemMessages: boolean) => _set({ showSystemMessages }),
+
+    showConversationMinimap: false,
+    setShowConversationMinimap: (showConversationMinimap: boolean) => _set({ showConversationMinimap }),
 
     // Other chat-specific configuration
 
@@ -266,6 +272,15 @@ export const getChatShowSystemMessages = (): boolean =>
 
 export const useChatShowSystemMessages = (): [boolean, (showSystemMessages: boolean) => void] =>
   useAppChatStore(useShallow(state => [state.showSystemMessages, state.setShowSystemMessages]));
+
+export const getChatShowConversationMinimap = (): boolean =>
+  useAppChatStore.getState().showConversationMinimap;
+
+export const setChatShowConversationMinimap = (showConversationMinimap: boolean): void =>
+  useAppChatStore.getState().setShowConversationMinimap(showConversationMinimap);
+
+export const useChatShowConversationMinimap = (): [boolean, (showConversationMinimap: boolean) => void] =>
+  useAppChatStore(useShallow(state => [state.showConversationMinimap, state.setShowConversationMinimap]));
 
 export const getIsNotificationEnabledForModel = (modelId: DLLMId): boolean =>
   useAppChatStore.getState().isNotificationEnabledForModel(modelId);

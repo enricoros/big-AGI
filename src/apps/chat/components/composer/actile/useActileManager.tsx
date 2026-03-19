@@ -14,10 +14,12 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
 
   // derived state
   const activeItemsByProvider = React.useMemo(() => {
-    const search = activeSearchString.trim().toLowerCase();
+    const search = activeSearchString.trim();
     return itemsByProvider.map(({ provider, items }) => ({
       provider,
-      items: items.filter(item => item.label?.toLowerCase().startsWith(search)),
+      items: provider.filterItems
+        ? provider.filterItems(items, search)
+        : items.filter(item => item.label?.toLowerCase().startsWith(search.toLowerCase())),
     })).filter(({ items }) => items.length > 0);
   }, [itemsByProvider, activeSearchString]);
 
@@ -120,11 +122,11 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
         onClose={handleClose}
         itemsByProvider={activeItemsByProvider}
         activeItemIndex={activeItemIndex}
-        activePrefixLength={activeSearchString.length}
+        activeSearchString={activeSearchString}
         onItemClick={handlePopupItemClicked}
       />
     );
-  }, [activeItemIndex, activeItemsByProvider, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen, totalItems]);
+  }, [activeItemIndex, activeItemsByProvider, activeSearchString, anchorRef, handleClose, handlePopupItemClicked, popupOpen, totalItems]);
 
   return {
     actileComponent,

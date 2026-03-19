@@ -182,6 +182,8 @@ type StreamMessageStatus = {
   errorMessage?: string
 };
 
+export type AixChatGenerateRequestTransform = (request: AixAPIChatGenerate_Request) => AixAPIChatGenerate_Request;
+
 
 interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
@@ -207,6 +209,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
   // others
   clientOptions: AixClientOptions,
   onStreamingUpdate: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
+  requestTransform?: AixChatGenerateRequestTransform,
 ): Promise<StreamMessageStatus> {
 
   let errorMessage: string | undefined;
@@ -221,10 +224,13 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
   try {
 
     // Aix ChatGenerate Request
-    const aixChatContentGenerateRequest: AixAPIChatGenerate_Request = {
+    const baseAixChatContentGenerateRequest: AixAPIChatGenerate_Request = {
       systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
+    const aixChatContentGenerateRequest = requestTransform
+      ? requestTransform(baseAixChatContentGenerateRequest)
+      : baseAixChatContentGenerateRequest;
 
     await aixChatGenerateContent_DMessage_orThrow(
       llmId,

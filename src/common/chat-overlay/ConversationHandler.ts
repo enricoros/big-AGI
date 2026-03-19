@@ -8,22 +8,181 @@ import { SystemPurposes } from '../../data';
 import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
 import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
-import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { resolveCouncilMaxRounds } from '~/common/stores/chat/chat.conversation';
+import type { DMessageCouncilMetadata } from '~/common/stores/chat/chat.message';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
+import { ChatActions, getConversationCouncilMaxRounds, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { hydrateCouncilSessionFromTranscriptEntries } from '../../apps/chat/editors/_handleExecute.council';
+import { replayCouncilOpLog } from '../../apps/chat/editors/_handleExecute.council.reducer';
+import { inferMultiAgentResumePlan } from '../../apps/chat/editors/_handleExecute';
+import { createIdleCouncilSessionState } from './store-perchat-composer_slice';
+import type { CouncilSessionState as OverlayCouncilSessionState } from './store-perchat-composer_slice';
 
 import { getChatAutoAI, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
 
 import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat-ephemerals_slice';
 import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_vanilla';
+import { perfMeasureSync } from '~/common/util/perfRegistry';
 
 
 // optimization: cache the actions
 const _chatStoreActions = useChatStore.getState() as ChatActions;
+
+function getMessagesSinceLatestUser(conversation: DConversation): DMessage[] {
+  const latestUserMessageIndex = conversation.messages.map(message => message.role).lastIndexOf('user');
+  return latestUserMessageIndex >= 0
+    ? conversation.messages.slice(latestUserMessageIndex + 1)
+    : conversation.messages;
+}
+
+function getCouncilLeaderParticipant(conversation: DConversation) {
+  const assistantParticipants = (conversation.participants ?? []).filter(participant => participant.kind === 'assistant' && !!participant.personaId);
+  return assistantParticipants.find(participant => participant.isLeader) ?? assistantParticipants[0] ?? null;
+}
+
+export function inferResumableCouncilSession(conversation: DConversation | undefined | null): OverlayCouncilSessionState | null {
+  return perfMeasureSync('derive:ConversationHandler.inferResumableCouncilSession', () => {
+    if (!conversation)
+      return null;
+
+    const persistedCouncilSession = conversation.councilSession?.canResume ? conversation.councilSession : null;
+
+    if (conversation.councilOpLog?.length) {
+      const latestUserMessage = [...conversation.messages].reverse().find(message => message.role === 'user') ?? null;
+      const councilSessionStartedOp = conversation.councilOpLog.find(op => op.type === 'session_started') ?? null;
+      if (!latestUserMessage || !councilSessionStartedOp || !councilSessionStartedOp.payload.latestUserMessageId || councilSessionStartedOp.payload.latestUserMessageId === latestUserMessage.id) {
+        const replay = replayCouncilOpLog(conversation.councilOpLog);
+        if (replay.workflowState && (
+          replay.canResume
+          || replay.persistedStatus === 'stopped'
+          || replay.workflowState.status === 'accepted'
+          || replay.workflowState.status === 'exhausted'
+        )) {
+          return {
+            status: replay.canResume
+              ? replay.persistedStatus ?? 'interrupted'
+              : replay.persistedStatus === 'stopped'
+                ? 'stopped'
+                : 'completed',
+            executeMode: 'generate-content' as const,
+            mode: conversation.turnTerminationMode ?? 'council',
+            phaseId: replay.phaseId,
+            passIndex: replay.passIndex,
+            workflowState: replay.workflowState,
+            canResume: replay.canResume,
+            interruptionReason: replay.interruptionReason,
+            updatedAt: replay.updatedAt,
+          };
+        }
+      }
+    }
+
+    const latestTurnMessages = getMessagesSinceLatestUser(conversation);
+    if (!latestTurnMessages.length)
+      return null;
+
+    if (conversation.turnTerminationMode === 'council') {
+      const deliberationMessages = latestTurnMessages.filter(message => {
+        const council = message.metadata?.council;
+        return message.role === 'assistant'
+          && council?.kind === 'deliberation'
+          && typeof council.phaseId === 'string'
+          && typeof council.passIndex === 'number';
+      });
+
+      if (!deliberationMessages.length)
+        return null;
+
+      const latestDeliberationMessage = deliberationMessages.reduce((latest, message) =>
+        message.created > latest.created ? message : latest,
+      deliberationMessages[0]);
+
+      const council = latestDeliberationMessage.metadata?.council as DMessageCouncilMetadata | undefined;
+      if (!council?.phaseId || typeof council.passIndex !== 'number')
+        return null;
+
+      if (latestTurnMessages.some(message => message.metadata?.council?.kind === 'result' && message.metadata.council.phaseId === council.phaseId))
+        return null;
+
+      const latestPhaseMessages = deliberationMessages.filter(message => message.metadata?.council?.phaseId === council.phaseId);
+      const latestPhasePassIndex = latestPhaseMessages.reduce((maxPassIndex, message) => Math.max(maxPassIndex, message.metadata?.council?.passIndex ?? 0), council.passIndex);
+      const hasIncompleteMessage = latestPhaseMessages.some(message => message.updated === null);
+      const leaderParticipant = getCouncilLeaderParticipant(conversation);
+      const reviewerParticipants = (conversation.participants ?? []).filter(participant =>
+        participant.kind === 'assistant'
+          && !!participant.personaId
+          && participant.id !== leaderParticipant?.id);
+      const workflowState = leaderParticipant
+        ? hydrateCouncilSessionFromTranscriptEntries({
+            phaseId: council.phaseId,
+            leaderParticipantId: leaderParticipant.id,
+            reviewerParticipantIds: reviewerParticipants.map(participant => participant.id),
+            maxRounds: resolveCouncilMaxRounds(getConversationCouncilMaxRounds(conversation.id)),
+            entries: latestPhaseMessages.map(message => ({
+              roundIndex: message.metadata?.council?.passIndex ?? 0,
+              participantId: message.metadata?.author?.participantId ?? '',
+              action: message.metadata?.council?.action === 'accept'
+                ? 'accept'
+                : message.metadata?.council?.action === 'reject'
+                  ? 'reject'
+                  : 'proposal',
+              messageId: message.id,
+              text: messageFragmentsReduceText(message.fragments).trim(),
+              reason: message.metadata?.council?.reason,
+            })),
+          })
+        : null;
+
+      return {
+        status: 'interrupted' as const,
+        executeMode: 'generate-content' as const,
+        mode: conversation.turnTerminationMode,
+        phaseId: council.phaseId,
+        passIndex: latestPhasePassIndex,
+        workflowState,
+        canResume: true,
+        interruptionReason: hasIncompleteMessage ? 'page-unload' : 'recovered-from-transcript',
+        updatedAt: latestDeliberationMessage.updated ?? latestDeliberationMessage.created ?? Date.now(),
+      };
+    }
+
+    const assistantParticipants = (conversation.participants ?? []).filter(participant => participant.kind === 'assistant' && !!participant.personaId);
+    if (!assistantParticipants.length)
+      return null;
+
+    const latestUserMessage = [...conversation.messages].reverse().find(message => message.role === 'user') ?? null;
+    const multiAgentResumePlan = inferMultiAgentResumePlan({
+      messages: conversation.messages,
+      latestUserMessage,
+      latestUserMessageId: latestUserMessage?.id ?? null,
+      participantsInOrder: assistantParticipants,
+      turnTerminationMode: conversation.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
+      persistedSession: persistedCouncilSession,
+    });
+
+    if (!multiAgentResumePlan) {
+      if (persistedCouncilSession?.mode === 'council')
+        return persistedCouncilSession;
+      return null;
+    }
+
+    return {
+      status: persistedCouncilSession?.status ?? 'interrupted' as const,
+      executeMode: 'generate-content' as const,
+      mode: conversation.turnTerminationMode ?? 'round-robin-per-human',
+      phaseId: null,
+      passIndex: multiAgentResumePlan.passIndex,
+      canResume: true,
+      interruptionReason: multiAgentResumePlan.interruptionReason,
+      updatedAt: multiAgentResumePlan.updatedAt,
+    };
+  });
+}
 
 
 /**
@@ -36,10 +195,20 @@ export class ConversationHandler {
 
   private readonly beamStore: StoreApi<BeamStore>;
   private readonly overlayStore: StoreApi<PerChatOverlayStore>;
+  private readonly _chatStoreUnsubscribe: (() => void) | null = null;
 
   constructor(private readonly conversationId: DConversationId) {
     this.beamStore = createBeamVanillaStore();
     this.overlayStore = createPerChatVanillaStore();
+
+    this._syncInferredCouncilSession();
+    this._chatStoreUnsubscribe = useChatStore.subscribe((state, prevState) => {
+      const conversation = state.conversations.find(_c => _c.id === this.conversationId) ?? null;
+      const prevConversation = prevState.conversations.find(_c => _c.id === this.conversationId) ?? null;
+      if (conversation === prevConversation)
+        return;
+      this._syncInferredCouncilSession();
+    });
 
     // track the open status of beams - this is meant to be an accelerator for the UI
     this.beamStore.subscribe((state, prevState) => {
@@ -47,6 +216,49 @@ export class ConversationHandler {
       useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, state.isOpen);
     });
   }
+
+  private _syncInferredCouncilSession(): void {
+    const conversation = useChatStore.getState().conversations.find(_c => _c.id === this.conversationId) ?? null;
+    const inferredCouncilSession = inferResumableCouncilSession(conversation);
+    const overlayState = this.overlayStore.getState();
+    const currentCouncilSession = overlayState.councilSession;
+    const nextMaxRounds = resolveCouncilMaxRounds(getConversationCouncilMaxRounds(this.conversationId));
+    const currentWorkflowState = currentCouncilSession.workflowState;
+
+    if (currentCouncilSession.status === 'running') {
+      if (currentCouncilSession.mode === 'council' && currentWorkflowState && currentWorkflowState.maxRounds !== nextMaxRounds) {
+        overlayState.updateCouncilSession({
+          workflowState: {
+            ...currentWorkflowState,
+            maxRounds: nextMaxRounds,
+          },
+        });
+      }
+      return;
+    }
+
+    if (inferredCouncilSession) {
+      const needsHydration = currentCouncilSession.status !== inferredCouncilSession.status
+        || currentCouncilSession.phaseId !== inferredCouncilSession.phaseId
+        || currentCouncilSession.passIndex !== inferredCouncilSession.passIndex
+        || currentCouncilSession.mode !== inferredCouncilSession.mode
+        || currentCouncilSession.canResume !== inferredCouncilSession.canResume
+        || currentCouncilSession.interruptionReason !== inferredCouncilSession.interruptionReason
+        || currentCouncilSession.workflowState?.updatedAt !== inferredCouncilSession.workflowState?.updatedAt
+        || currentCouncilSession.updatedAt !== inferredCouncilSession.updatedAt;
+      if (needsHydration) {
+        overlayState.setCouncilSession({
+          ...createIdleCouncilSessionState(),
+          ...inferredCouncilSession,
+        });
+      }
+      return;
+    }
+
+    if (currentCouncilSession.status !== 'idle')
+      overlayState.resetCouncilSession();
+  }
+
 
 
   // Conversation Management
@@ -123,6 +335,12 @@ export class ConversationHandler {
 
   setAbortController(abortController: AbortController | null, debugScope: string): void {
     _chatStoreActions.setAbortController(this.conversationId, abortController, debugScope);
+  }
+
+  abortActive(reason?: string): void {
+    const abortController = useChatStore.getState().conversations.find(_c => _c.id === this.conversationId)?._abortController ?? null;
+    abortController?.abort(reason);
+    _chatStoreActions.setAbortController(this.conversationId, null, `abortActive:${reason ?? 'abort'}`);
   }
 
   clearAbortController(debugScope: string): void {
@@ -317,6 +535,10 @@ export class ConversationHandler {
 
   get conversationOverlayStore() {
     return this.overlayStore;
+  }
+
+  get conversationIdRef() {
+    return this.conversationId;
   }
 
   get overlayActions() {

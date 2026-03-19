@@ -154,7 +154,9 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
 // conditionally enable the nextjs bundle analyzer
 import withBundleAnalyzer from '@next/bundle-analyzer';
 if (process.env.ANALYZE_BUNDLE) {
-  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig) as NextConfig;
+  nextConfig = withBundleAnalyzer({
+    openAnalyzer: process.env.ANALYZE_BUNDLE_OPEN === '1',
+  })(nextConfig) as NextConfig;
 }
 
 export default nextConfig;

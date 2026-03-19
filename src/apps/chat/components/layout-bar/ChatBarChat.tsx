@@ -1,10 +1,19 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Chip, Divider, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import { fileOpen, fileSave } from 'browser-fs-access';
+
+import { Box, Button, Chip, Divider, FormControl, FormHelperText, FormLabel, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import Menu from '@mui/joy/Menu';
+import MenuButton from '@mui/joy/MenuButton';
+import MenuItem from '@mui/joy/MenuItem';
+import Dropdown from '@mui/joy/Dropdown';
 
 import CloseIcon from '@mui/icons-material/Close';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -12,28 +21,86 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { createAssistantConversationParticipant, DConversationParticipant, DConversationTurnTerminationMode, generateAssistantParticipantName } from '~/common/stores/chat/chat.conversation';
+import {
+  createAssistantConversationParticipant,
+  DConversationParticipant,
+  DConversationTurnTerminationMode,
+  generateAssistantParticipantName,
+  sanitizeCouncilMaxRounds,
+  sanitizeCouncilTraceAutoCollapsePreviousRounds,
+  sanitizeCouncilTraceAutoExpandNewestRound,
+} from '~/common/stores/chat/chat.conversation';
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
+import type { DAgentGroupSnapshot, DAgentSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
+import { buildAgentGroupTransferFile, getAgentGroupTransferFilename, parseAgentGroupTransferFile } from '~/common/stores/chat/store-chat-agent-groups.transfer';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
-import { getParticipantAccentColor } from '~/common/util/dMessageUtils';
+import { getLLMLabel, type DLLM } from '~/common/stores/llms/llms.types';
+import { DModelParameterRegistry, DModelReasoningEffort, findModelReasoningEffortParamSpec, type DModelReasoningEffortParamId } from '~/common/stores/llms/llms.parameters';
+import { findParticipantMentionMatchIndex, getParticipantAccentColor, getParticipantAccentSx } from '~/common/util/dMessageUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
+import {
+  getParticipantEditorGridTemplateColumns,
+  getParticipantEditorSpeakWhenGridColumn,
+  getParticipantRosterGridTemplateColumns,
+} from './ChatBarChat.layout';
+import {
+  getParticipantReasoningEffortSelectState,
+  PARTICIPANT_REASONING_EFFORT_META,
+  PARTICIPANT_REASONING_EFFORT_ORDER,
+  PARTICIPANT_REASONING_MODEL_SETTING_VALUE,
+} from './ChatBarChat.reasoning';
+import { createUniqueAgentName, getActiveAgentGroup, getAgentGroupSaveMode, getAgentSaveMode, getAssistantParticipantsSpeakWhenSummary, setAssistantParticipantsSpeakWhen } from './ChatBarChat.agentGroup';
+import { ChatBarChatSettingsPanel, TURN_TERMINATION_MODE_OPTIONS } from './ChatBarChat.settings';
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
 import { useFolderDropdown } from './useFolderDropdown';
 
+function formatCouncilMaxRoundsDraft(value: number | null | undefined): string {
+  return value == null ? '' : String(value);
+}
+
+function getParticipantReasoningEffortOptions(llm: DLLM | null) {
+  if (!llm)
+    return { parameterId: null, parameterLabel: 'Reasoning Effort', options: [] as Array<{ value: DModelReasoningEffort; label: string; description: string }> };
+
+  const effortSpec = findModelReasoningEffortParamSpec(llm.parameterSpecs);
+  if (!effortSpec)
+    return { parameterId: null, parameterLabel: 'Reasoning Effort', options: [] as Array<{ value: DModelReasoningEffort; label: string; description: string }> };
+
+  const parameterId = effortSpec.paramId as DModelReasoningEffortParamId;
+  const allowedValues = new Set((effortSpec.enumValues as readonly DModelReasoningEffort[] | undefined)
+    ?? (DModelParameterRegistry[parameterId].values as readonly DModelReasoningEffort[]));
+  const options = PARTICIPANT_REASONING_EFFORT_ORDER
+    .filter(value => allowedValues.has(value))
+    .map(value => ({
+      value,
+      label: PARTICIPANT_REASONING_EFFORT_META[value].label,
+      description: PARTICIPANT_REASONING_EFFORT_META[value].description,
+    }));
+
+  return {
+    parameterId,
+    parameterLabel: DModelParameterRegistry[parameterId].label,
+    options,
+  };
+}
 
 export function ChatBarChat(props: {
   conversationId: DConversationId | null;
   llmDropdownRef: React.Ref<OptimaBarControlMethods>;
   personaDropdownRef: React.Ref<OptimaBarControlMethods>;
   onConversationSaveAgentGroup: (conversationId: DConversationId, name?: string, existingId?: string | null) => string | null;
+  onConversationLoadAgentGroup: (conversationId: DConversationId, agentGroupSnapshot: DAgentGroupSnapshot) => boolean;
 }) {
 
   // state
   const [participantsAnchorEl, setParticipantsAnchorEl] = React.useState<HTMLElement | null>(null);
   const [agentGroupNameDraft, setAgentGroupNameDraft] = React.useState('');
+  const [councilMaxRoundsDraft, setCouncilMaxRoundsDraft] = React.useState('');
   const [draftPersonaId, setDraftPersonaId] = React.useState<SystemPurposeId | ''>('');
   const [draftLlmId, setDraftLlmId] = React.useState<string>('');
   const [expandedParticipantId, setExpandedParticipantId] = React.useState<string | null>(null);
@@ -46,95 +113,191 @@ export function ChatBarChat(props: {
     llmId: string | null;
     customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
+    reasoningEffort: DConversationParticipant['reasoningEffort'];
   }>>({});
 
   // external state
   const { chatLLMDropdown, chatLLMId } = useChatLLMDropdown(props.llmDropdownRef);
   const { personaDropdown } = usePersonaIdDropdown(props.conversationId, props.personaDropdownRef);
   const { folderDropdown } = useFolderDropdown(props.conversationId);
-  const { participants, messages, systemPurposeId, turnTerminationMode, setParticipants, setTurnTerminationMode } = useChatStore(useShallow(state => {
+  const {
+    participants,
+    messages,
+    systemPurposeId,
+    turnTerminationMode,
+    councilMaxRounds,
+    councilTraceAutoCollapsePreviousRounds,
+    councilTraceAutoExpandNewestRound,
+    activeAgentGroupId,
+    setParticipants,
+    setTurnTerminationMode,
+    setCouncilMaxRounds,
+    setCouncilTraceAutoCollapsePreviousRounds,
+    setCouncilTraceAutoExpandNewestRound,
+  } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       participants: conversation?.participants ?? [],
       messages: conversation?.messages ?? [],
       systemPurposeId: conversation?.systemPurposeId ?? null,
-      turnTerminationMode: conversation?.turnTerminationMode === 'continuous'
+      turnTerminationMode: (conversation?.turnTerminationMode === 'continuous'
         ? 'continuous'
-        : conversation?.turnTerminationMode === 'consensus'
-          ? 'consensus'
-          : 'round-robin-per-human',
+        : conversation?.turnTerminationMode === 'council'
+          ? 'council'
+          : 'round-robin-per-human') as DConversationTurnTerminationMode,
+      councilMaxRounds: sanitizeCouncilMaxRounds(conversation?.councilMaxRounds),
+      councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(conversation?.councilTraceAutoCollapsePreviousRounds),
+      councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(conversation?.councilTraceAutoExpandNewestRound),
+      activeAgentGroupId: conversation?.agentGroupId ?? null,
       setParticipants: state.setParticipants,
       setTurnTerminationMode: state.setTurnTerminationMode,
+      setCouncilMaxRounds: state.setCouncilMaxRounds,
+      setCouncilTraceAutoCollapsePreviousRounds: state.setCouncilTraceAutoCollapsePreviousRounds,
+      setCouncilTraceAutoExpandNewestRound: state.setCouncilTraceAutoExpandNewestRound,
     };
   }));
-  const { savedAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
+  const { savedAgentGroups, savedAgents, saveAgent, importAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
     savedAgentGroups: state.savedAgentGroups,
+    savedAgents: state.savedAgents,
+    saveAgent: state.saveAgent,
+    importAgentGroups: state.importAgentGroups,
   })));
   const { llms: visibleLLMs } = useVisibleLLMs(chatLLMId ?? null, false, true);
+  const sortedSavedAgentGroups = React.useMemo(() =>
+    [...savedAgentGroups].sort((a, b) => b.updatedAt - a.updatedAt),
+  [savedAgentGroups]);
+  const sortedSavedAgents = React.useMemo(() =>
+    [...savedAgents].sort((a, b) => b.updatedAt - a.updatedAt),
+  [savedAgents]);
 
   // derived state
   const assistantParticipants = React.useMemo(() => participants.filter(participant => participant.kind === 'assistant'), [participants]);
-  const latestUserMessage = React.useMemo(() => [...messages].reverse().find(message => message.role === 'user') ?? null, [messages]);
+  const leaderParticipant = React.useMemo(() => assistantParticipants.find(participant => participant.isLeader) ?? assistantParticipants[0] ?? null, [assistantParticipants]);
+  const latestUserMessage = React.useMemo(() => participantsAnchorEl
+    ? [...messages].reverse().find(message => message.role === 'user') ?? null
+    : null, [messages, participantsAnchorEl]);
   const latestUserMessageIndex = React.useMemo(() => {
-    if (!latestUserMessage)
+    if (!participantsAnchorEl || !latestUserMessage)
       return -1;
     return messages.findIndex(message => message.id === latestUserMessage.id);
-  }, [latestUserMessage, messages]);
+  }, [latestUserMessage, messages, participantsAnchorEl]);
   const assistantMessagesSinceLatestUser = React.useMemo(() => {
+    if (!participantsAnchorEl)
+      return [];
     const messagesAfterLatestUser = latestUserMessageIndex >= 0 ? messages.slice(latestUserMessageIndex + 1) : [];
     return messagesAfterLatestUser.filter(message => message.role === 'assistant' && !!message.metadata?.author?.participantId);
-  }, [latestUserMessageIndex, messages]);
+  }, [latestUserMessageIndex, messages, participantsAnchorEl]);
   const latestAssistantMessage = React.useMemo(() => assistantMessagesSinceLatestUser.at(-1) ?? null, [assistantMessagesSinceLatestUser]);
-  const participantMentionPattern = React.useCallback((participantName: string) => {
-    const escapedName = participantName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`(^|[^\\w])@${escapedName}(?=$|[^\\w])`, 'i');
-  }, []);
+  const latestUserMessageText = React.useMemo(() => {
+    if (!participantsAnchorEl || !latestUserMessage)
+      return '';
+
+    return latestUserMessage.fragments
+      .filter(isTextContentFragment)
+      .map(fragment => fragment.part.text)
+      .join('\n');
+  }, [latestUserMessage, participantsAnchorEl]);
   const wasParticipantMentionedInLatestUserTurn = React.useCallback((participant: DConversationParticipant) => {
     const participantName = participant.name?.trim() ?? '';
-    const mentionRegex = participantName ? participantMentionPattern(participantName) : null;
-    return !!(latestUserMessage && mentionRegex && latestUserMessage.fragments.some(fragment =>
-      isTextContentFragment(fragment) && mentionRegex.test(fragment.part.text),
-    ));
-  }, [latestUserMessage, participantMentionPattern]);
-  const runnableParticipantIds = React.useMemo(() => assistantParticipants
-    .filter(participant => participant.speakWhen !== 'when-mentioned' || wasParticipantMentionedInLatestUserTurn(participant))
-    .map(participant => participant.id), [assistantParticipants, wasParticipantMentionedInLatestUserTurn]);
-  const spokenThisTurnParticipantIds = React.useMemo(() => new Set(assistantMessagesSinceLatestUser
-    .map(message => message.metadata?.author?.participantId)
-    .filter((participantId): participantId is string => !!participantId)), [assistantMessagesSinceLatestUser]);
+    return !!(latestUserMessageText && participantName && findParticipantMentionMatchIndex(latestUserMessageText, participantName) !== null);
+  }, [latestUserMessageText]);
+  const runnableParticipantIds = React.useMemo(() => {
+    if (!participantsAnchorEl)
+      return [];
+
+    return assistantParticipants
+      .filter(participant => participant.speakWhen !== 'when-mentioned' || wasParticipantMentionedInLatestUserTurn(participant))
+      .map(participant => participant.id);
+  }, [assistantParticipants, participantsAnchorEl, wasParticipantMentionedInLatestUserTurn]);
+  const spokenThisTurnParticipantIds = React.useMemo(() => {
+    if (!participantsAnchorEl)
+      return new Set<string>();
+
+    return new Set(assistantMessagesSinceLatestUser
+      .map(message => message.metadata?.author?.participantId)
+      .filter((participantId): participantId is string => !!participantId));
+  }, [assistantMessagesSinceLatestUser, participantsAnchorEl]);
   const nextToSpeakParticipantId = React.useMemo(() => runnableParticipantIds.find(participantId => !spokenThisTurnParticipantIds.has(participantId)) ?? null,
     [runnableParticipantIds, spokenThisTurnParticipantIds]);
-  const participantStatusById = React.useMemo(() => new Map(assistantParticipants.map(participant => {
-    const participantName = participant.name?.trim() ?? '';
-    const mentionRegex = participantName ? participantMentionPattern(participantName) : null;
-    const wasMentioned = !!(latestUserMessage && mentionRegex && latestUserMessage.fragments.some(fragment =>
-      isTextContentFragment(fragment) && mentionRegex.test(fragment.part.text),
-    ));
-    const willSpeak = participant.speakWhen !== 'when-mentioned' || wasMentioned;
-    const spokeThisTurn = spokenThisTurnParticipantIds.has(participant.id);
-    const spokeLast = latestAssistantMessage?.metadata?.author?.participantId === participant.id;
-    const isNextToSpeak = nextToSpeakParticipantId === participant.id;
-    const reason = isNextToSpeak
-      ? 'Next to speak'
-      : willSpeak
-        ? (spokeThisTurn ? 'Already spoke this turn' : (participant.speakWhen === 'when-mentioned' ? 'Will speak this turn because it was @mentioned' : 'Will speak every turn'))
-        : 'Waiting for an @mention';
-    return [participant.id, { wasMentioned, willSpeak, spokeThisTurn, spokeLast, isNextToSpeak, reason }];
-  })), [assistantParticipants, latestAssistantMessage, latestUserMessage, nextToSpeakParticipantId, participantMentionPattern, spokenThisTurnParticipantIds]);
+  const participantStatusById = React.useMemo(() => {
+    if (!participantsAnchorEl)
+      return new Map<string, { wasMentioned: boolean; willSpeak: boolean; spokeThisTurn: boolean; spokeLast: boolean; isNextToSpeak: boolean; reason: string }>();
+
+    return new Map(assistantParticipants.map(participant => {
+      const wasMentioned = wasParticipantMentionedInLatestUserTurn(participant);
+      const willSpeak = participant.speakWhen !== 'when-mentioned' || wasMentioned;
+      const spokeThisTurn = spokenThisTurnParticipantIds.has(participant.id);
+      const spokeLast = latestAssistantMessage?.metadata?.author?.participantId === participant.id;
+      const isNextToSpeak = nextToSpeakParticipantId === participant.id;
+      const reason = isNextToSpeak
+        ? 'Next to speak'
+        : willSpeak
+          ? (spokeThisTurn ? 'Already spoke this turn' : (participant.speakWhen === 'when-mentioned' ? 'Will speak this turn because it was @mentioned' : 'Will speak every turn'))
+          : 'Waiting for an @mention';
+      return [participant.id, { wasMentioned, willSpeak, spokeThisTurn, spokeLast, isNextToSpeak, reason }];
+    }));
+  }, [assistantParticipants, latestAssistantMessage, nextToSpeakParticipantId, participantsAnchorEl, spokenThisTurnParticipantIds, wasParticipantMentionedInLatestUserTurn]);
   const participantPersonaOptions = React.useMemo(() => Object.entries(SystemPurposes) as [SystemPurposeId, (typeof SystemPurposes)[SystemPurposeId]][], []);
   const selectedParticipantLlm = React.useMemo(() => visibleLLMs.find(llm => llm.id === draftLlmId) ?? null, [draftLlmId, visibleLLMs]);
+  const selectedParticipantReasoningConfig = React.useMemo(() => getParticipantReasoningEffortOptions(selectedParticipantLlm), [selectedParticipantLlm]);
+  const participantRosterGridTemplateColumns = React.useMemo(
+    () => getParticipantRosterGridTemplateColumns(!!expandedParticipantId),
+    [expandedParticipantId],
+  );
+  const participantEditorGridTemplateColumns = React.useMemo(() => getParticipantEditorGridTemplateColumns(), []);
+  const participantEditorSpeakWhenGridColumn = React.useMemo(() => getParticipantEditorSpeakWhenGridColumn(), []);
   const activeConversationGroupId = React.useMemo(() => {
     if (!props.conversationId)
       return null;
 
+    if (activeAgentGroupId && savedAgentGroups.some(group => group.id === activeAgentGroupId))
+      return activeAgentGroupId;
+
     const activeParticipants = assistantParticipants.map(participant => ({ ...participant }));
-    return savedAgentGroups.find(group =>
+    const matchesCurrentConversation = (group: typeof savedAgentGroups[number]) =>
       group.turnTerminationMode === turnTerminationMode
-      && JSON.stringify(group.participants) === JSON.stringify(activeParticipants)
-    )?.id ?? null;
-  }, [assistantParticipants, props.conversationId, savedAgentGroups, turnTerminationMode]);
+      && (turnTerminationMode !== 'council' || sanitizeCouncilMaxRounds(group.councilMaxRounds) === councilMaxRounds)
+      && sanitizeCouncilTraceAutoCollapsePreviousRounds(group.councilTraceAutoCollapsePreviousRounds) === councilTraceAutoCollapsePreviousRounds
+      && sanitizeCouncilTraceAutoExpandNewestRound(group.councilTraceAutoExpandNewestRound) === councilTraceAutoExpandNewestRound
+      && group.systemPurposeId === systemPurposeId
+      && JSON.stringify(group.participants) === JSON.stringify(activeParticipants);
+
+    return savedAgentGroups.find(matchesCurrentConversation)?.id ?? null;
+  }, [
+    activeAgentGroupId,
+    assistantParticipants,
+    councilMaxRounds,
+    councilTraceAutoCollapsePreviousRounds,
+    councilTraceAutoExpandNewestRound,
+    props.conversationId,
+    savedAgentGroups,
+    systemPurposeId,
+    turnTerminationMode,
+  ]);
+  const agentGroupSaveMode = React.useMemo(() => getAgentGroupSaveMode({
+    activeConversationGroupId,
+    agentGroupNameDraft,
+    savedAgentGroups,
+  }), [activeConversationGroupId, agentGroupNameDraft, savedAgentGroups]);
+  const activeSavedAgentGroup = React.useMemo(() => getActiveAgentGroup({
+    activeConversationGroupId,
+    savedAgentGroups,
+  }), [activeConversationGroupId, savedAgentGroups]);
   const canManageParticipants = !!props.conversationId;
   const canRemoveAssistant = assistantParticipants.length > 1;
+  const assistantSpeakWhenSummary = React.useMemo(() => getAssistantParticipantsSpeakWhenSummary(assistantParticipants), [assistantParticipants]);
+  const allAssistantsEveryTurn = React.useMemo(() =>
+    assistantParticipants.every(participant => (participant.speakWhen ?? 'every-turn') === 'every-turn'),
+  [assistantParticipants]);
+  const allAssistantsOnlyMention = React.useMemo(() =>
+    assistantParticipants.every(participant => (participant.speakWhen ?? 'every-turn') === 'when-mentioned'),
+  [assistantParticipants]);
+  const activeTurnMode = TURN_TERMINATION_MODE_OPTIONS[turnTerminationMode];
+  const activeTurnModeColor = turnTerminationMode === 'council'
+    ? 'primary'
+    : turnTerminationMode === 'continuous'
+      ? 'warning'
+      : 'neutral';
 
   React.useEffect(() => {
     if (!participantsAnchorEl) {
@@ -143,6 +306,7 @@ export function ChatBarChat(props: {
       setExpandedParticipantId(null);
       setParticipantDrafts({});
       setAgentGroupNameDraft('');
+      setCouncilMaxRoundsDraft('');
       return;
     }
 
@@ -150,7 +314,8 @@ export function ChatBarChat(props: {
       ? savedAgentGroups.find(group => group.id === activeConversationGroupId) ?? null
       : null;
     setAgentGroupNameDraft(activeGroup?.name ?? `Agents ${Math.max(assistantParticipants.length, 1)}`);
-  }, [activeConversationGroupId, assistantParticipants.length, participantsAnchorEl, savedAgentGroups, systemPurposeId]);
+    setCouncilMaxRoundsDraft(formatCouncilMaxRoundsDraft(councilMaxRounds));
+  }, [activeConversationGroupId, assistantParticipants.length, councilMaxRounds, participantsAnchorEl, savedAgentGroups, systemPurposeId]);
 
   const handleParticipantsToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     if (!canManageParticipants)
@@ -190,6 +355,7 @@ export function ChatBarChat(props: {
     llmId: string | null;
     customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
+    reasoningEffort: DConversationParticipant['reasoningEffort'];
   }>) => {
     const participant = participants.find(participant => participant.id === participantId);
     if (!participant)
@@ -203,6 +369,7 @@ export function ChatBarChat(props: {
         llmId: current[participantId]?.llmId ?? participant.llmId ?? null,
         customPrompt: current[participantId]?.customPrompt ?? participant.customPrompt ?? '',
         speakWhen: current[participantId]?.speakWhen ?? participant.speakWhen ?? 'every-turn',
+        reasoningEffort: current[participantId]?.reasoningEffort ?? participant.reasoningEffort,
         ...update,
       },
     }));
@@ -219,7 +386,8 @@ export function ChatBarChat(props: {
       || (draft.personaId ?? null) !== (participant.personaId ?? null)
       || (draft.llmId ?? null) !== (participant.llmId ?? null)
       || (draft.customPrompt.trim() || '') !== (participant.customPrompt ?? '')
-      || (draft.speakWhen ?? 'every-turn') !== (participant.speakWhen ?? 'every-turn');
+      || (draft.speakWhen ?? 'every-turn') !== (participant.speakWhen ?? 'every-turn')
+      || (draft.reasoningEffort ?? null) !== (participant.reasoningEffort ?? null);
 
     if (hasChanges)
       handleParticipantUpdate(participantId, {
@@ -228,6 +396,7 @@ export function ChatBarChat(props: {
         llmId: draft.llmId ?? null,
         customPrompt: draft.customPrompt.trim() || undefined,
         speakWhen: draft.speakWhen ?? 'every-turn',
+        reasoningEffort: draft.reasoningEffort ?? undefined,
       });
 
     setParticipantDrafts(current => {
@@ -249,14 +418,8 @@ export function ChatBarChat(props: {
     setExpandedParticipantId(participantId);
   }, [expandedParticipantId, handleParticipantDraftCommit]);
 
-  const handleParticipantsClose = React.useCallback(() => {
-    Object.keys(participantDrafts).forEach(participantId => handleParticipantDraftCommit(participantId));
-    setParticipantsAnchorEl(null);
-    setExpandedParticipantId(null);
-  }, [handleParticipantDraftCommit, participantDrafts]);
-
-  const handleParticipantReorder = React.useCallback((draggedParticipantId: string, targetParticipantId: string, edge: 'before' | 'after') => {
-    if (!props.conversationId || draggedParticipantId === targetParticipantId)
+  const handleParticipantMove = React.useCallback((participantId: string, direction: -1 | 1) => {
+    if (!props.conversationId)
       return;
 
     const humanParticipants = participants.filter(participant => participant.kind === 'human');
@@ -277,55 +440,90 @@ export function ChatBarChat(props: {
     setParticipants(props.conversationId, [...humanParticipants, ...reorderedAssistants]);
   }, [participants, props.conversationId, setParticipants]);
 
-  const resetParticipantDragState = React.useCallback(() => {
-    setDraggedParticipantId(null);
-    setDropTargetParticipantId(null);
-    setDropTargetEdge(null);
-  }, []);
-
-  const handleParticipantDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', participantId);
-    setDraggedParticipantId(participantId);
-    setDropTargetParticipantId(participantId);
-    setDropTargetEdge('before');
-  }, []);
-
-  const handleParticipantDragOver = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
-    if (!draggedParticipantId)
+  const handleParticipantLeaderChange = React.useCallback((participantId: string) => {
+    if (!props.conversationId)
       return;
 
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    setParticipants(props.conversationId, participants.map(participant =>
+      participant.kind === 'assistant'
+        ? { ...participant, isLeader: participant.id === participantId }
+        : participant,
+    ));
+  }, [participants, props.conversationId, setParticipants]);
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const pointerOffset = event.clientY - bounds.top;
-    const edge = pointerOffset < bounds.height / 2 ? 'before' : 'after';
+  const handleSetAllParticipantsSpeakWhen = React.useCallback((speakWhen: DConversationParticipant['speakWhen']) => {
+    if (!props.conversationId)
+      return;
 
-    setDropTargetParticipantId(participantId);
-    setDropTargetEdge(edge);
-  }, [draggedParticipantId]);
+    const nextParticipants = setAssistantParticipantsSpeakWhen(participants, speakWhen ?? 'every-turn');
+    if (nextParticipants === participants)
+      return;
 
-  const handleParticipantDrop = React.useCallback((event: React.DragEvent<HTMLElement>, participantId: string) => {
-    event.preventDefault();
+    setParticipants(props.conversationId, nextParticipants);
+    setParticipantDrafts(current => {
+      const nextDrafts = { ...current };
+      let hasDraftChanges = false;
 
-    const sourceParticipantId = draggedParticipantId || event.dataTransfer.getData('text/plain');
-    const edge = dropTargetParticipantId === participantId ? (dropTargetEdge ?? 'before') : 'before';
-    if (sourceParticipantId)
-      handleParticipantReorder(sourceParticipantId, participantId, edge);
+      for (const participant of participants) {
+        if (participant.kind !== 'assistant')
+          continue;
+        if (!nextDrafts[participant.id])
+          continue;
+        nextDrafts[participant.id] = {
+          ...nextDrafts[participant.id],
+          speakWhen: speakWhen ?? 'every-turn',
+        };
+        hasDraftChanges = true;
+      }
 
-    resetParticipantDragState();
-  }, [draggedParticipantId, dropTargetEdge, dropTargetParticipantId, handleParticipantReorder, resetParticipantDragState]);
-
-  const handleParticipantDragEnd = React.useCallback(() => {
-    resetParticipantDragState();
-  }, [resetParticipantDragState]);
+      return hasDraftChanges ? nextDrafts : current;
+    });
+  }, [participants, props.conversationId, setParticipants]);
 
   const handleTurnTerminationModeChange = React.useCallback((_event: React.SyntheticEvent | null, value: string | null) => {
-    if (!props.conversationId || (value !== 'round-robin-per-human' && value !== 'continuous' && value !== 'consensus'))
+    if (!props.conversationId || (value !== 'round-robin-per-human' && value !== 'continuous' && value !== 'council'))
       return;
     setTurnTerminationMode(props.conversationId, value);
   }, [props.conversationId, setTurnTerminationMode]);
+
+  const handleCouncilMaxRoundsDraftChange = React.useCallback((value: string) => {
+    if (!/^\d*$/.test(value))
+      return;
+
+    setCouncilMaxRoundsDraft(value);
+    if (!props.conversationId)
+      return;
+
+    setCouncilMaxRounds(props.conversationId, value ? Number(value) : null);
+  }, [props.conversationId, setCouncilMaxRounds]);
+
+  const handleCouncilMaxRoundsCommit = React.useCallback(() => {
+    if (!props.conversationId)
+      return;
+
+    const nextCouncilMaxRounds = sanitizeCouncilMaxRounds(councilMaxRoundsDraft);
+    setCouncilMaxRoundsDraft(formatCouncilMaxRoundsDraft(nextCouncilMaxRounds));
+    setCouncilMaxRounds(props.conversationId, nextCouncilMaxRounds);
+  }, [councilMaxRoundsDraft, props.conversationId, setCouncilMaxRounds]);
+
+  const handleCouncilTraceAutoCollapsePreviousRoundsChange = React.useCallback((value: boolean) => {
+    if (!props.conversationId)
+      return;
+    setCouncilTraceAutoCollapsePreviousRounds(props.conversationId, value);
+  }, [props.conversationId, setCouncilTraceAutoCollapsePreviousRounds]);
+
+  const handleCouncilTraceAutoExpandNewestRoundChange = React.useCallback((value: boolean) => {
+    if (!props.conversationId)
+      return;
+    setCouncilTraceAutoExpandNewestRound(props.conversationId, value);
+  }, [props.conversationId, setCouncilTraceAutoExpandNewestRound]);
+
+  const handleParticipantsClose = React.useCallback(() => {
+    Object.keys(participantDrafts).forEach(participantId => handleParticipantDraftCommit(participantId));
+    handleCouncilMaxRoundsCommit();
+    setParticipantsAnchorEl(null);
+    setExpandedParticipantId(null);
+  }, [handleCouncilMaxRoundsCommit, handleParticipantDraftCommit, participantDrafts]);
 
   const handleParticipantAdd = React.useCallback(() => {
     if (!props.conversationId || !draftPersonaId)
@@ -346,16 +544,143 @@ export function ChatBarChat(props: {
     if (!props.conversationId)
       return;
 
+    handleCouncilMaxRoundsCommit();
     const normalizedName = agentGroupNameDraft.trim() || `Agents ${Math.max(assistantParticipants.length, 1)}`;
     const savedId = props.onConversationSaveAgentGroup(
       props.conversationId,
       normalizedName,
-      activeConversationGroupId,
+      agentGroupSaveMode.existingId,
     );
 
     if (savedId)
       setAgentGroupNameDraft(normalizedName);
-  }, [activeConversationGroupId, agentGroupNameDraft, assistantParticipants.length, props]);
+  }, [agentGroupNameDraft, agentGroupSaveMode.existingId, assistantParticipants.length, handleCouncilMaxRoundsCommit, props]);
+
+  const handleSaveAgent = React.useCallback((participant: DConversationParticipant) => {
+    const participantName = participant.name.trim() || 'Untitled agent';
+    const saveMode = getAgentSaveMode({
+      participantName,
+      savedAgents,
+    });
+    const savedId = saveAgent({
+      name: participantName,
+      participant: {
+        ...participant,
+        id: 'saved-agent-template',
+      },
+    }, saveMode.existingId);
+
+    if (savedId) {
+      addSnackbar({
+        key: `agent-save-${savedId}`,
+        message: saveMode.existingId ? `"${participantName}" updated.` : `"${participantName}" saved.`,
+        type: 'success',
+      });
+    }
+  }, [saveAgent, savedAgents]);
+
+  const handleLoadAgent = React.useCallback((agentSnapshot: DAgentSnapshot) => {
+    if (!props.conversationId)
+      return;
+
+    const existingAgentNames = assistantParticipants.map(participant => participant.name);
+    const nextName = createUniqueAgentName(agentSnapshot.participant.name || agentSnapshot.name, existingAgentNames);
+    const nextParticipant = {
+      ...agentSnapshot.participant,
+      id: createAssistantConversationParticipant(
+        agentSnapshot.participant.personaId ?? systemPurposeId ?? 'Default',
+        agentSnapshot.participant.llmId ?? null,
+        nextName,
+        agentSnapshot.participant.speakWhen ?? 'every-turn',
+        false,
+        agentSnapshot.participant.accentHue,
+        agentSnapshot.participant.reasoningEffort,
+      ).id,
+      name: nextName,
+      isLeader: false,
+    } satisfies DConversationParticipant;
+
+    setParticipants(props.conversationId, [...participants, nextParticipant]);
+    setExpandedParticipantId(nextParticipant.id);
+    addSnackbar({
+      key: `agent-load-${agentSnapshot.id}`,
+      message: `"${nextName}" loaded.`,
+      type: 'success',
+    });
+  }, [assistantParticipants, participants, props.conversationId, setParticipants, systemPurposeId]);
+
+  const handleLoadAgentGroup = React.useCallback((agentGroupSnapshot: DAgentGroupSnapshot) => {
+    if (!props.conversationId)
+      return;
+
+    const wasLoaded = props.onConversationLoadAgentGroup(props.conversationId, agentGroupSnapshot);
+    if (wasLoaded) {
+      setAgentGroupNameDraft(agentGroupSnapshot.name);
+      setCouncilMaxRoundsDraft(formatCouncilMaxRoundsDraft(sanitizeCouncilMaxRounds(agentGroupSnapshot.councilMaxRounds)));
+      setExpandedParticipantId(null);
+      setParticipantDrafts({});
+    }
+  }, [props]);
+
+  const saveAgentGroupsToFile = React.useCallback(async (groupsToExport: DAgentGroupSnapshot[], groupName?: string) => {
+    const payload = buildAgentGroupTransferFile(groupsToExport);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const exportedAtLabel = prettyTimestampForFilenames(false);
+
+    await fileSave(blob, {
+      fileName: getAgentGroupTransferFilename({
+        groupName,
+        exportedAtLabel,
+      }),
+      extensions: ['.json'],
+    }).then(() => {
+      addSnackbar({
+        key: groupName ? `agent-group-export-ok-${groupName}` : 'agent-groups-export-ok',
+        message: groupName ? `"${groupName}" exported.` : 'Agent groups exported.',
+        type: 'success',
+      });
+    }).catch((error: any) => {
+      if (error?.name !== 'AbortError')
+        addSnackbar({
+          key: groupName ? `agent-group-export-fail-${groupName}` : 'agent-groups-export-fail',
+          message: `Could not export ${groupName ? `"${groupName}"` : 'agent groups'}. ${error?.message || ''}`.trim(),
+          type: 'issue',
+        });
+    });
+  }, []);
+
+  const handleAgentGroupsExport = React.useCallback(async () => {
+    await saveAgentGroupsToFile(savedAgentGroups);
+  }, [saveAgentGroupsToFile, savedAgentGroups]);
+
+  const handleAgentGroupExport = React.useCallback(async (group: DAgentGroupSnapshot) => {
+    await saveAgentGroupsToFile([group], group.name);
+  }, [saveAgentGroupsToFile]);
+
+  const handleAgentGroupsImport = React.useCallback(async (mode: 'single' | 'all') => {
+    try {
+      const file = await fileOpen({
+        description: mode === 'single' ? 'Agent Group JSON' : 'Agent Groups JSON',
+        mimeTypes: ['application/json'],
+        extensions: ['.json'],
+        multiple: false,
+      });
+
+      if (!file)
+        return;
+
+      const importedSnapshots = parseAgentGroupTransferFile(await file.text(), mode);
+      const importedCount = importAgentGroups(importedSnapshots);
+      addSnackbar({
+        key: 'agent-groups-import-ok',
+        message: importedCount === 1 ? '1 agent group imported.' : `${importedCount} agent groups imported.`,
+        type: 'success',
+      });
+    } catch (error: any) {
+      if (error?.name !== 'AbortError')
+        addSnackbar({ key: 'agent-groups-import-fail', message: `Could not import agent groups. ${error?.message || ''}`.trim(), type: 'issue' });
+    }
+  }, [importAgentGroups]);
 
   return <>
 
@@ -374,8 +699,24 @@ export function ChatBarChat(props: {
       startDecorator={<SmartToyOutlinedIcon />}
       variant={participantsAnchorEl ? 'solid' : 'soft'}
     >
-      Agents {assistantParticipants.length > 1 ? assistantParticipants.length : ''}
+      Agents {assistantParticipants.length > 1 ? assistantParticipants.length : ''}{leaderParticipant ? ` · Leader ${leaderParticipant.name}` : ''}
     </Button>
+    <Chip
+      size='sm'
+      variant='soft'
+      color={assistantSpeakWhenSummary.key === 'mixed' ? 'warning' : 'neutral'}
+      sx={{ maxWidth: { xs: '10rem', md: 'none' } }}
+    >
+      {assistantSpeakWhenSummary.label}
+    </Chip>
+    <Chip
+      size='sm'
+      variant='soft'
+      color={activeTurnModeColor}
+      sx={{ maxWidth: { xs: '9rem', md: 'none' } }}
+    >
+      {activeTurnMode.title}
+    </Chip>
     <CloseablePopup
       anchorEl={participantsAnchorEl}
       onClose={handleParticipantsClose}
@@ -390,12 +731,120 @@ export function ChatBarChat(props: {
           <Stack spacing={0.35}>
             <Typography level='title-md'>Agents</Typography>
             <Typography level='body-sm' sx={{ color: 'text.tertiary' }}>
-              {assistantParticipants.length} configured · drag to reorder
+              {assistantParticipants.length} configured · arranged in responsive columns
             </Typography>
           </Stack>
           <Stack direction='row' spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <Dropdown>
+              <MenuButton
+                slots={{ root: Button }}
+                slotProps={{ root: {
+                  size: 'sm',
+                  variant: 'soft',
+                  color: 'neutral',
+                  disabled: !sortedSavedAgents.length,
+                  endDecorator: <KeyboardArrowDownIcon />,
+                } }}
+              >
+                Load Agent
+              </MenuButton>
+              <Menu placement='bottom-end' sx={{ minWidth: 260, maxHeight: 320, overflow: 'auto' }}>
+                {!sortedSavedAgents.length ? (
+                  <MenuItem disabled>No saved agents yet</MenuItem>
+                ) : sortedSavedAgents.map(agent => (
+                  <MenuItem key={agent.id} onClick={() => handleLoadAgent(agent)} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography level='body-sm' noWrap>{agent.name}</Typography>
+                      <Typography level='body-xs' sx={{ color: 'text.tertiary' }} noWrap>
+                        {agent.participant.personaId ?? 'No persona'} · {agent.participant.llmId ?? 'Chat model'}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Dropdown>
+            <Dropdown>
+              <MenuButton
+                slots={{ root: Button }}
+                slotProps={{ root: {
+                  size: 'sm',
+                  variant: 'soft',
+                  color: 'neutral',
+                  disabled: !sortedSavedAgentGroups.length,
+                  endDecorator: <KeyboardArrowDownIcon />,
+                } }}
+              >
+                Load Group
+              </MenuButton>
+              <Menu placement='bottom-end' sx={{ minWidth: 260, maxHeight: 320, overflow: 'auto' }}>
+                {!sortedSavedAgentGroups.length ? (
+                  <MenuItem disabled>No saved groups yet</MenuItem>
+                ) : sortedSavedAgentGroups.map(group => (
+                  <MenuItem key={group.id} onClick={() => handleLoadAgentGroup(group)} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography level='body-sm' noWrap>{group.name}</Typography>
+                    </Box>
+                    <Button
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={event => {
+                        event.stopPropagation();
+                        void handleAgentGroupExport(group);
+                      }}
+                    >
+                      Export
+                    </Button>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Dropdown>
+            <Dropdown>
+              <MenuButton
+                slots={{ root: Button }}
+                slotProps={{ root: {
+                  size: 'sm',
+                  variant: 'soft',
+                  color: 'neutral',
+                  disabled: !savedAgentGroups.length,
+                  startDecorator: <FileDownloadOutlinedIcon />,
+                  endDecorator: <KeyboardArrowDownIcon />,
+                } }}
+              >
+                Export
+              </MenuButton>
+              <Menu placement='bottom-end' sx={{ minWidth: 220 }}>
+                <MenuItem
+                  disabled={!activeSavedAgentGroup}
+                  onClick={() => activeSavedAgentGroup && void handleAgentGroupExport(activeSavedAgentGroup)}
+                >
+                  Export current group
+                </MenuItem>
+                <MenuItem onClick={handleAgentGroupsExport}>
+                  Export all groups
+                </MenuItem>
+              </Menu>
+            </Dropdown>
+            <Dropdown>
+              <MenuButton
+                slots={{ root: Button }}
+                slotProps={{ root: {
+                  size: 'sm',
+                  variant: 'soft',
+                  color: 'neutral',
+                  startDecorator: <FileUploadOutlinedIcon />,
+                  endDecorator: <KeyboardArrowDownIcon />,
+                } }}
+              >
+                Import
+              </MenuButton>
+              <Menu placement='bottom-end' sx={{ minWidth: 220 }}>
+                <MenuItem onClick={() => handleAgentGroupsImport('single')}>Import 1 group</MenuItem>
+                <MenuItem onClick={() => handleAgentGroupsImport('all')}>Import all groups</MenuItem>
+              </Menu>
+            </Dropdown>
             <Button size='sm' variant='soft' color='primary' disabled={!props.conversationId} onClick={handleSaveAgentGroup}>
-              {activeConversationGroupId ? 'Update group' : 'Save group'}
+              {agentGroupSaveMode.buttonLabel}
             </Button>
             <Button size='sm' variant='soft' color='danger' disabled={!assistantParticipants.length} onClick={handleClearAgents}>
               Clear agents
@@ -403,41 +852,39 @@ export function ChatBarChat(props: {
           </Stack>
         </Stack>
 
-        <Box sx={{ display: 'grid', gap: 0.5 }}>
-          <Typography level='body-sm'>Group name</Typography>
-          <Input
-            size='sm'
-            value={agentGroupNameDraft}
-            onChange={event => setAgentGroupNameDraft(event.target.value)}
-            placeholder={`Agents ${Math.max(assistantParticipants.length, 1)}`}
-          />
-        </Box>
-
-        <Box sx={{ display: 'grid', gap: 0.5 }}>
-          <Typography level='body-sm'>Turn termination</Typography>
-          <Select
-            size='sm'
-            value={turnTerminationMode}
-            onChange={handleTurnTerminationModeChange}
-          >
-            <Option value='round-robin-per-human'>Human message → agents pass → @mentions can continue</Option>
-            <Option value='continuous'>Human starts → agents continue until stopped</Option>
-            <Option value='consensus'>Human message → all triggered agents must agree → one reply</Option>
-          </Select>
-          <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
-            {turnTerminationMode === 'continuous'
-              ? 'Agents keep taking turns until you stop the room.'
-              : turnTerminationMode === 'consensus'
-                ? 'Triggered agents deliberate privately and only a shared answer is shown when they match.'
-                : 'Each human message starts an ordered pass; agent @mentions can keep the room going until no follow-ups remain.'}
-          </Typography>
-        </Box>
+        <ChatBarChatSettingsPanel
+          agentGroupNameDraft={agentGroupNameDraft}
+          onAgentGroupNameDraftChange={setAgentGroupNameDraft}
+          turnTerminationMode={turnTerminationMode}
+          onTurnTerminationModeChange={handleTurnTerminationModeChange}
+          councilMaxRoundsDraft={councilMaxRoundsDraft}
+          onCouncilMaxRoundsDraftChange={handleCouncilMaxRoundsDraftChange}
+          onCouncilMaxRoundsCommit={handleCouncilMaxRoundsCommit}
+          councilTraceAutoCollapsePreviousRounds={councilTraceAutoCollapsePreviousRounds}
+          onCouncilTraceAutoCollapsePreviousRoundsChange={handleCouncilTraceAutoCollapsePreviousRoundsChange}
+          councilTraceAutoExpandNewestRound={councilTraceAutoExpandNewestRound}
+          onCouncilTraceAutoExpandNewestRoundChange={handleCouncilTraceAutoExpandNewestRoundChange}
+          canBulkSetSpeakWhen={!!assistantParticipants.length}
+          canSetAllParticipantsEveryTurn={!allAssistantsEveryTurn}
+          canSetAllParticipantsOnlyMention={!allAssistantsOnlyMention}
+          onSetAllParticipantsEveryTurn={() => handleSetAllParticipantsSpeakWhen('every-turn')}
+          onSetAllParticipantsOnlyMention={() => handleSetAllParticipantsSpeakWhen('when-mentioned')}
+        />
       </Box>
 
-      <Stack spacing={1}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: participantRosterGridTemplateColumns,
+          alignItems: 'start',
+        }}
+      >
         {assistantParticipants.map((participant, index) => {
           const personaTitle = participant.personaId ? SystemPurposes[participant.personaId]?.title ?? participant.personaId : 'No persona';
-          const llmLabel = participant.llmId ? (visibleLLMs.find(llm => llm.id === participant.llmId)?.label ?? participant.llmId) : 'Chat model';
+          const participantLlm = participant.llmId ? visibleLLMs.find(llm => llm.id === participant.llmId) ?? null : null;
+          const llmLabel = participantLlm ? getLLMLabel(participantLlm) : participant.llmId ?? 'Chat model';
+          const reasoningLabel = participant.reasoningEffort ? PARTICIPANT_REASONING_EFFORT_META[participant.reasoningEffort].label : null;
           const participantStatus = participantStatusById.get(participant.id);
           const isExpanded = expandedParticipantId === participant.id;
           const summaryLabel = participant.speakWhen === 'when-mentioned' ? 'On mention' : 'Every turn';
@@ -449,9 +896,29 @@ export function ChatBarChat(props: {
           const isCustomPersonaSelected = personaDraftValue === 'Custom';
           const hasCustomPrompt = isCustomPersonaSelected && !!customPromptDraft.trim();
           const speakWhenDraftValue = participantDraft?.speakWhen ?? participant.speakWhen ?? 'every-turn';
-          const participantAccentColor = getParticipantAccentColor(participant.name);
-          const isDragged = draggedParticipantId === participant.id;
-          const isDropTarget = dropTargetParticipantId === participant.id && draggedParticipantId !== participant.id;
+          const effectiveParticipantLlmId = llmDraftValue || chatLLMId || null;
+          const effectiveParticipantLlm = effectiveParticipantLlmId
+            ? visibleLLMs.find(llm => llm.id === effectiveParticipantLlmId) ?? null
+            : null;
+          const participantReasoningConfig = getParticipantReasoningEffortOptions(effectiveParticipantLlm);
+          const reasoningEffortDraftRaw = participantDraft?.reasoningEffort ?? participant.reasoningEffort ?? null;
+          const {
+            selectValue: reasoningEffortDraftValue,
+            helperText: reasoningEffortHelperText,
+            modelSettingLabel: reasoningEffortModelSettingLabel,
+          } = getParticipantReasoningEffortSelectState({
+            llm: effectiveParticipantLlm,
+            parameterId: participantReasoningConfig.parameterId,
+            options: participantReasoningConfig.options,
+            selectedReasoningEffort: reasoningEffortDraftRaw,
+          });
+          const agentSaveMode = getAgentSaveMode({
+            participantName: aliasDraft.trim() || participant.name,
+            savedAgents,
+          });
+          const participantAccentColor = getParticipantAccentColor(participant.name, assistantParticipants);
+          const participantAccentSoftSx = getParticipantAccentSx(participant.name, assistantParticipants, 'soft');
+          const participantAccentOutlinedSx = getParticipantAccentSx(participant.name, assistantParticipants, 'outlined') as React.CSSProperties;
           return (
             <Box
               key={participant.id}
@@ -463,10 +930,12 @@ export function ChatBarChat(props: {
               sx={{
                 display: 'grid',
                 gap: 0.9,
+                minWidth: 0,
                 p: 1,
                 borderRadius: 'xl',
+                gridColumn: isExpanded ? '1 / -1' : 'auto',
                 border: '1px solid',
-                borderColor: isExpanded ? `${participantAccentColor}.outlinedBorder` : 'divider',
+                borderColor: isExpanded ? participantAccentOutlinedSx.borderColor ?? `${participantAccentColor}.outlinedBorder` : 'divider',
                 backgroundColor: isExpanded ? 'background.level1' : 'background.surface',
                 transition: 'box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease',
                 position: 'relative',
@@ -495,7 +964,7 @@ export function ChatBarChat(props: {
                 } : undefined,
                 '&:hover': {
                   boxShadow: 'sm',
-                  borderColor: isExpanded ? `${participantAccentColor}.outlinedBorder` : 'neutral.outlinedHoverBorder',
+                  borderColor: isExpanded ? participantAccentOutlinedSx.borderColor ?? `${participantAccentColor}.outlinedBorder` : 'neutral.outlinedHoverBorder',
                 },
               }}
             >
@@ -510,7 +979,21 @@ export function ChatBarChat(props: {
                 >
                   <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                     <Typography level='title-sm'>{participant.name}</Typography>
-                    <Chip size='sm' variant='soft' color={participantAccentColor}>{summaryLabel}</Chip>
+                    {participant.isLeader && <Chip size='sm' variant='solid' color='primary'>Leader</Chip>}
+                    {isExpanded && !participant.isLeader && (
+                      <Button
+                        size='sm'
+                        variant='soft'
+                        color='primary'
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleParticipantLeaderChange(participant.id);
+                        }}
+                      >
+                        Make Leader
+                      </Button>
+                    )}
+                    <Chip size='sm' variant='soft' color={participantAccentColor} sx={participantAccentSoftSx}>{summaryLabel}</Chip>
                     {participantStatus?.isNextToSpeak && <Chip size='sm' variant='soft' color='primary'>Next</Chip>}
                     {participantStatus?.spokeThisTurn && <Chip size='sm' variant='soft' color='success'>Done</Chip>}
                     {participantStatus?.spokeLast && <Chip size='sm' variant='soft'>Latest</Chip>}
@@ -519,7 +1002,7 @@ export function ChatBarChat(props: {
                   </Stack>
 
                   <Typography level='body-sm' sx={{ color: 'text.secondary', mt: 0.35 }}>
-                    {personaTitle} · {llmLabel}
+                    {personaTitle} · {llmLabel}{reasoningLabel ? ` · ${reasoningLabel}` : ''}
                   </Typography>
                   <Typography level='body-xs' sx={{ color: participantStatus?.isNextToSpeak ? 'primary.600' : 'text.tertiary', mt: 0.15 }}>
                     {participantStatus?.reason ?? 'Ready'}
@@ -570,7 +1053,7 @@ export function ChatBarChat(props: {
                     }}
                     placeholder='Agent alias'
                   />
-                  <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: { xs: '1fr', md: 'minmax(8rem, 1fr) minmax(9rem, 1fr) minmax(8rem, 1fr)' } }}>
+                  <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: participantEditorGridTemplateColumns, minWidth: 0 }}>
                     <Select
                       size='sm'
                       value={personaDraftValue}
@@ -584,22 +1067,64 @@ export function ChatBarChat(props: {
                     <Select
                       size='sm'
                       value={llmDraftValue}
-                      onChange={(_event, value) => handleParticipantDraftChange(participant.id, { llmId: ((value as string | null) || null) })}
+                      onChange={(_event, value) => {
+                        const nextLlmId = ((value as string | null) || null);
+                        const nextLlm = (nextLlmId || chatLLMId)
+                          ? visibleLLMs.find(llm => llm.id === (nextLlmId || chatLLMId)) ?? null
+                          : null;
+                        const nextReasoningConfig = getParticipantReasoningEffortOptions(nextLlm);
+                        const currentReasoningEffort = participantDraft?.reasoningEffort ?? participant.reasoningEffort;
+                        handleParticipantDraftChange(participant.id, {
+                          llmId: nextLlmId,
+                          ...(currentReasoningEffort && !nextReasoningConfig.options.some(option => option.value === currentReasoningEffort)
+                            ? { reasoningEffort: undefined }
+                            : {}),
+                        });
+                      }}
                     >
                       <Option value={''}>Current chat model</Option>
                       {visibleLLMs.map(llm => (
-                        <Option key={llm.id} value={llm.id}>{llm.label}</Option>
+                        <Option key={llm.id} value={llm.id}>{getLLMLabel(llm)}</Option>
                       ))}
                     </Select>
 
                     <Select
                       size='sm'
                       value={speakWhenDraftValue}
+                      sx={{ gridColumn: participantEditorSpeakWhenGridColumn }}
                       onChange={(_event, value) => handleParticipantDraftChange(participant.id, { speakWhen: ((value as DConversationParticipant['speakWhen'] | null) ?? 'every-turn') })}
                     >
                       <Option value='every-turn'>Every turn</Option>
                       <Option value='when-mentioned'>Only @mentioned</Option>
                     </Select>
+
+                    <FormControl size='sm' sx={{ minWidth: 0 }}>
+                      <FormLabel sx={{ gap: 0.5 }}>
+                        {participantReasoningConfig.parameterLabel}
+                        <InfoOutlinedIcon
+                          sx={{ fontSize: 'md', color: 'text.tertiary' }}
+                          titleAccess='Controls how much effort the model spends on reasoning'
+                        />
+                      </FormLabel>
+                      <FormHelperText sx={{ minHeight: '2em' }}>
+                        {reasoningEffortHelperText}
+                      </FormHelperText>
+                      <Select
+                        size='sm'
+                        value={reasoningEffortDraftValue}
+                        onChange={(_event, value) => handleParticipantDraftChange(participant.id, {
+                          reasoningEffort: value === PARTICIPANT_REASONING_MODEL_SETTING_VALUE
+                            ? undefined
+                            : (value as DConversationParticipant['reasoningEffort'] | null) ?? undefined,
+                        })}
+                        disabled={!participantReasoningConfig.parameterId}
+                      >
+                        <Option value={PARTICIPANT_REASONING_MODEL_SETTING_VALUE}>Use model setting ({reasoningEffortModelSettingLabel})</Option>
+                        {participantReasoningConfig.options.map(option => (
+                          <Option key={option.value} value={option.value}>{option.label}</Option>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </Box>
 
                   {isCustomPersonaSelected && <Input
@@ -609,12 +1134,49 @@ export function ChatBarChat(props: {
                     onBlur={() => handleParticipantDraftCommit(participant.id)}
                     placeholder='Optional custom prompt/persona instructions'
                   />}
+
+                  <Stack direction='row' spacing={0.5} sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Stack direction='row' spacing={0.25} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Button
+                        size='sm'
+                        variant='soft'
+                        color='neutral'
+                        onClick={() => handleSaveAgent({
+                          ...participant,
+                          name: aliasDraft.trim() || participant.name,
+                          personaId: personaDraftValue ?? null,
+                          llmId: llmDraftValue || null,
+                          customPrompt: customPromptDraft.trim() || undefined,
+                          speakWhen: speakWhenDraftValue ?? 'every-turn',
+                          reasoningEffort: reasoningEffortDraftRaw ?? undefined,
+                        })}
+                      >
+                        {agentSaveMode.buttonLabel}
+                      </Button>
+                      <IconButton size='sm' variant='plain' disabled={index === 0} onClick={() => handleParticipantMove(participant.id, -1)}>
+                        <ArrowUpwardIcon />
+                      </IconButton>
+                      <IconButton size='sm' variant='plain' disabled={index === assistantParticipants.length - 1} onClick={() => handleParticipantMove(participant.id, 1)}>
+                        <ArrowDownwardIcon />
+                      </IconButton>
+                    </Stack>
+                    <Button
+                      size='sm'
+                      color='danger'
+                      disabled={!canRemoveAssistant}
+                      onClick={() => handleParticipantRemove(participant.id)}
+                      startDecorator={<CloseIcon />}
+                      variant='plain'
+                    >
+                      Remove
+                    </Button>
+                  </Stack>
                 </Box>
               )}
             </Box>
           );
         })}
-      </Stack>
+      </Box>
 
       <Box sx={{ display: 'grid', gap: 0.75, p: 1, borderRadius: 'xl', border: '1px dashed', borderColor: 'divider', backgroundColor: 'background.level1' }}>
         <Typography level='body-sm'>Add another agent</Typography>
@@ -638,7 +1200,7 @@ export function ChatBarChat(props: {
           >
             <Option value={''}>Current chat model</Option>
             {visibleLLMs.map(llm => (
-              <Option key={llm.id} value={llm.id}>{llm.label}</Option>
+              <Option key={llm.id} value={llm.id}>{getLLMLabel(llm)}</Option>
             ))}
           </Select>
 
@@ -647,7 +1209,9 @@ export function ChatBarChat(props: {
           </Button>
         </Box>
         <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
-          {selectedParticipantLlm ? `New agent uses ${selectedParticipantLlm.label}.` : 'New agent uses the current chat model.'}
+          {selectedParticipantLlm
+            ? `New agent uses ${getLLMLabel(selectedParticipantLlm)}.${selectedParticipantReasoningConfig.parameterId ? ` ${selectedParticipantReasoningConfig.parameterLabel} can be set after adding.` : ''}`
+            : 'New agent uses the current chat model.'}
         </Typography>
       </Box>
     </CloseablePopup>

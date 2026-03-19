@@ -1,214 +1,413 @@
-# Stateful Council Mode Design
+# Stateful Atomic Council Mode Design
 
 ## Goal
 
-Replace the current transcript-driven council loop with a stateful review workflow:
-- one Leader proposes a response
-- all other agents independently review that proposal
-- each reviewer returns only `accept` or `reject(reason)`
-- all rejection reasons are shared with every agent in the next round
-- the accepted Leader proposal is emitted verbatim to the user
+Replace the current mixed transcript-driven / mutable workflow council loop with a stateful and atomic coordinator that can safely handle:
 
-## Requirements
+- pause
+- stop
+- resume
+- unexpected tab close / app reload / process interruption
 
-- Agents are incommunicado during review rounds.
-- The Leader is the only agent allowed to author proposals.
-- Reviewers never submit alternative drafts.
-- Every agent receives:
-  - the original user request
-  - the latest Leader proposal, when one exists
-  - all rejection reasons accumulated from prior rounds
-- Council mode repeats until unanimous reviewer acceptance, interruption, or exhaustion.
-- The final user-facing answer is exactly the accepted Leader proposal text.
+without reparsing visible transcript messages and without persisting partial agent work.
 
-## Recommended Approach
+## Core Requirements
 
-Use a stateful coordinator instead of transcript parsing.
+- One Leader proposes exactly one response per round.
+- All non-leader agents review the current Leader proposal.
+- Reviewers publish:
+  - a public review plan
+  - then exactly one vote: `accept` or `reject(reason)`
+- Every committed proposal, plan, vote, and round transition is durable and atomic.
+- No partial leader/reviewer turn survives as durable state.
+- All visible Council UI is a projection of structured state, not the control path.
+- Resume must rebuild the council exclusively from structured durable records.
+- Already committed agent turns must never rerun after resume.
+- Uncommitted agent turns must be treated as if they never happened.
 
-The coordinator becomes the source of truth for:
-- current round
-- current phase
-- latest proposal
-- reviewer ballots
-- rejection reasons
-- interruption and resume state
-- accepted or exhausted terminal outcomes
+## Atomicity Model
 
-Visible transcript messages become projections of state, not control inputs.
+Council execution is atomic at the following boundaries:
+
+- leader turn commit
+- reviewer plan commit
+- reviewer vote commit
+- round completion
+- terminal session transition
+- control transitions: pause, resume, stop
+
+The system never persists:
+
+- partial streamed text as durable council state
+- half-written proposal records
+- half-written reviewer plans or votes
+- inferred status from transcript text
+
+The system may stream locally for UX, but durability only starts at commit time.
+
+## Recommended Architecture
+
+Use two layers:
+
+### 1. Append-Only Durable Journal
+
+Per conversation, persist an ordered Council operation log.
+
+This is the source of truth.
+
+### 2. Derived Projection
+
+Materialize a `CouncilSessionProjection` by replaying the ordered operation log through a pure reducer.
+
+This projection drives:
+
+- scheduling
+- resume decisions
+- Council trace UI
+- status chips
+- final answer emission
+
+If projection cache is stored, it is disposable and never authoritative.
+
+## Durable Operation Log
+
+### Envelope
+
+```ts
+type CouncilOp = {
+  opId: string;
+  phaseId: string;
+  conversationId: string;
+  sequence: number;
+  createdAt: number;
+  type: CouncilOpType;
+  payload: unknown;
+};
+```
+
+### Operation Types
+
+```ts
+type CouncilOpType =
+  | 'session_started'
+  | 'round_started'
+  | 'leader_turn_committed'
+  | 'reviewer_plan_committed'
+  | 'reviewer_vote_committed'
+  | 'round_completed'
+  | 'session_paused'
+  | 'session_resumed'
+  | 'session_stopped'
+  | 'session_accepted'
+  | 'session_exhausted';
+```
+
+### Key Payloads
+
+```ts
+type RoundStartedPayload = {
+  roundIndex: number;
+  leaderParticipantId: string;
+  reviewerParticipantIds: string[];
+  sharedRejectionReasons: string[];
+};
+
+type LeaderTurnCommittedPayload = {
+  roundIndex: number;
+  participantId: string;
+  proposalId: string;
+  proposalText: string;
+  deliberationText: string;
+  messageFragments: DMessageFragment[];
+};
+
+type ReviewerPlanCommittedPayload = {
+  roundIndex: number;
+  participantId: string;
+  planText: string;
+  messageFragments: DMessageFragment[];
+};
+
+type ReviewerVoteCommittedPayload = {
+  roundIndex: number;
+  participantId: string;
+  decision: 'accept' | 'reject';
+  reason: string | null;
+  messageFragments: DMessageFragment[];
+};
+
+type RoundCompletedPayload = {
+  roundIndex: number;
+  outcome: 'accepted' | 'revise';
+  rejectionReasons: string[];
+};
+
+type SessionAcceptedPayload = {
+  roundIndex: number;
+  proposalId: string;
+  finalResponse: string;
+};
+```
 
 ## State Machine
 
-Per user turn, Council mode runs as:
+Per user turn:
 
-`idle -> drafting -> reviewing -> accepted | exhausted | interrupted`
+`idle -> drafting -> reviewer-plans -> reviewer-votes -> accepted | exhausted | paused | stopped`
 
-### Drafting
+The reducer may derive a more compact status surface, but the execution scheduler must treat these boundaries as explicit phases, not transcript heuristics.
 
-- The coordinator creates a new round record.
-- The Leader receives the user request, persona/system instructions, and all rejection reasons from previous rounds.
-- The Leader returns exactly one proposal record with verbatim response text.
+## Execution Model
 
-### Reviewing
+Each agent step is two-phase:
 
-- Each reviewer receives the user request, the current Leader proposal, and all shared rejection reasons.
-- Reviewers do not see each other’s current-round ballots.
-- Each reviewer returns exactly one ballot:
-  - `accept`
-  - `reject(reason)`
+### 1. Run
 
-### Accepted
+- execute Leader / reviewer work in memory
+- buffer partial streamed output locally
+- validate structured result
 
-- If every reviewer accepts, the proposal is marked accepted.
-- The accepted proposal text is appended as the final assistant response shown to the user.
+### 2. Commit
 
-### Exhausted
+- append exactly one durable committed operation
+- recompute projection
+- then advance scheduling
 
-- If max rounds is reached without unanimous acceptance, the session stops.
-- The transcript can show the last proposal and rejection reasons for debugging, but no final user-facing answer is emitted from Council mode.
+Rule:
 
-### Interrupted
+- committed = real
+- not committed = never happened
 
-- Pause, stop, and unload recovery preserve the current round state and replay from structured records on resume.
+## Scheduler Rules
 
-## Data Model
+The scheduler chooses the next runnable step from projection only.
 
-### CouncilSessionState
+### If current round lacks `leader_turn_committed`
 
-- `status`: `idle | drafting | reviewing | accepted | exhausted | interrupted`
-- `phaseId`
-- `roundIndex`
-- `maxRounds`
-- `leaderParticipantId`
-- `acceptedProposalId | null`
-- `finalResponse | null`
-- `interruptionReason | null`
+- run Leader
 
-### CouncilRoundRecord
+### If Leader committed but reviewer plans are incomplete
 
-- `roundIndex`
-- `proposalId`
-- `proposalText`
-- `leaderParticipantId`
-- `ballots`
-- `sharedRejectionReasons`
-- `startedAt`
-- `completedAt | null`
+- run remaining reviewer plans
 
-### CouncilBallot
+### If reviewer plans are complete but votes are incomplete
 
-- `reviewerParticipantId`
-- `decision`: `accept | reject`
-- `reason`: string, required when rejected
+- run remaining reviewer votes
 
-### Shared Rejection Reasons
+### If votes are complete
 
-For each new round, the Leader and reviewers receive the aggregated ordered list of all rejection reasons collected so far in the session.
+- emit `round_completed`
+- if all accept:
+  - emit `session_accepted`
+- else if max rounds reached:
+  - emit `session_exhausted`
+- else:
+  - emit next `round_started`
+
+### Never schedule work when session is
+
+- `paused`
+- `stopped`
+- `accepted`
+- `exhausted`
 
 ## Prompting Rules
 
-### Leader Prompt
+### Leader
 
 Inputs:
+
 - original user request
-- active persona/system instructions
-- all prior rejection reasons
+- relevant conversation context
+- all prior committed round history needed by the protocol
+- shared rejection reasons from prior rounds
+- prior public plans/votes/reasons as required by the updated Council workflow
 
 Output contract:
-- exactly one proposal
-- no reviewer ballots
-- no direct final-user emission outside coordinator control
 
-### Reviewer Prompt
+- exactly one proposal for the current round
+
+### Reviewer Plan
 
 Inputs:
+
 - original user request
 - current Leader proposal
-- all shared rejection reasons from prior rounds
+- prior committed public Council history
 
 Output contract:
-- exactly one ballot
+
+- exactly one public review plan
+
+### Reviewer Vote
+
+Inputs:
+
+- original user request
+- current Leader proposal
+- current round public plans
+- prior committed public Council history
+
+Output contract:
+
+- exactly one vote
 - `accept`
 - or `reject(reason)`
-- no rewritten answer drafts
+
+## Reducer Invariants
+
+- operations are replayed in `sequence` order
+- duplicate `opId` is ignored idempotently
+- only one active round exists at a time
+- one committed Leader turn per round
+- at most one committed reviewer plan per reviewer per round
+- at most one committed reviewer vote per reviewer per round
+- `round_completed` only exists after required commits exist
+- `session_accepted`, `session_exhausted`, and `session_stopped` are terminal
+- final user-visible answer equals the accepted Leader proposal verbatim
+
+If an invalid op order appears, the reducer should surface inconsistency instead of inventing missing state.
+
+## Resume / Pause / Stop / Unexpected Close
+
+### Pause
+
+- abort active in-memory work
+- append `session_paused`
+- keep all committed work
+- on resume, continue from last valid commit boundary
+
+### Stop
+
+- abort active in-memory work
+- append `session_stopped`
+- session becomes terminal for that turn
+
+### Unexpected Close
+
+- no special recovery write is required
+- on reopen, rebuild projection from committed log
+- uncommitted work is discarded and may rerun safely
+
+### Resume
+
+- allowed only from paused/interrupted resumable states
+- append `session_resumed`
+- recompute projection
+- schedule only missing work
+- never rerun already committed turns
 
 ## Transcript Projection
 
-The UI should still be able to show a readable Council trace, but projection is derived from state.
+Council trace messages are purely projections from projection state.
 
-Projected messages can include:
-- Leader proposal per round
-- reviewer accepts/rejects
-- aggregated rejection reasons between rounds
-- final accepted proposal
-- exhaustion or interruption notices
+The transcript may show:
 
-These messages are view/state projections only and must not be reparsed to recover orchestration state.
+- Leader proposal
+- reviewer plans
+- reviewer votes
+- shared rejection reasons
+- round status
+- terminal session status
 
-## Execution Outline
+But these messages are never reparsed to recover orchestration state.
 
-1. User sends a message in Council mode.
-2. Coordinator starts a new session and round 1.
-3. Leader drafts proposal 1.
-4. Reviewers independently review proposal 1.
-5. If all accept:
-   - finalize with proposal 1 verbatim.
-6. If any reject:
-   - aggregate rejection reasons
-   - start round 2
-   - ask Leader for a revised proposal using those reasons
-7. Repeat until accepted, exhausted, or interrupted.
+## Persisted Conversation Model
+
+`DConversation.councilSession` remains the lightweight UI/runtime entry point, but durable orchestration state moves to an append-only journal.
+
+Recommended additions:
+
+- `councilOpLog?: CouncilOp[]`
+- optional cached projection for convenience/debugging
+
+`workflowState` may remain temporarily during migration, but must stop being the control source of truth.
+
+## Migration Strategy
+
+### Step 1
+
+- introduce `councilOpLog`
+- keep current `workflowState` as compatibility shadow
+- write durable journal for new council sessions
+
+### Step 2
+
+- switch resume/recovery/scheduling to journal + reducer only
+- keep transcript projection reading structured state
+
+### Step 3
+
+- remove transcript-driven and mutable legacy control logic
+- retain projection-only Council UI
+
+No attempt should be made to backfill perfect atomic history for old legacy sessions.
 
 ## Error Handling
 
-- Invalid or missing Leader proposal:
-  - fail the round visibly or retry once, but do not advance to review without a structured proposal
-- Invalid reviewer ballot:
-  - record a synthetic rejection reason such as `review failed`
-- Reviewer timeout/failure:
-  - treat as rejection with a synthetic reason
-- Resume after interruption:
-  - restore from structured session and round records
-- Exhaustion:
-  - mark terminal exhausted state and surface diagnostic transcript only
+- invalid leader proposal:
+  - fail turn or synthesize a rejected round reason, but do not commit malformed proposal state
+- invalid reviewer vote:
+  - normalize to `reject('review failed')`
+- timeout/failure before commit:
+  - no durable turn written
+- timeout/failure after commit:
+  - durable record stands, no rerun
+- reducer inconsistency:
+  - surface diagnostic status, do not guess hidden state
 
 ## Testing Strategy
 
-### Unit Tests
+### Reducer Tests
 
-- state transitions across drafting, reviewing, accepted, exhausted, interrupted
-- unanimous reviewer acceptance
-- single rejection triggering a new round
-- multi-round accumulation of rejection reasons
-- reviewer isolation rules
-- resume from partially completed review rounds
+- accepted session replay
+- exhausted session replay
+- paused session replay
+- stopped session replay
+- duplicate op replay
+- invalid op ordering
 
-### Prompt Builder Tests
+### Atomic Commit Tests
 
-- Leader sees only allowed inputs
-- reviewers see proposal plus shared reasons
-- reviewers do not receive other reviewers’ current-round ballots
+- interrupt leader before commit
+- interrupt leader after commit
+- interrupt reviewer plan before commit
+- interrupt reviewer vote after commit
 
-### Projection Tests
+### Scheduler Tests
 
-- projected transcript reflects state without controlling execution
-- final user-facing message equals accepted proposal verbatim
+- chooses Leader first
+- waits for all plans before votes
+- waits for all votes before round completion
+- starts next round only after completion op
+- does not run when paused/stopped/accepted/exhausted
 
-### Integration Test
+### Integration Tests
 
-- round 1 proposal rejected by at least one reviewer
-- rejection reasons aggregated and shared
-- round 2 proposal accepted unanimously
-- final assistant output equals round 2 proposal verbatim
+- rejection causes a new round
+- shared rejection reasons carry forward
+- resume after pause continues from last committed boundary
+- unexpected reload discards uncommitted work
+- final answer equals accepted proposal verbatim
 
-## Migration Notes
+### UI Projection Tests
 
-- Existing transcript-inferred consensus parsing should be retired from the control path.
-- Existing Council session persistence should migrate to structured round records.
-- Resume logic should hydrate from structured council state, not message text.
+- Council trace derives from projection only
+- no partial turn appears as durable visible state
+- resumed sessions show correct phase/round/status
+
+## Acceptance Criteria
+
+- no control path depends on parsing visible transcript
+- every durable Council transition is atomic
+- already committed turns never rerun after resume
+- uncommitted turns never appear as durable state
+- pause/stop/reload recovery rebuilds from journal only
+- final assistant output equals accepted Leader proposal verbatim
 
 ## Non-Goals
 
-- reviewer-authored alternative answer drafts
-- reviewer-to-reviewer communication
-- manual merge of multiple competing answer drafts
-- partial-final outputs before unanimous reviewer acceptance
+- transcript parsing as orchestration recovery
+- partial durable streaming state for council turns
+- reviewer-authored competing final answers
+- heuristic reconstruction of legacy sessions into perfect atomic history

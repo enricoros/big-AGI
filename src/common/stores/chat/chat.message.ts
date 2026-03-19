@@ -79,19 +79,36 @@ export interface DMessageAuthor {
   llmId?: DLLMId | null;
 }
 
-export interface DMessageConsensusMetadata {
-  kind: 'deliberation' | 'result';
+export interface DMessageCouncilMetadata {
+  kind: 'deliberation' | 'result' | 'notification';
   phaseId: string;
   passIndex: number;
-  action?: 'agree' | 'dont_agree';
+  provisional?: boolean;
+  action?: 'agree' | 'proposal' | 'accept' | 'reject' | 'revise';
   agreedResponse?: string;
+  agreedMessageId?: string;
+  leaderParticipantId?: string;
+  reason?: string;
+}
+
+export type DMessageRecipient =
+  | DMessageRecipientPersona
+  | DMessageRecipientParticipant
+  | DMessageRecipientBoard;
+
+export interface DMessageCouncilChannel {
+  channel: 'public-board' | 'direct' | 'system';
+  directParticipantIds?: [string, string] | string[];
+  visibleToParticipantIds?: string[];
 }
 
 export interface DMessageMetadata {
   author?: DMessageAuthor;
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
   entangled?: DMessageEntangled; // entangled messages info
-  consensus?: DMessageConsensusMetadata; // consensus-mode deliberation/result state
+  council?: DMessageCouncilMetadata; // council-mode deliberation/result state
+  consensus?: DMessageCouncilMetadata; // legacy persisted alias for council-mode state
+  councilChannel?: DMessageCouncilChannel; // council board / direct routing state
   /**
    * Per-turn chat routing overrides captured when a user message is sent.
    * These allow one conversation to mix different models/personas across turns,
@@ -103,7 +120,7 @@ export interface DMessageMetadata {
    * Defaults to `undefined` i.e. the current persona for the active operation (chat, beam, etc).
    * If set, has to be honored by the UI and the sending operation.
    */
-  initialRecipients?: DMessageRecipientPersona[];
+  initialRecipients?: DMessageRecipient[];
   // NOTE: if adding fields, manually update `duplicateDMessageMetadata`
 }
 
@@ -136,6 +153,15 @@ export interface DMessageEntangled {
 export interface DMessageRecipientPersona {
   rt: 'persona'; // recipient type discriminant
   personaUid: string | null; // null = explicit "no persona"
+}
+
+export interface DMessageRecipientParticipant {
+  rt: 'participant';
+  participantId: string;
+}
+
+export interface DMessageRecipientBoard {
+  rt: 'public-board';
 }
 
 
@@ -257,6 +283,8 @@ export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean
 }
 
 export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
+  const normalizedCouncil = metadata.council ?? metadata.consensus;
+
   // NOTE: update this function when adding metadata fields
   return {
     ...(metadata.author ? {
@@ -268,8 +296,15 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
     ...(metadata.entangled ? {
       entangled: { ...metadata.entangled },
     } : {}),
-    ...(metadata.consensus ? {
-      consensus: { ...metadata.consensus },
+    ...(normalizedCouncil ? {
+      council: { ...normalizedCouncil },
+    } : {}),
+    ...(metadata.councilChannel ? {
+      councilChannel: {
+        ...metadata.councilChannel,
+        ...(metadata.councilChannel.directParticipantIds ? { directParticipantIds: [...metadata.councilChannel.directParticipantIds] } : {}),
+        ...(metadata.councilChannel.visibleToParticipantIds ? { visibleToParticipantIds: [...metadata.councilChannel.visibleToParticipantIds] } : {}),
+      },
     } : {}),
     ...(metadata.routing ? {
       routing: { ...metadata.routing },

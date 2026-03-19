@@ -18,11 +18,13 @@ import { KeyValueData, KeyValueGrid } from './BlockPartToolInvocation';
 export function BlockPartToolResponse(props: {
   toolResponsePart: DMessageToolResponsePart,
   contentScaling: ContentScaling,
+  compactInline?: boolean,
+  defaultExpanded?: boolean,
   onDoubleClick?: (event: React.MouseEvent) => void;
 }) {
 
   // state
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(!!props.defaultExpanded);
 
   // external state
   const { fontSize, lineHeight } = useScaledTypographySx(props.contentScaling, false, false);
@@ -85,7 +87,17 @@ export function BlockPartToolResponse(props: {
 
 
   return (
-    <BlocksContainer onDoubleClick={props.onDoubleClick}><Box /*sx={{ px: 1.5 }}*/>
+    <BlocksContainer
+      onDoubleClick={props.onDoubleClick}
+      sx={props.compactInline ? {
+        width: 'auto',
+        overflowX: 'visible',
+        display: 'inline-flex',
+        flex: '0 0 auto',
+        maxWidth: '100%',
+        verticalAlign: 'top',
+      } : undefined}
+    ><Box sx={props.compactInline ? { display: 'inline-flex', maxWidth: '100%' } : undefined}>
       <Sheet
         variant='soft'
         color={rError ? 'danger' : undefined}
@@ -95,11 +107,13 @@ export function BlockPartToolResponse(props: {
           borderRadius: 'sm',
           pl: 1,
           pr: 2,
-          py: 0.75,
+          py: props.compactInline ? 0.5 : 0.75,
           fontSize,
           lineHeight,
           display: 'flex',
           flexDirection: 'column',
+          width: props.compactInline ? 'auto' : undefined,
+          maxWidth: '100%',
           ...(expanded ? {
             border: '1px solid',
             borderColor: 'primary.outlinedBorder',
@@ -113,7 +127,8 @@ export function BlockPartToolResponse(props: {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
+            gap: 0.5,
+            flexWrap: 'wrap',
             cursor: 'pointer',
             '&:hover': { '& .expand-icon': { opacity: 1 } },
           }}
@@ -145,21 +160,26 @@ export function BlockPartToolResponse(props: {
             </Chip>
           )}
 
-          <Chip size='sm' color={envInfo.color} variant='soft' sx={{ ml: 'auto' }}>
+          <Chip
+            size='sm'
+            color={envInfo.color}
+            variant='soft'
+            sx={{ ml: props.compactInline ? 0 : 'auto' }}
+          >
             {envInfo.label}
           </Chip>
         </Box>
 
         {/* Expanded details */}
-        <ExpanderControlledBox expanded={expanded}>
-          {expanded && <Box sx={{ mt: 1, ml: 2.625, pl: 1 }}>
+        {expanded && <ExpanderControlledBox expanded>
+          <Box sx={{ mt: 1, ml: 2.625, pl: 1 }}>
             <KeyValueGrid
               data={detailsData}
               // contentScaling={props.contentScaling}
               // stableSx={_styleKeyValueGrid}
             />
-          </Box>}
-        </ExpanderControlledBox>
+          </Box>
+        </ExpanderControlledBox>}
 
       </Sheet>
 

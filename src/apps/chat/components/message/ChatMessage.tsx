@@ -45,7 +45,7 @@ import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
-import { avatarIconSx, getParticipantAccentColor, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { avatarIconSx, getChatMessageMinimapAccentDataAttributes, getParticipantAccentColor, getParticipantAccentSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
@@ -158,6 +158,9 @@ export function ChatMessage(props: {
   showUnsafeHtmlCode?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
+  topDecoratorKind?: 'leader' | 'provisional' | 'system',
+  topDecoratorCompact?: boolean,
+  topDecoratorFirst?: boolean,
   onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
@@ -213,12 +216,23 @@ export function ChatMessage(props: {
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
-  const messageHasBeenEdited = !!messageUpdated;
-  const messageAuthorName = messageMetadata?.author?.participantName?.trim() || null;
+  const messageHasBeenEdited = messageUpdated !== null && messageUpdated > messageCreated;
+  const messageAuthorParticipantId = messageMetadata?.author?.participantId ?? null;
+  const resolvedAuthorName = React.useMemo(() => {
+    const explicitAuthorName = messageMetadata?.author?.participantName?.trim();
+    if (explicitAuthorName)
+      return explicitAuthorName;
+    if (!messageAuthorParticipantId)
+      return null;
+    return props.participants?.find(participant => participant.id === messageAuthorParticipantId)?.name?.trim() || null;
+  }, [messageAuthorParticipantId, messageMetadata?.author?.participantName, props.participants]);
+  const messageAuthorName = resolvedAuthorName;
   const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
   const messageAuthorPersonaTitle = messageAuthorPersonaId ? SystemPurposes[messageAuthorPersonaId]?.title ?? messageAuthorPersonaId : null;
   const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
-  const messageAuthorAccentColor = React.useMemo(() => getParticipantAccentColor(messageAuthorName), [messageAuthorName]);
+  const messageAuthorAccentColor = React.useMemo(() => getParticipantAccentColor(messageAuthorName, props.participants), [messageAuthorName, props.participants]);
+  const messageAuthorAccentSx = React.useMemo(() => getParticipantAccentSx(messageAuthorName, props.participants, 'soft'), [messageAuthorName, props.participants]);
+  const minimapAccentDataAttributes = getChatMessageMinimapAccentDataAttributes(fromAssistant, messageAuthorAccentColor, messageAuthorAccentSx);
   const handleAppendMention = React.useCallback((mentionText: string) => {
     props.onAppendMention?.(mentionText);
   }, [props]);
@@ -718,12 +732,47 @@ export function ChatMessage(props: {
   );
 
   const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
+  const topDecorator = React.useMemo(() => {
+    if (props.topDecorator !== undefined)
+      return props.topDecorator;
+    if (!props.topDecoratorKind)
+      return undefined;
+
+    const px = props.topDecoratorCompact ? 0.5 : 2;
+    const pt = props.topDecoratorCompact ? (props.topDecoratorFirst ? 0.5 : 0.25) : 0.5;
+
+    if (props.topDecoratorKind === 'leader') {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px, pt, pb: 0.25 }}>
+          <Chip size='sm' variant='solid' color='primary'>Leader</Chip>
+        </Box>
+      );
+    }
+
+    if (props.topDecoratorKind === 'provisional') {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px, pt, pb: 0.25 }}>
+          <Chip size='sm' variant='solid' color='warning'>
+            Provisional round draft
+          </Chip>
+        </Box>
+      );
+    }
+
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', px, pt, pb: 0.25 }}>
+        <Chip size='sm' variant='soft' color='neutral'>System notification</Chip>
+      </Box>
+    );
+  }, [props.topDecorator, props.topDecoratorCompact, props.topDecoratorFirst, props.topDecoratorKind]);
 
 
   return (
     <Box
       component='li'
       role='chat-message'
+      data-chat-minimap-background-color={minimapAccentDataAttributes.backgroundColor}
+      data-chat-minimap-border-color={minimapAccentDataAttributes.borderColor}
       tabIndex={-1 /* for shortcuts navigation */}
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
       onTouchEnd={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksTouchEnd : undefined}
@@ -732,7 +781,7 @@ export function ChatMessage(props: {
     >
 
       {/* (Optional) top decorator */}
-      {props.topDecorator}
+      {topDecorator}
 
 
       {/* Message Row: Aside, Fragment[][], Aside2 */}
@@ -743,7 +792,11 @@ export function ChatMessage(props: {
 
         {/* [start-Avatar] Avatar (Persona) */}
         {!props.hideAvatar && !isEditingText && (
-          <Box sx={zenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
+          <Box sx={{
+            ...(zenMode ? messageZenAsideColumnSx : messageAsideColumnSx),
+            // Keep the message overflow rail on the left even when user/system rows use reversed flow.
+            order: fromAssistant ? undefined : 1,
+          }}>
 
             {/* Persona Avatar or Menu Button */}
             <Box
@@ -774,9 +827,11 @@ export function ChatMessage(props: {
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
               <TooltipOutlined asLargePane enableInteractive title={messageAvatarTooltip} placement='bottom-start'>
-                <Typography level='body-xs' sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
-                  {messageAvatarLabel}
-                </Typography>
+                <Box sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
+                  <Typography level='body-xs' sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.15 }}>
+                    {messageAuthorName || messageAvatarLabel}
+                  </Typography>
+                </Box>
               </TooltipOutlined>
             )}
 
@@ -816,6 +871,7 @@ export function ChatMessage(props: {
                   onClick={() => handleAppendMention(`@${messageAuthorName}`)}
                   endDecorator={<AlternateEmailIcon sx={{ fontSize: 'sm' }} />}
                   sx={{
+                    ...messageAuthorAccentSx,
                     cursor: props.onAppendMention ? 'pointer' : 'default',
                     transition: 'transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease',
                     boxShadow: 'xs',

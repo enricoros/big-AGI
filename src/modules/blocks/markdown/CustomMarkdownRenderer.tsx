@@ -46,7 +46,7 @@ function SpanRenderer(props: React.HTMLAttributes<HTMLSpanElement> & { children?
   return <span {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</span>;
 }
 
-function MentionRenderer(props: { children: React.ReactNode; onAppendMention?: (mentionText: string) => void }) {
+function MentionRenderer(props: { children: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
   const mentionText = React.Children.toArray(props.children).join('').trim();
   if (!mentionText.startsWith('@'))
     return <>{props.children}</>;
@@ -60,14 +60,14 @@ function MentionRenderer(props: { children: React.ReactNode; onAppendMention?: (
       <button
         type='button'
         onClick={() => props.onAppendMention?.(`@${mentionName}`)}
-        style={getParticipantMentionSx(mentionName, true) as React.CSSProperties}
+        style={getParticipantMentionSx(mentionName, true, props.participants) as React.CSSProperties}
       >
         {props.children}
       </button>
     );
 
   return (
-    <span style={getParticipantMentionSx(mentionName) as React.CSSProperties}>
+    <span style={getParticipantMentionSx(mentionName, false, props.participants) as React.CSSProperties}>
       {props.children}
     </span>
   );

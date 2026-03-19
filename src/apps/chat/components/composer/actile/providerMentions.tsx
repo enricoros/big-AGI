@@ -3,6 +3,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 
 import type { ActileItem, ActileProvider, ActileProviderItems } from './ActileProvider';
+import { filterMentionItems } from './providerMentions.utils';
 
 
 export const providerMentions = (
@@ -40,7 +41,8 @@ export const providerMentions = (
     ],
   }),
 
+  filterItems: (items, search) => filterMentionItems(items, search),
+
   onItemSelect: (item) => onMentionSelect(item as ActileItem, '@'),
 
 });
-

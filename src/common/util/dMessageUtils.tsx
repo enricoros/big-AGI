@@ -81,6 +81,17 @@ const tooltipMetricsGridSx: SxProps = {
 };
 
 const participantAccentColors = ['primary', 'success', 'warning', 'danger'] as const satisfies readonly ColorPaletteProp[];
+
+type ParticipantAccentTokens = {
+  hue: number;
+  softColor: string;
+  softBg: string;
+  solidColor: string;
+  solidBg: string;
+  outlinedColor: string;
+  outlinedBg: string;
+  outlinedBorder: string;
+};
 const participantAccentMentionSxByColor: Record<ColorPaletteProp, React.CSSProperties> = {
   primary: { color: 'var(--joy-palette-primary-softColor)', backgroundColor: 'var(--joy-palette-primary-softBg)' },
   success: { color: 'var(--joy-palette-success-softColor)', backgroundColor: 'var(--joy-palette-success-softBg)' },
@@ -93,23 +104,205 @@ function normalizeParticipantAccentKey(name: string | null | undefined): string 
   return (name ?? '').trim().toLowerCase();
 }
 
-export function getParticipantAccentColor(name: string | null | undefined): ColorPaletteProp {
+function getParticipantRosterIndex(name: string | null | undefined, participants?: readonly DConversationParticipant[] | null): { index: number; total: number } | null {
+  const normalizedName = normalizeParticipantAccentKey(name);
+  if (!normalizedName || !participants?.length)
+    return null;
+
+  const assistantNames = Array.from(new Set(
+    participants
+      .filter(participant => participant.kind === 'assistant')
+      .map(participant => normalizeParticipantAccentKey(participant.name))
+      .filter(Boolean),
+  )).sort((a, b) => a.localeCompare(b));
+
+  const index = assistantNames.indexOf(normalizedName);
+  if (index === -1 || !assistantNames.length)
+    return null;
+
+  return { index, total: assistantNames.length };
+}
+
+function getParticipantAccentHue(name: string | null | undefined, participants?: readonly DConversationParticipant[] | null): number | null {
   const normalizedName = normalizeParticipantAccentKey(name);
   if (!normalizedName)
-    return 'neutral';
+    return null;
+
+  const persistedParticipant = participants?.find(participant =>
+    participant.kind === 'assistant'
+    && normalizeParticipantAccentKey(participant.name) === normalizedName
+    && typeof participant.accentHue === 'number'
+    && Number.isFinite(participant.accentHue),
+  );
+  if (persistedParticipant)
+    return Math.round((((persistedParticipant.accentHue! % 360) + 360) % 360));
+
+  const rosterIndex = getParticipantRosterIndex(name, participants);
+  if (rosterIndex) {
+    const total = Math.max(rosterIndex.total, 1);
+    const step = 360 / total;
+    const baseHue = 210;
+    return Math.round((baseHue + rosterIndex.index * step) % 360);
+  }
 
   let hash = 0;
   for (let index = 0; index < normalizedName.length; index++)
     hash = ((hash << 5) - hash + normalizedName.charCodeAt(index)) | 0;
 
-  return participantAccentColors[Math.abs(hash) % participantAccentColors.length] ?? 'neutral';
+  return Math.abs(hash) % 360;
 }
 
-export function getParticipantMentionSx(name: string | null | undefined, clickable = false): SxProps {
-  const color = getParticipantAccentColor(name);
+function getContrastTextColor(backgroundColor: string): string {
+  const hslMatch = backgroundColor.match(/hsl\(\s*(-?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*\)/i);
+  if (!hslMatch)
+    return 'var(--joy-palette-common-white, #ffffff)';
+
+  const hue = Number(hslMatch[1]);
+  const saturation = Number(hslMatch[2]) / 100;
+  const lightness = Number(hslMatch[3]) / 100;
+
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const huePrime = ((hue % 360) + 360) % 360 / 60;
+  const secondary = chroma * (1 - Math.abs((huePrime % 2) - 1));
+
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+
+  if (huePrime >= 0 && huePrime < 1)
+    [red, green, blue] = [chroma, secondary, 0];
+  else if (huePrime < 2)
+    [red, green, blue] = [secondary, chroma, 0];
+  else if (huePrime < 3)
+    [red, green, blue] = [0, chroma, secondary];
+  else if (huePrime < 4)
+    [red, green, blue] = [0, secondary, chroma];
+  else if (huePrime < 5)
+    [red, green, blue] = [secondary, 0, chroma];
+  else
+    [red, green, blue] = [chroma, 0, secondary];
+
+  const matchLightness = lightness - chroma / 2;
+  const [r, g, b] = [red + matchLightness, green + matchLightness, blue + matchLightness].map(channel => {
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  const blackContrast = (luminance + 0.05) / 0.05;
+
+  return whiteContrast >= blackContrast ? 'var(--joy-palette-common-white, #ffffff)' : 'var(--joy-palette-common-black, #000000)';
+}
+
+function getParticipantAccentTokens(name: string | null | undefined, participants?: readonly DConversationParticipant[] | null): ParticipantAccentTokens | null {
+  const hue = getParticipantAccentHue(name, participants);
+  if (hue === null)
+    return null;
+
+  const softBg = `hsl(${hue} 72% 38%)`;
+  const solidBg = `hsl(${hue} 74% 46%)`;
+  const outlinedBg = `hsl(${hue} 66% 30%)`;
 
   return {
-    ...participantAccentMentionSxByColor[color],
+    hue,
+    softColor: getContrastTextColor(softBg),
+    softBg,
+    solidColor: getContrastTextColor(solidBg),
+    solidBg,
+    outlinedColor: getContrastTextColor(outlinedBg),
+    outlinedBg,
+    outlinedBorder: `hsl(${hue} 58% 52%)`,
+  };
+}
+
+export function getParticipantAccentColor(name: string | null | undefined, participants?: readonly DConversationParticipant[] | null): ColorPaletteProp {
+  const hue = getParticipantAccentHue(name, participants);
+  if (hue === null)
+    return 'neutral';
+
+  return participantAccentColors[Math.floor((hue / 360) * participantAccentColors.length) % participantAccentColors.length] ?? 'neutral';
+}
+
+export function getParticipantAccentSx(name: string | null | undefined, participants?: readonly DConversationParticipant[] | null, tone: 'soft' | 'solid' | 'outlined' = 'soft'): SxProps {
+  const tokens = getParticipantAccentTokens(name, participants);
+  if (!tokens)
+    return {};
+
+  if (tone === 'solid') {
+    return {
+      color: tokens.solidColor,
+      backgroundColor: tokens.solidBg,
+      borderColor: tokens.solidBg,
+    } satisfies SxProps;
+  }
+
+  if (tone === 'outlined') {
+    return {
+      color: tokens.outlinedColor,
+      borderColor: tokens.outlinedBorder,
+      backgroundColor: tokens.outlinedBg,
+    } satisfies SxProps;
+  }
+
+  return {
+    color: tokens.softColor,
+    backgroundColor: tokens.softBg,
+    borderColor: tokens.outlinedBorder,
+  } satisfies SxProps;
+}
+
+const participantAccentMinimapAttrsByColor: Record<ColorPaletteProp, { backgroundColor: string; borderColor: string; }> = {
+  primary: {
+    backgroundColor: 'var(--joy-palette-primary-softBg)',
+    borderColor: 'var(--joy-palette-primary-outlinedBorder)',
+  },
+  success: {
+    backgroundColor: 'var(--joy-palette-success-softBg)',
+    borderColor: 'var(--joy-palette-success-outlinedBorder)',
+  },
+  warning: {
+    backgroundColor: 'var(--joy-palette-warning-softBg)',
+    borderColor: 'var(--joy-palette-warning-outlinedBorder)',
+  },
+  danger: {
+    backgroundColor: 'var(--joy-palette-danger-softBg)',
+    borderColor: 'var(--joy-palette-danger-outlinedBorder)',
+  },
+  neutral: {
+    backgroundColor: 'var(--joy-palette-neutral-softBg)',
+    borderColor: 'var(--joy-palette-neutral-outlinedBorder)',
+  },
+};
+
+export function getChatMessageMinimapAccentDataAttributes(fromAssistant: boolean, accentColor: ColorPaletteProp, accentSx: SxProps | undefined): {
+  backgroundColor?: string;
+  borderColor?: string;
+} {
+  if (!fromAssistant)
+    return {};
+
+  const paletteAttrs = participantAccentMinimapAttrsByColor[accentColor];
+  if (paletteAttrs)
+    return paletteAttrs;
+
+  if (!accentSx || typeof accentSx !== 'object')
+    return {};
+
+  return {
+    backgroundColor: 'backgroundColor' in accentSx && typeof accentSx.backgroundColor === 'string'
+      ? accentSx.backgroundColor
+      : undefined,
+    borderColor: 'borderColor' in accentSx && typeof accentSx.borderColor === 'string'
+      ? accentSx.borderColor
+      : undefined,
+  };
+}
+
+export function getParticipantMentionSx(name: string | null | undefined, clickable = false, participants?: readonly DConversationParticipant[] | null): SxProps {
+  const accentSx = getParticipantAccentSx(name, participants, 'soft') as React.CSSProperties;
+
+  return {
+    ...(Object.keys(accentSx).length ? accentSx : participantAccentMentionSxByColor[getParticipantAccentColor(name, participants)]),
     display: 'inline-flex',
     alignItems: 'center',
     border: 'none',
@@ -133,7 +326,7 @@ export function getParticipantMentionSx(name: string | null | undefined, clickab
     } : undefined,
   } satisfies SxProps;
 }
-const genericParticipantMentionRegex = /(^|[^\w])(@all(?=$|[^\w])|@[\p{L}\p{N}]+(?:[- ][\p{Lu}\p{N}][\p{L}\p{N}]*)*)/gu;
+const allParticipantMentionRegex = /(^|[^\w])(@all(?=$|[^\w]))/gu;
 
 export interface ParticipantMentionMatch {
   mentionText: string;
@@ -146,6 +339,17 @@ export function escapeParticipantMentionToken(token: string): string {
   return token.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function getParticipantMentionAliases(name: string): string[] {
+  const normalizedName = name.trim().replace(/\s+/g, ' ');
+  if (!normalizedName)
+    return [];
+
+  return Array.from(new Set([
+    normalizedName,
+    ...normalizedName.split('/').map(segment => segment.trim().replace(/\s+/g, ' ')).filter(Boolean),
+  ]));
+}
+
 function normalizeParticipantMentionName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
@@ -154,12 +358,12 @@ function isMentionBoundaryChar(char: string | undefined): boolean {
   return !char || /[\s.,!?;:)}\]"'”’،。！？]/u.test(char);
 }
 
-function collectGenericParticipantMentions(text: string): ParticipantMentionMatch[] {
+function collectAllParticipantMentions(text: string): ParticipantMentionMatch[] {
   const matches: ParticipantMentionMatch[] = [];
   let match: RegExpExecArray | null;
 
-  genericParticipantMentionRegex.lastIndex = 0;
-  while ((match = genericParticipantMentionRegex.exec(text)) !== null) {
+  allParticipantMentionRegex.lastIndex = 0;
+  while ((match = allParticipantMentionRegex.exec(text)) !== null) {
     const mentionText = match[2] ?? '';
     if (!mentionText)
       continue;
@@ -178,7 +382,7 @@ function collectGenericParticipantMentions(text: string): ParticipantMentionMatc
     });
   }
 
-  genericParticipantMentionRegex.lastIndex = 0;
+  allParticipantMentionRegex.lastIndex = 0;
   return matches;
 }
 
@@ -189,9 +393,38 @@ function getRosterMentionNames(participants?: readonly DConversationParticipant[
   return Array.from(new Set(
     participants
       .filter(participant => participant.kind === 'assistant')
-      .map(participant => participant.name.trim())
+      .flatMap(participant => getParticipantMentionAliases(participant.name))
       .filter(Boolean),
   ));
+}
+
+export function findParticipantMentionMatchIndex(text: string, participantName: string): number | null {
+  const aliases = getParticipantMentionAliases(participantName)
+    .sort((a, b) => b.length - a.length || a.localeCompare(b));
+
+  let bestMatch: { index: number; aliasLength: number } | null = null;
+
+  for (const alias of aliases) {
+    const explicitMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])@${escapeParticipantMentionToken(alias)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
+    const explicitMatch = explicitMentionRegex.exec(text);
+    if (explicitMatch) {
+      const index = explicitMatch.index + ((explicitMatch[0] ?? '').length - (`@${alias}`).length);
+      if (!bestMatch || index < bestMatch.index || (index === bestMatch.index && alias.length > bestMatch.aliasLength))
+        bestMatch = { index, aliasLength: alias.length };
+      continue;
+    }
+
+    const bareMentionRegex = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeParticipantMentionToken(alias)}(?=$|[^\\p{L}\\p{N}])`, 'iu');
+    const bareMatch = bareMentionRegex.exec(text);
+    if (!bareMatch)
+      continue;
+
+    const index = bareMatch.index + ((bareMatch[0] ?? '').length - alias.length);
+    if (!bestMatch || index < bestMatch.index || (index === bestMatch.index && alias.length > bestMatch.aliasLength))
+      bestMatch = { index, aliasLength: alias.length };
+  }
+
+  return bestMatch?.index ?? null;
 }
 
 export function findParticipantMentions(text: string, participants?: readonly DConversationParticipant[] | null): ParticipantMentionMatch[] {
@@ -199,7 +432,7 @@ export function findParticipantMentions(text: string, participants?: readonly DC
     .sort((a, b) => b.length - a.length || a.localeCompare(b));
 
   if (!rosterMentionNames.length)
-    return collectGenericParticipantMentions(text);
+    return collectAllParticipantMentions(text);
 
   const normalizedRoster = rosterMentionNames.map(name => ({
     rawName: name,
@@ -399,13 +632,14 @@ export function useMessageAvatarLabel(
       };
     }
 
-    // incomplete: just the name
+    // Prefer the conversation participant / agent name in the compact badge label.
+    // The underlying model remains available in the tooltip/details.
     const authorName = metadata?.author?.participantName?.trim() || null;
     const prettyName = prettyShortChatModelName(generatorName);
-    const labelPrefix = authorName && authorName !== prettyName ? `${authorName} · ` : '';
+    const compactLabel = authorName || prettyName;
     if (pendingIncomplete)
       return {
-        label: `${labelPrefix}${prettyName}`,
+        label: compactLabel,
         tooltip: (!created || complexity === 'minimal') ? null : (
           <Box sx={tooltipSx}>
             <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
@@ -416,7 +650,7 @@ export function useMessageAvatarLabel(
     // named generator: nothing else to do there
     if (generator.mgt === 'named')
       return {
-        label: `${labelPrefix}${prettyName}`,
+        label: compactLabel,
         tooltip: prettyName !== generator.name ? `${authorName ? `${authorName} · ` : ''}${generator.name}` : (authorName || null),
       };
 
@@ -429,7 +663,7 @@ export function useMessageAvatarLabel(
 
     // aix tooltip: more details
     return {
-      label: (stopReason && complexity !== 'minimal') ? <>{labelPrefix}{prettyName} <small>({stopReason})</small></> : `${labelPrefix}${prettyName}`,
+      label: (stopReason && complexity !== 'minimal') ? <>{compactLabel} <small>({stopReason})</small></> : compactLabel,
       tooltip: complexity === 'minimal' ? null : (
         <Box sx={tooltipSx}>
           {VendorIcon ? <Box sx={tooltipIconContainerSx}><VendorIcon />{generator.name}</Box> : <div>{generator.name}</div>}

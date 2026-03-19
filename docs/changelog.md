@@ -9,6 +9,37 @@ by release.
 > NOTE: with the release of 2.0.0 we switching to [big-agi.com/changes](https://big-agi.com/changes) for the
 > continuously updated changelog.
 
+### 2026-03-17
+
+- Council mode now runs phased rounds with one leader proposal, parallel reviewer plans, tool-only reviewer votes via `Accept()` / `Reject(reason)`, shared round history between rounds, and council artifacts rendered only inside the collapsed Council trace.
+
+### 2026-03-18
+
+- Chat conversations now have an optional desktop-only vertical minimap toggle in the side pane, with clearly segmented message blocks and click-to-scroll navigation inside the conversation.
+- Collapsed reasoning chips now surface streamed markdown section titles inline, so live reasoning headings stay visible before expanding the full trace.
+- The stacked composer pause/stop/expand controls now render as a cleaner connected control instead of nested pill buttons.
+- Synthetic council reviewer failures now show descriptive public failure copy instead of the raw `Invalid review.` placeholder text.
+- Stopped council sessions now persist their trace correctly instead of disappearing when the overlay rehydrates from the council op log.
+
+### 2026-03-19
+
+- `Consensus` naming has been fully renamed to `Council` across the app, while persisted legacy `consensus` conversation/session/message keys still auto-migrate on load so older saved chats, traces, and agent groups continue working.
+- Large chats now fall back to the lightweight minimap scroll controls once the conversation is windowed or the rendered entry count grows too high, preventing the desktop minimap overlay from remeasuring the full list on every update.
+- Council mode now defaults `Council max rounds` to unlimited when left blank, instead of pre-filling a hard stop at 12 rounds.
+- Changing `Council max rounds` now updates active, paused, stopped, and resumed council sessions consistently, instead of leaving in-flight runs stuck on stale round limits.
+- Council trace settings now include automatic collapse of previous rounds and automatic expansion of the newest round, and those preferences persist with the chat and saved agent groups.
+- Agent roster participants now expose a per-agent `Reasoning Effort` control in the editor, and that selection is applied as a runtime model-parameter override instead of changing the global model defaults.
+- User-stopped council sessions now remain resumable from the composer and council trace instead of being treated as terminal stops; fatal council stops still stay non-resumable.
+- Resuming an interrupted council now retries an errored leader proposal before starting reviewer votes, so a cut-off proposal does not incorrectly advance straight into review.
+- The Agents popup now lets you save and reload individual agent presets in addition to full agent groups.
+- Hosted web searches and fetches are now persisted inline as collapsible tool fragments instead of transient placeholders only, so they survive reloads, chat-mode switches, council turns, and interrupted/terminated responses across supported providers.
+- Council leaders now receive explicit carried-forward rejection reasons and prior-round proposal context when drafting round 2+, so revised proposals address reviewer objections instead of effectively starting fresh.
+- Council trace auto-expansion now preserves rounds the user expanded manually, and chat auto-scroll now stops snapping downward once the user has actually moved up off the bottom of the conversation.
+- Per-agent `Use model setting` reasoning-effort selection is now explicitly selectable again and shows the resolved model-level setting inline, instead of behaving like an unselectable empty value.
+- Consecutive hosted `Web Search` tool fragments now render as compact inline chips in the message flow instead of stacking as separate full-width blocks.
+- Messages now collapse multiple streamed reasoning fragments into a single `Show Reasoning` control instead of rendering one reasoning chip per fragment.
+- Node test runs now have an official `npm run test:node` entrypoint that preloads the existing import shims for `next/font/google` and other browser-only modules.
+
 ### What's New in 2 · Oct 31, 2025 · Open
 
 - **Big-AGI Open** is ready and more productive and faster than ever, with:
@@ -18,7 +49,9 @@ by release.
 - **Web Search** with citations for supported models
 - **UI** & Mobile UI overhaul with peeking and side panels
 - Agent roster editor now collapses expanded cards to a safe single-column layout inside the popup to prevent overlap
-- Council mode now shows a collapsible trace before the final answer, with round-by-round proposals, reviewer verdicts, and verbatim rejection reasons
+- Council mode now shows a collapsible live trace before the final answer, with a centered Leader row, side-by-side reviewer cards, expandable per-agent transcripts, reviewer bootstrap drafts in round 1, shared prior-round agent context from round 2 onward, concurrent reviewer rounds, verbatim rejection reasons, lazy transcript rendering to keep long multi-agent sessions responsive, and rich per-agent message snapshots in workflow cards so reasoning and tool traces appear inline
+- Council reviewers now submit verdicts through explicit `Accept` and `Reject(reason)` tool calls, so rejected votes always carry a structured reason
+- Council mode now lets you configure the maximum number of council rounds from the Agents popup, persists that setting with conversations and saved agent groups, and respects it when resuming interrupted councils
 - Next launch scripts now quarantine a broken `.next` tree before running so stale manifests/chunks do not crash startup
 - And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
 - Built for the future, madly optimized

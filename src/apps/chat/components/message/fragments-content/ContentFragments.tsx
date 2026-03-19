@@ -18,10 +18,12 @@ import { BlockPartError } from './BlockPartError';
 import { BlockPartImageRef } from './BlockPartImageRef';
 import { BlockPartModelAux } from '../fragments-void/BlockPartModelAux';
 import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
+import { collapseReasoningFragments, extractReasoningRenderSequence } from '../fragments-void/BlockPartModelAux.reasoning';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
-import { humanReadableFunctionName } from './BlockPartToolInvocation.utils';
+import { InlineHostedWebGroup } from './InlineHostedWebGroup';
+import { groupInlineHostedWebFragments, humanReadableFunctionName } from './BlockPartToolInvocation.utils';
 
 
 const _editLayoutSx: SxProps = {
@@ -59,6 +61,7 @@ export function ContentFragments(props: {
   messagePendingIncomplete?: boolean,
   messageGeneratorLlmId?: string | null,
   optiAllowSubBlocksMemo?: boolean,
+  defaultExpandedAuxiliaryFragments?: boolean,
   disableMarkdownText: boolean,
   showUnsafeHtmlCode?: boolean,
   participants?: DConversationParticipant[],
@@ -84,6 +87,63 @@ export function ContentFragments(props: {
   const fromUser = props.messageRole === 'user';
   const isEditingText = !!props.textEditsState;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
+
+  const renderHostedWebInlineGroup = React.useCallback((fragments: readonly InterleavedFragment[], key: string) => (
+    <InlineHostedWebGroup
+      key={key}
+      fragments={fragments}
+      contentScaling={props.contentScaling}
+      compactInline
+      defaultExpanded={props.defaultExpandedAuxiliaryFragments}
+      onDoubleClick={props.onDoubleClick}
+    />
+  ), [props.contentScaling, props.defaultExpandedAuxiliaryFragments, props.onDoubleClick]);
+
+  const normalizedContentFragments = React.useMemo(
+    () => collapseReasoningFragments(props.contentFragments),
+    [props.contentFragments],
+  );
+  const reasoningFragmentId = React.useMemo(
+    () => normalizedContentFragments.find(fragment =>
+      fragment.ft === 'void'
+      && fragment.part.pt === 'ma'
+      && fragment.part.aType === 'reasoning',
+    )?.fId ?? null,
+    [normalizedContentFragments],
+  );
+  const reasoningRenderSequence = React.useMemo(
+    () => !reasoningFragmentId ? [] : extractReasoningRenderSequence(props.contentFragments),
+    [props.contentFragments, reasoningFragmentId],
+  );
+  const reasoningHostedWebFragmentIds = React.useMemo(
+    () => new Set(
+      reasoningRenderSequence
+        .filter(sequenceItem => sequenceItem.type === 'hosted-web-group')
+        .flatMap(sequenceItem => sequenceItem.fragments.map(fragment => fragment.fId)),
+    ),
+    [reasoningRenderSequence],
+  );
+  const reasoningHostedWebNodeMap = React.useMemo(() => {
+    const entries = reasoningRenderSequence
+      .filter(sequenceItem => sequenceItem.type === 'hosted-web-group')
+      .map(sequenceItem => [
+        sequenceItem.key,
+        renderHostedWebInlineGroup(sequenceItem.fragments, `reasoning-hosted-inline-${sequenceItem.key}`),
+      ] as const)
+      .filter((entry): entry is readonly [string, React.ReactNode] => !!entry[1]);
+
+    return Object.fromEntries(entries);
+  }, [reasoningRenderSequence, renderHostedWebInlineGroup]);
+  const renderableContentFragments = React.useMemo(
+    () => reasoningHostedWebFragmentIds.size
+      ? normalizedContentFragments.filter(fragment => !reasoningHostedWebFragmentIds.has(fragment.fId))
+      : normalizedContentFragments,
+    [normalizedContentFragments, reasoningHostedWebFragmentIds],
+  );
+  const fragmentGroups = React.useMemo(
+    () => groupInlineHostedWebFragments(renderableContentFragments),
+    [renderableContentFragments],
+  );
 
 
   // solo placeholder - dataStreamViz trigger
@@ -120,7 +180,6 @@ export function ContentFragments(props: {
   // if no fragments, don't box them
   if (!props.showEmptyNotice && isEmpty)
     return null;
-
   return <Box aria-label='message body' sx={(showDataStreamViz || isEditingText) ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
@@ -132,7 +191,19 @@ export function ContentFragments(props: {
       />
     )}
 
-    {props.contentFragments.map((fragment, fragmentIndex) => {
+    {fragmentGroups.flatMap((fragmentGroup, groupIndex) => fragmentGroup.inlineHostedWeb
+      ? [(
+        <Box
+          key={`inline-hosted-web-${groupIndex}-${fragmentGroup.fragments[0]?.fId ?? 'group'}`}
+          sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}
+        >
+          {renderHostedWebInlineGroup(
+            fragmentGroup.fragments,
+            `inline-hosted-web-group-${groupIndex}-${fragmentGroup.fragments[0]?.fId ?? 'group'}`,
+          )}
+        </Box>
+      )]
+      : fragmentGroup.fragments.map((fragment, fragmentIndex) => {
 
       // simplify
       const { fId, ft } = fragment;
@@ -159,7 +230,10 @@ export function ContentFragments(props: {
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
                 zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
-                isLastFragment={fragmentIndex === props.contentFragments.length - 1}
+                isLastFragment={fragmentIndex === fragmentGroup.fragments.length - 1}
+                defaultExpanded={props.defaultExpandedAuxiliaryFragments}
+                expandedSequence={fId === reasoningFragmentId && reasoningRenderSequence.length ? reasoningRenderSequence : undefined}
+                expandedSequenceNodeMap={fId === reasoningFragmentId && reasoningRenderSequence.length ? reasoningHostedWebNodeMap : undefined}
                 onFragmentDelete={props.onFragmentDelete}
                 onFragmentReplace={props.onFragmentReplace}
               />
@@ -272,7 +346,6 @@ export function ContentFragments(props: {
               const zt = part.zType;
               switch (zt) {
                 case 'asset':
-                  // TODO: [ASSET] future: implement rendering for the real Reference to Zync Asset
                   if (part._legacyImageRefPart?.pt === 'image_ref')
                     return (
                       <BlockPartImageRef
@@ -322,12 +395,10 @@ export function ContentFragments(props: {
             />
           );
 
-        // This is the most frequent part by far, and can be broken down into sub-blocks
         case 'text':
           return (
             <BlockPartText_AutoBlocks
               key={fId}
-              // ref={blocksRendererRef}
               textPartText={part.text}
               setEditedText={props.setEditedText}
               fragmentId={fId}
@@ -336,7 +407,6 @@ export function ContentFragments(props: {
               fitScreen={props.fitScreen}
               isMobile={props.isMobile}
               disableMarkdownText={props.disableMarkdownText}
-              // renderWordsDiff={wordsDiff || undefined}
               showUnsafeHtmlCode={props.showUnsafeHtmlCode}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               onContextMenu={props.onContextMenu}
@@ -352,6 +422,7 @@ export function ContentFragments(props: {
               key={fId}
               toolInvocationPart={part}
               contentScaling={props.contentScaling}
+              defaultExpanded={props.defaultExpandedAuxiliaryFragments}
               onDoubleClick={props.onDoubleClick}
             />
           );
@@ -362,6 +433,7 @@ export function ContentFragments(props: {
               key={fId}
               toolResponsePart={part}
               contentScaling={props.contentScaling}
+              defaultExpanded={props.defaultExpandedAuxiliaryFragments}
               onDoubleClick={props.onDoubleClick}
             />
           );
@@ -370,7 +442,6 @@ export function ContentFragments(props: {
           return null;
 
         default:
-          // noinspection JSUnusedLocalSymbols
           const _exhaustiveContentFragmentCheck: never = part;
           return (
             <ScaledTextBlockRenderer
@@ -382,6 +453,6 @@ export function ContentFragments(props: {
             />
           );
       }
-    }).filter(Boolean)}
+    })).filter(Boolean)}
   </Box>;
 }

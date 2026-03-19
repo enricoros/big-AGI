@@ -57,6 +57,9 @@ export interface IParticleTransmitter {
   /** Appends data to a FC part [throttled] */
   appendFunctionCallInvocationArgs(id: string | null, argsJsonChunk: string): void;
 
+  /** Creates a function-call result part, flushing the previous one if needed, and completes it */
+  addFunctionCallResponse(id: string | null, error: boolean | string, name: string, result: string, environment: 'upstream' | 'server' | 'client'): void;
+
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
   addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter'): void;
 

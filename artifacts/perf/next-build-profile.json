@@ -1,0 +1,106 @@
+{
+  "generatedAt": "2026-03-17T13:13:48.778Z",
+  "topAssets": [
+    {
+      "file": "static/chunks/pages/_app-b1541c6829e36e16.js",
+      "bytes": 537158
+    },
+    {
+      "file": "static/chunks/8389-11edcd374b3ac93e.js",
+      "bytes": 251059
+    },
+    {
+      "file": "static/chunks/pages/index-470ed0aa4291353a.js",
+      "bytes": 242533
+    },
+    {
+      "file": "static/chunks/4549-8da54780abf893ff.js",
+      "bytes": 225860
+    },
+    {
+      "file": "static/chunks/framework-9f3a163b88ffc405.js",
+      "bytes": 139971
+    },
+    {
+      "file": "static/chunks/main-58cbcfe6651d3acc.js",
+      "bytes": 132385
+    },
+    {
+      "file": "static/chunks/3311-7e174ef756a3c7bf.js",
+      "bytes": 106231
+    },
+    {
+      "file": "static/chunks/3880-fd0c38e5065c27a3.js",
+      "bytes": 100896
+    },
+    {
+      "file": "static/chunks/8350-c2d928da0461a9cb.js",
+      "bytes": 100230
+    },
+    {
+      "file": "static/chunks/7156-2ee15a8d0704f929.js",
+      "bytes": 76270
+    },
+    {
+      "file": "static/chunks/3878-e85f8a5df37236f3.js",
+      "bytes": 70656
+    },
+    {
+      "file": "static/css/664facd2d8a9f007.css",
+      "bytes": 66853
+    },
+    {
+      "file": "static/chunks/3895-49ee09d0c82a03be.js",
+      "bytes": 57969
+    },
+    {
+      "file": "static/chunks/3044-09090575ad0b8a56.js",
+      "bytes": 49793
+    },
+    {
+      "file": "static/chunks/pages/draw-262d93c325975e62.js",
+      "bytes": 47955
+    },
+    {
+      "file": "static/chunks/pages/call-cbf452cfe3266d4c.js",
+      "bytes": 41639
+    },
+    {
+      "file": "static/chunks/pages/personas-cc1900d374d15b5b.js",
+      "bytes": 30556
+    },
+    {
+      "file": "static/chunks/3206-bd6b13f49797f017.js",
+      "bytes": 30528
+    },
+    {
+      "file": "static/chunks/30-000e7e299914a642.js",
+      "bytes": 30469
+    },
+    {
+      "file": "static/chunks/9195-93b1c2f09073289c.js",
+      "bytes": 29571
+    },
+    {
+      "file": "static/chunks/pages/info/debug-3e390f3bd44b5e2a.js",
+      "bytes": 29539
+    },
+    {
+      "file": "static/chunks/9057-61592f089f69c335.js",
+      "bytes": 26682
+    },
+    {
+      "file": "static/chunks/9479-7ec774d5694b0193.js",
+      "bytes": 25911
+    },
+    {
+      "file": "static/chunks/9467-cab578bbed263f53.js",
+      "bytes": 25297
+    },
+    {
+      "file": "static/chunks/1309-745d5d764a9aea80.js",
+      "bytes": 25031
+    }
+  ],
+  "buildStdout": "\n> big-agi@2.0.3 build\n> node --import tsx tools/develop/next-safe-run.ts build\n\n 🧠 \u001b[1mbig-AGI\u001b[0m v2.0.3 (@01de87ba4)\n 🧠 \u001b[1mbig-AGI\u001b[0m v2.0.3 (@01de87ba4)\n   ▲ Next.js 15.1.12\n\n   Creating an optimized production build ...\nWebpack Bundle Analyzer saved report to /home/eros/Desktop/big-AGI/.worktrees/consensus-mode/.next/analyze/nodejs.html\nWebpack Bundle Analyzer saved report to /home/eros/Desktop/big-AGI/.worktrees/consensus-mode/.next/analyze/edge.html\nWebpack Bundle Analyzer saved report to /home/eros/Desktop/big-AGI/.worktrees/consensus-mode/.next/analyze/client.html\n ✓ Compiled successfully\n   Linting and checking validity of types ...\n   Collecting page data ...\n   Generating static pages (0/15) ...\n   Generating static pages (3/15) \r\n   Generating static pages (7/15) \r\n   Generating static pages (11/15) \r\n ✓ Generating static pages (15/15)\n   Finalizing page optimization ...\n   Collecting build traces ...\n\nRoute (app)                                Size     First Load JS\n┌ ƒ /api/cloud/[trpc]                      139 B           104 kB\n└ ƒ /api/edge/[trpc]                       139 B           104 kB\n+ First Load JS shared by all              104 kB\n  ├ chunks/4bd1b696-b7be8402c29a2bf8.js    53 kB\n  ├ chunks/main-app-f032a8b60c9b8071.js    47.6 kB\n  └ other shared chunks (total)            3.67 kB\n\nRoute (pages)                              Size     First Load JS\n┌ ○ / (784 ms)                             95.9 kB         708 kB\n├   /_app                                  0 B             253 kB\n├ ○ /404                                   194 B           254 kB\n├ ○ /call                                  14.6 kB         424 kB\n├ ○ /dev/beam                              8.8 kB          606 kB\n├ ○ /diff (785 ms)                         13.4 kB         366 kB\n├ ○ /draw (784 ms)                         25.5 kB         440 kB\n├ ○ /info/debug (784 ms)                   11.4 kB         380 kB\n├ ○ /link/callback_openrouter (784 ms)     1.02 kB         354 kB\n├ ○ /link/chat/[chatLinkId] (786 ms)       9.09 kB         548 kB\n├ ○ /link/share_target (784 ms)            2.08 kB         355 kB\n├ ○ /news                                  350 B           353 kB\n├ ○ /personas (784 ms)                     25 kB           430 kB\n├ ○ /tokens                                7.13 kB         368 kB\n└ ○ /workspace                             581 B           353 kB\n+ First Load JS shared by all              264 kB\n  ├ chunks/framework-9f3a163b88ffc405.js   44.8 kB\n  ├ chunks/main-58cbcfe6651d3acc.js        38.7 kB\n  ├ chunks/pages/_app-b1541c6829e36e16.js  166 kB\n  ├ css/664facd2d8a9f007.css               10.4 kB\n  └ other shared chunks (total)            3.67 kB\n\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand\n\n"
+}

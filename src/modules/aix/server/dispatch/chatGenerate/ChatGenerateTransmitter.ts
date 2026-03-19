@@ -412,6 +412,19 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this._queueParticleS();
   }
 
+  /** Creates a FC result part, flushing the previous one if needed, and completes it */
+  addFunctionCallResponse(id: string | null, error: boolean | string, name: string, result: string, environment: 'upstream' | 'server' | 'client') {
+    this.endMessagePart();
+    this.transmissionQueue.push({
+      p: 'fcr',
+      id: id ?? serverSideId('aix-tool-response-id'),
+      name,
+      error,
+      result,
+      environment,
+    });
+  }
+
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
   addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter') {
     this.endMessagePart();

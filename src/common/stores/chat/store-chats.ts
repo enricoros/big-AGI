@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SystemPurposeId } from '../../../data';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { sanitizeModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 import { findLLMOrThrow, getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { agiUuid } from '~/common/util/idUtils';
@@ -16,9 +17,112 @@ import { workspaceForConversationIdentity } from '~/common/stores/workspace/work
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
-import { conversationTitle, createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant, DConversation, DConversationId, DConversationParticipant, DConversationParticipantSpeakWhen, DConversationTurnTerminationMode, duplicateDConversation } from './chat.conversation';
+import {
+  conversationTitle,
+  createAssistantConversationParticipant,
+  createDConversation,
+  createHumanConversationParticipant,
+  DConversation,
+  DConversationId,
+  DConversationParticipant,
+  DConversationParticipantSpeakWhen,
+  DConversationTurnTerminationMode,
+  duplicateDConversation,
+  DPersistedCouncilSession,
+  sanitizeCouncilMaxRounds,
+  sanitizeCouncilTraceAutoCollapsePreviousRounds,
+  sanitizeCouncilTraceAutoExpandNewestRound,
+} from './chat.conversation';
+import type { CouncilOp } from '../../../apps/chat/editors/_handleExecute.council.log';
+
+function assignStableParticipantAccentHues(participants: DConversationParticipant[]): DConversationParticipant[] {
+  const assistantParticipants = participants.filter(participant => participant.kind === 'assistant');
+  if (!assistantParticipants.length)
+    return participants;
+
+  const usedHues = new Set<number>();
+  for (const participant of assistantParticipants)
+    if (typeof participant.accentHue === 'number' && Number.isFinite(participant.accentHue))
+      usedHues.add(Math.round((((participant.accentHue % 360) + 360) % 360)));
+
+  const orderedAssistants = [...assistantParticipants].sort((a, b) => a.id.localeCompare(b.id));
+  const total = Math.max(orderedAssistants.length, 1);
+  const step = 360 / total;
+  const baseHue = 210;
+  const fallbackStep = 23;
+
+  const hueById = new Map<string, number>();
+  orderedAssistants.forEach((participant, index) => {
+    if (typeof participant.accentHue === 'number' && Number.isFinite(participant.accentHue)) {
+      hueById.set(participant.id, Math.round((((participant.accentHue % 360) + 360) % 360)));
+      return;
+    }
+
+    let candidateHue = Math.round((baseHue + index * step) % 360);
+    let attempts = 0;
+    while (usedHues.has(candidateHue) && attempts < 360) {
+      candidateHue = Math.round((candidateHue + fallbackStep) % 360);
+      attempts++;
+    }
+    usedHues.add(candidateHue);
+    hueById.set(participant.id, candidateHue);
+  });
+
+  return participants.map(participant =>
+    participant.kind === 'assistant'
+      ? {
+        ...participant,
+        accentHue: hueById.get(participant.id) ?? participant.accentHue,
+      }
+      : participant,
+  );
+}
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
+
+function updateCouncilRuntimeConfig(
+  conversation: DConversation,
+  update: {
+    maxRounds?: number | null;
+  },
+): Pick<DConversation, 'councilSession' | 'councilOpLog'> {
+  const nextMaxRounds = update.maxRounds === undefined
+    ? undefined
+    : sanitizeCouncilMaxRounds(update.maxRounds);
+  const activePhaseId = conversation.councilSession?.phaseId ?? null;
+
+  const councilSession = conversation.councilSession
+    ? {
+        ...conversation.councilSession,
+        workflowState: (conversation.councilSession.workflowState && nextMaxRounds !== undefined)
+          ? {
+              ...conversation.councilSession.workflowState,
+              maxRounds: nextMaxRounds ?? Number.POSITIVE_INFINITY,
+              updatedAt: Date.now(),
+            }
+          : conversation.councilSession.workflowState,
+      }
+    : conversation.councilSession ?? null;
+
+  const councilOpLog = conversation.councilOpLog?.length
+    ? conversation.councilOpLog.map(op =>
+        op.type === 'session_started'
+        && activePhaseId
+        && op.phaseId === activePhaseId
+        && nextMaxRounds !== undefined
+          ? {
+              ...op,
+              payload: {
+                ...op.payload,
+                maxRounds: nextMaxRounds ?? Number.POSITIVE_INFINITY,
+              },
+            }
+          : op,
+      )
+    : conversation.councilOpLog ?? null;
+
+  return { councilSession, councilOpLog };
+}
 
 
 /// Conversations Store
@@ -53,6 +157,11 @@ export interface ChatActions {
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setParticipants: (cId: DConversationId, participants: DConversationParticipant[]) => void;
   setTurnTerminationMode: (cId: DConversationId, mode: DConversationTurnTerminationMode) => void;
+  setCouncilMaxRounds: (cId: DConversationId, maxRounds: number | null) => void;
+  setCouncilTraceAutoCollapsePreviousRounds: (cId: DConversationId, value: boolean) => void;
+  setCouncilTraceAutoExpandNewestRound: (cId: DConversationId, value: boolean) => void;
+  setCouncilSession: (cId: DConversationId, councilSession: DPersistedCouncilSession | null) => void;
+  setCouncilPersistence: (cId: DConversationId, councilSession: DPersistedCouncilSession | null, councilOpLog: CouncilOp[] | null) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
@@ -442,21 +551,33 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           const providedParticipants = participants.map(participant => ({ ...participant }));
           const humanParticipants = providedParticipants.filter(participant => participant.kind === 'human');
           const assistantParticipants = providedParticipants.filter(participant => participant.kind === 'assistant');
+          const normalizedAssistantParticipants = assistantParticipants.length
+            ? assistantParticipants.map((participant, index) => ({
+              ...participant,
+              isLeader: assistantParticipants.some(candidate => candidate.isLeader)
+                ? participant.isLeader === true
+                : index === 0,
+            })).map((participant, index, allParticipants) => ({
+              ...participant,
+              isLeader: participant.isLeader === true && allParticipants.findIndex(candidate => candidate.isLeader) === index,
+            }))
+            : assistantParticipants;
           const nextParticipants = providedParticipants.length
             ? [
               ...(humanParticipants.length ? humanParticipants : [createHumanConversationParticipant(conversation.userSymbol || 'You')]),
-              ...assistantParticipants,
+              ...normalizedAssistantParticipants,
             ]
             : [
               createHumanConversationParticipant(conversation.userSymbol || 'You'),
-              createAssistantConversationParticipant(conversation.systemPurposeId),
+              createAssistantConversationParticipant(conversation.systemPurposeId, null, undefined, 'every-turn', true),
             ];
+          const nextParticipantsWithAccentHues = assignStableParticipantAccentHues(nextParticipants);
 
-          const primaryAssistant = nextParticipants.find(participant => participant.kind === 'assistant' && !!participant.personaId)
-            ?? createAssistantConversationParticipant(conversation.systemPurposeId);
+          const primaryAssistant = nextParticipantsWithAccentHues.find(participant => participant.kind === 'assistant' && !!participant.personaId)
+            ?? createAssistantConversationParticipant(conversation.systemPurposeId, null, undefined, 'every-turn', true);
 
           return {
-            participants: nextParticipants,
+            participants: nextParticipantsWithAccentHues,
             systemPurposeId: primaryAssistant.personaId ?? conversation.systemPurposeId,
           };
         }),
@@ -464,6 +585,36 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       setTurnTerminationMode: (conversationId: DConversationId, mode: DConversationTurnTerminationMode) =>
         _get()._editConversation(conversationId, {
           turnTerminationMode: mode,
+        }),
+
+      setCouncilMaxRounds: (conversationId: DConversationId, maxRounds: number | null) =>
+        _get()._editConversation(conversationId, conversation => {
+          const nextCouncilMaxRounds = sanitizeCouncilMaxRounds(maxRounds);
+          return {
+            councilMaxRounds: nextCouncilMaxRounds,
+            ...updateCouncilRuntimeConfig(conversation, { maxRounds: nextCouncilMaxRounds }),
+          };
+        }),
+
+      setCouncilTraceAutoCollapsePreviousRounds: (conversationId: DConversationId, value: boolean) =>
+        _get()._editConversation(conversationId, {
+          councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(value),
+        }),
+
+      setCouncilTraceAutoExpandNewestRound: (conversationId: DConversationId, value: boolean) =>
+        _get()._editConversation(conversationId, {
+          councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(value),
+        }),
+
+      setCouncilSession: (conversationId: DConversationId, councilSession: DPersistedCouncilSession | null) =>
+        _get()._editConversation(conversationId, {
+          councilSession,
+        }),
+
+      setCouncilPersistence: (conversationId: DConversationId, councilSession: DPersistedCouncilSession | null, councilOpLog: CouncilOp[] | null) =>
+        _get()._editConversation(conversationId, {
+          councilSession,
+          councilOpLog: councilOpLog?.length ? structuredClone(councilOpLog) : null,
         }),
 
       setAutoTitle: (conversationId: DConversationId, autoTitle: string) =>
@@ -574,6 +725,8 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
         // fixup conversations in-memory
         V4ToHeadConverters.inMemHeadCleanDConversations(state.conversations || []);
+        for (const conversation of state.conversations || [])
+          conversation.participants = assignStableParticipantAccentHues(conversation.participants || []);
 
         // [GC] Chat Image Assets
         // NOTE: this used to be in 'sherpa', but that caused the storage to be read too early, so we do it here post hydration
@@ -647,12 +800,16 @@ export function getConversationParticipants(conversationId: DConversationId | nu
     ];
 
   return participants
-    .map((participant): DConversationParticipant => ({
-      ...participant,
-      ...(participant.kind === 'assistant' ? {
-        speakWhen: (participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn') as DConversationParticipantSpeakWhen,
-      } : {}),
-    }))
+    .map((participant): DConversationParticipant => {
+      const reasoningEffort = sanitizeModelReasoningEffort(participant.reasoningEffort);
+      return {
+        ...participant,
+        ...(participant.kind === 'assistant' ? {
+          speakWhen: (participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn') as DConversationParticipantSpeakWhen,
+          ...(reasoningEffort ? { reasoningEffort } : {}),
+        } : {}),
+      };
+    })
     .sort((a, b) => {
       if (a.kind !== b.kind)
         return a.kind === 'human' ? -1 : 1;
@@ -663,9 +820,35 @@ export function getConversationParticipants(conversationId: DConversationId | nu
 export function getConversationTurnTerminationMode(conversationId: DConversationId | null): DConversationTurnTerminationMode {
   return getConversation(conversationId)?.turnTerminationMode === 'continuous'
     ? 'continuous'
-    : getConversation(conversationId)?.turnTerminationMode === 'consensus'
-      ? 'consensus'
+    : getConversation(conversationId)?.turnTerminationMode === 'council'
+      ? 'council'
       : 'round-robin-per-human';
+}
+
+export function getConversationCouncilMaxRounds(conversationId: DConversationId | null): number | null {
+  return sanitizeCouncilMaxRounds(getConversation(conversationId)?.councilMaxRounds);
+}
+
+export function getConversationCouncilTraceAutoCollapsePreviousRounds(conversationId: DConversationId | null): boolean {
+  return sanitizeCouncilTraceAutoCollapsePreviousRounds(getConversation(conversationId)?.councilTraceAutoCollapsePreviousRounds);
+}
+
+export function getConversationCouncilTraceAutoExpandNewestRound(conversationId: DConversationId | null): boolean {
+  return sanitizeCouncilTraceAutoExpandNewestRound(getConversation(conversationId)?.councilTraceAutoExpandNewestRound);
+}
+
+export function getConversationCouncilOpLog(conversationId: DConversationId | null): CouncilOp[] {
+  const councilOpLog = getConversation(conversationId)?.councilOpLog;
+  return councilOpLog?.length ? structuredClone(councilOpLog) : [];
+}
+
+export function getConversationCouncilState(conversationId: DConversationId | null) {
+  void conversationId;
+  return {
+    privateGroups: [] as never[],
+    invitations: [] as never[],
+    invitationBlocks: [] as never[],
+  };
 }
 
 

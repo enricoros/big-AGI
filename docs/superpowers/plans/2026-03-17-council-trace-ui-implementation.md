@@ -33,7 +33,7 @@
 
 **Files:**
 - Create: `src/apps/chat/components/ChatMessageList.councilTrace.test.ts`
-- Reference: `src/apps/chat/editors/_handleExecute.consensus.ts`
+- Reference: `src/apps/chat/editors/_handleExecute.council.ts`
 - Reference: `src/common/chat-overlay/store-perchat-composer_slice.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -350,7 +350,7 @@ Expected: PASS
 
 - [ ] **Step 2: Run the existing Council orchestration tests to guard behavior drift**
 
-Run: `node --import tsx --test src/apps/chat/editors/_handleExecute.consensus.test.ts src/apps/chat/editors/_handleExecute.runtime.test.ts`
+Run: `node --import tsx --test src/apps/chat/editors/_handleExecute.council.test.ts src/apps/chat/editors/_handleExecute.runtime.test.ts`
 Expected: PASS
 
 - [ ] **Step 3: Run full type-check**
