@@ -83,6 +83,12 @@ interface AppChatStore {
   showConversationMinimap: boolean;
   setShowConversationMinimap: (showConversationMinimap: boolean) => void;
 
+  showCallButton: boolean;
+  setShowCallButton: (showCallButton: boolean) => void;
+
+  showCompletionNotifications: boolean;
+  setShowCompletionNotifications: (showCompletionNotifications: boolean) => void;
+
   // other chat-specific configuration
 
   notificationEnabledModelIds: DLLMId[];
@@ -162,6 +168,12 @@ const useAppChatStore = create<AppChatStore>()(persist(
     showConversationMinimap: false,
     setShowConversationMinimap: (showConversationMinimap: boolean) => _set({ showConversationMinimap }),
 
+    showCallButton: false,
+    setShowCallButton: (showCallButton: boolean) => _set({ showCallButton }),
+
+    showCompletionNotifications: true,
+    setShowCompletionNotifications: (showCompletionNotifications: boolean) => _set({ showCompletionNotifications }),
+
     // Other chat-specific configuration
 
     notificationEnabledModelIds: [],
@@ -240,6 +252,15 @@ export const getChatTokenCountingMethod = (): TokenCountingMethod =>
 
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);
+
+export const useChatShowCallButton = (): [boolean, (showCallButton: boolean) => void] =>
+  useAppChatStore(useShallow(state => [state.showCallButton, state.setShowCallButton]));
+
+export const getChatShowCompletionNotifications = (): boolean =>
+  useAppChatStore.getState().showCompletionNotifications;
+
+export const useChatShowCompletionNotifications = (): [boolean, (showCompletionNotifications: boolean) => void] =>
+  useAppChatStore(useShallow(state => [state.showCompletionNotifications, state.setShowCompletionNotifications]));
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(useShallow(state => [state.micTimeoutMs, state.setMicTimeoutMs]));

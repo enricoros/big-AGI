@@ -49,7 +49,7 @@ function scriptedCouncilRejectReviewReply(analysis: string, reason: string): Scr
     finalText: '',
     fragments: [
       createTextContentFragment(analysis),
-      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Reject', JSON.stringify({ reason })),
+      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Improve', JSON.stringify({ reason })),
     ],
   };
 }
@@ -235,7 +235,9 @@ test('runCouncilSequence does not throw when a resumed reviewer vote fails', asy
   };
 
   const runtime = new ScriptedRuntime(new Map([
-    [writer.id, [new Error('bootstrap failed')]],
+    [leader.id, ['Draft two, revised.']],
+    [critic.id, [scriptedCouncilAcceptReviewReply('Critic analysis after revision.')]],
+    [writer.id, [new Error('bootstrap failed'), scriptedCouncilAcceptReviewReply('Writer analysis after revision.')]],
   ]));
 
   const result = await runCouncilSequence(
@@ -249,13 +251,13 @@ test('runCouncilSequence does not throw when a resumed reviewer vote fails', asy
     runtime,
   );
 
-  assert.equal(result, false);
-  assert.deepEqual(runtime.callLog, [writer.id]);
+  assert.equal(result, true);
+  assert.deepEqual(runtime.callLog, [writer.id, leader.id, critic.id, writer.id]);
 
   const councilSession = session.councilSessionRef() as any;
   assert.equal(councilSession?.status, 'completed');
-  assert.equal(councilSession?.workflowState?.status, 'exhausted');
-  assert.deepEqual(history.filter(message => !!message.metadata?.council), []);
+  assert.equal(councilSession?.workflowState?.status, 'accepted');
+  assert.equal(councilSession?.workflowState?.finalResponse, 'Draft two, revised.');
 });
 
 test('runCouncilSequence retries the leader proposal before reviews when the persisted proposal ended with an error fragment', async () => {
@@ -354,8 +356,8 @@ test('runCouncilSequence gives the leader prior-round rejection context before d
     .join('\n\n');
 
   assert.match(leaderSecondRoundText, /You are revising the council proposal for round 2\./);
-  assert.match(leaderSecondRoundText, /Shared rejection reasons to address:/);
+  assert.match(leaderSecondRoundText, /Shared improvement reasons to address:/);
   assert.match(leaderSecondRoundText, /Needs concrete implementation detail\./);
-  assert.match(leaderSecondRoundText, /Leader proposal:\nDraft one\./);
-  assert.match(leaderSecondRoundText, /Reject: Needs concrete implementation detail\./);
+  assert.match(leaderSecondRoundText, /Draft one\./);
+  assert.match(leaderSecondRoundText, /Improve\(\): Needs concrete implementation detail\./);
 });

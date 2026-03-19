@@ -23,11 +23,14 @@ import { inferMultiAgentResumePlan } from '../../apps/chat/editors/_handleExecut
 import { createIdleCouncilSessionState } from './store-perchat-composer_slice';
 import type { CouncilSessionState as OverlayCouncilSessionState } from './store-perchat-composer_slice';
 
-import { getChatAutoAI, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
+import { getChatAutoAI, getChatShowCompletionNotifications, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
 
 import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat-ephemerals_slice';
 import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_vanilla';
 import { perfMeasureSync } from '~/common/util/perfRegistry';
+import { addSnackbar, type SnackbarMessage } from '~/common/components/snackbar/useSnackbarsStore';
+import { panesManagerActions, getFocusedPaneConversationId } from '../../apps/chat/components/panes/store-panes-manager';
+import { conversationTitle } from '../stores/chat/chat.conversation';
 
 
 // optimization: cache the actions
@@ -45,15 +48,44 @@ function getCouncilLeaderParticipant(conversation: DConversation) {
   return assistantParticipants.find(participant => participant.isLeader) ?? assistantParticipants[0] ?? null;
 }
 
+function getFreshPersistedCouncilSession(
+  conversation: DConversation,
+  persistedCouncilSession: NonNullable<DConversation['councilSession']> | null,
+): OverlayCouncilSessionState | null {
+  if (!persistedCouncilSession || persistedCouncilSession.mode !== 'council' || !persistedCouncilSession.phaseId)
+    return null;
+
+  const latestUserMessage = [...conversation.messages].reverse().find(message => message.role === 'user') ?? null;
+  if (latestUserMessage && (persistedCouncilSession.updatedAt ?? 0) < latestUserMessage.created)
+    return null;
+
+  if (!persistedCouncilSession.canResume && !persistedCouncilSession.workflowState)
+    return null;
+
+  return {
+    status: persistedCouncilSession.status,
+    executeMode: persistedCouncilSession.executeMode ?? 'generate-content',
+    mode: persistedCouncilSession.mode,
+    phaseId: persistedCouncilSession.phaseId,
+    passIndex: persistedCouncilSession.passIndex,
+    workflowState: persistedCouncilSession.workflowState,
+    canResume: persistedCouncilSession.canResume,
+    interruptionReason: persistedCouncilSession.interruptionReason,
+    updatedAt: persistedCouncilSession.updatedAt,
+  };
+}
+
 export function inferResumableCouncilSession(conversation: DConversation | undefined | null): OverlayCouncilSessionState | null {
   return perfMeasureSync('derive:ConversationHandler.inferResumableCouncilSession', () => {
     if (!conversation)
       return null;
 
-    const persistedCouncilSession = conversation.councilSession?.canResume ? conversation.councilSession : null;
+    const persistedCouncilSession = conversation.councilSession ?? null;
+    const persistedResumableCouncilSession = persistedCouncilSession?.canResume ? persistedCouncilSession : null;
+    const freshPersistedCouncilSession = getFreshPersistedCouncilSession(conversation, persistedCouncilSession);
+    const latestUserMessage = [...conversation.messages].reverse().find(message => message.role === 'user') ?? null;
 
     if (conversation.councilOpLog?.length) {
-      const latestUserMessage = [...conversation.messages].reverse().find(message => message.role === 'user') ?? null;
       const councilSessionStartedOp = conversation.councilOpLog.find(op => op.type === 'session_started') ?? null;
       if (!latestUserMessage || !councilSessionStartedOp || !councilSessionStartedOp.payload.latestUserMessageId || councilSessionStartedOp.payload.latestUserMessageId === latestUserMessage.id) {
         const replay = replayCouncilOpLog(conversation.councilOpLog);
@@ -63,7 +95,7 @@ export function inferResumableCouncilSession(conversation: DConversation | undef
           || replay.workflowState.status === 'accepted'
           || replay.workflowState.status === 'exhausted'
         )) {
-          return {
+          const replaySession = {
             status: replay.canResume
               ? replay.persistedStatus ?? 'interrupted'
               : replay.persistedStatus === 'stopped'
@@ -78,8 +110,22 @@ export function inferResumableCouncilSession(conversation: DConversation | undef
             interruptionReason: replay.interruptionReason,
             updatedAt: replay.updatedAt,
           };
+
+          if (
+            freshPersistedCouncilSession?.workflowState
+            && freshPersistedCouncilSession.phaseId === replaySession.phaseId
+            && (freshPersistedCouncilSession.updatedAt ?? 0) > (replaySession.updatedAt ?? 0)
+          )
+            return freshPersistedCouncilSession;
+
+          return replaySession;
         }
       }
+    }
+
+    if (conversation.turnTerminationMode === 'council') {
+      if (freshPersistedCouncilSession)
+        return freshPersistedCouncilSession;
     }
 
     const latestTurnMessages = getMessagesSinceLatestUser(conversation);
@@ -155,24 +201,23 @@ export function inferResumableCouncilSession(conversation: DConversation | undef
     if (!assistantParticipants.length)
       return null;
 
-    const latestUserMessage = [...conversation.messages].reverse().find(message => message.role === 'user') ?? null;
     const multiAgentResumePlan = inferMultiAgentResumePlan({
       messages: conversation.messages,
       latestUserMessage,
       latestUserMessageId: latestUserMessage?.id ?? null,
       participantsInOrder: assistantParticipants,
       turnTerminationMode: conversation.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
-      persistedSession: persistedCouncilSession,
+      persistedSession: persistedResumableCouncilSession,
     });
 
     if (!multiAgentResumePlan) {
-      if (persistedCouncilSession?.mode === 'council')
-        return persistedCouncilSession;
+      if (persistedResumableCouncilSession?.mode === 'council')
+        return persistedResumableCouncilSession;
       return null;
     }
 
     return {
-      status: persistedCouncilSession?.status ?? 'interrupted' as const,
+      status: persistedResumableCouncilSession?.status ?? 'interrupted' as const,
       executeMode: 'generate-content' as const,
       mode: conversation.turnTerminationMode ?? 'round-robin-per-human',
       phaseId: null,
@@ -181,6 +226,163 @@ export function inferResumableCouncilSession(conversation: DConversation | undef
       interruptionReason: multiAgentResumePlan.interruptionReason,
       updatedAt: multiAgentResumePlan.updatedAt,
     };
+  });
+}
+
+function isMessageEligibleForCompletionNotification(message: DMessage): boolean {
+  if (message.role !== 'assistant' || message.updated === null)
+    return false;
+
+  const councilKind = message.metadata?.council?.kind;
+  return councilKind !== 'deliberation' && councilKind !== 'notification';
+}
+
+function resolveMessageCompletionNotificationText(conversation: DConversation, message: DMessage): string {
+  const authorParticipantId = message.metadata?.author?.participantId ?? null;
+  const authorName = (
+    (authorParticipantId
+      ? conversation.participants?.find(participant => participant.id === authorParticipantId)?.name
+      : null)
+    ?? message.metadata?.author?.participantName
+    ?? null
+  )?.trim();
+
+  return authorName
+    ? `${authorName} replied.`
+    : 'New reply ready.';
+}
+
+type MessageCompletionNotification = {
+  conversationId: DConversationId;
+  title: string;
+  body: string;
+  tag: string;
+};
+
+type ShowSystemNotificationOptions = {
+  force?: boolean;
+  onClick?: (() => void) | null;
+};
+
+export function shouldShowSystemNotification(): boolean {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || typeof Notification === 'undefined')
+    return false;
+
+  if (Notification.permission !== 'granted')
+    return false;
+
+  const isAppActive = document.visibilityState === 'visible' && document.hasFocus();
+  return !isAppActive;
+}
+
+export function getMessageCompletionNotification(
+  prevConversation: DConversation | undefined | null,
+  nextConversation: DConversation | undefined | null,
+): MessageCompletionNotification | null {
+  if (!prevConversation || !nextConversation)
+    return null;
+
+  const prevMessagesById = new Map(prevConversation.messages.map(message => [message.id, message]));
+  const completedMessage = [...nextConversation.messages].reverse().find(message => {
+    if (!isMessageEligibleForCompletionNotification(message))
+      return false;
+
+    const prevMessage = prevMessagesById.get(message.id);
+    return !prevMessage || prevMessage.updated === null;
+  }) ?? null;
+
+  if (!completedMessage)
+    return null;
+
+  const preview = messageFragmentsReduceText(completedMessage.fragments).trim().replace(/\s+/g, ' ');
+
+  return {
+    conversationId: nextConversation.id,
+    title: resolveMessageCompletionNotificationText(nextConversation, completedMessage),
+    body: preview.slice(0, 240),
+    tag: `message-complete:${nextConversation.id}:${completedMessage.id}`,
+  };
+}
+
+export function getBackgroundChatCompletionSnackbar(notification: MessageCompletionNotification, conversation: DConversation): SnackbarMessage | null {
+  const focusedConversationId = getFocusedPaneConversationId();
+  if (!focusedConversationId || focusedConversationId === notification.conversationId)
+    return null;
+
+  return {
+    key: `background-chat-complete:${notification.conversationId}`,
+    message: `${conversationTitle(conversation, 'Chat')} replied.`,
+    type: 'success',
+    onClick: () => openConversationFromCompletionNotification(notification.conversationId),
+    overrides: { autoHideDuration: 5000 },
+  };
+}
+
+export function focusNotificationTargetTab(): void {
+  if (typeof window === 'undefined')
+    return;
+
+  window.focus?.();
+
+  try {
+    window.open?.('', '_self')?.focus?.();
+  } catch {
+    // Ignore browser-specific focus/open restrictions and keep the best-effort focus above.
+  }
+}
+
+export function openConversationFromCompletionNotification(conversationId: DConversationId): void {
+  focusNotificationTargetTab();
+  panesManagerActions().openConversationInFocusedPane(conversationId);
+}
+
+function showSystemNotification(
+  notification: Pick<MessageCompletionNotification, 'title' | 'body' | 'tag'>,
+  options: ShowSystemNotificationOptions = {},
+): boolean {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted')
+    return false;
+
+  if (!options.force && !shouldShowSystemNotification())
+    return false;
+
+  const systemNotification = new Notification(notification.title, {
+    body: notification.body,
+    tag: notification.tag,
+    icon: '/icons/icon-192x192.png',
+  });
+  systemNotification.onclick = (event) => {
+    event.preventDefault?.();
+    options.onClick?.();
+    systemNotification.close();
+  };
+  return true;
+}
+
+export function showCompletionSystemNotification(notification: MessageCompletionNotification, options: Pick<ShowSystemNotificationOptions, 'force'> = {}): boolean {
+  return showSystemNotification(notification, {
+    force: options.force,
+    onClick: () => openConversationFromCompletionNotification(notification.conversationId),
+  });
+}
+
+export function showTestSystemNotification(): boolean {
+  const conversationId = getFocusedPaneConversationId();
+  const conversation = conversationId
+    ? useChatStore.getState().conversations.find(_c => _c.id === conversationId) ?? null
+    : null;
+
+  return showSystemNotification({
+    title: 'Test notification',
+    body: conversation
+      ? `System notifications are working. Click to open ${conversationTitle(conversation, 'Chat')}.`
+      : 'System notifications are working. Click to focus the app.',
+    tag: `message-complete:test:${conversationId ?? 'app'}`,
+  }, {
+    force: true,
+    onClick: conversationId
+      ? () => openConversationFromCompletionNotification(conversationId)
+      : () => focusNotificationTargetTab(),
   });
 }
 
@@ -207,6 +409,19 @@ export class ConversationHandler {
       const prevConversation = prevState.conversations.find(_c => _c.id === this.conversationId) ?? null;
       if (conversation === prevConversation)
         return;
+      const completedMessageNotification = getChatShowCompletionNotifications()
+        ? getMessageCompletionNotification(prevConversation, conversation)
+        : null;
+      if (completedMessageNotification) {
+        const backgroundChatCompletionSnackbar = shouldShowSystemNotification()
+          ? null
+          : getBackgroundChatCompletionSnackbar(completedMessageNotification, conversation);
+
+        if (backgroundChatCompletionSnackbar)
+          addSnackbar(backgroundChatCompletionSnackbar);
+        else
+          showCompletionSystemNotification(completedMessageNotification);
+      }
       this._syncInferredCouncilSession();
     });
 

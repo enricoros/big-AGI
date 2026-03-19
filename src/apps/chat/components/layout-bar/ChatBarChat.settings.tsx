@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Checkbox, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import { Box, Button, Input, Option, Select, Stack, Typography } from '@mui/joy';
 
 import type { DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 
@@ -30,10 +30,6 @@ export function ChatBarChatSettingsPanel(props: {
   councilMaxRoundsDraft: string;
   onCouncilMaxRoundsDraftChange: (value: string) => void;
   onCouncilMaxRoundsCommit: () => void;
-  councilTraceAutoCollapsePreviousRounds: boolean;
-  onCouncilTraceAutoCollapsePreviousRoundsChange: (value: boolean) => void;
-  councilTraceAutoExpandNewestRound: boolean;
-  onCouncilTraceAutoExpandNewestRoundChange: (value: boolean) => void;
   canBulkSetSpeakWhen: boolean;
   canSetAllParticipantsEveryTurn: boolean;
   canSetAllParticipantsOnlyMention: boolean;
@@ -115,28 +111,6 @@ export function ChatBarChatSettingsPanel(props: {
               Leave blank for unlimited. Otherwise stop the council after this many proposal/review rounds if the reviewers still do not agree.
             </Typography>
           </Box>
-
-          <Checkbox
-            checked={props.councilTraceAutoCollapsePreviousRounds}
-            label='Auto-collapse previous rounds'
-            onChange={event => props.onCouncilTraceAutoCollapsePreviousRoundsChange(event.target.checked)}
-            size='sm'
-            sx={{ alignSelf: 'flex-start' }}
-          />
-          <Typography level='body-xs' sx={{ color: 'text.tertiary', mt: -0.5 }}>
-            Collapse older rounds automatically when a newer round appears.
-          </Typography>
-
-          <Checkbox
-            checked={props.councilTraceAutoExpandNewestRound}
-            label='Auto-expand newest round'
-            onChange={event => props.onCouncilTraceAutoExpandNewestRoundChange(event.target.checked)}
-            size='sm'
-            sx={{ alignSelf: 'flex-start' }}
-          />
-          <Typography level='body-xs' sx={{ color: 'text.tertiary', mt: -0.5 }}>
-            Expand the latest round automatically as the trace advances.
-          </Typography>
         </Stack>
       )}
     </>

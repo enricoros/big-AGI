@@ -4,6 +4,8 @@ import test from 'node:test';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 
 import {
+  getParticipantReasoningEffortCompactLabel,
+  getParticipantReasoningEffortDraftValue,
   getParticipantReasoningEffortSelectState,
   PARTICIPANT_REASONING_EFFORT_META,
   PARTICIPANT_REASONING_EFFORT_ORDER,
@@ -74,4 +76,39 @@ test('shows the explicit participant override when one is selected', () => {
     helperText: 'Deep, thorough analysis',
     modelSettingLabel: 'Low',
   });
+});
+
+test('keeps an explicit draft reset to model setting instead of falling back to the persisted override', () => {
+  assert.equal(getParticipantReasoningEffortDraftValue({
+    draft: { reasoningEffort: null },
+    persistedReasoningEffort: 'medium',
+  }), null);
+});
+
+test('compact reasoning label uses the model setting summary when no override is selected', () => {
+  const llm = {
+    initialParameters: {},
+    userParameters: { llmVndOaiEffort: 'high' },
+  } as DLLM;
+
+  assert.equal(getParticipantReasoningEffortCompactLabel({
+    llm,
+    parameterId: 'llmVndOaiEffort',
+    options,
+    selectedReasoningEffort: null,
+  }), 'Use model setting (High)');
+});
+
+test('compact reasoning label uses the explicit override label when one is selected', () => {
+  const llm = {
+    initialParameters: {},
+    userParameters: { llmVndOaiEffort: 'high' },
+  } as DLLM;
+
+  assert.equal(getParticipantReasoningEffortCompactLabel({
+    llm,
+    parameterId: 'llmVndOaiEffort',
+    options,
+    selectedReasoningEffort: 'medium',
+  }), 'Medium');
 });

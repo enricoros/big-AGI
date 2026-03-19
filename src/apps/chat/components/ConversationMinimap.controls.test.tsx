@@ -57,6 +57,7 @@ test('conversation minimap control slots keep symmetric spacing around the minim
     display: 'grid',
     placeItems: 'center',
     alignSelf: 'center',
+    justifySelf: 'center',
     pointerEvents: 'auto',
   });
 
@@ -66,6 +67,7 @@ test('conversation minimap control slots keep symmetric spacing around the minim
     display: 'grid',
     placeItems: 'center',
     alignSelf: 'center',
+    justifySelf: 'center',
     pointerEvents: 'auto',
   });
 
@@ -75,6 +77,7 @@ test('conversation minimap control slots keep symmetric spacing around the minim
     display: 'grid',
     placeItems: 'center',
     alignSelf: 'center',
+    justifySelf: 'center',
     pointerEvents: 'none',
   });
 });

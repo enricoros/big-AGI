@@ -303,7 +303,7 @@ test('reviewer accept ballot parses without a rejection reason', () => {
 
 test('reviewer reject ballot preserves a rejection reason when present', () => {
   const ballot = classifyCouncilReviewBallotFragments([
-    '[[reject]] Missing the caveat about retries.',
+    '[[improve]] Missing the caveat about retries.',
   ], 'critic');
 
   assert.deepEqual(ballot, {
@@ -315,7 +315,7 @@ test('reviewer reject ballot preserves a rejection reason when present', () => {
 
 test('reviewer reject ballot parses without a rejection reason', () => {
   const ballot = classifyCouncilReviewBallotFragments([
-    '[[reject]]',
+    '[[improve]]',
   ], 'critic');
 
   assert.deepEqual(ballot, {
@@ -395,7 +395,7 @@ test('reviewer freeform text before terminal reject is preserved while the rejec
   const result = classifyCouncilTextFragments([
     'The answer is close, but it misses one caveat.',
     '',
-    '[[reject]] Missing the retry caveat.',
+    '[[improve]] Missing the retry caveat.',
   ], false);
 
   assert.equal(result.action, 'revise');
@@ -405,7 +405,7 @@ test('reviewer freeform text before terminal reject is preserved while the rejec
   const ballot = classifyCouncilReviewBallotFragments([
     'The answer is close, but it misses one caveat.',
     '',
-    '[[reject]] Missing the retry caveat.',
+    '[[improve]] Missing the retry caveat.',
   ], 'critic');
 
   assert.deepEqual(ballot, {
@@ -600,14 +600,14 @@ test('leader and reviewer turn records preserve fragment snapshots for exact wor
 
   const reviewerFragments = [
     createModelAuxVoidFragment('reasoning', 'The proposal still misses the retry caveat.'),
-    createTextContentFragment('The proposal still misses the retry caveat.\n\n[[reject]] Mention the retry caveat.'),
+    createTextContentFragment('The proposal still misses the retry caveat.\n\n[[improve]] Mention the retry caveat.'),
   ];
   session = recordCouncilReviewerTurn(session, {
     reviewerParticipantId: 'critic',
     fragmentTexts: [
       'The proposal still misses the retry caveat.',
       '',
-      '[[reject]] Mention the retry caveat.',
+      '[[improve]] Mention the retry caveat.',
     ],
     messageFragments: reviewerFragments,
     messagePendingIncomplete: true,
@@ -909,7 +909,7 @@ test('transcript hydration restores an accepted second-round proposal verbatim',
     maxRounds: 4,
     entries: [
       { roundIndex: 0, participantId: 'leader', action: 'proposal', messageId: 'proposal-1', text: 'Draft one.' },
-      { roundIndex: 0, participantId: 'critic', action: 'reject', messageId: 'critic-r1', text: 'Reject: Missing the caveat.', reason: 'Missing the caveat.' },
+      { roundIndex: 0, participantId: 'critic', action: 'reject', messageId: 'critic-r1', text: 'Improve(): Missing the caveat.', reason: 'Missing the caveat.' },
       { roundIndex: 0, participantId: 'writer', action: 'accept', messageId: 'writer-a1', text: 'Accept' },
       { roundIndex: 1, participantId: 'leader', action: 'proposal', messageId: 'proposal-2', text: 'Draft two with caveat.' },
       { roundIndex: 1, participantId: 'critic', action: 'accept', messageId: 'critic-a2', text: 'Accept' },
@@ -953,8 +953,8 @@ test('transcript hydration carries forward all rejection reasons into the next d
     maxRounds: 4,
     entries: [
       { roundIndex: 0, participantId: 'leader', action: 'proposal', messageId: 'proposal-1', text: 'Draft one.' },
-      { roundIndex: 0, participantId: 'critic', action: 'reject', messageId: 'critic-r1', text: 'Reject: Missing the caveat.', reason: 'Missing the caveat.' },
-      { roundIndex: 0, participantId: 'writer', action: 'reject', messageId: 'writer-r1', text: 'Reject: Too long.', reason: 'Too long.' },
+      { roundIndex: 0, participantId: 'critic', action: 'reject', messageId: 'critic-r1', text: 'Improve(): Missing the caveat.', reason: 'Missing the caveat.' },
+      { roundIndex: 0, participantId: 'writer', action: 'reject', messageId: 'writer-r1', text: 'Improve(): Too long.', reason: 'Too long.' },
     ],
   });
 
@@ -975,7 +975,7 @@ test('transcript hydration keeps the latest ballot per reviewer when duplicates 
     maxRounds: 4,
     entries: [
       { roundIndex: 0, participantId: 'leader', action: 'proposal', messageId: 'proposal-1', text: 'Draft one.' },
-      { roundIndex: 0, participantId: 'critic', action: 'reject', messageId: 'critic-r1', text: 'Reject: Missing the caveat.', reason: 'Missing the caveat.' },
+      { roundIndex: 0, participantId: 'critic', action: 'reject', messageId: 'critic-r1', text: 'Improve(): Missing the caveat.', reason: 'Missing the caveat.' },
       { roundIndex: 0, participantId: 'critic', action: 'accept', messageId: 'critic-a1', text: 'Accept' },
       { roundIndex: 0, participantId: 'writer', action: 'accept', messageId: 'writer-a1', text: 'Accept' },
     ],

@@ -19,6 +19,11 @@ const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/
 const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 const IGNORE_CGR_NO_IMAGE_DEREFERENCE = true; // set to false to raise an exception, otherwise the CGR will continue skipping the part
 const AUTO_SYSTEM_IMAGES_INDEX = true; // set to false to disable the small index of images (in system instruction)
+const NON_JSON_UPSTREAM_TOOL_RESPONSE_NAMES = new Set([
+  'web_search',
+  'web_fetch',
+  'google_search_retrieval',
+]);
 
 
 // AIX <> Simple Text API helpers
@@ -513,16 +518,20 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
           case 'tool_response':
             if (isToolResponseFunctionCallPart(aPart)) {
-              let resultObject: any;
-              try {
-                resultObject = JSON.parse(aPart.response.result);
-              } catch (error: any) {
-                throw new Error('[AIX validation] expecting `tool_response` to be parseable');
+              const isHostedUpstreamWebToolResponse = aPart.environment === 'upstream'
+                && NON_JSON_UPSTREAM_TOOL_RESPONSE_NAMES.has(aPart.response.name);
+              if (!isHostedUpstreamWebToolResponse) {
+                let resultObject: any;
+                try {
+                  resultObject = JSON.parse(aPart.response.result);
+                } catch (error: any) {
+                  throw new Error('[AIX validation] expecting `tool_response` to be parseable');
+                }
+                if (!resultObject || typeof resultObject !== 'object')
+                  throw new Error('[AIX validation] expecting `tool_response` to be a JSON object');
+                if (Array.isArray(resultObject))
+                  throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
               }
-              if (!resultObject || typeof resultObject !== 'object')
-                throw new Error('[AIX validation] expecting `tool_response` to be a JSON object');
-              if (Array.isArray(resultObject))
-                throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
             }
             toolMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
             break;

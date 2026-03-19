@@ -40,8 +40,8 @@ import type { DAgentGroupSnapshot, DAgentSnapshot } from '~/common/stores/chat/s
 import { buildAgentTransferFile, getAgentTransferFilename, parseAgentTransferFile } from '~/common/stores/chat/store-chat-agent.transfer';
 import { buildAgentGroupTransferFile, getAgentGroupTransferFilename, parseAgentGroupTransferFile } from '~/common/stores/chat/store-chat-agent-groups.transfer';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
-import { getLLMLabel, type DLLM } from '~/common/stores/llms/llms.types';
-import { DModelParameterRegistry, DModelReasoningEffort, findModelReasoningEffortParamSpec, type DModelReasoningEffortParamId } from '~/common/stores/llms/llms.parameters';
+import { getLLMLabel } from '~/common/stores/llms/llms.types';
+import { DModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 import { findParticipantMentionMatchIndex, getParticipantAccentColor, getParticipantAccentSx } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
@@ -51,9 +51,10 @@ import {
   getParticipantRosterGridTemplateColumns,
 } from './ChatBarChat.layout';
 import {
+  getReasoningEffortOptions,
+  getParticipantReasoningEffortCompactLabel,
+  getParticipantReasoningEffortDraftValue,
   getParticipantReasoningEffortSelectState,
-  PARTICIPANT_REASONING_EFFORT_META,
-  PARTICIPANT_REASONING_EFFORT_ORDER,
   PARTICIPANT_REASONING_MODEL_SETTING_VALUE,
 } from './ChatBarChat.reasoning';
 import { createUniqueAgentName, getActiveAgentGroup, getAgentGroupSaveMode, getAgentSaveMode, getAssistantParticipantsSpeakWhenSummary, setAssistantParticipantsSpeakWhen } from './ChatBarChat.agentGroup';
@@ -64,32 +65,6 @@ import { useFolderDropdown } from './useFolderDropdown';
 
 function formatCouncilMaxRoundsDraft(value: number | null | undefined): string {
   return value == null ? '' : String(value);
-}
-
-function getParticipantReasoningEffortOptions(llm: DLLM | null) {
-  if (!llm)
-    return { parameterId: null, parameterLabel: 'Reasoning Effort', options: [] as Array<{ value: DModelReasoningEffort; label: string; description: string }> };
-
-  const effortSpec = findModelReasoningEffortParamSpec(llm.parameterSpecs);
-  if (!effortSpec)
-    return { parameterId: null, parameterLabel: 'Reasoning Effort', options: [] as Array<{ value: DModelReasoningEffort; label: string; description: string }> };
-
-  const parameterId = effortSpec.paramId as DModelReasoningEffortParamId;
-  const allowedValues = new Set((effortSpec.enumValues as readonly DModelReasoningEffort[] | undefined)
-    ?? (DModelParameterRegistry[parameterId].values as readonly DModelReasoningEffort[]));
-  const options = PARTICIPANT_REASONING_EFFORT_ORDER
-    .filter(value => allowedValues.has(value))
-    .map(value => ({
-      value,
-      label: PARTICIPANT_REASONING_EFFORT_META[value].label,
-      description: PARTICIPANT_REASONING_EFFORT_META[value].description,
-    }));
-
-  return {
-    parameterId,
-    parameterLabel: DModelParameterRegistry[parameterId].label,
-    options,
-  };
 }
 
 const agentsToolbarButtonSx = {
@@ -145,7 +120,7 @@ export function ChatBarChat(props: {
     llmId: string | null;
     customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
-    reasoningEffort: DConversationParticipant['reasoningEffort'];
+    reasoningEffort: DConversationParticipant['reasoningEffort'] | null;
   }>>({});
 
   // external state
@@ -272,7 +247,7 @@ export function ChatBarChat(props: {
   }, [assistantParticipants, latestAssistantMessage, nextToSpeakParticipantId, participantsAnchorEl, spokenThisTurnParticipantIds, wasParticipantMentionedInLatestUserTurn]);
   const participantPersonaOptions = React.useMemo(() => Object.entries(SystemPurposes) as [SystemPurposeId, (typeof SystemPurposes)[SystemPurposeId]][], []);
   const selectedParticipantLlm = React.useMemo(() => visibleLLMs.find(llm => llm.id === draftLlmId) ?? null, [draftLlmId, visibleLLMs]);
-  const selectedParticipantReasoningConfig = React.useMemo(() => getParticipantReasoningEffortOptions(selectedParticipantLlm), [selectedParticipantLlm]);
+  const selectedParticipantReasoningConfig = React.useMemo(() => getReasoningEffortOptions(selectedParticipantLlm), [selectedParticipantLlm]);
   const isDraftCustomPersonaSelected = draftPersonaId === 'Custom';
   const participantRosterGridTemplateColumns = React.useMemo(
     () => getParticipantRosterGridTemplateColumns(!!expandedParticipantId),
@@ -320,6 +295,29 @@ export function ChatBarChat(props: {
   const canManageParticipants = !!props.conversationId;
   const canRemoveAssistant = assistantParticipants.length > 1;
   const assistantSpeakWhenSummary = React.useMemo(() => getAssistantParticipantsSpeakWhenSummary(assistantParticipants), [assistantParticipants]);
+  const leaderReasoningSummaryLabel = React.useMemo(() => {
+    if (!leaderParticipant)
+      return null;
+
+    const leaderLlmId = leaderParticipant.llmId || chatLLMId || null;
+    const leaderLlm = leaderLlmId
+      ? visibleLLMs.find(llm => llm.id === leaderLlmId) ?? null
+      : null;
+    const leaderReasoningConfig = getReasoningEffortOptions(leaderLlm);
+
+    return getParticipantReasoningEffortCompactLabel({
+      llm: leaderLlm,
+      parameterId: leaderReasoningConfig.parameterId,
+      options: leaderReasoningConfig.options,
+      selectedReasoningEffort: leaderParticipant.reasoningEffort ?? null,
+    });
+  }, [chatLLMId, leaderParticipant, visibleLLMs]);
+  const participantsButtonLabel = React.useMemo(() => {
+    if (turnTerminationMode === 'council')
+      return leaderParticipant ? `Leader ${leaderParticipant.name}${leaderReasoningSummaryLabel ? ` · ${leaderReasoningSummaryLabel}` : ''}` : 'Leader';
+
+    return `Agents ${assistantParticipants.length > 1 ? assistantParticipants.length : ''}${leaderParticipant ? ` · Leader ${leaderParticipant.name}` : ''}`;
+  }, [assistantParticipants.length, leaderParticipant, leaderReasoningSummaryLabel, turnTerminationMode]);
   const allAssistantsEveryTurn = React.useMemo(() =>
     assistantParticipants.every(participant => (participant.speakWhen ?? 'every-turn') === 'every-turn'),
   [assistantParticipants]);
@@ -390,7 +388,7 @@ export function ChatBarChat(props: {
     llmId: string | null;
     customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
-    reasoningEffort: DConversationParticipant['reasoningEffort'];
+    reasoningEffort: DConversationParticipant['reasoningEffort'] | null;
   }>) => {
     const participant = participants.find(participant => participant.id === participantId);
     if (!participant)
@@ -404,7 +402,7 @@ export function ChatBarChat(props: {
         llmId: current[participantId]?.llmId ?? participant.llmId ?? null,
         customPrompt: current[participantId]?.customPrompt ?? participant.customPrompt ?? '',
         speakWhen: current[participantId]?.speakWhen ?? participant.speakWhen ?? 'every-turn',
-        reasoningEffort: current[participantId]?.reasoningEffort ?? participant.reasoningEffort,
+        reasoningEffort: current[participantId]?.reasoningEffort ?? participant.reasoningEffort ?? null,
         ...update,
       },
     }));
@@ -540,18 +538,6 @@ export function ChatBarChat(props: {
     setCouncilMaxRoundsDraft(formatCouncilMaxRoundsDraft(nextCouncilMaxRounds));
     setCouncilMaxRounds(props.conversationId, nextCouncilMaxRounds);
   }, [councilMaxRoundsDraft, props.conversationId, setCouncilMaxRounds]);
-
-  const handleCouncilTraceAutoCollapsePreviousRoundsChange = React.useCallback((value: boolean) => {
-    if (!props.conversationId)
-      return;
-    setCouncilTraceAutoCollapsePreviousRounds(props.conversationId, value);
-  }, [props.conversationId, setCouncilTraceAutoCollapsePreviousRounds]);
-
-  const handleCouncilTraceAutoExpandNewestRoundChange = React.useCallback((value: boolean) => {
-    if (!props.conversationId)
-      return;
-    setCouncilTraceAutoExpandNewestRound(props.conversationId, value);
-  }, [props.conversationId, setCouncilTraceAutoExpandNewestRound]);
 
   const handleParticipantsClose = React.useCallback(() => {
     Object.keys(participantDrafts).forEach(participantId => handleParticipantDraftCommit(participantId));
@@ -830,7 +816,7 @@ export function ChatBarChat(props: {
       startDecorator={<SmartToyOutlinedIcon />}
       variant={participantsAnchorEl ? 'solid' : 'soft'}
     >
-      Agents {assistantParticipants.length > 1 ? assistantParticipants.length : ''}{leaderParticipant ? ` · Leader ${leaderParticipant.name}` : ''}
+      {participantsButtonLabel}
     </Button>
     <Chip
       size='sm'
@@ -1074,10 +1060,6 @@ export function ChatBarChat(props: {
           councilMaxRoundsDraft={councilMaxRoundsDraft}
           onCouncilMaxRoundsDraftChange={handleCouncilMaxRoundsDraftChange}
           onCouncilMaxRoundsCommit={handleCouncilMaxRoundsCommit}
-          councilTraceAutoCollapsePreviousRounds={councilTraceAutoCollapsePreviousRounds}
-          onCouncilTraceAutoCollapsePreviousRoundsChange={handleCouncilTraceAutoCollapsePreviousRoundsChange}
-          councilTraceAutoExpandNewestRound={councilTraceAutoExpandNewestRound}
-          onCouncilTraceAutoExpandNewestRoundChange={handleCouncilTraceAutoExpandNewestRoundChange}
           canBulkSetSpeakWhen={!!assistantParticipants.length}
           canSetAllParticipantsEveryTurn={!allAssistantsEveryTurn}
           canSetAllParticipantsOnlyMention={!allAssistantsOnlyMention}
@@ -1098,7 +1080,6 @@ export function ChatBarChat(props: {
           const personaTitle = participant.personaId ? SystemPurposes[participant.personaId]?.title ?? participant.personaId : 'No persona';
           const participantLlm = participant.llmId ? visibleLLMs.find(llm => llm.id === participant.llmId) ?? null : null;
           const llmLabel = participantLlm ? getLLMLabel(participantLlm) : participant.llmId ?? 'Chat model';
-          const reasoningLabel = participant.reasoningEffort ? PARTICIPANT_REASONING_EFFORT_META[participant.reasoningEffort].label : null;
           const participantStatus = participantStatusById.get(participant.id);
           const isExpanded = expandedParticipantId === participant.id;
           const summaryLabel = participant.speakWhen === 'when-mentioned' ? 'On mention' : 'Every turn';
@@ -1114,8 +1095,11 @@ export function ChatBarChat(props: {
           const effectiveParticipantLlm = effectiveParticipantLlmId
             ? visibleLLMs.find(llm => llm.id === effectiveParticipantLlmId) ?? null
             : null;
-          const participantReasoningConfig = getParticipantReasoningEffortOptions(effectiveParticipantLlm);
-          const reasoningEffortDraftRaw = participantDraft?.reasoningEffort ?? participant.reasoningEffort ?? null;
+          const participantReasoningConfig = getReasoningEffortOptions(effectiveParticipantLlm);
+          const reasoningEffortDraftRaw = getParticipantReasoningEffortDraftValue({
+            draft: participantDraft ?? null,
+            persistedReasoningEffort: participant.reasoningEffort,
+          });
           const {
             selectValue: reasoningEffortDraftValue,
             helperText: reasoningEffortHelperText,
@@ -1125,6 +1109,12 @@ export function ChatBarChat(props: {
             parameterId: participantReasoningConfig.parameterId,
             options: participantReasoningConfig.options,
             selectedReasoningEffort: reasoningEffortDraftRaw,
+          });
+          const reasoningSummaryLabel = getParticipantReasoningEffortCompactLabel({
+            llm: effectiveParticipantLlm,
+            parameterId: participantReasoningConfig.parameterId,
+            options: participantReasoningConfig.options,
+            selectedReasoningEffort: participant.reasoningEffort ?? null,
           });
           const agentSaveMode = getAgentSaveMode({
             participantName: aliasDraft.trim() || participant.name,
@@ -1203,7 +1193,7 @@ export function ChatBarChat(props: {
                   <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
                     <Typography level='title-sm' sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>{participant.name}</Typography>
                     {participant.isLeader && <Chip size='sm' variant='solid' color={participantAccentColor}>Leader</Chip>}
-                    {isExpanded && !participant.isLeader && (
+                    {isExpanded && turnTerminationMode === 'council' && !participant.isLeader && (
                       <Button
                         size='sm'
                         variant='soft'
@@ -1239,7 +1229,10 @@ export function ChatBarChat(props: {
                     {personaTitle}
                   </Typography>
                   <Typography level='body-xs' sx={{ color: 'text.tertiary', mt: 0.15 }}>
-                    {llmLabel}{reasoningLabel ? ` · ${reasoningLabel}` : ''}
+                    {llmLabel}
+                  </Typography>
+                  <Typography level='body-xs' sx={{ color: 'text.tertiary', mt: 0.1 }}>
+                    {reasoningSummaryLabel}
                   </Typography>
                   <Typography
                     level='body-xs'
@@ -1324,8 +1317,8 @@ export function ChatBarChat(props: {
                         const nextLlm = (nextLlmId || chatLLMId)
                           ? visibleLLMs.find(llm => llm.id === (nextLlmId || chatLLMId)) ?? null
                           : null;
-                        const nextReasoningConfig = getParticipantReasoningEffortOptions(nextLlm);
-                        const currentReasoningEffort = participantDraft?.reasoningEffort ?? participant.reasoningEffort;
+                        const nextReasoningConfig = getReasoningEffortOptions(nextLlm);
+                        const currentReasoningEffort = reasoningEffortDraftRaw;
                         handleParticipantDraftChange(participant.id, {
                           llmId: nextLlmId,
                           ...(currentReasoningEffort && !nextReasoningConfig.options.some(option => option.value === currentReasoningEffort)
@@ -1366,8 +1359,8 @@ export function ChatBarChat(props: {
                         value={reasoningEffortDraftValue}
                         onChange={(_event, value) => handleParticipantDraftChange(participant.id, {
                           reasoningEffort: value === PARTICIPANT_REASONING_MODEL_SETTING_VALUE
-                            ? undefined
-                            : (value as DConversationParticipant['reasoningEffort'] | null) ?? undefined,
+                            ? null
+                            : (value as DConversationParticipant['reasoningEffort'] | null) ?? null,
                         })}
                         disabled={!participantReasoningConfig.parameterId}
                       >

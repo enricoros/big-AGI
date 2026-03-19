@@ -24,10 +24,6 @@ test('settings panel shows the council max rounds control only in council mode',
       councilMaxRoundsDraft=''
       onCouncilMaxRoundsDraftChange={() => undefined}
       onCouncilMaxRoundsCommit={() => undefined}
-      councilTraceAutoCollapsePreviousRounds
-      onCouncilTraceAutoCollapsePreviousRoundsChange={() => undefined}
-      councilTraceAutoExpandNewestRound
-      onCouncilTraceAutoExpandNewestRoundChange={() => undefined}
       canBulkSetSpeakWhen
       canSetAllParticipantsEveryTurn
       canSetAllParticipantsOnlyMention
@@ -39,8 +35,6 @@ test('settings panel shows the council max rounds control only in council mode',
   assert.match(councilMarkup, /placeholder="Unlimited"/);
   assert.match(councilMarkup, /value=""/);
   assert.match(councilMarkup, /Leave blank for unlimited\./);
-  assert.match(councilMarkup, /Auto-collapse previous rounds/);
-  assert.match(councilMarkup, /Auto-expand newest round/);
   assert.match(councilMarkup, /Triggered agents must agree before one shared reply is shown\./);
   assert.match(councilMarkup, /Set all to every turn/);
   assert.match(councilMarkup, /Set all to only mention/);
@@ -54,10 +48,6 @@ test('settings panel shows the council max rounds control only in council mode',
       councilMaxRoundsDraft='7'
       onCouncilMaxRoundsDraftChange={() => undefined}
       onCouncilMaxRoundsCommit={() => undefined}
-      councilTraceAutoCollapsePreviousRounds
-      onCouncilTraceAutoCollapsePreviousRoundsChange={() => undefined}
-      councilTraceAutoExpandNewestRound
-      onCouncilTraceAutoExpandNewestRoundChange={() => undefined}
       canBulkSetSpeakWhen
       canSetAllParticipantsEveryTurn
       canSetAllParticipantsOnlyMention
@@ -81,10 +71,6 @@ test('settings panel shows bulk speak controls for every turn termination mode w
       councilMaxRoundsDraft='7'
       onCouncilMaxRoundsDraftChange={() => undefined}
       onCouncilMaxRoundsCommit={() => undefined}
-      councilTraceAutoCollapsePreviousRounds
-      onCouncilTraceAutoCollapsePreviousRoundsChange={() => undefined}
-      councilTraceAutoExpandNewestRound
-      onCouncilTraceAutoExpandNewestRoundChange={() => undefined}
       canBulkSetSpeakWhen
       canSetAllParticipantsEveryTurn
       canSetAllParticipantsOnlyMention={false}

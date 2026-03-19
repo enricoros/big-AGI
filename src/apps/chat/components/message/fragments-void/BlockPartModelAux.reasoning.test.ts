@@ -100,3 +100,18 @@ test('extractReasoningRenderSequence groups consecutive hosted web fragments int
   assert.equal(sequence[1]?.type, 'hosted-web-group');
   assert.equal(sequence[1]?.type === 'hosted-web-group' ? sequence[1].fragments.length : 0, 2);
 });
+
+test('extractReasoningRenderSequence keeps hosted web fragments inside reasoning after visible text appears', () => {
+  const sequence = extractReasoningRenderSequence([
+    createModelAuxVoidFragment('reasoning', 'Need sources.'),
+    createTextContentFragment('Drafting final answer.'),
+    create_FunctionCallInvocation_ContentFragment('ws-1', 'web_search', '{"q":"canary islands saas"}'),
+    create_FunctionCallResponse_ContentFragment('ws-1', false, 'web_search', 'Hosted web search completed.', 'upstream'),
+    createTextContentFragment('Final answer.'),
+  ]);
+
+  assert.equal(sequence.length, 2);
+  assert.equal(sequence[0]?.type, 'text');
+  assert.equal(sequence[1]?.type, 'hosted-web-group');
+  assert.equal(sequence[1]?.type === 'hosted-web-group' ? sequence[1].fragments.length : 0, 2);
+});

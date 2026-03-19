@@ -5,7 +5,7 @@ import { Agent } from '~/modules/aifn/react/react';
 import type { DConversationParticipant, DPersistedCouncilSession } from '~/common/stores/chat/chat.conversation';
 import { createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { createDMessagePlaceholderIncomplete, createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { create_FunctionCallInvocation_ContentFragment, createModelAuxVoidFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { create_FunctionCallInvocation_ContentFragment, createModelAuxVoidFragment, createTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 import { createPerChatVanillaStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
 import { inferResumableCouncilSession } from '~/common/chat-overlay/ConversationHandler';
@@ -113,7 +113,7 @@ function scriptedCouncilRejectReply(reason: string): ScriptedReply {
   return {
     finalText: '',
     fragments: [
-      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Reject', JSON.stringify({ reason })),
+      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Improve', JSON.stringify({ reason })),
     ],
   };
 }
@@ -122,7 +122,7 @@ function scriptedCouncilRejectNoReasonReply(): ScriptedReply {
   return {
     finalText: '',
     fragments: [
-      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Reject', '{}'),
+      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Improve', '{}'),
     ],
   };
 }
@@ -142,7 +142,7 @@ function scriptedCouncilRejectReviewReply(analysis: string, reason: string): Scr
     finalText: '',
     fragments: [
       createTextContentFragment(analysis),
-      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Reject', JSON.stringify({ reason })),
+      create_FunctionCallInvocation_ContentFragment('tool-reject', 'Improve', JSON.stringify({ reason })),
     ],
   };
 }
@@ -209,6 +209,8 @@ type ScriptedReply = string | {
 type PersonaInvocation = {
   participantId: string;
   sourceHistoryText: string;
+  sourceHistoryToolInvocationCount: number;
+  sourceHistoryToolResponseCount: number;
   requestedToolNames: string[];
   requestedToolsPolicy: unknown;
   existingAssistantMessageId: string | null;
@@ -306,6 +308,14 @@ class ScriptedChatExecutionRuntime implements ChatExecutionRuntime {
         .map(message => messageFragmentsReduceText(message.fragments))
         .filter(Boolean)
         .join('\n\n'),
+      sourceHistoryToolInvocationCount: (params.sourceHistory ?? [])
+        .flatMap(message => message.fragments)
+        .filter(fragment => 'part' in fragment && isToolInvocationPart(fragment.part))
+        .length,
+      sourceHistoryToolResponseCount: (params.sourceHistory ?? [])
+        .flatMap(message => message.fragments)
+        .filter(fragment => 'part' in fragment && isToolResponseFunctionCallPart(fragment.part))
+        .length,
       requestedToolNames: (() => {
         const transformedRequest = params.runOptions?.requestTransform?.({
           systemMessage: null,
@@ -444,7 +454,7 @@ test('runCouncilSequence can complete a full no-model council loop', async () =>
   assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Draft two with caveat.');
 });
 
-test('runCouncilSequence gives reviewer ballot turns the normal tools plus explicit Accept and Reject tools', async () => {
+test('runCouncilSequence gives reviewer ballot turns the normal tools plus explicit Accept and Improve tools', async () => {
   resetChatStoreForTest();
   const participants = createParticipants();
   const [, leader, critic, writer] = participants;
@@ -489,12 +499,12 @@ test('runCouncilSequence gives reviewer ballot turns the normal tools plus expli
   assert.doesNotMatch(leaderInvocation?.sourceHistoryText ?? '', /Output only the proposal text/i);
   assert.match(leaderInvocation?.sourceHistoryText ?? '', /Use @mentions to ask other agents to continue when the room supports mention follow-ups\./);
 
-  assert.deepEqual(criticReviewInvocation?.requestedToolNames, ['WebSearch', 'Accept', 'Reject']);
+  assert.deepEqual(criticReviewInvocation?.requestedToolNames, ['WebSearch', 'Accept', 'Improve']);
   assert.deepEqual(criticReviewInvocation?.requestedToolsPolicy, { type: 'required', toolNames: ['WebSearch'] });
   assert.match(criticReviewInvocation?.sourceHistoryText ?? '', /Use @mentions to ask other agents to continue when the room supports mention follow-ups\./);
   assert.match(criticReviewInvocation?.sourceHistoryText ?? '', /Analyze the current Leader proposal:/);
   assert.match(criticReviewInvocation?.sourceHistoryText ?? '', /Then return your verdict by calling exactly one tool:/);
-  assert.doesNotMatch(criticReviewInvocation?.sourceHistoryText ?? '', /Reject\(reason\)/);
+  assert.doesNotMatch(criticReviewInvocation?.sourceHistoryText ?? '', /Improve\(reason\)/);
   assert.doesNotMatch(criticReviewInvocation?.sourceHistoryText ?? '', /Stateful Council mode is active\./);
   assert.doesNotMatch(criticReviewInvocation?.sourceHistoryText ?? '', /You are a reviewer\./);
   assert.doesNotMatch(criticReviewInvocation?.sourceHistoryText ?? '', /write exactly one concise review plan/i);
@@ -517,6 +527,7 @@ test('runCouncilSequence marks reviewer replies without a ballot tool as missing
     [leader.id, ['Draft one.', 'Draft two with caveat.']],
     [critic.id, [
       'The draft is missing the key caveat about retries.',
+      'Still no ballot.',
       scriptedCouncilAcceptReviewReply('Critic analysis after revision.'),
     ]],
     [writer.id, [
@@ -542,7 +553,61 @@ test('runCouncilSequence marks reviewer replies without a ballot tool as missing
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[critic.id]?.terminalAction, 'reject');
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[critic.id]?.terminalReason, 'review verdict missing');
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[critic.id]?.reason, 'review verdict missing');
+  assert.equal(messageFragmentsReduceText(councilSession.workflowState?.rounds[0]?.reviewerVotes[critic.id]?.messageFragments ?? []), 'The draft is missing the key caveat about retries.\n\nStill no ballot.');
+});
+
+test('runCouncilSequence repairs a missing reviewer ballot with a forced follow-up verdict turn', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const [, leader, critic, writer] = participants;
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+  });
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Draft one.', 'Draft two with caveat.']],
+    [critic.id, [
+      'The draft is missing the key caveat about retries.',
+      {
+        finalText: '',
+        fragments: [
+          create_FunctionCallInvocation_ContentFragment('tool-reject-repair', 'Improve', JSON.stringify({ reason: 'Missing the key caveat about retries.' })),
+        ],
+      },
+      scriptedCouncilAcceptReviewReply('Critic analysis after revision.'),
+    ]],
+    [writer.id, [
+      scriptedCouncilAcceptReviewReply('Writer analysis one.'),
+      scriptedCouncilAcceptReviewReply('Writer analysis after revision.'),
+    ]],
+  ]));
+
+  const result = await runCouncilSequence(
+    runtime.getSession(conversationId),
+    conversationId,
+    participants.slice(1),
+    TEST_LLM_ID,
+    1,
+    userMessage.id,
+    null,
+    runtime,
+  );
+
+  assert.equal(result, true);
+
+  const councilSession = runtime.getSession(conversationId).getCouncilSession();
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[critic.id]?.terminalAction, 'reject');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[critic.id]?.terminalReason, 'Missing the key caveat about retries.');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[critic.id]?.reason, 'Missing the key caveat about retries.');
   assert.equal(messageFragmentsReduceText(councilSession.workflowState?.rounds[0]?.reviewerVotes[critic.id]?.messageFragments ?? []), 'The draft is missing the key caveat about retries.');
+
+  const criticInvocations = runtime.invocations.filter(invocation => invocation.participantId === critic.id);
+  assert.equal(criticInvocations.length, 3);
+  assert.deepEqual(criticInvocations[1]?.requestedToolNames, ['Accept', 'Improve']);
+  assert.deepEqual(criticInvocations[1]?.requestedToolsPolicy, { type: 'any' });
+  assert.match(criticInvocations[1]?.sourceHistoryText ?? '', /Your previous review did not submit the required verdict tool call\./);
+  assert.match(criticInvocations[1]?.sourceHistoryText ?? '', /Your review analysis was:\nThe draft is missing the key caveat about retries\./);
 });
 
 test('runCouncilSequence stops cleanly when the leader fails to produce a valid proposal', async () => {
@@ -780,25 +845,29 @@ test('runCouncilSequence shares all prior round agent messages with every agent 
   assert.ok(leaderRoundTwoInvocation);
   assert.match(leaderRoundTwoInvocation.sourceHistoryText, /Draft one\./);
   assert.match(leaderRoundTwoInvocation.sourceHistoryText, /Critic analysis one\./);
-  assert.match(leaderRoundTwoInvocation.sourceHistoryText, /Reject: Missing the caveat\./);
+  assert.match(leaderRoundTwoInvocation.sourceHistoryText, /Improve\(\): Missing the caveat\./);
   assert.match(leaderRoundTwoInvocation.sourceHistoryText, /Writer analysis one\./);
   assert.match(leaderRoundTwoInvocation.sourceHistoryText, /Accept/);
   assert.doesNotMatch(leaderRoundTwoInvocation.sourceHistoryText, /Leader proposal:/);
   assert.doesNotMatch(leaderRoundTwoInvocation.sourceHistoryText, /Reviewer analysis:/);
+  assert.equal(leaderRoundTwoInvocation.sourceHistoryToolInvocationCount, 0);
+  assert.equal(leaderRoundTwoInvocation.sourceHistoryToolResponseCount, 0);
   assert.ok(leaderRoundTwoInvocation.sourceHistoryText.indexOf('Draft one.') < leaderRoundTwoInvocation.sourceHistoryText.indexOf('Critic analysis one.'));
-  assert.ok(leaderRoundTwoInvocation.sourceHistoryText.indexOf('Critic analysis one.') < leaderRoundTwoInvocation.sourceHistoryText.indexOf('Reject: Missing the caveat.'));
-  assert.ok(leaderRoundTwoInvocation.sourceHistoryText.indexOf('Reject: Missing the caveat.') < leaderRoundTwoInvocation.sourceHistoryText.indexOf('Writer analysis one.'));
+  assert.ok(leaderRoundTwoInvocation.sourceHistoryText.indexOf('Critic analysis one.') < leaderRoundTwoInvocation.sourceHistoryText.indexOf('Improve(): Missing the caveat.'));
+  assert.ok(leaderRoundTwoInvocation.sourceHistoryText.indexOf('Improve(): Missing the caveat.') < leaderRoundTwoInvocation.sourceHistoryText.indexOf('Writer analysis one.'));
 
   const criticRoundTwoReviewInvocation = runtime.invocations.filter(invocation => invocation.participantId === critic.id)[1];
   assert.ok(criticRoundTwoReviewInvocation);
   assert.match(criticRoundTwoReviewInvocation.sourceHistoryText, /Draft one\./);
   assert.match(criticRoundTwoReviewInvocation.sourceHistoryText, /Critic analysis one\./);
-  assert.match(criticRoundTwoReviewInvocation.sourceHistoryText, /Reject: Missing the caveat\./);
+  assert.match(criticRoundTwoReviewInvocation.sourceHistoryText, /Improve\(\): Missing the caveat\./);
   assert.match(criticRoundTwoReviewInvocation.sourceHistoryText, /Writer analysis one\./);
   assert.match(criticRoundTwoReviewInvocation.sourceHistoryText, /Accept/);
+  assert.equal(criticRoundTwoReviewInvocation.sourceHistoryToolInvocationCount, 0);
+  assert.equal(criticRoundTwoReviewInvocation.sourceHistoryToolResponseCount, 0);
   assert.ok(criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Draft one.') < criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Critic analysis one.'));
-  assert.ok(criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Critic analysis one.') < criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Reject: Missing the caveat.'));
-  assert.ok(criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Reject: Missing the caveat.') < criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Writer analysis one.'));
+  assert.ok(criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Critic analysis one.') < criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Improve(): Missing the caveat.'));
+  assert.ok(criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Improve(): Missing the caveat.') < criticRoundTwoReviewInvocation.sourceHistoryText.indexOf('Writer analysis one.'));
 });
 
 test('runCouncilSequence keeps same-round reviewer analyses isolated during parallel review', async () => {
@@ -1257,6 +1326,158 @@ test('handleExecute resumes from councilOpLog without rerunning committed turns'
   assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Draft one.');
 });
 
+test('handleExecute resumes a council run from a persisted checkpoint when the councilOpLog is missing', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const leader = participants[1];
+  const critic = participants[2];
+  const writer = participants[3];
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  const workflowState = createCouncilSessionState({
+    phaseId: 'phase-persisted-session-resume',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+    councilSession: {
+      status: 'interrupted',
+      executeMode: 'generate-content',
+      mode: 'council',
+      phaseId: workflowState.phaseId,
+      passIndex: workflowState.roundIndex,
+      workflowState,
+      canResume: true,
+      interruptionReason: 'page-unload',
+      updatedAt: userMessage.created + 1,
+    },
+    councilOpLog: null,
+  });
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Draft one.']],
+    [critic.id, [scriptedCouncilAcceptReviewReply('Critic analysis one.')]],
+    [writer.id, [scriptedCouncilAcceptReviewReply('Writer analysis one.')]],
+  ]));
+
+  const result = await _handleExecute('generate-content', conversationId, 'runtime-test', runtime);
+
+  assert.equal(result, true);
+  assert.deepEqual(runtime.callLog, [leader.id, critic.id, writer.id]);
+
+  const messages = useChatStore.getState().historyView(conversationId) ?? [];
+  const resultMessage = messages.find(message => message.metadata?.council?.kind === 'result') ?? null;
+  assert.ok(resultMessage);
+  assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Draft one.');
+});
+
+test('handleExecute resumes a second-round council checkpoint when the councilOpLog is missing', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const leader = participants[1];
+  const critic = participants[2];
+  const writer = participants[3];
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-persisted-second-round-resume',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-round-0',
+    leaderParticipantId: leader.id,
+    proposalText: 'Draft one.',
+  });
+  workflowState = applyCouncilReviewBallots(workflowState, [
+    { reviewerParticipantId: critic.id, decision: 'reject', reason: 'Missing the caveat.' },
+    { reviewerParticipantId: writer.id, decision: 'accept' },
+  ]);
+
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+    councilSession: {
+      status: 'interrupted',
+      executeMode: 'generate-content',
+      mode: 'council',
+      phaseId: workflowState.phaseId,
+      passIndex: workflowState.roundIndex,
+      workflowState,
+      canResume: true,
+      interruptionReason: 'page-unload',
+      updatedAt: userMessage.created + 1,
+    },
+    councilOpLog: null,
+  });
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Draft two with caveat.']],
+    [critic.id, [scriptedCouncilAcceptReviewReply('Critic analysis two.')]],
+    [writer.id, [scriptedCouncilAcceptReviewReply('Writer analysis two.')]],
+  ]));
+
+  const result = await _handleExecute('generate-content', conversationId, 'runtime-test', runtime);
+
+  assert.equal(result, true);
+  assert.deepEqual(runtime.callLog, [leader.id, critic.id, writer.id]);
+
+  const conversation = useChatStore.getState().conversations.find(item => item.id === conversationId) ?? null;
+  assert.equal(conversation?.councilOpLog?.some(op => op.type === 'round_started' && op.payload.roundIndex === 1), true);
+
+  const resultMessage = (useChatStore.getState().historyView(conversationId) ?? [])
+    .find(message => message.metadata?.council?.kind === 'result') ?? null;
+  assert.ok(resultMessage);
+  assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Draft two with caveat.');
+});
+
+test('runCouncilSequence persists a resumable council checkpoint while the leader is still processing', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const leader = participants[1];
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+  });
+  const deferred = createDeferred<void>();
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, [{
+      finalText: 'Draft one.',
+      waitFor: deferred.promise,
+    }]],
+  ]));
+
+  const runPromise = runCouncilSequence(
+    runtime.getSession(conversationId),
+    conversationId,
+    participants.slice(1),
+    TEST_LLM_ID,
+    1,
+    userMessage.id,
+    null,
+    runtime,
+  );
+
+  await Promise.resolve();
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  const conversationDuringRun = useChatStore.getState().conversations.find(item => item.id === conversationId) ?? null;
+  assert.equal(conversationDuringRun?.councilSession?.status, 'interrupted');
+  assert.equal(conversationDuringRun?.councilSession?.canResume, true);
+  assert.equal(conversationDuringRun?.councilSession?.mode, 'council');
+  assert.equal(conversationDuringRun?.councilSession?.interruptionReason, 'page-unload');
+  assert.equal(conversationDuringRun?.councilSession?.workflowState?.status, 'drafting');
+  assert.ok(conversationDuringRun?.councilSession?.phaseId);
+
+  useChatStore.getState().abortConversationTemp(conversationId);
+  deferred.resolve();
+
+  const result = await runPromise;
+  assert.equal(result, false);
+});
+
 test('runCouncilSequence accepts a ballot-only reviewer accept', async () => {
   resetChatStoreForTest();
   const participants = createParticipants();
@@ -1290,6 +1511,55 @@ test('runCouncilSequence accepts a ballot-only reviewer accept', async () => {
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.reason, null);
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalAction, 'accept');
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalReason, null);
+});
+
+test('runCouncilSequence rejects reviewer accepts that only provide hidden reasoning without visible analysis', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const [, leader, critic, writer] = participants;
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+  });
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Draft one.', 'Draft two with explicit rationale.']],
+    [critic.id, [
+      scriptedCouncilAcceptReviewReply('Critic analysis one.'),
+      scriptedCouncilAcceptReviewReply('Critic analysis two.'),
+    ]],
+    [writer.id, [
+      {
+        finalText: '',
+        fragments: [
+          createModelAuxVoidFragment('reasoning', 'I am leaning toward accepting this because the proposal seems solid enough.'),
+          create_FunctionCallInvocation_ContentFragment('tool-accept-hidden-reasoning', 'Accept', '{}'),
+        ],
+      },
+      scriptedCouncilAcceptReviewReply('Writer analysis two.'),
+    ]],
+  ]));
+
+  const result = await runCouncilSequence(
+    runtime.getSession(conversationId),
+    conversationId,
+    participants.slice(1),
+    TEST_LLM_ID,
+    1,
+    userMessage.id,
+    null,
+    runtime,
+  );
+
+  assert.equal(result, true);
+
+  const councilSession = runtime.getSession(conversationId).getCouncilSession();
+  assert.equal(councilSession.workflowState?.status, 'accepted');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.ballot.decision, 'reject');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.reason, 'review analysis missing');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalAction, 'reject');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalReason, 'review analysis missing');
+  assert.equal(councilSession.workflowState?.rounds[1]?.reviewerVotes[writer.id]?.ballot.decision, 'accept');
 });
 
 test('runCouncilSequence accepts reviewer ballots even when pre-ballot text is meta-only', async () => {
@@ -1850,7 +2120,7 @@ test('handleExecute ignores stale resumable council state after a new user turn'
       leaderParticipantId: leader.id,
     },
   };
-  const criticBallotMessage = completeMessage(createDMessageTextContent('assistant', 'Reject'));
+  const criticBallotMessage = completeMessage(createDMessageTextContent('assistant', 'Improve()'));
   criticBallotMessage.metadata = {
     author: {
       participantId: critic.id,

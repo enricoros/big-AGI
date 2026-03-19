@@ -8,6 +8,7 @@ import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
+import { markdownNeedsPreprocessor } from './markdown/CustomMarkdownRenderer';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
@@ -17,8 +18,6 @@ import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
 
-// configuration
-const DISABLE_MARKDOWN_PROGRESSIVE_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
 // import '~/common/util/forceTouchToDoubleClick'; // Future: Mac trackpad: force press → double-click
 
 
@@ -124,8 +123,10 @@ export function AutoBlocksRenderer(props: {
 
         // Optimization: only memo the non-currently-rendered components, if the message is still in flux
         const optimizeMemoBeforeLastBlock = props.optiAllowSubBlocksMemo === true && index < (autoBlocksStable.length - 1);
-        // Optimization: disable the markdown preprocessor on the last block, only do it at the end not while in progress
-        const optimizeDisableProcessorsOnLast = DISABLE_MARKDOWN_PROGRESSIVE_PREPROCESS && props.optiAllowSubBlocksMemo === true && index === (autoBlocksStable.length - 1);
+        // Keep the lightweight path for plain streaming text, but still preprocess math/mark/del syntax immediately.
+        const optimizeDisableProcessorsOnLast = props.optiAllowSubBlocksMemo === true
+          && index === (autoBlocksStable.length - 1)
+          && !markdownNeedsPreprocessor(bkInput.content);
 
         switch (bkInput.bkt) {
 

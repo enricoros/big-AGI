@@ -10,9 +10,9 @@ export const COUNCIL_REVIEW_ANALYSIS_MISSING_REASON = 'review analysis missing';
 const COUNCIL_TRANSCRIPT_PREFIX_PATTERN = /^\[Council deliberation\]\s*/i;
 const LEGACY_CONSENSUS_TRANSCRIPT_PREFIX_PATTERN = /^\[Consensus deliberation\]\s*/i;
 const COUNCIL_PROTOCOL_PATTERN = /^\[\[(proposal|accept|revise|deliberation)\]\]\s*/i;
-const COUNCIL_REVIEW_BALLOT_PATTERN = /^\[\[(accept|reject)\]\]\s*(.*)$/i;
+const COUNCIL_REVIEW_BALLOT_PATTERN = /^\[\[(accept|improve)\]\]\s*(.*)$/i;
 const INLINE_COUNCIL_PROTOCOL_PATTERN = /^(?<leading>[\s\S]*?)\[\[(?<action>proposal|accept|revise|deliberation)\]\]\s*(?<trailing>[\s\S]*)$/i;
-const INLINE_COUNCIL_REVIEW_BALLOT_PATTERN = /^(?<leading>[\s\S]*?)\[\[(?<decision>accept|reject)\]\]\s*(?<trailing>[\s\S]*)$/i;
+const INLINE_COUNCIL_REVIEW_BALLOT_PATTERN = /^(?<leading>[\s\S]*?)\[\[(?<decision>accept|improve)\]\]\s*(?<trailing>[\s\S]*)$/i;
 
 export type CouncilProtocolAction = 'deliberation' | 'proposal' | 'accept' | 'revise';
 
@@ -532,7 +532,12 @@ function parseInlineCouncilReviewBallot(text: string): {
   trailingText: string;
 } | null {
   const match = text.match(INLINE_COUNCIL_REVIEW_BALLOT_PATTERN);
-  const decision = match?.groups?.decision?.toLowerCase() as CouncilBallotDecision | undefined;
+  const rawDecision = match?.groups?.decision?.toLowerCase();
+  const decision = rawDecision === 'accept'
+    ? 'accept'
+    : rawDecision === 'improve'
+      ? 'reject'
+      : null;
   if (!match || !decision)
     return null;
 
@@ -604,7 +609,7 @@ export function classifyCouncilReviewBallotFragments(fragmentTexts: readonly str
       reason: deriveCouncilReviewerFallbackReason(fragmentTexts),
     };
 
-  const decision = inlineBallot?.decision ?? ballotMatch?.[1]?.toLowerCase();
+  const decision = inlineBallot?.decision ?? (ballotMatch?.[1]?.toLowerCase() === 'improve' ? 'reject' : ballotMatch?.[1]?.toLowerCase());
   const trailingText = inlineBallot?.trailingText?.trim() || ballotMatch?.[2]?.trim() || '';
   if (decision === 'accept') {
     return {
@@ -677,10 +682,10 @@ export function classifyCouncilTextFragments(fragmentTexts: readonly string[], i
   const inlineBallot = parseInlineCouncilReviewBallot(terminalText);
   const terminalRejectReason = inlineBallot?.decision === 'reject'
     ? inlineBallot.trailingText?.trim() || ''
-    : terminalBallotMatch?.[1]?.toLowerCase() === 'reject'
+    : terminalBallotMatch?.[1]?.toLowerCase() === 'improve'
       ? terminalBallotMatch[2]?.trim() || ''
       : '';
-  if (!isLeader && (inlineBallot?.decision === 'reject' || terminalBallotMatch?.[1]?.toLowerCase() === 'reject')) {
+  if (!isLeader && (inlineBallot?.decision === 'reject' || terminalBallotMatch?.[1]?.toLowerCase() === 'improve')) {
     return {
       action: 'revise',
       deliberationText: [

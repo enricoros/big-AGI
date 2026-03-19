@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { inferResumableCouncilSession } from './ConversationHandler';
+import { focusNotificationTargetTab, getBackgroundChatCompletionSnackbar, getMessageCompletionNotification, inferResumableCouncilSession, openConversationFromCompletionNotification, shouldShowSystemNotification } from './ConversationHandler';
 import { createDConversation, createAssistantConversationParticipant, createHumanConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { createDMessagePlaceholderIncomplete, createDMessageTextContent } from '~/common/stores/chat/chat.message';
+import { createCouncilSessionState } from '../../apps/chat/editors/_handleExecute.council';
 import { createCouncilOp } from '../../apps/chat/editors/_handleExecute.council.log';
+import { getFocusedPaneConversationId, panesManagerActions } from '../../apps/chat/components/panes/store-panes-manager';
 
 
 const TEST_LLM_ID = 'test-llm';
@@ -230,6 +232,264 @@ test('inferResumableCouncilSession keeps fatal stopped council traces non-resuma
   assert.equal(inferred?.canResume, false);
   assert.equal(inferred?.phaseId, phaseId);
   assert.equal(inferred?.interruptionReason, 'leader-invalid-proposal');
+});
+
+test('inferResumableCouncilSession falls back to a persisted resumable council checkpoint when the council log is missing after refresh', () => {
+  const { conversation, leader, critic, writer } = createCouncilConversation();
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  conversation.messages = [userMessage];
+
+  const workflowState = createCouncilSessionState({
+    phaseId: 'phase-persisted-refresh',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+
+  conversation.councilSession = {
+    status: 'interrupted',
+    executeMode: 'generate-content',
+    mode: 'council',
+    phaseId: workflowState.phaseId,
+    passIndex: workflowState.roundIndex,
+    workflowState,
+    canResume: true,
+    interruptionReason: 'page-unload',
+    updatedAt: userMessage.created + 1,
+  };
+
+  const inferred = inferResumableCouncilSession(conversation);
+
+  assert.ok(inferred);
+  assert.equal(inferred?.status, 'interrupted');
+  assert.equal(inferred?.canResume, true);
+  assert.equal(inferred?.phaseId, workflowState.phaseId);
+  assert.equal(inferred?.workflowState?.status, 'drafting');
+  assert.equal(inferred?.interruptionReason, 'page-unload');
+});
+
+test('inferResumableCouncilSession keeps a completed council trace from a persisted checkpoint when the council log is missing after refresh', () => {
+  const { conversation, leader, critic, writer } = createCouncilConversation();
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  conversation.messages = [userMessage];
+
+  const workflowState = createCouncilSessionState({
+    phaseId: 'phase-persisted-completed-refresh',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  workflowState.status = 'accepted';
+  workflowState.acceptedProposalId = 'proposal-1';
+  workflowState.finalResponse = 'Draft one.';
+  workflowState.rounds[0].proposalId = 'proposal-1';
+  workflowState.rounds[0].proposalText = 'Draft one.';
+
+  conversation.councilSession = {
+    status: 'completed',
+    executeMode: 'generate-content',
+    mode: 'council',
+    phaseId: workflowState.phaseId,
+    passIndex: workflowState.roundIndex,
+    workflowState,
+    canResume: false,
+    interruptionReason: null,
+    updatedAt: userMessage.created + 1,
+  };
+
+  const inferred = inferResumableCouncilSession(conversation);
+
+  assert.ok(inferred);
+  assert.equal(inferred?.status, 'completed');
+  assert.equal(inferred?.canResume, false);
+  assert.equal(inferred?.phaseId, workflowState.phaseId);
+  assert.equal(inferred?.workflowState?.status, 'accepted');
+  assert.equal(inferred?.workflowState?.finalResponse, 'Draft one.');
+});
+
+test('getMessageCompletionNotification reports when a normal assistant reply finishes', () => {
+  const conversation = createDConversation('Developer');
+  const previousConversation = structuredClone(conversation);
+  const assistantMessage = completeMessage(createDMessageTextContent('assistant', 'Done.'));
+
+  conversation.messages = [assistantMessage];
+
+  const notification = getMessageCompletionNotification(previousConversation, conversation);
+
+  assert.deepEqual(notification, {
+    conversationId: conversation.id,
+    title: 'New reply ready.',
+    body: 'Done.',
+    tag: `message-complete:${conversation.id}:${assistantMessage.id}`,
+  });
+});
+
+test('getMessageCompletionNotification reports when a council result reply finishes', () => {
+  const { conversation, leader, critic, writer } = createCouncilConversation();
+  const previousConversation = structuredClone(conversation);
+
+  const resultMessage = completeMessage(createDMessageTextContent('assistant', 'Draft one.'));
+  resultMessage.metadata = {
+    author: {
+      participantId: leader.id,
+      participantName: leader.name,
+      personaId: leader.personaId,
+      llmId: leader.llmId,
+    },
+    council: {
+      kind: 'result',
+      phaseId: 'phase-final-response-notification',
+      passIndex: 0,
+      leaderParticipantId: leader.id,
+    },
+  };
+  conversation.messages = [resultMessage];
+
+  const notification = getMessageCompletionNotification(previousConversation, conversation);
+
+  assert.deepEqual(notification, {
+    conversationId: conversation.id,
+    title: 'Leader replied.',
+    body: 'Draft one.',
+    tag: `message-complete:${conversation.id}:${resultMessage.id}`,
+  });
+});
+
+test('getMessageCompletionNotification ignores council deliberation messages', () => {
+  const { conversation, leader, critic, writer } = createCouncilConversation();
+  const previousConversation = structuredClone(conversation);
+
+  const deliberationMessage = completeMessage(createDMessageTextContent('assistant', 'Internal draft one.'));
+  deliberationMessage.metadata = {
+    author: {
+      participantId: critic.id,
+      participantName: critic.name,
+      personaId: critic.personaId,
+      llmId: critic.llmId,
+    },
+    council: {
+      kind: 'deliberation',
+      phaseId: 'phase-no-deliberation-notification',
+      passIndex: 0,
+      action: 'accept',
+      leaderParticipantId: leader.id,
+    },
+  };
+  conversation.messages = [deliberationMessage];
+
+  assert.equal(getMessageCompletionNotification(previousConversation, conversation), null);
+});
+
+test('getMessageCompletionNotification ignores initial hydration', () => {
+  const conversation = createDConversation('Developer');
+  const assistantMessage = completeMessage(createDMessageTextContent('assistant', 'Done.'));
+  conversation.messages = [assistantMessage];
+
+  assert.equal(getMessageCompletionNotification(null, conversation), null);
+});
+
+test('getBackgroundChatCompletionSnackbar targets non-focused chats and opens them on click', () => {
+  panesManagerActions().openConversationInFocusedPane('focused-chat');
+
+  const conversation = createDConversation('Developer');
+  conversation.autoTitle = 'Background Council';
+
+  const snackbar = getBackgroundChatCompletionSnackbar({
+    conversationId: conversation.id,
+    title: 'Leader replied.',
+    body: 'Draft one.',
+    tag: `message-complete:${conversation.id}:msg-1`,
+  }, conversation);
+
+  assert.ok(snackbar);
+  assert.equal(snackbar?.message, 'Background Council replied.');
+  assert.equal(typeof snackbar?.onClick, 'function');
+
+  snackbar?.onClick?.();
+  assert.equal(getFocusedPaneConversationId(), conversation.id);
+});
+
+test('focusNotificationTargetTab brings the current app tab to the front', () => {
+  const originalWindow = globalThis.window;
+  const focusCalls: string[] = [];
+  const openCalls: Array<[string, string]> = [];
+
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      focus: () => {
+        focusCalls.push('focus');
+      },
+      open: (url: string, target: string) => {
+        openCalls.push([url, target]);
+        return {
+          focus: () => {
+            focusCalls.push('open-focus');
+          },
+        };
+      },
+    },
+  });
+
+  focusNotificationTargetTab();
+
+  assert.deepEqual(focusCalls, ['focus', 'open-focus']);
+  assert.deepEqual(openCalls, [['', '_self']]);
+
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
+});
+
+test('openConversationFromCompletionNotification focuses the app tab and opens the target chat', () => {
+  const originalWindow = globalThis.window;
+  const focusCalls: string[] = [];
+  const openCalls: Array<[string, string]> = [];
+
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      focus: () => {
+        focusCalls.push('focus');
+      },
+      open: (url: string, target: string) => {
+        openCalls.push([url, target]);
+        return {
+          focus: () => {
+            focusCalls.push('open-focus');
+          },
+        };
+      },
+    },
+  });
+
+  openConversationFromCompletionNotification('notification-target-chat');
+
+  assert.deepEqual(focusCalls, ['focus', 'open-focus']);
+  assert.deepEqual(openCalls, [['', '_self']]);
+  assert.equal(getFocusedPaneConversationId(), 'notification-target-chat');
+
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
+});
+
+test('shouldShowSystemNotification is false while the app window is active', () => {
+  const originalDocument = globalThis.document;
+  const originalNotification = globalThis.Notification;
+
+  Object.defineProperty(globalThis, 'document', {
+    configurable: true,
+    value: {
+      visibilityState: 'visible',
+      hasFocus: () => true,
+    },
+  });
+  Object.defineProperty(globalThis, 'Notification', {
+    configurable: true,
+    value: { permission: 'granted' },
+  });
+
+  assert.equal(shouldShowSystemNotification(), false);
+
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: originalDocument });
+  Object.defineProperty(globalThis, 'Notification', { configurable: true, value: originalNotification });
 });
 
 test('inferResumableCouncilSession ignores a completed councilOpLog after a newer user turn', () => {

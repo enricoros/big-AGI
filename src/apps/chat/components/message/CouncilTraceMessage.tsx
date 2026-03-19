@@ -3,13 +3,14 @@ import * as React from 'react';
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowRightRoundedIcon from '@mui/icons-material/KeyboardArrowRightRounded';
-import { Box, Button, Chip, Divider, ListItem, Typography } from '@mui/joy';
+import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
+import { Box, Button, Checkbox, Chip, Divider, ListItem, Typography } from '@mui/joy';
 import type { SxProps } from '@mui/joy/styles/types';
 
 import { PerfProfiler } from '~/common/components/perf/PerfProfiler';
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
-import { RenderMarkdown } from '~/modules/blocks/markdown/RenderMarkdown';
+import { preloadMarkdownRenderer, RenderMarkdown } from '~/modules/blocks/markdown/RenderMarkdown';
 import type {
   CouncilTraceAgentCard,
   CouncilTraceAgentDetailItem,
@@ -31,6 +32,12 @@ import { DocumentAttachmentFragments } from './fragments-attachment-doc/Document
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { VoidFragments } from './fragments-void/VoidFragments';
 
+const COUNCIL_ACCEPT_LABEL = 'Accept()';
+const COUNCIL_IMPROVE_LABEL = 'Improve()';
+
+if (typeof window !== 'undefined')
+  preloadMarkdownRenderer();
+
 
 function getCouncilTraceSummaryLabel(trace: CouncilTraceRenderItem): string {
   switch (trace.summaryStatus) {
@@ -51,7 +58,7 @@ function getCouncilTraceSummaryLabel(trace: CouncilTraceRenderItem): string {
 
 function getRoundSummary(round: CouncilTraceRoundItem): string {
   if (round.leaderProposalFailed)
-    return 'Leader failed to produce a valid proposal';
+    return 'Proposal failed';
   if ('reviewerPlanProgress' in round && round.phase === 'leader-proposal')
     return 'Leader drafting proposal';
   if ('reviewerPlanProgress' in round && round.phase === 'reviewer-plans')
@@ -74,7 +81,7 @@ function getRoundSummary(round: CouncilTraceRoundItem): string {
   }
 
   if (rejectCount)
-    return rejectCount === 1 ? '1 rejection' : `${rejectCount} rejections`;
+    return rejectCount === 1 ? '1 improvement request' : `${rejectCount} improvement requests`;
   if (pendingCount)
     return pendingCount === 1 ? '1 review pending' : `${pendingCount} reviews pending`;
   if (acceptCount)
@@ -82,6 +89,28 @@ function getRoundSummary(round: CouncilTraceRoundItem): string {
       ? 'Accepted unanimously'
       : `${acceptCount} acceptances`;
   return 'Awaiting review';
+}
+
+function getRoundSummaryTone(round: CouncilTraceRoundItem): 'neutral' | 'danger' {
+  return round.leaderProposalFailed ? 'danger' : 'neutral';
+}
+
+function getRoundLeadSummary(
+  round: CouncilTraceRoundItem,
+  proposalCard: CouncilTraceAgentCard | null,
+  reviewerReviewCardsCount: number,
+): string {
+  if (round.leaderProposalFailed)
+    return 'Leader failed before reviewer review began.';
+
+  if (proposalCard) {
+    return `${proposalCard.participantName} leads this round${reviewerReviewCardsCount ? ` with ${reviewerReviewCardsCount} reviewer${reviewerReviewCardsCount === 1 ? '' : 's'}` : ''}.`;
+  }
+
+  if (reviewerReviewCardsCount)
+    return `${reviewerReviewCardsCount} reviewer${reviewerReviewCardsCount === 1 ? '' : 's'} active in this round.`;
+
+  return 'Waiting for round details.';
 }
 
 function getRoundDecisionCounts(round: CouncilTraceRoundItem) {
@@ -113,6 +142,14 @@ function getReviewerDecisionTone(decision: CouncilTraceReviewerCard['decision'])
   }
 }
 
+function isSyntheticReviewerFailureCard(card: CouncilTraceAgentCard | CouncilTraceReviewerCard): boolean {
+  return isReviewerCard(card) && (
+    card.terminalLabel === 'Missing verdict'
+    || card.terminalLabel === 'Missing analysis'
+    || card.terminalLabel === 'Review failed'
+  );
+}
+
 function getAgentStatusTone(status: CouncilTraceAgentCard['status']) {
   switch (status) {
     case 'proposal-ready':
@@ -133,9 +170,9 @@ function getAgentStatusLabel(card: CouncilTraceAgentCard): string {
     card.status === 'proposal-ready'
       ? 'Proposal ready'
       : card.status === 'accepted'
-        ? 'Accept'
+        ? COUNCIL_ACCEPT_LABEL
         : card.status === 'rejected'
-          ? 'Reject'
+          ? COUNCIL_IMPROVE_LABEL
           : card.status === 'failed'
             ? 'Proposal failed'
           : 'Waiting'
@@ -144,13 +181,16 @@ function getAgentStatusLabel(card: CouncilTraceAgentCard): string {
 
 function getAgentRoleLabel(card: CouncilTraceAgentCard | CouncilTraceReviewerCard): string {
   if (card.role === 'leader')
-    return 'Leader proposal';
+    return card.status === 'failed' ? 'Leader failure' : 'Leader proposal';
 
   if (!isReviewerCard(card))
     return 'Reviewer analysis';
 
+  if (isSyntheticReviewerFailureCard(card))
+    return 'Reviewer failure';
+
   if (card.decision === 'reject')
-    return 'Reviewer rejection';
+    return 'Reviewer improvement request';
   if (card.decision === 'accept')
     return 'Reviewer approval';
   return 'Reviewer analysis';
@@ -158,7 +198,9 @@ function getAgentRoleLabel(card: CouncilTraceAgentCard | CouncilTraceReviewerCar
 
 function getAgentSummaryLabel(card: CouncilTraceAgentCard | CouncilTraceReviewerCard, showRejectReason: boolean): string {
   if (showRejectReason)
-    return 'Rejection reason';
+    return 'Improvement request';
+  if (card.status === 'failed' || isSyntheticReviewerFailureCard(card))
+    return 'Failure note';
   return card.role === 'leader' ? 'Draft snapshot' : 'Review note';
 }
 
@@ -166,6 +208,11 @@ function getAgentPersistenceBadge(
   card: CouncilTraceAgentCard | CouncilTraceReviewerCard,
   hasVisibleContent: boolean,
 ): { label: 'Persisted' | 'Streaming'; color: 'success' | 'warning' } | null {
+  if (card.status === 'failed' && card.messageFragments.length === 0)
+    return null;
+  if (isSyntheticReviewerFailureCard(card) && card.messageFragments.length === 0)
+    return null;
+
   const shouldShowBadge = hasVisibleContent || card.status !== 'waiting';
   if (!shouldShowBadge)
     return null;
@@ -195,7 +242,14 @@ function CouncilTraceMarkdownText(props: {
   if (typeof window === 'undefined') {
     return (
       <Box sx={props.sx}>
-        <Typography level='body-sm' sx={{ whiteSpace: 'pre-wrap' }}>
+        <Typography
+          level='body-sm'
+          aria-hidden='true'
+          sx={{
+            whiteSpace: 'pre-wrap',
+            visibility: 'hidden',
+          }}
+        >
           {props.content}
         </Typography>
       </Box>
@@ -245,6 +299,23 @@ function CouncilTraceLabeledCallout(props: {
       </Typography>
       {props.children}
     </Box>
+  );
+}
+
+function CouncilTraceRoundToggleButton(props: {
+  roundExpanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Button
+      size='sm'
+      variant={props.roundExpanded ? 'solid' : 'soft'}
+      color='neutral'
+      endDecorator={props.roundExpanded ? <KeyboardArrowUpRoundedIcon /> : <KeyboardArrowRightRoundedIcon />}
+      onClick={props.onToggle}
+    >
+      {props.roundExpanded ? 'Collapse round' : 'Expand round'}
+    </Button>
   );
 }
 
@@ -352,7 +423,7 @@ function renderAgentDetailItems(detailItems: readonly CouncilTraceAgentDetailIte
           >
             <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
               <Chip size='sm' variant='soft' color={detailItem.action === 'proposal' ? 'primary' : detailItem.action === 'accept' ? 'success' : 'danger'}>
-                {detailItem.action === 'proposal' ? 'Proposal ready' : detailItem.action === 'accept' ? 'Accept' : 'Reject'}
+                {detailItem.action === 'proposal' ? 'Proposal ready' : detailItem.action === 'accept' ? COUNCIL_ACCEPT_LABEL : COUNCIL_IMPROVE_LABEL}
               </Chip>
             </Box>
             {!!detailItem.text && (
@@ -486,6 +557,11 @@ function CouncilTraceAgentCardView(props: {
               {getAgentRoleLabel(card)}
             </Typography>
             <Typography level='title-sm'>{card.participantName}</Typography>
+            {(card.participantModelLabel || card.participantReasoningLabel) && (
+              <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
+                {[card.participantModelLabel, card.participantReasoningLabel].filter(Boolean).join(' · ')}
+              </Typography>
+            )}
           </Box>
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <Chip size='sm' variant='soft' color={getAgentStatusTone(card.status)}>
@@ -567,6 +643,50 @@ function CouncilTraceSection(props: {
   );
 }
 
+function CouncilTracePreferenceToggle(props: {
+  checked: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        minWidth: 0,
+        borderRadius: 'lg',
+        border: '1px solid',
+        borderColor: props.checked ? 'primary.softBorder' : 'divider',
+        backgroundColor: props.checked ? 'primary.softBg' : 'background.level1',
+        boxShadow: 'xs',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease',
+        px: 1,
+        py: 0.9,
+      }}
+    >
+      <Checkbox
+        checked={props.checked}
+        label={
+          <Typography level='body-sm' sx={{ fontWeight: 'md', color: 'text.primary' }}>
+            {props.label}
+          </Typography>
+        }
+        onChange={event => props.onChange(event.target.checked)}
+        size='sm'
+        sx={{
+          alignItems: 'center',
+          width: '100%',
+          '--Checkbox-gap': '0.75rem',
+          '& .MuiCheckbox-label': {
+            flex: 1,
+            minWidth: 0,
+          },
+        }}
+      />
+    </Box>
+  );
+}
+
 export function CouncilTraceMessage(props: {
   trace: CouncilTraceRenderItem;
   defaultExpanded?: boolean;
@@ -574,6 +694,8 @@ export function CouncilTraceMessage(props: {
   defaultExpandedAgentKeys?: string[];
   autoCollapsePreviousRounds?: boolean;
   autoExpandNewestRound?: boolean;
+  onAutoCollapsePreviousRoundsChange?: (value: boolean) => void;
+  onAutoExpandNewestRoundChange?: (value: boolean) => void;
 }) {
   const {
     trace,
@@ -582,6 +704,8 @@ export function CouncilTraceMessage(props: {
     defaultExpandedAgentKeys,
     autoCollapsePreviousRounds = true,
     autoExpandNewestRound = true,
+    onAutoCollapsePreviousRoundsChange,
+    onAutoExpandNewestRoundChange,
   } = props;
   const [expanded, setExpanded] = React.useState(defaultExpanded);
   const [expandedRounds, setExpandedRounds] = React.useState(() => new Set(
@@ -676,6 +800,20 @@ export function CouncilTraceMessage(props: {
               </Box>
 
               <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {expanded && onAutoCollapsePreviousRoundsChange && onAutoExpandNewestRoundChange && (
+                  <>
+                    <CouncilTracePreferenceToggle
+                      checked={autoCollapsePreviousRounds}
+                      label='Auto-collapse previous rounds'
+                      onChange={onAutoCollapsePreviousRoundsChange}
+                    />
+                    <CouncilTracePreferenceToggle
+                      checked={autoExpandNewestRound}
+                      label='Auto-expand newest round'
+                      onChange={onAutoExpandNewestRoundChange}
+                    />
+                  </>
+                )}
                 {expanded && trace.rounds.length > 0 && (
                   <>
                     <Button
@@ -779,6 +917,8 @@ export function CouncilTraceMessage(props: {
                   return (
                     <Box
                       key={`council-trace-round-${round.roundIndex}`}
+                      data-chat-minimap-entry='trace'
+                      data-chat-minimap-id={`council-trace-${trace.phaseId}-round-${round.roundIndex}`}
                       sx={{
                         borderRadius: 'md',
                         border: '1px solid',
@@ -801,12 +941,12 @@ export function CouncilTraceMessage(props: {
                         <Box sx={{ display: 'grid', gap: 0.45 }}>
                           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', alignItems: 'center' }}>
                             <Typography level='title-sm'>Round {round.roundIndex + 1}</Typography>
-                            <Chip size='sm' variant='soft' color='neutral'>
+                            <Chip size='sm' variant='soft' color={getRoundSummaryTone(round)}>
                               {getRoundSummary(round)}
                             </Chip>
                             {!!rejectCount && (
                               <Chip size='sm' variant='soft' color='danger'>
-                                {rejectCount} reject{rejectCount === 1 ? '' : 's'}
+                                {rejectCount} improvement request{rejectCount === 1 ? '' : 's'}
                               </Chip>
                             )}
                             {!!acceptCount && (
@@ -822,23 +962,14 @@ export function CouncilTraceMessage(props: {
                           </Box>
 
                           <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
-                            {proposalCard
-                              ? `${proposalCard.participantName} leads this round${reviewerReviewCards.length ? ` with ${reviewerReviewCards.length} reviewer${reviewerReviewCards.length === 1 ? '' : 's'}` : ''}.`
-                              : reviewerReviewCards.length
-                                ? `${reviewerReviewCards.length} reviewer${reviewerReviewCards.length === 1 ? '' : 's'} active in this round.`
-                                : 'Waiting for round details.'}
+                            {getRoundLeadSummary(round, proposalCard, reviewerReviewCards.length)}
                           </Typography>
                         </Box>
 
-                        <Button
-                          size='sm'
-                          variant={roundExpanded ? 'solid' : 'soft'}
-                          color='neutral'
-                          endDecorator={roundExpanded ? <KeyboardArrowDownRoundedIcon /> : <KeyboardArrowRightRoundedIcon />}
-                          onClick={() => toggleRound(round.roundIndex)}
-                        >
-                          {roundExpanded ? 'Collapse round' : 'Expand round'}
-                        </Button>
+                        <CouncilTraceRoundToggleButton
+                          roundExpanded={roundExpanded}
+                          onToggle={() => toggleRound(round.roundIndex)}
+                        />
                       </Box>
 
                       {roundExpanded && (
@@ -892,8 +1023,8 @@ export function CouncilTraceMessage(props: {
                                 sx={{
                                   borderRadius: 'md',
                                   border: '1px solid',
-                                  borderColor: round.sharedReasons.label === 'Final rejection reasons' ? 'danger.outlinedBorder' : 'divider',
-                                  backgroundColor: round.sharedReasons.label === 'Final rejection reasons' ? 'danger.softBg' : 'background.level1',
+                                  borderColor: round.sharedReasons.label === 'Final improvement reasons' ? 'danger.outlinedBorder' : 'divider',
+                                  backgroundColor: round.sharedReasons.label === 'Final improvement reasons' ? 'danger.softBg' : 'background.level1',
                                   p: 1,
                                   display: 'grid',
                                   gap: 0.75,
@@ -905,7 +1036,7 @@ export function CouncilTraceMessage(props: {
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.08em',
                                     fontWeight: 'lg',
-                                    color: round.sharedReasons.label === 'Final rejection reasons' ? 'danger.plainColor' : 'text.tertiary',
+                                    color: round.sharedReasons.label === 'Final improvement reasons' ? 'danger.plainColor' : 'text.tertiary',
                                   }}
                                 >
                                   Carry-forward feedback
@@ -920,6 +1051,13 @@ export function CouncilTraceMessage(props: {
                                 </Box>
                               </Box>
                             )}
+
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                              <CouncilTraceRoundToggleButton
+                                roundExpanded={roundExpanded}
+                                onToggle={() => toggleRound(round.roundIndex)}
+                              />
+                            </Box>
                           </Box>
                         </>
                       )}

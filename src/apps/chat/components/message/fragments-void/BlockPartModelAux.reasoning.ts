@@ -85,7 +85,6 @@ export function collapseReasoningFragments(fragments: readonly InterleavedFragme
 export function extractReasoningRenderSequence(fragments: readonly InterleavedFragment[]): ReasoningRenderSequenceItem[] {
   const sequence: ReasoningRenderSequenceItem[] = [];
   let sawReasoning = false;
-  let closedReasoningSpan = false;
   let pendingHostedWebGroup: InterleavedFragment[] = [];
 
   const flushPendingHostedWebGroup = () => {
@@ -100,9 +99,6 @@ export function extractReasoningRenderSequence(fragments: readonly InterleavedFr
   };
 
   for (const fragment of fragments) {
-    if (closedReasoningSpan)
-      break;
-
     const isReasoningFragment = fragment.ft === 'void'
       && fragment.part.pt === 'ma'
       && fragment.part.aType === 'reasoning';
@@ -137,7 +133,7 @@ export function extractReasoningRenderSequence(fragments: readonly InterleavedFr
 
     if (fragment.ft === 'content') {
       flushPendingHostedWebGroup();
-      closedReasoningSpan = true;
+      continue;
     }
   }
 

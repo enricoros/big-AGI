@@ -110,3 +110,27 @@ test('sliceVisibleRenderEntriesFromEnd always includes the newest entry even whe
 
   assert.deepEqual(sliced.map(entry => entry.key), ['group-1']);
 });
+
+test('sliceVisibleRenderEntriesFromEnd keeps a before-message council trace attached to the final answer', () => {
+  const resultEntry = createMessageEntry('result-1');
+  const entries: VisibleRenderEntry[] = [
+    createMessageEntry('m-1'),
+    {
+      kind: 'council-trace',
+      key: 'trace-1',
+      trace: {
+        phaseId: 'phase-1',
+        placement: { mode: 'before-message', anchorMessageId: 'result-1' },
+        rounds: [],
+        reviewerCount: 3,
+        totalRounds: 1,
+        summaryStatus: 'accepted',
+      } satisfies CouncilTraceRenderItem,
+    },
+    resultEntry,
+  ];
+
+  const sliced = sliceVisibleRenderEntriesFromEnd(entries, 1);
+
+  assert.deepEqual(sliced.map(entry => entry.key), ['trace-1', 'result-1']);
+});

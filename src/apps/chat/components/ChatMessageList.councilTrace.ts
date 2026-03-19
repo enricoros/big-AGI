@@ -13,6 +13,10 @@ import type { DConversationParticipant } from '~/common/stores/chat/chat.convers
 import { isTextContentFragment, isToolInvocationPart } from '~/common/stores/chat/chat.fragments';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import { PARTICIPANT_REASONING_EFFORT_META } from './layout-bar/ChatBarChat.reasoning';
+
+const COUNCIL_ACCEPT_LABEL = 'Accept()';
+const COUNCIL_IMPROVE_LABEL = 'Improve()';
 
 
 export type CouncilTracePlacement =
@@ -26,7 +30,7 @@ export type CouncilTracePlacement =
   };
 
 export type CouncilTraceSharedReasons = {
-  label: 'Shared with next round' | 'Queued for next round' | 'Final rejection reasons';
+  label: 'Shared with next round' | 'Queued for next round' | 'Final improvement reasons';
   reasons: string[];
 };
 
@@ -45,6 +49,8 @@ export type CouncilTraceAgentDetailItem =
 export type CouncilTraceAgentCard = {
   participantId: string;
   participantName: string;
+  participantModelLabel?: string | null;
+  participantReasoningLabel?: string | null;
   role: 'leader' | 'reviewer';
   status: 'proposal-ready' | 'accepted' | 'rejected' | 'waiting' | 'failed';
   excerpt: string | null;
@@ -99,6 +105,8 @@ export type CouncilTraceRenderItem = {
 type BuildCouncilTraceRenderParams = {
   messages: readonly DMessage[];
   participants: readonly DConversationParticipant[];
+  llmLabelsById?: ReadonlyMap<string, string>;
+  chatModelLabel?: string | null;
   councilSession: OverlayCouncilSessionState;
   autoCollapsePreviousRounds?: boolean;
   autoExpandNewestRound?: boolean;
@@ -125,7 +133,16 @@ export function buildCouncilTraceRenderItem(params: BuildCouncilTraceRenderParam
 
   const autoCollapsePreviousRounds = params.autoCollapsePreviousRounds ?? true;
   const autoExpandNewestRound = params.autoExpandNewestRound ?? true;
-  const participantNames = new Map(params.participants.map(participant => [participant.id, participant.name]));
+  const chatModelLabel = params.chatModelLabel ?? 'Chat model';
+  const participantCardsMeta = new Map(params.participants.map(participant => [participant.id, {
+    name: participant.name,
+    modelLabel: participant.llmId
+      ? params.llmLabelsById?.get(participant.llmId) ?? participant.llmId
+      : chatModelLabel,
+    reasoningLabel: participant.reasoningEffort
+      ? PARTICIPANT_REASONING_EFFORT_META[participant.reasoningEffort].label
+      : null,
+  }]));
   const roundsByIndex = new Map(workflowState.rounds.map(round => [round.roundIndex, round]));
   const latestRoundIndex = workflowState.rounds.reduce((maxRoundIndex, round) => Math.max(maxRoundIndex, round.roundIndex), -1);
   const rounds = [...workflowState.rounds]
@@ -134,9 +151,9 @@ export function buildCouncilTraceRenderItem(params: BuildCouncilTraceRenderParam
       const leaderProposalFailed = isLeaderProposalFailedRound(round, workflowState);
       const reviewerPlanProgress = buildReviewerPlanProgress(round, workflowState);
       const reviewerVoteProgress = buildReviewerVoteProgress(round, workflowState);
-      const proposalCard = buildProposalCard(round, workflowState, participantNames);
-      const reviewerPlanCards = buildReviewerPlanCards(round, workflowState, participantNames, reviewerPlanProgress);
-      const reviewerVoteCards = buildReviewerVoteCards(round, workflowState, participantNames, reviewerVoteProgress);
+      const proposalCard = buildProposalCard(round, workflowState, participantCardsMeta);
+      const reviewerPlanCards = buildReviewerPlanCards(round, workflowState, participantCardsMeta, reviewerPlanProgress);
+      const reviewerVoteCards = buildReviewerVoteCards(round, workflowState, participantCardsMeta, reviewerVoteProgress);
 
       return {
         roundIndex: round.roundIndex,
@@ -148,11 +165,11 @@ export function buildCouncilTraceRenderItem(params: BuildCouncilTraceRenderParam
         proposalId: round.proposalId,
         proposalText: round.proposalText,
         leaderParticipantId: round.leaderParticipantId,
-        leaderParticipantName: getParticipantName(participantNames, round.leaderParticipantId),
-        leaderCard: proposalCard ?? buildLeaderCard(round, workflowState, participantNames),
+        leaderParticipantName: getParticipantName(participantCardsMeta, round.leaderParticipantId),
+        leaderCard: proposalCard ?? buildLeaderCard(round, workflowState, participantCardsMeta),
         reviewerCards: reviewerVoteProgress.isShared
           ? reviewerVoteCards
-          : buildReviewerCards(round, workflowState, participantNames),
+          : buildReviewerCards(round, workflowState, participantCardsMeta),
         proposalCard,
         reviewerPlanCards,
         reviewerVoteCards,
@@ -282,8 +299,25 @@ function getMessagePlainText(message: DMessage): string {
     .trim();
 }
 
-function getParticipantName(participantNames: ReadonlyMap<string, string>, participantId: string): string {
-  return participantNames.get(participantId) ?? participantId;
+type CouncilTraceParticipantMeta = {
+  name: string;
+  modelLabel: string | null;
+  reasoningLabel: string | null;
+};
+
+function getParticipantMeta(
+  participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>,
+  participantId: string,
+): CouncilTraceParticipantMeta {
+  return participantCardsMeta.get(participantId) ?? {
+    name: participantId,
+    modelLabel: null,
+    reasoningLabel: null,
+  };
+}
+
+function getParticipantName(participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>, participantId: string): string {
+  return getParticipantMeta(participantCardsMeta, participantId).name;
 }
 
 function findCouncilTracePlacement(messages: readonly DMessage[], phaseId: string): CouncilTracePlacement {
@@ -333,7 +367,7 @@ function deriveSharedReasons(
   const summaryStatus = getCouncilTraceSummaryStatus(overlayCouncilSession, workflowState);
   return {
     label: summaryStatus === 'exhausted' || summaryStatus === 'stopped'
-      ? 'Final rejection reasons'
+      ? 'Final improvement reasons'
       : 'Queued for next round',
     reasons: visibleReasons,
   };
@@ -342,7 +376,7 @@ function deriveSharedReasons(
 function buildReviewerCards(
   round: WorkflowCouncilSessionState['rounds'][number],
   workflowState: WorkflowCouncilSessionState,
-  participantNames: ReadonlyMap<string, string>,
+  participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>,
 ): CouncilTraceReviewerCard[] {
   const allowPendingBallots = workflowState.status === 'reviewing' && workflowState.roundIndex === round.roundIndex;
 
@@ -367,7 +401,7 @@ function buildReviewerCards(
       ? getSyntheticReviewerFailurePresentation(ballot.reason)
       : null;
     const fallbackReviewText = ballot?.decision === 'accept'
-      ? 'Accept'
+      ? COUNCIL_ACCEPT_LABEL
       : syntheticFailurePresentation
         ? syntheticFailurePresentation.excerpt
         : ballot?.decision === 'reject'
@@ -375,18 +409,21 @@ function buildReviewerCards(
         : null;
     const excerpt = syntheticFailurePresentation?.excerpt ?? getAgentCardExcerpt(turn, fallbackReviewText);
     const visibleTurn = sanitizeReviewerTurnForDisplay(turn, syntheticReviewerFailure, visibleVoteMessageFragments);
+    const participantMeta = getParticipantMeta(participantCardsMeta, reviewerParticipantId);
     return [createAgentCard({
       participantId: reviewerParticipantId,
-      participantName: getParticipantName(participantNames, reviewerParticipantId),
+      participantName: participantMeta.name,
+      participantModelLabel: participantMeta.modelLabel,
+      participantReasoningLabel: participantMeta.reasoningLabel,
       role: 'reviewer',
       status,
       excerpt,
       terminalLabel: ballot?.decision === 'accept'
-        ? 'Accept'
+        ? COUNCIL_ACCEPT_LABEL
         : syntheticFailurePresentation
           ? syntheticFailurePresentation.label
         : ballot?.decision === 'reject'
-          ? 'Reject'
+          ? COUNCIL_IMPROVE_LABEL
           : null,
       terminalText: turn?.terminalText ?? '',
       terminalReason: syntheticFailurePresentation ? null : ballot?.decision === 'reject' ? ballot.reason ?? null : null,
@@ -425,17 +462,17 @@ function buildReviewerVoteProgress(
 function buildProposalCard(
   round: WorkflowCouncilSessionState['rounds'][number],
   workflowState: WorkflowCouncilSessionState,
-  participantNames: ReadonlyMap<string, string>,
+  participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>,
 ): CouncilTraceAgentCard | null {
   if (!round.leaderProposal && !round.proposalText)
     return null;
-  return buildLeaderCard(round, workflowState, participantNames);
+  return buildLeaderCard(round, workflowState, participantCardsMeta);
 }
 
 function buildReviewerPlanCards(
   round: WorkflowCouncilSessionState['rounds'][number],
   workflowState: WorkflowCouncilSessionState,
-  participantNames: ReadonlyMap<string, string>,
+  participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>,
   progress: CouncilTraceProgress,
 ): CouncilTraceAgentCard[] {
   return workflowState.reviewerParticipantIds.flatMap(reviewerParticipantId => {
@@ -457,9 +494,12 @@ function buildReviewerPlanCards(
       events: reviewerPlan.events,
     };
 
+    const participantMeta = getParticipantMeta(participantCardsMeta, reviewerParticipantId);
     return [createAgentCard({
       participantId: reviewerParticipantId,
-      participantName: getParticipantName(participantNames, reviewerParticipantId),
+      participantName: participantMeta.name,
+      participantModelLabel: participantMeta.modelLabel,
+      participantReasoningLabel: participantMeta.reasoningLabel,
       role: 'reviewer',
       status: 'proposal-ready',
       excerpt: getAgentCardExcerpt(syntheticTurn, reviewerPlan.planText),
@@ -473,7 +513,7 @@ function buildReviewerPlanCards(
 function buildReviewerVoteCards(
   round: WorkflowCouncilSessionState['rounds'][number],
   workflowState: WorkflowCouncilSessionState,
-  participantNames: ReadonlyMap<string, string>,
+  participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>,
   progress: CouncilTraceProgress,
 ): CouncilTraceReviewerCard[] {
   return workflowState.reviewerParticipantIds.flatMap(reviewerParticipantId => {
@@ -502,23 +542,31 @@ function buildReviewerVoteCards(
       .map(fragment => fragment.part.text.trim())
       .filter(Boolean)
       .at(-1) ?? null;
-    const excerpt = syntheticFailurePresentation?.excerpt ?? latestVoteText
-      ?? (ballot.decision === 'accept'
-        ? turn?.terminalText?.trim() || 'Accept'
-        : null);
     const visibleTurn = sanitizeReviewerTurnForDisplay(turn, syntheticReviewerFailure, visibleVoteMessageFragments);
+    const excerpt = syntheticFailurePresentation?.excerpt ?? (
+      ballot.decision === 'accept'
+        ? latestVoteText
+          ?? normalizeCouncilTraceText(turn?.deliberationText)
+          ?? normalizeCouncilTraceText(reviewerPlanText)
+          ?? normalizeCouncilTraceText(turn?.terminalText)
+          ?? COUNCIL_ACCEPT_LABEL
+        : latestVoteText ?? null
+    );
+    const participantMeta = getParticipantMeta(participantCardsMeta, reviewerParticipantId);
     return [createAgentCard({
       participantId: reviewerParticipantId,
-      participantName: getParticipantName(participantNames, reviewerParticipantId),
+      participantName: participantMeta.name,
+      participantModelLabel: participantMeta.modelLabel,
+      participantReasoningLabel: participantMeta.reasoningLabel,
       role: 'reviewer',
       status,
       excerpt,
       terminalLabel: ballot?.decision === 'accept'
-        ? 'Accept'
+        ? COUNCIL_ACCEPT_LABEL
         : syntheticFailurePresentation
           ? syntheticFailurePresentation.label
         : ballot?.decision === 'reject'
-          ? 'Reject'
+          ? COUNCIL_IMPROVE_LABEL
           : null,
       terminalText: turn?.terminalText ?? '',
       terminalReason: syntheticFailurePresentation ? null : ballot?.decision === 'reject' ? ballot.reason ?? null : null,
@@ -541,7 +589,7 @@ function getSyntheticReviewerFailurePresentation(reason: string | null | undefin
   if (reason === COUNCIL_REVIEW_VERDICT_MISSING_REASON) {
     return {
       label: 'Missing verdict',
-      excerpt: 'The reviewer response did not call Accept() or Reject().',
+      excerpt: 'The reviewer response did not call Accept() or Improve().',
     };
   }
 
@@ -613,15 +661,18 @@ function stripReviewerPlanEchoFromVoteFragments(
 function buildLeaderCard(
   round: WorkflowCouncilSessionState['rounds'][number],
   workflowState: WorkflowCouncilSessionState,
-  participantNames: ReadonlyMap<string, string>,
+  participantCardsMeta: ReadonlyMap<string, CouncilTraceParticipantMeta>,
 ): CouncilTraceAgentCard {
   const leaderParticipantId = round.leaderParticipantId ?? workflowState.leaderParticipantId;
   const turn = round?.leaderTurn ?? null;
   const leaderProposalFailed = isLeaderProposalFailedRound(round, workflowState);
+  const participantMeta = getParticipantMeta(participantCardsMeta, leaderParticipantId);
 
   return createAgentCard({
     participantId: leaderParticipantId,
-    participantName: getParticipantName(participantNames, leaderParticipantId),
+    participantName: participantMeta.name,
+    participantModelLabel: participantMeta.modelLabel,
+    participantReasoningLabel: participantMeta.reasoningLabel,
     role: 'leader',
     status: leaderProposalFailed
       ? 'failed'
@@ -845,7 +896,8 @@ function getAgentCardExcerpt(
     .filter(Boolean)
     .at(-1) ?? null;
 
-  return latestTextOutput
+  return (turn?.messagePendingIncomplete ? latestFragmentText : null)
+    ?? latestTextOutput
     ?? latestFragmentText
     ?? getMeaningfulText(turn?.initialDraftText)
     ?? getMeaningfulText(turn?.deliberationText)

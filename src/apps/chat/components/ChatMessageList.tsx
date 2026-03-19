@@ -11,6 +11,9 @@ import { speakText } from '~/modules/speex/speex.client';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
+import { getLLMLabel } from '~/common/stores/llms/llms.types';
+import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { PerfProfiler } from '~/common/components/perf/PerfProfiler';
@@ -485,6 +488,8 @@ export function ChatMessageList(props: {
 
   // external state
   const { notifyBooting } = useScrollToBottom();
+  const { llms: visibleLLMs } = useVisibleLLMs(null, false, false);
+  const { domainModelId: chatLLMId } = useModelDomain('primaryChat');
   const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
   const [showConversationMinimap] = useChatShowConversationMinimap();
@@ -527,6 +532,16 @@ export function ChatMessageList(props: {
   // derived state
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
   const composerHasInReferenceto = _composerInReferenceToCount > 0;
+  const handleCouncilTraceAutoCollapsePreviousRoundsChange = React.useCallback((value: boolean) => {
+    if (!conversationId)
+      return;
+    useChatStore.getState().setCouncilTraceAutoCollapsePreviousRounds(conversationId, value);
+  }, [conversationId]);
+  const handleCouncilTraceAutoExpandNewestRoundChange = React.useCallback((value: boolean) => {
+    if (!conversationId)
+      return;
+    useChatStore.getState().setCouncilTraceAutoExpandNewestRound(conversationId, value);
+  }, [conversationId]);
   const humanParticipantIds = React.useMemo(() => new Set(participants.filter(participant => participant.kind === 'human').map(participant => participant.id)), [participants]);
   const participantNames = React.useMemo(() => new Map(participants.map(participant => [participant.id, participant.name])), [participants]);
 
@@ -763,17 +778,27 @@ export function ChatMessageList(props: {
     'derive:ChatMessageList.getCouncilVisibleMessages',
     () => getCouncilVisibleMessages(conversationMessages, showSystemMessages),
   ), [conversationMessages, showSystemMessages]);
+  const llmLabelsById = React.useMemo(
+    () => new Map(visibleLLMs.map(llm => [llm.id, getLLMLabel(llm)])),
+    [visibleLLMs],
+  );
+  const chatModelLabel = React.useMemo(
+    () => chatLLMId ? llmLabelsById.get(chatLLMId) ?? chatLLMId : 'Chat model',
+    [chatLLMId, llmLabelsById],
+  );
   const hasCouncilDeliberation = React.useMemo(() => filteredMessages.some(message => message.metadata?.council?.kind === 'deliberation'), [filteredMessages]);
   const councilTracePlan = React.useMemo(() => perfMeasureSync(
     'derive:ChatMessageList.buildCouncilTraceRenderPlan',
     () => buildCouncilTraceRenderPlan({
       messages: filteredMessages,
       participants,
+      llmLabelsById,
+      chatModelLabel,
       councilSession,
       autoCollapsePreviousRounds: councilTraceAutoCollapsePreviousRounds,
       autoExpandNewestRound: councilTraceAutoExpandNewestRound,
     }),
-  ), [councilSession, councilTraceAutoCollapsePreviousRounds, councilTraceAutoExpandNewestRound, filteredMessages, participants]);
+  ), [chatModelLabel, councilSession, councilTraceAutoCollapsePreviousRounds, councilTraceAutoExpandNewestRound, filteredMessages, llmLabelsById, participants]);
   const councilTraceItem = councilTracePlan.traceItem;
   const groupedVisibleRenderEntries = React.useMemo(() => perfMeasureSync(
     'derive:ChatMessageList.getGroupedVisibleRenderEntries',
@@ -985,6 +1010,8 @@ export function ChatMessageList(props: {
                 trace={entry.trace}
                 autoCollapsePreviousRounds={councilTraceAutoCollapsePreviousRounds}
                 autoExpandNewestRound={councilTraceAutoExpandNewestRound}
+                onAutoCollapsePreviousRoundsChange={handleCouncilTraceAutoCollapsePreviousRoundsChange}
+                onAutoExpandNewestRoundChange={handleCouncilTraceAutoExpandNewestRoundChange}
               />
             );
 

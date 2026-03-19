@@ -53,6 +53,7 @@ const minimapControlSlotSx = {
   display: 'grid',
   placeItems: 'center',
   alignSelf: 'center',
+  justifySelf: 'center',
 } as const;
 
 export function getConversationMinimapControlSlotSx(position: 'top' | 'bottom', visible: boolean) {
@@ -111,6 +112,35 @@ function getEntryKind(element: HTMLElement): ConversationMinimapEntryKind | null
   return null;
 }
 
+function getEntryBoundsForElement(
+  element: HTMLElement,
+  scrollableElement: HTMLElement,
+  scrollableRect: DOMRect,
+): ConversationMinimapEntryBounds[] {
+  const kind = getEntryKind(element);
+  if (!kind)
+    return [];
+
+  const bounds = element.getBoundingClientRect();
+  if (bounds.height <= 0)
+    return [];
+
+  return [{
+    id: element.dataset.chatMinimapId || element.id || `${kind}-${bounds.top}-${bounds.height}`,
+    top: bounds.top - scrollableRect.top + scrollableElement.scrollTop,
+    height: bounds.height,
+    kind,
+    ...(kind === 'message' && element.dataset.chatMinimapBackgroundColor ? { backgroundColor: element.dataset.chatMinimapBackgroundColor } : {}),
+    ...(kind === 'message' && element.dataset.chatMinimapBorderColor ? { borderColor: element.dataset.chatMinimapBorderColor } : {}),
+  }];
+}
+
+function getNestedTraceEntryElements(traceElement: HTMLElement): HTMLElement[] {
+  const nestedTraceEntries = Array.from(traceElement.querySelectorAll<HTMLElement>('[data-chat-minimap-entry="trace"]'));
+
+  return nestedTraceEntries.filter(entry => !entry.querySelector('[data-chat-minimap-entry="trace"]'));
+}
+
 function getEntryBounds(listElement: HTMLElement, scrollableElement: HTMLElement): ConversationMinimapEntryBounds[] {
   const scrollableRect = scrollableElement.getBoundingClientRect();
 
@@ -122,18 +152,14 @@ function getEntryBounds(listElement: HTMLElement, scrollableElement: HTMLElement
     if (!kind)
       return [];
 
-    const bounds = child.getBoundingClientRect();
-    if (bounds.height <= 0)
-      return [];
+    if (kind !== 'trace')
+      return getEntryBoundsForElement(child, scrollableElement, scrollableRect);
 
-    return [{
-      id: child.dataset.chatMinimapId || child.id || `${kind}-${bounds.top}-${bounds.height}`,
-      top: bounds.top - scrollableRect.top + scrollableElement.scrollTop,
-      height: bounds.height,
-      kind,
-      ...(kind === 'message' && child.dataset.chatMinimapBackgroundColor ? { backgroundColor: child.dataset.chatMinimapBackgroundColor } : {}),
-      ...(kind === 'message' && child.dataset.chatMinimapBorderColor ? { borderColor: child.dataset.chatMinimapBorderColor } : {}),
-    }];
+    const nestedTraceEntries = getNestedTraceEntryElements(child);
+    if (nestedTraceEntries.length)
+      return nestedTraceEntries.flatMap(entry => getEntryBoundsForElement(entry, scrollableElement, scrollableRect));
+
+    return getEntryBoundsForElement(child, scrollableElement, scrollableRect);
   });
 }
 

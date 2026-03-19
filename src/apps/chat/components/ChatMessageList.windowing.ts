@@ -63,5 +63,18 @@ export function sliceVisibleRenderEntriesFromEnd(entries: VisibleRenderEntry[], 
     remainingUnits -= entryUnits;
   }
 
+  // Keep a result-anchored council trace attached to its final answer when the list is windowed from the end.
+  if (sliceStart > 0) {
+    const firstVisibleEntry = entries[sliceStart];
+    const previousEntry = entries[sliceStart - 1];
+    if (
+      firstVisibleEntry?.kind === 'message'
+      && previousEntry?.kind === 'council-trace'
+      && previousEntry.trace.placement.mode === 'before-message'
+      && previousEntry.trace.placement.anchorMessageId === firstVisibleEntry.message.id
+    )
+      sliceStart -= 1;
+  }
+
   return sliceStart <= 0 ? entries : entries.slice(sliceStart);
 }

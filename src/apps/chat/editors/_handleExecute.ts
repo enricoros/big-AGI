@@ -18,7 +18,7 @@ import type { DMessage, DMessageCouncilChannel } from '~/common/stores/chat/chat
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { duplicateDMessage } from '~/common/stores/chat/chat.message';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart, isVoidThinkingFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { getConversationCouncilMaxRounds, getConversationCouncilOpLog, getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
 import { findParticipantMentionMatchIndex } from '~/common/util/dMessageUtils';
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
@@ -590,13 +590,25 @@ const councilReviewerAcceptTool = {
   inputSchema: z.object({}),
 } as const;
 
-const councilReviewerRejectTool = {
-  name: 'Reject',
-  description: 'Reject the current leader proposal.',
+const councilReviewerImproveTool = {
+  name: 'Improve',
+  description: 'Request improvements to the current leader proposal.',
   inputSchema: z.object({
     reason: z.string().trim().min(1).optional(),
   }),
 } as const;
+
+const COUNCIL_REVIEWER_ACCEPT_LABEL = 'Accept()';
+const COUNCIL_REVIEWER_IMPROVE_LABEL = 'Improve()';
+
+function isCouncilReviewerBallotToolName(name: string | null | undefined): boolean {
+  return name === councilReviewerAcceptTool.name || name === councilReviewerImproveTool.name;
+}
+
+function formatCouncilReviewerImproveText(reason: string | null | undefined): string {
+  const normalizedReason = reason?.trim();
+  return normalizedReason ? `${COUNCIL_REVIEWER_IMPROVE_LABEL}: ${normalizedReason}` : COUNCIL_REVIEWER_IMPROVE_LABEL;
+}
 
 const exitLoopTool = {
   name: 'Exit_loop',
@@ -613,7 +625,7 @@ function createCouncilReviewerBallotRequestTransform() {
 
     const reviewerBallotTools = [
       !existingToolNames.has(councilReviewerAcceptTool.name) ? aixFunctionCallTool(councilReviewerAcceptTool) : null,
-      !existingToolNames.has(councilReviewerRejectTool.name) ? aixFunctionCallTool(councilReviewerRejectTool) : null,
+      !existingToolNames.has(councilReviewerImproveTool.name) ? aixFunctionCallTool(councilReviewerImproveTool) : null,
     ].filter(tool => tool !== null);
 
     return {
@@ -621,6 +633,17 @@ function createCouncilReviewerBallotRequestTransform() {
       tools: [...existingTools, ...reviewerBallotTools],
     };
   };
+}
+
+function createCouncilReviewerForcedBallotRequestTransform() {
+  return (request: Parameters<NonNullable<PersonaRunOptions['requestTransform']>>[0]) => ({
+    ...request,
+    tools: [
+      aixFunctionCallTool(councilReviewerAcceptTool),
+      aixFunctionCallTool(councilReviewerImproveTool),
+    ],
+    toolsPolicy: { type: 'any' as const },
+  });
 }
 
 function createExitLoopRequestTransform() {
@@ -710,8 +733,8 @@ function extractCouncilReviewerBallotFromToolInvocation(
     };
   }
 
-  if (invocation.name === councilReviewerRejectTool.name) {
-    const { reason } = councilReviewerRejectTool.inputSchema.parse(parsedArgs);
+  if (invocation.name === councilReviewerImproveTool.name) {
+    const { reason } = councilReviewerImproveTool.inputSchema.parse(parsedArgs);
     return {
       reviewerParticipantId,
       decision: 'reject',
@@ -747,13 +770,13 @@ function hasCouncilReviewerNonBallotToolActivity(fragments: DMessage['fragments'
       continue;
 
     if (isToolInvocationPart(fragment.part) && fragment.part.invocation.type === 'function_call') {
-      if (fragment.part.invocation.name !== councilReviewerAcceptTool.name && fragment.part.invocation.name !== councilReviewerRejectTool.name)
+      if (!isCouncilReviewerBallotToolName(fragment.part.invocation.name))
         return true;
       continue;
     }
 
     if (isToolResponseFunctionCallPart(fragment.part)) {
-      if (fragment.part.response.name !== councilReviewerAcceptTool.name && fragment.part.response.name !== councilReviewerRejectTool.name)
+      if (!isCouncilReviewerBallotToolName(fragment.part.response.name))
         return true;
     }
   }
@@ -765,7 +788,37 @@ function getCouncilReviewerAnalysisTexts(fragments: DMessage['fragments'] | null
   return (fragments ?? [])
     .filter(isTextContentFragment)
     .map(fragment => fragment.part.text.trim())
-    .filter(text => !!text && !/^accept$/i.test(text) && !/^reject(?::|\b)/i.test(text));
+    .filter(text => !!text && !/^accept(?:\(\))?$/i.test(text) && !/^improve(?:\(\))?(?::|\b)/i.test(text) && !/^reject(?::|\b)/i.test(text));
+}
+
+function hasCouncilReviewerHiddenReasoning(fragments: DMessage['fragments'] | null | undefined): boolean {
+  return (fragments ?? []).some(isVoidThinkingFragment);
+}
+
+function assertCouncilReviewerBallotHasVisibleAnalysis(
+  ballot: ReturnType<typeof extractCouncilReviewerBallotFromToolInvocation>,
+  fragments: DMessage['fragments'] | null | undefined,
+): void {
+  if (ballot.decision !== 'accept')
+    return;
+
+  if (getCouncilReviewerAnalysisTexts(fragments).length > 0)
+    return;
+
+  if (!hasCouncilReviewerHiddenReasoning(fragments) && !hasCouncilReviewerNonBallotToolActivity(fragments))
+    return;
+
+  throw new Error(COUNCIL_REVIEW_ANALYSIS_MISSING_REASON);
+}
+
+function mergeCouncilReviewerVoteFragments(
+  previousFragments: DMessage['fragments'] | null | undefined,
+  nextFragments: DMessage['fragments'] | null | undefined,
+): DMessage['fragments'] {
+  return [
+    ...structuredClone(previousFragments ?? []),
+    ...structuredClone(nextFragments ?? []),
+  ];
 }
 
 function isCouncilReviewerHeadingText(text: string): boolean {
@@ -825,7 +878,20 @@ function createCouncilOpLogFromSessionState(
     }),
   ];
 
-  for (const round of workflowState.rounds.sort((a, b) => a.roundIndex - b.roundIndex)) {
+  for (const round of [...workflowState.rounds].sort((a, b) => a.roundIndex - b.roundIndex)) {
+    councilOpLog = appendCouncilOps(councilOpLog, [
+      createCouncilOp(councilOpLog, 'round_started', {
+        roundIndex: round.roundIndex,
+        leaderParticipantId: round.leaderParticipantId,
+        reviewerParticipantIds: [...workflowState.reviewerParticipantIds],
+        sharedRejectionReasons: [...round.sharedRejectionReasons],
+      }, {
+        phaseId: workflowState.phaseId,
+        conversationId,
+        createdAt: getCouncilRoundStartedAt(round, workflowState.updatedAt),
+      }),
+    ]);
+
     if (round.leaderProposal?.proposalText) {
       councilOpLog = appendCouncilOps(councilOpLog, [
         createCouncilOp(councilOpLog, 'leader_turn_committed', {
@@ -933,6 +999,19 @@ function createCouncilOpLogFromSessionState(
   return councilOpLog;
 }
 
+function getCouncilRoundStartedAt(round: CouncilSessionState['rounds'][number], fallbackCreatedAt: number): number {
+  const candidateTimestamps = [
+    round.leaderProposal?.createdAt ?? null,
+    ...Object.values(round.reviewerPlans).map(reviewerPlan => reviewerPlan.createdAt),
+    ...Object.values(round.reviewerVotes).map(reviewerVote => reviewerVote.createdAt),
+    round.completedAt,
+  ].filter((createdAt): createdAt is number => typeof createdAt === 'number' && Number.isFinite(createdAt));
+
+  return candidateTimestamps.length
+    ? Math.min(...candidateTimestamps)
+    : fallbackCreatedAt;
+}
+
 function appendCommittedCouncilOps(params: {
   session: ChatExecutionSession;
   councilOpLog: CouncilOp[];
@@ -946,6 +1025,24 @@ function appendCommittedCouncilOps(params: {
   return { councilOpLog, workflowState };
 }
 
+function createResumableCouncilCheckpoint(
+  phaseId: string | null,
+  passIndex: number | null,
+  workflowState: CouncilSessionState,
+): DPersistedCouncilSession {
+  return {
+    status: 'interrupted',
+    executeMode: 'generate-content',
+    mode: 'council',
+    phaseId,
+    passIndex: workflowState.roundIndex ?? passIndex,
+    workflowState,
+    canResume: true,
+    interruptionReason: 'page-unload',
+    updatedAt: Date.now(),
+  };
+}
+
 function setCouncilSessionRunning(
   session: ChatExecutionSession,
   executeMode: ChatExecuteMode,
@@ -953,6 +1050,7 @@ function setCouncilSessionRunning(
   phaseId: string | null,
   passIndex: number | null,
   workflowState: CouncilSessionState | null = null,
+  councilOpLog: CouncilOp[] | null = null,
 ): void {
   const nextSession = {
     status: 'running' as const,
@@ -965,6 +1063,24 @@ function setCouncilSessionRunning(
     interruptionReason: null,
   };
   session.updateCouncilSession(nextSession);
+
+  if (mode === 'council' && workflowState)
+    session.persistCouncilState(createResumableCouncilCheckpoint(phaseId, passIndex, workflowState), councilOpLog);
+}
+
+function pickPreferredCouncilResumeState(args: {
+  replayedState: CouncilSessionState | null;
+  replayedUpdatedAt: number | null;
+  persistedState: CouncilSessionState | null;
+  persistedUpdatedAt: number | null;
+}): CouncilSessionState | null {
+  const replayedUpdatedAt = args.replayedState?.updatedAt ?? args.replayedUpdatedAt ?? 0;
+  const persistedUpdatedAt = args.persistedState?.updatedAt ?? args.persistedUpdatedAt ?? 0;
+
+  if (args.persistedState && (!args.replayedState || persistedUpdatedAt > replayedUpdatedAt))
+    return args.persistedState;
+
+  return args.replayedState ?? args.persistedState ?? null;
 }
 
 function finalizeCouncilSession(
@@ -1094,9 +1210,9 @@ function createCouncilHistoryMessage(params: {
   reason?: string | null;
 }): DMessage {
   const message = createDMessageEmpty('assistant');
-  const nextFragments = params.messageFragments?.length
-    ? structuredClone(params.messageFragments)
-    : [];
+  const nextFragments = (params.messageFragments ?? [])
+    .filter(isTextContentFragment)
+    .map(fragment => createTextContentFragment(fragment.part.text));
   const hasVisibleText = nextFragments.some(fragment => isTextContentFragment(fragment) && !!fragment.part.text.trim());
   if ((params.alwaysAppendFallbackText || !hasVisibleText) && params.fallbackText?.trim())
     nextFragments.push(createTextContentFragment(params.fallbackText.trim()));
@@ -1194,8 +1310,8 @@ function appendPriorCouncilRoundsToHistory(
       roundIndex: op.payload.roundIndex,
       messageFragments: op.payload.messageFragments,
       fallbackText: op.payload.decision === 'accept'
-        ? 'Accept'
-        : op.payload.reason?.trim() ? `Reject: ${op.payload.reason.trim()}` : 'Reject',
+        ? COUNCIL_REVIEWER_ACCEPT_LABEL
+        : formatCouncilReviewerImproveText(op.payload.reason),
       alwaysAppendFallbackText: true,
       pendingIncomplete: op.payload.messagePendingIncomplete,
       action: op.payload.decision,
@@ -1289,7 +1405,7 @@ function getCouncilLeaderRoundInstructionLines(rejectionReasons: readonly string
     'Previous reviewers did not accept the earlier draft. Produce a revised proposal that addresses their objections directly.',
     ...(rejectionReasons.length
       ? [
-          'Shared rejection reasons to address:',
+          'Shared improvement reasons to address:',
           ...rejectionReasons.map((reason, index) => `${index + 1}. ${reason}`),
         ]
       : [
@@ -1346,8 +1462,8 @@ async function prepareCouncilReviewerHistory(
   const instruction = [
     `Analyze the current Leader proposal:\n${proposalText}`,
     'Then return your verdict by calling exactly one tool:',
-    `- ${councilReviewerAcceptTool.name}`,
-    `- ${councilReviewerRejectTool.name}`,
+    `- ${COUNCIL_REVIEWER_ACCEPT_LABEL}`,
+    `- ${COUNCIL_REVIEWER_IMPROVE_LABEL}`,
   ];
 
   appendCouncilInstruction(participantHistory, instruction);
@@ -1530,7 +1646,7 @@ async function runCouncilReviewerBallot(
   sharedAbortController: AbortController,
   runOptions?: PersonaRunOptions,
 ): Promise<CouncilReviewerTurnResult> {
-  const { finalMessage } = await runtime.runPersona({
+  let { finalMessage } = await runtime.runPersona({
     assistantLlmId: llmId,
     conversationId,
     systemPurposeId: participant.personaId!,
@@ -1547,11 +1663,62 @@ async function runCouncilReviewerBallot(
   let ballot: ReturnType<typeof extractCouncilReviewerBallotFromToolInvocation>;
   try {
     ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
+    assertCouncilReviewerBallotHasVisibleAnalysis(ballot, finalMessage.fragments);
   } catch (error) {
-    const fallbackReason = deriveCouncilReviewerFallbackReason(fragmentTexts);
     const explicitErrorReason = error instanceof Error && error.message.trim()
       ? error.message.trim()
       : '';
+    if (explicitErrorReason === COUNCIL_REVIEW_VERDICT_MISSING_REASON && fragmentTexts.length) {
+      const repairHistory = participantHistory.map(message => duplicateDMessage(message, false));
+      const priorAnalysis = getCouncilReviewerAnalysisTexts(finalMessage.fragments).join('\n\n').trim();
+      appendCouncilInstruction(repairHistory, [
+        'Your previous review did not submit the required verdict tool call.',
+        ...(priorAnalysis ? [
+          `Your review analysis was:\n${priorAnalysis}`,
+        ] : []),
+        'Now return your verdict by calling exactly one tool and no other tool:',
+        `- ${COUNCIL_REVIEWER_ACCEPT_LABEL}`,
+        `- ${COUNCIL_REVIEWER_IMPROVE_LABEL}`,
+        'If you request changes, include the concrete blocking reason in the Improve tool arguments.',
+        'Do not repeat the full review in plain text.',
+      ]);
+
+      try {
+        const repaired = await runtime.runPersona({
+          assistantLlmId: llmId,
+          conversationId,
+          systemPurposeId: participant.personaId!,
+          keepAbortController: true,
+          sharedAbortController,
+          participant,
+          sourceHistory: repairHistory,
+          createPlaceholder: false,
+          runOptions: withParticipantRunOptions(llmId, participant, {
+            requestTransform: createCouncilReviewerForcedBallotRequestTransform(),
+          }),
+          session,
+        });
+
+        finalMessage = {
+          ...finalMessage,
+          fragments: mergeCouncilReviewerVoteFragments(finalMessage.fragments, repaired.finalMessage.fragments),
+          pendingIncomplete: !!(finalMessage.pendingIncomplete || repaired.finalMessage.pendingIncomplete),
+        };
+        ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
+        assertCouncilReviewerBallotHasVisibleAnalysis(ballot, finalMessage.fragments);
+        return {
+          ballot,
+          fragmentTexts: getCouncilFragmentTexts(finalMessage),
+          messageFragments: finalMessage.fragments,
+          messagePendingIncomplete: !!finalMessage.pendingIncomplete,
+        };
+      } catch (repairError) {
+        if (sharedAbortController.signal.aborted)
+          throw repairError;
+      }
+    }
+
+    const fallbackReason = deriveCouncilReviewerFallbackReason(fragmentTexts);
     ballot = {
       reviewerParticipantId: participant.id,
       decision: 'reject',
@@ -1586,8 +1753,8 @@ function createCouncilRoundMessage(
   const visibleText = action === 'proposal'
     ? text
     : action === 'accept'
-      ? 'Accept'
-      : reason ? `Reject: ${reason}` : 'Reject';
+      ? COUNCIL_REVIEWER_ACCEPT_LABEL
+      : formatCouncilReviewerImproveText(reason);
   const message = createDMessageTextContent('assistant', visibleText);
   message.metadata = {
     ...message.metadata,
@@ -1675,9 +1842,18 @@ export async function runCouncilSequence(
   const reviewerParticipants = participantsInOrder.filter(participant => participant.id !== leaderParticipant?.id && participant.kind === 'assistant' && !!participant.personaId);
   let currentCouncilOps = getConversationCouncilOpLog(conversationId)
     .filter(op => op.phaseId === phaseId);
-  const resumedFromExistingCouncilLog = currentCouncilOps.length > 0 || !!initialCouncilState;
-  if (!currentCouncilOps.length && initialCouncilState)
+  const replayedCurrentCouncilState = currentCouncilOps.length
+    ? replayCouncilOpLog(currentCouncilOps).workflowState
+    : null;
+  const shouldHydrateCouncilOpsFromState = !!initialCouncilState && (
+    !currentCouncilOps.length
+    || !replayedCurrentCouncilState
+    || replayedCurrentCouncilState.phaseId !== initialCouncilState.phaseId
+    || (replayedCurrentCouncilState.updatedAt ?? 0) < initialCouncilState.updatedAt
+  );
+  if (shouldHydrateCouncilOpsFromState)
     currentCouncilOps = createCouncilOpLogFromSessionState(initialCouncilState, conversationId, latestUserMessageId);
+  const resumedFromExistingCouncilLog = currentCouncilOps.length > 0 || !!initialCouncilState;
   if (!currentCouncilOps.length) {
     currentCouncilOps = [
       createCouncilOp([], 'session_started', {
@@ -1751,7 +1927,7 @@ export async function runCouncilSequence(
     while (!sharedAbortController.signal.aborted && (currentCouncilState.status === 'drafting' || currentCouncilState.status === 'reviewing')) {
       syncCouncilRuntimeMaxRounds();
       const roundIndex = currentCouncilState.roundIndex;
-      setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+      setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
       const currentConversationHistory = session.historyViewHeadOrThrow(`chat-persona-council-round-${roundIndex}`) as Readonly<DMessage[]>;
       const latestUserMessage = [...currentConversationHistory].reverse().find(message => message.role === 'user') ?? null;
       if (hasStopToken(latestUserMessage)) {
@@ -1807,7 +1983,7 @@ export async function runCouncilSequence(
                   messageFragments: message.fragments,
                   messagePendingIncomplete: message.pendingIncomplete,
                 });
-                setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+                setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
               },
               onTextSnapshot: (text) => {
                 currentCouncilState = appendCouncilAgentTurnEvent(currentCouncilState, {
@@ -1820,7 +1996,7 @@ export async function runCouncilSequence(
                     text,
                   },
                 });
-                setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+                setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
               },
             }),
           },
@@ -1890,7 +2066,7 @@ export async function runCouncilSequence(
         });
         currentCouncilOps = committedProposal.councilOpLog;
         currentCouncilState = committedProposal.workflowState;
-        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
         activeRound = currentCouncilState.rounds[currentCouncilState.roundIndex];
       }
 
@@ -1979,7 +2155,7 @@ export async function runCouncilSequence(
                           messageFragments: message.fragments,
                           messagePendingIncomplete: message.pendingIncomplete,
                         });
-                        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+                        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
                       },
                       onTextSnapshot: (text) => {
                         currentCouncilState = appendCouncilAgentTurnEvent(currentCouncilState, {
@@ -1992,7 +2168,7 @@ export async function runCouncilSequence(
                             text,
                           },
                         });
-                        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+                        setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
                       },
                     }),
                   },
@@ -2038,7 +2214,7 @@ export async function runCouncilSequence(
             });
             currentCouncilOps = committedVote.councilOpLog;
             currentCouncilState = committedVote.workflowState;
-            setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState);
+            setCouncilSessionRunning(session, 'generate-content', 'council', phaseId, roundIndex, currentCouncilState, currentCouncilOps);
 
             return reviewerResult.ballot;
           }));
@@ -2438,7 +2614,12 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         ? replayCouncilOpLog(councilOpLog)
         : null;
       const initialCouncilState = effectiveTurnTerminationMode === 'council' && (councilOpReplay?.canResume || resumeSession.canResume)
-        ? councilOpReplay?.workflowState ?? resumeSession.workflowState ?? (() => {
+        ? pickPreferredCouncilResumeState({
+            replayedState: councilOpReplay?.canResume ? councilOpReplay.workflowState : null,
+            replayedUpdatedAt: councilOpReplay?.updatedAt ?? null,
+            persistedState: resumeSession.canResume ? resumeSession.workflowState ?? null : null,
+            persistedUpdatedAt: resumeSession.updatedAt,
+          }) ?? (() => {
             const resumePhaseId = resumeSession.phaseId?.trim() || null;
             const leaderParticipant = getCouncilLeaderParticipant(participantsForTurn);
             if (!resumePhaseId || !leaderParticipant)

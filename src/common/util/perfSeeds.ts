@@ -202,7 +202,7 @@ function buildCouncilWorkflowAndMessages(): { messages: DMessage[]; session: DPe
   ];
   const leaderDeliberations = [
     'I am optimizing for speed first, but I may be underweighting rollback clarity.',
-    'Incorporating the first rejection reasons and making the order more conservative.',
+    'Incorporating the first improvement requests and making the order more conservative.',
     'The plan is tighter now, but cache coordination still needs explicit ownership.',
     'Rollback ordering is explicit now; I need to make the cache blast radius concrete.',
     'This pass should satisfy both rollback and cache reviewers while preserving a concise final answer.',
@@ -271,7 +271,7 @@ function buildCouncilWorkflowAndMessages(): { messages: DMessage[]; session: DPe
       ].join('\n');
       const finalText = ballot.decision === 'accept'
         ? `[[accept]] ${proposalText}`
-        : `[[reject]] ${ballot.reason}`;
+        : `[[improve]] ${ballot.reason}`;
 
       workflow = recordCouncilReviewerInitialDraft(workflow, {
         reviewerParticipantId: ballot.reviewer.id,
@@ -362,7 +362,7 @@ function buildCouncilWorkflowAndMessages(): { messages: DMessage[]; session: DPe
     {
       reviewer: reviewerB,
       draft: 'Verifying whether cache invalidation ownership is explicit enough for operations handoff.',
-      final: '[[reject]] Add the exact cache owner handoff before each region flips traffic.',
+      final: '[[improve]] Add the exact cache owner handoff before each region flips traffic.',
       reason: 'Add the exact cache owner handoff before each region flips traffic.',
     },
     {

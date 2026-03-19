@@ -92,6 +92,8 @@ const trace: CouncilTraceRenderItem = {
       leaderCard: {
         participantId: 'leader',
         participantName: 'Leader',
+        participantModelLabel: 'GPT-5.4',
+        participantReasoningLabel: 'X-High',
         role: 'leader',
         status: 'proposal-ready',
         excerpt: 'First pass note.',
@@ -112,10 +114,12 @@ const trace: CouncilTraceRenderItem = {
         {
           participantId: 'critic',
           participantName: 'Critic',
+          participantModelLabel: 'Claude Sonnet 4',
+          participantReasoningLabel: 'High',
           role: 'reviewer',
           status: 'rejected',
           excerpt: 'This is missing the caveat.',
-          terminalLabel: 'Reject',
+          terminalLabel: 'Improve()',
           terminalText: '',
           terminalReason: 'Missing the caveat.',
           hasDetails: true,
@@ -164,6 +168,8 @@ const trace: CouncilTraceRenderItem = {
       leaderCard: {
         participantId: 'leader',
         participantName: 'Leader',
+        participantModelLabel: 'GPT-5.4',
+        participantReasoningLabel: 'X-High',
         role: 'leader',
         status: 'proposal-ready',
         excerpt: 'Working draft note.',
@@ -184,6 +190,8 @@ const trace: CouncilTraceRenderItem = {
         {
           participantId: 'critic',
           participantName: 'Critic',
+          participantModelLabel: 'Claude Sonnet 4',
+          participantReasoningLabel: 'High',
           role: 'reviewer',
           status: 'accepted',
           excerpt: 'Looks good.',
@@ -205,6 +213,8 @@ const trace: CouncilTraceRenderItem = {
         {
           participantId: 'writer',
           participantName: 'Writer',
+          participantModelLabel: 'Chat model',
+          participantReasoningLabel: null,
           role: 'reviewer',
           status: 'accepted',
           excerpt: 'Approved.',
@@ -258,10 +268,54 @@ test('expanded council trace renders a centered leader row above a reviewer row 
   assert.match(markup, /Leader/);
   assert.match(markup, /Proposal ready/);
   assert.match(markup, /Working draft note\./);
+  assert.match(markup, /GPT-5\.4 · X-High/);
+  assert.match(markup, /Claude Sonnet 4 · High/);
   assert.match(markup, /Critic/);
   assert.match(markup, /Writer/);
-  assert.match(markup, /Reject/);
+  assert.match(markup, /Improve\(\)/);
   assert.match(markup, /Shared with next round/);
+});
+
+test('expanded council trace renders round automation preferences in the header when handlers are provided', () => {
+  const markup = renderToStaticMarkup(
+    <ul>
+      <CouncilTraceMessage
+        trace={trace}
+        defaultExpanded
+        defaultExpandedRoundIndexes={[0]}
+        autoCollapsePreviousRounds
+        autoExpandNewestRound
+        onAutoCollapsePreviousRoundsChange={() => undefined}
+        onAutoExpandNewestRoundChange={() => undefined}
+      />
+    </ul>,
+  );
+
+  assert.match(markup, /Auto-collapse previous rounds/);
+  assert.match(markup, /Auto-expand newest round/);
+  assert.match(markup, /Expand all/);
+  assert.match(markup, /Collapse all/);
+});
+
+test('expanded rounds render a collapse control at both the top and bottom of the round', () => {
+  const markup = renderToStaticMarkup(
+    <ul>
+      <CouncilTraceMessage trace={trace} defaultExpanded defaultExpandedRoundIndexes={[0]} />
+    </ul>,
+  );
+
+  assert.equal((markup.match(/Collapse round/g) ?? []).length, 2);
+});
+
+test('expanded council trace exposes each round as its own minimap entry', () => {
+  const markup = renderToStaticMarkup(
+    <ul>
+      <CouncilTraceMessage trace={trace} defaultExpanded defaultExpandedRoundIndexes={[1, 0]} />
+    </ul>,
+  );
+
+  assert.match(markup, /data-chat-minimap-id="council-trace-phase-1-round-0"/);
+  assert.match(markup, /data-chat-minimap-id="council-trace-phase-1-round-1"/);
 });
 
 test('expanded council trace shows older rounds above newer rounds while summarizing the newest round', () => {
@@ -401,6 +455,25 @@ test('assistant message renders hosted web search blocks inside the expanded rea
   );
 });
 
+test('assistant message keeps hosted web search inside Show Reasoning even after final text is rendered', () => {
+  const sharedFragments = [
+    createModelAuxVoidFragment('reasoning', '**Generating business ideas**\n\nNeed sources.'),
+    createTextContentFragment('Visible draft text.'),
+    create_FunctionCallInvocation_ContentFragment('ws-1', 'web_search', '{"q":"canary islands saas"}'),
+    create_FunctionCallResponse_ContentFragment('ws-1', false, 'web_search', 'Hosted web search completed.', 'upstream'),
+    createTextContentFragment('Final answer.'),
+  ];
+
+  const assistantMarkup = renderExpandedAssistantContentMarkup(sharedFragments);
+
+  assert.equal(countChipLabel(assistantMarkup, 'Show Reasoning'), 1);
+  assert.equal(countRenderedLabel(assistantMarkup, 'Web Search'), 1);
+  assert.match(
+    assistantMarkup,
+    /Show Reasoning[\s\S]*?markdown-body[\s\S]*?Need sources\.[\s\S]*?Web Search[\s\S]*?Hosted web search completed\.[\s\S]*?Visible draft text\.[\s\S]*?Final answer\./,
+  );
+});
+
 test('assistant message collapses one hosted web invocation-response pair into a single inline web search block', () => {
   const sharedFragments = [
     create_FunctionCallInvocation_ContentFragment('ws-1', 'web_search', '{"q":"canary islands saas"}'),
@@ -492,6 +565,8 @@ test('browser render does not duplicate the leader excerpt when structured propo
     );
 
     assert.equal((markup.match(/markdown-body/g) ?? []).length, (baselineMarkup.match(/markdown-body/g) ?? []).length);
+    assert.doesNotMatch(markup, /\snode="\[object Object\]"/);
+    assert.doesNotMatch(baselineMarkup, /\snode="\[object Object\]"/);
   } finally {
     if (previousWindow === undefined)
       delete (globalThis as typeof globalThis & { window?: Window }).window;
@@ -560,13 +635,13 @@ test('expanded reviewer trace keeps terminal rejection reason visible when struc
         role: 'reviewer',
         status: 'rejected',
         excerpt: null,
-        terminalLabel: 'Reject',
+        terminalLabel: 'Improve()',
         terminalText: '',
         terminalReason: 'Missing the caveat.',
         hasDetails: true,
         messageFragments: [
           createModelAuxVoidFragment('reasoning', 'I should verify the caveat before rejecting.'),
-          create_FunctionCallInvocation_ContentFragment('reject-critic', 'Reject', '{"reason":"Missing the caveat."}'),
+          create_FunctionCallInvocation_ContentFragment('reject-critic', 'Improve', '{"reason":"Missing the caveat."}'),
         ],
         messagePendingIncomplete: false,
         detailItems: [
@@ -591,7 +666,7 @@ test('expanded reviewer trace keeps terminal rejection reason visible when struc
 
   assert.match(markup, /Show Reasoning/);
   assert.doesNotMatch(markup, /I should verify the caveat before rejecting\./);
-  assert.match(markup, /Reject/);
+  assert.match(markup, /Improve\(\)/);
   assert.match(markup, /Missing the caveat\./);
   assert.doesNotMatch(markup, /No visible output\./);
 });
@@ -662,7 +737,7 @@ test('expanded council trace renders separate proposal and reviewer reviews sect
             role: 'reviewer',
             status: 'rejected',
             excerpt: 'Missing the caveat.',
-            terminalLabel: 'Reject',
+            terminalLabel: 'Improve()',
             terminalText: '',
             terminalReason: 'Missing the caveat.',
             hasDetails: false,
@@ -745,7 +820,7 @@ test('expanded council trace shows partial reviewer reviews before the round clo
             role: 'reviewer',
             status: 'rejected',
             excerpt: 'Need the caveat.',
-            terminalLabel: 'Reject',
+            terminalLabel: 'Improve()',
             terminalText: '',
             terminalReason: 'Need the caveat.',
             hasDetails: false,
@@ -922,7 +997,7 @@ test('synthetic reviewer failures do not render stale Accept tool details', () =
           participantName: 'Critic',
           role: 'reviewer',
           status: 'rejected',
-          excerpt: 'The reviewer response did not call Accept() or Reject().',
+          excerpt: 'The reviewer response did not call Accept() or Improve().',
           terminalLabel: 'Missing verdict',
           terminalText: '',
           terminalReason: null,
@@ -948,7 +1023,10 @@ test('synthetic reviewer failures do not render stale Accept tool details', () =
   );
 
   assert.match(markup, /Missing verdict/);
-  assert.match(markup, /The reviewer response did not call Accept\(\) or Reject\(\)\./);
+  assert.match(markup, /Reviewer failure/);
+  assert.match(markup, /Failure note/);
+  assert.match(markup, /The reviewer response did not call Accept\(\) or Improve\(\)\./);
+  assert.equal(countChipLabel(markup, 'Persisted'), 1);
   assert.doesNotMatch(markup, /review analysis missing/);
   assert.doesNotMatch(markup, />Accept</);
   assert.doesNotMatch(markup, /Name<\/div><div>Accept<\/div>/);
@@ -1007,13 +1085,12 @@ test('reviewer vote details do not replay the reviewer plan when the vote messag
         role: 'reviewer',
         status: 'rejected',
         excerpt: null,
-        terminalLabel: 'Reject',
+        terminalLabel: 'Improve()',
         terminalText: '',
         terminalReason: 'Missing the caveat.',
         hasDetails: true,
         messageFragments: [
-          createTextContentFragment('Critic plan: verify the caveat is present.'),
-          create_FunctionCallInvocation_ContentFragment('reject-critic', 'Reject', '{"reason":"Missing the caveat."}'),
+          create_FunctionCallInvocation_ContentFragment('reject-critic', 'Improve', '{"reason":"Missing the caveat."}'),
         ],
         messagePendingIncomplete: false,
         detailItems: [
@@ -1028,12 +1105,12 @@ test('reviewer vote details do not replay the reviewer plan when the vote messag
         role: 'reviewer',
         status: 'rejected',
         excerpt: null,
-        terminalLabel: 'Reject',
+        terminalLabel: 'Improve()',
         terminalText: '',
         terminalReason: 'Missing the caveat.',
         hasDetails: true,
         messageFragments: [
-          create_FunctionCallInvocation_ContentFragment('reject-critic', 'Reject', '{"reason":"Missing the caveat."}'),
+          create_FunctionCallInvocation_ContentFragment('reject-critic', 'Improve', '{"reason":"Missing the caveat."}'),
         ],
         messagePendingIncomplete: false,
         detailItems: [
@@ -1057,7 +1134,7 @@ test('reviewer vote details do not replay the reviewer plan when the vote messag
   );
 
   assert.equal((markup.match(/Critic plan: verify the caveat is present\./g) ?? []).length, 0);
-  assert.match(markup, /Reject/);
+  assert.match(markup, /Improve\(\)/);
   assert.match(markup, /Missing the caveat\./);
 });
 
@@ -1257,8 +1334,15 @@ test('stopped leader-proposal rounds show proposal failure and hide reviewer rev
   );
 
   assert.match(markup, /Stopped/);
+  assert.match(markup, /Round 1 proposal failed/);
+  assert.match(markup, /Leader failure/);
   assert.match(markup, /Leader failed to produce a valid proposal/);
   assert.match(markup, /Proposal failed/);
+  assert.match(markup, /Failure note/);
+  assert.match(markup, /Leader failed before reviewer review began\./);
+  assert.doesNotMatch(markup, /Persisted/);
+  assert.doesNotMatch(markup, /Leader proposal/);
+  assert.doesNotMatch(markup, /Leader leads this round\./);
   assert.doesNotMatch(markup, /Reviewer reviews/);
   assert.doesNotMatch(markup, /0\/2 reviews complete/);
 });

@@ -12,7 +12,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import type { AppChatIntent } from '../../AppChat';
-import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '../../store-app-chat';
+import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue, useChatShowCallButton } from '../../store-app-chat';
 
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
@@ -204,6 +204,7 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const composerQuickButton = useUIPreferencesStore(state => state.composerQuickButton);
+  const [showCallButton] = useChatShowCallButton();
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
   const { assistantAbortible, systemPurposeId, turnTerminationMode, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.targetConversationId);
@@ -1077,31 +1078,6 @@ export function Composer(props: {
               </Box>
             )}
 
-            {/* [Desktop, Col1] Insert Multi-modal content buttons */}
-            {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: 0.5, alignSelf: 'flex-start' }}>
-
-                {/* [desktop] Attachment Sources: dropdown menu or inline buttons */}
-                <AttachmentSourcesMemo
-                  mode={!labsComposerAttachmentsInline ? 'menu-rich' : 'inline-buttons'}
-                  color={!labsComposerAttachmentsInline ? (showTint || 'neutral') : showTint}
-                  richButtonStandOut={!isText && !isAppend}
-                  canBrowse={browseCapability.mayWork}
-                  hasScreenCapture={supportsScreenCapture}
-                  hasCamera={supportsCameraCapture()}
-                  onlyImages={showChatAttachments === 'only-images'}
-                  onAttachClipboard={attachAppendClipboardItems}
-                  onAttachFiles={handleAttachFiles}
-                  onAttachScreenCapture={handleAttachScreenCapture}
-                  onOpenCamera={handleOpenCamera}
-                  onOpenGoogleDrivePicker={openGoogleDrivePicker}
-                  onOpenWebInput={openWebInputDialog}
-                />
-
-              </Box>
-            )}
-
-
             {/* Top: Textarea & Mic & Overlays, Bottom, Attachment Drafts */}
             <Box sx={{
               flexGrow: 1,
@@ -1113,7 +1089,14 @@ export function Composer(props: {
             }}>
 
               {/* Text Edit + Mic buttons + MicOverlay */}
-              <Box sx={{ position: 'relative' /* for Mic overlay */, height: '100%' }}>
+              <Box sx={{
+                position: 'relative' /* for Mic overlay */,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.75,
+                flexGrow: 1,
+                minHeight: 0,
+              }}>
 
                 {!isDraw && !showChatInReferenceTo && composerThreadTargetDisplay.showChip && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, px: 0.5, pb: 0.5, alignItems: 'center' }}>
@@ -1131,7 +1114,11 @@ export function Composer(props: {
                 )}
 
                 {/* Edit box with inner Token Progress bar */}
-                <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */, height: '100%' }}>
+                <Box sx={{
+                  position: 'relative' /* for TokenBadge & TokenProgress */,
+                  flexGrow: 1,
+                  minHeight: 0,
+                }}>
 
                   <Textarea
                     variant='outlined'
@@ -1189,6 +1176,26 @@ export function Composer(props: {
                   )}
 
                 </Box>
+
+                {isDesktop && showChatAttachments && (
+                  <Box sx={{ display: 'grid', gap: 0.5, alignSelf: 'flex-start' }}>
+                    <AttachmentSourcesMemo
+                      mode={!labsComposerAttachmentsInline ? 'menu-rich' : 'inline-buttons'}
+                      color={!labsComposerAttachmentsInline ? (showTint || 'neutral') : showTint}
+                      richButtonStandOut={!isText && !isAppend}
+                      canBrowse={browseCapability.mayWork}
+                      hasScreenCapture={supportsScreenCapture}
+                      hasCamera={supportsCameraCapture()}
+                      onlyImages={showChatAttachments === 'only-images'}
+                      onAttachClipboard={attachAppendClipboardItems}
+                      onAttachFiles={handleAttachFiles}
+                      onAttachScreenCapture={handleAttachScreenCapture}
+                      onOpenCamera={handleOpenCamera}
+                      onOpenGoogleDrivePicker={openGoogleDrivePicker}
+                      onOpenWebInput={openWebInputDialog}
+                    />
+                  </Box>
+                )}
 
                 {mentionOnlyParticipants.length > 0 && !isDraw && !showChatInReferenceTo && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, px: 0.5, pt: 0.5, pb: 0.25 }}>
@@ -1315,7 +1322,9 @@ export function Composer(props: {
                 {/* [mobile] bottom-corner secondary button */}
                 {isMobile && (showChatExtras
                     ? (composerQuickButton === 'call'
-                      ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
+                      ? (showCallButton
+                        ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
+                        : <ButtonBeamMemo isMobile disabled={noConversation /*|| noLLM*/} color={beamButtonColor} hasContent={!!composeText} onClick={handleSendTextBeamClicked} />)
                       : <ButtonBeamMemo isMobile disabled={noConversation /*|| noLLM*/} color={beamButtonColor} hasContent={!!composeText} onClick={handleSendTextBeamClicked} />)
                     : isDraw
                       ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
@@ -1451,7 +1460,7 @@ export function Composer(props: {
               {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
                 {/* [desktop] Call secondary button */}
-                {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM || assistantAbortible} onClick={handleCallClicked} />}
+                {showChatExtras && showCallButton && <ButtonCallMemo disabled={noConversation || noLLM || assistantAbortible} onClick={handleCallClicked} />}
 
                 {/* [desktop] Draw Options secondary button */}
                 {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}

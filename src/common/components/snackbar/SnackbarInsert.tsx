@@ -99,17 +99,29 @@ export function SnackbarInsert() {
           animateCloseSnackbar();
         }
       }}
+      onClick={!activeMessage.onClick ? undefined : () => {
+        activeMessage.onClick?.();
+        animateCloseSnackbar();
+      }}
       startDecorator={config.startDecorator}
       endDecorator={!config.closeButton ? undefined : (
         <IconButton
-          onClick={animateCloseSnackbar}
+          onClick={(event) => {
+            event.stopPropagation();
+            animateCloseSnackbar();
+          }}
           size='sm'
           sx={{ my: '-0.4rem' }}
         >
           <CloseRoundedIcon />
         </IconButton>
       )}
-      sx={activeMessage.type === 'center-title' ? typeTitleSx : typeDefaultSx}
+      sx={{
+        ...(activeMessage.type === 'center-title' ? typeTitleSx : typeDefaultSx),
+        ...(activeMessage.onClick ? {
+          cursor: 'pointer',
+        } : null),
+      }}
     >
       {activeMessage.message}
     </Snackbar>

@@ -6,7 +6,6 @@ import { Components as ReactMarkdownComponents, default as ReactMarkdown } from 
 import { default as rehypeKatex } from 'rehype-katex';
 import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
-import { remarkMark } from 'remark-mark-highlight';
 
 import { Box, Chip } from '@mui/joy';
 
@@ -31,18 +30,39 @@ function MarkRenderer({ children }: { children: React.ReactNode }) {
   return <mark className='agi-highlight'>{children}</mark>;
 }
 
-function ParagraphRenderer(props: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
-  const { children, onAppendMention, participants, ...rest } = props;
+type MarkdownParagraphProps = React.HTMLAttributes<HTMLParagraphElement> & {
+  children?: React.ReactNode;
+  node?: unknown;
+  onAppendMention?: (mentionText: string) => void;
+  participants?: DConversationParticipant[];
+};
+
+function ParagraphRenderer(props: MarkdownParagraphProps) {
+  const { children, node: _node, onAppendMention, participants, ...rest } = props;
   return <p {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</p>;
 }
 
-function ListItemRenderer(props: React.LiHTMLAttributes<HTMLLIElement> & { children?: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
-  const { children, onAppendMention, participants, ...rest } = props;
+type MarkdownListItemProps = React.LiHTMLAttributes<HTMLLIElement> & {
+  children?: React.ReactNode;
+  node?: unknown;
+  onAppendMention?: (mentionText: string) => void;
+  participants?: DConversationParticipant[];
+};
+
+function ListItemRenderer(props: MarkdownListItemProps) {
+  const { children, node: _node, onAppendMention, participants, ...rest } = props;
   return <li {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</li>;
 }
 
-function SpanRenderer(props: React.HTMLAttributes<HTMLSpanElement> & { children?: React.ReactNode; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[] }) {
-  const { children, onAppendMention, participants, ...rest } = props;
+type MarkdownSpanProps = React.HTMLAttributes<HTMLSpanElement> & {
+  children?: React.ReactNode;
+  node?: unknown;
+  onAppendMention?: (mentionText: string) => void;
+  participants?: DConversationParticipant[];
+};
+
+function SpanRenderer(props: MarkdownSpanProps) {
+  const { children, node: _node, onAppendMention, participants, ...rest } = props;
   return <span {...rest}>{withMentionHighlighting(children, participants, onAppendMention)}</span>;
 }
 
@@ -260,7 +280,6 @@ function createReactMarkdownComponents(
 
 const remarkPluginsStable: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
-  remarkMark, // Mark-Highlight, for ==yellow==
   remarkTableCellBreaks, // Convert <br> HTML tags inside tables to break nodes (for line breaks in table cells)
   [remarkMath, {
     /**
@@ -332,6 +351,11 @@ let warnedAboutPreprocessor = false;
 const INLINE_LATEX_REGEX = /(\s*)\\\(([^\n]*?)\\\)/g;
 // noinspection RegExpRedundantEscape
 const BLOCK_LATEX_REGEX = /(\s*)\\\[((?:.|\n)*?)\\\]/g;
+const PREPROCESSOR_TRIGGER_REGEX = /\\\(|\\\[|<mark>|<del>/;
+
+export function markdownNeedsPreprocessor(markdownText: string): boolean {
+  return PREPROCESSOR_TRIGGER_REGEX.test(markdownText);
+}
 
 /*
  * Convert OpenAI-style markdown with LaTeX to 'remark-math' compatible format.

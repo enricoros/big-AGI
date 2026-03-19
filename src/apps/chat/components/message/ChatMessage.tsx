@@ -125,6 +125,15 @@ const antCachePromptOnSx: SxProps = {
   transform: 'rotate(90deg)',
 };
 
+function resolveJoyPaletteTokenToCssVar(value: string): string {
+  const match = value.match(/^([a-z]+)\.([A-Za-z0-9]+)$/);
+  if (!match)
+    return value;
+
+  const [, palette, token] = match;
+  return `var(--joy-palette-${palette}-${token})`;
+}
+
 
 export interface ChatMessageFunctionsHandle {
   beginEditTextContent: () => void;
@@ -219,12 +228,17 @@ export function ChatMessage(props: {
   const messageHasBeenEdited = messageUpdated !== null && messageUpdated > messageCreated;
   const messageAuthorParticipantId = messageMetadata?.author?.participantId ?? null;
   const resolvedAuthorName = React.useMemo(() => {
+    const participantNameFromRoster = messageAuthorParticipantId
+      ? props.participants?.find(participant => participant.id === messageAuthorParticipantId)?.name?.trim() || null
+      : null;
+    if (participantNameFromRoster)
+      return participantNameFromRoster;
+
     const explicitAuthorName = messageMetadata?.author?.participantName?.trim();
     if (explicitAuthorName)
       return explicitAuthorName;
-    if (!messageAuthorParticipantId)
-      return null;
-    return props.participants?.find(participant => participant.id === messageAuthorParticipantId)?.name?.trim() || null;
+
+    return null;
   }, [messageAuthorParticipantId, messageMetadata?.author?.participantName, props.participants]);
   const messageAuthorName = resolvedAuthorName;
   const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
@@ -232,7 +246,6 @@ export function ChatMessage(props: {
   const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
   const messageAuthorAccentColor = React.useMemo(() => getParticipantAccentColor(messageAuthorName, props.participants), [messageAuthorName, props.participants]);
   const messageAuthorAccentSx = React.useMemo(() => getParticipantAccentSx(messageAuthorName, props.participants, 'soft'), [messageAuthorName, props.participants]);
-  const minimapAccentDataAttributes = getChatMessageMinimapAccentDataAttributes(fromAssistant, messageAuthorAccentColor, messageAuthorAccentSx);
   const handleAppendMention = React.useCallback((mentionText: string) => {
     props.onAppendMention?.(mentionText);
   }, [props]);
@@ -658,6 +671,18 @@ export function ChatMessage(props: {
 
   // style
   const backgroundColor = messageBackground(messageRole, userCommandApprox, messageHasBeenEdited, false /*isAssistantError && !errorMessage*/);
+  const minimapAccentDataAttributes = React.useMemo(() => {
+    if (fromAssistant)
+      return getChatMessageMinimapAccentDataAttributes(true, messageAuthorAccentColor, messageAuthorAccentSx);
+
+    if (fromUser)
+      return {
+        backgroundColor: resolveJoyPaletteTokenToCssVar(backgroundColor),
+        borderColor: resolveJoyPaletteTokenToCssVar(backgroundColor),
+      };
+
+    return {};
+  }, [backgroundColor, fromAssistant, fromUser, messageAuthorAccentColor, messageAuthorAccentSx]);
 
   const listItemSx: SxProps = React.useMemo(() => ({
     // vars
@@ -732,6 +757,24 @@ export function ChatMessage(props: {
   );
 
   const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
+  const effectiveMessageAvatarTooltip = React.useMemo(() => {
+    if (!messageAuthorName)
+      return messageAvatarTooltip;
+
+    const staleAuthorName = messageMetadata?.author?.participantName?.trim() || null;
+    if (!staleAuthorName || staleAuthorName === messageAuthorName || !messageAvatarTooltip)
+      return messageAvatarTooltip;
+
+    if (typeof messageAvatarTooltip === 'string')
+      return messageAuthorName;
+
+    return (
+      <Box sx={{ display: 'grid', gap: 0.5 }}>
+        <div>{messageAuthorName}</div>
+        {messageAvatarTooltip}
+      </Box>
+    );
+  }, [messageAuthorName, messageAvatarTooltip, messageMetadata?.author?.participantName]);
   const topDecorator = React.useMemo(() => {
     if (props.topDecorator !== undefined)
       return props.topDecorator;
@@ -826,7 +869,7 @@ export function ChatMessage(props: {
 
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
-              <TooltipOutlined asLargePane enableInteractive title={messageAvatarTooltip} placement='bottom-start'>
+              <TooltipOutlined asLargePane enableInteractive title={effectiveMessageAvatarTooltip} placement='bottom-start'>
                 <Box sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
                   <Typography level='body-xs' sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.15 }}>
                     {messageAuthorName || messageAvatarLabel}

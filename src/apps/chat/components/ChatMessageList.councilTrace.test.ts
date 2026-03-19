@@ -16,6 +16,7 @@ import {
   COUNCIL_REVIEW_FAILED_REASON,
   COUNCIL_REVIEW_VERDICT_MISSING_REASON,
   createCouncilSessionState,
+  recordCouncilAgentMessageSnapshot,
   recordCouncilProposal,
   recordCouncilReviewerPlan,
   recordCouncilReviewerTurn,
@@ -121,6 +122,48 @@ test('accepted council workflow inserts a trace item immediately before the fina
   assert.equal(traceItem.rounds[0]?.defaultExpanded, false);
   assert.equal(traceItem.rounds[1]?.roundIndex, 1);
   assert.equal(traceItem.rounds[1]?.defaultExpanded, true);
+});
+
+test('council trace uses the current chat model label for participants inheriting the chat model', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-chat-model',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 2,
+  });
+
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-chat-model',
+    leaderParticipantId: 'leader',
+    proposalText: 'Proposal using inherited chat model.',
+  });
+
+  workflowState = applyCouncilReviewBallots(workflowState, [
+    { reviewerParticipantId: 'critic', decision: 'accept' },
+    { reviewerParticipantId: 'writer', decision: 'accept' },
+  ]);
+
+  const traceItem = buildCouncilTraceRenderPlan({
+    messages: [
+      createCouncilMessage({ id: 'proposal-chat-model', text: 'Proposal using inherited chat model.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-chat-model', passIndex: 0 }),
+      createCouncilMessage({ id: 'result-chat-model', text: 'Proposal using inherited chat model.', kind: 'result', authorParticipantId: 'leader', phaseId: 'phase-chat-model', passIndex: 0 }),
+    ],
+    participants,
+    chatModelLabel: 'GPT 5.4 mini',
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'completed',
+      phaseId: 'phase-chat-model',
+      passIndex: 0,
+      workflowState,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  assert.ok(traceItem);
+  assert.equal(traceItem.rounds[0]?.leaderCard.participantModelLabel, 'GPT 5.4 mini');
+  assert.equal(traceItem.rounds[0]?.reviewerCards[1]?.participantModelLabel, 'GPT 5.4 mini');
 });
 
 test('council trace round expansion defaults follow the configured auto-collapse and auto-expand settings', () => {
@@ -287,7 +330,7 @@ test('historical accepted council trace is reconstructed from persisted messages
   assert.equal(plan.showLegacyDeliberationToggle, false);
 });
 
-test('shared rejection reason labels reflect whether the round feeds a next round, waits for one, or terminates', () => {
+test('shared improvement reason labels reflect whether the round feeds a next round, waits for one, or terminates', () => {
   let sharedWorkflow = createCouncilSessionState({
     phaseId: 'phase-shared',
     leaderParticipantId: 'leader',
@@ -468,7 +511,7 @@ test('shared rejection reason labels reflect whether the round feeds a next roun
     },
   }).traceItem;
 
-  assert.equal(finalTrace?.rounds[0]?.sharedReasons?.label, 'Final rejection reasons');
+  assert.equal(finalTrace?.rounds[0]?.sharedReasons?.label, 'Final improvement reasons');
 });
 
 test('structured trace rounds expose a leader card plus reviewer cards in reviewer roster order', () => {
@@ -506,11 +549,11 @@ test('structured trace rounds expose a leader card plus reviewer cards in review
     fragmentTexts: [
       'This still needs the caveat.',
       '',
-      '[[reject]] Mention the retry caveat.',
+      '[[improve]] Mention the retry caveat.',
     ],
     messageFragments: [
       createModelAuxVoidFragment('reasoning', 'This still needs the caveat.'),
-      createTextContentFragment('This still needs the caveat.\n\n[[reject]] Mention the retry caveat.'),
+      createTextContentFragment('This still needs the caveat.\n\n[[improve]] Mention the retry caveat.'),
     ],
     messagePendingIncomplete: false,
   });
@@ -556,6 +599,96 @@ test('structured trace rounds expose a leader card plus reviewer cards in review
   assert.equal(traceItem?.rounds[0]?.reviewerCards[0]?.terminalReason, 'Mention the retry caveat.');
   assert.deepEqual(traceItem?.rounds[0]?.reviewerCards[0]?.messageFragments.map(fragment => fragment.part.pt), ['ma', 'text']);
   assert.equal(traceItem?.rounds[0]?.reviewerCards[1]?.status, 'accepted');
+});
+
+test('structured trace cards include participant model and reasoning labels when available', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-agent-meta',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 4,
+  });
+
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-agent-meta-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Final leader proposal.',
+  });
+
+  const traceItem = buildCouncilTraceRenderPlan({
+    messages: [
+      createCouncilMessage({ id: 'proposal-agent-meta-1', text: 'Final leader proposal.', kind: 'deliberation', action: 'proposal', authorParticipantId: 'leader', phaseId: 'phase-agent-meta', passIndex: 0 }),
+    ],
+    participants: [
+      participants[0],
+      { ...participants[1], llmId: 'gpt-5.4', reasoningEffort: 'xhigh' },
+      { ...participants[2], llmId: 'claude-sonnet-4', reasoningEffort: 'high' },
+      { ...participants[3], llmId: null, reasoningEffort: null },
+    ],
+    llmLabelsById: new Map([
+      ['gpt-5.4', 'GPT-5.4'],
+      ['claude-sonnet-4', 'Claude Sonnet 4'],
+    ]),
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'running',
+      phaseId: 'phase-agent-meta',
+      passIndex: 0,
+      workflowState,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  assert.equal(traceItem?.rounds[0]?.leaderCard.participantModelLabel, 'GPT-5.4');
+  assert.equal(traceItem?.rounds[0]?.leaderCard.participantReasoningLabel, 'X-High');
+  assert.equal(traceItem?.rounds[0]?.reviewerCards[0]?.participantModelLabel, 'Claude Sonnet 4');
+  assert.equal(traceItem?.rounds[0]?.reviewerCards[0]?.participantReasoningLabel, 'High');
+});
+
+test('leader cards prefer structured message snapshots over transient text-output excerpts', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-leader-markdown',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    maxRounds: 4,
+  });
+
+  workflowState = recordCouncilAgentMessageSnapshot(workflowState, {
+    roundIndex: 0,
+    participantId: 'leader',
+    role: 'leader',
+    messageFragments: [
+      createTextContentFragment('## Stable markdown proposal\n\n- First point'),
+    ],
+    messagePendingIncomplete: true,
+  });
+  workflowState = appendCouncilAgentTurnEvent(workflowState, {
+    roundIndex: 0,
+    participantId: 'leader',
+    role: 'leader',
+    event: {
+      type: 'text-output',
+      createdAt: 101,
+      text: 'Transient raw markdown snapshot',
+    },
+  });
+
+  const traceItem = buildCouncilTraceRenderPlan({
+    messages: [],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'running',
+      phaseId: 'phase-leader-markdown',
+      passIndex: 0,
+      workflowState,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  assert.equal(traceItem?.rounds[0]?.leaderCard.excerpt, '## Stable markdown proposal\n\n- First point');
 });
 
 test('structured trace detail payload preserves ordered agent transcript events and keeps pending reviewers visible', () => {
@@ -771,7 +904,7 @@ test('reviewer accept cards omit details when they only repeat the visible verdi
     },
   }).traceItem;
 
-  assert.equal(traceItem?.rounds[0]?.reviewerCards[0]?.excerpt, 'Accept');
+  assert.equal(traceItem?.rounds[0]?.reviewerCards[0]?.excerpt, 'Accept()');
   assert.equal(traceItem?.rounds[0]?.reviewerCards[0]?.hasDetails, false);
 });
 
@@ -821,7 +954,7 @@ test('reviewer cards follow reviewer participant order and preserve verbatim rej
   assert.deepEqual(traceItem?.rounds[1]?.reviewerCards, []);
 });
 
-test('reviewer vote card excerpts show the verdict instead of recycling the reviewer plan text', () => {
+test('reviewer vote card excerpts show prior reviewer text for ballot-only accepts without recycling reject plan text', () => {
   let workflowState = createCouncilSessionState({
     phaseId: 'phase-vote-excerpts',
     leaderParticipantId: 'leader',
@@ -862,7 +995,7 @@ test('reviewer vote card excerpts show the verdict instead of recycling the revi
     },
     messageFragments: [
       createTextContentFragment('Writer plan: verify the wording stays concise.'),
-      create_FunctionCallInvocation_ContentFragment('reject-1', 'Reject', '{"reason":"Missing the key caveat."}'),
+      create_FunctionCallInvocation_ContentFragment('reject-1', 'Improve', '{"reason":"Missing the key caveat."}'),
     ],
   });
 
@@ -884,7 +1017,7 @@ test('reviewer vote card excerpts show the verdict instead of recycling the revi
     participantId: card.participantId,
     excerpt: card.excerpt,
   })), [
-    { participantId: 'critic', excerpt: 'Accept' },
+    { participantId: 'critic', excerpt: 'Critic plan: verify the caveat is present.' },
     { participantId: 'writer', excerpt: null },
   ]);
 });
@@ -1049,7 +1182,7 @@ test('trace hides invalid reviewer ballot tool invocations for missing-verdict r
   assert.equal(criticCard?.decision, 'reject');
   assert.equal(criticCard?.reason, null);
   assert.equal(criticCard?.terminalLabel, 'Missing verdict');
-  assert.equal(criticCard?.excerpt, 'The reviewer response did not call Accept() or Reject().');
+  assert.equal(criticCard?.excerpt, 'The reviewer response did not call Accept() or Improve().');
   assert.deepEqual(criticCard?.messageFragments, []);
   assert.equal(criticCard?.hasDetails, false);
   assert.deepEqual(criticCard?.detailItems, []);
@@ -1095,9 +1228,58 @@ test('trace renders ballot-only reviewer accepts as valid accepts', () => {
 
   const criticCard = traceItem?.rounds[0]?.reviewerCards[0] ?? null;
   assert.ok(criticCard);
-  assert.equal(criticCard?.terminalLabel, 'Accept');
+  assert.equal(criticCard?.terminalLabel, 'Accept()');
   assert.equal(criticCard?.decision, 'accept');
-  assert.equal(criticCard?.excerpt, 'Accept');
+  assert.equal(criticCard?.excerpt, 'Accept()');
+});
+
+test('trace shows prior reviewer analysis on an accept card when the ballot turn is tool-only', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-ballot-only-accept-with-analysis',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic'],
+    maxRounds: 2,
+  });
+
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-ballot-only-accept-with-analysis-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Proposal under review.',
+  });
+  workflowState = recordCouncilReviewerPlan(workflowState, {
+    reviewerParticipantId: 'critic',
+    planText: 'The caveat is covered and the answer is ready.',
+  });
+  workflowState = recordCouncilReviewerVote(workflowState, {
+    reviewerParticipantId: 'critic',
+    ballot: {
+      reviewerParticipantId: 'critic',
+      decision: 'accept',
+    },
+    messageFragments: [
+      create_FunctionCallInvocation_ContentFragment('accept-after-analysis', 'Accept', '{}'),
+    ],
+  });
+
+  const traceItem = buildCouncilTraceRenderPlan({
+    messages: [],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'running',
+      phaseId: 'phase-ballot-only-accept-with-analysis',
+      passIndex: 0,
+      workflowState,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  const criticCard = traceItem?.rounds[0]?.reviewerCards[0] ?? null;
+  assert.ok(criticCard);
+  assert.equal(criticCard?.terminalLabel, 'Accept()');
+  assert.equal(criticCard?.decision, 'accept');
+  assert.equal(criticCard?.excerpt, 'The caveat is covered and the answer is ready.');
 });
 
 test('trace round view keeps proposal plus reviewer analysis and verdict artifacts', () => {

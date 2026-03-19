@@ -5,6 +5,7 @@ import { Box, styled } from '@mui/joy';
 
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { lineHeightChatTextMd } from '~/common/app.theme';
+import CustomMarkdownRenderer from './CustomMarkdownRenderer';
 
 
 /*
@@ -22,7 +23,9 @@ const RenderMarkdownBox = styled(Box)({
   '& table': { width: 'inherit !important' },           // un-break auto-width (tables have 'max-content', which overflows)
 });
 
-const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
+export function preloadMarkdownRenderer(): void {
+  // Markdown is loaded eagerly to avoid visible lazy-mount flicker in streamed/chat UIs.
+}
 
 export function RenderMarkdown(props: { content: string; disablePreprocessor?: boolean, sx?: SxProps; onAppendMention?: (mentionText: string) => void; participants?: DConversationParticipant[]; }) {
   return (
@@ -30,9 +33,12 @@ export function RenderMarkdown(props: { content: string; disablePreprocessor?: b
       className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
       sx={props.sx}
     >
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer content={props.content} disablePreprocessor={props.disablePreprocessor} onAppendMention={props.onAppendMention} participants={props.participants} />
-      </React.Suspense>
+      <CustomMarkdownRenderer
+        content={props.content}
+        disablePreprocessor={props.disablePreprocessor}
+        onAppendMention={props.onAppendMention}
+        participants={props.participants}
+      />
     </RenderMarkdownBox>
   );
 }

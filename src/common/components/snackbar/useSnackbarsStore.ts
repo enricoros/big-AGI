@@ -12,6 +12,7 @@ export interface SnackbarMessage {
   message: string;
   type: 'success' | 'issue' | 'center-title' | 'info' | 'precondition-fail';
   closeButton?: boolean,
+  onClick?: () => void;
   overrides?: Partial<SnackbarTypeMap['props']>;
 }
 
