@@ -44,6 +44,7 @@ import { getLLMLabel } from '~/common/stores/llms/llms.types';
 import { DModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 import { findParticipantMentionMatchIndex, getParticipantAccentColor, getParticipantAccentSx } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import {
   getParticipantEditorGridTemplateColumns,
@@ -102,6 +103,7 @@ export function ChatBarChat(props: {
   onConversationSaveAgentGroup: (conversationId: DConversationId, name?: string, existingId?: string | null) => string | null;
   onConversationLoadAgentGroup: (conversationId: DConversationId, agentGroupSnapshot: DAgentGroupSnapshot) => boolean;
 }) {
+  const isMobile = useIsMobile();
 
   // state
   const [participantsAnchorEl, setParticipantsAnchorEl] = React.useState<HTMLElement | null>(null);
@@ -903,13 +905,16 @@ export function ChatBarChat(props: {
       onClose={handleParticipantsClose}
       noAutoFocus
       placement='bottom-start'
+      maxHeightGapPx={isMobile ? 24 : 40}
       maxWidth={700}
-      minWidth={460}
+      minWidth={isMobile ? undefined : 460}
       sx={{
-        p: 1.25,
+        width: isMobile ? 'calc(100vw - 24px)' : undefined,
+        maxWidth: isMobile ? 'calc(100vw - 24px)' : undefined,
+        p: isMobile ? 0.9 : 1.25,
         display: 'grid',
-        gap: 1.25,
-        borderRadius: '24px',
+        gap: isMobile ? 1 : 1.25,
+        borderRadius: isMobile ? '18px' : '24px',
         border: '1px solid',
         borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.16)',
         backgroundImage: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.06) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.04) 48%, rgba(var(--joy-palette-neutral-mainChannel) / 0.02) 100%)',
@@ -920,8 +925,8 @@ export function ChatBarChat(props: {
         sx={{
           display: 'grid',
           gap: 1,
-          p: 1.2,
-          borderRadius: '20px',
+          p: isMobile ? 0.95 : 1.2,
+          borderRadius: isMobile ? '16px' : '20px',
           background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.08) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.04) 52%, rgba(var(--joy-palette-neutral-mainChannel) / 0.02) 100%)',
           border: '1px solid',
           borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
