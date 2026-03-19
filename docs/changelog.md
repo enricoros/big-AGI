@@ -24,6 +24,7 @@ by release.
 ### 2026-03-19
 
 - `Consensus` naming has been fully renamed to `Council` across the app, while persisted legacy `consensus` conversation/session/message keys still auto-migrate on load so older saved chats, traces, and agent groups continue working.
+- Council trace cards now use a stronger audit-style layout with clearer latest-outcome framing, richer round headers, responsive reviewer stacks on narrow screens, and more legible leader/reviewer cards with dedicated summary and carry-forward feedback callouts.
 - The Agents popup now uses a denser control-panel layout with pill-style action buttons, stronger group status cues, and more legible agent cards that emphasize leader, turn order, and next-speaker state.
 - Choosing the `Custom` persona while adding a new agent now reveals the custom prompt field immediately, and that prompt is saved onto the newly created agent.
 - Expanded agent cards now include single-agent `Import Agent` and `Export Agent` actions, so you can move one agent configuration in and out of JSON files without exporting a full group.

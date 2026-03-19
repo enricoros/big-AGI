@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowRightRoundedIcon from '@mui/icons-material/KeyboardArrowRightRounded';
 import { Box, Button, Chip, Divider, ListItem, Typography } from '@mui/joy';
 import type { SxProps } from '@mui/joy/styles/types';
 
@@ -81,6 +84,24 @@ function getRoundSummary(round: CouncilTraceRoundItem): string {
   return 'Awaiting review';
 }
 
+function getRoundDecisionCounts(round: CouncilTraceRoundItem) {
+  const reviewerCards = round.reviewerCards ?? round.reviewerVoteCards ?? [];
+  let rejectCount = 0;
+  let acceptCount = 0;
+  let pendingCount = 0;
+
+  for (const card of reviewerCards) {
+    if (card.decision === 'reject')
+      rejectCount++;
+    else if (card.decision === 'accept')
+      acceptCount++;
+    else
+      pendingCount++;
+  }
+
+  return { rejectCount, acceptCount, pendingCount };
+}
+
 function getReviewerDecisionTone(decision: CouncilTraceReviewerCard['decision']) {
   switch (decision) {
     case 'accept':
@@ -119,6 +140,26 @@ function getAgentStatusLabel(card: CouncilTraceAgentCard): string {
             ? 'Proposal failed'
           : 'Waiting'
   );
+}
+
+function getAgentRoleLabel(card: CouncilTraceAgentCard | CouncilTraceReviewerCard): string {
+  if (card.role === 'leader')
+    return 'Leader proposal';
+
+  if (!isReviewerCard(card))
+    return 'Reviewer analysis';
+
+  if (card.decision === 'reject')
+    return 'Reviewer rejection';
+  if (card.decision === 'accept')
+    return 'Reviewer approval';
+  return 'Reviewer analysis';
+}
+
+function getAgentSummaryLabel(card: CouncilTraceAgentCard | CouncilTraceReviewerCard, showRejectReason: boolean): string {
+  if (showRejectReason)
+    return 'Rejection reason';
+  return card.role === 'leader' ? 'Draft snapshot' : 'Review note';
 }
 
 function getAgentPersistenceBadge(
@@ -167,6 +208,42 @@ function CouncilTraceMarkdownText(props: {
         content={props.content}
         sx={councilTraceMarkdownSx}
       />
+    </Box>
+  );
+}
+
+function CouncilTraceLabeledCallout(props: {
+  label: string;
+  children: React.ReactNode;
+  tone?: 'neutral' | 'danger';
+}) {
+  const tone = props.tone ?? 'neutral';
+
+  return (
+    <Box
+      sx={{
+        borderRadius: 'md',
+        border: '1px solid',
+        borderColor: tone === 'danger' ? 'danger.outlinedBorder' : 'divider',
+        backgroundColor: tone === 'danger' ? 'danger.softBg' : 'background.level1',
+        px: 1,
+        py: 0.9,
+        display: 'grid',
+        gap: 0.6,
+      }}
+    >
+      <Typography
+        level='body-xs'
+        sx={{
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          fontWeight: 'lg',
+          color: tone === 'danger' ? 'danger.plainColor' : 'text.tertiary',
+        }}
+      >
+        {props.label}
+      </Typography>
+      {props.children}
     </Box>
   );
 }
@@ -395,56 +472,84 @@ function CouncilTraceAgentCardView(props: {
   return (
     <PerfProfiler id='CouncilTraceAgentCardView'>
       <Box sx={getCouncilTraceAgentCardSx(card.role)}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Typography level='title-sm'>{card.participantName}</Typography>
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <Chip size='sm' variant='soft' color={getAgentStatusTone(card.status)}>
-            {getAgentStatusLabel(card)}
-          </Chip>
-          {persistenceBadge && (
-            <Chip size='sm' variant='soft' color={persistenceBadge.color}>
-              {persistenceBadge.label}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 0.75, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'grid', gap: 0.2 }}>
+            <Typography
+              level='body-xs'
+              sx={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                fontWeight: 'lg',
+                color: card.role === 'leader' ? 'primary.plainColor' : 'text.tertiary',
+              }}
+            >
+              {getAgentRoleLabel(card)}
+            </Typography>
+            <Typography level='title-sm'>{card.participantName}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <Chip size='sm' variant='soft' color={getAgentStatusTone(card.status)}>
+              {getAgentStatusLabel(card)}
             </Chip>
-          )}
+            {persistenceBadge && (
+              <Chip size='sm' variant='soft' color={persistenceBadge.color}>
+                {persistenceBadge.label}
+              </Chip>
+            )}
+          </Box>
         </Box>
-      </Box>
 
-      {showExcerpt ? (
-        <CouncilTraceMarkdownText content={excerptText!} />
-      ) : !showRejectReason && !showDetails ? (
-        <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
-          {card.status === 'waiting' ? 'Waiting for output.' : 'No visible output.'}
-        </Typography>
-      ) : null}
+        {showExcerpt ? (
+          <CouncilTraceLabeledCallout label={getAgentSummaryLabel(card, false)}>
+            <CouncilTraceMarkdownText content={excerptText!} />
+          </CouncilTraceLabeledCallout>
+        ) : !showRejectReason && !showDetails ? (
+          <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
+            {card.status === 'waiting' ? 'Waiting for output.' : 'No visible output.'}
+          </Typography>
+        ) : null}
 
-      {showRejectReasonBox && rejectReason && (
-        <Box
-          sx={{
-            borderRadius: 'md',
-            border: '1px solid',
-            borderColor: 'divider',
-            backgroundColor: 'background.level1',
-            px: 1,
-            py: 0.75,
-          }}
+        {showRejectReasonBox && rejectReason && (
+          <CouncilTraceLabeledCallout label={getAgentSummaryLabel(card, true)} tone='danger'>
+            <CouncilTraceMarkdownText content={rejectReason} />
+          </CouncilTraceLabeledCallout>
+        )}
+
+        {showDetails && (
+          <Box
+            key={`agent-details-${roundIndex}-${card.participantId}`}
+            sx={{
+              display: 'grid',
+              gap: 0.75,
+              borderRadius: 'md',
+              border: '1px solid',
+              borderColor: 'divider',
+              backgroundColor: 'background.surface',
+              p: 0.9,
+            }}
           >
-          <CouncilTraceMarkdownText content={rejectReason} />
-        </Box>
-      )}
-
-      {showDetails && (
-        <Box key={`agent-details-${roundIndex}-${card.participantId}`} sx={{ display: 'grid', gap: 0.75 }}>
-          {hasStructuredMessage && (
-            <CouncilTraceAgentMessageBody
-              fragments={card.messageFragments}
-              messagePendingIncomplete={card.messagePendingIncomplete}
-            />
-          )}
-          {detailItems.length > 0 && (
-            renderAgentDetailItems(detailItems, card.participantId)
-          )}
-        </Box>
-      )}
+            <Typography
+              level='body-xs'
+              sx={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                fontWeight: 'lg',
+                color: 'text.tertiary',
+              }}
+            >
+              Structured trace
+            </Typography>
+            {hasStructuredMessage && (
+              <CouncilTraceAgentMessageBody
+                fragments={card.messageFragments}
+                messagePendingIncomplete={card.messagePendingIncomplete}
+              />
+            )}
+            {detailItems.length > 0 && (
+              renderAgentDetailItems(detailItems, card.participantId)
+            )}
+          </Box>
+        )}
       </Box>
     </PerfProfiler>
   );
@@ -543,196 +648,287 @@ export function CouncilTraceMessage(props: {
     <PerfProfiler id='CouncilTraceMessage'>
       <ListItem data-chat-minimap-entry='trace' sx={{ display: 'block', px: 0, py: 0.75 }}>
         <Box
-        sx={{
-          mx: 2,
-          borderRadius: 'lg',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.level1',
-          overflow: 'hidden',
-        }}
-      >
-        <Box sx={{ display: 'grid', gap: 1, p: 1.25 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <Box sx={{ display: 'grid', gap: 0.5 }}>
-              <Typography level='title-sm'>Council trace</Typography>
-              <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
-                {latestRoundText}
-              </Typography>
+          sx={{
+            mx: 2,
+            borderRadius: 'lg',
+            border: '1px solid',
+            borderColor: 'divider',
+            background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.06) 0%, var(--joy-palette-background-level1) 18%, var(--joy-palette-background-surface) 100%)',
+            boxShadow: 'sm',
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ display: 'grid', gap: 1, p: 1.25 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'grid', gap: 0.35 }}>
+                <Typography
+                  level='body-xs'
+                  sx={{
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    fontWeight: 'lg',
+                    color: 'primary.plainColor',
+                  }}
+                >
+                  Structured workflow audit
+                </Typography>
+                <Typography level='title-md'>Council trace</Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {expanded && trace.rounds.length > 0 && (
+                  <>
+                    <Button
+                      size='sm'
+                      variant='soft'
+                      color='neutral'
+                      disabled={allRoundsExpanded}
+                      startDecorator={<KeyboardArrowDownRoundedIcon />}
+                      onClick={expandAllRounds}
+                    >
+                      Expand all
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='soft'
+                      color='neutral'
+                      disabled={allRoundsCollapsed}
+                      startDecorator={<KeyboardArrowRightRoundedIcon />}
+                      onClick={collapseAllRounds}
+                    >
+                      Collapse all
+                    </Button>
+                  </>
+                )}
+                <Button
+                  size='sm'
+                  variant={expanded ? 'solid' : 'soft'}
+                  color='neutral'
+                  startDecorator={<AccountTreeRoundedIcon />}
+                  endDecorator={expanded ? <KeyboardArrowDownRoundedIcon /> : <KeyboardArrowRightRoundedIcon />}
+                  onClick={() => setExpanded(value => !value)}
+                >
+                  {expanded ? 'Hide workflow' : 'Show workflow'}
+                </Button>
+              </Box>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              {expanded && trace.rounds.length > 0 && (
-                <>
-                  <Button
-                    size='sm'
-                    variant='soft'
-                    color='neutral'
-                    disabled={allRoundsExpanded}
-                    onClick={expandAllRounds}
-                  >
-                    Expand all
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant='soft'
-                    color='neutral'
-                    disabled={allRoundsCollapsed}
-                    onClick={collapseAllRounds}
-                  >
-                    Collapse all
-                  </Button>
-                </>
-              )}
-              <Button
-                size='sm'
-                variant={expanded ? 'solid' : 'soft'}
-                color='neutral'
-                onClick={() => setExpanded(value => !value)}
-              >
-                {expanded ? 'Hide workflow' : 'Show workflow'}
-              </Button>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 0.9,
+                gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' },
+                alignItems: 'center',
+                borderRadius: 'md',
+                border: '1px solid',
+                borderColor: 'divider',
+                backgroundColor: 'background.surface',
+                px: 1,
+                py: 0.95,
+              }}
+            >
+              <Box sx={{ display: 'grid', gap: 0.25 }}>
+                <Typography
+                  level='body-xs'
+                  sx={{
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    fontWeight: 'lg',
+                    color: 'text.tertiary',
+                  }}
+                >
+                  Latest outcome
+                </Typography>
+                <Typography level='title-sm'>{latestRoundText}</Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                <Chip size='sm' variant='soft' color={getCouncilTraceStatusTone(trace.summaryStatus)}>
+                  {summaryLabel}
+                </Chip>
+                <Chip size='sm' variant='soft' color='neutral'>
+                  {trace.totalRounds} round{trace.totalRounds === 1 ? '' : 's'}
+                </Chip>
+                <Chip size='sm' variant='soft' color='neutral'>
+                  {trace.reviewerCount} reviewer{trace.reviewerCount === 1 ? '' : 's'}
+                </Chip>
+              </Box>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-            <Chip size='sm' variant='soft' color={getCouncilTraceStatusTone(trace.summaryStatus)}>
-              {summaryLabel}
-            </Chip>
-            <Chip size='sm' variant='soft' color='neutral'>
-              {trace.totalRounds} round{trace.totalRounds === 1 ? '' : 's'}
-            </Chip>
-            <Chip size='sm' variant='soft' color='neutral'>
-              {trace.reviewerCount} reviewer{trace.reviewerCount === 1 ? '' : 's'}
-            </Chip>
-          </Box>
-        </Box>
+          {expanded && (
+            <>
+              <Divider />
+              <Box sx={{ display: 'grid', gap: 1, p: 1.25 }}>
+                {trace.rounds.map(round => {
+                  const roundExpanded = expandedRounds.has(round.roundIndex);
+                  const proposalCard = round.proposalCard ?? round.leaderCard ?? null;
+                  const reviewerVoteProgress = round.reviewerVoteProgress ?? {
+                    completed: (round.reviewerCards ?? []).filter(card => card.decision !== 'pending').length,
+                    total: trace.reviewerCount,
+                    isShared: true,
+                  };
+                  const reviewerReviewCards = round.reviewerCards?.length
+                    ? round.reviewerCards
+                    : round.reviewerVoteCards?.length
+                      ? round.reviewerVoteCards
+                      : round.reviewerPlanCards ?? [];
+                  const shouldShowReviewerReviews = !round.leaderProposalFailed;
+                  const { acceptCount, rejectCount, pendingCount } = getRoundDecisionCounts(round);
 
-        {expanded && (
-          <>
-            <Divider />
-            <Box sx={{ display: 'grid', gap: 1, p: 1.25 }}>
-              {trace.rounds.map(round => {
-                const roundExpanded = expandedRounds.has(round.roundIndex);
-                const proposalCard = round.proposalCard ?? round.leaderCard ?? null;
-                const reviewerVoteProgress = round.reviewerVoteProgress ?? {
-                  completed: (round.reviewerCards ?? []).filter(card => card.decision !== 'pending').length,
-                  total: trace.reviewerCount,
-                  isShared: true,
-                };
-                const reviewerReviewCards = round.reviewerCards?.length
-                  ? round.reviewerCards
-                  : round.reviewerVoteCards?.length
-                    ? round.reviewerVoteCards
-                    : round.reviewerPlanCards ?? [];
-                const shouldShowReviewerReviews = !round.leaderProposalFailed;
+                  return (
+                    <Box
+                      key={`council-trace-round-${round.roundIndex}`}
+                      sx={{
+                        borderRadius: 'md',
+                        border: '1px solid',
+                        borderColor: roundExpanded ? 'primary.outlinedBorder' : 'divider',
+                        backgroundColor: 'background.surface',
+                        boxShadow: roundExpanded ? 'sm' : 'xs',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gap: 0.9,
+                          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' },
+                          alignItems: 'center',
+                          p: 1,
+                          backgroundColor: roundExpanded ? 'rgba(var(--joy-palette-primary-mainChannel) / 0.05)' : 'transparent',
+                        }}
+                      >
+                        <Box sx={{ display: 'grid', gap: 0.45 }}>
+                          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <Typography level='title-sm'>Round {round.roundIndex + 1}</Typography>
+                            <Chip size='sm' variant='soft' color='neutral'>
+                              {getRoundSummary(round)}
+                            </Chip>
+                            {!!rejectCount && (
+                              <Chip size='sm' variant='soft' color='danger'>
+                                {rejectCount} reject{rejectCount === 1 ? '' : 's'}
+                              </Chip>
+                            )}
+                            {!!acceptCount && (
+                              <Chip size='sm' variant='soft' color='success'>
+                                {acceptCount} accept{acceptCount === 1 ? '' : 's'}
+                              </Chip>
+                            )}
+                            {!!pendingCount && (
+                              <Chip size='sm' variant='soft' color='warning'>
+                                {pendingCount} pending
+                              </Chip>
+                            )}
+                          </Box>
 
-                return (
-                  <Box
-                    key={`council-trace-round-${round.roundIndex}`}
-                    sx={{
-                      borderRadius: 'md',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      backgroundColor: 'background.surface',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap', alignItems: 'center', p: 1 }}>
-                      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <Typography level='title-sm'>Round {round.roundIndex + 1}</Typography>
-                        <Chip size='sm' variant='soft' color='neutral'>
-                          {getRoundSummary(round)}
-                        </Chip>
+                          <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
+                            {proposalCard
+                              ? `${proposalCard.participantName} leads this round${reviewerReviewCards.length ? ` with ${reviewerReviewCards.length} reviewer${reviewerReviewCards.length === 1 ? '' : 's'}` : ''}.`
+                              : reviewerReviewCards.length
+                                ? `${reviewerReviewCards.length} reviewer${reviewerReviewCards.length === 1 ? '' : 's'} active in this round.`
+                                : 'Waiting for round details.'}
+                          </Typography>
+                        </Box>
+
+                        <Button
+                          size='sm'
+                          variant={roundExpanded ? 'solid' : 'soft'}
+                          color='neutral'
+                          endDecorator={roundExpanded ? <KeyboardArrowDownRoundedIcon /> : <KeyboardArrowRightRoundedIcon />}
+                          onClick={() => toggleRound(round.roundIndex)}
+                        >
+                          {roundExpanded ? 'Collapse round' : 'Expand round'}
+                        </Button>
                       </Box>
 
-                      <Button
-                        size='sm'
-                        variant={roundExpanded ? 'solid' : 'soft'}
-                        color='neutral'
-                        onClick={() => toggleRound(round.roundIndex)}
-                      >
-                        {roundExpanded ? 'Collapse round' : 'Expand round'}
-                      </Button>
-                    </Box>
+                      {roundExpanded && (
+                        <>
+                          <Divider />
+                          <Box sx={{ display: 'grid', gap: 1, p: 1 }}>
+                            {!!proposalCard && (
+                              <CouncilTraceSection title='Proposal'>
+                                <Box sx={getCouncilTraceLeaderRowSx()}>
+                                  <CouncilTraceAgentCardView
+                                    roundIndex={round.roundIndex}
+                                    card={proposalCard}
+                                    defaultExpanded={expandedAgentKeys.has(`${round.roundIndex}:${proposalCard.participantId}`)}
+                                  />
+                                </Box>
+                              </CouncilTraceSection>
+                            )}
 
-                    {roundExpanded && (
-                      <>
-                        <Divider />
-                        <Box sx={{ display: 'grid', gap: 1, p: 1 }}>
-                          {!!proposalCard && (
-                            <CouncilTraceSection title='Proposal'>
-                              <Box sx={getCouncilTraceLeaderRowSx()}>
-                                <CouncilTraceAgentCardView
-                                  roundIndex={round.roundIndex}
-                                  card={proposalCard}
-                                  defaultExpanded={expandedAgentKeys.has(`${round.roundIndex}:${proposalCard.participantId}`)}
-                                />
-                              </Box>
-                            </CouncilTraceSection>
-                          )}
-
-                          {shouldShowReviewerReviews && (
-                            <CouncilTraceSection title='Reviewer reviews'>
-                              {reviewerReviewCards.length ? (
-                                <>
-                                  {!reviewerVoteProgress.isShared && (
-                                    <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
-                                      {reviewerVoteProgress.completed}/{reviewerVoteProgress.total} reviews complete.
-                                    </Typography>
-                                  )}
-                                  <Box sx={getCouncilTraceReviewerRowScrollerSx()}>
-                                    <Box sx={getCouncilTraceReviewerRowSx(reviewerReviewCards.length)}>
-                                      {reviewerReviewCards.map(voteCard => (
-                                        <CouncilTraceAgentCardView
-                                          key={`round-${round.roundIndex}-vote-${voteCard.participantId}`}
-                                          roundIndex={round.roundIndex}
-                                          card={voteCard}
-                                          defaultExpanded={expandedAgentKeys.has(`${round.roundIndex}:${voteCard.participantId}`)}
-                                        />
-                                      ))}
+                            {shouldShowReviewerReviews && (
+                              <CouncilTraceSection title='Reviewer reviews'>
+                                {reviewerReviewCards.length ? (
+                                  <>
+                                    {!reviewerVoteProgress.isShared && (
+                                      <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
+                                        {reviewerVoteProgress.completed}/{reviewerVoteProgress.total} reviews complete.
+                                      </Typography>
+                                    )}
+                                    <Box sx={getCouncilTraceReviewerRowScrollerSx()}>
+                                      <Box sx={getCouncilTraceReviewerRowSx(reviewerReviewCards.length)}>
+                                        {reviewerReviewCards.map(voteCard => (
+                                          <CouncilTraceAgentCardView
+                                            key={`round-${round.roundIndex}-vote-${voteCard.participantId}`}
+                                            roundIndex={round.roundIndex}
+                                            card={voteCard}
+                                            defaultExpanded={expandedAgentKeys.has(`${round.roundIndex}:${voteCard.participantId}`)}
+                                          />
+                                        ))}
+                                      </Box>
                                     </Box>
-                                  </Box>
-                                </>
-                              ) : (
-                                <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
-                                  {reviewerVoteProgress.completed}/{reviewerVoteProgress.total} reviews complete.
-                                </Typography>
-                              )}
-                            </CouncilTraceSection>
-                          )}
+                                  </>
+                                ) : (
+                                  <Typography level='body-sm' sx={{ color: 'text.secondary' }}>
+                                    {reviewerVoteProgress.completed}/{reviewerVoteProgress.total} reviews complete.
+                                  </Typography>
+                                )}
+                              </CouncilTraceSection>
+                            )}
 
-                          {round.sharedReasons && (
-                            <Box
-                              sx={{
-                                borderRadius: 'md',
-                                border: '1px solid',
-                                borderColor: 'divider',
-                                backgroundColor: 'background.level1',
-                                p: 1,
-                                display: 'grid',
-                                gap: 0.75,
-                              }}
-                            >
-                              <Typography level='title-sm'>{round.sharedReasons.label}</Typography>
-                              <Box component='ol' sx={{ m: 0, pl: 2, display: 'grid', gap: 0.5 }}>
-                                {round.sharedReasons.reasons.map((reason, index) => (
-                                  <Box key={`round-${round.roundIndex}-reason-${index}`} component='li'>
-                                    <CouncilTraceMarkdownText content={reason} />
-                                  </Box>
-                                ))}
+                            {round.sharedReasons && (
+                              <Box
+                                sx={{
+                                  borderRadius: 'md',
+                                  border: '1px solid',
+                                  borderColor: round.sharedReasons.label === 'Final rejection reasons' ? 'danger.outlinedBorder' : 'divider',
+                                  backgroundColor: round.sharedReasons.label === 'Final rejection reasons' ? 'danger.softBg' : 'background.level1',
+                                  p: 1,
+                                  display: 'grid',
+                                  gap: 0.75,
+                                }}
+                              >
+                                <Typography
+                                  level='body-xs'
+                                  sx={{
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.08em',
+                                    fontWeight: 'lg',
+                                    color: round.sharedReasons.label === 'Final rejection reasons' ? 'danger.plainColor' : 'text.tertiary',
+                                  }}
+                                >
+                                  Carry-forward feedback
+                                </Typography>
+                                <Typography level='title-sm'>{round.sharedReasons.label}</Typography>
+                                <Box component='ol' sx={{ m: 0, pl: 2, display: 'grid', gap: 0.5 }}>
+                                  {round.sharedReasons.reasons.map((reason, index) => (
+                                    <Box key={`round-${round.roundIndex}-reason-${index}`} component='li'>
+                                      <CouncilTraceMarkdownText content={reason} />
+                                    </Box>
+                                  ))}
+                                </Box>
                               </Box>
-                            </Box>
-                          )}
-                        </Box>
-                      </>
-                    )}
-                  </Box>
-                );
-              })}
-            </Box>
-          </>
-        )}
+                            )}
+                          </Box>
+                        </>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </>
+          )}
         </Box>
       </ListItem>
     </PerfProfiler>
