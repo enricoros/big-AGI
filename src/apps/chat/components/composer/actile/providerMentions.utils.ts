@@ -187,10 +187,36 @@ function isCompactSubsequence(query: string, candidate: string): { matched: bool
   return { matched: true, gapPenalty };
 }
 
+const ALL_ITEM_EMPTY_SEARCH_SCORE = 10_000;
+const DEFAULT_EMPTY_SEARCH_SCORE = 1_000;
+
+// Exact matches should stay above every fuzzy variant, with @all still pinned first.
+const ALL_ITEM_EXACT_MATCH_SCORE = 20_000;
+const EXACT_MATCH_SCORE = 9_500;
+
+// Direct prefixes outrank compact and token-prefix matches.
+const ALL_ITEM_DIRECT_PREFIX_SCORE = 19_000;
+const DIRECT_PREFIX_SCORE = 9_000;
+
+// Compact prefixes are slightly weaker than direct prefixes because they ignore separators.
+const COMPACT_PREFIX_SCORE = 8_500;
+
+// Token-prefix matching is stronger than generic containment and subsequence matching.
+const ALL_ITEM_TOKEN_PREFIX_BASE_SCORE = 18_000;
+const TOKEN_PREFIX_BASE_SCORE = 8_000;
+const TOKEN_PREFIX_TOKEN_MATCH_SCORE = 120;
+const TOKEN_PREFIX_CURSOR_GAP_PENALTY = 6;
+
+// Containment and subsequence matches are the weakest accepted fuzzy matches.
+const COMPACT_CONTAINS_BASE_SCORE = 7_000;
+const SUBSEQUENCE_BASE_SCORE = 6_000;
+const COMPACT_POSITION_PENALTY = 8;
+const SUBSEQUENCE_GAP_PENALTY = 8;
+
 function getMentionItemScore(item: ActileItem, rawSearch: string): number | null {
   const normalizedSearch = normalizeMentionSearchValue(rawSearch);
   if (!normalizedSearch)
-    return item.label === '@all' ? 10_000 : 1_000;
+    return item.label === '@all' ? ALL_ITEM_EMPTY_SEARCH_SCORE : DEFAULT_EMPTY_SEARCH_SCORE;
 
   const normalizedLabel = normalizeMentionSearchValue(item.label);
   if (!normalizedLabel)
@@ -204,15 +230,15 @@ function getMentionItemScore(item: ActileItem, rawSearch: string): number | null
   const isAllItem = item.label === '@all';
   const isExact = normalizedLabel === normalizedSearch;
   if (isExact)
-    return isAllItem ? 20_000 : 9_500;
+    return isAllItem ? ALL_ITEM_EXACT_MATCH_SCORE : EXACT_MATCH_SCORE;
 
   const isDirectPrefix = normalizedLabel.startsWith(normalizedSearch);
   if (isDirectPrefix)
-    return (isAllItem ? 19_000 : 9_000) - (normalizedLabel.length - normalizedSearch.length);
+    return (isAllItem ? ALL_ITEM_DIRECT_PREFIX_SCORE : DIRECT_PREFIX_SCORE) - (normalizedLabel.length - normalizedSearch.length);
 
   const isCompactPrefix = compactLabel.startsWith(compactSearch);
   if (isCompactPrefix)
-    return 8_500 - (compactLabel.length - compactSearch.length);
+    return COMPACT_PREFIX_SCORE - (compactLabel.length - compactSearch.length);
 
   let tokenCursor = 0;
   let tokenPrefixScore = 0;
@@ -223,19 +249,25 @@ function getMentionItemScore(item: ActileItem, rawSearch: string): number | null
       break;
     }
 
-    tokenPrefixScore += 120 - (labelTokens[matchingTokenIndex]!.length - searchToken.length) - (matchingTokenIndex - tokenCursor) * 6;
+    tokenPrefixScore += TOKEN_PREFIX_TOKEN_MATCH_SCORE
+      - (labelTokens[matchingTokenIndex]!.length - searchToken.length)
+      - (matchingTokenIndex - tokenCursor) * TOKEN_PREFIX_CURSOR_GAP_PENALTY;
     tokenCursor = matchingTokenIndex + 1;
   }
   if (tokenPrefixScore >= 0)
-    return (isAllItem ? 18_000 : 8_000) + tokenPrefixScore;
+    return (isAllItem ? ALL_ITEM_TOKEN_PREFIX_BASE_SCORE : TOKEN_PREFIX_BASE_SCORE) + tokenPrefixScore;
 
   const compactContainsIndex = compactLabel.indexOf(compactSearch);
   if (compactContainsIndex !== -1)
-    return 7_000 - compactContainsIndex * 8 - (compactLabel.length - compactSearch.length);
+    return COMPACT_CONTAINS_BASE_SCORE
+      - compactContainsIndex * COMPACT_POSITION_PENALTY
+      - (compactLabel.length - compactSearch.length);
 
   const subsequence = isCompactSubsequence(compactSearch, compactLabel);
   if (subsequence.matched)
-    return 6_000 - subsequence.gapPenalty * 8 - (compactLabel.length - compactSearch.length);
+    return SUBSEQUENCE_BASE_SCORE
+      - subsequence.gapPenalty * SUBSEQUENCE_GAP_PENALTY
+      - (compactLabel.length - compactSearch.length);
 
   return null;
 }

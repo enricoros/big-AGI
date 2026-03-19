@@ -51,6 +51,7 @@ next-env.d.ts
 # other
 .idea/
 /artifacts/
+/.worktrees/
 
 # Ingore k8s/env-secret.yaml
 ./k8s/env-secret.yaml
