@@ -9,13 +9,12 @@ export function getParticipantEditorGridTemplateColumns() {
   return {
     xs: '1fr',
     sm: 'repeat(2, minmax(0, 1fr))',
-    lg: 'repeat(4, minmax(0, 1fr))',
   } as const;
 }
 
 export function getParticipantEditorSpeakWhenGridColumn() {
   return {
     xs: 'auto',
-    sm: 'auto',
+    sm: '1 / -1',
   } as const;
 }

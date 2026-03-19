@@ -12,3 +12,47 @@ test('participant model selectors use getLLMLabel so custom model names appear i
   assert.match(source, /const llmLabel = participantLlm \? getLLMLabel\(participantLlm\) : participant\.llmId \?\? 'Chat model';/);
   assert.doesNotMatch(source, /<Option key=\{llm\.id\} value=\{llm\.id\}>\{llm\.label\}<\/Option>/);
 });
+
+test('new custom agents expose and persist the custom prompt field from the add-agent form', () => {
+  const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /const \[draftCustomPrompt, setDraftCustomPrompt\] = React\.useState\(''\);/);
+  assert.match(source, /const isDraftCustomPersonaSelected = draftPersonaId === 'Custom';/);
+  assert.match(source, /if \(draftCustomPrompt\.trim\(\)\)\s*nextParticipant\.customPrompt = draftCustomPrompt\.trim\(\);/);
+  assert.match(source, /\{isDraftCustomPersonaSelected && \(\s*<Input[\s\S]*placeholder='Optional custom prompt\/persona instructions'/);
+});
+
+test('expanded agent cards expose import and export actions', () => {
+  const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /import \{ buildAgentTransferFile, getAgentTransferFilename, parseAgentTransferFile \} from '~\/common\/stores\/chat\/store-chat-agent\.transfer';/);
+  assert.match(source, /const handleAgentExport = React\.useCallback/);
+  assert.match(source, /const handleAgentImport = React\.useCallback/);
+  assert.match(source, />\s*Export Agent\s*</);
+  assert.match(source, />\s*Import Agent\s*</);
+});
+
+test('expanded agent cards use a header delete icon instead of a footer remove button', () => {
+  const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /import DeleteOutlineIcon from '@mui\/icons-material\/DeleteOutline';/);
+  assert.match(source, /aria-label='Delete'/);
+  assert.doesNotMatch(source, /startDecorator=\{<CloseIcon \/>}/);
+  assert.doesNotMatch(source, />\s*Remove\s*</);
+});
+
+test('saved agent menu items include an inline delete icon', () => {
+  const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /import \{ CloseablePopup, joyKeepPopup \} from '~\/common\/components\/CloseablePopup';/);
+  assert.match(source, /deleteAgent: state\.deleteAgent/);
+  assert.match(source, /const handleDeleteSavedAgent = React\.useCallback/);
+  assert.match(source, /sortedSavedAgents\.map\(agent => \(\s*<MenuItem[\s\S]*aria-label='Delete'[\s\S]*handleDeleteSavedAgent\(agent\)/);
+});
+
+test('leader chip uses the participant accent color instead of a fixed primary color', () => {
+  const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /\{participant\.isLeader && <Chip size='sm' variant='solid' color=\{participantAccentColor\}>Leader<\/Chip>\}/);
+  assert.doesNotMatch(source, /\{participant\.isLeader && <Chip size='sm' variant='solid' color='primary'>Leader<\/Chip>\}/);
+});

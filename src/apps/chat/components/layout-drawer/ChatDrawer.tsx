@@ -412,17 +412,18 @@ function ChatDrawer(props: {
                     >
                       Rename
                     </Button>
-                    <Button
+                    <IconButton
+                      aria-label='Delete'
                       size='sm'
                       variant='plain'
-                      color='danger'
+                      color='neutral'
                       onClick={event => {
                         event.stopPropagation();
                         handleAgentGroupDelete(group.id);
                       }}
                     >
-                      Delete
-                    </Button>
+                      <DeleteOutlineIcon />
+                    </IconButton>
                   </Box>
                 )}
               </Box>

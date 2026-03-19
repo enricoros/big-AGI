@@ -10,7 +10,9 @@ import MenuButton from '@mui/joy/MenuButton';
 import MenuItem from '@mui/joy/MenuItem';
 import Dropdown from '@mui/joy/Dropdown';
 
-import CloseIcon from '@mui/icons-material/Close';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -20,7 +22,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
-import { CloseablePopup } from '~/common/components/CloseablePopup';
+import { CloseablePopup, joyKeepPopup } from '~/common/components/CloseablePopup';
 import {
   createAssistantConversationParticipant,
   DConversationParticipant,
@@ -35,6 +37,7 @@ import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import type { DAgentGroupSnapshot, DAgentSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
+import { buildAgentTransferFile, getAgentTransferFilename, parseAgentTransferFile } from '~/common/stores/chat/store-chat-agent.transfer';
 import { buildAgentGroupTransferFile, getAgentGroupTransferFilename, parseAgentGroupTransferFile } from '~/common/stores/chat/store-chat-agent-groups.transfer';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 import { getLLMLabel, type DLLM } from '~/common/stores/llms/llms.types';
@@ -89,6 +92,34 @@ function getParticipantReasoningEffortOptions(llm: DLLM | null) {
   };
 }
 
+const agentsToolbarButtonSx = {
+  '--Button-gap': '0.375rem',
+  borderRadius: '999px',
+  px: 1.2,
+  border: '1px solid',
+  borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+  backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.06)',
+  boxShadow: 'xs',
+  fontWeight: 600,
+  '&:hover': {
+    borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.2)',
+    backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+  },
+} as const;
+
+const agentsToolbarPrimaryButtonSx = {
+  borderRadius: '999px',
+  px: 1.35,
+  fontWeight: 700,
+  boxShadow: 'sm',
+} as const;
+
+const agentsToolbarDangerButtonSx = {
+  borderRadius: '999px',
+  px: 1.15,
+  fontWeight: 600,
+} as const;
+
 export function ChatBarChat(props: {
   conversationId: DConversationId | null;
   llmDropdownRef: React.Ref<OptimaBarControlMethods>;
@@ -103,6 +134,7 @@ export function ChatBarChat(props: {
   const [councilMaxRoundsDraft, setCouncilMaxRoundsDraft] = React.useState('');
   const [draftPersonaId, setDraftPersonaId] = React.useState<SystemPurposeId | ''>('');
   const [draftLlmId, setDraftLlmId] = React.useState<string>('');
+  const [draftCustomPrompt, setDraftCustomPrompt] = React.useState('');
   const [expandedParticipantId, setExpandedParticipantId] = React.useState<string | null>(null);
   const [draggedParticipantId, setDraggedParticipantId] = React.useState<string | null>(null);
   const [dropTargetParticipantId, setDropTargetParticipantId] = React.useState<string | null>(null);
@@ -156,10 +188,11 @@ export function ChatBarChat(props: {
       setCouncilTraceAutoExpandNewestRound: state.setCouncilTraceAutoExpandNewestRound,
     };
   }));
-  const { savedAgentGroups, savedAgents, saveAgent, importAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
+  const { savedAgentGroups, savedAgents, saveAgent, deleteAgent, importAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
     savedAgentGroups: state.savedAgentGroups,
     savedAgents: state.savedAgents,
     saveAgent: state.saveAgent,
+    deleteAgent: state.deleteAgent,
     importAgentGroups: state.importAgentGroups,
   })));
   const { llms: visibleLLMs } = useVisibleLLMs(chatLLMId ?? null, false, true);
@@ -240,6 +273,7 @@ export function ChatBarChat(props: {
   const participantPersonaOptions = React.useMemo(() => Object.entries(SystemPurposes) as [SystemPurposeId, (typeof SystemPurposes)[SystemPurposeId]][], []);
   const selectedParticipantLlm = React.useMemo(() => visibleLLMs.find(llm => llm.id === draftLlmId) ?? null, [draftLlmId, visibleLLMs]);
   const selectedParticipantReasoningConfig = React.useMemo(() => getParticipantReasoningEffortOptions(selectedParticipantLlm), [selectedParticipantLlm]);
+  const isDraftCustomPersonaSelected = draftPersonaId === 'Custom';
   const participantRosterGridTemplateColumns = React.useMemo(
     () => getParticipantRosterGridTemplateColumns(!!expandedParticipantId),
     [expandedParticipantId],
@@ -303,6 +337,7 @@ export function ChatBarChat(props: {
     if (!participantsAnchorEl) {
       setDraftPersonaId(systemPurposeId ?? '');
       setDraftLlmId('');
+      setDraftCustomPrompt('');
       setExpandedParticipantId(null);
       setParticipantDrafts({});
       setAgentGroupNameDraft('');
@@ -534,11 +569,14 @@ export function ChatBarChat(props: {
       draftLlmId || null,
       generateAssistantParticipantName(draftPersonaId, assistantParticipants.map(participant => participant.name)),
     );
+    if (draftCustomPrompt.trim())
+      nextParticipant.customPrompt = draftCustomPrompt.trim();
 
     setParticipants(props.conversationId, [...participants, nextParticipant]);
     setDraftLlmId('');
+    setDraftCustomPrompt('');
     setExpandedParticipantId(nextParticipant.id);
-  }, [assistantParticipants, draftLlmId, draftPersonaId, participants, props.conversationId, setParticipants]);
+  }, [assistantParticipants, draftCustomPrompt, draftLlmId, draftPersonaId, participants, props.conversationId, setParticipants]);
 
   const handleSaveAgentGroup = React.useCallback(() => {
     if (!props.conversationId)
@@ -609,6 +647,15 @@ export function ChatBarChat(props: {
     });
   }, [assistantParticipants, participants, props.conversationId, setParticipants, systemPurposeId]);
 
+  const handleDeleteSavedAgent = React.useCallback((agentSnapshot: DAgentSnapshot) => {
+    deleteAgent(agentSnapshot.id);
+    addSnackbar({
+      key: `agent-delete-${agentSnapshot.id}`,
+      message: `"${agentSnapshot.name}" deleted.`,
+      type: 'success',
+    });
+  }, [deleteAgent]);
+
   const handleLoadAgentGroup = React.useCallback((agentGroupSnapshot: DAgentGroupSnapshot) => {
     if (!props.conversationId)
       return;
@@ -621,6 +668,90 @@ export function ChatBarChat(props: {
       setParticipantDrafts({});
     }
   }, [props]);
+
+  const saveAgentsToFile = React.useCallback(async (agentsToExport: DAgentSnapshot[], agentName?: string) => {
+    const payload = buildAgentTransferFile(agentsToExport);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const exportedAtLabel = prettyTimestampForFilenames(false);
+
+    await fileSave(blob, {
+      fileName: getAgentTransferFilename({
+        agentName,
+        exportedAtLabel,
+      }),
+      extensions: ['.json'],
+    }).then(() => {
+      addSnackbar({
+        key: agentName ? `agent-export-ok-${agentName}` : 'agents-export-ok',
+        message: agentName ? `"${agentName}" exported.` : 'Agents exported.',
+        type: 'success',
+      });
+    }).catch((error: any) => {
+      if (error?.name !== 'AbortError')
+        addSnackbar({
+          key: agentName ? `agent-export-fail-${agentName}` : 'agents-export-fail',
+          message: `Could not export ${agentName ? `"${agentName}"` : 'agents'}. ${error?.message || ''}`.trim(),
+          type: 'issue',
+        });
+    });
+  }, []);
+
+  const handleAgentExport = React.useCallback(async (participant: DConversationParticipant) => {
+    const participantName = participant.name.trim() || 'Untitled agent';
+    await saveAgentsToFile([{
+      id: participant.id,
+      name: participantName,
+      participant: {
+        ...participant,
+        name: participantName,
+      },
+      updatedAt: Date.now(),
+    }], participantName);
+  }, [saveAgentsToFile]);
+
+  const handleAgentImport = React.useCallback(async (participantId: string) => {
+    try {
+      const file = await fileOpen({
+        description: 'Agent JSON',
+        mimeTypes: ['application/json'],
+        extensions: ['.json'],
+        multiple: false,
+      });
+
+      if (!file)
+        return;
+
+      const importedSnapshots = parseAgentTransferFile(await file.text(), 'single');
+      const importedAgent = importedSnapshots[0];
+      if (!importedAgent)
+        return;
+
+      handleParticipantUpdate(participantId, {
+        name: importedAgent.participant.name.trim() || importedAgent.name.trim() || 'Untitled agent',
+        personaId: importedAgent.participant.personaId,
+        llmId: importedAgent.participant.llmId ?? null,
+        accentHue: importedAgent.participant.accentHue,
+        customPrompt: importedAgent.participant.customPrompt?.trim() || undefined,
+        speakWhen: importedAgent.participant.speakWhen ?? 'every-turn',
+        reasoningEffort: importedAgent.participant.reasoningEffort,
+      });
+      setParticipantDrafts(currentDrafts => {
+        if (!(participantId in currentDrafts))
+          return currentDrafts;
+        const nextDrafts = { ...currentDrafts };
+        delete nextDrafts[participantId];
+        return nextDrafts;
+      });
+      addSnackbar({
+        key: `agent-import-ok-${participantId}`,
+        message: `"${importedAgent.name.trim() || importedAgent.participant.name.trim() || 'Agent'}" imported.`,
+        type: 'success',
+      });
+    } catch (error: any) {
+      if (error?.name !== 'AbortError')
+        addSnackbar({ key: `agent-import-fail-${participantId}`, message: `Could not import agent. ${error?.message || ''}`.trim(), type: 'issue' });
+    }
+  }, [handleParticipantUpdate]);
 
   const saveAgentGroupsToFile = React.useCallback(async (groupsToExport: DAgentGroupSnapshot[], groupName?: string) => {
     const payload = buildAgentGroupTransferFile(groupsToExport);
@@ -722,19 +853,72 @@ export function ChatBarChat(props: {
       onClose={handleParticipantsClose}
       noAutoFocus
       placement='bottom-start'
-      maxWidth={560}
-      minWidth={420}
-      sx={{ p: 1.25, display: 'grid', gap: 1.25 }}
+      maxWidth={700}
+      minWidth={460}
+      sx={{
+        p: 1.25,
+        display: 'grid',
+        gap: 1.25,
+        borderRadius: '24px',
+        border: '1px solid',
+        borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.16)',
+        backgroundImage: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.06) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.04) 48%, rgba(var(--joy-palette-neutral-mainChannel) / 0.02) 100%)',
+        boxShadow: 'lg',
+      }}
     >
-      <Box sx={{ display: 'grid', gap: 1, p: 1.1, borderRadius: 'xl', backgroundColor: 'background.level1', border: '1px solid', borderColor: 'divider' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          p: 1.2,
+          borderRadius: '20px',
+          background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.08) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.04) 52%, rgba(var(--joy-palette-neutral-mainChannel) / 0.02) 100%)',
+          border: '1px solid',
+          borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+          boxShadow: 'sm',
+        }}
+      >
         <Stack direction='row' spacing={1} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-          <Stack spacing={0.35}>
-            <Typography level='title-md'>Agents</Typography>
+          <Stack spacing={0.45} sx={{ minWidth: 0 }}>
+            <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <Typography level='title-md' sx={{ letterSpacing: '-0.01em' }}>Agents</Typography>
+              <Chip
+                size='sm'
+                variant='soft'
+                color='neutral'
+                sx={{
+                  borderRadius: '999px',
+                  fontWeight: 600,
+                  backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.08)',
+                }}
+              >
+                {assistantParticipants.length} configured
+              </Chip>
+              {activeSavedAgentGroup && (
+                <Chip
+                  size='sm'
+                  variant='soft'
+                  color='primary'
+                  sx={{ borderRadius: '999px', maxWidth: '16rem' }}
+                >
+                  Active group: {activeSavedAgentGroup.name}
+                </Chip>
+              )}
+            </Stack>
             <Typography level='body-sm' sx={{ color: 'text.tertiary' }}>
-              {assistantParticipants.length} configured · arranged in responsive columns
+              Responsive roster layout{leaderParticipant ? ` · leader ${leaderParticipant.name}` : ''}
             </Typography>
           </Stack>
-          <Stack direction='row' spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Stack
+            direction='row'
+            spacing={0.75}
+            sx={{
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+              rowGap: 0.75,
+            }}
+          >
             <Dropdown>
               <MenuButton
                 slots={{ root: Button }}
@@ -744,6 +928,7 @@ export function ChatBarChat(props: {
                   color: 'neutral',
                   disabled: !sortedSavedAgents.length,
                   endDecorator: <KeyboardArrowDownIcon />,
+                  sx: agentsToolbarButtonSx,
                 } }}
               >
                 Load Agent
@@ -759,6 +944,18 @@ export function ChatBarChat(props: {
                         {agent.participant.personaId ?? 'No persona'} · {agent.participant.llmId ?? 'Chat model'}
                       </Typography>
                     </Box>
+                    <IconButton
+                      aria-label='Delete'
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={joyKeepPopup((event) => {
+                        event.stopPropagation();
+                        handleDeleteSavedAgent(agent);
+                      })}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
                   </MenuItem>
                 ))}
               </Menu>
@@ -772,6 +969,7 @@ export function ChatBarChat(props: {
                   color: 'neutral',
                   disabled: !sortedSavedAgentGroups.length,
                   endDecorator: <KeyboardArrowDownIcon />,
+                  sx: agentsToolbarButtonSx,
                 } }}
               >
                 Load Group
@@ -809,6 +1007,7 @@ export function ChatBarChat(props: {
                   disabled: !savedAgentGroups.length,
                   startDecorator: <FileDownloadOutlinedIcon />,
                   endDecorator: <KeyboardArrowDownIcon />,
+                  sx: agentsToolbarButtonSx,
                 } }}
               >
                 Export
@@ -834,6 +1033,7 @@ export function ChatBarChat(props: {
                   color: 'neutral',
                   startDecorator: <FileUploadOutlinedIcon />,
                   endDecorator: <KeyboardArrowDownIcon />,
+                  sx: agentsToolbarButtonSx,
                 } }}
               >
                 Import
@@ -843,10 +1043,24 @@ export function ChatBarChat(props: {
                 <MenuItem onClick={() => handleAgentGroupsImport('all')}>Import all groups</MenuItem>
               </Menu>
             </Dropdown>
-            <Button size='sm' variant='soft' color='primary' disabled={!props.conversationId} onClick={handleSaveAgentGroup}>
+            <Button
+              size='sm'
+              variant='soft'
+              color='primary'
+              disabled={!props.conversationId}
+              onClick={handleSaveAgentGroup}
+              sx={agentsToolbarPrimaryButtonSx}
+            >
               {agentGroupSaveMode.buttonLabel}
             </Button>
-            <Button size='sm' variant='soft' color='danger' disabled={!assistantParticipants.length} onClick={handleClearAgents}>
+            <Button
+              size='sm'
+              variant='soft'
+              color='danger'
+              disabled={!assistantParticipants.length}
+              onClick={handleClearAgents}
+              sx={agentsToolbarDangerButtonSx}
+            >
               Clear agents
             </Button>
           </Stack>
@@ -875,7 +1089,7 @@ export function ChatBarChat(props: {
       <Box
         sx={{
           display: 'grid',
-          gap: 1,
+          gap: 1.1,
           gridTemplateColumns: participantRosterGridTemplateColumns,
           alignItems: 'start',
         }}
@@ -928,48 +1142,57 @@ export function ChatBarChat(props: {
               onDrop={(event) => handleParticipantDrop(event, participant.id)}
               onDragEnd={handleParticipantDragEnd}
               sx={{
+                position: 'relative',
+                overflow: 'hidden',
                 display: 'grid',
-                gap: 0.9,
+                gap: 0.95,
                 minWidth: 0,
-                p: 1,
-                borderRadius: 'xl',
+                p: 1.1,
+                borderRadius: '20px',
                 gridColumn: isExpanded ? '1 / -1' : 'auto',
                 border: '1px solid',
-                borderColor: isExpanded ? participantAccentOutlinedSx.borderColor ?? `${participantAccentColor}.outlinedBorder` : 'divider',
-                backgroundColor: isExpanded ? 'background.level1' : 'background.surface',
-                transition: 'box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease',
-                position: 'relative',
-                cursor: 'grab',
-                opacity: isDragged ? 0.55 : 1,
-                boxShadow: isDropTarget ? 'md' : undefined,
-                '&::before': isDropTarget && dropTargetEdge === 'before' ? {
+                borderColor: isExpanded
+                  ? participantAccentOutlinedSx.borderColor ?? `${participantAccentColor}.outlinedBorder`
+                  : 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+                background: isExpanded
+                  ? `linear-gradient(180deg, rgba(var(--joy-palette-${participantAccentColor}-mainChannel) / 0.12) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.035) 52%, rgba(var(--joy-palette-neutral-mainChannel) / 0.015) 100%)`
+                  : `linear-gradient(180deg, rgba(var(--joy-palette-${participantAccentColor}-mainChannel) / 0.08) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.03) 54%, rgba(var(--joy-palette-neutral-mainChannel) / 0.01) 100%)`,
+                boxShadow: isExpanded ? 'md' : 'xs',
+                transition: 'box-shadow 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease',
+                '&::before': {
                   content: '""',
                   position: 'absolute',
-                  left: 12,
-                  right: 12,
-                  top: -4,
-                  height: 3,
-                  borderRadius: 999,
-                  backgroundColor: 'primary.500',
-                } : undefined,
-                '&::after': isDropTarget && dropTargetEdge === 'after' ? {
-                  content: '""',
-                  position: 'absolute',
-                  left: 12,
-                  right: 12,
-                  bottom: -4,
-                  height: 3,
-                  borderRadius: 999,
-                  backgroundColor: 'primary.500',
-                } : undefined,
+                  inset: '0 auto auto 0',
+                  width: '100%',
+                  height: '1px',
+                  background: `linear-gradient(90deg, rgba(var(--joy-palette-${participantAccentColor}-mainChannel) / 0.7), transparent 75%)`,
+                  opacity: isExpanded ? 1 : 0.85,
+                  pointerEvents: 'none',
+                },
                 '&:hover': {
-                  boxShadow: 'sm',
-                  borderColor: isExpanded ? participantAccentOutlinedSx.borderColor ?? `${participantAccentColor}.outlinedBorder` : 'neutral.outlinedHoverBorder',
+                  transform: 'translateY(-1px)',
+                  boxShadow: 'md',
+                  borderColor: isExpanded
+                    ? participantAccentOutlinedSx.borderColor ?? `${participantAccentColor}.outlinedBorder`
+                    : 'rgba(var(--joy-palette-neutral-mainChannel) / 0.22)',
                 },
               }}
             >
               <Stack direction='row' spacing={1} sx={{ alignItems: 'flex-start' }}>
-                <Chip size='sm' variant='soft' color='neutral' sx={{ minWidth: 32, justifyContent: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                <Chip
+                  size='sm'
+                  variant='soft'
+                  color='neutral'
+                  sx={{
+                    minWidth: 34,
+                    justifyContent: 'center',
+                    fontVariantNumeric: 'tabular-nums',
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                    backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
+                    boxShadow: 'xs',
+                  }}
+                >
                   {index + 1}
                 </Chip>
 
@@ -977,9 +1200,9 @@ export function ChatBarChat(props: {
                   onClick={() => handleExpandedParticipantChange(participant.id)}
                   sx={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
                 >
-                  <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Typography level='title-sm'>{participant.name}</Typography>
-                    {participant.isLeader && <Chip size='sm' variant='solid' color='primary'>Leader</Chip>}
+                  <Stack direction='row' spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
+                    <Typography level='title-sm' sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>{participant.name}</Typography>
+                    {participant.isLeader && <Chip size='sm' variant='solid' color={participantAccentColor}>Leader</Chip>}
                     {isExpanded && !participant.isLeader && (
                       <Button
                         size='sm'
@@ -993,7 +1216,18 @@ export function ChatBarChat(props: {
                         Make Leader
                       </Button>
                     )}
-                    <Chip size='sm' variant='soft' color={participantAccentColor} sx={participantAccentSoftSx}>{summaryLabel}</Chip>
+                    <Chip
+                      size='sm'
+                      variant='soft'
+                      color={participantAccentColor}
+                      sx={{
+                        ...participantAccentSoftSx,
+                        borderRadius: '999px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {summaryLabel}
+                    </Chip>
                     {participantStatus?.isNextToSpeak && <Chip size='sm' variant='soft' color='primary'>Next</Chip>}
                     {participantStatus?.spokeThisTurn && <Chip size='sm' variant='soft' color='success'>Done</Chip>}
                     {participantStatus?.spokeLast && <Chip size='sm' variant='soft'>Latest</Chip>}
@@ -1001,32 +1235,50 @@ export function ChatBarChat(props: {
                     {hasCustomPrompt && <Chip size='sm' variant='soft' color='warning'>Custom prompt</Chip>}
                   </Stack>
 
-                  <Typography level='body-sm' sx={{ color: 'text.secondary', mt: 0.35 }}>
-                    {personaTitle} · {llmLabel}{reasoningLabel ? ` · ${reasoningLabel}` : ''}
+                  <Typography level='body-sm' sx={{ color: 'text.secondary', mt: 0.45, fontWeight: 600 }}>
+                    {personaTitle}
                   </Typography>
-                  <Typography level='body-xs' sx={{ color: participantStatus?.isNextToSpeak ? 'primary.600' : 'text.tertiary', mt: 0.15 }}>
+                  <Typography level='body-xs' sx={{ color: 'text.tertiary', mt: 0.15 }}>
+                    {llmLabel}{reasoningLabel ? ` · ${reasoningLabel}` : ''}
+                  </Typography>
+                  <Typography
+                    level='body-xs'
+                    sx={{
+                      color: participantStatus?.isNextToSpeak ? 'primary.600' : 'text.tertiary',
+                      mt: 0.3,
+                      fontWeight: participantStatus?.isNextToSpeak ? 700 : 500,
+                    }}
+                  >
                     {participantStatus?.reason ?? 'Ready'}
                   </Typography>
                 </Box>
 
                 <Stack direction='row' spacing={0.25} sx={{ alignItems: 'center' }}>
-                  <IconButton
-                    aria-label='Delete'
-                    size='sm'
-                    variant='plain'
-                    color='neutral'
-                    disabled={!canRemoveAssistant}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleParticipantRemove(participant.id);
-                    }}
-                  >
-                    <DeleteOutlineIcon />
-                  </IconButton>
+                  {isExpanded && (
+                    <IconButton
+                      aria-label='Delete'
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      disabled={!canRemoveAssistant}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleParticipantRemove(participant.id);
+                      }}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  )}
                   <Button
                     size='sm'
                     variant={isExpanded ? 'soft' : 'plain'}
                     color={isExpanded ? participantAccentColor : 'neutral'}
+                    sx={{
+                      borderRadius: '999px',
+                      px: 1.1,
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}
                     onClick={(event) => {
                       event.stopPropagation();
                       handleExpandedParticipantChange(participant.id);
@@ -1135,8 +1387,7 @@ export function ChatBarChat(props: {
                     placeholder='Optional custom prompt/persona instructions'
                   />}
 
-                  <Stack direction='row' spacing={0.5} sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Stack direction='row' spacing={0.25} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Stack direction='row' spacing={0.25} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                       <Button
                         size='sm'
                         variant='soft'
@@ -1153,23 +1404,38 @@ export function ChatBarChat(props: {
                       >
                         {agentSaveMode.buttonLabel}
                       </Button>
+                      <Button
+                        size='sm'
+                        variant='plain'
+                        color='neutral'
+                        onClick={() => void handleAgentExport({
+                          ...participant,
+                          name: aliasDraft.trim() || participant.name,
+                          personaId: personaDraftValue ?? null,
+                          llmId: llmDraftValue || null,
+                          customPrompt: customPromptDraft.trim() || undefined,
+                          speakWhen: speakWhenDraftValue ?? 'every-turn',
+                          reasoningEffort: reasoningEffortDraftRaw ?? undefined,
+                        })}
+                        startDecorator={<FileDownloadOutlinedIcon />}
+                      >
+                        Export Agent
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='plain'
+                        color='neutral'
+                        onClick={() => void handleAgentImport(participant.id)}
+                        startDecorator={<FileUploadOutlinedIcon />}
+                      >
+                        Import Agent
+                      </Button>
                       <IconButton size='sm' variant='plain' disabled={index === 0} onClick={() => handleParticipantMove(participant.id, -1)}>
                         <ArrowUpwardIcon />
                       </IconButton>
                       <IconButton size='sm' variant='plain' disabled={index === assistantParticipants.length - 1} onClick={() => handleParticipantMove(participant.id, 1)}>
                         <ArrowDownwardIcon />
                       </IconButton>
-                    </Stack>
-                    <Button
-                      size='sm'
-                      color='danger'
-                      disabled={!canRemoveAssistant}
-                      onClick={() => handleParticipantRemove(participant.id)}
-                      startDecorator={<CloseIcon />}
-                      variant='plain'
-                    >
-                      Remove
-                    </Button>
                   </Stack>
                 </Box>
               )}
@@ -1178,13 +1444,39 @@ export function ChatBarChat(props: {
         })}
       </Box>
 
-      <Box sx={{ display: 'grid', gap: 0.75, p: 1, borderRadius: 'xl', border: '1px dashed', borderColor: 'divider', backgroundColor: 'background.level1' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 0.75,
+          p: 1.05,
+          borderRadius: '20px',
+          border: '1px dashed',
+          borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.18)',
+          background: 'linear-gradient(180deg, rgba(var(--joy-palette-success-mainChannel) / 0.06) 0%, rgba(var(--joy-palette-neutral-mainChannel) / 0.025) 100%)',
+        }}
+      >
         <Typography level='body-sm'>Add another agent</Typography>
-        <Box sx={{ display: 'grid', gap: 0.75, gridTemplateColumns: { xs: '1fr', md: 'minmax(10rem, 1fr) minmax(10rem, 1fr) auto' } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 0.75,
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: isDraftCustomPersonaSelected
+                ? 'minmax(10rem, 1fr) minmax(10rem, 1fr) minmax(14rem, 1.4fr) auto'
+                : 'minmax(10rem, 1fr) minmax(10rem, 1fr) auto',
+            },
+          }}
+        >
           <Select
             placeholder='Persona'
             value={draftPersonaId || null}
-            onChange={(_event, value) => setDraftPersonaId((value as SystemPurposeId | null) ?? '')}
+            onChange={(_event, value) => {
+              const nextPersonaId = (value as SystemPurposeId | null) ?? '';
+              setDraftPersonaId(nextPersonaId);
+              if (nextPersonaId !== 'Custom')
+                setDraftCustomPrompt('');
+            }}
             size='sm'
           >
             {participantPersonaOptions.map(([personaId, persona]) => (
@@ -1203,6 +1495,15 @@ export function ChatBarChat(props: {
               <Option key={llm.id} value={llm.id}>{getLLMLabel(llm)}</Option>
             ))}
           </Select>
+
+          {isDraftCustomPersonaSelected && (
+            <Input
+              size='sm'
+              value={draftCustomPrompt}
+              onChange={(event) => setDraftCustomPrompt(event.target.value)}
+              placeholder='Optional custom prompt/persona instructions'
+            />
+          )}
 
           <Button size='sm' onClick={handleParticipantAdd} disabled={!draftPersonaId} startDecorator={<SmartToyOutlinedIcon />}>
             Add agent

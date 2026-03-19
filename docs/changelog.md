@@ -24,6 +24,13 @@ by release.
 ### 2026-03-19
 
 - `Consensus` naming has been fully renamed to `Council` across the app, while persisted legacy `consensus` conversation/session/message keys still auto-migrate on load so older saved chats, traces, and agent groups continue working.
+- The Agents popup now uses a denser control-panel layout with pill-style action buttons, stronger group status cues, and more legible agent cards that emphasize leader, turn order, and next-speaker state.
+- Choosing the `Custom` persona while adding a new agent now reveals the custom prompt field immediately, and that prompt is saved onto the newly created agent.
+- Expanded agent cards now include single-agent `Import Agent` and `Export Agent` actions, so you can move one agent configuration in and out of JSON files without exporting a full group.
+- Expanded agent cards now use a compact header delete icon next to `Close`, replacing the old footer `Remove` button.
+- Saved-agent entries in the `Load Agent` menu now include an inline delete icon, so presets can be removed directly from the dropdown without loading them first.
+- Saved agent groups in the drawer quick-load menu now use the same inline delete icon instead of a text `Delete` button.
+- Leader badges inside agent cards now use the same participant accent color family as the card background instead of a fixed primary blue.
 - Large chats now fall back to the lightweight minimap scroll controls once the conversation is windowed or the rendered entry count grows too high, preventing the desktop minimap overlay from remeasuring the full list on every update.
 - Council mode now defaults `Council max rounds` to unlimited when left blank, instead of pre-filling a hard stop at 12 rounds.
 - Changing `Council max rounds` now updates active, paused, stopped, and resumed council sessions consistently, instead of leaving in-flight runs stuck on stale round limits.
