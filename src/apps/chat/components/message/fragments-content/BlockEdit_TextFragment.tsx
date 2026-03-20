@@ -13,6 +13,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { ActileItem } from '../../composer/actile/ActileProvider';
 import { providerMentions } from '../../composer/actile/providerMentions';
+import { matchOpenMentionAtEnd } from '../../composer/actile/providerMentions.utils';
 import { useActileManager } from '../../composer/actile/useActileManager';
 
 
@@ -106,7 +107,7 @@ export function BlockEdit_TextFragment(props: {
     const currentText = textArea.value;
     const cursorPos = textArea.selectionStart ?? currentText.length;
     const textUntilCursor = currentText.slice(0, cursorPos);
-    const mentionMatch = textUntilCursor.match(/(^|\s)@[\w-]*$/i);
+    const mentionMatch = matchOpenMentionAtEnd(textUntilCursor);
     if (!mentionMatch)
       return;
 

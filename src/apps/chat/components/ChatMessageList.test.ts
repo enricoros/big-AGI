@@ -96,5 +96,4 @@ test('single-agent human-driven chats display the active model name while keepin
   });
 
   assert.equal(result.displayNamesById.get(participant.id), 'GPT 5.4');
-  assert.equal(result.mentionNamesById.get(participant.id), 'Echo Kernel');
 });

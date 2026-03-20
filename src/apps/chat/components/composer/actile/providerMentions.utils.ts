@@ -1,6 +1,11 @@
 import type { ActileItem } from './ActileProvider';
 
 
+export function matchOpenMentionAtEnd(value: string): RegExpMatchArray | null {
+  return value.match(/(^|\s)@[^@\n\r]*$/u);
+}
+
+
 function normalizeMentionSearchValue(value: string): string {
   return value
     .trim()

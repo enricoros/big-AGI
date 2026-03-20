@@ -3,7 +3,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 
 import type { ActileItem, ActileProvider, ActileProviderItems } from './ActileProvider';
-import { filterMentionItems } from './providerMentions.utils';
+import { filterMentionItems, matchOpenMentionAtEnd } from './providerMentions.utils';
 
 
 export const providerMentions = (
@@ -17,7 +17,7 @@ export const providerMentions = (
     return 'Agents';
   },
 
-  fastCheckTriggerText: (trailingText: string) => /(^|\s)@[\w-]*$/i.test(trailingText),
+  fastCheckTriggerText: (trailingText: string) => !!matchOpenMentionAtEnd(trailingText),
 
   fetchItems: async (): ActileProviderItems => ({
     searchPrefix: '@',

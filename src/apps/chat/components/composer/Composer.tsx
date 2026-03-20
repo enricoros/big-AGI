@@ -57,6 +57,7 @@ import type { ActileItem } from './actile/ActileProvider';
 import { providerAttachmentLabels } from './actile/providerAttachmentLabels';
 import { providerCommands } from './actile/providerCommands';
 import { providerMentions } from './actile/providerMentions';
+import { matchOpenMentionAtEnd } from './actile/providerMentions.utils';
 import { providerStarredMessages, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
@@ -693,7 +694,7 @@ export function Composer(props: {
       const currentText = textArea.value;
       const cursorPos = textArea.selectionStart;
       const textUntilCursor = currentText.slice(0, cursorPos);
-      const mentionMatch = textUntilCursor.match(/(^|\s)@[\w-]*$/i);
+      const mentionMatch = matchOpenMentionAtEnd(textUntilCursor);
       if (!mentionMatch)
         return;
 

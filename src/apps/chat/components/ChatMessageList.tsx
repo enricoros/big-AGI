@@ -164,31 +164,28 @@ export function getSingleAgentHumanDrivenParticipantNameOverrides(params: {
   chatModelLabel: string;
 }): {
   displayNamesById: ReadonlyMap<string, string>;
-  mentionNamesById: ReadonlyMap<string, string>;
 } {
   if (params.turnTerminationMode !== 'round-robin-per-human')
-    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+    return { displayNamesById: new Map() };
 
   const assistantParticipants = params.participants.filter(participant => participant.kind === 'assistant');
   if (assistantParticipants.length !== 1)
-    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+    return { displayNamesById: new Map() };
 
   const participant = assistantParticipants[0];
   if (!participant)
-    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+    return { displayNamesById: new Map() };
 
-  const canonicalName = participant.name.trim();
   const modelLabel = participant.llmId
     ? params.llmLabelsById.get(participant.llmId) ?? participant.llmId
     : params.chatModelLabel;
   const displayName = modelLabel.trim();
 
-  if (!displayName || displayName === canonicalName)
-    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+  if (!displayName || displayName === participant.name.trim())
+    return { displayNamesById: new Map() };
 
   return {
     displayNamesById: new Map([[participant.id, displayName]]),
-    mentionNamesById: canonicalName ? new Map([[participant.id, canonicalName]]) : new Map(),
   };
 }
 
@@ -288,7 +285,6 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
   handleAppendMention: (mentionText: string) => void;
   participants: DConversationParticipant[];
   participantDisplayNamesById: ReadonlyMap<string, string>;
-  participantMentionNamesById: ReadonlyMap<string, string>;
 }) {
   const {
     entry,
@@ -324,7 +320,6 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
     handleAppendMention,
     participants,
     participantDisplayNamesById,
-    participantMentionNamesById,
   } = props;
 
   const groupTone = isExpanded ? 'primary' : 'neutral';
@@ -404,7 +399,6 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
                       onAppendMention={handleAppendMention}
                       participants={participants}
                       participantDisplayNamesById={participantDisplayNamesById}
-                      participantMentionNamesById={participantMentionNamesById}
                     />
                   )}
                 </Box>
@@ -833,7 +827,7 @@ export function ChatMessageList(props: {
     () => chatLLMId ? llmLabelsById.get(chatLLMId) ?? chatLLMId : 'Chat model',
     [chatLLMId, llmLabelsById],
   );
-  const { displayNamesById: participantDisplayNamesById, mentionNamesById: participantMentionNamesById } = React.useMemo(
+  const { displayNamesById: participantDisplayNamesById } = React.useMemo(
     () => getSingleAgentHumanDrivenParticipantNameOverrides({
       participants,
       turnTerminationMode,
@@ -1108,7 +1102,6 @@ export function ChatMessageList(props: {
                 handleAppendMention={handleAppendMention}
                 participants={participants}
                 participantDisplayNamesById={participantDisplayNamesById}
-                participantMentionNamesById={participantMentionNamesById}
               />
             );
           }
@@ -1155,7 +1148,6 @@ export function ChatMessageList(props: {
                 onAppendMention={handleAppendMention}
                 participants={participants}
                 participantDisplayNamesById={participantDisplayNamesById}
-                participantMentionNamesById={participantMentionNamesById}
               />
             </PerfProfiler>
           );

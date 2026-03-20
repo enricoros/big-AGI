@@ -86,7 +86,6 @@ function renderSingleAgentModelNamedAssistantChatMessageMarkup() {
         isMobile={false}
         participants={[participant]}
         participantDisplayNamesById={new Map([[participant.id, 'GPT 5.4']])}
-        participantMentionNamesById={new Map([[participant.id, participant.name]])}
         onAppendMention={() => undefined}
       />
     </ul>,
@@ -128,6 +127,5 @@ test('assistant messages can display a model label while keeping canonical menti
 
   assert.match(markup, />GPT 5\.4</);
   assert.match(markup, /Click to mention @GPT 5\.4/);
-  assert.match(source, /const messageAuthorMentionName = React\.useMemo\(\(\) => \{/);
-  assert.match(source, /onClick=\{\(\) => handleAppendMention\(`@\$\{messageAuthorMentionName\}`\)\}/);
+  assert.match(source, /onClick=\{\(\) => handleAppendMention\(`@\$\{messageAuthorName\}`\)\}/);
 });

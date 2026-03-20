@@ -187,7 +187,6 @@ export function ChatMessage(props: {
   onAppendMention?: (mentionText: string) => void,
   participants?: DConversationParticipant[],
   participantDisplayNamesById?: ReadonlyMap<string, string>,
-  participantMentionNamesById?: ReadonlyMap<string, string>,
   sx?: SxProps,
 }) {
 
@@ -251,14 +250,6 @@ export function ChatMessage(props: {
     return null;
   }, [messageAuthorCanonicalName, messageAuthorParticipantId, messageMetadata?.author?.participantName, props.participantDisplayNamesById]);
   const messageAuthorName = resolvedAuthorName;
-  const messageAuthorMentionName = React.useMemo(() => {
-    if (!messageAuthorParticipantId)
-      return messageAuthorName;
-
-    return props.participantMentionNamesById?.get(messageAuthorParticipantId)?.trim()
-      || messageAuthorCanonicalName
-      || messageAuthorName;
-  }, [messageAuthorCanonicalName, messageAuthorName, messageAuthorParticipantId, props.participantMentionNamesById]);
   const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
   const messageAuthorPersonaTitle = messageAuthorPersonaId ? SystemPurposes[messageAuthorPersonaId]?.title ?? messageAuthorPersonaId : null;
   const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
@@ -929,7 +920,7 @@ export function ChatMessage(props: {
                   size='sm'
                   variant='soft'
                   color={messageAuthorAccentColor}
-                  onClick={() => handleAppendMention(`@${messageAuthorMentionName}`)}
+                  onClick={() => handleAppendMention(`@${messageAuthorName}`)}
                   endDecorator={<AlternateEmailIcon sx={{ fontSize: 'sm' }} />}
                   sx={{
                     ...messageAuthorAccentSx,

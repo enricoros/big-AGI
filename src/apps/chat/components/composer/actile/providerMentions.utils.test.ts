@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { ActileItem } from './ActileProvider';
-import { filterMentionItems, getMentionItemHighlightParts } from './providerMentions.utils';
+import { filterMentionItems, getMentionItemHighlightParts, matchOpenMentionAtEnd } from './providerMentions.utils';
 
 
 const mentionItems: ActileItem[] = [
@@ -79,4 +79,10 @@ test('getMentionItemHighlightParts preserves separated fuzzy groups across words
     serializeHighlight('@Devil\'s Advocate', '@dev adv'),
     '[@Dev]il\'s [Adv]ocate',
   );
+});
+
+test('matchOpenMentionAtEnd keeps spaced mention names open while typing', () => {
+  assert.equal(matchOpenMentionAtEnd('Ping @GPT 5.4')?.[0], ' @GPT 5.4');
+  assert.equal(matchOpenMentionAtEnd('@Devil\'s Advocate')?.[0], '@Devil\'s Advocate');
+  assert.equal(matchOpenMentionAtEnd('Ping @GPT 5.4\nnext line'), null);
 });
