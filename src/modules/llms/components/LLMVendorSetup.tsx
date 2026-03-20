@@ -15,6 +15,7 @@ import { GeminiServiceSetup } from '../vendors/gemini/GeminiServiceSetup';
 import { GroqServiceSetup } from '../vendors/groq/GroqServiceSetup';
 import { LMStudioServiceSetup } from '../vendors/lmstudio/LMStudioServiceSetup';
 import { LocalAIServiceSetup } from '../vendors/localai/LocalAIServiceSetup';
+import { MiniMaxServiceSetup } from '../vendors/minimax/MiniMaxServiceSetup';
 import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
 import { MoonshotServiceSetup } from '../vendors/moonshot/MoonshotServiceSetup';
 import { OllamaServiceSetup } from '../vendors/ollama/OllamaServiceSetup';
@@ -42,6 +43,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   groq: GroqServiceSetup,
   lmstudio: LMStudioServiceSetup,
   localai: LocalAIServiceSetup,
+  minimax: MiniMaxServiceSetup,
   mistral: MistralServiceSetup,
   moonshot: MoonshotServiceSetup,
   ollama: OllamaServiceSetup,
