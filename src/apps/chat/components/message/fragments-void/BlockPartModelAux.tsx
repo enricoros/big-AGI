@@ -17,6 +17,7 @@ import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId 
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import { extractReasoningTitles, type ReasoningRenderSequenceItem } from './BlockPartModelAux.reasoning';
+import { useChatShowReasoningTitles } from '../../../store-app-chat';
 
 
 // configuration
@@ -141,6 +142,7 @@ export function BlockPartModelAux(props: {
   contentScaling: ContentScaling,
   isLastFragment: boolean,
   defaultExpanded?: boolean,
+  showReasoningTitles?: boolean,
   collapsedInlineChildren?: React.ReactNode,
   expandedInlineChildren?: React.ReactNode,
   expandedSequence?: ReasoningRenderSequenceItem[],
@@ -155,6 +157,8 @@ export function BlockPartModelAux(props: {
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
+  const storedShowReasoningTitles = useChatShowReasoningTitles();
+  const showReasoningTitles = props.showReasoningTitles ?? storedShowReasoningTitles;
 
   // memo
   const scaledTypographySx = useScaledTypographySx(adjustContentScaling(props.contentScaling, -1), false, false);
@@ -278,12 +282,13 @@ export function BlockPartModelAux(props: {
       )}
     </Box>
 
-    {!expanded && !!streamedReasoningTitles.length && (
-      <Box sx={_styles.titlePreviewRow}>
+    {!expanded && showReasoningTitles && !!streamedReasoningTitles.length && (
+      <Box data-agi-reasoning-title-preview='true' sx={_styles.titlePreviewRow}>
         {streamedReasoningTitles.map((title, index) => (
           <Typography
             key={`${props.fragmentId}-reasoning-title-${index}`}
             level='body-xs'
+            data-agi-reasoning-title-badge='true'
             sx={_styles.titlePreviewBadge}
           >
             {title}

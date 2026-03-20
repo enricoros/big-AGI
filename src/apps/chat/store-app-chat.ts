@@ -46,6 +46,9 @@ interface AppChatStore {
   tokenCountingMethod: TokenCountingMethod;
   setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => void;
 
+  showReasoningTitles: boolean;
+  setShowReasoningTitles: (showReasoningTitles: boolean) => void;
+
   // chat UI
 
   clearFilters: () => void;
@@ -129,6 +132,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     tokenCountingMethod: Is.Desktop ? 'accurate' : 'approximate',
     setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => _set({ tokenCountingMethod }),
+
+    showReasoningTitles: true,
+    setShowReasoningTitles: (showReasoningTitles: boolean) => _set({ showReasoningTitles }),
 
     // Chat UI
 
@@ -217,6 +223,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoVndAntBreakpoints: state.autoVndAntBreakpoints,
   chatThinkingPolicy: state.chatThinkingPolicy,
   tokenCountingMethod: state.tokenCountingMethod,
+  showReasoningTitles: state.showReasoningTitles,
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestAttachmentPrompts: state.setAutoSuggestAttachmentPrompts,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
@@ -226,6 +233,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   setAutoVndAntBreakpoints: state.setAutoVndAntBreakpoints,
   setChatThinkingPolicy: state.setChatThinkingPolicy,
   setTokenCountingMethod: state.setTokenCountingMethod,
+  setShowReasoningTitles: state.setShowReasoningTitles,
 })));
 
 export const getChatAutoAI = (): {
@@ -236,6 +244,8 @@ export const getChatAutoAI = (): {
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
   autoVndAntBreakpoints: boolean,
+  chatThinkingPolicy: ChatThinkingPolicy,
+  showReasoningTitles: boolean,
 } => useAppChatStore.getState();
 
 export const useChatAutoSuggestHTMLUI = (): boolean =>
@@ -249,6 +259,15 @@ export const getChatThinkingPolicy = (): ChatThinkingPolicy =>
 
 export const getChatTokenCountingMethod = (): TokenCountingMethod =>
   useAppChatStore.getState().tokenCountingMethod;
+
+export const getChatShowReasoningTitles = (): boolean =>
+  useAppChatStore.getState().showReasoningTitles;
+
+export const setChatShowReasoningTitles = (showReasoningTitles: boolean): void =>
+  useAppChatStore.getState().setShowReasoningTitles(showReasoningTitles);
+
+export const useChatShowReasoningTitles = (): boolean =>
+  useAppChatStore(state => state.showReasoningTitles);
 
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);

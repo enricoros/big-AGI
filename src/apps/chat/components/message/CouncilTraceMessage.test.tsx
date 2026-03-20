@@ -16,6 +16,8 @@ import { createDMessageFromFragments } from '~/common/stores/chat/chat.message';
 import { ChatMessage } from './ChatMessage';
 import { CouncilTraceMessage } from './CouncilTraceMessage';
 import { ContentFragments } from './fragments-content/ContentFragments';
+import { BlockPartModelAux } from './fragments-void/BlockPartModelAux';
+import { getChatShowReasoningTitles } from '../../store-app-chat';
 
 
 function createLazyDetailItems(items: CouncilTraceRenderItem['rounds'][number]['leaderCard']['detailItems']) {
@@ -70,6 +72,11 @@ function countChipLabel(markup: string, label: string): number {
 
 function countRenderedLabel(markup: string, label: string): number {
   return (markup.match(new RegExp(`>${label}<`, 'g')) ?? []).length;
+}
+
+function countReasoningTitleBadge(markup: string, label: string): number {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (markup.match(new RegExp(`data-agi-reasoning-title-badge=\"true\"[\\s\\S]*?>${escapedLabel}<`, 'g')) ?? []).length;
 }
 
 const trace: CouncilTraceRenderItem = {
@@ -472,6 +479,52 @@ test('assistant message keeps hosted web search inside Show Reasoning even after
     assistantMarkup,
     /Show Reasoning[\s\S]*?markdown-body[\s\S]*?Need sources\.[\s\S]*?Web Search[\s\S]*?Hosted web search completed\.[\s\S]*?Visible draft text\.[\s\S]*?Final answer\./,
   );
+});
+
+test('assistant message shows collapsed reasoning titles by default and hides them when the setting is off', () => {
+  const auxText = [
+    '**Searching for local marketplaces**',
+    '**Searching for current prices**',
+    'Comparing listings.',
+  ].join('\n');
+
+  assert.equal(getChatShowReasoningTitles(), true);
+
+  const visibleMarkup = renderToStaticMarkup(
+    <BlockPartModelAux
+      fragmentId='reasoning-fragment-id'
+      auxType='reasoning'
+      auxText={auxText}
+      auxHasSignature={false}
+      auxRedactedDataCount={0}
+      messagePendingIncomplete={false}
+      zenMode={false}
+      contentScaling={0}
+      isLastFragment
+      showReasoningTitles
+    />,
+  );
+
+  assert.equal(countReasoningTitleBadge(visibleMarkup, 'Searching for local marketplaces'), 1);
+  assert.equal(countReasoningTitleBadge(visibleMarkup, 'Searching for current prices'), 1);
+
+  const hiddenMarkup = renderToStaticMarkup(
+    <BlockPartModelAux
+      fragmentId='reasoning-fragment-id'
+      auxType='reasoning'
+      auxText={auxText}
+      auxHasSignature={false}
+      auxRedactedDataCount={0}
+      messagePendingIncomplete={false}
+      zenMode={false}
+      contentScaling={0}
+      isLastFragment
+      showReasoningTitles={false}
+    />,
+  );
+
+  assert.equal(countReasoningTitleBadge(hiddenMarkup, 'Searching for local marketplaces'), 0);
+  assert.equal(countReasoningTitleBadge(hiddenMarkup, 'Searching for current prices'), 0);
 });
 
 test('assistant message collapses one hosted web invocation-response pair into a single inline web search block', () => {
