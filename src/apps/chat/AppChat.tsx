@@ -39,7 +39,7 @@ import type { SystemPurposeId } from '../../data';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationCouncilMaxRounds, getConversationParticipants, getConversationSystemPurposeId, getConversationTurnTerminationMode, useChatStore, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationCouncilMaxRounds, getConversationParticipants, getConversationTurnTerminationMode, useChatStore, useConversation } from '~/common/stores/chat/store-chats';
 import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
@@ -230,6 +230,7 @@ export function AppChat() {
     title: focusedChatTitle,
     isEmpty: isFocusedChatEmpty,
     isDeveloper: isFocusedChatDeveloper,
+    turnTerminationMode: focusedChatTurnTerminationMode,
     conversationIdx: focusedChatNumber,
     // all
     hasConversations,
@@ -263,7 +264,7 @@ export function AppChat() {
   const isMultiAddable = chatPanes.length < 4;
   const isMultiConversationId = paneUniqueConversationIds.length >= 2;
   const willMulticast = isComposerMulticast && isMultiConversationId;
-  const disableNewButton = isFocusedChatEmpty && !isMultiPane;
+  const disableNewButton = isFocusedChatEmpty && !isMultiPane && focusedChatTurnTerminationMode === 'round-robin-per-human';
 
   const handleOpenConversationInFocusedPane = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -553,7 +554,7 @@ export function AppChat() {
     // create conversation (or recycle the existing top-of-stack empty conversation)
     const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito)
       ? recycleNewConversationId
-      : prependNewConversation(agentGroupSnapshot?.systemPurposeId ?? getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
+      : prependNewConversation(agentGroupSnapshot?.systemPurposeId ?? undefined, isIncognito);
 
     if (agentGroupSnapshot && conversationId) {
       useChatStore.getState().setSystemPurposeId(conversationId, agentGroupSnapshot.systemPurposeId);
@@ -576,7 +577,7 @@ export function AppChat() {
     if (!isMobile)
       composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
+  }, [activeFolderId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
 
   const handleConversationSaveAgentGroup = React.useCallback((conversationId: DConversationId, name?: string, existingId?: string | null) => {
     const conversation = getConversation(conversationId);

@@ -42,6 +42,10 @@ export type ChatSearchSorting = 'frequency' | 'date';
 
 export type ChatSearchDepth = 'titles' | 'content' | 'attachments';
 
+export function shouldRenderConversationInDrawer(messageCount: number): boolean {
+  return messageCount > 0;
+}
+
 
 function messageHasDocAttachmentFragments(message: DMessage): boolean {
   return message.fragments.some(fragment => isAttachmentFragment(fragment) && isDocPart(fragment.part));
@@ -131,6 +135,9 @@ export function useChatDrawerRenderItems(
 
           // optimized reduction to find stars/images/docs/and lowercased text for search
           const messageCount = _c.messages.length;
+          if (!shouldRenderConversationInDrawer(messageCount))
+            return null;
+
           const messageFlags = new Set<DMessageUserFlag>();
           let lcMessageSearchText = '';
           let hasStars = false, hasImages = false, hasDocs = false;

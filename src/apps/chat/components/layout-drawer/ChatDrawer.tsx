@@ -134,7 +134,7 @@ function ChatDrawer(props: {
   // New/Activate/Delete Conversation
 
   const isMultiPane = props.chatPanesConversationIds.length >= 2;
-  const disableNewButton = props.disableNewButton && filteredChatsIncludeActive;
+  const disableNewButton = props.disableNewButton;
   const newButtonDontRecycle = isMultiPane || !filteredChatsIncludeActive;
 
   const handleButtonNew = React.useCallback((event: React.MouseEvent) => {
@@ -145,11 +145,11 @@ function ChatDrawer(props: {
   }, [newButtonDontRecycle, onConversationNew]);
 
   const handleAgentGroupLoad = React.useCallback((agentGroupSnapshot: DAgentGroupSnapshot) => {
-    onConversationNew(true, false, agentGroupSnapshot);
+    onConversationNew(disableNewButton ? false : true, false, agentGroupSnapshot);
     setEditingGroupId(null);
     if (getIsMobile())
       optimaCloseDrawer();
-  }, [onConversationNew]);
+  }, [disableNewButton, onConversationNew]);
 
   const handleAgentGroupRename = React.useCallback((groupId: string, name: string) => {
     renameAgentGroup(groupId, name);
@@ -331,11 +331,11 @@ function ChatDrawer(props: {
         </Box>
 
         <Menu placement='bottom-start' sx={{ minWidth: 260, zIndex: themeZIndexOverMobileDrawer }}>
-          <MenuItem onClick={() => onConversationNew(newButtonDontRecycle, false)}>
+          <MenuItem disabled={disableNewButton} onClick={() => onConversationNew(newButtonDontRecycle, false)}>
             <ListItemDecorator><AddIcon /></ListItemDecorator>
             New chat
           </MenuItem>
-          <MenuItem onClick={() => onConversationNew(newButtonDontRecycle, true)}>
+          <MenuItem disabled={disableNewButton} onClick={() => onConversationNew(newButtonDontRecycle, true)}>
             <ListItemDecorator><AddIcon /></ListItemDecorator>
             New incognito chat
           </MenuItem>

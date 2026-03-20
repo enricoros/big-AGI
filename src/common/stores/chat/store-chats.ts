@@ -860,6 +860,11 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   const title = conversation ? conversationTitle(conversation) : null;
   const isEmpty = conversation ? !conversation.messages.length : true;
   const isDeveloper = conversation?.systemPurposeId === 'Developer';
+  const turnTerminationMode = conversation?.turnTerminationMode === 'continuous'
+    ? 'continuous'
+    : conversation?.turnTerminationMode === 'council'
+      ? 'council'
+      : 'round-robin-per-human';
   const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
 
   const hasConversations = conversations.length > 1 || (conversations.length === 1 && !!conversations[0].messages.length);
@@ -869,6 +874,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     title,
     isEmpty,
     isDeveloper,
+    turnTerminationMode,
     conversationIdx,
     hasConversations,
     recycleNewConversationId,
