@@ -58,13 +58,14 @@ test('leader chip uses the participant accent color instead of a fixed primary c
   assert.doesNotMatch(source, /\{participant\.isLeader && <Chip size='sm' variant='solid' color='primary'>Leader<\/Chip>\}/);
 });
 
-test('council mode participants button only shows the leader label', () => {
+test('participants button only shows leader details outside human-driven multi-agent chats', () => {
   const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
 
   assert.match(source, /const participantsButtonLabel = React\.useMemo\(\(\) => \{/);
   assert.match(source, /const leaderReasoningSummaryLabel = React\.useMemo\(\(\) => \{/);
-  assert.match(source, /if \(turnTerminationMode === 'council'\)\s*return leaderParticipant \? `Leader \$\{leaderParticipant\.name\}\$\{leaderReasoningSummaryLabel \? ` · \$\{leaderReasoningSummaryLabel\}` : ''\}` : 'Leader';/);
-  assert.match(source, /return `Agents \$\{assistantParticipants\.length > 1 \? assistantParticipants\.length : ''\}\$\{leaderParticipant \? ` · Leader \$\{leaderParticipant\.name\}` : ''\}`;/);
+  assert.match(source, /const showLeaderInParticipantsButton = assistantParticipants\.length > 1 && turnTerminationMode !== 'round-robin-per-human';/);
+  assert.match(source, /if \(turnTerminationMode === 'council' && showLeaderInParticipantsButton\)\s*return leaderParticipant \? `Leader \$\{leaderParticipant\.name\}\$\{leaderReasoningSummaryLabel \? ` · \$\{leaderReasoningSummaryLabel\}` : ''\}` : 'Leader';/);
+  assert.match(source, /return `Agents \$\{assistantParticipants\.length > 1 \? assistantParticipants\.length : ''\}`;/);
   assert.match(source, /\{participantsButtonLabel\}/);
 });
 

@@ -316,12 +316,13 @@ export function ChatBarChat(props: {
       selectedReasoningEffort: leaderParticipant.reasoningEffort ?? null,
     });
   }, [chatLLMId, leaderParticipant, visibleLLMs]);
+  const showLeaderInParticipantsButton = assistantParticipants.length > 1 && turnTerminationMode !== 'round-robin-per-human';
   const participantsButtonLabel = React.useMemo(() => {
-    if (turnTerminationMode === 'council')
+    if (turnTerminationMode === 'council' && showLeaderInParticipantsButton)
       return leaderParticipant ? `Leader ${leaderParticipant.name}${leaderReasoningSummaryLabel ? ` · ${leaderReasoningSummaryLabel}` : ''}` : 'Leader';
 
-    return `Agents ${assistantParticipants.length > 1 ? assistantParticipants.length : ''}${leaderParticipant ? ` · Leader ${leaderParticipant.name}` : ''}`;
-  }, [assistantParticipants.length, leaderParticipant, leaderReasoningSummaryLabel, turnTerminationMode]);
+    return `Agents ${assistantParticipants.length > 1 ? assistantParticipants.length : ''}`;
+  }, [assistantParticipants.length, leaderParticipant, leaderReasoningSummaryLabel, showLeaderInParticipantsButton, turnTerminationMode]);
   const allAssistantsEveryTurn = React.useMemo(() =>
     assistantParticipants.every(participant => (participant.speakWhen ?? 'every-turn') === 'every-turn'),
   [assistantParticipants]);
