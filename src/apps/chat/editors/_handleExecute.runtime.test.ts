@@ -214,6 +214,7 @@ type PersonaInvocation = {
   requestedToolNames: string[];
   requestedToolsPolicy: unknown;
   existingAssistantMessageId: string | null;
+  existingAssistantUpstreamHandleResponseId: string | null;
   llmUserParametersReplacement: DModelParameterValues | null;
 };
 
@@ -358,6 +359,7 @@ class ScriptedChatExecutionRuntime implements ChatExecutionRuntime {
         return transformedRequest?.toolsPolicy;
       })(),
       existingAssistantMessageId: params.runOptions?.existingAssistantMessageId ?? null,
+      existingAssistantUpstreamHandleResponseId: params.runOptions?.existingAssistantUpstreamHandle?.responseId ?? null,
       llmUserParametersReplacement: params.runOptions?.llmUserParametersReplacement
         ? structuredClone(params.runOptions.llmUserParametersReplacement)
         : null,
@@ -1795,6 +1797,14 @@ test('handleExecute resumes the same incomplete room message before continuing w
       llmId: leader.llmId,
     },
   };
+  incompleteLeaderMessage.generator = {
+    ...incompleteLeaderMessage.generator,
+    upstreamHandle: {
+      uht: 'vnd.oai.responses',
+      responseId: 'resp_resume_leader',
+      expiresAt: null,
+    },
+  };
 
   const conversationId = importConversationForTest({
     participants,
@@ -1823,6 +1833,9 @@ test('handleExecute resumes the same incomplete room message before continuing w
   assert.equal(result, true);
   assert.deepEqual(runtime.callLog, [leader.id, critic.id, writer.id]);
   assert.equal(runtime.invocations[0]?.existingAssistantMessageId, incompleteLeaderMessage.id);
+  assert.equal(runtime.invocations[0]?.existingAssistantUpstreamHandleResponseId, 'resp_resume_leader');
+  assert.equal(runtime.invocations[1]?.existingAssistantUpstreamHandleResponseId, null);
+  assert.equal(runtime.invocations[2]?.existingAssistantUpstreamHandleResponseId, null);
 
   const messages = useChatStore.getState().historyView(conversationId) ?? [];
   const assistantMessages = messages.filter(message => message.role === 'assistant');

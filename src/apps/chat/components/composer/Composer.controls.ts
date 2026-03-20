@@ -143,7 +143,13 @@ export function getComposerSessionStatusLabel(
             : null;
 }
 
-export function getComposerResumeLabel(turnTerminationMode: DConversationTurnTerminationMode): string {
+export function getComposerResumeLabel(
+  turnTerminationMode: DConversationTurnTerminationMode,
+  assistantParticipantCount: number,
+): string {
+  if (turnTerminationMode === 'round-robin-per-human' && assistantParticipantCount <= 1)
+    return 'Resume reply';
+
   return `Resume ${getComposerSessionSubject(turnTerminationMode).toLowerCase()}`;
 }
 
@@ -181,7 +187,7 @@ export function getComposerInterruptionPolicy(params: {
   const isMultiAgentSession = params.assistantParticipantCount > 1 || params.turnTerminationMode === 'continuous' || isCouncilSession;
   const showPause = params.assistantAbortible && hasSessionLifecycleControls;
   const showStop = params.assistantAbortible;
-  const showResume = hasSessionLifecycleControls && params.hasTargetConversationId && params.councilSessionCanResume && !params.assistantAbortible;
+  const showResume = params.hasTargetConversationId && params.councilSessionCanResume && !params.assistantAbortible;
 
   return {
     isCouncilSession,

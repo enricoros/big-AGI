@@ -516,7 +516,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Communicates the upstream response handle, for remote control/resumability */
-  setUpstreamHandle(handle: string, _type: 'oai-responses' /* the only one for now, used for type safety */) {
+  setUpstreamHandle(handle: string, _type: 'oai-responses' /* the only one for now, used for type safety */, startingAfter?: number) {
     if (SERVER_DEBUG_WIRE)
       console.log('|response-handle|', handle);
     // NOTE: if needed, we could store the handle locally for server-side resumability, but we just implement client-side (correction, manual) for now
@@ -525,6 +525,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       handle: {
         uht: 'vnd.oai.responses',
         responseId: handle,
+        ...(startingAfter !== undefined ? { startingAfter } : {}),
         expiresAt: Date.now() + 30 * 24 * 3600 * 1000, // default: 30 days expiry
       },
     });

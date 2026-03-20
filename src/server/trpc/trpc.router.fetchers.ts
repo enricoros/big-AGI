@@ -119,6 +119,12 @@ type TRPCFetcherErrorCategory =
   | 'http'
   | 'parse';
 
+function _serverAccessHint(showHint: boolean): string {
+  return showHint
+    ? ' \n\nPlease make sure the Server can access the configured upstream endpoint.'
+    : '';
+}
+
 
 /**
  * Internal fetcher
@@ -241,7 +247,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
         + `Could not connect: ${_period(errorString)}`
         + (causeMessage ? ` \nTechnical cause: ${_period(causeMessage)}` : '')
-        + (prettyShowUrl ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
+        + _serverAccessHint(prettyShowUrl),
       // cause: _cause,
     });
   }
@@ -287,7 +293,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
         + (payloadString ? ` - \n${payloadString}` : '')
         // Custom hints for common issues from select providers
         + (s === 403 && moduleName === 'Gemini' && payloadString?.includes('Requests from referer') ? ' \n\nGemini: Check API key restrictions in Google Cloud Console' : '')
-        + ((s === 404 || (s === 403 && !url.includes('bedrock') /* just a tad more silence */) || s === 502) && !url.includes('app.openpipe.ai') ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''), // [OpenPipe] 403 when the model is associated to the project, 404 when not found
+        + _serverAccessHint((s === 404 || (s === 403 && !url.includes('bedrock') /* just a tad more silence */) || s === 502) && !url.includes('app.openpipe.ai')), // [OpenPipe] 403 when the model is associated to the project, 404 when not found
       // cause: payload, // NOT an Error - do not use even to preserve original error payload as cause
     });
   }
@@ -312,7 +318,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
         connErrorName: error.connErrorName,
         httpStatus: error.httpStatus,
         message: `[${moduleName} parsing issue]: ${error.message}`
-          + ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}`,
+          + _serverAccessHint(true),
         // cause: error.cause, // REMOVE the cause
       });
 

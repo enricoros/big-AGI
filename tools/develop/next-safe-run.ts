@@ -9,8 +9,17 @@ const require = createRequire(import.meta.url);
 const REQUIRED_PAGES_MANIFEST_ROUTES = ['/_app', '/_document', '/_error'] as const;
 const NEXT_MISSING_CHUNK_PATTERN = /Cannot find module '\.\/(\d+\.js)'/;
 
+function getNextDistDirName() {
+  return process.env.BIG_AGI_NEXT_DIST_DIR?.trim() || '.next';
+}
+
+function getNextDistDir(projectRoot: string) {
+  return join(projectRoot, getNextDistDirName());
+}
+
 function getMissingServerChunksForBundle(projectRoot: string, bundleRelativePath: string): string[] {
-  const bundlePath = join(projectRoot, '.next', 'server', bundleRelativePath);
+  const nextDir = getNextDistDir(projectRoot);
+  const bundlePath = join(nextDir, 'server', bundleRelativePath);
   if (!existsSync(bundlePath))
     return [];
 
@@ -26,7 +35,7 @@ function getMissingServerChunksForBundle(projectRoot: string, bundleRelativePath
     .map(token => token.trim())
     .filter(token => /^\d+$/.test(token));
 
-  return referencedChunkIds.filter(chunkId => !existsSync(join(projectRoot, '.next', 'server', 'chunks', `${chunkId}.js`)));
+  return referencedChunkIds.filter(chunkId => !existsSync(join(nextDir, 'server', 'chunks', `${chunkId}.js`)));
 }
 
 export function findMissingNextChunkError(logText: string): string | null {
@@ -34,7 +43,7 @@ export function findMissingNextChunkError(logText: string): string | null {
 }
 
 export function inspectNextBuildState(projectRoot: string): { isBroken: boolean; reason?: string } {
-  const nextDir = join(projectRoot, '.next');
+  const nextDir = getNextDistDir(projectRoot);
   if (!existsSync(nextDir))
     return { isBroken: false };
 
@@ -79,17 +88,18 @@ export function inspectNextBuildState(projectRoot: string): { isBroken: boolean;
 }
 
 function moveBrokenNextBuildAside(projectRoot: string, reason: string) {
-  const nextDir = join(projectRoot, '.next');
+  const nextDir = getNextDistDir(projectRoot);
+  const nextDirName = basename(nextDir);
   const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
 
   for (let attempt = 0; ; attempt++) {
     const suffix = attempt === 0 ? '' : `-${attempt}`;
-    const backupDir = join(projectRoot, `.next.corrupt-${timestamp}${suffix}`);
+    const backupDir = join(projectRoot, `${nextDirName}.corrupt-${timestamp}${suffix}`);
     if (existsSync(backupDir))
       continue;
 
     renameSync(nextDir, backupDir);
-    console.warn(`[next-safe-run] Moved broken .next to ${basename(backupDir)} (${reason})`);
+    console.warn(`[next-safe-run] Moved broken ${nextDirName} to ${basename(backupDir)} (${reason})`);
     return;
   }
 }
@@ -105,18 +115,25 @@ async function main() {
     return;
   }
 
+  const nextDistDir = process.env.BIG_AGI_NEXT_DIST_DIR?.trim() || (nextCommand === 'dev' ? '.next-dev' : '');
+  if (nextDistDir)
+    process.env.BIG_AGI_NEXT_DIST_DIR = nextDistDir;
+  else
+    delete process.env.BIG_AGI_NEXT_DIST_DIR;
+
   const buildState = inspectNextBuildState(projectRoot);
   if (buildState.isBroken)
     moveBrokenNextBuildAside(projectRoot, buildState.reason ?? 'corrupt build output');
 
   const nextBin = require.resolve('next/dist/bin/next');
   const shouldWatchForMissingChunks = nextCommand === 'dev';
+  const nextEnv = { ...process.env };
   let restartAttempts = 0;
 
   while (true) {
     const child = spawn(process.execPath, [nextBin, nextCommand, ...nextArgs], {
       cwd: projectRoot,
-      env: process.env,
+      env: nextEnv,
       stdio: shouldWatchForMissingChunks ? ['inherit', 'pipe', 'pipe'] : 'inherit',
     });
 
@@ -152,7 +169,7 @@ async function main() {
 
     if (restartReason && restartAttempts < 2) {
       restartAttempts++;
-      if (existsSync(join(projectRoot, '.next')))
+      if (existsSync(getNextDistDir(projectRoot)))
         moveBrokenNextBuildAside(projectRoot, restartReason);
       console.warn(`[next-safe-run] Restarting Next dev after runtime chunk failure (${restartReason})`);
       continue;

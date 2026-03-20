@@ -22,6 +22,23 @@ function writeTextFile(projectRoot: string, relativePath: string, value = '') {
   writeFileSync(filePath, value);
 }
 
+function withEnv<T>(name: string, value: string | undefined, fn: () => T): T {
+  const previous = process.env[name];
+  if (value === undefined)
+    delete process.env[name];
+  else
+    process.env[name] = value;
+
+  try {
+    return fn();
+  } finally {
+    if (previous === undefined)
+      delete process.env[name];
+    else
+      process.env[name] = previous;
+  }
+}
+
 test('treats a missing build manifest as a broken .next tree', () => {
   const projectRoot = makeProjectRoot();
   mkdirSync(join(projectRoot, 'pages'));
@@ -102,4 +119,21 @@ Require stack:
 `;
 
   assert.equal(findMissingNextChunkError(errorText), '9963.js');
+});
+
+test('inspects the configured dist dir instead of always assuming .next', () => {
+  const projectRoot = makeProjectRoot();
+  mkdirSync(join(projectRoot, 'pages'));
+  writeJsonFile(projectRoot, '.next-dev/build-manifest.json', {});
+  writeTextFile(projectRoot, '.next-dev/server/webpack-runtime.js');
+  writeJsonFile(projectRoot, '.next-dev/server/pages-manifest.json', {
+    '/_app': 'pages/_app.js',
+    '/_document': 'pages/_document.js',
+    '/_error': 'pages/_error.js',
+    '/': 'pages/index.js',
+  });
+
+  const result = withEnv('BIG_AGI_NEXT_DIST_DIR', '.next-dev', () => inspectNextBuildState(projectRoot));
+
+  assert.deepStrictEqual(result, { isBroken: false });
 });

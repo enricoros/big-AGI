@@ -350,11 +350,6 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // -> Model
         pt.setModelName(event.response.model);
 
-        // -> Upstream Handle (for remote control: resume, cancel, delete)
-        // Implementation NOTE: we won't uproll sequence numbers for partial resumes - we'll just download the full response
-        if (event.response.store && event.response.id)
-          pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
-
         // TODO: [FUTURE] Accumulate in DMessage.sessionMetadata:
         //   pt.setSessionMetadata('openai.response.id', response.id)
         //   pt.setSessionMetadata('openai.response.expiresAt', response.expires_at)
@@ -736,6 +731,9 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         break;
 
     }
+
+    if (R.responseId !== 'new response' && event.sequence_number !== undefined)
+      pt.setUpstreamHandle(R.responseId, 'oai-responses', event.sequence_number);
   };
 }
 

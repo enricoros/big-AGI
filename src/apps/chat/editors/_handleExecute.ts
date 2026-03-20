@@ -14,7 +14,7 @@ import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 import { DEFAULT_COUNCIL_MAX_ROUNDS, resolveCouncilMaxRounds } from '~/common/stores/chat/chat.conversation';
 import type { DConversationId, DConversationParticipant, DPersistedCouncilSession, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { createDMessageEmpty, createDMessageTextContent, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
-import type { DMessage, DMessageCouncilChannel } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageCouncilChannel, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { duplicateDMessage } from '~/common/stores/chat/chat.message';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
@@ -1498,6 +1498,7 @@ export interface MultiAgentResumePlan {
   pendingParticipantsInOrder: DConversationParticipant[];
   existingAssistantMessageId: string | null;
   existingAssistantParticipantId: string | null;
+  existingAssistantUpstreamHandle: DMessageGenerator['upstreamHandle'] | null;
   interruptionReason: string | null;
   updatedAt: number;
   passIndex: number;
@@ -1606,6 +1607,7 @@ export function inferMultiAgentResumePlan(params: {
     pendingParticipantsInOrder,
     existingAssistantMessageId: incompleteAssistantMessage?.id ?? null,
     existingAssistantParticipantId: incompleteAssistantParticipantId,
+    existingAssistantUpstreamHandle: incompleteAssistantMessage?.generator?.upstreamHandle ?? null,
     interruptionReason: incompleteAssistantMessage ? 'page-unload' : persistedSession?.interruptionReason ?? 'recovered-from-transcript',
     updatedAt: incompleteAssistantMessage?.updated
       ?? incompleteAssistantMessage?.created
@@ -2339,7 +2341,7 @@ async function runParticipantSequence(
   latestUserMessageId: string | null,
   councilChannel: DMessageCouncilChannel,
   runtime?: ChatExecutionRuntime,
-  resumePlan?: Pick<MultiAgentResumePlan, 'pendingParticipantsInOrder' | 'existingAssistantMessageId' | 'existingAssistantParticipantId'> | null,
+  resumePlan?: Pick<MultiAgentResumePlan, 'pendingParticipantsInOrder' | 'existingAssistantMessageId' | 'existingAssistantParticipantId' | 'existingAssistantUpstreamHandle'> | null,
 ): Promise<boolean> {
   if (!participantsInOrder.length)
     return false;
@@ -2366,6 +2368,7 @@ async function runParticipantSequence(
       : null;
     let resumeIncompleteAssistantMessageId = resumePlan?.existingAssistantMessageId ?? null;
     let resumeIncompleteAssistantParticipantId = resumePlan?.existingAssistantParticipantId ?? null;
+    let resumeIncompleteAssistantUpstreamHandle = resumePlan?.existingAssistantUpstreamHandle ?? null;
 
     while (!sharedAbortController.signal.aborted) {
       setCouncilSessionRunning(session, 'generate-content', turnTerminationMode, null, continuousTurnCount);
@@ -2447,7 +2450,12 @@ async function runParticipantSequence(
           messageChannel: councilChannel,
           runOptions: withParticipantRunOptions(participantLlmId, participant, {
             ...(resumeIncompleteAssistantMessageId && resumeIncompleteAssistantParticipantId === participant.id
-              ? { existingAssistantMessageId: resumeIncompleteAssistantMessageId }
+              ? {
+                  existingAssistantMessageId: resumeIncompleteAssistantMessageId,
+                  ...(resumeIncompleteAssistantUpstreamHandle ? {
+                    existingAssistantUpstreamHandle: resumeIncompleteAssistantUpstreamHandle,
+                  } : {}),
+                }
               : {}),
             ...(canLeaderExitLoop
               ? { requestTransform: createExitLoopRequestTransform() }
@@ -2458,6 +2466,7 @@ async function runParticipantSequence(
         if (resumeIncompleteAssistantParticipantId === participant.id) {
           resumeIncompleteAssistantMessageId = null;
           resumeIncompleteAssistantParticipantId = null;
+          resumeIncompleteAssistantUpstreamHandle = null;
         }
         results.push(result.success);
         if (turnTerminationMode === 'continuous')

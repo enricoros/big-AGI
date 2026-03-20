@@ -78,12 +78,10 @@ test('getComposerInterruptionPolicy maps pause and stop actions across all chat 
   }
 });
 
-test('getComposerInterruptionPolicy exposes resume for resumable session modes across all chat modes and statuses', async (t) => {
+test('getComposerInterruptionPolicy exposes resume whenever the session is resumable across all chat modes and statuses', async (t) => {
   for (const turnTerminationMode of TURN_TERMINATION_MODES) {
     for (const chatExecuteMode of CHAT_EXECUTE_MODES) {
       for (const councilSessionStatus of COUNCIL_STATUSES) {
-        const shouldResumeSingleAgent = turnTerminationMode === 'continuous' || turnTerminationMode === 'council';
-        const shouldResumeMultiAgent = shouldResumeSingleAgent || turnTerminationMode === 'round-robin-per-human';
         await t.test(`${turnTerminationMode} / ${chatExecuteMode} / ${councilSessionStatus}`, () => {
           const resumableSingleAgentPolicy = getComposerInterruptionPolicy({
             assistantAbortible: false,
@@ -113,10 +111,10 @@ test('getComposerInterruptionPolicy exposes resume for resumable session modes a
             turnTerminationMode,
           });
 
-          assert.equal(resumableSingleAgentPolicy.showResume, shouldResumeSingleAgent);
-          assert.equal(resumableSingleAgentPolicy.resumeAction, shouldResumeSingleAgent ? 'resume-council' : null);
-          assert.equal(resumablePolicy.showResume, shouldResumeMultiAgent);
-          assert.equal(resumablePolicy.resumeAction, shouldResumeMultiAgent ? 'resume-council' : null);
+          assert.equal(resumableSingleAgentPolicy.showResume, true);
+          assert.equal(resumableSingleAgentPolicy.resumeAction, 'resume-council');
+          assert.equal(resumablePolicy.showResume, true);
+          assert.equal(resumablePolicy.resumeAction, 'resume-council');
           assert.equal(hiddenResumePolicy.showResume, false);
           assert.equal(hiddenResumePolicy.resumeAction, null);
         });
@@ -177,6 +175,23 @@ test('getComposerInterruptionPolicy exposes pause and resume outside council mod
   assert.equal(agentsLoopPolicy.showPause, false);
   assert.equal(agentsLoopPolicy.showResume, true);
   assert.equal(agentsLoopPolicy.resumeAction, 'resume-council');
+});
+
+test('getComposerInterruptionPolicy exposes resume for single-agent human-driven chats after unexpected interruption', () => {
+  const interruptedSingleAgentPolicy = getComposerInterruptionPolicy({
+    assistantAbortible: false,
+    assistantParticipantCount: 1,
+    chatExecuteMode: 'generate-content',
+    councilSessionCanResume: true,
+    councilSessionStatus: 'interrupted',
+    hasTargetConversationId: true,
+    turnTerminationMode: 'round-robin-per-human',
+  });
+
+  assert.equal(interruptedSingleAgentPolicy.isCouncilSession, false);
+  assert.equal(interruptedSingleAgentPolicy.showPause, false);
+  assert.equal(interruptedSingleAgentPolicy.showResume, true);
+  assert.equal(interruptedSingleAgentPolicy.resumeAction, 'resume-council');
 });
 
 test('getComposerActionBarState shows queueing while an assistant reply is abortible', () => {
@@ -380,9 +395,10 @@ test('composer session labels follow the active turn mode instead of always sayi
   assert.equal(getComposerSessionStatusLabel('continuous', 'stopped', '@exit-loop'), 'Loop ended by leader');
   assert.equal(getComposerSessionStatusLabel('council', 'completed'), 'Council completed');
   assert.equal(getComposerSessionStatusLabel('round-robin-per-human', 'idle'), null);
-  assert.equal(getComposerResumeLabel('round-robin-per-human'), 'Resume room');
-  assert.equal(getComposerResumeLabel('continuous'), 'Resume loop');
-  assert.equal(getComposerResumeLabel('council'), 'Resume council');
+  assert.equal(getComposerResumeLabel('round-robin-per-human', 1), 'Resume reply');
+  assert.equal(getComposerResumeLabel('round-robin-per-human', 2), 'Resume room');
+  assert.equal(getComposerResumeLabel('continuous', 1), 'Resume loop');
+  assert.equal(getComposerResumeLabel('council', 3), 'Resume council');
 });
 
 test('turn mode display policy avoids redundant desktop chip plus helper copy', () => {

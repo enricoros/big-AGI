@@ -135,9 +135,8 @@ async function* _connectToDispatch(
 
     // Handle AI Service connection error
     const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-    const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${request.url}]` : '';
 
-    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, _d.consoleLogErrors);
+    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}`, _d.consoleLogErrors);
     yield* chatGenerateTx.flushParticles();
     return null; // signal caller to exit
   }

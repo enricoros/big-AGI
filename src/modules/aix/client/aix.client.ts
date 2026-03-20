@@ -24,6 +24,7 @@ import { ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
 import { aixClientDebuggerGetRBO, getAixDebuggerNoStreaming } from './debugger/memstore-aix-client-debugger';
+import { aixSupportsUpstreamReattach } from './aix.resume';
 import { withDecimator } from './withDecimator';
 
 
@@ -188,6 +189,7 @@ export type AixChatGenerateRequestTransform = (request: AixAPIChatGenerate_Reque
 interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
+  resumeHandle?: DMessageGenerator['upstreamHandle'];
 
   // LLM parameter configuration layers: full replacement of user params and/or overrides of a set of individual params
   llmUserParametersReplacement?: DModelParameterValues; // can replace the 'global' llm user configuration with an alternate config (e.g. persona, or per-chat)
@@ -366,6 +368,7 @@ export async function aixChatGenerateText_Simple(
     aixChatGenerate,
     aixContext,
     aixStreaming,
+    clientOptions?.resumeHandle,
     abortSignal,
     clientOptions?.throttleParallelThreads ?? 0,
     !aixStreaming ? undefined : async (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
@@ -524,7 +527,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   }
 
   // Aix Low-Level Chat Generation
-  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
+  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.resumeHandle, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
     async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
@@ -647,6 +650,7 @@ async function _aixChatGenerateContent_LL(
   aixContext: AixAPI_Context_ChatGenerate,
   aixStreaming: boolean,
   // others
+  resumeHandle: AixClientOptions['resumeHandle'],
   abortSignal: AbortSignal,
   throttleParallelThreads: number | undefined,
   // optional streaming callback: not fired until the first piece of content
@@ -666,14 +670,14 @@ async function _aixChatGenerateContent_LL(
    * FIXME: implement client selection of resumability - aixAccess option?
    * For now we turn it on for Responses API for select kinds of request.
    */
-  const requestResumability = !!aixModel.vndOaiResponsesAPI &&
+  const requestResumability = aixSupportsUpstreamReattach(aixAccess) &&
+    !!aixModel.vndOaiResponsesAPI &&
     (['conversation', 'beam-scatter', 'beam-gather'] satisfies (AixAPI_Context_ChatGenerate['name'] | string)[]).includes(aixContext.name);
 
   const aixConnectionOptions: AixAPI_ConnectionOptions_ChatGenerate = {
     ...inspectorEnabled && { debugDispatchRequest: true, debugProfilePerformance: true },
     ...debugRequestBodyOverride && { debugRequestBodyOverride },
-    // FIXME: disabled until clearly working
-    // ...requestResumability && { enableResumability: true },
+    ...requestResumability && { enableResumability: true },
   } as const;
 
 
@@ -698,6 +702,8 @@ async function _aixChatGenerateContent_LL(
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
   // - resume: for network disconnects with OpenAI Responses API handle
   const rsm = new AixStreamRetry(0, 0); // sensible: 3, 2
+  if (resumeHandle && aixSupportsUpstreamReattach(aixAccess))
+    rsm.resumeHandle = resumeHandle;
 
   while (true) {
 

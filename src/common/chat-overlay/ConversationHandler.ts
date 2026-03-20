@@ -17,9 +17,12 @@ import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceho
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
+import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 import { hydrateCouncilSessionFromTranscriptEntries } from '../../apps/chat/editors/_handleExecute.council';
 import { replayCouncilOpLog } from '../../apps/chat/editors/_handleExecute.council.reducer';
 import { inferMultiAgentResumePlan } from '../../apps/chat/editors/_handleExecute';
+import { aixSupportsUpstreamReattach } from '~/modules/aix/client/aix.resume';
 import { createIdleCouncilSessionState } from './store-perchat-composer_slice';
 import type { CouncilSessionState as OverlayCouncilSessionState } from './store-perchat-composer_slice';
 
@@ -46,6 +49,23 @@ function getMessagesSinceLatestUser(conversation: DConversation): DMessage[] {
 function getCouncilLeaderParticipant(conversation: DConversation) {
   const assistantParticipants = (conversation.participants ?? []).filter(participant => participant.kind === 'assistant' && !!participant.personaId);
   return assistantParticipants.find(participant => participant.isLeader) ?? assistantParticipants[0] ?? null;
+}
+
+function supportsSingleAssistantUpstreamResume(message: DMessage | null): boolean {
+  if (!message?.generator?.upstreamHandle)
+    return false;
+
+  const llmId = message.metadata?.author?.llmId?.trim() || null;
+  if (!llmId)
+    return true;
+
+  try {
+    const llm = findLLMOrThrow(llmId);
+    const { transportAccess } = findServiceAccessOrThrow(llm.sId);
+    return aixSupportsUpstreamReattach(transportAccess);
+  } catch {
+    return true;
+  }
 }
 
 function getFreshPersistedCouncilSession(
@@ -209,6 +229,14 @@ export function inferResumableCouncilSession(conversation: DConversation | undef
       turnTerminationMode: conversation.turnTerminationMode === 'continuous' ? 'continuous' : 'round-robin-per-human',
       persistedSession: persistedResumableCouncilSession,
     });
+
+    const latestIncompleteAssistantMessage = [...latestTurnMessages].reverse().find(message =>
+      message.role === 'assistant' && (!!message.pendingIncomplete || message.updated === null),
+    ) ?? null;
+    const isSingleAssistantReply = assistantParticipants.length === 1
+      && (conversation.turnTerminationMode ?? 'round-robin-per-human') === 'round-robin-per-human';
+    if (isSingleAssistantReply && latestIncompleteAssistantMessage && !supportsSingleAssistantUpstreamResume(latestIncompleteAssistantMessage))
+      return null;
 
     if (!multiAgentResumePlan) {
       if (persistedResumableCouncilSession?.mode === 'council')

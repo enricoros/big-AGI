@@ -9,7 +9,7 @@ import type { DModelParameterValues } from '~/common/stores/llms/llms.parameters
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import type { DMessage, DMessageCouncilChannel } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageCouncilChannel, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
@@ -42,7 +42,26 @@ export interface PersonaRunOptions {
     passIndex: number;
   };
   existingAssistantMessageId?: string | null;
+  existingAssistantUpstreamHandle?: DMessageGenerator['upstreamHandle'];
   onStreamUpdate?: (message: AixChatGenerateContent_DMessageGuts, messageComplete: boolean) => void;
+}
+
+export function shouldForcePersonaStreamFlush(params: {
+  existingMessage?: Readonly<DMessage> | null;
+  pendingUpdate: AixChatGenerateContent_DMessageGuts | null;
+  nextUpdate: AixChatGenerateContent_DMessageGuts;
+  messageComplete: boolean;
+}): boolean {
+  if (params.messageComplete)
+    return true;
+
+  const nextResponseId = params.nextUpdate.generator.upstreamHandle?.responseId ?? null;
+  if (!nextResponseId)
+    return false;
+
+  const pendingResponseId = params.pendingUpdate?.generator.upstreamHandle?.responseId ?? null;
+  const existingResponseId = params.existingMessage?.generator?.upstreamHandle?.responseId ?? null;
+  return nextResponseId !== pendingResponseId && nextResponseId !== existingResponseId;
 }
 
 export function applyMessageChannelScope(message: DMessage, channel?: DMessageCouncilChannel | null): void {
@@ -197,6 +216,7 @@ export async function runPersonaOnConversationHead(
     {
       abortSignal: abortController.signal,
       throttleParallelThreads: parallelViewCount,
+      resumeHandle: runOptions?.existingAssistantUpstreamHandle,
       llmUserParametersReplacement: runOptions?.llmUserParametersReplacement,
     },
     (messageOverwrite: AixChatGenerateContent_DMessageGuts, messageComplete: boolean) => {
@@ -210,9 +230,10 @@ export async function runPersonaOnConversationHead(
 
       // Preserve placeholder metadata (especially council author labels) while streaming,
       // because the model overwrite payload may omit metadata entirely.
-      if (assistantMessageId) {
-        const existingMessage = cHandler.historyFindMessageOrThrow(assistantMessageId);
-        if (existingMessage?.metadata) {
+      const existingMessage = assistantMessageId
+        ? cHandler.historyFindMessageOrThrow(assistantMessageId)
+        : undefined;
+      if (existingMessage?.metadata) {
           const nextMetadata: NonNullable<DMessage['metadata']> = {
             ...existingMessage.metadata,
             ...(deepCopy as AixChatGenerateContent_DMessageGuts & { metadata?: DMessage['metadata'] }).metadata,
@@ -236,7 +257,6 @@ export async function runPersonaOnConversationHead(
           }
 
           (deepCopy as AixChatGenerateContent_DMessageGuts & { metadata?: DMessage['metadata'] }).metadata = nextMetadata;
-        }
       }
 
       const firstTextFragment = deepCopy.fragments?.find(isTextContentFragment);
@@ -252,9 +272,15 @@ export async function runPersonaOnConversationHead(
 
       // update the message
       if (assistantMessageId) {
+        const forceFlush = shouldForcePersonaStreamFlush({
+          existingMessage,
+          pendingUpdate: pendingStreamMessageUpdate,
+          nextUpdate: deepCopy,
+          messageComplete,
+        });
         pendingStreamMessageUpdate = deepCopy;
         pendingStreamMessageComplete = pendingStreamMessageComplete || messageComplete;
-        flushPendingStreamMessageUpdate(messageComplete);
+        flushPendingStreamMessageUpdate(forceFlush);
       }
 
       runOptions?.onStreamUpdate?.(deepCopy, messageComplete);

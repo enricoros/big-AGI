@@ -205,6 +205,7 @@ export type DMessageGenerator = ({
   upstreamHandle?: {
     uht: 'vnd.oai.responses',
     responseId: string,
+    startingAfter?: number,
     expiresAt: number | null,         // null = never expires
   },
   tokenStopReason?:

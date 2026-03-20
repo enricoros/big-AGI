@@ -17,7 +17,9 @@
 
 # next.js
 /.next/
+/.next-dev/
 /.next.corrupt-*/
+/.next-dev.corrupt-*/
 /.next.corrupt-manual-*/
 /.next.pre-fix-backup-*/
 /.next.watchdog-*/

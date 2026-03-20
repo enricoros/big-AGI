@@ -4,7 +4,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, useTheme } from '@mui/joy';
+import { Box, Chip, Typography, useTheme } from '@mui/joy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
@@ -65,7 +66,7 @@ import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
 
 import { _handleExecute } from './editors/_handleExecute';
 import { getConversationToFocusAfterDeletion } from './AppChat.delete';
-import { enqueueConversationSend, getQueuedConversationDrainAction, type QueuedConversationSend } from './AppChat.queue';
+import { enqueueConversationSend, getQueuedConversationDrainAction, getQueuedConversationPostExecuteAction, getQueuedConversationPreview, removeQueuedConversationSend, type QueuedConversationPreview, type QueuedConversationSend } from './AppChat.queue';
 
 
 // what to say when a chat is new and has no title
@@ -84,6 +85,36 @@ const scrollToBottomSx = {
 
 const chatMessageListSx: SxProps = {
   flexGrow: 1,
+};
+
+const queuedConversationPreviewBarSx: SxProps = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 0.5,
+  px: { xs: 1, md: 2 },
+  py: 0.75,
+  borderBottom: '1px solid',
+  borderBottomColor: 'divider',
+  backgroundColor: 'background.level1',
+};
+
+const queuedConversationPreviewChipsSx: SxProps = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 0.5,
+};
+
+const queuedConversationPreviewChipSx: SxProps = {
+  maxWidth: '100%',
+  '& .MuiChip-label': {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  '& .MuiChip-endDecorator': {
+    ml: 0.25,
+    pointerEvents: 'auto',
+  },
 };
 
 /*const chatMessageListBrandedSx: SxProps = {
@@ -252,6 +283,34 @@ export function AppChat() {
 
   const queuedConversationSendsRef = React.useRef<Map<DConversationId, QueuedConversationSend[]>>(new Map());
   const drainingConversationIdsRef = React.useRef<Set<DConversationId>>(new Set());
+  const stopRequestedConversationIdsRef = React.useRef<Set<DConversationId>>(new Set());
+  const [queuedConversationPreviews, setQueuedConversationPreviews] = React.useState<Record<DConversationId, QueuedConversationPreview | null>>({});
+  const focusedQueuedConversationPreview = focusedPaneConversationId ? queuedConversationPreviews[focusedPaneConversationId] ?? null : null;
+
+  const syncQueuedConversationPreview = React.useCallback((conversationId: DConversationId, queuedItems: QueuedConversationSend[] | undefined) => {
+    setQueuedConversationPreviews(current => {
+      const nextPreview = getQueuedConversationPreview(queuedItems ?? []);
+      if (!nextPreview) {
+        if (!(conversationId in current))
+          return current;
+        const { [conversationId]: _removed, ...rest } = current;
+        return rest;
+      }
+
+      const currentPreview = current[conversationId] ?? null;
+      if (currentPreview
+        && currentPreview.count === nextPreview.count
+        && currentPreview.hasOverflow === nextPreview.hasOverflow
+        && currentPreview.items.length === nextPreview.items.length
+        && currentPreview.items.every((item, index) => item.index === nextPreview.items[index]?.index && item.label === nextPreview.items[index]?.label))
+        return current;
+
+      return {
+        ...current,
+        [conversationId]: nextPreview,
+      };
+    });
+  }, []);
 
   const reportExecuteOutcome = React.useCallback((outcome: Awaited<ReturnType<typeof _handleExecute>>) => {
     if (outcome === 'err-no-chatllm')
@@ -278,12 +337,14 @@ export function AppChat() {
         const nextQueuedItem = queuedItems?.[0];
         if (!nextQueuedItem) {
           queuedConversationSendsRef.current.delete(conversationId);
+          syncQueuedConversationPreview(conversationId, []);
           break;
         }
 
         const conversation = getConversation(conversationId);
         if (!conversation) {
           queuedItems?.shift();
+          syncQueuedConversationPreview(conversationId, queuedItems);
           if (!queuedItems?.length)
             queuedConversationSendsRef.current.delete(conversationId);
           continue;
@@ -299,6 +360,7 @@ export function AppChat() {
           break;
 
         queuedItems?.shift();
+        syncQueuedConversationPreview(conversationId, queuedItems);
         if (!queuedItems?.length)
           queuedConversationSendsRef.current.delete(conversationId);
 
@@ -327,20 +389,43 @@ export function AppChat() {
     } finally {
       drainingConversationIdsRef.current.delete(conversationId);
     }
-  }, [reportExecuteOutcome]);
+  }, [reportExecuteOutcome, syncQueuedConversationPreview]);
 
   const handleExecuteAndOutcome = React.useCallback(async (chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, callerNameDebug: string) => {
     try {
       const outcome = await _handleExecute(chatExecuteMode, conversationId, callerNameDebug);
       return reportExecuteOutcome(outcome);
     } finally {
-      void drainQueuedConversationSends(conversationId);
+      const stopRequested = stopRequestedConversationIdsRef.current.delete(conversationId);
+      if (getQueuedConversationPostExecuteAction({ stopRequested }) === 'drain')
+        void drainQueuedConversationSends(conversationId);
     }
   }, [drainQueuedConversationSends, reportExecuteOutcome]);
 
   const handleResumeCouncilSession = React.useCallback(async (conversationId: DConversationId) => {
     return await handleExecuteAndOutcome('generate-content', conversationId, 'chat-council-resume');
   }, [handleExecuteAndOutcome]);
+
+  const handleStopConversation = React.useCallback((conversationId: DConversationId) => {
+    stopRequestedConversationIdsRef.current.add(conversationId);
+  }, []);
+
+  const handleRemoveQueuedConversationSend = React.useCallback((conversationId: DConversationId, removeIndex: number) => {
+    const queuedItems = queuedConversationSendsRef.current.get(conversationId);
+    if (!queuedItems?.length)
+      return;
+
+    const nextQueuedItems = removeQueuedConversationSend(queuedItems, removeIndex);
+    if (nextQueuedItems === queuedItems)
+      return;
+
+    if (nextQueuedItems.length)
+      queuedConversationSendsRef.current.set(conversationId, nextQueuedItems);
+    else
+      queuedConversationSendsRef.current.delete(conversationId);
+
+    syncQueuedConversationPreview(conversationId, nextQueuedItems);
+  }, [syncQueuedConversationPreview]);
 
   const handleComposerAction = React.useCallback((conversationId: DConversationId, sendMode: 'steer' | 'queue', chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
 
@@ -367,14 +452,16 @@ export function AppChat() {
 
       if (conversation._abortController) {
         const queuedItems = queuedConversationSendsRef.current.get(conversation.id) ?? [];
-        queuedConversationSendsRef.current.set(conversation.id, enqueueConversationSend({
+        const nextQueuedItems = enqueueConversationSend({
           queuedItems,
           sendMode,
           turnTerminationMode: getConversationTurnTerminationMode(conversation.id),
           chatExecuteMode,
           fragments: duplicatedFragments,
           metadata: duplicatedMetadata,
-        }));
+        });
+        queuedConversationSendsRef.current.set(conversation.id, nextQueuedItems);
+        syncQueuedConversationPreview(conversation.id, nextQueuedItems);
         void drainQueuedConversationSends(conversation.id);
         continue;
       }
@@ -399,7 +486,7 @@ export function AppChat() {
     }
 
     return true;
-  }, [drainQueuedConversationSends, paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
+  }, [drainQueuedConversationSends, handleExecuteAndOutcome, paneUniqueConversationIds, syncQueuedConversationPreview, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
     await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-content'
@@ -943,6 +1030,67 @@ export function AppChat() {
 
     </PanelGroup>
 
+    {!!focusedQueuedConversationPreview?.count && (
+      <Box sx={queuedConversationPreviewBarSx}>
+        <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
+          Enqueued messages
+        </Typography>
+        <Box sx={queuedConversationPreviewChipsSx}>
+          {focusedPaneConversationId && focusedQueuedConversationPreview.items.map(item => (
+            <Chip
+              key={`queued-pane-${item.index}-${item.label}`}
+              size='sm'
+              variant='soft'
+              color='warning'
+              sx={queuedConversationPreviewChipSx}
+              endDecorator={
+                <Box
+                  component='button'
+                  type='button'
+                  aria-label={`Remove queued message: ${item.label}`}
+                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleRemoveQueuedConversationSend(focusedPaneConversationId, item.index);
+                  }}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 0,
+                    background: 'transparent',
+                    color: 'inherit',
+                    p: 0,
+                    m: 0,
+                    pointerEvents: 'auto',
+                    cursor: 'pointer',
+                    lineHeight: 0,
+                  }}
+                >
+                  <DeleteOutlineIcon sx={{ fontSize: 'md' }} />
+                </Box>
+              }
+            >
+              {item.label}
+            </Chip>
+          ))}
+          {focusedQueuedConversationPreview.hasOverflow && (
+            <Chip
+              size='sm'
+              variant='soft'
+              color='neutral'
+            >
+              +{focusedQueuedConversationPreview.count - focusedQueuedConversationPreview.items.length}
+            </Chip>
+          )}
+        </Box>
+      </Box>
+    )}
+
     {/* Composer with auto-hide */}
     <Box {...composerAutoHide.compressorProps}>
       <div style={composerAutoHide.compressibleStyle}>
@@ -957,6 +1105,7 @@ export function AppChat() {
           isMulticast={isMultiConversationId ? isComposerMulticast : null}
           isDeveloperMode={isFocusedChatDeveloper}
           onAction={handleComposerAction}
+          onStopConversation={handleStopConversation}
           onResumeCouncilSession={handleResumeCouncilSession}
           onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
           onConversationsImportFromFiles={handleConversationsImportFromFiles}

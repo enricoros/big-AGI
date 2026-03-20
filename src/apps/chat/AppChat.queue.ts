@@ -1,5 +1,5 @@
 import type { DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
-import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText, type DMessageMetadata } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -12,11 +12,85 @@ export type QueuedConversationSend = {
   metadata?: DMessageMetadata;
 };
 
+export type QueuedConversationPreview = {
+  count: number;
+  items: {
+    index: number;
+    label: string;
+  }[];
+  hasOverflow: boolean;
+};
+
 export type DrainQueuedConversationAction =
   | 'abort-active-and-process'
   | 'drop-missing-conversation'
   | 'process-next'
   | 'wait';
+
+export type PostExecuteQueuedConversationAction =
+  | 'drain'
+  | 'hold';
+
+function _truncateLabel(text: string, maxLength: number): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized)
+    return '';
+  return normalized.length <= maxLength
+    ? normalized
+    : `${normalized.slice(0, Math.max(maxLength - 1, 1)).trimEnd()}…`;
+}
+
+export function getQueuedConversationSendLabel(item: QueuedConversationSend, maxLength: number = 72): string {
+  const text = _truncateLabel(messageFragmentsReduceText(item.fragments), maxLength);
+  if (text)
+    return text;
+
+  switch (item.chatExecuteMode) {
+    case 'append-user':
+      return 'Append queued input';
+    case 'beam-content':
+      return 'Queued Beam run';
+    case 'generate-image':
+      return 'Queued image request';
+    case 'react-content':
+      return 'Queued ReAct request';
+    case 'generate-content':
+    default:
+      return item.mode === 'steer' ? 'Queued priority message' : 'Queued message';
+  }
+}
+
+export function getQueuedConversationPreview(
+  queuedItems: QueuedConversationSend[],
+  maxVisible: number = 3,
+  maxLabelLength: number = 72,
+): QueuedConversationPreview | null {
+  if (!queuedItems.length)
+    return null;
+
+  const items = queuedItems
+    .slice(0, maxVisible)
+    .map((item, index) => ({
+      index,
+      label: getQueuedConversationSendLabel(item, maxLabelLength),
+    }));
+
+  return {
+    count: queuedItems.length,
+    items,
+    hasOverflow: queuedItems.length > maxVisible,
+  };
+}
+
+export function removeQueuedConversationSend(
+  queuedItems: QueuedConversationSend[],
+  removeIndex: number,
+): QueuedConversationSend[] {
+  if (removeIndex < 0 || removeIndex >= queuedItems.length)
+    return queuedItems;
+
+  return queuedItems.filter((_, index) => index !== removeIndex);
+}
 
 export function enqueueConversationSend(params: {
   queuedItems: QueuedConversationSend[];
@@ -65,4 +139,10 @@ export function getQueuedConversationDrainAction(params: {
   return params.nextQueuedMode === 'steer' && params.turnTerminationMode !== 'council'
     ? 'abort-active-and-process'
     : 'wait';
+}
+
+export function getQueuedConversationPostExecuteAction(params: {
+  stopRequested: boolean;
+}): PostExecuteQueuedConversationAction {
+  return params.stopRequested ? 'hold' : 'drain';
 }

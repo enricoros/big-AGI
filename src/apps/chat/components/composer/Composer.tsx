@@ -166,6 +166,7 @@ export function Composer(props: {
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
   onAction: (conversationId: DConversationId, sendMode: 'steer' | 'queue', chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
+  onStopConversation: (conversationId: DConversationId) => void;
   onResumeCouncilSession: (conversationId: DConversationId) => Promise<boolean>;
   onConversationBeamEdit: (conversationId: DConversationId, editMessageId?: DMessageId) => Promise<void>;
   onConversationsImportFromFiles: (files: File[]) => Promise<void>;
@@ -278,7 +279,7 @@ export function Composer(props: {
 
   // derived state
 
-  const { composerTextAreaRef, targetConversationId, onAction, onTextImagine } = props;
+  const { composerTextAreaRef, targetConversationId, onAction, onStopConversation, onTextImagine } = props;
   const assistantParticipants = React.useMemo(() => (props.participants ?? []).filter(participant => participant.kind === 'assistant'), [props.participants]);
   const leaderParticipant = React.useMemo(() => assistantParticipants.find(participant => participant.isLeader) ?? assistantParticipants[0] ?? null, [assistantParticipants]);
   const composerThreadTargetDisplay = React.useMemo(() => getComposerThreadTargetDisplay(turnTerminationMode), [turnTerminationMode]);
@@ -625,12 +626,13 @@ export function Composer(props: {
   const handleStopClicked = React.useCallback(() => {
     if (!targetConversationId)
       return;
+    onStopConversation(targetConversationId);
     const cHandler = ConversationsManager.getHandler(targetConversationId);
     if (interruptionPolicy.stopAction === 'abort-active-stop')
       cHandler.abortActive('@stop');
     else if (interruptionPolicy.stopAction === 'abort-conversation-temp')
       abortConversationTemp(targetConversationId);
-  }, [abortConversationTemp, interruptionPolicy.stopAction, targetConversationId]);
+  }, [abortConversationTemp, interruptionPolicy.stopAction, onStopConversation, targetConversationId]);
 
   const handlePauseClicked = React.useCallback(() => {
     if (!targetConversationId || interruptionPolicy.pauseAction !== 'abort-active-pause')
@@ -958,7 +960,7 @@ export function Composer(props: {
         <Button
           key='composer-resume'
           variant='soft'
-          color={councilSessionStatus === 'interrupted' ? 'danger' : 'warning'}
+          color='success'
           loading={sendStarted}
           onClick={() => void handleResumeClicked()}
           endDecorator={stackInlineLifecycleButtons ? undefined : <PlayArrowRoundedIcon sx={{ fontSize: 18 }} />}
@@ -967,7 +969,10 @@ export function Composer(props: {
             ...(stackInlineLifecycleButtons ? stackedLifecycleActionButtonSx : {}),
           }}
         >
-          {getComposerResumeLabel(turnTerminationMode as DConversationTurnTerminationMode)}
+          {getComposerResumeLabel(
+            turnTerminationMode as DConversationTurnTerminationMode,
+            props.participants?.filter(participant => participant.kind === 'assistant').length ?? 0,
+          )}
         </Button>
       )}
     </>
@@ -1005,10 +1010,13 @@ export function Composer(props: {
     + (recognitionState.isAvailable ? ' · ramble' : '')
     + '...';
 
+  if (isDesktop && assistantAbortible && !isDraw)
+    textPlaceholder += platformAwareKeystrokes('\n\n⏳ Ctrl + Enter queues your message');
+
   if (isDesktop && timeToShowTips && !isDraw) {
     if (explainShiftEnter)
       textPlaceholder += !enterIsNewline ? '\n\n⏎ Shift + Enter to add a new line' : '\n\n➤ Shift + Enter to send';
-    else if (explainCtrlEnter)
+    else if (explainCtrlEnter && !assistantAbortible)
       textPlaceholder += platformAwareKeystrokes('\n\n⏳ Tip: Ctrl + Enter queues your message');
     else if (explainCtrlShiftEnter)
       textPlaceholder += platformAwareKeystrokes('\n\n➤ Tip: Ctrl + Shift + Enter steers next');

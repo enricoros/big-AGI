@@ -49,6 +49,18 @@ by release.
 - Node test runs now have an official `npm run test:node` entrypoint that preloads the existing import shims for `next/font/google` and other browser-only modules.
 - Production builds now use local/system font stacks for UI and code text instead of `next/font/google`, removing a build-time dependency on fetching Google Fonts during Vercel and other network-restricted deployments.
 
+### 2026-03-20
+
+- Unexpectedly terminated single-agent chats now expose a `Resume reply` control from the composer, and OpenAI Responses-backed replies continue from their stored upstream response handle instead of restarting the answer from scratch.
+- OpenAI Responses retries now skip replaying persisted hosted upstream web-search tool fragments as synthetic function-call history, preventing `No tool output found for function call ...` HTTP 400 failures on follow-up turns.
+- Single-agent reply resume is now hidden for custom OpenAI-compatible proxy hosts that do not support the upstream Responses reattach endpoint, avoiding broken `404 /v1/responses/{id}` resume attempts.
+- The chat layout now shows a compact `Enqueued messages` preview between the message panels and composer while replies are still running, so queued prompts stay visible instead of disappearing into the background.
+- Each visible enqueued-message chip now includes a delete action, so queued prompts can be removed directly before they are sent.
+- The chat textarea now shows an explicit queue shortcut hint while a reply is still running, making `Ctrl + Enter` queueing discoverable without waiting for the rotating tip system.
+- Local `npm run dev` now uses a dedicated `.next-dev` output tree while `build` and `start` keep using `.next`, preventing manifest/chunk corruption when development and production builds run at the same time.
+- Using `Stop` now leaves enqueued messages on hold instead of auto-sending them as soon as the interrupted run unwinds.
+- User-facing upstream failure messages now avoid echoing the configured endpoint URL, so custom proxy hosts do not get reflected back into chat-visible errors.
+
 ### What's New in 2 · Oct 31, 2025 · Open
 
 - **Big-AGI Open** is ready and more productive and faster than ever, with:

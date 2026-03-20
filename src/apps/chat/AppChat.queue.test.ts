@@ -7,7 +7,10 @@ import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
 
 import {
   enqueueConversationSend,
+  getQueuedConversationPreview,
   getQueuedConversationDrainAction,
+  getQueuedConversationPostExecuteAction,
+  removeQueuedConversationSend,
   type QueuedConversationSend,
 } from './AppChat.queue';
 
@@ -136,4 +139,55 @@ test('getQueuedConversationDrainAction aborts only steer sends on busy non-counc
       assert.equal(getQueuedConversationDrainAction(input), expected);
     });
   }
+});
+
+test('getQueuedConversationPreview shows queued text previews and overflow count', () => {
+  const preview = getQueuedConversationPreview([
+    createQueuedItem('steer', 'generate-content', 'First queued reply'),
+    createQueuedItem('queue', 'generate-content', 'Second queued reply'),
+    createQueuedItem('queue', 'react-content', 'Third queued reply'),
+    createQueuedItem('queue', 'beam-content', 'Fourth queued reply'),
+  ]);
+
+  assert.deepEqual(preview, {
+    count: 4,
+    items: [
+      { index: 0, label: 'First queued reply' },
+      { index: 1, label: 'Second queued reply' },
+      { index: 2, label: 'Third queued reply' },
+    ],
+    hasOverflow: true,
+  });
+});
+
+test('getQueuedConversationPreview falls back to execute-mode labels when the queued item has no text', () => {
+  const preview = getQueuedConversationPreview([{
+    mode: 'queue',
+    chatExecuteMode: 'generate-image',
+    fragments: [],
+  }]);
+
+  assert.deepEqual(preview, {
+    count: 1,
+    items: [{ index: 0, label: 'Queued image request' }],
+    hasOverflow: false,
+  });
+});
+
+test('removeQueuedConversationSend removes the requested queued item by index', () => {
+  const result = removeQueuedConversationSend([
+    createQueuedItem('steer', 'generate-content', 'First queued reply'),
+    createQueuedItem('queue', 'generate-content', 'Second queued reply'),
+    createQueuedItem('queue', 'react-content', 'Third queued reply'),
+  ], 1);
+
+  assert.deepEqual(result.map(item => item.fragments[0] && 'part' in item.fragments[0] && item.fragments[0].part.pt === 'text' ? item.fragments[0].part.text : null), [
+    'First queued reply',
+    'Third queued reply',
+  ]);
+});
+
+test('getQueuedConversationPostExecuteAction holds queued sends after an explicit stop request', () => {
+  assert.equal(getQueuedConversationPostExecuteAction({ stopRequested: true }), 'hold');
+  assert.equal(getQueuedConversationPostExecuteAction({ stopRequested: false }), 'drain');
 });

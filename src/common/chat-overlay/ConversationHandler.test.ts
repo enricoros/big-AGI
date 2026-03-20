@@ -7,9 +7,47 @@ import { createDMessagePlaceholderIncomplete, createDMessageTextContent } from '
 import { createCouncilSessionState } from '../../apps/chat/editors/_handleExecute.council';
 import { createCouncilOp } from '../../apps/chat/editors/_handleExecute.council.log';
 import { getFocusedPaneConversationId, panesManagerActions } from '../../apps/chat/components/panes/store-panes-manager';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
+import type { DLLM } from '~/common/stores/llms/llms.types';
 
 
 const TEST_LLM_ID = 'test-llm';
+
+useModelsStore.setState(state => ({
+  ...state,
+  llms: [{
+    id: TEST_LLM_ID,
+    label: 'Test LLM',
+    created: 0,
+    description: 'Test model',
+    hidden: false,
+    contextTokens: 8192,
+    maxOutputTokens: 4096,
+    interfaces: ['oai-chat', 'oai-chat-reasoning'],
+    parameterSpecs: [],
+    initialParameters: {
+      llmRef: TEST_LLM_ID,
+      llmTemperature: 0.5,
+      llmResponseTokens: 1024,
+    },
+    sId: 'test-service',
+    vId: 'openai',
+    userParameters: {
+      llmRef: TEST_LLM_ID,
+    },
+  } satisfies DLLM],
+  sources: [{
+    id: 'test-service',
+    label: 'Test Service',
+    vId: 'openai',
+    setup: {
+      oaiKey: 'test-key',
+      oaiOrg: '',
+      oaiHost: '',
+      heliKey: '',
+    },
+  }],
+}));
 
 function completeMessage<T extends ReturnType<typeof createDMessageTextContent>>(message: T): T {
   message.updated = message.created;
@@ -603,6 +641,102 @@ test('inferResumableCouncilSession exposes room resume for an incomplete assista
   assert.equal(inferred?.mode, 'round-robin-per-human');
   assert.equal(inferred?.status, 'interrupted');
   assert.equal(inferred?.canResume, true);
+});
+
+test('inferResumableCouncilSession exposes room resume for an incomplete single-assistant message', () => {
+  const conversation = createDConversation('Developer');
+  const human = createHumanConversationParticipant('You');
+  const leader = createAssistantConversationParticipant('Developer', TEST_LLM_ID, 'Nova Yield', 'every-turn', true);
+  conversation.participants = [human, leader];
+  conversation.turnTerminationMode = 'round-robin-per-human';
+
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Find me transport options.'));
+  const incompleteLeaderMessage = createDMessagePlaceholderIncomplete('assistant', '...');
+  incompleteLeaderMessage.metadata = {
+    author: {
+      participantId: leader.id,
+      participantName: leader.name,
+      personaId: leader.personaId,
+      llmId: leader.llmId,
+    },
+  };
+  incompleteLeaderMessage.generator = {
+    ...incompleteLeaderMessage.generator,
+    upstreamHandle: {
+      uht: 'vnd.oai.responses',
+      responseId: 'resp_resume_single',
+      startingAfter: 42,
+      expiresAt: null,
+    },
+  };
+  conversation.messages = [userMessage, incompleteLeaderMessage];
+
+  const inferred = inferResumableCouncilSession(conversation);
+  assert.ok(inferred);
+  assert.equal(inferred?.mode, 'round-robin-per-human');
+  assert.equal(inferred?.status, 'interrupted');
+  assert.equal(inferred?.canResume, true);
+});
+
+test('inferResumableCouncilSession hides single-assistant resume when the interrupted reply has no supported upstream reattach handle', () => {
+  useModelsStore.setState(state => ({
+    ...state,
+    sources: state.sources.map(service =>
+      service.id !== 'test-service'
+        ? service
+        : {
+            ...service,
+            setup: {
+              ...service.setup,
+              oaiHost: 'https://proxy.example.invalid',
+            },
+          },
+    ),
+  }));
+
+  const conversation = createDConversation('Developer');
+  const human = createHumanConversationParticipant('You');
+  const leader = createAssistantConversationParticipant('Developer', TEST_LLM_ID, 'Nova Yield', 'every-turn', true);
+  conversation.participants = [human, leader];
+  conversation.turnTerminationMode = 'round-robin-per-human';
+
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Find me transport options.'));
+  const incompleteLeaderMessage = createDMessagePlaceholderIncomplete('assistant', '...');
+  incompleteLeaderMessage.metadata = {
+    author: {
+      participantId: leader.id,
+      participantName: leader.name,
+      personaId: leader.personaId,
+      llmId: leader.llmId,
+    },
+  };
+  incompleteLeaderMessage.generator = {
+    ...incompleteLeaderMessage.generator,
+    upstreamHandle: {
+      uht: 'vnd.oai.responses',
+      responseId: 'resp_resume_proxy',
+      startingAfter: 163,
+      expiresAt: null,
+    },
+  };
+  conversation.messages = [userMessage, incompleteLeaderMessage];
+
+  assert.equal(inferResumableCouncilSession(conversation), null);
+
+  useModelsStore.setState(state => ({
+    ...state,
+    sources: state.sources.map(service =>
+      service.id !== 'test-service'
+        ? service
+        : {
+            ...service,
+            setup: {
+              ...service.setup,
+              oaiHost: '',
+            },
+          },
+    ),
+  }));
 });
 
 test('inferResumableCouncilSession exposes room resume for outstanding mention follow-ups', () => {
