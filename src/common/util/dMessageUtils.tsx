@@ -4,7 +4,6 @@ import TimeAgo from 'react-timeago';
 import type { SxProps } from '@mui/joy/styles/types';
 import type { ColorPaletteProp } from '@mui/joy/styles';
 import { Avatar, Box } from '@mui/joy';
-import Face6Icon from '@mui/icons-material/Face6';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
@@ -13,6 +12,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { llmsGetVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
+import { HumanBrainIcon } from '~/common/components/icons/HumanBrainIcon';
 
 import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
@@ -532,7 +532,7 @@ export function makeMessageAvatarIcon(
       return <SettingsSuggestIcon sx={avatarIconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
 
     case 'user':
-      return <Face6Icon sx={avatarIconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
+      return <HumanBrainIcon sx={avatarIconSx} />;
 
     case 'assistant':
       const isDownload = messageGeneratorName === 'web';
