@@ -186,6 +186,8 @@ export function ChatMessage(props: {
   onTextSpeak?: (text: string) => Promise<void>,
   onAppendMention?: (mentionText: string) => void,
   participants?: DConversationParticipant[],
+  participantDisplayNamesById?: ReadonlyMap<string, string>,
+  participantMentionNamesById?: ReadonlyMap<string, string>,
   sx?: SxProps,
 }) {
 
@@ -227,10 +229,18 @@ export function ChatMessage(props: {
   const fromUser = messageRole === 'user';
   const messageHasBeenEdited = messageUpdated !== null && messageUpdated > messageCreated;
   const messageAuthorParticipantId = messageMetadata?.author?.participantId ?? null;
+  const messageAuthorCanonicalName = React.useMemo(() => messageAuthorParticipantId
+    ? props.participants?.find(participant => participant.id === messageAuthorParticipantId)?.name?.trim() || null
+    : null,
+  [messageAuthorParticipantId, props.participants]);
   const resolvedAuthorName = React.useMemo(() => {
-    const participantNameFromRoster = messageAuthorParticipantId
-      ? props.participants?.find(participant => participant.id === messageAuthorParticipantId)?.name?.trim() || null
+    const participantNameFromDisplayOverrides = messageAuthorParticipantId
+      ? props.participantDisplayNamesById?.get(messageAuthorParticipantId)?.trim() || null
       : null;
+    if (participantNameFromDisplayOverrides)
+      return participantNameFromDisplayOverrides;
+
+    const participantNameFromRoster = messageAuthorCanonicalName;
     if (participantNameFromRoster)
       return participantNameFromRoster;
 
@@ -239,8 +249,16 @@ export function ChatMessage(props: {
       return explicitAuthorName;
 
     return null;
-  }, [messageAuthorParticipantId, messageMetadata?.author?.participantName, props.participants]);
+  }, [messageAuthorCanonicalName, messageAuthorParticipantId, messageMetadata?.author?.participantName, props.participantDisplayNamesById]);
   const messageAuthorName = resolvedAuthorName;
+  const messageAuthorMentionName = React.useMemo(() => {
+    if (!messageAuthorParticipantId)
+      return messageAuthorName;
+
+    return props.participantMentionNamesById?.get(messageAuthorParticipantId)?.trim()
+      || messageAuthorCanonicalName
+      || messageAuthorName;
+  }, [messageAuthorCanonicalName, messageAuthorName, messageAuthorParticipantId, props.participantMentionNamesById]);
   const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
   const messageAuthorPersonaTitle = messageAuthorPersonaId ? SystemPurposes[messageAuthorPersonaId]?.title ?? messageAuthorPersonaId : null;
   const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
@@ -911,7 +929,7 @@ export function ChatMessage(props: {
                   size='sm'
                   variant='soft'
                   color={messageAuthorAccentColor}
-                  onClick={() => handleAppendMention(`@${messageAuthorName}`)}
+                  onClick={() => handleAppendMention(`@${messageAuthorMentionName}`)}
                   endDecorator={<AlternateEmailIcon sx={{ fontSize: 'sm' }} />}
                   sx={{
                     ...messageAuthorAccentSx,

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import * as React from 'react';
@@ -65,6 +66,33 @@ function renderRenamedAssistantChatMessageMarkup() {
   );
 }
 
+function renderSingleAgentModelNamedAssistantChatMessageMarkup() {
+  const participant = createAssistantConversationParticipant('Developer', 'openai-gpt-5.4', 'Echo Kernel', 'every-turn', true);
+  const message = createDMessageTextContent('assistant', 'Respuesta con nombre de modelo.');
+  message.metadata = {
+    author: {
+      participantId: participant.id,
+      participantName: participant.name,
+      personaId: participant.personaId,
+      llmId: participant.llmId,
+    },
+  };
+
+  return renderToStaticMarkup(
+    <ul>
+      <ChatMessage
+        message={message}
+        fitScreen={false}
+        isMobile={false}
+        participants={[participant]}
+        participantDisplayNamesById={new Map([[participant.id, 'GPT 5.4']])}
+        participantMentionNamesById={new Map([[participant.id, participant.name]])}
+        onAppendMention={() => undefined}
+      />
+    </ul>,
+  );
+}
+
 test('system messages created with updated equal to created do not show the edited warning', () => {
   const markup = renderChatMessageMarkup(100);
 
@@ -92,4 +120,14 @@ test('assistant messages prefer the current participant name over stale author m
   assert.match(markup, />Planificador</);
   assert.doesNotMatch(markup, /aria-label="Leader"/);
   assert.doesNotMatch(markup, />Leader</);
+});
+
+test('assistant messages can display a model label while keeping canonical mention text', () => {
+  const markup = renderSingleAgentModelNamedAssistantChatMessageMarkup();
+  const source = readFileSync(new URL('./ChatMessage.tsx', import.meta.url), 'utf8');
+
+  assert.match(markup, />GPT 5\.4</);
+  assert.match(markup, /Click to mention @GPT 5\.4/);
+  assert.match(source, /const messageAuthorMentionName = React\.useMemo\(\(\) => \{/);
+  assert.match(source, /onClick=\{\(\) => handleAppendMention\(`@\$\{messageAuthorMentionName\}`\)\}/);
 });

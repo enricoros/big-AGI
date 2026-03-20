@@ -157,6 +157,41 @@ export function getRenderableConversationParticipants(params: {
     });
 }
 
+export function getSingleAgentHumanDrivenParticipantNameOverrides(params: {
+  participants: readonly DConversationParticipant[];
+  turnTerminationMode: 'round-robin-per-human' | 'continuous' | 'council';
+  llmLabelsById: ReadonlyMap<string, string>;
+  chatModelLabel: string;
+}): {
+  displayNamesById: ReadonlyMap<string, string>;
+  mentionNamesById: ReadonlyMap<string, string>;
+} {
+  if (params.turnTerminationMode !== 'round-robin-per-human')
+    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+
+  const assistantParticipants = params.participants.filter(participant => participant.kind === 'assistant');
+  if (assistantParticipants.length !== 1)
+    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+
+  const participant = assistantParticipants[0];
+  if (!participant)
+    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+
+  const canonicalName = participant.name.trim();
+  const modelLabel = participant.llmId
+    ? params.llmLabelsById.get(participant.llmId) ?? participant.llmId
+    : params.chatModelLabel;
+  const displayName = modelLabel.trim();
+
+  if (!displayName || displayName === canonicalName)
+    return { displayNamesById: new Map(), mentionNamesById: new Map() };
+
+  return {
+    displayNamesById: new Map([[participant.id, displayName]]),
+    mentionNamesById: canonicalName ? new Map([[participant.id, canonicalName]]) : new Map(),
+  };
+}
+
 function normalizeMessageChannel(message: DMessage) {
   const channel = message.metadata?.councilChannel;
   return channel?.channel === 'system' ? channel : publicBoardChannel;
@@ -252,6 +287,8 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
   handleTextSpeak: (text: string) => Promise<void>;
   handleAppendMention: (mentionText: string) => void;
   participants: DConversationParticipant[];
+  participantDisplayNamesById: ReadonlyMap<string, string>;
+  participantMentionNamesById: ReadonlyMap<string, string>;
 }) {
   const {
     entry,
@@ -286,6 +323,8 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
     handleTextSpeak,
     handleAppendMention,
     participants,
+    participantDisplayNamesById,
+    participantMentionNamesById,
   } = props;
 
   const groupTone = isExpanded ? 'primary' : 'neutral';
@@ -364,6 +403,8 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
                       onTextSpeak={handleTextSpeak}
                       onAppendMention={handleAppendMention}
                       participants={participants}
+                      participantDisplayNamesById={participantDisplayNamesById}
+                      participantMentionNamesById={participantMentionNamesById}
                     />
                   )}
                 </Box>
@@ -499,6 +540,7 @@ export function ChatMessageList(props: {
     storedParticipants,
     conversationUserSymbol,
     conversationSystemPurposeId,
+    turnTerminationMode,
     councilTraceAutoCollapsePreviousRounds,
     councilTraceAutoExpandNewestRound,
   } = useChatStore(useShallow(React.useCallback(({ conversations }) => {
@@ -509,6 +551,11 @@ export function ChatMessageList(props: {
       storedParticipants: conversation?.participants ?? null,
       conversationUserSymbol: conversation?.userSymbol ?? null,
       conversationSystemPurposeId: conversation?.systemPurposeId ?? null,
+      turnTerminationMode: (conversation?.turnTerminationMode === 'continuous'
+        ? 'continuous'
+        : conversation?.turnTerminationMode === 'council'
+          ? 'council'
+          : 'round-robin-per-human') as const,
       councilTraceAutoCollapsePreviousRounds: getConversationCouncilTraceAutoCollapsePreviousRounds(props.conversationId),
       councilTraceAutoExpandNewestRound: getConversationCouncilTraceAutoExpandNewestRound(props.conversationId),
     };
@@ -786,6 +833,15 @@ export function ChatMessageList(props: {
     () => chatLLMId ? llmLabelsById.get(chatLLMId) ?? chatLLMId : 'Chat model',
     [chatLLMId, llmLabelsById],
   );
+  const { displayNamesById: participantDisplayNamesById, mentionNamesById: participantMentionNamesById } = React.useMemo(
+    () => getSingleAgentHumanDrivenParticipantNameOverrides({
+      participants,
+      turnTerminationMode,
+      llmLabelsById,
+      chatModelLabel,
+    }),
+    [chatModelLabel, llmLabelsById, participants, turnTerminationMode],
+  );
   const hasCouncilDeliberation = React.useMemo(() => filteredMessages.some(message => message.metadata?.council?.kind === 'deliberation'), [filteredMessages]);
   const councilTracePlan = React.useMemo(() => perfMeasureSync(
     'derive:ChatMessageList.buildCouncilTraceRenderPlan',
@@ -1051,6 +1107,8 @@ export function ChatMessageList(props: {
                 handleTextSpeak={handleTextSpeak}
                 handleAppendMention={handleAppendMention}
                 participants={participants}
+                participantDisplayNamesById={participantDisplayNamesById}
+                participantMentionNamesById={participantMentionNamesById}
               />
             );
           }
@@ -1096,6 +1154,8 @@ export function ChatMessageList(props: {
                 onTextSpeak={handleTextSpeak}
                 onAppendMention={handleAppendMention}
                 participants={participants}
+                participantDisplayNamesById={participantDisplayNamesById}
+                participantMentionNamesById={participantMentionNamesById}
               />
             </PerfProfiler>
           );

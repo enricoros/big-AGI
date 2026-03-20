@@ -4,7 +4,7 @@ import test from 'node:test';
 
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 
-import { getRenderableConversationParticipants } from './ChatMessageList';
+import { getRenderableConversationParticipants, getSingleAgentHumanDrivenParticipantNameOverrides } from './ChatMessageList';
 
 
 test('getRenderableConversationParticipants preserves the original array when participants are already renderable', () => {
@@ -74,5 +74,27 @@ test('chat message list keeps the floating desktop overlay active even when only
   const source = readFileSync(new URL('./ChatMessageList.tsx', import.meta.url), 'utf8');
   assert.match(source, /const conversationOverlayMode = getChatMessageListConversationOverlayMode\(/);
   assert.match(source, /conversationOverlayMode !== 'hidden'/);
-  assert.match(source, /showTrack=\{conversationOverlayMode === 'minimap'\}/);
+  assert.match(source, /showTrack=\{showConversationMinimapTrack\}/);
+});
+
+test('single-agent human-driven chats display the active model name while keeping canonical mentions', () => {
+  const participant: DConversationParticipant = {
+    id: 'assistant-1',
+    kind: 'assistant',
+    name: 'Echo Kernel',
+    personaId: 'Developer',
+    llmId: 'openai-gpt-5.4',
+    speakWhen: 'every-turn',
+    isLeader: true,
+  };
+
+  const result = getSingleAgentHumanDrivenParticipantNameOverrides({
+    participants: [participant],
+    turnTerminationMode: 'round-robin-per-human',
+    llmLabelsById: new Map([['openai-gpt-5.4', 'GPT 5.4']]),
+    chatModelLabel: 'Chat model',
+  });
+
+  assert.equal(result.displayNamesById.get(participant.id), 'GPT 5.4');
+  assert.equal(result.mentionNamesById.get(participant.id), 'Echo Kernel');
 });
