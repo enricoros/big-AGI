@@ -580,7 +580,7 @@ function createCouncilAgentTurnRecord(participantId: string, roundIndex: number,
   };
 }
 
-function cloneCouncilMessageFragments(messageFragments: readonly DMessageFragment[] | undefined): DMessageFragment[] {
+function cloneCouncilMessageFragments(messageFragments: readonly DMessageFragment[] | null | undefined): DMessageFragment[] {
   return messageFragments?.length ? structuredClone([...messageFragments]) : [];
 }
 

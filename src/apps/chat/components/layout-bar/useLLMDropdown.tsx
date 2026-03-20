@@ -89,8 +89,10 @@ function LLMDropdown(props: {
       }
 
       // add the model item
-      const llmReasoningValue = sanitizeModelReasoningEffort(llm.userParameters?.llmVndOaiEffort ?? llm.initialParameters?.llmVndOaiEffort) ?? null;
       const llmReasoningConfig = getReasoningEffortOptions(llm);
+      const llmReasoningValue = llmReasoningConfig.parameterId
+        ? sanitizeModelReasoningEffort(llm.userParameters?.[llmReasoningConfig.parameterId] ?? llm.initialParameters?.[llmReasoningConfig.parameterId]) ?? null
+        : null;
       const llmReasoningState = getParticipantReasoningEffortSelectState({
         llm,
         parameterId: llmReasoningConfig.parameterId,
@@ -184,7 +186,9 @@ function LLMDropdown(props: {
     if (!llmReasoningConfig.parameterId || llmReasoningConfig.options.length === 0)
       return null;
 
-    const llmReasoningValue = sanitizeModelReasoningEffort(llm.userParameters?.llmVndOaiEffort ?? llm.initialParameters?.llmVndOaiEffort) ?? null;
+    const llmReasoningValue = sanitizeModelReasoningEffort(
+      llm.userParameters?.[llmReasoningConfig.parameterId] ?? llm.initialParameters?.[llmReasoningConfig.parameterId],
+    ) ?? null;
     const llmReasoningState = getParticipantReasoningEffortSelectState({
       llm,
       parameterId: llmReasoningConfig.parameterId,
@@ -208,7 +212,9 @@ function LLMDropdown(props: {
             : llmReasoningConfig.options.findIndex(option => option.label === llmReasoningState.modelSettingLabel);
           const nextOption = llmReasoningConfig.options[(currentIndex + 1 + llmReasoningConfig.options.length) % llmReasoningConfig.options.length]
             ?? llmReasoningConfig.options[0];
-          useModelsStore.getState().updateLLMUserParameters(itemKey, { llmVndOaiEffort: nextOption.value });
+          useModelsStore.getState().updateLLMUserParameters(itemKey, {
+            [llmReasoningConfig.parameterId]: nextOption.value,
+          });
         }}
         sx={{
           border: 0,

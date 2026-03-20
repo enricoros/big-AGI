@@ -18,7 +18,7 @@ import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
-import { SystemPurposeId, SystemPurposes } from '../../../../data';
+import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
@@ -96,6 +96,8 @@ const agentsToolbarDangerButtonSx = {
   fontWeight: 600,
 } as const;
 
+type ParticipantReasoningEffortDraft = DModelReasoningEffort | null;
+
 export function ChatBarChat(props: {
   conversationId: DConversationId | null;
   llmDropdownRef: React.Ref<OptimaBarControlMethods>;
@@ -122,7 +124,7 @@ export function ChatBarChat(props: {
     llmId: string | null;
     customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
-    reasoningEffort: DConversationParticipant['reasoningEffort'] | null;
+    reasoningEffort: ParticipantReasoningEffortDraft;
   }>>({});
 
   // external state
@@ -390,7 +392,7 @@ export function ChatBarChat(props: {
     llmId: string | null;
     customPrompt: string;
     speakWhen: DConversationParticipant['speakWhen'];
-    reasoningEffort: DConversationParticipant['reasoningEffort'] | null;
+    reasoningEffort: ParticipantReasoningEffortDraft;
   }>) => {
     const participant = participants.find(participant => participant.id === participantId);
     if (!participant)
@@ -678,7 +680,7 @@ export function ChatBarChat(props: {
     const nextParticipant = {
       ...agentSnapshot.participant,
       id: createAssistantConversationParticipant(
-        agentSnapshot.participant.personaId ?? systemPurposeId ?? 'Default',
+        agentSnapshot.participant.personaId ?? systemPurposeId ?? defaultSystemPurposeId,
         agentSnapshot.participant.llmId ?? null,
         nextName,
         agentSnapshot.participant.speakWhen ?? 'every-turn',
@@ -1391,7 +1393,7 @@ export function ChatBarChat(props: {
                         handleParticipantDraftChange(participant.id, {
                           llmId: nextLlmId,
                           ...(currentReasoningEffort && !nextReasoningConfig.options.some(option => option.value === currentReasoningEffort)
-                            ? { reasoningEffort: undefined }
+                            ? { reasoningEffort: null }
                             : {}),
                         });
                       }}

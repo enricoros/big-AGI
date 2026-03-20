@@ -414,6 +414,7 @@ export class ConversationHandler {
         : null;
       if (completedMessageNotification) {
         const backgroundChatCompletionSnackbar = shouldShowSystemNotification()
+          || !conversation
           ? null
           : getBackgroundChatCompletionSnackbar(completedMessageNotification, conversation);
 

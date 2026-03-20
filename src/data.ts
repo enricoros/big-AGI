@@ -4,6 +4,31 @@ export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' |
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
+export function isSystemPurposeId(value: unknown): value is SystemPurposeId {
+  switch (value) {
+    case 'Catalyst':
+    case 'Custom':
+    case 'Designer':
+    case 'Developer':
+    case 'DeveloperPreview':
+    case 'Executive':
+    case 'Generic':
+    case 'Scientist':
+    case 'YouTubeTranscriber':
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function sanitizeSystemPurposeId(value: unknown): SystemPurposeId {
+  if (value === 'Default')
+    return defaultSystemPurposeId;
+  return isSystemPurposeId(value)
+    ? value
+    : defaultSystemPurposeId;
+}
+
 export type SystemPurposeData = {
   title: string;
   description: string | React.JSX.Element;

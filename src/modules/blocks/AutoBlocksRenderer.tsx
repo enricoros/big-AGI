@@ -126,6 +126,7 @@ export function AutoBlocksRenderer(props: {
         // Keep the lightweight path for plain streaming text, but still preprocess math/mark/del syntax immediately.
         const optimizeDisableProcessorsOnLast = props.optiAllowSubBlocksMemo === true
           && index === (autoBlocksStable.length - 1)
+          && bkInput.bkt === 'md-bk'
           && !markdownNeedsPreprocessor(bkInput.content);
 
         switch (bkInput.bkt) {

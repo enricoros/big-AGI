@@ -47,6 +47,7 @@ by release.
 - Consecutive hosted `Web Search` tool fragments now render as compact inline chips in the message flow instead of stacking as separate full-width blocks.
 - Messages now collapse multiple streamed reasoning fragments into a single `Show Reasoning` control instead of rendering one reasoning chip per fragment.
 - Node test runs now have an official `npm run test:node` entrypoint that preloads the existing import shims for `next/font/google` and other browser-only modules.
+- Production builds now use local/system font stacks for UI and code text instead of `next/font/google`, removing a build-time dependency on fetching Google Fonts during Vercel and other network-restricted deployments.
 
 ### What's New in 2 · Oct 31, 2025 · Open
 

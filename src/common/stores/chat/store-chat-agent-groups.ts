@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { defaultSystemPurposeId, sanitizeSystemPurposeId } from '../../../data';
 import type { SystemPurposeId } from '../../../data';
 
 import type { DConversationParticipant, DConversationTurnTerminationMode } from './chat.conversation';
@@ -51,15 +52,25 @@ type AgentGroupsStore = AgentGroupsState & AgentGroupsActions;
 const duplicateParticipants = (participants: DConversationParticipant[]) =>
   participants.map(participant => ({ ...participant }));
 
+const normalizeParticipant = (participant: DConversationParticipant): DConversationParticipant =>
+  participant.kind !== 'assistant'
+    ? { ...participant }
+    : {
+      ...participant,
+      personaId: sanitizeSystemPurposeId(participant.personaId),
+    };
+
 const normalizeAgentGroupSnapshot = (snapshot: Partial<DAgentGroupSnapshot> & Record<string, unknown>): DAgentGroupSnapshot => ({
   id: typeof snapshot.id === 'string' && snapshot.id ? snapshot.id : agiUuid('chat-agent-group'),
   name: typeof snapshot.name === 'string' && snapshot.name.trim() ? snapshot.name.trim() : 'Untitled group',
-  systemPurposeId: snapshot.systemPurposeId as SystemPurposeId,
+  systemPurposeId: sanitizeSystemPurposeId(snapshot.systemPurposeId),
   turnTerminationMode: sanitizeConversationTurnTerminationMode(snapshot.turnTerminationMode),
   councilMaxRounds: sanitizeCouncilMaxRounds(snapshot.councilMaxRounds ?? snapshot.consensusMaxRounds),
   councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(snapshot.councilTraceAutoCollapsePreviousRounds),
   councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(snapshot.councilTraceAutoExpandNewestRound),
-  participants: duplicateParticipants(Array.isArray(snapshot.participants) ? snapshot.participants : []),
+  participants: Array.isArray(snapshot.participants)
+    ? snapshot.participants.map(normalizeParticipant)
+    : [],
   updatedAt: typeof snapshot.updatedAt === 'number' && Number.isFinite(snapshot.updatedAt) ? snapshot.updatedAt : Date.now(),
 });
 
@@ -70,7 +81,7 @@ const duplicateAgentGroupSnapshot = (snapshot: DAgentGroupSnapshot): DAgentGroup
 
 const duplicateAgentSnapshot = (snapshot: DAgentSnapshot): DAgentSnapshot => ({
   ...snapshot,
-  participant: { ...snapshot.participant },
+  participant: normalizeParticipant(snapshot.participant),
 });
 
 export function migratePersistedAgentGroupsState(persistedState: unknown, version: number): AgentGroupsState {
@@ -111,11 +122,18 @@ export const useChatAgentGroupsStore = create<AgentGroupsStore>()(persist(
     saveAgent: (snapshot, existingId) => {
       const id = existingId || agiUuid('chat-participant-assistant');
       const normalizedName = snapshot.name.trim() || snapshot.participant.name.trim() || 'Untitled agent';
+      const normalizedParticipant = snapshot.participant.kind === 'assistant'
+        ? normalizeParticipant(snapshot.participant)
+        : {
+          ...snapshot.participant,
+          kind: 'assistant' as const,
+          personaId: defaultSystemPurposeId,
+        };
       const nextSnapshot: DAgentSnapshot = {
         ...snapshot,
         id,
         name: normalizedName,
-        participant: { ...snapshot.participant, name: normalizedName },
+        participant: { ...normalizedParticipant, name: normalizedName },
         updatedAt: Date.now(),
       };
 

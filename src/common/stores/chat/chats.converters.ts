@@ -1,4 +1,5 @@
 import type { SystemPurposeId } from '../../../data';
+import { sanitizeSystemPurposeId } from '../../../data';
 
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
@@ -39,6 +40,7 @@ export namespace V4ToHeadConverters {
   function _inMemHeadCleanDConversation(c: DConversation, validLiveFileIDs: LiveFileId[]): void {
     // re-add transient properties
     c._abortController = null;
+    c.systemPurposeId = sanitizeSystemPurposeId(c.systemPurposeId);
 
     // fixup .messages[]
     if (!c.messages)
@@ -58,9 +60,9 @@ export namespace V4ToHeadConverters {
             ...participant,
             id: typeof participant.id === 'string' ? participant.id : (participant.kind === 'human'
               ? createHumanConversationParticipant(typeof participant.name === 'string' ? participant.name : 'You').id
-              : createAssistantConversationParticipant(participant.personaId || c.systemPurposeId, participant.llmId ?? null, typeof participant.name === 'string' ? participant.name : (participant.personaId || c.systemPurposeId)).id),
-            name: typeof participant.name === 'string' && participant.name ? participant.name : (participant.kind === 'human' ? 'You' : (participant.personaId || c.systemPurposeId)),
-            personaId: participant.kind === 'assistant' ? (participant.personaId || c.systemPurposeId) : null,
+              : createAssistantConversationParticipant(sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId), participant.llmId ?? null, typeof participant.name === 'string' ? participant.name : sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId)).id),
+            name: typeof participant.name === 'string' && participant.name ? participant.name : (participant.kind === 'human' ? 'You' : sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId)),
+            personaId: participant.kind === 'assistant' ? sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId) : null,
             llmId: participant.llmId ?? null,
             ...(participant.kind === 'assistant' && typeof participant.accentHue === 'number' && Number.isFinite(participant.accentHue) ? {
               accentHue: Math.round((((participant.accentHue % 360) + 360) % 360)),
@@ -76,7 +78,7 @@ export namespace V4ToHeadConverters {
             } : {}),
           };
         if (participant.personaId)
-          return createAssistantConversationParticipant(participant.personaId, participant.llmId ?? null);
+          return createAssistantConversationParticipant(sanitizeSystemPurposeId(participant.personaId), participant.llmId ?? null);
         return null;
       })
       .filter(Boolean);
@@ -247,7 +249,7 @@ export namespace V3StoreDataToHead {
       created,
     } = ic;
 
-    const cc = createDConversation(systemPurposeId as SystemPurposeId);
+    const cc = createDConversation(sanitizeSystemPurposeId(systemPurposeId));
     if (id) cc.id = id;
     cc.messages = messages.map(_recreateMessage);
     if (userTitle) cc.userTitle = userTitle;

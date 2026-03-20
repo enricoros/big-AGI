@@ -18,6 +18,8 @@ import type { DMessage, DMessageCouncilChannel } from '~/common/stores/chat/chat
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { duplicateDMessage } from '~/common/stores/chat/chat.message';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
+import type { CouncilSessionState as ComposerCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
+import type { DMessageContentFragment, DMessageVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart, isVoidThinkingFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { getConversationCouncilMaxRounds, getConversationCouncilOpLog, getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
 import { findParticipantMentionMatchIndex } from '~/common/util/dMessageUtils';
@@ -307,7 +309,22 @@ function getParticipantLlmUserParametersReplacement(
   };
   for (const paramId of MODEL_REASONING_EFFORT_PARAM_IDS)
     delete nextUserParameters[paramId];
-  nextUserParameters[effortSpec.paramId] = reasoningEffort;
+
+  switch (effortSpec.paramId) {
+    case 'llmVndAntEffort':
+      nextUserParameters.llmVndAntEffort = reasoningEffort as DModelParameterValues['llmVndAntEffort'];
+      break;
+    case 'llmVndGemEffort':
+      nextUserParameters.llmVndGemEffort = reasoningEffort as DModelParameterValues['llmVndGemEffort'];
+      break;
+    case 'llmVndMiscEffort':
+      nextUserParameters.llmVndMiscEffort = reasoningEffort as DModelParameterValues['llmVndMiscEffort'];
+      break;
+    case 'llmVndOaiEffort':
+      nextUserParameters.llmVndOaiEffort = reasoningEffort as DModelParameterValues['llmVndOaiEffort'];
+      break;
+  }
+
   return nextUserParameters;
 }
 
@@ -812,9 +829,9 @@ function assertCouncilReviewerBallotHasVisibleAnalysis(
 }
 
 function mergeCouncilReviewerVoteFragments(
-  previousFragments: DMessage['fragments'] | null | undefined,
-  nextFragments: DMessage['fragments'] | null | undefined,
-): DMessage['fragments'] {
+  previousFragments: readonly (DMessageContentFragment | DMessageVoidFragment)[] | null | undefined,
+  nextFragments: readonly (DMessageContentFragment | DMessageVoidFragment)[] | null | undefined,
+): (DMessageContentFragment | DMessageVoidFragment)[] {
   return [
     ...structuredClone(previousFragments ?? []),
     ...structuredClone(nextFragments ?? []),
@@ -1123,7 +1140,7 @@ function finalizeCouncilSession(
     return;
   }
 
-  const completedSession = {
+  const completedSession: ComposerCouncilSessionState = {
     ...createIdleCouncilSessionState(),
     status: 'completed',
     executeMode: 'generate-content',
@@ -1139,7 +1156,7 @@ function finalizeCouncilSession(
   session.persistCouncilState(mode === 'council'
     ? {
         status: 'completed',
-        executeMode: completedSession.executeMode,
+        executeMode: 'generate-content',
         mode: completedSession.mode,
         phaseId: completedSession.phaseId,
         passIndex: completedSession.passIndex,

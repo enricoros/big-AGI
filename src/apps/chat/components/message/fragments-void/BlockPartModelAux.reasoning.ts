@@ -1,4 +1,4 @@
-import type { DMessageVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
 
 import { isInlineHostedWebFragment } from '../fragments-content/BlockPartToolInvocation.utils';
@@ -39,11 +39,7 @@ export function extractReasoningTitles(auxText: string): string[] {
 }
 
 export function collapseReasoningFragments(fragments: readonly InterleavedFragment[]): InterleavedFragment[] {
-  const reasoningFragments = fragments.filter((fragment): fragment is DMessageVoidFragment =>
-    fragment.ft === 'void'
-    && fragment.part.pt === 'ma'
-    && fragment.part.aType === 'reasoning',
-  );
+  const reasoningFragments = fragments.filter(isVoidThinkingFragment);
 
   if (reasoningFragments.length <= 1)
     return [...fragments];
@@ -59,9 +55,7 @@ export function collapseReasoningFragments(fragments: readonly InterleavedFragme
   let mergedInserted = false;
 
   return fragments.flatMap(fragment => {
-    const isReasoningFragment = fragment.ft === 'void'
-      && fragment.part.pt === 'ma'
-      && fragment.part.aType === 'reasoning';
+    const isReasoningFragment = isVoidThinkingFragment(fragment);
 
     if (!isReasoningFragment)
       return [fragment];
@@ -99,9 +93,7 @@ export function extractReasoningRenderSequence(fragments: readonly InterleavedFr
   };
 
   for (const fragment of fragments) {
-    const isReasoningFragment = fragment.ft === 'void'
-      && fragment.part.pt === 'ma'
-      && fragment.part.aType === 'reasoning';
+    const isReasoningFragment = isVoidThinkingFragment(fragment);
 
     if (isReasoningFragment) {
       flushPendingHostedWebGroup();

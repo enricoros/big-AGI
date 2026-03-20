@@ -51,6 +51,7 @@ the same steps 1 and 2 as for [local development](#local-development).
    # .. repeat the steps above up to `npm install`, then:
    npm run build
    ```
+   The production build no longer depends on fetching Google Fonts at build time, so it is safe to run in restricted CI/CD or self-hosted environments without outbound font access.
 4. Start the production server (`npx` may be optional):
    ```bash
    npx next start --port 3000

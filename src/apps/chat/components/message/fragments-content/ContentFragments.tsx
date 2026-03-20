@@ -129,8 +129,7 @@ export function ContentFragments(props: {
       .map(sequenceItem => [
         sequenceItem.key,
         renderHostedWebInlineGroup(sequenceItem.fragments, `reasoning-hosted-inline-${sequenceItem.key}`),
-      ] as const)
-      .filter((entry): entry is readonly [string, React.ReactNode] => !!entry[1]);
+      ] as const);
 
     return Object.fromEntries(entries);
   }, [reasoningRenderSequence, renderHostedWebInlineGroup]);
