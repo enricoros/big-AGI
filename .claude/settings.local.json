@@ -23,6 +23,8 @@
       "Bash(npm install)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)",
       "Bash(rg:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
