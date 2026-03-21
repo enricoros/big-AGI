@@ -61,7 +61,7 @@ export const ProviderTheming = (props: { emotionCache?: EmotionCache, children: 
 
   return (
     <CacheProvider value={props.emotionCache || clientSideEmotionCache}>
-      <CssVarsProvider defaultMode='light' theme={theme}>
+      <CssVarsProvider defaultMode='system' theme={theme}>
         <CssBaseline />
         {/* Inject sprites to be referenced by SVG rendering */}
         <VendorIconSpriteMemo />
