@@ -23,8 +23,8 @@ export type EventDomainName = keyof EventDomains;
 export type EventName<D extends EventDomainName> = keyof EventDomains[D];
 export type EventData<D extends EventDomainName, E extends EventName<D>> = EventDomains[D][E];
 
-export type FullEventName<D extends EventDomainName, E extends EventName<D>> =
-  `${string & D}:${string & E}`;
+// export type FullEventName<D extends EventDomainName, E extends EventName<D>> =
+//   `${string & D}:${string & E}`;
 
 
 export type EventListener<D extends EventDomainName, E extends EventName<D>> =
