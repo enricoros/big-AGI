@@ -141,6 +141,56 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-5.4-pro-2026-03-05',
   },
 
+  // GPT-5.4 Mini - Released March 17, 2026
+  {
+    idPrefix: 'gpt-5.4-mini-2026-03-17',
+    label: 'GPT-5.4 Mini (2026-03-17)',
+    description: 'Strongest mini model for coding, computer use, and subagents. GPT-5.4-class intelligence at lower cost and latency.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 0.75, cache: { cType: 'oai-ac', read: 0.075 }, output: 4.5 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.4-mini',
+    label: 'GPT-5.4 Mini',
+    symLink: 'gpt-5.4-mini-2026-03-17',
+  },
+
+  // GPT-5.4 Nano - Released March 17, 2026
+  {
+    idPrefix: 'gpt-5.4-nano-2026-03-17',
+    label: 'GPT-5.4 Nano (2026-03-17)',
+    description: 'Cheapest GPT-5.4-class model for simple high-volume tasks like classification and data extraction.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 0.2, cache: { cType: 'oai-ac', read: 0.02 }, output: 1.25 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.4-nano',
+    label: 'GPT-5.4 Nano',
+    symLink: 'gpt-5.4-nano-2026-03-17',
+  },
+
 
   /// GPT-5.3 series
 
