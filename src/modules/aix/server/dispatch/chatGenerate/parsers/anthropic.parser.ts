@@ -83,6 +83,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
   let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
   const elisionCheck = (fullText: string) => {
+    if (!elideFirstTextBlock) return false;
     elideFirstTextBlock = false;
     if (fullText !== '\n\n') return false;
     console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
@@ -630,6 +631,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
   let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
   const elisionCheck = (fullText: string) => {
+    if (!elideFirstTextBlock) return false;
     elideFirstTextBlock = false;
     if (fullText !== '\n\n') return false;
     console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
