@@ -17,6 +17,7 @@ import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { tradeFileVariant } from './trade.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
 
 // configuration
@@ -980,7 +981,7 @@ export function FlashBackup(props: {
     setErrorMessage(null);
     try {
       onStartedBackup?.();
-      const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
+      const dateStr = prettyTimestampForFilenames(false);
       const success = await saveFlashObjectOrThrow(
         'full',
         event.ctrlKey, // control forces a traditional browser download - default: fileSave
