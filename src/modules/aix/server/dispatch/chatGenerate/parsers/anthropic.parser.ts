@@ -211,23 +211,23 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             break;
 
           case 'tool_use':
-            // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
-            if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-              content_block.input = null;
+            // [Anthropic] Note: .input={} is parsed as an object - zap to '' for later string concatenation via input_json_delta
+            if (content_block && content_block.input && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
+              content_block.input = '';
 
             // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
             const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825';
             if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
               console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from code_execution (tool_id: ${content_block.caller?.type === 'code_execution_20250825' ? content_block.caller.tool_id : 'n/a'})`);
 
-            pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
+            pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input || null);
             break;
 
           case 'server_tool_use':
             // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
             // NOTE: We don't create tool invocations for server tools - just show placeholders
-            if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-              content_block.input = null;
+            if (content_block && content_block.input && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
+              content_block.input = '';
 
             // Show placeholder for known server tools
             switch (content_block.name) { // .server_tool_use.name
