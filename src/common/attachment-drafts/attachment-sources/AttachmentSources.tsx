@@ -19,6 +19,7 @@ import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { takeScreenCapture } from '~/common/util/screenCaptureUtils';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 import { ButtonAttachCameraMemo } from './ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './ButtonAttachClipboard';
@@ -308,7 +309,7 @@ function AttachmentSources(props: {
             Attach
           </MenuButton>
         )}
-        <Menu sx={{ '--List-padding': '0.5rem' /* menu-compact or menu-message */ }}>
+        <Menu sx={{ '--List-padding': '0.5rem', zIndex: themeZIndexOverMobileDrawer /* menu-compact or menu-message: above dialogs */ }}>
 
           {/* Files */}
           {/*<MenuItem onClick={handleAttachFilePicker}>*/}
@@ -430,6 +431,7 @@ function AttachmentSources(props: {
         sx={{
           minWidth: 280,
           '--List-padding': '0.5rem',
+          zIndex: themeZIndexOverMobileDrawer,
           animation: `${animationMenu} 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
           // boxShadow: '0 16px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
           boxShadow: 'md',
