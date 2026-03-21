@@ -12,8 +12,8 @@ export type { EventPayload, EventDomains, EventDomainName, EventName, EventData,
 export { appEvents, DomainEventHelper, EventBus } from './events.bus';
 
 // re-export live event state
-export type { LiveEventStateData } from './events.stateful';
-export { LiveEventState, StatefulEventsManager, createStatefulEventsManagerFor } from './events.stateful';
+// export type { LiveEventStateData } from './events.stateful';
+// export { LiveEventState, StatefulEventsManager, createStatefulEventsManagerFor } from './events.stateful';
 
 
 // configuration
