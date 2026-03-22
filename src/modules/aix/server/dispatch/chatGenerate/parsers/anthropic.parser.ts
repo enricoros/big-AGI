@@ -237,7 +237,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               case 'web_fetch':
                 pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
                 break;
-              // Skills API tools (server-side execution)
+              case 'code_execution':
+                pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+                break;
               case 'bash_code_execution':
                 pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
                 break;
@@ -303,26 +305,19 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             if (content_block.content.type === 'code_execution_result') {
               // Success - check for generated files in content array
               const fileIds: string[] = [];
-              if (Array.isArray(content_block.content.content)) {
-                for (const outputBlock of content_block.content.content) {
-                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+              if (Array.isArray(content_block.content.content))
+                for (const outputBlock of content_block.content.content)
+                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id)
                     fileIds.push(outputBlock.file_id);
-                  }
-                }
-              }
 
-              // Build text message describing execution result
-              let resultText = '\n\n⚡ Code executed by Skill';
               if (fileIds.length > 0) {
-                resultText += '\n';
-                for (const fileId of fileIds) {
+                let resultText = '\n\n⚡ Code executed by Skill\n';
+                for (const fileId of fileIds)
                   resultText += `\n📎 File: \`${fileId}\``;
-                }
-              } else {
-                resultText += ' (no files generated)';
-              }
-              resultText += '\n';
-              pt.appendText(resultText);
+                resultText += '\n';
+                pt.appendText(resultText);
+              } else
+                pt.sendVoidPlaceholder('code-exec', 'Code executed by Skill');
 
               // Log for debugging
               console.log('[Anthropic] Code execution result:', {
@@ -345,33 +340,27 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             if (content_block.content.type === 'bash_code_execution_result') {
               // Success - check for generated files in content array
               const fileIds: string[] = [];
-              if (Array.isArray(content_block.content.content)) {
-                for (const outputBlock of content_block.content.content) {
-                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+              if (Array.isArray(content_block.content.content))
+                for (const outputBlock of content_block.content.content)
+                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id)
                     fileIds.push(outputBlock.file_id);
-                  }
-                }
-              }
 
-              // Build text message describing execution result
-              let resultText = '\n\n⚡ Bash executed by Skill';
               if (fileIds.length > 0) {
-                resultText += '\n';
-                for (const fileId of fileIds) {
+                let resultText = '\n\n⚡ Bash executed by Skill\n';
+                for (const fileId of fileIds)
                   resultText += `\n📎 File: \`${fileId}\``;
-                }
-              } else {
-                resultText += ' (no files generated)';
-              }
-              resultText += '\n';
-              pt.appendText(resultText);
+                resultText += '\n';
+                pt.appendText(resultText);
+              } else
+                pt.sendVoidPlaceholder('code-exec', 'Bash executed by Skill');
 
               // Log for debugging
-              console.log('[Anthropic] Bash code execution result:', {
-                return_code: content_block.content.return_code,
-                file_count: fileIds.length,
-                file_ids: fileIds,
-              });
+              if (fileIds.length)
+                console.log('[Anthropic] Bash code execution result:', {
+                  return_code: content_block.content.return_code,
+                  file_count: fileIds.length,
+                  file_ids: fileIds,
+                });
             } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
               // Error during bash execution
               pt.appendText(`\n\n⚠️ Bash execution error: ${content_block.content.error_code}\n`);
@@ -717,6 +706,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
             case 'web_fetch':
               pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
               break;
+            case 'code_execution':
+              pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+              break;
             case 'bash_code_execution':
               pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
               break;
@@ -783,33 +775,27 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           if (contentBlock.content.type === 'code_execution_result') {
             // Success - check for generated files in content array
             const fileIds: string[] = [];
-            if (Array.isArray(contentBlock.content.content)) {
-              for (const outputBlock of contentBlock.content.content) {
-                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+            if (Array.isArray(contentBlock.content.content))
+              for (const outputBlock of contentBlock.content.content)
+                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id)
                   fileIds.push(outputBlock.file_id);
-                }
-              }
-            }
 
-            // Build text message describing execution result
-            let resultText = '\n\n⚡ Code executed by Skill';
             if (fileIds.length > 0) {
-              resultText += '\n';
-              for (const fileId of fileIds) {
+              let resultText = '\n\n⚡ Code executed by Skill\n';
+              for (const fileId of fileIds)
                 resultText += `\n📎 File: \`${fileId}\``;
-              }
-            } else {
-              resultText += ' (no files generated)';
-            }
-            resultText += '\n';
-            pt.appendText(resultText);
+              resultText += '\n';
+              pt.appendText(resultText);
+            } else
+              pt.sendVoidPlaceholder('code-exec', 'Code executed by Skill');
 
             // Log for debugging
-            console.log('[Anthropic] Code execution result (non-streaming):', {
-              return_code: contentBlock.content.return_code,
-              file_count: fileIds.length,
-              file_ids: fileIds,
-            });
+            if (fileIds.length)
+              console.log('[Anthropic] Code execution result (non-streaming):', {
+                return_code: contentBlock.content.return_code,
+                file_count: fileIds.length,
+                file_ids: fileIds,
+              });
           } else if (contentBlock.content.type === 'encrypted_code_execution_result') {
             // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
             pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
@@ -825,26 +811,19 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           if (contentBlock.content.type === 'bash_code_execution_result') {
             // Success - check for generated files in content array
             const fileIds: string[] = [];
-            if (Array.isArray(contentBlock.content.content)) {
-              for (const outputBlock of contentBlock.content.content) {
-                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+            if (Array.isArray(contentBlock.content.content))
+              for (const outputBlock of contentBlock.content.content)
+                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id)
                   fileIds.push(outputBlock.file_id);
-                }
-              }
-            }
 
-            // Build text message describing execution result
-            let resultText = '\n\n⚡ Bash executed by Skill';
             if (fileIds.length > 0) {
-              resultText += '\n';
-              for (const fileId of fileIds) {
+              let resultText = '\n\n⚡ Bash executed by Skill\n';
+              for (const fileId of fileIds)
                 resultText += `\n📎 File: \`${fileId}\``;
-              }
-            } else {
-              resultText += ' (no files generated)';
-            }
-            resultText += '\n';
-            pt.appendText(resultText);
+              resultText += '\n';
+              pt.appendText(resultText);
+            } else
+              pt.sendVoidPlaceholder('code-exec', 'Bash executed by Skill');
 
             // Log for debugging
             console.log('[Anthropic] Bash code execution result (non-streaming):', {
