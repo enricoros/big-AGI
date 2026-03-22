@@ -141,6 +141,56 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-5.4-pro-2026-03-05',
   },
 
+  // GPT-5.4 Mini - Released March 17, 2026
+  {
+    idPrefix: 'gpt-5.4-mini-2026-03-17',
+    label: 'GPT-5.4 Mini (2026-03-17)',
+    description: 'Strongest mini model for coding, computer use, and subagents. GPT-5.4-class intelligence at lower cost and latency.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 0.75, cache: { cType: 'oai-ac', read: 0.075 }, output: 4.5 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.4-mini',
+    label: 'GPT-5.4 Mini',
+    symLink: 'gpt-5.4-mini-2026-03-17',
+  },
+
+  // GPT-5.4 Nano - Released March 17, 2026
+  {
+    idPrefix: 'gpt-5.4-nano-2026-03-17',
+    label: 'GPT-5.4 Nano (2026-03-17)',
+    description: 'Cheapest GPT-5.4-class model for simple high-volume tasks like classification and data extraction.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 0.2, cache: { cType: 'oai-ac', read: 0.02 }, output: 1.25 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.4-nano',
+    label: 'GPT-5.4 Nano',
+    symLink: 'gpt-5.4-nano-2026-03-17',
+  },
+
 
   /// GPT-5.3 series
 
@@ -237,6 +287,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmForceNoStream' },
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] },
       { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
     ],
     chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
     // benchmark: TBD
@@ -341,6 +392,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] },
       { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
@@ -357,6 +409,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // low, medium, high (no minimal)
       { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
@@ -373,6 +426,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // low, medium, high (no minimal)
       { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },

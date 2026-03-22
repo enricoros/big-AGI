@@ -83,6 +83,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
   let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
   const elisionCheck = (fullText: string) => {
+    if (!elideFirstTextBlock) return false;
     elideFirstTextBlock = false;
     if (fullText !== '\n\n') return false;
     console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
@@ -210,23 +211,23 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             break;
 
           case 'tool_use':
-            // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
-            if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-              content_block.input = null;
+            // [Anthropic] Note: .input={} is parsed as an object - zap to '' for later string concatenation via input_json_delta
+            if (content_block && content_block.input && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
+              content_block.input = '';
 
             // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
             const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825';
             if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
               console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from code_execution (tool_id: ${content_block.caller?.type === 'code_execution_20250825' ? content_block.caller.tool_id : 'n/a'})`);
 
-            pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
+            pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input || null);
             break;
 
           case 'server_tool_use':
             // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
             // NOTE: We don't create tool invocations for server tools - just show placeholders
-            if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-              content_block.input = null;
+            if (content_block && content_block.input && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
+              content_block.input = '';
 
             // Show placeholder for known server tools
             switch (content_block.name) { // .server_tool_use.name
@@ -236,7 +237,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               case 'web_fetch':
                 pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
                 break;
-              // Skills API tools (server-side execution)
+              case 'code_execution':
+                pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+                break;
               case 'bash_code_execution':
                 pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
                 break;
@@ -302,26 +305,19 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             if (content_block.content.type === 'code_execution_result') {
               // Success - check for generated files in content array
               const fileIds: string[] = [];
-              if (Array.isArray(content_block.content.content)) {
-                for (const outputBlock of content_block.content.content) {
-                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+              if (Array.isArray(content_block.content.content))
+                for (const outputBlock of content_block.content.content)
+                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id)
                     fileIds.push(outputBlock.file_id);
-                  }
-                }
-              }
 
-              // Build text message describing execution result
-              let resultText = '\n\n⚡ Code executed by Skill';
               if (fileIds.length > 0) {
-                resultText += '\n';
-                for (const fileId of fileIds) {
+                let resultText = '\n\n⚡ Code executed by Skill\n';
+                for (const fileId of fileIds)
                   resultText += `\n📎 File: \`${fileId}\``;
-                }
-              } else {
-                resultText += ' (no files generated)';
-              }
-              resultText += '\n';
-              pt.appendText(resultText);
+                resultText += '\n';
+                pt.appendText(resultText);
+              } else
+                pt.sendVoidPlaceholder('code-exec', 'Code executed by Skill');
 
               // Log for debugging
               console.log('[Anthropic] Code execution result:', {
@@ -329,6 +325,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 file_count: fileIds.length,
                 file_ids: fileIds,
               });
+            } else if (content_block.content.type === 'encrypted_code_execution_result') {
+              // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
+              pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
+              console.log('[Anthropic] Encrypted code execution result:', { return_code: content_block.content.return_code });
             } else if (content_block.content.type === 'code_execution_tool_result_error') {
               // Error during code execution
               pt.appendText(`\n\n⚠️ Skill execution error: ${content_block.content.error_code}\n`);
@@ -340,33 +340,27 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             if (content_block.content.type === 'bash_code_execution_result') {
               // Success - check for generated files in content array
               const fileIds: string[] = [];
-              if (Array.isArray(content_block.content.content)) {
-                for (const outputBlock of content_block.content.content) {
-                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+              if (Array.isArray(content_block.content.content))
+                for (const outputBlock of content_block.content.content)
+                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id)
                     fileIds.push(outputBlock.file_id);
-                  }
-                }
-              }
 
-              // Build text message describing execution result
-              let resultText = '\n\n⚡ Bash executed by Skill';
               if (fileIds.length > 0) {
-                resultText += '\n';
-                for (const fileId of fileIds) {
+                let resultText = '\n\n⚡ Bash executed by Skill\n';
+                for (const fileId of fileIds)
                   resultText += `\n📎 File: \`${fileId}\``;
-                }
-              } else {
-                resultText += ' (no files generated)';
-              }
-              resultText += '\n';
-              pt.appendText(resultText);
+                resultText += '\n';
+                pt.appendText(resultText);
+              } else
+                pt.sendVoidPlaceholder('code-exec', 'Bash executed by Skill');
 
               // Log for debugging
-              console.log('[Anthropic] Bash code execution result:', {
-                return_code: content_block.content.return_code,
-                file_count: fileIds.length,
-                file_ids: fileIds,
-              });
+              if (fileIds.length)
+                console.log('[Anthropic] Bash code execution result:', {
+                  return_code: content_block.content.return_code,
+                  file_count: fileIds.length,
+                  file_ids: fileIds,
+                });
             } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
               // Error during bash execution
               pt.appendText(`\n\n⚠️ Bash execution error: ${content_block.content.error_code}\n`);
@@ -402,10 +396,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // using the Files API with content_block.file_id
             break;
 
-          case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
-            if (Array.isArray(content_block.content)) {
+          case 'tool_search_tool_result': // [Anthropic, 2025-11-24] Tool Search Tool
+            if (content_block.content?.type === 'tool_search_tool_search_result') {
               // success
-              const toolNames = content_block.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+              const toolNames = content_block.content.tool_references.map(ref => ref.tool_name);
               pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
               // Log for future debugging
               console.log('[Anthropic] Tool search discovered:', { tools: toolNames });
@@ -630,6 +624,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
   let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
   const elisionCheck = (fullText: string) => {
+    if (!elideFirstTextBlock) return false;
     elideFirstTextBlock = false;
     if (fullText !== '\n\n') return false;
     console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
@@ -711,6 +706,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
             case 'web_fetch':
               pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
               break;
+            case 'code_execution':
+              pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
+              break;
             case 'bash_code_execution':
               pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
               break;
@@ -777,33 +775,31 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           if (contentBlock.content.type === 'code_execution_result') {
             // Success - check for generated files in content array
             const fileIds: string[] = [];
-            if (Array.isArray(contentBlock.content.content)) {
-              for (const outputBlock of contentBlock.content.content) {
-                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id) {
+            if (Array.isArray(contentBlock.content.content))
+              for (const outputBlock of contentBlock.content.content)
+                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id)
                   fileIds.push(outputBlock.file_id);
-                }
-              }
-            }
 
-            // Build text message describing execution result
-            let resultText = '\n\n⚡ Code executed by Skill';
             if (fileIds.length > 0) {
-              resultText += '\n';
-              for (const fileId of fileIds) {
+              let resultText = '\n\n⚡ Code executed by Skill\n';
+              for (const fileId of fileIds)
                 resultText += `\n📎 File: \`${fileId}\``;
-              }
-            } else {
-              resultText += ' (no files generated)';
-            }
-            resultText += '\n';
-            pt.appendText(resultText);
+              resultText += '\n';
+              pt.appendText(resultText);
+            } else
+              pt.sendVoidPlaceholder('code-exec', 'Code executed by Skill');
 
             // Log for debugging
-            console.log('[Anthropic] Code execution result (non-streaming):', {
-              return_code: contentBlock.content.return_code,
-              file_count: fileIds.length,
-              file_ids: fileIds,
-            });
+            if (fileIds.length)
+              console.log('[Anthropic] Code execution result (non-streaming):', {
+                return_code: contentBlock.content.return_code,
+                file_count: fileIds.length,
+                file_ids: fileIds,
+              });
+          } else if (contentBlock.content.type === 'encrypted_code_execution_result') {
+            // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
+            pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
+            console.log('[Anthropic] Encrypted code execution result (non-streaming):', { return_code: contentBlock.content.return_code });
           } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
             // Error during code execution
             pt.appendText(`\n\n⚠️ Skill execution error: ${contentBlock.content.error_code}\n`);
@@ -815,26 +811,19 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           if (contentBlock.content.type === 'bash_code_execution_result') {
             // Success - check for generated files in content array
             const fileIds: string[] = [];
-            if (Array.isArray(contentBlock.content.content)) {
-              for (const outputBlock of contentBlock.content.content) {
-                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id) {
+            if (Array.isArray(contentBlock.content.content))
+              for (const outputBlock of contentBlock.content.content)
+                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id)
                   fileIds.push(outputBlock.file_id);
-                }
-              }
-            }
 
-            // Build text message describing execution result
-            let resultText = '\n\n⚡ Bash executed by Skill';
             if (fileIds.length > 0) {
-              resultText += '\n';
-              for (const fileId of fileIds) {
+              let resultText = '\n\n⚡ Bash executed by Skill\n';
+              for (const fileId of fileIds)
                 resultText += `\n📎 File: \`${fileId}\``;
-              }
-            } else {
-              resultText += ' (no files generated)';
-            }
-            resultText += '\n';
-            pt.appendText(resultText);
+              resultText += '\n';
+              pt.appendText(resultText);
+            } else
+              pt.sendVoidPlaceholder('code-exec', 'Bash executed by Skill');
 
             // Log for debugging
             console.log('[Anthropic] Bash code execution result (non-streaming):', {
@@ -870,16 +859,16 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           });
           break;
 
-        case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
-          if (Array.isArray(contentBlock.content)) {
+        case 'tool_search_tool_result': // [Anthropic, 2025-11-24] Tool Search Tool
+          if (contentBlock.content?.type === 'tool_search_tool_search_result') {
             // success
-            const toolNames = contentBlock.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+            const toolNames = contentBlock.content.tool_references.map(ref => ref.tool_name);
             pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
             // Log for future debugging
             console.log('[Anthropic] Tool search discovered (non-streaming):', { tools: toolNames });
-          } else if ((contentBlock.content as any)?.type === 'tool_search_tool_result_error') {
+          } else if (contentBlock.content?.type === 'tool_search_tool_result_error') {
             // error during tool search
-            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${(contentBlock.content as any).error_code}`);
+            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${contentBlock.content.error_code}`);
           }
           break;
 

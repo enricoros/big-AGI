@@ -17,6 +17,22 @@
     "temperature": [1],
     "tools": ["oai-image-generation","oai-web-search"]
   },
+  "gpt-5.4-nano-2026-03-17": {
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
+  "gpt-5.4-mini-2026-03-17": {
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
   "gpt-5.3-codex": {
     "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
     "oai-temperature-think-high": [1],
@@ -48,7 +64,7 @@
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-temperature-think-high": [1],
     "temperature": [1],
-    "tools": ["oai-web-search"]
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.2-chat-latest": {
     "temperature": [1],
@@ -70,19 +86,19 @@
     "oai-reasoning-effort": ["low","medium","high","xhigh"],
     "oai-temperature-think-high": [1],
     "temperature": [1],
-    "tools": ["oai-web-search"]
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.1-codex-mini": {
     "oai-reasoning-effort": ["low","medium","high"],
     "oai-temperature-think-high": [1],
     "temperature": [1],
-    "tools": ["oai-web-search"]
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5.1-codex": {
     "oai-reasoning-effort": ["low","medium","high"],
     "oai-temperature-think-high": [1],
     "temperature": [1],
-    "tools": ["oai-web-search"]
+    "tools": ["oai-image-generation","oai-web-search"]
   },
   "gpt-5-2025-08-07": {
     "oai-reasoning-effort": ["minimal","low","medium","high"],
