@@ -11,6 +11,31 @@ import { getSpeechRecognitionClass, WebSpeechApiEngine } from './WebSpeechApiEng
 // configuration
 export const PLACEHOLDER_INTERIM_TRANSCRIPT = 'Listening...';
 
+// ────────────────────────────────────────────────────────────────────────────
+// When true, ALL speech recognition is routed through the server-side
+// transcription endpoint (AudioRecorderEngine → /api/stt/transcribe)
+// instead of the browser's Web Speech API.
+//
+// Set to false to restore the original Web Speech API behaviour.
+// ────────────────────────────────────────────────────────────────────────────
+const FORCE_SERVER_STT = true;
+
+function resolveEngineType(requested: RecognitionEngineType): RecognitionEngineType {
+  if (FORCE_SERVER_STT && requested === 'webSpeechApi')
+    return 'audioRecorder';
+  return requested;
+}
+
+function hasMediaRecorderSupport(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    typeof window.MediaRecorder !== 'undefined' &&
+    typeof navigator !== 'undefined' &&
+    !!navigator.mediaDevices &&
+    typeof navigator.mediaDevices.getUserMedia === 'function'
+  );
+}
+
 
 /// Capability interface
 
@@ -18,8 +43,12 @@ let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
 
 export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRecognition => {
   if (!cachedCapability) {
-    const isApiAvailable = !!getSpeechRecognitionClass();
+    const isApiAvailable = FORCE_SERVER_STT
+      ? hasMediaRecorderSupport()
+      : !!getSpeechRecognitionClass();
+
     const isDeviceNotSupported = false;
+
     cachedCapability = {
       mayWork: isApiAvailable && !isDeviceNotSupported,
       isApiAvailable,
@@ -45,11 +74,11 @@ export interface IRecognitionEngine {
 }
 
 export interface SpeechResult {
-  transcript: string;             // the portion of the transcript that is finalized (or all the transcript if done)
-  interimTranscript: string;      // for the continuous (interim) listening, this is the current transcript
-  done: boolean;                  // true if the recognition is done - no more updates after this
-  doneReason: SpeechDoneReason;   // the reason why the recognition is done
-  flagSendOnDone: boolean | undefined; // user flags set on 'startRecognition' - passive
+  transcript: string;
+  interimTranscript: string;
+  done: boolean;
+  doneReason: SpeechDoneReason;
+  flagSendOnDone: boolean | undefined;
 }
 
 export function createSpeechRecognitionResults(): SpeechResult {
@@ -63,15 +92,14 @@ export function createSpeechRecognitionResults(): SpeechResult {
 }
 
 export type SpeechDoneReason =
-  | undefined             // upon start: not done yet
-  | 'manual'              // user clicked the stop button
-  | 'continuous-deadline' // we hit our `softStopTimeout` while listening continuously
-  | 'api-unknown-timeout' // a timeout has occurred
-  | 'api-error'           // underlying .onerror
-  | 'api-no-speech'       // underlying .onerror, user did not speak
-  | 'switch-engine'       // the engine is switching
-  | 'react-unmount';      // the component is unmounting - the App shall never see this (set on unmount and not transmitted)
-
+  | undefined
+  | 'manual'
+  | 'continuous-deadline'
+  | 'api-unknown-timeout'
+  | 'api-error'
+  | 'api-no-speech'
+  | 'switch-engine'
+  | 'react-unmount';
 
 export interface SpeechRecognitionState {
   isAvailable: boolean;
@@ -87,15 +115,14 @@ type SpeechResultCallback = (result: SpeechResult) => void;
 
 /**
  * Hook for speech recognition that supports switching between engines.
- * @param onResultCallback - Callback when a result is received
- * @param softStopTimeout - Timeout for continuous listening
- * @param engineType - The type of capture engine to use
  */
 export const useSpeechRecognition = (
   engineType: RecognitionEngineType,
   onResultCallback: SpeechResultCallback,
   softStopTimeout: number,
 ) => {
+
+  const resolvedInitial = resolveEngineType(engineType);
 
   // state
   const [recognitionState, setRecognitionState] = React.useState<SpeechRecognitionState>({
@@ -104,10 +131,10 @@ export const useSpeechRecognition = (
     hasAudio: false,
     hasSpeech: false,
     errorMessage: null,
-    currentEngine: engineType,
+    currentEngine: resolvedInitial,
   });
 
-  // external state (will update this function when changed)
+  // external state
   const preferredLanguage = useUIPreferencesStore(state => state.preferredLanguage);
 
   // refs
@@ -116,36 +143,31 @@ export const useSpeechRecognition = (
   const preferredLanguageRef = React.useRef<string>(preferredLanguage);
   const engineRef = React.useRef<IRecognitionEngine | null>(null);
 
-
-  // hooks
-
   const updateState = React.useCallback((state: Partial<SpeechRecognitionState>) => {
-    setRecognitionState((prevState) => ({ ...prevState, ...state }));
+    setRecognitionState((prev) => ({ ...prev, ...state }));
   }, []);
 
-  // Params: update refs when params change
   React.useEffect(() => {
-    // detect changes
-    if (onResultCallbackRef.current === onResultCallback
-      && preferredLanguageRef.current === preferredLanguage
-      && softStopTimeoutRef.current === softStopTimeout)
+    if (
+      onResultCallbackRef.current === onResultCallback &&
+      preferredLanguageRef.current === preferredLanguage &&
+      softStopTimeoutRef.current === softStopTimeout
+    )
       return;
 
-    // remember local values
     onResultCallbackRef.current = onResultCallback;
     softStopTimeoutRef.current = softStopTimeout;
     preferredLanguageRef.current = preferredLanguage;
 
-    // update the values in the running instance
     engineRef.current?.updateConfiguration(preferredLanguage, softStopTimeout, onResultCallback);
   }, [onResultCallback, preferredLanguage, softStopTimeout]);
 
-  // Recreate the engine if the type changes (and upon load, and destroy it on unmount)
   React.useEffect(() => {
     if (!isBrowser) return;
 
-    // prevent re-creating the engine if it's the same type, and multiple instances
-    if (engineRef.current?.engineType === engineType)
+    const resolved = resolveEngineType(engineType);
+
+    if (engineRef.current?.engineType === resolved)
       return;
 
     if (engineRef.current) {
@@ -159,25 +181,16 @@ export const useSpeechRecognition = (
       hasAudio: false,
       hasSpeech: false,
       errorMessage: null,
-      currentEngine: engineType,
+      currentEngine: resolved,
     });
 
-    switch (engineType) {
-      case 'webSpeechApi':
-
-        // check if the device is supported
-        // if (browserSpeechRecognitionCapability().isDeviceNotSupported) {
-        //   setErrorMessage('Speech recognition is not supported on this device.');
-        //   return;
-        // }
-
-        // check if the API is available
+    switch (resolved) {
+      case 'webSpeechApi': {
         const webSpeechAPI = getSpeechRecognitionClass();
         if (!webSpeechAPI) {
           updateState({ errorMessage: 'Speech recognition API is not available in this browser.' });
           return;
         }
-
         engineRef.current = new WebSpeechApiEngine(
           webSpeechAPI,
           preferredLanguageRef.current,
@@ -186,6 +199,7 @@ export const useSpeechRecognition = (
           updateState,
         );
         break;
+      }
 
       case 'audioRecorder':
         engineRef.current = new AudioRecorderEngine(
@@ -206,10 +220,11 @@ export const useSpeechRecognition = (
     };
   }, [engineType, updateState]);
 
-
   const startRecognition = React.useCallback(() => {
-    if (!engineRef.current) return console.error('startRecognition: Speech recognition is not supported or not initialized.');
-    if (engineRef.current.isBetweenBeginEnd()) return console.error('startRecognition: Start recording called while already recording.');
+    if (!engineRef.current)
+      return console.error('startRecognition: Speech recognition is not supported or not initialized.');
+    if (engineRef.current.isBetweenBeginEnd())
+      return console.error('startRecognition: Start recording called while already recording.');
 
     try {
       updateState({ errorMessage: null });
@@ -221,8 +236,10 @@ export const useSpeechRecognition = (
   }, [updateState]);
 
   const stopRecognition = React.useCallback((sendOnDone: boolean) => {
-    if (!engineRef.current) return console.error('stopRecognition: Speech recognition is not supported or not initialized.');
-    if (!engineRef.current.isBetweenBeginEnd()) return console.error('stopRecognition: Stop recognition called while not recognizing.');
+    if (!engineRef.current)
+      return console.error('stopRecognition: Speech recognition is not supported or not initialized.');
+    if (!engineRef.current.isBetweenBeginEnd())
+      return console.error('stopRecognition: Stop recognition called while not recognizing.');
     engineRef.current.stop('manual', sendOnDone);
   }, []);
 
@@ -231,14 +248,13 @@ export const useSpeechRecognition = (
   const toggleRecognition = React.useCallback((sendOnDone?: boolean) => {
     if (!engineRef.current) return;
 
-    // start or stop
-    if (hasError || engineRef.current?.isBetweenBeginEnd()) {
+    if (hasError || engineRef.current.isBetweenBeginEnd()) {
       stopRecognition(sendOnDone === true);
       updateState({ errorMessage: null });
-    } else
+    } else {
       startRecognition();
+    }
   }, [hasError, startRecognition, stopRecognition, updateState]);
-
 
   return {
     recognitionState,
