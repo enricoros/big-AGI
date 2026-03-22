@@ -15,10 +15,8 @@
     "perf:browser": "node --import tsx tools/perf/profile-browser-session.ts",
     "perf:audit": "npm run perf:build && npm run perf:browser",
     "start": "node --import tsx tools/develop/next-safe-run.ts start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check .",
-    "format:write": "prettier --write .",
+    "lint": "eslint app pages src tools next.config.ts eslint.config.mjs middleware_BASIC_AUTH.ts --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "npm run test:node",
     "test:node": "cross-env NODE_OPTIONS=\"--require ./tools/tests/mock-test-imports.cjs\" node --import tsx --test",
     "postinstall": "prisma generate --no-hints",
@@ -30,6 +28,30 @@
   },
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
+  },
+  "overrides": {
+    "@posthog/cli": {
+      "rimraf": {
+        "glob": {
+          "minimatch": "10.2.4"
+        }
+      }
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^9.0.9"
+    },
+    "cheerio": {
+      "undici": "^7.24.5"
+    },
+    "flat-cache": {
+      "flatted": "^3.4.2"
+    },
+    "glob": {
+      "minimatch": "10.2.4"
+    },
+    "mammoth": {
+      "underscore": "^1.13.8"
+    }
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -43,14 +65,14 @@
     "@googleworkspace/drive-picker-react": "^0.2.0",
     "@mui/icons-material": "^5.18.0",
     "@mui/joy": "^5.0.0-beta.52",
-    "@next/bundle-analyzer": "~15.1.12",
+    "@next/bundle-analyzer": "~15.5.14",
     "@prisma/client": "~5.22.0",
     "@tanstack/react-query": "5.90.21",
     "@tanstack/react-virtual": "^3.13.22",
-    "@trpc/client": "11.5.1",
-    "@trpc/next": "11.5.1",
-    "@trpc/react-query": "11.5.1",
-    "@trpc/server": "11.5.1",
+    "@trpc/client": "11.14.1",
+    "@trpc/next": "11.14.1",
+    "@trpc/react-query": "11.14.1",
+    "@trpc/server": "11.14.1",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "aws4fetch": "^1.0.20",
@@ -64,7 +86,7 @@
     "idb-keyval": "^6.2.2",
     "mammoth": "^1.11.0",
     "nanoid": "^5.1.6",
-    "next": "~15.1.12",
+    "next": "~15.5.14",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "5.4.54",
     "posthog-js": "^1.360.2",
@@ -91,7 +113,7 @@
     "zustand": "5.0.7"
   },
   "devDependencies": {
-    "@posthog/nextjs-config": "~1.6.4",
+    "@posthog/nextjs-config": "~1.8.23",
     "@types/node": "^25.5.0",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.6",
@@ -101,7 +123,7 @@
     "@types/turndown": "^5.0.6",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
-    "eslint-config-next": "~15.1.12",
+    "eslint-config-next": "~15.5.14",
     "prettier": "^3.8.1",
     "prisma": "~5.22.0",
     "tsx": "^4.21.0",

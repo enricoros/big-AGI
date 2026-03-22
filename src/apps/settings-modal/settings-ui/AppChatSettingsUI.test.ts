@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-
 test('app chat settings expose a persisted call button toggle defaulting to off in the composer UI', () => {
   const settingsSource = readFileSync(new URL('./AppChatSettingsUI.tsx', import.meta.url), 'utf8');
   const storeSource = readFileSync(new URL('../../chat/store-app-chat.ts', import.meta.url), 'utf8');
@@ -11,7 +10,7 @@ test('app chat settings expose a persisted call button toggle defaulting to off 
 
   assert.match(settingsSource, /useChatShowCallButton/);
   assert.match(settingsSource, /title='Call Button'/);
-  assert.match(settingsSource, /description=\{showCallButton \? 'Show call action' : 'Hidden'\}/);
+  assert.match(settingsSource, /description=\{showCallButton\s*\?\s*'Show call action'\s*:\s*'Hidden'\}/);
   assert.match(settingsSource, /<Switch checked=\{showCallButton\} onChange=\{handleShowCallButtonChange\}/);
 
   assert.match(settingsSource, /useChatShowCompletionNotifications/);
@@ -42,8 +41,11 @@ test('app chat settings expose a persisted call button toggle defaulting to off 
   assert.match(storeSource, /export const useChatShowCompletionNotifications = \(\): \[boolean, \(showCompletionNotifications: boolean\) => void\] =>/);
 
   assert.match(composerSource, /const \[showCallButton\] = useChatShowCallButton\(\);/);
-  assert.match(composerSource, /\? \(showCallButton/);
-  assert.match(composerSource, /\{showChatExtras && showCallButton && <ButtonCallMemo disabled=\{noConversation \|\| noLLM \|\| assistantAbortible\} onClick=\{handleCallClicked\} \/>\}/);
+  assert.match(composerSource, /showCallButton/);
+  assert.match(
+    composerSource,
+    /\{showChatExtras && showCallButton && <ButtonCallMemo disabled=\{noConversation \|\| noLLM \|\| assistantAbortible\} onClick=\{handleCallClicked\} \/>\}/,
+  );
 
   assert.match(conversationHandlerSource, /getChatShowCompletionNotifications/);
   assert.match(conversationHandlerSource, /getChatShowCompletionNotifications\(\)\s*\?\s*getMessageCompletionNotification/);

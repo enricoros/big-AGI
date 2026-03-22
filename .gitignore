@@ -18,6 +18,7 @@
 # next.js
 /.next/
 /.next-dev/
+/.next-build-test/
 /.next.corrupt-*/
 /.next-dev.corrupt-*/
 /.next.corrupt-manual-*/

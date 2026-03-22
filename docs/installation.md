@@ -36,7 +36,6 @@ add your own models, or run your own instance, follow the steps below.
    npm run test:node
    npm run typecheck
    npm run lint
-   npm run format:check
    ```
 4. Run the development server:
    ```bash

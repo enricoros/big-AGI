@@ -48,11 +48,12 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-dev/types/**/*.ts",
     ".next/types/**/*.ts",
-    "dist/types/**/*.ts",
     // this is here only because otherwise, during standalone build the process would update this file
+    "dist/types/**/*.ts",
     "next-env.d.ts",
-    ".next-dev/types/**/*.ts"
+    ".next-build-test/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

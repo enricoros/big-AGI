@@ -2,15 +2,17 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-
 test('participant model selectors use getLLMLabel so custom model names appear in agent settings', () => {
   const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
 
-  assert.match(source, /import\s*\{\s*getLLMLabel\s*\}\s*from '~\/common\/stores\/llms\/llms\.types'/);
+  assert.match(source, /import\s*\{[\s\S]*getLLMLabel[\s\S]*\}\s*from '~\/common\/stores\/llms\/llms\.types';/);
   assert.equal((source.match(/\{getLLMLabel\(llm\)\}/g) ?? []).length >= 2, true);
-  assert.match(source, /New agent uses \$\{getLLMLabel\(selectedParticipantLlm\)\}\./);
+  assert.match(source, /New agent uses \$\{getLLMLabel\(selectedParticipantLlm\)\}\.\$\{selectedParticipantReasoningConfig\.parameterId/);
   assert.match(source, /const llmLabel = participantLlm \? getLLMLabel\(participantLlm\) : participant\.llmId \?\? 'Chat model';/);
-  assert.match(source, /import\s*\{[\s\S]*getReasoningEffortOptions,[\s\S]*getParticipantReasoningEffortCompactLabel,[\s\S]*\}\s*from '\.\/ChatBarChat\.reasoning';/);
+  assert.match(
+    source,
+    /import\s*\{[\s\S]*getReasoningEffortOptions,[\s\S]*getParticipantReasoningEffortCompactLabel,[\s\S]*\}\s*from '\.\/ChatBarChat\.reasoning';/,
+  );
   assert.doesNotMatch(source, /<Option key=\{llm\.id\} value=\{llm\.id\}>\{llm\.label\}<\/Option>/);
 });
 
@@ -26,7 +28,10 @@ test('new custom agents expose and persist the custom prompt field from the add-
 test('expanded agent cards expose import and export actions', () => {
   const source = readFileSync(new URL('./ChatBarChat.tsx', import.meta.url), 'utf8');
 
-  assert.match(source, /import \{ buildAgentTransferFile, getAgentTransferFilename, parseAgentTransferFile \} from '~\/common\/stores\/chat\/store-chat-agent\.transfer';/);
+  assert.match(
+    source,
+    /import \{ buildAgentTransferFile, getAgentTransferFilename, parseAgentTransferFile \} from '~\/common\/stores\/chat\/store-chat-agent\.transfer';/,
+  );
   assert.match(source, /const handleAgentExport = React\.useCallback/);
   assert.match(source, /const handleAgentImport = React\.useCallback/);
   assert.match(source, />\s*Export Agent\s*</);
@@ -64,7 +69,10 @@ test('participants button only shows leader details outside human-driven multi-a
   assert.match(source, /const participantsButtonLabel = React\.useMemo\(\(\) => \{/);
   assert.match(source, /const leaderReasoningSummaryLabel = React\.useMemo\(\(\) => \{/);
   assert.match(source, /const showLeaderInParticipantsButton = assistantParticipants\.length > 1 && turnTerminationMode !== 'round-robin-per-human';/);
-  assert.match(source, /if \(turnTerminationMode === 'council' && showLeaderInParticipantsButton\)\s*return leaderParticipant \? `Leader \$\{leaderParticipant\.name\}\$\{leaderReasoningSummaryLabel \? ` · \$\{leaderReasoningSummaryLabel\}` : ''\}` : 'Leader';/);
+  assert.match(
+    source,
+    /if \(turnTerminationMode === 'council' && showLeaderInParticipantsButton\)\s*return leaderParticipant \? `Leader \$\{leaderParticipant\.name\}\$\{leaderReasoningSummaryLabel \? ` · \$\{leaderReasoningSummaryLabel\}` : ''\}` : 'Leader';/,
+  );
   assert.match(source, /return `Agents \$\{assistantParticipants\.length > 1 \? assistantParticipants\.length : ''\}`;/);
   assert.match(source, /\{participantsButtonLabel\}/);
 });
