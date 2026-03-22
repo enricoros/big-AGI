@@ -226,6 +226,13 @@ export const DModelParameterRegistry = {
     // undefined means model default
   },
 
+  llmVndAntWebDynamic: { // applies to both web search and web fetch when enabled
+    label: 'Dynamic Filtering',
+    type: 'boolean',
+    description: 'Use dynamic filtering for search/fetch - more accurate, reduces tokens (Opus/Sonnet 4.6+, not ZDR-eligible)',
+    // undefined means false (standard versions)
+  },
+
   llmVndAntWebFetch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Fetch',
     type: 'enum',

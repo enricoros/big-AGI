@@ -242,6 +242,7 @@ export function LLMParametersEditor(props: {
     llmVndAntInfSpeed,
     llmVndAntSkills,
     llmVndAntThinkingBudget,
+    llmVndAntWebDynamic,
     llmVndAntWebFetch,
     llmVndAntWebFetchMaxUses,
     llmVndAntWebSearch,
@@ -528,6 +529,18 @@ export function LLMParametersEditor(props: {
         sliderSx={{ maxWidth: 148 }}
       />
     </Box>}
+
+    {showParam('llmVndAntWebDynamic') && (llmVndAntWebSearch === 'auto' || llmVndAntWebFetch === 'auto' || !!llmVndAntWebDynamic) && (
+      <FormSwitchControl
+        title='Dynamic Filtering'
+        tooltip='Use dynamic filtering for search/fetch - more accurate, reduces tokens (Opus/Sonnet 4.6+, not ZDR-eligible)'
+        checked={!!llmVndAntWebDynamic}
+        onChange={checked => {
+          if (!checked) onRemoveParameter('llmVndAntWebDynamic');
+          else onChangeParameter({ llmVndAntWebDynamic: true });
+        }}
+      />
+    )}
 
     {showParam('llmVndAnt1MContext') && (
       <FormSwitchControl

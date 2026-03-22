@@ -215,28 +215,25 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   if (!skipHostedToolsDueToCustomTools) {
     const hostedTools: NonNullable<TRequest['tools']> = [];
 
-    // Web Search Tool
+    // Web Search Tool - dynamic filtering (20260209) uses internal code execution for better results
     if (model.vndAntWebSearch === 'auto') {
       hostedTools.push({
-        type: 'web_search_20250305',
-        // type: 'web_search_20260209', // TODO
+        type: model.vndAntWebDynamic ? 'web_search_20260209' : 'web_search_20250305',
         name: 'web_search',
         ...(model.vndAntWebSearchMaxUses !== undefined ? { max_uses: model.vndAntWebSearchMaxUses } : {}),
-        // Pass user geolocation for location-aware search results
         ...(model.userGeolocation ? {
           user_location: { type: 'approximate' as const, ...model.userGeolocation },
         } : {}),
       });
     }
 
-    // Web Fetch Tool
+    // Web Fetch Tool - dynamic filtering (20260209) uses internal code execution for better results
     if (model.vndAntWebFetch === 'auto') {
       hostedTools.push({
-        type: 'web_fetch_20250910',
-        //type: 'web_fetch_20260209',
+        type: model.vndAntWebDynamic ? 'web_fetch_20260209' : 'web_fetch_20250910',
         name: 'web_fetch',
         ...(model.vndAntWebFetchMaxUses !== undefined ? { max_uses: model.vndAntWebFetchMaxUses } : {}),
-        citations: { enabled: true }, // Enable citations
+        citations: { enabled: true },
       });
     }
 
