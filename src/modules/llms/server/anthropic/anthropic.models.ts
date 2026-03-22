@@ -36,6 +36,12 @@ const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndAntWebSearchMaxUses' },
 ] as const;
 
+/** Dynamic filtering for web search/fetch - only Opus/Sonnet 4.6+ */
+const ANT_TOOLS_DYNAMIC: ModelDescriptionSchema['parameterSpecs'] = [
+  ...ANT_TOOLS,
+  { paramId: 'llmVndAntWebDynamic' },
+] as const;
+
 
 const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { idVariant: 'thinking' /* this is here because of OpenRouter matching, see below - all these are assued as thinking variants */ } } = {
 
@@ -52,7 +58,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       { paramId: 'llmVndAnt1MContext' },
       { paramId: 'llmVndAntInfSpeed' },
-      ...ANT_TOOLS,
+      ...ANT_TOOLS_DYNAMIC,
     ],
     // benchmark: { cbaElo: ... }, // TBD
   },
@@ -67,7 +73,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       // Note: sweep validates 'max' effort, but Anthropic docs state max is not available on Sonnet 4.6 as of 2026-02-18
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndAnt1MContext' },
-      ...ANT_TOOLS,
+      ...ANT_TOOLS_DYNAMIC,
     ],
     // benchmark: { cbaElo: ... }, // TBD
   },
@@ -191,7 +197,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       { paramId: 'llmVndAnt1MContext' },
       { paramId: 'llmVndAntInfSpeed' },
-      ...ANT_TOOLS,
+      ...ANT_TOOLS_DYNAMIC,
     ],
     // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50 (with 1M context enabled)
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
@@ -218,7 +224,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
       // Note: sweep validates 'max' effort, but Anthropic docs state max is not available on Sonnet 4.6 as of 2026-02-18
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndAnt1MContext' },
-      ...ANT_TOOLS,
+      ...ANT_TOOLS_DYNAMIC,
     ],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
