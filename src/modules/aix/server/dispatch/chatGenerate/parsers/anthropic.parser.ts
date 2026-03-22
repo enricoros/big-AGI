@@ -330,6 +330,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 file_count: fileIds.length,
                 file_ids: fileIds,
               });
+            } else if (content_block.content.type === 'encrypted_code_execution_result') {
+              // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
+              pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
+              console.log('[Anthropic] Encrypted code execution result:', { return_code: content_block.content.return_code });
             } else if (content_block.content.type === 'code_execution_tool_result_error') {
               // Error during code execution
               pt.appendText(`\n\n⚠️ Skill execution error: ${content_block.content.error_code}\n`);
@@ -403,10 +407,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // using the Files API with content_block.file_id
             break;
 
-          case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
-            if (Array.isArray(content_block.content)) {
+          case 'tool_search_tool_result': // [Anthropic, 2025-11-24] Tool Search Tool
+            if (content_block.content?.type === 'tool_search_tool_search_result') {
               // success
-              const toolNames = content_block.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+              const toolNames = content_block.content.tool_references.map(ref => ref.tool_name);
               pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
               // Log for future debugging
               console.log('[Anthropic] Tool search discovered:', { tools: toolNames });
@@ -806,6 +810,10 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               file_count: fileIds.length,
               file_ids: fileIds,
             });
+          } else if (contentBlock.content.type === 'encrypted_code_execution_result') {
+            // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
+            pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
+            console.log('[Anthropic] Encrypted code execution result (non-streaming):', { return_code: contentBlock.content.return_code });
           } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
             // Error during code execution
             pt.appendText(`\n\n⚠️ Skill execution error: ${contentBlock.content.error_code}\n`);
@@ -872,16 +880,16 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           });
           break;
 
-        case 'tool_result': // [Anthropic, 2025-11-24] Tool Search Tool - The actual tool definitions are auto-expanded by Anthropic's API
-          if (Array.isArray(contentBlock.content)) {
+        case 'tool_search_tool_result': // [Anthropic, 2025-11-24] Tool Search Tool
+          if (contentBlock.content?.type === 'tool_search_tool_search_result') {
             // success
-            const toolNames = contentBlock.content.map((ref: { type: string; tool_name: string }) => ref.tool_name);
+            const toolNames = contentBlock.content.tool_references.map(ref => ref.tool_name);
             pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
             // Log for future debugging
             console.log('[Anthropic] Tool search discovered (non-streaming):', { tools: toolNames });
-          } else if ((contentBlock.content as any)?.type === 'tool_search_tool_result_error') {
+          } else if (contentBlock.content?.type === 'tool_search_tool_result_error') {
             // error during tool search
-            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${(contentBlock.content as any).error_code}`);
+            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${contentBlock.content.error_code}`);
           }
           break;
 

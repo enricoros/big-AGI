@@ -155,12 +155,14 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     if (model.vndAntThinkingBudget === 'adaptive') {
       payload.thinking = {
         type: 'adaptive',
+        // display: 'summarized', // default, use 'omitted' to not include it and stream faster while preserving the signature
       };
       delete payload.temperature;
     } else if (model.vndAntThinkingBudget !== null) {
       payload.thinking = {
         type: 'enabled',
         budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
+        // display: 'summarized', // default, use 'omitted' to not include it and stream faster while preserving the signature
       };
       delete payload.temperature;
     } else {
@@ -217,9 +219,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     if (model.vndAntWebSearch === 'auto') {
       hostedTools.push({
         type: 'web_search_20250305',
+        // type: 'web_search_20260209', // TODO
         name: 'web_search',
-        ...(model.vndAntWebSearchMaxUses !== undefined ? { max_uses: model.vndAntWebSearchMaxUses } : {}), // Allow up to 10 searches by default
-        // max_uses: model.vndAntWebSearchMaxUses ?? DEFAULT_WEB_SEARCH_MAX_USES, // Allow up to 10 searches by default
+        ...(model.vndAntWebSearchMaxUses !== undefined ? { max_uses: model.vndAntWebSearchMaxUses } : {}),
         // Pass user geolocation for location-aware search results
         ...(model.userGeolocation ? {
           user_location: { type: 'approximate' as const, ...model.userGeolocation },
@@ -231,9 +233,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     if (model.vndAntWebFetch === 'auto') {
       hostedTools.push({
         type: 'web_fetch_20250910',
+        //type: 'web_fetch_20260209',
         name: 'web_fetch',
-        ...(model.vndAntWebFetchMaxUses !== undefined ? { max_uses: model.vndAntWebFetchMaxUses } : {}), // Allow up to 5 fetches by default
-        // max_uses: model.vndAntWebFetchMaxUses ?? DEFAULT_WEB_FETCH_MAX_USES, // Allow up to 5 fetches by default
+        ...(model.vndAntWebFetchMaxUses !== undefined ? { max_uses: model.vndAntWebFetchMaxUses } : {}),
         citations: { enabled: true }, // Enable citations
       });
     }
@@ -279,8 +281,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       if (!payload.tools?.length)
         payload.tools = [];
 
-      if (!payload.tools.some(t => t.type === 'code_execution_20250825'))
-        payload.tools.push({ type: 'code_execution_20250825', name: 'code_execution' });
+      if (!payload.tools.some(t => t.type === 'code_execution_20260120' /* Beta */ || t.type === 'code_execution_20250825'))
+        payload.tools.push({ type: 'code_execution_20260120', name: 'code_execution' });
     }
   }
 
@@ -457,7 +459,7 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[], strictToolsEnabled: 
           // [Anthropic, 2025-11-24] Tool Search Tool - auto-defer all custom tools
           ...(toolSearchToolEnabled ? { defer_loading: true } : {}),
           // [Anthropic, 2025-11-24] Programmatic Tool Calling - pass through allowed_callers and input_examples
-          ...(allowed_callers ? { allowed_callers: allowed_callers.map(c => c === 'code_execution' ? 'code_execution_20250825' : c) } : {}),
+          ...(allowed_callers ? { allowed_callers: allowed_callers.map(c => c === 'code_execution' ? 'code_execution_20260120' : c) } : {}),
           ...(input_examples ? { input_examples } : {}),
         };
 
