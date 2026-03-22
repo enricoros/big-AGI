@@ -577,7 +577,7 @@ export function AppChat() {
     if (!isMobile)
       composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
+  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
 
   const handleConversationSaveAgentGroup = React.useCallback((conversationId: DConversationId, name?: string, existingId?: string | null) => {
     const conversation = getConversation(conversationId);

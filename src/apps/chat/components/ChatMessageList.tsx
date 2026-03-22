@@ -15,7 +15,7 @@ import { getLLMLabel } from '~/common/stores/llms/llms.types';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
+import type { DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { PerfProfiler } from '~/common/components/perf/PerfProfiler';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
@@ -539,17 +539,18 @@ export function ChatMessageList(props: {
     councilTraceAutoExpandNewestRound,
   } = useChatStore(useShallow(React.useCallback(({ conversations }) => {
     const conversation = conversations.find(item => item.id === props.conversationId) ?? null;
+    const turnTerminationMode: DConversationTurnTerminationMode = conversation?.turnTerminationMode === 'continuous'
+      ? 'continuous'
+      : conversation?.turnTerminationMode === 'council'
+        ? 'council'
+        : 'round-robin-per-human';
     return {
       conversationMessages: conversation?.messages ?? stableNoMessages,
       historyTokenCount: conversation?.tokenCount ?? 0,
       storedParticipants: conversation?.participants ?? null,
       conversationUserSymbol: conversation?.userSymbol ?? null,
       conversationSystemPurposeId: conversation?.systemPurposeId ?? null,
-      turnTerminationMode: (conversation?.turnTerminationMode === 'continuous'
-        ? 'continuous'
-        : conversation?.turnTerminationMode === 'council'
-          ? 'council'
-          : 'round-robin-per-human') as const,
+      turnTerminationMode,
       councilTraceAutoCollapsePreviousRounds: getConversationCouncilTraceAutoCollapsePreviousRounds(props.conversationId),
       councilTraceAutoExpandNewestRound: getConversationCouncilTraceAutoExpandNewestRound(props.conversationId),
     };
