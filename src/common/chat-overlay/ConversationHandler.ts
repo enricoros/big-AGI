@@ -15,7 +15,7 @@ import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from 
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
-import { getChatAutoAI } from '../../apps/chat/store-app-chat';
+import { getChatAutoAI, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
 
 import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat-ephemerals_slice';
 import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_vanilla';
@@ -267,7 +267,7 @@ export class ConversationHandler {
       }
 
       // post-result: strip reasoning traces per user's thinking policy (issue #1003)
-      const { chatThinkingPolicy } = getChatAutoAI();
+      const chatThinkingPolicy = getChatThinkingPolicy();
       if (chatThinkingPolicy === 'last-only')
         this.historyStripThinking(1);
       else if (chatThinkingPolicy === 'discard-all')
