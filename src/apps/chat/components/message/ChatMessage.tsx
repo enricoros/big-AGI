@@ -46,7 +46,7 @@ import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, getChatMessageMinimapAccentDataAttributes, getParticipantAccentColor, getParticipantAccentSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
-import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
+import type { DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
@@ -143,6 +143,16 @@ export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: s
 
 export const ChatMessageMemo = React.memo(ChatMessage);
 
+export function shouldShowRestartInCouncilAction(params: {
+  initialRecipients?: ReadonlyArray<{ rt: string }>;
+  messageRole: DMessage['role'];
+  turnTerminationMode?: DConversationTurnTerminationMode;
+}) {
+  return params.turnTerminationMode === 'council'
+    && params.messageRole === 'user'
+    && !!params.initialRecipients?.some(recipient => recipient.rt === 'participant');
+}
+
 /**
  * The Message component is a customizable chat message UI component that supports
  * different roles (user, assistant, and system), text editing, syntax highlighting,
@@ -172,6 +182,8 @@ export function ChatMessage(props: {
   topDecoratorFirst?: boolean,
   onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
+  onMessageAssistantFromInCouncil?: (messageId: string, offset: number) => Promise<void>,
+  onMessageUpstreamResume?: (messageId: string) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageContinue?: (messageId: string, continueText: null | string) => void,
@@ -187,6 +199,7 @@ export function ChatMessage(props: {
   onAppendMention?: (mentionText: string) => void,
   participants?: DConversationParticipant[],
   participantDisplayNamesById?: ReadonlyMap<string, string>,
+  turnTerminationMode?: DConversationTurnTerminationMode,
   sx?: SxProps,
 }) {
 
@@ -264,6 +277,11 @@ export function ChatMessage(props: {
   const isUserNotifyComplete = messageHasUserFlag(props.message, MESSAGE_FLAG_NOTIFY_COMPLETE);
   const isVndAndCacheAuto = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_AUTO);
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
+  const showRestartInCouncilAction = shouldShowRestartInCouncilAction({
+    initialRecipients: messageMetadata?.initialRecipients,
+    messageRole,
+    turnTerminationMode: props.turnTerminationMode,
+  });
 
   const {
     annotationFragments,    // Web Citations, References (rendered at top)
@@ -427,6 +445,16 @@ export function ChatMessage(props: {
     handleCloseOpsMenu();
     await props.onMessageBeam?.(messageId);
   };
+
+  const handleOpsAssistantFromInCouncil = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleCloseOpsMenu();
+    await props.onMessageAssistantFromInCouncil?.(messageId, 0);
+  };
+
+  const handleUpstreamResume = React.useCallback(async () => {
+    await props.onMessageUpstreamResume?.(messageId);
+  }, [messageId, props]);
 
   const handleOpsBranch = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -1094,9 +1122,7 @@ export function ChatMessage(props: {
           {props.isBottom && fromAssistant && lastFragmentIsError && messageGenerator?.upstreamHandle?.responseId && (
             <BlockOpUpstreamResume
               upstreamHandle={messageGenerator.upstreamHandle}
-              onResume={console.error}
-              onCancel={console.error}
-              onDelete={console.error}
+              onResume={props.onMessageUpstreamResume ? handleUpstreamResume : undefined}
             />
           )}
 
@@ -1286,6 +1312,12 @@ export function ChatMessage(props: {
           )}
           {/* Beam/Restart */}
           {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
+          {showRestartInCouncilAction && !!props.onMessageAssistantFromInCouncil && (
+            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFromInCouncil}>
+              <ListItemDecorator><TelegramIcon color='primary' /></ListItemDecorator>
+              Restart <span style={{ opacity: 0.5 }}>in Council</span>
+            </MenuItem>
+          )}
           {!!props.onMessageAssistantFrom && (
             <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFrom}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>

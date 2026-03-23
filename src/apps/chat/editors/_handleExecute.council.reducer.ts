@@ -1,7 +1,6 @@
 import type { DPersistedCouncilSessionStatus } from '~/common/stores/chat/chat.conversation';
 
 import {
-  COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL,
   applyCouncilReviewBallots,
   createCouncilSessionState,
   doesCouncilRoundNeedLeaderProposal,
@@ -16,7 +15,8 @@ import type { CouncilOp } from './_handleExecute.council.log';
 type ReplayedCouncilSessionStatus = DPersistedCouncilSessionStatus | 'stopped';
 
 function isStoppedCouncilSessionResumable(reason: string | null | undefined): boolean {
-  return reason !== COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL;
+  void reason;
+  return true;
 }
 
 export type CouncilOpLogReplay = {

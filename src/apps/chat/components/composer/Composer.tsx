@@ -26,6 +26,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
+import { inferResumableCouncilSession } from '~/common/chat-overlay/ConversationHandler';
 import { DMessageId, DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import type { DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { DConversationId, DConversationParticipant } from '~/common/stores/chat/chat.conversation';
@@ -79,6 +80,7 @@ import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import {
   getComposerActionBarState,
+  getComposerCouncilPrimarySendMode,
   getComposerInterruptionPolicy,
   getComposerResumeLabel,
   getComposerSessionRoundLabel,
@@ -208,7 +210,7 @@ export function Composer(props: {
   const composerQuickButton = useUIPreferencesStore(state => state.composerQuickButton);
   const [showCallButton] = useChatShowCallButton();
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantAbortible, systemPurposeId, turnTerminationMode, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
+  const { assistantAbortible, conversation, systemPurposeId, turnTerminationMode, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.targetConversationId);
     const turnTerminationMode: DConversationTurnTerminationMode = conversation?.turnTerminationMode === 'continuous'
       ? 'continuous'
@@ -217,6 +219,7 @@ export function Composer(props: {
         : 'round-robin-per-human';
     return {
       assistantAbortible: conversation ? !!conversation._abortController : false,
+      conversation: conversation ?? null,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       turnTerminationMode,
       tokenCount: conversation ? conversation.tokenCount : 0,
@@ -229,7 +232,14 @@ export function Composer(props: {
   const conversationOverlayStore = props.targetConversationId
     ? ConversationsManager.getHandler(props.targetConversationId)?.conversationOverlayStore ?? null
     : null;
-  const councilSession = useChatComposerOverlayStore(conversationOverlayStore, store => store.councilSession);
+  const overlayCouncilSession = useChatComposerOverlayStore(conversationOverlayStore, store => store.councilSession);
+  const councilSession = React.useMemo(() => {
+    if (overlayCouncilSession.status === 'running' || overlayCouncilSession.canResume)
+      return overlayCouncilSession;
+
+    const inferredCouncilSession = inferResumableCouncilSession(conversation);
+    return inferredCouncilSession ?? overlayCouncilSession;
+  }, [conversation, overlayCouncilSession]);
 
   // composer-overlay: for the in-reference-to state, comes from the conversation overlay
   const allowInReferenceTo = chatExecuteMode === 'generate-content';
@@ -620,6 +630,12 @@ export function Composer(props: {
     turnTerminationMode as DConversationTurnTerminationMode,
     councilSession.passIndex,
   );
+  const councilLeaderPrimarySend = getComposerCouncilPrimarySendMode({
+    assistantAbortible,
+    assistantParticipantCount: assistantParticipants.length,
+    chatExecuteMode,
+    turnTerminationMode: turnTerminationMode as DConversationTurnTerminationMode,
+  });
   const isCouncilSession = interruptionPolicy.isCouncilSession;
   const hasInlineLifecycleButtons = interruptionPolicy.showPause || interruptionPolicy.showStop || interruptionPolicy.showResume;
   const stackInlineLifecycleButtons = hasInlineLifecycleButtons;
@@ -761,6 +777,27 @@ export function Composer(props: {
         return e.preventDefault();
       }
 
+      if (councilLeaderPrimarySend) {
+        if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+          if (await handleSendClicked('steer')) {
+            touchCtrlEnter();
+            e.stopPropagation();
+          }
+          return e.preventDefault();
+        }
+
+        if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          touchShiftEnter();
+          return;
+        }
+
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+          if (await handleSendToChatClicked())
+            e.stopPropagation();
+          return e.preventDefault();
+        }
+      }
+
       // Ctrl (Windows) + Enter: queue the message behind the current turn
       if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
         if (await handleSendClicked('queue')) {
@@ -788,7 +825,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, composeText, enterIsNewline, handleInReferenceToClear, handleSendAction, handleSendClicked, inReferenceTo?.length, touchAltEnter, touchCtrlEnter, touchCtrlShiftEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, composeText, councilLeaderPrimarySend, enterIsNewline, handleInReferenceToClear, handleSendAction, handleSendClicked, handleSendToChatClicked, inReferenceTo?.length, touchAltEnter, touchCtrlEnter, touchCtrlShiftEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -1011,10 +1048,14 @@ export function Composer(props: {
     + (recognitionState.isAvailable ? ' · ramble' : '')
     + '...';
 
-  if (isDesktop && assistantAbortible && !isDraw)
+  if (isDesktop && councilLeaderPrimarySend && !isDraw) {
+    textPlaceholder += platformAwareKeystrokes('\n\n➤ Enter sends to leader · Ctrl + Enter sends to council');
+    textPlaceholder += '\n\n⏎ Shift + Enter adds a new line';
+  } else if (isDesktop && assistantAbortible && !isDraw) {
     textPlaceholder += platformAwareKeystrokes('\n\n⏳ Ctrl + Enter queues your message');
+  }
 
-  if (isDesktop && timeToShowTips && !isDraw) {
+  if (isDesktop && timeToShowTips && !isDraw && !councilLeaderPrimarySend) {
     if (explainShiftEnter)
       textPlaceholder += !enterIsNewline ? '\n\n⏎ Shift + Enter to add a new line' : '\n\n➤ Shift + Enter to send';
     else if (explainCtrlEnter && !assistantAbortible)
@@ -1384,7 +1425,7 @@ export function Composer(props: {
                       disabled={noConversation /* || noLLM*/}
                       loading={sendStarted}
                       loadingPosition='end'
-                      onClick={() => void handleSendClicked()}
+                      onClick={() => void (councilLeaderPrimarySend ? handleSendToChatClicked() : handleSendClicked())}
                       endDecorator={sendButtonIcon}
                       sx={{
                         '--Button-gap': '1rem',
@@ -1421,7 +1462,7 @@ export function Composer(props: {
                       disabled={noConversation}
                       loading={sendStarted}
                       loadingPosition='end'
-                      onClick={() => void handleSendToChatClicked()}
+                      onClick={() => void handleSendClicked()}
                       endDecorator={<SendIcon sx={{ fontSize: 18 }} />}
                       sx={{ width: '100%', minWidth: 0 }}
                     >

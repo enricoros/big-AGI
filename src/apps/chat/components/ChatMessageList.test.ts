@@ -3,8 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
+import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 
-import { getRenderableConversationParticipants, getSingleAgentHumanDrivenParticipantNameOverrides } from './ChatMessageList';
+import { getNonCouncilRenderEntries, getRenderableConversationParticipants, getRestartInCouncilMessageMetadata, getSingleAgentHumanDrivenParticipantNameOverrides } from './ChatMessageList';
 
 
 test('getRenderableConversationParticipants preserves the original array when participants are already renderable', () => {
@@ -96,4 +97,53 @@ test('single-agent human-driven chats display the active model name while keepin
   });
 
   assert.equal(result.displayNamesById.get(participant.id), 'GPT 5.4');
+});
+
+test('restart in council metadata keeps existing fields while rerouting the message to the public board', () => {
+  const result = getRestartInCouncilMessageMetadata({
+    author: {
+      participantId: 'human-1',
+      participantName: 'You',
+      personaId: null,
+      llmId: null,
+    },
+    councilChannel: {
+      channel: 'public-board',
+      visibleToParticipantIds: ['leader-1'],
+    },
+    inReferenceTo: [{
+      mrt: 'dmsg',
+      mRole: 'assistant',
+      mText: 'Earlier context',
+    }],
+    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
+  });
+
+  assert.deepEqual(result.author, {
+    participantId: 'human-1',
+    participantName: 'You',
+    personaId: null,
+    llmId: null,
+  });
+  assert.deepEqual(result.inReferenceTo, [{
+    mrt: 'dmsg',
+    mRole: 'assistant',
+    mText: 'Earlier context',
+  }]);
+  assert.deepEqual(result.councilChannel, { channel: 'public-board' });
+  assert.deepEqual(result.initialRecipients, [{ rt: 'public-board' }]);
+});
+
+test('non-council render entries window before decorating the chat history tail', () => {
+  const first = createDMessageTextContent('assistant', 'First');
+  const second = createDMessageTextContent('assistant', 'Second');
+  const system = createDMessageTextContent('system', 'System');
+  system.metadata = { councilChannel: { channel: 'system' } };
+
+  const result = getNonCouncilRenderEntries([first, second, system], 2);
+
+  assert.deepEqual(result.map(entry => entry.message.id), [second.id, system.id]);
+  assert.equal(result[0]?.kind, 'message');
+  assert.equal(result[0]?.topDecoratorKind, undefined);
+  assert.equal(result[1]?.topDecoratorKind, 'system');
 });

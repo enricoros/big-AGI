@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createAssistantConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 
-import { ChatMessage } from './ChatMessage';
+import { ChatMessage, shouldShowRestartInCouncilAction } from './ChatMessage';
 
 
 function renderChatMessageMarkup(updated: number | null) {
@@ -128,4 +128,39 @@ test('assistant messages can display a model label while keeping canonical menti
   assert.match(markup, />GPT 5\.4</);
   assert.match(markup, /Click to mention @GPT 5\.4/);
   assert.match(source, /onClick=\{\(\) => handleAppendMention\(`@\$\{messageAuthorName\}`\)\}/);
+});
+
+test('restart in council action is shown only for user messages with explicit participant recipients in council mode', () => {
+  assert.equal(shouldShowRestartInCouncilAction({
+    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
+    messageRole: 'user',
+    turnTerminationMode: 'council',
+  }), true);
+
+  assert.equal(shouldShowRestartInCouncilAction({
+    initialRecipients: [{ rt: 'public-board' }],
+    messageRole: 'user',
+    turnTerminationMode: 'council',
+  }), false);
+
+  assert.equal(shouldShowRestartInCouncilAction({
+    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
+    messageRole: 'assistant',
+    turnTerminationMode: 'council',
+  }), false);
+
+  assert.equal(shouldShowRestartInCouncilAction({
+    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
+    messageRole: 'user',
+    turnTerminationMode: 'round-robin-per-human',
+  }), false);
+});
+
+test('upstream resume block delegates to the message resume handler instead of placeholder console errors', () => {
+  const source = readFileSync(new URL('./ChatMessage.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /onResume=\{props\.onMessageUpstreamResume \? handleUpstreamResume : undefined\}/);
+  assert.doesNotMatch(source, /onResume=\{console\.error\}/);
+  assert.doesNotMatch(source, /onCancel=\{console\.error\}/);
+  assert.doesNotMatch(source, /onDelete=\{console\.error\}/);
 });

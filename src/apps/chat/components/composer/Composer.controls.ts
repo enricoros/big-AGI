@@ -25,6 +25,18 @@ export type ComposerActionBarIcon =
   | 'telegram'
   | null;
 
+export function getComposerCouncilPrimarySendMode(params: {
+  assistantAbortible: boolean;
+  assistantParticipantCount: number;
+  chatExecuteMode: ChatExecuteMode;
+  turnTerminationMode: DConversationTurnTerminationMode;
+}) {
+  return !params.assistantAbortible
+    && params.chatExecuteMode === 'generate-content'
+    && params.assistantParticipantCount > 1
+    && params.turnTerminationMode === 'council';
+}
+
 export function getComposerActionBarState(params: {
   allAttachmentsCompatible: boolean;
   assistantAbortible: boolean;
@@ -42,7 +54,12 @@ export function getComposerActionBarState(params: {
   const isAppend = params.chatExecuteMode === 'append-user';
   const isReAct = params.chatExecuteMode === 'react-content';
   const isDraw = params.chatExecuteMode === 'generate-image';
-  const showCouncilBypassSendAction = isText && params.assistantParticipantCount > 1 && params.turnTerminationMode === 'council';
+  const showCouncilLeaderPrimarySend = getComposerCouncilPrimarySendMode({
+    assistantAbortible: params.assistantAbortible,
+    assistantParticipantCount: params.assistantParticipantCount,
+    chatExecuteMode: params.chatExecuteMode,
+    turnTerminationMode: params.turnTerminationMode,
+  });
 
   const sendButtonVariant = (isAppend || (params.isMobile && isTextBeam)) ? 'outlined' as const : 'solid' as const;
   const sendButtonColor =
@@ -58,8 +75,12 @@ export function getComposerActionBarState(params: {
         : 'Send to room'
     : params.chatExecuteModeSendLabel;
   const showQueueSendAction = isText && params.assistantAbortible;
-  const primarySendButtonLabel = showQueueSendAction ? 'Queue message' : sendButtonLabel;
-  const secondarySendButtonLabel = showCouncilBypassSendAction ? 'Send to leader' : null;
+  const primarySendButtonLabel = showQueueSendAction
+    ? 'Queue message'
+    : showCouncilLeaderPrimarySend
+      ? 'Send to leader'
+      : sendButtonLabel;
+  const secondarySendButtonLabel = showCouncilLeaderPrimarySend ? 'Send to council' : null;
 
   const turnModeChip = isText && params.assistantParticipantCount > 1
     ? {

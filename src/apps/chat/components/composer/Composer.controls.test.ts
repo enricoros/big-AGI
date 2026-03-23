@@ -8,6 +8,7 @@ import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import {
   getComposerActionBarState,
   getComposerCouncilRoundLabel,
+  getComposerCouncilPrimarySendMode,
   getComposerInterruptionPolicy,
   getComposerResumeLabel,
   getComposerSessionRoundLabel,
@@ -237,8 +238,8 @@ test('getComposerActionBarState derives the council send state for multi-agent t
   assert.deepStrictEqual(result, {
     expanderVariant: null,
     primaryIcon: 'telegram',
-    primarySendButtonLabel: 'Seek council agreement',
-    secondarySendButtonLabel: 'Send to leader',
+    primarySendButtonLabel: 'Send to leader',
+    secondarySendButtonLabel: 'Send to council',
     sendButtonColor: 'primary',
     sendButtonVariant: 'solid',
     showQueueSendAction: false,
@@ -247,6 +248,44 @@ test('getComposerActionBarState derives the council send state for multi-agent t
       helper: 'Triggered agents must converge on the same reply before anything is shown.',
       label: 'Council',
     },
+  });
+});
+
+test('getComposerCouncilPrimarySendMode only enables leader-first send in idle multi-agent council text chats', async (t) => {
+  await t.test('enabled for idle council text chats', () => {
+    assert.equal(getComposerCouncilPrimarySendMode({
+      assistantAbortible: false,
+      assistantParticipantCount: 2,
+      chatExecuteMode: 'generate-content',
+      turnTerminationMode: 'council',
+    }), true);
+  });
+
+  await t.test('disabled while a council run is abortible', () => {
+    assert.equal(getComposerCouncilPrimarySendMode({
+      assistantAbortible: true,
+      assistantParticipantCount: 2,
+      chatExecuteMode: 'generate-content',
+      turnTerminationMode: 'council',
+    }), false);
+  });
+
+  await t.test('disabled for single-agent chats', () => {
+    assert.equal(getComposerCouncilPrimarySendMode({
+      assistantAbortible: false,
+      assistantParticipantCount: 1,
+      chatExecuteMode: 'generate-content',
+      turnTerminationMode: 'council',
+    }), false);
+  });
+
+  await t.test('disabled outside normal text generation', () => {
+    assert.equal(getComposerCouncilPrimarySendMode({
+      assistantAbortible: false,
+      assistantParticipantCount: 2,
+      chatExecuteMode: 'beam-content',
+      turnTerminationMode: 'council',
+    }), false);
   });
 });
 

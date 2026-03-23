@@ -597,7 +597,7 @@ function isCouncilInterruptionResumable(interruption: { status: CouncilRunInterr
   if (interruption.status === 'paused' || interruption.status === 'interrupted')
     return true;
   if (interruption.status === 'stopped')
-    return interruption.reason !== COUNCIL_INTERRUPTION_REASON_INVALID_PROPOSAL;
+    return true;
   return false;
 }
 

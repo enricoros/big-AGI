@@ -646,13 +646,13 @@ test('runCouncilSequence stops cleanly when the leader fails to produce a valid 
 
   const councilSession = runtime.getSession(conversationId).getCouncilSession();
   assert.equal(councilSession.status, 'stopped');
-  assert.equal(councilSession.canResume, false);
+  assert.equal(councilSession.canResume, true);
   assert.equal(councilSession.workflowState?.status, 'interrupted');
   assert.equal(councilSession.workflowState?.interruptionReason, 'leader-invalid-proposal');
 
   const conversation = useChatStore.getState().conversations.find(item => item.id === conversationId) ?? null;
   assert.equal(conversation?.councilSession?.status, 'stopped');
-  assert.equal(conversation?.councilSession?.canResume, false);
+  assert.equal(conversation?.councilSession?.canResume, true);
   assert.equal(conversation?.councilSession?.interruptionReason, 'leader-invalid-proposal');
   assert.equal(conversation?.councilOpLog?.some(op => op.type === 'session_stopped' && op.payload.reason === 'leader-invalid-proposal'), true);
 });

@@ -220,7 +220,7 @@ test('inferResumableCouncilSession rehydrates a stopped council trace from counc
   assert.equal(inferred?.workflowState?.rounds[0]?.proposalText, 'Draft one.');
 });
 
-test('inferResumableCouncilSession keeps fatal stopped council traces non-resumable', () => {
+test('inferResumableCouncilSession keeps proposal-failed council traces resumable', () => {
   const { conversation, leader } = createCouncilConversation();
   const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
   conversation.messages = [userMessage];
@@ -269,7 +269,7 @@ test('inferResumableCouncilSession keeps fatal stopped council traces non-resuma
 
   assert.ok(inferred);
   assert.equal(inferred?.status, 'stopped');
-  assert.equal(inferred?.canResume, false);
+  assert.equal(inferred?.canResume, true);
   assert.equal(inferred?.phaseId, phaseId);
   assert.equal(inferred?.interruptionReason, 'leader-invalid-proposal');
 });
