@@ -7,7 +7,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
-import { RequestRetryError } from '../chatGenerate.retrier';
+import { OperationRetrySignal } from '../chatGenerate.operation-retry';
 
 
 // configuration
@@ -599,7 +599,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               'overloaded_error': 529,
             };
             // request a retry by unwinding to the retrier
-            throw new RequestRetryError(`retrying Anthropic: ${errorText}`, {
+            throw new OperationRetrySignal(`retrying Anthropic: ${errorText}`, {
               causeHttp: errorTypeToHttpStatus[error.type],
               causeConn: error.type,
             });

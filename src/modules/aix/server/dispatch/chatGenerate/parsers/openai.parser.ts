@@ -108,7 +108,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error) {
-      // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+      // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
       return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
     }
 
@@ -751,7 +751,7 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+  // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
   pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, 'srv-warn');
   return true;
 }

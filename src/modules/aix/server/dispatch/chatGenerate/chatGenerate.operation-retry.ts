@@ -12,14 +12,14 @@ const AIX_DISABLE_OPERATION_RETRY = false;
 const AIX_DEBUG_OPERATION_RETRY = true; // prints the execution retries
 
 
-// --- Retriable Error, throw this from any Parser to get the whole operation retried ---
+// --- Operation Retry Signal, throw this from any Parser to get the whole operation retried ---
 
 /**
- * Thrown when a retryable error occurs during streaming (e.g., Anthropic overloaded_error).
- * Signals the operation should be retried at a higher level.
+ * Signal thrown by parsers when a retryable error occurs mid-stream (e.g., Anthropic overloaded_error).
+ * Caught by the operation-level retrier, which resets particles and retries the entire dispatch.
  */
-export class RequestRetryError extends Error {
-  override readonly name = 'RequestRetryError';
+export class OperationRetrySignal extends Error {
+  override readonly name = 'OperationRetrySignal';
 
   readonly reason: string;
   readonly causeHttp?: number;
@@ -30,7 +30,7 @@ export class RequestRetryError extends Error {
     this.reason = reason;
     this.causeHttp = options?.causeHttp;
     this.causeConn = options?.causeConn;
-    Object.setPrototypeOf(this, RequestRetryError.prototype);
+    Object.setPrototypeOf(this, OperationRetrySignal.prototype);
   }
 }
 
@@ -39,9 +39,9 @@ export class RequestRetryError extends Error {
 
 /**
  * Wraps executeChatGenerateDispatch with operation-level retry for mid-stream errors.
- * Retries entire operation when RequestRetryError is thrown (e.g., Anthropic overloaded_error).
+ * Retries entire operation when OperationRetrySignal is thrown (e.g., Anthropic overloaded_error).
  */
-export async function* executeChatGenerateWithRetry(
+export async function* executeChatGenerateWithOperationRetry(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   streaming: boolean,
   abortSignal: AbortSignal,
@@ -69,11 +69,11 @@ export async function* executeChatGenerateWithRetry(
       // if (error instanceof DOMException && error.name === 'AbortError')
       //   throw error; // expected abort - pass through to be handled by parent loop and converted to terminating particle
 
-      // NOTE: executeChatGenerate only throws RequestRetryError. All other errors (abort, network, parsing)
+      // NOTE: executeChatGenerate only throws OperationRetrySignal. All other errors (abort, network, parsing)
       // are handled internally with terminating particles. However we do a defensive check here just in case.
-      if (!(error instanceof RequestRetryError)) {
+      if (!(error instanceof OperationRetrySignal)) {
         if (AIX_DEBUG_OPERATION_RETRY)
-          console.warn(`[operation.retrier] ⚠️ Unexpected error type (expected RequestRetryError): ${error?.name || 'unknown'}`);
+          console.warn(`[operation.retrier] ⚠️ Unexpected error type (expected OperationRetrySignal): ${error?.name || 'unknown'}`);
         throw error; // unexpected
       }
 

@@ -645,7 +645,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
 
         // Transmit the error as text - note: throw if you want to transmit as 'error'
-        // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+        // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
         pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
         break;
 
@@ -997,7 +997,7 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+  // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
   pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
   return true;
 }
