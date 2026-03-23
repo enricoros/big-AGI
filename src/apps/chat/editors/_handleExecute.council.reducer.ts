@@ -59,13 +59,7 @@ export function reduceCouncilOps(ops: readonly CouncilOp[]): CouncilSessionState
           ...session,
           status: 'drafting',
           roundIndex: op.payload.roundIndex,
-          rounds: session.rounds.map(round => round.roundIndex !== op.payload.roundIndex
-            ? round
-            : {
-                ...round,
-                leaderParticipantId: op.payload.leaderParticipantId,
-                sharedRejectionReasons: [...op.payload.sharedRejectionReasons],
-              }),
+          rounds: upsertRoundForReplay(session.rounds, op.payload.roundIndex, op.payload.leaderParticipantId, op.payload.sharedRejectionReasons),
         }, op.createdAt);
         break;
       }
@@ -285,6 +279,39 @@ function withUpdatedAt(session: CouncilSessionState, updatedAt: number): Council
     ...session,
     updatedAt,
   };
+}
+
+function upsertRoundForReplay(
+  rounds: readonly CouncilSessionState['rounds'][number][],
+  roundIndex: number,
+  leaderParticipantId: string,
+  sharedRejectionReasons: readonly string[],
+): CouncilSessionState['rounds'] {
+  const existingRound = rounds.find(round => round.roundIndex === roundIndex) ?? null;
+  const nextRound = existingRound
+    ? {
+        ...existingRound,
+        leaderParticipantId,
+        sharedRejectionReasons: [...sharedRejectionReasons],
+      }
+    : {
+        roundIndex,
+        phase: 'leader-proposal' as const,
+        proposalId: null,
+        proposalText: null,
+        leaderParticipantId,
+        ballots: [],
+        sharedRejectionReasons: [...sharedRejectionReasons],
+        leaderTurn: null,
+        reviewerTurns: {},
+        leaderProposal: null,
+        reviewerPlans: {},
+        reviewerVotes: {},
+        completedAt: null,
+      };
+
+  return [...rounds.filter(round => round.roundIndex !== roundIndex), nextRound]
+    .sort((a, b) => a.roundIndex - b.roundIndex);
 }
 
 function deriveActiveCouncilStatus(session: CouncilSessionState): CouncilSessionState['status'] {

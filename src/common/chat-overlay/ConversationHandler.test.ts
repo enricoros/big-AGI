@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { ConversationsManager } from './ConversationsManager';
 import { focusNotificationTargetTab, getBackgroundChatCompletionSnackbar, getMessageCompletionNotification, inferResumableCouncilSession, openConversationFromCompletionNotification, shouldShowSystemNotification } from './ConversationHandler';
 import { createDConversation, createAssistantConversationParticipant, createHumanConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { createDMessagePlaceholderIncomplete, createDMessageTextContent } from '~/common/stores/chat/chat.message';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { createCouncilSessionState } from '../../apps/chat/editors/_handleExecute.council';
 import { createCouncilOp } from '../../apps/chat/editors/_handleExecute.council.log';
 import { getFocusedPaneConversationId, panesManagerActions } from '../../apps/chat/components/panes/store-panes-manager';
@@ -580,6 +582,115 @@ test('inferResumableCouncilSession ignores a completed councilOpLog after a newe
   conversation.councilOpLog = councilOpLog;
 
   assert.equal(inferResumableCouncilSession(conversation), null);
+});
+
+test('historyTruncateTo clears persisted and overlay council resume state for restart-from-here', () => {
+  const { conversation, leader, critic, writer } = createCouncilConversation();
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  const assistantMessage = completeMessage(createDMessageTextContent('assistant', 'Draft one.'));
+  conversation.messages = [userMessage, assistantMessage];
+
+  const workflowState = createCouncilSessionState({
+    phaseId: 'phase-restart-from-here',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  conversation.councilSession = {
+    status: 'interrupted',
+    executeMode: 'generate-content',
+    mode: 'council',
+    phaseId: workflowState.phaseId,
+    passIndex: workflowState.roundIndex,
+    workflowState,
+    canResume: true,
+    interruptionReason: 'page-unload',
+    updatedAt: userMessage.created + 1,
+  };
+  conversation.councilOpLog = [
+    createCouncilOp([], 'session_started', {
+      leaderParticipantId: leader.id,
+      reviewerParticipantIds: [critic.id, writer.id],
+      maxRounds: 12,
+      latestUserMessageId: userMessage.id,
+    }, {
+      phaseId: workflowState.phaseId,
+      conversationId: conversation.id,
+      opId: 'session-started',
+      createdAt: userMessage.created + 1,
+    }),
+  ];
+
+  useChatStore.setState({
+    conversations: [conversation],
+  });
+
+  const handler = ConversationsManager.getHandler(conversation.id);
+  assert.equal(handler.conversationOverlayStore.getState().councilSession.canResume, true);
+
+  handler.historyTruncateTo(userMessage.id, 0);
+
+  const truncatedConversation = useChatStore.getState().conversations.find(item => item.id === conversation.id) ?? null;
+  assert.ok(truncatedConversation);
+  assert.equal(truncatedConversation?.messages.length, 1);
+  assert.equal(truncatedConversation?.councilSession, null);
+  assert.equal(truncatedConversation?.councilOpLog, null);
+  assert.equal(handler.conversationOverlayStore.getState().councilSession.status, 'idle');
+  assert.equal(handler.conversationOverlayStore.getState().councilSession.canResume, false);
+});
+
+test('historyTruncateTo clears council resume state even when truncation removes no messages', () => {
+  const { conversation, leader, critic, writer } = createCouncilConversation();
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  conversation.messages = [userMessage];
+
+  const workflowState = createCouncilSessionState({
+    phaseId: 'phase-restart-noop-truncate',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  conversation.councilSession = {
+    status: 'interrupted',
+    executeMode: 'generate-content',
+    mode: 'council',
+    phaseId: workflowState.phaseId,
+    passIndex: workflowState.roundIndex,
+    workflowState,
+    canResume: true,
+    interruptionReason: 'page-unload',
+    updatedAt: userMessage.created + 1,
+  };
+  conversation.councilOpLog = [
+    createCouncilOp([], 'session_started', {
+      leaderParticipantId: leader.id,
+      reviewerParticipantIds: [critic.id, writer.id],
+      maxRounds: 12,
+      latestUserMessageId: userMessage.id,
+    }, {
+      phaseId: workflowState.phaseId,
+      conversationId: conversation.id,
+      opId: 'session-started-noop',
+      createdAt: userMessage.created + 1,
+    }),
+  ];
+
+  useChatStore.setState({
+    conversations: [conversation],
+  });
+
+  const handler = ConversationsManager.getHandler(conversation.id);
+  assert.equal(handler.conversationOverlayStore.getState().councilSession.canResume, true);
+
+  handler.historyTruncateTo(userMessage.id, 0);
+
+  const truncatedConversation = useChatStore.getState().conversations.find(item => item.id === conversation.id) ?? null;
+  assert.ok(truncatedConversation);
+  assert.equal(truncatedConversation?.messages.length, 1);
+  assert.equal(truncatedConversation?.councilSession, null);
+  assert.equal(truncatedConversation?.councilOpLog, null);
+  assert.equal(handler.conversationOverlayStore.getState().councilSession.status, 'idle');
+  assert.equal(handler.conversationOverlayStore.getState().councilSession.canResume, false);
 });
 
 test('inferResumableCouncilSession does not expose resume for a completed human-driven turn', () => {

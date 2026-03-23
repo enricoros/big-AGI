@@ -20,7 +20,7 @@ import { duplicateDMessage } from '~/common/stores/chat/chat.message';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
 import type { CouncilSessionState as ComposerCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
 import type { DMessageContentFragment, DMessageVoidFragment } from '~/common/stores/chat/chat.fragments';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart, isVoidThinkingFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { getConversationCouncilMaxRounds, getConversationCouncilOpLog, getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
 import { findParticipantMentionMatchIndex } from '~/common/util/dMessageUtils';
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
@@ -781,51 +781,11 @@ const COUNCIL_REVIEWER_META_INTENT_PATTERN = /\b(i(?:\s+\w+){0,2}\s+need to|i(?:
 const COUNCIL_REVIEWER_INVESTIGATION_PATTERN = /\b(inspect|evaluate|analy[sz]e|assess|check|verify|review|look into|look up|search|research|compare|validate|inspecting|evaluating|analy[sz]ing|checking|verifying|reviewing|searching|researching|comparing|validating|revisar|verificar|comprobar|buscar|investigar|analizar|evaluar|comparar|validar|inspeccionar|revisando|verificando|comprobando|buscando|investigando|analizando|evaluando|comparando|validando)\b/i;
 const COUNCIL_REVIEWER_EXECUTED_FINDING_PATTERN = /\b(found|confirmed|verified|checked|reviewed|searched|researched|compared|validated|shows|showed|indicates|indicated|cites|contains|contained|includes|included|states|stated|demonstrates|demonstrated|he comprobado|he verificado|he revisado|he encontrado|he comparado|he validado|muestra|mostr[oó]|indica|indic[oó]|cita|cit[oó]|contiene|conten[ií]a|incluye|incluy[oó]|afirma|afirm[oó]|confirma|confirm[oó]|demuestra|demostr[oó])\b/i;
 
-function hasCouncilReviewerNonBallotToolActivity(fragments: DMessage['fragments'] | null | undefined): boolean {
-  for (const fragment of fragments ?? []) {
-    if (fragment.ft !== 'content')
-      continue;
-
-    if (isToolInvocationPart(fragment.part) && fragment.part.invocation.type === 'function_call') {
-      if (!isCouncilReviewerBallotToolName(fragment.part.invocation.name))
-        return true;
-      continue;
-    }
-
-    if (isToolResponseFunctionCallPart(fragment.part)) {
-      if (!isCouncilReviewerBallotToolName(fragment.part.response.name))
-        return true;
-    }
-  }
-
-  return false;
-}
-
 function getCouncilReviewerAnalysisTexts(fragments: DMessage['fragments'] | null | undefined): string[] {
   return (fragments ?? [])
     .filter(isTextContentFragment)
     .map(fragment => fragment.part.text.trim())
     .filter(text => !!text && !/^accept(?:\(\))?$/i.test(text) && !/^improve(?:\(\))?(?::|\b)/i.test(text) && !/^reject(?::|\b)/i.test(text));
-}
-
-function hasCouncilReviewerHiddenReasoning(fragments: DMessage['fragments'] | null | undefined): boolean {
-  return (fragments ?? []).some(isVoidThinkingFragment);
-}
-
-function assertCouncilReviewerBallotHasVisibleAnalysis(
-  ballot: ReturnType<typeof extractCouncilReviewerBallotFromToolInvocation>,
-  fragments: DMessage['fragments'] | null | undefined,
-): void {
-  if (ballot.decision !== 'accept')
-    return;
-
-  if (getCouncilReviewerAnalysisTexts(fragments).length > 0)
-    return;
-
-  if (!hasCouncilReviewerHiddenReasoning(fragments) && !hasCouncilReviewerNonBallotToolActivity(fragments))
-    return;
-
-  throw new Error(COUNCIL_REVIEW_ANALYSIS_MISSING_REASON);
 }
 
 function mergeCouncilReviewerVoteFragments(
@@ -1682,7 +1642,6 @@ async function runCouncilReviewerBallot(
   let ballot: ReturnType<typeof extractCouncilReviewerBallotFromToolInvocation>;
   try {
     ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
-    assertCouncilReviewerBallotHasVisibleAnalysis(ballot, finalMessage.fragments);
   } catch (error) {
     const explicitErrorReason = error instanceof Error && error.message.trim()
       ? error.message.trim()
@@ -1724,7 +1683,6 @@ async function runCouncilReviewerBallot(
           pendingIncomplete: !!(finalMessage.pendingIncomplete || repaired.finalMessage.pendingIncomplete),
         };
         ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
-        assertCouncilReviewerBallotHasVisibleAnalysis(ballot, finalMessage.fragments);
         return {
           ballot,
           fragmentTexts: getCouncilFragmentTexts(finalMessage),

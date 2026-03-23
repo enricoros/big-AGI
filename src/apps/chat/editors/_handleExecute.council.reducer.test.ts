@@ -256,6 +256,60 @@ test('reduceCouncilOps rebuilds exhausted sessions after a rejected final round'
   assert.equal(projection?.rounds[0]?.ballots[0]?.reason, 'Missing the caveat.');
 });
 
+test('reduceCouncilOps materializes replay rounds that start before their full history is available', () => {
+  const { ops, next } = createBaseOps();
+  next('round_started', {
+    roundIndex: 1,
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic', 'writer'],
+    sharedRejectionReasons: ['Missing the caveat.'],
+  }, { opId: 'round-1-started', createdAt: 101 });
+  next('leader_turn_committed', {
+    roundIndex: 1,
+    participantId: 'leader',
+    proposalId: 'proposal-2',
+    proposalText: 'Draft two.',
+    deliberationText: '',
+    messageFragments: [createTextContentFragment('Draft two.')],
+    messagePendingIncomplete: false,
+  }, { opId: 'leader-1', createdAt: 102 });
+  next('reviewer_vote_committed', {
+    roundIndex: 1,
+    participantId: 'critic',
+    decision: 'accept',
+    reason: null,
+    fragmentTexts: [],
+    messageFragments: [],
+    messagePendingIncomplete: false,
+  }, { opId: 'vote-critic-1', createdAt: 103 });
+  next('reviewer_vote_committed', {
+    roundIndex: 1,
+    participantId: 'writer',
+    decision: 'accept',
+    reason: null,
+    fragmentTexts: [],
+    messageFragments: [],
+    messagePendingIncomplete: false,
+  }, { opId: 'vote-writer-1', createdAt: 104 });
+  next('round_completed', {
+    roundIndex: 1,
+    outcome: 'accepted',
+    rejectionReasons: [],
+  }, { opId: 'round-1-complete', createdAt: 105 });
+  next('session_accepted', {
+    roundIndex: 1,
+    proposalId: 'proposal-2',
+    finalResponse: 'Draft two.',
+  }, { opId: 'session-accepted-1', createdAt: 106 });
+
+  const projection = reduceCouncilOps(ops);
+  assert.ok(projection);
+  assert.equal(projection?.status, 'accepted');
+  assert.equal(projection?.roundIndex, 1);
+  assert.equal(projection?.rounds[1]?.sharedRejectionReasons[0], 'Missing the caveat.');
+  assert.equal(projection?.rounds[1]?.proposalText, 'Draft two.');
+});
+
 test('reduceCouncilOps ignores duplicate op ids', () => {
   const { ops, next } = createBaseOps();
   const planOp = next('reviewer_plan_committed', {

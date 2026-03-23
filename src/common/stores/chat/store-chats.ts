@@ -353,6 +353,8 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           return {
             messages: truncatedMessages,
             tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
+            councilSession: null,
+            councilOpLog: null,
             updated: Date.now(),
             _abortController: null,
           };

@@ -6,6 +6,7 @@ import type { DConversationParticipant, DPersistedCouncilSession } from '~/commo
 import { createAssistantConversationParticipant, createDConversation, createHumanConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { createDMessagePlaceholderIncomplete, createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { create_FunctionCallInvocation_ContentFragment, createModelAuxVoidFragment, createTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createPerChatVanillaStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
 import { inferResumableCouncilSession } from '~/common/chat-overlay/ConversationHandler';
@@ -1515,7 +1516,7 @@ test('runCouncilSequence accepts a ballot-only reviewer accept', async () => {
   assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalReason, null);
 });
 
-test('runCouncilSequence rejects reviewer accepts that only provide hidden reasoning without visible analysis', async () => {
+test('runCouncilSequence accepts reviewer accepts that only provide hidden reasoning without visible analysis', async () => {
   resetChatStoreForTest();
   const participants = createParticipants();
   const [, leader, critic, writer] = participants;
@@ -1557,11 +1558,52 @@ test('runCouncilSequence rejects reviewer accepts that only provide hidden reaso
 
   const councilSession = runtime.getSession(conversationId).getCouncilSession();
   assert.equal(councilSession.workflowState?.status, 'accepted');
-  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.ballot.decision, 'reject');
-  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.reason, 'review analysis missing');
-  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalAction, 'reject');
-  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalReason, 'review analysis missing');
-  assert.equal(councilSession.workflowState?.rounds[1]?.reviewerVotes[writer.id]?.ballot.decision, 'accept');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.ballot.decision, 'accept');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.reason, null);
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalAction, 'accept');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalReason, null);
+});
+
+test('runCouncilSequence accepts reviewer accepts after non-ballot tool activity without visible analysis', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const [, leader, critic, writer] = participants;
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Answer the user clearly.'));
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+  });
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Draft one.']],
+    [critic.id, [scriptedCouncilAcceptReviewReply('Critic analysis one.')]],
+    [writer.id, [{
+      finalText: '',
+      fragments: [
+        create_FunctionCallInvocation_ContentFragment('tool-search', 'web_search', '{"q":"proposal caveat"}'),
+        create_FunctionCallInvocation_ContentFragment('tool-accept-after-search', 'Accept', '{}'),
+      ],
+    }]],
+  ]));
+
+  const result = await runCouncilSequence(
+    runtime.getSession(conversationId),
+    conversationId,
+    participants.slice(1),
+    TEST_LLM_ID,
+    1,
+    userMessage.id,
+    null,
+    runtime,
+  );
+
+  assert.equal(result, true);
+
+  const councilSession = runtime.getSession(conversationId).getCouncilSession();
+  assert.equal(councilSession.workflowState?.status, 'accepted');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.ballot.decision, 'accept');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerVotes[writer.id]?.reason, null);
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalAction, 'accept');
+  assert.equal(councilSession.workflowState?.rounds[0]?.reviewerTurns[writer.id]?.terminalReason, null);
 });
 
 test('runCouncilSequence accepts reviewer ballots even when pre-ballot text is meta-only', async () => {
@@ -2208,6 +2250,189 @@ test('handleExecute ignores stale resumable council state after a new user turn'
   const resultMessage = messages.findLast(message => message.metadata?.council?.kind === 'result') ?? null;
   assert.ok(resultMessage);
   assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Fresh proposal for the second request.');
+});
+
+test('handleExecute restarts council from the beginning after history truncation to the user message', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const leader = participants[1];
+  const critic = participants[2];
+  const writer = participants[3];
+
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Restart this council from the top.'));
+  const priorDraftMessage = completeMessage(createDMessageTextContent('assistant', 'Old draft.'));
+  priorDraftMessage.metadata = {
+    author: {
+      participantId: leader.id,
+      participantName: leader.name,
+      personaId: leader.personaId,
+      llmId: leader.llmId,
+    },
+    councilChannel: { channel: 'public-board' },
+    council: {
+      kind: 'deliberation',
+      phaseId: 'phase-restart-history-truncate',
+      passIndex: 0,
+      action: 'proposal',
+      leaderParticipantId: leader.id,
+    },
+  };
+
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-restart-history-truncate',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-old',
+    leaderParticipantId: leader.id,
+    proposalText: 'Old draft.',
+  });
+  workflowState = {
+    ...workflowState,
+    status: 'reviewing',
+  };
+
+  const councilOpLog = [
+    createCouncilOp([], 'session_started', {
+      leaderParticipantId: leader.id,
+      reviewerParticipantIds: [critic.id, writer.id],
+      maxRounds: 12,
+      latestUserMessageId: userMessage.id,
+    }, {
+      phaseId: workflowState.phaseId,
+      conversationId: 'conversation-restart-history-truncate',
+      opId: 'session-started',
+      createdAt: 100,
+    }),
+  ];
+  councilOpLog.push(createCouncilOp(councilOpLog, 'leader_turn_committed', {
+    roundIndex: 0,
+    participantId: leader.id,
+    proposalId: 'proposal-old',
+    proposalText: 'Old draft.',
+    deliberationText: '',
+    messageFragments: [],
+    messagePendingIncomplete: false,
+  }, {
+    phaseId: workflowState.phaseId,
+    conversationId: 'conversation-restart-history-truncate',
+    opId: 'leader-turn-old',
+    createdAt: 101,
+  }));
+
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage, priorDraftMessage],
+    councilSession: {
+      status: 'interrupted',
+      executeMode: 'generate-content',
+      mode: 'council',
+      phaseId: workflowState.phaseId,
+      passIndex: workflowState.roundIndex,
+      workflowState,
+      canResume: true,
+      interruptionReason: 'page-unload',
+      updatedAt: Date.now(),
+    },
+    councilOpLog,
+  });
+
+  ConversationsManager.getHandler(conversationId).historyTruncateTo(userMessage.id, 0);
+
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Fresh proposal after restart.']],
+    [critic.id, [scriptedCouncilAcceptReviewReply('Fresh critic review.')]],
+    [writer.id, [scriptedCouncilAcceptReviewReply('Fresh writer review.')]],
+  ]));
+
+  const result = await _handleExecute('generate-content', conversationId, 'runtime-test', runtime);
+
+  assert.equal(result, true);
+  assert.deepEqual(runtime.callLog, [leader.id, critic.id, writer.id]);
+
+  const conversation = useChatStore.getState().conversations.find(item => item.id === conversationId) ?? null;
+  assert.ok(conversation);
+  assert.equal(conversation?.messages.some(message => message.id === priorDraftMessage.id), false);
+  assert.equal(conversation?.councilOpLog?.[0]?.type, 'session_started');
+  assert.equal(conversation?.councilOpLog?.[0]?.payload.latestUserMessageId, userMessage.id);
+  assert.equal(conversation?.councilOpLog?.some(op => op.opId === 'leader-turn-old'), false);
+
+  const resultMessage = (useChatStore.getState().historyView(conversationId) ?? [])
+    .findLast(message => message.metadata?.council?.kind === 'result') ?? null;
+  assert.ok(resultMessage);
+  assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Fresh proposal after restart.');
+});
+
+test('handleExecute restarts council from the beginning after no-op truncation on the latest user message', async () => {
+  resetChatStoreForTest();
+  const participants = createParticipants();
+  const leader = participants[1];
+  const critic = participants[2];
+  const writer = participants[3];
+
+  const userMessage = completeMessage(createDMessageTextContent('user', 'Restart this council from the top.'));
+  const workflowState = createCouncilSessionState({
+    phaseId: 'phase-restart-noop-truncate',
+    leaderParticipantId: leader.id,
+    reviewerParticipantIds: [critic.id, writer.id],
+    maxRounds: 12,
+  });
+  const councilOpLog = [
+    createCouncilOp([], 'session_started', {
+      leaderParticipantId: leader.id,
+      reviewerParticipantIds: [critic.id, writer.id],
+      maxRounds: 12,
+      latestUserMessageId: userMessage.id,
+    }, {
+      phaseId: workflowState.phaseId,
+      conversationId: 'conversation-restart-noop-truncate',
+      opId: 'session-started-noop',
+      createdAt: 100,
+    }),
+  ];
+
+  const conversationId = importConversationForTest({
+    participants,
+    messages: [userMessage],
+    councilSession: {
+      status: 'interrupted',
+      executeMode: 'generate-content',
+      mode: 'council',
+      phaseId: workflowState.phaseId,
+      passIndex: workflowState.roundIndex,
+      workflowState,
+      canResume: true,
+      interruptionReason: 'page-unload',
+      updatedAt: Date.now(),
+    },
+    councilOpLog,
+  });
+
+  ConversationsManager.getHandler(conversationId).historyTruncateTo(userMessage.id, 0);
+
+  const runtime = new ScriptedChatExecutionRuntime(new Map([
+    [leader.id, ['Fresh proposal after no-op restart.']],
+    [critic.id, [scriptedCouncilAcceptReviewReply('Fresh critic review.')]],
+    [writer.id, [scriptedCouncilAcceptReviewReply('Fresh writer review.')]],
+  ]));
+
+  const result = await _handleExecute('generate-content', conversationId, 'runtime-test', runtime);
+
+  assert.equal(result, true);
+  assert.deepEqual(runtime.callLog, [leader.id, critic.id, writer.id]);
+
+  const conversation = useChatStore.getState().conversations.find(item => item.id === conversationId) ?? null;
+  assert.ok(conversation);
+  assert.equal(conversation?.councilOpLog?.[0]?.type, 'session_started');
+  assert.equal(conversation?.councilOpLog?.[0]?.payload.latestUserMessageId, userMessage.id);
+  assert.equal(conversation?.councilOpLog?.some(op => op.opId === 'session-started-noop'), false);
+
+  const resultMessage = (useChatStore.getState().historyView(conversationId) ?? [])
+    .findLast(message => message.metadata?.council?.kind === 'result') ?? null;
+  assert.ok(resultMessage);
+  assert.equal(messageFragmentsReduceText(resultMessage!.fragments), 'Fresh proposal after no-op restart.');
 });
 
 test('handleExecute ignores stale councilOpLog after a new user turn', async () => {

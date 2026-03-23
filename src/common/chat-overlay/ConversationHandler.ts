@@ -680,6 +680,8 @@ export class ConversationHandler {
 
   historyTruncateTo(messageId: DMessageId, offset: number = 0): void {
     _chatStoreActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
+    _chatStoreActions.setCouncilPersistence(this.conversationId, null, null);
+    this.overlayStore.getState().resetCouncilSession();
   }
 
   historyViewHeadOrThrow(scope: string): Readonly<DMessage[]> {
