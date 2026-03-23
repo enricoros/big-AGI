@@ -106,7 +106,7 @@ export type RetryAttempt = {
  * @param onRetry Optional callback invoked before each retry attempt
  * @returns Promise that resolves with the successful result or rejects with the final error
  */
-export function createRetryablePromise<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
+export function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
   return new Promise<T>(async (resolve, reject) => {
     let attemptNumber = 1;
 

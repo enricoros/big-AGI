@@ -1,6 +1,6 @@
 import { createEmptyReadableStream, safeErrorString } from '~/server/wire';
-import { createRetryablePromise, RetryAttempt } from '~/server/trpc/trpc.fetchers.retrier';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchWithAbortableConnectionRetry, RetryAttempt } from '~/server/trpc/trpc.fetchers.retrier';
 
 import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
@@ -111,7 +111,8 @@ async function* _connectToDispatch(
       // -> retry-server-dispatch
       chatGenerateTx.sendControl({ cg: 'retry-reset', rScope: 'srv-dispatch', rShallClear: false, reason: 'retrying initial connection', ...info });
     };
-    const chatGenerateResponsePromise = createRetryablePromise(connectionOperationCreator, intakeAbortSignal, onRetryAttempt);
+    // throws the original error (TRPCFetcherError) from fetchResponseOrTRPCThrow when: not retryable, aborted, or all attempts exhausted
+    const chatGenerateResponsePromise = fetchWithAbortableConnectionRetry(connectionOperationCreator, intakeAbortSignal, onRetryAttempt);
     const dispatchResponse = yield* heartbeatsWhileAwaiting(chatGenerateResponsePromise);
     _d.profiler?.measureEnd('connect');
 
