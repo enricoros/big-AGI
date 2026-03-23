@@ -11,6 +11,7 @@ import { AixDebugObject } from './chatGenerate.debug';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
+import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { OperationRetrySignal } from './chatGenerate.operation-retry';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
@@ -180,6 +181,7 @@ async function* _consumeDispatchUnified(
 
   } catch (error: any) {
     // NS pass-through dispatch signals - thrown by parsers to request operation retry or continuation
+    if (error instanceof DispatchContinuationSignal) throw error;
     if (error instanceof OperationRetrySignal) throw error;
 
     if (dispatchBody === undefined)
@@ -306,6 +308,7 @@ async function* _consumeDispatchStream(
 
       } catch (error: any) {
         // pass-through dispatch signals - thrown by parsers to request operation retry or continuation
+        if (error instanceof DispatchContinuationSignal) throw error;
         if (error instanceof OperationRetrySignal) throw error;
 
         // Handle parsing issue (likely a schema break); print it to the server console as well

@@ -10,13 +10,13 @@ import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Conte
 import type { AixDebugObject } from '../server/dispatch/chatGenerate/chatGenerate.debug';
 import { AIX_INSPECTOR_ALLOWED_CONTEXTS, AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../server/api/aix.security';
 import { createChatGenerateDispatch } from '../server/dispatch/chatGenerate/chatGenerate.dispatch';
-import { executeChatGenerateWithOperationRetry } from '../server/dispatch/chatGenerate/chatGenerate.operation-retry';
+import { executeChatGenerateWithContinuation } from '../server/dispatch/chatGenerate/chatGenerate.continuation';
 
 
 // --- Client-side AIX ChatGenerate Executor ---
 
 /**
- * Client-side chat generation - uses server's executeChatGenerateWithOperationRetry directly.
+ * Client-side chat generation - uses server's executeChatGenerateWithContinuation directly.
  * Matches server-side pattern exactly.
  */
 export async function* clientSideChatGenerate(
@@ -32,7 +32,7 @@ export async function* clientSideChatGenerate(
   const _d: AixDebugObject = _createClientDebugConfig(access, connectionOptions, context.name);
   const chatGenerateDispatchCreator = () => createChatGenerateDispatch(access, model, chatGenerate, streaming, !!connectionOptions?.enableResumability);
 
-  yield* executeChatGenerateWithOperationRetry(chatGenerateDispatchCreator, streaming, abortSignal, _d);
+  yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, streaming, abortSignal, _d);
 }
 
 // CSF debug config - lighter than server-side

@@ -4,7 +4,7 @@ import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
 import { _createDebugConfig } from '../dispatch/chatGenerate/chatGenerate.debug';
 import { createChatGenerateDispatch, createChatGenerateResumeDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
-import { executeChatGenerateWithOperationRetry } from '../dispatch/chatGenerate/chatGenerate.operation-retry';
+import { executeChatGenerateWithContinuation } from '../dispatch/chatGenerate/chatGenerate.continuation';
 
 import { AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
 
@@ -30,7 +30,7 @@ export const aixRouter = createTRPCRouter({
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const chatGenerateDispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
 
-      yield* executeChatGenerateWithOperationRetry(chatGenerateDispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, input.streaming, ctx.reqSignal, _d);
     }),
 
   /**
@@ -49,7 +49,7 @@ export const aixRouter = createTRPCRouter({
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const resumeDispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.resumeHandle, input.streaming);
 
-      yield* executeChatGenerateWithOperationRetry(resumeDispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(resumeDispatchCreator, input.streaming, ctx.reqSignal, _d);
     }),
 
 });
