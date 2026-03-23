@@ -7,6 +7,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { DispatchContinuationSignal } from '../chatGenerate.continuation';
 import { OperationRetrySignal } from '../chatGenerate.operation-retry';
 
 
@@ -564,7 +565,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
-        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop');
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop', { stop_reason: responseMessage.stop_reason });
+
+        // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
+        if (responseMessage.stop_reason === 'pause_turn')
+          throw new DispatchContinuationSignal(
+            _createAnthropicPauseTurnContinuation(responseMessage.content, responseMessage.container?.id),
+          );
+
         return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
 
       // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
@@ -638,6 +646,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     const {
       model,
       content,
+      container,
       stop_reason,
       usage,
     } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
@@ -910,6 +919,65 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       }
       pt.updateMetrics(metricsUpdate);
     }
+
+    // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
+    if (stop_reason === 'pause_turn')
+      throw new DispatchContinuationSignal(
+        _createAnthropicPauseTurnContinuation(content, container?.id),
+      );
+  };
+}
+
+
+// --- Anthropic pause_turn continuation ---
+
+/**
+ * Creates a DispatchContinuation for Anthropic's pause_turn stop reason.
+ * Appends accumulated content blocks as an assistant message for the next turn.
+ * On subsequent turns, detects the trailing assistant message and extends its content.
+ */
+function _createAnthropicPauseTurnContinuation(
+  accumulatedContent: AnthropicWire_API_Message_Create.Response['content'],
+  containerId: string | undefined,
+): { reason: string; mutateBody: (body: Record<string, unknown>) => Record<string, unknown> } {
+  return {
+    reason: 'pause_turn',
+    mutateBody(body: Record<string, unknown>): Record<string, unknown> {
+      const messages = [...(body.messages as { role: string; content: unknown }[])];
+
+      // Streaming accumulates tool_use/server_tool_use `input` as a JSON string via input_json_delta.
+      // The API expects `input` as a parsed object when sent back in messages - we convert it here
+      const fixedContent = accumulatedContent.map(block => {
+        if (('type' in block) && (block.type === 'tool_use' || block.type === 'server_tool_use') && typeof block.input === 'string') {
+          try {
+            return { ...block, input: JSON.parse(block.input) };
+          } catch {
+            return block;
+          }
+        }
+        return block;
+      });
+
+      // Detect trailing assistant message from a prior continuation turn
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant' && Array.isArray(lastMessage.content)) {
+        // Extend existing assistant message with new content blocks
+        messages[messages.length - 1] = {
+          ...lastMessage,
+          content: [...lastMessage.content, ...fixedContent],
+        };
+      } else {
+        // First continuation: append new assistant message with accumulated content
+        messages.push({ role: 'assistant', content: [...fixedContent] });
+      }
+
+      return {
+        ...body,
+        messages,
+        // Pass container ID as string to reuse the existing container
+        ...(containerId ? { container: containerId } : {}),
+      };
+    },
   };
 }
 

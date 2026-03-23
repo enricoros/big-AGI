@@ -154,7 +154,12 @@ export namespace AnthropicWire_Blocks {
     type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(), // length: 1-64
-    input: z.any(), // Formally an 'object', but relaxed for robust parsing, and code-enforced
+    /**
+     * Formally an 'object', but relaxed for robust parsing, and code-enforced.
+     * 2026-03-23: Anthropic seems to actually want a dictionary here, in case by mistake we pass strings.
+     *             We first found this while implementing the Anthropic Continuation logic (see chatGenerate.continuation.ts)
+     */
+    input: z.any(),
     caller: _ToolUseCaller_schema.optional(),
   });
 
@@ -266,7 +271,7 @@ export namespace AnthropicWire_Blocks {
       ]),
       z.string(), // forward-compatibility parsing
     ]),
-    input: z.any(),
+    input: z.any(), // see the comment on ToolUseBlock_schema.input
     caller: _ToolUseCaller_schema.optional(),
   });
 

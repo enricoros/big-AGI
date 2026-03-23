@@ -4,6 +4,7 @@ import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
+import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { executeChatGenerateDispatch } from './chatGenerate.executor';
 
 
@@ -69,19 +70,21 @@ export async function* executeChatGenerateWithOperationRetry(
       // if (error instanceof DOMException && error.name === 'AbortError')
       //   throw error; // expected abort - pass through to be handled by parent loop and converted to terminating particle
 
-      // NOTE: executeChatGenerate only throws OperationRetrySignal. All other errors (abort, network, parsing)
-      // are handled internally with terminating particles. However we do a defensive check here just in case.
+      // Pass through continuation signals silently to the outer wrapper
+      if (error instanceof DispatchContinuationSignal) throw error; // expected: outer loop will continue generation
+
+      // Only OperationRetrySignal is handled here. All other errors are unexpected.
       if (!(error instanceof OperationRetrySignal)) {
         if (AIX_DEBUG_OPERATION_RETRY)
           console.warn(`[operation.retrier] ⚠️ Unexpected error type (expected OperationRetrySignal): ${error?.name || 'unknown'}`);
-        throw error; // unexpected
+        throw error; // unexpected: executeChatGenerate shall convert exceptions to yielded particles
       }
 
       // sanity: exhausted attempts - must be a Parser error - as it shall have not thrown in this case
       if (attemptNumber >= maxAttempts) {
         if (AIX_DEBUG_OPERATION_RETRY)
           console.warn(`[operation.retrier] ⚠️ Retry error on final attempt (parser bug?) - ${error?.message || error}`);
-        throw error; // unexpected
+        throw error; // out of attempts
       }
 
       // retry: backoff: 1s, 2s, 4s (capped at 10s)
@@ -94,7 +97,7 @@ export async function* executeChatGenerateWithOperationRetry(
       // -> retry-server-operation - parent loop of retry-server-dispatch
       yield {
         cg: 'retry-reset', rScope: 'srv-op',
-        rShallClear: true, // requesting a reassembler reset, however there are likely low/no particles yet
+        rShallClear: false, // preserve particles from prior continuation turns; operation errors fire early with low/no particles
         reason: error.reason || error.message || 'retrying operation',
         attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs,
         ...(error.causeHttp ? { causeHttp: error.causeHttp } : undefined),
