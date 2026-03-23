@@ -23,7 +23,7 @@ import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
  *
  * Can be called directly from server-side code or wrapped in retry logic, batching, etc.
  */
-export async function* executeChatGenerate(
+export async function* executeChatGenerateDispatch(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   streaming: boolean,
   intakeAbortSignal: AbortSignal,
