@@ -13,7 +13,8 @@ import { RequestRetryError } from '../chatGenerate.retrier';
 // configuration
 const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
 // NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
-const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = true; // [Anthropic, 2026-01-12] Block Start Index issue workaround
+// NOTE: 2026-03-23: disabled, not useful any longer
+const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = false; // [Anthropic, 2026-01-12] Block Start Index issue workaround
 
 /**
  * [Anthropic, Opus-4.6] First text packet is '\n\n' - elide it
