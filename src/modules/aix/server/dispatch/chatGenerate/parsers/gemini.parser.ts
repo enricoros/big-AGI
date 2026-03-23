@@ -55,7 +55,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       const finishReason = eventData.candidates[0]?.finishReason;
       if (typeof finishReason === 'string')
 
-        // FIXME: potential point for throwing RequestRetryError (using 'srv-warn' for now)
+        // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
         //        in case of transient errors (502, 503, proxy queue, etc.) - not for good codes.
 
         switch (true) {
