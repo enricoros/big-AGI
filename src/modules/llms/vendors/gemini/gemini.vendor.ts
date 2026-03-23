@@ -30,7 +30,7 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   displayRank: 14,
   displayGroup: 'popular',
   location: 'cloud',
-  instanceLimit: 1,
+  instanceLimit: 2,
   hasServerConfigKey: 'hasLlmGemini',
 
   /// client-side-fetch ///
