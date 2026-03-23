@@ -10,7 +10,7 @@ import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } 
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
-import { getChatAutoAI, getIsNotificationEnabledForModel } from '../store-app-chat';
+import { getChatAutoAI, getChatThinkingPolicy, getIsNotificationEnabledForModel } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/store-panes-manager';
 
 
@@ -55,7 +55,7 @@ export async function runPersonaOnConversationHead(
   const parallelViewCount = getLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
 
   // ai follow-up operations (fire/forget)
-  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat, chatThinkingPolicy } = getChatAutoAI();
+  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // AutoSpeak
   const autoSpeaker: PersonaProcessorInterface | null = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;
@@ -129,6 +129,7 @@ export async function runPersonaOnConversationHead(
   if (!hasBeenAborted && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
     void autoChatFollowUps(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
+  const chatThinkingPolicy = getChatThinkingPolicy();
   if (chatThinkingPolicy === 'last-only')
     cHandler.historyStripThinking(1);
   else if (chatThinkingPolicy === 'discard-all')

@@ -218,7 +218,6 @@ export const getChatAutoAI = (): {
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
   autoVndAntBreakpoints: boolean,
-  chatThinkingPolicy: ChatThinkingPolicy,
 } => useAppChatStore.getState();
 
 export const useChatAutoSuggestHTMLUI = (): boolean =>
@@ -226,6 +225,9 @@ export const useChatAutoSuggestHTMLUI = (): boolean =>
 
 export const useChatAutoSuggestAttachmentPrompts = (): boolean =>
   useAppChatStore(state => state.autoSuggestAttachmentPrompts);
+
+export const getChatThinkingPolicy = (): ChatThinkingPolicy =>
+  useAppChatStore.getState().chatThinkingPolicy;
 
 export const getChatTokenCountingMethod = (): TokenCountingMethod =>
   useAppChatStore.getState().tokenCountingMethod;
