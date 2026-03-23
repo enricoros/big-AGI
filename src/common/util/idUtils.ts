@@ -102,12 +102,15 @@ export function stripLegacyUuidPrefix(value: string): string | false {
  */
 export function agiUuidV4(_scope: UuidV4Scope): string {
   // for modern browsers and Node.js
-  if (typeof crypto !== 'undefined' && crypto.randomUUID)
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
     return crypto.randomUUID();
 
-  // fallback for missing crypto.randomUUID
+  // fallback for missing crypto.randomUUID (e.g. non-secure HTTP context)
   const randomValues = new Uint8Array(16);
-  crypto.getRandomValues(randomValues);
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function')
+    crypto.getRandomValues(randomValues);
+  else
+    for (let i = 0; i < 16; i++) randomValues[i] = Math.floor(Math.random() * 256);
 
   // Set version (4) and variant (RFC4122)
   randomValues[6] = (randomValues[6] & 0x0f) | 0x40;
