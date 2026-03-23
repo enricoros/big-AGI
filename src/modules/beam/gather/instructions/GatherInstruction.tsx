@@ -10,10 +10,14 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
+import { isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
 import { getBeamCardScrolling } from '../../store-module-beam';
+
+// NOTE: we are making Beam depend on AppChat with this?
+import { getChatThinkingPolicy } from '../../../../apps/chat/store-app-chat';
 
 
 type ChatGenerateMethods =
@@ -52,13 +56,23 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
 
   const gatherSystemInstruction = createDMessageTextContent('system', _mixChatGeneratePrompt(_i.systemPrompt, inputs.rayMessages.length, prevStepOutput));
   const chatMessagesWithoutSystem = inputs.chatMessages.filter(_m => (_m.role === 'user' || _m.role === 'assistant'));
+
+  // #1042: strip thinking fragments from ray messages when the user has set reasoning traces to 'discard-all',
+  // to reduce token usage and help fit more beams within the context window for fusion
+  const discardThinking = getChatThinkingPolicy() === 'discard-all';
+
   const gatherHistory: DMessage[] = [
     // s0-h0-u0
     ...chatMessagesWithoutSystem,
     // aN: every proposal is an assistant message
     // FIXME: there could be an issue with aix.dispatch fusion of assistant messages, and in the future, this should require a
     //        re-encoding or structuring of sorts, e.g.: .map(_m => ({ ..._m, metadata: { ..._m.metadata, asAttachment: true } }))
-    ...inputs.rayMessages,
+    ...(!discardThinking
+      ? inputs.rayMessages
+      : inputs.rayMessages.map((_m) => ({
+          ..._m,
+          fragments: _m.fragments.filter((_f) => !isVoidThinkingFragment(_f)),
+        }))),
     // u
     createDMessageTextContent('user', _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput)),
   ];
