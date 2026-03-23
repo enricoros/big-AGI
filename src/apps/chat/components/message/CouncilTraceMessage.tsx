@@ -1052,12 +1052,6 @@ export function CouncilTraceMessage(props: {
                               </Box>
                             )}
 
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                              <CouncilTraceRoundToggleButton
-                                roundExpanded={roundExpanded}
-                                onToggle={() => toggleRound(round.roundIndex)}
-                              />
-                            </Box>
                           </Box>
                         </>
                       )}

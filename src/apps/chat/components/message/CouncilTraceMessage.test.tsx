@@ -304,14 +304,14 @@ test('expanded council trace renders round automation preferences in the header 
   assert.match(markup, /Collapse all/);
 });
 
-test('expanded rounds render a collapse control at both the top and bottom of the round', () => {
+test('expanded rounds render a single collapse control in the round header', () => {
   const markup = renderToStaticMarkup(
     <ul>
       <CouncilTraceMessage trace={trace} defaultExpanded defaultExpandedRoundIndexes={[0]} />
     </ul>,
   );
 
-  assert.equal((markup.match(/Collapse round/g) ?? []).length, 2);
+  assert.equal((markup.match(/Collapse round/g) ?? []).length, 1);
 });
 
 test('expanded council trace exposes each round as its own minimap entry', () => {
