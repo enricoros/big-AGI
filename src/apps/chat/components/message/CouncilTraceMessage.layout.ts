@@ -8,22 +8,27 @@ export function getCouncilTraceLeaderRowSx() {
 
 export function getCouncilTraceReviewerRowScrollerSx() {
   return {
-    overflowX: 'auto',
+    overflowX: { xs: 'auto', md: 'visible' },
     mx: { xs: -0.25, md: 0 },
     pb: 0.5,
     scrollbarWidth: 'thin',
   } as const;
 }
 
-export function getCouncilTraceReviewerRowSx(_cardCount: number) {
+export function getCouncilTraceReviewerRowSx(cardCount: number) {
+  const useDenseDesktopGrid = cardCount > 0 && cardCount <= 3;
+
   return {
     display: 'grid',
     gap: 1,
     alignItems: 'start',
     gridAutoFlow: { xs: 'row', md: 'column' },
-    gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'none' },
+    gridTemplateColumns: {
+      xs: 'minmax(0, 1fr)',
+      md: useDenseDesktopGrid ? `repeat(${cardCount}, minmax(0, 1fr))` : 'none',
+    },
     gridAutoColumns: { md: 'minmax(18rem, 22rem)' },
-    minWidth: { xs: 0, md: 'max-content' },
+    minWidth: { xs: 0, md: useDenseDesktopGrid ? 0 : 'max-content' },
   } as const;
 }
 

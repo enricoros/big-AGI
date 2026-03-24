@@ -8,7 +8,7 @@ import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleF
 
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { createDMessageEmpty, createDMessageTextContent, duplicateDMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import type { DMessageContentFragment, DMessageToolInvocationPart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageContentFragment, DMessageFragment, DMessageToolInvocationPart } from '~/common/stores/chat/chat.fragments';
 import { create_FunctionCallResponse_ContentFragment, isContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 
 
@@ -37,9 +37,15 @@ type FunctionToolInvocation = DMessageToolInvocationPart & {
   invocation: Extract<DMessageToolInvocationPart['invocation'], { type: 'function_call' }>;
 };
 
-type ToolHandler = (invocation: FunctionToolInvocation, sourceHistory: Readonly<DMessage[]>) => Promise<ToolHandlerResult>;
+type ToolHandler = (
+  invocation: FunctionToolInvocation,
+  sourceHistory: Readonly<DMessage[]>,
+  parentMessageId: string | null,
+) => Promise<ToolHandlerResult>;
 
 type PersonaExecutor = (params: ChatExecutionRuntimeRunPersonaParams) => Promise<PersonaRunResult>;
+
+type SubagentProgressStatus = 'queued' | 'running' | 'streaming' | 'finalizing' | 'done' | 'failed';
 
 function composeRequestTransforms(
   baseTransform: PersonaRunOptions['requestTransform'] | undefined,
@@ -115,11 +121,15 @@ function buildAssistantHistoryMessage(params: {
   return assistantMessage;
 }
 
+function cloneMessageFragments<TFragment extends DMessageFragment>(fragments: readonly TFragment[] | null | undefined): TFragment[] {
+  return structuredClone((fragments ?? []) as TFragment[]) as TFragment[];
+}
+
 function mergeFinalMessages(prefix: PersonaRunResult['finalMessage'], suffix: PersonaRunResult['finalMessage']): PersonaRunResult['finalMessage'] {
   return {
     fragments: [
-      ...structuredClone(prefix.fragments),
-      ...structuredClone(suffix.fragments),
+      ...cloneMessageFragments(prefix.fragments),
+      ...cloneMessageFragments(suffix.fragments),
     ],
     generator: structuredClone(suffix.generator),
     pendingIncomplete: suffix.pendingIncomplete,
@@ -133,7 +143,7 @@ function updateAssistantMessageFromFinalMessage(
   messageComplete: boolean,
 ): void {
   session.messageEdit(assistantMessageId, {
-    fragments: structuredClone(message.fragments),
+    fragments: cloneMessageFragments(message.fragments),
     generator: structuredClone(message.generator),
     pendingIncomplete: message.pendingIncomplete,
   }, messageComplete, false);
@@ -150,6 +160,40 @@ function createSubagentUserMessage(prompt: string): DMessage {
   ].join('\n'));
 }
 
+function formatSubagentProgressText(params: {
+  prompt: string;
+  status: SubagentProgressStatus;
+  visibleText?: string | null;
+  note?: string | null;
+}): string {
+  const statusLabel = params.status === 'queued'
+    ? 'Queued'
+    : params.status === 'running'
+      ? 'Running delegated task'
+      : params.status === 'streaming'
+        ? 'Streaming visible output'
+        : params.status === 'finalizing'
+          ? 'Finalizing result'
+          : params.status === 'done'
+            ? 'Complete'
+            : 'Failed';
+
+  const sections = [
+    `**Task**\n${params.prompt.trim()}`,
+    `**Status**\n${statusLabel}`,
+  ];
+
+  if (params.note?.trim())
+    sections.push(`**Activity**\n${params.note.trim()}`);
+
+  if (params.visibleText?.trim())
+    sections.push(`**Current output**\n${params.visibleText.trim()}`);
+  else if (params.status !== 'done' && params.status !== 'failed')
+    sections.push('**Current output**\nWaiting for first visible output...');
+
+  return sections.join('\n\n');
+}
+
 function createSubagentToolHandlers(
   params: ChatExecutionRuntimeRunPersonaParams,
   executePersona: PersonaExecutor,
@@ -157,7 +201,7 @@ function createSubagentToolHandlers(
   abortController: AbortController,
 ): Map<string, ToolHandler> {
   return new Map<string, ToolHandler>([
-    [SUBAGENT_TOOL_NAME, async (invocation, sourceHistory) => {
+    [SUBAGENT_TOOL_NAME, async (invocation, sourceHistory, parentMessageId) => {
       if (context.depth >= SUBAGENT_MAX_DEPTH) {
         return {
           error: 'subagent depth limit reached',
@@ -183,12 +227,20 @@ function createSubagentToolHandlers(
 
       const ephemeral = params.session.createEphemeralHandler(
         params.participant?.name ? `${params.participant.name} subagent` : 'Subagent',
-        'Delegating task...',
+        formatSubagentProgressText({
+          prompt: parsedArgs.prompt,
+          status: 'queued',
+          note: 'Creating delegated run context.',
+        }),
       );
       ephemeral.updateState({
         depth: context.depth + 1,
         prompt: parsedArgs.prompt,
         status: 'running',
+        phase: 'Creating delegated run context',
+        messageFragments: [],
+        parentMessageId,
+        parentToolInvocationId: invocation.id,
       });
 
       try {
@@ -210,17 +262,38 @@ function createSubagentToolHandlers(
         }, executePersona, {
           depth: context.depth + 1,
         }, (message, messageComplete) => {
-          const visibleText = messageFragmentsReduceText(message.fragments).trim();
-          if (visibleText)
-            ephemeral.updateText(visibleText);
+          const visibleText = messageFragmentsReduceText(message.fragments ?? []).trim();
+          const progressStatus: SubagentProgressStatus = messageComplete
+            ? 'finalizing'
+            : visibleText
+              ? 'streaming'
+              : 'running';
+          ephemeral.updateText(formatSubagentProgressText({
+            prompt: parsedArgs.prompt,
+            status: progressStatus,
+            visibleText,
+            note: messageComplete
+              ? 'Wrapping up delegated result.'
+              : visibleText
+                ? 'Received visible output from delegated run.'
+                : 'Waiting for delegated visible output.',
+          }));
           ephemeral.updateState({
             depth: context.depth + 1,
             prompt: parsedArgs.prompt,
-            status: messageComplete ? 'finalizing' : 'running',
+            status: messageComplete ? 'finalizing' : visibleText ? 'streaming' : 'running',
+            phase: messageComplete
+              ? 'Wrapping up delegated result'
+              : visibleText
+                ? 'Streaming visible output'
+                : 'Waiting for delegated visible output',
+            messageFragments: cloneMessageFragments(message.fragments),
+            parentMessageId,
+            parentToolInvocationId: invocation.id,
           });
         });
 
-        const childMessage = messageFragmentsReduceText(childResult.finalMessage.fragments).trim();
+        const childMessage = messageFragmentsReduceText(childResult.finalMessage.fragments ?? []).trim();
         const toolPayload = childMessage
           ? {
               ok: true,
@@ -231,11 +304,20 @@ function createSubagentToolHandlers(
               message: '',
             };
 
-        ephemeral.updateText(childMessage || 'No visible text returned.');
+        ephemeral.updateText(formatSubagentProgressText({
+          prompt: parsedArgs.prompt,
+          status: childResult.success ? 'done' : 'failed',
+          visibleText: childMessage,
+          note: childMessage ? 'Delegated run returned a final result.' : 'Delegated run completed without visible text.',
+        }));
         ephemeral.updateState({
           depth: context.depth + 1,
           prompt: parsedArgs.prompt,
           status: childResult.success ? 'done' : 'failed',
+          phase: childResult.success ? 'Delegated run completed' : 'Delegated run failed',
+          messageFragments: cloneMessageFragments(childResult.finalMessage.fragments),
+          parentMessageId,
+          parentToolInvocationId: invocation.id,
         });
 
         return {
@@ -243,11 +325,20 @@ function createSubagentToolHandlers(
           result: JSON.stringify(toolPayload),
         };
       } catch (error) {
-        ephemeral.updateText(error instanceof Error && error.message ? error.message : 'Subagent execution failed.');
+        ephemeral.updateText(formatSubagentProgressText({
+          prompt: parsedArgs.prompt,
+          status: 'failed',
+          visibleText: error instanceof Error && error.message ? error.message : 'Subagent execution failed.',
+          note: 'Delegated run failed before returning a final result.',
+        }));
         ephemeral.updateState({
           depth: context.depth + 1,
           prompt: parsedArgs.prompt,
           status: 'failed',
+          phase: 'Delegated run failed',
+          messageFragments: [],
+          parentMessageId,
+          parentToolInvocationId: invocation.id,
         });
         if (abortController.signal.aborted)
           throw error;
@@ -338,41 +429,50 @@ export async function runPersonaWithEphemeralSubagents(
 
       if (assistantMessageId && !firstPass)
         updateAssistantMessageFromFinalMessage(params.session, assistantMessageId, lastResult.finalMessage, true);
+      if (!lastResult)
+        throw new Error('tool loop invariant: missing last result');
 
       const pendingInvocations = getPendingClientToolInvocations(lastResult.finalMessage.fragments, executableToolNames);
       if (!pendingInvocations.length || loopAbortController.signal.aborted)
         return lastResult;
+      let accumulatedResult: PersonaRunResult = lastResult;
 
-      for (const invocation of pendingInvocations) {
+      const resolvedToolResults = await Promise.all(pendingInvocations.map(async invocation => {
         const handler = toolHandlers.get(invocation.invocation.name);
         if (!handler)
-          continue;
+          return null;
 
-        const toolResult = await handler(invocation, currentHistory);
-        const responseFragment = create_FunctionCallResponse_ContentFragment(
+        const toolResult = await handler(invocation, currentHistory, assistantMessageId);
+        return create_FunctionCallResponse_ContentFragment(
           invocation.id,
           toolResult.error,
           invocation.invocation.name,
           toolResult.result,
           'client',
         );
+      }));
 
-        lastResult = {
-          ...lastResult,
+      for (const responseFragment of resolvedToolResults) {
+        if (!responseFragment)
+          continue;
+
+        accumulatedResult = {
+          ...accumulatedResult,
           finalMessage: {
-            ...lastResult.finalMessage,
+            ...accumulatedResult.finalMessage,
             fragments: [
-              ...structuredClone(lastResult.finalMessage.fragments),
+              ...cloneMessageFragments(accumulatedResult.finalMessage.fragments),
               responseFragment,
             ],
           },
         };
+        lastResult = accumulatedResult;
 
         if (assistantMessageId)
           params.session.messageFragmentAppend(assistantMessageId, responseFragment, false, false);
 
-        params.runOptions?.onStreamUpdate?.(lastResult.finalMessage, false);
-        onLoopStreamUpdate?.(lastResult.finalMessage, false);
+        params.runOptions?.onStreamUpdate?.(accumulatedResult.finalMessage, false);
+        onLoopStreamUpdate?.(accumulatedResult.finalMessage, false);
       }
 
       currentHistory = [
@@ -381,13 +481,13 @@ export async function runPersonaWithEphemeralSubagents(
           ? duplicateDMessage(params.session.historyFindMessageOrThrow(assistantMessageId) ?? buildAssistantHistoryMessage({
             participant: params.participant,
             assistantLlmId: params.assistantLlmId,
-            message: lastResult.finalMessage,
+            message: accumulatedResult.finalMessage,
             messageChannel: params.messageChannel,
           }), false)
           : buildAssistantHistoryMessage({
             participant: params.participant,
             assistantLlmId: params.assistantLlmId,
-            message: lastResult.finalMessage,
+            message: accumulatedResult.finalMessage,
             messageChannel: params.messageChannel,
           }),
       ];

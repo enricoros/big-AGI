@@ -65,6 +65,7 @@ export function ContentFragments(props: {
   disableMarkdownText: boolean,
   showUnsafeHtmlCode?: boolean,
   participants?: DConversationParticipant[],
+  hiddenToolCallIds?: ReadonlySet<string>,
 
   textEditsState: ChatMessageTextPartEditState | null,
   setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
@@ -274,6 +275,19 @@ export function ContentFragments(props: {
 
       // CONTENT FRAGMENTS (text, code, tool calls, images, errors)
       const { part } = fragment;
+      if (props.hiddenToolCallIds?.size) {
+        if (part.pt === 'tool_invocation'
+          && part.invocation.type === 'function_call'
+          && part.invocation.name === 'subagent'
+          && props.hiddenToolCallIds.has(part.id))
+          return null;
+
+        if (part.pt === 'tool_response'
+          && part.response.type === 'function_call'
+          && part.response.name === 'subagent'
+          && props.hiddenToolCallIds.has(part.id))
+          return null;
+      }
 
       // editing for text parts, tool invocations, or tool responses
       if (props.textEditsState && !!props.setEditedText && (

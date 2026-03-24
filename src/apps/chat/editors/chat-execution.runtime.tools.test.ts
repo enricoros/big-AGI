@@ -10,7 +10,7 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { createDMessageEmpty, createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
-import { createTextContentFragment, create_FunctionCallInvocation_ContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
+import { createModelAuxVoidFragment, createTextContentFragment, create_FunctionCallInvocation_ContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 
 
 const TEST_LLM_ID = 'test-llm';
@@ -26,6 +26,17 @@ type ScriptedReply = {
   success?: boolean;
   fragments: DMessageFragment[];
 };
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((innerResolve, innerReject) => {
+    resolve = innerResolve;
+    reject = innerReject;
+  });
+
+  return { promise, resolve, reject };
+}
 
 class FakeSession implements ChatExecutionSession {
   readonly conversationId = createDConversation().id;
@@ -218,6 +229,7 @@ test('runPersonaWithEphemeralSubagents executes subagent tool calls and continue
     },
     {
       fragments: [
+        createModelAuxVoidFragment('reasoning', 'Need to inspect the edge case first.'),
         createTextContentFragment('The delegated edge case is covered.'),
       ],
     },
@@ -250,7 +262,99 @@ test('runPersonaWithEphemeralSubagents executes subagent tool calls and continue
   assert.equal(session.appendedFragments.length, 1);
   assert.equal(session.ephemerals.length, 1);
   assert.equal(session.ephemerals[0]?.done, true);
-  assert.match(session.ephemerals[0]?.text ?? '', /delegated edge case/i);
+  assert.match(session.ephemerals[0]?.text ?? '', /\*\*Task\*\*/);
+  assert.match(session.ephemerals[0]?.text ?? '', /Check the edge case\./);
+  assert.match(session.ephemerals[0]?.text ?? '', /The delegated edge case is covered\./);
+  assert.equal(Array.isArray((session.ephemerals[0]?.state as { messageFragments?: unknown })?.messageFragments), true);
+  assert.equal(((session.ephemerals[0]?.state as { messageFragments?: DMessageFragment[] })?.messageFragments ?? [])[0]?.ft, 'void');
+  assert.equal((session.ephemerals[0]?.state as { parentMessageId?: string })?.parentMessageId, 'assistant-1');
+  assert.equal((session.ephemerals[0]?.state as { parentToolInvocationId?: string })?.parentToolInvocationId, 'tool-1');
+});
+
+test('runPersonaWithEphemeralSubagents runs sibling subagent tool calls concurrently while preserving response order', async () => {
+  const session = new FakeSession();
+  const firstDeferred = createDeferred<PersonaRunResult>();
+  const secondDeferred = createDeferred<PersonaRunResult>();
+  const startedPrompts: string[] = [];
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    const sourceHistoryText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+
+    if (sourceHistoryText.includes('First delegated task.')) {
+      startedPrompts.push('first');
+      return firstDeferred.promise;
+    }
+
+    if (sourceHistoryText.includes('Second delegated task.')) {
+      startedPrompts.push('second');
+      return secondDeferred.promise;
+    }
+
+    if (sourceHistoryText.includes('Solve the task.')) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'First delegated task.' })),
+          create_FunctionCallInvocation_ContentFragment('tool-2', 'subagent', JSON.stringify({ prompt: 'Second delegated task.' })),
+        ]),
+        assistantMessageId: 'assistant-root',
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        createTextContentFragment('Merged final answer.'),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const runPromise = runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.deepEqual(startedPrompts, ['first', 'second']);
+
+  secondDeferred.resolve({
+    success: true,
+    finalMessage: createFinalMessage([
+      createTextContentFragment('Second result.'),
+    ]),
+    assistantMessageId: null,
+  });
+
+  await Promise.resolve();
+
+  assert.equal(session.ephemerals.length, 2);
+  assert.match(session.ephemerals[0]?.text ?? '', /First delegated task\./);
+  assert.match(session.ephemerals[1]?.text ?? '', /Second delegated task\./);
+
+  firstDeferred.resolve({
+    success: true,
+    finalMessage: createFinalMessage([
+      createTextContentFragment('First result.'),
+    ]),
+    assistantMessageId: null,
+  });
+
+  const result = await runPromise;
+  const toolResponses = result.finalMessage.fragments
+    .filter(fragment => fragment.ft === 'content' && isToolResponseFunctionCallPart(fragment.part))
+    .map(fragment => JSON.parse(fragment.part.response.result));
+
+  assert.deepEqual(toolResponses, [
+    { ok: true, message: 'First result.' },
+    { ok: true, message: 'Second result.' },
+  ]);
+  assert.ok(session.ephemerals.every(ephemeral => ephemeral.done));
 });
 
 test('runPersonaWithEphemeralSubagents lets nested subagents inherit the same toolset', async () => {
@@ -302,4 +406,62 @@ test('runPersonaWithEphemeralSubagents lets nested subagents inherit the same to
     message: 'Child synthesized the hidden constraint.',
   }]);
   assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'text');
+});
+
+test('runPersonaWithEphemeralSubagents tolerates streamed child updates without fragments', async () => {
+  const session = new FakeSession();
+  let rootCallCount = 0;
+  let childCallCount = 0;
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    const sourceHistoryText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+
+    if (sourceHistoryText.includes('Delegated task from your parent agent:')) {
+      childCallCount++;
+      params.runOptions?.onStreamUpdate?.({
+        generator: { mgt: 'named', name: TEST_LLM_ID },
+        pendingIncomplete: true,
+      } as PersonaRunResult['finalMessage'], false);
+
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          createTextContentFragment('Child final output.'),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    rootCallCount++;
+    if (rootCallCount === 1) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle the delegated task.' })),
+        ]),
+        assistantMessageId: 'assistant-root',
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        createTextContentFragment('Parent final output.'),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const result = await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  assert.equal(childCallCount, 1);
+  assert.equal(rootCallCount, 2);
+  assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'text');
+  assert.match(session.ephemerals[0]?.text ?? '', /Child final output\./);
 });

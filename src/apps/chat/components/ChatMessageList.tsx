@@ -63,6 +63,7 @@ import { CouncilTraceMessage } from './message/CouncilTraceMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatAutoSuggestHTMLUI, useChatShowConversationMinimap, useChatShowSystemMessages } from '../store-app-chat';
+import type { DEphemeral } from '~/common/chat-overlay/store-perchat-ephemerals_slice';
 
 
 const stableNoMessages: DMessage[] = [];
@@ -71,6 +72,7 @@ const stableNoRenderEntries: GroupedVisibleRenderEntry[] = [];
 const stableNoVisibleEntries = [] as VisibleRenderEntry[];
 const stableNoGroupMessages: RenderedGroupMessageEntry[] = [];
 const stableNoCouncilTracePlan = { traceItem: null, showLegacyDeliberationToggle: false } as const;
+const stableNoEphemerals = [] as DEphemeral[];
 const publicBoardChannel = { channel: 'public-board' } as const;
 const INITIAL_VISIBLE_ENTRY_UNITS = 48;
 const councilGroupBoxSx = { display: 'grid', gap: 1, px: 2, pt: 0.5, pb: 0.75 } as const;
@@ -296,6 +298,8 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
   handleAppendMention: (mentionText: string) => void;
   participants: DConversationParticipant[];
   participantDisplayNamesById: ReadonlyMap<string, string>;
+  ephemeralsByMessageId: ReadonlyMap<string, DEphemeral[]>;
+  conversationHandler?: ConversationHandler | null;
 }) {
   const {
     entry,
@@ -333,6 +337,8 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
     handleAppendMention,
     participants,
     participantDisplayNamesById,
+    ephemeralsByMessageId,
+    conversationHandler,
   } = props;
 
   const groupTone = isExpanded ? 'primary' : 'neutral';
@@ -415,6 +421,8 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
                       participants={participants}
                       participantDisplayNamesById={participantDisplayNamesById}
                       turnTerminationMode='council'
+                      ephemerals={ephemeralsByMessageId.get(message.id) ?? stableNoEphemerals}
+                      conversationHandler={conversationHandler}
                     />
                   )}
                 </Box>
@@ -459,7 +467,9 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
     && prevProps.handleTextImagine === nextProps.handleTextImagine
     && prevProps.handleTextSpeak === nextProps.handleTextSpeak
     && prevProps.handleAppendMention === nextProps.handleAppendMention
-    && prevProps.participants === nextProps.participants;
+    && prevProps.participants === nextProps.participants
+    && prevProps.ephemeralsByMessageId === nextProps.ephemeralsByMessageId
+    && prevProps.conversationHandler === nextProps.conversationHandler;
 });
 
 function getMessageDecoratorKind(message: DMessage): MessageDecoratorKind | undefined {
@@ -520,6 +530,11 @@ function getCouncilGroupColumnWidth(messageCount: number): string {
   if (messageCount === 3)
     return 'minmax(17rem, 1fr)';
   return 'minmax(15rem, 1fr)';
+}
+
+function getEphemeralParentMessageId(ephemeral: DEphemeral): string | null {
+  const parentMessageId = (ephemeral.state as { parentMessageId?: unknown } | null | undefined)?.parentMessageId;
+  return typeof parentMessageId === 'string' && parentMessageId.trim() ? parentMessageId : null;
 }
 
 export function ChatMessageList(props: {
@@ -607,6 +622,28 @@ export function ChatMessageList(props: {
   const isCouncilRenderMode = turnTerminationMode === 'council';
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
   const composerHasInReferenceto = _composerInReferenceToCount > 0;
+  const ephemeralsByMessageId = React.useMemo(() => {
+    const grouped = new Map<string, DEphemeral[]>();
+    if (!ephemerals?.length)
+      return grouped;
+
+    for (const ephemeral of ephemerals) {
+      const parentMessageId = getEphemeralParentMessageId(ephemeral);
+      if (!parentMessageId)
+        continue;
+      const current = grouped.get(parentMessageId);
+      if (current)
+        current.push(ephemeral);
+      else
+        grouped.set(parentMessageId, [ephemeral]);
+    }
+
+    return grouped;
+  }, [ephemerals]);
+  const unboundEphemerals = React.useMemo(
+    () => ephemerals?.filter(ephemeral => !getEphemeralParentMessageId(ephemeral)) ?? null,
+    [ephemerals],
+  );
   const handleCouncilTraceAutoCollapsePreviousRoundsChange = React.useCallback((value: boolean) => {
     if (!conversationId)
       return;
@@ -852,9 +889,11 @@ export function ChatMessageList(props: {
   const minimapOverlaySx: SxProps = React.useMemo(() => getChatMessageListMinimapOverlaySx(), []);
   const listSx: SxProps = React.useMemo(() => ({
     p: 0,
+    px: { xs: 0.5, md: 1 },
+    py: 1,
 
     // we added these after removing the minSize={20} (%) from the containing panel.
-    minWidth: '18rem',
+    minWidth: { xs: 0, md: '18rem' },
     // minHeight: '180px', // not need for this, as it's already an overflow scrolling container, so one can reduce it to a pixel
 
     // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
@@ -863,6 +902,7 @@ export function ChatMessageList(props: {
     // layout
     display: 'flex',
     flexDirection: 'column',
+    gap: 1,
   }), []);
 
   const filteredMessages = React.useMemo(() => perfMeasureSync(
@@ -1193,6 +1233,8 @@ export function ChatMessageList(props: {
                 handleAppendMention={handleAppendMention}
                 participants={participants}
                 participantDisplayNamesById={participantDisplayNamesById}
+                ephemeralsByMessageId={ephemeralsByMessageId}
+                conversationHandler={conversationHandler}
               />
             );
           }
@@ -1242,6 +1284,8 @@ export function ChatMessageList(props: {
                 participants={participants}
                 participantDisplayNamesById={participantDisplayNamesById}
                 turnTerminationMode={turnTerminationMode}
+                ephemerals={ephemeralsByMessageId.get(message.id) ?? stableNoEphemerals}
+                conversationHandler={conversationHandler}
               />
             </PerfProfiler>
           );
@@ -1249,9 +1293,9 @@ export function ChatMessageList(props: {
       )}
 
       {/* Render ephemerals (sidebar ReAct output widgets) at the bottom */}
-      {!!ephemerals?.length && !!conversationHandler && (
+      {!!unboundEphemerals?.length && !!conversationHandler && (
         <Ephemerals
-          ephemerals={ephemerals}
+          ephemerals={unboundEphemerals}
           conversationHandler={conversationHandler}
           sx={{
             mt: 'auto',

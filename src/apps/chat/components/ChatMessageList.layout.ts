@@ -2,6 +2,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 
 
 export const CHAT_MESSAGE_LIST_MINIMAP_TRACK_MAX_RENDER_UNITS = 160;
+export const CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX = 48;
 
 export function shouldShowConversationMinimapTrack(args: {
   showConversationMinimap: boolean;
@@ -34,6 +35,11 @@ export function getChatMessageListConversationOverlayMode(args: {
 export function getChatMessageListContainerSx(baseSx?: SxProps): SxProps {
   return {
     position: 'relative',
+    boxSizing: 'border-box',
+    pr: {
+      xs: 0,
+      md: `${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px`,
+    },
     ...baseSx,
   };
 }
@@ -42,12 +48,20 @@ export function getChatMessageListMinimapOverlaySx(): SxProps {
   return {
     position: 'sticky',
     top: 12,
+    right: 0,
     zIndex: 3,
     height: 0,
     display: { xs: 'none', md: 'flex' },
+    width: {
+      xs: 'auto',
+      md: `calc(100% + ${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px)`,
+    },
+    mr: {
+      xs: 0,
+      md: `calc(-1 * ${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px)`,
+    },
     justifyContent: 'flex-end',
     pointerEvents: 'none',
-    px: 1,
     pt: 0.5,
     overflow: 'visible',
   };

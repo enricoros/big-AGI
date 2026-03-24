@@ -87,6 +87,12 @@ const chatMessageListSx: SxProps = {
   flexGrow: 1,
 };
 
+const chatPanelsDesktopStyle = {
+  width: '100%',
+  maxWidth: '112rem',
+  marginInline: 'auto',
+} as const;
+
 const queuedConversationPreviewBarSx: SxProps = {
   display: 'flex',
   flexDirection: 'column',
@@ -896,6 +902,7 @@ export function AppChat() {
     <PanelGroup
       direction={(isMobile || isTallScreen) ? 'vertical' : 'horizontal'}
       id='app-chat-panels'
+      style={isMobile ? undefined : chatPanelsDesktopStyle}
     >
 
       {chatPanes.map((pane, idx) => {

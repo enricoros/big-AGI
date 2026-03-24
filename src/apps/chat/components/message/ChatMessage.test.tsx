@@ -6,7 +6,8 @@ import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { createAssistantConversationParticipant } from '~/common/stores/chat/chat.conversation';
-import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageTextContent } from '~/common/stores/chat/chat.message';
+import { create_FunctionCallInvocation_ContentFragment, create_FunctionCallResponse_ContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import { ChatMessage, shouldShowRestartInCouncilAction } from './ChatMessage';
 
@@ -92,6 +93,39 @@ function renderSingleAgentModelNamedAssistantChatMessageMarkup() {
   );
 }
 
+function renderAssistantMessageWithInlineSubagentMarkup() {
+  const message = createDMessageEmpty('assistant');
+  message.fragments = [
+    create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Inspect the issue.' })),
+    create_FunctionCallResponse_ContentFragment('tool-1', false, 'subagent', JSON.stringify({ ok: true, message: 'Done.' }), 'client'),
+    createTextContentFragment('Parent final answer.'),
+  ];
+  const ephemerals = [{
+    id: 'ephemeral-1',
+    title: 'Planner',
+    text: '**Task**\nInspect the issue.',
+    state: {
+      parentMessageId: message.id,
+      parentToolInvocationId: 'tool-1',
+    },
+    done: false,
+    minimized: false,
+    showStatePane: false,
+  }];
+
+  return renderToStaticMarkup(
+    <ul>
+      <ChatMessage
+        message={message}
+        fitScreen={false}
+        isMobile={false}
+        ephemerals={ephemerals}
+        conversationHandler={{ overlayActions: { ephemeralsDelete() {}, ephemeralsToggleMinimized() {}, ephemeralsToggleShowStatePane() {} } } as any}
+      />
+    </ul>,
+  );
+}
+
 test('system messages created with updated equal to created do not show the edited warning', () => {
   const markup = renderChatMessageMarkup(100);
 
@@ -163,4 +197,12 @@ test('upstream resume block delegates to the message resume handler instead of p
   assert.doesNotMatch(source, /onResume=\{console\.error\}/);
   assert.doesNotMatch(source, /onCancel=\{console\.error\}/);
   assert.doesNotMatch(source, /onDelete=\{console\.error\}/);
+});
+
+test('assistant messages hide duplicate subagent tool blocks when inline subagent panels are present', () => {
+  const markup = renderAssistantMessageWithInlineSubagentMarkup();
+
+  assert.match(markup, /Planner Internal Monologue/);
+  assert.doesNotMatch(markup, />Subagent</);
+  assert.doesNotMatch(markup, />Client</);
 });

@@ -279,7 +279,9 @@ function CouncilTraceLabeledCallout(props: {
         borderRadius: 'md',
         border: '1px solid',
         borderColor: tone === 'danger' ? 'danger.outlinedBorder' : 'divider',
-        backgroundColor: tone === 'danger' ? 'danger.softBg' : 'background.level1',
+        background: tone === 'danger'
+          ? 'linear-gradient(180deg, rgba(var(--joy-palette-danger-mainChannel) / 0.10) 0%, var(--joy-palette-danger-softBg) 100%)'
+          : 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.05) 0%, var(--joy-palette-background-level1) 100%)',
         px: 1,
         py: 0.9,
         display: 'grid',
@@ -400,7 +402,7 @@ function renderAgentDetailItems(detailItems: readonly CouncilTraceAgentDetailIte
               borderRadius: 'md',
               border: '1px solid',
               borderColor: 'divider',
-              backgroundColor: 'background.level1',
+              backgroundColor: 'background.level2',
               px: 1,
               py: 0.75,
             }}
@@ -414,7 +416,7 @@ function renderAgentDetailItems(detailItems: readonly CouncilTraceAgentDetailIte
               borderRadius: 'md',
               border: '1px solid',
               borderColor: 'divider',
-              backgroundColor: 'background.level1',
+              backgroundColor: 'background.level2',
               px: 1,
               py: 0.75,
               display: 'grid',
@@ -599,8 +601,8 @@ function CouncilTraceAgentCardView(props: {
               gap: 0.75,
               borderRadius: 'md',
               border: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: 'background.surface',
+              borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+              background: 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.05) 0%, var(--joy-palette-background-level1) 100%)',
               p: 0.9,
             }}
           >
@@ -773,11 +775,11 @@ export function CouncilTraceMessage(props: {
       <ListItem data-chat-minimap-entry='trace' sx={{ display: 'block', px: 0, py: 0.75 }}>
         <Box
           sx={{
-            mx: 2,
+            mx: { xs: 0.5, md: 1 },
             borderRadius: 'lg',
             border: '1px solid',
-            borderColor: 'divider',
-            background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.06) 0%, var(--joy-palette-background-level1) 18%, var(--joy-palette-background-surface) 100%)',
+            borderColor: 'rgba(var(--joy-palette-primary-mainChannel) / 0.18)',
+            background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.08) 0%, var(--joy-palette-background-level1) 18%, var(--joy-palette-background-surface) 100%)',
             boxShadow: 'sm',
             overflow: 'hidden',
           }}
@@ -859,8 +861,8 @@ export function CouncilTraceMessage(props: {
                 alignItems: 'center',
                 borderRadius: 'md',
                 border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.surface',
+                borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+                background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.04) 0%, var(--joy-palette-background-surface) 100%)',
                 px: 1,
                 py: 0.95,
               }}
@@ -922,8 +924,10 @@ export function CouncilTraceMessage(props: {
                       sx={{
                         borderRadius: 'md',
                         border: '1px solid',
-                        borderColor: roundExpanded ? 'primary.outlinedBorder' : 'divider',
-                        backgroundColor: 'background.surface',
+                        borderColor: roundExpanded ? 'primary.outlinedBorder' : 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+                        background: roundExpanded
+                          ? 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.08) 0%, var(--joy-palette-background-surface) 100%)'
+                          : 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.04) 0%, var(--joy-palette-background-surface) 100%)',
                         boxShadow: roundExpanded ? 'sm' : 'xs',
                         overflow: 'hidden',
                       }}

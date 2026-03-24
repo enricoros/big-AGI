@@ -51,6 +51,8 @@ import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/u
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import type { DEphemeral } from '~/common/chat-overlay/store-perchat-ephemerals_slice';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 
 import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
@@ -64,6 +66,7 @@ import { VoidFragments } from './fragments-void/VoidFragments';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
 import { setIsNotificationEnabledForModel, useChatShowTextDiff } from '../../store-app-chat';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
+import { Ephemerals } from '../Ephemerals';
 
 
 // Enable the menu on text selection
@@ -78,7 +81,7 @@ export const BUBBLE_MIN_TEXT_LENGTH = 3;
 const messageBodySx: SxProps = {
   display: 'flex',
   alignItems: 'flex-start', // avatars at the top, and honor 'static' position
-  gap: { xs: 0, md: 1 },
+  gap: { xs: 0.75, md: 1.25 },
 };
 
 const messageBodyReverseSx: SxProps = {
@@ -112,7 +115,7 @@ const fragmentsListSx: SxProps = {
   // layout
   display: 'flex',
   flexDirection: 'column',
-  gap: 1.5,     // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
+  gap: 1.25,    // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
 };
 
 const antCachePromptOffSx: SxProps = {
@@ -200,6 +203,8 @@ export function ChatMessage(props: {
   participants?: DConversationParticipant[],
   participantDisplayNamesById?: ReadonlyMap<string, string>,
   turnTerminationMode?: DConversationTurnTerminationMode,
+  ephemerals?: DEphemeral[],
+  conversationHandler?: ConversationHandler | null,
   sx?: SxProps,
 }) {
 
@@ -306,6 +311,15 @@ export function ChatMessage(props: {
     : fragmentFlattenedText.startsWith('/draw ') ? 'draw'
       : fragmentFlattenedText.startsWith('/react ') ? 'react'
         : false;
+  const hiddenSubagentToolCallIds = React.useMemo(() => {
+    const hiddenIds = new Set<string>();
+    for (const ephemeral of props.ephemerals ?? []) {
+      const toolInvocationId = (ephemeral.state as { parentToolInvocationId?: unknown } | null | undefined)?.parentToolInvocationId;
+      if (typeof toolInvocationId === 'string' && toolInvocationId.trim())
+        hiddenIds.add(toolInvocationId);
+    }
+    return hiddenIds;
+  }, [props.ephemerals]);
 
 
   // TODO: fix the diffing
@@ -720,22 +734,64 @@ export function ChatMessage(props: {
 
     return {};
   }, [backgroundColor, fromAssistant, fromUser, messageAuthorAccentColor, messageAuthorAccentSx]);
+  const messageAccentColor = React.useMemo(() => {
+    if (fromAssistant)
+      return minimapAccentDataAttributes.borderColor || minimapAccentDataAttributes.backgroundColor || 'var(--joy-palette-success-outlinedBorder)';
+
+    if (fromUser)
+      return 'var(--joy-palette-primary-outlinedBorder)';
+
+    if (fromSystem)
+      return 'var(--joy-palette-neutral-outlinedBorder)';
+
+    return 'var(--joy-palette-neutral-outlinedBorder)';
+  }, [fromAssistant, fromSystem, fromUser, minimapAccentDataAttributes.backgroundColor, minimapAccentDataAttributes.borderColor]);
+  const messageHorizontalPadding = themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2;
 
   const listItemSx: SxProps = React.useMemo(() => ({
     // vars
     // '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0, // disabled - looks worse
+    '--message-accent-color': messageAccentColor,
 
     // style
     backgroundColor: backgroundColor,
-    px: { xs: 1, md: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2 },
+    backgroundImage: fromAssistant
+      ? 'linear-gradient(180deg, rgba(var(--joy-palette-success-mainChannel) / 0.05) 0%, transparent 24%)'
+      : fromUser
+        ? 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.08) 0%, transparent 26%)'
+        : 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.07) 0%, transparent 24%)',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: fromAssistant
+      ? 'rgba(var(--joy-palette-neutral-mainChannel) / 0.15)'
+      : fromUser
+        ? 'rgba(var(--joy-palette-primary-mainChannel) / 0.22)'
+        : 'rgba(var(--joy-palette-neutral-mainChannel) / 0.18)',
+    boxShadow: props.isBottom ? 'sm' : 'xs',
+    pl: {
+      xs: fromUser ? 1 : 1.75,
+      md: fromUser ? messageHorizontalPadding : messageHorizontalPadding + 0.75,
+    },
+    pr: {
+      xs: fromUser ? 1.75 : 1,
+      md: fromUser ? messageHorizontalPadding + 0.75 : messageHorizontalPadding,
+    },
     py: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2,
+    overflow: 'hidden',
+    position: 'relative',
+    isolation: 'isolate',
     // filter: 'url(#agi-futuristic-glow)',
 
-    // style: omit border if set externally
-    ...(!('borderBottom' in (props.sx || {})) && !props.isBottom && {
-      borderBottom: '1px solid',
-      borderBottomColor: 'divider',
-    }),
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: fromUser ? '10px 4px 10px auto' : '10px auto 10px 4px',
+      width: '0.25rem',
+      borderRadius: '999px',
+      background: 'var(--message-accent-color)',
+      opacity: fromAssistant || fromUser ? 1 : 0.75,
+      boxShadow: '0 0 0 1px rgba(255 255 255 / 0.15)',
+    },
 
     // style: when starred
     ...(isUserStarred && {
@@ -779,7 +835,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.isBottom, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, fromAssistant, fromUser, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, messageAccentColor, messageHorizontalPadding, props.isBottom, props.sx, uiComplexityMode]);
 
 
   // avatar icon & label & tooltip
@@ -1058,6 +1114,7 @@ export function ChatMessage(props: {
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showUnsafeHtmlCode={props.showUnsafeHtmlCode}
+            hiddenToolCallIds={hiddenSubagentToolCallIds}
 
             textEditsState={textContentEditState}
             setEditedText={(!props.onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}
@@ -1132,6 +1189,14 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               options={continuationOptions}
               onContinue={handleMessageContinue}
+            />
+          )}
+
+          {!!props.ephemerals?.length && !!props.conversationHandler && (
+            <Ephemerals
+              ephemerals={props.ephemerals}
+              conversationHandler={props.conversationHandler}
+              sx={{ mt: 0.5 }}
             />
           )}
 

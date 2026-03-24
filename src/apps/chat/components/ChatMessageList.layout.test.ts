@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX,
   CHAT_MESSAGE_LIST_MINIMAP_TRACK_MAX_RENDER_UNITS,
   getChatMessageListContainerSx,
   getChatMessageListConversationOverlayMode,
@@ -10,13 +11,26 @@ import {
 } from './ChatMessageList.layout';
 
 
-test('chat message list minimap uses an overlay layer instead of reserving layout width', () => {
+test('chat message list reserves a desktop gutter for the minimap overlay', () => {
   const containerSx = getChatMessageListContainerSx();
   assert.equal(containerSx.position, 'relative');
-  assert.equal('gridTemplateColumns' in containerSx, false);
+  assert.equal(containerSx.boxSizing, 'border-box');
+  assert.deepStrictEqual(containerSx.pr, {
+    xs: 0,
+    md: `${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px`,
+  });
 
   const overlaySx = getChatMessageListMinimapOverlaySx();
   assert.equal(overlaySx.position, 'sticky');
+  assert.equal(overlaySx.right, 0);
+  assert.deepStrictEqual(overlaySx.width, {
+    xs: 'auto',
+    md: `calc(100% + ${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px)`,
+  });
+  assert.deepStrictEqual(overlaySx.mr, {
+    xs: 0,
+    md: `calc(-1 * ${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px)`,
+  });
   assert.equal(overlaySx.height, 0);
   assert.equal(overlaySx.pointerEvents, 'none');
 });

@@ -4,6 +4,8 @@ import type { ColorPaletteProp } from '@mui/joy/styles/types';
 import { Box, Chip, Typography } from '@mui/joy';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowRightRoundedIcon from '@mui/icons-material/KeyboardArrowRightRounded';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 
 import { RenderMarkdown } from '~/modules/blocks/markdown/RenderMarkdown';
@@ -23,7 +25,7 @@ import { useChatShowReasoningTitles } from '../../../store-app-chat';
 // configuration
 const ENABLE_MARKDOWN_DETECTION = true;
 // const REASONING_COLOR = '#ca74b8'; // '#f22a85' (folder-aligned), '#ca74b8' (emoji-aligned)
-const REASONING_COLOR: ColorPaletteProp = 'success';
+const REASONING_COLOR: ColorPaletteProp = 'neutral';
 const ANTHROPIC_REDACTED_EXPLAINER = //  https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#example-streaming-with-redacted-thinking
   'Some of Claude\'s internal reasoning has been automatically encrypted for safety reasons. This doesn\'t affect the quality of responses.';
 
@@ -32,21 +34,48 @@ const _styles = {
 
   block: {
     mx: 1.5,
+    mt: 0.25,
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+    background: 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.05) 0%, var(--joy-palette-background-surface) 36%)',
+    boxShadow: 'xs',
+    overflow: 'hidden',
+  },
+
+  headerRow: {
+    px: 1,
+    py: 0.875,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 0.75,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    background: 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.05) 0%, transparent 100%)',
+  },
+
+  headerMain: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 0.75,
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
 
   chip: {
     px: 1.5,
-    py: 0.375,
+    py: 0.45,
     my: '1px', // to not crop the outline on mobile, or on beam
-    outline: '1px solid',
-    outlineColor: `${REASONING_COLOR}.solidBg`, // .outlinedBorder
-    boxShadow: `1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
+    borderRadius: '999px',
+    boxShadow: 'sm',
   },
 
   chipDisabled: {
     px: 1.5,
-    py: 0.375,
+    py: 0.45,
     my: '1px', // to not crop the outline on mobile, or on beam
+    opacity: 0.8,
   },
 
   chipIcon: {
@@ -63,19 +92,20 @@ const _styles = {
   chipExpanded: {
     mt: '1px', // need to copy the `chip` mt
     px: 1.5,
-    py: 0.375,
-    // borderRadius: 'sm',
-    // transition: 'border-radius 0.2s ease-in-out',
+    py: 0.45,
+    borderRadius: '999px',
+    boxShadow: 'sm',
   },
 
   text: {
-    borderRadius: 'sm', // was: 12px
+    borderRadius: 'md',
     border: '1px solid',
-    borderColor: `${REASONING_COLOR}.outlinedColor`,
-    backgroundColor: `rgb(var(--joy-palette-${REASONING_COLOR}-lightChannel) / 15%)`, // similar to success.50
-    // boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
-    mt: 1,
-    p: 1,
+    borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.12)',
+    background: 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.03) 0%, var(--joy-palette-background-surface) 100%)',
+    mt: 0.25,
+    mx: 1,
+    mb: 1,
+    p: 1.1,
 
     // plain text style
     overflowWrap: 'anywhere',
@@ -99,7 +129,8 @@ const _styles = {
   },
 
   titlePreviewRow: {
-    mt: 0.75,
+    px: 1,
+    pb: 1,
     display: 'flex',
     flexWrap: 'wrap',
     gap: 0.5,
@@ -111,10 +142,21 @@ const _styles = {
     py: 0.375,
     borderRadius: '999px',
     border: '1px solid',
-    borderColor: `${REASONING_COLOR}.outlinedBorder`,
-    backgroundColor: `rgb(var(--joy-palette-${REASONING_COLOR}-lightChannel) / 12%)`,
-    color: `${REASONING_COLOR}.plainColor`,
+    borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.14)',
+    backgroundColor: 'background.level1',
+    color: 'text.secondary',
     lineHeight: 1.2,
+  },
+
+  statusBadge: {
+    px: 0.875,
+    py: 0.3,
+    borderRadius: '999px',
+    border: '1px solid',
+    borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.14)',
+    backgroundColor: 'background.level1',
+    color: 'text.secondary',
+    lineHeight: 1.1,
   },
 
 } as const;
@@ -173,6 +215,14 @@ export function BlockPartModelAux(props: {
     ...(maybeMarkdown ? _styles.textUndoWhitespace : {}),
   }), [maybeMarkdown, scaledTypographySx]);
   const hasExpandedSequence = !!props.expandedSequence?.length;
+  const statusColor: ColorPaletteProp = props.messagePendingIncomplete && props.isLastFragment ? 'warning' : REASONING_COLOR;
+  const statusLabel = props.messagePendingIncomplete && props.isLastFragment
+    ? 'Streaming'
+    : props.auxRedactedDataCount
+      ? 'Partially redacted'
+      : hasExpandedSequence
+        ? 'Structured'
+        : 'Available';
 
   let typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
@@ -229,10 +279,10 @@ export function BlockPartModelAux(props: {
   return <Box sx={_styles.block}>
 
     {/* Chip to expand/collapse */}
-    <Box data-agi-no-copy /* do not copy these buttons */ sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center', flex: 1, minWidth: 0 }}>
+    <Box data-agi-no-copy /* do not copy these buttons */ sx={_styles.headerRow}>
+      <Box sx={_styles.headerMain}>
         <Chip
-          color={props.isLastFragment ? REASONING_COLOR : 'neutral'}
+          color={props.isLastFragment ? statusColor : 'neutral'}
           variant={expanded ? 'solid' : 'soft'}
           size='sm'
           onClick={handleToggleExpanded}
@@ -240,13 +290,17 @@ export function BlockPartModelAux(props: {
           startDecorator={
             <AllInclusiveIcon
               sx={(props.messagePendingIncomplete && !expanded && props.isLastFragment) ? _styles.chipIconPending : _styles.chipIcon}
-              /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
             />
           }
-          // startDecorator='🧠'
+          endDecorator={expanded ? <KeyboardArrowDownRoundedIcon /> : <KeyboardArrowRightRoundedIcon />}
         >
           Show {typeText}
         </Chip>
+
+        <Typography level='body-xs' sx={_styles.statusBadge}>
+          {statusLabel}
+        </Typography>
+
       </Box>
 
       {expanded && !props.messagePendingIncomplete && (showInline || showDelete) && !!props.auxText && (
@@ -254,7 +308,7 @@ export function BlockPartModelAux(props: {
 
           {/* Make inline */}
           {showInline && <Chip
-            color={REASONING_COLOR}
+            color='primary'
             variant='soft'
             size='sm'
             disabled={!onFragmentReplace /* || props.messagePendingIncomplete */}
@@ -267,7 +321,7 @@ export function BlockPartModelAux(props: {
 
           {/* Delete */}
           {showDelete && <Chip
-            color={REASONING_COLOR}
+            color='danger'
             variant='soft'
             size='sm'
             disabled={!onFragmentDelete /* || props.messagePendingIncomplete */}
