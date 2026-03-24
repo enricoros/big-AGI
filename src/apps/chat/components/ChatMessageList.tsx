@@ -885,7 +885,6 @@ export function ChatMessageList(props: {
 
 
   // style memo
-  const containerSx: SxProps = React.useMemo(() => getChatMessageListContainerSx(props.sx), [props.sx]);
   const minimapOverlaySx: SxProps = React.useMemo(() => getChatMessageListMinimapOverlaySx(), []);
   const listSx: SxProps = React.useMemo(() => ({
     p: 0,
@@ -1118,6 +1117,10 @@ export function ChatMessageList(props: {
     showConversationMinimapTrack,
     visibleMessageCount,
   });
+  const containerSx: SxProps = React.useMemo(() => getChatMessageListContainerSx({
+    reserveMinimapGutter: conversationOverlayMode === 'minimap',
+    baseSx: props.sx,
+  }), [conversationOverlayMode, props.sx]);
 
 
   // no conversation: sine qua non

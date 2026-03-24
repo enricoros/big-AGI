@@ -32,15 +32,24 @@ export function getChatMessageListConversationOverlayMode(args: {
 }
 
 
-export function getChatMessageListContainerSx(baseSx?: SxProps): SxProps {
+export function getChatMessageListContainerSx(args?: {
+  reserveMinimapGutter?: boolean;
+  baseSx?: SxProps;
+}): SxProps {
+  const reserveMinimapGutter = args?.reserveMinimapGutter ?? true;
+
   return {
     position: 'relative',
     boxSizing: 'border-box',
     pr: {
       xs: 0,
-      md: `${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px`,
+      md: reserveMinimapGutter ? `${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px` : 0,
     },
-    ...baseSx,
+    transition: 'padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+    },
+    ...args?.baseSx,
   };
 }
 

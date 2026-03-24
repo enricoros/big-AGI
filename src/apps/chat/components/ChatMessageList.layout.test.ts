@@ -11,14 +11,25 @@ import {
 } from './ChatMessageList.layout';
 
 
-test('chat message list reserves a desktop gutter for the minimap overlay', () => {
-  const containerSx = getChatMessageListContainerSx();
-  assert.equal(containerSx.position, 'relative');
-  assert.equal(containerSx.boxSizing, 'border-box');
-  assert.deepStrictEqual(containerSx.pr, {
+test('chat message list reserves a desktop gutter only while the minimap track is visible', () => {
+  const minimapContainerSx = getChatMessageListContainerSx({ reserveMinimapGutter: true });
+  assert.equal(minimapContainerSx.position, 'relative');
+  assert.equal(minimapContainerSx.boxSizing, 'border-box');
+  assert.deepStrictEqual(minimapContainerSx.pr, {
     xs: 0,
     md: `${CHAT_MESSAGE_LIST_MINIMAP_GUTTER_PX}px`,
   });
+  assert.equal(minimapContainerSx.transition, 'padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1)');
+
+  const controlsContainerSx = getChatMessageListContainerSx({ reserveMinimapGutter: false });
+  assert.deepStrictEqual(controlsContainerSx.pr, {
+    xs: 0,
+    md: 0,
+  });
+
+  const containerSx = minimapContainerSx;
+  assert.equal(containerSx.position, 'relative');
+  assert.equal(containerSx.boxSizing, 'border-box');
 
   const overlaySx = getChatMessageListMinimapOverlaySx();
   assert.equal(overlaySx.position, 'sticky');
