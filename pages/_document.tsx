@@ -55,7 +55,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
           'name': 'Big-AGI',
           'url': 'https://big-agi.com',
           'applicationCategory': 'ProductivityApplication',
-          'operatingSystem': 'Web',
+          'operatingSystem': 'All, Web',
           'description': Brand.Meta.Description,
           'sameAs': ['https://github.com/enricoros/big-agi', 'https://discord.gg/MkH4qj2Jp9',],
           'author': { '@type': 'Person', 'name': 'Enrico Ros', 'url': 'https://www.enricoros.com' },
