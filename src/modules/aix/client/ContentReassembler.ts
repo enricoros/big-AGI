@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -218,9 +218,9 @@ export class ContentReassembler {
 
   async #reassembleParticle(op: AixWire_Particles.ChatGenerateOp): Promise<void> {
 
-    // remove placeholder if any other content except heartbeat or void-placeholder
+    // remove trailing placeholder if any other content except heartbeat or void-placeholder
     if (!('p' in op) || !(op.p === '❤' || op.p === 'vp'))
-      this.removePlaceholderIfAtIndex0();
+      this.removeTrailingPlaceholder();
 
     switch (true) {
 
@@ -598,22 +598,22 @@ export class ContentReassembler {
     // update the model op
     const modelOp: DVoidPlaceholderModelOp = { mot, cts: Date.now() };
 
-    // Only reuse placeholder if it's at index 0
-    if (this.accumulator.fragments.length > 0) {
-      const firstFragment = this.accumulator.fragments[0];
-      if (firstFragment.ft === 'void' && firstFragment.part.pt === 'ph') {
-        // Update existing placeholder at index 0
-        firstFragment.part.pText = text;
-        firstFragment.part.modelOp = modelOp;
+    const fragments = this.accumulator.fragments;
+
+    // Reuse existing trailing placeholder (rapid vp updates reuse rather than accumulate)
+    if (fragments.length > 0) {
+      const lastFragment = fragments[fragments.length - 1];
+      if (isVoidPlaceholderFragment(lastFragment)) {
+        lastFragment.part.pText = text;
+        lastFragment.part.modelOp = modelOp;
         return;
       }
     }
 
-    // Create new placeholder at the beginning (will be index 0)
-    const placeholderFragment = createPlaceholderVoidFragment(text, undefined, modelOp);
-    this.accumulator.fragments.unshift(placeholderFragment); // Add to beginning
+    // Append new placeholder at end - temporal ordering preserved
+    fragments.push(createPlaceholderVoidFragment(text, undefined, modelOp));
 
-    // Placeholders don't affect text fragment indexing
+    // Placeholders don't affect text fragment indexing (push to end doesn't shift existing indices)
     // NOTE: we could have placeholders breaking text accumulation into new fragments with `this.currentTextFragmentIndex = null;`, however
     // since placeholders are used a lot with hosted tool calls, this could lead to way too many fragments being created
   }
@@ -634,14 +634,11 @@ export class ContentReassembler {
     };
   }
 
-  // Helper to remove placeholder when real content arrives
-  private removePlaceholderIfAtIndex0(): void {
-    if (this.accumulator.fragments.length > 0) {
-      const firstFragment = this.accumulator.fragments[0];
-      if (firstFragment.ft === 'void' && firstFragment.part.pt === 'ph') {
-        this.accumulator.fragments.shift(); // Remove placeholder at index 0
-      }
-    }
+  // helper to remove trailing placeholder when real content arrives
+  private removeTrailingPlaceholder(): void {
+    const fragments = this.accumulator.fragments;
+    if (fragments.length > 0 && isVoidPlaceholderFragment(fragments[fragments.length - 1]))
+      fragments.pop(); // Remove trailing placeholder
   }
 
 
