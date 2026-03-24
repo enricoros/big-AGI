@@ -66,7 +66,6 @@ For deploying a custom big-AGI instance:
 - **Advanced Setup**:
   - **[Source Code Customization](customizations.md)**: Modify the source code
   - **[Access Control](deploy-authentication.md)**: Optional, add basic user authentication
-  - **[Database Setup](deploy-database.md)**: Optional, enables "Chat Link Sharing"
   - **[Reverse Proxy](deploy-reverse-proxy.md)**: Optional, enables custom domains and SSL
   - **[Docker Deployment](deploy-docker.md)**: Deploy with Docker containers
   - **[Kubernetes](deploy-k8s.md)**: Deploy on Kubernetes clusters
