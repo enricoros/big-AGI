@@ -147,13 +147,11 @@ export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: s
 export const ChatMessageMemo = React.memo(ChatMessage);
 
 export function shouldShowRestartInCouncilAction(params: {
-  initialRecipients?: ReadonlyArray<{ rt: string }>;
   messageRole: DMessage['role'];
   turnTerminationMode?: DConversationTurnTerminationMode;
 }) {
   return params.turnTerminationMode === 'council'
-    && params.messageRole === 'user'
-    && !!params.initialRecipients?.some(recipient => recipient.rt === 'participant');
+    && params.messageRole === 'user';
 }
 
 /**
@@ -186,6 +184,7 @@ export function ChatMessage(props: {
   onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
   onMessageAssistantFromInCouncil?: (messageId: string, offset: number) => Promise<void>,
+  onMessageAssistantToCouncil?: (messageId: string, offset: number) => Promise<void>,
   onMessageUpstreamResume?: (messageId: string) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
@@ -283,7 +282,6 @@ export function ChatMessage(props: {
   const isVndAndCacheAuto = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_AUTO);
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
   const showRestartInCouncilAction = shouldShowRestartInCouncilAction({
-    initialRecipients: messageMetadata?.initialRecipients,
     messageRole,
     turnTerminationMode: props.turnTerminationMode,
   });
@@ -451,19 +449,23 @@ export function ChatMessage(props: {
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
     handleCloseOpsMenu();
+    if (!fromAssistant && showRestartInCouncilAction) {
+      await props.onMessageAssistantFromInCouncil?.(messageId, 0);
+      return;
+    }
     await props.onMessageAssistantFrom?.(messageId, fromAssistant ? -1 : 0);
+  };
+
+  const handleOpsAssistantToCouncil = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleCloseOpsMenu();
+    await props.onMessageAssistantToCouncil?.(messageId, 0);
   };
 
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
     handleCloseOpsMenu();
     await props.onMessageBeam?.(messageId);
-  };
-
-  const handleOpsAssistantFromInCouncil = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleCloseOpsMenu();
-    await props.onMessageAssistantFromInCouncil?.(messageId, 0);
   };
 
   const handleUpstreamResume = React.useCallback(async () => {
@@ -1377,10 +1379,10 @@ export function ChatMessage(props: {
           )}
           {/* Beam/Restart */}
           {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
-          {showRestartInCouncilAction && !!props.onMessageAssistantFromInCouncil && (
-            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFromInCouncil}>
+          {showRestartInCouncilAction && !!props.onMessageAssistantToCouncil && (
+            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantToCouncil}>
               <ListItemDecorator><TelegramIcon color='primary' /></ListItemDecorator>
-              Restart <span style={{ opacity: 0.5 }}>in Council</span>
+              Restart <span style={{ opacity: 0.5 }}>to Council</span>
             </MenuItem>
           )}
           {!!props.onMessageAssistantFrom && (

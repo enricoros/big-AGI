@@ -17,6 +17,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
+import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
@@ -39,6 +40,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { DELETE_HOLD_DURATION_MS, getDeleteHoldProgressSx } from './ChatDrawerItem.layout';
@@ -110,6 +112,11 @@ function ChatDrawer(props: {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
   const [renderLimit, setRenderLimit] = React.useState(200); // progressive loading limit
+  const { archivedChatsCount, purgeExpiredArchivedConversations, setArchived } = useChatStore(useShallow(state => ({
+    archivedChatsCount: state.conversations.filter(conversation => !!conversation.isArchived).length,
+    purgeExpiredArchivedConversations: state.purgeExpiredArchivedConversations,
+    setArchived: state.setArchived,
+  })));
 
   // external state
   const {
@@ -141,6 +148,9 @@ function ChatDrawer(props: {
   }, []);
 
   React.useEffect(() => () => clearAgentGroupDeleteHold(false), [clearAgentGroupDeleteHold]);
+  React.useEffect(() => {
+    purgeExpiredArchivedConversations();
+  }, [purgeExpiredArchivedConversations]);
   const gifMode = uiComplexityMode === 'extra';
 
   // Calculate chat counts per folder
@@ -315,12 +325,26 @@ function ChatDrawer(props: {
   }, [onConversationActivate]);
 
   const handleConversationsDeleteFiltered = React.useCallback(() => {
-    !!filteredChatIDs?.length && onConversationsDelete(filteredChatIDs, false);
-  }, [filteredChatIDs, onConversationsDelete]);
+    if (!filteredChatIDs?.length)
+      return;
+
+    filteredChatIDs.forEach(conversationId => setArchived(conversationId, !filterIsArchived));
+  }, [filterIsArchived, filteredChatIDs, setArchived]);
 
   const handleConversationDeleteNoConfirmation = React.useCallback((conversationId: DConversationId) => {
-    conversationId && onConversationsDelete([conversationId], true);
+    if (!conversationId)
+      return;
+    setArchived(conversationId, true);
+  }, [setArchived]);
+  const handleConversationDeletePermanently = React.useCallback((conversationId: DConversationId) => {
+    if (!conversationId)
+      return;
+    onConversationsDelete([conversationId], false);
   }, [onConversationsDelete]);
+
+  const handleConversationSetArchived = React.useCallback((conversationId: DConversationId, isArchived: boolean) => {
+    setArchived(conversationId, isArchived);
+  }, [setArchived]);
 
   const handleConversationsExport = React.useCallback(() => {
     props.activeConversationId && onConversationsExportDialog(props.activeConversationId, true);
@@ -712,6 +736,8 @@ function ChatDrawer(props: {
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
               onConversationDeleteNoConfirmation={handleConversationDeleteNoConfirmation}
+              onConversationDeletePermanently={handleConversationDeletePermanently}
+              onConversationSetArchived={handleConversationSetArchived}
               onConversationExport={onConversationsExportDialog}
               onConversationFolderChange={handleConversationFolderChange}
             />
@@ -768,6 +794,17 @@ function ChatDrawer(props: {
         )}
       </Box>
 
+      <ListItemButton
+        selected={filterIsArchived}
+        disabled={!filterIsArchived && archivedChatsCount === 0}
+        onClick={toggleFilterIsArchived}
+      >
+        <ListItemDecorator>
+          {filterIsArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}
+        </ListItemDecorator>
+        {filterIsArchived ? 'Back to Chats' : `Archived Chats${archivedChatsCount ? ` (${archivedChatsCount})` : ''}`}
+      </ListItemButton>
+
       <ListDivider sx={{ my: 0 }} />
 
       {/* Bottom commands */}
@@ -790,9 +827,11 @@ function ChatDrawer(props: {
 
       <ListItemButton disabled={filteredChatsAreEmpty} onClick={handleConversationsDeleteFiltered}>
         <ListItemDecorator>
-          <DeleteOutlineIcon />
+          {filterIsArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}
         </ListItemDecorator>
-        Delete {filteredChatsCount >= 2 ? `all ${filteredChatsCount} chats` : 'chat'}
+        {filterIsArchived
+          ? (filteredChatsCount >= 2 ? `Restore all ${filteredChatsCount} chats` : 'Restore chat')
+          : (filteredChatsCount >= 2 ? `Archive all ${filteredChatsCount} chats` : 'Archive chat')}
       </ListItemButton>
 
     </OptimaDrawerList>

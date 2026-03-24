@@ -19,3 +19,22 @@ test('drawer new-chat actions stay blocked for an empty focused draft while save
   assert.match(source, /<MenuItem disabled=\{disableNewButton\} onClick=\{\(\) => onConversationNew\(newButtonDontRecycle, false\)\}>/);
   assert.match(source, /<MenuItem disabled=\{disableNewButton\} onClick=\{\(\) => onConversationNew\(newButtonDontRecycle, true\)\}>/);
 });
+
+test('archived active chat rows expose separate restore and permanent delete actions', () => {
+  const source = readFileSync(new URL('./ChatDrawerItem.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /title='Delete Permanently'/);
+  assert.match(source, /<DeleteForeverIcon \/>/);
+  assert.match(source, /title='Restore'/);
+  assert.match(source, /Auto-delete in \$\{archiveDaysUntilPermanentDelete\} day/);
+  assert.match(source, /archiveDaysUntilPermanentDelete\}d/);
+});
+
+test('drawer title uses CSS truncation instead of appending manual ellipsis text', () => {
+  const source = readFileSync(new URL('./ChatDrawerItem.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /textOverflow: 'ellipsis'/);
+  assert.match(source, /whiteSpace: 'nowrap'/);
+  assert.match(source, /\{title\.trim\(\) \? title : CHAT_NOVEL_TITLE\}/);
+  assert.doesNotMatch(source, /' \.\.\.'/);
+});

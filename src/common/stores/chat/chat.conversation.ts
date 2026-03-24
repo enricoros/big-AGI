@@ -95,6 +95,7 @@ export interface DConversation {
   autoTitle?: string;
 
   isArchived?: boolean;               // TODO: this is too simple - convert to improved meta information - for now this will do
+  archivedAt?: number;
 
   // temp flags
   _isIncognito?: boolean;             // simple implementation: won't store this conversation (note: side effects should be evaluated, images seem to be gc'd correctly, but not sure if this is really incognito)

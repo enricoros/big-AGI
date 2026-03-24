@@ -104,6 +104,16 @@ export function getRestartInCouncilMessageMetadata(
   };
 }
 
+export function getRestartToCouncilMessageMetadata(
+  metadata?: Readonly<DMessageMetadata>,
+): DMessageMetadata {
+  return {
+    ...(metadata ? duplicateDMessageMetadata(metadata) : {}),
+    councilChannel: { channel: 'public-board' },
+    initialRecipients: [{ rt: 'public-board' }],
+  };
+}
+
 export function getRenderableConversationParticipants(params: {
   conversationId: DConversationId | null;
   participants: DConversationParticipant[] | null | undefined;
@@ -287,6 +297,7 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
   handleAddInReferenceTo?: (item: DMetaReferenceItem) => void;
   handleMessageAssistantFrom: (messageId: DMessageId, offset: number) => Promise<void>;
   handleMessageAssistantFromInCouncil: (messageId: DMessageId, offset: number) => Promise<void>;
+  handleMessageAssistantToCouncil: (messageId: DMessageId, offset: number) => Promise<void>;
   handleMessageUpstreamResume: (messageId: DMessageId) => Promise<void>;
   handleMessageBeam: (messageId: DMessageId) => Promise<void>;
   handleMessageBranch: (messageId: DMessageId) => void;
@@ -326,6 +337,7 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
     handleAddInReferenceTo,
     handleMessageAssistantFrom,
     handleMessageAssistantFromInCouncil,
+    handleMessageAssistantToCouncil,
     handleMessageUpstreamResume,
     handleMessageBeam,
     handleMessageBranch,
@@ -409,6 +421,7 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
                       onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
                       onMessageAssistantFrom={handleMessageAssistantFrom}
                       onMessageAssistantFromInCouncil={handleMessageAssistantFromInCouncil}
+                      onMessageAssistantToCouncil={handleMessageAssistantToCouncil}
                       onMessageUpstreamResume={handleMessageUpstreamResume}
                       onMessageBeam={handleMessageBeam}
                       onMessageBranch={handleMessageBranch}
@@ -459,6 +472,7 @@ const CouncilGroupEntryView = React.memo(function CouncilGroupEntryView(props: {
     && prevProps.composerCanAddInReferenceTo === nextProps.composerCanAddInReferenceTo
     && prevProps.handleAddInReferenceTo === nextProps.handleAddInReferenceTo
     && prevProps.handleMessageAssistantFrom === nextProps.handleMessageAssistantFrom
+    && prevProps.handleMessageAssistantToCouncil === nextProps.handleMessageAssistantToCouncil
     && prevProps.handleMessageBeam === nextProps.handleMessageBeam
     && prevProps.handleMessageBranch === nextProps.handleMessageBranch
     && prevProps.handleMessageContinue === nextProps.handleMessageContinue
@@ -728,6 +742,19 @@ export function ChatMessageList(props: {
       await onConversationExecuteHistory(conversationId);
     }
   }, [conversationHandler, conversationId, leaderParticipant?.id, onConversationExecuteHistory]);
+
+  const handleMessageAssistantToCouncil = React.useCallback(async (messageId: DMessageId, offset: number) => {
+    if (conversationId && conversationHandler) {
+      conversationHandler.historyTruncateTo(messageId, offset);
+      const truncatedMessage = conversationHandler.historyFindMessageOrThrow(messageId);
+      if (truncatedMessage?.role === 'user') {
+        conversationHandler.messageEdit(messageId, {
+          metadata: getRestartToCouncilMessageMetadata(truncatedMessage.metadata),
+        }, false, true);
+      }
+      await onConversationExecuteHistory(conversationId);
+    }
+  }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
   const handleMessageUpstreamResume = React.useCallback(async (_messageId: DMessageId) => {
     if (conversationId && conversationHandler)
@@ -1229,6 +1256,7 @@ export function ChatMessageList(props: {
                 handleAddInReferenceTo={handleAddInReferenceTo}
                 handleMessageAssistantFrom={handleMessageAssistantFrom}
                 handleMessageAssistantFromInCouncil={handleMessageAssistantFromInCouncil}
+                handleMessageAssistantToCouncil={handleMessageAssistantToCouncil}
                 handleMessageUpstreamResume={handleMessageUpstreamResume}
                 handleMessageBeam={handleMessageBeam}
                 handleMessageBranch={handleMessageBranch}
@@ -1279,6 +1307,7 @@ export function ChatMessageList(props: {
                 onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
                 onMessageAssistantFrom={handleMessageAssistantFrom}
                 onMessageAssistantFromInCouncil={handleMessageAssistantFromInCouncil}
+                onMessageAssistantToCouncil={handleMessageAssistantToCouncil}
                 onMessageUpstreamResume={handleMessageUpstreamResume}
                 onMessageBeam={handleMessageBeam}
                 onMessageBranch={handleMessageBranch}

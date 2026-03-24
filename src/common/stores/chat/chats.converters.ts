@@ -386,6 +386,7 @@ export namespace DataAtRestV1 {
       title: part.title,
       conversationIds: part.conversationIds,
       color: part.color,
+      visibleInAllChats: part.visibleInAllChats !== false,
     };
   }
 
@@ -439,6 +440,7 @@ export namespace DataAtRestV1 {
     title: string;
     conversationIds: DConversationId[];
     color?: string; // Optional color property
+    visibleInAllChats?: boolean;
   }
 
 }

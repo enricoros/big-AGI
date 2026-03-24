@@ -38,6 +38,10 @@ by release.
 - Council trace settings now include automatic collapse of previous rounds and automatic expansion of the newest round, and those preferences persist with the chat and saved agent groups.
 - Agent roster participants now expose a per-agent `Reasoning Effort` control in the editor, and that selection is applied as a runtime model-parameter override instead of changing the global model defaults.
 - User-stopped council sessions now remain resumable from the composer and council trace instead of being treated as terminal stops; fatal council stops still stay non-resumable.
+
+### 2026-03-24
+
+- Chat drawer delete actions now archive chats instead of permanently deleting them, archived chats are reachable from a dedicated bottom-of-drawer `Archived Chats` entry, archived rows can be restored directly from the drawer, and archived chats are permanently purged after 4 weeks.
 - Resuming an interrupted council now retries an errored leader proposal before starting reviewer votes, so a cut-off proposal does not incorrectly advance straight into review.
 - The Agents popup now lets you save and reload individual agent presets in addition to full agent groups.
 - Hosted web searches and fetches are now persisted inline as collapsible tool fragments instead of transient placeholders only, so they survive reloads, chat-mode switches, council turns, and interrupted/terminated responses across supported providers.

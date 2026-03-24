@@ -5,6 +5,9 @@ import {
   getChatTitleEditorSx,
   getDeleteHoldProgressSx,
   getDeleteConfirmButtonProps,
+  getFolderTintBackgroundImage,
+  getInactiveChatHoverSx,
+  getFolderTintHoverSx,
   getInactiveChatConfirmDeleteButtonSx,
   getInactiveChatDeleteButtonSx,
   getInactiveChatMainButtonSx,
@@ -27,6 +30,32 @@ test('inactive chat row shell extends the soft background across the whole row',
     my: '0.1875rem',
     borderRadius: 'sm',
     backgroundColor: 'neutral.softBg',
+    transition: 'background-color 0.16s ease',
+    '&:hover': {
+      backgroundColor: 'neutral.softHoverBg',
+    },
+    '&:focus-within': {
+      backgroundColor: 'neutral.softHoverBg',
+    },
+  });
+});
+
+test('inactive chat row shell adds only a mild folder tint when a folder color exists', () => {
+  assert.deepStrictEqual(getInactiveChatRowShellSx(false, '#f13d41'), {
+    mx: '0.25rem',
+    my: '0.1875rem',
+    borderRadius: 'sm',
+    backgroundColor: 'neutral.softBg',
+    transition: 'background-color 0.16s ease',
+    backgroundImage: 'linear-gradient(rgba(241, 61, 65, 0.07), rgba(241, 61, 65, 0.07))',
+    '&:hover': {
+      backgroundColor: 'neutral.softHoverBg',
+      backgroundImage: 'linear-gradient(rgba(241, 61, 65, 0.12), rgba(241, 61, 65, 0.12))',
+    },
+    '&:focus-within': {
+      backgroundColor: 'neutral.softHoverBg',
+      backgroundImage: 'linear-gradient(rgba(241, 61, 65, 0.12), rgba(241, 61, 65, 0.12))',
+    },
   });
 });
 
@@ -36,12 +65,49 @@ test('inactive incognito chat row shell keeps its patterned background across th
     my: '0.1875rem',
     borderRadius: 'sm',
     backgroundColor: 'background.level2',
+    transition: 'background-color 0.16s ease',
     backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
+    '&:hover': {
+      backgroundColor: 'background.level3',
+    },
+    '&:focus-within': {
+      backgroundColor: 'background.level3',
+    },
     border: '1px solid',
     borderColor: 'background.level3',
     '& .MuiListItemDecorator-root': {
       color: '#9C27B0',
     },
+  });
+});
+
+test('folder tint background image converts supported hex colors and ignores invalid values', () => {
+  assert.equal(
+    getFolderTintBackgroundImage('#f13d41', 0.1),
+    'linear-gradient(rgba(241, 61, 65, 0.1), rgba(241, 61, 65, 0.1))',
+  );
+  assert.equal(
+    getFolderTintBackgroundImage('#abc', 0.07),
+    'linear-gradient(rgba(170, 187, 204, 0.07), rgba(170, 187, 204, 0.07))',
+  );
+  assert.equal(getFolderTintBackgroundImage('warning', 0.07), undefined);
+});
+
+test('folder tint hover helper creates only the overlay layer', () => {
+  assert.deepStrictEqual(
+    getFolderTintHoverSx('#f13d41', 0.12),
+    { backgroundImage: 'linear-gradient(rgba(241, 61, 65, 0.12), rgba(241, 61, 65, 0.12))' },
+  );
+  assert.deepStrictEqual(getFolderTintHoverSx(undefined, 0.12), {});
+});
+
+test('inactive chat hover helper keeps row-wide hover colors aligned', () => {
+  assert.deepStrictEqual(getInactiveChatHoverSx(false, '#f13d41'), {
+    backgroundColor: 'neutral.softHoverBg',
+    backgroundImage: 'linear-gradient(rgba(241, 61, 65, 0.12), rgba(241, 61, 65, 0.12))',
+  });
+  assert.deepStrictEqual(getInactiveChatHoverSx(true), {
+    backgroundColor: 'background.level3',
   });
 });
 
@@ -102,6 +168,8 @@ test('armed inactive confirm delete button gets its own slot so it does not over
 
 test('inactive main button reserves space for the overlaid delete action and keeps the row visually continuous', () => {
   assert.deepStrictEqual(getInactiveChatMainButtonSx(false, false), {
+    '--joy-palette-neutral-plainHoverBg': 'transparent',
+    '--joy-palette-neutral-plainActiveBg': 'transparent',
     flex: 1,
     border: 'none',
     position: 'relative',
@@ -111,14 +179,19 @@ test('inactive main button reserves space for the overlaid delete action and kee
     backgroundColor: 'transparent',
     transition: 'background-color 0.16s ease',
     '&:hover': {
-      backgroundColor: 'neutral.softHoverBg',
+      backgroundColor: 'transparent',
     },
     '&:focus-visible': {
-      backgroundColor: 'neutral.softHoverBg',
+      backgroundColor: 'transparent',
+    },
+    '&.Mui-focusVisible': {
+      backgroundColor: 'transparent',
     },
   });
 
   assert.deepStrictEqual(getInactiveChatMainButtonSx(false, true), {
+    '--joy-palette-neutral-plainHoverBg': 'transparent',
+    '--joy-palette-neutral-plainActiveBg': 'transparent',
     flex: 1,
     border: 'none',
     position: 'relative',
@@ -128,14 +201,19 @@ test('inactive main button reserves space for the overlaid delete action and kee
     backgroundColor: 'transparent',
     transition: 'background-color 0.16s ease',
     '&:hover': {
-      backgroundColor: 'neutral.softHoverBg',
+      backgroundColor: 'transparent',
     },
     '&:focus-visible': {
-      backgroundColor: 'neutral.softHoverBg',
+      backgroundColor: 'transparent',
+    },
+    '&.Mui-focusVisible': {
+      backgroundColor: 'transparent',
     },
   });
 
-  assert.deepStrictEqual(getInactiveChatMainButtonSx(true, false), {
+  assert.deepStrictEqual(getInactiveChatMainButtonSx(false, false, '#f13d41'), {
+    '--joy-palette-neutral-plainHoverBg': 'transparent',
+    '--joy-palette-neutral-plainActiveBg': 'transparent',
     flex: 1,
     border: 'none',
     position: 'relative',
@@ -145,10 +223,35 @@ test('inactive main button reserves space for the overlaid delete action and kee
     backgroundColor: 'transparent',
     transition: 'background-color 0.16s ease',
     '&:hover': {
-      backgroundColor: 'background.level3',
+      backgroundColor: 'transparent',
     },
     '&:focus-visible': {
-      backgroundColor: 'background.level3',
+      backgroundColor: 'transparent',
+    },
+    '&.Mui-focusVisible': {
+      backgroundColor: 'transparent',
+    },
+  });
+
+  assert.deepStrictEqual(getInactiveChatMainButtonSx(true, false), {
+    '--joy-palette-neutral-plainHoverBg': 'transparent',
+    '--joy-palette-neutral-plainActiveBg': 'transparent',
+    flex: 1,
+    border: 'none',
+    position: 'relative',
+    borderRadius: 'sm',
+    minHeight: '2.5rem',
+    mr: '2.75rem',
+    backgroundColor: 'transparent',
+    transition: 'background-color 0.16s ease',
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+    '&:focus-visible': {
+      backgroundColor: 'transparent',
+    },
+    '&.Mui-focusVisible': {
+      backgroundColor: 'transparent',
     },
     filter: 'contrast(0)',
   });

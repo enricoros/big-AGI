@@ -5,7 +5,7 @@ import test from 'node:test';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 
-import { getNonCouncilRenderEntries, getRenderableConversationParticipants, getRestartInCouncilMessageMetadata, getSingleAgentHumanDrivenParticipantNameOverrides } from './ChatMessageList';
+import { getNonCouncilRenderEntries, getRenderableConversationParticipants, getRestartInCouncilMessageMetadata, getRestartToCouncilMessageMetadata, getSingleAgentHumanDrivenParticipantNameOverrides } from './ChatMessageList';
 
 
 test('getRenderableConversationParticipants preserves the original array when participants are already renderable', () => {
@@ -132,6 +132,41 @@ test('restart in council metadata keeps existing fields while rerouting the mess
   }]);
   assert.deepEqual(result.councilChannel, { channel: 'public-board' });
   assert.deepEqual(result.initialRecipients, [{ rt: 'participant', participantId: 'leader-1' }]);
+});
+
+test('restart to council metadata keeps existing fields while rerouting the message to the public board', () => {
+  const result = getRestartToCouncilMessageMetadata({
+    author: {
+      participantId: 'human-1',
+      participantName: 'You',
+      personaId: null,
+      llmId: null,
+    },
+    councilChannel: {
+      channel: 'public-board',
+      visibleToParticipantIds: ['leader-1'],
+    },
+    inReferenceTo: [{
+      mrt: 'dmsg',
+      mRole: 'assistant',
+      mText: 'Earlier context',
+    }],
+    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
+  });
+
+  assert.deepEqual(result.author, {
+    participantId: 'human-1',
+    participantName: 'You',
+    personaId: null,
+    llmId: null,
+  });
+  assert.deepEqual(result.inReferenceTo, [{
+    mrt: 'dmsg',
+    mRole: 'assistant',
+    mText: 'Earlier context',
+  }]);
+  assert.deepEqual(result.councilChannel, { channel: 'public-board' });
+  assert.deepEqual(result.initialRecipients, [{ rt: 'public-board' }]);
 });
 
 test('non-council render entries window before decorating the chat history tail', () => {

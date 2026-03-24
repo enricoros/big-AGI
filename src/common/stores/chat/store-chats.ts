@@ -13,6 +13,7 @@ import { backupIdbV3, createIDBPersistStorage } from '~/common/util/idbUtils';
 
 import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
+import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
@@ -80,6 +81,70 @@ function assignStableParticipantAccentHues(participants: DConversationParticipan
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 
+export const CHAT_ARCHIVE_RETENTION_MS = 4 * 7 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+export function getArchiveDaysUntilPermanentDelete(archivedAt: number | undefined, now: number = Date.now()): number | null {
+  if (typeof archivedAt !== 'number' || !Number.isFinite(archivedAt))
+    return null;
+
+  const remainingMs = archivedAt + CHAT_ARCHIVE_RETENTION_MS - now;
+  return Math.max(0, Math.ceil(remainingMs / ONE_DAY_MS));
+}
+
+function removeConversationIdsFromAuxStores(conversationIds: DConversationId[]) {
+  if (!conversationIds.length)
+    return;
+
+  conversationIds.forEach(conversationId => workspaceActions().remove(workspaceForConversationIdentity(conversationId)));
+
+  const { folders, removeConversationFromFolder } = useFolderStore.getState();
+  folders.forEach(folder => {
+    conversationIds.forEach(conversationId => {
+      if (folder.conversationIds.includes(conversationId))
+        removeConversationFromFolder(folder.id, conversationId);
+    });
+  });
+}
+
+export function normalizeArchivedConversations(args: {
+  conversations: DConversation[];
+  now?: number;
+}): {
+  conversations: DConversation[];
+  expiredConversationIds: DConversationId[];
+} {
+  const now = args.now ?? Date.now();
+  const expiredConversationIds: DConversationId[] = [];
+
+  const conversations = args.conversations.flatMap(conversation => {
+    if (!conversation.isArchived) {
+      if (conversation.archivedAt === undefined)
+        return [conversation];
+      return [{ ...conversation, archivedAt: undefined }];
+    }
+
+    const archivedAt = typeof conversation.archivedAt === 'number' && Number.isFinite(conversation.archivedAt)
+      ? conversation.archivedAt
+      : now;
+
+    if (archivedAt <= now - CHAT_ARCHIVE_RETENTION_MS) {
+      expiredConversationIds.push(conversation.id);
+      return [];
+    }
+
+    if (archivedAt === conversation.archivedAt)
+      return [conversation];
+
+    return [{ ...conversation, archivedAt }];
+  });
+
+  return {
+    conversations,
+    expiredConversationIds,
+  };
+}
+
 function updateCouncilRuntimeConfig(
   conversation: DConversation,
   update: {
@@ -138,6 +203,7 @@ export interface ChatActions {
   importConversation: (c: DConversation, preventClash: boolean) => DConversationId;
   branchConversation: (cId: DConversationId, mId: DMessageId | null) => DConversationId | null;
   deleteConversations: (cIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
+  purgeExpiredArchivedConversations: () => DConversationId[];
 
   // within a conversation
   isIncognito: (cId: DConversationId) => boolean | undefined;
@@ -269,11 +335,33 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           conversations: newConversations,
         });
 
-        // [workspace] since conversation=workspace for now, remove all workspaces too
-        conversationIds.forEach(conversationId => workspaceActions().remove(workspaceForConversationIdentity(conversationId)));
+        removeConversationIdsFromAuxStores(conversationIds);
 
         // return the next conversation Id in line, if valid
         return newConversations[(cIndex >= 0 && cIndex < newConversations.length) ? cIndex : 0].id;
+      },
+
+      purgeExpiredArchivedConversations: (): DConversationId[] => {
+        const { conversations } = _get();
+        const {
+          conversations: retainedConversations,
+          expiredConversationIds,
+        } = normalizeArchivedConversations({ conversations });
+
+        if (!expiredConversationIds.length) {
+          if (retainedConversations !== conversations)
+            _set({ conversations: retainedConversations });
+          return [];
+        }
+
+        _set({
+          conversations: retainedConversations.length
+            ? retainedConversations
+            : [createDConversation()],
+        });
+
+        removeConversationIdsFromAuxStores(expiredConversationIds);
+        return expiredConversationIds;
       },
 
 
@@ -647,6 +735,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             isArchived: isArchived,
+            archivedAt: isArchived ? Date.now() : undefined,
             // updated: Date.now(), // don't update this - the 'entity state' shall update, but not this soft time
           }),
 
@@ -724,6 +813,13 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       // Post-Loading: re-add transient properties and cleanup state
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+
+        const {
+          conversations: retainedConversations,
+          expiredConversationIds,
+        } = normalizeArchivedConversations({ conversations: state.conversations || [] });
+        state.conversations = retainedConversations.length ? retainedConversations : [createDConversation()];
+        removeConversationIdsFromAuxStores(expiredConversationIds);
 
         // fixup conversations in-memory
         V4ToHeadConverters.inMemHeadCleanDConversations(state.conversations || []);

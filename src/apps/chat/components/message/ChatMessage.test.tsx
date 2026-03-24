@@ -183,30 +183,34 @@ test('assistant messages can display a model label while keeping canonical menti
   assert.match(source, /onClick=\{\(\) => handleAppendMention\(`@\$\{messageAuthorName\}`\)\}/);
 });
 
-test('restart in council action is shown only for user messages with explicit participant recipients in council mode', () => {
+test('restart in council action is shown for any user message in council mode', () => {
   assert.equal(shouldShowRestartInCouncilAction({
-    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
     messageRole: 'user',
     turnTerminationMode: 'council',
   }), true);
 
   assert.equal(shouldShowRestartInCouncilAction({
-    initialRecipients: [{ rt: 'public-board' }],
     messageRole: 'user',
     turnTerminationMode: 'council',
-  }), false);
+  }), true);
 
   assert.equal(shouldShowRestartInCouncilAction({
-    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
     messageRole: 'assistant',
     turnTerminationMode: 'council',
   }), false);
 
   assert.equal(shouldShowRestartInCouncilAction({
-    initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
     messageRole: 'user',
     turnTerminationMode: 'round-robin-per-human',
   }), false);
+});
+
+test('council user messages expose both leader-only and full-council restart actions', () => {
+  const source = readFileSync(new URL('./ChatMessage.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /if \(!fromAssistant && showRestartInCouncilAction\) \{\s+await props\.onMessageAssistantFromInCouncil\?\.\(messageId, 0\);/s);
+  assert.match(source, /await props\.onMessageAssistantToCouncil\?\.\(messageId, 0\);/);
+  assert.match(source, /Restart <span style=\{\{ opacity: 0\.5 \}\}>to Council<\/span>/);
 });
 
 test('upstream resume block delegates to the message resume handler instead of placeholder console errors', () => {

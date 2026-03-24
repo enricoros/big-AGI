@@ -2,15 +2,16 @@ import * as React from 'react';
 
 import { Avatar, Box, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -23,11 +24,11 @@ import { ANIM_BUSY_TYPING } from '~/common/util/dMessageUtils';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
-import { useChatStore } from '~/common/stores/chat/store-chats';
+import { getArchiveDaysUntilPermanentDelete, useChatStore } from '~/common/stores/chat/store-chats';
 
 import { CHAT_NOVEL_TITLE } from '../../AppChat';
 import { shouldAutoDisarmDeleteArm } from './ChatDrawerItem.delete';
-import { DELETE_HOLD_DURATION_MS, getChatTitleEditorSx, getDeleteConfirmButtonProps, getDeleteHoldProgressSx, getInactiveChatConfirmDeleteButtonSx, getInactiveChatDeleteButtonSx, getInactiveChatMainButtonSx, getInactiveChatRowShellSx } from './ChatDrawerItem.layout';
+import { DELETE_HOLD_DURATION_MS, getChatTitleEditorSx, getDeleteConfirmButtonProps, getDeleteHoldProgressSx, getFolderTintBackgroundImage, getInactiveChatConfirmDeleteButtonSx, getInactiveChatDeleteButtonSx, getInactiveChatMainButtonSx, getInactiveChatRowShellSx } from './ChatDrawerItem.layout';
 
 
 // set to true to display the conversation IDs
@@ -48,6 +49,8 @@ export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
   prev.onConversationActivate === next.onConversationActivate &&
   prev.onConversationBranch === next.onConversationBranch &&
   prev.onConversationDeleteNoConfirmation === next.onConversationDeleteNoConfirmation &&
+  prev.onConversationDeletePermanently === next.onConversationDeletePermanently &&
+  prev.onConversationSetArchived === next.onConversationSetArchived &&
   prev.onConversationExport === next.onConversationExport &&
   prev.onConversationFolderChange === next.onConversationFolderChange,
 );
@@ -61,6 +64,7 @@ export interface ChatNavigationItemData {
   isIncognito: boolean;
   title: string;
   isArchived: boolean;
+  archivedAt?: number;
   userSymbol: string | undefined;
   userFlagsSummary: string | undefined;
   containsDocAttachments: boolean;
@@ -88,6 +92,8 @@ function ChatDrawerItem(props: {
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
   onConversationDeleteNoConfirmation: (conversationId: DConversationId) => void,
+  onConversationDeletePermanently: (conversationId: DConversationId) => void,
+  onConversationSetArchived: (conversationId: DConversationId, isArchived: boolean) => void,
   onConversationExport: (conversationId: DConversationId, exportAll: boolean) => void,
   onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
 }) {
@@ -99,13 +105,15 @@ function ChatDrawerItem(props: {
   const [deleteHoldProgress, setDeleteHoldProgress] = React.useState(0);
 
   // derived state
-  const { onConversationBranch, onConversationExport, onConversationFolderChange } = props;
+  const { onConversationBranch, onConversationDeletePermanently, onConversationExport, onConversationFolderChange, onConversationSetArchived } = props;
   const {
     conversationId,
     isActive,
     isAlsoOpen,
     isIncognito,
     title,
+    isArchived,
+    archivedAt,
     userSymbol,
     userFlagsSummary,
     containsDocAttachments,
@@ -225,10 +233,21 @@ function ChatDrawerItem(props: {
     if (deleteArmed) {
       setDeleteArmed(false);
       event.stopPropagation();
-      onConversationDeleteNoConfirmation(conversationId);
+      onConversationSetArchived(conversationId, true);
     }
-  }, [conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
+  }, [conversationId, deleteArmed, onConversationSetArchived]);
+  const handleConversationRestore = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDeleteArmed(false);
+    onConversationSetArchived(conversationId, false);
+  }, [conversationId, onConversationSetArchived]);
+  const handleConversationDeletePermanently = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    onConversationDeletePermanently(conversationId);
+  }, [conversationId, onConversationDeletePermanently]);
   const handleDeleteButtonPointerDown = React.useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (isArchived)
+      return;
     if (deleteArmed)
       return;
     if (event.pointerType === 'mouse' && event.button !== 0)
@@ -253,7 +272,7 @@ function ChatDrawerItem(props: {
         suppressNextDeleteButtonClickRef.current = true;
         clearDeleteHold(true);
         setDeleteArmed(false);
-        onConversationDeleteNoConfirmation(conversationId);
+        onConversationSetArchived(conversationId, true);
         return;
       }
 
@@ -261,7 +280,7 @@ function ChatDrawerItem(props: {
     };
 
     deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
-  }, [clearDeleteHold, conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
+  }, [clearDeleteHold, conversationId, deleteArmed, isArchived, onConversationSetArchived]);
 
   const handleDeleteButtonPointerEnd = React.useCallback((event?: React.PointerEvent<HTMLButtonElement>) => {
     event?.stopPropagation();
@@ -278,19 +297,32 @@ function ChatDrawerItem(props: {
       return;
     }
 
+    if (isArchived) {
+      handleConversationRestore(event);
+      return;
+    }
+
     if (deleteArmed)
       handleDeleteButtonHide(event);
     else
       handleDeleteButtonShow(event);
-  }, [deleteArmed, handleDeleteButtonHide, handleDeleteButtonShow]);
+  }, [deleteArmed, handleConversationRestore, handleDeleteButtonHide, handleDeleteButtonShow, isArchived]);
 
 
   const personaSymbol = userSymbol || SystemPurposes[systemPurposeId]?.symbol || '❓';
   const personaImageURI = SystemPurposes[systemPurposeId]?.imageUri ?? undefined;
   const deleteConfirmButtonProps = getDeleteConfirmButtonProps();
+  const archiveDaysUntilPermanentDelete = React.useMemo(
+    () => isArchived ? getArchiveDaysUntilPermanentDelete(archivedAt) : null,
+    [archivedAt, isArchived],
+  );
 
 
   const progress = props.bottomBarBasis ? 100 * (searchFrequency || messageCount) / props.bottomBarBasis : 0;
+  const folderTintBackgroundImage = React.useMemo(
+    () => !isIncognito ? getFolderTintBackgroundImage(folder?.color, isActive ? 0.1 : 0.07) : undefined,
+    [folder?.color, isActive, isIncognito],
+  );
 
   const titleRowComponent = React.useMemo(() => <>
 
@@ -341,12 +373,15 @@ function ChatDrawerItem(props: {
         onDoubleClick={handleTitleEditBegin}
         sx={{
           color: isActive ? 'text.primary' : 'text.secondary',
-          overflowWrap: 'anywhere',
           flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
-        {title.trim() ? title : CHAT_NOVEL_TITLE}{beingGenerated && ' ...'}
+        {title.trim() ? title : CHAT_NOVEL_TITLE}
       </Box>
     ) : (
       <InlineTextarea
@@ -359,7 +394,20 @@ function ChatDrawerItem(props: {
     )}
 
     {/* Right text */}
-    {searchFrequency > 0 ? (
+    {isArchived && archiveDaysUntilPermanentDelete !== null ? (
+      <Tooltip arrow disableInteractive title={`Auto-delete in ${archiveDaysUntilPermanentDelete} day${archiveDaysUntilPermanentDelete === 1 ? '' : 's'}`}>
+        <Typography
+          level='body-xs'
+          sx={{
+            whiteSpace: 'nowrap',
+            color: archiveDaysUntilPermanentDelete <= 7 ? 'danger.plainColor' : 'text.tertiary',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {archiveDaysUntilPermanentDelete}d
+        </Typography>
+      </Tooltip>
+    ) : searchFrequency > 0 ? (
       // Display search frequency if it exists and is greater than 0
       <Typography level='body-sm'>
         {searchFrequency}
@@ -374,7 +422,7 @@ function ChatDrawerItem(props: {
       </Box>
     ) : null}
 
-  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, hasBeamOpen, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
+  </>, [archiveDaysUntilPermanentDelete, beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, hasBeamOpen, isActive, isArchived, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
@@ -407,6 +455,9 @@ function ChatDrawerItem(props: {
         // style
         fontSize: 'inherit',
         backgroundColor: isActive ? 'neutral.solidActiveBg' : 'neutral.softBg',
+        ...(folderTintBackgroundImage ? {
+          backgroundImage: folderTintBackgroundImage,
+        } : {}),
         borderRadius: 'md',
         mx: '0.25rem',
         my: '0.1875rem',
@@ -442,11 +493,22 @@ function ChatDrawerItem(props: {
         {/* Title row */}
         <Box sx={{ display: 'flex', gap: 'var(--ListItem-gap)', minHeight: '2.25rem', alignItems: 'center' }}>
           {titleRowComponent}
+          {isArchived && (
+            <Tooltip arrow disableInteractive title='Restore'>
+              <FadeInButton
+                key='btn-restore-title-row'
+                size='sm'
+                onClick={handleConversationRestore}
+              >
+                <UnarchiveOutlinedIcon />
+              </FadeInButton>
+            </Tooltip>
+          )}
         </Box>
 
         {/* buttons row */}
         {isActive && (
-          <Box sx={{ display: 'flex', gap: 0.5, minHeight: '2.25rem', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 0.5, rowGap: 0.5, minHeight: '2.25rem', alignItems: 'center' }}>
             {props.showSymbols && <ListItemDecorator />}
 
             {/* Current Folder color, and change initiator */}
@@ -463,8 +525,6 @@ function ChatDrawerItem(props: {
                     </FadeInButton>
                   )}
                 </Tooltip>
-
-                {/*<Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />*/}
               </>}
 
               <Tooltip arrow disableInteractive title='Rename'>
@@ -492,39 +552,44 @@ function ChatDrawerItem(props: {
                   </FadeInButton>
                 </Tooltip>
               </>}
-
             </>}
 
-            {/* --> */}
-            <Box sx={{ flex: 1 }} />
+            <Box sx={{ flex: '1 1 auto', minWidth: 0 }} />
 
-            {/* Delete [armed, arming] buttons */}
-            {/*{!searchFrequency && <>*/}
-            {deleteArmed && (
-              <Tooltip color='danger' arrow disableInteractive title='Confirm Deletion'>
+            {deleteArmed && !isArchived && (
+              <Tooltip color='danger' arrow disableInteractive title='Confirm Archive'>
                 <FadeInButton key='btn-del' size='sm' onClick={handleConversationDelete} {...deleteConfirmButtonProps}>
-                  <DeleteForeverIcon />
+                  <ArchiveOutlinedIcon />
                 </FadeInButton>
               </Tooltip>
             )}
 
-            <Tooltip arrow disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
-              <FadeInButton
-                key='btn-arm'
-                size='sm'
-                onClick={handleDeleteButtonClick}
-                onPointerDown={handleDeleteButtonPointerDown}
-                onPointerUp={handleDeleteButtonPointerEnd}
-                onPointerCancel={handleDeleteButtonPointerEnd}
-                onPointerLeave={handleDeleteButtonPointerEnd}
-                sx={deleteArmed
-                  ? { opacity: 1 }
-                  : getDeleteHoldProgressSx(deleteHoldProgress)}
-              >
-                {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-              </FadeInButton>
-            </Tooltip>
-            {/*</>}*/}
+            {!isArchived && (
+              <Tooltip arrow disableInteractive title={deleteArmed ? 'Cancel Archive' : 'Archive'}>
+                <FadeInButton
+                  key='btn-arm'
+                  size='sm'
+                  onClick={handleDeleteButtonClick}
+                  onPointerDown={handleDeleteButtonPointerDown}
+                  onPointerUp={handleDeleteButtonPointerEnd}
+                  onPointerCancel={handleDeleteButtonPointerEnd}
+                  onPointerLeave={handleDeleteButtonPointerEnd}
+                  sx={deleteArmed
+                    ? { opacity: 1 }
+                    : getDeleteHoldProgressSx(deleteHoldProgress)}
+                >
+                  {deleteArmed ? <CloseRoundedIcon /> : <ArchiveOutlinedIcon />}
+                </FadeInButton>
+              </Tooltip>
+            )}
+
+            {isArchived && (
+              <Tooltip color='danger' arrow disableInteractive title='Delete Permanently'>
+                <FadeInButton key='btn-del-permanent' size='sm' color='danger' onClick={handleConversationDeletePermanently}>
+                  <DeleteForeverIcon />
+                </FadeInButton>
+              </Tooltip>
+            )}
           </Box>
         )}
 
@@ -546,12 +611,12 @@ function ChatDrawerItem(props: {
   ) : (
 
     // Inactive Conversation - click to activate
-    <Sheet className='chat-drawer-item-shell' variant='plain' sx={getInactiveChatRowShellSx(isIncognito)}>
+    <Sheet className='chat-drawer-item-shell' variant='plain' sx={getInactiveChatRowShellSx(isIncognito, folder?.color)}>
       <ListItem sx={{ alignItems: 'center', gap: 0.5, px: 'calc(var(--ListItem-paddingX) - 0.25rem)', position: 'relative' }}>
 
         <ListItemButton
           onClick={handleConversationActivate}
-          sx={getInactiveChatMainButtonSx(isIncognito, deleteArmed)}
+          sx={getInactiveChatMainButtonSx(isIncognito, deleteArmed, folder?.color)}
         >
 
           {titleRowComponent}
@@ -562,9 +627,9 @@ function ChatDrawerItem(props: {
         </ListItemButton>
 
         {deleteArmed && (
-          <Tooltip color='danger' arrow disableInteractive title='Confirm Deletion'>
+          <Tooltip color='danger' arrow disableInteractive title='Confirm Archive'>
             <FadeInButton
-              aria-label='Confirm Deletion'
+              aria-label='Confirm Archive'
               key='btn-del-inactive'
               size='sm'
               onClick={handleConversationDelete}
@@ -574,14 +639,14 @@ function ChatDrawerItem(props: {
                 ...getInactiveChatConfirmDeleteButtonSx(),
               }}
             >
-              <DeleteForeverIcon />
+              <ArchiveOutlinedIcon />
             </FadeInButton>
           </Tooltip>
         )}
 
-        <Tooltip arrow disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
+        <Tooltip arrow disableInteractive title={isArchived ? 'Restore' : deleteArmed ? 'Cancel Archive' : 'Archive'}>
           <FadeInButton
-            aria-label={deleteArmed ? 'Cancel Delete' : 'Delete'}
+            aria-label={isArchived ? 'Restore' : deleteArmed ? 'Cancel Archive' : 'Archive'}
             className='chat-drawer-item-delete-button'
             key='btn-arm-inactive'
             size='sm'
@@ -592,10 +657,10 @@ function ChatDrawerItem(props: {
             onPointerLeave={handleDeleteButtonPointerEnd}
             sx={{
               ...getInactiveChatDeleteButtonSx(deleteArmed),
-              ...(!deleteArmed ? getDeleteHoldProgressSx(deleteHoldProgress) : {}),
+              ...(!deleteArmed && !isArchived ? getDeleteHoldProgressSx(deleteHoldProgress) : {}),
             }}
           >
-            {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+            {isArchived ? <UnarchiveOutlinedIcon /> : deleteArmed ? <CloseRoundedIcon /> : <ArchiveOutlinedIcon />}
           </FadeInButton>
         </Tooltip>
 
