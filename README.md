@@ -43,7 +43,7 @@ It comes packed with **world-class features** like Beam, and is praised for its 
 
 ### What makes Big-AGI different:
 
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.6, Nano Banana Pro, Kimi K2.5 or GPT 5.2 -
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 4.6, Nano Banana Pro, Kimi K2.5 or GPT 5.4 -
 **Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
@@ -74,7 +74,7 @@ Purest AI outputs
 </td>
 <td align="center" valign="top">
 Flow-state interface<br/>
-Higly customizable<br/>
+Highly customizable<br/>
 Best-in-class UX
 </td>
 <td align="center" valign="top">
@@ -182,8 +182,11 @@ The new architecture is solid and the speed improvements are real.
 </details>
 
 <details>
-<summary>What's New in 1.16.1...1.16.10 · 2024-2025 (patch releases)</summary>
+<summary>What's New in 1.16.1...1.16.13 · (patch releases)</summary>
 
+- 1.16.13: Docker fix ([#840](https://github.com/enricoros/big-AGI/issues/840))
+- 1.16.12: Dockerfile update ([#840](https://github.com/enricoros/big-AGI/issues/840))
+- 1.16.11: v1 final release, documentation updates
 - 1.16.10: OpenRouter models support
 - 1.16.9: Docker Gemini fix, R1 models support
 - 1.16.8: OpenAI ChatGPT-4o Latest, o1 models support
@@ -245,7 +248,7 @@ The new architecture is solid and the speed improvements are real.
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
 - **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
 - **Mistral** Large and Google **Gemini 1.5** support
-- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Performance optimizations: runs [much faster](https://x.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
 
@@ -326,14 +329,15 @@ Delightful UX with latest models exclusive features like Beam for **multi-model 
 
 Configure 100s of AI models from 20+ providers:
 
-| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                                                                                                             |
-|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.io/) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                                                                                                                  |
-| Local Servers       | [LM Studio](https://lmstudio.ai/) (non-open)                                                                                                                                                                                                                                                                                                                                                    |
-| Multimodal services | [Anthropic](https://anthropic.com) · [AWS Bedrock](https://aws.amazon.com/bedrock/) · [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                             |
+| **AI models**       | _supported vendors_                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.io/) · [Ollama](https://ollama.com/)                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Local Servers       | [LM Studio](https://lmstudio.ai/) (non-open)                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Multimodal services | [Anthropic](https://anthropic.com) · [AWS Bedrock](https://aws.amazon.com/bedrock/) · [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                                                                                                                                                                                       |
 | LLM services        | [Alibaba](https://www.alibabacloud.com/en/product/modelstudio) · [DeepSeek](https://deepseek.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [Moonshot](https://www.moonshot.cn/) · [OpenPipe](https://openpipe.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) · [xAI](https://x.ai/) · [Z.ai](https://z.ai/) |
-| Image services      | OpenAI · Google Gemini                                                                                                                                                                                                                                                                                                                                                                          |
-| Speech services     | [ElevenLabs](https://elevenlabs.io) · [Inworld](https://inworld.ai) · [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech) · LocalAI · Browser (Web Speech API)                                                                                                                                                                                                                 |
+| OpenAI-compatible   | Any OpenAI-compatible endpoint - models, pricing, and capabilities are auto-detected                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Image services      | OpenAI · Google Gemini (Nano Banana) · LocalAI                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Speech services     | [ElevenLabs](https://elevenlabs.io) · [Inworld](https://inworld.ai) · [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech) · LocalAI · Browser (Web Speech API)                                                                                                                                                                                                                                                                                                            |
 
 ### Additional Integrations
 
@@ -389,4 +393,4 @@ When you open an issue, our custom AI triage system (powered by [Claude Code](ht
 
 MIT License · [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md)
 
-**2023-2026** · Enrico Ros × [Big-AGI](https://big-agi.com)
+**2023-2026** · [Enrico Ros](https://www.enricoros.com) × [Token Fabrics](https://www.tokenfabrics.com)

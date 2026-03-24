@@ -37,14 +37,18 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <meta property='og:site_name' content={Brand.Meta.SiteName} />
         <meta property='og:type' content='website' />
 
-        {/* Twitter */}
-        <meta property='twitter:card' content='summary_large_image' />
+        {/* Twitter / X */}
+        <meta name='twitter:card' content='summary_large_image' />
         <meta property='twitter:url' content={Brand.URIs.Home} />
         <meta property='twitter:title' content={Brand.Title.Common} />
         <meta property='twitter:description' content={Brand.Meta.Description} />
         {Brand.URIs.CardImage && <meta property='twitter:image' content={Brand.URIs.CardImage} />}
         <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
-        <meta name='twitter:card' content='summary_large_image' />
+        <meta name='twitter:creator' content='@enricoros' />
+
+        {/* Author */}
+        <meta name='author' content='Enrico Ros' />
+        <link rel='author' href='https://www.enricoros.com' />
 
         {/* Style Sheets (injected and server-side) */}
         <meta name='emotion-insertion-point' content='' />

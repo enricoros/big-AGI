@@ -49,8 +49,8 @@ Edit the `src/data.ts` file to customize personas. This file houses the default 
 Adapt the UI to match your project's aesthetic, incorporate new features, or exclude unnecessary ones.
 
 - [ ] Adjust `src/common/app.theme.ts` for theme changes: colors, spacing, button appearance, animations, etc
-- [ ] Modify `src/common/app.config.tsx` to alter the application's name
-- [ ] Update `src/common/app.nav.tsx` to revise the navigation bar
+- [ ] Modify `src/common/app.release.ts` to alter the application's name
+- [ ] Update `src/common/app.nav.ts` to revise the navigation bar
 
 ### Add a Message of the Day
 
@@ -71,7 +71,7 @@ Example: `NEXT_PUBLIC_MOTD=🚀 New features available in {{app_build_pkgver}}! 
 
 Test your application thoroughly using local development (refer to README.md for local build instructions). Deploy using your preferred hosting service. big-AGI supports deployment on platforms like Vercel, Docker, or any Node.js-compatible service, especially those supporting NextJS's "Edge Runtime."
 
-- [deploy-cloudflare.md](deploy-cloudflare.md): for Cloudflare Workers deployment
+- [deploy-cloudflare.md](deploy-cloudflare.md): for Cloudflare Pages deployment (limited support)
 - [deploy-docker.md](deploy-docker.md): for Docker deployment instructions and examples
 - [deploy-k8s.md](deploy-k8s.md): for Kubernetes deployment instructions and examples
 

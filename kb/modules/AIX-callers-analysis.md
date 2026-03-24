@@ -7,8 +7,8 @@ This document analyzes all AIX function callers and their patterns for message r
 ### Three-Tier Call Hierarchy
 
 **Core AIX Functions** (Direct tRPC API callers):
-- `aixChatGenerateContent_DMessage_FromConversation` - 8 callers (conversation streaming)
-- `aixChatGenerateContent_DMessage` - 6 callers (direct request/response)
+- `aixChatGenerateContent_DMessage_FromConversation` - 9 callers (conversation streaming)
+- `aixChatGenerateContent_DMessage_orThrow` - 6 callers (direct request/response)
 - `aixChatGenerateText_Simple` - 12 callers (text-only utilities)
 
 **Utility Layer** (Hooks & Functions):
@@ -24,6 +24,7 @@ This document analyzes all AIX function callers and their patterns for message r
 | **Caller** | **Context** | **Message Removal** | **Placeholder** | **Error Handling** |
 |------------|-------------|-------------------|----------------|-------------------|
 | **Chat Persona** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | None | Error fragments |
+| **XE Chat Generate** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | `'...'` placeholder | Error fragments via messageEditor |
 | **Beam Scatter** | `'beam-scatter'` | `messageWasInterruptedAtStart()` → empty message | `SCATTER_PLACEHOLDER` | Ray status update |
 | **Beam Gather** | `'beam-gather'` | `messageWasInterruptedAtStart()` → clear fragments | `GATHER_PLACEHOLDER` | Re-throw errors |
 | **Beam Follow-up** | `'beam-followup'` | `messageWasInterruptedAtStart()` → remove message | `FOLLOWUP_PLACEHOLDER` | Status updates |

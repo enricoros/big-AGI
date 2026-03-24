@@ -7,7 +7,7 @@ process for your own instance of big-AGI and related products.
 
 **Try big-AGI** - You don't need to install anything if you want to play with big-AGI
 and have your API keys to various model services. You can access our free instance on [big-AGI.com](https://big-agi.com).
-The free instance runs the latest `main-stable` branch from this repository.
+The free instance runs the latest `main` branch from this repository.
 
 ## 🧩 Build-your-own
 
@@ -72,9 +72,8 @@ Create your GitHub fork, create a Vercel project over that fork, and deploy it. 
 
 ### Deploy on Cloudflare
 
-Deploy on Cloudflare's global network by installing big-AGI on
-Cloudflare Pages. Check out the [Cloudflare Installation Guide](deploy-cloudflare.md)
-for step-by-step instructions.
+> Note: Cloudflare Pages deployment has limitations due to Edge Runtime constraints.
+> See the [Cloudflare guide](deploy-cloudflare.md) for details and known issues.
 
 ### Docker Deployments
 
@@ -146,6 +145,6 @@ Enjoy all the features of big-AGI without the hassle of infrastructure managemen
 Join our vibrant community of developers, researchers, and AI enthusiasts. Share your projects, get help, and collaborate with others.
 
 - [Discord Community](https://discord.gg/MkH4qj2Jp9)
-- [Twitter](https://twitter.com/enricoros)
+- [X (Twitter)](https://x.com/enricoros)
 
 For any questions or inquiries, please don't hesitate to [reach out to our team](mailto:hello@big-agi.com).

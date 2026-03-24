@@ -2,7 +2,8 @@
   "name": "big-agi",
   "version": "2.0.3",
   "private": true,
-  "author": "Enrico Ros <enrico.ros@gmail.com>",
+  "author": "Enrico Ros <enrico@big-agi.com> (https://www.enricoros.com)",
+  "homepage": "https://big-agi.com",
   "repository": "https://github.com/enricoros/big-agi",
   "scripts": {
     "dev": "next dev --turbopack",
