@@ -14,6 +14,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { CustomARenderer } from './CustomARenderer';
+import { RenderCode } from '../code/RenderCode';
 import { remarkTableCellBreaks } from './tableBreaks.remark';
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
 
@@ -202,6 +203,21 @@ function generateMarkdownTableFromData(tableData: any[]): string {
 
 const reactMarkdownComponents = {
   a: CustomARenderer, // override the link renderer to add target="_blank"
+  code: ({ inline, className, children, ...props }: any) => {
+    const match = /language-(\w+)/.exec(className || '');
+    const language = match ? match[1] : '';
+    if (!inline && language === 'mermaid') {
+      return (
+        <RenderCode
+          semiStableId={undefined}
+          title="mermaid"
+          code={String(children).replace(/\n$/, '')}
+          isPartial={false}
+        />
+      );
+    }
+    return <code className={className} {...props}>{children}</code>;
+  },
   del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
   mark: MarkRenderer, // renders the <mark> tag (==highlight==)
   table: TableRenderer, // override the table renderer to show the download CSV links and Copy Markdown button
