@@ -61,6 +61,10 @@ by release.
 - Using `Stop` now leaves enqueued messages on hold instead of auto-sending them as soon as the interrupted run unwinds.
 - User-facing upstream failure messages now avoid echoing the configured endpoint URL, so custom proxy hosts do not get reflected back into chat-visible errors.
 
+### 2026-03-24
+
+- Agent turns can now call a built-in `subagent(prompt)` tool that spawns an ephemeral helper with the same conversation context and tool access, lets that helper recurse into its own tools, and feeds the returned message back into the parent turn before the final visible answer is completed.
+
 ### What's New in 2 · Oct 31, 2025 · Open
 
 - **Big-AGI Open** is ready and more productive and faster than ever, with:

@@ -6,7 +6,7 @@ import { DConversationId, DConversationParticipant, splitSystemMessageFromHistor
 import type { SystemPurposeId } from '../../../data';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelParameterValues } from '~/common/stores/llms/llms.parameters';
-import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { isTextContentFragment, isToolInvocationPart, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import type { DMessage, DMessageCouncilChannel, DMessageGenerator } from '~/common/stores/chat/chat.message';
@@ -314,7 +314,19 @@ export async function runPersonaOnConversationHead(
   }
 
   // notify when complete, if set
-  if (assistantMessageId && cHandler.messageHasUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE)) {
+  const toolResponseIds = new Set(lastDeepCopy.fragments.flatMap(fragment =>
+    fragment.ft === 'content' && isToolResponseFunctionCallPart(fragment.part)
+      ? [fragment.part.id]
+      : [],
+  ));
+  const awaitsToolFollowUp = lastDeepCopy.fragments.some(fragment =>
+    fragment.ft === 'content'
+    && isToolInvocationPart(fragment.part)
+    && fragment.part.invocation.type === 'function_call'
+    && !toolResponseIds.has(fragment.part.id),
+  );
+
+  if (!awaitsToolFollowUp && assistantMessageId && cHandler.messageHasUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE)) {
     cHandler.messageSetUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE, false, false);
     AudioGenerator.chatNotifyResponse();
   }
@@ -327,12 +339,12 @@ export async function runPersonaOnConversationHead(
   if (!keepAbortController)
     cHandler.clearAbortController('chat-persona');
 
-  if (autoTitleChat) {
+  if (autoTitleChat && !awaitsToolFollowUp) {
     // fire/forget, this will only set the title if it's not already set
     void autoConversationTitle(conversationId, false);
   }
 
-  if (!hasBeenAborted && assistantMessageId && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
+  if (!hasBeenAborted && !awaitsToolFollowUp && assistantMessageId && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
     void autoChatFollowUps(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   const chatThinkingPolicy = getChatThinkingPolicy();

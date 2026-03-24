@@ -3,6 +3,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecutionRuntime } from './chat-execution.runtime';
 import { runPersonaOnConversationHead } from './chat-persona';
+import { runPersonaWithEphemeralSubagents } from './chat-execution.runtime.tools';
 
 
 const defaultChatExecutionRuntime: ChatExecutionRuntime = {
@@ -32,18 +33,18 @@ const defaultChatExecutionRuntime: ChatExecutionRuntime = {
     };
   },
   createAbortController: () => new AbortController(),
-  runPersona: (params) => runPersonaOnConversationHead(
-    params.assistantLlmId,
-    params.conversationId,
-    params.systemPurposeId,
-    params.keepAbortController,
-    params.sharedAbortController,
-    params.participant,
-    params.sourceHistory,
-    params.createPlaceholder,
-    params.messageChannel,
-    params.runOptions,
-  ),
+  runPersona: (params) => runPersonaWithEphemeralSubagents(params, innerParams => runPersonaOnConversationHead(
+    innerParams.assistantLlmId,
+    innerParams.conversationId,
+    innerParams.systemPurposeId,
+    innerParams.keepAbortController,
+    innerParams.sharedAbortController,
+    innerParams.participant,
+    innerParams.sourceHistory,
+    innerParams.createPlaceholder,
+    innerParams.messageChannel,
+    innerParams.runOptions,
+  )),
 };
 
 export async function getDefaultChatExecutionRuntime(): Promise<ChatExecutionRuntime> {
