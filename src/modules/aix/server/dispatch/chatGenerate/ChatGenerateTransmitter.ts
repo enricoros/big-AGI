@@ -167,7 +167,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (SERVER_DEBUG_WIRE)
       console.log('|terminate-dispatch|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
     if (this.terminationReason)
-      console.warn(`[AIX] setDispatchEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
+      console.warn(`[Aix.${this.prettyDialect}] setDispatchEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
     this.terminationReason = reason;
   }
 
@@ -188,7 +188,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (SERVER_DEBUG_WIRE)
       console.log('|terminate-dialect|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
     if (this.terminationReason)
-      console.warn(`[AIX] setDialectEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
+      console.warn(`[Aix.${this.prettyDialect}] setDialectEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
     this.terminationReason = reason;
   }
 
@@ -205,7 +205,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (SERVER_DEBUG_WIRE)
       console.log('|token-stop|', reason);
     if (this.tokenStopReason)
-      console.warn(`[AIX] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
+      console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
     this.tokenStopReason = reason;
   }
 
