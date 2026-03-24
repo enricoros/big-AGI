@@ -92,12 +92,12 @@ AIX is organized into the following files and folders:
 
 - Dispatch (`/server/dispatch/`) - Server to AI Provider communication:
   - `/server/dispatch/chatGenerate/`: Content Generation with chat-style inputs:
-    - `./adapters/`: Adapters for creating API requests for different AI protocols (Anthropic, Gemini, OpenAI).
-    - `./parsers/`: Parsers for parsing streaming/non-streamin responses from different AI protocols (same 3).
+    - `./adapters/`: Adapters for creating API requests for different AI protocols (Anthropic, Bedrock, Gemini, OpenAI Chat Completions, OpenAI Responses, xAI Responses).
+    - `./parsers/`: Parsers for parsing streaming/non-streaming responses from different AI protocols (Anthropic, Bedrock Converse, Gemini, OpenAI, OpenAI Responses).
     - `chatGenerate.dispatch.ts`: Creates a pipeline to execute Chat Generation to a specific provider.
     - `ChatGenerateTransmitter.ts`: Used to serialize and transmit AixWire_Particles to the client.
   - `/server/dispatch/wiretypes/`: AI provider Wire Types:
-    - Type definitions for different AI providers/protocols (Anthropic, Gemini, OpenAI).
+    - Type definitions for different AI providers/protocols (Anthropic, Bedrock Converse, Gemini, OpenAI, xAI).
   - `stream.demuxers.ts`: Handles demuxing of different stream formats.
 
 ## 3. Architecture Diagram
@@ -160,7 +160,7 @@ sequenceDiagram
                 AIX Client ->> AIX Client: Display error message
             else DMessageDocPart
                 AIX Client ->> AIX Client: Process and display document
-            else DMetaPlaceholderPart
+            else DVoidPlaceholderPart
                 AIX Client ->> AIX Client: Handle placeholder (non-submitted)
             end
         end

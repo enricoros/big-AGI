@@ -51,13 +51,13 @@ Vercel Analytics and Speed Insights are local API endpoints deployed to your dom
 domain. Furthermore, the Vercel Analytics service is privacy-friendly, and does not track individual users.
 
 This service is avaialble to system administrators when deploying to Vercel. It is automatically enabled when deploying to Vercel.
-The code that activates Vercel Analytics is located in the `src/pages/_app.tsx` file:
+The code that activates Vercel Analytics is located in the `pages/_app.tsx` file:
 
 ```tsx
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => <>
   ...
-  {isVercelFromFrontend && <VercelAnalytics debug={false} />}
-  {isVercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
+  {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
+  {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
   ...
 </>;
 ```

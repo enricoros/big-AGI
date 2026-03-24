@@ -47,7 +47,7 @@ Shows only parameters that are:
 - Not marked as `hidden`
 
 **Value Resolution**: Both UIs use `getAllModelParameterValues()` to merge:
-1. **Fallback values** - Implicit parameters get their `runtimeFallback` values
+1. **Fallback values** - Implicit parameters get their `LLMImplicitParametersRuntimeFallback` values
 2. **Initial values** - Model's `initialParameters` (populated during model creation)
 3. **User values** - User's `userParameters` (highest priority)
 
@@ -63,7 +63,7 @@ The AIX client transforms DLLM parameters to wire protocol format. This layer ha
 
 Server-side adapters translate AIX parameters to vendor APIs. Each vendor may interpret parameters differently:
 
-- **OpenAI**: `vndEffort` → `reasoning_effort`
+- **OpenAI**: `vndEffort` -> `reasoning_effort`
 - **Perplexity**: Reuses OpenAI parameter format
 - **OpenAI Responses API**: Maps to structured reasoning config with additional logic
 
@@ -71,7 +71,7 @@ Server-side adapters translate AIX parameters to vendor APIs. Each vendor may in
 
 When a model is loaded:
 
-1. **Model Creation**: `modelDescriptionToDLLM()` creates the DLLM with empty `initialParameters`
+1. **Model Creation**: `_createDLLMFromModelDescription()` creates the DLLM with empty `initialParameters`
 2. **Initial Value Application**: `applyModelParameterSpecsInitialValues()` populates initial values from:
    - Model spec `initialValue` (highest priority)
    - Registry `initialValue` (fallback)

@@ -30,6 +30,12 @@ You can see your data in your browser's local storage and IndexedDB - try it you
 
 ![Browser local storage showing API keys and chat data](pixels/data_ownership_local_storage.png)
 
+### Sync for Authenticated Users
+
+Users with accounts on big-agi.com who opt into Sync (a Pro feature) have their entity data - such as conversations and personas - replicated to the server for multi-device access.
+Server-side data is isolated per-user using Row Level Security (RLS), ensuring that no other user can access your synced data.
+Sync is entirely optional; without it, all data remains local to your browser.
+
 ### What This Means For You
 
 Storing data in your browser means:
@@ -43,7 +49,7 @@ Storing data in your browser means:
 
 Big-AGI generates a _device identifier_ that combines timestamp and random components, stored only on your device. This identifier:
 
-- Is used only for the **optional sync functionality** between your devices (not yet ready)
+- Is used only for the **optional sync functionality** between your devices
 - Helps maintain data consistency when using Big-AGI across multiple devices
 - Remains completely local unless you explicitly enable sync
 - Is not used for tracking, analytics, or telemetry

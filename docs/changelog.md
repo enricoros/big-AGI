@@ -20,8 +20,11 @@ by release.
 - And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
 - Built for the future, madly optimized
 
-### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
+### What's New in 1.16.1...1.16.13 · (patch releases)
 
+- 1.16.13: Docker fix (#840)
+- 1.16.12: Dockerfile update (#840)
+- 1.16.11: v1 final release, documentation updates
 - 1.16.10: OpenRouter models support
 - 1.16.9: Docker Gemini fix, R1 models support
 - 1.16.8: OpenAI ChatGPT-4o Latest, o1 models support
@@ -70,7 +73,7 @@ by release.
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
 - **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
 - **Mistral** Large and Google **Gemini 1.5** support
-- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Performance optimizations: runs [much faster](https://x.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
 - [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)

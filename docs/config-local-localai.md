@@ -41,6 +41,8 @@ In addition to using the UI, configuration can also be done using
 
 ### Integration: Models Gallery
 
+> Note: The Gallery Admin feature described below may have been removed or renamed in recent versions of big-AGI.
+
 If the running LocalAI instance is configured with a [Model Gallery](https://localai.io/models/):
 
 - Go to Models > LocalAI

@@ -10,6 +10,8 @@ Essential guides:
 
 - **[FAQ](help-faq.md)**: Common questions and answers
 - **[Enabling Microphone](help-feature-microphone.md)**: Configure speech recognition in your browser
+- **[Data Ownership](help-data-ownership.md)**: How your data is stored and managed
+- **[Live File](help-feature-livefile.md)**: Live file attachment feature
 
 ## AI Services
 
@@ -26,15 +28,16 @@ How to set up AI models and features in big-AGI.
     [Google Gemini](https://aistudio.google.com/app/apikey),
     [Groq](https://console.groq.com/keys),
     [Mistral](https://console.mistral.ai/api-keys/),
+    [Moonshot](https://platform.moonshot.cn/console/api-keys),
     [OpenAI](https://platform.openai.com/api-keys),
     [OpenPipe](https://app.openpipe.ai/settings),
     [Perplexity](https://www.perplexity.ai/settings/api),
     [TogetherAI](https://api.together.xyz/settings/api-keys),
-    [xAI](http://x.ai/api),
+    [xAI](https://x.ai/api),
     [Z.ai](https://z.ai/)
   - **[Azure OpenAI](config-azure-openai.md)** guide
-  - **FireworksAI** ([API keys](https://fireworks.ai/account/api-keys), via custom OpenAI endpoint: https://api.fireworks.ai/inference)
   - **[OpenRouter](config-openrouter.md)** guide
+  - **OpenAI-compatible endpoints**: Any provider with an OpenAI-compatible API works out of the box - models, pricing, and capabilities are auto-detected
 
 
 - **Local AI Integrations**:
@@ -44,8 +47,9 @@ How to set up AI models and features in big-AGI.
 - **Enhanced AI Features**:
   - **[Web Browsing](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud
   - **Web Search**: Google Search API (see '[Environment Variables](environment-variables.md)')
-  - **Image Generation**: GPT Image (gpt-image-1), DALL·E 3 and 2
+  - **Image Generation**: GPT Image (gpt-image-1), Nano Banana, DALL·E 3 and 2
   - **Voice Synthesis**: ElevenLabs, Inworld, OpenAI TTS, LocalAI, or browser Web Speech API
+  - **[Google Drive](config-feature-google-drive.md)**: Attach files from Google Drive
 
 ## Deployment & Customization
 
@@ -64,6 +68,9 @@ For deploying a custom big-AGI instance:
   - **[Access Control](deploy-authentication.md)**: Optional, add basic user authentication
   - **[Database Setup](deploy-database.md)**: Optional, enables "Chat Link Sharing"
   - **[Reverse Proxy](deploy-reverse-proxy.md)**: Optional, enables custom domains and SSL
+  - **[Docker Deployment](deploy-docker.md)**: Deploy with Docker containers
+  - **[Kubernetes](deploy-k8s.md)**: Deploy on Kubernetes clusters
+  - **[Analytics](deploy-analytics.md)**: Set up usage analytics
   - **[Environment Variables](environment-variables.md)**: Pre-configures models and services
 
 ## Community & Support

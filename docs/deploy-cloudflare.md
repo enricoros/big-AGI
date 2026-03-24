@@ -1,18 +1,20 @@
+---
+unlisted: true
+---
+
 # Deploying a Next.js App on Cloudflare Pages
 
-> WARNING: Cloudflare Pages does not support traditional NodeJS runtimes, but only Edge Runtime functions.
+> WARNING: Cloudflare Pages only supports Edge Runtime functions, not the full Node.js runtime.
 >
-> In this project we use Prisma connected to serverless Postgres, which at the moment cannot run on
-> edge functions, so we cannot deploy this project on Cloudflare Pages.
+> The cloud router in this project requires a Node.js runtime for Supabase SDK, authentication,
+> sync, and other server-side features that cannot run on Cloudflare's edge runtime.
 >
-> Workaround: Step 3.4. has been added below, to DELETE the NodeJS traditional runtime - which means that some
+> Workaround: Step 3.4. has been added below, to DELETE the Node.js cloud router - which means that some
 > parts of this application will not work.
->  - [Side effects](https://github.com/enricoros/big-agi/blob/main/src/apps/chat/trade/server/trade.router.ts#L19):
-     > Sharing functionality to DB, and import from ChatGPT share, and post to Paste.GG will not work
+>  - [Side effects](https://github.com/enricoros/big-agi/blob/main/src/modules/trade/server/trade.router.ts):
+>     Sharing functionality, import from ChatGPT share, and post to Paste.GG will not work
+>  - Cloud features (sync, auth, payments) will not be available
 >  - See [Issue 174](https://github.com/enricoros/big-agi/issues/174).
->
-> Longer term: follow [prisma/prisma: Support Edge Function deployments](https://github.com/prisma/prisma/issues/21394)
-> and convert the Node runtime to Edge runtime once Prisma supports it.
 
 This guide provides steps to deploy your Next.js app on Cloudflare Pages.
 It is based on the [official Cloudflare developer documentation](https://developers.cloudflare.com/pages/framework-guides/deploy-a-nextjs-site/),

@@ -174,7 +174,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>Support for new Mistral-Large models</>, icon: MistralIcon },
       { text: <>Support for Google Gemini 1.5 models and various improvements</>, icon: GoogleIcon as any },
       { text: <>Deeper LocalAI integration including support for <B issue={411}>model galleries</B></>, icon: LocalAIIcon },
-      { text: <>Major <B href='https://twitter.com/enricoros/status/1756553038293303434'>performance optimizations</B>: runs faster, saves power, saves memory</> },
+      { text: <>Major <B href='https://x.com/enricoros/status/1756553038293303434'>performance optimizations</B>: runs faster, saves power, saves memory</> },
       { text: <>Improvements: auto-size charts, search and folder experience</> },
       { text: <>Perfect chat scaling, with rapid keyboard shortcuts</> },
       { text: <>Also: diagrams auto-resize, open code with StackBlitz and JSFiddle, quick model visibility toggle, open links externally, docs on the web</> },
