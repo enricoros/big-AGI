@@ -47,7 +47,7 @@ const _styles = {
   opChip: {
     maxWidth: '100%', // fundamental for the ellipsize to work
     // width: '100%', // would have way less 'jumpy-ness'
-    // minWidth: 200, // would work on mobile, but no clear advantage
+    minWidth: 200, // would work on mobile, but no clear advantage
     // fontWeight: 500,
     minHeight: '2rem',
     // replaced by Box with px: 2
@@ -68,7 +68,7 @@ const modelOperationConfig: Record<DVoidPlaceholderModelOp['mot'], { Icon: React
   'search-web': { Icon: SearchRoundedIcon, color: 'neutral' },
   'gen-image': { Icon: BrushRoundedIcon, color: 'success' },
   'code-exec': { Icon: CodeIcon, color: 'primary' },
-  'flow-cont': { Icon: SearchRoundedIcon, color: 'neutral' },
+  'flow-cont': { Icon: SearchRoundedIcon, color: 'warning' },
 } as const;
 
 
