@@ -30,6 +30,14 @@ test('archived active chat rows expose separate restore and permanent delete act
   assert.match(source, /archiveDaysUntilPermanentDelete\}d/);
 });
 
+test('archived chats entry is hidden when there are no archived chats outside the archived filter', () => {
+  const source = readFileSync(new URL('./ChatDrawer.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /\{\(filterIsArchived \|\| archivedChatsCount > 0\) && \(/);
+  assert.match(source, /\{filterIsArchived \? 'Back to Chats' : `Archived Chats \(\$\{archivedChatsCount\}\)`\}/);
+  assert.doesNotMatch(source, /disabled=\{!filterIsArchived && archivedChatsCount === 0\}/);
+});
+
 test('drawer title uses CSS truncation instead of appending manual ellipsis text', () => {
   const source = readFileSync(new URL('./ChatDrawerItem.tsx', import.meta.url), 'utf8');
 

@@ -794,16 +794,17 @@ function ChatDrawer(props: {
         )}
       </Box>
 
-      <ListItemButton
-        selected={filterIsArchived}
-        disabled={!filterIsArchived && archivedChatsCount === 0}
-        onClick={toggleFilterIsArchived}
-      >
-        <ListItemDecorator>
-          {filterIsArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}
-        </ListItemDecorator>
-        {filterIsArchived ? 'Back to Chats' : `Archived Chats${archivedChatsCount ? ` (${archivedChatsCount})` : ''}`}
-      </ListItemButton>
+      {(filterIsArchived || archivedChatsCount > 0) && (
+        <ListItemButton
+          selected={filterIsArchived}
+          onClick={toggleFilterIsArchived}
+        >
+          <ListItemDecorator>
+            {filterIsArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}
+          </ListItemDecorator>
+          {filterIsArchived ? 'Back to Chats' : `Archived Chats (${archivedChatsCount})`}
+        </ListItemButton>
+      )}
 
       <ListDivider sx={{ my: 0 }} />
 
