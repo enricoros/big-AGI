@@ -264,7 +264,7 @@ export type DVoidPlaceholderPart = {
 };
 
 export type DVoidPlaceholderModelOp = {
-  mot: 'search-web' | 'gen-image' | 'code-exec',
+  mot: 'search-web' | 'gen-image' | 'code-exec' | 'flow-cont',
   cts: number, // client-based timestamp
 };
 
