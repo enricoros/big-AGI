@@ -218,9 +218,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               content_block.input = '';
 
             // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
-            const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825';
+            const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825' || content_block.caller?.type === 'code_execution_20260120';
             if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
-              console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from code_execution (tool_id: ${content_block.caller?.type === 'code_execution_20250825' ? content_block.caller.tool_id : 'n/a'})`);
+              console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from ${content_block.caller!.type} (tool_id: ${content_block.caller!.type !== 'direct' ? content_block.caller!.tool_id : 'n/a'})`);
 
             pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input || null);
             break;
@@ -698,9 +698,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           // NOTE: this gets parsed as an object, not string deltas of a json!
 
           // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
-          const isProgrammaticCallNS = contentBlock.caller?.type === 'code_execution_20250825';
+          const isProgrammaticCallNS = contentBlock.caller?.type === 'code_execution_20250825' || contentBlock.caller?.type === 'code_execution_20260120';
           if (isProgrammaticCallNS)
-            console.log(`[Anthropic] Programmatic tool call (non-streaming): ${contentBlock.name} called from code_execution (tool_id: ${contentBlock.caller?.type === 'code_execution_20250825' ? contentBlock.caller.tool_id : 'n/a'})`);
+            console.log(`[Anthropic] Programmatic tool call (non-streaming): ${contentBlock.name} called from ${contentBlock.caller!.type} (tool_id: ${contentBlock.caller!.type !== 'direct' ? contentBlock.caller!.tool_id : 'n/a'})`);
 
           pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
           pt.endMessagePart();
