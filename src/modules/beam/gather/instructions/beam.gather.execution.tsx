@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Typography } from '@mui/joy';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { abortWithReason } from '~/common/util/errorUtils';
 import { createDMessageEmpty, DMessage } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 
@@ -44,7 +45,7 @@ export function gatherStartFusion(
 
   // abort any current fusion
   const { instructions } = initialFusion;
-  initialFusion.fusingAbortController?.abort('Merge Stopped');
+  abortWithReason(initialFusion.fusingAbortController, 'Merge Stopped');
 
   // validate preconditions
   const onError = (errorText: string) => onUpdateBFusion({
@@ -161,7 +162,7 @@ export function gatherStartFusion(
 
 
 export function gatherStopFusion(fusion: BFusion): BFusion {
-  fusion.fusingAbortController?.abort('Merge Stopped');
+  abortWithReason(fusion.fusingAbortController, 'Merge Stopped');
   return {
     ...fusion,
     ...(fusion.stage === 'fusing' ? { stage: 'stopped' /* optimistic as the abort shall do the same */ } : {}),
