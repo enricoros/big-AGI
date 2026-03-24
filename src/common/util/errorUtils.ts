@@ -1,5 +1,15 @@
 import { Release } from '~/common/app.release';
 
+
+/**
+ * Abort an AbortController with a proper DOMException('AbortError') instead of a raw string,
+ * so all downstream `error.name === 'AbortError'` checks work correctly.
+ */
+export function abortWithReason(controller: AbortController | undefined | null, message: string): void {
+  controller?.abort(new DOMException(message, 'AbortError'));
+}
+
+
 /**
  * Present an error to the user in a human-readable format.
  * Be exhaustive and not repetitive. Ignore the stack trace.
