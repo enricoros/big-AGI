@@ -126,6 +126,25 @@ function renderAssistantMessageWithInlineSubagentMarkup() {
   );
 }
 
+function renderAssistantMessageWithInlineSubagentResultMarkup() {
+  const message = createDMessageEmpty('assistant');
+  message.fragments = [
+    create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Inspect the issue.' })),
+    create_FunctionCallResponse_ContentFragment('tool-1', false, 'subagent', JSON.stringify({ ok: true, message: 'Done.' }), 'client'),
+    createTextContentFragment('Parent final answer.'),
+  ];
+
+  return renderToStaticMarkup(
+    <ul>
+      <ChatMessage
+        message={message}
+        fitScreen={false}
+        isMobile={false}
+      />
+    </ul>,
+  );
+}
+
 test('system messages created with updated equal to created do not show the edited warning', () => {
   const markup = renderChatMessageMarkup(100);
 
@@ -205,4 +224,12 @@ test('assistant messages hide duplicate subagent tool blocks when inline subagen
   assert.match(markup, /Planner Internal Monologue/);
   assert.doesNotMatch(markup, />Subagent</);
   assert.doesNotMatch(markup, />Client</);
+});
+
+test('assistant messages render a single subagent block for a matched invocation and response pair', () => {
+  const markup = renderAssistantMessageWithInlineSubagentResultMarkup();
+  const subagentMatches = markup.match(/>Subagent</g) ?? [];
+
+  assert.equal(subagentMatches.length, 1);
+  assert.match(markup, /Parent final answer\./);
 });

@@ -99,7 +99,7 @@ test('single-agent human-driven chats display the active model name while keepin
   assert.equal(result.displayNamesById.get(participant.id), 'GPT 5.4');
 });
 
-test('restart in council metadata keeps existing fields while rerouting the message to the public board', () => {
+test('restart in council metadata keeps existing fields while rerouting the message to the leader', () => {
   const result = getRestartInCouncilMessageMetadata({
     author: {
       participantId: 'human-1',
@@ -117,7 +117,7 @@ test('restart in council metadata keeps existing fields while rerouting the mess
       mText: 'Earlier context',
     }],
     initialRecipients: [{ rt: 'participant', participantId: 'leader-1' }],
-  });
+  }, 'leader-1');
 
   assert.deepEqual(result.author, {
     participantId: 'human-1',
@@ -131,7 +131,7 @@ test('restart in council metadata keeps existing fields while rerouting the mess
     mText: 'Earlier context',
   }]);
   assert.deepEqual(result.councilChannel, { channel: 'public-board' });
-  assert.deepEqual(result.initialRecipients, [{ rt: 'public-board' }]);
+  assert.deepEqual(result.initialRecipients, [{ rt: 'participant', participantId: 'leader-1' }]);
 });
 
 test('non-council render entries window before decorating the chat history tail', () => {

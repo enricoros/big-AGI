@@ -22,6 +22,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
 import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
 import { buildAgentGroupTransferFile, getAgentGroupTransferFilename, parseAgentGroupTransferFile } from '~/common/stores/chat/store-chat-agent-groups.transfer';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
@@ -34,11 +35,13 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { getIsMobile } from '~/common/components/useMatchMedia';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
+import { DELETE_HOLD_DURATION_MS, getDeleteHoldProgressSx } from './ChatDrawerItem.layout';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from '../layout-bar/useFolderDropdown';
@@ -47,7 +50,6 @@ import { useChatDrawerFilters } from '../../store-app-chat';
 
 // this is here to make shallow comparisons work on the next hook
 const noFolders: DFolder[] = [];
-
 /*
  * Lists folders and returns the active folder
  */
@@ -86,6 +88,7 @@ function ChatDrawer(props: {
 }) {
 
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
+  const { showPromisedOverlay } = useOverlayComponents();
   const { savedAgentGroups, renameAgentGroup, deleteAgentGroup, importAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
     savedAgentGroups: state.savedAgentGroups,
     renameAgentGroup: state.renameAgentGroup,
@@ -94,6 +97,12 @@ function ChatDrawer(props: {
   })));
 
   const [editingGroupId, setEditingGroupId] = React.useState<string | null>(null);
+  const [holdingDeleteGroupId, setHoldingDeleteGroupId] = React.useState<string | null>(null);
+  const [holdingDeleteGroupProgress, setHoldingDeleteGroupProgress] = React.useState(0);
+  const deleteHoldFrameRef = React.useRef<number | null>(null);
+  const deleteHoldStartedAtRef = React.useRef<number | null>(null);
+  const deleteHoldTriggeredGroupIdRef = React.useRef<string | null>(null);
+  const suppressNextDeleteClickGroupIdRef = React.useRef<string | null>(null);
 
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
   const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
@@ -118,6 +127,20 @@ function ChatDrawer(props: {
   );
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
+
+  const clearAgentGroupDeleteHold = React.useCallback((resetProgress: boolean) => {
+    if (deleteHoldFrameRef.current !== null) {
+      cancelAnimationFrame(deleteHoldFrameRef.current);
+      deleteHoldFrameRef.current = null;
+    }
+    deleteHoldStartedAtRef.current = null;
+    deleteHoldTriggeredGroupIdRef.current = null;
+    setHoldingDeleteGroupId(null);
+    if (resetProgress)
+      setHoldingDeleteGroupProgress(0);
+  }, []);
+
+  React.useEffect(() => () => clearAgentGroupDeleteHold(false), [clearAgentGroupDeleteHold]);
   const gifMode = uiComplexityMode === 'extra';
 
   // Calculate chat counts per folder
@@ -156,10 +179,74 @@ function ChatDrawer(props: {
     setEditingGroupId(null);
   }, [renameAgentGroup]);
 
-  const handleAgentGroupDelete = React.useCallback((groupId: string) => {
+  const handleAgentGroupDelete = React.useCallback(async (groupId: string) => {
+    const groupName = savedAgentGroups.find(group => group.id === groupId)?.name || 'this agent group';
+
+    if (!await showPromisedOverlay('chat-agent-group-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open
+        onClose={onUserReject}
+        onPositive={() => onResolve(true)}
+        title='Delete Agent Group'
+        confirmationText={`Are you sure you want to delete "${groupName}"? This action cannot be undone.`}
+        positiveActionText='Delete agent group'
+      />,
+    )) return;
+
     deleteAgentGroup(groupId);
     setEditingGroupId(current => current === groupId ? null : current);
-  }, [deleteAgentGroup]);
+  }, [deleteAgentGroup, savedAgentGroups, showPromisedOverlay]);
+  const handleAgentGroupDeleteHoldStart = React.useCallback((event: React.PointerEvent<HTMLButtonElement>, groupId: string) => {
+    if (event.pointerType === 'mouse' && event.button !== 0)
+      return;
+
+    event.stopPropagation();
+    clearAgentGroupDeleteHold(true);
+    setHoldingDeleteGroupId(groupId);
+
+    const startedAt = performance.now();
+    deleteHoldStartedAtRef.current = startedAt;
+
+    const updateProgress = (now: number) => {
+      const currentStartedAt = deleteHoldStartedAtRef.current;
+      if (currentStartedAt === null)
+        return;
+
+      const progress = Math.min((now - currentStartedAt) / DELETE_HOLD_DURATION_MS, 1);
+      setHoldingDeleteGroupProgress(progress);
+
+      if (progress >= 1) {
+        deleteHoldTriggeredGroupIdRef.current = groupId;
+        suppressNextDeleteClickGroupIdRef.current = groupId;
+        clearAgentGroupDeleteHold(true);
+        void handleAgentGroupDelete(groupId);
+        return;
+      }
+
+      deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
+    };
+
+    deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
+  }, [clearAgentGroupDeleteHold, handleAgentGroupDelete]);
+
+  const handleAgentGroupDeleteHoldEnd = React.useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (deleteHoldTriggeredGroupIdRef.current)
+      return;
+    clearAgentGroupDeleteHold(true);
+  }, [clearAgentGroupDeleteHold]);
+
+  const handleAgentGroupDeleteClick = React.useCallback((event: React.MouseEvent, groupId: string) => {
+    event.stopPropagation();
+
+    if (suppressNextDeleteClickGroupIdRef.current === groupId) {
+      suppressNextDeleteClickGroupIdRef.current = null;
+      event.preventDefault();
+      return;
+    }
+
+    void handleAgentGroupDelete(groupId);
+  }, [handleAgentGroupDelete]);
 
   const saveAgentGroupsToFile = React.useCallback(async (groupsToExport: DAgentGroupSnapshot[], groupName?: string) => {
     const payload = buildAgentGroupTransferFile(groupsToExport);
@@ -417,10 +504,14 @@ function ChatDrawer(props: {
                       size='sm'
                       variant='plain'
                       color='neutral'
-                      onClick={event => {
-                        event.stopPropagation();
-                        handleAgentGroupDelete(group.id);
-                      }}
+                      onClick={event => handleAgentGroupDeleteClick(event, group.id)}
+                      onPointerDown={event => handleAgentGroupDeleteHoldStart(event, group.id)}
+                      onPointerUp={handleAgentGroupDeleteHoldEnd}
+                      onPointerCancel={handleAgentGroupDeleteHoldEnd}
+                      onPointerLeave={handleAgentGroupDeleteHoldEnd}
+                      sx={holdingDeleteGroupId === group.id
+                        ? getDeleteHoldProgressSx(holdingDeleteGroupProgress)
+                        : undefined}
                     >
                       <DeleteOutlineIcon />
                     </IconButton>
@@ -432,7 +523,7 @@ function ChatDrawer(props: {
         </Menu>
       </Dropdown>
     );
-  }, [disableNewButton, editingGroupId, handleAgentGroupDelete, handleAgentGroupExport, handleAgentGroupLoad, handleAgentGroupRename, handleAgentGroupsExport, handleAgentGroupsImport, handleButtonNew, newButtonDontRecycle, onConversationNew, sortedSavedAgentGroups]);
+  }, [disableNewButton, editingGroupId, handleAgentGroupDeleteClick, handleAgentGroupDeleteHoldEnd, handleAgentGroupDeleteHoldStart, handleAgentGroupExport, handleAgentGroupLoad, handleAgentGroupRename, handleAgentGroupsExport, handleAgentGroupsImport, handleButtonNew, holdingDeleteGroupId, holdingDeleteGroupProgress, newButtonDontRecycle, onConversationNew, sortedSavedAgentGroups]);
 
   const { isSearching } = isDrawerSearching(debouncedSearchQuery);
   const groupingComponent = React.useMemo(() => (

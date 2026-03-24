@@ -20,6 +20,7 @@ import { BlockPartModelAux } from '../fragments-void/BlockPartModelAux';
 import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
 import { collapseReasoningFragments, extractReasoningRenderSequence } from '../fragments-void/BlockPartModelAux.reasoning';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
+import { BlockPartSubagentCall } from './BlockPartSubagentCall';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
 import { InlineHostedWebGroup } from './InlineHostedWebGroup';
@@ -144,6 +145,43 @@ export function ContentFragments(props: {
     () => groupInlineHostedWebFragments(renderableContentFragments),
     [renderableContentFragments],
   );
+  const subagentResponseByInvocationId = React.useMemo(() => {
+    const invocationFragments = new Map<string, InterleavedFragment>();
+    const responseFragments = new Map<string, InterleavedFragment>();
+
+    for (const fragment of renderableContentFragments) {
+      if (fragment.ft !== 'content')
+        continue;
+
+      if (fragment.part.pt === 'tool_invocation'
+        && fragment.part.invocation.type === 'function_call'
+        && fragment.part.invocation.name === 'subagent') {
+        invocationFragments.set(fragment.part.id, fragment);
+      }
+
+      if (fragment.part.pt === 'tool_response'
+        && fragment.part.response.type === 'function_call'
+        && fragment.part.response.name === 'subagent') {
+        responseFragments.set(fragment.part.id, fragment);
+      }
+    }
+
+    const responseByInvocationId = new Map<string, InterleavedFragment['part']>();
+    const pairedResponseFragmentIds = new Set<DMessageFragmentId>();
+
+    for (const [toolCallId] of invocationFragments) {
+      const responseFragment = responseFragments.get(toolCallId);
+      if (!responseFragment || responseFragment.part.pt !== 'tool_response')
+        continue;
+      responseByInvocationId.set(toolCallId, responseFragment.part);
+      pairedResponseFragmentIds.add(responseFragment.fId);
+    }
+
+    return {
+      responseByInvocationId,
+      pairedResponseFragmentIds,
+    };
+  }, [renderableContentFragments]);
 
 
   // solo placeholder - dataStreamViz trigger
@@ -275,6 +313,12 @@ export function ContentFragments(props: {
 
       // CONTENT FRAGMENTS (text, code, tool calls, images, errors)
       const { part } = fragment;
+      if (part.pt === 'tool_response'
+        && part.response.type === 'function_call'
+        && part.response.name === 'subagent'
+        && subagentResponseByInvocationId.pairedResponseFragmentIds.has(fId))
+        return null;
+
       if (props.hiddenToolCallIds?.size) {
         if (part.pt === 'tool_invocation'
           && part.invocation.type === 'function_call'
@@ -430,6 +474,18 @@ export function ContentFragments(props: {
           );
 
         case 'tool_invocation':
+          if (part.invocation.type === 'function_call' && part.invocation.name === 'subagent') {
+            return (
+              <BlockPartSubagentCall
+                key={fId}
+                toolInvocationPart={part}
+                toolResponsePart={subagentResponseByInvocationId.responseByInvocationId.get(part.id) ?? null}
+                contentScaling={props.contentScaling}
+                defaultExpanded={props.defaultExpandedAuxiliaryFragments}
+                onDoubleClick={props.onDoubleClick}
+              />
+            );
+          }
           return (
             <BlockPartToolInvocation
               key={fId}

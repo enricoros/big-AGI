@@ -91,11 +91,16 @@ const councilMessageColumnBaseSx = {
   overflow: 'hidden',
 } as const;
 
-export function getRestartInCouncilMessageMetadata(metadata?: Readonly<DMessageMetadata>): DMessageMetadata {
+export function getRestartInCouncilMessageMetadata(
+  metadata?: Readonly<DMessageMetadata>,
+  leaderParticipantId?: string | null,
+): DMessageMetadata {
   return {
     ...(metadata ? duplicateDMessageMetadata(metadata) : {}),
     councilChannel: { channel: 'public-board' },
-    initialRecipients: [{ rt: 'public-board' }],
+    initialRecipients: leaderParticipantId
+      ? [{ rt: 'participant', participantId: leaderParticipantId }]
+      : [{ rt: 'public-board' }],
   };
 }
 
@@ -610,6 +615,10 @@ export function ChatMessageList(props: {
       systemPurposeId: conversationSystemPurposeId,
     });
   }, [conversationId, conversationSystemPurposeId, conversationUserSymbol, storedParticipants]);
+  const leaderParticipant = React.useMemo(
+    () => participants.find(participant => participant.kind === 'assistant' && participant.isLeader) ?? participants.find(participant => participant.kind === 'assistant') ?? null,
+    [participants],
+  );
   const { _composerInReferenceToCount, ephemerals, showCouncilDeliberation, toggleShowCouncilDeliberation, councilSession } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
@@ -713,12 +722,12 @@ export function ChatMessageList(props: {
       const truncatedMessage = conversationHandler.historyFindMessageOrThrow(messageId);
       if (truncatedMessage?.role === 'user') {
         conversationHandler.messageEdit(messageId, {
-          metadata: getRestartInCouncilMessageMetadata(truncatedMessage.metadata),
+          metadata: getRestartInCouncilMessageMetadata(truncatedMessage.metadata, leaderParticipant?.id),
         }, false, true);
       }
       await onConversationExecuteHistory(conversationId);
     }
-  }, [conversationHandler, conversationId, onConversationExecuteHistory]);
+  }, [conversationHandler, conversationId, leaderParticipant?.id, onConversationExecuteHistory]);
 
   const handleMessageUpstreamResume = React.useCallback(async (_messageId: DMessageId) => {
     if (conversationId && conversationHandler)

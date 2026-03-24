@@ -56,6 +56,31 @@ test('OpenAI Responses does not replay incomplete hosted upstream web-search inv
   assert.equal(payload.input.some(item => item.type === 'function_call' && item.call_id === 'ws-2'), false);
 });
 
+test('OpenAI Responses does not replay opaque upstream function calls with invalid custom-tool names', async () => {
+  const assistantMessage = createDMessageFromFragments('assistant', [
+    create_FunctionCallInvocation_ContentFragment('web-1', 'web.image_query', '{"q":"thermal paste"}'),
+    create_FunctionCallResponse_ContentFragment('web-1', false, 'web.image_query', '{"images":[]}', 'upstream'),
+    createTextContentFragment('Collected image results.'),
+  ]);
+
+  const chatSequence = await aixCGR_ChatSequence_FromDMessagesOrThrow([assistantMessage]);
+  const payload = aixToOpenAIResponses(
+    'openai',
+    { id: 'gpt-5.4' } as any,
+    { systemMessage: null, chatSequence },
+    false,
+    false,
+  );
+
+  assert.equal(payload.input.some(item => item.type === 'function_call' && item.call_id === 'web-1'), false);
+  assert.equal(payload.input.some(item => item.type === 'function_call_output' && item.call_id === 'web-1'), false);
+  assert.ok(payload.input.some(item =>
+    item.type === 'message'
+    && item.role === 'assistant'
+    && item.content.some(content => content.type === 'output_text' && content.text.includes('Collected image results.')),
+  ));
+});
+
 test('OpenAI Responses still replays regular function-call history', async () => {
   const assistantMessage = createDMessageFromFragments('assistant', [
     create_FunctionCallInvocation_ContentFragment('tool-1', 'lookup_price', '{"item":"bike"}'),

@@ -3,12 +3,23 @@ import test from 'node:test';
 
 import {
   getChatTitleEditorSx,
+  getDeleteHoldProgressSx,
   getDeleteConfirmButtonProps,
   getInactiveChatConfirmDeleteButtonSx,
   getInactiveChatDeleteButtonSx,
   getInactiveChatMainButtonSx,
   getInactiveChatRowShellSx,
 } from './ChatDrawerItem.layout';
+
+test('delete hold progress style stays inert at zero and clamps to a full danger fill at one', () => {
+  assert.deepStrictEqual(getDeleteHoldProgressSx(0), {});
+
+  assert.deepStrictEqual(getDeleteHoldProgressSx(1), {
+    color: 'danger.softColor',
+    backgroundImage: 'linear-gradient(90deg, rgba(var(--joy-palette-danger-mainChannel) / 0.24) 0%, rgba(var(--joy-palette-danger-mainChannel) / 0.24) 100%, transparent 100%, transparent 100%)',
+    boxShadow: 'inset 0 0 0 1px rgba(var(--joy-palette-danger-mainChannel) / 0.22)',
+  });
+});
 
 test('inactive chat row shell extends the soft background across the whole row', () => {
   assert.deepStrictEqual(getInactiveChatRowShellSx(false), {

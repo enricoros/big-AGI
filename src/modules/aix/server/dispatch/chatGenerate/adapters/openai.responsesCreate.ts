@@ -11,11 +11,17 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } fro
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
+const OPENAI_RESPONSES_CUSTOM_FUNCTION_TOOL_NAME_RE = /^[a-zA-Z0-9_-]{1,64}$/;
 const OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES = new Set([
   'web_search',
   'web_fetch',
   'google_search_retrieval',
 ]);
+
+function _shouldReplayOpenAIResponsesFunctionCallName(name: string): boolean {
+  return OPENAI_RESPONSES_CUSTOM_FUNCTION_TOOL_NAME_RE.test(name)
+    && !OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES.has(name);
+}
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
@@ -312,7 +318,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
         if (
           modelPart.pt === 'tool_invocation'
           && modelPart.invocation.type === 'function_call'
-          && OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES.has(modelPart.invocation.name)
+          && !_shouldReplayOpenAIResponsesFunctionCallName(modelPart.invocation.name)
         )
           hostedUpstreamToolInvocationIds.add(modelPart.id);
       }
@@ -491,7 +497,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                 skippedHostedUpstreamToolIds.has(modelPart.id)
                 || (
                   modelPart.invocation.type === 'function_call'
-                  && OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES.has(modelPart.invocation.name)
+                  && !_shouldReplayOpenAIResponsesFunctionCallName(modelPart.invocation.name)
                   && !allToolResponseIds.has(modelPart.id)
                 )
               )

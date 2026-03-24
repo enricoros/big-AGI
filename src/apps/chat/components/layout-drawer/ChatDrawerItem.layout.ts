@@ -1,4 +1,17 @@
 const inactiveDeleteButtonHoverBackgroundColor = '#202426';
+export const DELETE_HOLD_DURATION_MS = 1000;
+
+export function getDeleteHoldProgressSx(holdProgress: number) {
+  if (holdProgress <= 0)
+    return {} as const;
+
+  const progressPercent = `${Math.max(0, Math.min(holdProgress, 1)) * 100}%`;
+  return {
+    color: 'danger.softColor',
+    backgroundImage: `linear-gradient(90deg, rgba(var(--joy-palette-danger-mainChannel) / 0.24) 0%, rgba(var(--joy-palette-danger-mainChannel) / 0.24) ${progressPercent}, transparent ${progressPercent}, transparent 100%)`,
+    boxShadow: 'inset 0 0 0 1px rgba(var(--joy-palette-danger-mainChannel) / 0.22)',
+  } as const;
+}
 
 export function getInactiveChatRowShellSx(isIncognito: boolean) {
   const baseBackgroundColor = isIncognito ? 'background.level2' : 'neutral.softBg';

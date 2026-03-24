@@ -3,7 +3,7 @@ import { safeErrorString } from '~/server/wire';
 import { hasKeys } from '~/common/util/objectUtils';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
@@ -91,6 +91,44 @@ function _webSearchActionToArgs(action: Extract<OpenAIWire_API_Responses.Respons
     default:
       return null;
   }
+}
+
+function _deriveParseContextIdentifiers(context?: ChatGenerateParseContext) {
+  const contextName = context?.contextName;
+  const contextRef = context?.contextRef;
+  const conversationId = context?.conversationId ?? (contextName === 'conversation' ? contextRef : undefined);
+  const messageId = context?.messageId ?? (contextName && contextName !== 'conversation' ? contextRef : undefined);
+
+  return {
+    contextName,
+    contextRef,
+    conversationId,
+    messageId,
+  };
+}
+
+function _logOpenAIResponsesUpstreamError(
+  source: 'stream-event' | 'response-object',
+  errorPayload: any,
+  context?: ChatGenerateParseContext,
+  extras?: Record<string, unknown>,
+) {
+  const errorType = safeErrorString(errorPayload?.error?.type || errorPayload?.type);
+  const errorCode = safeErrorString(errorPayload?.error?.code || errorPayload?.code);
+  const errorParam = safeErrorString(errorPayload?.error?.param || errorPayload?.param);
+  const errorMessage = safeErrorString(errorPayload?.error?.message || errorPayload?.message);
+
+  console.warn('[AIX] OpenAI Responses upstream error', {
+    source,
+    modelId: context?.modelId,
+    endpoint: context?.requestUrl,
+    ..._deriveParseContextIdentifiers(context),
+    errorType,
+    errorCode,
+    errorParam,
+    errorMessage,
+    ...extras,
+  });
 }
 
 
@@ -303,7 +341,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
   const R = new ResponseParserStateMachine();
 
-  return function(pt: IParticleTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // throws on malformed event data
     const chunkData = JSON.parse(eventData);
@@ -695,6 +733,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         const errorMessage = safeErrorString(event.error?.message || event?.message) ?? undefined;
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
 
+        _logOpenAIResponsesUpstreamError('stream-event', event, context, {
+          responseId: R.responseId !== 'new response' ? R.responseId : undefined,
+          sequenceNumber: event.sequence_number,
+        });
+
         // Transmit the error as text - note: throw if you want to transmit as 'error'
         // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
         pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
@@ -745,13 +788,13 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
 
-  return function(pt: IParticleTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // Throws on malformed event data
     const responseData = JSON.parse(eventData);
 
     // .error: transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardResponseError(responseData, pt))
+    if (_forwardResponseError(responseData, pt, context))
       return;
 
     // [OpenAI] possibly log the warnings to get more insights on the API
@@ -1038,7 +1081,7 @@ function _fromResponseUsage(usage: OpenAIWire_API_Responses.Response['usage'], p
 /**
  * If there's an error in the pre-decoded message, push it down to the particle transmitter.
  */
-function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
+function _forwardResponseError(parsedData: any, pt: IParticleTransmitter, context?: ChatGenerateParseContext) {
 
   // operate on .error
   if (!parsedData || !parsedData.error) return false;
@@ -1049,6 +1092,8 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
     console.log('[DEV] AIX: OpenAI-Responses-dispatch ignored error:', { error });
     return false;
   }
+
+  _logOpenAIResponsesUpstreamError('response-object', parsedData, context);
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)

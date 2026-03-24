@@ -27,12 +27,11 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { CHAT_NOVEL_TITLE } from '../../AppChat';
 import { shouldAutoDisarmDeleteArm } from './ChatDrawerItem.delete';
-import { getChatTitleEditorSx, getDeleteConfirmButtonProps, getInactiveChatConfirmDeleteButtonSx, getInactiveChatDeleteButtonSx, getInactiveChatMainButtonSx, getInactiveChatRowShellSx } from './ChatDrawerItem.layout';
+import { DELETE_HOLD_DURATION_MS, getChatTitleEditorSx, getDeleteConfirmButtonProps, getDeleteHoldProgressSx, getInactiveChatConfirmDeleteButtonSx, getInactiveChatDeleteButtonSx, getInactiveChatMainButtonSx, getInactiveChatRowShellSx } from './ChatDrawerItem.layout';
 
 
 // set to true to display the conversation IDs
 // const DEBUG_CONVERSATION_IDS = false;
-
 
 export const FadeInButton = styled(IconButton)({
   opacity: 0.5,
@@ -97,6 +96,7 @@ function ChatDrawerItem(props: {
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
   const [isAutoEditingTitle, setIsAutoEditingTitle] = React.useState(false);
   const [deleteArmed, setDeleteArmed] = React.useState(false);
+  const [deleteHoldProgress, setDeleteHoldProgress] = React.useState(0);
 
   // derived state
   const { onConversationBranch, onConversationExport, onConversationFolderChange } = props;
@@ -118,6 +118,21 @@ function ChatDrawerItem(props: {
     searchFrequency,
   } = props.item;
   const isNew = messageCount === 0;
+  const deleteHoldFrameRef = React.useRef<number | null>(null);
+  const deleteHoldStartedAtRef = React.useRef<number | null>(null);
+  const deleteHoldTriggeredRef = React.useRef(false);
+  const suppressNextDeleteButtonClickRef = React.useRef(false);
+
+  const clearDeleteHold = React.useCallback((resetProgress: boolean) => {
+    if (deleteHoldFrameRef.current !== null) {
+      cancelAnimationFrame(deleteHoldFrameRef.current);
+      deleteHoldFrameRef.current = null;
+    }
+    deleteHoldStartedAtRef.current = null;
+    deleteHoldTriggeredRef.current = false;
+    if (resetProgress)
+      setDeleteHoldProgress(0);
+  }, []);
 
 
   // [effect] auto-disarm only after an armed active row becomes inactive
@@ -132,6 +147,7 @@ function ChatDrawerItem(props: {
       setDeleteArmed(false);
     wasActiveRef.current = isActive;
   }, [isActive, shallClose]);
+  React.useEffect(() => () => clearDeleteHold(false), [clearDeleteHold]);
 
 
   // Activate
@@ -212,6 +228,61 @@ function ChatDrawerItem(props: {
       onConversationDeleteNoConfirmation(conversationId);
     }
   }, [conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
+  const handleDeleteButtonPointerDown = React.useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (deleteArmed)
+      return;
+    if (event.pointerType === 'mouse' && event.button !== 0)
+      return;
+
+    event.stopPropagation();
+    clearDeleteHold(true);
+
+    const startedAt = performance.now();
+    deleteHoldStartedAtRef.current = startedAt;
+
+    const updateProgress = (now: number) => {
+      const currentStartedAt = deleteHoldStartedAtRef.current;
+      if (currentStartedAt === null)
+        return;
+
+      const progress = Math.min((now - currentStartedAt) / DELETE_HOLD_DURATION_MS, 1);
+      setDeleteHoldProgress(progress);
+
+      if (progress >= 1) {
+        deleteHoldTriggeredRef.current = true;
+        suppressNextDeleteButtonClickRef.current = true;
+        clearDeleteHold(true);
+        setDeleteArmed(false);
+        onConversationDeleteNoConfirmation(conversationId);
+        return;
+      }
+
+      deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
+    };
+
+    deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
+  }, [clearDeleteHold, conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
+
+  const handleDeleteButtonPointerEnd = React.useCallback((event?: React.PointerEvent<HTMLButtonElement>) => {
+    event?.stopPropagation();
+    if (deleteHoldTriggeredRef.current)
+      return;
+    clearDeleteHold(true);
+  }, [clearDeleteHold]);
+
+  const handleDeleteButtonClick = React.useCallback((event: React.MouseEvent) => {
+    if (suppressNextDeleteButtonClickRef.current) {
+      suppressNextDeleteButtonClickRef.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (deleteArmed)
+      handleDeleteButtonHide(event);
+    else
+      handleDeleteButtonShow(event);
+  }, [deleteArmed, handleDeleteButtonHide, handleDeleteButtonShow]);
 
 
   const personaSymbol = userSymbol || SystemPurposes[systemPurposeId]?.symbol || '❓';
@@ -438,7 +509,18 @@ function ChatDrawerItem(props: {
             )}
 
             <Tooltip arrow disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
-              <FadeInButton key='btn-arm' size='sm' onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow} sx={deleteArmed ? { opacity: 1 } : {}}>
+              <FadeInButton
+                key='btn-arm'
+                size='sm'
+                onClick={handleDeleteButtonClick}
+                onPointerDown={handleDeleteButtonPointerDown}
+                onPointerUp={handleDeleteButtonPointerEnd}
+                onPointerCancel={handleDeleteButtonPointerEnd}
+                onPointerLeave={handleDeleteButtonPointerEnd}
+                sx={deleteArmed
+                  ? { opacity: 1 }
+                  : getDeleteHoldProgressSx(deleteHoldProgress)}
+              >
                 {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
               </FadeInButton>
             </Tooltip>
@@ -503,8 +585,15 @@ function ChatDrawerItem(props: {
             className='chat-drawer-item-delete-button'
             key='btn-arm-inactive'
             size='sm'
-            onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow}
-            sx={getInactiveChatDeleteButtonSx(deleteArmed)}
+            onClick={handleDeleteButtonClick}
+            onPointerDown={handleDeleteButtonPointerDown}
+            onPointerUp={handleDeleteButtonPointerEnd}
+            onPointerCancel={handleDeleteButtonPointerEnd}
+            onPointerLeave={handleDeleteButtonPointerEnd}
+            sx={{
+              ...getInactiveChatDeleteButtonSx(deleteArmed),
+              ...(!deleteArmed ? getDeleteHoldProgressSx(deleteHoldProgress) : {}),
+            }}
           >
             {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
           </FadeInButton>
