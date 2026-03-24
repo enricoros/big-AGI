@@ -55,6 +55,7 @@ next-env.d.ts
 .idea/
 /artifacts/
 /.worktrees/
+/AGENTS_LOG.md
 /docs/superpowers/
 
 # Ingore k8s/env-secret.yaml
