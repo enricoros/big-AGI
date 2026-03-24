@@ -46,9 +46,20 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
         <meta name='twitter:creator' content='@enricoros' />
 
-        {/* Author */}
+        {/* Author & Structured Data */}
         <meta name='author' content='Enrico Ros' />
         <link rel='author' href='https://www.enricoros.com' />
+        <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Big-AGI',
+          'url': 'https://big-agi.com',
+          'applicationCategory': 'ProductivityApplication',
+          'operatingSystem': 'Web',
+          'description': Brand.Meta.Description,
+          'author': { '@type': 'Person', 'name': 'Enrico Ros', 'url': 'https://www.enricoros.com' },
+          'publisher': { '@type': 'Organization', 'name': 'Token Fabrics LLC', 'url': 'https://www.tokenfabrics.com' },
+        }) }} />
 
         {/* Style Sheets (injected and server-side) */}
         <meta name='emotion-insertion-point' content='' />
