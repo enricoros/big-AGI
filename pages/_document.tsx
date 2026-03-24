@@ -57,6 +57,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
           'applicationCategory': 'ProductivityApplication',
           'operatingSystem': 'Web',
           'description': Brand.Meta.Description,
+          'sameAs': ['https://github.com/enricoros/big-agi', 'https://discord.gg/MkH4qj2Jp9',],
           'author': { '@type': 'Person', 'name': 'Enrico Ros', 'url': 'https://www.enricoros.com' },
           'publisher': { '@type': 'Organization', 'name': 'Token Fabrics LLC', 'url': 'https://www.tokenfabrics.com' },
         }) }} />
