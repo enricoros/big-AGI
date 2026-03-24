@@ -22,6 +22,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 #### Core Platform Systems
 - **[app-routing.md](systems/app-routing.md)** - Next.js routing, provider stack, and display state hierarchy
 - **[LLM-parameters-system.md](systems/LLM-parameters-system.md)** - Language model parameter flow across the system
+- **[LLM-vendor-integration.md](modules/LLM-vendor-integration.md)** - Adding new LLM providers
 
 ### KB Guidelines
 
