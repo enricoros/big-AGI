@@ -31,7 +31,13 @@ add your own models, or run your own instance, follow the steps below.
    ```bash
    npm install
    ```
-3. Run the development server:
+3. Run the local quality checks before changing chat behavior, stores, or shared UI code:
+   ```bash
+   npm run test:node
+   npm run typecheck
+   npm run lint
+   ```
+4. Run the development server:
    ```bash
    npm run dev
    ```
@@ -47,9 +53,10 @@ the same steps 1 and 2 as for [local development](#local-development).
    # .. repeat the steps above up to `npm install`, then:
    npm run build
    ```
+   The production build no longer depends on fetching Google Fonts at build time, so it is safe to run in restricted CI/CD or self-hosted environments without outbound font access.
 4. Start the production server (`npx` may be optional):
    ```bash
-   npx next start --port 3000
+   npm run start
    ```
    Your big-AGI production instance is on `http://localhost:3000`.
 

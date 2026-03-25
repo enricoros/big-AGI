@@ -9,6 +9,66 @@ by release.
 > NOTE: with the release of 2.0.0 we switching to [big-agi.com/changes](https://big-agi.com/changes) for the
 > continuously updated changelog.
 
+### 2026-03-17
+
+- Council mode now runs phased rounds with one leader proposal, parallel reviewer plans, tool-only reviewer votes via `Accept()` / `Reject(reason)`, shared round history between rounds, and council artifacts rendered only inside the collapsed Council trace.
+
+### 2026-03-18
+
+- Chat conversations now have an optional desktop-only vertical minimap toggle in the side pane, with clearly segmented message blocks and click-to-scroll navigation inside the conversation.
+- Collapsed reasoning chips now surface streamed markdown section titles inline, so live reasoning headings stay visible before expanding the full trace.
+- The stacked composer pause/stop/expand controls now render as a cleaner connected control instead of nested pill buttons.
+- Synthetic council reviewer failures now show descriptive public failure copy instead of the raw `Invalid review.` placeholder text.
+- Stopped council sessions now persist their trace correctly instead of disappearing when the overlay rehydrates from the council op log.
+
+### 2026-03-19
+
+- `Consensus` naming has been fully renamed to `Council` across the app, while persisted legacy `consensus` conversation/session/message keys still auto-migrate on load so older saved chats, traces, and agent groups continue working.
+- Council trace cards now use a stronger audit-style layout with clearer latest-outcome framing, richer round headers, responsive reviewer stacks on narrow screens, and more legible leader/reviewer cards with dedicated summary and carry-forward feedback callouts.
+- The Agents popup now uses a denser control-panel layout with pill-style action buttons, stronger group status cues, and more legible agent cards that emphasize leader, turn order, and next-speaker state.
+- Choosing the `Custom` persona while adding a new agent now reveals the custom prompt field immediately, and that prompt is saved onto the newly created agent.
+- Expanded agent cards now include single-agent `Import Agent` and `Export Agent` actions, so you can move one agent configuration in and out of JSON files without exporting a full group.
+- Expanded agent cards now use a compact header delete icon next to `Close`, replacing the old footer `Remove` button.
+- Saved-agent entries in the `Load Agent` menu now include an inline delete icon, so presets can be removed directly from the dropdown without loading them first.
+- Saved agent groups in the drawer quick-load menu now use the same inline delete icon instead of a text `Delete` button.
+- Leader badges inside agent cards now use the same participant accent color family as the card background instead of a fixed primary blue.
+- Large chats now fall back to the lightweight minimap scroll controls once the conversation is windowed or the rendered entry count grows too high, preventing the desktop minimap overlay from remeasuring the full list on every update.
+- Council mode now defaults `Council max rounds` to unlimited when left blank, instead of pre-filling a hard stop at 12 rounds.
+- Changing `Council max rounds` now updates active, paused, stopped, and resumed council sessions consistently, instead of leaving in-flight runs stuck on stale round limits.
+- Council trace settings now include automatic collapse of previous rounds and automatic expansion of the newest round, and those preferences persist with the chat and saved agent groups.
+- Agent roster participants now expose a per-agent `Reasoning Effort` control in the editor, and that selection is applied as a runtime model-parameter override instead of changing the global model defaults.
+- User-stopped council sessions now remain resumable from the composer and council trace instead of being treated as terminal stops; fatal council stops still stay non-resumable.
+
+### 2026-03-24
+
+- Chat drawer delete actions now archive chats instead of permanently deleting them, archived chats are reachable from a dedicated bottom-of-drawer `Archived Chats` entry, archived rows can be restored directly from the drawer, and archived chats are permanently purged after 4 weeks.
+- Resuming an interrupted council now retries an errored leader proposal before starting reviewer votes, so a cut-off proposal does not incorrectly advance straight into review.
+- The Agents popup now lets you save and reload individual agent presets in addition to full agent groups.
+- Hosted web searches and fetches are now persisted inline as collapsible tool fragments instead of transient placeholders only, so they survive reloads, chat-mode switches, council turns, and interrupted/terminated responses across supported providers.
+- Council leaders now receive explicit carried-forward rejection reasons and prior-round proposal context when drafting round 2+, so revised proposals address reviewer objections instead of effectively starting fresh.
+- Council trace auto-expansion now preserves rounds the user expanded manually, and chat auto-scroll now stops snapping downward once the user has actually moved up off the bottom of the conversation.
+- Per-agent `Use model setting` reasoning-effort selection is now explicitly selectable again and shows the resolved model-level setting inline, instead of behaving like an unselectable empty value.
+- Consecutive hosted `Web Search` tool fragments now render as compact inline chips in the message flow instead of stacking as separate full-width blocks.
+- Messages now collapse multiple streamed reasoning fragments into a single `Show Reasoning` control instead of rendering one reasoning chip per fragment.
+- Node test runs now have an official `npm run test:node` entrypoint that preloads the existing import shims for `next/font/google` and other browser-only modules.
+- Production builds now use local/system font stacks for UI and code text instead of `next/font/google`, removing a build-time dependency on fetching Google Fonts during Vercel and other network-restricted deployments.
+
+### 2026-03-20
+
+- Unexpectedly terminated single-agent chats now expose a `Resume reply` control from the composer, and OpenAI Responses-backed replies continue from their stored upstream response handle instead of restarting the answer from scratch.
+- OpenAI Responses retries now skip replaying persisted hosted upstream web-search tool fragments as synthetic function-call history, preventing `No tool output found for function call ...` HTTP 400 failures on follow-up turns.
+- Single-agent reply resume is now hidden for custom OpenAI-compatible proxy hosts that do not support the upstream Responses reattach endpoint, avoiding broken `404 /v1/responses/{id}` resume attempts.
+- The chat layout now shows a compact `Enqueued messages` preview between the message panels and composer while replies are still running, so queued prompts stay visible instead of disappearing into the background.
+- Each visible enqueued-message chip now includes a delete action, so queued prompts can be removed directly before they are sent.
+- The chat textarea now shows an explicit queue shortcut hint while a reply is still running, making `Ctrl + Enter` queueing discoverable without waiting for the rotating tip system.
+- Local `npm run dev` now uses a dedicated `.next-dev` output tree while `build` and `start` keep using `.next`, preventing manifest/chunk corruption when development and production builds run at the same time.
+- Using `Stop` now leaves enqueued messages on hold instead of auto-sending them as soon as the interrupted run unwinds.
+- User-facing upstream failure messages now avoid echoing the configured endpoint URL, so custom proxy hosts do not get reflected back into chat-visible errors.
+
+### 2026-03-24
+
+- Agent turns can now call a built-in `subagent(prompt)` tool that spawns an ephemeral helper with the same conversation context and tool access, lets that helper recurse into its own tools, and feeds the returned message back into the parent turn before the final visible answer is completed.
+
 ### What's New in 2 · Oct 31, 2025 · Open
 
 - **Big-AGI Open** is ready and more productive and faster than ever, with:
@@ -17,6 +77,11 @@ by release.
 - **Image Generation** and editing with Nano Banana and gpt-image-1
 - **Web Search** with citations for supported models
 - **UI** & Mobile UI overhaul with peeking and side panels
+- Agent roster editor now collapses expanded cards to a safe single-column layout inside the popup to prevent overlap
+- Council mode now shows a collapsible live trace before the final answer, with a centered Leader row, side-by-side reviewer cards, expandable per-agent transcripts, reviewer bootstrap drafts in round 1, shared prior-round agent context from round 2 onward, concurrent reviewer rounds, verbatim rejection reasons, lazy transcript rendering to keep long multi-agent sessions responsive, and rich per-agent message snapshots in workflow cards so reasoning and tool traces appear inline
+- Council reviewers now submit verdicts through explicit `Accept` and `Reject(reason)` tool calls, so rejected votes always carry a structured reason
+- Council mode now lets you configure the maximum number of council rounds from the Agents popup, persists that setting with conversations and saved agent groups, and respects it when resuming interrupted councils
+- Next launch scripts now quarantine a broken `.next` tree before running so stale manifests/chunks do not crash startup
 - And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
 - Built for the future, madly optimized
 

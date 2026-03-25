@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, create_FunctionCallResponse_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -23,6 +23,27 @@ const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or 
 const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
 const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = false; // 2025-10-10: put errors in the dedicated part
+
+
+export function normalizeCGIssueForDisplay(
+  issueId: AixWire_Particles.CGIssueId,
+  issueText: string,
+): { issueText: string; issueHint?: DMessageErrorPart['hint'] } {
+  if (
+    issueId === 'dispatch-read'
+    && /\*\*\[Streaming Issue\][\s\S]*?:\s*Error in input stream\s*$/i.test(issueText.trim())
+  ) {
+    return {
+      issueText: 'An unexpected issue occurred: **connection terminated**.',
+      issueHint: 'aix-net-disconnected',
+    };
+  }
+
+  return {
+    issueText,
+    issueHint: undefined,
+  };
+}
 
 
 /**
@@ -250,6 +271,9 @@ export class ContentReassembler {
           case '_fci':
             this.onAppendFunctionCallInvocationArgs(op);
             break;
+          case 'fcr':
+            this.onAddFunctionCallResponse(op);
+            break;
           case 'cei':
             this.onAddCodeExecutionInvocation(op);
             break;
@@ -423,6 +447,11 @@ export class ContentReassembler {
 
   private onAddCodeExecutionInvocation(cei: Extract<AixWire_Particles.PartParticleOp, { p: 'cei' }>): void {
     this.accumulator.fragments.push(create_CodeExecutionInvocation_ContentFragment(cei.id, cei.language, cei.code, cei.author));
+    this.currentTextFragmentIndex = null;
+  }
+
+  private onAddFunctionCallResponse(fcr: Extract<AixWire_Particles.PartParticleOp, { p: 'fcr' }>): void {
+    this.accumulator.fragments.push(create_FunctionCallResponse_ContentFragment(fcr.id, fcr.error, fcr.name, fcr.result, fcr.environment));
     this.currentTextFragmentIndex = null;
   }
 
@@ -726,7 +755,11 @@ export class ContentReassembler {
     }
   }
 
-  private onCGIssue({ issueId: _issueId /* Redundant as we add an Error Fragment already */, issueText, issueHint }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'issue' }> & { issueHint?: DMessageErrorPart['hint'] }): void {
+  private onCGIssue({ issueId, issueText, issueHint }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'issue' }> & { issueHint?: DMessageErrorPart['hint'] }): void {
+    const normalizedIssue = normalizeCGIssueForDisplay(issueId, issueText);
+    issueText = normalizedIssue.issueText;
+    issueHint = normalizedIssue.issueHint ?? issueHint;
+
     // NOTE: not sure I like the flow at all here
     // there seem to be some bad conditions when issues are raised while the active part is not text
     if (MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN) {

@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, Chip, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -32,6 +32,8 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 
+import { SystemPurposes } from '../../../../data';
+
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
@@ -43,11 +45,14 @@ import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
-import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { avatarIconSx, getChatMessageMinimapAccentDataAttributes, getParticipantAccentColor, getParticipantAccentSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import type { DConversationParticipant, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import type { DEphemeral } from '~/common/chat-overlay/store-perchat-ephemerals_slice';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 
 import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
@@ -61,6 +66,7 @@ import { VoidFragments } from './fragments-void/VoidFragments';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
 import { setIsNotificationEnabledForModel, useChatShowTextDiff } from '../../store-app-chat';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
+import { Ephemerals } from '../Ephemerals';
 
 
 // Enable the menu on text selection
@@ -75,7 +81,7 @@ export const BUBBLE_MIN_TEXT_LENGTH = 3;
 const messageBodySx: SxProps = {
   display: 'flex',
   alignItems: 'flex-start', // avatars at the top, and honor 'static' position
-  gap: { xs: 0, md: 1 },
+  gap: { xs: 0.75, md: 1.25 },
 };
 
 const messageBodyReverseSx: SxProps = {
@@ -109,7 +115,7 @@ const fragmentsListSx: SxProps = {
   // layout
   display: 'flex',
   flexDirection: 'column',
-  gap: 1.5,     // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
+  gap: 1.25,    // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
 };
 
 const antCachePromptOffSx: SxProps = {
@@ -122,6 +128,15 @@ const antCachePromptOnSx: SxProps = {
   transform: 'rotate(90deg)',
 };
 
+function resolveJoyPaletteTokenToCssVar(value: string): string {
+  const match = value.match(/^([a-z]+)\.([A-Za-z0-9]+)$/);
+  if (!match)
+    return value;
+
+  const [, palette, token] = match;
+  return `var(--joy-palette-${palette}-${token})`;
+}
+
 
 export interface ChatMessageFunctionsHandle {
   beginEditTextContent: () => void;
@@ -130,6 +145,14 @@ export interface ChatMessageFunctionsHandle {
 export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: string };
 
 export const ChatMessageMemo = React.memo(ChatMessage);
+
+export function shouldShowRestartInCouncilAction(params: {
+  messageRole: DMessage['role'];
+  turnTerminationMode?: DConversationTurnTerminationMode;
+}) {
+  return params.turnTerminationMode === 'council'
+    && params.messageRole === 'user';
+}
 
 /**
  * The Message component is a customizable chat message UI component that supports
@@ -155,8 +178,14 @@ export function ChatMessage(props: {
   showUnsafeHtmlCode?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
+  topDecoratorKind?: 'leader' | 'provisional' | 'system',
+  topDecoratorCompact?: boolean,
+  topDecoratorFirst?: boolean,
   onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
+  onMessageAssistantFromInCouncil?: (messageId: string, offset: number) => Promise<void>,
+  onMessageAssistantToCouncil?: (messageId: string, offset: number) => Promise<void>,
+  onMessageUpstreamResume?: (messageId: string) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageContinue?: (messageId: string, continueText: null | string) => void,
@@ -169,6 +198,12 @@ export function ChatMessage(props: {
   onTextDiagram?: (messageId: string, text: string) => Promise<void>,
   onTextImagine?: (text: string) => Promise<void>,
   onTextSpeak?: (text: string) => Promise<void>,
+  onAppendMention?: (mentionText: string) => void,
+  participants?: DConversationParticipant[],
+  participantDisplayNamesById?: ReadonlyMap<string, string>,
+  turnTerminationMode?: DConversationTurnTerminationMode,
+  ephemerals?: DEphemeral[],
+  conversationHandler?: ConversationHandler | null,
   sx?: SxProps,
 }) {
 
@@ -208,13 +243,48 @@ export function ChatMessage(props: {
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
-  const messageHasBeenEdited = !!messageUpdated;
+  const messageHasBeenEdited = messageUpdated !== null && messageUpdated > messageCreated;
+  const messageAuthorParticipantId = messageMetadata?.author?.participantId ?? null;
+  const messageAuthorCanonicalName = React.useMemo(() => messageAuthorParticipantId
+    ? props.participants?.find(participant => participant.id === messageAuthorParticipantId)?.name?.trim() || null
+    : null,
+  [messageAuthorParticipantId, props.participants]);
+  const resolvedAuthorName = React.useMemo(() => {
+    const participantNameFromDisplayOverrides = messageAuthorParticipantId
+      ? props.participantDisplayNamesById?.get(messageAuthorParticipantId)?.trim() || null
+      : null;
+    if (participantNameFromDisplayOverrides)
+      return participantNameFromDisplayOverrides;
+
+    const participantNameFromRoster = messageAuthorCanonicalName;
+    if (participantNameFromRoster)
+      return participantNameFromRoster;
+
+    const explicitAuthorName = messageMetadata?.author?.participantName?.trim();
+    if (explicitAuthorName)
+      return explicitAuthorName;
+
+    return null;
+  }, [messageAuthorCanonicalName, messageAuthorParticipantId, messageMetadata?.author?.participantName, props.participantDisplayNamesById]);
+  const messageAuthorName = resolvedAuthorName;
+  const messageAuthorPersonaId = messageMetadata?.author?.personaId ?? null;
+  const messageAuthorPersonaTitle = messageAuthorPersonaId ? SystemPurposes[messageAuthorPersonaId]?.title ?? messageAuthorPersonaId : null;
+  const messageAuthorLlmId = messageMetadata?.author?.llmId ?? (messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : null);
+  const messageAuthorAccentColor = React.useMemo(() => getParticipantAccentColor(messageAuthorName, props.participants), [messageAuthorName, props.participants]);
+  const messageAuthorAccentSx = React.useMemo(() => getParticipantAccentSx(messageAuthorName, props.participants, 'soft'), [messageAuthorName, props.participants]);
+  const handleAppendMention = React.useCallback((mentionText: string) => {
+    props.onAppendMention?.(mentionText);
+  }, [props]);
 
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
   const isUserNotifyComplete = messageHasUserFlag(props.message, MESSAGE_FLAG_NOTIFY_COMPLETE);
   const isVndAndCacheAuto = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_AUTO);
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
+  const showRestartInCouncilAction = shouldShowRestartInCouncilAction({
+    messageRole,
+    turnTerminationMode: props.turnTerminationMode,
+  });
 
   const {
     annotationFragments,    // Web Citations, References (rendered at top)
@@ -228,6 +298,8 @@ export function ChatMessage(props: {
   const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, interleavedFragments.filter(f => f.ft === 'content'), fromAssistant, props.onMessageFragmentReplace);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
+  const wholeMessageText = fragmentFlattenedText.trim();
+  const canReplyToWholeMessage = !!props.onAddInReferenceTo && wholeMessageText.length >= BUBBLE_MIN_TEXT_LENGTH;
   const isSpecialT2I = textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
   const couldDiagram = textSubject.length >= 100 && !isSpecialT2I;
   const couldImagine = textSubject.length >= 3 && !isSpecialT2I;
@@ -237,6 +309,15 @@ export function ChatMessage(props: {
     : fragmentFlattenedText.startsWith('/draw ') ? 'draw'
       : fragmentFlattenedText.startsWith('/react ') ? 'react'
         : false;
+  const hiddenSubagentToolCallIds = React.useMemo(() => {
+    const hiddenIds = new Set<string>();
+    for (const ephemeral of props.ephemerals ?? []) {
+      const toolInvocationId = (ephemeral.state as { parentToolInvocationId?: unknown } | null | undefined)?.parentToolInvocationId;
+      if (typeof toolInvocationId === 'string' && toolInvocationId.trim())
+        hiddenIds.add(toolInvocationId);
+    }
+    return hiddenIds;
+  }, [props.ephemerals]);
 
 
   // TODO: fix the diffing
@@ -368,7 +449,17 @@ export function ChatMessage(props: {
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
     handleCloseOpsMenu();
+    if (!fromAssistant && showRestartInCouncilAction) {
+      await props.onMessageAssistantFromInCouncil?.(messageId, 0);
+      return;
+    }
     await props.onMessageAssistantFrom?.(messageId, fromAssistant ? -1 : 0);
+  };
+
+  const handleOpsAssistantToCouncil = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleCloseOpsMenu();
+    await props.onMessageAssistantToCouncil?.(messageId, 0);
   };
 
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
@@ -376,6 +467,10 @@ export function ChatMessage(props: {
     handleCloseOpsMenu();
     await props.onMessageBeam?.(messageId);
   };
+
+  const handleUpstreamResume = React.useCallback(async () => {
+    await props.onMessageUpstreamResume?.(messageId);
+  }, [messageId, props]);
 
   const handleOpsBranch = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -409,11 +504,37 @@ export function ChatMessage(props: {
   const handleOpsAddInReferenceTo = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onAddInReferenceTo && textSubject.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
-      onAddInReferenceTo({ mrt: 'dmsg', mText: textSubject.trim(), mRole: messageRole /*, messageId*/ });
+      onAddInReferenceTo({
+        mrt: 'dmsg',
+        mText: textSubject.trim(),
+        mRole: messageRole /*, messageId*/,
+        ...(fromAssistant && messageMetadata?.author?.participantId ? { mAuthorParticipantId: messageMetadata.author.participantId } : {}),
+        ...(fromAssistant && messageAuthorName ? { mAuthorParticipantName: messageAuthorName } : {}),
+        ...(fromAssistant ? { mCarryAuthorMention: true } : {}),
+      });
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
     }
+  };
+
+  const handleOpsAddWholeMessageInReferenceTo = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canReplyToWholeMessage)
+      return;
+
+    onAddInReferenceTo?.({
+      mrt: 'dmsg',
+      mText: wholeMessageText,
+      mRole: messageRole /*, messageId*/,
+      ...(fromAssistant && messageMetadata?.author?.participantId ? { mAuthorParticipantId: messageMetadata.author.participantId } : {}),
+      ...(fromAssistant && messageAuthorName ? { mAuthorParticipantName: messageAuthorName } : {}),
+      ...(fromAssistant ? { mCarryAuthorMention: true } : {}),
+    });
+    handleCloseOpsMenu();
+    closeContextMenu();
+    closeBubble();
   };
 
   const handleOpsSpeak = async (e: React.MouseEvent) => {
@@ -603,22 +724,76 @@ export function ChatMessage(props: {
 
   // style
   const backgroundColor = messageBackground(messageRole, userCommandApprox, messageHasBeenEdited, false /*isAssistantError && !errorMessage*/);
+  const minimapAccentDataAttributes = React.useMemo(() => {
+    if (fromAssistant)
+      return getChatMessageMinimapAccentDataAttributes(true, messageAuthorAccentColor, messageAuthorAccentSx);
+
+    if (fromUser)
+      return {
+        backgroundColor: resolveJoyPaletteTokenToCssVar(backgroundColor),
+        borderColor: resolveJoyPaletteTokenToCssVar(backgroundColor),
+      };
+
+    return {};
+  }, [backgroundColor, fromAssistant, fromUser, messageAuthorAccentColor, messageAuthorAccentSx]);
+  const messageAccentColor = React.useMemo(() => {
+    if (fromAssistant)
+      return minimapAccentDataAttributes.borderColor || minimapAccentDataAttributes.backgroundColor || 'var(--joy-palette-success-outlinedBorder)';
+
+    if (fromUser)
+      return 'var(--joy-palette-primary-outlinedBorder)';
+
+    if (fromSystem)
+      return 'var(--joy-palette-neutral-outlinedBorder)';
+
+    return 'var(--joy-palette-neutral-outlinedBorder)';
+  }, [fromAssistant, fromSystem, fromUser, minimapAccentDataAttributes.backgroundColor, minimapAccentDataAttributes.borderColor]);
+  const messageHorizontalPadding = themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2;
 
   const listItemSx: SxProps = React.useMemo(() => ({
     // vars
     // '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0, // disabled - looks worse
+    '--message-accent-color': messageAccentColor,
 
     // style
     backgroundColor: backgroundColor,
-    px: { xs: 1, md: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2 },
+    backgroundImage: fromAssistant
+      ? 'linear-gradient(180deg, rgba(var(--joy-palette-success-mainChannel) / 0.05) 0%, transparent 24%)'
+      : fromUser
+        ? 'linear-gradient(180deg, rgba(var(--joy-palette-primary-mainChannel) / 0.08) 0%, transparent 26%)'
+        : 'linear-gradient(180deg, rgba(var(--joy-palette-neutral-mainChannel) / 0.07) 0%, transparent 24%)',
+    borderRadius: 'lg',
+    border: '1px solid',
+    borderColor: fromAssistant
+      ? 'rgba(var(--joy-palette-neutral-mainChannel) / 0.15)'
+      : fromUser
+        ? 'rgba(var(--joy-palette-primary-mainChannel) / 0.22)'
+        : 'rgba(var(--joy-palette-neutral-mainChannel) / 0.18)',
+    boxShadow: props.isBottom ? 'sm' : 'xs',
+    pl: {
+      xs: fromUser ? 1 : 1.75,
+      md: fromUser ? messageHorizontalPadding : messageHorizontalPadding + 0.75,
+    },
+    pr: {
+      xs: fromUser ? 1.75 : 1,
+      md: fromUser ? messageHorizontalPadding + 0.75 : messageHorizontalPadding,
+    },
     py: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2,
+    overflow: 'hidden',
+    position: 'relative',
+    isolation: 'isolate',
     // filter: 'url(#agi-futuristic-glow)',
 
-    // style: omit border if set externally
-    ...(!('borderBottom' in (props.sx || {})) && !props.isBottom && {
-      borderBottom: '1px solid',
-      borderBottomColor: 'divider',
-    }),
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: fromUser ? '10px 4px 10px auto' : '10px auto 10px 4px',
+      width: '0.25rem',
+      borderRadius: '999px',
+      background: 'var(--message-accent-color)',
+      opacity: fromAssistant || fromUser ? 1 : 0.75,
+      boxShadow: '0 0 0 1px rgba(255 255 255 / 0.15)',
+    },
 
     // style: when starred
     ...(isUserStarred && {
@@ -662,7 +837,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.isBottom, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, fromAssistant, fromUser, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, messageAccentColor, messageHorizontalPadding, props.isBottom, props.sx, uiComplexityMode]);
 
 
   // avatar icon & label & tooltip
@@ -672,17 +847,70 @@ export function ChatMessage(props: {
   const showAvatarIcon = !props.hideAvatar && !zenMode;
   const messageGeneratorName = messageGenerator?.name;
   const messageAvatarIcon = React.useMemo(
-    () => !showAvatarIcon ? null : makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, isUserNotifyComplete, true),
-    [isUserMessageSkipped, isUserNotifyComplete, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
+    () => !showAvatarIcon ? null : makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, messageMetadata?.author, !!messagePendingIncomplete, isUserMessageSkipped, isUserNotifyComplete, true),
+    [isUserMessageSkipped, isUserNotifyComplete, messageGeneratorName, messageMetadata?.author, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
   );
 
   const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
+  const effectiveMessageAvatarTooltip = React.useMemo(() => {
+    if (!messageAuthorName)
+      return messageAvatarTooltip;
+
+    const staleAuthorName = messageMetadata?.author?.participantName?.trim() || null;
+    if (!staleAuthorName || staleAuthorName === messageAuthorName || !messageAvatarTooltip)
+      return messageAvatarTooltip;
+
+    if (typeof messageAvatarTooltip === 'string')
+      return messageAuthorName;
+
+    return (
+      <Box sx={{ display: 'grid', gap: 0.5 }}>
+        <div>{messageAuthorName}</div>
+        {messageAvatarTooltip}
+      </Box>
+    );
+  }, [messageAuthorName, messageAvatarTooltip, messageMetadata?.author?.participantName]);
+  const topDecorator = React.useMemo(() => {
+    if (props.topDecorator !== undefined)
+      return props.topDecorator;
+    if (!props.topDecoratorKind)
+      return undefined;
+
+    const px = props.topDecoratorCompact ? 0.5 : 2;
+    const pt = props.topDecoratorCompact ? (props.topDecoratorFirst ? 0.5 : 0.25) : 0.5;
+
+    if (props.topDecoratorKind === 'leader') {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px, pt, pb: 0.25 }}>
+          <Chip size='sm' variant='solid' color='primary'>Leader</Chip>
+        </Box>
+      );
+    }
+
+    if (props.topDecoratorKind === 'provisional') {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px, pt, pb: 0.25 }}>
+          <Chip size='sm' variant='solid' color='warning'>
+            Provisional round draft
+          </Chip>
+        </Box>
+      );
+    }
+
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', px, pt, pb: 0.25 }}>
+        <Chip size='sm' variant='soft' color='neutral'>System notification</Chip>
+      </Box>
+    );
+  }, [props.topDecorator, props.topDecoratorCompact, props.topDecoratorFirst, props.topDecoratorKind]);
 
 
   return (
     <Box
       component='li'
       role='chat-message'
+      data-chat-minimap-background-color={minimapAccentDataAttributes.backgroundColor}
+      data-chat-minimap-border-color={minimapAccentDataAttributes.borderColor}
       tabIndex={-1 /* for shortcuts navigation */}
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
       onTouchEnd={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksTouchEnd : undefined}
@@ -691,7 +919,7 @@ export function ChatMessage(props: {
     >
 
       {/* (Optional) top decorator */}
-      {props.topDecorator}
+      {topDecorator}
 
 
       {/* Message Row: Aside, Fragment[][], Aside2 */}
@@ -702,7 +930,11 @@ export function ChatMessage(props: {
 
         {/* [start-Avatar] Avatar (Persona) */}
         {!props.hideAvatar && !isEditingText && (
-          <Box sx={zenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
+          <Box sx={{
+            ...(zenMode ? messageZenAsideColumnSx : messageAsideColumnSx),
+            // Keep the message overflow rail on the left even when user/system rows use reversed flow.
+            order: fromAssistant ? undefined : 1,
+          }}>
 
             {/* Persona Avatar or Menu Button */}
             <Box
@@ -732,10 +964,12 @@ export function ChatMessage(props: {
 
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
-              <TooltipOutlined asLargePane enableInteractive title={messageAvatarTooltip} placement='bottom-start'>
-                <Typography level='body-xs' sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
-                  {messageAvatarLabel}
-                </Typography>
+              <TooltipOutlined asLargePane enableInteractive title={effectiveMessageAvatarTooltip} placement='bottom-start'>
+                <Box sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
+                  <Typography level='body-xs' sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.15 }}>
+                    {messageAuthorName || messageAvatarLabel}
+                  </Typography>
+                </Box>
               </TooltipOutlined>
             )}
 
@@ -759,6 +993,69 @@ export function ChatMessage(props: {
 
         {/* V-Fragments: Image Attachments | Content | Doc Attachments */}
         <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={fragmentsListSx}>
+
+          {/* Assistant author identity */}
+          {fromAssistant && !!messageAuthorName && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mx: 0.5, mb: -0.5 }}>
+              <Tooltip
+                arrow
+                disableInteractive
+                title={props.onAppendMention ? `Click to mention @${messageAuthorName}` : ''}
+              >
+                <Chip
+                  size='sm'
+                  variant='soft'
+                  color={messageAuthorAccentColor}
+                  onClick={() => handleAppendMention(`@${messageAuthorName}`)}
+                  endDecorator={<AlternateEmailIcon sx={{ fontSize: 'sm' }} />}
+                  sx={{
+                    ...messageAuthorAccentSx,
+                    cursor: props.onAppendMention ? 'pointer' : 'default',
+                    transition: 'transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease',
+                    boxShadow: 'xs',
+                    '&:hover': props.onAppendMention ? {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'sm',
+                      filter: 'saturate(1.15)',
+                    } : undefined,
+                    '&:active': props.onAppendMention ? {
+                      transform: 'translateY(0)',
+                      boxShadow: 'xs',
+                    } : undefined,
+                  }}
+                >
+                  {messageAuthorName}
+                </Chip>
+              </Tooltip>
+              {canReplyToWholeMessage && (
+                <Tooltip arrow disableInteractive title={props.hasInReferenceTo ? 'Reply to this message too' : 'Reply to this message'}>
+                  <IconButton
+                    size='sm'
+                    variant='soft'
+                    color='primary'
+                    onClick={handleOpsAddWholeMessageInReferenceTo}
+                    sx={{
+                      '--Icon-fontSize': '1.1rem',
+                      borderRadius: '999px',
+                      boxShadow: 'xs',
+                    }}
+                  >
+                    {props.hasInReferenceTo ? <ReplyAllRoundedIcon /> : <ReplyRoundedIcon />}
+                  </IconButton>
+                </Tooltip>
+              )}
+              {messageAuthorPersonaTitle && (
+                <Typography level='body-xs' sx={{ color: 'text.secondary' }}>
+                  {messageAuthorPersonaTitle}
+                </Typography>
+              )}
+              {messageAuthorLlmId && (
+                <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
+                  {messageAuthorLlmId}
+                </Typography>
+              )}
+            </Box>
+          )}
 
           {/* (optional) Message date */}
           {(props.showBlocksDate === true && !!(messageUpdated || messageCreated)) && (
@@ -819,6 +1116,7 @@ export function ChatMessage(props: {
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showUnsafeHtmlCode={props.showUnsafeHtmlCode}
+            hiddenToolCallIds={hiddenSubagentToolCallIds}
 
             textEditsState={textContentEditState}
             setEditedText={(!props.onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}
@@ -832,6 +1130,8 @@ export function ChatMessage(props: {
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
+            onAppendMention={props.onAppendMention}
+            participants={props.participants}
           />
 
           {/* Document Fragments */}
@@ -881,9 +1181,7 @@ export function ChatMessage(props: {
           {props.isBottom && fromAssistant && lastFragmentIsError && messageGenerator?.upstreamHandle?.responseId && (
             <BlockOpUpstreamResume
               upstreamHandle={messageGenerator.upstreamHandle}
-              onResume={console.error}
-              onCancel={console.error}
-              onDelete={console.error}
+              onResume={props.onMessageUpstreamResume ? handleUpstreamResume : undefined}
             />
           )}
 
@@ -893,6 +1191,14 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               options={continuationOptions}
               onContinue={handleMessageContinue}
+            />
+          )}
+
+          {!!props.ephemerals?.length && !!props.conversationHandler && (
+            <Ephemerals
+              ephemerals={props.ephemerals}
+              conversationHandler={props.conversationHandler}
+              sx={{ mt: 0.5 }}
             />
           )}
 
@@ -1073,6 +1379,12 @@ export function ChatMessage(props: {
           )}
           {/* Beam/Restart */}
           {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
+          {showRestartInCouncilAction && !!props.onMessageAssistantToCouncil && (
+            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantToCouncil}>
+              <ListItemDecorator><TelegramIcon color='primary' /></ListItemDecorator>
+              Restart <span style={{ opacity: 0.5 }}>to Council</span>
+            </MenuItem>
+          )}
           {!!props.onMessageAssistantFrom && (
             <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFrom}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>

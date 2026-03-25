@@ -5,10 +5,16 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
+import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
+
+import type { ActileItem } from '../../composer/actile/ActileProvider';
+import { providerMentions } from '../../composer/actile/providerMentions';
+import { matchOpenMentionAtEnd } from '../../composer/actile/providerMentions.utils';
+import { useActileManager } from '../../composer/actile/useActileManager';
 
 
 // configuration
@@ -62,6 +68,7 @@ export function BlockEdit_TextFragment(props: {
   inputLabel?: string,
   fragmentId: DMessageFragmentId,
   enableRestart?: boolean,
+  participants?: DConversationParticipant[],
 
   // visual
   contentScaling: ContentScaling,
@@ -78,6 +85,7 @@ export function BlockEdit_TextFragment(props: {
 
   // state
   const [isFocused, setIsFocused] = React.useState(false);
+  const editorTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external
   // NOTE: we disabled `useUIPreferencesStore(state => state.enterIsNewline)` on 2024-06-19, as it's
@@ -91,12 +99,44 @@ export function BlockEdit_TextFragment(props: {
   // derived state
   const { fragmentId, setEditedText, onSubmit, onEscapePressed } = props;
 
-  // handlers
-  const handleEditTextChanged = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    (e.target.value !== undefined) && setEditedText(fragmentId, e.target.value, false);
+  const handleMentionSelect = React.useCallback(({ label }: ActileItem, _searchPrefix: string) => {
+    const textArea = editorTextAreaRef.current;
+    if (!textArea)
+      return;
+
+    const currentText = textArea.value;
+    const cursorPos = textArea.selectionStart ?? currentText.length;
+    const textUntilCursor = currentText.slice(0, cursorPos);
+    const mentionMatch = matchOpenMentionAtEnd(textUntilCursor);
+    if (!mentionMatch)
+      return;
+
+    const mentionStart = cursorPos - mentionMatch[0].length + (mentionMatch[0].startsWith(' ') ? 1 : 0);
+    const nextText = currentText.substring(0, mentionStart) + label + ' ' + currentText.substring(cursorPos);
+    setEditedText(fragmentId, nextText, false);
+
+    const newCursorPos = mentionStart + label.length + 1;
+    setTimeout(() => editorTextAreaRef.current?.setSelectionRange(newCursorPos, newCursorPos), 0);
   }, [fragmentId, setEditedText]);
 
+  const actileProviders = React.useMemo(() => props.participants?.length
+    ? [providerMentions(props.participants, handleMentionSelect)]
+    : [], [handleMentionSelect, props.participants]);
+
+  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, editorTextAreaRef);
+
+  // handlers
+  const handleEditTextChanged = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value !== undefined) {
+      setEditedText(fragmentId, e.target.value, false);
+      actileInterceptTextChange(e.target.value);
+    }
+  }, [actileInterceptTextChange, fragmentId, setEditedText]);
+
   const handleEditKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (actileInterceptKeydown(e))
+      return;
+
     if (e.key === 'Enter') {
       if (e.nativeEvent.isComposing)
         return;
@@ -114,7 +154,7 @@ export function BlockEdit_TextFragment(props: {
       e.stopPropagation(); // prevents the global shortcut, e.g. closing beam after this
       onEscapePressed();
     }
-  }, [enterIsNewline, isControlled, onEscapePressed, onSubmit, props.enableRestart]);
+  }, [actileInterceptKeydown, enterIsNewline, isControlled, onEscapePressed, onSubmit, props.enableRestart]);
 
   // shortcuts
   const isEdited = props.editedText !== undefined;
@@ -151,7 +191,8 @@ export function BlockEdit_TextFragment(props: {
 
 
   return (
-    <BlocksTextarea
+    <>
+      <BlocksTextarea
       variant={/*props.invertedColors ? 'plain' :*/ 'soft'}
       color={/*props.uncolor ? undefined : props.invertedColors ? 'primary' :*/ 'warning'}
       autoFocus
@@ -163,14 +204,22 @@ export function BlockEdit_TextFragment(props: {
       startDecorator={props.inputLabel ? <small>{props.inputLabel}</small> : undefined}
       placeholder={'Edit the message...'}
       minRows={1.5} // unintuitive
+      slotProps={{
+        ...(enterIsNewline ? _textAreaSlotPropsEnter : _textAreaSlotPropsDone),
+        textarea: {
+          ...((enterIsNewline ? _textAreaSlotPropsEnter : _textAreaSlotPropsDone).textarea),
+          ref: editorTextAreaRef,
+        },
+      }}
       onFocus={isControlled ? undefined : () => setIsFocused(true)}
       onBlur={isControlled ? undefined : () => setIsFocused(false)}
       // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
-      slotProps={enterIsNewline ? _textAreaSlotPropsEnter : _textAreaSlotPropsDone}
       // endDecorator={props.endDecorator}
       sx={sx}
     />
+    {actileComponent}
+  </>
   );
 }

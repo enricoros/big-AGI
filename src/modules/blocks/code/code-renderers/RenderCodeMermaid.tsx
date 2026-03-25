@@ -73,9 +73,8 @@ function _loadMermaidFromCDN() {
 }
 
 /**
- * Pass the current font families at loading time. Note that the font families will be compiled by next to something like this:
- * - code: "'__JetBrains_Mono_dc2b2d', '__JetBrains_Mono_Fallback_dc2b2d', monospace",
- * - text: "'__Inter_1870e5', '__Inter_Fallback_1870e5', Helvetica, Arial, sans-serif"
+ * Pass the current font families at loading time so Mermaid uses the same
+ * local/system stacks as the rest of the app.
  */
 function _initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
   mermaidAPI.initialize({

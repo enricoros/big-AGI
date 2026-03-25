@@ -533,6 +533,16 @@ export type DModelParameterSpecAny = {
   [K in DModelParameterId]: DModelParameterSpec<K>;
 }[DModelParameterId];
 
+export const MODEL_REASONING_EFFORT_PARAM_IDS = [
+  'llmVndAntEffort',
+  'llmVndGemEffort',
+  'llmVndOaiEffort',
+  'llmVndMiscEffort',
+] as const satisfies readonly DModelParameterId[];
+
+export type DModelReasoningEffortParamId = typeof MODEL_REASONING_EFFORT_PARAM_IDS[number];
+export type DModelReasoningEffort = DModelParameterValue<DModelReasoningEffortParamId>;
+
 /**
  * Model-specific parameter configuration
  * Defines which parameters a model supports and their per-model settings.
@@ -557,6 +567,30 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
    * Example: llmVndOaiEffort registry has 6 values, but a specific model may only support ['low', 'medium', 'high'].
    */
   enumValues?: readonly DModelParameterValue<T>[];
+}
+
+export function sanitizeModelReasoningEffort(value: unknown): DModelReasoningEffort | undefined {
+  if (typeof value !== 'string')
+    return undefined;
+
+  return MODEL_REASONING_EFFORT_PARAM_IDS
+    .flatMap(paramId => [...(('values' in DModelParameterRegistry[paramId] ? DModelParameterRegistry[paramId].values : []) as readonly string[])])
+    .includes(value)
+    ? value as DModelReasoningEffort
+    : undefined;
+}
+
+export function findModelReasoningEffortParamSpec(parameterSpecs: DModelParameterSpecAny[] | undefined): DModelParameterSpec<DModelReasoningEffortParamId> | null {
+  if (!parameterSpecs?.length)
+    return null;
+
+  const spec = parameterSpecs.find(parameterSpec =>
+    MODEL_REASONING_EFFORT_PARAM_IDS.includes(parameterSpec.paramId as DModelReasoningEffortParamId),
+  );
+
+  return spec
+    ? spec as DModelParameterSpec<DModelReasoningEffortParamId>
+    : null;
 }
 
 

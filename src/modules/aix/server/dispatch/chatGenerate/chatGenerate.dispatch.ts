@@ -4,7 +4,7 @@ import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLR
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
-import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
@@ -39,6 +39,12 @@ export type ChatGenerateDispatchRequest =
 
 export type ChatGenerateParseContext = {
   retriesAvailable: boolean;
+  modelId?: string;
+  requestUrl?: string;
+  contextName?: AixAPI_Context_ChatGenerate['name'];
+  contextRef?: AixAPI_Context_ChatGenerate['ref'];
+  conversationId?: string;
+  messageId?: string;
 };
 
 export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void;

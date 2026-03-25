@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -eu
+
+echo "pre-push: running TypeScript checks"
+npm run check:pre-push

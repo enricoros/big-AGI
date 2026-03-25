@@ -8,13 +8,13 @@ import { runWhenIdle } from '~/common/util/pwaUtils';
 import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
 
 // Modals
-import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
-import { LogViewerDialog } from '~/common/logger/viewer/LoggerViewerDialog';
-import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
 // Lazy-loaded Modals
+const AixDebuggerDialogLazy = React.lazy(() => import('~/modules/aix/client/debugger/AixDebuggerDialog').then(module => ({ default: module.AixDebuggerDialog })));
+const LogViewerDialogLazy = React.lazy(() => import('~/common/logger/viewer/LoggerViewerDialog').then(module => ({ default: module.LogViewerDialog })));
 const ModelsModalsLazy = React.lazy(() => import('~/modules/llms/models-modal/ModelsModals').then(module => ({ default: module.ModelsModals })));
 const SettingsModalLazy = React.lazy(() => import('../../../apps/settings-modal/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const ShortcutsModalLazy = React.lazy(() => import('../../../apps/settings-modal/ShortcutsModal').then(module => ({ default: module.ShortcutsModal })));
 
 
 export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
@@ -58,14 +58,24 @@ export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
     )}
 
     {/* Logger */}
-    {showLogger && <LogViewerDialog onClose={closeLogger} />}
+    {showLogger && (
+      <React.Suspense fallback={null}>
+        <LogViewerDialogLazy onClose={closeLogger} />
+      </React.Suspense>
+    )}
 
     {/* AIX Debugger Dialog */}
-    {showAIXDebugger && <AixDebuggerDialog onClose={closeAIXDebugger} />}
+    {showAIXDebugger && (
+      <React.Suspense fallback={null}>
+        <AixDebuggerDialogLazy onClose={closeAIXDebugger} />
+      </React.Suspense>
+    )}
 
     {/* Overlay Shortcuts */}
     {showKeyboardShortcuts && (
-      <ShortcutsModal onClose={closeKeyboardShortcuts} />
+      <React.Suspense fallback={null}>
+        <ShortcutsModalLazy onClose={closeKeyboardShortcuts} />
+      </React.Suspense>
     )}
 
   </>;

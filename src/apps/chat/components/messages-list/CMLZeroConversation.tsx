@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, Sheet, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 
+import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
 
 const _styles = {
   center: {
@@ -33,7 +34,7 @@ const _styles = {
 
 
 export function CMLZeroConversation(props: {
-  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
+  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean, agentGroupSnapshot?: DAgentGroupSnapshot | null) => void,
 }) {
   return (
     <Box sx={_styles.center}>

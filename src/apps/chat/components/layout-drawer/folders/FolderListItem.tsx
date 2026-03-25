@@ -2,16 +2,18 @@ import * as React from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import { useSortable } from '@dnd-kit/sortable';
 
-import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, RadioGroup, Sheet } from '@mui/joy';
+import { Box, FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, RadioGroup, Sheet, Tooltip } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { DFolder, FOLDERS_COLOR_PALETTE, isFolderVisibleInAllChats, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
@@ -45,6 +47,7 @@ export function FolderListItem(props: {
   // props
   const { isActive, onFolderSelect, chatCount } = props;
   const { id: folderId, color: folderColor, title: folderTitle } = props.folder;
+  const folderVisibleInAllChats = isFolderVisibleInAllChats(props.folder);
 
   // state
   const [deleteArmed, setDeleteArmed] = React.useState(false);
@@ -80,6 +83,16 @@ export function FolderListItem(props: {
   }, []);
 
   const handleMenuClose = React.useCallback(() => setMenuAnchorEl(null), []);
+
+  const handleToggleVisibleInAllChats = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    useFolderStore.getState().setFolderVisibleInAllChats(folderId, !folderVisibleInAllChats);
+  }, [folderId, folderVisibleInAllChats]);
+
+  const handleToggleVisibleInAllChatsFromMenu = React.useCallback((event: React.MouseEvent) => {
+    handleToggleVisibleInAllChats(event);
+    handleMenuClose();
+  }, [handleMenuClose, handleToggleVisibleInAllChats]);
 
 
   // Edit Title
@@ -150,16 +163,28 @@ export function FolderListItem(props: {
         },
       }}
       endAction={!isEditing &&
-        <IconButton
-          size='sm'
-          // variant='plain'
-          onClick={handleMenuToggle}
-          onContextMenu={handleMenuToggle}
-          sx={!isActive ? _styles.menuButton : undefined}
-          className='menu-icon'
-        >
-          <MoreVertIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title={folderVisibleInAllChats ? 'Shown in All Chats' : 'Hidden from All Chats'}>
+            <IconButton
+              size='sm'
+              variant={folderVisibleInAllChats ? 'plain' : 'soft'}
+              color={folderVisibleInAllChats ? 'neutral' : 'warning'}
+              aria-label={folderVisibleInAllChats ? 'Hide folder chats from All Chats' : 'Show folder chats in All Chats'}
+              onClick={handleToggleVisibleInAllChats}
+            >
+              {folderVisibleInAllChats ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
+            </IconButton>
+          </Tooltip>
+          <IconButton
+            size='sm'
+            onClick={handleMenuToggle}
+            onContextMenu={handleMenuToggle}
+            sx={!isActive ? _styles.menuButton : undefined}
+            className='menu-icon'
+          >
+            <MoreVertIcon />
+          </IconButton>
+        </Box>
       }
     >
       <ListItemButton
@@ -187,7 +212,7 @@ export function FolderListItem(props: {
             sx={_styles.itemTextArea}
           />
         ) : (
-          <ListItemContent onDoubleClick={handleEditTitle}>
+          <ListItemContent onDoubleClick={handleEditTitle} sx={{ opacity: folderVisibleInAllChats ? 1 : 0.7 }}>
             {folderTitle}
             {chatCount !== undefined && chatCount > 0 && <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: '0.5rem' }}> {chatCount}</span>}
           </ListItemContent>
@@ -237,6 +262,13 @@ export function FolderListItem(props: {
                 </MenuItem>
               </>
             )}
+
+            <MenuItem onClick={handleToggleVisibleInAllChatsFromMenu}>
+              <ListItemDecorator>
+                {folderVisibleInAllChats ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
+              </ListItemDecorator>
+              {folderVisibleInAllChats ? 'Hide from All Chats' : 'Show in All Chats'}
+            </MenuItem>
 
             <MenuItem
               sx={{

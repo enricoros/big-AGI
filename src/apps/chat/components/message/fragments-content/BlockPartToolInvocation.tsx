@@ -12,7 +12,11 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageToolInvocationPart } from '~/common/stores/chat/chat.fragments';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
-import { humanReadableFunctionName } from './BlockPartToolInvocation.utils';
+import {
+  getCompactInvocationDetails,
+  humanReadableFunctionName,
+  isHostedWebToolInvocationPart,
+} from './BlockPartToolInvocation.utils';
 
 
 const keyValueGridSx = {
@@ -85,11 +89,13 @@ export function KeyValueGrid(props: {
 export function BlockPartToolInvocation(props: {
   toolInvocationPart: DMessageToolInvocationPart,
   contentScaling: ContentScaling,
+  compactInline?: boolean,
+  defaultExpanded?: boolean,
   onDoubleClick?: (event: React.MouseEvent) => void;
 }) {
 
   // state
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(!!props.defaultExpanded);
 
   // external state
   const { fontSize, lineHeight } = useScaledTypographySx(props.contentScaling, false, false);
@@ -109,14 +115,24 @@ export function BlockPartToolInvocation(props: {
 
   // memo details
 
+  const suppressHostedWebDetails = React.useMemo(
+    () => isHostedWebToolInvocationPart(props.toolInvocationPart),
+    [props.toolInvocationPart],
+  );
+
   const detailsData: KeyValueData = React.useMemo(() => {
     switch (invocation.type) {
-      case 'function_call':
+      case 'function_call': {
+        const compactDetails = getCompactInvocationDetails(invocation.name, invocation.args);
+        if (suppressHostedWebDetails)
+          return [];
+
         return [
           { label: 'Name', value: invocation.name },
-          { label: 'Args', value: invocation.args || 'None', asCode: true },
+          ...(compactDetails.length ? compactDetails : []),
           { label: 'ID', value: iId },
         ];
+      }
       case 'code_execution':
         return [
           { label: 'Language', value: invocation.language },
@@ -128,17 +144,30 @@ export function BlockPartToolInvocation(props: {
           { label: 'ID', value: iId },
         ];
     }
-  }, [invocation, iId]);
+  }, [invocation, iId, suppressHostedWebDetails]);
+  const hasDetails = detailsData.length > 0;
 
 
   const toggleExpanded = React.useCallback((event: React.MouseEvent) => {
+    if (!hasDetails)
+      return;
     event.stopPropagation();
     setExpanded(prev => !prev);
-  }, []);
+  }, [hasDetails]);
 
 
   return (
-    <BlocksContainer onDoubleClick={props.onDoubleClick}><Box /*sx={{ px: 1.5 }}*/>
+    <BlocksContainer
+      onDoubleClick={props.onDoubleClick}
+      sx={props.compactInline ? {
+        width: 'auto',
+        overflowX: 'visible',
+        display: 'inline-flex',
+        flex: '0 0 auto',
+        maxWidth: '100%',
+        verticalAlign: 'top',
+      } : undefined}
+    ><Box sx={props.compactInline ? { display: 'inline-flex', maxWidth: '100%' } : undefined}>
 
       <Sheet
         variant='soft'
@@ -148,11 +177,13 @@ export function BlockPartToolInvocation(props: {
           borderRadius: 'sm',
           pl: 1,
           pr: 2,
-          py: 0.75,
+          py: props.compactInline ? 0.5 : 0.75,
           fontSize,
           lineHeight,
           display: 'flex',
           flexDirection: 'column',
+          width: props.compactInline ? 'auto' : undefined,
+          maxWidth: '100%',
           ...(expanded ? {
             border: '1px solid',
             borderColor: 'primary.outlinedBorder',
@@ -166,25 +197,28 @@ export function BlockPartToolInvocation(props: {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            cursor: 'pointer',
-            '&:hover': { '& .expand-icon': { opacity: 1 } },
+            gap: 0.5,
+            flexWrap: 'wrap',
+            cursor: hasDetails ? 'pointer' : 'default',
+            '&:hover': hasDetails ? { '& .expand-icon': { opacity: 1 } } : undefined,
           }}
-          onClick={toggleExpanded}
+          onClick={hasDetails ? toggleExpanded : undefined}
         >
-          <IconButton
-            size='sm'
-            className='expand-icon'
-            sx={{
-              minWidth: 'auto',
-              minHeight: 'auto',
-              padding: 0,
-              opacity: expanded ? 1 : 0.5,
-              transition: 'opacity 0.2s',
-            }}
-          >
-            {expanded ? <KeyboardArrowDownIcon fontSize='small' /> : <KeyboardArrowRightIcon fontSize='small' />}
-          </IconButton>
+          {hasDetails && (
+            <IconButton
+              size='sm'
+              className='expand-icon'
+              sx={{
+                minWidth: 'auto',
+                minHeight: 'auto',
+                padding: 0,
+                opacity: expanded ? 1 : 0.5,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              {expanded ? <KeyboardArrowDownIcon fontSize='small' /> : <KeyboardArrowRightIcon fontSize='small' />}
+            </IconButton>
+          )}
 
           {/*<Tooltip title={humanName !== originalName ? `Original: ${originalName}` : undefined} placement='top'>*/}
           <Typography level='body-sm' sx={{ fontWeight: 'md' }}>
@@ -194,15 +228,15 @@ export function BlockPartToolInvocation(props: {
         </Box>
 
         {/* Expanded details */}
-        <ExpanderControlledBox expanded={expanded}>
-          {expanded && <Box sx={{ mt: 1, ml: 2.625, pl: 1 }}>
+        {expanded && hasDetails && <ExpanderControlledBox expanded>
+          <Box sx={{ mt: 1, ml: 2.625, pl: 1 }}>
             <KeyValueGrid
               data={detailsData}
               // contentScaling={props.contentScaling}
               // stableSx={_styleKeyValueGrid}
             />
-          </Box>}
-        </ExpanderControlledBox>
+          </Box>
+        </ExpanderControlledBox>}
 
       </Sheet>
 

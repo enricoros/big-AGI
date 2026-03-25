@@ -57,6 +57,9 @@ export interface IParticleTransmitter {
   /** Appends data to a FC part [throttled] */
   appendFunctionCallInvocationArgs(id: string | null, argsJsonChunk: string): void;
 
+  /** Creates a function-call result part, flushing the previous one if needed, and completes it */
+  addFunctionCallResponse(id: string | null, error: boolean | string, name: string, result: string, environment: 'upstream' | 'server' | 'client'): void;
+
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
   addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter'): void;
 
@@ -89,7 +92,7 @@ export interface IParticleTransmitter {
   setProviderInfraLabel(label: string): void;
 
   /** Communicates the upstream response handle, for remote control/resumability */
-  setUpstreamHandle(handle: string, type: 'oai-responses'): void;
+  setUpstreamHandle(handle: string, type: 'oai-responses', startingAfter?: number): void;
 
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
   updateMetrics(update: Partial<AixWire_Particles.CGSelectMetrics>): void;
