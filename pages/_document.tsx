@@ -45,6 +45,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {Brand.URIs.CardImage && <meta property='twitter:image' content={Brand.URIs.CardImage} />}
         <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
         <meta name='twitter:creator' content='@enricoros' />
+        <link rel='canonical' href={Brand.URIs.Home} />
 
         {/* Author & Structured Data */}
         <meta name='author' content='Enrico Ros' />
