@@ -530,10 +530,12 @@ export function LLMParametersEditor(props: {
       />
     </Box>}
 
-    {showParam('llmVndAntWebDynamic') && (llmVndAntWebSearch === 'auto' || llmVndAntWebFetch === 'auto' || !!llmVndAntWebDynamic) && (
+    {showParam('llmVndAntWebDynamic') && (
       <FormSwitchControl
-        title='Dynamic Filtering'
+        title='Web Dynamic Filtering'
+        description='Code-based web refinement'
         tooltip='Use dynamic filtering for search/fetch - more accurate, reduces tokens (Opus/Sonnet 4.6+, not ZDR-eligible)'
+        disabled={llmVndAntWebSearch !== 'auto' && llmVndAntWebFetch !== 'auto'}
         checked={!!llmVndAntWebDynamic}
         onChange={checked => {
           if (!checked) onRemoveParameter('llmVndAntWebDynamic');
