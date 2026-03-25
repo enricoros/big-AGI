@@ -332,8 +332,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
               console.log('[Anthropic] Encrypted code execution result:', { return_code: content_block.content.return_code });
             } else if (content_block.content.type === 'code_execution_tool_result_error') {
-              // Error during code execution
-              pt.appendText(`\n\n⚠️ Skill execution error: ${content_block.content.error_code}\n`);
+              // Error during code execution - log and show as transient placeholder (often a server-side artifact)
+              console.log('[Anthropic] Code execution error:', content_block.content.error_code);
+              pt.sendVoidPlaceholder('code-exec', `Skill error: ${content_block.content.error_code}`);
             }
             break;
 
@@ -364,8 +365,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                   file_ids: fileIds,
                 });
             } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
-              // Error during bash execution
-              pt.appendText(`\n\n⚠️ Bash execution error: ${content_block.content.error_code}\n`);
+              // Error during bash execution - log and show as transient placeholder (often a server-side artifact)
+              console.log('[Anthropic] Bash execution error:', content_block.content.error_code);
+              pt.sendVoidPlaceholder('code-exec', `Bash error: ${content_block.content.error_code}`);
             }
             break;
 
@@ -811,8 +813,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
             pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
             console.log('[Anthropic] Encrypted code execution result (non-streaming):', { return_code: contentBlock.content.return_code });
           } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
-            // Error during code execution
-            pt.appendText(`\n\n⚠️ Skill execution error: ${contentBlock.content.error_code}\n`);
+            // Error during code execution - log and show as transient placeholder (often a server-side artifact)
+            console.log('[Anthropic] Code execution error (non-streaming):', contentBlock.content.error_code);
+            pt.sendVoidPlaceholder('code-exec', `Skill error: ${contentBlock.content.error_code}`);
           }
           break;
 
@@ -842,8 +845,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
               file_ids: fileIds,
             });
           } else if (contentBlock.content.type === 'bash_code_execution_tool_result_error') {
-            // Error during bash execution
-            pt.appendText(`\n\n⚠️ Bash execution error: ${contentBlock.content.error_code}\n`);
+            // Error during bash execution - log and show as transient placeholder (often a server-side artifact)
+            console.log('[Anthropic] Bash execution error (non-streaming):', contentBlock.content.error_code);
+            pt.sendVoidPlaceholder('code-exec', `Bash error: ${contentBlock.content.error_code}`);
           }
           break;
 
