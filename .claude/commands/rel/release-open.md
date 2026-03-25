@@ -9,7 +9,15 @@ Execute the release process for Big-AGI. Go step-by-step, waiting for user appro
 
 If `$ARGUMENTS` provided, use it. Otherwise, read `package.json` and increment patch version.
 
-## Step 2: Update Files
+## Step 2: Gather Context
+
+Before drafting, gather what changed:
+1. `git log --oneline` since last release tag to see all commits
+2. Fetch https://big-agi.com/changes to see what daily entries already covered
+3. `gh issue list --state closed --search "closed:>LAST_RELEASE_DATE"` to find closed issues
+4. Check auto-generated release notes (`gh release create --generate-notes --draft`) for community PRs and new contributors
+
+## Step 3: Update Files
 
 1. **package.json** - Update `version` field
 2. **src/common/app.release.ts** - Increment `Monotonics.NewsVersion` (e.g., 203 → 204)
@@ -23,12 +31,13 @@ For the news entry, ask user for release name and key highlights.
 - UX items grouped, minimal bold
 - Fixes last, brief
 - Release name stays subtle - don't oversell the theme
+- Apply the draft, then let the user edit manually and re-read after - don't over-iterate
 
 Use `<B>`, `<B issue={N}>`, `<B href='url'>`. Re-read file after user edits.
 
 4. User runs `npm i` to update lockfile
 
-## Step 3: README
+## Step 4: README
 
 Update `README.md`:
 - Line ~46: Update model examples if new flagship models
@@ -36,7 +45,7 @@ Update `README.md`:
 
 **Style:** `- Open X.Y.Z: **Name** feature1, feature2, feature3`
 
-## Step 4: Git Operations
+## Step 5: Git Operations
 
 User commits changes, then:
 ```bash
@@ -44,21 +53,31 @@ git tag vX.Y.Z
 git push opensource vX.Y.Z
 ```
 
-## Step 5: GitHub Release
+## Step 6: GitHub Release
 
-Create release with `gh release create`. Structure:
+Create release with `gh release create` using `--notes` (not `--body`).
+
+**Structure** - discursive intro paragraph, then themed sections, not a generic "What's New" header:
 
 ```
 # Big-AGI X.Y.Z - Name
 
-## What's New
+### Theme tagline.
 
-### **Headline Feature**
-1-2 sentences explaining the main theme. Then bullet points for specifics.
+1-2 sentence discursive paragraph setting the release theme - what it means, not a feature list.
 
-### **Also New**
-- Bullet list of other features
-- Keep it scannable
+### Section Name (e.g., Models & Parameters)
+- Bullet points for specifics
+- Group by theme, not by commit order
+
+### Vendor/Platform Section (when enough substance)
+- Give a vendor its own section if 3+ related changes (e.g., Anthropic, AWS Bedrock)
+
+### Also New
+- Remaining features, scannable
+
+## New Contributors
+* @user made their first contribution (brief description) in PR_URL
 
 **Full Changelog**: https://github.com/enricoros/big-AGI/compare/vPREV...vNEW
 
@@ -66,7 +85,14 @@ Create release with `gh release create`. Structure:
 Available now at [big-agi.com](https://big-agi.com), via Docker, or self-host from source.
 ```
 
-## Step 6: Announcements
+## Step 7: Changelog (big-agi.com/changes)
+
+The Open release entry on big-agi.com/changes is lightweight - just 1-2 bullets announcing the stable release, since daily entries already covered the individual features. Use `/rel:changelog` to generate.
+
+**Style:** `- Open X.Y.Z Name stable release on GitHub and Docker`
+followed by 1 bullet summarizing what landed in the final days since the last daily entry.
+
+## Step 8: Announcements
 
 Draft for user to post:
 
@@ -89,6 +115,16 @@ Big-AGI Open X.Y.Z is out!
 **Category:** Items
 **More:** Count of commits/fixes
 ```
+
+## Step 9: Cover Image Prompts
+
+Offer cover image prompt alternatives for the release. Read past prompts from `news.data.tsx` comments (lines ~24-37) for the pattern.
+
+**Pattern:** Always a capybara sculpture made of crystal glass, wearing rayban-like oversized black sunglasses. Each release has a unique theme/activity that symbolizes the release.
+
+**Shared prefix:** `High-key white scene, very clean, hero framing. A close-up photo of a capybara sculpture made of crystal glass. The capybara wears rayban-like oversized black sunglasses.`
+
+**Also offer future release concepts** tied to vision vectors from `kb/vision-inlined.md` (e.g., agency, inhabitation, sculpting, safe exploration).
 
 ## Tone Guide
 
