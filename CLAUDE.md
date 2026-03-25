@@ -13,7 +13,7 @@ Dev servers may be already running on ports 3000, 3001, 3002, or 3003 (not alway
 
 ```bash
 # Validate (~5s, safe while dev server runs, do NOT use `next build` ~45s for same checks)
-tsc --noEmit --pretty && npm run lint # Type check (~3.5s) + ESLint (~2s)
+npm run typecheck && npm run lint     # Type check (~3.5s) + ESLint (~2s)
 eslint src/path/to/file.ts           # Lint specific file
 
 # Full build (~60s+, only when suspecting runtime/bundle issues)
@@ -23,6 +23,8 @@ npm run build  # next build runs compile+lint+types but stops at first type-erro
 # npm run supabase:local-update-types   # Generate TypeScript types
 # npm run stripe:listen                 # Listen for Stripe webhooks
 ```
+
+Local git pushes are guarded by `.githooks/pre-push`, which runs `npm run check:pre-push` (`npm run typecheck`). `npm install` and `npm run prepare` configure `core.hooksPath=.githooks` for the local clone.
 
 ### Git/GitHub remotes
 

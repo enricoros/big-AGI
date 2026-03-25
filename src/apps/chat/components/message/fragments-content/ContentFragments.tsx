@@ -8,7 +8,7 @@ import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
-import { DMessageContentFragment, DMessageFragmentId, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragmentId, DMessageToolResponsePart, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { Release } from '~/common/app.release';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
@@ -166,7 +166,7 @@ export function ContentFragments(props: {
       }
     }
 
-    const responseByInvocationId = new Map<string, InterleavedFragment['part']>();
+    const responseByInvocationId = new Map<string, DMessageToolResponsePart>();
     const pairedResponseFragmentIds = new Set<DMessageFragmentId>();
 
     for (const [toolCallId] of invocationFragments) {
