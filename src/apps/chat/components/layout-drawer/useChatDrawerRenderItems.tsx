@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
-import type { DFolder } from '~/common/stores/folders/store-chat-folders';
+import { DFolder, isFolderVisibleInAllChats } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { createTimeBucketClassifierEn } from '~/common/util/timeUtils';
@@ -42,6 +42,10 @@ export type ChatSearchSorting = 'frequency' | 'date';
 
 export type ChatSearchDepth = 'titles' | 'content' | 'attachments';
 
+export function shouldRenderConversationInDrawer(messageCount: number): boolean {
+  return messageCount > 0;
+}
+
 
 function messageHasDocAttachmentFragments(message: DMessage): boolean {
   return message.fragments.some(fragment => isAttachmentFragment(fragment) && isDocPart(fragment.part));
@@ -73,6 +77,23 @@ export function isDrawerSearching(filterByQuery: string): { isSearching: boolean
     isSearching: lcTextQuery.length >= SEARCH_MIN_CHARS,
     lcTextQuery,
   };
+}
+
+export function shouldShowConversationInAllChats(conversationId: DConversationId, allFolders: readonly DFolder[]): boolean {
+  const matchingFolders = allFolders.filter(folder => folder.conversationIds.includes(conversationId));
+  if (!matchingFolders.length)
+    return true;
+  return matchingFolders.some(folder => isFolderVisibleInAllChats(folder));
+}
+
+export function filterConversationsByFolderSelection<TConversation extends { id: DConversationId }>(
+  conversations: readonly TConversation[],
+  activeFolder: DFolder | null,
+  allFolders: readonly DFolder[],
+): TConversation[] {
+  if (activeFolder)
+    return conversations.filter(conversation => activeFolder.conversationIds.includes(conversation.id));
+  return conversations.filter(conversation => shouldShowConversationInAllChats(conversation.id, allFolders));
 }
 
 
@@ -119,8 +140,7 @@ export function useChatDrawerRenderItems(
         : convPreFilter.filter(c => !c.isArchived);
 
       // filter 1: select all conversations or just the ones in the active folder
-      const conversationsInFolder = !activeFolder ? conversations
-        : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));
+      const conversationsInFolder = filterConversationsByFolderSelection(conversations, activeFolder, allFolders);
 
       // filter 2: preparation: lowercase the query
       const { isSearching, lcTextQuery } = isDrawerSearching(filterByQuery);
@@ -131,6 +151,9 @@ export function useChatDrawerRenderItems(
 
           // optimized reduction to find stars/images/docs/and lowercased text for search
           const messageCount = _c.messages.length;
+          if (!shouldRenderConversationInDrawer(messageCount))
+            return null;
+
           const messageFlags = new Set<DMessageUserFlag>();
           let lcMessageSearchText = '';
           let hasStars = false, hasImages = false, hasDocs = false;
@@ -165,6 +188,9 @@ export function useChatDrawerRenderItems(
           // union of message flags -> emoji string
           const userFlagsUnique = !messageFlags.size ? undefined
             : Array.from(messageFlags).map(messageUserFlagToEmoji).join('');
+          const conversationFolder = !allFolders.length
+            ? undefined
+            : allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null;
 
           // create the ChatNavigationData
           return {
@@ -176,15 +202,12 @@ export function useChatDrawerRenderItems(
             isEmpty: !messageCount && !_c.userTitle,
             title,
             isArchived: !!_c.isArchived,
+            archivedAt: _c.archivedAt,
             userSymbol: _c.userSymbol || undefined,
             userFlagsSummary: userFlagsUnique,
             containsDocAttachments: hasDocs && filterHasDocFragments, // special case: only show this icon when filtering - too many icons otherwise
             containsImageAssets: hasImages,
-            folder: !allFolders.length
-              ? undefined                             // don't show folder select if folders are disabled
-              : _c.id === activeConversationId        // only show the folder for active conversation(s)
-                ? allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null
-                : null,
+            folder: conversationFolder,
             updatedAt: _c.updated || _c.created || 0,
             hasBeamOpen: !!openBeamConversationIds?.[_c.id],
             messageCount,

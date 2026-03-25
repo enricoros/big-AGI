@@ -406,6 +406,13 @@ export function getInstantAppChatPanesCount() {
   return useAppChatPanesStore.getState().chatPanes.length;
 }
 
+export function getFocusedPaneConversationId(): DConversationId | null {
+  const state = useAppChatPanesStore.getState();
+  return state.chatPaneFocusIndex !== null
+    ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null
+    : null;
+}
+
 
 // Reactive hooks
 

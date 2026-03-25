@@ -6,12 +6,21 @@
   "homepage": "https://big-agi.com",
   "repository": "https://github.com/enricoros/big-agi",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "dev-debug": "cross-env NODE_OPTIONS='--inspect' next dev",
-    "dev-https": "next dev --experimental-https",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "node --import tsx tools/develop/next-safe-run.ts dev",
+    "dev-debug": "cross-env NODE_OPTIONS='--inspect' node --import tsx tools/develop/next-safe-run.ts dev",
+    "dev-https": "node --import tsx tools/develop/next-safe-run.ts dev --experimental-https",
+    "build": "node --import tsx tools/develop/next-safe-run.ts build",
+    "perf:build": "node --import tsx tools/perf/profile-next-build.ts",
+    "perf:bundle": "cross-env ANALYZE_BUNDLE=1 ANALYZE_BUNDLE_OPEN=0 node --import tsx tools/develop/next-safe-run.ts build",
+    "perf:browser": "node --import tsx tools/perf/profile-browser-session.ts",
+    "perf:audit": "npm run perf:build && npm run perf:browser",
+    "start": "node --import tsx tools/develop/next-safe-run.ts start",
+    "lint": "eslint app pages src tools next.config.ts eslint.config.mjs middleware_BASIC_AUTH.ts --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "check:pre-push": "npm run typecheck",
+    "test": "npm run test:node",
+    "test:node": "cross-env NODE_OPTIONS=\"--require ./tools/tests/mock-test-imports.cjs\" node --import tsx --test",
+    "prepare": "node tools/git-hooks/install-hooks.mjs",
     "postinstall": "prisma generate --no-hints",
     "gen:icon-sprites": "node tools/develop/gen-icon-sprites/generate-llm-sprites.ts",
     "db:push": "prisma db push",
@@ -21,6 +30,30 @@
   },
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
+  },
+  "overrides": {
+    "@posthog/cli": {
+      "rimraf": {
+        "glob": {
+          "minimatch": "10.2.4"
+        }
+      }
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^9.0.9"
+    },
+    "cheerio": {
+      "undici": "^7.24.5"
+    },
+    "flat-cache": {
+      "flatted": "^3.4.2"
+    },
+    "glob": {
+      "minimatch": "10.2.4"
+    },
+    "mammoth": {
+      "underscore": "^1.13.8"
+    }
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -34,14 +67,14 @@
     "@googleworkspace/drive-picker-react": "^0.2.0",
     "@mui/icons-material": "^5.18.0",
     "@mui/joy": "^5.0.0-beta.52",
-    "@next/bundle-analyzer": "~15.1.12",
+    "@next/bundle-analyzer": "~15.5.14",
     "@prisma/client": "~5.22.0",
     "@tanstack/react-query": "5.90.21",
     "@tanstack/react-virtual": "^3.13.22",
-    "@trpc/client": "11.5.1",
-    "@trpc/next": "11.5.1",
-    "@trpc/react-query": "11.5.1",
-    "@trpc/server": "11.5.1",
+    "@trpc/client": "11.14.1",
+    "@trpc/next": "11.14.1",
+    "@trpc/react-query": "11.14.1",
+    "@trpc/server": "11.14.1",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "aws4fetch": "^1.0.20",
@@ -55,11 +88,11 @@
     "idb-keyval": "^6.2.2",
     "mammoth": "^1.11.0",
     "nanoid": "^5.1.6",
-    "next": "~15.1.12",
+    "next": "~15.5.14",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "5.4.54",
-    "posthog-js": "^1.364.6",
-    "posthog-node": "^5.28.11",
+    "posthog-js": "^1.360.2",
+    "posthog-node": "^5.28.2",
     "prismjs": "^1.30.0",
     "puppeteer-core": "^24.39.1",
     "react": "^18.3.1",
@@ -82,7 +115,7 @@
     "zustand": "5.0.7"
   },
   "devDependencies": {
-    "@posthog/nextjs-config": "~1.6.4",
+    "@posthog/nextjs-config": "~1.8.23",
     "@types/node": "^25.5.0",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.6",
@@ -91,12 +124,12 @@
     "@types/react-dom": "^19.2.3",
     "@types/turndown": "^5.0.6",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.4",
-    "eslint-config-next": "~15.1.12",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "~15.5.14",
     "prettier": "^3.8.1",
     "prisma": "~5.22.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": "^24.0.0 || ^22.0.0 || ^20.0.0"

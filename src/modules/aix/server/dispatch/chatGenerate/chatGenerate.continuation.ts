@@ -1,7 +1,7 @@
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { AixDebugObject } from './chatGenerate.debug';
-import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
+import type { ChatGenerateDispatch, ChatGenerateParseContext } from './chatGenerate.dispatch';
 import { executeChatGenerateWithOperationRetry } from './chatGenerate.operation-retry';
 
 
@@ -57,6 +57,7 @@ export async function* executeChatGenerateWithContinuation(
   streaming: boolean,
   abortSignal: AbortSignal,
   _d: AixDebugObject,
+  parseContext?: Omit<ChatGenerateParseContext, 'retriesAvailable' | 'requestUrl'>,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   let currentCreator = dispatchCreatorFn;
@@ -64,7 +65,7 @@ export async function* executeChatGenerateWithContinuation(
   for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
     try {
 
-      yield* executeChatGenerateWithOperationRetry(currentCreator, streaming, abortSignal, _d);
+      yield* executeChatGenerateWithOperationRetry(currentCreator, streaming, abortSignal, _d, parseContext);
       return; // normal completion
 
     } catch (error) {

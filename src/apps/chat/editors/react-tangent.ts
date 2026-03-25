@@ -1,9 +1,9 @@
 import { Agent } from '~/modules/aifn/react/react';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
-import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { ChatExecutionSession } from './chat-execution.runtime';
 
 // configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
@@ -12,7 +12,7 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 /**
  * Synchronous ReAct chat function - TODO: event loop, auto-ui, cleanups, etc.
  */
-export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId, contextRef: string) {
+export async function runReActUpdatingState(cHandler: ChatExecutionSession, question: string | undefined, assistantLlmId: DLLMId, contextRef: string) {
   if (!question) {
     cHandler.messageAppendAssistantText('Issue: no question provided.', 'issue');
     return false;

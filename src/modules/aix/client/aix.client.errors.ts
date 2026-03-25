@@ -5,6 +5,25 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // configuration
 const AIX_CLIENT_DEV_ASSERTS = process.env.NODE_ENV === 'development';
+const AIX_CLIENT_ABORT_REASONS = new Set(['@stop', 'stop', 'chat-stop', '@pause', 'paused', 'aborted']);
+
+
+function isAbortReasonText(value: unknown): boolean {
+  return typeof value === 'string' && AIX_CLIENT_ABORT_REASONS.has(value.trim().toLowerCase());
+}
+
+function isAbortLikeError(error: unknown): boolean {
+  if (isAbortReasonText(error))
+    return true;
+
+  if (!(error instanceof Error))
+    return false;
+
+  return error.name === 'AbortError'
+    || isAbortReasonText(error.message)
+    || (error.cause instanceof DOMException && error.cause.name === 'AbortError')
+    || isAbortReasonText((error as Error & { cause?: { message?: unknown } }).cause?.message);
+}
 
 
 /**
@@ -22,7 +41,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
 } {
 
   // User abort or AbortError from elsewhere (e.g. server-side tRPC abort?)
-  const isErrorAbort = error instanceof Error && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
+  const isErrorAbort = isAbortLikeError(error);
   if (isUserAbort || isErrorAbort) {
     if (AIX_CLIENT_DEV_ASSERTS && isUserAbort !== isErrorAbort)
       console.error(`[DEV] Aix streaming AbortError mismatch (${isUserAbort}, ${isErrorAbort})`, { error: error });

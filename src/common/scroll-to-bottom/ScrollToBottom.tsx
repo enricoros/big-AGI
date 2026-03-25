@@ -33,9 +33,38 @@ const DEBUG_SCROLL_TO_BOTTOM = false;
 // If you make this too small, the button may show when jumping lines on mobile
 // if you make it too large, the user would need a very large flick to unlock the view
 const USER_STICKY_MARGIN = 60;
+const USER_SCROLL_INTENT_LOCK_MS = 300;
+const TOUCH_SCROLL_UP_INTENT_THRESHOLD_PX = 6;
 
 // during the 'booting' timeout, scrolls happen instantly instead of smoothly
 const BOOTING_TIMEOUT = 400;
+
+export function isScrollViewportAtBottom(args: {
+  scrollHeight: number;
+  scrollTop: number;
+  offsetHeight: number;
+  stickyMargin?: number;
+}): boolean {
+  return args.scrollHeight - args.scrollTop <= args.offsetHeight + (args.stickyMargin ?? USER_STICKY_MARGIN);
+}
+
+export function shouldScrollToBottomOnResize(args: {
+  stickToBottom: boolean;
+  scrollHeight: number;
+  scrollTop: number;
+  offsetHeight: number;
+  stickyMargin?: number;
+  suppressAutoScrollUntil?: number;
+  now?: number;
+}): boolean {
+  if ((args.suppressAutoScrollUntil ?? 0) > (args.now ?? Date.now()))
+    return false;
+
+  if (args.stickToBottom)
+    return true;
+
+  return isScrollViewportAtBottom(args);
+}
 
 
 function DebugBorderBox(props: { heightPx: number, color: string }) {
@@ -79,6 +108,7 @@ export function ScrollToBottom(props: {
   const [state, setState] = React.useState<ScrollToBottomState>({
     stickToBottom: props.stickToBottomInitial || false,
     booting: props.bootToBottom || false,
+    atTop: !props.bootToBottom ? true : undefined,
     atBottom: undefined,
   });
 
@@ -91,6 +121,8 @@ export function ScrollToBottom(props: {
   // skip the next scroll event (when we want to stay where we are)
   const skipNextScrollCounter = React.useRef(0);
   const skipResetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const suppressAutoScrollUntilRef = React.useRef(0);
+  const lastTouchClientYRef = React.useRef<number | null>(null);
 
 
   // derived state
@@ -100,6 +132,14 @@ export function ScrollToBottom(props: {
 
   const stateRef = React.useRef(state);
   stateRef.current = state;
+
+  const suppressAutoScrollFromUserIntent = React.useCallback(() => {
+    suppressAutoScrollUntilRef.current = Date.now() + USER_SCROLL_INTENT_LOCK_MS;
+    setState(state => state.stickToBottom
+      ? { ...state, stickToBottom: false }
+      : state,
+    );
+  }, []);
 
 
   // [Debugging]
@@ -173,11 +213,18 @@ export function ScrollToBottom(props: {
           console.log('   -> large enough window', entries.length);
 
         // update state only if this changed
-        if (stateRef.current.atBottom !== true)
-          setState(state => ({ ...state, atBottom: true }));
+        if (stateRef.current.atBottom !== true || stateRef.current.atTop !== true)
+          setState(state => ({ ...state, atTop: true, atBottom: true }));
       }
 
-      if (entries.length > 0 && stateRef.current.stickToBottom)
+      if (entries.length > 0 && shouldScrollToBottomOnResize({
+        stickToBottom: stateRef.current.stickToBottom,
+        scrollHeight: scrollable.scrollHeight,
+        scrollTop: scrollable.scrollTop,
+        offsetHeight: scrollable.offsetHeight,
+        suppressAutoScrollUntil: suppressAutoScrollUntilRef.current,
+        now: Date.now(),
+      }))
         doScrollToBottom();
     });
 
@@ -206,15 +253,21 @@ export function ScrollToBottom(props: {
       }
 
       // compute intersections
-      const atBottom = scrollable.scrollHeight - scrollable.scrollTop <= scrollable.offsetHeight + USER_STICKY_MARGIN;
+      const atTop = scrollable.scrollTop <= 1;
+      const atBottom = isScrollViewportAtBottom({
+        scrollHeight: scrollable.scrollHeight,
+        scrollTop: scrollable.scrollTop,
+        offsetHeight: scrollable.offsetHeight,
+      });
 
       // assume this is = to the user intention
       const stickToBottom = atBottom;
 
       // update state only if anything changed
-      setState(state => state.stickToBottom !== stickToBottom || state.atBottom !== atBottom
+      setState(state => state.stickToBottom !== stickToBottom || state.atBottom !== atBottom || state.atTop !== atTop
         ? {
           ...state,
+          atTop,
           stickToBottom: props.disableAutoStick ? (state.stickToBottom && stickToBottom) : stickToBottom,
           atBottom,
         }
@@ -224,11 +277,46 @@ export function ScrollToBottom(props: {
 
     // _scrollEventsListener(true);
 
-    // cancelable listener (user and programatic scroll events)
-    scrollable.addEventListener('scroll', _scrollEventsListener);
-    return () => scrollable.removeEventListener('scroll', _scrollEventsListener);
+    const _wheelEventsListener = (event: WheelEvent) => {
+      if (event.deltaY < 0)
+        suppressAutoScrollFromUserIntent();
+    };
 
-  }, [props.disableAutoStick, state.booting]);
+    const _touchStartListener = (event: TouchEvent) => {
+      lastTouchClientYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const _touchMoveListener = (event: TouchEvent) => {
+      const currentClientY = event.touches[0]?.clientY ?? null;
+      const previousClientY = lastTouchClientYRef.current;
+
+      if (currentClientY !== null && previousClientY !== null && currentClientY - previousClientY >= TOUCH_SCROLL_UP_INTENT_THRESHOLD_PX)
+        suppressAutoScrollFromUserIntent();
+
+      lastTouchClientYRef.current = currentClientY;
+    };
+
+    const _touchEndListener = () => {
+      lastTouchClientYRef.current = null;
+    };
+
+    // cancelable listeners (user and programatic scroll events)
+    scrollable.addEventListener('scroll', _scrollEventsListener);
+    scrollable.addEventListener('wheel', _wheelEventsListener, { passive: true });
+    scrollable.addEventListener('touchstart', _touchStartListener, { passive: true });
+    scrollable.addEventListener('touchmove', _touchMoveListener, { passive: true });
+    scrollable.addEventListener('touchend', _touchEndListener, { passive: true });
+    scrollable.addEventListener('touchcancel', _touchEndListener, { passive: true });
+    return () => {
+      scrollable.removeEventListener('scroll', _scrollEventsListener);
+      scrollable.removeEventListener('wheel', _wheelEventsListener);
+      scrollable.removeEventListener('touchstart', _touchStartListener);
+      scrollable.removeEventListener('touchmove', _touchMoveListener);
+      scrollable.removeEventListener('touchend', _touchEndListener);
+      scrollable.removeEventListener('touchcancel', _touchEndListener);
+    };
+
+  }, [props.disableAutoStick, state.booting, suppressAutoScrollFromUserIntent]);
 
   /**
    * Cleanup the skipNextScrollCounter
@@ -262,6 +350,9 @@ export function ScrollToBottom(props: {
     if (DEBUG_SCROLL_TO_BOTTOM)
       console.log('-= setStickToBottom', stickToBottom);
 
+    if (stickToBottom)
+      suppressAutoScrollUntilRef.current = 0;
+
     setState(state => state.stickToBottom !== stickToBottom
       ? ({ ...state, stickToBottom })
       : state,
@@ -270,6 +361,20 @@ export function ScrollToBottom(props: {
     if (stickToBottom)
       doScrollToBottom();
   }, [doScrollToBottom]);
+
+  const scrollToTop = React.useCallback(() => {
+    const scrollable = scrollableElementRef.current;
+    if (!scrollable)
+      return;
+
+    isProgrammaticScroll.current = true;
+    setState(state => ({
+      ...state,
+      atTop: true,
+      stickToBottom: false,
+    }));
+    scrollable.scrollTo({ top: 0, behavior: scrollBehavior });
+  }, [scrollBehavior]);
 
   const skipNextAutoScroll = React.useCallback(() => {
     skipNextScrollCounter.current += 2;
@@ -296,6 +401,7 @@ export function ScrollToBottom(props: {
       ...state,
       notifyBooting,
       setStickToBottom,
+      scrollToTop,
       skipNextAutoScroll,
     }}>
       {/* Scrollable v-maxed */}

@@ -111,6 +111,7 @@ const _styles = {
 
 export type OptimaDropdownItems = Record<string, {
   title: string,
+  inlineLabel?: React.ReactNode,
   symbol?: string,
   type?: 'separator'
   icon?: React.ReactNode,
@@ -134,6 +135,8 @@ function OptimaBarDropdown<TValue extends string>(props: {
   onChange: (value: TValue | null) => void,
   // optional
   activeEndDecorator?: React.JSX.Element,
+  renderItemInlineControl?: (key: string, isActive: boolean) => React.ReactNode,
+  renderItemEndDecorator?: (key: string, isActive: boolean) => React.ReactNode,
   prependOption?: React.JSX.Element
   appendOption?: React.JSX.Element,
   placeholder?: string,
@@ -196,6 +199,9 @@ function OptimaBarDropdown<TValue extends string>(props: {
         {itemsKeys.map((_itemKey: string, idx: number) => {
           const _item = props.items[_itemKey];
           const isActive = _itemKey === props.value;
+          const inlineControl = props.renderItemInlineControl?.(_itemKey, isActive) ?? null;
+          const endDecorator = props.renderItemEndDecorator?.(_itemKey, isActive) ?? (isActive ? props.activeEndDecorator : null);
+          const hasEndDecorator = !!endDecorator;
 
           // Label & Decorators
           const safeTitle = _item.title || '';
@@ -230,8 +236,20 @@ function OptimaBarDropdown<TValue extends string>(props: {
               {/* Text */}
               <div className='agi-ellipsize'>{safeTitle}</div>
 
-              {/* Optional End Decorator */}
-              {isActive && props.activeEndDecorator}
+              {/* Optional Inline Label */}
+              {(inlineControl ?? _item.inlineLabel) && <Box
+                sx={{
+                  ml: 'auto',
+                  mr: hasEndDecorator ? 0.75 : 0,
+                  color: 'text.tertiary',
+                  fontSize: 'sm',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {inlineControl ?? _item.inlineLabel}
+              </Box>}
+
+              {endDecorator}
             </Option>
           );
         })}

@@ -29,8 +29,14 @@ export const aixRouter = createTRPCRouter({
     .mutation(async function* ({ input, ctx }) {
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const chatGenerateDispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
+      const parseContext = {
+        modelId: input.model.id,
+        contextName: input.context.name,
+        contextRef: input.context.ref,
+        conversationId: input.context.name === 'conversation' ? input.context.ref : undefined,
+      } as const;
 
-      yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, input.streaming, ctx.reqSignal, _d, parseContext);
     }),
 
   /**
@@ -48,8 +54,13 @@ export const aixRouter = createTRPCRouter({
     .mutation(async function* ({ input, ctx }) {
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const resumeDispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.resumeHandle, input.streaming);
+      const parseContext = {
+        contextName: input.context.name,
+        contextRef: input.context.ref,
+        conversationId: input.context.name === 'conversation' ? input.context.ref : undefined,
+      } as const;
 
-      yield* executeChatGenerateWithContinuation(resumeDispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(resumeDispatchCreator, input.streaming, ctx.reqSignal, _d, parseContext);
     }),
 
 });

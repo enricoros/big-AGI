@@ -17,6 +17,13 @@
 
 # next.js
 /.next/
+/.next-dev/
+/.next-build-test/
+/.next.corrupt-*/
+/.next-dev.corrupt-*/
+/.next.corrupt-manual-*/
+/.next.pre-fix-backup-*/
+/.next.watchdog-*/
 /dist/
 /out/
 
@@ -46,6 +53,10 @@ next-env.d.ts
 
 # other
 .idea/
+/artifacts/
+/.worktrees/
+/AGENTS_LOG.md
+/docs/superpowers/
 
 # Ingore k8s/env-secret.yaml
 ./k8s/env-secret.yaml
