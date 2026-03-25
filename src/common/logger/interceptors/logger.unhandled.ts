@@ -26,7 +26,10 @@ export function setupClientUncaughtErrorsLogging(): () => void {
 
   // Handle unhandled promise rejections
   const handleRejection = (event: PromiseRejectionEvent) => {
-    logger.error('Unhandled promise rejection', {
+    // skip if already handled by a component-level listener
+    if (event.defaultPrevented) return;
+
+   logger.error('Unhandled promise rejection', {
       reason: event.reason,
       message: event.reason?.message,
       stack: event.reason?.stack,
