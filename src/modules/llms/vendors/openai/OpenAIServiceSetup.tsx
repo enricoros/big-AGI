@@ -43,7 +43,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
-  const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
+  const shallFetchSucceed = oaiKey ? keyValid : (!needsUserKey || !!oaiHost);
 
 
   // [effect] auto-update the service label when a known provider host is selected
@@ -80,7 +80,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       } {oaiKey && !oaiHost && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSettings({ oaiKey: value })}
-      required={needsUserKey || !!oaiHost} isError={keyError}
+      required={needsUserKey && !oaiHost} isError={keyError}
       placeholder='sk-...'
     />
 

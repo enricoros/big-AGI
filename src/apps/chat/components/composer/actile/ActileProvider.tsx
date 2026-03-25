@@ -3,7 +3,7 @@ import type { FunctionComponent } from 'react';
 export interface ActileProvider<TItem extends ActileItem = ActileItem> {
 
   // Unique key for the provider
-  readonly key: 'pcmd' | 'pstrmsg' | 'pattlbl';
+  readonly key: 'pcmd' | 'pstrmsg' | 'pattlbl' | 'pmention';
 
   // Label for display
   get label(): string;
@@ -11,6 +11,7 @@ export interface ActileProvider<TItem extends ActileItem = ActileItem> {
   // Interface for the provider
   fastCheckTriggerText: (trailingText: string) => boolean;
   fetchItems: () => ActileProviderItems<TItem>;
+  filterItems?: (items: ActileItem[], search: string) => ActileItem[];
   onItemSelect: (item: ActileItem) => void;
 
 }

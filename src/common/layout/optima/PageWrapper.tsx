@@ -27,8 +27,13 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
   // mobile: match the desktop container structure, to keep state across layour changes
   if (props.isMobile)
     return (
-      <Box>
-        <Container id='app-page-container' disableGutters maxWidth={false}>
+      <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+        <Container
+          id='app-page-container'
+          disableGutters
+          maxWidth={false}
+          sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+        >
           <PageCore component={props.component} currentApp={props.currentApp} isFull isMobile>
             {props.children}
           </PageCore>

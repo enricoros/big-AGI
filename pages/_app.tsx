@@ -20,6 +20,7 @@ import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
 
 import { ErrorBoundary } from '~/common/components/ErrorBoundary';
+import { installBrowserPerfController } from '~/common/util/perfRegistry';
 import { Is } from '~/common/util/pwaUtils';
 import { OverlaysInsert } from '~/common/layout/overlays/OverlaysInsert';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
@@ -29,9 +30,20 @@ import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/3rdparty/GoogleAnalytics';
 import { hasPostHogAnalytics, OptionalPostHogAnalytics } from '~/common/components/3rdparty/PostHogAnalytics';
+const perfSeedBackupStorageKey = 'big-agi:perf-seed-backup-v1';
 
 
 const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
+  React.useEffect(() => {
+    installBrowserPerfController();
+    const shouldLoadPerfSeedBootstrap = window.location.search.includes('perfSeed=')
+      || !!window.localStorage.getItem(perfSeedBackupStorageKey);
+    if (!shouldLoadPerfSeedBootstrap)
+      return;
+
+    void import('../src/common/util/perfSeedBootstrap')
+      .then(module => module.syncPerfSeedFromWindowLocation(window.location.search));
+  }, []);
 
   // We are using a nextjs per-page layout pattern to bring the (Optima) layout creation to a shared place
   // This reduces the flicker and the time switching between apps, and seems to not have impact on

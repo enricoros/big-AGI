@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { fileOpen, fileSave } from 'browser-fs-access';
+
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
@@ -14,8 +17,13 @@ import FolderIcon from '@mui/icons-material/Folder';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
+import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { useChatAgentGroupsStore } from '~/common/stores/chat/store-chat-agent-groups';
+import type { DAgentGroupSnapshot } from '~/common/stores/chat/store-chat-agent-groups';
+import { buildAgentGroupTransferFile, getAgentGroupTransferFilename, parseAgentGroupTransferFile } from '~/common/stores/chat/store-chat-agent-groups.transfer';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
@@ -25,12 +33,17 @@ import { OPTIMA_DRAWER_BACKGROUND } from '~/common/layout/optima/optima.config';
 import { OptimaDrawerHeader } from '~/common/layout/optima/drawer/OptimaDrawerHeader';
 import { OptimaDrawerList } from '~/common/layout/optima/drawer/OptimaDrawerList';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { getIsMobile } from '~/common/components/useMatchMedia';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
+import { DELETE_HOLD_DURATION_MS, getDeleteHoldProgressSx } from './ChatDrawerItem.layout';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from '../layout-bar/useFolderDropdown';
@@ -39,7 +52,6 @@ import { useChatDrawerFilters } from '../../store-app-chat';
 
 // this is here to make shallow comparisons work on the next hook
 const noFolders: DFolder[] = [];
-
 /*
  * Lists folders and returns the active folder
  */
@@ -69,7 +81,8 @@ function ChatDrawer(props: {
   focusedChatBeamOpen: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
-  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
+  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean, agentGroupSnapshot?: DAgentGroupSnapshot | null) => void,
+  onConversationSaveAgentGroup: (conversationId: DConversationId, name?: string, existingId?: string | null) => string | null,
   onConversationsDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
   onConversationsExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationsImportDialog: () => void,
@@ -77,14 +90,33 @@ function ChatDrawer(props: {
 }) {
 
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
+  const { showPromisedOverlay } = useOverlayComponents();
+  const { savedAgentGroups, renameAgentGroup, deleteAgentGroup, importAgentGroups } = useChatAgentGroupsStore(useShallow(state => ({
+    savedAgentGroups: state.savedAgentGroups,
+    renameAgentGroup: state.renameAgentGroup,
+    deleteAgentGroup: state.deleteAgentGroup,
+    importAgentGroups: state.importAgentGroups,
+  })));
 
-  // local state
+  const [editingGroupId, setEditingGroupId] = React.useState<string | null>(null);
+  const [holdingDeleteGroupId, setHoldingDeleteGroupId] = React.useState<string | null>(null);
+  const [holdingDeleteGroupProgress, setHoldingDeleteGroupProgress] = React.useState(0);
+  const deleteHoldFrameRef = React.useRef<number | null>(null);
+  const deleteHoldStartedAtRef = React.useRef<number | null>(null);
+  const deleteHoldTriggeredGroupIdRef = React.useRef<string | null>(null);
+  const suppressNextDeleteClickGroupIdRef = React.useRef<string | null>(null);
+
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
   const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
   const [searchDepth, setSearchDepth] = React.useState<ChatSearchDepth>('attachments'); // default: full search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
   const [renderLimit, setRenderLimit] = React.useState(200); // progressive loading limit
+  const { archivedChatsCount, purgeExpiredArchivedConversations, setArchived } = useChatStore(useShallow(state => ({
+    archivedChatsCount: state.conversations.filter(conversation => !!conversation.isArchived).length,
+    purgeExpiredArchivedConversations: state.purgeExpiredArchivedConversations,
+    setArchived: state.setArchived,
+  })));
 
   // external state
   const {
@@ -102,6 +134,23 @@ function ChatDrawer(props: {
   );
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
+
+  const clearAgentGroupDeleteHold = React.useCallback((resetProgress: boolean) => {
+    if (deleteHoldFrameRef.current !== null) {
+      cancelAnimationFrame(deleteHoldFrameRef.current);
+      deleteHoldFrameRef.current = null;
+    }
+    deleteHoldStartedAtRef.current = null;
+    deleteHoldTriggeredGroupIdRef.current = null;
+    setHoldingDeleteGroupId(null);
+    if (resetProgress)
+      setHoldingDeleteGroupProgress(0);
+  }, []);
+
+  React.useEffect(() => () => clearAgentGroupDeleteHold(false), [clearAgentGroupDeleteHold]);
+  React.useEffect(() => {
+    purgeExpiredArchivedConversations();
+  }, [purgeExpiredArchivedConversations]);
   const gifMode = uiComplexityMode === 'extra';
 
   // Calculate chat counts per folder
@@ -118,7 +167,7 @@ function ChatDrawer(props: {
   // New/Activate/Delete Conversation
 
   const isMultiPane = props.chatPanesConversationIds.length >= 2;
-  const disableNewButton = props.disableNewButton && filteredChatsIncludeActive;
+  const disableNewButton = props.disableNewButton;
   const newButtonDontRecycle = isMultiPane || !filteredChatsIncludeActive;
 
   const handleButtonNew = React.useCallback((event: React.MouseEvent) => {
@@ -128,6 +177,147 @@ function ChatDrawer(props: {
       optimaCloseDrawer();
   }, [newButtonDontRecycle, onConversationNew]);
 
+  const handleAgentGroupLoad = React.useCallback((agentGroupSnapshot: DAgentGroupSnapshot) => {
+    onConversationNew(disableNewButton ? false : true, false, agentGroupSnapshot);
+    setEditingGroupId(null);
+    if (getIsMobile())
+      optimaCloseDrawer();
+  }, [disableNewButton, onConversationNew]);
+
+  const handleAgentGroupRename = React.useCallback((groupId: string, name: string) => {
+    renameAgentGroup(groupId, name);
+    setEditingGroupId(null);
+  }, [renameAgentGroup]);
+
+  const handleAgentGroupDelete = React.useCallback(async (groupId: string) => {
+    const groupName = savedAgentGroups.find(group => group.id === groupId)?.name || 'this agent group';
+
+    if (!await showPromisedOverlay('chat-agent-group-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open
+        onClose={onUserReject}
+        onPositive={() => onResolve(true)}
+        title='Delete Agent Group'
+        confirmationText={`Are you sure you want to delete "${groupName}"? This action cannot be undone.`}
+        positiveActionText='Delete agent group'
+      />,
+    )) return;
+
+    deleteAgentGroup(groupId);
+    setEditingGroupId(current => current === groupId ? null : current);
+  }, [deleteAgentGroup, savedAgentGroups, showPromisedOverlay]);
+  const handleAgentGroupDeleteHoldStart = React.useCallback((event: React.PointerEvent<HTMLButtonElement>, groupId: string) => {
+    if (event.pointerType === 'mouse' && event.button !== 0)
+      return;
+
+    event.stopPropagation();
+    clearAgentGroupDeleteHold(true);
+    setHoldingDeleteGroupId(groupId);
+
+    const startedAt = performance.now();
+    deleteHoldStartedAtRef.current = startedAt;
+
+    const updateProgress = (now: number) => {
+      const currentStartedAt = deleteHoldStartedAtRef.current;
+      if (currentStartedAt === null)
+        return;
+
+      const progress = Math.min((now - currentStartedAt) / DELETE_HOLD_DURATION_MS, 1);
+      setHoldingDeleteGroupProgress(progress);
+
+      if (progress >= 1) {
+        deleteHoldTriggeredGroupIdRef.current = groupId;
+        suppressNextDeleteClickGroupIdRef.current = groupId;
+        clearAgentGroupDeleteHold(true);
+        void handleAgentGroupDelete(groupId);
+        return;
+      }
+
+      deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
+    };
+
+    deleteHoldFrameRef.current = requestAnimationFrame(updateProgress);
+  }, [clearAgentGroupDeleteHold, handleAgentGroupDelete]);
+
+  const handleAgentGroupDeleteHoldEnd = React.useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (deleteHoldTriggeredGroupIdRef.current)
+      return;
+    clearAgentGroupDeleteHold(true);
+  }, [clearAgentGroupDeleteHold]);
+
+  const handleAgentGroupDeleteClick = React.useCallback((event: React.MouseEvent, groupId: string) => {
+    event.stopPropagation();
+
+    if (suppressNextDeleteClickGroupIdRef.current === groupId) {
+      suppressNextDeleteClickGroupIdRef.current = null;
+      event.preventDefault();
+      return;
+    }
+
+    void handleAgentGroupDelete(groupId);
+  }, [handleAgentGroupDelete]);
+
+  const saveAgentGroupsToFile = React.useCallback(async (groupsToExport: DAgentGroupSnapshot[], groupName?: string) => {
+    const payload = buildAgentGroupTransferFile(groupsToExport);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const exportedAtLabel = prettyTimestampForFilenames(false);
+
+    await fileSave(blob, {
+      fileName: getAgentGroupTransferFilename({
+        groupName,
+        exportedAtLabel,
+      }),
+      extensions: ['.json'],
+    }).then(() => {
+      addSnackbar({
+        key: groupName ? `agent-group-export-ok-${groupName}` : 'agent-groups-export-ok',
+        message: groupName ? `"${groupName}" exported.` : 'Agent groups exported.',
+        type: 'success',
+      });
+    }).catch((error: any) => {
+      if (error?.name !== 'AbortError')
+        addSnackbar({
+          key: groupName ? `agent-group-export-fail-${groupName}` : 'agent-groups-export-fail',
+          message: `Could not export ${groupName ? `"${groupName}"` : 'agent groups'}. ${error?.message || ''}`.trim(),
+          type: 'issue',
+        });
+    });
+  }, []);
+
+  const handleAgentGroupsExport = React.useCallback(async () => {
+    await saveAgentGroupsToFile(savedAgentGroups);
+  }, [saveAgentGroupsToFile, savedAgentGroups]);
+
+  const handleAgentGroupExport = React.useCallback(async (group: DAgentGroupSnapshot) => {
+    await saveAgentGroupsToFile([group], group.name);
+  }, [saveAgentGroupsToFile]);
+
+  const handleAgentGroupsImport = React.useCallback(async (mode: 'single' | 'all') => {
+    try {
+      const file = await fileOpen({
+        description: mode === 'single' ? 'Agent Group JSON' : 'Agent Groups JSON',
+        mimeTypes: ['application/json'],
+        extensions: ['.json'],
+        multiple: false,
+      });
+
+      if (!file)
+        return;
+
+      const importedSnapshots = parseAgentGroupTransferFile(await file.text(), mode);
+      const importedCount = importAgentGroups(importedSnapshots);
+      addSnackbar({
+        key: 'agent-groups-import-ok',
+        message: importedCount === 1 ? '1 agent group imported.' : `${importedCount} agent groups imported.`,
+        type: 'success',
+      });
+    } catch (error: any) {
+      if (error?.name !== 'AbortError')
+        addSnackbar({ key: 'agent-groups-import-fail', message: `Could not import agent groups. ${error?.message || ''}`.trim(), type: 'issue' });
+    }
+  }, [importAgentGroups]);
+
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
     if (closeMenu && getIsMobile())
@@ -135,12 +325,26 @@ function ChatDrawer(props: {
   }, [onConversationActivate]);
 
   const handleConversationsDeleteFiltered = React.useCallback(() => {
-    !!filteredChatIDs?.length && onConversationsDelete(filteredChatIDs, false);
-  }, [filteredChatIDs, onConversationsDelete]);
+    if (!filteredChatIDs?.length)
+      return;
+
+    filteredChatIDs.forEach(conversationId => setArchived(conversationId, !filterIsArchived));
+  }, [filterIsArchived, filteredChatIDs, setArchived]);
 
   const handleConversationDeleteNoConfirmation = React.useCallback((conversationId: DConversationId) => {
-    conversationId && onConversationsDelete([conversationId], true);
+    if (!conversationId)
+      return;
+    setArchived(conversationId, true);
+  }, [setArchived]);
+  const handleConversationDeletePermanently = React.useCallback((conversationId: DConversationId) => {
+    if (!conversationId)
+      return;
+    onConversationsDelete([conversationId], false);
   }, [onConversationsDelete]);
+
+  const handleConversationSetArchived = React.useCallback((conversationId: DConversationId, isArchived: boolean) => {
+    setArchived(conversationId, isArchived);
+  }, [setArchived]);
 
   const handleConversationsExport = React.useCallback(() => {
     props.activeConversationId && onConversationsExportDialog(props.activeConversationId, true);
@@ -190,7 +394,161 @@ function ChatDrawer(props: {
   }, [debouncedSearchQuery]);
 
 
-  // memoize the group dropdown
+  const sortedSavedAgentGroups = React.useMemo(() =>
+    [...savedAgentGroups].sort((a, b) => b.updatedAt - a.updatedAt),
+  [savedAgentGroups]);
+
+  const groupedNewButton = React.useMemo(() => {
+    const canLoadGroups = sortedSavedAgentGroups.length > 0;
+
+    return (
+      <Dropdown>
+        <Box sx={{ display: 'flex', width: '100%' }}>
+          <Button
+            // variant='outlined'
+            variant={disableNewButton ? undefined : 'soft'}
+            disabled={disableNewButton}
+            onClick={handleButtonNew}
+            sx={{
+              flex: 1,
+              justifyContent: 'flex-start',
+              padding: '0px 0.75rem',
+              border: '1px solid',
+              borderColor: 'neutral.outlinedBorder',
+              borderRadius: 'sm 0 0 sm',
+              borderRight: 0,
+              '--ListItemDecorator-size': 'calc(2.5rem - 1px)',
+            }}
+          >
+            <ListItemDecorator><AddIcon sx={{ fontSize: '' }} /></ListItemDecorator>
+            New chat
+          </Button>
+          <MenuButton
+            slots={{ root: IconButton }}
+            slotProps={{ root: {
+              variant: disableNewButton ? 'plain' : 'soft',
+              disabled: disableNewButton && !canLoadGroups,
+              'aria-label': 'Load saved agent group',
+              sx: {
+                border: '1px solid',
+                borderColor: 'neutral.outlinedBorder',
+                borderRadius: '0 sm sm 0',
+                minWidth: '2.75rem',
+              },
+            } }}
+          >
+            <KeyboardArrowDownIcon />
+          </MenuButton>
+        </Box>
+
+        <Menu placement='bottom-start' sx={{ minWidth: 260, zIndex: themeZIndexOverMobileDrawer }}>
+          <MenuItem disabled={disableNewButton} onClick={() => onConversationNew(newButtonDontRecycle, false)}>
+            <ListItemDecorator><AddIcon /></ListItemDecorator>
+            New chat
+          </MenuItem>
+          <MenuItem disabled={disableNewButton} onClick={() => onConversationNew(newButtonDontRecycle, true)}>
+            <ListItemDecorator><AddIcon /></ListItemDecorator>
+            New incognito chat
+          </MenuItem>
+
+          <ListDivider />
+          <ListItem>
+            <Typography level='body-sm'>{'Saved agent groups'}</Typography>
+          </ListItem>
+          <MenuItem onClick={handleAgentGroupsExport} disabled={!sortedSavedAgentGroups.length}>
+            <ListItemDecorator><FileDownloadOutlinedIcon /></ListItemDecorator>
+            Export all groups
+          </MenuItem>
+          <MenuItem onClick={() => handleAgentGroupsImport('single')}>
+            <ListItemDecorator><FileUploadOutlinedIcon /></ListItemDecorator>
+            Import 1 group
+          </MenuItem>
+          <MenuItem onClick={() => handleAgentGroupsImport('all')}>
+            <ListItemDecorator><FileUploadOutlinedIcon /></ListItemDecorator>
+            Import all groups
+          </MenuItem>
+          <ListDivider />
+
+          {!canLoadGroups ? (
+            <ListItem>
+              <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>No saved groups yet</Typography>
+            </ListItem>
+          ) : sortedSavedAgentGroups.map(group => (
+            <MenuItem
+              key={group.id}
+              onClick={() => editingGroupId === group.id ? undefined : handleAgentGroupLoad(group)}
+              sx={{ alignItems: 'stretch' }}
+            >
+              <ListItemDecorator><AddIcon /></ListItemDecorator>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {editingGroupId === group.id ? (
+                  <input
+                    autoFocus
+                    defaultValue={group.name}
+                    onBlur={event => handleAgentGroupRename(group.id, event.currentTarget.value)}
+                    onClick={event => event.stopPropagation()}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleAgentGroupRename(group.id, (event.currentTarget as HTMLInputElement).value);
+                      } else if (event.key === 'Escape') {
+                        event.preventDefault();
+                        setEditingGroupId(null);
+                      }
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                ) : (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                    <Typography level='body-sm' noWrap sx={{ flex: 1 }}>{group.name}</Typography>
+                    <Button
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={event => {
+                        event.stopPropagation();
+                        void handleAgentGroupExport(group);
+                      }}
+                    >
+                      Export
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={event => {
+                        event.stopPropagation();
+                        setEditingGroupId(group.id);
+                      }}
+                    >
+                      Rename
+                    </Button>
+                    <IconButton
+                      aria-label='Delete'
+                      size='sm'
+                      variant='plain'
+                      color='neutral'
+                      onClick={event => handleAgentGroupDeleteClick(event, group.id)}
+                      onPointerDown={event => handleAgentGroupDeleteHoldStart(event, group.id)}
+                      onPointerUp={handleAgentGroupDeleteHoldEnd}
+                      onPointerCancel={handleAgentGroupDeleteHoldEnd}
+                      onPointerLeave={handleAgentGroupDeleteHoldEnd}
+                      sx={holdingDeleteGroupId === group.id
+                        ? getDeleteHoldProgressSx(holdingDeleteGroupProgress)
+                        : undefined}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
+      </Dropdown>
+    );
+  }, [disableNewButton, editingGroupId, handleAgentGroupDeleteClick, handleAgentGroupDeleteHoldEnd, handleAgentGroupDeleteHoldStart, handleAgentGroupExport, handleAgentGroupLoad, handleAgentGroupRename, handleAgentGroupsExport, handleAgentGroupsImport, handleButtonNew, holdingDeleteGroupId, holdingDeleteGroupProgress, newButtonDontRecycle, onConversationNew, sortedSavedAgentGroups]);
+
   const { isSearching } = isDrawerSearching(debouncedSearchQuery);
   const groupingComponent = React.useMemo(() => (
     <Dropdown>
@@ -363,29 +721,7 @@ function ChatDrawer(props: {
         />
 
         {/* New Chat Button */}
-        <Button
-          // variant='outlined'
-          variant={disableNewButton ? undefined : 'soft'}
-          disabled={disableNewButton}
-          onClick={handleButtonNew}
-          sx={{
-            // ...PageDrawerTallItemSx,
-            justifyContent: 'flex-start',
-            padding: '0px 0.75rem',
-
-            // style
-            border: '1px solid',
-            borderColor: 'neutral.outlinedBorder',
-            borderRadius: 'sm',
-            '--ListItemDecorator-size': 'calc(2.5rem - 1px)', // compensate for the border
-            // backgroundColor: 'background.popup',
-            // boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'xs',
-            // transition: 'box-shadow 0.2s',
-          }}
-        >
-          <ListItemDecorator><AddIcon sx={{ fontSize: '' }} /></ListItemDecorator>
-          New chat
-        </Button>
+        {groupedNewButton}
 
       </Box>
 
@@ -400,6 +736,8 @@ function ChatDrawer(props: {
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
               onConversationDeleteNoConfirmation={handleConversationDeleteNoConfirmation}
+              onConversationDeletePermanently={handleConversationDeletePermanently}
+              onConversationSetArchived={handleConversationSetArchived}
               onConversationExport={onConversationsExportDialog}
               onConversationFolderChange={handleConversationFolderChange}
             />
@@ -456,6 +794,18 @@ function ChatDrawer(props: {
         )}
       </Box>
 
+      {(filterIsArchived || archivedChatsCount > 0) && (
+        <ListItemButton
+          selected={filterIsArchived}
+          onClick={toggleFilterIsArchived}
+        >
+          <ListItemDecorator>
+            {filterIsArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}
+          </ListItemDecorator>
+          {filterIsArchived ? 'Back to Chats' : `Archived Chats (${archivedChatsCount})`}
+        </ListItemButton>
+      )}
+
       <ListDivider sx={{ my: 0 }} />
 
       {/* Bottom commands */}
@@ -478,9 +828,11 @@ function ChatDrawer(props: {
 
       <ListItemButton disabled={filteredChatsAreEmpty} onClick={handleConversationsDeleteFiltered}>
         <ListItemDecorator>
-          <DeleteOutlineIcon />
+          {filterIsArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}
         </ListItemDecorator>
-        Delete {filteredChatsCount >= 2 ? `all ${filteredChatsCount} chats` : 'chat'}
+        {filterIsArchived
+          ? (filteredChatsCount >= 2 ? `Restore all ${filteredChatsCount} chats` : 'Restore chat')
+          : (filteredChatsCount >= 2 ? `Archive all ${filteredChatsCount} chats` : 'Archive chat')}
       </ListItemButton>
 
     </OptimaDrawerList>

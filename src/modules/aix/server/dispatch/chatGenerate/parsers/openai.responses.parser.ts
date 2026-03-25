@@ -3,7 +3,7 @@ import { safeErrorString } from '~/server/wire';
 import { hasKeys } from '~/common/util/objectUtils';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
@@ -34,6 +34,101 @@ function sanitizeUrlForDisplay(url: string | null): string {
     // Fallback: return a generic indicator
     return 'website';
   }
+}
+
+function _formatHostedWebSearchAction(action: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>['action']): string {
+  if (!action)
+    return 'Hosted web search ran without action details.';
+
+  switch (action.type) {
+    case 'search':
+      return [
+        action.query ? `Query: ${action.query}` : 'Query: unavailable',
+        ...(action.sources?.length ? [
+          '',
+          'Sources:',
+          ...action.sources.map((source: NonNullable<typeof action.sources>[number], index: number) => `${index + 1}. ${source.title || sanitizeUrlForDisplay(source.url)}\n${source.url}${source.snippet ? `\n${source.snippet}` : ''}`),
+        ] : ['Results: unavailable']),
+      ].join('\n');
+
+    case 'open_page':
+      return `Opened page: ${action.url || 'unknown'}`;
+
+    case 'find_in_page':
+    case 'find':
+      return [
+        `Pattern: ${action.pattern}`,
+        `Page: ${action.url}`,
+      ].join('\n');
+
+    default:
+      return 'Hosted web search completed.';
+  }
+}
+
+function _webSearchActionToArgs(action: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>['action']): object | null {
+  if (!action)
+    return null;
+
+  switch (action.type) {
+    case 'search':
+      return {
+        type: action.type,
+        ...(action.query ? { query: action.query } : {}),
+      };
+    case 'open_page':
+      return {
+        type: action.type,
+        ...(action.url ? { url: action.url } : {}),
+      };
+    case 'find_in_page':
+    case 'find':
+      return {
+        type: action.type,
+        pattern: action.pattern,
+        url: action.url,
+      };
+    default:
+      return null;
+  }
+}
+
+function _deriveParseContextIdentifiers(context?: ChatGenerateParseContext) {
+  const contextName = context?.contextName;
+  const contextRef = context?.contextRef;
+  const conversationId = context?.conversationId ?? (contextName === 'conversation' ? contextRef : undefined);
+  const messageId = context?.messageId ?? (contextName && contextName !== 'conversation' ? contextRef : undefined);
+
+  return {
+    contextName,
+    contextRef,
+    conversationId,
+    messageId,
+  };
+}
+
+function _logOpenAIResponsesUpstreamError(
+  source: 'stream-event' | 'response-object',
+  errorPayload: any,
+  context?: ChatGenerateParseContext,
+  extras?: Record<string, unknown>,
+) {
+  const errorType = safeErrorString(errorPayload?.error?.type || errorPayload?.type);
+  const errorCode = safeErrorString(errorPayload?.error?.code || errorPayload?.code);
+  const errorParam = safeErrorString(errorPayload?.error?.param || errorPayload?.param);
+  const errorMessage = safeErrorString(errorPayload?.error?.message || errorPayload?.message);
+
+  console.warn('[AIX] OpenAI Responses upstream error', {
+    source,
+    modelId: context?.modelId,
+    endpoint: context?.requestUrl,
+    ..._deriveParseContextIdentifiers(context),
+    errorType,
+    errorCode,
+    errorParam,
+    errorMessage,
+    ...extras,
+  });
 }
 
 
@@ -246,7 +341,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
   const R = new ResponseParserStateMachine();
 
-  return function(pt: IParticleTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // throws on malformed event data
     const chunkData = JSON.parse(eventData);
@@ -292,11 +387,6 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
         // -> Model
         pt.setModelName(event.response.model);
-
-        // -> Upstream Handle (for remote control: resume, cancel, delete)
-        // Implementation NOTE: we won't uproll sequence numbers for partial resumes - we'll just download the full response
-        if (event.response.store && event.response.id)
-          pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
 
         // TODO: [FUTURE] Accumulate in DMessage.sessionMetadata:
         //   pt.setSessionMetadata('openai.response.id', response.id)
@@ -548,7 +638,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.sendVoidPlaceholder('search-web', 'Searching the web...');
+        pt.startFunctionCallInvocation(event.item_id, 'web_search', 'json_object', null);
         break;
 
       case 'response.web_search_call.searching':
@@ -559,7 +649,6 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.sendVoidPlaceholder('search-web', 'Search completed');
         // -> Actual web_search_call results are handled in response.output_item.done
         break;
 
@@ -644,6 +733,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         const errorMessage = safeErrorString(event.error?.message || event?.message) ?? undefined;
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
 
+        _logOpenAIResponsesUpstreamError('stream-event', event, context, {
+          responseId: R.responseId !== 'new response' ? R.responseId : undefined,
+          sequenceNumber: event.sequence_number,
+        });
+
         // Transmit the error as text - note: throw if you want to transmit as 'error'
         // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
         pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
@@ -680,6 +774,9 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         break;
 
     }
+
+    if (R.responseId !== 'new response' && event.sequence_number !== undefined)
+      pt.setUpstreamHandle(R.responseId, 'oai-responses', event.sequence_number);
   };
 }
 
@@ -691,13 +788,13 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
 
-  return function(pt: IParticleTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // Throws on malformed event data
     const responseData = JSON.parse(eventData);
 
     // .error: transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardResponseError(responseData, pt))
+    if (_forwardResponseError(responseData, pt, context))
       return;
 
     // [OpenAI] possibly log the warnings to get more insights on the API
@@ -878,7 +975,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         case 'web_search_call':
           // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
-          _forwardWebSearchCallItem(pt, oItem);
+          _forwardWebSearchCallItem(pt, oItem, { startInvocation: true });
           pt.endMessagePart();
           break;
 
@@ -984,7 +1081,7 @@ function _fromResponseUsage(usage: OpenAIWire_API_Responses.Response['usage'], p
 /**
  * If there's an error in the pre-decoded message, push it down to the particle transmitter.
  */
-function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
+function _forwardResponseError(parsedData: any, pt: IParticleTransmitter, context?: ChatGenerateParseContext) {
 
   // operate on .error
   if (!parsedData || !parsedData.error) return false;
@@ -995,6 +1092,8 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
     console.log('[DEV] AIX: OpenAI-Responses-dispatch ignored error:', { error });
     return false;
   }
+
+  _logOpenAIResponsesUpstreamError('response-object', parsedData, context);
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
@@ -1047,52 +1146,31 @@ function _imageGenerationMimeType(item: { output_format?: string }): string {
 }
 
 /**
- * Processes web search call actions and sends appropriate placeholders.
- * Handles search, open_page, and find_in_page action types.
+ * Persists a hosted web-search call as normal tool invocation/response fragments.
  *
  * IMPORTANT: Web search sources vs citations distinction:
  * - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
  * - citations: High-quality links (2-3) via annotations in message content
  */
-function _forwardWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>): void {
-  const { action, status } = webSearchCall;
+function _forwardWebSearchCallItem(
+  pt: IParticleTransmitter,
+  webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>,
+  options?: { startInvocation?: boolean },
+): void {
+  const { id, action, status } = webSearchCall;
 
-  // Handle failed web search (e.g., xAI returns status: 'failed' when web search fails)
-  if (status === 'failed') {
-    const failedUrl = action?.type === 'open_page' ? action.url : undefined;
-    pt.sendVoidPlaceholder('search-web', failedUrl ? `Failed to access ${sanitizeUrlForDisplay(failedUrl)}` : 'Web search failed');
-    return;
-  }
+  if (options?.startInvocation)
+    pt.startFunctionCallInvocation(id, 'web_search', 'json_object', _webSearchActionToArgs(action));
 
-  switch (action?.type) {
-    case 'search':
-      if (action.query && action.sources && Array.isArray(action.sources)) {
-        pt.sendVoidPlaceholder('search-web', `${action.query}: ${action.sources.length} results...`);
-      } else if (action.query)
-        pt.sendVoidPlaceholder('search-web', `${action.query}: completed`);
-      break;
+  const result = _formatHostedWebSearchAction(action);
+  const error = status === 'failed'
+    ? (action?.type === 'open_page' && action.url ? `Failed to access ${sanitizeUrlForDisplay(action.url)}` : 'Web search failed')
+    : false;
 
-    case 'open_page':
-      // Action: opening/visiting a specific web page
-      const sanitizedUrl = sanitizeUrlForDisplay(action.url);
-      pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'page...'}`);
-      break;
+  if (!action)
+    console.log('[DEV] AIX: web_search_call completed without action details', { webSearchCall });
 
-    case 'find_in_page':
-      // Action: searching for a pattern within an opened page
-      const sanitizedPageUrl = sanitizeUrlForDisplay(action.url);
-      if (action.pattern && action.url)
-        pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
-      else if (action.pattern)
-        pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}"`);
-      else
-        pt.sendVoidPlaceholder('search-web', 'Searching in page...');
-      break;
-
-    default:
-      console.log(`[DEV] AIX: Unknown web_search_call action type: ${action?.type}`, { action });
-      break;
-  }
+  pt.addFunctionCallResponse(id, error, 'web_search', result, 'upstream');
 }
 
 /**

@@ -8,6 +8,7 @@ import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOu
 import CompressIcon from '@mui/icons-material/Compress';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
@@ -22,7 +23,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
 
-import { useChatShowSystemMessages } from '../../store-app-chat';
+import { useChatShowConversationMinimap, useChatShowSystemMessages } from '../../store-app-chat';
 import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
 
 
@@ -54,6 +55,7 @@ export function ChatPane(props: {
   // external state
   const { canAddPane, isMultiPane } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
+  const [showConversationMinimap, setShowConversationMinimap] = useChatShowConversationMinimap();
 
   const { isArchived, setArchived } = useChatStore(useShallow((state) => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
@@ -112,6 +114,7 @@ export function ChatPane(props: {
   }, [isArchived, props.conversationId, setArchived]);
 
   const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
+  const handleToggleConversationMinimap = () => setShowConversationMinimap(!showConversationMinimap);
 
 
   return <>
@@ -201,6 +204,16 @@ export function ChatPane(props: {
       </MenuItem>
 
     </OptimaPanelGroupedList>
+
+    {!props.isMobile && (
+      <OptimaPanelGroupedList title='View'>
+        <ListItemButton disabled={props.disableItems} onClick={handleToggleConversationMinimap}>
+          <ListItemDecorator><MapOutlinedIcon /></ListItemDecorator>
+          Show Minimap
+          <Switch size='sm' checked={showConversationMinimap} disabled={props.disableItems} onChange={handleToggleConversationMinimap} sx={{ ml: 'auto' }} />
+        </ListItemButton>
+      </OptimaPanelGroupedList>
+    )}
 
     {/* ... how do we name this? ... */}
     <OptimaPanelGroupedList title='Persona'>

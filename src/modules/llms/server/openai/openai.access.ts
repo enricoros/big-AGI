@@ -104,6 +104,15 @@ export function llmsRandomKeyFromMultiKey(multiKeyString: string): string {
   return multiKeys[Math.floor(Math.random() * multiKeys.length)];
 }
 
+/**
+ * Accept a few legacy/UI placeholder values as "no key" so we don't forward
+ * obviously fake bearer tokens to OpenAI-compatible endpoints.
+ */
+export function llmsNormalizeOptionalApiKey(apiKey: string | undefined | null): string {
+  const normalized = apiKey?.trim() || '';
+  return normalized === '!' ? '' : normalized;
+}
+
 
 // --- OpenAI-Compatible Access ---
 
@@ -258,13 +267,13 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       let heliKey: string | false;
       if (access.oaiHost) {
         // Client controls the endpoint: only client credentials
-        oaiKey = access.oaiKey || '';
+        oaiKey = llmsNormalizeOptionalApiKey(access.oaiKey);
         oaiHost = access.oaiHost;
         oaiOrg = access.oaiOrg || '';
         heliKey = access.heliKey || false;
       } else {
         // Client hasn't touched the endpoint: server infrastructure
-        oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
+        oaiKey = llmsNormalizeOptionalApiKey(access.oaiKey) || env.OPENAI_API_KEY || '';
         oaiHost = /* NO access.oaiHost */ env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
         oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
         heliKey = access.heliKey || env.HELICONE_API_KEY || false;

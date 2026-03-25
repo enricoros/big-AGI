@@ -9,6 +9,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, getLLMLabel, isLLMVisible } from '~/common/stores/llms/llms.types';
+import { sanitizeModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -18,7 +19,10 @@ import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 import { useUIComplexityMode } from '~/common/stores/store-ui';
+
+import { getReasoningEffortOptions, getParticipantReasoningEffortSelectState } from './ChatBarChat.reasoning';
 
 
 function LLMDropdown(props: {
@@ -38,7 +42,6 @@ function LLMDropdown(props: {
 
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
-
   const llmsCount = llms.filter(isLLMVisible).length;
   const showFilter = llmsCount >= 50;
 
@@ -49,8 +52,6 @@ function LLMDropdown(props: {
   const handleOpenLLMOptions = React.useCallback(() => {
     return chatLlmId && optimaActions().openModelOptions(chatLlmId);
   }, [chatLlmId]);
-
-
   // dropdown items - cached
   const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>(undefined);
 
@@ -88,8 +89,23 @@ function LLMDropdown(props: {
       }
 
       // add the model item
+      const llmReasoningConfig = getReasoningEffortOptions(llm);
+      const llmReasoningValue = llmReasoningConfig.parameterId
+        ? sanitizeModelReasoningEffort(llm.userParameters?.[llmReasoningConfig.parameterId] ?? llm.initialParameters?.[llmReasoningConfig.parameterId]) ?? null
+        : null;
+      const llmReasoningState = getParticipantReasoningEffortSelectState({
+        llm,
+        parameterId: llmReasoningConfig.parameterId,
+        options: llmReasoningConfig.options,
+        selectedReasoningEffort: llmReasoningValue,
+      });
       llmItems[llm.id] = {
         title: getLLMLabel(llm),
+        inlineLabel: llmReasoningConfig.parameterId
+          ? (llmReasoningValue
+            ? llmReasoningConfig.options.find(option => option.value === llmReasoningValue)?.label ?? llmReasoningState.modelSettingLabel
+            : llmReasoningState.modelSettingLabel)
+          : undefined,
         ...(llm.userStarred ? { symbol: '⭐' } : {}),
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };
@@ -137,6 +153,88 @@ function LLMDropdown(props: {
       </IconButton>
     </GoodTooltip>
   ), [handleOpenLLMOptions]);
+  const renderModelOptionsButton = React.useCallback((itemKey: string, isActive: boolean) => {
+    if (isActive)
+      return llmDropdownButton;
+
+    return (
+      <IconButton
+        variant='outlined'
+        color='neutral'
+        onMouseDown={event => event.stopPropagation()}
+        onClick={event => {
+          event.stopPropagation();
+          optimaActions().openModelOptions(itemKey);
+        }}
+        sx={{
+          ml: 0.25,
+          my: '-0.25rem',
+          backgroundColor: 'background.surface',
+          boxShadow: 'xs',
+        }}
+      >
+        <SettingsIcon sx={{ fontSize: 'xl' }} />
+      </IconButton>
+    );
+  }, [llmDropdownButton]);
+  const renderModelReasoningControl = React.useCallback((itemKey: string) => {
+    const llm = llms.find(candidate => candidate.id === itemKey) ?? null;
+    if (!llm)
+      return null;
+
+    const llmReasoningConfig = getReasoningEffortOptions(llm);
+    if (!llmReasoningConfig.parameterId || llmReasoningConfig.options.length === 0)
+      return null;
+
+    const llmReasoningValue = sanitizeModelReasoningEffort(
+      llm.userParameters?.[llmReasoningConfig.parameterId] ?? llm.initialParameters?.[llmReasoningConfig.parameterId],
+    ) ?? null;
+    const llmReasoningState = getParticipantReasoningEffortSelectState({
+      llm,
+      parameterId: llmReasoningConfig.parameterId,
+      options: llmReasoningConfig.options,
+      selectedReasoningEffort: llmReasoningValue,
+    });
+    const currentLabel = llmReasoningValue
+      ? llmReasoningConfig.options.find(option => option.value === llmReasoningValue)?.label ?? llmReasoningState.modelSettingLabel
+      : llmReasoningState.modelSettingLabel;
+
+    return (
+      <Box
+        component='button'
+        type='button'
+        title='Cycle reasoning effort'
+        onMouseDown={event => event.stopPropagation()}
+        onClick={event => {
+          event.stopPropagation();
+          const currentIndex = llmReasoningValue
+            ? llmReasoningConfig.options.findIndex(option => option.value === llmReasoningValue)
+            : llmReasoningConfig.options.findIndex(option => option.label === llmReasoningState.modelSettingLabel);
+          const nextOption = llmReasoningConfig.options[(currentIndex + 1 + llmReasoningConfig.options.length) % llmReasoningConfig.options.length]
+            ?? llmReasoningConfig.options[0];
+          useModelsStore.getState().updateLLMUserParameters(itemKey, {
+            [llmReasoningConfig.parameterId]: nextOption.value,
+          });
+        }}
+        sx={{
+          border: 0,
+          background: 'transparent',
+          color: 'inherit',
+          font: 'inherit',
+          px: 0.5,
+          py: 0.125,
+          borderRadius: 'sm',
+          cursor: 'pointer',
+          '&:hover': {
+            backgroundColor: 'background.level1',
+            color: 'text.primary',
+          },
+        }}
+      >
+        {currentLabel}
+      </Box>
+    );
+  }, [llms]);
 
 
   // "Models Filter" box
@@ -167,7 +265,6 @@ function LLMDropdown(props: {
 
   // "Models Setup" button
   const llmDropdownAppendOptions = React.useMemo(() => <>
-
     {/*{chatLlmId && (*/}
     {/*  <ListItemButton key='menu-opt' onClick={handleOpenLLMOptions}>*/}
     {/*    <ListItemDecorator><SettingsIcon color='success' /></ListItemDecorator>*/}
@@ -188,7 +285,6 @@ function LLMDropdown(props: {
         {/*</Box>*/}
       </Box>
     </ListItemButton>
-
   </>, [hasDropdownOptions]);
 
 
@@ -198,10 +294,11 @@ function LLMDropdown(props: {
       items={llmDropdownItems}
       value={chatLlmId}
       onChange={handleChatLLMChange}
+      renderItemInlineControl={renderModelReasoningControl}
+      renderItemEndDecorator={renderModelOptionsButton}
       placeholder={props.placeholder || '⚠️ Models …'}
       prependOption={llmDropdownPrependOptions}
       appendOption={llmDropdownAppendOptions}
-      activeEndDecorator={llmDropdownButton}
       showSymbols={showSymbols ? 'compact' : false}
     />
   );

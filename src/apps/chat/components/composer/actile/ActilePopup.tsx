@@ -5,15 +5,19 @@ import { Box, ListItem, ListItemButton, ListItemDecorator, Sheet, Typography } f
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 
 import type { ActileItem, ActileProvider } from './ActileProvider';
+import { getMentionItemHighlightParts } from './providerMentions.utils';
 
 export function ActilePopup(props: {
   anchorEl: HTMLElement | null,
   onClose: () => void,
   itemsByProvider: { provider: ActileProvider, items: ActileItem[] }[],
   activeItemIndex: number,
-  activePrefixLength: number,
+  activeSearchString: string,
   onItemClick: (item: ActileItem) => void,
 }) {
+
+  const anchorWidth = props.anchorEl?.getBoundingClientRect().width ?? 0;
+  const popupMinWidth = Math.max(320, Math.ceil(anchorWidth));
 
   // We need to keep track of the overall item index to correctly match with activeItemIndex
   const itemIndices = React.useMemo(() => {
@@ -36,10 +40,11 @@ export function ActilePopup(props: {
     <CloseablePopup
       menu anchorEl={props.anchorEl} onClose={props.onClose}
       maxHeightGapPx={320}
-      minWidth={320}
+      minWidth={popupMinWidth}
       noBottomPadding
       noAutoFocus={true /* we control keyboard navigation */}
       noTopPadding
+      sx={{ width: popupMinWidth, maxWidth: 'min(90vw, 42rem)', boxSizing: 'border-box' }}
     >
 
       {!props.itemsByProvider.length && (
@@ -64,9 +69,9 @@ export function ActilePopup(props: {
           {items.map((item) => {
             const index = itemIndices.findIndex(idx => idx.providerKey === provider.key && idx.itemKey === item.key);
             const isActive = itemIndices[index]?.isActive;
-
-            const labelBold = item.label.slice(0, props.activePrefixLength);
-            const labelNormal = item.label.slice(props.activePrefixLength);
+            const labelParts = provider.key === 'pmention'
+              ? getMentionItemHighlightParts(item.label, props.activeSearchString)
+              : [{ text: item.label, highlighted: false }];
 
             return (
               <ListItem
@@ -88,7 +93,11 @@ export function ActilePopup(props: {
                     {/* Item main text  */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography level='title-sm' color={isActive ? 'primary' : undefined}>
-                        <span style={{ textDecoration: 'underline' }}><b>{labelBold}</b></span>{labelNormal}
+                        {labelParts.map((part, partIndex) => part.highlighted ? (
+                          <span key={partIndex} style={{ textDecoration: 'underline' }}><b>{part.text}</b></span>
+                        ) : (
+                          <React.Fragment key={partIndex}>{part.text}</React.Fragment>
+                        ))}
                       </Typography>
                       {item.argument && <Typography level='body-sm'>
                         {item.argument}

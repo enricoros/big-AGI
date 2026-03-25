@@ -4,6 +4,31 @@ export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' |
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
+export function isSystemPurposeId(value: unknown): value is SystemPurposeId {
+  switch (value) {
+    case 'Catalyst':
+    case 'Custom':
+    case 'Designer':
+    case 'Developer':
+    case 'DeveloperPreview':
+    case 'Executive':
+    case 'Generic':
+    case 'Scientist':
+    case 'YouTubeTranscriber':
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function sanitizeSystemPurposeId(value: unknown): SystemPurposeId {
+  if (value === 'Default')
+    return defaultSystemPurposeId;
+  return isSystemPurposeId(value)
+    ? value
+    : defaultSystemPurposeId;
+}
+
 export type SystemPurposeData = {
   title: string;
   description: string | React.JSX.Element;
@@ -32,7 +57,7 @@ Current date: {{LocaleNow}}
 {{RenderSVG}}
 {{PreferTables}}
 `,
-    symbol: '🧠',
+    symbol: '🤖',
     examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
     call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },

@@ -9,6 +9,7 @@ export interface ScrollToBottomState {
 
   // state
   booting: boolean;
+  atTop: boolean | undefined;
   atBottom: boolean | undefined;
 }
 
@@ -18,6 +19,7 @@ export interface ScrollToBottomState {
 export interface ScrollToBottomActions {
   notifyBooting: () => void;
   setStickToBottom: (stick: boolean) => void;
+  scrollToTop: () => void;
   skipNextAutoScroll: () => void;
 }
 
@@ -32,9 +34,11 @@ export const UseScrollToBottomProvider = UseScrollToBottom.Provider;
 const _oocFallback: ScrollToBottomContext = {
   stickToBottom: false,
   booting: false,
+  atTop: true,
   atBottom: false,
   notifyBooting: console.log,
   setStickToBottom: console.log,
+  scrollToTop: console.log,
   skipNextAutoScroll: () => {
     // ignore - when used by DocAttachmentFragmentPane outside of a provider
   },

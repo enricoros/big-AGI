@@ -1,0 +1,6 @@
+.next
+.next-dev
+dist
+node_modules
+package-lock.json
+public/workers

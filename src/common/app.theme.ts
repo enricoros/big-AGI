@@ -1,6 +1,5 @@
 import createCache, { StylisElement, StylisPlugin } from '@emotion/cache';
 
-import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -17,21 +16,29 @@ export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 
 // Theme & Fonts
 
-const font = Inter({
-  weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
-  subsets: ['latin'],
-  display: 'swap',
-  fallback: ['Helvetica', 'Arial', 'sans-serif'],
-});
-export const themeFontFamilyCss = font.style.fontFamily;
+// Keep builds network-independent by using local/system font stacks instead of
+// next/font/google, which fetches font assets during production builds.
+export const themeFontFamilyCss = [
+  'Inter',
+  '-apple-system',
+  'BlinkMacSystemFont',
+  '"Segoe UI"',
+  'Helvetica',
+  'Arial',
+  'sans-serif',
+].join(', ');
 
-const jetBrainsMono = JetBrains_Mono({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  fallback: ['monospace'],
-});
-export const themeCodeFontFamilyCss = jetBrainsMono.style.fontFamily;
+export const themeCodeFontFamilyCss = [
+  '"JetBrains Mono"',
+  '"SFMono-Regular"',
+  'SFMono-Regular',
+  'Menlo',
+  'Monaco',
+  'Consolas',
+  '"Liberation Mono"',
+  '"Courier New"',
+  'monospace',
+].join(', ');
 
 
 export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({

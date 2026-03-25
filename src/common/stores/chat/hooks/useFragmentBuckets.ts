@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
+import { perfMeasureSync } from '~/common/util/perfRegistry';
 
 import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, DVoidFragmentModelAnnotations, isContentFragment, isErrorPart, isImageRefPart, isVoidAnnotationsFragment, isZyncAssetImageReferencePart } from '../chat.fragments';
 
@@ -31,7 +32,7 @@ export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[
   const nonImageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
 
   // Use useMemo to recalculate buckets only when messageFragments changes
-  return React.useMemo(() => {
+  return React.useMemo(() => perfMeasureSync('derive:useFragmentBuckets', () => {
 
     const annotationFragments: DVoidFragmentModelAnnotations[] = [];
     const interleavedFragments: InterleavedFragment[] = [];
@@ -86,5 +87,5 @@ export function useFragmentBuckets(messageFragments: Immutable<DMessageFragment[
       nonImageAttachments: nonImageAttachmentsRef.current,
       lastFragmentIsError: !!lastFragment && isContentFragment(lastFragment) && isErrorPart(lastFragment.part),
     };
-  }, [messageFragments]);
+  }), [messageFragments]);
 }
