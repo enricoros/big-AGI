@@ -139,7 +139,7 @@ export function Composer(props: {
   })));
   const timeToShowTips = useLogicSherpaStore(state => state.usageCount >= SHOW_TIPS_AFTER_RELOADS);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
-  const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
+
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const composerQuickButton = useUIPreferencesStore(state => state.composerQuickButton);
@@ -546,7 +546,7 @@ export function Composer(props: {
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey && !e.metaKey && !e.ctrlKey) {
         if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
-          touchAltEnter();
+          e.stopPropagation();
         return e.preventDefault();
       }
 
@@ -567,7 +567,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchShiftEnter]);
 
 
   // Focus mode
