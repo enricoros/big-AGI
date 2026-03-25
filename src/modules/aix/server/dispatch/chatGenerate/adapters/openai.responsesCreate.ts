@@ -11,6 +11,17 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } fro
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
+const OPENAI_RESPONSES_CUSTOM_FUNCTION_TOOL_NAME_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+const OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES = new Set([
+  'web_search',
+  'web_fetch',
+  'google_search_retrieval',
+]);
+
+function _shouldReplayOpenAIResponsesFunctionCallName(name: string): boolean {
+  return OPENAI_RESPONSES_CUSTOM_FUNCTION_TOOL_NAME_RE.test(name)
+    && !OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES.has(name);
+}
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
@@ -297,6 +308,36 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   type ModelMessage = Extract<OpenAIWire_Responses_Items.InputMessage_Compat, { role: 'assistant' }>;
   type FunctionCallMessage = OpenAIWire_Responses_Items.OutputFunctionCallItem;
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
+  const allToolResponseIds = new Set<string>();
+  const hostedUpstreamToolInvocationIds = new Set<string>();
+  const skippedHostedUpstreamToolIds = new Set<string>();
+
+  for (const aixMessage of chatSequence) {
+    if (aixMessage.role === 'model') {
+      for (const modelPart of aixMessage.parts) {
+        if (
+          modelPart.pt === 'tool_invocation'
+          && modelPart.invocation.type === 'function_call'
+          && !_shouldReplayOpenAIResponsesFunctionCallName(modelPart.invocation.name)
+        )
+          hostedUpstreamToolInvocationIds.add(modelPart.id);
+      }
+      continue;
+    }
+
+    if (aixMessage.role !== 'tool')
+      continue;
+
+    for (const toolPart of aixMessage.parts) {
+      if (toolPart.pt !== 'tool_response')
+        continue;
+
+      allToolResponseIds.add(toolPart.id);
+
+      if (hostedUpstreamToolInvocationIds.has(toolPart.id))
+        skippedHostedUpstreamToolIds.add(toolPart.id);
+    }
+  }
 
   let allowUserAppend = true;
 
@@ -452,6 +493,15 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             case 'tool_invocation':
+              if (
+                skippedHostedUpstreamToolIds.has(modelPart.id)
+                || (
+                  modelPart.invocation.type === 'function_call'
+                  && !_shouldReplayOpenAIResponsesFunctionCallName(modelPart.invocation.name)
+                  && !allToolResponseIds.has(modelPart.id)
+                )
+              )
+                break;
               const invocation = modelPart.invocation;
               const invocationType = invocation.type;
               switch (invocationType) {
@@ -472,20 +522,38 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               // TODO: support this in the future - may contain the encrypted reasoning data, although we don't parse this yet
               break;
 
+            case 'meta_cache_control':
+              // ignored - Anthropic only
+              break;
+
+            default:
+              const _exhaustiveCheck: never = mPt;
+              throw new Error(`Unsupported part type in Model message: ${mPt}`);
+          }
+        }
+        break;
+
+      case 'tool':
+        for (const toolPart of messageParts) {
+          const tPt = toolPart.pt;
+          switch (tPt) {
+
             case 'tool_response':
-              const toolResponseType = modelPart.response.type;
+              if (skippedHostedUpstreamToolIds.has(toolPart.id))
+                break;
+              const toolResponseType = toolPart.response.type;
               switch (toolResponseType) {
                 case 'function_call':
-                  const { result: functionCallOutput } = modelPart.response;
-                  newFunctionCallOutputMessage(modelPart.id, functionCallOutput);
+                  const { result: functionCallOutput } = toolPart.response;
+                  newFunctionCallOutputMessage(toolPart.id, functionCallOutput);
                   break;
                 case 'code_execution':
-                  const { result: codeExecutionOutput } = modelPart.response;
-                  newFunctionCallOutputMessage(modelPart.id, codeExecutionOutput);
+                  const { result: codeExecutionOutput } = toolPart.response;
+                  newFunctionCallOutputMessage(toolPart.id, codeExecutionOutput);
                   break;
                 default:
                   const _exhaustiveCheck: never = toolResponseType;
-                  throw new Error(`Unsupported tool response type in Model message: ${mPt}/${toolResponseType}`);
+                  throw new Error(`Unsupported tool response type in Tool message: ${tPt}/${toolResponseType}`);
               }
               break;
 
@@ -494,8 +562,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             default:
-              const _exhaustiveCheck: never = mPt;
-              throw new Error(`Unsupported part type in Model message: ${mPt}`);
+              const _exhaustiveCheck: never = tPt;
+              throw new Error(`Unsupported part type in Tool message: ${tPt}`);
           }
         }
         break;
@@ -579,4 +647,3 @@ export function vndOaiRestoreMarkdown(payload: TRequest) {
   else if (!payload.instructions)
     payload.instructions = MARKDOWN_INSTRUCTION;
 }
-
