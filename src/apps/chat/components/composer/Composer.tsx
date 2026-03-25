@@ -38,7 +38,6 @@ import { getModelParameterValueWithFallback } from '~/common/stores/llms/llms.pa
 import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
-import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { supportsCameraCapture } from '~/common/components/camera/useCameraCapture';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAttachHandler_CameraOpen, useAttachHandler_Files, useAttachHandler_PasteIntercept, useAttachHandler_ScreenCapture, useAttachHandler_UrlWebLinks } from '~/common/attachment-drafts/attachment-sources/useAttachmentSourceHandlers';
@@ -141,7 +140,6 @@ export function Composer(props: {
   const timeToShowTips = useLogicSherpaStore(state => state.usageCount >= SHOW_TIPS_AFTER_RELOADS);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
   const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
-  const { novel: explainCtrlEnter, touch: touchCtrlEnter } = useUICounter('composer-ctrl-enter');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const composerQuickButton = useUIPreferencesStore(state => state.composerQuickButton);
@@ -554,10 +552,8 @@ export function Composer(props: {
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) { // 'ctrl+enter' -> beam
-          touchCtrlEnter();
+        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
           e.stopPropagation();
-        }
         return e.preventDefault();
       }
 
@@ -571,7 +567,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -708,10 +704,6 @@ export function Composer(props: {
   if (isDesktop && timeToShowTips && !isDraw) {
     if (explainShiftEnter)
       textPlaceholder += !enterIsNewline ? '\n\n⏎ Shift + Enter to add a new line' : '\n\n➤ Shift + Enter to send';
-      // else if (explainAltEnter)
-    //   textPlaceholder += platformAwareKeystrokes('\n\n⭳ Tip: Alt + Enter to just append the message');
-    else if (explainCtrlEnter)
-      textPlaceholder += platformAwareKeystrokes('\n\n⫷ Tip: Ctrl + Enter to beam');
   }
 
   const stableGridSx: SxProps = React.useMemo(() => ({
