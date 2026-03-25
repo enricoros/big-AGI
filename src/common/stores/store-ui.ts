@@ -251,7 +251,6 @@ type KnownKeys =
   | 'call-wizard'                     // first Call
   | 'composer-shift-enter'            // not used Shift + Enter in the Composer yet
   | 'composer-alt-enter'              // not used Alt + Enter in the Composer yet
-  | 'composer-ctrl-enter'             // not used Ctrl + Enter in the Composer yet
   | 'models-setup-first-visit'        // first visit to the Models Setup
   ;
 
