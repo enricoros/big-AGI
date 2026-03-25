@@ -18,8 +18,6 @@ import { Release } from '~/common/app.release';
 import { clientUtmSource } from '~/common/util/pwaUtils';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
-import { beamBlogUrl } from './beam.data';
-
 
 // Cover Images
 // A capybara created from the intersection of two perfect spheres, creating a unique geometric form. Made of frosted glass with black sunglasses. Sitting on a platform where two squares overlap - their intersection glows softly. The overlapping area contains the word "OPEN" in clean sans-serif. White background with geometric shadows.
@@ -35,6 +33,9 @@ import coverV114 from '../../../public/images/covers/release-cover-v1.14.0.png';
 import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
 // An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is calling on a 3D origami old-school pink telephone and the camera is zooming on the telephone. Close up photography, bokeh, white background.
 import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
+
+
+const beamBlogUrl = 'https://big-agi.com/blog/beam-multi-model-ai-reasoning/';
 
 
 interface NewsItem {
@@ -71,6 +72,19 @@ export const DevNewsItem: NewsItem = {
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
+  {
+    versionCode: '2.0.4',
+    versionName: 'Hyper Params',
+    versionDate: new Date('2026-03-25T12:00:00Z'),
+    items: [
+      { text: <><B>Opus 4.6</B> adaptive thinking 1M tokens, <B>Sonnet 4.6</B>, <B>GPT-5.4</B> family, <B>Gemini 3.1 Pro</B>, <B>Nano Banana 2</B>, <B>Grok 4.20</B>, <B>Z.ai</B> models</> },
+      { text: <>Improved parameter accuracy for reasoning effort, verbosity, and temperature</> },
+      { text: <><B issue={965}>AWS Bedrock</B>: native Anthropic, Amazon Nova, and OpenAI-compatible</> },
+      { text: <>Anthropic: <B>Fast mode</B>, <B>continuation</B>, search depth US-inference</> },
+      { text: <><B issue={945}>Attachments on any message</B>, lossless images, focus mode</> },
+      { text: <>Rich text copy, reasoning trace controls, and more fixes</> },
+    ],
+  },
   {
     versionCode: '2.0.3',
     versionName: 'Red Carpet',

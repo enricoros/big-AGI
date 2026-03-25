@@ -19,7 +19,6 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { BigAgiProNewsCallout, bigAgiProUrl } from './bigAgiPro.data';
 import { DevNewsItem, newsFrontendTimestamp, NewsItems } from './news.data';
-import { beamNewsCallout } from './beam.data';
 
 
 // number of news items to show by default, before the expander
@@ -266,12 +265,12 @@ export function AppNews() {
               {/*  </Box>*/}
               {/*)}*/}
 
-              {/* Inject the Beam item here*/}
-              {idx === 2 && (
-                <Box sx={{ mb: 3 }}>
-                  {beamNewsCallout}
-                </Box>
-              )}
+              {/*/!* Inject the Beam item here*!/*/}
+              {/*{idx === 2 && (*/}
+              {/*  <Box sx={{ mb: 3 }}>*/}
+              {/*    {beamNewsCallout}*/}
+              {/*  </Box>*/}
+              {/*)}*/}
 
               {/* News Item */}
               <NewsCard key={'news-' + idx} newsItem={ni} idx={idx} addPadding={addPadding} />
@@ -283,7 +282,7 @@ export function AppNews() {
                 </Box>
               )}
 
-              {idx === 1 && <Divider sx={{ my: 6, mx: 6 }}/>}
+              {/*{idx === 1 && <Divider sx={{ my: 6, mx: 6 }}/>}*/}
 
             </React.Fragment>;
           })}
