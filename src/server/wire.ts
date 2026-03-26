@@ -5,6 +5,7 @@ import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
 /// set this to true to see the tRPC and fetch requests made by the server
 export const SERVER_DEBUG_WIRE = false;
+const SERVER_DEBUG_MAX_BYTES = 8192;
 
 
 export class ServerFetchError extends Error {
@@ -186,9 +187,15 @@ export class DebugWireLogger {
     const nowMs = Date.now();
     const elapsedMs = this.lastMs ? nowMs - this.lastMs : 0;
     this.lastMs = nowMs;
+
+    // deep clone the object with a per-string-field limit, and remove the type: 'event' field if present
+    const obectClone = objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, SERVER_DEBUG_MAX_BYTES);
+    if (obectClone && typeof obectClone === 'object' && 'type' in obectClone && obectClone.type === 'event')
+      delete (obectClone as any).type;
+
     console.log(
       `\n[${this.label}:${this.distinct}] <- #${this.sequenceNumber} (${elapsedMs} ms):`,
-      objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, 8192),
+      obectClone,
       // JSON.stringify(objectDeepCloneWithStringLimit(data, `${this.label}.wire-debug`, 8192), null, 2),
     );
   }
