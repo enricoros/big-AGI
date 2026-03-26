@@ -34,7 +34,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (AIX_CLIENT_DEV_ASSERTS) console.error('[DEV] Aix streaming Error:', { error });
 
 
-  // Browser-level network connection drops (TypeError, happens below tRPC error wrapping layer)
+  // Browser-level network connection drops (TypeError, happens below tRPC error wrapping layer), such as terminating the `npm run dev` process while streaming
   // Network errors - when the client is disconnected (Vercel 5min timeout, Mobile timeout / disconnect, etc) - they show up as TypeErrors
   // IMPORTANT: we will differentiate between the 2 'net-disconnected' cases in the UI, checking for the errorMessage '**network error**' vs '**connection terminated**'
   if (error instanceof TypeError && error.message === 'network error')
