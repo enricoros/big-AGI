@@ -13,7 +13,8 @@ import { OpenAIWire_API_Responses } from '../../wiretypes/openai.wiretypes';
 
 // configuration
 const OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
-const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n'; // true: shows the sequence of events
+const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n';
+const INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES = 250_000; // skip resize for small images (e.g. code interpreter charts)
 
 
 /**
@@ -418,7 +419,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'code_interpreter_call':
             // -> CIC: process completed code interpreter call (xAI/OpenAI)
-            _forwardCodeInterpreterCallItem(pt, doneItem);
+            _forwardDoneCodeInterpreterCallItem(pt, doneItem);
             break;
 
           case 'custom_tool_call':
@@ -901,7 +902,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         case 'code_interpreter_call':
           // -> CIC: process completed code interpreter call (xAI/OpenAI)
-          _forwardCodeInterpreterCallItem(pt, oItem);
+          _forwardDoneCodeInterpreterCallItem(pt, oItem);
           pt.endMessagePart();
           break;
 
@@ -1103,43 +1104,55 @@ function _forwardWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extr
  * - addCodeExecutionInvocation for the code being executed
  * - addCodeExecutionResponse for each output result
  */
-function _forwardCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
+function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
   const { id, code, outputs, status /*,container_id*/ } = codeInterpreterCall;
 
   // <- Emit code (like Gemini's executableCode)
   if (code)
     pt.addCodeExecutionInvocation(id, '', code, 'code_interpreter');
 
-  // <- Emit outputs (like Gemini's codeExecutionResult)
-  let outputSent = 0;
+  // <- Accumulate outputs by type, then emit: logs (non-error), logs (error), images
+  const isError = status === 'failed';
+  let accLogs = '';
+  let accErrorLogs = '';
+  const accImages: { url: string }[] = [];
+
   if (outputs && Array.isArray(outputs))
     for (const output of outputs) {
-      const outputType = output.type;
-      switch (outputType) {
+      switch (output.type) {
         case 'logs':
-          // Emit logs as code execution response
-          const isError = status === 'failed';
-          pt.addCodeExecutionResponse(id, isError, output.logs, 'code_interpreter', 'upstream');
-          outputSent++;
+          if (isError) accErrorLogs += (accErrorLogs ? OPENAI_RESPONSES_SAME_PART_SPACER /* reusing constant */ : '') + output.logs;
+          else accLogs += (accLogs ? OPENAI_RESPONSES_SAME_PART_SPACER : '') + output.logs;
           break;
-
         case 'image':
-          // Image output has a URL
-          // TODO: could fetch and inline the image
-          console.log('[DEV] AIX: TODO: Analyze code Interpreter output URL and decide what to do:', output.url.slice(0, 200)); // log first 200 chars
-          pt.addCodeExecutionResponse(id, false, `[Generated image: ${output.url}]`, 'code_interpreter', 'upstream');
-          outputSent++;
+          accImages.push(output);
           break;
-
         default:
-          const _exhaustiveCheck: never = outputType;
-          console.log(`[DEV] AIX: Unknown code_interpreter_call output type: ${(output as any)?.type}`, { output });
+          const _exhaustiveCheck: never = output;
+          console.log(`[DEV] AIX: Unknown code_interpreter_call output:`, { output });
           break;
       }
     }
 
-  // <- Error message if status is failed and no outputs were provided
-  if (status === 'failed' && !outputSent)
+  // Emit accumulated logs
+  if (accLogs)
+    pt.addCodeExecutionResponse(id, false, accLogs, 'code_interpreter', 'upstream');
+  if (accErrorLogs)
+    pt.addCodeExecutionResponse(id, true, accErrorLogs, 'code_interpreter', 'upstream');
+
+  // Emit images last
+  for (const imgOutput of accImages) {
+    const imgMatch = imgOutput.url.match(/^data:([^;]+);base64,(.+)$/);
+    if (imgMatch) {
+      const [, mimeType, base64Data] = imgMatch;
+      const hintSkipResize = base64Data.length <= INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES;
+      pt.appendImageInline(mimeType, base64Data, 'Code interpreter output', 'code_interpreter', '', hintSkipResize);
+    } else
+      pt.addCodeExecutionResponse(id, false, `[Generated image: ${imgOutput.url}]`, 'code_interpreter', 'upstream');
+  }
+
+  // Error message if status is failed and no outputs were provided
+  if (isError && !accLogs && !accErrorLogs && !accImages.length)
     pt.addCodeExecutionResponse(id, true, 'Code execution failed', 'code_interpreter', 'upstream');
 
 }

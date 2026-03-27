@@ -500,7 +500,7 @@ export class ContentReassembler {
     // Break text accumulation, as we have a full image part in the middle
     this.currentTextFragmentIndex = null;
 
-    let { i_b64: inputBase64, mimeType: inputType, label, generator, prompt } = particle;
+    let { i_b64: inputBase64, mimeType: inputType, label, generator, prompt, hintSkipResize } = particle;
     const safeLabel = label || 'Generated Image';
 
     try {
@@ -509,7 +509,7 @@ export class ContentReassembler {
       let inputImage = await convert_Base64WithMimeType_To_Blob(inputBase64, inputType, 'ContentReassembler.onAppendInlineImage');
 
       // perform resize/type conversion if desired, and find the image dimensions
-      const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && !this.skipImageCompression && inputType === 'image/png';
+      const shallConvert = GENERATED_IMAGES_CONVERT_TO_COMPRESSED && !this.skipImageCompression && !hintSkipResize && inputType === 'image/png';
       const { blob: imageBlob, height: imageHeight, width: imageWidth } = await imageBlobTransform(inputImage, {
         convertToMimeType: shallConvert ? PLATFORM_IMAGE_MIMETYPE : undefined,
         convertToLossyQuality: GENERATED_IMAGES_COMPRESSION_QUALITY,
