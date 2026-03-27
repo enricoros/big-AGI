@@ -10,7 +10,7 @@ import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
-import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isPlaceholderPart, isTextContentFragment, isVoidFragment } from './chat.fragments';
+import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isTextContentFragment, isVoidPlaceholderFragment } from './chat.fragments';
 
 
 // configuration
@@ -64,9 +64,14 @@ export namespace V4ToHeadConverters {
         if (!validLiveFileIDs.includes(fragment.liveFileId))
           delete fragment.liveFileId;
 
-      // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
-      if (isVoidFragment(fragment) && isPlaceholderPart(fragment.part))
-        m.fragments[i] = createErrorContentFragment(`${fragment.part.pText || '(did not complete)'}`);
+      // [Show Terminated] convert a Placeholder fragment [part.pt='ph'] to an Error fragment
+      const isLastFragment = (i === m.fragments.length - 1);
+      if (isLastFragment && isVoidPlaceholderFragment(fragment)) // [PH-LIFECYCLE]
+        m.fragments[i] = createErrorContentFragment(
+          'opLog' in fragment.part ? '(message incomplete)'
+            : fragment.part.pText ? `(did not complete: ${fragment.part.pText})`
+              : '(did not complete)'
+        );
 
       // [ASSET] [MIGRATION] Convert DBlob image references to Asset references - converts legacy image_ref parts with dblob references to the new reference system
       if (isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob') {
