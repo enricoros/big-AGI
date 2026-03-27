@@ -51,6 +51,13 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (error instanceof TRPCClientError) {
     switch (error.cause?.message) {
       /**
+       * When network is disconnected while a request hasn't started (is queued by the browser).
+       * - repro: queue up > 6 connections, then turn WiFi off (no CSF).
+       */
+      case 'Failed to Fetch':
+        return { errorType: 'net-disconnected', errorMessage: 'An issue occurred: **network error**' };
+
+      /**
        * The body of the response was "Request Entity Too Large".
        * - this caused trpc, in ...stream/jsonl.ts, function createConsumerStream, to throw an error due to parsing the line as JSON
        *   - "const head = JSON.parse(line);"
