@@ -372,6 +372,7 @@ interface BlockPartPlaceholderProps {
   contentScaling: ContentScaling,
   messagePendingIncomplete: boolean,
   showAsDataStreamViz?: boolean,
+  zenMode?: boolean,
 
   // used for self deletion
   fragmentId: DMessageFragmentId,
@@ -382,7 +383,7 @@ interface BlockPartPlaceholderProps {
 /**
  * Transient placeholder: follow-ups, retries, model-op progress (with PFC nesting), or italic text.
  */
-export function BlockPartPlaceholder({ placeholderPart, contentScaling, messagePendingIncomplete, showAsDataStreamViz, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
+export function BlockPartPlaceholder({ placeholderPart, contentScaling, messagePendingIncomplete, showAsDataStreamViz, zenMode, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
 
   // state
   const [showVisualization, setShowVisualization] = React.useState(false);
@@ -415,7 +416,7 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, messageP
     return <RenderChipAixControl text={pText} aixControl={aixControl} />;
 
   // 3. Model operation render - stacked list when multiple operations, single chip otherwise
-  if (opLog?.length) return (
+  if (opLog?.length) return zenMode ? null : (
     <RenderChipListModelOps
       opLog={opLog}
       contentScaling={adjustContentScaling(contentScaling, -1)}
