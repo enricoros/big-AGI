@@ -206,7 +206,9 @@ export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean
     role: message.role,
     fragments: duplicateDMessageFragments(message.fragments, skipVoid), // [*] full message duplication (see downstream)
 
-    ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
+    // 2026-03-27: Not porting pendingIncomplete anymore - if a message is duplicated, we consider it detached
+    // IMPORTANT: a duplicate message is never 'being generated' (anymore) - we may as well finalize it
+    // ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
 
     purposeId: message.purposeId,
 
