@@ -4,8 +4,8 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 15 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
- * localai, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai, zai
+ * Supports 16 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
+ * localai, minimax, mistral, moonshot, openai, openpipe, openrouter, perplexity, togetherai, xai, zai
  */
 
 import * as z from 'zod/v4';
@@ -25,6 +25,7 @@ const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
+const DEFAULT_MINIMAX_HOST = 'https://api.minimax.io';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_MOONSHOT_HOST = 'https://api.moonshot.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
@@ -112,7 +113,7 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
-    'localai', 'mistral', 'moonshot', 'openai', 'openpipe',
+    'localai', 'minimax', 'mistral', 'moonshot', 'openai', 'openpipe',
     'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
@@ -208,6 +209,25 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           ...(localAIKey && { Authorization: `Bearer ${localAIKey}` }),
         },
         url: localAIHost + apiPath,
+      };
+
+    case 'minimax':
+      // https://platform.minimaxi.com/document/models
+      let minimaxKey = access.oaiKey || env.MINIMAX_API_KEY || '';
+      const minimaxHost = llmsFixupHost(access.oaiHost || DEFAULT_MINIMAX_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      minimaxKey = llmsRandomKeyFromMultiKey(minimaxKey);
+
+      if (!minimaxKey || !minimaxHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing MiniMax API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${minimaxKey}`,
+        },
+        url: minimaxHost + apiPath,
       };
 
     case 'mistral':
