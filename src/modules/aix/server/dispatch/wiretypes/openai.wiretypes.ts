@@ -1030,13 +1030,42 @@ export namespace OpenAIWire_Responses_Items {
   export const ContentItem_TextPart_schema = z.object({
     type: z.literal('output_text'),
     text: z.string(),
-    // NOTE: this could also be file_citation, container_file_citation, file_path
-    annotations: z.array(z.object({
-      type: z.literal('url_citation'),
-      url: z.string(),
-      title: z.string().optional(), // [xAI] xAI doesn't always send title
-      start_index: z.int().optional(),
-      end_index: z.int().optional(),
+    annotations: z.array(z.discriminatedUnion('type', [
+      // Annotation_UrlCitation_schema
+      z.object({
+        type: z.literal('url_citation'),
+        url: z.string(),
+        title: z.string().optional(), // [xAI] xAI doesn't always send title
+        start_index: z.int().optional(),
+        end_index: z.int().optional(),
+      }),
+      // Annotation_ContainerFileCitation_schema
+      z.object({
+        type: z.literal('container_file_citation'),
+        container_id: z.string(),
+        file_id: z.string(),
+        filename: z.string().optional(),
+        start_index: z.int().optional(),
+        end_index: z.int().optional(),
+      }),
+      // Annotation_FileCitation_schema
+      z.object({
+        type: z.literal('file_citation'),
+        file_id: z.string(),
+        filename: z.string().optional(),
+        start_index: z.int().optional(),
+        end_index: z.int().optional(),
+      }),
+      // Annotation_FilePath_schema
+      z.object({
+        type: z.literal('file_path'),
+        file_id: z.string(),
+        start_index: z.int().optional(),
+        end_index: z.int().optional(),
+      }),
+    ]).catch((ctx) => {
+      console.log('[DEV] AIX: OpenAI Responses: unknown annotation type, ignoring:', (ctx.value as any)?.type);
+      return { type: 'url_citation', url: '' };
     })).optional(),
     // [DO-NOT-CARE] // logprobs: ...
   });
@@ -1068,6 +1097,7 @@ export namespace OpenAIWire_Responses_Items {
     id: z.string(), // unique ID of the output item
     role: z.literal('assistant'), // [?XAI] also 'tool'?
     content: z.array(_ContentItem_Parts_schema),
+    phase: z.enum(['commentary', 'final_answer']).or(z.string()).optional(), // [OpenAI, 2026-03-03] message phase indicator for multi-phase responses
   });
 
   const OutputReasoningItem = _OutputItemBase_schema.extend({
@@ -1117,14 +1147,19 @@ export namespace OpenAIWire_Responses_Items {
       // Action type: 'search' - lists all the search results of a web search, once done
       z.object({
         type: z.literal('search'),
-        query: z.string().optional(), // query might not always be present in done event
+        // the search queries, e.g. ["Enrico Ros", "Enrico Ros person", "Enrico Ros biography", "site:linkedin.com Enrico Ros"]
+        queries: z.array(z.string()).optional(),
+        // [OpenAI 2026-03-xx] DEPRECATED query might not always be present in done event
+        query: z.string().optional(),
+        // the output websites, if any [{"type":"url","url":"https://www.enricoros.com/"}, {"type":"url","url": "https://linkedin.com/in/enricoros/"}, ...]
         sources: z.array(z.object({
           type: z.literal('url').optional(), // source type
           url: z.string(),
-          title: z.string().optional(),
-          snippet: z.string().optional(),
-          start_index: z.number().optional(),
-          end_index: z.number().optional(),
+          // [OpenAI 2026-03-xx] not present anymore
+          // title: z.string().optional(),
+          // snippet: z.string().optional(),
+          // start_index: z.number().optional(),
+          // end_index: z.number().optional(),
         })).optional(),
       }),
 
@@ -1142,10 +1177,10 @@ export namespace OpenAIWire_Responses_Items {
         url: z.string(), // URL of the page being searched
       }),
 
-      // Future-proof: any other action type with flexible structure
-      z.any(),
-
-    ]).optional(),
+    ]).optional().catch((ctx) => {
+      console.log('[DEV] AIX: OpenAI Responses: unknown web_search_call action type, ignoring:', ctx.value);
+      return undefined;
+    }),
   });
 
   const OutputImageGenerationCallItem_schema = _OutputItemBase_schema.extend({

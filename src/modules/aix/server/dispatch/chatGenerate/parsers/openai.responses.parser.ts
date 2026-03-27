@@ -25,8 +25,8 @@ function sanitizeUrlForDisplay(url: string | null): string {
   if (!url) return 'unknown';
   try {
     const urlObj = new URL(url);
-    // Return just the protocol and hostname (e.g., "https://example.com")
-    return `${urlObj.protocol}//${urlObj.hostname}`;
+    // Return just the protocol and hostname and path (e.g., "https://example.com/hello/")
+    return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`;
   } catch (error) {
     // If URL parsing fails, try to extract just the domain part manually
     const match = url.match(/^https?:\/\/([^/?#]+)/);
@@ -314,8 +314,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         break;
 
       case 'response.completed':
-        // CHANGE of { status, output, usage } expected
-        R.setResponse(eventType, event.response, ['status', 'output', 'usage']);
+        // CHANGE of { ..fields.. } expected
+        R.setResponse(eventType, event.response, ['status', 'output', 'usage' /*, 'service_tier', 'completed_at' (not yet parsed) */]);
 
         // -> Status: determine stop reason based on streamed content
         pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
@@ -554,8 +554,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.searching':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        // Update placeholder for ongoing search (can happen multiple times)
-        // pt.sendVoidPlaceholder('search-web', 'Searching...');
+        // Nothing to do here: a duplicate of 'in_progress' with the same (empty) content
         break;
 
       case 'response.web_search_call.completed':
@@ -575,7 +574,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.generating':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('gen-image', 'Generating image...');
+        // Duplicate of 'in_progress' with no new information
         break;
 
       case 'response.image_generation_call.partial_image':
@@ -603,7 +602,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.code_interpreter_call.interpreting':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        pt.sendVoidPlaceholder('code-exec', 'Running code...');
+        // Do nothing - we do have the live code tokens {event.delta} being written, but we don't care to stream those
+        // For now, just acknowledge - final code handled in output_item.done
         break;
 
       case 'response.code_interpreter_call.completed':
@@ -1024,9 +1024,13 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
       break;
 
     default:
+      const _exhaustiveCheck: never = annotation;
+      // fallthrough
+    case 'container_file_citation':
+    case 'file_citation':
+    case 'file_path':
       // Unknown annotation type - log for future implementation
-      if (annotation)
-        console.log(`[DEV] AIX: Unknown annotation type: ${annotation.type}`, { annotation });
+      console.log(`[DEV] AIX: OpenAI-Responses - Unhandled annotation:`, { annotation });
       break;
   }
 }
@@ -1036,7 +1040,7 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
  * The API echoes the output_format in the done item (e.g. 'png', 'webp', 'jpeg').
  */
 function _imageGenerationMimeType(item: { output_format?: string }): string {
-  switch ((item as any).output_format) {
+  switch (item?.output_format) {
     case 'webp':
       return 'image/webp';
     case 'jpeg':
@@ -1160,7 +1164,9 @@ function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInter
 /**
  * Processes custom tool call and emits appropriate particles.
  *
- * For now, we just show a placeholder indicating the search was performed.
+ * [xAI] For now, we just show a placeholder indicating the search was performed.
+ * [xAI] Mainly for xAI, that has some custom tools defined and we get events about them.
+ *
  * The actual search results are typically reflected in the model's text response.
  */
 function _forwardCustomToolCallItem(pt: IParticleTransmitter, customToolCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'custom_tool_call' }>): void {
