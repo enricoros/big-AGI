@@ -71,8 +71,11 @@ export interface IParticleTransmitter {
   /** Sends control particles right away, such as aix-info/aix-retry-reset/... control particles */
   sendCGControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue?: boolean): void;
 
-  /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
-  sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string): void;
+  /** Sends a void placeholder particle - temporary status with operation tracking */
+  sendOperationState(
+    mot: 'search-web' | 'gen-image' | 'code-exec', text: string,
+    opts: { opId: string, state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] }
+  ): void;
 
   /**
    * Sends vendor-specific state modifier for the last emitted part.

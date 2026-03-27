@@ -461,13 +461,21 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.transmissionQueue.push(cgCOp);
   }
 
-  /** Sends a void placeholder particle - temporary status that gets wiped when real content arrives */
-  sendVoidPlaceholder(mot: 'search-web' | 'gen-image' | 'code-exec', text: string) {
-    // Don't end message part - placeholders should not interfere with content flow
+  /** Sends an operation status particle - temporary progress with operation tracking */
+  sendOperationState(
+    mot: 'search-web' | 'gen-image' | 'code-exec', text: string,
+    opts: { opId: string, state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] },
+  ) {
+    // Don't end message part - operation status should not interfere with content flow
     this.transmissionQueue.push({
       p: 'vp',
-      text,
       mot,
+      opId: opts.opId,
+      text,
+      ...opts.state ? { state: opts.state } : undefined,
+      ...opts.parentOpId ? { parentOpId: opts.parentOpId } : undefined,
+      ...opts.iTexts?.length ? { iTexts: opts.iTexts } : undefined,
+      ...opts.oTexts?.length ? { oTexts: opts.oTexts } : undefined,
     } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>);
   }
 

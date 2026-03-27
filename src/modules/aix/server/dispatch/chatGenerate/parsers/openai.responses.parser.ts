@@ -398,7 +398,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'web_search_call':
             // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
-            _forwardWebSearchCallItem(pt, doneItem);
+            _forwardDoneWebSearchCallItem(pt, doneItem, doneItem.id);
             break;
 
           case 'image_generation_call':
@@ -424,7 +424,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'custom_tool_call':
             // -> CTC: notify about the custom tool call completion and its input
-            _forwardCustomToolCallItem(pt, doneItem);
+            _forwardDoneCustomToolCallItem(pt, doneItem, doneItem.id);
             break;
 
           default:
@@ -549,7 +549,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.sendVoidPlaceholder('search-web', 'Searching the web...');
+        pt.sendOperationState('search-web', 'Searching the web...', { opId: event.item_id });
         break;
 
       case 'response.web_search_call.searching':
@@ -559,7 +559,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.sendVoidPlaceholder('search-web', 'Search completed');
+        pt.sendOperationState('search-web', 'Search completed', { opId: event.item_id, state: 'done' });
         // -> Actual web_search_call results are handled in response.output_item.done
         break;
 
@@ -569,7 +569,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('gen-image', 'Starting image generation...');
+        pt.sendOperationState('gen-image', 'Generating image...', { opId: event.item_id });
         break;
 
       case 'response.image_generation_call.generating':
@@ -587,7 +587,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('gen-image', 'Image generation completed');
+        pt.sendOperationState('gen-image', 'Image generated', { opId: event.item_id, state: 'done' });
         // -> Final image result is handled in response.output_item.done
         break;
 
@@ -597,30 +597,30 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.code_interpreter_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        pt.sendVoidPlaceholder('code-exec', 'Starting code interpreter...');
-        break;
-
-      case 'response.code_interpreter_call.interpreting':
-        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        // Do nothing - we do have the live code tokens {event.delta} being written, but we don't care to stream those
-        // For now, just acknowledge - final code handled in output_item.done
-        break;
-
-      case 'response.code_interpreter_call.completed':
-        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        pt.sendVoidPlaceholder('code-exec', 'Code execution completed');
-        // -> Final result is handled in response.output_item.done
+        pt.sendOperationState('code-exec', 'Writing code...', { opId: event.item_id });
         break;
 
       case 'response.code_interpreter_call_code.delta':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        // Incremental code updates - could show live code being written
+        // Do nothing - we do have the live code tokens {event.delta} being written, but we don't care to stream those
         // For now, just acknowledge - final code handled in output_item.done
         break;
 
       case 'response.code_interpreter_call_code.done':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
         // Code complete - final handling in output_item.done
+        pt.sendOperationState('code-exec', `Written code: ${event.code?.length ? event.code.slice(0, 1024) : '...'}`, { opId: event.item_id });
+        break;
+
+      case 'response.code_interpreter_call.interpreting':
+        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
+        pt.sendOperationState('code-exec', 'Running code...', { opId: event.item_id });
+        break;
+
+      case 'response.code_interpreter_call.completed':
+        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
+        pt.sendOperationState('code-exec', 'Code executed', { opId: event.item_id, state: 'done' });
+        // -> Final result is handled in response.output_item.done
         break;
 
       // 4.x - Custom Tool Call Events
@@ -879,7 +879,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         case 'web_search_call':
           // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
-          _forwardWebSearchCallItem(pt, oItem);
+          _forwardDoneWebSearchCallItem(pt, oItem, oItem.id);
           pt.endMessagePart();
           break;
 
@@ -907,7 +907,8 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
           break;
 
         case 'custom_tool_call':
-          // -> CTC: notify about the custom tool call completion and its input          _forwardCustomToolCallItem(pt, oItem);
+          // -> CTC: notify about the custom tool call completion and its input
+          _forwardDoneCustomToolCallItem(pt, oItem, oItem.id);
           pt.endMessagePart();
           break;
 
@@ -1059,43 +1060,47 @@ function _imageGenerationMimeType(item: { output_format?: string }): string {
  * - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
  * - citations: High-quality links (2-3) via annotations in message content
  */
-function _forwardWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>): void {
+function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>, opId: string): void {
   const { action, status } = webSearchCall;
+
+  const doneOpts = { opId, state: 'done' } as const;
 
   // Handle failed web search (e.g., xAI returns status: 'failed' when web search fails)
   if (status === 'failed') {
-    const failedUrl = action?.type === 'open_page' ? action.url : undefined;
-    pt.sendVoidPlaceholder('search-web', failedUrl ? `Failed to access ${sanitizeUrlForDisplay(failedUrl)}` : 'Web search failed');
+    const failedUrl = action && action.type === 'open_page' ? action.url : undefined;
+    pt.sendOperationState('search-web', failedUrl ? `Search error: ${sanitizeUrlForDisplay(failedUrl)}` : 'Search error', { opId, state: 'error' });
     return;
   }
 
   switch (action?.type) {
     case 'search':
-      if (action.query && action.sources && Array.isArray(action.sources)) {
-        pt.sendVoidPlaceholder('search-web', `${action.query}: ${action.sources.length} results...`);
-      } else if (action.query)
-        pt.sendVoidPlaceholder('search-web', `${action.query}: completed`);
+      const queries: string[] = action.queries?.length ? action.queries : action.query ? [action.query] : [];
+      const sourceUrls: string[] = action.sources?.map((s: any) => s.url).filter(url => !!url) ?? [];
+      const foundCount = sourceUrls.length;
+      let doneText = 'Search completed';
+      if (foundCount) doneText += `: ${foundCount} result${foundCount > 1 ? 's' : ''}`;
+      if (queries.length) doneText += (foundCount ? ' for' : ' - for') + (queries.length > 1 ? ` ${queries.length} queries` : '') + ': ' + queries.join(', ');
+      pt.sendOperationState('search-web', doneText, { ...doneOpts, ...queries.length ? { iTexts: queries } : undefined, ...sourceUrls.length ? { oTexts: sourceUrls } : undefined });
       break;
 
     case 'open_page':
       // Action: opening/visiting a specific web page
-      const sanitizedUrl = sanitizeUrlForDisplay(action.url);
-      pt.sendVoidPlaceholder('search-web', `Opening ${action.url ? sanitizedUrl : 'page...'}`);
+      pt.sendOperationState('search-web', `Retrieved ${action.url ? sanitizeUrlForDisplay(action.url) : 'web page'}`, { ...doneOpts, ...action.url ? { iTexts: [action.url], oTexts: [action.url] } : undefined });
       break;
 
+    case 'find':
     case 'find_in_page':
       // Action: searching for a pattern within an opened page
-      const sanitizedPageUrl = sanitizeUrlForDisplay(action.url);
-      if (action.pattern && action.url)
-        pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}" on ${sanitizedPageUrl}`);
-      else if (action.pattern)
-        pt.sendVoidPlaceholder('search-web', `Searching for "${action.pattern}"`);
-      else
-        pt.sendVoidPlaceholder('search-web', 'Searching in page...');
+      pt.sendOperationState('search-web', action.pattern
+        ? (action.url ? `Searched for "${action.pattern}" on ${sanitizeUrlForDisplay(action.url)}` : `Searched page for "${action.pattern}"`)
+        : 'Searched web page', { ...doneOpts, ...action.pattern ? { iTexts: [action.pattern] } : undefined });
       break;
 
     default:
-      console.log(`[DEV] AIX: Unknown web_search_call action type: ${action?.type}`, { action });
+      const _exhaustiveCheck: never = action;
+      // fallthrough
+    case undefined:
+      console.log(`[DEV] AIX: Unknown web_search_call action:`, { action });
       break;
   }
 }
@@ -1169,15 +1174,17 @@ function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInter
  *
  * The actual search results are typically reflected in the model's text response.
  */
-function _forwardCustomToolCallItem(pt: IParticleTransmitter, customToolCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'custom_tool_call' }>): void {
+function _forwardDoneCustomToolCallItem(pt: IParticleTransmitter, customToolCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'custom_tool_call' }>, opId: string): void {
   const { name, input } = customToolCall;
 
-  // Show a placeholder for the custom tool call
+  const doneOpts = { opId, state: 'done' } as const;
+
+  // Show a placeholder for the custom tool call (these arrive in output_item.done, so they're completed)
   // xAI x_search tools include: x_user_search, x_keyword_search, x_semantic_search, x_thread_fetch, ...
   if (name.startsWith('x_'))
-    pt.sendVoidPlaceholder('search-web', `X search: ${name}${input ? ` (${input.slice(0, 50)}${input.length > 50 ? '...' : ''})` : ''}`);
+    pt.sendOperationState('search-web', `X search: ${name}${input ? ` (${input.slice(0, 50)}${input.length > 50 ? '...' : ''})` : ''}`, doneOpts);
   else
-    pt.sendVoidPlaceholder('search-web', `Custom tool: ${name}`);
+    pt.sendOperationState('code-exec' /* WEAK cast, this is not a fit */, `Custom tool: ${name}`, doneOpts);
 }
 
 

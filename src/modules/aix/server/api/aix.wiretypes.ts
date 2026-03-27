@@ -746,8 +746,14 @@ export namespace AixWire_Particles {
     | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline' | 'code_interpreter', environment: DMessageToolResponsePart['environment'] }
     | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
     | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string, hintSkipResize?: boolean } // inline image, complete
+    /**
+     * Model Operation - tracks instant model's operation(s) state, primarily for hosted tools.
+     * - state is 'ative' unless specified otherwise, 'error' is done too
+     * - shall be called 'mos' but for legacy/compatibility it's still 'vp' (backwards comp to simple void placeholder particles)
+     */
+    | { p: /*'mo'*/ 'vp', opId: string, text: string, mot: 'search-web' | 'gen-image' | 'code-exec', state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] }
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
     | { p: 'svs', vendor: string, state: Record<string, unknown> } // set vendor state - applies to the last emitted part (opaque protocol state)
-    | { p: 'vp', text: string, mot: 'search-web' | 'gen-image' | 'code-exec' | 'flow-cont' }; // void placeholder - temporary status text that gets wiped when real content arrives
+    ;
 
 }

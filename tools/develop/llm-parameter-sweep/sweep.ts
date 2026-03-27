@@ -331,8 +331,8 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   appendUrlCitation(_title: string, _url: string, _citationNumber?: number, _startIndex?: number, _endIndex?: number, _textSnippet?: string, _pubTs?: number): void { /* no-op */ }
 
   // Special
-  sendControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
-  sendVoidPlaceholder(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string): void { /* no-op */ }
+  sendCGControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
+  sendOperationState(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string, _opts?: any): void { /* no-op */ }
   sendSetVendorState(_vendor: string, _state: unknown): void { /* no-op */ }
 
   // Non-parts data

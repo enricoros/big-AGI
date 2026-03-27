@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderModelOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -94,6 +94,23 @@ export class ContentReassembler {
     // Classify termination
     this.accumulator.legacyGenTokenStopReason = this._deriveTokenStopReason();
 
+
+    // Fragment finalization heuristics:
+
+    // - remove placeholders for clean exists, leave them for issues or client-aborts
+    if (this._terminationReason === 'done-dialect')
+      while (this.removeLastVoidPlaceholder()) {} // [PH-LIFECYCLE]
+
+    // - mark as completed or errorer
+    for (const fragment of this.accumulator.fragments)
+      if (isVoidPlaceholderFragment(fragment) && fragment.part.opLog?.length)
+        for (const entry of fragment.part.opLog) {
+          if (entry.text?.endsWith('...')) entry.text = entry.text.slice(0, -3);
+          if (entry.state === 'active') entry.state = 'error';
+          entry.oTexts = [...(entry.oTexts || []), `Terminated with reason: ${this._terminationReason ?? 'unknown'}`];
+        }
+
+    
     // Metrics
     const hadIssues = !!this.accumulator.legacyGenTokenStopReason;
     metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hadIssues);
@@ -217,20 +234,19 @@ export class ContentReassembler {
   /// Particle Reassembly ///
 
   async #reassembleParticle(op: AixWire_Particles.ChatGenerateOp): Promise<void> {
-
-    // remove trailing placeholder if any other content except heartbeat or void-placeholder
-    if (!('p' in op) || !(op.p === '❤' || op.p === 'vp'))
-      this.removeTrailingPlaceholder();
-
     switch (true) {
 
       // TextParticleOp
       case 't' in op:
+        this.removeLastVoidPlaceholder();
         this.onAppendText(op);
         break;
 
       // PartParticleOp
       case 'p' in op:
+        // heuristics to remove the placeholder if real user-destined content arrives
+        if (op.p !== '❤' && op.p !== 'vp' && op.p !== 'urlc' && op.p !== 'svs')
+          this.removeLastVoidPlaceholder();
         switch (op.p) {
           case '❤':
             // ignore the heartbeats
@@ -269,7 +285,7 @@ export class ContentReassembler {
             this.onAddUrlCitation(op);
             break;
           case 'vp':
-            this.onAppendVoidPlaceholder(op);
+            this.onSetOperationState(op);
             break;
           default:
             // noinspection JSUnusedLocalSymbols
@@ -595,30 +611,73 @@ export class ContentReassembler {
     // This ensures we don't interrupt the text flow
   }
 
-  private onAppendVoidPlaceholder(vp: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
-    const { text, mot } = vp;
+  private onSetOperationState(os: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
 
-    // update the model op
-    const modelOp: DVoidPlaceholderModelOp = { mot, cts: Date.now() };
+    // This operation does not require removal of exisitng VoidPlaceholder fragments, as it recycles the last one if any
 
-    const fragments = this.accumulator.fragments;
+    // destructure
+    const { text, mot, opId, state, parentOpId, iTexts, oTexts } = os;
 
-    // Reuse existing trailing placeholder (rapid vp updates reuse rather than accumulate)
-    if (fragments.length > 0) {
-      const lastFragment = fragments[fragments.length - 1];
-      if (isVoidPlaceholderFragment(lastFragment)) {
-        lastFragment.part.pText = text;
-        lastFragment.part.modelOp = modelOp;
-        return;
-      }
+    const existingPh = this.accumulator.fragments.findLast(isVoidPlaceholderFragment);
+    if (!existingPh) {
+
+      // New placeholder with initial opLog entry (root level = 0)
+      this.accumulator.fragments.push(createPlaceholderVoidFragment(text, undefined, undefined, [{
+        opId,
+        text,
+        mot,
+        state: state ?? 'active',
+        ...iTexts ? { iTexts } : undefined,
+        ...oTexts ? { oTexts } : undefined,
+        ...parentOpId ? { parentOpId } : undefined,
+        level: 0,
+        cts: Date.now(),
+      }]));
+
+      // Placeholders don't affect text fragment indexing (push to end doesn't shift existing indices)
+      // NOTE: we could have placeholders breaking text accumulation into new fragments with `this.currentTextFragmentIndex = null;`, however
+      // since placeholders are used a lot with hosted tool calls, this could lead to way too many fragments being created
+      return;
     }
 
-    // Append new placeholder at end - temporal ordering preserved
-    fragments.push(createPlaceholderVoidFragment(text, undefined, modelOp));
+    // Accumulate into existing placeholder
+    const part = existingPh.part;
 
-    // Placeholders don't affect text fragment indexing (push to end doesn't shift existing indices)
-    // NOTE: we could have placeholders breaking text accumulation into new fragments with `this.currentTextFragmentIndex = null;`, however
-    // since placeholders are used a lot with hosted tool calls, this could lead to way too many fragments being created
+    // Takeover: operations supersede other placeholder types
+    delete part.pType;
+    delete part.aixControl;
+
+    // mutable cast: accumulator fragments are not from an immutable store
+    const opLog = (part.opLog ?? (part.opLog = [])) as DVoidPlaceholderMOp[];
+
+    // existing opId in opLog
+    const entry = opLog.find(e => e.opId === opId);
+    if (entry) {
+      // update existing operation in place
+      if (text) entry.text = text;
+      if (state) entry.state = state;
+      if (iTexts) entry.iTexts = iTexts;
+      if (oTexts) entry.oTexts = oTexts;
+    } else {
+      // append new operation - infer level from parent's level (or 0)
+      const level = !parentOpId ? 0 : 1 + (opLog.find(e => e.opId === parentOpId)?.level ?? 0);
+      opLog.push({
+        opId,
+        mot,
+        text,
+        state: state ?? 'active',
+        ...iTexts ? { iTexts } : undefined,
+        ...oTexts ? { oTexts } : undefined,
+        ...parentOpId ? { parentOpId } : undefined,
+        level,
+        cts: Date.now(),
+      });
+    }
+
+    // Top-level pText reflects latest active (or last if all done)
+    const latest = opLog.findLast(e => e.state === 'active') ?? opLog[opLog.length - 1];
+    part.pText = latest.text;
+
   }
 
   private onSetVendorState(vs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void {
@@ -637,11 +696,14 @@ export class ContentReassembler {
     };
   }
 
-  // helper to remove trailing placeholder when real content arrives
-  private removeTrailingPlaceholder(): void {
+  private removeLastVoidPlaceholder(): boolean {
     const fragments = this.accumulator.fragments;
-    if (fragments.length > 0 && isVoidPlaceholderFragment(fragments[fragments.length - 1]))
-      fragments.pop(); // Remove trailing placeholder
+    const idx = fragments.findLastIndex(isVoidPlaceholderFragment);
+    if (idx < 0) return false;
+    fragments.splice(idx, 1);
+    if (this.currentTextFragmentIndex !== null && this.currentTextFragmentIndex > idx)
+      this.currentTextFragmentIndex--;
+    return true;
   }
 
 
@@ -768,8 +830,9 @@ export class ContentReassembler {
     }
 
     // -> ph: show retry status
-    this.accumulator.fragments.push(createPlaceholderVoidFragment(retryMessage, undefined, undefined, {
     const retryMessage = `Retrying [${attempt}/${maxAttempts}] in ${Math.round(delayMs / 100) / 10}s - ${reason}`;
+    this.removeLastVoidPlaceholder();
+    this.accumulator.fragments.push(createPlaceholderVoidFragment(retryMessage, undefined, {
       ctl: 'ec-retry',
       rScope: rScope,
       rAttempt: attempt,

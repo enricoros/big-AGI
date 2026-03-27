@@ -168,7 +168,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (!responseMessage)
           throw new Error('Unexpected content_block_start');
 
-        const { index: requestedIndex, content_block } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
+        const { index: requestedIndex, content_block: contentBlock } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
 
         // [Anthropic, 2026-01-12] Block Start Index issue
         let index = requestedIndex;
@@ -180,247 +180,101 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             console.log(`[Anthropic] ♨️ content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
           } else
             throw new Error(`Unexpected content block start location (${requestedIndex})`);
-        responseMessage.content[index] = content_block;
+        responseMessage.content[index] = contentBlock;
 
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
-          const debugInfo = content_block.type === 'tool_use' ? `tool=${content_block.name}`
-            : content_block.type === 'server_tool_use' ? `server_tool=${content_block.name}`
-              : content_block.type === 'text' ? `text_len=${content_block.text.length}`
-                : content_block.type === 'thinking' ? `thinking_len=${content_block.thinking.length}`
-                  : content_block.type === 'container_upload' ? `file_id=${content_block.file_id}`
-                    : content_block.type;
-          console.log(`ant content_block_start[${index}]: type=${content_block.type}, ${debugInfo}`);
+          const debugInfo = contentBlock.type === 'tool_use' ? `tool=${contentBlock.name}`
+            : contentBlock.type === 'server_tool_use' ? `server_tool=${contentBlock.name}`
+              : contentBlock.type === 'text' ? `text_len=${contentBlock.text.length}`
+                : contentBlock.type === 'thinking' ? `thinking_len=${contentBlock.thinking.length}`
+                  : contentBlock.type === 'container_upload' ? `file_id=${contentBlock.file_id}`
+                    : contentBlock.type;
+          console.log(`ant content_block_start[${index}]: type=${contentBlock.type}, ${debugInfo}`);
         }
 
-        switch (content_block.type) { // .content_block_start.type
+        switch (contentBlock.type) { // .content_block_start.type
           case 'text':
             // Hotfix Opus-4.6: elide first text block if it's '\n\n'
-            if (elisionCheck(content_block.text)) break;
+            if (elisionCheck(contentBlock.text)) break;
             // add separator when text follows server tool execution
-            pt.appendText(!needsTextSeparator ? content_block.text : '\n\n' + content_block.text);
+            pt.appendText(!needsTextSeparator ? contentBlock.text : '\n\n' + contentBlock.text);
             needsTextSeparator = false;
             // Note: In streaming mode, citations arrive via citations_delta events, not on content_block_start
             break;
 
           case 'thinking':
-            pt.appendReasoningText(content_block.thinking);
-            if (content_block.signature)
-              pt.setReasoningSignature(content_block.signature);
+            pt.appendReasoningText(contentBlock.thinking);
+            if (contentBlock.signature)
+              pt.setReasoningSignature(contentBlock.signature);
             break;
 
           case 'redacted_thinking':
-            pt.addReasoningRedactedData(content_block.data);
+            pt.addReasoningRedactedData(contentBlock.data);
             break;
 
           case 'tool_use':
             // [Anthropic] Note: .input={} is parsed as an object - zap to '' for later string concatenation via input_json_delta
-            if (content_block && content_block.input && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-              content_block.input = '';
+            if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object' && Object.keys(contentBlock.input).length === 0)
+              contentBlock.input = '';
 
             // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
-            const isProgrammaticCall = content_block.caller?.type === 'code_execution_20250825' || content_block.caller?.type === 'code_execution_20260120';
+            const isProgrammaticCall = contentBlock.caller?.type === 'code_execution_20250825' || contentBlock.caller?.type === 'code_execution_20260120';
             if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
-              console.log(`[Anthropic] Programmatic tool call: ${content_block.name} called from ${content_block.caller!.type} (tool_id: ${content_block.caller!.type !== 'direct' ? content_block.caller!.tool_id : 'n/a'})`);
+              console.log(`[Anthropic] Programmatic tool call: ${contentBlock.name} called from ${contentBlock.caller!.type} (tool_id: ${contentBlock.caller!.type !== 'direct' ? contentBlock.caller!.tool_id : 'n/a'})`);
 
-            pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input || null);
+            pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'incr_str', contentBlock.input || null);
             break;
 
           case 'server_tool_use':
-            // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
-            // NOTE: We don't create tool invocations for server tools - just show placeholders
-            if (content_block && content_block.input && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-              content_block.input = '';
+            // Streaming: zap empty input object since JSON will be streamed via input_json_delta
+            if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object' && Object.keys(contentBlock.input).length === 0)
+              contentBlock.input = '';
 
-            // Show placeholder for known server tools
-            switch (content_block.name) { // .server_tool_use.name
-              case 'web_search':
-                pt.sendVoidPlaceholder('search-web', 'Searching the web...');
-                break;
-              case 'web_fetch':
-                pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
-                break;
-              case 'code_execution':
-                pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
-                break;
-              case 'bash_code_execution':
-                pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
-                break;
-              case 'text_editor_code_execution':
-                pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
-                break;
-              // [Anthropic, 2025-11-24] Tool Search Tool
-              case 'tool_search_tool_regex':
-              case 'tool_search_tool_bm25':
-                pt.sendVoidPlaceholder('code-exec', '🔍 Searching available tools...');
-                break;
-              default:
-                // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
-                console.warn(`[Anthropic Parser] Unknown server tool: ${content_block.name}`);
-                pt.sendVoidPlaceholder('code-exec', `⚡ Using ${content_block.name}...`);
-                break;
-            }
-
-            // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
-            // pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
+            _handleCBS_ServerToolUse(pt, contentBlock);
             break;
 
           case 'web_search_tool_result':
-            // Web search results arrive fully formed (no deltas)
-            // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
-            if (Array.isArray(content_block.content)) {
-              // Success - array of search results
-              // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
-              //       Only high-quality citations that appear in text annotations should be shown
-              pt.sendVoidPlaceholder('search-web', `Search completed: ${content_block.content.length} results`);
-            } else if (content_block.content.type === 'web_search_tool_result_error') {
-              // Error during web search
-              pt.sendVoidPlaceholder('search-web', `Search error: ${content_block.content.error_code}`);
-            }
+            _handleCBS_WebSearchToolResult(pt, contentBlock);
             break;
 
           case 'web_fetch_tool_result':
-            // Web fetch results arrive fully formed (no deltas)
-            // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
-            if (content_block.content.type === 'web_fetch_result') {
-              // Success - fetched a URL
-              pt.sendVoidPlaceholder('search-web', `Retrieved ${content_block.content.url}`);
-
-              // Add citation for the fetched content
-              const fetchedContent = content_block.content.content;
-              pt.appendUrlCitation(
-                fetchedContent?.title || 'Web Content',
-                content_block.content.url,
-                undefined, // citationNumber
-                undefined, // startIndex
-                undefined, // endIndex
-                undefined, // textSnippet
-                content_block.content.retrieved_at ? Date.parse(content_block.content.retrieved_at) : undefined,
-              );
-            } else if (content_block.content.type === 'web_fetch_tool_result_error') {
-              // Error during web fetch
-              pt.sendVoidPlaceholder('search-web', `Fetch error: ${content_block.content.error_code}`);
-            }
+            _handleCBS_WebFetchToolResult(pt, contentBlock);
             break;
 
           case 'code_execution_tool_result':
-            // Code execution result from Skills container - extract file IDs from output
-            if (content_block.content.type === 'code_execution_result') {
-              // Success - check for generated files in content array
-              const fileIds: string[] = [];
-              if (Array.isArray(content_block.content.content))
-                for (const outputBlock of content_block.content.content)
-                  if (outputBlock.type === 'code_execution_output' && outputBlock.file_id)
-                    fileIds.push(outputBlock.file_id);
-
-              if (fileIds.length > 0) {
-                let resultText = '\n\n⚡ Code executed by Skill\n';
-                for (const fileId of fileIds)
-                  resultText += `\n📎 File: \`${fileId}\``;
-                resultText += '\n';
-                pt.appendText(resultText);
-              } else
-                pt.sendVoidPlaceholder('code-exec', 'Code executed by Skill');
-
-              // Log for debugging
-              console.log('[Anthropic] Code execution result:', {
-                return_code: content_block.content.return_code,
-                file_count: fileIds.length,
-                file_ids: fileIds,
-              });
-            } else if (content_block.content.type === 'encrypted_code_execution_result') {
-              // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
-              pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
-              console.log('[Anthropic] Encrypted code execution result:', { return_code: content_block.content.return_code });
-            } else if (content_block.content.type === 'code_execution_tool_result_error') {
-              // Error during code execution - log and show as transient placeholder (often a server-side artifact)
-              console.log('[Anthropic] Code execution error:', content_block.content.error_code);
-              pt.sendVoidPlaceholder('code-exec', `Skill error: ${content_block.content.error_code}`);
-            }
+            _handleCBS_CodeExecutionToolResult(pt, contentBlock);
             break;
 
           case 'bash_code_execution_tool_result':
-            // Bash code execution result from Skills container - extract file IDs from output
-            if (content_block.content.type === 'bash_code_execution_result') {
-              // Success - check for generated files in content array
-              const fileIds: string[] = [];
-              if (Array.isArray(content_block.content.content))
-                for (const outputBlock of content_block.content.content)
-                  if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id)
-                    fileIds.push(outputBlock.file_id);
-
-              if (fileIds.length > 0) {
-                let resultText = '\n\n⚡ Bash executed by Skill\n';
-                for (const fileId of fileIds)
-                  resultText += `\n📎 File: \`${fileId}\``;
-                resultText += '\n';
-                pt.appendText(resultText);
-              } else
-                pt.sendVoidPlaceholder('code-exec', 'Bash executed by Skill');
-
-              // Log for debugging
-              if (fileIds.length)
-                console.log('[Anthropic] Bash code execution result:', {
-                  return_code: content_block.content.return_code,
-                  file_count: fileIds.length,
-                  file_ids: fileIds,
-                });
-            } else if (content_block.content.type === 'bash_code_execution_tool_result_error') {
-              // Error during bash execution - log and show as transient placeholder (often a server-side artifact)
-              console.log('[Anthropic] Bash execution error:', content_block.content.error_code);
-              pt.sendVoidPlaceholder('code-exec', `Bash error: ${content_block.content.error_code}`);
-            }
+            _handleCBS_BashCodeExecutionToolResult(pt, contentBlock);
             break;
 
           case 'text_editor_code_execution_tool_result':
-            // Text editor code execution result from Skills container
-            pt.sendVoidPlaceholder('code-exec', '⚡ Text editor code executed by Skill');
-
-            // Log for debugging
-            console.log('[Anthropic] Text editor code execution result from Skills');
+            _handleCBS_TextEditorCodeExecutionToolResult(pt, contentBlock);
             break;
 
           case 'mcp_tool_use':
-            throw new Error(`Server tool type 'mcp_tool_use' is not yet implemented. Please report this to request support.`);
+            throw new Error(`Server tool 'mcp_tool_use' is not yet implemented.`);
 
           case 'mcp_tool_result':
-            throw new Error(`Server tool type 'mcp_tool_result' is not yet implemented. Please report this to request support.`);
+            throw new Error(`Server tool 'mcp_tool_result' is not yet implemented.`);
 
           case 'container_upload':
-            // Container upload - this is when a Skill has generated a file
-            // The file_id can be used with the Files API to download the file
-            pt.sendVoidPlaceholder('code-exec', `📎 File generated (ID: ${content_block.file_id})`);
-
-            // Log for debugging
-            console.log('[Anthropic] Container upload:', {
-              file_id: content_block.file_id,
-              container: responseMessage.container?.id,
-            });
-
-            // TODO: Future enhancement - could trigger automatic file download here
-            // using the Files API with content_block.file_id
+            _handleCBS_ContainerUpload(pt, contentBlock, responseMessage.container?.id);
             break;
 
-          case 'tool_search_tool_result': // [Anthropic, 2025-11-24] Tool Search Tool
-            if (content_block.content?.type === 'tool_search_tool_search_result') {
-              // success
-              const toolNames = content_block.content.tool_references.map(ref => ref.tool_name);
-              pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
-              // Log for future debugging
-              console.log('[Anthropic] Tool search discovered:', { tools: toolNames });
-            } else if (content_block.content?.type === 'tool_search_tool_result_error') {
-              // error during tool search
-              pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${content_block.content.error_code}`);
-            }
+          case 'tool_search_tool_result':
+            _handleCBS_ToolSearchToolResult(pt, contentBlock);
             break;
 
           default:
-            const _exhaustiveCheck: never = content_block;
-            aixResilientUnknownValue('Anthropic', 'contentBlockType', (content_block as any)?.type);
+            const _exhaustiveCheck: never = contentBlock;
+            aixResilientUnknownValue('Anthropic', 'contentBlockType', (contentBlock as any)?.type);
             break;
         }
 
         // set separator flag when server tools complete (text after tools needs visual separation)
-        if (content_block.type.includes('tool_use') || content_block.type.includes('tool_result'))
+        if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
           needsTextSeparator = hotFixAntInjectToolsTextSpacer;
 
         break;
@@ -462,9 +316,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               contentBlock.input += delta.partial_json;
               pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
             } else if (contentBlock.type === 'server_tool_use') {
-              // Server tools also receive input_json_delta for their inputs
+              // Server tools stream their input (e.g., for code_execution, this is the Python code being executed).
+              // For PFC flows (Opus), this contains web_search()/web_fetch() calls that reveal the actual search queries.
               contentBlock.input += delta.partial_json;
-              // TODO: Stream server tool args when we add executedBy:'server' support to DMessage tool_response parts
+              // [ATOL] Will stream code/args to the Tool Execution Graph for live display.
               // pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
             } else
               throw new Error('Unexpected input_json_delta');
@@ -522,10 +377,35 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (!responseMessage) throw new Error('Unexpected content_block_stop');
 
         const { index } = AnthropicWire_API_Message_Create.event_ContentBlockStop_schema.parse(JSON.parse(eventData));
-        if (responseMessage.content[index] === undefined)
+        const stoppedBlock = responseMessage.content[index];
+        if (stoppedBlock === undefined)
           throw new Error(`Unexpected content block stop location (${index})`);
 
-        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant content_block_stop[${index}]: type=${responseMessage.content[index].type}`);
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant content_block_stop[${index}]: type=${stoppedBlock.type}`);
+
+        // Special cases - we usually do not handle block ends
+        switch (stoppedBlock.type) {
+          // For server_tool_use: decode accumulated input (JSON) from the server tool -> code execution code
+          case 'server_tool_use':
+            switch (stoppedBlock.name) {
+              case 'code_execution':
+              case 'bash_code_execution':
+              case 'text_editor_code_execution':
+                // for code execution, we can try to parse the accumulated input as code
+                // NOTE that the execution is not completed, that's going to come in the '*code_execution_tool_result' blocks
+                let iTexts: string[] | undefined = undefined;
+                if (stoppedBlock.input)
+                  try {
+                    const input = typeof stoppedBlock.input === 'string' ? JSON.parse(stoppedBlock.input) : stoppedBlock.input;
+                    if (typeof input === 'object' && typeof input.code === 'string')
+                      iTexts = [_ellipsizeContext(input.code)];
+                  } catch { /* ignore parse errors */ }
+                const execText = stoppedBlock.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
+                pt.sendOperationState('code-exec', execText, { opId: stoppedBlock.id, ...iTexts && { iTexts } });
+                break;
+            }
+            break;
+        }
 
         // Signal that the tool is ready? (if it is...)
         pt.endMessagePart();
@@ -709,181 +589,41 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           break;
 
         case 'server_tool_use':
-          // Server tool use in non-streaming mode
-          // NOTE: We don't create tool invocations for server tools - just show placeholders
-          switch (contentBlock.name) { // .server_tool_use.name
-            case 'web_search':
-              pt.sendVoidPlaceholder('search-web', 'Searching the web...');
-              break;
-            case 'web_fetch':
-              pt.sendVoidPlaceholder('search-web', 'Fetching web content...');
-              break;
-            case 'code_execution':
-              pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
-              break;
-            case 'bash_code_execution':
-              pt.sendVoidPlaceholder('code-exec', '⚡ Running bash script...');
-              break;
-            case 'text_editor_code_execution':
-              pt.sendVoidPlaceholder('code-exec', '⚡ Executing code...');
-              break;
-            // [Anthropic, 2025-11-24] Tool Search Tool
-            case 'tool_search_tool_regex':
-            case 'tool_search_tool_bm25':
-              pt.sendVoidPlaceholder('code-exec', '🔍 Searching available tools...');
-              break;
-            default:
-              console.warn(`[Anthropic Parser] Unknown server tool (non-streaming): ${contentBlock.name}`);
-              pt.sendVoidPlaceholder('code-exec', `⚡ Using ${contentBlock.name}...`);
-              break;
-          }
-          // TODO: Store server tool invocation when we add executedBy:'server' support to DMessage tool_response parts
-          // pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
-          // pt.endMessagePart();
+          _handleCBS_ServerToolUse(pt, contentBlock);
           break;
 
         case 'web_search_tool_result':
-          // Web search results in non-streaming mode
-          // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
-          if (Array.isArray(contentBlock.content)) {
-            // Success - array of search results
-            // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
-            //       Only high-quality citations that appear in text annotations should be shown
-            pt.sendVoidPlaceholder('search-web', `Search completed: ${contentBlock.content.length} results`);
-          } else if (contentBlock.content.type === 'web_search_tool_result_error') {
-            // Error during web search
-            pt.sendVoidPlaceholder('search-web', `Search error: ${contentBlock.content.error_code}`);
-          }
-          // pt.endMessagePart(); // Not needed for placeholders
+          _handleCBS_WebSearchToolResult(pt, contentBlock);
           break;
 
         case 'web_fetch_tool_result':
-          // Web fetch results in non-streaming mode
-          // TODO: Store server tool result when we add executedBy:'server' support to DMessage tool_response parts
-          if (contentBlock.content.type === 'web_fetch_result') {
-            // Success - fetched a URL
-            pt.sendVoidPlaceholder('search-web', `Retrieved ${contentBlock.content.url}`);
-
-            // Add citation for the fetched content
-            const fetchedContent = contentBlock.content.content;
-            pt.appendUrlCitation(
-              fetchedContent?.title || 'Web Content',
-              contentBlock.content.url,
-              undefined, // citationNumber
-              undefined, // startIndex
-              undefined, // endIndex
-              undefined, // textSnippet
-              contentBlock.content.retrieved_at ? Date.parse(contentBlock.content.retrieved_at) : undefined,
-            );
-          } else if (contentBlock.content.type === 'web_fetch_tool_result_error') {
-            // Error during web fetch
-            pt.sendVoidPlaceholder('search-web', `Fetch error: ${contentBlock.content.error_code}`);
-          }
-          // pt.endMessagePart(); // Not needed for placeholders
+          _handleCBS_WebFetchToolResult(pt, contentBlock);
           break;
 
         case 'code_execution_tool_result':
-          // Code execution result from Skills container (non-streaming)
-          if (contentBlock.content.type === 'code_execution_result') {
-            // Success - check for generated files in content array
-            const fileIds: string[] = [];
-            if (Array.isArray(contentBlock.content.content))
-              for (const outputBlock of contentBlock.content.content)
-                if (outputBlock.type === 'code_execution_output' && outputBlock.file_id)
-                  fileIds.push(outputBlock.file_id);
-
-            if (fileIds.length > 0) {
-              let resultText = '\n\n⚡ Code executed by Skill\n';
-              for (const fileId of fileIds)
-                resultText += `\n📎 File: \`${fileId}\``;
-              resultText += '\n';
-              pt.appendText(resultText);
-            } else
-              pt.sendVoidPlaceholder('code-exec', 'Code executed by Skill');
-
-            // Log for debugging
-            if (fileIds.length)
-              console.log('[Anthropic] Code execution result (non-streaming):', {
-                return_code: contentBlock.content.return_code,
-                file_count: fileIds.length,
-                file_ids: fileIds,
-              });
-          } else if (contentBlock.content.type === 'encrypted_code_execution_result') {
-            // Encrypted variant (PFC + web_search) - stdout is encrypted, show as transient placeholder
-            pt.sendVoidPlaceholder('code-exec', 'Code executed (encrypted output)');
-            console.log('[Anthropic] Encrypted code execution result (non-streaming):', { return_code: contentBlock.content.return_code });
-          } else if (contentBlock.content.type === 'code_execution_tool_result_error') {
-            // Error during code execution - log and show as transient placeholder (often a server-side artifact)
-            console.log('[Anthropic] Code execution error (non-streaming):', contentBlock.content.error_code);
-            pt.sendVoidPlaceholder('code-exec', `Skill error: ${contentBlock.content.error_code}`);
-          }
+          _handleCBS_CodeExecutionToolResult(pt, contentBlock);
           break;
 
         case 'bash_code_execution_tool_result':
-          // Bash code execution result from Skills container (non-streaming)
-          if (contentBlock.content.type === 'bash_code_execution_result') {
-            // Success - check for generated files in content array
-            const fileIds: string[] = [];
-            if (Array.isArray(contentBlock.content.content))
-              for (const outputBlock of contentBlock.content.content)
-                if (outputBlock.type === 'bash_code_execution_output' && outputBlock.file_id)
-                  fileIds.push(outputBlock.file_id);
-
-            if (fileIds.length > 0) {
-              let resultText = '\n\n⚡ Bash executed by Skill\n';
-              for (const fileId of fileIds)
-                resultText += `\n📎 File: \`${fileId}\``;
-              resultText += '\n';
-              pt.appendText(resultText);
-            } else
-              pt.sendVoidPlaceholder('code-exec', 'Bash executed by Skill');
-
-            // Log for debugging
-            console.log('[Anthropic] Bash code execution result (non-streaming):', {
-              return_code: contentBlock.content.return_code,
-              file_count: fileIds.length,
-              file_ids: fileIds,
-            });
-          } else if (contentBlock.content.type === 'bash_code_execution_tool_result_error') {
-            // Error during bash execution - log and show as transient placeholder (often a server-side artifact)
-            console.log('[Anthropic] Bash execution error (non-streaming):', contentBlock.content.error_code);
-            pt.sendVoidPlaceholder('code-exec', `Bash error: ${contentBlock.content.error_code}`);
-          }
+          _handleCBS_BashCodeExecutionToolResult(pt, contentBlock);
           break;
 
         case 'text_editor_code_execution_tool_result':
-          // Text editor code execution result from Skills container (non-streaming)
-          pt.sendVoidPlaceholder('code-exec', '⚡ Text editor code executed by Skill');
-          console.log('[Anthropic] Text editor code execution result from Skills (non-streaming)');
+          _handleCBS_TextEditorCodeExecutionToolResult(pt, contentBlock);
           break;
 
         case 'mcp_tool_use':
-          throw new Error(`Server tool 'mcp_tool_use' is not yet implemented. Please report this issue to request support.`);
+          throw new Error(`Server tool 'mcp_tool_use' is not yet implemented.`);
 
         case 'mcp_tool_result':
-          throw new Error(`Server tool 'mcp_tool_result' is not yet implemented. Please report this issue to request support.`);
+          throw new Error(`Server tool 'mcp_tool_result' is not yet implemented.`);
 
         case 'container_upload':
-          // Container upload - this is when a Skill has generated a file
-          pt.sendVoidPlaceholder('code-exec', `📎 File generated (ID: ${contentBlock.file_id})`);
-
-          // Log for debugging
-          console.log('[Anthropic] Container upload (non-streaming):', {
-            file_id: contentBlock.file_id,
-          });
+          _handleCBS_ContainerUpload(pt, contentBlock, container?.id);
           break;
 
-        case 'tool_search_tool_result': // [Anthropic, 2025-11-24] Tool Search Tool
-          if (contentBlock.content?.type === 'tool_search_tool_search_result') {
-            // success
-            const toolNames = contentBlock.content.tool_references.map(ref => ref.tool_name);
-            pt.sendVoidPlaceholder('code-exec', `🔍 Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`);
-            // Log for future debugging
-            console.log('[Anthropic] Tool search discovered (non-streaming):', { tools: toolNames });
-          } else if (contentBlock.content?.type === 'tool_search_tool_result_error') {
-            // error during tool search
-            pt.sendVoidPlaceholder('code-exec', `🔍 Tool search error: ${contentBlock.content.error_code}`);
-          }
+        case 'tool_search_tool_result':
+          _handleCBS_ToolSearchToolResult(pt, contentBlock);
           break;
 
         default:
@@ -930,6 +670,205 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         _createAnthropicPauseTurnContinuation(content, container?.id),
       );
   };
+}
+
+
+// --- Shared server tool result handlers (used by both S and NS parsers) ---
+
+type _ContentBlock = AnthropicWire_API_Message_Create.Response['content'][number];
+
+/** Ellipsize long strings for iTexts/oTexts display (keeps start + end, shows byte count in the middle) */
+function _ellipsizeContext(text: string, maxBytes = 512): string {
+  if (text.length <= maxBytes) return text;
+  const ellipsis = `...[${(text.length - maxBytes).toLocaleString()} chars]...`;
+  const half = Math.floor((maxBytes - ellipsis.length) / 2);
+  return text.slice(0, half) + ellipsis + text.slice(-half);
+}
+
+function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'server_tool_use' }>): void {
+  // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
+  // NOTE: We don't create tool invocations for server tools - just show operation state
+
+  // Extract input fields when available (non-streaming has the full object; streaming starts empty and accumulates via input_json_delta)
+  const inputObj = typeof block.input === 'object' ? block.input as Record<string, any> : undefined;
+  const srvOp: Parameters<typeof pt.sendOperationState>[2] = {
+    opId: block.id,
+    ...((block.caller?.type && block.caller.type !== 'direct') && { parentOpId: block.caller.tool_id }),
+  };
+
+  switch (block.name) { // .server_tool_use.name
+    case 'web_search':
+      // start input: { query: string } - dynamically extracted
+      const searchQuery = typeof inputObj?.query === 'string' ? inputObj.query : undefined;
+      pt.sendOperationState('search-web', 'Searching the web...', { ...srvOp, ...(searchQuery ? { iTexts: [`Search query: "${searchQuery}"`] } : undefined) });
+      break;
+    case 'web_fetch':
+      // start input: { url: string } - dynamically extracted
+      const fetchUrl = typeof inputObj?.url === 'string' ? inputObj.url : undefined;
+      pt.sendOperationState('search-web', `Fetching ${fetchUrl || 'web content'}...`, { ...srvOp, ...(fetchUrl ? { iTexts: [`URL: ${fetchUrl}`] } : undefined) });
+      break;
+    case 'code_execution':
+    case 'bash_code_execution':
+    case 'text_editor_code_execution':
+      // end input: { code: string } - dynamically extracted
+      const code = typeof inputObj?.code === 'string' ? inputObj.code : undefined;
+      const execText = !code ? 'Writing code...' : block.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
+      pt.sendOperationState('code-exec', execText, { ...srvOp, ...(code ? { iTexts: [_ellipsizeContext(code)] } : undefined) });
+      break;
+    // [Anthropic, 2025-11-24] Tool Search Tool
+    case 'tool_search_tool_regex':
+    case 'tool_search_tool_bm25':
+      // start/end input: unmapped yet
+      pt.sendOperationState('code-exec', 'Searching available tools...', srvOp);
+      break;
+    default:
+      // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
+      console.warn(`[Anthropic Parser] Unknown server tool ${block.name}`, { input: block.input });
+      pt.sendOperationState('code-exec', `Using ${block.name}...`, srvOp);
+      break;
+  }
+
+  // [ATOL] Server tool invocations will be captured by the Tool Execution Graph.
+  // Key data available here: block.id (srvtoolu_*), block.name, block.input (streamed via input_json_delta),
+  // block.caller?.type ('direct' | 'code_execution_*') - indicates nesting (e.g., code_execution orchestrating web_search via PFC).
+  // For PFC (Programmatic Function Calling): Opus uses code_execution to write Python that calls web_search()/web_fetch() - the streamed
+  // input contains the actual code being executed, and caller.type on nested tool_use blocks shows the call chain.
+  // Nesting -> opLog level (inferred by the reassembler from the presence of a parent op)
+}
+
+function _handleCBS_WebSearchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'web_search_tool_result' }>): void {
+  // Web search results arrive fully formed (no deltas)
+  // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
+  //       Only high-quality citations that appear in text annotations should be shown
+  const opId = block.tool_use_id;
+  if (Array.isArray(block.content)) {
+    // Success - array of search results
+    const oTexts = block.content.map((r: any) => r.url).filter(Boolean);
+    pt.sendOperationState('search-web', `Search completed: ${block.content.length} results`, { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+  } else if (block.content.type === 'web_search_tool_result_error') {
+    // Error during web search
+    pt.sendOperationState('search-web', `Search error: ${block.content.error_code}`, { opId, state: 'error' });
+  }
+}
+
+function _handleCBS_WebFetchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'web_fetch_tool_result' }>): void {
+  // Web fetch results arrive fully formed (no deltas)
+  const opId = block.tool_use_id;
+  switch (block.content.type) {
+    case 'web_fetch_result':
+      // Success - fetched a URL
+      const content = block.content.content;
+      const fetchedText = (content?.type === 'document' && content.source?.type === 'text' && content.source.data)
+        ? _ellipsizeContext(content.source.data, 280) : undefined;
+      pt.sendOperationState('search-web', `Retrieved ${block.content.url}`, { opId, state: 'done', ...fetchedText && { oTexts: [fetchedText] } });
+
+      // Add citation for the fetched content
+      const fetchedContent = block.content.content;
+      pt.appendUrlCitation(
+        fetchedContent?.title || 'Web Content',
+        block.content.url,
+        undefined, // citationNumber
+        undefined, // startIndex
+        undefined, // endIndex
+        undefined, // textSnippet
+        block.content.retrieved_at ? Date.parse(block.content.retrieved_at) : undefined,
+      );
+      break;
+
+    case 'web_fetch_tool_result_error':
+      // Error - URL is already captured as iTexts on the invocation entry
+      pt.sendOperationState('search-web', `Fetch error: ${block.content.error_code}`, { opId, state: 'error' });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_CodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'code_execution_tool_result' }>): void {
+  // Code execution result from container (Skill or traditional, such as dynamic web search)
+  const opId = block.tool_use_id;
+  switch (block.content.type) {
+    case 'code_execution_result':
+    case 'encrypted_code_execution_result': {
+      // encrypted variant (PFC + web_search): stdout is encrypted, only stderr is readable
+      const oTexts: string[] = [];
+      if (block.content.type === 'code_execution_result' && block.content.stdout)
+        oTexts.push(_ellipsizeContext(block.content.stdout));
+      else if (block.content.type === 'encrypted_code_execution_result')
+        oTexts.push('[Anthropic encrypted output]');
+      if (block.content.stderr)
+        oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
+      pt.sendOperationState('code-exec', 'Code executed', { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+
+      // add text if there are generated files in content array (e.g. generated from a skill)
+      const fileIds: string[] = [];
+      if (Array.isArray(block.content?.content))
+        for (const ob of block.content.content)
+          if (ob.type === 'code_execution_output' && ob.file_id)
+            fileIds.push(ob.file_id);
+      if (fileIds.length > 0)
+        pt.appendText(`\n\n⚡ Code executed by Skill\n${fileIds.map(id => `\n📎 File: \`${id}\``).join('')}\n`);
+      break;
+    }
+
+    case 'code_execution_tool_result_error':
+      pt.sendOperationState('code-exec', `Execution error: ${block.content.error_code}`, { opId, state: 'error' });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_BashCodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'bash_code_execution_tool_result' }>): void {
+  // Bash code execution result from container
+  const opId = block.tool_use_id;
+  switch (block.content.type) {
+    case 'bash_code_execution_result':
+      pt.sendOperationState('code-exec', 'Bash executed', { opId, state: 'done' });
+
+      // add text if there are generated files in content array
+      const fileIds: string[] = [];
+      if (Array.isArray(block.content.content))
+        for (const ob of block.content.content)
+          if (ob.type === 'bash_code_execution_output' && ob.file_id)
+            fileIds.push(ob.file_id);
+      if (fileIds.length > 0)
+        pt.appendText(`\n\n⚡ Bash executed by Skill\n${fileIds.map(id => `\n📎 File: \`${id}\``).join('')}\n`);
+      break;
+
+    case 'bash_code_execution_tool_result_error':
+      pt.sendOperationState('code-exec', `Bash error: ${block.content.error_code}`, { opId, state: 'error' });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_TextEditorCodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'text_editor_code_execution_tool_result' }>): void {
+  // Text editor code execution result from Skills container
+  pt.sendOperationState('code-exec', 'Text editor code executed', { opId: block.tool_use_id, state: 'done' });
+}
+
+function _handleCBS_ContainerUpload(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'container_upload' }>, containerId: string | undefined): void {
+  // Container upload - this is when a Skill has generated a file - file_id can be used with the Files API to download the file
+  pt.appendText(`\n\n⚡ File uploaded to container (${containerId || 'none'})\n\n📎 File: \`${block.file_id}\`\n\n`);
+  // TODO: Future enhancement - could trigger automatic file download here using the Files API with content_block.file_id, or offer an UI way to do so through a dedicated part/block?
+}
+
+function _handleCBS_ToolSearchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'tool_search_tool_result' }>): void {
+  // [Anthropic, 2025-11-24] Tool Search Tool
+  const opId = block.tool_use_id;
+  if (block.content?.type === 'tool_search_tool_search_result') {
+    // success
+    const toolNames = block.content.tool_references.map(ref => ref.tool_name);
+    pt.sendOperationState('code-exec', `Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`, { opId, state: 'done' });
+  } else if (block.content?.type === 'tool_search_tool_result_error') {
+    // error during tool search
+    pt.sendOperationState('code-exec', `Tool search error: ${block.content.error_code}`, { opId, state: 'error' });
+  }
 }
 
 
