@@ -106,8 +106,10 @@ export class ContentReassembler {
       if (isVoidPlaceholderFragment(fragment) && fragment.part.opLog?.length)
         for (const entry of fragment.part.opLog) {
           if (entry.text?.endsWith('...')) entry.text = entry.text.slice(0, -3);
-          if (entry.state === 'active') entry.state = 'error';
-          entry.oTexts = [...(entry.oTexts || []), `Terminated with reason: ${this._terminationReason ?? 'unknown'}`];
+          if (entry.state === 'active') {
+            entry.state = 'error';
+            entry.oTexts = [...(entry.oTexts || []), `Terminated with reason: ${this._terminationReason ?? 'unknown'}`];
+          }
         }
 
     
