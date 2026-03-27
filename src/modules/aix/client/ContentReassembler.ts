@@ -101,7 +101,7 @@ export class ContentReassembler {
     if (this._terminationReason === 'done-dialect')
       while (this.removeLastVoidPlaceholder()) {} // [PH-LIFECYCLE]
 
-    // - mark as completed or errorer
+    // - mark as completed or errored
     for (const fragment of this.accumulator.fragments)
       if (isVoidPlaceholderFragment(fragment) && fragment.part.opLog?.length)
         for (const entry of fragment.part.opLog) {
@@ -613,7 +613,7 @@ export class ContentReassembler {
 
   private onSetOperationState(os: Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>): void {
 
-    // This operation does not require removal of exisitng VoidPlaceholder fragments, as it recycles the last one if any
+    // This operation does not require removal of existing VoidPlaceholder fragments, as it recycles the last one if any
 
     // destructure
     const { text, mot, opId, state, parentOpId, iTexts, oTexts } = os;

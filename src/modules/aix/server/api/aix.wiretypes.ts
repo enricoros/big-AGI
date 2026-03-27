@@ -748,7 +748,7 @@ export namespace AixWire_Particles {
     | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string, hintSkipResize?: boolean } // inline image, complete
     /**
      * Model Operation - tracks instant model's operation(s) state, primarily for hosted tools.
-     * - state is 'ative' unless specified otherwise, 'error' is done too
+     * - state is 'active' unless specified otherwise, 'error' is done too
      * - shall be called 'mos' but for legacy/compatibility it's still 'vp' (backwards comp to simple void placeholder particles)
      */
     | { p: /*'mo'*/ 'vp', opId: string, text: string, mot: 'search-web' | 'gen-image' | 'code-exec', state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] }

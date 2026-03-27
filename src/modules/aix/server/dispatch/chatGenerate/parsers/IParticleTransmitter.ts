@@ -12,7 +12,7 @@ export interface IParticleTransmitter {
   /** Set the end reason - only use for 'done-dialect' to signal a dialect-close */
   setDialectEnded(reason: ParticleCGDialectEndReason): void;
 
-  /** End the current part and flush it, which also calls `setDialectEnded('issue-dialct')` */
+  /** End the current part and flush it, which also calls `setDialectEnded('issue-dialect')` */
   setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
 
   /** Communicates the finish reason to the client - Data only, this does not do Control, like the above */
