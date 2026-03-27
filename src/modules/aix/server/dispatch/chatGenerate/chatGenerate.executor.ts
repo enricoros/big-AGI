@@ -110,7 +110,10 @@ async function* _connectToDispatch(
     });
     const onRetryAttempt = (info: RetryAttempt) => {
       // -> retry-server-dispatch
-      chatGenerateTx.sendControl({ cg: 'retry-reset', rScope: 'srv-dispatch', rShallClear: false, reason: 'retrying initial connection', ...info });
+      chatGenerateTx.sendCGControl({
+        cg: 'aix-retry-reset', rScope: 'srv-dispatch', rShallClear: false, reason: 'retrying connection',
+        ...info, attempt: info.attempt - 1, maxAttempts: info.maxAttempts - 1,
+      });
     };
     // throws the original error (TRPCFetcherError) from fetchResponseOrTRPCThrow when: not retryable, aborted, or all attempts exhausted
     const chatGenerateResponsePromise = fetchWithAbortableConnectionRetry(connectionOperationCreator, intakeAbortSignal, onRetryAttempt);

@@ -92,7 +92,7 @@ export async function* executeChatGenerateWithContinuation(
       };
 
       // Notify the client that a continuation turn is starting
-      yield { p: 'vp', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...`, mot: 'flow-cont' };
+      yield { cg: 'aix-info', ait: 'flow-cont', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...` };
 
       // -> Loop continues - already-yielded particles are preserved
     }

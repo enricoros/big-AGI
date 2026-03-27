@@ -57,7 +57,7 @@ export class ContentReassembler {
     private readonly onInlineAudio?: (audio: { blob: Blob; mimeType: string; label: string; durationMs?: number }) => void,
   ) {
 
-    // [SUDO] Debugging the request, last-write-wins for the global (displayed in the UI)
+    // [AI Inspector] Debugging the request, last-write-wins for the global (displayed in the UI)
     this.debuggerFrameId = !inspectorContext ? null : aixClientDebugger_init(inspectorTransport ?? 'trpc', inspectorContext);
 
   }
@@ -98,7 +98,7 @@ export class ContentReassembler {
     const hadIssues = !!this.accumulator.legacyGenTokenStopReason;
     metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hadIssues);
 
-    // [SUDO] Debugging, finalize the frame
+    // [AI Inspector] Debugging, finalize the frame
     if (this.debuggerFrameId)
       aixClientDebugger_completeFrame(this.debuggerFrameId);
 
@@ -136,9 +136,9 @@ export class ContentReassembler {
     if (DEBUG_PARTICLES)
       console.log(`-> aix.p: client-retry (${strategy})`, { errorMessage, attempt, maxAttempts, delayMs, causeHttp, causeConn });
 
-    // process as retry-reset with cli-ll scope
-    this.onRetryReset({
-      cg: 'retry-reset', rScope: 'cli-ll',
+    // process as aix-retry-reset with cli-ll scope
+    this.onAixRetryReset({
+      cg: 'aix-retry-reset', rScope: 'cli-ll',
       rShallClear: false, // TODO: check if this is correct; we shall clear, but at the same time we haven't tried to see
       reason: strategy === 'resume' ? `Resuming - ${errorMessage}` : `Reconnecting - ${errorMessage}`,
       attempt, maxAttempts, delayMs, causeHttp, causeConn,
@@ -295,8 +295,11 @@ export class ContentReassembler {
           case 'issue':
             this.onCGIssue(op);
             break;
-          case 'retry-reset':
-            this.onRetryReset(op);
+          case 'aix-info':
+            this.onAixInfo(op);
+            break;
+          case 'aix-retry-reset':
+            this.onAixRetryReset(op);
             break;
           case 'set-metrics':
             this.onMetrics(op);
@@ -740,7 +743,16 @@ export class ContentReassembler {
     this._appendErrorFragment(issueText, issueHint);
   }
 
-  private onRetryReset({ rScope, rShallClear, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'retry-reset' }>): void {
+  private onAixInfo({ ait, text }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-info' }>): void {
+    // -> ph: show info
+    this.removeLastVoidPlaceholder();
+    this.accumulator.fragments.push(createPlaceholderVoidFragment(text, undefined, {
+      ctl: 'ac-info',
+      ait: ait,
+    }));
+  }
+
+  private onAixRetryReset({ rScope, rShallClear, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
     // operation-level retry likely requires a wipe
     if (rShallClear) {
       this.currentTextFragmentIndex = null;
@@ -756,8 +768,8 @@ export class ContentReassembler {
     }
 
     // -> ph: show retry status
-    const retryMessage = `Retrying [${attempt}/${maxAttempts}] in ${Math.round(delayMs / 1000)}s - ${reason}`;
     this.accumulator.fragments.push(createPlaceholderVoidFragment(retryMessage, undefined, undefined, {
+    const retryMessage = `Retrying [${attempt}/${maxAttempts}] in ${Math.round(delayMs / 100) / 10}s - ${reason}`;
       ctl: 'ec-retry',
       rScope: rScope,
       rAttempt: attempt,

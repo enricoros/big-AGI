@@ -454,8 +454,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
 
-  /** Sends control particles right away, such as retry-reset control particles */
-  sendControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue: boolean = true) {
+  /** Sends control particles right away, such as aix-info/aix-retry-reset/... control particles */
+  sendCGControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue: boolean = true) {
     // queue current particles before sending control particle (interfere with content flow)
     if (flushQueue) this._queueParticleS();
     this.transmissionQueue.push(cgCOp);
