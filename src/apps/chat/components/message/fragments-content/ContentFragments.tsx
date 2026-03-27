@@ -166,14 +166,11 @@ export function ContentFragments(props: {
             return (
               <BlockPartPlaceholder
                 key={fId}
-                placeholderText={part.pText}
-                placeholderType={part.pType}
-                placeholderModelOp={part.modelOp}
-                placeholderAixControl={part.aixControl}
-                messageRole={props.messageRole}
+                fragmentId={fId}
+                placeholderPart={part}
                 contentScaling={props.contentScaling}
-                showAsItalic
                 showAsDataStreamViz={showDataStreamViz}
+                onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
               />
             );
 
