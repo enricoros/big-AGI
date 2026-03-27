@@ -188,7 +188,9 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
       payload.toolConfig = _toGeminiToolConfig(chatGenerate.toolsPolicy);
   }
 
-  // Hosted tools
+
+  // --- Hosted tools ---
+  let _addedHostedTool = false;
 
   // [Gemini, 2025-11-18] Code Execution: add tool when enabled
   if (model.vndGeminiCodeExecution === 'auto' && !skipHostedToolsDueToCustomTools) {
@@ -201,21 +203,24 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(codeExecutionTool);
+    _addedHostedTool = true;
   }
 
-  // [Gemini, 2025-11-01] Computer Use: add tool when environment is specified
-  if (model.vndGeminiComputerUse && !skipHostedToolsDueToCustomTools) {
+  // [Gemini, 2025-11-01] Computer Use: add tool when explicitly enabled or auto-detected from model ID
+  const computerUseEnv = model.vndGeminiComputerUse || (model.id.includes('-computer-use') ? 'browser' : undefined);
+  if (computerUseEnv && !skipHostedToolsDueToCustomTools) {
     if (!payload.tools) payload.tools = [];
 
     // Build the Computer Use tool configuration
     const computerUseTool: NonNullable<TRequest['tools']>[number] = {
       computerUse: {
-        environment: model.vndGeminiComputerUse === 'browser' ? 'ENVIRONMENT_BROWSER' : 'ENVIRONMENT_BROWSER',
+        environment: computerUseEnv === 'browser' ? 'ENVIRONMENT_BROWSER' : 'ENVIRONMENT_BROWSER',
       },
     };
 
     // Add to tools array
     payload.tools.push(computerUseTool);
+    _addedHostedTool = true;
   }
 
   // [Gemini, 2025-10-13] Google Search Grounding: add tool when enabled
@@ -229,6 +234,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(googleSearchTool);
+    _addedHostedTool = true;
   }
 
   // [Gemini, 2025-08-18] URL Context: add tool when enabled
@@ -243,7 +249,18 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(urlContextTool);
+    _addedHostedTool = true;
   }
+
+  // [Gemini, 2026-03] Enable server-side tool invocation visibility for hosted tools
+  // Streams toolCall/toolResponse parts showing real-time hosted tool activity (search queries, URL fetches, etc.)
+  // Deny-based so future models (gemini-4, etc.) are included automatically
+  if (_addedHostedTool) {
+    const missingContextCirculation = ['gemini-2.', '-image-preview', 'nano-banana', 'deep-research'];
+    if (!missingContextCirculation.some((p) => model.id.includes(p)))
+      payload.toolConfig = { ...payload.toolConfig, includeServerSideToolInvocations: true };
+  }
+
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
@@ -342,7 +359,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
                   functionCallArgs = invocation.args;
                 }
               }
-              parts.push(GeminiWire_ContentParts.FunctionCallPart(invocation.name, functionCallArgs));
+              parts.push(GeminiWire_ContentParts.FunctionCallPart({ id: part.id, name: invocation.name, args: functionCallArgs }));
               break;
             case 'code_execution':
               if (invocation.language?.toLowerCase() !== 'python')
@@ -378,7 +395,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
                   functionResponseResponse = part.response.result;
                 }
               }
-              parts.push(GeminiWire_ContentParts.FunctionResponsePart(part.response._name || part.id, functionResponseResponse));
+              parts.push(GeminiWire_ContentParts.FunctionResponsePart({ id: part.id, name: part.response._name || part.id, response: functionResponseResponse }));
               break;
             case 'code_execution':
               parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));

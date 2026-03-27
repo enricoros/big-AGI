@@ -164,6 +164,8 @@ export namespace GeminiWire_ContentParts {
 
   export const ExecutableCodePart_schema = z.object({
     executableCode: z.object({
+      /** Optional ID for correlating with CodeExecutionResult. */
+      id: z.string().optional(),
       language: z.enum([
         // /**
         //  * Unspecified language. This value should not be used.
@@ -179,6 +181,8 @@ export namespace GeminiWire_ContentParts {
 
   export const CodeExecutionResultPart_schema = z.object({
     codeExecutionResult: z.object({
+      /** Optional ID matching the ExecutableCode.id this result is for. */
+      id: z.string().optional(),
       outcome: z.enum([
         // /**
         //  * Unspecified status. This value should not be used.
@@ -224,6 +228,37 @@ export namespace GeminiWire_ContentParts {
   );
 
 
+  /// Server-side Tool Invocation Parts (output only, requires includeServerSideToolInvocations in ToolConfig)
+
+  /** [Gemini, 2026-03] Server-side tool type enum for hosted tool invocations */
+  export type ServerToolType = z.infer<typeof _ServerToolType_enum>;
+  const _ServerToolType_enum = z.enum([
+    'GOOGLE_SEARCH_WEB',
+    'GOOGLE_SEARCH_IMAGE',
+    'URL_CONTEXT',
+    'GOOGLE_MAPS',
+    'FILE_SEARCH',
+  ]);
+
+  /** [Gemini, 2026-03] Server-initiated tool invocation - shows what hosted tools are being called */
+  const ToolCallPart_schema = z.object({
+    toolCall: z.object({
+      id: z.string().optional(),
+      toolType: _ServerToolType_enum.or(z.string()), // forward-compatibility
+      args: z.json().optional(),
+    }),
+  });
+
+  /** [Gemini, 2026-03] Server-side tool result - shows hosted tool execution results */
+  const ToolResponsePart_schema = z.object({
+    toolResponse: z.object({
+      id: z.string().optional(),
+      toolType: _ServerToolType_enum.or(z.string()), // forward-compatibility
+      response: z.json().optional(),
+    }),
+  });
+
+
   /// Content Parts (union of) - (model output) response.candidates[number].content.parts
 
   const _ContentPartData_Output_schema = z.union([
@@ -234,6 +269,11 @@ export namespace GeminiWire_ContentParts {
     // FileDataPart_schema,
     ExecutableCodePart_schema,
     CodeExecutionResultPart_schema,
+    // NOTE: In the future, code execution may also arrive via ToolCallPart/ToolResponsePart when
+    // includeServerSideToolInvocations is true. For now we keep the dedicated ExecutableCode/CodeExecutionResult
+    // parts as the primary path and use ToolCall/ToolResponse for search/URL/maps tools only.
+    ToolCallPart_schema,
+    ToolResponsePart_schema,
   ]);
 
   export const ContentPart_Output_schema = z.intersection(
@@ -252,12 +292,12 @@ export namespace GeminiWire_ContentParts {
     return { inlineData: { mimeType, data } };
   }
 
-  export function FunctionCallPart(name: string, args?: Record<string, any>): z.infer<typeof FunctionCallPart_schema> {
-    return { functionCall: { name, args } };
+  export function FunctionCallPart({ id, name, args }: { id?: string, name: string, args?: Record<string, any> }): z.infer<typeof FunctionCallPart_schema> {
+    return { functionCall: { ...(id !== undefined ? { id } : {}), name, ...(args !== undefined ? { args } : {}) } };
   }
 
-  export function FunctionResponsePart(name: string, response?: Record<string, any>): z.infer<typeof FunctionResponsePart_schema> {
-    return { functionResponse: { name, response } };
+  export function FunctionResponsePart({ id, name, response }: { id?: string, name: string, response?: Record<string, any> }): z.infer<typeof FunctionResponsePart_schema> {
+    return { functionResponse: { ...(id !== undefined ? { id } : {}), name, ...(response !== undefined ? { response } : {}) } };
   }
 
   export function ExecutableCodePart(language: 'PYTHON', code: string): z.infer<typeof ExecutableCodePart_schema> {
@@ -436,6 +476,12 @@ export namespace GeminiWire_ToolDeclarations {
       /** Language code for content (BCP 47 format, e.g., "en-US"). */
       languageCode: z.string().optional(),
     }).optional(),
+
+    /**
+     * [Gemini, 2026-03] When true, exposes server-side tool invocations (Google Search, URL Context, etc.)
+     * as toolCall/toolResponse parts in the response stream, providing real-time visibility into hosted tool activity.
+     */
+    includeServerSideToolInvocations: z.boolean().optional(),
   });
 
 }

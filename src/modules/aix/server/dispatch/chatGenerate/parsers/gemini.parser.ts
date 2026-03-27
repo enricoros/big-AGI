@@ -1,9 +1,12 @@
+import { Release } from '~/common/app.release';
+
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
+import type { GeminiWire_ContentParts } from '../../wiretypes/gemini.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
 import { geminiConvertPCM2WAV } from './gemini.audioutils';
@@ -12,6 +15,7 @@ import { geminiConvertPCM2WAV } from './gemini.audioutils';
 // configuration
 const COLLAPSE_EMPTY_TEXT_PARTS = true;
 const ENABLE_RECITATIONS_AS_CITATIONS = false;
+const DEV_DEBUG_MISSING_IDS = Release.IsNodeDevBuild; // not in staging to reduce noise
 
 
 /**
@@ -210,6 +214,10 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'functionCall' in mPart:
             let { id: fcId, name: fcName, args: fcArgs } = mPart.functionCall;
 
+            // [DEV] Track whether Gemini always provides IDs - if confirmed, make schema fields required
+            if (DEV_DEBUG_MISSING_IDS && !fcId)
+              console.log('[DEV] Gemini functionCall missing id for:', fcName);
+
             // Validate the function call arguments - we expect a JSON object, not just any JSON value
             if (!fcArgs || typeof fcArgs !== 'object')
               console.warn(`[Gemini] Invalid function call arguments: ${JSON.stringify(fcArgs)} for ${fcName}`);
@@ -220,21 +228,28 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
           // <- ExecutableCodePart
           case 'executableCode' in mPart:
-            pt.addCodeExecutionInvocation(null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
+            // [DEV] Track whether Gemini always provides IDs - if confirmed, make schema fields required
+            if (DEV_DEBUG_MISSING_IDS && !mPart.executableCode.id)
+              console.log('[DEV] Gemini executableCode missing id');
+            pt.addCodeExecutionInvocation(mPart.executableCode.id ?? null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
             break;
 
           // <- CodeExecutionResultPart
           case 'codeExecutionResult' in mPart:
+            const ceId = mPart.codeExecutionResult.id ?? null;
+            // [DEV] Track whether Gemini always provides IDs - if confirmed, make schema fields required
+            if (DEV_DEBUG_MISSING_IDS && !ceId)
+              console.log('[DEV] Gemini codeExecutionResult missing id');
             switch (mPart.codeExecutionResult.outcome) {
               case 'OUTCOME_OK':
-                pt.addCodeExecutionResponse(null, false, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
+                pt.addCodeExecutionResponse(ceId, false, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
                 break;
               case 'OUTCOME_FAILED':
-                pt.addCodeExecutionResponse(null, true, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
+                pt.addCodeExecutionResponse(ceId, true, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
                 break;
               case 'OUTCOME_DEADLINE_EXCEEDED':
                 const deadlineError = 'Code execution deadline exceeded' + (mPart.codeExecutionResult.output ? `: ${mPart.codeExecutionResult.output}` : '');
-                pt.addCodeExecutionResponse(null, deadlineError, '', 'gemini_auto_inline', 'upstream');
+                pt.addCodeExecutionResponse(ceId, deadlineError, '', 'gemini_auto_inline', 'upstream');
                 break;
               default:
                 const _exhaustiveCheck: never = mPart.codeExecutionResult.outcome;
@@ -242,6 +257,36 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 break;
             }
             break;
+
+          // <- ToolCallPart (server-side hosted tool invocation, e.g. Google Search, URL Context)
+          case 'toolCall' in mPart: {
+            const tc = mPart.toolCall;
+            if (!tc.id) {
+              if (DEV_DEBUG_MISSING_IDS) console.log('[DEV] Gemini toolCall missing id for:', tc.toolType);
+              break;
+            }
+            const cfg = _geminiGetServerToolConfig(tc.toolType);
+            const parsed = cfg.parseArgs?.(tc.args);
+            const statusText = parsed?.text ?? cfg.callLabel;
+            const iTexts = parsed?.iTexts ?? (tc.args ? [_geminiJsonSummary(tc.args)].filter(Boolean) as string[] : undefined);
+
+            pt.sendOperationState(cfg.mot, statusText, { opId: tc.id, ...(iTexts?.length ? { iTexts } : {}) });
+            break;
+          }
+
+          // <- ToolResponsePart (server-side hosted tool result)
+          case 'toolResponse' in mPart: {
+            const tr = mPart.toolResponse;
+            if (!tr.id) {
+              if (DEV_DEBUG_MISSING_IDS) console.log('[DEV] Gemini toolResponse missing id for:', tr.toolType);
+              break;
+            }
+            const cfg = _geminiGetServerToolConfig(tr.toolType);
+            const oTexts = cfg.parseResponse?.(tr.response)?.oTexts;
+
+            pt.sendOperationState(cfg.mot, cfg.doneLabel, { opId: tr.id, state: 'done', ...(oTexts?.length ? { oTexts } : {}) });
+            break;
+          }
 
           default:
             // noinspection JSUnusedLocalSymbols
@@ -273,7 +318,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
          * - annotations and ranges .groundingSupports
          * - sort chunks by their overal confidence in the .groundingSupports?
          * - follow up Google Search queries (.webSearchQueries)
-         * - include the 'renderedContent' from .searchEntryPoint
+         * - follow up Google Search queries (.webSearchQueries) for suggested refinements
          */
         for (const { web } of candidate0.groundingMetadata.groundingChunks)
           pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
@@ -387,4 +432,118 @@ function _explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRati
 function _geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
   const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
   return order.indexOf(b.probability) - order.indexOf(a.probability);
+}
+
+
+// --- Gemini Hosted Tools (server-side tool invocations) ---
+
+// Exhaustive config for all known ServerToolType values.
+// Adding a value to _ServerToolType_enum in gemini.wiretypes.ts without updating this map is a compile error.
+
+type _GeminiServerToolConfig = {
+  mot: 'search-web' | 'code-exec',
+  callLabel: string,
+  doneLabel: string,
+  parseArgs?: (args: unknown) => { text: string, iTexts?: string[] },
+  parseResponse?: (response: unknown) => { oTexts?: string[] },
+};
+
+// Wire format (verified): search tools use { queries: string[] }, e.g. { queries: ["\"Enrico Ros\"", "\"Enrico Ros\" tech"] }
+// Wire format (verified): toolResponse contains grounding data (+ searchEntryPoint HTML which we skip)
+// NOTE: when includeServerSideToolInvocations is true, grounding data may be in toolResponse
+// instead of candidate.groundingMetadata - citations are still extracted from groundingMetadata if present
+
+/** Shared parseArgs for query-based tools (search web/images/files) */
+function _geminiParseQueryArgs(label: string, iTextPrefix: string): NonNullable<_GeminiServerToolConfig['parseArgs']> {
+  return (args) => {
+    const a = _geminiAsObj(args);
+    const queries = _geminiStrArray(a?.queries) || _geminiStrArray(a?.query ? [a.query] : undefined);
+    return queries?.length
+      ? { text: label, iTexts: queries.map(q => `${iTextPrefix}: "${q}"`) }
+      : { text: label };
+  };
+}
+
+const _geminiServerToolConfigs: Record<GeminiWire_ContentParts.ServerToolType, _GeminiServerToolConfig> = {
+  'GOOGLE_SEARCH_WEB': {
+    mot: 'search-web',
+    callLabel: 'Searching the web...',
+    doneLabel: 'Search completed',
+    parseArgs: _geminiParseQueryArgs('Searching the web...', 'Search query'),
+  },
+  'GOOGLE_SEARCH_IMAGE': {
+    mot: 'search-web',
+    callLabel: 'Searching images...',
+    doneLabel: 'Image search completed',
+    parseArgs: _geminiParseQueryArgs('Searching images...', 'Search query'),
+  },
+  'URL_CONTEXT': {
+    mot: 'search-web',
+    callLabel: 'Fetching web content...',
+    doneLabel: 'Retrieved content',
+    // Wire format (verified): { urls: string[] } e.g. { urls: ["https://big-agi.com"] }
+    parseArgs: (args) => {
+      const a = _geminiAsObj(args);
+      const urls = _geminiStrArray(a?.urls);
+      return urls?.length
+        ? { text: `Fetching ${urls[0]}...`, iTexts: urls.map(u => `URL: ${u}`) }
+        : { text: 'Fetching web content...' };
+    },
+    // Wire format (verified): { url_metadata: [{ retrieved_url: string, url_retrieval_status: string }] }
+    parseResponse: (response) => {
+      const r = _geminiAsObj(response);
+      const urlMetadata = Array.isArray(r?.url_metadata) ? r.url_metadata as Record<string, unknown>[] : [];
+      const urls = urlMetadata
+        .filter(m => m.url_retrieval_status === 'URL_RETRIEVAL_STATUS_SUCCESS')
+        .map(m => _geminiStr(m.retrieved_url))
+        .filter((u): u is string => !!u);
+      return urls.length ? { oTexts: urls } : {};
+    },
+  },
+  'GOOGLE_MAPS': {
+    mot: 'search-web',
+    callLabel: 'Looking up location...',
+    doneLabel: 'Maps lookup completed',
+  },
+  'FILE_SEARCH': {
+    mot: 'search-web',
+    callLabel: 'Searching files...',
+    doneLabel: 'File search completed',
+    parseArgs: _geminiParseQueryArgs('Searching files...', 'Search query'),
+  },
+};
+
+
+function _geminiGetServerToolConfig(toolType: string): _GeminiServerToolConfig {
+  return _geminiServerToolConfigs[toolType as GeminiWire_ContentParts.ServerToolType] ?? {
+    mot: 'search-web',
+    callLabel: `Using ${toolType}...`,
+    doneLabel: `${toolType} completed`,
+  };
+}
+
+// Helpers for speculative arg/response parsing
+
+function _geminiAsObj(v: unknown): Record<string, unknown> | null {
+  return (v && typeof v === 'object' && !Array.isArray(v)) ? v as Record<string, unknown> : null;
+}
+
+function _geminiStr(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length ? v : undefined;
+}
+
+function _geminiStrArray(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const strings = v.filter((s): s is string => typeof s === 'string' && s.length > 0);
+  return strings.length ? strings : undefined;
+}
+
+/** Summarize an unknown JSON value for iTexts/oTexts display (keeps start + end, shows char count in the middle) */
+function _geminiJsonSummary(v: unknown, maxLen = 512): string | undefined {
+  if (v === undefined || v === null) return undefined;
+  const s = JSON.stringify(v);
+  if (s.length <= maxLen) return s;
+  const ellipsis = `...[${(s.length - maxLen).toLocaleString()} chars]...`;
+  const half = Math.floor((maxLen - ellipsis.length) / 2);
+  return s.slice(0, half) + ellipsis + s.slice(-half);
 }
