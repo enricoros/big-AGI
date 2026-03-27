@@ -271,7 +271,11 @@ export namespace AnthropicWire_Blocks {
       ]),
       z.string(), // forward-compatibility parsing
     ]),
-    input: z.any(), // see the comment on ToolUseBlock_schema.input
+    input: z.union([
+      z.object({ query: z.string() }), // web_search
+      z.object({ url: z.string() }), // web_fetch
+      z.object({ code: z.string() }), // code_execution, bash_code_execution, text_editor_code_execution
+    ]).or(z.any()), // see the comment on ToolUseBlock_schema.input
     caller: _ToolUseCaller_schema.optional(),
   });
 
