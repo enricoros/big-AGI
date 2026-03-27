@@ -169,6 +169,7 @@ function RenderChipAixControl({ aixControl, text }: {
 function RenderChipListModelOps(props: {
   opLog: Exclude<DVoidPlaceholderPart['opLog'], undefined>,
   contentScaling: ContentScaling,
+  messagePendingIncomplete: boolean,
   fragmentId: DMessageFragmentId,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
@@ -223,6 +224,7 @@ function RenderChipListModelOps(props: {
           <ModelOperationChip
             op={entry}
             contentScaling={contentScaling}
+            messagePendingIncomplete={props.messagePendingIncomplete}
           />
         </Box>
       ))}
@@ -244,6 +246,7 @@ function RenderChipListModelOps(props: {
 function ModelOperationChip(props: {
   op: DVoidPlaceholderMOp,
   contentScaling: ContentScaling,
+  messagePendingIncomplete: boolean,
 }) {
 
   // state
@@ -260,7 +263,7 @@ function ModelOperationChip(props: {
   const oText = oTexts?.join('\n') ?? null;
   const hasDetails = !!iText || !!oText;
 
-  const timerIsActive = !isFinished && Math.floor((Date.now() - cts) / 1000) < MODELOP_TIMEOUT_LIMIT;
+  const timerIsActive = props.messagePendingIncomplete && !isFinished && Math.floor((Date.now() - cts) / 1000) < MODELOP_TIMEOUT_LIMIT;
 
   // [effect] show the elapsed time
   React.useEffect(() => {
@@ -367,6 +370,7 @@ function OperationsHarakiriChip(props: {
 interface BlockPartPlaceholderProps {
   placeholderPart: DVoidPlaceholderPart,
   contentScaling: ContentScaling,
+  messagePendingIncomplete: boolean,
   showAsDataStreamViz?: boolean,
 
   // used for self deletion
@@ -378,7 +382,7 @@ interface BlockPartPlaceholderProps {
 /**
  * Transient placeholder: follow-ups, retries, model-op progress (with PFC nesting), or italic text.
  */
-export function BlockPartPlaceholder({ placeholderPart, contentScaling, showAsDataStreamViz, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
+export function BlockPartPlaceholder({ placeholderPart, contentScaling, messagePendingIncomplete, showAsDataStreamViz, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
 
   // state
   const [showVisualization, setShowVisualization] = React.useState(false);
@@ -415,6 +419,7 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, showAsDa
     <RenderChipListModelOps
       opLog={opLog}
       contentScaling={adjustContentScaling(contentScaling, -1)}
+      messagePendingIncomplete={messagePendingIncomplete}
       fragmentId={fragmentId}
       onFragmentDelete={onFragmentDelete}
     />

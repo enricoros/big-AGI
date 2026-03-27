@@ -86,6 +86,7 @@ export function ContentFragments(props: {
   // solo placeholder - dataStreamViz trigger
   const showDataStreamViz =
     !Release.Features.LIGHTER_ANIMATIONS
+    && !!props.messagePendingIncomplete // if generating
     && props.uiComplexityMode !== 'minimal'
     && props.contentFragments.length === 1
     // && props.noVoidFragments // not needed, we have all the interleaved fragments here
@@ -169,6 +170,7 @@ export function ContentFragments(props: {
                 fragmentId={fId}
                 placeholderPart={part}
                 contentScaling={props.contentScaling}
+                messagePendingIncomplete={!!props.messagePendingIncomplete}
                 showAsDataStreamViz={showDataStreamViz}
                 onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
               />
