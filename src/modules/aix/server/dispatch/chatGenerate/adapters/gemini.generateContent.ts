@@ -414,7 +414,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
                   functionResponseResponse = part.response.result;
                 }
               }
-              parts.push(GeminiWire_ContentParts.FunctionResponsePart({ id: part.id, name: part.response.name || part.id, response: functionResponseResponse }));
+              parts.push(GeminiWire_ContentParts.FunctionResponsePart({ id: part.id, name: part.response.name, response: functionResponseResponse }));
               break;
             case 'code_execution':
               parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));

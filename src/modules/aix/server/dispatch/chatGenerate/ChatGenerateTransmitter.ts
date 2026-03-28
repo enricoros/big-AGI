@@ -377,6 +377,10 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     // validate state
     if (this.currentPart?.p === 'fci')
       throw new Error('Cannot start a new function call while the previous one is still open [parser-logic]');
+    if (!functionName) {
+      console.warn(`Aix.${this.prettyDialect}: function call missing name, using fallback`);
+      functionName = 'unknown_function';
+    }
 
     this.endMessagePart();
     this.currentPart = {

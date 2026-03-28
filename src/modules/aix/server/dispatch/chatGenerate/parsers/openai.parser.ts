@@ -287,7 +287,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
             id: deltaToolCall.id || serverSideId('aix-tool-call-id'),
             type: 'function',
             function: {
-              name: deltaToolCall.function.name || '',
+              name: deltaToolCall.function.name ?? '',
               arguments: deltaToolCall.function.arguments || '',
             },
           };

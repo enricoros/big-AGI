@@ -199,7 +199,7 @@ export type DMessageToolInvocationPart = {
   id: string,
   invocation: {
     type: 'function_call'
-    name: string;             // Name of the function as passed from the definition
+    name: string;             // REQUIRED. Name of the function as passed from the definition
     args: string /*| null*/;  // JSON-encoded object (only objects are supported), if null there are no args and it's just a plain invocation
     // temporary, not stored
     _description?: string;    // Description from the definition
