@@ -252,6 +252,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // [NO-CIRCULATION] can't combine hosted + custom tools with restrictive policies - custom wins -> wipe hosted if any
   const hasUserRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  // NOTE: we may have to remove the 'hasUserRestrictivePolicy' as some models seem to not want any other tool when user tools are set
   if (_addedHostedTools && hasUserTools && !hasToolContextCirculation && hasUserRestrictivePolicy) {
     _addedHostedTools = false;
     payload.tools = undefined; // wipe
