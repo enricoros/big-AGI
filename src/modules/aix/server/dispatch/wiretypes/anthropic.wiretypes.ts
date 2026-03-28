@@ -339,6 +339,7 @@ export namespace AnthropicWire_Blocks {
         stderr: z.string(),
         return_code: z.number(),
         content: z.array(_CodeExecutionOutputBlock_schema),
+        // abort_reason: z.string().nullish(), // seen as null in responses, but undocumented - revisit if non-null values appear
       }),
       // Encrypted variant - used when code execution is combined with programmatic tool calling + web_search
       z.object({
@@ -347,6 +348,7 @@ export namespace AnthropicWire_Blocks {
         stderr: z.string(),
         return_code: z.number(),
         content: z.array(_CodeExecutionOutputBlock_schema),
+        // abort_reason: z.string().nullish(), // seen as null in responses, but undocumented - revisit if non-null values appear
       }),
       z.object({
         type: z.literal('code_execution_tool_result_error'),

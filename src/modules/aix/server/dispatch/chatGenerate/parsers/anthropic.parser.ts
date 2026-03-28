@@ -397,9 +397,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 if (stoppedBlock.input)
                   try {
                     const input = typeof stoppedBlock.input === 'string' ? JSON.parse(stoppedBlock.input) : stoppedBlock.input;
-                    const codeOrCommandText = typeof input === 'object' ? (typeof input.code === 'string' ? input.code : typeof input.command === 'string' ? input.command : undefined) : undefined;
-                    if (codeOrCommandText)
-                      iTexts = [_ellipsizeContext(codeOrCommandText)];
+                    const code = typeof input === 'object' ? (typeof input.code === 'string' ? input.code : typeof input.command === 'string' ? input.command : undefined) : undefined;
+                    if (code) iTexts = [_ellipsizeContext(code)];
                   } catch { /* ignore parse errors */ }
                 const execText = stoppedBlock.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
                 pt.sendOperationState('code-exec', execText, { opId: stoppedBlock.id, ...iTexts && { iTexts } });
@@ -711,9 +710,10 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
     case 'code_execution':
     case 'bash_code_execution':
     case 'text_editor_code_execution':
-      // end input: { code: string } - dynamically extracted
-      const code = typeof inputObj?.code === 'string' ? inputObj.code : undefined;
-      const execText = !code ? 'Writing code...' : block.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
+      // end input: { code: string } for code_execution or { command: string } for bash_code_execution
+      const code = typeof inputObj?.code === 'string' ? inputObj.code : typeof inputObj?.command === 'string' ? inputObj.command : undefined;
+      const execText = !code ? (block.name === 'bash_code_execution' ? 'Writing bash code...' : 'Writing code...')
+        : block.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
       pt.sendOperationState('code-exec', execText, { ...srvOp, ...(code ? { iTexts: [_ellipsizeContext(code)] } : undefined) });
       break;
     // [Anthropic, 2025-11-24] Tool Search Tool
@@ -794,13 +794,16 @@ function _handleCBS_CodeExecutionToolResult(pt: IParticleTransmitter, block: Ext
     case 'encrypted_code_execution_result': {
       // encrypted variant (PFC + web_search): stdout is encrypted, only stderr is readable
       const oTexts: string[] = [];
+      if (block.content.return_code !== 0)
+        oTexts.push(`exit code: ${block.content.return_code}`);
       if (block.content.type === 'code_execution_result' && block.content.stdout)
         oTexts.push(_ellipsizeContext(block.content.stdout));
       else if (block.content.type === 'encrypted_code_execution_result')
         oTexts.push('[Anthropic encrypted output]');
       if (block.content.stderr)
         oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
-      pt.sendOperationState('code-exec', 'Code executed', { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+      const codeExecFailed = block.content.return_code !== 0;
+      pt.sendOperationState('code-exec', codeExecFailed ? `Code executed` /* was: failed */ : 'Code executed', { opId, state: codeExecFailed ? 'error' : 'done', ...oTexts.length ? { oTexts } : undefined });
 
       // add text if there are generated files in content array (e.g. generated from a skill)
       const fileIds: string[] = [];
@@ -828,11 +831,14 @@ function _handleCBS_BashCodeExecutionToolResult(pt: IParticleTransmitter, block:
   switch (block.content.type) {
     case 'bash_code_execution_result':
       const oTexts: string[] = [];
+      if (block.content.return_code !== 0)
+        oTexts.push(`exit code: ${block.content.return_code}`);
       if (block.content.stdout)
         oTexts.push(_ellipsizeContext(block.content.stdout));
       if (block.content.stderr)
         oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
-      pt.sendOperationState('code-exec', 'Bash executed', { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+      const bashFailed = block.content.return_code !== 0;
+      pt.sendOperationState('code-exec', bashFailed ? `Bash executed` /* was: failed */ : 'Bash executed', { opId, state: bashFailed ? 'error' : 'done', ...oTexts.length ? { oTexts } : undefined });
 
       // add text if there are generated files in content array
       const fileIds: string[] = [];
