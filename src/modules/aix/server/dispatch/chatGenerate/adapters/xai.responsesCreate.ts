@@ -322,21 +322,6 @@ function _toXAIResponsesInput(
               // reasoning/thinking block - ignored for input
               break;
 
-            case 'meta_cache_control':
-              // ignored
-              break;
-
-            default:
-              const _exhaustiveCheck: never = mPt;
-              throw new Error(`Unsupported part type in Model message: ${mPt}`);
-          }
-        }
-        break;
-
-      case 'tool':
-        for (const part of messageParts) {
-          const tPt = part.pt;
-          switch (tPt) {
             case 'tool_response':
               const responseType = part.response.type;
               switch (responseType) {
@@ -346,7 +331,7 @@ function _toXAIResponsesInput(
                   break;
                 default:
                   const _check: never = responseType;
-                  throw new Error(`Unsupported tool response type: ${tPt}/${responseType}`);
+                  throw new Error(`Unsupported tool response type in Model message: ${mPt}/${responseType}`);
               }
               break;
 
@@ -355,8 +340,8 @@ function _toXAIResponsesInput(
               break;
 
             default:
-              const _exhaustiveCheck: never = tPt;
-              throw new Error(`Unsupported part type in Tool message: ${tPt}`);
+              const _exhaustiveCheck: never = mPt;
+              throw new Error(`Unsupported part type in Model message: ${mPt}`);
           }
         }
         break;

@@ -632,6 +632,14 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               // ignore this thinking block - Anthropic only
               break;
 
+            case 'tool_response':
+              const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
+              if (part.response.type === 'function_call' || part.response.type === 'code_execution')
+                chatMessages.push(OpenAIWire_Messages.ToolMessage(part.id, toolErrorPrefix + part.response.result));
+              else
+                throw new Error(`Unsupported tool response type in Model message: ${(part as any).pt}`);
+              break;
+
             case 'meta_cache_control':
               // ignore this breakpoint hint - Anthropic only
               break;
@@ -641,29 +649,6 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
           }
 
-        }
-        break;
-
-      case 'tool':
-        for (const part of parts) {
-          switch (part.pt) {
-
-            case 'tool_response':
-              const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
-              if (part.response.type === 'function_call' || part.response.type === 'code_execution')
-                chatMessages.push(OpenAIWire_Messages.ToolMessage(part.id, toolErrorPrefix + part.response.result));
-              else
-                throw new Error(`Unsupported tool response type in Tool message: ${(part as any).pt}`);
-              break;
-
-            case 'meta_cache_control':
-              // ignore this breakpoint hint - Anthropic only
-              break;
-
-            default:
-              const _exhaustiveCheck: never = part;
-              throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
-          }
         }
         break;
     }

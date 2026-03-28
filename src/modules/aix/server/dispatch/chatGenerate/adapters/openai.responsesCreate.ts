@@ -472,36 +472,20 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               // TODO: support this in the future - may contain the encrypted reasoning data, although we don't parse this yet
               break;
 
-            case 'meta_cache_control':
-              // ignored - Anthropic only
-              break;
-
-            default:
-              const _exhaustiveCheck: never = mPt;
-              throw new Error(`Unsupported part type in Model message: ${mPt}`);
-          }
-        }
-        break;
-
-      case 'tool':
-        for (const toolPart of messageParts) {
-          const tPt = toolPart.pt;
-          switch (tPt) {
-
             case 'tool_response':
-              const toolResponseType = toolPart.response.type;
+              const toolResponseType = modelPart.response.type;
               switch (toolResponseType) {
                 case 'function_call':
-                  const { result: functionCallOutput } = toolPart.response;
-                  newFunctionCallOutputMessage(toolPart.id, functionCallOutput);
+                  const { result: functionCallOutput } = modelPart.response;
+                  newFunctionCallOutputMessage(modelPart.id, functionCallOutput);
                   break;
                 case 'code_execution':
-                  const { result: codeExecutionOutput } = toolPart.response;
-                  newFunctionCallOutputMessage(toolPart.id, codeExecutionOutput);
+                  const { result: codeExecutionOutput } = modelPart.response;
+                  newFunctionCallOutputMessage(modelPart.id, codeExecutionOutput);
                   break;
                 default:
                   const _exhaustiveCheck: never = toolResponseType;
-                  throw new Error(`Unsupported tool response type in Tool message: ${tPt}/${toolResponseType}`);
+                  throw new Error(`Unsupported tool response type in Model message: ${mPt}/${toolResponseType}`);
               }
               break;
 
@@ -510,8 +494,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             default:
-              const _exhaustiveCheck: never = tPt;
-              throw new Error(`Unsupported part type in Tool message: ${tPt}`);
+              const _exhaustiveCheck: never = mPt;
+              throw new Error(`Unsupported part type in Model message: ${mPt}`);
           }
         }
         break;

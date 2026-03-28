@@ -185,21 +185,6 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
             // Extended thinking / reasoning - Converse API does not support thinking blocks, skip
             break;
 
-          case 'meta_cache_control':
-            // Converse API does not support cache control - skip
-            break;
-
-          default:
-            const _exhaustiveCheck: never = part;
-            throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
-        }
-      }
-      break;
-
-    case 'tool':
-      for (const part of parts) {
-        switch (part.pt) {
-
           case 'tool_response':
             const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
             switch (part.response.type) {
@@ -222,12 +207,12 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
             break;
 
           case 'meta_cache_control':
-            // ignored in tools
+            // ignore this breakpoint hint - Anthropic only
             break;
 
           default:
             const _exhaustiveCheck: never = part;
-            throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
+            throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
         }
       }
       break;

@@ -27,7 +27,6 @@ export type AixParts_MetaInReferenceToPart = z.infer<typeof AixWire_Parts.MetaIn
 
 export type AixMessages_SystemMessage = z.infer<typeof AixWire_Content.SystemInstruction_schema>;
 export type AixMessages_ModelMessage = z.infer<typeof AixWire_Content.ModelMessage_schema>;
-export type AixMessages_ToolMessage = z.infer<typeof AixWire_Content.ToolMessage_schema>;
 export type AixMessages_UserMessage = z.infer<typeof AixWire_Content.UserMessage_schema>;
 export type AixMessages_ChatMessage = z.infer<typeof AixWire_Content.ChatMessage_schema>;
 
@@ -294,15 +293,8 @@ export namespace AixWire_Content {
       AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.ToolInvocationPart_schema,
-      AixWire_Parts.ModelAuxPart_schema,
-      AixWire_Parts.MetaCacheControl_schema,
-    ])),
-  });
-
-  export const ToolMessage_schema = z.object({
-    role: z.literal('tool'),
-    parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.ToolResponsePart_schema,
+      AixWire_Parts.ModelAuxPart_schema,
       AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
@@ -310,7 +302,6 @@ export namespace AixWire_Content {
   export const ChatMessage_schema = z.discriminatedUnion('role', [
     UserMessage_schema,
     ModelMessage_schema,
-    ToolMessage_schema,
   ]);
 
 }

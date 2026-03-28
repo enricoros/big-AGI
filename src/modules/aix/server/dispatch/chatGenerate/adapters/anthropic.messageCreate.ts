@@ -390,21 +390,6 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
               yield { role: 'assistant', content: AnthropicWire_Blocks.RedactedThinkingBlock(redactedData) };
             break;
 
-          case 'meta_cache_control':
-            yield { set_cache_control: part.control };
-            break;
-
-          default:
-            const _exhaustiveCheck: never = part;
-            throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
-        }
-      }
-      break;
-
-    case 'tool':
-      for (const part of parts) {
-        switch (part.pt) {
-
           case 'tool_response':
             const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
             switch (part.response.type) {
@@ -417,17 +402,17 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
                 yield { role: 'user', content: AnthropicWire_Blocks.ToolResultBlock(part.id, ceTextParts, part.error ? true : undefined) };
                 break;
               default:
-                throw new Error(`Unsupported tool response type in Tool message: ${(part as any).pt}`);
+                throw new Error(`Unsupported tool response type in Model message: ${(part as any).pt}`);
             }
             break;
 
           case 'meta_cache_control':
-            // ignored in tools
+            yield { set_cache_control: part.control };
             break;
 
           default:
             const _exhaustiveCheck: never = part;
-            throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
+            throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
         }
       }
       break;
