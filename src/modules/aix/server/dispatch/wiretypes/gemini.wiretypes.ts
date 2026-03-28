@@ -55,7 +55,7 @@ export namespace GeminiWire_ContentParts {
     'VIDEO',
     'AUDIO',
     'DOCUMENT', // e.g. PDF
-  ]);
+  ]).or(z.string()); // forward-compatible with future modalities
 
   /** Media resolution for the input media. */
   export const mediaResolution_enum = z.enum([
@@ -513,7 +513,7 @@ export namespace GeminiWire_Safety {
     'HARM_CATEGORY_IMAGE_SEXUALLY_EXPLICIT',
     // [Gemini, 2026-03] Jailbreak detection:
     'HARM_CATEGORY_JAILBREAK',
-  ]);
+  ]).or(z.string()); // forward-compatible with future harm categories
 
   export const HarmProbability_enum = z.enum([
     'HARM_PROBABILITY_UNSPECIFIED',
@@ -521,7 +521,7 @@ export namespace GeminiWire_Safety {
     'LOW',
     'MEDIUM',
     'HIGH',
-  ]);
+  ]).or(z.string()); // forward-compatible with future probability levels
 
   export type SafetyRating = z.infer<typeof SafetyRating_schema>;
   export const SafetyRating_schema = z.object({
@@ -560,7 +560,8 @@ export namespace GeminiWire_Safety {
     'BLOCKLIST',                // terms are included in the terminology blocklist
     'PROHIBITED_CONTENT',       // prohibited content
     'IMAGE_SAFETY',             // unsafe image generation content
-  ]);
+    // Note: MODEL_ARMOR and JAILBREAK exist in SDK but are "not supported in Gemini API" (Vertex AI only)
+  ]).or(z.string());            // forward-compatible with future block reasons
 
   export const PromptFeedback_schema = z.object({
     /** Optional. If set, the prompt was blocked and no candidates are returned. */
