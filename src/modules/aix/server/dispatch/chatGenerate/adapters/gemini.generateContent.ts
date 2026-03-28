@@ -176,24 +176,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // --- Tools ---
 
-  // Allow/deny auto-adding hosted tools when custom tools are present
-  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
-  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy; // FIXME: re-evaluate in the future whether this shall be on higher information levels (callers)
-
-  // Function Calls (Custom Tools)
-  if (chatGenerate.tools) {
-    payload.tools = _toGeminiTools(chatGenerate.tools);
-    if (chatGenerate.toolsPolicy)
-      payload.toolConfig = _toGeminiToolConfig(chatGenerate.toolsPolicy);
-  }
-
-
-  // --- Hosted tools ---
-  let _addedHostedTool = false;
+  // --- Hosted tools (added first, custom tools below) ---
+  let _addedHostedTools = false;
 
   // [Gemini, 2025-11-18] Code Execution: add tool when enabled
-  if (model.vndGeminiCodeExecution === 'auto' && !skipHostedToolsDueToCustomTools) {
+  if (model.vndGeminiCodeExecution === 'auto') {
     if (!payload.tools) payload.tools = [];
 
     // Build the Code Execution tool configuration (empty object)
@@ -203,12 +190,12 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(codeExecutionTool);
-    _addedHostedTool = true;
+    _addedHostedTools = true;
   }
 
   // [Gemini, 2025-11-01] Computer Use: add tool when explicitly enabled or auto-detected from model ID
   const computerUseEnv = model.vndGeminiComputerUse || (model.id.includes('-computer-use') ? 'browser' : undefined);
-  if (computerUseEnv && !skipHostedToolsDueToCustomTools) {
+  if (computerUseEnv) {
     if (!payload.tools) payload.tools = [];
 
     // Build the Computer Use tool configuration
@@ -220,11 +207,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(computerUseTool);
-    _addedHostedTool = true;
+    _addedHostedTools = true;
   }
 
   // [Gemini, 2025-10-13] Google Search Grounding: add tool when enabled
-  if (model.vndGeminiGoogleSearch && !skipHostedToolsDueToCustomTools) {
+  if (model.vndGeminiGoogleSearch) {
     if (!payload.tools) payload.tools = [];
 
     // Build the Google Search tool configuration
@@ -234,12 +221,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(googleSearchTool);
-    _addedHostedTool = true;
+    _addedHostedTools = true;
   }
 
   // [Gemini, 2025-08-18] URL Context: add tool when enabled
-  const disableUrlContext = isFamilyNanoBanana /* Nano Bananas don't fetch */ || skipHostedToolsDueToCustomTools;
-  if (model.vndGeminiUrlContext === 'auto' && !disableUrlContext) {
+  if (model.vndGeminiUrlContext === 'auto' && !isFamilyNanoBanana /* Nano Bananas don't fetch */) {
     if (!payload.tools) payload.tools = [];
 
     // Build the URL Context tool configuration (empty object)
@@ -249,16 +235,49 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
     // Add to tools array
     payload.tools.push(urlContextTool);
-    _addedHostedTool = true;
+    _addedHostedTools = true;
   }
 
-  // [Gemini, 2026-03] Enable server-side tool invocation visibility for hosted tools
-  // Streams toolCall/toolResponse parts showing real-time hosted tool activity (search queries, URL fetches, etc.)
-  // Deny-based so future models (gemini-4, etc.) are included automatically
-  if (_addedHostedTool) {
-    const missingContextCirculation = ['gemini-2.', '-image-preview', 'nano-banana', 'deep-research'];
-    if (!missingContextCirculation.some((p) => model.id.includes(p)))
-      payload.toolConfig = { ...payload.toolConfig, includeServerSideToolInvocations: true };
+
+  // --- Custom tools (function calling) ---
+
+  const hasUserTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+
+  // Tool Context Circulation: Gemini 3+ can combine hosted + custom tools and expose server-side tool invocations.
+  // - https://ai.google.dev/gemini-api/docs/tool-combination
+  // - AUTO mode is NOT supported - forces VALIDATED.
+  // Deny-list: models WITHOUT tool context circulation (pre-Gemini 3, image models, deep research)
+  const _noToolContextCirculation = ['gemini-2.', '-image-preview', 'nano-banana', 'deep-research'];
+  const hasToolContextCirculation = !_noToolContextCirculation.some((p) => model.id.includes(p));
+
+  // [NO-CIRCULATION] can't combine hosted + custom tools with restrictive policies - custom wins -> wipe hosted if any
+  const hasUserRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  if (_addedHostedTools && hasUserTools && !hasToolContextCirculation && hasUserRestrictivePolicy) {
+    _addedHostedTools = false;
+    payload.tools = undefined; // wipe
+  }
+
+  // Function Calls
+  if (chatGenerate.tools) {
+    payload.tools = [
+      ...payload.tools || [],
+      ..._toGeminiTools(chatGenerate.tools)
+    ];
+    if (chatGenerate.toolsPolicy)
+      payload.toolConfig = _toGeminiToolConfig(chatGenerate.toolsPolicy);
+  }
+
+  // [CIRCULATION] Enables server-side tool invocation visibility (toolCall/toolResponse parts in the stream). For:
+  //  A. hosted+custom on Gemini 3+ -> circulation + VALIDATED
+  //  B. hosted-only on Gemini 3+ -> circulation
+  //  C. hosted on Gemini 2.x -> tools work without circulation
+  //  D. custom-only -> no circulation needed.
+  if (_addedHostedTools && hasToolContextCirculation) {
+    payload.toolConfig = { ...payload.toolConfig, includeServerSideToolInvocations: true };
+
+    // When combining hosted + custom tools, AUTO mode is not supported - force VALIDATED
+    if (hasUserTools && payload.toolConfig?.functionCallingConfig?.mode === 'AUTO')
+      payload.toolConfig.functionCallingConfig.mode = 'VALIDATED';
   }
 
 
@@ -395,7 +414,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
                   functionResponseResponse = part.response.result;
                 }
               }
-              parts.push(GeminiWire_ContentParts.FunctionResponsePart({ id: part.id, name: part.response._name || part.id, response: functionResponseResponse }));
+              parts.push(GeminiWire_ContentParts.FunctionResponsePart({ id: part.id, name: part.response.name || part.id, response: functionResponseResponse }));
               break;
             case 'code_execution':
               parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));
