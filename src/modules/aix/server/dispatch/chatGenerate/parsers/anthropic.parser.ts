@@ -397,8 +397,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 if (stoppedBlock.input)
                   try {
                     const input = typeof stoppedBlock.input === 'string' ? JSON.parse(stoppedBlock.input) : stoppedBlock.input;
-                    if (typeof input === 'object' && typeof input.code === 'string')
-                      iTexts = [_ellipsizeContext(input.code)];
+                    const codeOrCommandText = typeof input === 'object' ? (typeof input.code === 'string' ? input.code : typeof input.command === 'string' ? input.command : undefined) : undefined;
+                    if (codeOrCommandText)
+                      iTexts = [_ellipsizeContext(codeOrCommandText)];
                   } catch { /* ignore parse errors */ }
                 const execText = stoppedBlock.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
                 pt.sendOperationState('code-exec', execText, { opId: stoppedBlock.id, ...iTexts && { iTexts } });
@@ -826,7 +827,12 @@ function _handleCBS_BashCodeExecutionToolResult(pt: IParticleTransmitter, block:
   const opId = block.tool_use_id;
   switch (block.content.type) {
     case 'bash_code_execution_result':
-      pt.sendOperationState('code-exec', 'Bash executed', { opId, state: 'done' });
+      const oTexts: string[] = [];
+      if (block.content.stdout)
+        oTexts.push(_ellipsizeContext(block.content.stdout));
+      if (block.content.stderr)
+        oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
+      pt.sendOperationState('code-exec', 'Bash executed', { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
 
       // add text if there are generated files in content array
       const fileIds: string[] = [];
