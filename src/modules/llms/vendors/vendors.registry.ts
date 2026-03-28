@@ -16,6 +16,7 @@ import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenPipe } from './openpipe/openpipe.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
+import { ModelVendorTensorix } from './tensorix/tensorix.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
 import { ModelVendorXAI } from './xai/xai.vendor';
 import { ModelVendorZAI } from './zai/zai.vendor';
@@ -40,6 +41,7 @@ export type ModelVendorId =
   | 'openpipe'
   | 'openrouter'
   | 'perplexity'
+  | 'tensorix'
   | 'togetherai'
   | 'xai'
   | 'zai'
@@ -63,6 +65,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   openpipe: ModelVendorOpenPipe,
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
+  tensorix: ModelVendorTensorix,
   togetherai: ModelVendorTogetherAI,
   xai: ModelVendorXAI,
   zai: ModelVendorZAI,
