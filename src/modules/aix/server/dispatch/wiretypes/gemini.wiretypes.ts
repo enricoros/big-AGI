@@ -447,8 +447,8 @@ export namespace GeminiWire_ToolDeclarations {
         'AUTO',
         /**
          * The model is constrained to always predict a function call.
-         * If allowed_function_names is provided, the model picks from the set of allowed functions.
-         * Also used to force a specific function by setting allowed_function_names to a single function name.
+         * If allowedFunctionNames is provided, the model picks from the set of allowed functions.
+         * Also used to force a specific function by setting allowedFunctionNames to a single function name.
          */
         'ANY',
         /**
@@ -463,7 +463,8 @@ export namespace GeminiWire_ToolDeclarations {
          */
         'VALIDATED',
       ]).optional(),
-      allowedFunctionNames: z.array(z.string()).optional(),
+      allowedFunctionNames: z.array(z.string()).optional(), // for ANY and VALIDATED
+      // [DO-NOT-IMPL] streamFunctionCallArguments: z.boolean().optional(), // streams partial FC args via FunctionCall.partialArgs - not needed
     }).optional(),
 
     // configuration for retrieval tools (Google Search, URL Context)
@@ -505,6 +506,13 @@ export namespace GeminiWire_Safety {
     'HARM_CATEGORY_SEXUALLY_EXPLICIT',
     'HARM_CATEGORY_DANGEROUS_CONTENT',
     'HARM_CATEGORY_CIVIC_INTEGRITY', // 2025-01-10
+    // [Gemini, 2026-03] Image safety classifications:
+    'HARM_CATEGORY_IMAGE_HATE',
+    'HARM_CATEGORY_IMAGE_DANGEROUS_CONTENT',
+    'HARM_CATEGORY_IMAGE_HARASSMENT',
+    'HARM_CATEGORY_IMAGE_SEXUALLY_EXPLICIT',
+    // [Gemini, 2026-03] Jailbreak detection:
+    'HARM_CATEGORY_JAILBREAK',
   ]);
 
   export const HarmProbability_enum = z.enum([
@@ -683,8 +691,13 @@ export namespace GeminiWire_API_Generate_Content {
     imageConfig: z.object({
       /** Controls the aspect ratio of generated images */
       aspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
-      /** [Gemini, 2025-11-20] Undocumented yet */
+      /** [Gemini, 2025-11-20] Controls output resolution */
       imageSize: z.enum(['1K', '2K', '4K']).optional(),
+      /** [Gemini, 2026-03] 4 new fields - Unused yet */
+      personGeneration: z.enum(['DONT_ALLOW', 'ALLOW_ADULT', 'ALLOW_ALL']).optional(),
+      prominentPeople: z.enum(['PROMINENT_PEOPLE_UNSPECIFIED', 'ALLOW_PROMINENT_PEOPLE', 'BLOCK_PROMINENT_PEOPLE']).optional(),
+      outputMimeType: z.string().optional(), // e.g. 'image/jpeg', 'image/png'
+      outputCompressionQuality: z.number().int().optional(), // JPEG compression quality, 0-100
     }).optional(),
 
     // Added on 2025-01-10 - Low-level - not requested/used yet but added
@@ -709,6 +722,8 @@ export namespace GeminiWire_API_Generate_Content {
     systemInstruction: GeminiWire_Messages.SystemInstruction_schema.optional(),
     generationConfig: GenerationConfig_schema.optional(),
     cachedContent: z.string().optional(),
+    /** (Not useful to us) Configures the logging behavior for a given request. */
+    store: z.boolean().optional(),
   });
 
   // Response
@@ -946,6 +961,11 @@ export namespace GeminiWire_API_Generate_Content {
       .optional(), // [Gemini, 2025-11-07] relaxed to optional for proxy error cases
     /** (we ignore this) Unique identifier for the response, for log/debug */
     responseId: z.string().optional(),
+    /** (Not useful to us) Current model lifecycle status */
+    modelStatus: z.object({
+      lifecycleStage: z.enum(['MODEL_STAGE_UNSPECIFIED', 'STABLE', 'EXPERIMENTAL', 'DEPRECATED']).or(z.string()).optional(),
+      deprecationDate: z.string().optional(), // ISO date format
+    }).optional(),
   });
 
 }
