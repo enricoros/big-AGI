@@ -266,8 +266,8 @@ export const useModelsStore = create<LlmsStore>()(persist(
     resetServiceUserParameters: (serviceId: DModelsServiceId) =>
       set(({ llms }) => ({
         llms: llms.map((llm: DLLM): DLLM => {
-          if (llm.sId !== serviceId) return llm;
-          // strip away user parameters and user label
+          if (llm.sId !== serviceId || llm.isUserClone) return llm;
+          // strip away user parameters and user label (skip user-cloned models)
           const {
             userParameters,
             userLabel, // service-wide reset includes resetting the name
