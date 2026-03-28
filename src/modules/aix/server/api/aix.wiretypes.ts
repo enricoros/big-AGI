@@ -179,7 +179,7 @@ export namespace AixWire_Parts {
 
   const _FunctionCallInvocation_schema = z.object({
     type: z.literal('function_call'),
-    name: z.string(),
+    name: z.string(), // function name
     args: z.string(), //.nullable(), // 2024-11-03: disabled .nullable(), as we'll use '' for no args (which some APIs weirdly don't support so we'll mock downstream as '{}')
     // _description: z.string().optional(),
     // _args_schema: z.object({}).optional(),
@@ -206,7 +206,8 @@ export namespace AixWire_Parts {
   const _FunctionCallResponse_schema = z.object({
     type: z.literal('function_call'),
     result: z.string(),
-    _name: z.string().optional(),
+    /** Function name - must match the _FunctionCallDeclaration.name for the Gemini API */
+    name: z.string().optional(),
   });
 
   const _CodeExecutionResponse_schema = z.object({
@@ -314,7 +315,7 @@ export namespace AixWire_Tooling {
 
   /// Function Call Tool Definition
 
-  const _FunctionCall_schema = z.object({
+  const _FunctionCallDeclaration_schema = z.object({
     /**
      * The name of the function to call. Up to 64 characters long, and can only contain letters, numbers, underscores, and hyphens.
      */
@@ -349,7 +350,7 @@ export namespace AixWire_Tooling {
 
   const _FunctionCallTool_schema = z.object({
     type: z.literal('function_call'),
-    function_call: _FunctionCall_schema,
+    function_call: _FunctionCallDeclaration_schema,
     // domain: z.enum(['server', 'client']).optional(),
   });
 
