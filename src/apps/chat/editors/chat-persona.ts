@@ -296,9 +296,14 @@ export async function runPersonaOnConversationHead(
 
   flushPendingStreamMessageUpdate(true);
 
+  const shouldSkipErrorCommit = messageStatus.outcome === 'errored'
+    && assistantMessageId
+    && !!runOptions?.existingAssistantMessageId
+    && !createPlaceholder;
+
   // final message update (needed only in case of error)
   const lastDeepCopy = structuredClone(messageStatus.lastDMessage);
-  if (messageStatus.outcome === 'errored' && assistantMessageId)
+  if (messageStatus.outcome === 'errored' && assistantMessageId && !shouldSkipErrorCommit)
     cHandler.messageEdit(assistantMessageId, lastDeepCopy, true, false);
 
   // special case: if the last message was aborted and had no content, delete it

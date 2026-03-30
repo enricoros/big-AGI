@@ -16,6 +16,9 @@ export interface ChatExecutionEphemeralHandle {
   updateText: (text: string) => void;
   updateState: (state: object) => void;
   markAsDone: () => void;
+  getState?: () => object;
+  getText?: () => string;
+  replaceWithExisting?: (parentToolInvocationId: string, state: object) => boolean;
 }
 
 export interface ChatExecutionSession {

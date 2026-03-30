@@ -4,8 +4,9 @@ import { persist } from 'zustand/middleware';
 import { defaultSystemPurposeId, sanitizeSystemPurposeId } from '../../../data';
 import type { SystemPurposeId } from '../../../data';
 
-import type { DConversationParticipant, DConversationTurnTerminationMode } from './chat.conversation';
+import type { DConversationParticipant, DConversationTurnTerminationMode, DConversationTurnsOrder } from './chat.conversation';
 import {
+  sanitizeConversationTurnsOrder,
   sanitizeConversationTurnTerminationMode,
   sanitizeCouncilMaxRounds,
   sanitizeCouncilTraceAutoCollapsePreviousRounds,
@@ -18,6 +19,7 @@ export interface DAgentGroupSnapshot {
   name: string;
   systemPurposeId: SystemPurposeId;
   turnTerminationMode: DConversationTurnTerminationMode;
+  turnsOrder: DConversationTurnsOrder;
   councilMaxRounds?: number | null;
   councilTraceAutoCollapsePreviousRounds?: boolean;
   councilTraceAutoExpandNewestRound?: boolean;
@@ -65,6 +67,7 @@ const normalizeAgentGroupSnapshot = (snapshot: Partial<DAgentGroupSnapshot> & Re
   name: typeof snapshot.name === 'string' && snapshot.name.trim() ? snapshot.name.trim() : 'Untitled group',
   systemPurposeId: sanitizeSystemPurposeId(snapshot.systemPurposeId),
   turnTerminationMode: sanitizeConversationTurnTerminationMode(snapshot.turnTerminationMode),
+  turnsOrder: sanitizeConversationTurnsOrder(snapshot.turnsOrder),
   councilMaxRounds: sanitizeCouncilMaxRounds(snapshot.councilMaxRounds ?? snapshot.consensusMaxRounds),
   councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(snapshot.councilTraceAutoCollapsePreviousRounds),
   councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(snapshot.councilTraceAutoExpandNewestRound),
@@ -201,7 +204,7 @@ export const useChatAgentGroupsStore = create<AgentGroupsStore>()(persist(
   }),
   {
     name: 'app-chat-agent-groups',
-    version: 4,
+    version: 5,
     migrate: migratePersistedAgentGroupsState,
   },
 ));

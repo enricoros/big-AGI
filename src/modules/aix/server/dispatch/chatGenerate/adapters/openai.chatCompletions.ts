@@ -69,6 +69,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (hotFixAlternateUserAssistantRoles)
     chatMessages = _fixAlternateUserAssistantRoles(chatMessages);
 
+  if (openAIDialect === 'openrouter')
+    chatMessages = _fixEnsureTrailingUserMessage(chatMessages);
+
 
   // constrained output modes - both JSON and tool invocations
   // const strictJsonOutput = !!model.strictJsonOutput;
@@ -367,6 +370,17 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
     acc.push(historyItem);
     return acc;
   }, [] as TRequestMessages);
+}
+
+function _fixEnsureTrailingUserMessage(chatMessages: TRequestMessages): TRequestMessages {
+  const lastMessage = chatMessages[chatMessages.length - 1];
+  if (!lastMessage || lastMessage.role === 'user' || lastMessage.role === 'tool')
+    return chatMessages;
+
+  return [
+    ...chatMessages,
+    { role: 'user', content: [{ type: 'text', text: '' }] },
+  ];
 }
 
 function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessages {

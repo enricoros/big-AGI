@@ -15,6 +15,7 @@ import {
   createDConversation,
   createHumanConversationParticipant,
   DConversation,
+  sanitizeConversationTurnsOrder,
   sanitizeConversationTurnTerminationMode,
   sanitizeCouncilMaxRounds,
   sanitizeCouncilTraceAutoCollapsePreviousRounds,
@@ -90,6 +91,7 @@ export namespace V4ToHeadConverters {
 
     c.participants = [humanParticipant, ...assistantParticipants];
     c.turnTerminationMode = sanitizeConversationTurnTerminationMode((c as any).turnTerminationMode);
+    c.turnsOrder = sanitizeConversationTurnsOrder((c as any).turnsOrder);
     c.councilMaxRounds = sanitizeCouncilMaxRounds((c as any).consensusMaxRounds ?? (c as any).councilMaxRounds);
     c.councilTraceAutoCollapsePreviousRounds = sanitizeCouncilTraceAutoCollapsePreviousRounds((c as any).councilTraceAutoCollapsePreviousRounds);
     c.councilTraceAutoExpandNewestRound = sanitizeCouncilTraceAutoExpandNewestRound((c as any).councilTraceAutoExpandNewestRound);

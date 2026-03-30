@@ -567,7 +567,7 @@ export function ChatMessageList(props: {
   isMobile: boolean,
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string, addSplitPane: boolean) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId) => Promise<void>,
+  onConversationExecuteHistory: (conversationId: DConversationId, executeCallerNameDebug?: string) => Promise<void>,
   onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean, agentGroupSnapshot?: DAgentGroupSnapshot | null) => void,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
@@ -725,8 +725,11 @@ export function ChatMessageList(props: {
 
   const handleMessageAssistantFrom = React.useCallback(async (messageId: DMessageId, offset: number) => {
     if (conversationId && conversationHandler) {
+      const targetMessage = conversationHandler.historyFindMessageOrThrow(messageId);
       conversationHandler.historyTruncateTo(messageId, offset);
-      await onConversationExecuteHistory(conversationId);
+      if (targetMessage?.role === 'assistant')
+        conversationHandler.messagesDelete([messageId]);
+      await onConversationExecuteHistory(conversationId, targetMessage?.role === 'assistant' ? `chat-retry-message:${messageId}` : undefined);
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 

@@ -12,6 +12,7 @@ import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 export type DConversationParticipantSpeakWhen = 'every-turn' | 'when-mentioned';
 export type DConversationTurnTerminationMode = 'round-robin-per-human' | 'continuous' | 'council';
 export type DConversationTurnTerminationModeLegacy = DConversationTurnTerminationMode | 'consensus';
+export type DConversationTurnsOrder = 'custom' | 'random';
 export type DPersistedCouncilSessionStatus = 'paused' | 'interrupted' | 'stopped' | 'completed';
 
 export const DEFAULT_COUNCIL_MAX_ROUNDS = null;
@@ -60,6 +61,10 @@ export function sanitizeConversationTurnTerminationMode(value: unknown): DConver
   return 'round-robin-per-human';
 }
 
+export function sanitizeConversationTurnsOrder(value: unknown): DConversationTurnsOrder {
+  return value === 'random' ? 'random' : 'custom';
+}
+
 export interface DPersistedCouncilSession {
   status: DPersistedCouncilSessionStatus;
   executeMode: 'generate-content' | null;
@@ -106,6 +111,7 @@ export interface DConversation {
   systemPurposeId: SystemPurposeId;   // primary AI participant persona for backward compatibility
   participants?: DConversationParticipant[]; // persistent AI participant roster, primary participant first
   turnTerminationMode?: DConversationTurnTerminationMode;
+  turnsOrder?: DConversationTurnsOrder;
   councilMaxRounds?: number | null;
   councilTraceAutoCollapsePreviousRounds?: boolean;
   councilTraceAutoExpandNewestRound?: boolean;
@@ -254,6 +260,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
       createAssistantConversationParticipant(systemPurposeId || defaultSystemPurposeId, null, undefined, 'every-turn', true),
     ],
     turnTerminationMode: 'round-robin-per-human',
+    turnsOrder: 'custom',
     // @deprecated
     tokenCount: 0,
 
@@ -298,6 +305,7 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
       councilOpLog: structuredClone(conversation.councilOpLog),
     } : {}),
     turnTerminationMode: conversation.turnTerminationMode ?? 'round-robin-per-human',
+    turnsOrder: sanitizeConversationTurnsOrder(conversation.turnsOrder),
     councilMaxRounds: sanitizeCouncilMaxRounds(conversation.councilMaxRounds),
     councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(conversation.councilTraceAutoCollapsePreviousRounds),
     councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(conversation.councilTraceAutoExpandNewestRound),

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, Input, Option, Select, Stack, Typography } from '@mui/joy';
 
-import type { DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
+import type { DConversationTurnTerminationMode, DConversationTurnsOrder } from '~/common/stores/chat/chat.conversation';
 
 export const TURN_TERMINATION_MODE_OPTIONS: Record<DConversationTurnTerminationMode, {
   title: string;
@@ -22,11 +22,27 @@ export const TURN_TERMINATION_MODE_OPTIONS: Record<DConversationTurnTerminationM
   },
 };
 
+export const TURNS_ORDER_OPTIONS: Record<DConversationTurnsOrder, {
+  title: string;
+  description: string;
+}> = {
+  custom: {
+    title: 'Custom order',
+    description: 'Use the roster order you set manually.',
+  },
+  random: {
+    title: 'Random order',
+    description: 'Shuffle the roster each turn and show agents in that shuffled order.',
+  },
+};
+
 export function ChatBarChatSettingsPanel(props: {
   agentGroupNameDraft: string;
   onAgentGroupNameDraftChange: (value: string) => void;
   turnTerminationMode: DConversationTurnTerminationMode;
   onTurnTerminationModeChange: (_event: React.SyntheticEvent | null, value: string | null) => void;
+  turnsOrder: DConversationTurnsOrder;
+  onTurnsOrderChange: (_event: React.SyntheticEvent | null, value: string | null) => void;
   councilMaxRoundsDraft: string;
   onCouncilMaxRoundsDraftChange: (value: string) => void;
   onCouncilMaxRoundsCommit: () => void;
@@ -92,6 +108,30 @@ export function ChatBarChatSettingsPanel(props: {
             </Button>
           </Stack>
         )}
+      </Box>
+
+      <Box sx={{ display: 'grid', gap: 0.5 }}>
+        <Typography level='body-sm'>Turns order</Typography>
+        <Select
+          size='sm'
+          value={props.turnsOrder}
+          onChange={props.onTurnsOrderChange}
+          renderValue={(option) => option ? TURNS_ORDER_OPTIONS[option.value as DConversationTurnsOrder].title : ''}
+        >
+          {(Object.entries(TURNS_ORDER_OPTIONS) as [DConversationTurnsOrder, (typeof TURNS_ORDER_OPTIONS)[DConversationTurnsOrder]][]).map(([value, mode]) => (
+            <Option key={value} value={value}>
+              <Box sx={{ display: 'grid', gap: 0.25 }}>
+                <Typography level='body-sm'>{mode.title}</Typography>
+                <Typography level='body-xs' sx={{ color: 'text.tertiary', whiteSpace: 'normal' }}>
+                  {mode.description}
+                </Typography>
+              </Box>
+            </Option>
+          ))}
+        </Select>
+        <Typography level='body-xs' sx={{ color: 'text.tertiary' }}>
+          {TURNS_ORDER_OPTIONS[props.turnsOrder].description}
+        </Typography>
       </Box>
 
       {props.turnTerminationMode === 'council' && (

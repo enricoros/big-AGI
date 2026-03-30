@@ -5,7 +5,7 @@ import type { PersonaRunResult, PersonaRunOptions } from './chat-persona';
 import { applyMessageChannelScope } from './chat-persona';
 
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
-
+import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { createDMessageEmpty, createDMessageTextContent, duplicateDMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import type { DMessageContentFragment, DMessageFragment, DMessageToolInvocationPart } from '~/common/stores/chat/chat.fragments';
@@ -26,6 +26,7 @@ const subagentTool = {
 
 type ToolLoopContext = {
   depth: number;
+  allowSubagentDelegation?: boolean;
 };
 
 type ToolHandlerResult = {
@@ -54,8 +55,18 @@ function composeRequestTransforms(
   return request => nextTransform(baseTransform ? baseTransform(request) : request);
 }
 
+function composeRequestTransformsReverse(
+  baseTransform: PersonaRunOptions['requestTransform'] | undefined,
+  nextTransform: NonNullable<PersonaRunOptions['requestTransform']>,
+): PersonaRunOptions['requestTransform'] {
+  return request => baseTransform ? baseTransform(nextTransform(request)) : nextTransform(request);
+}
+
 function createSubagentRequestTransform(): NonNullable<PersonaRunOptions['requestTransform']> {
   return request => {
+    if ((request as AixAPIChatGenerate_Request & { __disallowSubagentDelegation?: boolean }).__disallowSubagentDelegation)
+      return request;
+
     const existingTools = request.tools ?? [];
     const hasSubagentTool = existingTools.some(tool =>
       tool.type === 'function_call' && tool.function_call.name === SUBAGENT_TOOL_NAME,
@@ -75,21 +86,23 @@ function getPendingClientToolInvocations(
   executableToolNames: ReadonlySet<string>,
 ): FunctionToolInvocation[] {
   const contentFragments = fragments.filter((fragment): fragment is DMessageContentFragment => isContentFragment(fragment));
-  const respondedIds = new Set<string>();
+  const latestInvocationById = new Map<string, FunctionToolInvocation>();
+  const latestResponseById = new Set<string>();
   const pendingInvocations: FunctionToolInvocation[] = [];
 
   for (const fragment of contentFragments) {
+    if (isToolInvocationPart(fragment.part) && fragment.part.invocation.type === 'function_call') {
+      if (executableToolNames.has(fragment.part.invocation.name))
+        latestInvocationById.set(fragment.part.id, fragment.part as FunctionToolInvocation);
+      continue;
+    }
     if (isToolResponseFunctionCallPart(fragment.part))
-      respondedIds.add(fragment.part.id);
+      latestResponseById.add(fragment.part.id);
   }
 
-  for (const fragment of contentFragments) {
-    if (!isToolInvocationPart(fragment.part) || fragment.part.invocation.type !== 'function_call')
-      continue;
-    if (!executableToolNames.has(fragment.part.invocation.name) || respondedIds.has(fragment.part.id))
-      continue;
-    pendingInvocations.push(fragment.part as FunctionToolInvocation);
-  }
+  for (const [invocationId, invocation] of latestInvocationById.entries())
+    if (!latestResponseById.has(invocationId))
+      pendingInvocations.push(invocation);
 
   return pendingInvocations;
 }
@@ -119,6 +132,28 @@ function buildAssistantHistoryMessage(params: {
     applyMessageChannelScope(assistantMessage, params.messageChannel);
   assistantMessage.updated = assistantMessage.created;
   return assistantMessage;
+}
+
+function buildToolFollowUpHistory(params: {
+  baseHistory: Readonly<DMessage[]>;
+  assistantMessage: DMessage;
+}): DMessage[] {
+  const history = params.baseHistory.map(message => duplicateDMessage(message, false));
+  const toolFollowUpMessage = createDMessageEmpty('user');
+  toolFollowUpMessage.fragments = cloneMessageFragments(params.assistantMessage.fragments).map(fragment =>
+    fragment.ft === 'content' && fragment.part.pt === 'text'
+      ? {
+          ...fragment,
+          part: {
+            ...fragment.part,
+            text: fragment.part.text.trimEnd(),
+          },
+        }
+      : fragment,
+  );
+  toolFollowUpMessage.updated = toolFollowUpMessage.created;
+  history.push(toolFollowUpMessage);
+  return history;
 }
 
 function cloneMessageFragments<TFragment extends DMessageFragment>(fragments: readonly TFragment[] | null | undefined): TFragment[] {
@@ -156,7 +191,8 @@ function createSubagentUserMessage(prompt: string): DMessage {
     '',
     'You are an ephemeral subagent.',
     'Work only on the delegated task using the shared conversation context and the same available tools.',
-    'Return only the result your parent agent should use next.',
+    'After using any delegated tools, you must still send a final visible assistant reply that summarizes the result for your parent agent.',
+    'Do not stop after a tool result or internal progress update.',
   ].join('\n'));
 }
 
@@ -242,6 +278,14 @@ function createSubagentToolHandlers(
         parentMessageId,
         parentToolInvocationId: invocation.id,
       });
+      if (ephemeral.replaceWithExisting?.(invocation.id, ephemeral.getState?.() ?? {}))
+        return {
+          error: false,
+          result: JSON.stringify({
+            ok: true,
+            message: '',
+          }),
+        };
 
       try {
         const childHistory = [
@@ -261,6 +305,7 @@ function createSubagentToolHandlers(
           },
         }, executePersona, {
           depth: context.depth + 1,
+          allowSubagentDelegation: false,
         }, (message, messageComplete) => {
           const visibleText = messageFragmentsReduceText(message.fragments ?? []).trim();
           const progressStatus: SubagentProgressStatus = messageComplete
@@ -366,10 +411,16 @@ export async function runPersonaWithEphemeralSubagents(
   const managesAbortController = !params.sharedAbortController && !params.keepAbortController;
   const toolHandlers = createSubagentToolHandlers(params, executePersona, context, loopAbortController);
   const executableToolNames = new Set(toolHandlers.keys());
-  const baseRequestTransform = composeRequestTransforms(
-    params.runOptions?.requestTransform,
-    createSubagentRequestTransform(),
-  );
+  const baseRequestTransform: PersonaRunOptions['requestTransform'] = request => {
+    const requestWithDelegationFlag = {
+      ...request,
+      __disallowSubagentDelegation: context.allowSubagentDelegation === false,
+    } as AixAPIChatGenerate_Request & { __disallowSubagentDelegation?: boolean };
+    return composeRequestTransforms(
+      params.runOptions?.requestTransform,
+      createSubagentRequestTransform(),
+    )?.(requestWithDelegationFlag) ?? requestWithDelegationFlag;
+  };
 
   if (managesAbortController)
     params.session.setAbortController(loopAbortController, 'chat-persona-tool-loop');
@@ -433,6 +484,12 @@ export async function runPersonaWithEphemeralSubagents(
         throw new Error('tool loop invariant: missing last result');
 
       const pendingInvocations = getPendingClientToolInvocations(lastResult.finalMessage.fragments, executableToolNames);
+      const terminalIssueDetected = !!assistantMessageId && lastResult.finalMessage.fragments.some(fragment =>
+        fragment.ft === 'content'
+        && fragment.part.pt === 'error',
+      );
+      if (terminalIssueDetected)
+        return lastResult;
       if (!pendingInvocations.length || loopAbortController.signal.aborted)
         return lastResult;
       let accumulatedResult: PersonaRunResult = lastResult;
@@ -475,22 +532,23 @@ export async function runPersonaWithEphemeralSubagents(
         onLoopStreamUpdate?.(accumulatedResult.finalMessage, false);
       }
 
-      currentHistory = [
-        ...baseHistory,
-        assistantMessageId
-          ? duplicateDMessage(params.session.historyFindMessageOrThrow(assistantMessageId) ?? buildAssistantHistoryMessage({
-            participant: params.participant,
-            assistantLlmId: params.assistantLlmId,
-            message: accumulatedResult.finalMessage,
-            messageChannel: params.messageChannel,
-          }), false)
-          : buildAssistantHistoryMessage({
-            participant: params.participant,
-            assistantLlmId: params.assistantLlmId,
-            message: accumulatedResult.finalMessage,
-            messageChannel: params.messageChannel,
-          }),
-      ];
+      const assistantHistoryMessage = assistantMessageId
+        ? duplicateDMessage(params.session.historyFindMessageOrThrow(assistantMessageId) ?? buildAssistantHistoryMessage({
+          participant: params.participant,
+          assistantLlmId: params.assistantLlmId,
+          message: accumulatedResult.finalMessage,
+          messageChannel: params.messageChannel,
+        }), false)
+        : buildAssistantHistoryMessage({
+          participant: params.participant,
+          assistantLlmId: params.assistantLlmId,
+          message: accumulatedResult.finalMessage,
+          messageChannel: params.messageChannel,
+        });
+      currentHistory = buildToolFollowUpHistory({
+        baseHistory,
+        assistantMessage: assistantHistoryMessage,
+      });
       firstPass = false;
     }
 
@@ -498,6 +556,7 @@ export async function runPersonaWithEphemeralSubagents(
       ...params,
       keepAbortController: true,
       sharedAbortController: loopAbortController,
+      sourceHistory: currentHistory,
       runOptions: {
         ...params.runOptions,
         requestTransform: baseRequestTransform,

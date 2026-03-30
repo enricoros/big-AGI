@@ -21,6 +21,8 @@ test('settings panel shows the council max rounds control only in council mode',
       onAgentGroupNameDraftChange={() => undefined}
       turnTerminationMode='council'
       onTurnTerminationModeChange={() => undefined}
+      turnsOrder='custom'
+      onTurnsOrderChange={() => undefined}
       councilMaxRoundsDraft=''
       onCouncilMaxRoundsDraftChange={() => undefined}
       onCouncilMaxRoundsCommit={() => undefined}
@@ -45,6 +47,8 @@ test('settings panel shows the council max rounds control only in council mode',
       onAgentGroupNameDraftChange={() => undefined}
       turnTerminationMode='round-robin-per-human'
       onTurnTerminationModeChange={() => undefined}
+      turnsOrder='custom'
+      onTurnsOrderChange={() => undefined}
       councilMaxRoundsDraft='7'
       onCouncilMaxRoundsDraftChange={() => undefined}
       onCouncilMaxRoundsCommit={() => undefined}
@@ -61,6 +65,37 @@ test('settings panel shows the council max rounds control only in council mode',
   assert.match(roundRobinMarkup, /Set all to only mention/);
 });
 
+test('settings panel shows turns order options and help text', () => {
+  const source = readFileSync(new URL('./ChatBarChat.settings.tsx', import.meta.url), 'utf8');
+
+  assert.match(source, /Turns order/);
+  assert.match(source, /Custom order/);
+  assert.match(source, /Random order/);
+
+  const markup = renderToStaticMarkup(
+    <ChatBarChatSettingsPanel
+      agentGroupNameDraft='Agents 2'
+      onAgentGroupNameDraftChange={() => undefined}
+      turnTerminationMode='round-robin-per-human'
+      onTurnTerminationModeChange={() => undefined}
+      turnsOrder='random'
+      onTurnsOrderChange={() => undefined}
+      councilMaxRoundsDraft=''
+      onCouncilMaxRoundsDraftChange={() => undefined}
+      onCouncilMaxRoundsCommit={() => undefined}
+      canBulkSetSpeakWhen
+      canSetAllParticipantsEveryTurn
+      canSetAllParticipantsOnlyMention
+      onSetAllParticipantsEveryTurn={() => undefined}
+      onSetAllParticipantsOnlyMention={() => undefined}
+    />,
+  );
+
+  assert.match(markup, /Turns order/);
+  assert.match(markup, /Shuffle the roster each turn and show agents in that shuffled order\./);
+  assert.match(markup, /Shuffle the roster each turn and show agents in that shuffled order\./);
+});
+
 test('settings panel shows bulk speak controls for every turn termination mode when assistants are editable', () => {
   const continuousMarkup = renderToStaticMarkup(
     <ChatBarChatSettingsPanel
@@ -68,6 +103,8 @@ test('settings panel shows bulk speak controls for every turn termination mode w
       onAgentGroupNameDraftChange={() => undefined}
       turnTerminationMode='continuous'
       onTurnTerminationModeChange={() => undefined}
+      turnsOrder='custom'
+      onTurnsOrderChange={() => undefined}
       councilMaxRoundsDraft='7'
       onCouncilMaxRoundsDraftChange={() => undefined}
       onCouncilMaxRoundsCommit={() => undefined}

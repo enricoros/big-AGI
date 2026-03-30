@@ -34,6 +34,9 @@ test('expanded agent cards expose import and export actions', () => {
   );
   assert.match(source, /const handleAgentExport = React\.useCallback/);
   assert.match(source, /const handleAgentImport = React\.useCallback/);
+  assert.match(source, /const handleAgentDuplicate = React\.useCallback/);
+  assert.match(source, /import ContentCopyIcon from '@mui\/icons-material\/ContentCopy';/);
+  assert.match(source, />\s*Duplicate Agent\s*</);
   assert.match(source, />\s*Export Agent\s*</);
   assert.match(source, />\s*Import Agent\s*</);
 });

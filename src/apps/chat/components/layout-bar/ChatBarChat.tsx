@@ -12,6 +12,7 @@ import Dropdown from '@mui/joy/Dropdown';
 
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
@@ -27,6 +28,7 @@ import {
   createAssistantConversationParticipant,
   DConversationParticipant,
   DConversationTurnTerminationMode,
+  DConversationTurnsOrder,
   generateAssistantParticipantName,
   sanitizeCouncilMaxRounds,
   sanitizeCouncilTraceAutoCollapsePreviousRounds,
@@ -59,7 +61,7 @@ import {
   PARTICIPANT_REASONING_MODEL_SETTING_VALUE,
 } from './ChatBarChat.reasoning';
 import { createUniqueAgentName, getActiveAgentGroup, getAgentGroupSaveMode, getAgentSaveMode, getAssistantParticipantsSpeakWhenSummary, setAssistantParticipantsSpeakWhen } from './ChatBarChat.agentGroup';
-import { ChatBarChatSettingsPanel, TURN_TERMINATION_MODE_OPTIONS } from './ChatBarChat.settings';
+import { ChatBarChatSettingsPanel, TURNS_ORDER_OPTIONS, TURN_TERMINATION_MODE_OPTIONS } from './ChatBarChat.settings';
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
 import { useFolderDropdown } from './useFolderDropdown';
@@ -136,12 +138,14 @@ export function ChatBarChat(props: {
     messages,
     systemPurposeId,
     turnTerminationMode,
+    turnsOrder,
     councilMaxRounds,
     councilTraceAutoCollapsePreviousRounds,
     councilTraceAutoExpandNewestRound,
     activeAgentGroupId,
     setParticipants,
     setTurnTerminationMode,
+    setTurnsOrder,
     setCouncilMaxRounds,
     setCouncilTraceAutoCollapsePreviousRounds,
     setCouncilTraceAutoExpandNewestRound,
@@ -156,12 +160,14 @@ export function ChatBarChat(props: {
         : conversation?.turnTerminationMode === 'council'
           ? 'council'
           : 'round-robin-per-human') as DConversationTurnTerminationMode,
+      turnsOrder: (conversation?.turnsOrder === 'random' ? 'random' : 'custom') as DConversationTurnsOrder,
       councilMaxRounds: sanitizeCouncilMaxRounds(conversation?.councilMaxRounds),
       councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(conversation?.councilTraceAutoCollapsePreviousRounds),
       councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(conversation?.councilTraceAutoExpandNewestRound),
       activeAgentGroupId: conversation?.agentGroupId ?? null,
       setParticipants: state.setParticipants,
       setTurnTerminationMode: state.setTurnTerminationMode,
+      setTurnsOrder: state.setTurnsOrder,
       setCouncilMaxRounds: state.setCouncilMaxRounds,
       setCouncilTraceAutoCollapsePreviousRounds: state.setCouncilTraceAutoCollapsePreviousRounds,
       setCouncilTraceAutoExpandNewestRound: state.setCouncilTraceAutoExpandNewestRound,
@@ -330,6 +336,7 @@ export function ChatBarChat(props: {
     assistantParticipants.every(participant => (participant.speakWhen ?? 'every-turn') === 'when-mentioned'),
   [assistantParticipants]);
   const activeTurnMode = TURN_TERMINATION_MODE_OPTIONS[turnTerminationMode];
+  const activeTurnsOrder = TURNS_ORDER_OPTIONS[turnsOrder];
   const activeTurnModeColor = turnTerminationMode === 'council'
     ? 'primary'
     : turnTerminationMode === 'continuous'
@@ -588,6 +595,12 @@ export function ChatBarChat(props: {
     setTurnTerminationMode(props.conversationId, value);
   }, [props.conversationId, setTurnTerminationMode]);
 
+  const handleTurnsOrderChange = React.useCallback((_event: React.SyntheticEvent | null, value: string | null) => {
+    if (!props.conversationId || (value !== 'custom' && value !== 'random'))
+      return;
+    setTurnsOrder(props.conversationId, value);
+  }, [props.conversationId, setTurnsOrder]);
+
   const handleCouncilMaxRoundsDraftChange = React.useCallback((value: string) => {
     if (!/^\d*$/.test(value))
       return;
@@ -808,6 +821,36 @@ export function ChatBarChat(props: {
     }
   }, [handleParticipantUpdate]);
 
+  const handleAgentDuplicate = React.useCallback((participant: DConversationParticipant) => {
+    if (!props.conversationId)
+      return;
+
+    const existingAgentNames = assistantParticipants.map(existingParticipant => existingParticipant.name);
+    const nextName = createUniqueAgentName(participant.name || 'Untitled agent', existingAgentNames);
+    const duplicatedParticipant = {
+      ...participant,
+      id: createAssistantConversationParticipant(
+        participant.personaId ?? systemPurposeId ?? defaultSystemPurposeId,
+        participant.llmId ?? null,
+        nextName,
+        participant.speakWhen ?? 'every-turn',
+        false,
+        participant.accentHue,
+        participant.reasoningEffort,
+      ).id,
+      name: nextName,
+      isLeader: false,
+    } satisfies DConversationParticipant;
+
+    setParticipants(props.conversationId, [...participants, duplicatedParticipant]);
+    setExpandedParticipantId(duplicatedParticipant.id);
+    addSnackbar({
+      key: `agent-duplicate-${duplicatedParticipant.id}`,
+      message: `"${nextName}" duplicated.`,
+      type: 'success',
+    });
+  }, [assistantParticipants, participants, props.conversationId, setParticipants, systemPurposeId]);
+
   const saveAgentGroupsToFile = React.useCallback(async (groupsToExport: DAgentGroupSnapshot[], groupName?: string) => {
     const payload = buildAgentGroupTransferFile(groupsToExport);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -902,6 +945,14 @@ export function ChatBarChat(props: {
       sx={{ maxWidth: { xs: '9rem', md: 'none' } }}
     >
       {activeTurnMode.title}
+    </Chip>
+    <Chip
+      size='sm'
+      variant='soft'
+      color={turnsOrder === 'random' ? 'warning' : 'neutral'}
+      sx={{ maxWidth: { xs: '10rem', md: 'none' } }}
+    >
+      {activeTurnsOrder.title}
     </Chip>
     <CloseablePopup
       anchorEl={participantsAnchorEl}
@@ -1129,6 +1180,8 @@ export function ChatBarChat(props: {
           onAgentGroupNameDraftChange={setAgentGroupNameDraft}
           turnTerminationMode={turnTerminationMode}
           onTurnTerminationModeChange={handleTurnTerminationModeChange}
+          turnsOrder={turnsOrder}
+          onTurnsOrderChange={handleTurnsOrderChange}
           councilMaxRoundsDraft={councilMaxRoundsDraft}
           onCouncilMaxRoundsDraftChange={handleCouncilMaxRoundsDraftChange}
           onCouncilMaxRoundsCommit={handleCouncilMaxRoundsCommit}
@@ -1468,6 +1521,23 @@ export function ChatBarChat(props: {
                         })}
                       >
                         {agentSaveMode.buttonLabel}
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='plain'
+                        color='neutral'
+                        onClick={() => handleAgentDuplicate({
+                          ...participant,
+                          name: aliasDraft.trim() || participant.name,
+                          personaId: personaDraftValue ?? null,
+                          llmId: llmDraftValue || null,
+                          customPrompt: customPromptDraft.trim() || undefined,
+                          speakWhen: speakWhenDraftValue ?? 'every-turn',
+                          reasoningEffort: reasoningEffortDraftRaw ?? undefined,
+                        })}
+                        startDecorator={<ContentCopyIcon />}
+                      >
+                        Duplicate Agent
                       </Button>
                       <Button
                         size='sm'

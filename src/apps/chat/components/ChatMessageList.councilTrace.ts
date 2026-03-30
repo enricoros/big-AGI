@@ -397,7 +397,7 @@ function buildReviewerCards(
         ? 'rejected'
         : 'waiting';
     const syntheticReviewerFailure = ballot?.decision === 'reject' && isSyntheticReviewerFailureReason(ballot.reason);
-    const syntheticFailurePresentation = syntheticReviewerFailure
+    const syntheticFailurePresentation = ballot?.decision === 'reject'
       ? getSyntheticReviewerFailurePresentation(ballot.reason)
       : null;
     const fallbackReviewText = ballot?.decision === 'accept'
@@ -534,7 +534,7 @@ function buildReviewerVoteCards(
         ? 'rejected'
         : 'waiting';
     const syntheticReviewerFailure = ballot?.decision === 'reject' && isSyntheticReviewerFailureReason(ballot.reason);
-    const syntheticFailurePresentation = syntheticReviewerFailure
+    const syntheticFailurePresentation = ballot?.decision === 'reject'
       ? getSyntheticReviewerFailurePresentation(ballot.reason)
       : null;
     const latestVoteText = visibleVoteMessageFragments
@@ -582,6 +582,10 @@ function isSyntheticReviewerFailureReason(reason: string | null | undefined): bo
     || reason === COUNCIL_REVIEW_ANALYSIS_MISSING_REASON;
 }
 
+function isCouncilReviewerServiceFailureReason(reason: string | null | undefined): boolean {
+  return !!reason && /^\[(?:Service|Dispatch|Connection) Issue\]/.test(reason);
+}
+
 function getSyntheticReviewerFailurePresentation(reason: string | null | undefined): {
   label: string;
   excerpt: string;
@@ -604,6 +608,13 @@ function getSyntheticReviewerFailurePresentation(reason: string | null | undefin
     return {
       label: 'Review failed',
       excerpt: 'The reviewer failed before submitting a verdict.',
+    };
+  }
+
+  if (isCouncilReviewerServiceFailureReason(reason)) {
+    return {
+      label: 'Service issue',
+      excerpt: reason!,
     };
   }
 

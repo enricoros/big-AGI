@@ -312,9 +312,12 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   const hostedUpstreamToolInvocationIds = new Set<string>();
   const skippedHostedUpstreamToolIds = new Set<string>();
 
-  for (const aixMessage of chatSequence) {
-    if (aixMessage.role === 'model') {
+  for (const aixMessage of chatSequence)
+    if (aixMessage.role === 'model')
       for (const modelPart of aixMessage.parts) {
+        if (modelPart.pt === 'tool_response')
+          allToolResponseIds.add(modelPart.id);
+
         if (
           modelPart.pt === 'tool_invocation'
           && modelPart.invocation.type === 'function_call'
@@ -322,22 +325,10 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
         )
           hostedUpstreamToolInvocationIds.add(modelPart.id);
       }
-      continue;
-    }
 
-    if (aixMessage.role !== 'tool')
-      continue;
-
-    for (const toolPart of aixMessage.parts) {
-      if (toolPart.pt !== 'tool_response')
-        continue;
-
-      allToolResponseIds.add(toolPart.id);
-
-      if (hostedUpstreamToolInvocationIds.has(toolPart.id))
-        skippedHostedUpstreamToolIds.add(toolPart.id);
-    }
-  }
+  for (const toolResponseId of allToolResponseIds)
+    if (hostedUpstreamToolInvocationIds.has(toolResponseId))
+      skippedHostedUpstreamToolIds.add(toolResponseId);
 
   let allowUserAppend = true;
 
@@ -522,38 +513,22 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               // TODO: support this in the future - may contain the encrypted reasoning data, although we don't parse this yet
               break;
 
-            case 'meta_cache_control':
-              // ignored - Anthropic only
-              break;
-
-            default:
-              const _exhaustiveCheck: never = mPt;
-              throw new Error(`Unsupported part type in Model message: ${mPt}`);
-          }
-        }
-        break;
-
-      case 'tool':
-        for (const toolPart of messageParts) {
-          const tPt = toolPart.pt;
-          switch (tPt) {
-
             case 'tool_response':
-              if (skippedHostedUpstreamToolIds.has(toolPart.id))
+              if (skippedHostedUpstreamToolIds.has(modelPart.id))
                 break;
-              const toolResponseType = toolPart.response.type;
+              const toolResponseType = modelPart.response.type;
               switch (toolResponseType) {
                 case 'function_call':
-                  const { result: functionCallOutput } = toolPart.response;
-                  newFunctionCallOutputMessage(toolPart.id, functionCallOutput);
+                  const { result: functionCallOutput } = modelPart.response;
+                  newFunctionCallOutputMessage(modelPart.id, functionCallOutput);
                   break;
                 case 'code_execution':
-                  const { result: codeExecutionOutput } = toolPart.response;
-                  newFunctionCallOutputMessage(toolPart.id, codeExecutionOutput);
+                  const { result: codeExecutionOutput } = modelPart.response;
+                  newFunctionCallOutputMessage(modelPart.id, codeExecutionOutput);
                   break;
                 default:
                   const _exhaustiveCheck: never = toolResponseType;
-                  throw new Error(`Unsupported tool response type in Tool message: ${tPt}/${toolResponseType}`);
+                  throw new Error(`Unsupported tool response type in Model message: ${mPt}/${toolResponseType}`);
               }
               break;
 
@@ -562,8 +537,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             default:
-              const _exhaustiveCheck: never = tPt;
-              throw new Error(`Unsupported part type in Tool message: ${tPt}`);
+              const _exhaustiveCheck: never = mPt;
+              throw new Error(`Unsupported part type in Model message: ${mPt}`);
           }
         }
         break;

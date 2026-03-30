@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import type { DConversationParticipant } from '~/common/stores/chat/chat.conversation';
 import {
+  createErrorContentFragment,
   createModelAuxVoidFragment,
   createTextContentFragment,
   create_FunctionCallInvocation_ContentFragment,
@@ -1186,6 +1187,53 @@ test('trace hides invalid reviewer ballot tool invocations for missing-verdict r
   assert.deepEqual(criticCard?.messageFragments, []);
   assert.equal(criticCard?.hasDetails, false);
   assert.deepEqual(criticCard?.detailItems, []);
+});
+
+test('trace surfaces reviewer service failures instead of missing-verdict copy', () => {
+  let workflowState = createCouncilSessionState({
+    phaseId: 'phase-service-review-failure',
+    leaderParticipantId: 'leader',
+    reviewerParticipantIds: ['critic'],
+    maxRounds: 2,
+  });
+
+  workflowState = recordCouncilProposal(workflowState, {
+    proposalId: 'proposal-service-review-failure-1',
+    leaderParticipantId: 'leader',
+    proposalText: 'Proposal under review.',
+  });
+  workflowState = recordCouncilReviewerVote(workflowState, {
+    reviewerParticipantId: 'critic',
+    ballot: {
+      reviewerParticipantId: 'critic',
+      decision: 'reject',
+      reason: '[Service Issue] Openai: Upstream responded with HTTP 429 - All credentials for model claude-opus-4-6-thinking are cooling down',
+    },
+    messageFragments: [
+      createErrorContentFragment('[Service Issue] Openai: Upstream responded with HTTP 429 - All credentials for model claude-opus-4-6-thinking are cooling down'),
+    ],
+  });
+
+  const traceItem = buildCouncilTraceRenderPlan({
+    messages: [],
+    participants,
+    councilSession: {
+      ...createIdleCouncilSessionState(),
+      status: 'running',
+      phaseId: 'phase-service-review-failure',
+      passIndex: 0,
+      workflowState,
+      canResume: true,
+      updatedAt: 100,
+    },
+  }).traceItem;
+
+  const criticCard = traceItem?.rounds[0]?.reviewerCards[0] ?? null;
+  assert.ok(criticCard);
+  assert.equal(criticCard?.decision, 'reject');
+  assert.equal(criticCard?.reason, null);
+  assert.equal(criticCard?.terminalLabel, 'Service issue');
+  assert.equal(criticCard?.excerpt, '[Service Issue] Openai: Upstream responded with HTTP 429 - All credentials for model claude-opus-4-6-thinking are cooling down');
 });
 
 test('trace renders ballot-only reviewer accepts as valid accepts', () => {

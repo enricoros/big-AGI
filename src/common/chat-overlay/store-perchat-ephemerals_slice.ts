@@ -57,6 +57,7 @@ export interface EphemeralsOverlayStore extends EphemeralsOverlayState {
   ephemeralsToggleShowStatePane: (ephemeralId: DEphemeralId) => void;
 
   getEphemeral: (ephemeralId: DEphemeralId) => Readonly<DEphemeral> | undefined;
+  findEphemeralByParentToolInvocationId: (parentToolInvocationId: string) => Readonly<DEphemeral> | undefined;
 
 }
 
@@ -108,5 +109,11 @@ export const createEphemeralsOverlayStoreSlice: StateCreator<EphemeralsOverlaySt
 
   getEphemeral: (ephemeralId) =>
     _get().ephemerals.find((e) => e.id === ephemeralId),
+
+  findEphemeralByParentToolInvocationId: (parentToolInvocationId) =>
+    _get().ephemerals.find((e) => {
+      const state = e.state as { parentToolInvocationId?: unknown } | undefined;
+      return state?.parentToolInvocationId === parentToolInvocationId;
+    }),
 
 });

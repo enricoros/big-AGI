@@ -78,6 +78,14 @@ test('chat message list keeps the floating desktop overlay active even when only
   assert.match(source, /showTrack=\{showConversationMinimapTrack\}/);
 });
 
+test('assistant retry truncates the clicked message, deletes it, and re-executes with a retry caller marker', () => {
+  const source = readFileSync(new URL('./ChatMessageList.tsx', import.meta.url), 'utf8');
+  assert.match(source, /const targetMessage = conversationHandler\.historyFindMessageOrThrow\(messageId\);/);
+  assert.match(source, /conversationHandler\.historyTruncateTo\(messageId, offset\);/);
+  assert.match(source, /if \(targetMessage\?\.role === 'assistant'\)\s+conversationHandler\.messagesDelete\(\[messageId\]\);/);
+  assert.match(source, /await onConversationExecuteHistory\(conversationId, targetMessage\?\.role === 'assistant' \? `chat-retry-message:\$\{messageId\}` : undefined\);/);
+});
+
 test('single-agent human-driven chats display the active model name while keeping canonical mentions', () => {
   const participant: DConversationParticipant = {
     id: 'assistant-1',

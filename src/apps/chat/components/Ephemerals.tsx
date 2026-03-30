@@ -22,6 +22,23 @@ import { DocumentAttachmentFragments } from './message/fragments-attachment-doc/
 import { ImageAttachmentFragments } from './message/fragments-attachment-image/ImageAttachmentFragments';
 import { VoidFragments } from './message/fragments-void/VoidFragments';
 
+function getEphemeralDedupKey(ephemeral: DEphemeral): string {
+  const state = ephemeral.state as { parentToolInvocationId?: unknown; parentMessageId?: unknown } | null | undefined;
+  const parentToolInvocationId = typeof state?.parentToolInvocationId === 'string' && state.parentToolInvocationId.trim()
+    ? state.parentToolInvocationId
+    : null;
+  if (parentToolInvocationId)
+    return `tool:${parentToolInvocationId}`;
+
+  const parentMessageId = typeof state?.parentMessageId === 'string' && state.parentMessageId.trim()
+    ? state.parentMessageId
+    : null;
+  if (parentMessageId)
+    return `message:${parentMessageId}:${ephemeral.title}`;
+
+  return `ephemeral:${ephemeral.id}`;
+}
+
 
 function formatStateValue(value: unknown): string {
   if (value === null)
@@ -445,10 +462,16 @@ export function Ephemerals(props: {
 }) {
 
   const adjContentScaling = useUIPreferencesStore(state => adjustContentScaling(state.contentScaling, -1));
+  const dedupedEphemerals = React.useMemo(() => {
+    const latestByKey = new Map<string, DEphemeral>();
+    for (const ephemeral of props.ephemerals)
+      latestByKey.set(getEphemeralDedupKey(ephemeral), ephemeral);
+    return Array.from(latestByKey.values());
+  }, [props.ephemerals]);
 
   return (
     <Box sx={{ display: 'grid', gap: 1, ...props.sx }}>
-      {props.ephemerals.map(ephemeral => (
+      {dedupedEphemerals.map(ephemeral => (
         <EphemeralItem
           key={ephemeral.id}
           ephemeral={ephemeral}

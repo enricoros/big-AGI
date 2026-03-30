@@ -753,7 +753,7 @@ export class ConversationHandler {
   // Ephemerals
 
   createEphemeralHandler(title: string, initialText: string) {
-    const { ephemeralsAppend, ephemeralsUpdate, ephemeralsDelete, getEphemeral } = this.overlayActions;
+    const { ephemeralsAppend, ephemeralsUpdate, ephemeralsDelete, getEphemeral, findEphemeralByParentToolInvocationId } = this.overlayActions;
 
     // create and append
     const ephemeral = createDEphemeral(title, initialText);
@@ -768,7 +768,34 @@ export class ConversationHandler {
     // return a 'handler' (manipulation functions)
     return {
       updateText: (text: string) => ephemeralsUpdate(eId, { text }),
-      updateState: (state: object) => ephemeralsUpdate(eId, { state }),
+      updateState: (state: object) => {
+        const nextState = state as { parentToolInvocationId?: unknown };
+        const parentToolInvocationId = typeof nextState?.parentToolInvocationId === 'string'
+          ? nextState.parentToolInvocationId
+          : undefined;
+
+        if (parentToolInvocationId) {
+          const existingEphemeral = findEphemeralByParentToolInvocationId(parentToolInvocationId);
+          if (existingEphemeral && existingEphemeral.id !== eId) {
+            ephemeralsDelete(eId);
+            ephemeralsUpdate(existingEphemeral.id, { text: getEphemeral(eId)?.text ?? initialText, state });
+            return;
+          }
+        }
+
+        ephemeralsUpdate(eId, { state });
+      },
+      getState: () => getEphemeral(eId)?.state ?? {},
+      getText: () => getEphemeral(eId)?.text ?? initialText,
+      replaceWithExisting: (parentToolInvocationId: string, state: object) => {
+        const existingEphemeral = findEphemeralByParentToolInvocationId(parentToolInvocationId);
+        if (!existingEphemeral || existingEphemeral.id === eId)
+          return false;
+
+        ephemeralsDelete(eId);
+        ephemeralsUpdate(existingEphemeral.id, { text: getEphemeral(eId)?.text ?? initialText, state });
+        return true;
+      },
       markAsDone: () => {
         ephemeralsUpdate(eId, { done: true });
         setTimeout(deleteIfMinimized, EPHEMERALS_DEFAULT_TIMEOUT);

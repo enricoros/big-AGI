@@ -28,6 +28,7 @@ import {
   DConversationParticipant,
   DConversationParticipantSpeakWhen,
   DConversationTurnTerminationMode,
+  DConversationTurnsOrder,
   duplicateDConversation,
   DPersistedCouncilSession,
   sanitizeCouncilMaxRounds,
@@ -223,6 +224,7 @@ export interface ChatActions {
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setParticipants: (cId: DConversationId, participants: DConversationParticipant[]) => void;
   setTurnTerminationMode: (cId: DConversationId, mode: DConversationTurnTerminationMode) => void;
+  setTurnsOrder: (cId: DConversationId, order: DConversationTurnsOrder) => void;
   setCouncilMaxRounds: (cId: DConversationId, maxRounds: number | null) => void;
   setCouncilTraceAutoCollapsePreviousRounds: (cId: DConversationId, value: boolean) => void;
   setCouncilTraceAutoExpandNewestRound: (cId: DConversationId, value: boolean) => void;
@@ -677,6 +679,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           turnTerminationMode: mode,
         }),
 
+      setTurnsOrder: (conversationId: DConversationId, order: DConversationTurnsOrder) =>
+        _get()._editConversation(conversationId, {
+          turnsOrder: order,
+        }),
+
       setCouncilMaxRounds: (conversationId: DConversationId, maxRounds: number | null) =>
         _get()._editConversation(conversationId, conversation => {
           const nextCouncilMaxRounds = sanitizeCouncilMaxRounds(maxRounds);
@@ -921,6 +928,10 @@ export function getConversationTurnTerminationMode(conversationId: DConversation
     : getConversation(conversationId)?.turnTerminationMode === 'council'
       ? 'council'
       : 'round-robin-per-human';
+}
+
+export function getConversationTurnsOrder(conversationId: DConversationId | null): DConversationTurnsOrder {
+  return getConversation(conversationId)?.turnsOrder === 'random' ? 'random' : 'custom';
 }
 
 export function getConversationCouncilMaxRounds(conversationId: DConversationId | null): number | null {

@@ -10,6 +10,7 @@ import { createDMessageEmpty, createDMessageTextContent } from '~/common/stores/
 import { create_FunctionCallInvocation_ContentFragment, create_FunctionCallResponse_ContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import { ChatMessage, shouldShowRestartInCouncilAction } from './ChatMessage';
+import { Ephemerals } from '../Ephemerals';
 
 
 function renderChatMessageMarkup(updated: number | null) {
@@ -236,4 +237,37 @@ test('assistant messages render a single subagent block for a matched invocation
 
   assert.equal(subagentMatches.length, 1);
   assert.match(markup, /Parent final answer\./);
+});
+
+test('ephemerals render only the latest card for the same subagent invocation id', () => {
+  const markup = renderToStaticMarkup(
+    <Ephemerals
+      ephemerals={[
+        {
+          id: 'ephemeral-1',
+          title: 'Opal subagent',
+          text: 'first',
+          state: { parentMessageId: 'message-1', parentToolInvocationId: 'tool-1' },
+          done: false,
+          minimized: false,
+          showStatePane: false,
+        },
+        {
+          id: 'ephemeral-2',
+          title: 'Opal subagent',
+          text: 'second',
+          state: { parentMessageId: 'message-1', parentToolInvocationId: 'tool-1' },
+          done: false,
+          minimized: false,
+          showStatePane: false,
+        },
+      ]}
+      conversationHandler={{ overlayActions: { ephemeralsDelete() {}, ephemeralsToggleMinimized() {}, ephemeralsToggleShowStatePane() {} } } as any}
+    />,
+  );
+
+  const matches = markup.match(/Opal subagent Internal Monologue/g) ?? [];
+  assert.equal(matches.length, 1);
+  assert.match(markup, /second/);
+  assert.doesNotMatch(markup, /first/);
 });

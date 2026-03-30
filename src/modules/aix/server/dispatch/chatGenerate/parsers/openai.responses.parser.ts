@@ -13,7 +13,8 @@ import { OpenAIWire_API_Responses } from '../../wiretypes/openai.wiretypes';
 
 // configuration
 const OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
-const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n'; // true: shows the sequence of events
+const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n';
+const INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES = 250_000; // skip resize for small images (e.g. code interpreter charts)
 
 
 /**
@@ -24,8 +25,8 @@ function sanitizeUrlForDisplay(url: string | null): string {
   if (!url) return 'unknown';
   try {
     const urlObj = new URL(url);
-    // Return just the protocol and hostname (e.g., "https://example.com")
-    return `${urlObj.protocol}//${urlObj.hostname}`;
+    // Return just the protocol and hostname and path (e.g., "https://example.com/hello/")
+    return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`;
   } catch (error) {
     // If URL parsing fails, try to extract just the domain part manually
     const match = url.match(/^https?:\/\/([^/?#]+)/);
@@ -33,63 +34,6 @@ function sanitizeUrlForDisplay(url: string | null): string {
       return `${url.split('://')[0]}://${match[1]}`;
     // Fallback: return a generic indicator
     return 'website';
-  }
-}
-
-function _formatHostedWebSearchAction(action: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>['action']): string {
-  if (!action)
-    return 'Hosted web search ran without action details.';
-
-  switch (action.type) {
-    case 'search':
-      return [
-        action.query ? `Query: ${action.query}` : 'Query: unavailable',
-        ...(action.sources?.length ? [
-          '',
-          'Sources:',
-          ...action.sources.map((source: NonNullable<typeof action.sources>[number], index: number) => `${index + 1}. ${source.title || sanitizeUrlForDisplay(source.url)}\n${source.url}${source.snippet ? `\n${source.snippet}` : ''}`),
-        ] : ['Results: unavailable']),
-      ].join('\n');
-
-    case 'open_page':
-      return `Opened page: ${action.url || 'unknown'}`;
-
-    case 'find_in_page':
-    case 'find':
-      return [
-        `Pattern: ${action.pattern}`,
-        `Page: ${action.url}`,
-      ].join('\n');
-
-    default:
-      return 'Hosted web search completed.';
-  }
-}
-
-function _webSearchActionToArgs(action: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>['action']): object | null {
-  if (!action)
-    return null;
-
-  switch (action.type) {
-    case 'search':
-      return {
-        type: action.type,
-        ...(action.query ? { query: action.query } : {}),
-      };
-    case 'open_page':
-      return {
-        type: action.type,
-        ...(action.url ? { url: action.url } : {}),
-      };
-    case 'find_in_page':
-    case 'find':
-      return {
-        type: action.type,
-        pattern: action.pattern,
-        url: action.url,
-      };
-    default:
-      return null;
   }
 }
 
@@ -487,7 +431,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'web_search_call':
             // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
-            _forwardWebSearchCallItem(pt, doneItem);
+            _forwardDoneWebSearchCallItem(pt, doneItem, doneItem.id);
             break;
 
           case 'image_generation_call':
@@ -508,12 +452,12 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'code_interpreter_call':
             // -> CIC: process completed code interpreter call (xAI/OpenAI)
-            _forwardCodeInterpreterCallItem(pt, doneItem);
+            _forwardDoneCodeInterpreterCallItem(pt, doneItem);
             break;
 
           case 'custom_tool_call':
             // -> CTC: notify about the custom tool call completion and its input
-            _forwardCustomToolCallItem(pt, doneItem);
+            _forwardDoneCustomToolCallItem(pt, doneItem, doneItem.id);
             break;
 
           default:
@@ -638,7 +582,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.web_search_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'web_search_call');
-        pt.startFunctionCallInvocation(event.item_id, 'web_search', 'json_object', null);
+        pt.sendOperationState('search-web', 'Searching the web...', { opId: event.item_id });
         break;
 
       case 'response.web_search_call.searching':
@@ -658,12 +602,12 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('gen-image', 'Starting image generation...');
+        pt.sendOperationState('gen-image', 'Generating image...', { opId: event.item_id });
         break;
 
       case 'response.image_generation_call.generating':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('gen-image', 'Generating image...');
+        break;
         break;
 
       case 'response.image_generation_call.partial_image':
@@ -676,7 +620,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendVoidPlaceholder('gen-image', 'Image generation completed');
+        pt.sendOperationState('gen-image', 'Image generated', { opId: event.item_id, state: 'done' });
         // -> Final image result is handled in response.output_item.done
         break;
 
@@ -686,29 +630,27 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.code_interpreter_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        pt.sendVoidPlaceholder('code-exec', 'Starting code interpreter...');
-        break;
-
-      case 'response.code_interpreter_call.interpreting':
-        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        pt.sendVoidPlaceholder('code-exec', 'Running code...');
-        break;
-
-      case 'response.code_interpreter_call.completed':
-        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        pt.sendVoidPlaceholder('code-exec', 'Code execution completed');
-        // -> Final result is handled in response.output_item.done
+        pt.sendOperationState('code-exec', 'Writing code...', { opId: event.item_id });
         break;
 
       case 'response.code_interpreter_call_code.delta':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        // Incremental code updates - could show live code being written
-        // For now, just acknowledge - final code handled in output_item.done
         break;
 
       case 'response.code_interpreter_call_code.done':
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
-        // Code complete - final handling in output_item.done
+        pt.sendOperationState('code-exec', `Written code: ${event.code?.length ? event.code.slice(0, 1024) : '...'}`, { opId: event.item_id });
+        break;
+
+      case 'response.code_interpreter_call.interpreting':
+        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
+        pt.sendOperationState('code-exec', 'Running code...', { opId: event.item_id });
+        break;
+
+      case 'response.code_interpreter_call.completed':
+        R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
+        pt.sendOperationState('code-exec', 'Code executed', { opId: event.item_id, state: 'done' });
+        // -> Final result is handled in response.output_item.done
         break;
 
       // 4.x - Custom Tool Call Events
@@ -975,7 +917,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         case 'web_search_call':
           // -> WSC: process completed web search - NO TEXT MESSAGES, use fragments instead
-          _forwardWebSearchCallItem(pt, oItem, { startInvocation: true });
+          _forwardDoneWebSearchCallItem(pt, oItem, oItem.id);
           pt.endMessagePart();
           break;
 
@@ -998,12 +940,12 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
 
         case 'code_interpreter_call':
           // -> CIC: process completed code interpreter call (xAI/OpenAI)
-          _forwardCodeInterpreterCallItem(pt, oItem);
+          _forwardDoneCodeInterpreterCallItem(pt, oItem);
           pt.endMessagePart();
           break;
 
         case 'custom_tool_call':
-          // -> CTC: notify about the custom tool call completion and its input          _forwardCustomToolCallItem(pt, oItem);
+          _forwardDoneCustomToolCallItem(pt, oItem, oItem.id);
           pt.endMessagePart();
           break;
 
@@ -1122,9 +1064,12 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
       break;
 
     default:
-      // Unknown annotation type - log for future implementation
-      if (annotation)
-        console.log(`[DEV] AIX: Unknown annotation type: ${annotation.type}`, { annotation });
+      const _exhaustiveCheck: never = annotation;
+      // fallthrough
+    case 'container_file_citation':
+    case 'file_citation':
+    case 'file_path':
+      console.log(`[DEV] AIX: OpenAI-Responses - Unhandled annotation:`, { annotation });
       break;
   }
 }
@@ -1134,7 +1079,7 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
  * The API echoes the output_format in the done item (e.g. 'png', 'webp', 'jpeg').
  */
 function _imageGenerationMimeType(item: { output_format?: string }): string {
-  switch ((item as any).output_format) {
+  switch (item?.output_format) {
     case 'webp':
       return 'image/webp';
     case 'jpeg':
@@ -1152,74 +1097,92 @@ function _imageGenerationMimeType(item: { output_format?: string }): string {
  * - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
  * - citations: High-quality links (2-3) via annotations in message content
  */
-function _forwardWebSearchCallItem(
-  pt: IParticleTransmitter,
-  webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>,
-  options?: { startInvocation?: boolean },
-): void {
-  const { id, action, status } = webSearchCall;
+function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>, opId: string): void {
+  const { action, status } = webSearchCall;
 
-  if (options?.startInvocation)
-    pt.startFunctionCallInvocation(id, 'web_search', 'json_object', _webSearchActionToArgs(action));
+  const doneOpts = { opId, state: 'done' } as const;
 
-  const result = _formatHostedWebSearchAction(action);
-  const error = status === 'failed'
-    ? (action?.type === 'open_page' && action.url ? `Failed to access ${sanitizeUrlForDisplay(action.url)}` : 'Web search failed')
-    : false;
+  if (status === 'failed') {
+    const failedUrl = action && action.type === 'open_page' ? action.url : undefined;
+    pt.sendOperationState('search-web', failedUrl ? `Search error: ${sanitizeUrlForDisplay(failedUrl)}` : 'Search error', { opId, state: 'error' });
+    return;
+  }
 
-  if (!action)
-    console.log('[DEV] AIX: web_search_call completed without action details', { webSearchCall });
+  switch (action?.type) {
+    case 'search':
+      const queries: string[] = action.queries?.length ? action.queries : action.query ? [action.query] : [];
+      const sourceUrls: string[] = action.sources?.map((s: any) => s.url).filter(url => !!url) ?? [];
+      const foundCount = sourceUrls.length;
+      let doneText = 'Search completed';
+      if (foundCount) doneText += `: ${foundCount} result${foundCount > 1 ? 's' : ''}`;
+      if (queries.length) doneText += (foundCount ? ' for' : ' - for') + (queries.length > 1 ? ` ${queries.length} queries` : '') + ': ' + queries.join(', ');
+      pt.sendOperationState('search-web', doneText, { ...doneOpts, ...queries.length ? { iTexts: queries } : undefined, ...sourceUrls.length ? { oTexts: sourceUrls } : undefined });
+      break;
 
-  pt.addFunctionCallResponse(id, error, 'web_search', result, 'upstream');
+    case 'open_page':
+      pt.sendOperationState('search-web', `Retrieved ${action.url ? sanitizeUrlForDisplay(action.url) : 'web page'}`, { ...doneOpts, ...action.url ? { iTexts: [action.url], oTexts: [action.url] } : undefined });
+      break;
+
+    case 'find':
+    case 'find_in_page':
+      pt.sendOperationState('search-web', action.pattern
+        ? (action.url ? `Searched for "${action.pattern}" on ${sanitizeUrlForDisplay(action.url)}` : `Searched page for "${action.pattern}"`)
+        : 'Searched web page', { ...doneOpts, ...action.pattern ? { iTexts: [action.pattern] } : undefined });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = action;
+    case undefined:
+      console.log(`[DEV] AIX: Unknown web_search_call action:`, { action });
+      break;
+  }
 }
 
-/**
- * Processes code interpreter call and emits appropriate particles.
- * Handles code execution results from xAI/OpenAI code_interpreter tool.
- *
- * Pattern follows Gemini's code execution handling:
- * - addCodeExecutionInvocation for the code being executed
- * - addCodeExecutionResponse for each output result
- */
-function _forwardCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
+function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
   const { id, code, outputs, status /*,container_id*/ } = codeInterpreterCall;
 
-  // <- Emit code (like Gemini's executableCode)
   if (code)
     pt.addCodeExecutionInvocation(id, '', code, 'code_interpreter');
 
-  // <- Emit outputs (like Gemini's codeExecutionResult)
-  let outputSent = 0;
+  const isError = status === 'failed';
+  let accLogs = '';
+  let accErrorLogs = '';
+  const accImages: { url: string }[] = [];
+
   if (outputs && Array.isArray(outputs))
     for (const output of outputs) {
-      const outputType = output.type;
-      switch (outputType) {
+      switch (output.type) {
         case 'logs':
-          // Emit logs as code execution response
-          const isError = status === 'failed';
-          pt.addCodeExecutionResponse(id, isError, output.logs, 'code_interpreter', 'upstream');
-          outputSent++;
+          if (isError) accErrorLogs += (accErrorLogs ? OPENAI_RESPONSES_SAME_PART_SPACER : '') + output.logs;
+          else accLogs += (accLogs ? OPENAI_RESPONSES_SAME_PART_SPACER : '') + output.logs;
           break;
-
         case 'image':
-          // Image output has a URL
-          // TODO: could fetch and inline the image
-          console.log('[DEV] AIX: TODO: Analyze code Interpreter output URL and decide what to do:', output.url.slice(0, 200)); // log first 200 chars
-          pt.addCodeExecutionResponse(id, false, `[Generated image: ${output.url}]`, 'code_interpreter', 'upstream');
-          outputSent++;
+          accImages.push(output);
           break;
-
         default:
-          const _exhaustiveCheck: never = outputType;
-          console.log(`[DEV] AIX: Unknown code_interpreter_call output type: ${(output as any)?.type}`, { output });
+          const _exhaustiveCheck: never = output;
+          console.log(`[DEV] AIX: Unknown code_interpreter_call output:`, { output });
           break;
       }
     }
 
-  // <- Error message if status is failed and no outputs were provided
-  if (status === 'failed' && !outputSent)
-    pt.addCodeExecutionResponse(id, true, 'Code execution failed', 'code_interpreter', 'upstream');
+  if (accLogs)
+    pt.addCodeExecutionResponse(id, false, accLogs, 'code_interpreter', 'upstream');
+  if (accErrorLogs)
+    pt.addCodeExecutionResponse(id, true, accErrorLogs, 'code_interpreter', 'upstream');
 
+  for (const imgOutput of accImages) {
+    const imgMatch = imgOutput.url.match(/^data:([^;]+);base64,(.+)$/);
+    if (imgMatch) {
+      const [, mimeType, base64Data] = imgMatch;
+      const hintSkipResize = base64Data.length <= INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES;
+      pt.appendImageInline(mimeType, base64Data, 'Code interpreter output', 'code_interpreter', '', hintSkipResize);
+    } else
+      pt.addCodeExecutionResponse(id, false, `[Generated image: ${imgOutput.url}]`, 'code_interpreter', 'upstream');
+  }
+
+  if (isError && !accLogs && !accErrorLogs && !accImages.length)
+    pt.addCodeExecutionResponse(id, true, 'Code execution failed', 'code_interpreter', 'upstream');
 }
 
 /**
@@ -1228,15 +1191,15 @@ function _forwardCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpret
  * For now, we just show a placeholder indicating the search was performed.
  * The actual search results are typically reflected in the model's text response.
  */
-function _forwardCustomToolCallItem(pt: IParticleTransmitter, customToolCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'custom_tool_call' }>): void {
+function _forwardDoneCustomToolCallItem(pt: IParticleTransmitter, customToolCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'custom_tool_call' }>, opId: string): void {
   const { name, input } = customToolCall;
 
-  // Show a placeholder for the custom tool call
-  // xAI x_search tools include: x_user_search, x_keyword_search, x_semantic_search, x_thread_fetch, ...
+  const doneOpts = { opId, state: 'done' } as const;
+
   if (name.startsWith('x_'))
-    pt.sendVoidPlaceholder('search-web', `X search: ${name}${input ? ` (${input.slice(0, 50)}${input.length > 50 ? '...' : ''})` : ''}`);
+    pt.sendOperationState('search-web', `X search: ${name}${input ? ` (${input.slice(0, 50)}${input.length > 50 ? '...' : ''})` : ''}`, doneOpts);
   else
-    pt.sendVoidPlaceholder('search-web', `Custom tool: ${name}`);
+    pt.sendOperationState('code-exec', `Custom tool: ${name}`, doneOpts);
 }
 
 

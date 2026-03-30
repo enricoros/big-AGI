@@ -2,12 +2,21 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { ChatGenerateTransmitter } from '../ChatGenerateTransmitter';
-import { createAnthropicMessageParserNS } from './anthropic.parser';
+import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './anthropic.parser';
 import { createOpenAIResponseParserNS } from './openai.responses.parser';
 
 
 function flushParticles(transmitter: ChatGenerateTransmitter) {
   return Array.from(transmitter.flushParticles());
+}
+
+function pushAnthropicEvent(
+  parser: ReturnType<typeof createAnthropicMessageParser>,
+  transmitter: ChatGenerateTransmitter,
+  eventName: string,
+  payload: object,
+) {
+  parser(transmitter, JSON.stringify(payload), eventName);
 }
 
 test('OpenAI Responses persists hosted web searches as tool invocation/response particles', () => {
@@ -117,4 +126,96 @@ test('Anthropic persists hosted web searches as tool invocation/response particl
     && p.result.includes('Official Report')
     && p.result.includes('https://example.com/official'),
   ));
+});
+
+test('Anthropic streaming persists a tool_use verdict after thinking deltas', () => {
+  const transmitter = new ChatGenerateTransmitter('Anthropic');
+  const parser = createAnthropicMessageParser();
+
+  pushAnthropicEvent(parser, transmitter, 'message_start', {
+    type: 'message_start',
+    message: {
+      id: 'msg_1',
+      type: 'message',
+      role: 'assistant',
+      model: 'claude-opus-4-6',
+      content: [],
+      stop_reason: null,
+      stop_sequence: null,
+      usage: { input_tokens: 12, output_tokens: 0 },
+    },
+  });
+  pushAnthropicEvent(parser, transmitter, 'content_block_start', {
+    type: 'content_block_start',
+    index: 0,
+    content_block: { type: 'thinking', thinking: '', signature: 'sig_1' },
+  });
+  pushAnthropicEvent(parser, transmitter, 'content_block_delta', {
+    type: 'content_block_delta',
+    index: 0,
+    delta: { type: 'thinking_delta', thinking: 'I should vote now.' },
+  });
+  pushAnthropicEvent(parser, transmitter, 'content_block_stop', {
+    type: 'content_block_stop',
+    index: 0,
+  });
+  pushAnthropicEvent(parser, transmitter, 'content_block_start', {
+    type: 'content_block_start',
+    index: 1,
+    content_block: { type: 'tool_use', id: 'toolu_1', name: 'Accept', input: {} },
+  });
+  pushAnthropicEvent(parser, transmitter, 'content_block_stop', {
+    type: 'content_block_stop',
+    index: 1,
+  });
+  pushAnthropicEvent(parser, transmitter, 'message_delta', {
+    type: 'message_delta',
+    delta: { stop_reason: 'tool_use', stop_sequence: null },
+    usage: { output_tokens: 9 },
+  });
+  pushAnthropicEvent(parser, transmitter, 'message_stop', {
+    type: 'message_stop',
+  });
+
+  const particles = flushParticles(transmitter);
+
+  assert.ok(particles.some(p => 'p' in p && p.p === 'fci' && p.id === 'toolu_1' && p.name === 'Accept'));
+  assert.ok(particles.some(p => 'p' in p && p.p === '_fci' && p._args === '{}'));
+});
+
+test('Anthropic streaming persists a tool_use verdict even if content_block_stop is missing', () => {
+  const transmitter = new ChatGenerateTransmitter('Anthropic');
+  const parser = createAnthropicMessageParser();
+
+  pushAnthropicEvent(parser, transmitter, 'message_start', {
+    type: 'message_start',
+    message: {
+      id: 'msg_2',
+      type: 'message',
+      role: 'assistant',
+      model: 'claude-opus-4-6',
+      content: [],
+      stop_reason: null,
+      stop_sequence: null,
+      usage: { input_tokens: 12, output_tokens: 0 },
+    },
+  });
+  pushAnthropicEvent(parser, transmitter, 'content_block_start', {
+    type: 'content_block_start',
+    index: 0,
+    content_block: { type: 'tool_use', id: 'toolu_2', name: 'Accept', input: {} },
+  });
+  pushAnthropicEvent(parser, transmitter, 'message_delta', {
+    type: 'message_delta',
+    delta: { stop_reason: 'tool_use', stop_sequence: null },
+    usage: { output_tokens: 4 },
+  });
+  pushAnthropicEvent(parser, transmitter, 'message_stop', {
+    type: 'message_stop',
+  });
+
+  const particles = flushParticles(transmitter);
+
+  assert.ok(particles.some(p => 'p' in p && p.p === 'fci' && p.id === 'toolu_2' && p.name === 'Accept'));
+  assert.ok(particles.some(p => 'p' in p && p.p === '_fci' && p._args === '{}'));
 });

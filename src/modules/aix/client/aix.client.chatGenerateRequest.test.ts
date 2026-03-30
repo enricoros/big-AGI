@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import assert from 'node:assert/strict';
 
 import {
   create_FunctionCallInvocation_ContentFragment,
@@ -24,4 +25,16 @@ test('aixCGR_ChatSequence_FromDMessagesOrThrow accepts hosted upstream web tool 
     const chatSequence = await aixCGR_ChatSequence_FromDMessagesOrThrow([assistantMessage]);
     assert.equal(chatSequence.length, 2);
   });
+});
+
+test('aixCGR_ChatSequence_FromDMessagesOrThrow appends a trailing user message after a terminal assistant message', async () => {
+  const assistantMessage = createDMessageFromFragments('assistant', [
+    createTextContentFragment('Final assistant answer.'),
+  ]);
+
+  const chatSequence = await aixCGR_ChatSequence_FromDMessagesOrThrow([assistantMessage]);
+
+  assert.equal(chatSequence.at(-1)?.role, 'user');
+  assert.equal(chatSequence.at(-1)?.parts[0]?.pt, 'text');
+  assert.equal((chatSequence.at(-1)?.parts[0] as { text?: string } | undefined)?.text, '');
 });

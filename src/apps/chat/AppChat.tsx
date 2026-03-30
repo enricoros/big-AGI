@@ -495,8 +495,8 @@ export function AppChat() {
     return true;
   }, [drainQueuedConversationSends, handleExecuteAndOutcome, paneUniqueConversationIds, syncQueuedConversationPreview, willMulticast]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
-    await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-content'
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, executeCallerNameDebug: string = 'chat-execute-history') => {
+    await handleExecuteAndOutcome('generate-content', conversationId, executeCallerNameDebug); // replace with 'history', then 'generate-content'
   }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
@@ -507,13 +507,15 @@ export function AppChat() {
     const inputHistory = cHandler.historyViewHeadOrThrow('chat-regenerate-shortcut');
     if (!inputHistory.length) return;
 
-    // remove the last message if assistant's
     const lastMessage = inputHistory[inputHistory.length - 1];
-    if (lastMessage.role === 'assistant')
-      cHandler.historyTruncateTo(lastMessage.id, -1);
+    if (lastMessage.role === 'assistant') {
+      cHandler.historyTruncateTo(lastMessage.id, 0);
+      cHandler.messagesDelete([lastMessage.id]);
+      await handleExecuteAndOutcome('generate-content', focusedPaneConversationId, `chat-retry-message:${lastMessage.id}`);
+      return;
+    }
 
-    // generate: NOTE: this will replace the system message correctly
-    await handleExecuteAndOutcome('generate-content', focusedPaneConversationId, 'chat-regenerate-last'); // truncate if assistant, then gen-text
+    await handleExecuteAndOutcome('generate-content', focusedPaneConversationId, 'chat-regenerate-last');
   }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
@@ -566,6 +568,7 @@ export function AppChat() {
       useChatStore.getState().setSystemPurposeId(conversationId, agentGroupSnapshot.systemPurposeId);
       useChatStore.getState().setParticipants(conversationId, agentGroupSnapshot.participants.map(participant => ({ ...participant })));
       useChatStore.getState().setTurnTerminationMode(conversationId, agentGroupSnapshot.turnTerminationMode);
+      useChatStore.getState()._editConversation(conversationId, { turnsOrder: agentGroupSnapshot.turnsOrder });
       useChatStore.getState().setCouncilMaxRounds(conversationId, agentGroupSnapshot.councilMaxRounds ?? getConversationCouncilMaxRounds(focusedPaneConversationId));
       useChatStore.getState().setCouncilTraceAutoCollapsePreviousRounds(conversationId, sanitizeCouncilTraceAutoCollapsePreviousRounds(agentGroupSnapshot.councilTraceAutoCollapsePreviousRounds));
       useChatStore.getState().setCouncilTraceAutoExpandNewestRound(conversationId, sanitizeCouncilTraceAutoExpandNewestRound(agentGroupSnapshot.councilTraceAutoExpandNewestRound));
@@ -597,6 +600,7 @@ export function AppChat() {
       name: name?.trim() || `Agents ${Math.max(participants.length, 1)}`,
       systemPurposeId: conversation.systemPurposeId,
       turnTerminationMode: conversation.turnTerminationMode ?? 'round-robin-per-human',
+      turnsOrder: conversation.turnsOrder ?? 'custom',
       councilMaxRounds: getConversationCouncilMaxRounds(conversationId),
       councilTraceAutoCollapsePreviousRounds: sanitizeCouncilTraceAutoCollapsePreviousRounds(conversation.councilTraceAutoCollapsePreviousRounds),
       councilTraceAutoExpandNewestRound: sanitizeCouncilTraceAutoExpandNewestRound(conversation.councilTraceAutoExpandNewestRound),
@@ -627,6 +631,7 @@ export function AppChat() {
     useChatStore.getState().setSystemPurposeId(conversationId, agentGroupSnapshot.systemPurposeId);
     useChatStore.getState().setParticipants(conversationId, [...humanParticipants, ...agentGroupSnapshot.participants.map(participant => ({ ...participant }))]);
     useChatStore.getState().setTurnTerminationMode(conversationId, agentGroupSnapshot.turnTerminationMode);
+    useChatStore.getState()._editConversation(conversationId, { turnsOrder: agentGroupSnapshot.turnsOrder });
     useChatStore.getState().setCouncilMaxRounds(conversationId, agentGroupSnapshot.councilMaxRounds ?? getConversationCouncilMaxRounds(conversationId));
     useChatStore.getState().setCouncilTraceAutoCollapsePreviousRounds(conversationId, sanitizeCouncilTraceAutoCollapsePreviousRounds(agentGroupSnapshot.councilTraceAutoCollapsePreviousRounds));
     useChatStore.getState().setCouncilTraceAutoExpandNewestRound(conversationId, sanitizeCouncilTraceAutoExpandNewestRound(agentGroupSnapshot.councilTraceAutoExpandNewestRound));

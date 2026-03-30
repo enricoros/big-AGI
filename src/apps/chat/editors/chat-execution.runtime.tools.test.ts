@@ -10,7 +10,7 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { createDMessageEmpty, createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
-import { createModelAuxVoidFragment, createTextContentFragment, create_FunctionCallInvocation_ContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
+import { createModelAuxVoidFragment, createTextContentFragment, create_FunctionCallInvocation_ContentFragment, create_FunctionCallResponse_ContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 
 
 const TEST_LLM_ID = 'test-llm';
@@ -108,6 +108,23 @@ class FakeSession implements ChatExecutionSession {
       },
       updateState: (state: object) => {
         ephemeral.state = state;
+      },
+      getState: () => ephemeral.state,
+      getText: () => ephemeral.text,
+      replaceWithExisting: (parentToolInvocationId: string, state: object) => {
+        const existingEphemeral = this.ephemerals.find((candidate) =>
+          candidate !== ephemeral &&
+          (candidate.state as { parentToolInvocationId?: unknown })?.parentToolInvocationId === parentToolInvocationId,
+        );
+        if (!existingEphemeral)
+          return false;
+
+        existingEphemeral.text = ephemeral.text;
+        existingEphemeral.state = state;
+        const index = this.ephemerals.indexOf(ephemeral);
+        if (index >= 0)
+          this.ephemerals.splice(index, 1);
+        return true;
       },
       markAsDone: () => {
         ephemeral.done = true;
@@ -243,7 +260,11 @@ test('runPersonaWithEphemeralSubagents executes subagent tool calls and continue
   const result = await runPersonaWithEphemeralSubagents(createBaseParams(session), executePersona);
 
   assert.equal(calls.length, 3);
-  assert.ok(calls.every(call => call.requestedToolNames.includes('subagent')));
+  assert.deepEqual(calls.map(call => call.requestedToolNames), [
+    ['WebSearch', 'subagent'],
+    ['WebSearch'],
+    ['WebSearch', 'subagent'],
+  ]);
   assert.match(calls[1]?.sourceHistoryText ?? '', /Delegated task from your parent agent:/);
 
   assert.deepEqual(result.finalMessage.fragments.map(fragment => fragment.part.pt), [
@@ -394,7 +415,13 @@ test('runPersonaWithEphemeralSubagents lets nested subagents inherit the same to
   }, executePersona);
 
   assert.equal(calls.length, 5);
-  assert.ok(calls.every(call => call.requestedToolNames.includes('subagent')));
+  assert.deepEqual(calls.map(call => call.requestedToolNames), [
+    ['WebSearch', 'subagent'],
+    ['WebSearch'],
+    ['WebSearch'],
+    ['WebSearch'],
+    ['WebSearch', 'subagent'],
+  ]);
   assert.equal(session.ephemerals.length, 2);
   assert.ok(session.ephemerals.every(ephemeral => ephemeral.done));
 
@@ -464,4 +491,429 @@ test('runPersonaWithEphemeralSubagents tolerates streamed child updates without 
   assert.equal(rootCallCount, 2);
   assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'text');
   assert.match(session.ephemerals[0]?.text ?? '', /Child final output\./);
+});
+
+test('runPersonaWithEphemeralSubagents instructs child agents to send a final visible reply after delegated tools', async () => {
+  const session = new FakeSession();
+  const capturedHistoryTexts: string[] = [];
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    const sourceHistoryText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+
+    capturedHistoryTexts.push(sourceHistoryText);
+
+    if (sourceHistoryText.includes('Delegated task from your parent agent:')) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          createTextContentFragment('Child final output.'),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Investigate and report back.' })),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  const childHistoryText = capturedHistoryTexts.find(text => text.includes('Delegated task from your parent agent:')) ?? '';
+  assert.match(childHistoryText, /must still send a final visible assistant reply/i);
+  assert.match(childHistoryText, /Do not stop after a tool result or internal progress update\./);
+});
+
+test('runPersonaWithEphemeralSubagents converts tool-follow-up history to a user turn for providers that reject assistant prefill', async () => {
+  const session = new FakeSession();
+  const capturedRoles: Array<Array<DMessage['role']>> = [];
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    capturedRoles.push((params.sourceHistory ?? []).map(message => message.role));
+
+    const hasDelegatedPrompt = (params.sourceHistory ?? []).some(message =>
+      message.fragments.some(fragment => 'part' in fragment && fragment.part.pt === 'text' && fragment.part.text.includes('Delegated task from your parent agent:')),
+    );
+
+    if (hasDelegatedPrompt) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          createTextContentFragment('Child final output.'),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    if (capturedRoles.length === 1) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle the delegated task.' })),
+        ]),
+        assistantMessageId: 'assistant-root',
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        createTextContentFragment('Parent final output.'),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const result = await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  assert.deepEqual(capturedRoles, [
+    ['user'],
+    ['user', 'user'],
+    ['user', 'user'],
+  ]);
+  assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'text');
+});
+
+test('runPersonaWithEphemeralSubagents trims trailing whitespace from tool-follow-up text history', async () => {
+  const session = new FakeSession();
+  const calls: ExecutorCall[] = [];
+
+  const executePersona = createScriptedExecutor(session, calls, [
+    {
+      assistantMessageId: 'assistant-root',
+      fragments: [
+        create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle the delegated task.' })),
+        createTextContentFragment('Trailing whitespace from assistant.   \n\n'),
+      ],
+    },
+    {
+      fragments: [
+        createTextContentFragment('Child final output.'),
+      ],
+    },
+    {
+      assistantMessageId: 'assistant-root',
+      fragments: [
+        createTextContentFragment('Parent final output.'),
+      ],
+    },
+  ]);
+
+  await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  assert.equal(calls[2]?.sourceHistoryText, 'Solve the task.\n\nTrailing whitespace from assistant.');
+});
+
+test('runPersonaWithEphemeralSubagents uses the user-terminated follow-up history in the final fallback execution path', async () => {
+  const session = new FakeSession();
+  const capturedHistories: string[] = [];
+  let rootCallCount = 0;
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    const historyText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+    capturedHistories.push(historyText);
+
+    const hasDelegatedPrompt = historyText.includes('Delegated task from your parent agent:');
+    if (hasDelegatedPrompt) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          createTextContentFragment('Child final output.'),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    rootCallCount++;
+    if (rootCallCount === 1) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle the delegated task.' })),
+        ]),
+        assistantMessageId: 'assistant-root',
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        createTextContentFragment('Fallback final output.'),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const result = await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona, { depth: 8 });
+
+  assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'text');
+  assert.deepEqual(capturedHistories, [
+    'Solve the task.',
+    'Solve the task.',
+  ]);
+});
+
+test('runPersonaWithEphemeralSubagents does not re-execute historical subagent invocations that already have responses', async () => {
+  const session = new FakeSession();
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    const sourceHistoryText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+
+    if (sourceHistoryText.includes('Delegated task from your parent agent:'))
+      throw new Error('Historical subagent invocation was replayed unexpectedly');
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Fresh delegated task.' })),
+        create_FunctionCallResponse_ContentFragment('tool-1', false, 'subagent', JSON.stringify({ ok: true, message: 'Already done.' }), 'client'),
+        createTextContentFragment('Parent final output.'),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const result = await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'text');
+  assert.equal(session.ephemerals.length, 0);
+});
+
+test('runPersonaWithEphemeralSubagents does not create duplicate ephemerals for the same subagent invocation id', async () => {
+  const session = new FakeSession();
+  const calls: ExecutorCall[] = [];
+  let childGate = createDeferred<void>();
+  let childRuns = 0;
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    calls.push({
+      createPlaceholder: params.createPlaceholder,
+      requestedToolNames: collectRequestedToolNames(params),
+      sourceHistoryText: (params.sourceHistory ?? [])
+        .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+        .filter(Boolean)
+        .join('\n\n'),
+    });
+
+    const sourceHistoryText = calls.at(-1)?.sourceHistoryText ?? '';
+    if (sourceHistoryText.includes('Delegated task from your parent agent:')) {
+      childRuns++;
+      await childGate.promise;
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          createTextContentFragment(`Child final output ${childRuns}.`),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    if (calls.length === 1) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle once.' })),
+        ]),
+        assistantMessageId: 'assistant-root',
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle once.' })),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const firstRunPromise = runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  const secondRunPromise = runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  assert.equal(session.ephemerals.length, 1);
+  assert.equal((session.ephemerals[0]?.state as { parentToolInvocationId?: string })?.parentToolInvocationId, 'tool-1');
+
+  childGate.resolve();
+  await Promise.all([firstRunPromise, secondRunPromise]);
+
+  assert.equal(childRuns, 1);
+});
+
+test('runPersonaWithEphemeralSubagents stops the tool loop when the assistant message ends with a terminal provider error', async () => {
+  const session = new FakeSession();
+  let rootCalls = 0;
+  let childCalls = 0;
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    const sourceHistoryText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+
+    if (sourceHistoryText.includes('Delegated task from your parent agent:')) {
+      childCalls++;
+      return {
+        success: false,
+        finalMessage: createFinalMessage([
+          createTextContentFragment('Child should not be called after terminal error.'),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    rootCalls++;
+    return {
+      success: false,
+      finalMessage: createFinalMessage([
+        create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Should not execute.' })),
+        {
+          fId: 'error-1',
+          ft: 'content',
+          part: {
+            pt: 'error',
+            error: '[Service Issue] Openai: Upstream responded with HTTP 400 - Request contains an invalid argument.',
+          },
+        },
+      ] as DMessageFragment[]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const result = await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  assert.equal(rootCalls, 1);
+  assert.equal(childCalls, 0);
+  assert.equal(result.finalMessage.fragments.at(-1)?.part.pt, 'error');
+  assert.equal(session.ephemerals.length, 0);
+});
+
+test('runPersonaWithEphemeralSubagents does not append a duplicate terminal provider error over an existing assistant message', async () => {
+  const session = new FakeSession();
+  const existingAssistant = createDMessageEmpty('assistant');
+  existingAssistant.id = 'assistant-root';
+  existingAssistant.fragments = [{
+    fId: 'error-existing',
+    ft: 'content',
+    part: {
+      pt: 'error',
+      error: '[Service Issue] Openai: Upstream responded with HTTP 400 - Request contains an invalid argument.',
+    },
+  }];
+  session.messages.set(existingAssistant.id, structuredClone(existingAssistant));
+
+  let executeCalls = 0;
+  const executePersona = async (): Promise<PersonaRunResult> => {
+    executeCalls++;
+    return {
+      success: false,
+      finalMessage: createFinalMessage([
+        {
+          fId: 'error-existing',
+          ft: 'content',
+          part: {
+            pt: 'error',
+            error: '[Service Issue] Openai: Upstream responded with HTTP 400 - Request contains an invalid argument.',
+          },
+        },
+      ] as DMessageFragment[]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  const result = await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+    runOptions: {
+      existingAssistantMessageId: 'assistant-root',
+    },
+  }, executePersona);
+
+  assert.equal(executeCalls, 1);
+  assert.equal(session.messageEdits.length, 0);
+  assert.equal(result.finalMessage.fragments.length, 1);
+  assert.equal(result.finalMessage.fragments[0]?.part.pt, 'error');
+});
+
+test('runPersonaWithEphemeralSubagents disables subagent delegation inside child delegated runs', async () => {
+  const session = new FakeSession();
+  const requestedToolNamesByCall: string[][] = [];
+
+  const executePersona = async (params: ChatExecutionRuntimeRunPersonaParams): Promise<PersonaRunResult> => {
+    requestedToolNamesByCall.push(collectRequestedToolNames(params));
+
+    const sourceHistoryText = (params.sourceHistory ?? [])
+      .map(message => message.fragments.map(fragment => 'part' in fragment && fragment.part.pt === 'text' ? fragment.part.text : '').filter(Boolean).join('\n'))
+      .filter(Boolean)
+      .join('\n\n');
+
+    if (sourceHistoryText.includes('Delegated task from your parent agent:')) {
+      return {
+        success: true,
+        finalMessage: createFinalMessage([
+          createTextContentFragment('Child final output.'),
+        ]),
+        assistantMessageId: null,
+      };
+    }
+
+    return {
+      success: true,
+      finalMessage: createFinalMessage([
+        create_FunctionCallInvocation_ContentFragment('tool-1', 'subagent', JSON.stringify({ prompt: 'Handle delegated task.' })),
+      ]),
+      assistantMessageId: 'assistant-root',
+    };
+  };
+
+  await runPersonaWithEphemeralSubagents({
+    ...createBaseParams(session),
+    createPlaceholder: false,
+  }, executePersona);
+
+  assert.deepEqual(requestedToolNamesByCall, [
+    ['WebSearch', 'subagent'],
+    ['WebSearch'],
+    ['WebSearch', 'subagent'],
+  ]);
 });

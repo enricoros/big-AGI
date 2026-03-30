@@ -12,7 +12,7 @@ import { SystemPurposes } from '../../../data';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 
 import { DEFAULT_COUNCIL_MAX_ROUNDS, resolveCouncilMaxRounds } from '~/common/stores/chat/chat.conversation';
-import type { DConversationId, DConversationParticipant, DPersistedCouncilSession, DConversationTurnTerminationMode } from '~/common/stores/chat/chat.conversation';
+import type { DConversationId, DConversationParticipant, DPersistedCouncilSession, DConversationTurnTerminationMode, DConversationTurnsOrder } from '~/common/stores/chat/chat.conversation';
 import { createDMessageEmpty, createDMessageTextContent, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import type { DMessage, DMessageCouncilChannel, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -21,7 +21,7 @@ import { createIdleCouncilSessionState } from '~/common/chat-overlay/store-perch
 import type { CouncilSessionState as ComposerCouncilSessionState } from '~/common/chat-overlay/store-perchat-composer_slice';
 import type { DMessageContentFragment, DMessageVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isToolInvocationPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
-import { getConversationCouncilMaxRounds, getConversationCouncilOpLog, getConversationParticipants, getConversationTurnTerminationMode } from '~/common/stores/chat/store-chats';
+import { getConversationCouncilMaxRounds, getConversationCouncilOpLog, getConversationParticipants, getConversationTurnTerminationMode, getConversationTurnsOrder } from '~/common/stores/chat/store-chats';
 import { findParticipantMentionMatchIndex } from '~/common/util/dMessageUtils';
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
@@ -366,6 +366,39 @@ function mergeParticipantsInRosterOrder(
   return roster.filter(participant => primaryIds.has(participant.id) || extraIds.has(participant.id));
 }
 
+export function shuffleParticipantsAvoidingFirstSpeakerRepeat(
+  participants: DConversationParticipant[],
+  previousFirstParticipantId: string | null,
+): DConversationParticipant[] {
+  if (participants.length <= 1)
+    return participants;
+
+  const shuffled = [...participants];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const swapIndex = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[swapIndex]] = [shuffled[swapIndex]!, shuffled[i]!];
+  }
+
+  if (!previousFirstParticipantId || shuffled[0]?.id !== previousFirstParticipantId)
+    return shuffled;
+
+  const alternateIndex = shuffled.findIndex(participant => participant.id !== previousFirstParticipantId);
+  if (alternateIndex > 0)
+    [shuffled[0], shuffled[alternateIndex]] = [shuffled[alternateIndex]!, shuffled[0]!];
+
+  return shuffled;
+}
+
+function applyTurnsOrder(
+  participants: DConversationParticipant[],
+  turnsOrder: DConversationTurnsOrder,
+  previousFirstParticipantId: string | null,
+): DConversationParticipant[] {
+  return turnsOrder === 'random'
+    ? shuffleParticipantsAvoidingFirstSpeakerRepeat(participants, previousFirstParticipantId)
+    : participants;
+}
+
 function getAssistantMessagesSinceLatestUser(messages: Readonly<DMessage[]>, latestUserMessageId: string | null): DMessage[] {
   if (!latestUserMessageId)
     return [];
@@ -635,11 +668,9 @@ const exitLoopTool = {
 
 function createCouncilReviewerBallotRequestTransform() {
   return (request: Parameters<NonNullable<PersonaRunOptions['requestTransform']>>[0]) => {
-    const existingTools = request.tools ?? [];
     const existingToolNames = new Set(
-      existingTools.flatMap(tool => tool.type === 'function_call' ? [tool.function_call.name] : []),
+      (request.tools ?? []).flatMap(tool => tool.type === 'function_call' ? [tool.function_call.name] : []),
     );
-
     const reviewerBallotTools = [
       !existingToolNames.has(councilReviewerAcceptTool.name) ? aixFunctionCallTool(councilReviewerAcceptTool) : null,
       !existingToolNames.has(councilReviewerImproveTool.name) ? aixFunctionCallTool(councilReviewerImproveTool) : null,
@@ -647,7 +678,8 @@ function createCouncilReviewerBallotRequestTransform() {
 
     return {
       ...request,
-      tools: [...existingTools, ...reviewerBallotTools],
+      tools: reviewerBallotTools,
+      toolsPolicy: { type: 'any' as const },
     };
   };
 }
@@ -659,7 +691,7 @@ function createCouncilReviewerForcedBallotRequestTransform() {
       aixFunctionCallTool(councilReviewerAcceptTool),
       aixFunctionCallTool(councilReviewerImproveTool),
     ],
-    toolsPolicy: { type: 'any' as const },
+    toolsPolicy: { type: 'function_call' as const, function_call: { name: councilReviewerAcceptTool.name } },
   });
 }
 
@@ -1334,6 +1366,18 @@ function getCouncilFragmentTexts(message: Pick<DMessage, 'fragments'> | { fragme
     .map(fragment => fragment.part.text);
 }
 
+function getCouncilFailureTexts(message: Pick<DMessage, 'fragments'> | { fragments?: DMessage['fragments'] }): string[] {
+  return (message.fragments ?? []).flatMap(fragment => {
+    if (fragment.ft !== 'content')
+      return [];
+    if (fragment.part.pt === 'text')
+      return [fragment.part.text];
+    if (fragment.part.pt === 'error')
+      return [fragment.part.error];
+    return [];
+  });
+}
+
 function createCouncilTextStreamObserver(params: {
   participantId: string;
   role: 'leader' | 'reviewer';
@@ -1639,6 +1683,7 @@ async function runCouncilReviewerBallot(
   });
 
   const fragmentTexts = getCouncilFragmentTexts(finalMessage);
+  const failureTexts = getCouncilFailureTexts(finalMessage);
   let ballot: ReturnType<typeof extractCouncilReviewerBallotFromToolInvocation>;
   try {
     ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
@@ -1647,60 +1692,67 @@ async function runCouncilReviewerBallot(
       ? error.message.trim()
       : '';
     if (explicitErrorReason === COUNCIL_REVIEW_VERDICT_MISSING_REASON && fragmentTexts.length) {
-      const repairHistory = participantHistory.map(message => duplicateDMessage(message, false));
-      const priorAnalysis = getCouncilReviewerAnalysisTexts(finalMessage.fragments).join('\n\n').trim();
-      appendCouncilInstruction(repairHistory, [
-        'Your previous review did not submit the required verdict tool call.',
-        ...(priorAnalysis ? [
-          `Your review analysis was:\n${priorAnalysis}`,
-        ] : []),
-        'Now return your verdict by calling exactly one tool and no other tool:',
-        `- ${COUNCIL_REVIEWER_ACCEPT_LABEL}`,
-        `- ${COUNCIL_REVIEWER_IMPROVE_LABEL}`,
-        'If you request changes, include the concrete blocking reason in the Improve tool arguments.',
-        'Do not repeat the full review in plain text.',
-      ]);
+      for (let repairAttempt = 0; repairAttempt < 2; repairAttempt++) {
+        const repairHistory = participantHistory.map(message => duplicateDMessage(message, false));
+        const priorAnalysis = getCouncilReviewerAnalysisTexts(finalMessage.fragments).join('\n\n').trim();
+        appendCouncilInstruction(repairHistory, [
+          'Your previous review did not submit the required verdict tool call.',
+          ...(priorAnalysis ? [
+            `Your review analysis was:\n${priorAnalysis}`,
+          ] : []),
+          'Now return your verdict by calling exactly one tool and no other tool:',
+          `- ${COUNCIL_REVIEWER_ACCEPT_LABEL}`,
+          `- ${COUNCIL_REVIEWER_IMPROVE_LABEL}`,
+          'If you request changes, include the concrete blocking reason in the Improve tool arguments.',
+          'Do not repeat the full review in plain text.',
+        ]);
 
-      try {
-        const repaired = await runtime.runPersona({
-          assistantLlmId: llmId,
-          conversationId,
-          systemPurposeId: participant.personaId!,
-          keepAbortController: true,
-          sharedAbortController,
-          participant,
-          sourceHistory: repairHistory,
-          createPlaceholder: false,
-          runOptions: withParticipantRunOptions(llmId, participant, {
-            requestTransform: createCouncilReviewerForcedBallotRequestTransform(),
-          }),
-          session,
-        });
+        try {
+          const repaired = await runtime.runPersona({
+            assistantLlmId: llmId,
+            conversationId,
+            systemPurposeId: participant.personaId!,
+            keepAbortController: true,
+            sharedAbortController,
+            participant,
+            sourceHistory: repairHistory,
+            createPlaceholder: false,
+            runOptions: withParticipantRunOptions(llmId, participant, {
+              requestTransform: createCouncilReviewerForcedBallotRequestTransform(),
+            }),
+            session,
+          });
 
-        finalMessage = {
-          ...finalMessage,
-          fragments: mergeCouncilReviewerVoteFragments(finalMessage.fragments, repaired.finalMessage.fragments),
-          pendingIncomplete: !!(finalMessage.pendingIncomplete || repaired.finalMessage.pendingIncomplete),
-        };
-        ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
-        return {
-          ballot,
-          fragmentTexts: getCouncilFragmentTexts(finalMessage),
-          messageFragments: finalMessage.fragments,
-          messagePendingIncomplete: !!finalMessage.pendingIncomplete,
-        };
-      } catch (repairError) {
-        if (sharedAbortController.signal.aborted)
-          throw repairError;
+          finalMessage = {
+            ...finalMessage,
+            fragments: mergeCouncilReviewerVoteFragments(finalMessage.fragments, repaired.finalMessage.fragments),
+            pendingIncomplete: !!(finalMessage.pendingIncomplete || repaired.finalMessage.pendingIncomplete),
+          };
+          ballot = extractCouncilReviewerBallotFromToolInvocation(finalMessage.fragments, participant.id);
+          return {
+            ballot,
+            fragmentTexts: getCouncilFragmentTexts(finalMessage),
+            messageFragments: finalMessage.fragments,
+            messagePendingIncomplete: !!finalMessage.pendingIncomplete,
+          };
+        } catch (repairError) {
+          if (sharedAbortController.signal.aborted)
+            throw repairError;
+          const repairErrorReason = repairError instanceof Error && repairError.message.trim()
+            ? repairError.message.trim()
+            : '';
+          if (repairErrorReason !== COUNCIL_REVIEW_VERDICT_MISSING_REASON)
+            break;
+        }
       }
     }
 
-    const fallbackReason = deriveCouncilReviewerFallbackReason(fragmentTexts);
+    const fallbackReason = deriveCouncilReviewerFallbackReason(failureTexts);
     ballot = {
       reviewerParticipantId: participant.id,
       decision: 'reject',
       reason: (explicitErrorReason === COUNCIL_REVIEW_VERDICT_MISSING_REASON || explicitErrorReason === COUNCIL_REVIEW_ANALYSIS_MISSING_REASON)
-        ? explicitErrorReason
+        ? (fallbackReason && fallbackReason !== COUNCIL_REVIEW_FAILED_REASON ? fallbackReason : explicitErrorReason)
         : (fallbackReason && fallbackReason !== COUNCIL_REVIEW_FAILED_REASON
         ? fallbackReason
         : explicitErrorReason)
@@ -1804,6 +1856,7 @@ export async function runCouncilSequence(
   latestUserMessageId: string | null,
   initialCouncilState: CouncilSessionState | null = null,
   runtime?: ChatExecutionRuntime,
+  turnsOrder: DConversationTurnsOrder = 'custom',
 ): Promise<boolean> {
   void latestUserMessageId;
 
@@ -1813,10 +1866,14 @@ export async function runCouncilSequence(
   const phaseId = initialCouncilState?.phaseId ?? `council-${agiCustomId(12)}`;
   const resolvedRuntime = await resolveChatExecutionRuntime(runtime);
   const sharedAbortController = resolvedRuntime.createAbortController();
-  const leaderParticipant = getCouncilLeaderParticipant(participantsInOrder);
+  const previousLeaderParticipantId = initialCouncilState?.rounds
+    .filter(round => typeof round.leaderParticipantId === 'string')
+    .at(-1)?.leaderParticipantId ?? null;
+  const effectiveParticipantsInOrder = applyTurnsOrder(participantsInOrder, turnsOrder, previousLeaderParticipantId);
+  const leaderParticipant = getCouncilLeaderParticipant(effectiveParticipantsInOrder);
   if (!leaderParticipant)
     return false;
-  const reviewerParticipants = participantsInOrder.filter(participant => participant.id !== leaderParticipant?.id && participant.kind === 'assistant' && !!participant.personaId);
+  const reviewerParticipants = effectiveParticipantsInOrder.filter(participant => participant.id !== leaderParticipant?.id && participant.kind === 'assistant' && !!participant.personaId);
   let currentCouncilOps = getConversationCouncilOpLog(conversationId)
     .filter(op => op.phaseId === phaseId);
   const replayedCurrentCouncilState = currentCouncilOps.length
@@ -1933,7 +1990,7 @@ export async function runCouncilSequence(
           currentCouncilState,
           leaderLlmId,
           leaderParticipant.personaId,
-          participantsInOrder,
+          effectiveParticipantsInOrder,
           leaderParticipant,
           sharedRejectionReasons,
           currentCouncilState.roundIndex,
@@ -2105,7 +2162,7 @@ export async function runCouncilSequence(
                   reviewer,
                   leaderParticipant,
                   proposalText,
-                  participantsInOrder,
+                  effectiveParticipantsInOrder,
                   sharedRejectionReasons,
                   currentCouncilState.roundIndex,
                 );
@@ -2296,6 +2353,7 @@ async function runParticipantSequence(
   allAssistantParticipants: DConversationParticipant[],
   defaultChatLlmId: DLLMId,
   turnTerminationMode: DConversationTurnTerminationMode,
+  turnsOrder: DConversationTurnsOrder,
   latestUserMessageId: string | null,
   councilChannel: DMessageCouncilChannel,
   runtime?: ChatExecutionRuntime,
@@ -2348,14 +2406,16 @@ async function runParticipantSequence(
             ? participantsInOrder
             : getParticipantsRemainingThisTurn(historyForTurn, latestUserMessageId, participantsInOrder);
       initialParticipantsForPassOverride = null;
+      const previousFirstSpeakerId = getAssistantMessagesSinceLatestUser(historyForTurn, latestUserMessageId)[0]?.metadata?.author?.participantId ?? null;
+      const orderedParticipantsForPassBase = applyTurnsOrder(participantsForPassBase, turnsOrder, previousFirstSpeakerId);
 
       const queuedMentionedParticipants = pendingMentionedParticipantIds
-        .map(participantId => participantsForPassBase.find(participant => participant.id === participantId) ?? participantsInOrder.find(participant => participant.id === participantId) ?? allAssistantParticipants.find(participant => participant.id === participantId) ?? null)
+        .map(participantId => orderedParticipantsForPassBase.find(participant => participant.id === participantId) ?? participantsInOrder.find(participant => participant.id === participantId) ?? allAssistantParticipants.find(participant => participant.id === participantId) ?? null)
         .filter((participant): participant is DConversationParticipant => !!participant);
       const queuedMentionedParticipantIds = new Set(queuedMentionedParticipants.map(participant => participant.id));
       const participantsForPass = [
         ...queuedMentionedParticipants,
-        ...participantsForPassBase.filter(participant => !queuedMentionedParticipantIds.has(participant.id)),
+        ...orderedParticipantsForPassBase.filter(participant => !queuedMentionedParticipantIds.has(participant.id)),
       ];
       pendingMentionedParticipantIds = [];
 
@@ -2499,13 +2559,15 @@ async function runParticipantSequence(
 
 export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, executeCallerNameDebug: string, runtime?: ChatExecutionRuntime) {
   const resolvedRuntime = await resolveChatExecutionRuntime(runtime);
+  const retryMessageId = executeCallerNameDebug.startsWith('chat-retry-message:')
+    ? executeCallerNameDebug.slice('chat-retry-message:'.length) || null
+    : null;
 
   const participants = getConversationParticipants(conversationId);
   const assistantParticipants = participants.filter(participant => participant.kind === 'assistant' && !!participant.personaId);
   const primaryParticipant = assistantParticipants[0] ?? null;
-  const chatLLMId = primaryParticipant?.llmId ?? getChatLLMId();
-  const systemPurposeId = primaryParticipant?.personaId ?? null;
   const turnTerminationMode = getConversationTurnTerminationMode(conversationId);
+  const turnsOrder = getConversationTurnsOrder(conversationId);
 
   // Handle missing conversation
   if (!conversationId)
@@ -2513,6 +2575,13 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
   const session = resolvedRuntime.getSession(conversationId);
   const initialHistory = session.historyViewHeadOrThrow('handle-execute-' + executeCallerNameDebug) as Readonly<DMessage[]>;
+  const retryMessage = retryMessageId ? initialHistory.find(message => message.id === retryMessageId) ?? null : null;
+  const retryAuthor = retryMessage?.metadata?.author ?? null;
+  const retryParticipant = retryAuthor?.participantId
+    ? assistantParticipants.find(participant => participant.id === retryAuthor.participantId) ?? null
+    : null;
+  const chatLLMId = retryParticipant?.llmId ?? retryAuthor?.llmId ?? primaryParticipant?.llmId ?? getChatLLMId();
+  const systemPurposeId = retryParticipant?.personaId ?? retryAuthor?.personaId ?? primaryParticipant?.personaId ?? null;
 
   // Handle unconfigured
   if (!chatLLMId || !chatExecuteMode)
@@ -2648,6 +2717,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
             latestUserMessage?.id ?? null,
             initialCouncilState,
             resolvedRuntime,
+            turnsOrder,
           )
           : await runParticipantSequence(
             session,
@@ -2656,6 +2726,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
             assistantParticipantsForChannel,
             chatLLMId,
             effectiveTurnTerminationMode,
+            turnsOrder,
             latestUserMessage?.id ?? null,
             requestedCouncilChannel,
             resolvedRuntime,
