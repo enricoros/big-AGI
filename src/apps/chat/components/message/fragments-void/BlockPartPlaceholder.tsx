@@ -71,7 +71,7 @@ const _styles = {
   opChip: {
     maxWidth: '100%', // fundamental for the ellipsize to work
     // width: '100%', // would have way less 'jumpy-ness'
-    minWidth: 200, // would work on mobile, but no clear advantage
+    minWidth: 100, // safety floor, constant across active/done states
     // fontWeight: 500,
     minHeight: '1.75rem',
     // replaced by Box with px: 2
@@ -85,7 +85,6 @@ const _styles = {
     },
   },
   opChipDone: {
-    minWidth: undefined, // reset
     boxShadow: undefined, // reset
     color: 'text.tertiary',
     background: 'transparent',
@@ -300,7 +299,11 @@ function ModelOperationChip(props: {
     >
       <span className='agi-ellipsize'>
         {text}
-        {elapsedSeconds >= MODELOP_TIMEOUT_DELAY && <span style={{ opacity: 0.6 }}> · {elapsedSeconds}s</span>}
+        {elapsedSeconds >= MODELOP_TIMEOUT_DELAY && (
+          <span style={{ opacity: 0.6 }}>
+            {' · '}<span style={{ display: 'inline-block', minWidth: elapsedSeconds >= 100 ? '3.5ch' : '2.5ch' }}>{elapsedSeconds}s</span>
+          </span>
+        )}
       </span>
     </Chip>
   );
