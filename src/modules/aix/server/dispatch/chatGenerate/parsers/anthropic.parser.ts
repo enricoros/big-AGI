@@ -489,7 +489,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               'overloaded_error': 529,
             };
             // request a retry by unwinding to the retrier
-            throw new OperationRetrySignal(`retrying Anthropic: ${errorText}`, {
+            throw new OperationRetrySignal(`Anthropic: ${errorText}`, {
               causeHttp: errorTypeToHttpStatus[error.type],
               causeConn: error.type,
             });
