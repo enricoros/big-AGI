@@ -29,6 +29,7 @@ npm run build  # next build runs compile+lint+types but stops at first type-erro
 The `gh` command is available to interact with GitHub from the terminal, but **NEVER PUSH TO ANY BRANCH**. The user manages all 'write' git operations.
 - `opensource` -> `enricoros/big-AGI` (public, default branch: `main`, MIT) - community issues/PRs/releases
 - `private` -> `big-agi/big-agi-private` (private, default branch: `dev`) - main dev repo with `dev`->`staging`->`prod` pipeline
+- **Always use `git mv` instead of `mv`** when renaming or moving files - preserves git history tracking
 
 ### Core Directory Structure
 
