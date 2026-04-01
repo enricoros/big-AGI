@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { ColorPaletteProp } from '@mui/joy/styles/types';
+import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, Typography } from '@mui/joy';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -11,7 +11,7 @@ import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import { adjustContentScaling, ContentScaling } from '~/common/app.theme';
+import { adjustContentScaling, ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { animationSpinHalfPause } from '~/common/util/animUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -32,35 +32,32 @@ const _styles = {
   },
 
   chip: {
-    px: 1.5,
-    py: 0.375,
+    pl: 1.5,
+    pr: 1.75,
     my: '1px', // to not crop the outline on mobile, or on beam
+    minHeight: '1.5rem', // similar parts, modelOps and paired tools, are 1.75rem
+    '& .MuiChip-startDecorator': {
+      marginRight: '0.5em',
+    },
+  },
+
+  chipActive: {
     outline: '1px solid',
     outlineColor: `${REASONING_COLOR}.solidBg`, // .outlinedBorder
     boxShadow: `1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
+    // '& > button': {
+    //   boxShadow: `inset 1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
+    // },
   },
 
-  chipDisabled: {
-    px: 1.5,
-    py: 0.375,
-    my: '1px', // to not crop the outline on mobile, or on beam
-  },
-
-  chipIcon: {
-    fontSize: '1rem',
-    mr: 0.5,
-  },
-
+  chipIcon: undefined, // { fontSize: '1rem', },
   chipIconPending: {
-    fontSize: '1rem',
-    mr: 0.5,
+    // fontSize: '1rem',
     animation: `${animationSpinHalfPause} 2s ease-in-out infinite`,
   },
 
   chipExpanded: {
     mt: '1px', // need to copy the `chip` mt
-    px: 1.5,
-    py: 0.375,
     // borderRadius: 'sm',
     // transition: 'border-radius 0.2s ease-in-out',
   },
@@ -94,7 +91,6 @@ const _styles = {
     // borderRadius: 'sm',
     // fontSize: 'xs',
   },
-
 } as const;
 
 
@@ -130,16 +126,27 @@ export function BlockPartModelAux(props: {
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
 
+  // derived
+  const isActive = props.isLastFragment && props.messagePendingIncomplete;
+  const contentScaling = adjustContentScaling(props.contentScaling, -1);
+  const typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
+
   // memo
-  const scaledTypographySx = useScaledTypographySx(adjustContentScaling(props.contentScaling, -1), false, false);
   const maybeMarkdown = React.useMemo(() => !ENABLE_MARKDOWN_DETECTION || neverExpanded ? false : _maybeMarkdownReasoning(props.auxText), [neverExpanded, props.auxText]);
+
+  // memo style
+  const chipSx: SxProps = React.useMemo(() => ({
+    ..._styles.chip,
+    ...(isActive && _styles.chipActive),
+    ...(expanded && _styles.chipExpanded),
+    fontSize: themeScalingMap[contentScaling]?.blockFontSize ?? undefined,
+  }), [contentScaling, expanded, isActive]);
+  const scaledTypographySx = useScaledTypographySx(contentScaling, false, false);
   const textSx = React.useMemo(() => ({
     ..._styles.text,
     ...scaledTypographySx,
     ...(maybeMarkdown ? _styles.textUndoWhitespace : {}),
   }), [maybeMarkdown, scaledTypographySx]);
-
-  let typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
 
   // handlers
@@ -196,20 +203,21 @@ export function BlockPartModelAux(props: {
     {/* Chip to expand/collapse */}
     <Box data-agi-no-copy /* do not copy these buttons */ sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
-        color={props.isLastFragment ? REASONING_COLOR : 'neutral'}
-        variant={expanded ? 'solid' : 'soft'}
         size='sm'
+        color={isActive || expanded ? REASONING_COLOR : 'neutral'}
+        variant={expanded ? 'solid' : 'soft'}
         onClick={handleToggleExpanded}
-        sx={expanded ? _styles.chipExpanded : props.isLastFragment ? _styles.chip : _styles.chipDisabled}
+        sx={chipSx}
         startDecorator={
           <AllInclusiveIcon
-            sx={(props.messagePendingIncomplete && !expanded && props.isLastFragment) ? _styles.chipIconPending : _styles.chipIcon}
+            sx={!expanded && isActive ? _styles.chipIconPending : _styles.chipIcon}
             /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
           />
         }
         // startDecorator='🧠'
       >
-        Show {typeText}
+        {/*Show {typeText}*/}
+        {isActive && !expanded && typeText === 'Reasoning' ? `${typeText}...` : `Show ${typeText}`}
       </Chip>
 
       {expanded && !props.messagePendingIncomplete && (showInline || showDelete) && !!props.auxText && (
@@ -223,7 +231,8 @@ export function BlockPartModelAux(props: {
             disabled={!onFragmentReplace /* || props.messagePendingIncomplete */}
             onClick={!onFragmentReplace ? undefined : handleInline}
             endDecorator={<TextFieldsIcon />}
-            sx={(!onFragmentReplace /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
+            sx={_styles.chip}
+            // sx={(!onFragmentReplace /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
           >
             Make Regular Text
           </Chip>}
@@ -236,7 +245,8 @@ export function BlockPartModelAux(props: {
             disabled={!onFragmentDelete /* || props.messagePendingIncomplete */}
             onClick={!onFragmentDelete ? undefined : handleDelete}
             endDecorator={<DeleteOutlineIcon />}
-            sx={(!onFragmentDelete /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
+            sx={_styles.chip}
+            // sx={(!onFragmentDelete /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
           >
             Delete
           </Chip>}
