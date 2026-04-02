@@ -400,7 +400,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                     const code = typeof input === 'object' ? (typeof input.code === 'string' ? input.code : typeof input.command === 'string' ? input.command : undefined) : undefined;
                     if (code) iTexts = [_ellipsizeContext(code)];
                   } catch { /* ignore parse errors */ }
-                const execText = stoppedBlock.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
+                const textWhat = stoppedBlock.name === 'bash_code_execution' ? 'bash script' : stoppedBlock.name === 'text_editor_code_execution' ? 'text' : 'code';
+                const execText = `Executing ${textWhat}...`;
                 pt.sendOperationState('code-exec', execText, { opId: stoppedBlock.id, ...iTexts && { iTexts } });
                 break;
             }
@@ -712,8 +713,8 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
     case 'text_editor_code_execution':
       // end input: { code: string } for code_execution or { command: string } for bash_code_execution
       const code = typeof inputObj?.code === 'string' ? inputObj.code : typeof inputObj?.command === 'string' ? inputObj.command : undefined;
-      const execText = !code ? (block.name === 'bash_code_execution' ? 'Writing bash code...' : 'Writing code...')
-        : block.name === 'bash_code_execution' ? 'Executing bash script...' : 'Executing code...';
+      const textWhat = block.name === 'bash_code_execution' ? 'bash script' : block.name === 'text_editor_code_execution' ? 'text' : 'code';
+      const execText = !code ? `Writing ${textWhat}...` : `Executing ${textWhat}...`;
       pt.sendOperationState('code-exec', execText, { ...srvOp, ...(code ? { iTexts: [_ellipsizeContext(code)] } : undefined) });
       break;
     // [Anthropic, 2025-11-24] Tool Search Tool
@@ -861,7 +862,7 @@ function _handleCBS_BashCodeExecutionToolResult(pt: IParticleTransmitter, block:
 
 function _handleCBS_TextEditorCodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'text_editor_code_execution_tool_result' }>): void {
   // Text editor code execution result from Skills container
-  pt.sendOperationState('code-exec', 'Text editor code executed', { opId: block.tool_use_id, state: 'done' });
+  pt.sendOperationState('code-exec', 'Text executed', { opId: block.tool_use_id, state: 'done' });
 }
 
 function _handleCBS_ContainerUpload(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'container_upload' }>, containerId: string | undefined): void {
