@@ -22,8 +22,10 @@
  */
 
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
-const htmlPath = process.argv[2] || '/tmp/ollama-newest.html';
+const htmlPath = process.argv[2] || path.join(os.tmpdir(), 'ollama-newest.html');
 const TOP_N_ALWAYS_INCLUDE = 30;
 const MIN_PULLS_THRESHOLD = 50000;
 

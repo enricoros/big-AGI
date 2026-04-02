@@ -8,14 +8,11 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Automated Workflow:**
 ```bash
-# 1. Fetch the HTML (sorted by newest for stable ordering)
-curl -s "https://ollama.com/library?sort=newest" -o /tmp/ollama-newest.html
+# 1. Fetch the HTML to a cross-platform temp path (sorted by newest for stable ordering)
+curl -s "https://ollama.com/library?sort=newest" -o "$(node -p "require('os').tmpdir()")/ollama-newest.html"
 
-# 2. Parse it with the script
-node .claude/scripts/parse-ollama-models.js > /tmp/ollama-parsed.txt 2>&1
-
-# 3. Review the parsed output
-cat /tmp/ollama-parsed.txt
+# 2. Parse it with the script (auto-finds the file in os.tmpdir())
+node .claude/scripts/parse-ollama-models.js 2>&1
 ```
 
 The parser outputs: `modelName|pulls|capabilities|sizes`
