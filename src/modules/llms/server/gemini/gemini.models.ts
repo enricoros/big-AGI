@@ -75,7 +75,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Mar 4, 2026)
+// Pricing based on https://ai.google.dev/pricing (Apr 2, 2026)
 
 const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
@@ -130,8 +130,7 @@ const gemini25FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   cache: { cType: 'oai-ac', read: 0.01 }, // text/image/video; audio is $0.03 but we don't differentiate yet
 };
 
-const gemini25FlashLitePreviewPricing = gemini25FlashLitePricing; // The latest model based on Gemini 2.5 Flash lite optimized for cost-efficiency, high throughput and high quality.
-
+// REMOVED: gemini25FlashLitePreviewPricing (preview shut down, was same as gemini25FlashLitePricing)
 // REMOVED: gemini25FlashNativeAudioPricing (dialog models no longer supported)
 
 const gemini25FlashPreviewTTSPricing: ModelDescriptionSchema['chatPrice'] = {
@@ -256,7 +255,7 @@ const _knownGeminiModels: ({
 
   /// Generation 3.0
 
-  // 3.0 Pro (Preview) - Released November 18, 2025; DEPRECATED: shutdown March 9, 2026
+  // 3.0 Pro (Preview) - Released November 18, 2025; DEPRECATED: shutdown March 9, 2026 (still available)
   {
     id: 'models/gemini-3-pro-preview',
     labelOverride: 'Gemini 3 Pro Preview',
@@ -467,7 +466,8 @@ const _knownGeminiModels: ({
     benchmark: undefined, // TTS models are not benchmarkable
   },
 
-  // REMOVED MODELS - we do not support Native Audio Preview:
+  // REMOVED MODELS - we do not support Native Audio / Live API models:
+  // - models/gemini-3.1-flash-live-preview (Live API, released March 26, 2026)
   // - models/gemini-2.5-flash-native-audio-preview-12-2025
   // REMOVED MODELS (old dialog models superseded by native audio preview):
   // - models/gemini-2.5-flash-preview-native-audio-dialog
@@ -476,23 +476,10 @@ const _knownGeminiModels: ({
 
   // 2.5 Flash-Lite
 
-  /// 2.5 Flash-Lite Preview - Released September 25, 2025; shutdown March 31, 2026
-  {
-    id: 'models/gemini-2.5-flash-lite-preview-09-2025',
-    labelOverride: 'Gemini 2.5 Flash-Lite Preview 09-2025',
-    isPreview: true,
-    deprecated: '2026-03-31',
-    chatPrice: gemini25FlashLitePreviewPricing,
-    interfaces: IF_25,
-    parameterSpecs: [
-      { paramId: 'llmVndGeminiThinkingBudget' },
-      { paramId: 'llmVndGeminiGoogleSearch' },
-    ],
-    benchmark: { cbaElo: 1379 }, // gemini-2.5-flash-lite-preview-09-2025-no-thinking
-  },
+  // REMOVED: models/gemini-2.5-flash-lite-preview-09-2025 (shut down March 31, 2026, superseded by gemini-2.5-flash-lite stable and gemini-3.1-flash-lite-preview)
+
   // 2.5 Flash-Lite - Released July 2025
   {
-    hidden: true, // yielding to more recent preview
     id: 'models/gemini-2.5-flash-lite',
     labelOverride: 'Gemini 2.5 Flash-Lite',
     deprecated: '2026-07-22',
@@ -588,6 +575,21 @@ const _knownGeminiModels: ({
 
   /// Other Experimental Models
 
+  // Gemma 4 Models - Released April 2, 2026
+  {
+    id: 'models/gemma-4-31b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree, // Free tier only according to pricing page
+  },
+  {
+    hidden: true, // smaller MoE variant
+    id: 'models/gemma-4-26b-a4b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree, // Free tier only according to pricing page
+  },
+
   // Gemma 3n Model (newer than 3, first seen on the May 2025 update)
   {
     id: 'models/gemma-3n-e4b-it',
@@ -656,7 +658,8 @@ export function geminiValidateModelDefs_DEV(apiModels: GeminiWire_API_Models_Lis
   if (DEV_DEBUG_GEMINI_MODELS) {
     // Filter to chat-capable models first, then check for stale/unknown definitions
     const chatModelIds = apiModels.filter(geminiFilterModels).map(m => m.name);
-    llmDevCheckModels_DEV('Gemini', chatModelIds, _knownGeminiModels.map(m => m.id));
+    const knownIds = _knownGeminiModels.filter(m => !filterLyingModelNames.includes(m.id)).map(m => m.id);
+    llmDevCheckModels_DEV('Gemini', chatModelIds, knownIds);
   }
 
 }
@@ -753,6 +756,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-1.5-flash-8b',
   'models/gemini-1.0-pro',
   'models/gemini-pro',
+  'models/gemma-4-',
   'models/gemma-3n-',
   'models/gemma-3-27b',
   'models/gemma-3-12b',
