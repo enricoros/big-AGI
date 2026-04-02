@@ -111,7 +111,7 @@ async function* _connectToDispatch(
     const onRetryAttempt = (info: RetryAttempt) => {
       // -> retry-server-dispatch
       chatGenerateTx.sendCGControl({
-        cg: 'aix-retry-reset', rScope: 'srv-dispatch', rShallClear: false, reason: 'retrying connection',
+        cg: 'aix-retry-reset', rScope: 'srv-dispatch', rClearStrategy: 'none', reason: 'retrying connection',
         ...info, attempt: info.attempt - 1, maxAttempts: info.maxAttempts - 1,
       });
     };

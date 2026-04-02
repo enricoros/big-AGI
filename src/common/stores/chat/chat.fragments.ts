@@ -269,7 +269,7 @@ export type DVoidPlaceholderPart = {
 
   // NOTE: the following should be extracted as its own part over time
   aixControl?:
-    | { ctl: 'ac-info', ait: 'flow-cont' }
+    | { ctl: 'ac-info', ait: 'flow-cont' | 'flow-checkpoint' }
     | DVoidPlaceholderAixControlRetry,
 };
 

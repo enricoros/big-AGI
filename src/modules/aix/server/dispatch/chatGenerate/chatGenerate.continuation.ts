@@ -91,6 +91,9 @@ export async function* executeChatGenerateWithContinuation(
         return dispatch;
       };
 
+      // Mark continuation checkpoint - client preserves all content up to this point on retry
+      yield { cg: 'aix-continuation-checkpoint' } satisfies AixWire_Particles.ChatControlOp;
+
       // Notify the client that a continuation turn is starting
       yield { cg: 'aix-info', ait: 'flow-cont', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...` };
 

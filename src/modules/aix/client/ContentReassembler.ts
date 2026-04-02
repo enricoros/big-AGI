@@ -50,6 +50,7 @@ export class ContentReassembler {
 
   // reassembly state (plus the ext. accumulator)
   private currentTextFragmentIndex: number | null = null;
+  private continuationCheckpointIndex: number = 0; // fragments index at last checkpoint - content before this is confirmed from prior continuation turns
 
   // raw termination data (set during stream or by client, classified at finalization)
   private _terminationReason?: 'done-client-aborted' | 'issue-client-rpc' | AixWire_Particles.CGEndReason;
@@ -122,6 +123,10 @@ export class ContentReassembler {
         }
 
 
+    // Solidify across checkpoint boundaries: fuse adjacent text fragments & reasoning fragments
+    // that were kept apart during generation to preserve rewindability
+    this._solidifyFragmentsAcrossBoundaries();
+
     // Metrics
     const hadIssues = !!this.accumulator.legacyGenTokenStopReason;
     metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hadIssues);
@@ -165,9 +170,10 @@ export class ContentReassembler {
       console.log(`-> aix.p: client-retry (${strategy})`, { errorMessage, attempt, maxAttempts, delayMs, causeHttp, causeConn });
 
     // process as aix-retry-reset with cli-ll scope
+    // reconnect: server starts from scratch, clear everything; resume: server continues, keep all
     this.onAixRetryReset({
       cg: 'aix-retry-reset', rScope: 'cli-ll',
-      rShallClear: false, // TODO: check if this is correct; we shall clear, but at the same time we haven't tried to see
+      rClearStrategy: strategy === 'reconnect' ? 'all' : 'none',
       reason: strategy === 'resume' ? `Resuming - ${errorMessage}` : `Reconnecting - ${errorMessage}`,
       attempt, maxAttempts, delayMs, causeHttp, causeConn,
     });
@@ -322,6 +328,9 @@ export class ContentReassembler {
           case 'issue':
             this.onCGIssue(op);
             break;
+          case 'aix-continuation-checkpoint':
+            this.onContinuationCheckpoint();
+            break;
           case 'aix-info':
             await this._removeLastVoidPlaceholderDelayed();
             this.onAixInfo(op); // creates a voidPlaceholder
@@ -380,11 +389,12 @@ export class ContentReassembler {
     // Break text accumulation
     this.currentTextFragmentIndex = null;
 
-    // append to existing ModelAuxVoidFragment if possible
-    const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    // append to existing ModelAuxVoidFragment if possible (only at or after checkpoint - don't touch prior turns)
+    const lastIdx = this.accumulator.fragments.length - 1;
+    const currentFragment = lastIdx >= this.continuationCheckpointIndex ? this.accumulator.fragments[lastIdx] : undefined;
     if (!restart && currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
       const appendedPart = { ...currentFragment.part, aText: (currentFragment.part.aText || '') + _t } satisfies DVoidModelAuxPart;
-      this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: appendedPart };
+      this.accumulator.fragments[lastIdx] = { ...currentFragment, part: appendedPart };
       return;
     }
 
@@ -395,8 +405,9 @@ export class ContentReassembler {
 
   private onSetReasoningSignature({ signature }: Extract<AixWire_Particles.PartParticleOp, { p: 'trs' }>): void {
 
-    // set to existing ModelAuxVoidFragment if possible
-    const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    // set to existing ModelAuxVoidFragment if possible (only at or after checkpoint)
+    const lastIdx = this.accumulator.fragments.length - 1;
+    const currentFragment = lastIdx >= this.continuationCheckpointIndex ? this.accumulator.fragments[lastIdx] : undefined;
     if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
       const setPart = { ...currentFragment.part, textSignature: signature } satisfies DVoidModelAuxPart;
       this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: setPart };
@@ -410,8 +421,9 @@ export class ContentReassembler {
 
   private onAddRedactedDataParcel({ _data }: Extract<AixWire_Particles.PartParticleOp, { p: 'trr_' }>): void {
 
-    // add to existing ModelAuxVoidFragment if possible
-    const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    // add to existing ModelAuxVoidFragment if possible (only at or after checkpoint)
+    const lastIdx = this.accumulator.fragments.length - 1;
+    const currentFragment = lastIdx >= this.continuationCheckpointIndex ? this.accumulator.fragments[lastIdx] : undefined;
     if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
       const appendedPart = { ...currentFragment.part, redactedData: [...(currentFragment.part.redactedData || []), _data] } satisfies DVoidModelAuxPart;
       this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: appendedPart };
@@ -439,7 +451,8 @@ export class ContentReassembler {
   }
 
   private onAppendFunctionCallInvocationArgs(_fci: Extract<AixWire_Particles.PartParticleOp, { p: '_fci' }>): void {
-    const fragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    const lastIdx = this.accumulator.fragments.length - 1;
+    const fragment = lastIdx >= this.continuationCheckpointIndex ? this.accumulator.fragments[lastIdx] : undefined;
     if (fragment && isContentFragment(fragment) && fragment.part.pt === 'tool_invocation' && fragment.part.invocation.type === 'function_call') {
       const updatedPart = {
         ...fragment.part,
@@ -631,8 +644,16 @@ export class ContentReassembler {
     // destructure
     const { text, mot, opId, state, parentOpId, iTexts, oTexts } = os;
 
-    const existingPh = this.accumulator.fragments.findLast(isVoidPlaceholderFragment);
-    if (!existingPh) {
+    // Only search for placeholders at or after the checkpoint boundary
+    const fragments = this.accumulator.fragments;
+    let existingPh: (typeof fragments)[number] | undefined;
+    for (let i = fragments.length - 1; i >= this.continuationCheckpointIndex; i--) {
+      if (isVoidPlaceholderFragment(fragments[i])) {
+        existingPh = fragments[i];
+        break;
+      }
+    }
+    if (!existingPh || !isVoidPlaceholderFragment(existingPh)) {
 
       // New placeholder with initial opLog entry (root level = 0)
       this.accumulator.fragments.push(createPlaceholderVoidFragment(text, undefined, undefined, [{
@@ -721,7 +742,14 @@ export class ContentReassembler {
 
   private async _removeLastVoidPlaceholderDelayed(): Promise<boolean> {
     const fragments = this.accumulator.fragments;
-    const idx = fragments.findLastIndex(isVoidPlaceholderFragment);
+    // only remove placeholders at or after the checkpoint boundary during generation
+    let idx = -1;
+    for (let i = fragments.length - 1; i >= this.continuationCheckpointIndex; i--) {
+      if (isVoidPlaceholderFragment(fragments[i])) {
+        idx = i;
+        break;
+      }
+    }
     if (idx < 0) return false;
     // delay before removal
     await new Promise(resolve => setTimeout(resolve, VP_PERSISTENCE_DELAY));
@@ -840,6 +868,20 @@ export class ContentReassembler {
     this._appendErrorFragment(issueText, issueHint);
   }
 
+  private onContinuationCheckpoint(): void {
+    // Break text accumulation across the checkpoint boundary
+    this.currentTextFragmentIndex = null;
+
+    // Everything up to this point is confirmed content from completed continuation turns
+    this.continuationCheckpointIndex = this.accumulator.fragments.length;
+
+    // -> ph: visible checkpoint marker
+    this.accumulator.fragments.push(createPlaceholderVoidFragment('Continuation checkpoint', undefined, {
+      ctl: 'ac-info',
+      ait: 'flow-checkpoint',
+    }));
+  }
+
   private onAixInfo({ ait, text }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-info' }>): void {
     // -> ph: show info
     this.accumulator.fragments.push(createPlaceholderVoidFragment(text, undefined, {
@@ -848,19 +890,32 @@ export class ContentReassembler {
     }));
   }
 
-  private onAixRetryReset({ rScope, rShallClear, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
-    // operation-level retry likely requires a wipe
-    if (rShallClear) {
-      this.currentTextFragmentIndex = null;
-      this.accumulator.fragments = [];
-      delete this.accumulator.legacyGenTokenStopReason;
-      // reset private termination state
-      this._terminationReason = undefined;
-      this._tokenStopReasonWire = undefined;
-      // keep metrics/model/handle intact - may be useful for debugging retries
+  private onAixRetryReset({ rScope, rClearStrategy, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
+    switch (rClearStrategy) {
+      case 'none':
+        // keep everything (e.g. L1 connection retries - no content streamed yet)
+        break;
 
-      // discard any pending particles from the failed attempt
-      this.wireParticlesBacklog.length = 0;
+      case 'since-checkpoint':
+        // clear content from current attempt, preserve prior continuation turns
+        this.accumulator.fragments.length = this.continuationCheckpointIndex;
+        this.currentTextFragmentIndex = null;
+        this.wireParticlesBacklog.length = 0;
+        break;
+
+      case 'all':
+        // full wipe for reconnect scenarios (L4 client reconnect)
+        this.currentTextFragmentIndex = null;
+        this.continuationCheckpointIndex = 0;
+        this.accumulator.fragments = [];
+        delete this.accumulator.legacyGenTokenStopReason;
+        // reset private termination state
+        this._terminationReason = undefined;
+        this._tokenStopReasonWire = undefined;
+        // keep metrics/model/handle intact - may be useful for debugging retries
+        // discard any pending particles from the failed attempt
+        this.wireParticlesBacklog.length = 0;
+        break;
     }
 
     // -> ph: show retry status
@@ -914,6 +969,58 @@ export class ContentReassembler {
   private _appendErrorFragment(errorText: string, errorHint?: DMessageErrorPart['hint']): void {
     this.accumulator.fragments.push(createErrorContentFragment(errorText, errorHint));
     this.currentTextFragmentIndex = null;
+  }
+
+  /**
+   * Solidification pass run once at finalization - fuses adjacent fragments that were kept
+   * separate during generation to preserve rewindability across checkpoint boundaries.
+   *
+   * - Fuses adjacent TextContentFragments into one
+   * - Fuses adjacent ModelAuxVoidFragments (reasoning) into one
+   * - Removes checkpoint placeholder markers (they served their purpose)
+   */
+  private _solidifyFragmentsAcrossBoundaries(): void {
+    const fragments = this.accumulator.fragments;
+    if (fragments.length < 2) return;
+
+    for (let i = fragments.length - 1; i > 0; i--) {
+      const prev = fragments[i - 1];
+      const curr = fragments[i];
+
+      // Fuse adjacent text content fragments
+      if (isTextContentFragment(prev) && isTextContentFragment(curr)) {
+        prev.part = { ...prev.part, text: prev.part.text + curr.part.text };
+        fragments.splice(i, 1);
+        continue;
+      }
+
+      // Fuse adjacent reasoning (ModelAux) fragments
+      if (isVoidFragment(prev) && isModelAuxPart(prev.part) && isVoidFragment(curr) && isModelAuxPart(curr.part)) {
+        prev.part = {
+          ...prev.part,
+          aText: (prev.part.aText || '') + (curr.part.aText || ''),
+          // keep the later signature if present, fall back to earlier
+          ...(curr.part.textSignature ? { textSignature: curr.part.textSignature } : {}),
+          // merge redacted data arrays
+          ...((prev.part.redactedData || curr.part.redactedData) ? {
+            redactedData: [...(prev.part.redactedData || []), ...(curr.part.redactedData || [])],
+          } : {}),
+        };
+        fragments.splice(i, 1);
+        continue;
+      }
+
+      // Remove checkpoint placeholder markers (their purpose is served at finalization)
+      if (isVoidPlaceholderFragment(curr) && curr.part.aixControl?.ctl === 'ac-info' && curr.part.aixControl.ait === 'flow-checkpoint') {
+        fragments.splice(i, 1);
+        // re-check this index since next fragment shifted down
+        // (but we're iterating backwards, so the next i will be i-1 which is correct)
+      }
+    }
+
+    // Also check index 0 for a checkpoint placeholder (edge case)
+    if (fragments.length && isVoidPlaceholderFragment(fragments[0]) && fragments[0].part.aixControl?.ctl === 'ac-info' && fragments[0].part.aixControl.ait === 'flow-checkpoint')
+      fragments.splice(0, 1);
   }
 
 }
