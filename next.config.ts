@@ -26,17 +26,20 @@ const buildType =
   process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone' as const
     : process.env.BIG_AGI_BUILD === 'static' ? 'export' as const
       : undefined;
+const runtimeDistDir = process.env.BIG_AGI_NEXT_DIST_DIR?.trim() || undefined;
+const resolvedDistDir = runtimeDistDir || (buildType ? 'dist' : undefined);
 
 buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
+runtimeDistDir && console.log(` 🧠 big-AGI: using Next dist dir ${runtimeDistDir}`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig: NextConfig = {
   reactStrictMode: !process.env.NO_STRICT_MODE, // default: enabled
+  ...(resolvedDistDir ? { distDir: resolvedDistDir } : {}),
 
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
   ...(buildType && {
     output: buildType,
-    distDir: 'dist',
 
     // disable image optimization for exports
     images: { unoptimized: true },
@@ -155,7 +158,9 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
 // conditionally enable the nextjs bundle analyzer
 import withBundleAnalyzer from '@next/bundle-analyzer';
 if (process.env.ANALYZE_BUNDLE) {
-  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig) as NextConfig;
+  nextConfig = withBundleAnalyzer({
+    openAnalyzer: process.env.ANALYZE_BUNDLE_OPEN === '1',
+  })(nextConfig) as NextConfig;
 }
 
 export default nextConfig;

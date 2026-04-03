@@ -5,6 +5,7 @@ import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragm
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { SystemPurposeId } from '../../../data';
 import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 
 
@@ -71,16 +72,63 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 
 // Message > Metadata
 
+export interface DMessageAuthor {
+  participantId: string;
+  participantName?: string;
+  personaId?: SystemPurposeId | null;
+  llmId?: DLLMId | null;
+}
+
+export interface DMessageCouncilMetadata {
+  kind: 'deliberation' | 'result' | 'notification';
+  phaseId: string;
+  passIndex: number;
+  provisional?: boolean;
+  action?: 'agree' | 'proposal' | 'accept' | 'reject' | 'revise';
+  agreedResponse?: string;
+  agreedMessageId?: string;
+  leaderParticipantId?: string;
+  reason?: string;
+}
+
+export type DMessageRecipient =
+  | DMessageRecipientPersona
+  | DMessageRecipientParticipant
+  | DMessageRecipientBoard;
+
+export interface DMessageCouncilChannel {
+  channel: 'public-board' | 'direct' | 'system';
+  directParticipantIds?: [string, string] | string[];
+  visibleToParticipantIds?: string[];
+}
+
 export interface DMessageMetadata {
+  author?: DMessageAuthor;
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
   entangled?: DMessageEntangled; // entangled messages info
+  council?: DMessageCouncilMetadata; // council-mode deliberation/result state
+  consensus?: DMessageCouncilMetadata; // legacy persisted alias for council-mode state
+  councilChannel?: DMessageCouncilChannel; // council board / direct routing state
+  /**
+   * Per-turn chat routing overrides captured when a user message is sent.
+   * These allow one conversation to mix different models/personas across turns,
+   * while preserving the exact selection for regenerate/replay flows.
+   */
+  routing?: DMessageRouting;
   /**
    * Initially intended recipients of this message.
    * Defaults to `undefined` i.e. the current persona for the active operation (chat, beam, etc).
    * If set, has to be honored by the UI and the sending operation.
    */
-  initialRecipients?: DMessageRecipientPersona[];
+  initialRecipients?: DMessageRecipient[];
   // NOTE: if adding fields, manually update `duplicateDMessageMetadata`
+}
+
+export interface DMessageRouting {
+  llmId?: DLLMId | null;
+  systemPurposeId?: SystemPurposeId | null;
+  llmIds?: (DLLMId | null)[];
+  systemPurposeIds?: SystemPurposeId[];
 }
 
 /** A textual reference to a text snipped, by a certain role. */
@@ -88,6 +136,9 @@ export interface DMetaReferenceItem {
   mrt: 'dmsg';                        // for future type discrimination
   mText: string;
   mRole: DMessageRole;
+  mAuthorParticipantId?: string;
+  mAuthorParticipantName?: string;
+  mCarryAuthorMention?: boolean;
   // messageId?: string;
 }
 
@@ -102,6 +153,15 @@ export interface DMessageEntangled {
 export interface DMessageRecipientPersona {
   rt: 'persona'; // recipient type discriminant
   personaUid: string | null; // null = explicit "no persona"
+}
+
+export interface DMessageRecipientParticipant {
+  rt: 'participant';
+  participantId: string;
+}
+
+export interface DMessageRecipientBoard {
+  rt: 'public-board';
 }
 
 
@@ -145,6 +205,7 @@ export type DMessageGenerator = ({
   upstreamHandle?: {
     uht: 'vnd.oai.responses',
     responseId: string,
+    startingAfter?: number,
     expiresAt: number | null,         // null = never expires
   },
   tokenStopReason?:
@@ -225,13 +286,31 @@ export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean
 }
 
 export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
+  const normalizedCouncil = metadata.council ?? metadata.consensus;
+
   // NOTE: update this function when adding metadata fields
   return {
+    ...(metadata.author ? {
+      author: { ...metadata.author },
+    } : {}),
     ...(metadata.inReferenceTo ? {
       inReferenceTo: metadata.inReferenceTo.map(refItem => ({ ...refItem })),
     } : {}),
     ...(metadata.entangled ? {
       entangled: { ...metadata.entangled },
+    } : {}),
+    ...(normalizedCouncil ? {
+      council: { ...normalizedCouncil },
+    } : {}),
+    ...(metadata.councilChannel ? {
+      councilChannel: {
+        ...metadata.councilChannel,
+        ...(metadata.councilChannel.directParticipantIds ? { directParticipantIds: [...metadata.councilChannel.directParticipantIds] } : {}),
+        ...(metadata.councilChannel.visibleToParticipantIds ? { visibleToParticipantIds: [...metadata.councilChannel.visibleToParticipantIds] } : {}),
+      },
+    } : {}),
+    ...(metadata.routing ? {
+      routing: { ...metadata.routing },
     } : {}),
     ...(metadata.initialRecipients?.length ? {
       initialRecipients: metadata.initialRecipients.map(recipient => ({ ...recipient })),

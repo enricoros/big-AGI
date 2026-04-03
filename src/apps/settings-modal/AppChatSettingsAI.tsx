@@ -80,6 +80,7 @@ export function AppChatSettingsAI() {
     // autoSuggestQuestions, setAutoSuggestQuestions,
     autoTitleChat, setAutoTitleChat,
     chatThinkingPolicy, setChatThinkingPolicy,
+    showReasoningTitles, setShowReasoningTitles,
     tokenCountingMethod, setTokenCountingMethod,
   } = useChatAutoAI();
 
@@ -94,6 +95,8 @@ export function AppChatSettingsAI() {
   const handleAutoSuggestDiagramsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestDiagrams(event.target.checked);
 
   const handleAutoSuggestHTMLUIChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestHTMLUI(event.target.checked);
+
+  const handleShowReasoningTitlesChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowReasoningTitles(event.target.checked);
 
   // const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
 
@@ -152,6 +155,17 @@ export function AppChatSettingsAI() {
       value={chatThinkingPolicy}
       onChange={setChatThinkingPolicy}
     />
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart
+        title='Reasoning Titles'
+        description={showReasoningTitles ? 'Visible when collapsed' : 'Hidden'}
+        tooltip='Shows streamed reasoning section titles in collapsed reasoning blocks.'
+      />
+      <Switch checked={showReasoningTitles} onChange={handleShowReasoningTitlesChange}
+              endDecorator={showReasoningTitles ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
 
     <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
 

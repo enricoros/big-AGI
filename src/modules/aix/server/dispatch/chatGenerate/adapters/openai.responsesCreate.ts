@@ -11,6 +11,17 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } fro
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
+const OPENAI_RESPONSES_CUSTOM_FUNCTION_TOOL_NAME_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+const OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES = new Set([
+  'web_search',
+  'web_fetch',
+  'google_search_retrieval',
+]);
+
+function _shouldReplayOpenAIResponsesFunctionCallName(name: string): boolean {
+  return OPENAI_RESPONSES_CUSTOM_FUNCTION_TOOL_NAME_RE.test(name)
+    && !OPENAI_RESPONSES_SKIP_REPLAY_UPSTREAM_TOOL_NAMES.has(name);
+}
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
@@ -297,6 +308,27 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   type ModelMessage = Extract<OpenAIWire_Responses_Items.InputMessage_Compat, { role: 'assistant' }>;
   type FunctionCallMessage = OpenAIWire_Responses_Items.OutputFunctionCallItem;
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
+  const allToolResponseIds = new Set<string>();
+  const hostedUpstreamToolInvocationIds = new Set<string>();
+  const skippedHostedUpstreamToolIds = new Set<string>();
+
+  for (const aixMessage of chatSequence)
+    if (aixMessage.role === 'model')
+      for (const modelPart of aixMessage.parts) {
+        if (modelPart.pt === 'tool_response')
+          allToolResponseIds.add(modelPart.id);
+
+        if (
+          modelPart.pt === 'tool_invocation'
+          && modelPart.invocation.type === 'function_call'
+          && !_shouldReplayOpenAIResponsesFunctionCallName(modelPart.invocation.name)
+        )
+          hostedUpstreamToolInvocationIds.add(modelPart.id);
+      }
+
+  for (const toolResponseId of allToolResponseIds)
+    if (hostedUpstreamToolInvocationIds.has(toolResponseId))
+      skippedHostedUpstreamToolIds.add(toolResponseId);
 
   let allowUserAppend = true;
 
@@ -452,6 +484,15 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             case 'tool_invocation':
+              if (
+                skippedHostedUpstreamToolIds.has(modelPart.id)
+                || (
+                  modelPart.invocation.type === 'function_call'
+                  && !_shouldReplayOpenAIResponsesFunctionCallName(modelPart.invocation.name)
+                  && !allToolResponseIds.has(modelPart.id)
+                )
+              )
+                break;
               const invocation = modelPart.invocation;
               const invocationType = invocation.type;
               switch (invocationType) {
@@ -473,6 +514,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             case 'tool_response':
+              if (skippedHostedUpstreamToolIds.has(modelPart.id))
+                break;
               const toolResponseType = modelPart.response.type;
               switch (toolResponseType) {
                 case 'function_call':
@@ -579,4 +622,3 @@ export function vndOaiRestoreMarkdown(payload: TRequest) {
   else if (!payload.instructions)
     payload.instructions = MARKDOWN_INSTRUCTION;
 }
-

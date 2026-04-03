@@ -20,6 +20,7 @@ export type GlobalOverlayId = // string - disabled so we keep an orderliness
   | 'app-recent-changes'                  // Recent changes in the app, only private branch
   | 'camera-capture'
   | 'chat-attachments-clear'
+  | 'chat-agent-group-delete-confirmation'
   | 'chat-delete-confirmation'
   | 'chat-reset-confirmation'
   | 'chat-message-delete-confirmation'

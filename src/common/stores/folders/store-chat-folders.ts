@@ -10,6 +10,7 @@ export interface DFolder {
   title: string;
   conversationIds: DConversationId[];
   color?: string; // Optional color property
+  visibleInAllChats?: boolean;
 }
 
 interface FolderState {
@@ -24,6 +25,7 @@ interface FolderActions {
   moveFolder: (fromIndex: number, toIndex: number) => void;
   setFolderName: (folderId: string, title: string) => void;
   setFolderColor: (folderId: string, color: string) => void;
+  setFolderVisibleInAllChats: (folderId: string, visibleInAllChats: boolean) => void;
   addConversationToFolder: (folderId: string, conversationId: DConversationId) => void;
   removeConversationFromFolder: (folderId: string, conversationId: DConversationId) => void;
   toggleEnableFolders: () => void;
@@ -55,6 +57,7 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           title,
           conversationIds: [],
           color,
+          visibleInAllChats: true,
         };
 
         set(state => ({
@@ -89,6 +92,15 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           folders: state.folders.map(folder =>
             folder.id === folderId
               ? { ...folder, color }
+              : folder,
+          ),
+        })),
+
+      setFolderVisibleInAllChats: (folderId: string, visibleInAllChats: boolean): void =>
+        set(state => ({
+          folders: state.folders.map(folder =>
+            folder.id === folderId
+              ? { ...folder, visibleInAllChats }
               : folder,
           ),
         })),
@@ -156,4 +168,8 @@ export const FOLDERS_COLOR_PALETTE = [
 export function getRotatingFolderColor(): string {
   const randomIndex = Math.floor(Math.random() * (FOLDERS_COLOR_PALETTE.length / 3));
   return FOLDERS_COLOR_PALETTE[randomIndex];
+}
+
+export function isFolderVisibleInAllChats(folder: Pick<DFolder, 'visibleInAllChats'>): boolean {
+  return folder.visibleInAllChats !== false;
 }

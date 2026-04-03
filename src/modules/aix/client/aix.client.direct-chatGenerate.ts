@@ -31,8 +31,14 @@ export async function* clientSideChatGenerate(
   // keep in sync with the `aixRouter.chatGenerateContent` server-side procedure
   const _d: AixDebugObject = _createClientDebugConfig(access, connectionOptions, context.name);
   const chatGenerateDispatchCreator = () => createChatGenerateDispatch(access, model, chatGenerate, streaming, !!connectionOptions?.enableResumability);
+  const parseContext = {
+    modelId: model.id,
+    contextName: context.name,
+    contextRef: context.ref,
+    conversationId: context.name === 'conversation' ? context.ref : undefined,
+  } as const;
 
-  yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, streaming, abortSignal, _d);
+  yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, streaming, abortSignal, _d, parseContext);
 }
 
 // CSF debug config - lighter than server-side

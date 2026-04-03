@@ -3,7 +3,7 @@ import { abortableDelay } from '~/server/wire';
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { AixDebugObject } from './chatGenerate.debug';
-import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
+import type { ChatGenerateDispatch, ChatGenerateParseContext } from './chatGenerate.dispatch';
 import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { executeChatGenerateDispatch } from './chatGenerate.executor';
 
@@ -47,6 +47,7 @@ export async function* executeChatGenerateWithOperationRetry(
   streaming: boolean,
   abortSignal: AbortSignal,
   _d: AixDebugObject,
+  parseContext?: Omit<ChatGenerateParseContext, 'retriesAvailable' | 'requestUrl'>,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   const maxAttempts = AIX_DISABLE_OPERATION_RETRY ? 1 : 4; // 1 = no retries (just immediate attempt), 4 = initial + 3 retries
@@ -56,6 +57,7 @@ export async function* executeChatGenerateWithOperationRetry(
     try {
 
       yield* executeChatGenerateDispatch(dispatchCreatorFn, streaming, abortSignal, _d, {
+        ...parseContext,
         retriesAvailable: attemptNumber < maxAttempts,
       });
 

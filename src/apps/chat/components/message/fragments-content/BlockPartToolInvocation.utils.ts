@@ -2,6 +2,9 @@
 // Utilities for rendering tool invocations
 //
 
+import type { DMessageToolInvocationPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
+import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
+
 /**
  * [EDITORIAL] Known hosted tool name translations
  *
@@ -25,8 +28,101 @@ const KNOWN_TOOL_TRANSLATIONS: Record<string, string> = {
   'code_execution': 'Code Execution',
   'google_search_retrieval': 'Google Search',
 
+  // Hosted web tools
+  'web_search': 'Web Search',
+  'web_fetch': 'Web Fetch',
+
   // Add other confirmed provider-hosted tools here as discovered
 } as const;
+
+const HOSTED_WEB_TOOL_NAMES = new Set([
+  'web_search',
+  'web_fetch',
+  'google_search_retrieval',
+]);
+
+export function isHostedWebToolName(name: string): boolean {
+  return HOSTED_WEB_TOOL_NAMES.has(name);
+}
+
+export function isHostedWebToolInvocationPart(part: DMessageToolInvocationPart): boolean {
+  return part.invocation.type === 'function_call' && isHostedWebToolName(part.invocation.name);
+}
+
+export function isHostedWebToolResponsePart(part: DMessageToolResponsePart): boolean {
+  return part.response.type === 'function_call' && isHostedWebToolName(part.response.name) && part.environment === 'upstream';
+}
+
+export function isInlineHostedWebFragment(fragment: InterleavedFragment): boolean {
+  if (fragment.ft !== 'content')
+    return false;
+
+  const { part } = fragment;
+  if (part.pt === 'tool_invocation')
+    return isHostedWebToolInvocationPart(part);
+  if (part.pt === 'tool_response')
+    return isHostedWebToolResponsePart(part);
+
+  return false;
+}
+
+export function groupInlineHostedWebFragments(fragments: readonly InterleavedFragment[]): Array<{
+  inlineHostedWeb: boolean;
+  fragments: InterleavedFragment[];
+}> {
+  const groups: Array<{ inlineHostedWeb: boolean; fragments: InterleavedFragment[] }> = [];
+
+  for (const fragment of fragments) {
+    const inlineHostedWeb = isInlineHostedWebFragment(fragment);
+    const previousGroup = groups[groups.length - 1];
+
+    if (inlineHostedWeb && previousGroup?.inlineHostedWeb) {
+      previousGroup.fragments.push(fragment);
+      continue;
+    }
+
+    groups.push({
+      inlineHostedWeb,
+      fragments: [fragment],
+    });
+  }
+
+  return groups;
+}
+
+export function getCompactInvocationDetails(name: string, args: string | null | undefined): Array<{ label: string; value: string; asCode?: boolean }> {
+  const trimmedArgs = args?.trim() || '';
+  if (!trimmedArgs)
+    return [];
+
+  let parsedArgs: unknown = null;
+  try {
+    parsedArgs = JSON.parse(trimmedArgs);
+  } catch {
+    return [{ label: 'Args', value: trimmedArgs, asCode: true }];
+  }
+
+  if (!parsedArgs || typeof parsedArgs !== 'object' || Array.isArray(parsedArgs))
+    return [{ label: 'Args', value: trimmedArgs, asCode: true }];
+
+  const argsRecord = parsedArgs as Record<string, unknown>;
+
+  if (name === 'web_search') {
+    const query = typeof argsRecord.q === 'string'
+      ? argsRecord.q
+      : typeof argsRecord.query === 'string'
+        ? argsRecord.query
+        : '';
+    return query ? [{ label: 'Query', value: query }] : [];
+  }
+
+  if (name === 'web_fetch') {
+    const url = typeof argsRecord.url === 'string' ? argsRecord.url : '';
+    return url ? [{ label: 'URL', value: url }] : [];
+  }
+
+  return [{ label: 'Args', value: trimmedArgs, asCode: true }];
+}
 
 
 /**

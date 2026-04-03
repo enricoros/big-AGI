@@ -10,7 +10,7 @@ const Anchor = styled('a')({});
 
 interface NextLinkComposedProps
   extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>,
-    Omit<NextLinkProps, 'href' | 'as' | 'passHref' | 'onMouseEnter' | 'onClick' | 'onTouchStart'> {
+    Omit<NextLinkProps, 'href' | 'as' | 'passHref' | 'legacyBehavior' | 'onMouseEnter' | 'onClick' | 'onTouchStart'> {
   to: NextLinkProps['href'];
   linkAs?: NextLinkProps['as'];
 }
@@ -24,25 +24,22 @@ const NextLinkComposed = React.forwardRef<HTMLAnchorElement, NextLinkComposedPro
       scroll,
       shallow,
       prefetch,
-      legacyBehavior = true,
       locale,
       ...other
     } = props;
 
     return (
       <NextLink
+        ref={ref}
         href={to}
         prefetch={prefetch}
         as={linkAs}
         replace={replace}
         scroll={scroll}
         shallow={shallow}
-        passHref
         locale={locale}
-        legacyBehavior={legacyBehavior}
-      >
-        <Anchor ref={ref} {...other} />
-      </NextLink>
+        {...other}
+      />
     );
   },
 );
@@ -64,7 +61,6 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link
     as,
     className: classNameProps,
     href,
-    legacyBehavior,
     linkAs: linkAsProp,
     locale,
     noLinkStyle,
@@ -94,7 +90,6 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link
     scroll,
     shallow,
     prefetch,
-    legacyBehavior,
     locale,
   };
 

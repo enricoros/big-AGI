@@ -326,6 +326,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   appendImageInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _prompt: string): void { /* no-op */ }
   startFunctionCallInvocation(_id: string | null, _functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', _args: string | object | null): void { /* no-op */ }
   appendFunctionCallInvocationArgs(_id: string | null, _argsJsonChunk: string): void { /* no-op */ }
+  addFunctionCallResponse(_id: string | null, _error: boolean | string, _name: string, _result: string, _environment: 'upstream' | 'server' | 'client'): void { /* no-op */ }
   addCodeExecutionInvocation(_id: string | null, _language: string, _code: string, _author: 'gemini_auto_inline' | 'code_interpreter'): void { /* no-op */ }
   addCodeExecutionResponse(_id: string | null, _error: boolean | string, _result: string, _executor: 'gemini_auto_inline' | 'code_interpreter', _environment: 'upstream'): void { /* no-op */ }
   appendUrlCitation(_title: string, _url: string, _citationNumber?: number, _startIndex?: number, _endIndex?: number, _textSnippet?: string, _pubTs?: number): void { /* no-op */ }

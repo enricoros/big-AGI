@@ -3,10 +3,10 @@ import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments }
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixConvertImageRefToInlineImageOrThrow, aixConvertZyncImageAssetRefToInlineImageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 
-import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { Immutable } from '~/common/types/immutable.types';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { DMessageFragment, createErrorContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
+import type { ChatExecutionSession } from './chat-execution.runtime';
 
 
 // NOTE: also see src/common/stores/chat/chat.gc.ts, which has cleanup code for images create here
@@ -15,7 +15,7 @@ import { DMessageFragment, createErrorContentFragment, isContentOrAttachmentFrag
 /**
  * Text to image, appended as an 'assistant' message
  */
-export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText: string, imageFragments?: Immutable<DMessageFragment[]>) {
+export async function runImageGenerationUpdatingState(cHandler: ChatExecutionSession, imageText: string, imageFragments?: Immutable<DMessageFragment[]>) {
   if (!imageText) {
     cHandler.messageAppendAssistantText('Issue: no image description provided.', 'issue');
     return false;
@@ -93,4 +93,3 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
     return false;
   }
 }
-

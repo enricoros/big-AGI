@@ -9,7 +9,7 @@ import { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import { AixDebugObject } from './chatGenerate.debug';
 import { AixDemuxers } from '../stream.demuxers';
-import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
+import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseContext, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
 import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { OperationRetrySignal } from './chatGenerate.operation-retry';
@@ -29,7 +29,7 @@ export async function* executeChatGenerateDispatch(
   streaming: boolean,
   intakeAbortSignal: AbortSignal,
   _d: AixDebugObject,
-  parseContext?: { retriesAvailable: boolean },
+  parseContext?: ChatGenerateParseContext,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   // AIX ChatGenerate Particles - Intake Transmitter
@@ -50,6 +50,13 @@ export async function* executeChatGenerateDispatch(
   if (_d.requestBodyOverride && 'body' in dispatch.request)
     dispatch.request.body = { ...dispatch.request.body, ..._d.requestBodyOverride };
 
+  const effectiveParseContext = parseContext
+    ? {
+        ...parseContext,
+        requestUrl: dispatch.request.url,
+      }
+    : undefined;
+
   // Connect to the dispatch
   const dispatchResponse = yield* _connectToDispatch(dispatch.request, intakeAbortSignal, chatGenerateTx, _d);
   if (!dispatchResponse)
@@ -57,9 +64,9 @@ export async function* executeChatGenerateDispatch(
 
   // Consume dispatch response
   if (!streaming)
-    yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+    yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, effectiveParseContext);
   else
-    yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+    yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, effectiveParseContext);
 
   // Tack profiling particles if generated
   if (_d.profiler) {
@@ -140,9 +147,8 @@ async function* _connectToDispatch(
 
     // Handle AI Service connection error
     const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-    const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${request.url}]` : '';
 
-    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, _d.consoleLogErrors);
+    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}`, _d.consoleLogErrors);
     yield* chatGenerateTx.flushParticles();
     return null; // signal caller to exit
   }
@@ -157,7 +163,7 @@ async function* _consumeDispatchUnified(
   dispatchParserNS: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
-  parseContext?: { retriesAvailable: boolean },
+  parseContext?: ChatGenerateParseContext,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
   let dispatchBody: string | undefined = undefined;
   try {
@@ -207,7 +213,7 @@ async function* _consumeDispatchStream(
   dispatchParser: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
-  parseContext?: { retriesAvailable: boolean },
+  parseContext?: ChatGenerateParseContext,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   // Body reader with optional transform (e.g. AWS EventStream binary -> SSE text)

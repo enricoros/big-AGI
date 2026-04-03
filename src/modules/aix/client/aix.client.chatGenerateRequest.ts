@@ -19,6 +19,11 @@ const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/
 const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 const IGNORE_CGR_NO_IMAGE_DEREFERENCE = true; // set to false to raise an exception, otherwise the CGR will continue skipping the part
 const AUTO_SYSTEM_IMAGES_INDEX = true; // set to false to disable the small index of images (in system instruction)
+const NON_JSON_UPSTREAM_TOOL_RESPONSE_NAMES = new Set([
+  'web_search',
+  'web_fetch',
+  'google_search_retrieval',
+]);
 
 
 // AIX <> Simple Text API helpers
@@ -59,6 +64,18 @@ function aixCGR_ModelMessageText(text: string): AixMessages_ModelMessage {
 
 function aixCGRTextPart(text: string) {
   return { pt: 'text' as const, text };
+}
+
+function aixCGR_ModelSpeakerLabel(message: Pick<DMessage, 'metadata'>): string | null {
+  const author = message.metadata?.author;
+  const authorName = author?.participantName?.trim();
+  if (!authorName)
+    return null;
+
+  const authorPersona = author?.personaId?.trim();
+  const authorModel = author?.llmId?.trim();
+  const suffix = [authorPersona, authorModel].filter(Boolean).join(' · ');
+  return suffix ? `${authorName} · ${suffix}` : authorName;
 }
 
 
@@ -388,7 +405,11 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
     } else if (dMessageRole === 'assistant') {
 
-      const modelMessage: AixMessages_ModelMessage = { role: 'model', parts: [] };
+      const speakerLabel = aixCGR_ModelSpeakerLabel(m);
+      const modelMessage: AixMessages_ModelMessage = {
+        role: 'model',
+        parts: speakerLabel ? [aixCGRTextPart(`Previous assistant message from ${speakerLabel}:\n`)] : [],
+      };
 
       for (const aFragment of m.fragments) {
 
@@ -400,9 +421,10 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
         switch (aPart.pt) {
 
           case 'text':
+            modelMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
+            break;
+
           case 'tool_invocation':
-            // Key place where the Aix Zod inferred types are compared to the Typescript defined DMessagePart* types
-            // - in case of error, check that the types in `chat.fragments.ts` and `aix.wiretypes.ts` are in sync
             modelMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
             break;
 
@@ -413,19 +435,15 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             const isAntModelAux = aPart.textSignature || aPart.redactedData?.length;
             if (isAntModelAux) {
               const aModelAuxPart = aPart as AixParts_ModelAuxPart; // NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here
-              // modelMessage.parts.push(_vnd ? { ...aModelAuxPart, _vnd } : aModelAuxPart);
               modelMessage.parts.push(aModelAuxPart);
             }
             break;
 
           case 'doc':
-            // TODO
             console.warn('aixCGR_FromDMessages: doc part from Assistant not implemented yet');
-            // mMsg.parts.push(aPart);
             break;
 
           case 'error':
-            // Note: the llm will receive the extra '[ERROR]' text; this could be optimized to handle errors better
             modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aPart.error}` });
             break;
 
@@ -458,7 +476,6 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
                         break;
 
                       case 'audio':
-                        // dereference the Zync Audio Asset, converting it to an inline buffer
                         throw '[DEV] audio assets from the assistant are not supported yet';
 
                       default:
@@ -475,7 +492,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
                 break;
 
               case '_sentinel':
-                break; // not a real case
+                break;
 
               default:
                 const _exhaustiveCheck: never = refPartRt;
@@ -484,12 +501,6 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'image_ref':
-            // TODO: rescale shall be dependent on the LLM here - and be careful with the high-res options, as they can
-            //  be really space consuming. how to choose between high and low? global option?
-            /**
-             * FIXME for GEMINI IMAGE GENERATION
-             * For now we upload ONLY THE LAST IMAGE as full quality, while all others are resized before transmission.
-             */
             const imageSize = aPart.dataRef.reftype === 'dblob' ? aPart.dataRef?.bytesSize ?? 0 : 0;
             const isLastAssistantMessage = _index === lastAssistantMessageIndex;
             const resizeMode = !isLastAssistantMessage ? 'openai-low-res' : imageSize > 400_000 ? 'openai-high-res' : false;
@@ -503,21 +514,21 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'tool_response':
-            // Validation of DMessageToolResponsePart of response.type: 'function_call'
-            // - NOTE: for now we make the large assumption that responses are JSON objects, not arrays, not strings
-            // - This was done for Gemini as the response needs to be an object; however we will need to decide:
-            // TODO: decide the responses policy: do we allow only objects? if not, then what's the rule to convert objects to Gemini's inputs?
             if (isToolResponseFunctionCallPart(aPart)) {
-              let resultObject: any;
-              try {
-                resultObject = JSON.parse(aPart.response.result);
-              } catch (error: any) {
-                throw new Error('[AIX validation] expecting `tool_response` to be parseable');
+              const isHostedUpstreamWebToolResponse = aPart.environment === 'upstream'
+                && NON_JSON_UPSTREAM_TOOL_RESPONSE_NAMES.has(aPart.response.name);
+              if (!isHostedUpstreamWebToolResponse) {
+                let resultObject: any;
+                try {
+                  resultObject = JSON.parse(aPart.response.result);
+                } catch (error: any) {
+                  throw new Error('[AIX validation] expecting `tool_response` to be parseable');
+                }
+                if (!resultObject || typeof resultObject !== 'object')
+                  throw new Error('[AIX validation] expecting `tool_response` to be a JSON object');
+                if (Array.isArray(resultObject))
+                  throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
               }
-              if (!resultObject || typeof resultObject !== 'object')
-                throw new Error('[AIX validation] expecting `tool_response` to be a JSON object');
-              if (Array.isArray(resultObject))
-                throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
             }
             modelMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
             break;
@@ -530,11 +541,8 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
       }
 
       if (modelMessage.parts.length > 0) {
-
-        // (on Assistant messages) handle the ant-cache-prompt user/auto flags, on the very last message
         if (mHasAntCacheFlag)
           modelMessage.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
-
         acc.chatSequence.push(modelMessage);
       }
 

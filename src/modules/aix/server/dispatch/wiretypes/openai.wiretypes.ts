@@ -495,7 +495,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
   const Usage_schema = z.object({
     prompt_tokens: z.number(),
-    completion_tokens: z.number(),
+    completion_tokens: z.number().optional(),
     total_tokens: z.number(),
 
     // [OpenAI, 2024-10-01] breaks down the input tokens into components

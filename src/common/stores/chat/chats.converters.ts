@@ -1,4 +1,5 @@
 import type { SystemPurposeId } from '../../../data';
+import { sanitizeSystemPurposeId } from '../../../data';
 
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
@@ -7,8 +8,20 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
+import { sanitizeModelReasoningEffort } from '~/common/stores/llms/llms.parameters';
 
-import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
+import {
+  createAssistantConversationParticipant,
+  createDConversation,
+  createHumanConversationParticipant,
+  DConversation,
+  sanitizeConversationTurnsOrder,
+  sanitizeConversationTurnTerminationMode,
+  sanitizeCouncilMaxRounds,
+  sanitizeCouncilTraceAutoCollapsePreviousRounds,
+  sanitizeCouncilTraceAutoExpandNewestRound,
+  type DConversationId,
+} from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
 import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isTextContentFragment, isVoidPlaceholderFragment } from './chat.fragments';
 
@@ -28,6 +41,7 @@ export namespace V4ToHeadConverters {
   function _inMemHeadCleanDConversation(c: DConversation, validLiveFileIDs: LiveFileId[]): void {
     // re-add transient properties
     c._abortController = null;
+    c.systemPurposeId = sanitizeSystemPurposeId(c.systemPurposeId);
 
     // fixup .messages[]
     if (!c.messages)
@@ -35,6 +49,70 @@ export namespace V4ToHeadConverters {
 
     for (const message of c.messages)
       inMemHeadCleanDMessage(message, validLiveFileIDs);
+
+    const rawParticipants = Array.isArray(c.participants) ? c.participants as any[] : [];
+    const upgradedParticipants = rawParticipants
+      .map(participant => {
+        if (!participant)
+          return null;
+        const reasoningEffort = sanitizeModelReasoningEffort(participant.reasoningEffort);
+        if (participant.kind === 'human' || participant.kind === 'assistant')
+          return {
+            ...participant,
+            id: typeof participant.id === 'string' ? participant.id : (participant.kind === 'human'
+              ? createHumanConversationParticipant(typeof participant.name === 'string' ? participant.name : 'You').id
+              : createAssistantConversationParticipant(sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId), participant.llmId ?? null, typeof participant.name === 'string' ? participant.name : sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId)).id),
+            name: typeof participant.name === 'string' && participant.name ? participant.name : (participant.kind === 'human' ? 'You' : sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId)),
+            personaId: participant.kind === 'assistant' ? sanitizeSystemPurposeId(participant.personaId || c.systemPurposeId) : null,
+            llmId: participant.llmId ?? null,
+            ...(participant.kind === 'assistant' && typeof participant.accentHue === 'number' && Number.isFinite(participant.accentHue) ? {
+              accentHue: Math.round((((participant.accentHue % 360) + 360) % 360)),
+            } : {}),
+            ...(participant.kind === 'assistant' && typeof participant.customPrompt === 'string' && participant.customPrompt.trim() ? {
+              customPrompt: participant.customPrompt,
+            } : {}),
+            ...(participant.kind === 'assistant' ? {
+              speakWhen: participant.speakWhen === 'when-mentioned' ? 'when-mentioned' : 'every-turn',
+              ...(reasoningEffort ? {
+                reasoningEffort,
+              } : {}),
+            } : {}),
+          };
+        if (participant.personaId)
+          return createAssistantConversationParticipant(sanitizeSystemPurposeId(participant.personaId), participant.llmId ?? null);
+        return null;
+      })
+      .filter(Boolean);
+
+    const humanParticipant = upgradedParticipants.find(participant => participant.kind === 'human') ?? createHumanConversationParticipant(c.userSymbol || 'You');
+    const assistantParticipants = upgradedParticipants.filter(participant => participant.kind === 'assistant');
+    if (!assistantParticipants.length)
+      assistantParticipants.push(createAssistantConversationParticipant(c.systemPurposeId));
+
+    c.participants = [humanParticipant, ...assistantParticipants];
+    c.turnTerminationMode = sanitizeConversationTurnTerminationMode((c as any).turnTerminationMode);
+    c.turnsOrder = sanitizeConversationTurnsOrder((c as any).turnsOrder);
+    c.councilMaxRounds = sanitizeCouncilMaxRounds((c as any).consensusMaxRounds ?? (c as any).councilMaxRounds);
+    c.councilTraceAutoCollapsePreviousRounds = sanitizeCouncilTraceAutoCollapsePreviousRounds((c as any).councilTraceAutoCollapsePreviousRounds);
+    c.councilTraceAutoExpandNewestRound = sanitizeCouncilTraceAutoExpandNewestRound((c as any).councilTraceAutoExpandNewestRound);
+    delete (c as any).consensusMaxRounds;
+
+    if (c.councilSession) {
+      c.councilSession.mode = c.councilSession.mode == null
+        ? null
+        : sanitizeConversationTurnTerminationMode(c.councilSession.mode);
+      const status = c.councilSession.status;
+      const isResumableStatus = status === 'paused' || status === 'interrupted';
+      const isTerminalStatus = status === 'completed' || status === 'stopped';
+      if ((!isResumableStatus && !isTerminalStatus) || (isResumableStatus && !c.councilSession.canResume))
+        c.councilSession = null;
+    }
+
+    c.councilOpLog = Array.isArray(c.councilOpLog)
+      ? c.councilOpLog
+          .filter(op => !!op && typeof op === 'object' && typeof (op as any).opId === 'string' && typeof (op as any).type === 'string')
+          .sort((a, b) => a.sequence - b.sequence || a.createdAt - b.createdAt)
+      : undefined;
   }
 
 
@@ -114,6 +192,11 @@ export namespace V4ToHeadConverters {
     // run dev upgrades
     dev_inMemHeadUpgradeDMessage(m);
 
+    if (m.metadata?.consensus && !m.metadata.council)
+      m.metadata.council = { ...m.metadata.consensus };
+    if (m.metadata && 'consensus' in m.metadata)
+      delete m.metadata.consensus;
+
   }
 
   export function dev_inMemHeadUpgradeDMessage(m: DMessage): void {
@@ -173,7 +256,7 @@ export namespace V3StoreDataToHead {
       created,
     } = ic;
 
-    const cc = createDConversation(systemPurposeId as SystemPurposeId);
+    const cc = createDConversation(sanitizeSystemPurposeId(systemPurposeId));
     if (id) cc.id = id;
     cc.messages = messages.map(_recreateMessage);
     if (userTitle) cc.userTitle = userTitle;
@@ -310,6 +393,7 @@ export namespace DataAtRestV1 {
       title: part.title,
       conversationIds: part.conversationIds,
       color: part.color,
+      visibleInAllChats: part.visibleInAllChats !== false,
     };
   }
 
@@ -363,6 +447,7 @@ export namespace DataAtRestV1 {
     title: string;
     conversationIds: DConversationId[];
     color?: string; // Optional color property
+    visibleInAllChats?: boolean;
   }
 
 }
