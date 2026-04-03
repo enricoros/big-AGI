@@ -44,6 +44,7 @@ import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/model
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
+import { minimaxHardcodedModelDescriptions } from './openai/models/minimax.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './openai/models/openpipe.models';
@@ -331,6 +332,13 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         },
       });
     }
+
+    case 'minimax':
+      // [MiniMax]: no /v1/models endpoint - use hardcoded model descriptions
+      return createListModelsDispatch({
+        fetchModels: async () => null,
+        convertToDescriptions: () => minimaxHardcodedModelDescriptions(),
+      });
 
     case 'perplexity':
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/getting-started/pricing#sonar-models-chat-completions)

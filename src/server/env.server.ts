@@ -73,6 +73,9 @@ export const env = createEnv({
     LOCALAI_API_HOST: z.url().optional(),
     LOCALAI_API_KEY: z.string().optional(),
 
+    // LLM: MiniMax
+    MINIMAX_API_KEY: z.string().optional(),
+
     // LLM: Mistral
     MISTRAL_API_KEY: z.string().optional(),
 

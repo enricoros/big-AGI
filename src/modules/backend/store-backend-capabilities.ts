@@ -17,6 +17,7 @@ export interface BackendCapabilities {
   hasLlmGroq: boolean;
   hasLlmLocalAIHost: boolean;
   hasLlmLocalAIKey: boolean;
+  hasLlmMiniMax: boolean;
   hasLlmMistral: boolean;
   hasLlmMoonshot: boolean;
   hasLlmOllama: boolean;
@@ -59,6 +60,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmGroq: false,
     hasLlmLocalAIHost: false,
     hasLlmLocalAIKey: false,
+    hasLlmMiniMax: false,
     hasLlmMistral: false,
     hasLlmMoonshot: false,
     hasLlmOllama: false,
