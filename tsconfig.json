@@ -9,6 +9,9 @@
     "moduleDetection": "force",
     "isolatedModules": true,
 
+    /* Typescript 6.0 transition: side effects imports are denied by default */
+    "noUncheckedSideEffectImports": false,
+
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": false,
@@ -28,11 +31,11 @@
     "jsxImportSource": "@emotion/react",
 
     /* Path Aliases */
-    "baseUrl": ".",
     "paths": {
-      "~/common/*": ["src/common/*"],
-      "~/modules/*": ["src/modules/*"],
-      "~/server/*": ["src/server/*"]
+      "*": ["."],
+      "~/common/*": ["./src/common/*"],
+      "~/modules/*": ["./src/modules/*"],
+      "~/server/*": ["./src/server/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts",
