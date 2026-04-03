@@ -514,11 +514,11 @@ export namespace OpenAIWire_API_Chat_Completions {
       // text_tokens: z.number().optional(), // [Discord, 2024-04-10] revealed as present on custom OpenAI endpoint - not using it here yet
       audio_tokens: z.number().optional() // [OpenAI, 2024-10-01] audio tokens used in the completion (charged at a different rate)
         .nullable(), // [Arcee, 2026-04-02]
-      // image_tokens: z.number().optional(), // [OpenRouter, 2026-02-06] confirmed: image tokens in image generation output
-      accepted_prediction_tokens: z.number().optional() // [OpenAI, 2024-11-05] Predicted Outputs
+      image_tokens: z.number().optional() // [OpenRouter, 2026-02-06] confirmed: image tokens in image generation output
         .nullable(), // [Arcee, 2026-04-02]
-      rejected_prediction_tokens: z.number().optional() // [OpenAI, 2024-11-05] Predicted Outputs
-        .nullable(), // [Arcee, 2026-04-02]
+      // DO-NOT-CARE: we do NOT care at all about these, for predicted outputs (probably unsupported now)
+      // accepted_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
+      // rejected_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
     }).optional() // not present in other APIs yet
       .nullable(), // [2025-06-02] no issues yet, but preventive
 
@@ -636,8 +636,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
     // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
-    citations: z.array(z.any()).optional()
-      .nullable(), // [Arcee, 2026-04-02]
+    // citations: z.array(z.any()).optional()
+    //   .nullable(), // [Arcee, 2026-04-02]
     // [Perplexity, 2025-06-23] Search results
     search_results: z.array(z.object({
       title: z.string().optional().nullable(), // Title of the search result
@@ -810,8 +810,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
     // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
-    citations: z.array(z.any()).optional()
-      .nullable(), // [Arcee, 2026-04-02]
+    // citations: z.array(z.any()).optional()
+    //   .nullable(), // [Arcee, 2026-04-02]
     // [Perplexity, 2025-06-23] Search results
     search_results: z.array(z.object({
       title: z.string().optional().nullable(), // Title of the search result

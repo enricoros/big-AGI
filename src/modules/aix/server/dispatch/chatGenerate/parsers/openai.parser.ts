@@ -670,7 +670,9 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
 
   // Input redistribution: Cache Read
   if (usage.prompt_tokens_details) {
-    const TCacheRead = usage.prompt_tokens_details.cached_tokens;
+    // TODO Input redistribution: Audio tokens
+    // const TAudioIn = usage.prompt_tokens_details.audio_tokens ?? undefined;
+    const TCacheRead = usage.prompt_tokens_details.cached_tokens ?? undefined;
     if (TCacheRead !== undefined && TCacheRead > 0) {
       metricsUpdate.TCacheRead = TCacheRead;
       if (metricsUpdate.TIn !== undefined)
@@ -688,18 +690,18 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
     }
   }
 
-  // TODO Input redistribution: Audio tokens
-
   // Output Metrics
 
   // Output breakdown: Reasoning
   if (usage.completion_tokens_details) {
-    const details = usage.completion_tokens_details || {};
-    if (details.reasoning_tokens !== undefined)
-      metricsUpdate.TOutR = usage.completion_tokens_details.reasoning_tokens;
+    const TOutReasoning = usage.completion_tokens_details.reasoning_tokens ?? undefined;
+    if (TOutReasoning !== undefined)
+      metricsUpdate.TOutR = TOutReasoning;
+    // TODO: Output breakdown: Audio / Image
+    // const TOutAudio = details.audio_tokens ?? undefined;
+    // const TOutImage = details.image_tokens ?? undefined;
   }
 
-  // TODO: Output breakdown: Audio
 
   // Upstream Cost Reporting
 
