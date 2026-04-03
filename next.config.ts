@@ -18,8 +18,7 @@ process.env.NEXT_PUBLIC_BUILD_HASH = (buildHash || '').slice(0, 10);
 process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + readFileSync(new URL('./package.json', import.meta.url))).version;
 process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
 process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE = process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE || (process.env.VERCEL_ENV ? `vercel-${process.env.VERCEL_ENV}` : 'local'); // Docker or custom, Vercel
-if (!('NEXT_DEPLOYMENT_ID' in process.env)) // skip on 2nd pass (build: edge bundle)
-  console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH}${process.env.VERCEL_ENV ? `, \x1b[2mV:\x1b[0m${process.env.VERCEL_ENV}` : ''}, \x1b[2mN:\x1b[0m${process.env.NODE_ENV})`);
+console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH}${process.env.VERCEL_ENV ? `, \x1b[2mV:\x1b[0m${process.env.VERCEL_ENV}` : ''}, \x1b[2mN:\x1b[0m${process.env.NODE_ENV})`);
 
 // Non-default build types
 const buildType =
