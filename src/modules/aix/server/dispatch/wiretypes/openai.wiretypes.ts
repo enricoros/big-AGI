@@ -630,7 +630,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
     // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
-    citations: z.array(z.any()).optional(),
+    citations: z.array(z.any()).optional()
+      .nullable(), // [2026-04-01] Reported on Discord - from the `trinity-large-thinking` model
     // [Perplexity, 2025-06-23] Search results
     search_results: z.array(z.object({
       title: z.string().optional().nullable(), // Title of the search result
@@ -725,7 +726,8 @@ export namespace OpenAIWire_API_Chat_Completions {
       data: z.string().optional(), // incremental base64 audio data
       transcript: z.string().optional(), // incremental transcript
       expires_at: z.number().optional(), // seems to be only in the last chunk
-    }).optional(),
+    }).optional()
+      .nullable(), // [2026-04-01] Reported on Discord - from the `trinity-large-thinking` model
     /**
      * [OpenRouter, 2025-12-31] Extension for Image generation output
      */
@@ -802,7 +804,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
     // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
-    citations: z.array(z.any()).optional(),
+    citations: z.array(z.any()).optional()
+      .nullable(), // [2026-04-01] Reported on Discord - from the `trinity-large-thinking` model
     // [Perplexity, 2025-06-23] Search results
     search_results: z.array(z.object({
       title: z.string().optional().nullable(), // Title of the search result
