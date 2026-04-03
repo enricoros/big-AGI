@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import { Autocomplete, AutocompleteOption, Box, FormControl, FormHelperText, FormLabel, Typography } from '@mui/joy';
+import { Autocomplete, AutocompleteOption, Box, FormControl, FormHelperText, FormLabel, ListItemDecorator, Typography } from '@mui/joy';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
+
+import { ArceeAIIcon } from '~/common/components/icons/vendors/ArceeAIIcon';
 
 
 /**
@@ -25,11 +27,12 @@ interface VerifiedProvider {
   category: 'Example Proxies' | 'Example Providers';
   docsUrl?: string; // optional link to provider docs
   hostMatch?: string; // substring to match against current host (defaults to host)
+  icon?: React.ComponentType<{ sx?: object }>; // optional icon component
 }
 
 const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   // Example Providers
-  { id: 'arcee', label: 'Arcee AI', host: 'https://api.arcee.ai/api', hostMatch: 'arcee.ai', category: 'Example Providers', description: 'High-performance AI models (Trinity, Maestro)', docsUrl: 'https://docs.arcee.ai/' },
+  { id: 'arcee', label: 'Arcee AI', host: 'https://api.arcee.ai/api', hostMatch: 'arcee.ai', category: 'Example Providers', description: 'High-performance open AI models', docsUrl: 'https://docs.arcee.ai/', icon: ArceeAIIcon },
   { id: 'chutes', label: 'Chutes AI', host: 'https://llm.chutes.ai', hostMatch: '.chutes.ai', category: 'Example Providers', description: 'GPU marketplace for AI inference', docsUrl: 'https://chutes.ai/docs' },
   { id: 'fireworks', label: 'Fireworks AI', host: 'https://api.fireworks.ai/inference', hostMatch: 'fireworks.ai', category: 'Example Providers', description: 'Fast inference for open models', docsUrl: 'https://docs.fireworks.ai/getting-started/quickstart' },
   { id: 'llmapi', label: 'LLM API', host: 'https://api.llmapi.ai', hostMatch: 'llmapi.ai', category: 'Example Providers', description: 'Multi-model API gateway', docsUrl: 'https://llmapi.ai' },
@@ -131,9 +134,12 @@ export function OpenAIHostAutocomplete(props: {
         renderOption={(optionProps, option) => {
           const { key, ...rest } = optionProps as any;
           return (
-            <AutocompleteOption key={key} {...rest} sx={{ display: 'block', py: 1 }}>
-              <Typography level='title-sm'>{option.label}</Typography>
-              <Typography level='body-xs' textColor='text.tertiary' className='agi-ellipsize' mt={0.25}>{option.description}</Typography>
+            <AutocompleteOption key={key} {...rest} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
+              <ListItemDecorator>{option.icon && <option.icon />}</ListItemDecorator>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography level='title-sm'>{option.label}</Typography>
+                <Typography level='body-xs' textColor='text.tertiary' className='agi-ellipsize' mt={0.25}>{option.description}</Typography>
+              </Box>
             </AutocompleteOption>
           );
         }}
