@@ -91,7 +91,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/turndown": "^5.0.6",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.4",
     "eslint-config-next": "~15.1.12",
     "prettier": "^3.8.1",
     "prisma": "~5.22.0",
