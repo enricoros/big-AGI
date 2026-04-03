@@ -671,13 +671,6 @@ async function _aixChatGenerateContent_LL(
   } as const;
 
 
-  // Aix Low-Level Chat Generation Accumulator
-  const accumulator_LL: AixChatGenerateContent_LL = {
-    fragments: [],
-    /* rest start as undefined (missing in reality) */
-  };
-
-
   // [CSF] Pre-load client-side executor if needed
   let clientSideChatGenerate: typeof import('./aix.client.direct-chatGenerate').clientSideChatGenerate | undefined = undefined;
   if (aixAccess.clientSideFetch)
@@ -688,6 +681,22 @@ async function _aixChatGenerateContent_LL(
     }
 
 
+  // Particles Reassembler - owns the accumulator, reused across Client-side retries
+  const reassembler = new ContentReassembler(
+    inspectorTransport,
+    inspectorContext,
+    getLabsLosslessImages(),
+    abortSignal,
+    (audio) => {
+      const audioUrl = URL.createObjectURL(audio.blob);
+      void AudioPlayer.playUrl(audioUrl)
+        .catch(error => console.log('[AIX] Failed to play audio:', { error }))
+        .finally(() => URL.revokeObjectURL(audioUrl));
+    },
+  );
+  const accumulator_LL = reassembler.accumulator; // stable ref - readonly, same object throughout
+
+
   // Retry/Reconnect - low-level state machine
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
   // - resume: for network disconnects with OpenAI Responses API handle
@@ -695,46 +704,28 @@ async function _aixChatGenerateContent_LL(
 
   while (true) {
 
-    const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, 'aicChatGenerateContent', async () => {
+    // fresh decimated callback per iteration (decimator has start/stop lifecycle)
+    const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, 'aicChatGenerateContent', async (accumulator: AixChatGenerateContent_LL, contentStarted: boolean) => {
       /**
-       * We want the first update to have actual content.
+       * We want the first caller's update to have actual content.
        * However note that we won't be sending out the model name very fast this way,
        * but it's probably what we want because of the ParticleIndicators (VFX!)
        */
-      if (!accumulator_LL.fragments.length)
+      if (!contentStarted)
         return;
 
-      await onGenerateContentUpdate(accumulator_LL, false);
+      await onGenerateContentUpdate(accumulator, false);
     });
 
-    /**
-     * Particles Reassembler.
-     * - uses this accumulator
-     * - calls a partial update callback with built-in decimation
-     * - optional. forwards particles to the debugger
-     * - abort will interrupt the fetch, and also the reassembly (for pieces coming still down the wire)
-     */
-    const reassembler = new ContentReassembler(
-      accumulator_LL, // FIXME: TEMP: moved the accumulator outside to keep appending to it (recreating new ContentReassembler each retry)
-      sendContentUpdate,
-      inspectorTransport,
-      inspectorContext,
-      getLabsLosslessImages(),
-      abortSignal,
-      (audio) => {
-        const audioUrl = URL.createObjectURL(audio.blob);
-        void AudioPlayer.playUrl(audioUrl)
-          .catch(error => console.log('[AIX] Failed to play audio:', { error }))
-          .finally(() => URL.revokeObjectURL(audioUrl));
-      },
-    );
+    // important: update the callback as we recreate the decimator every time
+    reassembler.updateCallback = sendContentUpdate;
 
     try {
 
       let particleStream: AsyncIterable<AixWire_Particles.ChatGenerateOp, void>;
 
       // AIX [CSM] Direct Execution
-      if (!rsm.resumeHandle && clientSideChatGenerate)
+      if (!accumulator_LL.genUpstreamHandle && clientSideChatGenerate)
         particleStream = clientSideChatGenerate(
           aixAccess,
           aixModel,
@@ -746,7 +737,7 @@ async function _aixChatGenerateContent_LL(
         );
 
       // AIX tRPC Streaming Generation from Chat input
-      else if (!rsm.resumeHandle)
+      else if (!accumulator_LL.genUpstreamHandle)
         particleStream = await apiStream.aix.chatGenerateContent.mutate({
           access: aixAccess,
           model: aixModel,
@@ -760,7 +751,7 @@ async function _aixChatGenerateContent_LL(
       else
         particleStream = await apiStream.aix.reattachContent.mutate({
           access: aixAccess,
-          resumeHandle: rsm.resumeHandle,
+          resumeHandle: accumulator_LL.genUpstreamHandle,
           context: aixContext,
           streaming: true,
           connectionOptions: aixConnectionOptions,
@@ -795,15 +786,12 @@ async function _aixChatGenerateContent_LL(
       // stop the deadline decimator, as we're into error handling mode now
       sendContentUpdate?.stop?.();
 
-      // store the resume handle, if got one
-      if (accumulator_LL.genUpstreamHandle) rsm.resumeHandle = accumulator_LL.genUpstreamHandle;
-
       // classify error
       const { errorType, errorMessage } = aixClassifyStreamingError(error, abortSignal.aborted, !!accumulator_LL.fragments.length);
       const maybeErrorStatusCode = error?.status || error?.response?.status || undefined;
 
-      // retry decision
-      const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode);
+      // client-side-retry decision - resume handle from accumulator determines strategy (resume vs reconnect)
+      const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode, !!accumulator_LL.genUpstreamHandle);
       if (!shallRetry) {
 
         // NOT retryable: e.g. client-abort, or missing handle
@@ -816,6 +804,13 @@ async function _aixChatGenerateContent_LL(
         // ... fall through (traditional single path)
 
       } else {
+
+        // drain in-flight processing before resetting state (prevents ghost fragments from mid-await particles)
+        try {
+          await reassembler.waitForWireComplete();
+        } catch (_) {
+          /* processing errors are already handled internally */
+        }
 
         // fragment-notify of our ongoing retry attempt
         try {

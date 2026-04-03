@@ -1,6 +1,3 @@
-import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
-
-
 // configuration
 const RETRY_PROFILES = {
   network: { baseDelay: 500, maxDelay: 8000, jitter: 0.25 },    // Network interruptions
@@ -14,8 +11,6 @@ type RetryDecision = false | { strategy: RetryStrategy; delayMs: number; attempt
 type RetryStrategy = 'resume' | 'reconnect';
 type StepResult = 'completed' | 'aborted';
 
-type _ResumeHandle = DMessageGenerator['upstreamHandle'];
-
 
 /**
  * Retry/resume logic for AIX _aixChatGenerateContent_LL.
@@ -25,7 +20,6 @@ type _ResumeHandle = DMessageGenerator['upstreamHandle'];
 export class AixStreamRetry {
 
   private mAttempts = 0;
-  private mResumeHandle: _ResumeHandle;
 
   constructor(
     private readonly maxReconnectAttempts = 0,
@@ -33,24 +27,14 @@ export class AixStreamRetry {
   ) {
   }
 
-  // resume handle management
-
-  get resumeHandle() {
-    return this.mResumeHandle;
-  }
-
-  set resumeHandle(handle: _ResumeHandle | undefined) {
-    if (!handle) return;
-    this.mResumeHandle = handle;
-  }
-
   /**
-   * Determines if error is retryable and returns strategy + delay
+   * Determines if error is retryable and returns strategy + delay.
+   * The resume handle (if any) determines the strategy: resume if available, reconnect otherwise.
    */
-  shallRetry(errorType: 'client-aborted' | 'net-disconnected' | 'request-exceeded' | 'response-captive' | 'net-unknown', maybeStatusCode?: number): RetryDecision {
+  shallRetry(errorType: 'client-aborted' | 'net-disconnected' | 'request-exceeded' | 'response-captive' | 'net-unknown', maybeStatusCode?: number, hasResumeHandle?: boolean): RetryDecision {
 
     // determine strategy - based on availability of resume handle
-    const strategy: RetryStrategy = this.mResumeHandle ? 'resume' : 'reconnect';
+    const strategy: RetryStrategy = hasResumeHandle ? 'resume' : 'reconnect';
     const maxAttempts = strategy === 'resume' ? this.maxResumeAttempts : this.maxReconnectAttempts;
 
     // check if we've exceeded max attempts

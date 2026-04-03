@@ -91,7 +91,7 @@ export async function* executeChatGenerateWithContinuation(
         return dispatch;
       };
 
-      // Notify the client that a continuation turn is starting
+      // Continuation checkpoint - client snapshots accumulator state and shows info placeholder
       yield { cg: 'aix-info', ait: 'flow-cont', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...` };
 
       // -> Loop continues - already-yielded particles are preserved
