@@ -500,19 +500,25 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [OpenAI, 2024-10-01] breaks down the input tokens into components
     prompt_tokens_details: z.object({
-      audio_tokens: z.number().optional(),
-      cached_tokens: z.number().optional(),
+      audio_tokens: z.number().optional()
+        .nullable(), // [Arcee, 2026-04-02]
+      cached_tokens: z.number().optional()
+        .nullable(), // [Arcee, 2026-04-02]
     }).optional()
       .nullable(), // [2025-06-02] Chutes.ai using slang server returns null for prompt_tokens_details
 
     // [OpenAI o1, 2024-09-12] breaks down the completion tokens into components
     completion_tokens_details: z.object({
-      reasoning_tokens: z.number().optional(), // [Discord, 2024-04-10] reported missing
+      reasoning_tokens: z.number().optional() // [Discord, 2024-04-10] reported missing
+        .nullable(), // [Arcee, 2026-04-02]
       // text_tokens: z.number().optional(), // [Discord, 2024-04-10] revealed as present on custom OpenAI endpoint - not using it here yet
-      audio_tokens: z.number().optional(), // [OpenAI, 2024-10-01] audio tokens used in the completion (charged at a different rate)
+      audio_tokens: z.number().optional() // [OpenAI, 2024-10-01] audio tokens used in the completion (charged at a different rate)
+        .nullable(), // [Arcee, 2026-04-02]
       // image_tokens: z.number().optional(), // [OpenRouter, 2026-02-06] confirmed: image tokens in image generation output
-      accepted_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
-      rejected_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
+      accepted_prediction_tokens: z.number().optional() // [OpenAI, 2024-11-05] Predicted Outputs
+        .nullable(), // [Arcee, 2026-04-02]
+      rejected_prediction_tokens: z.number().optional() // [OpenAI, 2024-11-05] Predicted Outputs
+        .nullable(), // [Arcee, 2026-04-02]
     }).optional() // not present in other APIs yet
       .nullable(), // [2025-06-02] no issues yet, but preventive
 
@@ -631,7 +637,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
     // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
     citations: z.array(z.any()).optional()
-      .nullable(), // [2026-04-01] Reported on Discord - from the `trinity-large-thinking` model
+      .nullable(), // [Arcee, 2026-04-02]
     // [Perplexity, 2025-06-23] Search results
     search_results: z.array(z.object({
       title: z.string().optional().nullable(), // Title of the search result
@@ -727,7 +733,7 @@ export namespace OpenAIWire_API_Chat_Completions {
       transcript: z.string().optional(), // incremental transcript
       expires_at: z.number().optional(), // seems to be only in the last chunk
     }).optional()
-      .nullable(), // [2026-04-01] Reported on Discord - from the `trinity-large-thinking` model
+      .nullable(), // [Arcee, 2026-04-02]
     /**
      * [OpenRouter, 2025-12-31] Extension for Image generation output
      */
@@ -805,7 +811,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
     // DEPRECATED: The citations field is being deprecated in favor of the new search_results field
     citations: z.array(z.any()).optional()
-      .nullable(), // [2026-04-01] Reported on Discord - from the `trinity-large-thinking` model
+      .nullable(), // [Arcee, 2026-04-02]
     // [Perplexity, 2025-06-23] Search results
     search_results: z.array(z.object({
       title: z.string().optional().nullable(), // Title of the search result
