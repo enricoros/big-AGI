@@ -32,7 +32,7 @@ test('leader row centers the leader card and caps its readable width', () => {
 
 test('reviewer row stays side by side inside a horizontal overflow container with capped columns', () => {
   const scrollerSx = getCouncilTraceReviewerRowScrollerSx();
-  assert.equal(scrollerSx.overflowX, 'auto');
+  assert.deepStrictEqual(scrollerSx.overflowX, { xs: 'auto', md: 'visible' });
   assert.deepStrictEqual(scrollerSx.mx, { xs: -0.25, md: 0 });
   assert.equal(scrollerSx.pb, 0.5);
   assert.equal(scrollerSx.scrollbarWidth, 'thin');
@@ -42,9 +42,9 @@ test('reviewer row stays side by side inside a horizontal overflow container wit
   assert.equal(reviewerRowSx.gap, 1);
   assert.equal(reviewerRowSx.alignItems, 'start');
   assert.deepStrictEqual(reviewerRowSx.gridAutoFlow, { xs: 'row', md: 'column' });
-  assert.deepStrictEqual(reviewerRowSx.gridTemplateColumns, { xs: 'minmax(0, 1fr)', md: 'none' });
+  assert.deepStrictEqual(reviewerRowSx.gridTemplateColumns, { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr))' });
   assert.deepStrictEqual(reviewerRowSx.gridAutoColumns, { md: 'minmax(18rem, 22rem)' });
-  assert.deepStrictEqual(reviewerRowSx.minWidth, { xs: 0, md: 'max-content' });
+  assert.deepStrictEqual(reviewerRowSx.minWidth, { xs: 0, md: 0 });
 
   const reviewerCardSx = getCouncilTraceAgentCardSx('reviewer');
   assert.equal(reviewerCardSx.display, 'grid');

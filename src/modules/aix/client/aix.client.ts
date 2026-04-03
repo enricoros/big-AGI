@@ -711,8 +711,6 @@ async function _aixChatGenerateContent_LL(
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
   // - resume: for network disconnects with OpenAI Responses API handle
   const rsm = new AixStreamRetry(0, 0); // sensible: 3, 2
-  if (resumeHandle && aixSupportsUpstreamReattach(aixAccess))
-    rsm.resumeHandle = resumeHandle;
 
   while (true) {
 

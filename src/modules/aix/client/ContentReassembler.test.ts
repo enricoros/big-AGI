@@ -29,11 +29,7 @@ test('normalizeCGIssueForDisplay keeps unrelated issues unchanged', () => {
 });
 
 test('ContentReassembler persists function-call tool responses as content fragments', async () => {
-  const accumulator = {
-    fragments: [],
-  };
-
-  const reassembler = new ContentReassembler(accumulator);
+  const reassembler = new ContentReassembler();
   reassembler.enqueueWireParticle({
     p: 'fcr',
     id: 'web-search-1',
@@ -44,6 +40,7 @@ test('ContentReassembler persists function-call tool responses as content fragme
   });
   await reassembler.waitForWireComplete();
 
+  const { accumulator } = reassembler;
   assert.equal(accumulator.fragments.length, 1);
   assert.deepEqual(accumulator.fragments[0]?.part, {
     pt: 'tool_response',

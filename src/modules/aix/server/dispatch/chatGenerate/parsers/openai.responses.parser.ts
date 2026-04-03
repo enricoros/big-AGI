@@ -1097,45 +1097,107 @@ function _imageGenerationMimeType(item: { output_format?: string }): string {
  * - sources: ALL search results (e.g., 20 URLs) - bulk data for special web search fragments
  * - citations: High-quality links (2-3) via annotations in message content
  */
-function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>, opId: string): void {
-  const { action, status } = webSearchCall;
+type TOpenAIWebSearchAction = NonNullable<Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>['action']>;
 
-  const doneOpts = { opId, state: 'done' } as const;
-
-  if (status === 'failed') {
-    const failedUrl = action && action.type === 'open_page' ? action.url : undefined;
-    pt.sendOperationState('search-web', failedUrl ? `Search error: ${sanitizeUrlForDisplay(failedUrl)}` : 'Search error', { opId, state: 'error' });
-    return;
-  }
-
+function _webSearchActionToArgs(action: TOpenAIWebSearchAction | undefined): string | null {
   switch (action?.type) {
     case 'search':
-      const queries: string[] = action.queries?.length ? action.queries : action.query ? [action.query] : [];
-      const sourceUrls: string[] = action.sources?.map((s: any) => s.url).filter(url => !!url) ?? [];
-      const foundCount = sourceUrls.length;
-      let doneText = 'Search completed';
-      if (foundCount) doneText += `: ${foundCount} result${foundCount > 1 ? 's' : ''}`;
-      if (queries.length) doneText += (foundCount ? ' for' : ' - for') + (queries.length > 1 ? ` ${queries.length} queries` : '') + ': ' + queries.join(', ');
-      pt.sendOperationState('search-web', doneText, { ...doneOpts, ...queries.length ? { iTexts: queries } : undefined, ...sourceUrls.length ? { oTexts: sourceUrls } : undefined });
-      break;
+      return JSON.stringify({
+        ...(action.query ? { query: action.query } : {}),
+        ...(action.queries?.length ? { queries: action.queries } : {}),
+      });
 
     case 'open_page':
-      pt.sendOperationState('search-web', `Retrieved ${action.url ? sanitizeUrlForDisplay(action.url) : 'web page'}`, { ...doneOpts, ...action.url ? { iTexts: [action.url], oTexts: [action.url] } : undefined });
-      break;
+      return JSON.stringify({
+        ...(action.url ? { url: action.url } : {}),
+      });
 
     case 'find':
     case 'find_in_page':
-      pt.sendOperationState('search-web', action.pattern
-        ? (action.url ? `Searched for "${action.pattern}" on ${sanitizeUrlForDisplay(action.url)}` : `Searched page for "${action.pattern}"`)
-        : 'Searched web page', { ...doneOpts, ...action.pattern ? { iTexts: [action.pattern] } : undefined });
-      break;
+      return JSON.stringify({
+        ...(action.url ? { url: action.url } : {}),
+        ...(action.pattern ? { pattern: action.pattern } : {}),
+      });
+
+    case undefined:
+      return null;
 
     default:
       const _exhaustiveCheck: never = action;
-    case undefined:
-      console.log(`[DEV] AIX: Unknown web_search_call action:`, { action });
-      break;
+      return null;
   }
+}
+
+function _formatWebSearchCallResult(webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>): { error: boolean | string, result: string } {
+  const { action, status } = webSearchCall;
+
+  if (status === 'failed') {
+    const failedUrl = action?.type === 'open_page' ? action.url : undefined;
+    const errorText = failedUrl ? `Search error: ${sanitizeUrlForDisplay(failedUrl)}` : 'Search error';
+    return {
+      error: errorText,
+      result: errorText,
+    };
+  }
+
+  switch (action?.type) {
+    case 'search': {
+      const queries: string[] = action.queries?.length ? action.queries : action.query ? [action.query] : [];
+      const sources = action.sources ?? [];
+
+      return {
+        error: false,
+        result: [
+          ...queries.map(query => `Query: ${query}`),
+          ...(queries.length && sources.length ? [''] : []),
+          ...sources.map((source, index) => {
+            const richSource = source as typeof source & { title?: string; snippet?: string };
+            return [
+              `${index + 1}. ${richSource.title || richSource.url || 'Search result'}`,
+              ...(richSource.url ? [richSource.url] : []),
+              ...(richSource.snippet ? [richSource.snippet] : []),
+            ].join('\n');
+          }),
+        ].join('\n'),
+      };
+    }
+
+    case 'open_page':
+      return {
+        error: false,
+        result: action.url ? `URL: ${action.url}` : 'Retrieved web page',
+      };
+
+    case 'find':
+    case 'find_in_page':
+      return {
+        error: false,
+        result: [
+          ...(action.pattern ? [`Pattern: ${action.pattern}`] : []),
+          ...(action.url ? [`URL: ${action.url}`] : []),
+        ].join('\n') || 'Searched web page',
+      };
+
+    case undefined:
+      return {
+        error: false,
+        result: 'Search completed',
+      };
+
+    default:
+      const _exhaustiveCheck: never = action;
+      return {
+        error: false,
+        result: 'Search completed',
+      };
+  }
+}
+
+function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>, opId: string): void {
+  pt.startFunctionCallInvocation(opId, 'web_search', 'incr_str', _webSearchActionToArgs(webSearchCall.action));
+
+  const formattedResult = _formatWebSearchCallResult(webSearchCall);
+  pt.addFunctionCallResponse(opId, formattedResult.error, 'web_search', formattedResult.result, 'upstream');
 }
 
 function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {

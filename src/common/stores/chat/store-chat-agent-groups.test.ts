@@ -142,6 +142,7 @@ test('migrates legacy consensus agent groups to council snapshots', () => {
     name: 'Legacy council',
     systemPurposeId: 'Developer',
     turnTerminationMode: 'council',
+    turnsOrder: 'custom',
     councilMaxRounds: 5,
     councilTraceAutoCollapsePreviousRounds: true,
     councilTraceAutoExpandNewestRound: true,

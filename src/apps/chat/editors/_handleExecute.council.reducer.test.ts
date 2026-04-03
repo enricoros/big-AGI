@@ -151,7 +151,7 @@ test('replayCouncilOpLog resumes user-stopped sessions', () => {
   assert.equal(replay.interruptionReason, '@stop');
 });
 
-test('replayCouncilOpLog keeps fatal stopped sessions non-resumable', () => {
+test('replayCouncilOpLog keeps fatal stopped sessions resumable for council recovery', () => {
   const { ops, next } = createBaseOps();
   next('leader_turn_committed', {
     roundIndex: 0,
@@ -167,7 +167,7 @@ test('replayCouncilOpLog keeps fatal stopped sessions non-resumable', () => {
   }, { opId: 'stopped', createdAt: 102 });
 
   const replay = replayCouncilOpLog(ops);
-  assert.equal(replay.canResume, false);
+  assert.equal(replay.canResume, true);
   assert.equal(replay.persistedStatus, 'stopped');
   assert.equal(replay.workflowState?.status, 'interrupted');
   assert.equal(replay.interruptionReason, 'leader-invalid-proposal');
