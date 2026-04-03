@@ -14,21 +14,11 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-02-18
+ * - updated: 2026-04-02
  */
 const _knownGroqModels: ManualMappings = [
 
   // Preview Models
-  {
-    isPreview: true,
-    idPrefix: 'meta-llama/llama-4-maverick-17b-128e-instruct',
-    label: 'Llama 4 Maverick · 17B × 128E (Preview)',
-    description: 'Llama 4 Maverick 17B MoE with 128 experts (400B total params), native multimodal with vision support. 131K context, 8K max output. ~600 t/s on Groq.',
-    contextWindow: 131072,
-    maxCompletionTokens: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.20, output: 0.60 },
-  },
   {
     isPreview: true,
     idPrefix: 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -57,12 +47,22 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 262144,
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 1.00, output: 3.00 },
+    chatPrice: { input: 1.00, output: 3.00, cache: { cType: 'oai-ac', read: 0.50 } },
   },
+  // Deprecated redirects (still returned by API)
+  {
+    idPrefix: 'moonshotai/kimi-k2-instruct',
+    label: 'Kimi K2 Instruct (Deprecated)',
+    symLink: 'moonshotai/kimi-k2-instruct-0905',
+    contextWindow: 131072, // API returns 131K (vs 262K for the 0905 version)
+    maxCompletionTokens: 16384,
+  },
+
   // REMOVED MODELS (no longer returned by API):
   // - (Jan 21, 2026) qwen-qwq-32b, qwen-2.5-32b, qwen-2.5-coder-32b
   // - (Jan 21, 2026) deepseek-r1-distill-llama-70b, deepseek-r1-distill-qwen-32b
-  // - (Feb 18, 2026) moonshotai/kimi-k2-instruct (deprecated redirect, removed from docs)
+  // - (Feb 18, 2026) moonshotai/kimi-k2-instruct (deprecated redirect, removed from docs; still returned by API -> symlink above)
+  // - (Apr 02, 2026) meta-llama/llama-4-maverick-17b-128e-instruct (removed from docs and pricing)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)
@@ -93,7 +93,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.15, output: 0.60 },
+    chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.075 } },
   },
   {
     isPreview: true,
@@ -112,7 +112,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.075, output: 0.30 },
+    chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
   },
 
   // Production Models - Meta
@@ -136,7 +136,7 @@ const _knownGroqModels: ManualMappings = [
     chatPrice: { input: 0.05, output: 0.08 },
   },
 
-  // (Feb 18, 2026) allam-2-7b (SDAIA) removed from docs and pricing
+  // (Feb 18, 2026) allam-2-7b (SDAIA) removed from docs and pricing, still returned by API -> deny list
 
 ];
 
@@ -147,6 +147,7 @@ const groqDenyList: string[] = [
   'playai-tts',
   'canopylabs/orpheus', // TTS models
   'llama-prompt-guard', // Text classification models
+  'allam-2-7b', // SDAIA model, removed from docs and pricing (Feb 2026), API still returns it
 ];
 
 export function groqModelFilter(model: { id: string }): boolean {
