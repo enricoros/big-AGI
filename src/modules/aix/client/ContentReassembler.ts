@@ -819,7 +819,6 @@ export class ContentReassembler {
         // normal completions
         'ok': undefined,
         'ok-tool_invocations': undefined,
-        'ok-pause_continue': undefined,
         // issues: dialect, dispatch, or client
         'cg-issue': 'issue',
         // interruptions

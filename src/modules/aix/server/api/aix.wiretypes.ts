@@ -686,7 +686,6 @@ export namespace AixWire_Particles {
   export type GCTokenStopReason =
     | 'ok'                      // clean, including reaching 'stop sequences'
     | 'ok-tool_invocations'     // clean & tool invocations
-    | 'ok-pause_continue'       // clean, but paused (e.g. Anthropic server tools like web search) - requires continuation
     // premature:
     | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
     | 'filter-content'          // content filter (e.g. profanity)

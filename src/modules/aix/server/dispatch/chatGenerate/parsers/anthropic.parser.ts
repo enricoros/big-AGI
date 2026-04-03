@@ -422,7 +422,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         Object.assign(responseMessage, delta);
 
         // -> Token Stop Reason
-        const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
+        const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason, 'message_delta');
         if (tokenStopReason !== null)
           pt.setTokenStopReason(tokenStopReason);
 
@@ -638,11 +638,6 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
-    // -> Token Stop Reason
-    const tokenStopReason = _fromAnthropicStopReason(stop_reason);
-    if (tokenStopReason !== null)
-      pt.setTokenStopReason(tokenStopReason);
-
     // -> Stats
     if (usage) {
       const elapsedTimeMilliseconds = Date.now() - parserCreationTimestamp;
@@ -670,6 +665,11 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       throw new DispatchContinuationSignal(
         _createAnthropicPauseTurnContinuation(content, container?.id),
       );
+
+    // -> Token Stop Reason (pause_turn already thrown above)
+    const tokenStopReason = _fromAnthropicStopReason(stop_reason, 'parser_NS');
+    if (tokenStopReason !== null)
+      pt.setTokenStopReason(tokenStopReason);
   };
 }
 
@@ -938,7 +938,7 @@ function _createAnthropicPauseTurnContinuation(
 }
 
 
-function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.Response['stop_reason']) {
+function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.Response['stop_reason'], debugCaller: string) {
   switch (stopReason) {
 
     case 'end_turn':
@@ -947,13 +947,6 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
 
     case 'tool_use':
       return 'ok-tool_invocations';
-
-    /**
-     * https://docs.claude.com/en/api/handling-stop-reasons#pause-turn
-     * Used with server tools like web search when Claude needs to pause a long-running operation.
-     */
-    case 'pause_turn':
-      return 'ok-pause_continue';
 
     case 'max_tokens':
       return 'out-of-tokens';
@@ -964,8 +957,17 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
     case 'refusal':
       return 'filter-refusal'; // Safety concerns - refusal to answer
 
+    case 'pause_turn':
+      // pause_turn hits this function from message_delta, but the return is irrelevant -
+      // message_stop will throw DispatchContinuationSignal before the tokenStopReason matters
+      // https://docs.claude.com/en/api/handling-stop-reasons#pause-turn
+      return null;
+
     default:
-      console.warn(`_fromAnthropicStopReason: unknown stop reason: ${stopReason}`);
+      const _exhaustiveCheck: never = stopReason;
+      // fallthrough
+    case null:
+      console.warn(`_fromAnthropicStopReason(${debugCaller}): unexpected stop_reason: ${stopReason}`);
       return null;
   }
 }

@@ -503,7 +503,7 @@ async function testParameterValue(
 
     // Check tokenStopReason for non-ok outcomes
     const stopReason = collector.tokenStopReason;
-    const isValidStop = !stopReason || stopReason === 'ok' || stopReason === 'ok-tool_invocations' || stopReason === 'ok-pause_continue';
+    const isValidStop = !stopReason || stopReason === 'ok' || stopReason === 'ok-tool_invocations';
     const isTruncated = stopReason === 'out-of-tokens';
 
     const preview = collector.hasText
