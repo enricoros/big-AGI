@@ -33,6 +33,7 @@ import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { llmsHostnameMatches, OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
+import { arceeAIHeuristic, arceeAIModelsToModelDescriptions } from './openai/models/arceeai.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
@@ -470,8 +471,13 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(moonshotModelSortFn);
 
             case 'openai':
-              // [ChutesAI] special case for model enumeration
               const oaiHost = access.oaiHost;
+
+              // [Arcee AI] special case for model enumeration
+              if (arceeAIHeuristic(oaiHost))
+                return arceeAIModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [ChutesAI] special case for model enumeration
               if (chutesAIHeuristic(oaiHost))
                 return chutesAIModelsToModelDescriptions(maybeModels);
 

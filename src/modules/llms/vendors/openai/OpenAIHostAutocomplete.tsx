@@ -29,6 +29,7 @@ interface VerifiedProvider {
 
 const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   // Example Providers
+  { id: 'arcee', label: 'Arcee AI', host: 'https://api.arcee.ai/api', hostMatch: 'arcee.ai', category: 'Example Providers', description: 'High-performance AI models (Trinity, Maestro)', docsUrl: 'https://docs.arcee.ai/' },
   { id: 'chutes', label: 'Chutes AI', host: 'https://llm.chutes.ai', hostMatch: '.chutes.ai', category: 'Example Providers', description: 'GPU marketplace for AI inference', docsUrl: 'https://chutes.ai/docs' },
   { id: 'fireworks', label: 'Fireworks AI', host: 'https://api.fireworks.ai/inference', hostMatch: 'fireworks.ai', category: 'Example Providers', description: 'Fast inference for open models', docsUrl: 'https://docs.fireworks.ai/getting-started/quickstart' },
   { id: 'llmapi', label: 'LLM API', host: 'https://api.llmapi.ai', hostMatch: 'llmapi.ai', category: 'Example Providers', description: 'Multi-model API gateway', docsUrl: 'https://llmapi.ai' },
