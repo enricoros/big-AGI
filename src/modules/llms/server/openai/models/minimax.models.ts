@@ -35,55 +35,57 @@ const _knownMiniMaxModels: ModelDescriptionSchema[] = [
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.60, output: 2.40 },
+    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.06 } },
   },
 
   // M2.5 series
   {
     id: 'MiniMax-M2.5',
     label: 'MiniMax M2.5',
-    description: 'Strong coding and reasoning, best value. 192K context, 65K max output.',
-    contextWindow: 196608,
-    maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
-  },
-  {
-    id: 'MiniMax-M2.5-highspeed',
-    label: 'MiniMax M2.5 (Highspeed)',
-    description: 'Faster M2.5 variant at ~100 t/s. 192K context, 65K max output.',
-    contextWindow: 196608,
-    maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.60, output: 2.40 },
-  },
-
-  // M2.1 series
-  {
-    id: 'MiniMax-M2.1',
-    label: 'MiniMax M2.1',
-    description: '230B params (10B active), multilingual coding. 192K context, 65K max output.',
-    contextWindow: 196608,
+    description: 'Strong coding and reasoning, best value. 200K context, 65K max output.',
+    contextWindow: 204800,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
   },
   {
-    id: 'MiniMax-M2.1-highspeed',
-    label: 'MiniMax M2.1 (Highspeed)',
-    description: 'Faster M2.1 variant. 192K context, 65K max output.',
-    contextWindow: 196608,
+    id: 'MiniMax-M2.5-highspeed',
+    label: 'MiniMax M2.5 (Highspeed)',
+    description: 'Faster M2.5 variant at ~100 t/s. 200K context, 65K max output.',
+    contextWindow: 204800,
     maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.60, output: 2.40 },
+    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
+  },
+
+  // M2.1 series (legacy)
+  {
+    id: 'MiniMax-M2.1',
+    label: 'MiniMax M2.1',
+    description: '230B params (10B active), multilingual coding. 200K context, 65K max output.',
+    contextWindow: 204800,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
+    hidden: true, // yield to newer
+  },
+  {
+    id: 'MiniMax-M2.1-highspeed',
+    label: 'MiniMax M2.1 (Highspeed)',
+    description: 'Faster M2.1 variant. 200K context, 65K max output.',
+    contextWindow: 204800,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
+    hidden: true, // yield to newer
   },
 
   // M2
   {
     id: 'MiniMax-M2',
     label: 'MiniMax M2',
-    description: '230B params (10B active), agentic and reasoning. 192K context, 128K max output.',
-    contextWindow: 196608,
+    description: '230B params (10B active), agentic and reasoning. 200K context, 128K max output.',
+    contextWindow: 204800,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
