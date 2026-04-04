@@ -1,11 +1,12 @@
 import { agiUuid } from '~/common/util/idUtils';
 
-import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isVoidFragment } from './chat.fragments';
+import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, duplicateDMessageFragments } from './chat.fragments';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
+import type { Immutable } from '~/common/types/immutable.types';
 
 
 // Message
@@ -352,60 +353,76 @@ export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
 
 // helpers during the transition from V3
 
-export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n', excludeAttachmentFragments?: boolean): string {
+export function messageFragmentsReduceText(fragments: Immutable<DMessageFragment[]>, fragmentSeparator: string = '\n\n', excludeAttachmentFragments?: boolean): string {
+
+  // This function is used frequently - so this is the optimized version with low allocations
 
   // quick path for empty fragments
   if (!fragments?.length)
     return '';
 
-  return fragments
-    .map(fragment => {
-      switch (true) {
-        case isContentFragment(fragment):
-          const cPt = fragment.part.pt;
-          switch (cPt) {
-            case 'text':
-              return fragment.part.text;
-            case 'error':
-              return fragment.part.error;
-            case 'reference':
-            case 'image_ref':
-              return '';
-            case 'tool_invocation':
-            case 'tool_response':
-              // Ignore tools for the text reduction
-              return '';
-            case '_pt_sentinel':
-              return '';
-            default:
-              const _exhaustiveCheck: never = cPt;
-              break;
-          }
-          break;
-        case isAttachmentFragment(fragment):
-          if (excludeAttachmentFragments)
-            return '';
+  // fast path: single text content fragment (most common case)
+  if (fragments.length === 1 && fragments[0].ft === 'content' && fragments[0].part.pt === 'text')
+    return fragments[0].part.text;
+
+  // single-pass accumulation (avoids intermediate arrays from .map/.filter/.join)
+  let result = '';
+  for (const fragment of fragments) {
+    let text: string | undefined;
+
+    switch (fragment.ft) {
+      case 'content': {
+        const cPt = fragment.part.pt;
+        switch (cPt) {
+          case 'text':
+            text = fragment.part.text;
+            break;
+          case 'error':
+            text = fragment.part.error;
+            break;
+          case 'reference':
+          case 'image_ref':
+          case 'tool_invocation':
+          case 'tool_response':
+          case '_pt_sentinel':
+            break;
+          default:
+            const _exhaustiveCheck: never = cPt;
+            break;
+        }
+        break;
+      }
+      case 'attachment':
+        if (!excludeAttachmentFragments) {
           const aPt = fragment.part.pt;
           switch (aPt) {
             case 'doc':
-              return fragment.part.data.text;
+              text = fragment.part.data.text;
+              break;
             case 'reference':
             case 'image_ref':
-              return '';
             case '_pt_sentinel':
-              return '';
+              break;
             default:
               const _exhaustiveCheck: never = aPt;
               break;
           }
-          break;
-        case isVoidFragment(fragment):
-          // all void fragments are ignored by definition when doing a text reduction
-          return '';
-      }
-      console.warn(`[DEV] messageFragmentsReduceText: unexpected '${fragment.ft}' fragment with '${(fragment as any)?.part?.pt}' part`);
-      return '';
-    })
-    .filter(text => !!text)
-    .join(fragmentSeparator);
+        }
+        break;
+      case 'void': // all void fragments (including reasoning) are ignored by definition when doing a text reduction
+      case '_ft_sentinel':
+        break;
+      default:
+        const _exhaustiveCheck: never = fragment;
+        console.warn(`[DEV] messageFragmentsReduceText: unexpected '${(fragment as any)?.ft}' fragment with '${(fragment as any)?.part?.pt}' part`);
+        break;
+    }
+
+    if (text) {
+      if (result) result += fragmentSeparator;
+      result += text;
+    }
+  }
+
+  return result;
 }
