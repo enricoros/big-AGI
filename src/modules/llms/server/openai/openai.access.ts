@@ -258,14 +258,14 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       let heliKey: string | false;
       if (access.oaiHost) {
         // Client controls the endpoint: only client credentials
-        oaiKey = access.oaiKey || '';
         oaiHost = access.oaiHost;
+        oaiKey = access.oaiKey || ''; // key can be null, e.g. LocalAI
         oaiOrg = access.oaiOrg || '';
         heliKey = access.heliKey || false;
       } else {
         // Client hasn't touched the endpoint: server infrastructure
-        oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
         oaiHost = /* NO access.oaiHost */ env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
+        oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
         oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
         heliKey = access.heliKey || env.HELICONE_API_KEY || false;
       }
