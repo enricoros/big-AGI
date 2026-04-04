@@ -40,6 +40,7 @@ import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
+import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
 import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
@@ -396,6 +397,11 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
         // [OpenAI-compatible dialects]: openAI-style fetch models list
         fetchModels: async () => {
+
+          // Bypass fetch for providers that do NOT have the /v1/models API yet - works in conjunction with the hardcoded models below
+          const bypassFetch = (dialect === 'openai' && minimaxHeuristic(oaiUrl)); // [MiniMax]
+          if (bypassFetch) return { data: [] }; // dummy response
+
           _wire?.logRequest('GET', oaiUrl, oaiHeaders);
           const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ 
             url: oaiUrl, 
@@ -491,6 +497,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [FireworksAI] special case for model enumeration
               if (fireworksAIHeuristic(oaiUrl))
                 return fireworksAIModelsToModelDescriptions(maybeModels);
+
+              // [MiniMax] hardcoded models (no /v1/models API yet)
+              if (minimaxHeuristic(oaiUrl))
+                return minimaxHardcodedModelDescriptions();
 
               // [Novita] special case for model enumeration
               if (novitaHeuristic(oaiUrl))
