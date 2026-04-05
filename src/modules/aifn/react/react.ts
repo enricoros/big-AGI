@@ -176,11 +176,21 @@ export class Agent {
 type ActionFunction = (input: string) => Promise<string>;
 
 async function wikipedia(q: string): Promise<string> {
-  const response = await frontendSideFetch(
-    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`,
-  );
-  const data = await response.json();
-  return data.query.search[0].snippet;
+  try {
+    const response = await frontendSideFetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`,
+    );
+    if (!response.ok)
+      return 'Wikipedia API error: HTTP ' + response.status;
+    const data = await response.json();
+    const results = data?.query?.search;
+    if (!Array.isArray(results) || results.length === 0)
+      return 'No Wikipedia results found for: ' + q;
+    return results[0].snippet || 'No snippet available';
+  } catch (error: any) {
+    console.error('Error fetching Wikipedia results:', error);
+    return 'An error occurred while searching Wikipedia: ' + (error?.message || error?.toString() || 'Unknown error');
+  }
 }
 
 async function search(query: string): Promise<string> {
