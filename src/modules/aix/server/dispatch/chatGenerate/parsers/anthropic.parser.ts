@@ -796,6 +796,10 @@ function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name
       pt.sendOperationState('code-exec', `${verb} ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
       break;
     }
+    default:
+      // we silently ignore the updates for unknown tools (unknown input structures), or tools that have the full
+      // input object at the start event (e.g., web_search with query in input)
+      break;
   }
 }
 

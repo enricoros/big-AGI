@@ -396,8 +396,9 @@ function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest
 
   // ll.fragments[] -> dest.text (with error handling)
   // NOTE: similar to messageFragmentsReduceText, but with a more adapted behavior and throwing
+  if (!fragments.length) return; // keep dest.text as null until first content arrives
   dest.text = '';
-  for (let fragment of fragments) {
+  for (const fragment of fragments) {
     const pt = fragment.part.pt;
     switch (pt) {
       case 'text':

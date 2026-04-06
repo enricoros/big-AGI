@@ -3,9 +3,9 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning } from '~/common/s
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
 
-// [MiniMax] Hostname heuristic for OpenAI-compatible detection
-export function minimaxHeuristic(hostname: string | undefined): boolean {
-  return !!hostname && hostname.includes('minimax.io');
+// [MiniMax] URL/host heuristic for OpenAI-compatible detection
+export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
+  return !!urlOrHost && urlOrHost.includes('minimax.io');
 }
 
 
