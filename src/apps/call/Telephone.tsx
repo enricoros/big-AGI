@@ -250,13 +250,13 @@ export function Telephone(props: {
       if (messageWasInterruptedAtStart(status.lastDMessage))
         return;
 
-      // whether status.outcome === 'success' or not, we get a valid DMessage, eventually with Error Fragments inside
+      // whether status.outcome === 'completed' or not, we get a valid DMessage, eventually with Error Fragments inside
       const fullMessage = createDMessageFromFragments('assistant', status.lastDMessage.fragments);
       fullMessage.generator = status.lastDMessage.generator;
       setCallMessages(messages => [...messages, fullMessage]); // [state] append assistant:call_response
 
       // fire/forget - use 'fast' priority for real-time conversation
-      if (status.outcome === 'success' && finalText?.length >= 1)
+      if (status.outcome === 'completed' && finalText?.length >= 1)
         void speakText(finalText,
           undefined,
           { label: 'Call', priority: 'fast' },

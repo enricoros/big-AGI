@@ -78,12 +78,12 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
   ];
 
   // update the UI
-  const onMessageUpdated = (update: AixChatGenerateContent_DMessageGuts, completed: boolean) => {
-    // in-place update of the intermediate message
-    const { fragments: incrementalFragments, ...incrementalRest } = update;
-    Object.assign(inputs.intermediateDMessage, incrementalRest);
-    if (incrementalFragments?.length) {
-      inputs.intermediateDMessage.fragments = incrementalFragments;
+  const onMessageUpdated = (messageOverwriteShallow: AixChatGenerateContent_DMessageGuts, completed: boolean) => {
+    // fragments and generator are already immutable (new refs per update) - no deep clone needed
+    const { fragments, ...rest } = messageOverwriteShallow;
+    Object.assign(inputs.intermediateDMessage, rest);
+    if (fragments?.length) {
+      inputs.intermediateDMessage.fragments = fragments;
       inputs.intermediateDMessage.updated = Date.now();
     }
     if (completed)
@@ -95,7 +95,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
 
       case 'character-count':
         inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageFragmentsReduceText(incrementalFragments || []).length} characters</Typography>,
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageFragmentsReduceText(fragments || []).length} characters</Typography>,
         );
         return;
 
@@ -136,8 +136,8 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
       // this message will be discarded as the abort status is checked in the next `catch`
       throw new Error('Instruction Stopped.');
     }
-    if (status.outcome === 'errored')
-      throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
+    if (status.outcome === 'failed')
+      throw new Error(`Model execution error: ${status.outcomeFailedMessage || 'Unknown error'}`);
 
     // Proceed to the next step
     return messageFragmentsReduceText(inputs.intermediateDMessage.fragments); // returns the PipedValueType

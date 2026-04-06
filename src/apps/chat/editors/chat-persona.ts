@@ -78,15 +78,14 @@ export async function runPersonaOnConversationHead(
       // if (abortController.signal.aborted)
       //   console.warn('runPersonaOnConversationHead: Aborted', { conversationId, assistantLlmId, messageOverwrite });
 
-      // deep copy the object to avoid partial updates
-      let deepCopy = structuredClone(messageOverwrite);
+      // fragments and generator are already immutable (new refs per update) - no deep clone needed
+      const { fragments, ...rest } = messageOverwrite;
 
       // [Cosmetic Logic] if the content hasn't come yet, don't replace the fragments to still show the placeholder
-      if (!messageComplete && deepCopy.pendingIncomplete && deepCopy.fragments?.length === 0)
-        delete (deepCopy as any).fragments;
+      const includeFragments = !!fragments?.length || messageComplete || !messageOverwrite.pendingIncomplete;
 
       // update the message
-      cHandler.messageEdit(assistantMessageId, deepCopy, messageComplete, false);
+      cHandler.messageEdit(assistantMessageId, { ...(includeFragments && { fragments }), ...rest }, messageComplete, false);
 
       // if requested, speak the message
       autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
@@ -97,12 +96,12 @@ export async function runPersonaOnConversationHead(
   );
 
   // final message update (needed only in case of error)
-  const lastDeepCopy = structuredClone(messageStatus.lastDMessage);
-  if (messageStatus.outcome === 'errored')
-    cHandler.messageEdit(assistantMessageId, lastDeepCopy, true, false);
+  const lastDMessage = messageStatus.lastDMessage;
+  if (messageStatus.outcome === 'failed')
+    cHandler.messageEdit(assistantMessageId, lastDMessage, true, false);
 
   // special case: if the last message was aborted and had no content, delete it
-  if (messageWasInterruptedAtStart(lastDeepCopy)) {
+  if (messageWasInterruptedAtStart(lastDMessage)) {
     cHandler.messagesDelete([assistantMessageId]);
     // NOTE: ok to exit here, as the abort was already done
     return false;
@@ -136,5 +135,5 @@ export async function runPersonaOnConversationHead(
     cHandler.historyStripThinking(0);
 
   // return true if this succeeded
-  return messageStatus.outcome === 'success';
+  return messageStatus.outcome === 'completed';
 }

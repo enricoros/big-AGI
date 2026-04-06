@@ -3,8 +3,8 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 import type { MaybePromise } from '~/common/types/useful.types';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
-import { DMessage, DMessageGenerator, messageSetGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
-import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
+import { DMessage, DMessageGenerator, createGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
+import { DMetricsChatGenerate_Lg, DMetricsChatGenerate_Md, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiStream } from '~/common/util/trpc.client';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
@@ -165,24 +165,6 @@ export function aixCreateModelFromLLMOptions(
 }
 
 
-/**
- * Accumulator for ChatGenerate output data, as it is being streamed.
- * The object is modified in-place from the lower layers and passed to the callback for efficiency.
- */
-export interface AixChatGenerateContent_DMessageGuts extends Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'> {
-  fragments: (DMessageContentFragment | DMessageVoidFragment /* no AttachmentFragments */)[];
-  // Since 'aixChatGenerateContent_DMessage_FromConversation' starts from named (before replacement from LL), we can't Extract
-  generator: DMessageGenerator; // Extract<DMessageGenerator, { mgt: 'aix' }>;
-  pendingIncomplete: boolean;
-}
-
-type StreamMessageStatus = {
-  outcome: 'success' | 'aborted' | 'errored',
-  lastDMessage: AixChatGenerateContent_DMessageGuts,
-  errorMessage?: string
-};
-
-
 interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
@@ -193,8 +175,19 @@ interface AixClientOptions {
 }
 
 
+// --- L3 - Conversation-level generation (builds chat request, error wrapping) ---
+
+/** L3 return: final DMessage-compatible object + terminal outcome. errorMessage is only set for pre-LL errors. */
+type _AixChatGenerateContent_FromConversation_Result = {
+  lastDMessage: AixChatGenerateContent_DMessageGuts,
+  outcome: AixChatGenerateTerminal_LL,
+  outcomeFailedMessage?: string,
+};
+
 /**
  * Level 3 Generation from an LLM Id + Chat History.
+ * Updates use Zustand-style immutable references: .fragments and .generator are new objects on each update.
+ * Callers can pass the update directly to stores without deep cloning.
  */
 export async function aixChatGenerateContent_DMessage_FromConversation(
   // chat-inputs -> Partial<DMessage> outputs
@@ -207,9 +200,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
   // others
   clientOptions: AixClientOptions,
   onStreamingUpdate: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
-): Promise<StreamMessageStatus> {
-
-  let errorMessage: string | undefined;
+): Promise<_AixChatGenerateContent_FromConversation_Result> {
 
   let lastDMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
@@ -226,7 +217,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
 
-    await aixChatGenerateContent_DMessage_orThrow(
+    const { outcome, ...resultDMessage } = await aixChatGenerateContent_DMessage_orThrow(
       llmId,
       aixChatContentGenerateRequest,
       aixCreateChatGenerateContext(aixContextName, aixContextRef),
@@ -238,47 +229,37 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       },
     );
 
+    return { outcome, lastDMessage: resultDMessage };
+
   } catch (error: any) {
 
-    // this can only be a large, user-visible error, such as LLM not found
-    console.warn('[DEV] aixChatGenerateContentStreaming error:', { error });
-
-    // > error fragment
-    errorMessage = error.message || (typeof error === 'string' ? error : 'Chat stopped.');
-    lastDMessage.fragments.push(createErrorContentFragment(`Issue: ${errorMessage}`));
-
-    // .generator: 'issue', no pendingIncomplete
-    lastDMessage.generator = { ...lastDMessage.generator, tokenStopReason: 'issue' };
-    lastDMessage.pendingIncomplete = false;
+    // pre-LL error (e.g. LLM not found, service misconfigured, content assembly error) - the LL likly never ran
+    console.warn('[DEV] aixChatGenerateContent error:', { error });
+    const errorMessage = error.message || (typeof error === 'string' ? error : 'Chat stopped.');
+    lastDMessage = {
+      fragments: [...lastDMessage.fragments, createErrorContentFragment(`Issue: ${errorMessage}`)],
+      generator: { ...lastDMessage.generator, tokenStopReason: 'issue' },
+      pendingIncomplete: false,
+    }
+    return { outcome: 'failed', lastDMessage, outcomeFailedMessage: errorMessage };
 
   }
-
-  // Derive outcome: client-abort wins (user intent), then errors/issues, then success
-  const tokenStopReason = lastDMessage.generator?.tokenStopReason;
-  const outcome: StreamMessageStatus['outcome'] =
-    tokenStopReason === 'client-abort' ? 'aborted'
-      : (errorMessage || tokenStopReason === 'issue') ? 'errored'
-        : 'success';
-
-  return {
-    outcome,
-    lastDMessage: lastDMessage,
-    errorMessage: errorMessage || undefined,
-  };
 }
 
 
+// --- L2-Simple - Text-only facade (resolves LLM, calls LL, returns string) ---
+
 /**
- * Accumulator for the simple text-only API
+ * L2-S - Accumulator for the simple text-only API
  */
-interface AixChatGenerateText_Simple {
+interface _AixChatGenerateText_Simple {
   text: string | null;
   generator: DMessageGenerator;
   isDone: boolean;
 }
 
 /**
- * Level 2 - Simpler facade to text-only inputs and text-only outputs - and nothing else. Old-school V1-like API.
+ * L2-S - Simpler facade to text-only inputs and text-only outputs - and nothing else. Old-school V1-like API.
  *
  * NOTE: this is a simplified version of the `aixChatGenerateContent_DMessage` function, with text-only inputs and outputs.
  * NOTE: it's missing throttling; there's the chance we could abstract and consolidate the two functions, because they are
@@ -334,12 +315,11 @@ export async function aixChatGenerateText_Simple(
 
 
   // Variable to store the final text
-  const state: AixChatGenerateText_Simple = {
+  const state: _AixChatGenerateText_Simple = {
     text: null,
-    generator: { mgt: 'named', name: 'replace-me-ll' },
+    generator: createGeneratorAIX_AutoLabel(llm.vId, llm.id),
     isDone: false,
   };
-  messageSetGeneratorAIX_AutoLabel(state, llm.vId, llm.id);
 
   // NO streaming initial notification - only notified past the first real characters
   // await onTextStreamUpdate?.(dText.text, false);
@@ -353,17 +333,18 @@ export async function aixChatGenerateText_Simple(
     : new AbortController().signal; // since this is a 'simple' low-stakes API, we can 'ignore' the abort signal and not enforce it with the caller
 
 
-  // Aix Low-Level Chat Generation - does not throw, but may return an error in the final text
-  const ll = await _aixChatGenerateContent_LL(
+  // Aix LL Chat Generation - does not throw, but may return an error in the final text
+  const { cgMetricsLg, outcome, ...llFinal } = await _aixChatGenerateContent_LL(
     aixAccess,
     aixModel,
     aixChatGenerate,
     aixContext,
     aixStreaming,
+    state.generator,
     abortSignal,
     clientOptions?.throttleParallelThreads ?? 0,
     !aixStreaming ? undefined : async (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
-      _llToText(ll, state);
+      _llToL2Simple(ll, state);
       if (onTextStreamUpdate && state.text !== null)
         await onTextStreamUpdate(state.text, false, state.generator);
     },
@@ -373,8 +354,9 @@ export async function aixChatGenerateText_Simple(
   state.isDone = true;
 
   // LLM Cost computation & Aggregations
-  _llToText(ll, state);
-  _updateGeneratorCostsInPlace(state.generator, llm, `aix_chatgenerate_text-${aixContextName}`);
+  _llToL2Simple(llFinal, state);
+  const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, `aix_chatgenerate_text-${aixContextName}`);
+  if (metrics) state.generator = { ...state.generator, metrics };
 
 
   // re-throw the user-initiated abort, as the former function catches it
@@ -386,11 +368,15 @@ export async function aixChatGenerateText_Simple(
     throw new Error('AIX: Empty text response.');
 
   // throw if there are error fragments
-  const errorMessage = ll.fragments
+  const errorMessage = llFinal.fragments
     .filter(f => isContentFragment(f) && isErrorPart(f.part))
     .map(f => (f.part as DMessageErrorPart).error).join('\n');
   if (errorMessage)
     throw new Error('AIX: Error in response: ' + errorMessage);
+
+  // throw if the outcome is failed
+  if (outcome === 'failed')
+    throw new Error('AIX: Generation failed.');
 
   // final update
   await onTextStreamUpdate?.(state.text, true, state.generator);
@@ -404,45 +390,59 @@ export async function aixChatGenerateText_Simple(
  * - error -> inline error text: DO NOT THROW HERE, as the LL will catch it and add another error part with the same text
  * - tool -> throw: the LL will catch it and add the error text. However when done outside the LL (secondary usage) this will throw freely
  */
-function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Simple) {
-  // copy over just the generator by using the accumulator -> DMessage-like copier
-  _llToDMessageGuts(src, {
-    generator: dest.generator, // target our dest's object
-    fragments: [], pendingIncomplete: false, // unused, mocked
-  });
+function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest: _AixChatGenerateText_Simple) {
+  // transfer generator by reference - already structurally shared
+  dest.generator = generator;
 
-  // transform the fragments to plain text
-  if (src.fragments.length) {
-    dest.text = '';
-    for (let fragment of src.fragments) {
-      const pt = fragment.part.pt;
-      switch (pt) {
-        case 'text':
-          dest.text += fragment.part.text;
-          break;
-        case 'error':
-          dest.text += (dest.text ? '\n' : '') + fragment.part.error;
-          break;
-        case 'tool_invocation':
-          throw new Error(`AIX: Unexpected tool invocation ${fragment.part.invocation?.type === 'function_call' ? fragment.part.invocation.name : fragment.part.id} in the Text response.`);
-        case 'annotations': // citations - ignored
-        case 'ma': // model annotations (thinking tokens) - ignored
-        case 'ph': // placeholder - ignored
-        case 'reference': // impossible
-        case 'image_ref': // impossible
-        case 'tool_response': // impossible - stopped at the invocation already
-        case '_pt_sentinel': // impossible
-          break;
-        default:
-          const _exhaustiveCheck: never = pt;
-      }
+  // ll.fragments[] -> dest.text (with error handling)
+  // NOTE: similar to messageFragmentsReduceText, but with a more adapted behavior and throwing
+  dest.text = '';
+  for (let fragment of fragments) {
+    const pt = fragment.part.pt;
+    switch (pt) {
+      case 'text':
+        dest.text += fragment.part.text;
+        break;
+      case 'error':
+        dest.text += (dest.text ? '\n' : '') + fragment.part.error;
+        break;
+      case 'tool_invocation':
+        throw new Error(`AIX: Unexpected tool invocation ${fragment.part.invocation?.type === 'function_call' ? fragment.part.invocation.name : fragment.part.id} in the Text response.`);
+      case 'annotations': // citations - ignored
+      case 'ma': // model annotations (thinking tokens) - ignored
+      case 'ph': // placeholder - ignored
+      case 'reference': // impossible
+      case 'image_ref': // impossible
+      case 'tool_response': // impossible - stopped at the invocation already
+      case '_pt_sentinel': // impossible
+        break;
+      default:
+        const _exhaustiveCheck: never = pt;
     }
   }
 }
 
 
+// --- L2 - DMessage generation (resolves LLM, calls LL, finalizes costs, returns DMessageGuts + outcome) ---
+
 /**
- * Level 1 - Generates chat content using a specified LLM and ChatGenerateRequest (incl. Tools) and returns a DMessage-compatible object.
+ * L2 Accumulator for ChatGenerate DMessage output data, as it is being streamed.
+ * Uses Zustand-style immutable references: .fragments and .generator are replaced (not mutated) on each update.
+ */
+export interface AixChatGenerateContent_DMessageGuts extends Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'> {
+  fragments: (DMessageContentFragment | DMessageVoidFragment /* no AttachmentFragments */)[];
+  // Since 'aixChatGenerateContent_DMessage_FromConversation' starts from named (before replacement from LL), we can't Extract
+  generator: DMessageGenerator; // Extract<DMessageGenerator, { mgt: 'aix' }>;
+  pendingIncomplete: boolean;
+}
+
+/** L2 return type: DMessage-compatible guts + LL outcome (kept separate to prevent leaking into stores) */
+type _AixChatGenerateContent_DMessageGuts_WithOutcome = AixChatGenerateContent_DMessageGuts & {
+  outcome: AixChatGenerateTerminal_LL;
+};
+
+/**
+ * Level 2 - Generates chat content using a specified LLM and ChatGenerateRequest (incl. Tools) and returns a DMessage-compatible object.
  *
  * Contract:
  * - empty fragments means no content yet, and no error
@@ -476,7 +476,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   // others
   clientOptions: AixClientOptions,
   onStreamingUpdate?: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
-): Promise<AixChatGenerateContent_DMessageGuts> {
+): Promise<_AixChatGenerateContent_DMessageGuts_WithOutcome> {
 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
@@ -493,16 +493,12 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
 
   // Legacy Note: awaited OpenAI moderation check was removed (was only on this codepath)
 
-  // Aix Low-Level Chat Generation
+  // Aix LL Chat Generation
   const dMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
-    generator: { mgt: 'named', name: 'replace-me-ll' /* metrics: undefined, tokenStopReason: undefined */ },
+    generator: createGeneratorAIX_AutoLabel(llm.vId, llm.id), // using llm.id (not aixModel.id/ref) so we can re-select them in the UI (Beam)
     pendingIncomplete: true,
   };
-  // Note on the Generator. Besides the simple set below:
-  // - it will get replaced once, and then it's the same from that point on
-  // - using llm.id instead of aixModel.id (the ref) so we can re-select them in the UI (Beam)
-  messageSetGeneratorAIX_AutoLabel(dMessage, llm.vId, llm.id);
 
   // streaming initial notification, for UI updates
   await onStreamingUpdate?.(dMessage, false);
@@ -517,8 +513,16 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
     clientOptions.abortSignal = new AbortController().signal;
   }
 
-  // Aix Low-Level Chat Generation
-  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
+  // Aix LL Chat Generation
+  const { cgMetricsLg, outcome, ...llFinal } = await _aixChatGenerateContent_LL(
+    aixAccess,
+    aixModel,
+    aixChatGenerate,
+    aixContext,
+    aixStreaming,
+    dMessage.generator,
+    clientOptions.abortSignal,
+    clientOptions.throttleParallelThreads ?? 0,
     async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
@@ -528,77 +532,86 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
     },
   );
 
-  // Mark as complete
+  // Finalize DMessage
+  _llToDMessageGuts(llFinal, dMessage);
+  const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, `aix_chatgenerate_content-${aixContext.name}`);
+  if (metrics) dMessage.generator = { ...dMessage.generator, metrics };
   dMessage.pendingIncomplete = false;
 
-  // LLM Cost computation & Aggregations
-  _llToDMessageGuts(llAccumulator, dMessage);
-  _updateGeneratorCostsInPlace(dMessage.generator, llm, `aix_chatgenerate_content-${aixContext.name}`);
-
-  // final update (could ignore and take the dMessage)
+  // final update
   await onStreamingUpdate?.(dMessage, true);
 
-  return dMessage;
+  // return DMessageGuts spread + outcome
+  return { ...dMessage, outcome };
 }
 
-function _llToDMessageGuts(src: AixChatGenerateContent_LL, dest: AixChatGenerateContent_DMessageGuts) {
-  // replace the fragments if we have any
-  if (src.fragments.length)
-    dest.fragments = src.fragments; // Note: this gets replaced once, and then it's the same from that point on
-  // replace the generator pieces
-  if (src.genMetricsLg)
-    dest.generator.metrics = metricsChatGenerateLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
-  if (src.genModelName)
-    dest.generator.name = src.genModelName;
-  if (src.genProviderInfraLabel)
-    dest.generator.providerInfraLabel = src.genProviderInfraLabel;
-  if (src.genUpstreamHandle)
-    dest.generator.upstreamHandle = src.genUpstreamHandle;
-  if (src.legacyGenTokenStopReason)
-    dest.generator.tokenStopReason = src.legacyGenTokenStopReason;
+function _llToDMessageGuts({ fragments, generator }: AixChatGenerateContent_LL, dest: AixChatGenerateContent_DMessageGuts) {
+  // transfer fragments by reference - safe because the accumulator replaces (never mutates) its arrays
+  // cast: LL enforces ReadonlyArray (no .push on accumulator), DMessage uses mutable arrays - the boundary is here
+  dest.fragments = fragments as (DMessageContentFragment | DMessageVoidFragment)[];
+
+  // transfer generator by reference - already structurally shared by the reassembler
+  dest.generator = generator;
 }
 
-function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, debugCostSource: string) {
+function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGenerate_Lg, llm: DLLM, debugCostSource: string): undefined | DMetricsChatGenerate_Md {
+  // Compute the Md metrics from Lg
+  let metricsMd = cgMetricsLg ? metricsChatGenerateLgToMd(cgMetricsLg) : undefined;
+
   // Compute costs
   const logLlmRefId = getAllModelParameterValues(llm.initialParameters, llm.userParameters).llmRef || llm.id;
   const adjChatPricing = llmChatPricing_adjusted(llm);
-  const costs = metricsComputeChatGenerateCostsMd(generator.metrics, adjChatPricing, logLlmRefId);
+  const costs = metricsComputeChatGenerateCostsMd(metricsMd, adjChatPricing, logLlmRefId);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices
-    return;
+    return metricsMd;
   }
-
-  // Add the costs to the generator.metrics object
-  if (generator.metrics)
-    Object.assign(generator.metrics, costs);
+  metricsMd = { ...metricsMd /* TIn, TOut, ... */, ...costs /* $c, ... $code */ };
 
   // Run aggregations
-  const m = generator.metrics;
+  const m = metricsMd;
   const inputTokens = (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0);
   const outputTokens = (m?.TOut || 0) /* + (m?.TOutR || 0) THIS IS A BREAKDOWN, IT'S ALREADY IN */;
   metricsStoreAddChatGenerate(costs, inputTokens, outputTokens, llm, debugCostSource);
+
+  // Merge costs into a new generator
+  return metricsMd;
 }
 
 
+// --- LL Low-Level (Level 1) - Streaming loop with retry/reassembler ---
+
 /**
- * Accumulator for Lower Level ChatGenerate output data, as it is being streamed.
- * The object is modified in-place and passed to the callback for efficiency.
+ * Streaming accumulator for LL ChatGenerate - the live view during streaming.
+ *
+ * Structural sharing contract (Zustand-style):
+ * - .fragments and .generator are REPLACED with new references on each LL update, never mutated in place
+ * - Callers receive stable snapshots by reference - safe to forward to stores, do not mutate
  */
 export interface AixChatGenerateContent_LL {
-  // source of truth for any caller
-  // - empty array means no content yet, and no error
-  fragments: (DMessageContentFragment | DMessageVoidFragment)[];
-
-  // pieces of generator
-  genMetricsLg?: DMetricsChatGenerate_Lg;
-  genModelName?: string;
-  genProviderInfraLabel?: string;
-  genUpstreamHandle?: DMessageGenerator['upstreamHandle'];
-  legacyGenTokenStopReason?: DMessageGenerator['tokenStopReason'];
+  fragments: ReadonlyArray<DMessageContentFragment | DMessageVoidFragment>;
+  generator: Readonly<DMessageGenerator>;
 }
 
 /**
- * Low-level-0 client-side ChatGenerateContent, with optional streaming.
+ * Finalized LL result - extends the streaming accumulator with fields only available after finalization.
+ */
+export interface AixChatGenerateContent_LL_Result extends AixChatGenerateContent_LL {
+  outcome: AixChatGenerateTerminal_LL;
+  // Lg metrics - kept separate from generator.metrics (Md) because Lg is richer and used for final summaries
+  cgMetricsLg?: DMetricsChatGenerate_Lg;
+}
+
+/**
+ * Terminal state of a single LL generation call - why it stopped.
+ * - 'completed': model responded normally (content may have tokenStopReason detail like out-of-tokens or filter)
+ * - 'aborted': user cancelled
+ * - 'failed': error occurred (error fragments carry the detail)
+ */
+export type AixChatGenerateTerminal_LL = 'completed' | 'aborted' | 'failed';
+
+/**
+ * LL (Level 1) - Client-side ChatGenerateContent, with optional streaming.
  *
  * Contract:
  * - empty fragments means no content yet, and no error
@@ -622,15 +635,15 @@ export interface AixChatGenerateContent_LL {
  *    - other special parts include the Anthropic Caching hints, on select message
  * @param aixContext specifies the scope of the caller, such as what's the high level objective of this call
  * @param aixStreaming requests the source to provide incremental updates
+ * @param initialGenerator generator initial value, which will be updated for every new piece of information received
  * @param abortSignal allows the caller to stop the operation
  * @param throttleParallelThreads allows the caller to limit the number of parallel threads
  *
- * The output is an accumulator object with the fragments, and the generator
- * pieces (metrics, model name, token stop reason)
+ * The output is an accumulator object with the fragments and generator.
  *
  * @param onGenerateContentUpdate updated with the same accumulator at every step, and at the end (with isDone=true)
  * @returns the final accumulator object
- * @throws Error if there are rare low-level errors, or if [CSF] client-side fails to load
+ * @throws Error if there are rare LL errors, or if [CSF] client-side fails to load
  *
  */
 async function _aixChatGenerateContent_LL(
@@ -641,16 +654,17 @@ async function _aixChatGenerateContent_LL(
   aixContext: AixAPI_Context_ChatGenerate,
   aixStreaming: boolean,
   // others
+  initialGenerator: DMessageGenerator,
   abortSignal: AbortSignal,
   throttleParallelThreads: number | undefined,
   // optional streaming callback: not fired until the first piece of content
   onGenerateContentUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => MaybePromise<void>,
-): Promise<AixChatGenerateContent_LL> {
+): Promise<AixChatGenerateContent_LL_Result> {
 
   // Inspector support - can be requested by the client, but granted on the server side
   const inspectorEnabled = getAixInspectorEnabled();
-  const inspectorTransport = inspectorEnabled ? aixAccess.clientSideFetch ? 'csf' as const : 'trpc' as const : undefined;
-  const inspectorContext = inspectorEnabled ? { contextName: aixContext.name, contextRef: aixContext.ref } : undefined;
+  const inspectorTransport = !inspectorEnabled ? undefined : aixAccess.clientSideFetch ? 'csf' : 'trpc';
+  const inspectorContext = !inspectorEnabled ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
 
   // [DEV] Inspector - request body override
   const requestBodyOverrideJson = inspectorEnabled && aixClientDebuggerGetRBO();
@@ -683,6 +697,7 @@ async function _aixChatGenerateContent_LL(
 
   // Particles Reassembler - owns the accumulator, reused across Client-side retries
   const reassembler = new ContentReassembler(
+    initialGenerator,
     inspectorTransport,
     inspectorContext,
     getLabsLosslessImages(),
@@ -694,10 +709,10 @@ async function _aixChatGenerateContent_LL(
         .finally(() => URL.revokeObjectURL(audioUrl));
     },
   );
-  const accumulator_LL = reassembler.accumulator; // stable ref - readonly, same object throughout
+  const accumulator_LL = reassembler.S; // stable ref - readonly, same object throughout
 
 
-  // Retry/Reconnect - low-level state machine
+  // Retry/Reconnect - LL state machine
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
   // - resume: for network disconnects with OpenAI Responses API handle
   const rsm = new AixStreamRetry(0, 0); // sensible: 3, 2
@@ -705,7 +720,7 @@ async function _aixChatGenerateContent_LL(
   while (true) {
 
     // fresh decimated callback per iteration (decimator has start/stop lifecycle)
-    const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, 'aicChatGenerateContent', async (accumulator: AixChatGenerateContent_LL, contentStarted: boolean) => {
+    const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, 'aixChatGenerateContent', async (accumulator: AixChatGenerateContent_LL, contentStarted: boolean) => {
       /**
        * We want the first caller's update to have actual content.
        * However note that we won't be sending out the model name very fast this way,
@@ -725,7 +740,7 @@ async function _aixChatGenerateContent_LL(
       let particleStream: AsyncIterable<AixWire_Particles.ChatGenerateOp, void>;
 
       // AIX [CSM] Direct Execution
-      if (!accumulator_LL.genUpstreamHandle && clientSideChatGenerate)
+      if (!accumulator_LL.generator.upstreamHandle && clientSideChatGenerate)
         particleStream = clientSideChatGenerate(
           aixAccess,
           aixModel,
@@ -737,7 +752,7 @@ async function _aixChatGenerateContent_LL(
         );
 
       // AIX tRPC Streaming Generation from Chat input
-      else if (!accumulator_LL.genUpstreamHandle)
+      else if (!accumulator_LL.generator.upstreamHandle)
         particleStream = await apiStream.aix.chatGenerateContent.mutate({
           access: aixAccess,
           model: aixModel,
@@ -747,11 +762,11 @@ async function _aixChatGenerateContent_LL(
           connectionOptions: aixConnectionOptions,
         }, { signal: abortSignal });
 
-      // AIX tRPC Streaming re-attachment from handle - for low-level auto-resume
+      // AIX tRPC Streaming re-attachment from handle - for LL auto-resume
       else
         particleStream = await apiStream.aix.reattachContent.mutate({
           access: aixAccess,
-          resumeHandle: accumulator_LL.genUpstreamHandle,
+          resumeHandle: accumulator_LL.generator.upstreamHandle,
           context: aixContext,
           streaming: true,
           connectionOptions: aixConnectionOptions,
@@ -781,65 +796,59 @@ async function _aixChatGenerateContent_LL(
       // synchronize any pending async tasks
       await reassembler.waitForWireComplete();
 
+      break; // -> terminal: completed
+
     } catch (error: any) {
 
       // stop the deadline decimator, as we're into error handling mode now
       sendContentUpdate?.stop?.();
+
+      // drain in-flight processing before any terminal/retry decision (prevents ghost fragments from mid-await particles)
+      await reassembler.waitForWireComplete().catch(() => {/* processing errors are already handled internally */});
+
 
       // classify error
       const { errorType, errorMessage } = aixClassifyStreamingError(error, abortSignal.aborted, !!accumulator_LL.fragments.length);
       const maybeErrorStatusCode = error?.status || error?.response?.status || undefined;
 
       // client-side-retry decision - resume handle from accumulator determines strategy (resume vs reconnect)
-      const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode, !!accumulator_LL.genUpstreamHandle);
-      if (!shallRetry) {
+      const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode, !!accumulator_LL.generator.upstreamHandle);
+      if (shallRetry) {
 
-        // NOT retryable: e.g. client-abort, or missing handle
-        if (errorType === 'client-aborted')
-          reassembler.setClientAborted();
-        else {
-          const errorHint: DMessageErrorPart['hint'] = `aix-${errorType}`; // MUST MATCH our `aixClassifyStreamingError` hints with 'aix-<type>' in DMessageErrorPart
-          reassembler.setClientExcepted(errorMessage, errorHint);
-        }
-        // ... fall through (traditional single path)
-
-      } else {
-
-        // drain in-flight processing before resetting state (prevents ghost fragments from mid-await particles)
-        try {
-          await reassembler.waitForWireComplete();
-        } catch (_) {
-          /* processing errors are already handled internally */
-        }
-
-        // fragment-notify of our ongoing retry attempt
+        // notify UI of our ongoing retry attempt
         try {
           await reassembler.setClientRetrying(shallRetry.strategy, errorMessage, shallRetry.attemptNumber, 0, shallRetry.delayMs, typeof maybeErrorStatusCode === 'number' ? maybeErrorStatusCode : undefined, errorType);
-          await onGenerateContentUpdate?.(accumulator_LL, false /* partial */);
-        } catch (e) {
-          // .. ignore the notification error
+          await onGenerateContentUpdate?.(accumulator_LL, false);
+        } catch (_) {
+          // ignore notification errors
         }
 
-        // delay then RETRY
+        // delay then retry
         const stepResult = await rsm.delayedStep(shallRetry.delayMs, abortSignal);
         if (stepResult === 'completed')
-          continue; // -> Loop
+          continue; // -> retry: loop
 
-        // user-aborted during retry-backoff
-        reassembler.setClientAborted();
-        // ... fall through (aborted during backoff)
-
+        // user-aborted during retry backoff
+        // ...fall through to classify with the original error
       }
+
+      // Terminal: not retryable, or user-aborted during retry backoff
+      if (errorType === 'client-aborted')
+        reassembler.setClientAborted();
+      else {
+        const errorHint: DMessageErrorPart['hint'] = `aix-${errorType}`; // MUST MATCH our `aixClassifyStreamingError` hints with 'aix-<type>' in DMessageErrorPart
+        reassembler.setClientExcepted(errorMessage, errorHint);
+      }
+      break; // -> terminal: failed or aborted
     }
-    // NOTE: sooner or later we fall through on this code path, maybe looped or not, maybe with good data or maybe with reassembled errors...
-
-    // and we're done
-    reassembler.finalizeAccumulator();
-
-    // final update bypasses decimation entirely and contains complete content
-    await onGenerateContentUpdate?.(accumulator_LL, true /* Last message, done */);
-
-    // return the final accumulated message
-    return accumulator_LL;
   }
+
+
+  // Finalize - classify termination, append error fragments, compute outcome
+  const llResult = reassembler.finalizeReassembly();
+
+  // final update bypasses decimation entirely and contains complete content
+  await onGenerateContentUpdate?.(llResult, true /* only true here */);
+
+  return llResult;
 }
