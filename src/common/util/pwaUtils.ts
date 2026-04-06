@@ -11,6 +11,7 @@ const _safeUA = isBrowser ? window.navigator?.userAgent.toLowerCase() || '' : ''
 export const Is = {
   Desktop: !/mobile|android|iphone|ipad|ipod/.test(_safeUA),
   Browser: {
+    Brave: isBrowser && !!(navigator as any).brave,
     Chrome: _safeUA.includes('chrome') || _safeUA.includes('crios'),
     get Safari() {
       return _safeUA.includes('safari') && !this.Chrome && !_safeUA.includes('chromium');
