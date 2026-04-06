@@ -204,7 +204,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
     if (SERVER_DEBUG_WIRE)
       console.log('|token-stop|', reason);
-    if (this.tokenStopReason)
+    if (this.tokenStopReason && this.tokenStopReason !== reason)
       console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
     this.tokenStopReason = reason;
   }
