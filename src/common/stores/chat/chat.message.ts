@@ -280,6 +280,14 @@ export function messageWasInterruptedAtStart(message: Pick<DMessage, 'generator'
 
 // helpers - generators
 
+export function messageSetGeneratorNamed(message: Pick<DMessage, 'generator'>, label: 'web' | 'issue' | 'help' | string): void {
+  message.generator = { mgt: 'named', name: label };
+}
+
+export function messageSetGeneratorAIX_AutoLabel(message: Pick<DMessage, 'generator'>, modelVendorId: ModelVendorId, modelId: DLLMId): void {
+  message.generator = createGeneratorAIX_AutoLabel(modelVendorId, modelId);
+}
+
 export function createGeneratorAIX_AutoLabel(modelVendorId: ModelVendorId, modelId: DLLMId): DMessageGenerator {
   const heuristicLabel = modelId.includes('-') ? modelId.replace(/^[^-]+-(\d-)?/, '') : modelId;
   return { mgt: 'aix', name: heuristicLabel, aix: { vId: modelVendorId, mId: modelId } };

@@ -205,7 +205,7 @@ export function useMessageAvatarLabel(
 
   // OPTIMIZATION - THIS COULD BACKFIRE - THE ICON MAY NOT BE UPDATED AS OFTEN AS WE NEED
   // -> we will only trigger updates on: updated, pendingIncomplete changes, name changes
-  // generator will change at every step (due to some structuredClone in AIX); we choose to 'lag' behind it and
+  // generator ref changes during streaming (new ref per update); we 'lag' behind it and
   // refresh this when other variables change
   const laggedGeneratorRef = React.useRef<DMessageGenerator | undefined>(undefined);
   laggedGeneratorRef.current = generator;

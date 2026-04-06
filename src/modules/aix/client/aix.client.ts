@@ -178,7 +178,7 @@ interface AixClientOptions {
 // --- L3 - Conversation-level generation (builds chat request, error wrapping) ---
 
 /** L3 return: final DMessage-compatible object + terminal outcome. errorMessage is only set for pre-LL errors. */
-type _AixChatGenerateContent_FromConversation_Result = {
+export type AixChatGenerateContent_FromConversation_Result = {
   lastDMessage: AixChatGenerateContent_DMessageGuts,
   outcome: AixChatGenerateTerminal_LL,
   outcomeFailedMessage?: string,
@@ -200,7 +200,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
   // others
   clientOptions: AixClientOptions,
   onStreamingUpdate: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
-): Promise<_AixChatGenerateContent_FromConversation_Result> {
+): Promise<AixChatGenerateContent_FromConversation_Result> {
 
   let lastDMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
