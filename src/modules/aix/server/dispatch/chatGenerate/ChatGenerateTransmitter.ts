@@ -347,6 +347,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this._queueParticleS();
   }
 
+  /** Appends a hosted resource (e.g. Anthropic container file) - inline content between text fragments */
+  appendHostedResource(hres: Extract<AixWire_Particles.PartParticleOp, { p: 'hres' }>) {
+    this.endMessagePart();
+    this.transmissionQueue.push(hres);
+  }
+
 
   /**
    * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead

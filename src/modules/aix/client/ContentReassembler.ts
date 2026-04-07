@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -337,14 +337,17 @@ export class ContentReassembler {
           case 'ii':
             await this.onAppendInlineImage(op);
             break;
-          case 'svs':
-            this.onSetVendorState(op);
+          case 'vp':
+            this.onSetOperationState(op);
             break;
           case 'urlc':
             this.onAddUrlCitation(op);
             break;
-          case 'vp':
-            this.onSetOperationState(op);
+          case 'hres':
+            this.onAppendHostedResource(op);
+            break;
+          case 'svs':
+            this.onSetVendorState(op);
             break;
           default:
             // noinspection JSUnusedLocalSymbols
@@ -646,6 +649,28 @@ export class ContentReassembler {
       this._pushFragment(zyncImageAssetFragmentWithLegacy);
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
+    }
+  }
+
+  private onAppendHostedResource(op: Extract<AixWire_Particles.PartParticleOp, { p: 'hres' }>): void {
+
+    // Break text accumulation, as we will display this as it happens (parting text, if needed)
+    this.S._textFragmentIndex = null;
+
+    switch (op.kind) {
+
+      case 'vnd.ant.file':
+        this._pushFragment(createHostedResourceContentFragment({
+          via: 'anthropic',
+          fileId: op.fileId,
+          ...(op.containerId ? { containerId: op.containerId } : {}),
+        }));
+        break;
+
+      default:
+        const _exhaustiveCheck: never = op.kind;
+        console.warn('[ContentReassembler] onAppendHostedResource: unrecognized hosted resource kind', { op });
+        break;
     }
   }
 

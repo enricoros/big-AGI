@@ -102,6 +102,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
           case 'image_ref':
           case 'tool_invocation':
           case 'tool_response':
+          case 'hosted_resource':
           case 'error':
           case '_pt_sentinel':
             console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Content fragment', { sFragment });
@@ -362,6 +363,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
           case 'error':
           case 'tool_invocation':
           case 'tool_response':
+          case 'hosted_resource':
             console.warn('aixCGR_FromDMessages: unexpected Non-User fragment part type', (uFragment.part as any).pt);
             break;
 
@@ -520,6 +522,18 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
                 throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
             }
             modelMessage.parts.push(_vnd ? { ...aPart, _vnd } : aPart);
+            break;
+
+          case 'hosted_resource':
+            // Hosted resources are download-only artifacts - emit a text placeholder for model context
+            // NOTE: disabled for now - we don't know how usefult this hinting it, and we're clashing with proprietary Anthropic prompts
+            // modelMessage.parts.push({
+            //   pt: 'text',
+            //   text: `[Output file: ${aPart.resource.via === 'anthropic' ? aPart.resource.fileId : 'unknown'}]`,
+            //   // ...(aPart.resource.via === 'anthropic' && {
+            //   //   _vnd: { anthropic: { containerUpload: { fileId: aPart.resource.fileId, ...(aPart.resource.containerId && { containerId: aPart.resource.containerId }) } } },
+            //   // }),
+            // });
             break;
 
           default:

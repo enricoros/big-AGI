@@ -326,7 +326,7 @@ function ModelOperationChip(props: {
         {!!iTexts?.length && !!oTexts?.length && <Divider sx={{ my: 2 }} />}
 
         {!!oTexts?.length && oTexts.map((t, i) => (
-          <span key={i} style={t.startsWith('exit code:') ? { color: 'var(--joy-palette-danger-plainColor)', fontWeight: 600 } : undefined}>
+          <span key={i} style={t.startsWith('exit code:') ? { color: 'var(--joy-palette-warning-plainColor)', fontWeight: 600 } : undefined}>
             {i > 0 && '\n'}{t}
           </span>
         ))}

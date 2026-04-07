@@ -72,7 +72,7 @@ export const llmAnthropicRouter = createTRPCRouter({
       downloadable: z.boolean().optional(),
     }))
     .query(async ({ input: { access, fileId } }) => {
-      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true });
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
     }),
 
   /* [Anthropic] download file content - for Skills-generated files */
@@ -82,7 +82,7 @@ export const llmAnthropicRouter = createTRPCRouter({
       fileId: z.string(),
     }))
     .query(async ({ input: { access, fileId } }) => {
-      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true });
+      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true, enableCodeExecution: true });
       const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'Anthropic' });
       return {
         base64Data: Buffer.from(await response.arrayBuffer()).toString('base64'),

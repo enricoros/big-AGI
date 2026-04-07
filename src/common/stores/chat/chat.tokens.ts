@@ -91,6 +91,7 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         return estimateTextTokens(cPart.text, llm, debugFrom);
       case 'tool_invocation':
       case 'tool_response':
+      case 'hosted_resource':
         break; // warn
       default:
         const _exhaustiveCheck: never = cPt;

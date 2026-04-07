@@ -35,6 +35,7 @@ export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
   | DMessageImageRefPart          // large image
   | DMessageToolInvocationPart    // shown to dev only, signature of the llm function call
   | DMessageToolResponsePart      // shown to dev only, response of the llm
+  | DMessageHostedResourcePart    // provider-hosted resource (e.g. Anthropic file from Skills) with download affordance
   | DMessageErrorPart             // red message, e.g. non-content application issues
   | _SentinelPart
 >;
@@ -231,6 +232,15 @@ export type DMessageToolResponsePart = {
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 type DMessageToolCodeExecutor = 'gemini_auto_inline' | 'code_interpreter';
 
+
+/** Hosted resource - a provider-hosted resource (e.g. Anthropic container file from Skills/code execution). */
+export type DMessageHostedResourcePart = {
+  pt: 'hosted_resource';
+  resource:
+    | { via: 'anthropic', fileId: string, containerId?: string };
+};
+
+
 type DVoidModelAnnotationsPart = {
   pt: 'annotations',
   annotations: readonly DVoidWebCitation[],
@@ -390,6 +400,10 @@ export function isToolResponseFunctionCallPart(part: DMessageContentFragment['pa
   return part.pt === 'tool_response' && part.response.type === 'function_call';
 }
 
+export function isHostedResourcePart(part: DMessageContentFragment['part']): part is DMessageHostedResourcePart {
+  return part.pt === 'hosted_resource';
+}
+
 export function isAnnotationsPart(part: DMessageVoidFragment['part']) {
   return part.pt === 'annotations';
 }
@@ -431,6 +445,10 @@ export function create_FunctionCallResponse_ContentFragment(id: string, error: b
 
 export function create_CodeExecutionResponse_ContentFragment(id: string, error: boolean | string, result: string, executor: DMessageToolCodeExecutor, environment: DMessageToolEnvironment): DMessageContentFragment {
   return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
+}
+
+export function createHostedResourceContentFragment(resource: DMessageHostedResourcePart['resource']): DMessageContentFragment {
+  return _createContentFragment({ pt: 'hosted_resource', resource });
 }
 
 function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
@@ -677,6 +695,9 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
         ? _create_FunctionCallResponse_Part(part.id, part.error, part.response.name, part.response.result, part.environment) as TPart
         : _create_CodeExecutionResponse_Part(part.id, part.error, part.response.result, part.response.executor, part.environment) as TPart;
 
+    case 'hosted_resource':
+      return { pt: 'hosted_resource', resource: { ...part.resource } } as TPart;
+
     case '_pt_sentinel':
       return _create_Sentinel_Part() as TPart;
 
@@ -873,6 +894,7 @@ export function updateFragmentWithEditedText(
         break;
 
       case 'image_ref':
+      case 'hosted_resource':
       case '_pt_sentinel':
         // nothing to do here - not editable
         break;

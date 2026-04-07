@@ -432,6 +432,7 @@ function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest
       case 'ph': // placeholder - ignored
       case 'reference': // impossible
       case 'image_ref': // impossible
+      case 'hosted_resource': // impossible - download-only artifact
       case 'tool_response': // impossible - stopped at the invocation already
       case '_pt_sentinel': // impossible
         break;

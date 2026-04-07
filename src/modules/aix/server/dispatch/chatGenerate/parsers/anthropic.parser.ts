@@ -887,14 +887,11 @@ function _handleCBS_CodeExecutionToolResult(pt: IParticleTransmitter, block: Ext
       const codeExecFailed = block.content.return_code !== 0;
       pt.sendOperationState('code-exec', codeExecFailed ? `Code executed` /* was: failed */ : 'Code executed', { opId, state: codeExecFailed ? 'error' : 'done', ...oTexts.length ? { oTexts } : undefined });
 
-      // add text if there are generated files in content array (e.g. generated from a skill)
-      const fileIds: string[] = [];
+      // emit structured hosted resource references for generated files (e.g. from a skill)
       if (Array.isArray(block.content?.content))
         for (const ob of block.content.content)
           if (ob.type === 'code_execution_output' && ob.file_id)
-            fileIds.push(ob.file_id);
-      if (fileIds.length > 0)
-        pt.appendText(`\n\n⚡ Code executed by Skill\n${fileIds.map(id => `\n📎 File: \`${id}\``).join('')}\n`);
+            pt.appendHostedResource({ p: 'hres', kind: 'vnd.ant.file', fileId: ob.file_id });
       break;
     }
 
@@ -922,14 +919,11 @@ function _handleCBS_BashCodeExecutionToolResult(pt: IParticleTransmitter, block:
       const bashFailed = block.content.return_code !== 0;
       pt.sendOperationState('code-exec', bashFailed ? `Bash executed` /* was: failed */ : 'Bash executed', { opId, state: bashFailed ? 'error' : 'done', ...oTexts.length ? { oTexts } : undefined });
 
-      // add text if there are generated files in content array
-      const fileIds: string[] = [];
+      // emit structured hosted resource references for generated files
       if (Array.isArray(block.content.content))
         for (const ob of block.content.content)
           if (ob.type === 'bash_code_execution_output' && ob.file_id)
-            fileIds.push(ob.file_id);
-      if (fileIds.length > 0)
-        pt.appendText(`\n\n⚡ Bash executed by Skill\n${fileIds.map(id => `\n📎 File: \`${id}\``).join('')}\n`);
+            pt.appendHostedResource({ p: 'hres', kind: 'vnd.ant.file', fileId: ob.file_id });
       break;
 
     case 'bash_code_execution_tool_result_error':
@@ -972,9 +966,8 @@ function _handleCBS_TextEditorCodeExecutionToolResult(pt: IParticleTransmitter, 
 }
 
 function _handleCBS_ContainerUpload(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'container_upload' }>, containerId: string | undefined): void {
-  // Container upload - this is when a Skill has generated a file - file_id can be used with the Files API to download the file
-  pt.appendText(`\n\n⚡ File uploaded to container (${containerId || 'none'})\n\n📎 File: \`${block.file_id}\`\n\n`);
-  // TODO: Future enhancement - could trigger automatic file download here using the Files API with content_block.file_id, or offer an UI way to do so through a dedicated part/block?
+  // Container upload - Skill has generated a file, emit as a downloadable hosted resource
+  pt.appendHostedResource({ p: 'hres', kind: 'vnd.ant.file', fileId: block.file_id, ...(containerId ? { containerId } : {}) });
 }
 
 function _handleCBS_ToolSearchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'tool_search_tool_result' }>): void {

@@ -347,6 +347,7 @@ export function messageFragmentsReduceText(fragments: Immutable<DMessageFragment
           case 'image_ref':
           case 'tool_invocation':
           case 'tool_response':
+          case 'hosted_resource':
           case '_pt_sentinel':
             break;
           default:

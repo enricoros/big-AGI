@@ -14,6 +14,7 @@ import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
 import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
+import { BlockPartHostedResource } from './BlockPartHostedResource';
 import { BlockPartImageRef } from './BlockPartImageRef';
 import { BlockPartModelAux } from '../fragments-void/BlockPartModelAux';
 import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
@@ -357,6 +358,16 @@ export function ContentFragments(props: {
               toolResponsePart={part}
               contentScaling={props.contentScaling}
               onDoubleClick={props.onDoubleClick}
+            />
+          );
+
+        case 'hosted_resource':
+          return (
+            <BlockPartHostedResource
+              key={fId}
+              hostedResourcePart={part}
+              messageGeneratorLlmId={props.messageGeneratorLlmId}
+              contentScaling={props.contentScaling}
             />
           );
 
