@@ -84,8 +84,19 @@ export const llmAnthropicRouter = createTRPCRouter({
     .query(async ({ input: { access, fileId } }) => {
       const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true, enableCodeExecution: true });
       const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'Anthropic' });
+
+      // Guard against excessively large files (10 MB limit)
+      const MAX_FILE_BYTES = 10 * 1024 * 1024;
+      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+      if (contentLength > MAX_FILE_BYTES)
+        throw new Error(`File too large to download (${(contentLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
+
+      const arrayBuffer = await response.arrayBuffer();
+      if (arrayBuffer.byteLength > MAX_FILE_BYTES)
+        throw new Error(`File too large to download (${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
+
       return {
-        base64Data: Buffer.from(await response.arrayBuffer()).toString('base64'),
+        base64Data: Buffer.from(arrayBuffer).toString('base64'),
         mimeType: response.headers.get('content-type') || 'application/octet-stream',
       };
     }),

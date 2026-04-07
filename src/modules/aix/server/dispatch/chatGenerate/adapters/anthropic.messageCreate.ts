@@ -312,7 +312,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
           version: 'latest',
         })),
       };
-    } else if (containerId && enableCodeExecution)
+    } else if (containerId)
       payload.container = containerId;
   }
 

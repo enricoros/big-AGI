@@ -221,7 +221,9 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
 
-    // [Anthropic Container] Extract container from the last assistant message (if valid, 15s margin for transit)
+    // [Anthropic Container] Session resolution: walk history backwards to find the most recent
+    // unexpired container. Stops at the first container found (same session = same container;
+    // older containers from the same session would be at least as expired).
     if (!clientOptions.antContainerId)
       for (let i = chatHistoryWithoutSystemMessages.length - 1; i >= 0; i--) {
         const uc = chatHistoryWithoutSystemMessages[i].generator?.upstreamContainer;
