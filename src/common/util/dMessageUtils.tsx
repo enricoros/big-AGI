@@ -70,7 +70,7 @@ const tooltipCreationTimeSx: SxProps = {
   color: 'text.tertiary',
 };
 
-const tooltipMetricsGridSx: SxProps = {
+export const tooltipMetricsGridSx: SxProps = {
   // grid of 2 columns, the first fits the labels, the other expends with the values
   display: 'grid',
   gridTemplateColumns: 'auto 1fr',
@@ -249,8 +249,8 @@ export function useMessageAvatarLabel(
     const modelId = generator.aix?.mId ?? null;
     const vendorId = generator.aix?.vId ?? null;
     const VendorIcon = (vendorId && complexity !== 'minimal') ? llmsGetVendorIcon(vendorId) : null;
-    const metrics = generator.metrics ? _prettyMetrics(generator.metrics, complexity) : null;
-    const stopReason = generator.tokenStopReason ? _prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
+    const metrics = generator.metrics ? prettyMessageMetrics(generator.metrics, complexity) : null;
+    const stopReason = generator.tokenStopReason ? prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
 
     // aix tooltip: more details
     return {
@@ -269,7 +269,8 @@ export function useMessageAvatarLabel(
   }, [complexity, created, generatorName, pendingIncomplete, updated]);
 }
 
-function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode: UIComplexityMode): React.ReactNode {
+/** Renders chat generation metrics as a grid. Exported for reuse in message info popup. */
+export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode: UIComplexityMode): React.ReactNode {
   if (!metrics) return null;
 
   const showWaitingTime = metrics?.dtStart !== undefined && (uiComplexityMode === 'extra' || metrics.dtStart >= 10000);
@@ -344,7 +345,7 @@ function _prettyCostCode(code: MetricsChatGenerateCost_Md['$code']): string | nu
   }
 }
 
-function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], complexity: UIComplexityMode): string | null {
+export function prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], complexity: UIComplexityMode): string | null {
   if (!reason) return null;
   switch (reason) {
     case 'client-abort':

@@ -16,6 +16,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
@@ -53,6 +54,7 @@ import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
+import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
@@ -180,6 +182,7 @@ export function ChatMessage(props: {
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
+  const [showInfoModal, setShowInfoModal] = React.useState(false);
   const attachmentsEditRef = React.useRef<EditModeAttachmentsHandle>(null);
 
   // external state
@@ -358,6 +361,13 @@ export function ChatMessage(props: {
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_STARRED);
   }, [messageId, onMessageToggleUserFlag]);
+
+  const handleOpsShowInfo = React.useCallback(() => {
+    setOpsMenuAnchor(null);
+    setShowInfoModal(true);
+  }, []);
+
+  const handleInfoClose = React.useCallback(() => setShowInfoModal(false), []);
 
   const handleOpsToggleNotifyComplete = React.useCallback(() => {
     // also remember the preference, for auto-setting flags by the persona
@@ -984,6 +994,10 @@ export function ChatMessage(props: {
                 </Tooltip>
               </MenuItem>
             )}
+            {/* Info */}
+            <MenuItem onClick={handleOpsShowInfo} sx={{ flexGrow: 0, px: 1 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 'xl' }} />
+            </MenuItem>
           </Box>
 
           {/* Notify Complete */}
@@ -1238,6 +1252,16 @@ export function ChatMessage(props: {
             Speak
           </MenuItem>}
         </CloseablePopup>
+      )}
+
+
+      {/* Message Info Modal */}
+      {showInfoModal && (
+        <ChatMessageInfoPopup
+          open
+          onClose={handleInfoClose}
+          message={props.message}
+        />
       )}
 
     </Box>
