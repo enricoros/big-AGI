@@ -748,7 +748,11 @@ export namespace AixWire_Particles {
      */
     | { p: /*'mo'*/ 'vp', opId: string, text: string, mot: 'search-web' | 'gen-image' | 'code-exec', state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] }
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
-    | { p: 'svs', vendor: string, state: Record<string, unknown> } // set vendor state - applies to the last emitted part (opaque protocol state)
+    | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
+      | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level
+      | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
+      // | { vendor: string, state: Record<string, unknown> } // disable catch-all becasue it forces casts in type discriminations
+      )
     ;
 
 }

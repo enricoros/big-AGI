@@ -770,6 +770,19 @@ export class ContentReassembler {
   }
 
   private onSetVendorState(vs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void {
+
+    // Promote Anthropic container state -> Generator (message-scoped, for cross-turn reuse)
+    if (vs.vendor === 'anthropic' && 'container' in vs.state) {
+      const { id, expiresAt } = vs.state.container;
+      if (id && expiresAt)
+        this.S.generator = {
+          ...this.S.generator,
+          upstreamContainer: { uct: 'vnd.ant.container', containerId: id, expiresAt },
+        };
+      return; // container is message-scoped, not fragment-scoped
+    }
+
+    // Fragment-scoped vendor states - attach to the last fragment (e.g. Gemini thoughtSignature)
     const lastIdx = this.S.fragments.length - 1;
     const lastFragment = this.S.fragments[lastIdx];
     if (!lastFragment) {
@@ -777,7 +790,7 @@ export class ContentReassembler {
       return;
     }
 
-    // attach vendor state
+    // attach fragment-level vendor state
     this._replaceFragmentAt(lastIdx, {
       ...lastFragment,
       vendorState: {

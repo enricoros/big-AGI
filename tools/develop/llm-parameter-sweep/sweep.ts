@@ -333,7 +333,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   // Special
   sendCGControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
   sendOperationState(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string, _opts?: any): void { /* no-op */ }
-  sendSetVendorState(_vendor: string, _state: unknown): void { /* no-op */ }
+  sendSetVendorState(_svs: any): void { /* no-op */ }
 
   // Non-parts data
   setModelName(_modelName: string): void { /* no-op */ }

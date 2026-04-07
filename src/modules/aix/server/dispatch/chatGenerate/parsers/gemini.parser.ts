@@ -296,7 +296,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         }
 
         // Set the thought signature if available
-        thoughtSignature && pt.sendSetVendorState('gemini', { thoughtSignature: mPart.thoughtSignature });
+        thoughtSignature && pt.sendSetVendorState({ p: 'svs', vendor: 'gemini', state: { thoughtSignature } });
       }
 
       // -> Candidates[0] -> Safety Ratings

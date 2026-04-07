@@ -130,18 +130,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (isFirstMessage)
           pt.setModelName(responseMessage.model);
 
-        // -> Container metadata (for Skills)
+        // -> Container metadata (for Skills) - propagate to client via svs for cross-turn reuse
         if (responseMessage.container) {
-          // TODO: [PRIORITY] Accumulate in DMessage.sessionMetadata:
-          //   pt.setSessionMetadata('anthropic.container.id', container.id)
-          //   pt.setSessionMetadata('anthropic.container.expiresAt', Date.parse(container.expires_at))
-          // Request builder will find latest values and reuse container across turns for file access.
-
-          console.log('[Anthropic] Container active:', {
-            id: responseMessage.container.id,
-            expires_at: responseMessage.container.expires_at,
-            skills: responseMessage.container.skills,
-          });
+          _emitContainerState(pt, responseMessage.container);
+          if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: container=${responseMessage.container.id}`);
         }
 
         if (responseMessage.usage) {
@@ -405,6 +397,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         Object.assign(responseMessage, delta);
 
+        // -> Container state update - arrives here when container was created mid-stream
+        if (delta.container)
+          _emitContainerState(pt, delta.container);
+
         // -> Token Stop Reason
         const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason, 'message_delta');
         if (tokenStopReason !== null)
@@ -521,6 +517,10 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     // -> Model
     if (model)
       pt.setModelName(model);
+
+    // -> Container metadata (for Skills) - propagate to client via svs for cross-turn reuse
+    if (container)
+      _emitContainerState(pt, container);
 
     // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
@@ -658,9 +658,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 }
 
 
-// --- Shared server tool result handlers (used by both S and NS parsers) ---
-
-type _ContentBlock = AnthropicWire_API_Message_Create.Response['content'][number];
+// --- Shared helpers (used by both S and NS parsers) ---
 
 /** Ellipsize long strings for iTexts/oTexts display (keeps start + end, shows byte count in the middle) */
 function _ellipsizeContext(text: string, maxBytes = 512): string {
@@ -669,6 +667,24 @@ function _ellipsizeContext(text: string, maxBytes = 512): string {
   const half = Math.floor((maxBytes - ellipsis.length) / 2);
   return text.slice(0, half) + ellipsis + text.slice(-half);
 }
+
+/**
+ * Emit container state via svs particle - reassembler promotes this to generator.upstreamContainer.
+ * NOTE: DMessage.sessionMetadata was designed for this (see chat.message.ts) but we use generator
+ * fields instead - simpler plumbing, no new persistence/migration, and ephemeral containers fit well.
+ */
+function _emitContainerState(pt: IParticleTransmitter, container: { id: string; expires_at: string }): void {
+  pt.sendSetVendorState({
+    p: 'svs',
+    vendor: 'anthropic',
+    state: { container: { id: container.id, expiresAt: container.expires_at } },
+  });
+}
+
+
+// --- Shared server tool result handlers (used by both S and NS parsers) ---
+
+type _ContentBlock = AnthropicWire_API_Message_Create.Response['content'][number];
 
 function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'server_tool_use' }>): void {
   // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)

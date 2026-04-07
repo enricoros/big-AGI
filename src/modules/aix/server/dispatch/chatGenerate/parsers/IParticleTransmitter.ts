@@ -79,9 +79,9 @@ export interface IParticleTransmitter {
 
   /**
    * Sends vendor-specific state modifier for the last emitted part.
-   * Used to attach opaque protocol state (e.g., Gemini thoughtSignature) without polluting core part schemas.
+   * Used to attach opaque protocol state (e.g., Gemini thoughtSignature, Anthropic container) without polluting core part schemas.
    */
-  sendSetVendorState(vendor: string, state: unknown): void;
+  sendSetVendorState(svs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void;
 
   // Non-parts data //
 

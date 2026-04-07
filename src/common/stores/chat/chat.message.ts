@@ -27,21 +27,9 @@ export interface DMessage {
 
   generator?: DMessageGenerator;      // Assistant generator info, and metrics
 
-  /**
-   * Session metadata for multi-turn agentic sessions.
-   *
-   * Enables stateful time-monotonic multi-turn interactions in a stateless architecture:
-   * - Parsers accumulate session values (container IDs, response handles, etc.)
-   * - Request builders traverse history for latest non-expired values
-   * - Child messages inherit parent session, new values override
-   *
-   * Pattern:
-   * 1. Parser extracts vendor session data → stores in sessionMetadata
-   * 2. Request builder finds latest value per key → includes in next request
-   * 3. Vendor reuses session (e.g., Anthropic container for file access, OpenAI response for reconnection)
-   *
-   * Keys namespaced by vendor: 'anthropic.container.id', 'openai.response.id'
-   */
+  // Session metadata for multi-turn agentic sessions was considered here (see commit 3cd38f47)
+  // but vendor session state (container IDs, response handles) is stored on DMessageGenerator
+  // fields instead (upstreamContainer, upstreamHandle) - simpler plumbing, no persistence migration.
   // sessionMetadata?: DMessageSessionMetadata;
 
   userFlags?: DMessageUserFlag[];     // (UI) user-set per-message flags
@@ -60,13 +48,7 @@ export type DMessageId = string;
 
 export type DMessageRole = 'user' | 'assistant' | 'system';
 
-/**
- * Session metadata carrying vendor-specific state across multi-turn agentic sessions.
- * Namespaced keys (e.g., 'anthropic.container.id'), child inherits parent, new values override.
- *
- * NOTE: may use some typescript module augmentation to plug new keys and value types here.
- * NOTE2: may add references to the parent sessions/unique Ids, although they may be the message itself
- */
+// Superseded by DMessageGenerator.upstreamContainer / .upstreamHandle - see note above.
 // export type DMessageSessionMetadata = Record<string, string | number | boolean | null>;
 
 
@@ -143,6 +125,11 @@ export type DMessageGenerator = ({
 }) & {
   metrics?: DMetricsChatGenerate_Md;   // medium-sized metrics stored in the message
   providerInfraLabel?: string;         // upstream provider that served the request (e.g., OpenRouter provider routing)
+  upstreamContainer?: {
+    uct: 'vnd.ant.container',
+    containerId: string,
+    expiresAt: string,                // ISO 8601 UTC timestamp (e.g., "2026-04-07T05:59:32Z")
+  },
   upstreamHandle?: {
     uht: 'vnd.oai.responses',
     responseId: string,
@@ -249,6 +236,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         // ...(generator.xeOpCode ? { xeOpCode: generator.xeOpCode } : {}),
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
         ...(generator.providerInfraLabel ? { providerInfraLabel: generator.providerInfraLabel } : {}),
+        ...(generator.upstreamContainer ? { upstreamContainer: { ...generator.upstreamContainer } } : {}),
         ...(generator.upstreamHandle ? { upstreamHandle: { ...generator.upstreamHandle } } : {}),
         ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
       };
@@ -259,6 +247,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         aix: { ...generator.aix },
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
         ...(generator.providerInfraLabel ? { providerInfraLabel: generator.providerInfraLabel } : {}),
+        ...(generator.upstreamContainer ? { upstreamContainer: { ...generator.upstreamContainer } } : {}),
         ...(generator.upstreamHandle ? { upstreamHandle: { ...generator.upstreamHandle } } : {}),
         ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
       };
