@@ -4,6 +4,8 @@ import TimeAgo from 'react-timeago';
 
 import { Box, CircularProgress, IconButton, Sheet, Typography } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 
 import type { AnthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
@@ -11,12 +13,18 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import type { DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
+import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
+import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';
 import { humanReadableBytes } from '~/common/util/textUtils';
+import { imageBlobTransform } from '~/common/util/imageUtils';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 
 /**
@@ -64,17 +72,19 @@ function AnthropicFileChip(props: {
   access: AnthropicAccessSchema,
   fileId: string,
   contentScaling: ContentScaling,
+  onFragmentDelete?: () => void,
 }) {
 
   // state
-  const [downloading, setDownloading] = React.useState(false);
-  const [downloadError, setDownloadError] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState<false | 'download' | 'copy' | 'delete'>(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const { showPromisedOverlay } = useOverlayComponents();
 
   // props
-  const { access, fileId } = props;
+  const { access, fileId, onFragmentDelete } = props;
 
   // external state
-  const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmAnthropic.getFileMetadata.useQuery(
+  const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmAnthropic.fileApiGetMetadata.useQuery(
     // metadata query - cached by React Query, staleTime: Infinity (file metadata is immutable)
     { access, fileId },
     { staleTime: Infinity },
@@ -85,25 +95,73 @@ function AnthropicFileChip(props: {
   const fileName = metadata?.filename || fileId;
   const displayName = fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName;
 
+
+  // shared: fetch file content as { blob, mimeType }
+  const _fetchFileBlob = React.useCallback(async (): Promise<{ blob: Blob, mimeType: string }> => {
+    const { base64Data, mimeType } = await apiAsync.llmAnthropic.fileApiDownload.query({ access, fileId });
+    const bytes = convert_Base64_To_UInt8Array(base64Data, 'hosted-resource-ant-file');
+    return { blob: new Blob([bytes], { type: mimeType }), mimeType };
+  }, [access, fileId]);
+
+
   const handleDownload = React.useCallback(async () => {
-    setDownloading(true);
-    setDownloadError(null);
+    setBusy('download');
+    setActionError(null);
     try {
-      const { base64Data, mimeType } = await apiAsync.llmAnthropic.downloadFile.query({ access, fileId });
-      const binary = atob(base64Data);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++)
-        bytes[i] = binary.charCodeAt(i);
-      const blob = new Blob([bytes], { type: mimeType });
+      const { blob } = await _fetchFileBlob();
       downloadBlob(blob, fileName);
     } catch (error: any) {
-      setDownloadError(error?.message || 'Download failed');
+      setActionError(error?.message || 'Download failed');
     } finally {
-      setDownloading(false);
+      setBusy(false);
     }
-  }, [access, fileId, fileName]);
+  }, [_fetchFileBlob, fileName]);
 
-  const hasError = !!metaError || !!downloadError;
+  const handleCopy = React.useCallback(async () => {
+    setBusy('copy');
+    setActionError(null);
+    try {
+      const { blob, mimeType: blobMimeType } = await _fetchFileBlob();
+      if (blobMimeType.startsWith('image/')) {
+        // ClipboardItem only supports image/png - convert from jpeg/webp/gif/etc. if needed
+        const pngBlob = blobMimeType === 'image/png' ? blob
+          : (await imageBlobTransform(blob, { convertToMimeType: 'image/png', throwOnTypeConversionError: true })).blob;
+        copyBlobPromiseToClipboard('image/png', Promise.resolve(pngBlob), fileName);
+      } else {
+        copyToClipboard(await blob.text(), fileName);
+      }
+    } catch (error: any) {
+      setActionError(error?.message || 'Copy failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [_fetchFileBlob, fileName]);
+
+  const handleDelete = React.useCallback(async (event: React.MouseEvent) => {
+    if (!onFragmentDelete) return;
+    if (!event.shiftKey && !await showPromisedOverlay('chat-message-delete-hosted-resource', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={<>Delete &quot;{fileName}&quot; from Anthropic servers?<br />This action cannot be undone.</>}
+        positiveActionText='Delete'
+      />,
+    )) return;
+    setBusy('delete');
+    setActionError(null);
+    try {
+      await apiAsync.llmAnthropic.fileApiDelete.mutate({ access, fileId });
+      onFragmentDelete();
+    } catch (error: any) {
+      setActionError(error?.message || 'Delete failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [access, fileId, fileName, onFragmentDelete, showPromisedOverlay]);
+
+
+  const isBusy = !!busy || metaLoading;
+  const hasError = !!metaError || !!actionError;
+
 
   return (
     <Sheet
@@ -125,7 +183,7 @@ function AnthropicFileChip(props: {
       <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.5 }} />
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
-          {metaLoading ? 'Loading...' : hasError ? `${displayName} - ${downloadError || 'Could not load file info'}` : displayName}
+          {metaLoading ? 'Loading...' : hasError ? `${displayName} - ${actionError || 'Could not load file info'}` : displayName}
         </Box>
         {metadata && (
           <Box sx={{ fontSize: 'xs', opacity: 0.6 }}>
@@ -133,9 +191,23 @@ function AnthropicFileChip(props: {
           </Box>
         )}
       </Box>
-      <IconButton variant='soft' color='primary' disabled={downloading || metaLoading} onClick={handleDownload} sx={{ ml: 'auto' }}>
-        {downloading ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
-      </IconButton>
+      <GoodTooltip title='Copy to clipboard'>
+        <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleCopy} size='sm'>
+          {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
+        </IconButton>
+      </GoodTooltip>
+      <GoodTooltip title='Download file'>
+        <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDownload} size='sm'>
+          {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
+        </IconButton>
+      </GoodTooltip>
+      {onFragmentDelete && (
+        <GoodTooltip title='Delete from Anthropic servers'>
+          <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDelete} size='sm'>
+            {busy === 'delete' ? <CircularProgress size='sm' /> : <DeleteOutlineIcon sx={{ fontSize: 'lg' }} />}
+          </IconButton>
+        </GoodTooltip>
+      )}
     </Sheet>
   );
 }
@@ -143,11 +215,18 @@ function AnthropicFileChip(props: {
 
 export function BlockPartHostedResource(props: {
   hostedResourcePart: DMessageHostedResourcePart,
+  fragmentId: DMessageFragmentId,
   messageGeneratorLlmId?: string | null,
   contentScaling: ContentScaling,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
 
   const { resource } = props.hostedResourcePart;
+  const { fragmentId, onFragmentDelete } = props;
+
+  const handleFragmentDelete = React.useCallback(() => {
+    onFragmentDelete?.(fragmentId);
+  }, [fragmentId, onFragmentDelete]);
 
   // reactive service resolution (stable string selector, no re-render loops)
   const serviceId = useAnthropicServiceId(resource.via === 'anthropic' ? (props.messageGeneratorLlmId ?? undefined) : undefined);
@@ -164,6 +243,7 @@ export function BlockPartHostedResource(props: {
       access={access}
       fileId={resource.fileId}
       contentScaling={props.contentScaling}
+      onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
     />
   );
 }

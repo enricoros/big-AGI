@@ -1,7 +1,7 @@
 import * as z from 'zod/v4';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
-import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
@@ -56,27 +56,20 @@ export const llmAnthropicRouter = createTRPCRouter({
       return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.skills}/${skillId}`, { enableSkills: true });
     }),
 
-  /* [Anthropic] get file metadata - for Skills-generated files */
-  getFileMetadata: edgeProcedure
+  /* [Anthropic] Files API - delete file permanently from Anthropic servers */
+  fileApiDelete: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
       fileId: z.string(),
     }))
-    .output(z.object({
-      id: z.string(),
-      type: z.literal('file'),
-      filename: z.string(),
-      mime_type: z.string(),
-      size_bytes: z.number(),
-      created_at: z.string(),
-      downloadable: z.boolean().optional(),
-    }))
-    .query(async ({ input: { access, fileId } }) => {
-      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
+    .mutation(async ({ input: { access, fileId } }) => {
+      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
+      await fetchTextOrTRPCThrow({ url, headers, method: 'DELETE', name: 'Anthropic' });
+      return { success: true };
     }),
 
-  /* [Anthropic] download file content - for Skills-generated files */
-  downloadFile: edgeProcedure
+  /* [Anthropic] Files API - download file content */
+  fileApiDownload: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
       fileId: z.string(),
@@ -99,6 +92,25 @@ export const llmAnthropicRouter = createTRPCRouter({
         base64Data: Buffer.from(arrayBuffer).toString('base64'),
         mimeType: response.headers.get('content-type') || 'application/octet-stream',
       };
+    }),
+
+  /* [Anthropic] Files API - get file metadata */
+  fileApiGetMetadata: edgeProcedure
+    .input(z.object({
+      access: anthropicAccessSchema,
+      fileId: z.string(),
+    }))
+    .output(z.object({
+      id: z.string(),
+      type: z.literal('file'),
+      filename: z.string(),
+      mime_type: z.string(),
+      size_bytes: z.number(),
+      created_at: z.string(),
+      downloadable: z.boolean().optional(),
+    }))
+    .query(async ({ input: { access, fileId } }) => {
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
     }),
 
 });

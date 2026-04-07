@@ -366,8 +366,10 @@ export function ContentFragments(props: {
             <BlockPartHostedResource
               key={fId}
               hostedResourcePart={part}
+              fragmentId={fId}
               messageGeneratorLlmId={props.messageGeneratorLlmId}
               contentScaling={props.contentScaling}
+              onFragmentDelete={props.onFragmentDelete}
             />
           );
 
