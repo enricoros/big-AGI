@@ -12,36 +12,39 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 import { downloadBlob } from '~/common/util/downloadUtils';
-import { findModelsServiceOrNull, llmsStoreState } from '~/common/stores/llms/store-llms';
+import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';
 import { humanReadableBytes } from '~/common/util/textUtils';
 
 
 /**
- * Resolve Anthropic access credentials, preferring the generator's specific service
- * (the one that created the file) and falling back to the first available Anthropic service.
+ * Hook: reactively resolve the Anthropic service ID for file access.
+ * Selects a stable string (service ID) so Zustand won't trigger re-render loops.
+ * Prefers the generator's own service, falls back to the first available Anthropic service.
  */
-function _resolveAnthropicAccess(generatorLlmId?: DLLMId): AnthropicAccessSchema | null {
+function useAnthropicServiceId(generatorLlmId?: DLLMId): DModelsServiceId | null {
+  return useModelsStore(({ llms, sources }) => {
+    if (generatorLlmId) {
+      const llm = llms.find(m => m.id === generatorLlmId);
+      if (llm) {
+        const service = findModelsServiceOrNull(llm.sId);
+        if (service?.vId === 'anthropic')
+          return service.id;
+      }
+    }
+    return sources.find(s => s.vId === 'anthropic')?.id ?? null;
+  });
+}
+
+/** Derive access credentials from a resolved service ID (non-reactive, called on-demand). */
+function _accessFromServiceId(serviceId: DModelsServiceId): AnthropicAccessSchema | null {
   const vendor = findModelVendor<any, AnthropicAccessSchema>('anthropic');
   if (!vendor) return null;
-
-  const { llms, sources } = llmsStoreState();
-
-  // prefer the generator's service (the one that created the file)
-  if (generatorLlmId) {
-    const llm = llms.find(m => m.id === generatorLlmId);
-    if (llm) {
-      const service = findModelsServiceOrNull(llm.sId);
-      if (service?.vId === 'anthropic')
-        return vendor.getTransportAccess(service.setup);
-    }
-  }
-
-  // fall back to the first available Anthropic service
-  const anthropicService = sources.find(s => s.vId === 'anthropic');
-  if (!anthropicService) return null;
-  return vendor.getTransportAccess(anthropicService.setup);
+  const service = findModelsServiceOrNull(serviceId);
+  if (!service) return null;
+  return vendor.getTransportAccess(service.setup);
 }
 
 
@@ -121,12 +124,12 @@ function AnthropicFileChip(props: {
     >
       <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.5 }} />
       <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Box className='agi-ellipsize' sx={{ fontWeight: 'md', color: hasError ? 'danger' : undefined }}>
+        <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
           {metaLoading ? 'Loading...' : hasError ? `${displayName} - ${downloadError || 'Could not load file info'}` : displayName}
         </Box>
         {metadata && (
           <Box sx={{ fontSize: 'xs', opacity: 0.6 }}>
-            {humanReadableBytes(metadata.size_bytes)} - <TimeAgo date={metadata.created_at} /> - {metadata.mime_type}
+            {humanReadableBytes(metadata.size_bytes)} · <TimeAgo date={metadata.created_at} /> · {metadata.mime_type}
           </Box>
         )}
       </Box>
@@ -146,10 +149,11 @@ export function BlockPartHostedResource(props: {
 
   const { resource } = props.hostedResourcePart;
 
-  // memo state
-  const access = React.useMemo(() => {
-    return resource.via === 'anthropic' ? _resolveAnthropicAccess(props.messageGeneratorLlmId ?? undefined) : null;
-  }, [resource.via, props.messageGeneratorLlmId]);
+  // reactive service resolution (stable string selector, no re-render loops)
+  const serviceId = useAnthropicServiceId(resource.via === 'anthropic' ? (props.messageGeneratorLlmId ?? undefined) : undefined);
+
+  // derive access credentials on-demand from the resolved service ID
+  const access = React.useMemo(() => serviceId ? _accessFromServiceId(serviceId) : null, [serviceId]);
 
   // only support Anthropic files for now
   if (resource.via !== 'anthropic' || !access)
