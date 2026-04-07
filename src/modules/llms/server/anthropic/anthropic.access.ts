@@ -60,24 +60,36 @@ const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
   // Known SDK beta headers (for reference, not all used):
   //   prompt-caching-2024-07-31        -- GA: no longer needed
   //   pdfs-2024-09-25                  -- GA: no longer needed
-  //   token-efficient-tools-2025-02-19 -- not used; disabled for now as side-effects are untested
-  //   extended-cache-ttl-2025-04-11    -- for 1h cache TTL; we support ttl:'1h' in wiretypes already
-  //   interleaved-thinking-2025-05-14  -- for Claude 4/4.5 interleaved thinking (auto on Opus 4.6 adaptive)
+  //   token-efficient-tools-2025-02-19 -- GA on Claude 4+; still works on 3.7 but side-effects untested
+  //   extended-cache-ttl-2025-04-11    -- GA: ttl:'1h' in request body is sufficient
+  //   interleaved-thinking-2025-05-14  -- deprecated on Opus 4.6 (adaptive); still REQUIRED for Claude 4.0/4.1/4.5
   //   context-management-2025-06-27    -- for context_management edits (e.g. clear_tool_uses)
-  //   model-context-window-exceeded-2025-08-26 -- Sonnet 4.5+ have this by default
+  //   model-context-window-exceeded-2025-08-26 -- GA on Claude 4.5+
+
+  // Uncomment if interleaved thinking is needed for Claude 4.0-4.5 models:
+  // 'interleaved-thinking-2025-05-14',
 
 ] as const;
 
 const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
   'claude-3-7-sonnet-20250219': [
 
-    /** enables long output for the 3.7 Sonnet model */
+    /** enables long output for the 3.7 Sonnet model - no effect on Claude 4+ (native 128k) */
     'output-128k-2025-02-19',
 
     /** computer Tools for Sonnet 3.7 [computer_20250124, text_editor_20250124, bash_20250124] */
     'computer-use-2025-01-24',
 
   ] as const,
+
+  // Computer use on newer models requires a different beta header:
+  //   computer-use-2025-01-24 -> Sonnet 3.7, Sonnet 4, Opus 4, Opus 4.1, Sonnet 4.5, Haiku 4.5
+  //   computer-use-2025-11-24 -> Opus 4.5, Sonnet 4.6, Opus 4.6 (adds enable_zoom)
+  // Uncomment and adjust model IDs when computer use is enabled for these models:
+  // 'claude-sonnet-4-6': ['computer-use-2025-11-24'] as const,
+  // 'claude-opus-4-6': ['computer-use-2025-11-24'] as const,
+  // 'claude-opus-4-5': ['computer-use-2025-11-24'] as const,
+  // 'claude-sonnet-4-5': ['computer-use-2025-01-24'] as const,
 } as const;
 
 
@@ -85,7 +97,6 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
 
 export type AnthropicHeaderOptions = {
   modelIdForBetaFeatures?: string;
-  vndAntWebFetch?: boolean;
   vndAnt1MContext?: boolean;
   enableSkills?: boolean;
   enableCodeExecution?: boolean;
@@ -152,45 +163,50 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
  * Used by both the direct Anthropic path (as header) and Bedrock path (as body field).
  */
 export function anthropicBetaFeatures(options?: AnthropicHeaderOptions): string[] {
-  const betaFeatures = [...DEFAULT_ANTHROPIC_BETA_FEATURES];
+  const bf = new Set(DEFAULT_ANTHROPIC_BETA_FEATURES);
+
+  // Per-model beta features
   if (options?.modelIdForBetaFeatures) {
     // string search (.includes) within the keys, to be more resilient to modelId changes/prefixing
     for (const [key, value] of Object.entries(PER_MODEL_BETA_FEATURES))
       if (key.includes(options.modelIdForBetaFeatures))
-        betaFeatures.push(...value);
+        value.forEach(f => bf.add(f));
   }
-
-  // Add beta feature for web-fetch if enabled
-  // Note: web-fetch-2025-09-10 is documented in official API docs but not yet in TypeScript SDK types
-  if (options?.vndAntWebFetch)
-    betaFeatures.push('web-fetch-2025-09-10');
 
   // Add beta feature for 1M context window if enabled
   if (options?.vndAnt1MContext)
-    betaFeatures.push('context-1m-2025-08-07');
+    bf.add('context-1m-2025-08-07');
 
-  // Add beta feature for code execution (required for Skills)
-  if (options?.enableCodeExecution || options?.enableSkills)
-    betaFeatures.push('code-execution-2025-08-25');
 
-  // Add beta features for Skills API
-  if (options?.enableSkills) {
-    betaFeatures.push('skills-2025-10-02');
-    betaFeatures.push('files-api-2025-04-14'); // For file downloads
+  // Code execution (for dynamic web tools PFC, or Skills) + files API for container downloads
+  // Note: SDK defines code-execution-2025-05-22; we use 2025-08-25 (newer iteration, not yet in SDK types).
+  // Code execution may be GA now (most SDK examples skip the beta namespace), but keeping for safety.
+  if (options?.enableCodeExecution) {
+    bf.add('code-execution-2025-08-25');
+    bf.add('files-api-2025-04-14');
   }
 
-  // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
-  if (options?.enableStrictOutputs)
-    betaFeatures.push('structured-outputs-2025-11-13');
+  if (options?.enableSkills) {
+    bf.add('code-execution-2025-08-25');
+    bf.add('files-api-2025-04-14');
+    bf.add('skills-2025-10-02');
+  }
 
-  // [Anthropic, 2025-11-24] Add beta feature for Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
-  // Same beta header covers both features: tool discovery and programmatic calling from code execution
+  // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
+  // GA on Claude 4.5+ via output_config.format (which we use). SDK auto-injects structured-outputs-2025-12-15.
+  // Keeping older header as safety net for pre-4.5 models; harmless on newer ones.
+  if (options?.enableStrictOutputs)
+    bf.add('structured-outputs-2025-11-13');
+
+  // [Anthropic, 2025-11-24] Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
+  // Same beta header covers both features: tool discovery and programmatic calling from code execution.
+  // Note: advanced-tool-use-2025-11-20 is NOT in the SDK AnthropicBeta type union (possibly private/undocumented).
   if (options?.enableToolSearch || options?.enableProgrammaticToolCalling)
-    betaFeatures.push('advanced-tool-use-2025-11-20');
+    bf.add('advanced-tool-use-2025-11-20');
 
   // [Anthropic, fast-mode-2026-02-01] Fast inference mode
   if (options?.enableFastMode)
-    betaFeatures.push('fast-mode-2026-02-01');
+    bf.add('fast-mode-2026-02-01');
 
-  return betaFeatures;
+  return [...bf];
 }
