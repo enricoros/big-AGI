@@ -1,3 +1,7 @@
+// TODO: OpenAI container_file_citation support (via: 'openai' with fileId + containerId)
+// TODO: click chip to preview text files inline (expand content, like doc attachments)
+// TODO: download + store as Zync asset for local persistence (survives Anthropic file expiry/deletion)
+
 import * as React from 'react';
 
 import TimeAgo from 'react-timeago';
@@ -149,7 +153,9 @@ function AnthropicFileChip(props: {
     setBusy('delete');
     setActionError(null);
     try {
+      // remote deletion
       await apiAsync.llmAnthropic.fileApiDelete.mutate({ access, fileId });
+      // fragment removal
       onFragmentDelete();
     } catch (error: any) {
       setActionError(error?.message || 'Delete failed');
@@ -161,6 +167,7 @@ function AnthropicFileChip(props: {
 
   const isBusy = !!busy || metaLoading;
   const hasError = !!metaError || !!actionError;
+  const isFileGone = !!metaError && typeof metaError === 'object' && 'data' in metaError && metaError.data?.httpStatus === 404;
 
 
   return (
@@ -183,7 +190,7 @@ function AnthropicFileChip(props: {
       <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.5 }} />
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
-          {metaLoading ? 'Loading...' : hasError ? `${displayName} - ${actionError || 'Could not load file info'}` : displayName}
+          {metaLoading ? 'Loading...' : isFileGone ? `${fileId} - file no longer available` : hasError ? `${displayName} - ${actionError || 'Could not load file info'}` : displayName}
         </Box>
         {metadata && (
           <Box sx={{ fontSize: 'xs', opacity: 0.6 }}>
@@ -192,12 +199,12 @@ function AnthropicFileChip(props: {
         )}
       </Box>
       <GoodTooltip title='Copy to clipboard'>
-        <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleCopy} size='sm'>
+        <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleCopy} size='sm'>
           {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
         </IconButton>
       </GoodTooltip>
       <GoodTooltip title='Download file'>
-        <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDownload} size='sm'>
+        <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleDownload} size='sm'>
           {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
         </IconButton>
       </GoodTooltip>
