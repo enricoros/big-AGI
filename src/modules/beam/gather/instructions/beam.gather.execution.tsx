@@ -150,6 +150,7 @@ export function gatherStartFusion(
       onUpdateBFusion({
         stage: 'error',
         errorText: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
+        fusingProgressComponent: undefined, // stops the spinner
       });
     })
     .finally(() => onUpdateBFusion({

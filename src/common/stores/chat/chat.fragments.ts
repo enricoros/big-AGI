@@ -334,6 +334,10 @@ export function isTextContentFragment(fragment: DMessageFragment): fragment is D
   return fragment.ft === 'content' && fragment.part.pt === 'text';
 }
 
+export function isErrorContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageErrorPart } {
+  return fragment.ft === 'content' && fragment.part.pt === 'error';
+}
+
 export function isAttachmentFragment(fragment: DMessageFragment): fragment is DMessageAttachmentFragment {
   return fragment.ft === 'attachment' && !!fragment.part?.pt;
 }

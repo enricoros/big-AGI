@@ -10,7 +10,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
-import { isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
+import { isErrorContentFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
@@ -137,7 +137,9 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
       throw new Error('Instruction Stopped.');
     }
     if (status.outcome === 'failed')
-      throw new Error(`Model execution error: ${status.outcomeFailedMessage || 'Unknown error'}`);
+      throw new Error(status.outcomeFailedMessage
+        || inputs.intermediateDMessage.fragments.findLast(isErrorContentFragment)?.part?.error
+        || 'Unknown error');
 
     // Proceed to the next step
     return messageFragmentsReduceText(inputs.intermediateDMessage.fragments); // returns the PipedValueType
