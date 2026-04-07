@@ -1,7 +1,7 @@
 import * as z from 'zod/v4';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
-import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
@@ -62,19 +62,32 @@ export const llmAnthropicRouter = createTRPCRouter({
       access: anthropicAccessSchema,
       fileId: z.string(),
     }))
+    .output(z.object({
+      id: z.string(),
+      type: z.literal('file'),
+      filename: z.string(),
+      mime_type: z.string(),
+      size_bytes: z.number(),
+      created_at: z.string(),
+      downloadable: z.boolean().optional(),
+    }))
     .query(async ({ input: { access, fileId } }) => {
       return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true });
     }),
 
-  /* [Anthropic] download file - for Skills-generated files */
+  /* [Anthropic] download file content - for Skills-generated files */
   downloadFile: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
       fileId: z.string(),
     }))
     .query(async ({ input: { access, fileId } }) => {
-      // Return file data - could be integrated with ZYNC Assets in the future
-      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true });
+      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true });
+      const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'Anthropic' });
+      return {
+        base64Data: Buffer.from(await response.arrayBuffer()).toString('base64'),
+        mimeType: response.headers.get('content-type') || 'application/octet-stream',
+      };
     }),
 
 });
