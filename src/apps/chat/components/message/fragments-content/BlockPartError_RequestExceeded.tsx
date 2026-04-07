@@ -36,7 +36,9 @@ export function BlockPartError_RequestExceeded(props: {
           Request Too Large
         </Box>
         <div>
-          Your message or attachments exceed the limit of the Vercel edge network
+          Your message or attachments exceed the limit
+          of the Vercel edge network
+          {/*  Note: Assumption here - since explaing to any 413, it could be any network */}
         </div>
 
         {/* Recovery options */}

@@ -49,6 +49,12 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   // tRPC-level protocol errors (wrapped by tRPC client)
   // Initial connection failures, HTTP errors, or text responses that blow up tRPC's JSON parser
   if (error instanceof TRPCClientError) {
+
+    // Server-side PAYLOAD_TOO_LARGE - HTTP 413
+    if (error.data?.httpStatus === 413) {
+      console.log('ee',{error: structuredClone(error)});
+      return { errorType: 'request-exceeded', errorMessage: '**Request too large**: This request exceed the size limit of the servers' };}
+
     switch (error.cause?.message) {
       /**
        * When network is disconnected while a request hasn't started (is queued by the browser).
@@ -58,7 +64,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
         return { errorType: 'net-disconnected', errorMessage: 'An issue occurred: **network error**' };
 
       /**
-       * The body of the response was "Request Entity Too Large".
+       * The body of the response was "Request Entity Too Large" (Vercel edge limit ~4.5MB).
        * - this caused trpc, in ...stream/jsonl.ts, function createConsumerStream, to throw an error due to parsing the line as JSON
        *   - "const head = JSON.parse(line);"
        * - as the error bubbles up to here, and cannot be handled by the superjson transformer either, which happens after this
