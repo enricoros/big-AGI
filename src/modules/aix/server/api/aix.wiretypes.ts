@@ -473,6 +473,7 @@ export namespace AixWire_API {
 
     // Anthropic
     vndAnt1MContext: z.boolean().optional(),
+    vndAntContainerId: z.string().optional(),
     vndAntInfSpeed: z.enum(['fast']).optional(),
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),

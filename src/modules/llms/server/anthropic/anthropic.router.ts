@@ -6,12 +6,12 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
-import { anthropicAccess, anthropicAccessSchema, AnthropicAccessSchema, AnthropicHeaderOptions, ANTHROPIC_API_PATHS } from './anthropic.access';
+import { anthropicAccess, anthropicAccessSchema, AnthropicAccessSchema, AnthropicHostedFeatures, ANTHROPIC_API_PATHS } from './anthropic.access';
 
 
 // Mappers
 
-async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHeaderOptions, signal?: AbortSignal): Promise<TOut> {
+async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHostedFeatures, signal?: AbortSignal): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath, options);
   return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic', signal });
 }

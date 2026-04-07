@@ -95,16 +95,15 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
 
 // --- Anthropic Access ---
 
-export type AnthropicHeaderOptions = {
-  modelIdForBetaFeatures?: string;
-  vndAnt1MContext?: boolean;
-  enableSkills?: boolean;
+export type AnthropicHostedFeatures = {
+  disableAllHostedTools?: boolean;
+  enable1MContext?: boolean;
   enableCodeExecution?: boolean;
   enableFastMode?: boolean; // [Anthropic, fast-mode-2026-02-01]
+  enableSkills?: boolean;
   enableStrictOutputs?: boolean; // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
-  enableToolSearch?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool
-  enableProgrammaticToolCalling?: boolean; // [Anthropic, 2025-11-24] Programmatic Tool Calling (allowed_callers, input_examples)
-  clientSideFetch?: boolean; // whether the request will be made from client-side (browser) - adds CORS header
+  enableToolAdvanced20251120?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool + Programmatic Tool Calling (umbrella header)
+  modelIdForPerModelFeatures?: string;
 };
 
 export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;
@@ -117,7 +116,7 @@ export const anthropicAccessSchema = z.object({
   anthropicInferenceGeo: z.string().trim().nullable().optional(), // [Anthropic, 2026-02-01] e.g. "us" for US-only inference, optional: for server backward-comp, and can be removed
 });
 
-export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHeaderOptions): { headers: HeadersInit, url: string } {
+export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHostedFeatures): { headers: HeadersInit, url: string } {
   // API key
   const anthropicKey = access.anthropicKey || env.ANTHROPIC_API_KEY || '';
 
@@ -162,21 +161,20 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
  * Build the list of Anthropic beta feature strings from options.
  * Used by both the direct Anthropic path (as header) and Bedrock path (as body field).
  */
-export function anthropicBetaFeatures(options?: AnthropicHeaderOptions): string[] {
+export function anthropicBetaFeatures(options?: AnthropicHostedFeatures): string[] {
   const bf = new Set(DEFAULT_ANTHROPIC_BETA_FEATURES);
 
   // Per-model beta features
-  if (options?.modelIdForBetaFeatures) {
+  if (options?.modelIdForPerModelFeatures) {
     // string search (.includes) within the keys, to be more resilient to modelId changes/prefixing
     for (const [key, value] of Object.entries(PER_MODEL_BETA_FEATURES))
-      if (key.includes(options.modelIdForBetaFeatures))
+      if (key.includes(options.modelIdForPerModelFeatures))
         value.forEach(f => bf.add(f));
   }
 
   // Add beta feature for 1M context window if enabled
-  if (options?.vndAnt1MContext)
+  if (options?.enable1MContext)
     bf.add('context-1m-2025-08-07');
-
 
   // Code execution (for dynamic web tools PFC, or Skills) + files API for container downloads
   // Note: SDK defines code-execution-2025-05-22; we use 2025-08-25 (newer iteration, not yet in SDK types).
@@ -186,27 +184,26 @@ export function anthropicBetaFeatures(options?: AnthropicHeaderOptions): string[
     bf.add('files-api-2025-04-14');
   }
 
-  if (options?.enableSkills) {
-    bf.add('code-execution-2025-08-25');
-    bf.add('files-api-2025-04-14');
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
+  if (options?.enableFastMode)
+    bf.add('fast-mode-2026-02-01');
+
+  // Skills also requires +enableCodeExecution
+  if (options?.enableSkills)
     bf.add('skills-2025-10-02');
-  }
 
   // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
   // GA on Claude 4.5+ via output_config.format (which we use). SDK auto-injects structured-outputs-2025-12-15.
   // Keeping older header as safety net for pre-4.5 models; harmless on newer ones.
+  // Bedrock / AWS may still require: https://platform.claude.com/docs/en/build-with-claude/structured-outputs
   if (options?.enableStrictOutputs)
     bf.add('structured-outputs-2025-11-13');
 
   // [Anthropic, 2025-11-24] Advanced Tool Use (Tool Search Tool, Programmatic Tool Calling)
   // Same beta header covers both features: tool discovery and programmatic calling from code execution.
   // Note: advanced-tool-use-2025-11-20 is NOT in the SDK AnthropicBeta type union (possibly private/undocumented).
-  if (options?.enableToolSearch || options?.enableProgrammaticToolCalling)
+  if (options?.enableToolAdvanced20251120)
     bf.add('advanced-tool-use-2025-11-20');
-
-  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
-  if (options?.enableFastMode)
-    bf.add('fast-mode-2026-02-01');
 
   return [...bf];
 }

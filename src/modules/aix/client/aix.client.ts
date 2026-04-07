@@ -172,6 +172,10 @@ interface AixClientOptions {
   // LLM parameter configuration layers: full replacement of user params and/or overrides of a set of individual params
   llmUserParametersReplacement?: DModelParameterValues; // can replace the 'global' llm user configuration with an alternate config (e.g. persona, or per-chat)
   llmOptionsOverride?: Omit<DModelParameterValues, 'llmRef'>; // overrides (sets/replaces) individual LLM parameters
+
+  // -- Session State - extract? --
+  // [Anthropic Container] Container ID from a prior turn (caller checks expiry before setting)
+  antContainerId?: string;
 }
 
 
@@ -216,6 +220,20 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
+
+    // [Anthropic Container] Extract container from the last assistant message (if valid, 15s margin for transit)
+    if (!clientOptions.antContainerId)
+      for (let i = chatHistoryWithoutSystemMessages.length - 1; i >= 0; i--) {
+        const uc = chatHistoryWithoutSystemMessages[i].generator?.upstreamContainer;
+        if (uc?.uct === 'vnd.ant.container') {
+          const remainingMs = Date.parse(uc.expiresAt) - Date.now();
+          if (remainingMs <= 15_000)
+            console.log(`[DEV] AIX: Anthropic container ${uc.containerId} expired ${Math.round(-remainingMs / 1000)}s ago, not reusing.`);
+          else
+            clientOptions = { ...clientOptions, antContainerId: uc.containerId };
+          break;
+        }
+      }
 
     const { outcome, ...resultDMessage } = await aixChatGenerateContent_DMessage_orThrow(
       llmId,
@@ -486,6 +504,10 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
   const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmOptionsOverride, llmId);
+
+  // [Anthropic Container] Inject session state: Anthropic container from a prior turn (must be unexpired)
+  if (clientOptions?.antContainerId)
+    aixModel.vndAntContainerId = clientOptions.antContainerId;
 
   // Client-side late stage model HotFixes
   const { shallDisableStreaming } = await clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llmParameters.llmRef || llm.id);

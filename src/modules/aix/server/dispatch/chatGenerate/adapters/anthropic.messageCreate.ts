@@ -1,5 +1,7 @@
 import * as z from 'zod/v4';
 
+import type { AnthropicHostedFeatures } from '~/modules/llms/server/anthropic/anthropic.access';
+
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
@@ -21,7 +23,41 @@ const hotFixAntSeparateContiguousThinkingBlocks = true; // Interleave continuous
 
 type TRequest = AnthropicWire_API_Message_Create.Request;
 
-export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
+
+/**
+ * Determines which Anthropic hosted features will be active for a request.
+ * Single source of truth for both the request builder (tools, container) and the dispatch (beta headers).
+ */
+export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request): AnthropicHostedFeatures {
+
+  // Allow/deny auto-adding hosted tools when custom tools are present with a restrictive policy
+  const _hasAixCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
+  const _hasAixToolRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+
+  // Dynamic web tools (20260209) require code execution for programmatic tool calling
+  const hasDynamicWebTools = model.vndAntWebDynamic === true && (model.vndAntWebSearch === 'auto' || model.vndAntWebFetch === 'auto');
+
+  // Programmatic Tool Calling - tools with allowed_callers or input_examples
+  const programmaticToolCalling = chatGenerate.tools?.some(tool =>
+    tool.type === 'function_call' && (
+      tool.function_call.allowed_callers?.includes('code_execution') ||
+      (tool.function_call.input_examples && tool.function_call.input_examples.length > 0)
+    ),
+  ) ?? false;
+
+  return {
+    disableAllHostedTools: !!(_hasAixCustomTools && _hasAixToolRestrictivePolicy),
+    enable1MContext: model.vndAnt1MContext === true,
+    enableCodeExecution: !!model.vndAntSkills || !!model.vndAntContainerId || hasDynamicWebTools || programmaticToolCalling,
+    enableFastMode: model.vndAntInfSpeed === 'fast',
+    enableSkills: !!model.vndAntSkills,
+    enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations,
+    enableToolAdvanced20251120: !!model.vndAntToolSearch || programmaticToolCalling,
+    modelIdForPerModelFeatures: model.id,
+  };
+}
+
+export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, hostedFeatures: ReturnType<typeof aixAnthropicHostedFeatures>): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -204,15 +240,14 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   if (model.vndAntInfSpeed === 'fast')
     payload.speed = 'fast';
 
+
   // --- Tools ---
 
-  // Allow/deny auto-adding hosted tools when custom tools are present
-  const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
-  const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+  // Hosted capabilities - shared logic with dispatch for beta header correctness
+  const { disableAllHostedTools, enableCodeExecution } = hostedFeatures;
 
   // Hosted tools
-  if (!skipHostedToolsDueToCustomTools) {
+  if (!disableAllHostedTools) {
     const hostedTools: NonNullable<TRequest['tools']> = [];
 
     // Web Search Tool - dynamic filtering (20260209) uses internal code execution for better results
@@ -249,38 +284,36 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
         name: 'tool_search_tool_bm25',
       });
 
+    // Code Execution tool - required for dynamic filtering, Skills, etc.
+    if (enableCodeExecution)
+      hostedTools.push({ type: 'code_execution_20260120', name: 'code_execution' });
+
     // Merge hosted tools with custom tools
     if (hostedTools.length > 0) {
       payload.tools = payload.tools ? [...payload.tools, ...hostedTools] : hostedTools;
     }
   }
 
-  // --- Skills Container ---
+  // --- Container - for code execution (Skills, dynamic filtering, etc.) continuity between calls ---
 
-  // Add Skills container if enabled (non-empty string)
-  if (model.vndAntSkills) {
+  if (enableCodeExecution) {
 
-    // Parse comma-separated string and convert to Anthropic format
-    const skillIds = model.vndAntSkills.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+    // Container ID from a previous turn (expiry already checked client-side)
+    const containerId = model.vndAntContainerId;
 
-    if (skillIds.length > 0) {
-
-      // request a container with those selected skills
+    const skillIds = model.vndAntSkills?.split(',').map(s => s.trim()).filter(s => s);
+    if (skillIds?.length) {
+      // Reuse or create a container for the skills
       payload.container = {
-        skills: skillIds.map((skillId: string) => ({
-          type: 'anthropic' as const,
+        ...(containerId ? { id: containerId } : {}),
+        skills: skillIds.map((skillId: string) => ({ 
+          type: 'anthropic',
           skill_id: skillId,
           version: 'latest',
         })),
       };
-
-      // also require the code_execution tool (required by Skills)
-      if (!payload.tools?.length)
-        payload.tools = [];
-
-      if (!payload.tools.some(t => t.type === 'code_execution_20260120' /* Beta */ || t.type === 'code_execution_20250825'))
-        payload.tools.push({ type: 'code_execution_20260120', name: 'code_execution' });
-    }
+    } else if (containerId && enableCodeExecution)
+      payload.container = containerId;
   }
 
 
