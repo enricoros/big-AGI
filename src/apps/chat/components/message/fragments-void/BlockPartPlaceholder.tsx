@@ -301,7 +301,7 @@ function ModelOperationChip(props: {
         {text}
         {elapsedSeconds >= MODELOP_TIMEOUT_DELAY && (
           <span style={{ opacity: 0.6 }}>
-            {' · '}<span style={{ display: 'inline-block', minWidth: elapsedSeconds >= 100 ? '3.5ch' : '2.5ch' }}>{elapsedSeconds}s</span>
+            {' · '}<span style={{ display: 'inline-block', minWidth: elapsedSeconds >= 100 ? '4ch' : '3ch' }}>{elapsedSeconds}s</span>
           </span>
         )}
       </span>
