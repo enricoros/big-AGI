@@ -8,6 +8,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow, getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { agiUuid } from '~/common/util/idUtils';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { backupIdbV3, createIDBPersistStorage } from '~/common/util/idbUtils';
 
 import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
@@ -488,8 +489,12 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         const mergedConversations = [...(currentState?.conversations || [])];
         if (persistedState && typeof persistedState === 'object' && 'conversations' in persistedState) {
           const storedConversations = persistedState.conversations as ChatState['conversations'];
-          if (storedConversations.length)
+          if (storedConversations.length) {
+            // [setting] skip the default new conversation if the user prefers to reopen the last chat
+            if (!useUIPreferencesStore.getState().startupNewChat)
+              mergedConversations.length = 0;
             mergedConversations.push(...storedConversations);
+          }
         }
 
         return {

@@ -60,12 +60,14 @@ export function AppChatSettingsUI() {
     doubleClickToEdit, setDoubleClickToEdit,
     enterIsNewline, setEnterIsNewline,
     showPersonaFinder, setShowPersonaFinder,
+    startupNewChat, setStartupNewChat,
   } = useUIPreferencesStore(useShallow(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     disableMarkdown: state.disableMarkdown, setDisableMarkdown: state.setDisableMarkdown,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
     showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
+    startupNewChat: state.startupNewChat, setStartupNewChat: state.setStartupNewChat,
   })));
 
   const handleEnterIsNewlineChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterIsNewline(!event.target.checked);
@@ -75,6 +77,8 @@ export function AppChatSettingsUI() {
   const handleDisableMarkdown = (event: React.ChangeEvent<HTMLInputElement>) => setDisableMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPersonaFinder(event.target.checked);
+
+  const handleStartupNewChatChange = (event: React.ChangeEvent<HTMLInputElement>) => setStartupNewChat(event.target.checked);
 
   return <>
 
@@ -117,6 +121,14 @@ export function AppChatSettingsUI() {
               endDecorator={showPersonaFinder ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='New Chat on Startup'
+                      description={startupNewChat ? 'New empty chat' : 'Reopen last chat'} />
+      <Switch checked={startupNewChat} onChange={handleStartupNewChatChange}
+              endDecorator={startupNewChat ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
 
     <SettingUIContentScaling />
 
