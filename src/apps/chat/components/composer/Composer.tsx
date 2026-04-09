@@ -658,6 +658,7 @@ export function Composer(props: {
 
   const showChatInReferenceTo = !!inReferenceTo?.length;
   const showChatExtras = isText && !showChatInReferenceTo && !assistantAbortible && composerQuickButton !== 'off';
+  const speechMayWork = browserSpeechRecognitionCapability().mayWork;
 
   const sendButtonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
@@ -964,7 +965,7 @@ export function Composer(props: {
 
                 {/* [mobile] bottom-corner secondary button */}
                 {isMobile && (showChatExtras
-                    ? (composerQuickButton === 'call'
+                    ? (composerQuickButton === 'call' && speechMayWork
                       ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
                       : <ButtonBeamMemo isMobile disabled={noConversation /*|| noLLM*/} color={beamButtonColor} hasContent={!!composeText} onClick={handleSendTextBeamClicked} />)
                     : isDraw
@@ -1055,8 +1056,8 @@ export function Composer(props: {
               {/* [desktop] secondary bottom-buttons (aligned to bottom for now, and mutually exclusive) */}
               {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
-                {/* [desktop] Call secondary button */}
-                {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM || assistantAbortible} onClick={handleCallClicked} />}
+                {/* [desktop] Call secondary button - hidden when speech recognition is not available */}
+                {showChatExtras && speechMayWork && <ButtonCallMemo disabled={noConversation || noLLM || assistantAbortible} onClick={handleCallClicked} />}
 
                 {/* [desktop] Draw Options secondary button */}
                 {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}

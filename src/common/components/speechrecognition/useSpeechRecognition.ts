@@ -18,13 +18,17 @@ let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
 
 export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRecognition => {
   if (!cachedCapability) {
-    const isApiAvailable = !!getSpeechRecognitionClass();
+    const isBraveBlocked = Is.Browser.Brave; // Brave exposes the API but silently blocks results
+    const isApiAvailable = !!getSpeechRecognitionClass() && !isBraveBlocked;
     const isDeviceNotSupported = false;
     cachedCapability = {
       mayWork: isApiAvailable && !isDeviceNotSupported,
       isApiAvailable,
       isDeviceNotSupported,
-      warnings: Is.OS.iOS ? ['Not tested on this browser/device.'] : [],
+      warnings: [
+        ...Is.OS.iOS ? ['Not tested on this browser/device.'] : [],
+        ...isBraveBlocked ? ['Speech recognition is not supported in Brave. Please use Chrome, Edge, or Safari.'] : [],
+      ],
     };
   }
   return cachedCapability;
