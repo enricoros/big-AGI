@@ -14,7 +14,7 @@ import * as z from 'zod/v4';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { anthropicInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
+import { llmsAntInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
 import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 
@@ -242,7 +242,7 @@ export function bedrockModelsToDescriptions(
 
       // Known Anthropic: enrich with hardcoded definitions + inject thinking variants
       if (antModel) {
-        for (const variant of anthropicInjectVariants([], antModel))
+        for (const variant of llmsAntInjectVariants([], antModel))
           descriptions.push(llmBedrockStripAnthropicMDS({ // Filter to the subset of Anthropic params supported
             ...variant,
             id: modelId,

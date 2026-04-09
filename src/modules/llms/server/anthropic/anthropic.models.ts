@@ -16,6 +16,13 @@ import { llmDevCheckModels_DEV } from '../models.mappings';
 // configuration
 const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 
+// Cap the API-reported max_input_tokens to this value for contextWindow.
+// The Anthropic API reports 1M for models that support extended context, but 1M requires
+// a beta header and has tiered pricing - we let the llmVndAnt1MContext parameter opt-in.
+// Set to `false` to use raw API values (useful for debugging mismatches).
+const ANT_CAP_CONTEXT_WINDOW: number | false = 200_000;
+
+
 
 const IF_4 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching];
 const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
@@ -28,7 +35,7 @@ const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking, was used for manual control of thinking up to 4.5, we pre-default it to 16384 and the user can set it to another value or null to turn thinking off
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
-const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
+const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
   { paramId: 'llmVndAntSkills' },
   { paramId: 'llmVndAntWebFetch' },
   { paramId: 'llmVndAntWebFetchMaxUses' },
@@ -37,7 +44,7 @@ const ANT_TOOLS: ModelDescriptionSchema['parameterSpecs'] = [
 ] as const;
 
 /** Dynamic filtering for web search/fetch - only Opus/Sonnet 4.6+ */
-const ANT_TOOLS_DYNAMIC: ModelDescriptionSchema['parameterSpecs'] = [
+const ANT_TOOLS_DYNAMIC: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
   ...ANT_TOOLS,
   { paramId: 'llmVndAntWebDynamic' },
 ] as const;
@@ -177,7 +184,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
 
 } as const;
 
-export function anthropicInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
+export function llmsAntInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
   return createVariantInjector(_hardcodedAnthropicThinkingVariants, 'before')(acc, model);
 }
 
@@ -217,7 +224,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     label: 'Claude Sonnet 4.6',
     description: 'Best combination of speed and intelligence for everyday tasks',
     contextWindow: 200000,
-    maxCompletionTokens: 64000,
+    maxCompletionTokens: 128000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
@@ -402,8 +409,45 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 /**
  * Namespace for the Anthropic API Models List response schema.
  * NOTE: not merged into AIX because of possible circular dependency issues - future work.
+ *
+ * As of 2026-04: the /v1/models API returns expanded model metadata including
+ * max_input_tokens, max_tokens, and a capabilities object with detailed support
+ * flags for effort levels, thinking types, image/pdf input, code execution, etc.
  */
 export namespace AnthropicWire_API_Models_List {
+
+  const _Supported_schema = z.object({
+    supported: z.boolean(),
+  });
+
+  const _Capabilities_schema = z.object({
+    batch: _Supported_schema.nullish(),
+    citations: _Supported_schema.nullish(),
+    code_execution: _Supported_schema.nullish(),
+    context_management: z.object({
+      supported: z.boolean(),
+      clear_thinking_20251015: _Supported_schema.nullish(),
+      clear_tool_uses_20250919: _Supported_schema.nullish(),
+      compact_20260112: _Supported_schema.nullish(),
+    }).nullish(),
+    effort: z.object({
+      supported: z.boolean(),
+      low: _Supported_schema.nullish(),
+      medium: _Supported_schema.nullish(),
+      high: _Supported_schema.nullish(),
+      max: _Supported_schema.nullish(),
+    }).nullish(),
+    image_input: _Supported_schema.nullish(),
+    pdf_input: _Supported_schema.nullish(),
+    structured_outputs: _Supported_schema.nullish(),
+    thinking: z.object({
+      supported: z.boolean(),
+      types: z.object({
+        enabled: _Supported_schema.nullish(),
+        adaptive: _Supported_schema.nullish(),
+      }).nullish(),
+    }).nullish(),
+  });
 
   export type ModelObject = z.infer<typeof ModelObject_schema>;
   const ModelObject_schema = z.object({
@@ -411,6 +455,10 @@ export namespace AnthropicWire_API_Models_List {
     id: z.string(),
     display_name: z.string(),
     created_at: z.string(),
+    // expanded fields (2026-04) - per API docs: `number | null`
+    max_input_tokens: z.number().nullish(),
+    max_tokens: z.number().nullish(),
+    capabilities: _Capabilities_schema.nullish(),
   });
 
   export const Response_schema = z.object({
@@ -423,33 +471,164 @@ export namespace AnthropicWire_API_Models_List {
 }
 
 
-// -- Helper Functions --
+// -- Helper Functions (DEV) --
 
-export function anthropicValidateModelDefs_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
+export function llmsAntValidateModelDefs_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
     llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id));
+    _llmsAntCheckApiCapabilities_DEV(availableModels);
   }
 }
 
 /**
+ * DEV: Compares API-provided values against hardcoded definitions:
+ * - maxCompletionTokens, contextWindow, and effort enumValues.
+ */
+function _llmsAntCheckApiCapabilities_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
+  for (const apiModel of availableModels) {
+    // find hardcoded known model
+    const hc = hardcodedAnthropicModels.find(m => m.id === apiModel.id);
+    if (!hc) {
+      // console.log(`[DEV] Anthropic '${apiModel.id}': no hardcoded definition for this model - consider adding one for pricing, benchmarks, and interface/parameter specs (except token limits which are API-authoritative)`); // also check if it's a known thinking variant without its own hardcoded def
+      continue;
+    }
+
+    // maxCompletionTokens mismatch
+    if (apiModel.max_tokens && hc.maxCompletionTokens && apiModel.max_tokens !== hc.maxCompletionTokens)
+      console.log(`[DEV] Anthropic '${apiModel.id}': maxCompletionTokens mismatch - hardcoded=${hc.maxCompletionTokens}, api=${apiModel.max_tokens}`);
+
+    // contextWindow vs max_input_tokens
+    if (apiModel.max_input_tokens) {
+      const expectedBase = ANT_CAP_CONTEXT_WINDOW ? Math.min(apiModel.max_input_tokens, ANT_CAP_CONTEXT_WINDOW) : apiModel.max_input_tokens;
+      if (hc.contextWindow !== null && hc.contextWindow !== expectedBase)
+        console.log(`[DEV] Anthropic '${apiModel.id}': contextWindow mismatch - hardcoded=${hc.contextWindow}, api=${apiModel.max_input_tokens}${ANT_CAP_CONTEXT_WINDOW ? ` (capped=${expectedBase})` : ''}`);
+    }
+
+    // effort enumValues mismatch
+    if (apiModel.capabilities?.effort?.supported) {
+      const apiEffort = (['low', 'medium', 'high', 'max'] as const).filter(l => apiModel.capabilities?.effort?.[l]?.supported);
+      const knownEffortSpec = hc.parameterSpecs?.find(s => s.paramId === 'llmVndAntEffort');
+      if (knownEffortSpec?.enumValues) {
+        const hardcoded = knownEffortSpec.enumValues.join(',');
+        const fromApi = apiEffort.join(',');
+        if (hardcoded !== fromApi)
+          console.log(`[DEV] Anthropic '${apiModel.id}': effort enumValues mismatch - hardcoded=[${hardcoded}], api=[${fromApi}]`);
+      }
+    }
+  }
+}
+
+
+// -- Helper Functions --
+
+/**
  * Create a placeholder ModelDescriptionSchema for Anthropic models not in the hardcoded list.
- * Uses sensible defaults with the newest available interfaces for day-0 support.
+ * Uses API-provided capabilities for accurate day-0 support when available.
  */
 export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
+  const caps = model.capabilities;
+
+  // Interfaces
+
+  const interfaces: ModelDescriptionSchema['interfaces'] = [
+    LLM_IF_OAI_Chat,
+    LLM_IF_OAI_Fn,
+    LLM_IF_ANT_PromptCaching,
+  ];
+  if (!caps || caps?.image_input?.supported) interfaces.push(LLM_IF_OAI_Vision);
+  if (!caps || caps?.thinking?.supported) interfaces.push(LLM_IF_OAI_Reasoning);
+
+  // ParameterSpecs
+
+  // derive effort enumValues
+  const parameterSpecs: ModelDescriptionSchema['parameterSpecs'] = [];
+  if (caps?.effort?.supported) {
+    const effortValues: string[] = [];
+    if (caps.effort.low?.supported) effortValues.push('low');
+    if (caps.effort.medium?.supported) effortValues.push('medium');
+    if (caps.effort.high?.supported) effortValues.push('high');
+    if (caps.effort.max?.supported) effortValues.push('max');
+    if (effortValues.length)
+      parameterSpecs.push({ paramId: 'llmVndAntEffort', enumValues: effortValues });
+  }
+
+  // derive thinking params
+  if (caps?.thinking?.supported) {
+    // Adaptive thinking (4.6+) - force adaptive mode
+    if (caps.thinking.types?.adaptive?.supported)
+      parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 });
+    // Classic extended thinking
+    else if (caps.thinking.types?.enabled?.supported)
+      parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget' });
+  }
+
+  // 1M context param heuristic
+  const maxInputTokens = model.max_input_tokens;
+  if (ANT_CAP_CONTEXT_WINDOW && maxInputTokens && maxInputTokens > ANT_CAP_CONTEXT_WINDOW)
+    parameterSpecs.push({ paramId: 'llmVndAnt1MContext' });
+
+  // +standard tool params
+  parameterSpecs.push(...ANT_TOOLS);
+
+  const defaultContextWindow = ANT_CAP_CONTEXT_WINDOW || 200_000;
   return {
     id: model.id,
     idVariant: '::placeholder',
     label: model.display_name,
     created: Math.round(new Date(model.created_at).getTime() / 1000),
     description: 'Newest model, description not available yet.',
-    contextWindow: 200000,
-    maxCompletionTokens: 32768,
-    interfaces: IF_4_R,
+    contextWindow: maxInputTokens ? (ANT_CAP_CONTEXT_WINDOW ? Math.min(maxInputTokens, ANT_CAP_CONTEXT_WINDOW) : maxInputTokens) : defaultContextWindow,
+    maxCompletionTokens: model.max_tokens || 32768,
+    interfaces,
+    parameterSpecs,
     // chatPrice: ...
     // benchmark: ...
   };
 }
 
+/**
+ * Apply API-provided metadata to a known hardcoded model definition.
+ * API data is authoritative for token limits; hardcoded data is kept for
+ * pricing, benchmarks, interfaces, and parameter specs (except effort enumValues).
+ */
+export function llmsAntFuseModelKnowledge(knownModel: ModelDescriptionSchema, apiModel: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
+  let updated = knownModel;
+
+  // apply creation time if not set
+  if (!updated.created && apiModel.created_at)
+    updated = { ...updated, created: Math.round(new Date(apiModel.created_at).getTime() / 1000) };
+
+  // API-authoritative: context window (optionally capped - the 1M context param handles the rest)
+  if (apiModel.max_input_tokens) {
+    const apiContextWindow = ANT_CAP_CONTEXT_WINDOW ? Math.min(apiModel.max_input_tokens, ANT_CAP_CONTEXT_WINDOW) : apiModel.max_input_tokens;
+    if (updated.contextWindow !== apiContextWindow)
+      updated = { ...updated, contextWindow: apiContextWindow };
+  }
+
+  // API-authoritative: max output tokens
+  if (apiModel.max_tokens && apiModel.max_tokens !== updated.maxCompletionTokens)
+    updated = { ...updated, maxCompletionTokens: apiModel.max_tokens };
+
+  // DISABLED for now - not sure this helps much, as we editoralize this:
+  // API-authoritative: effort enumValues (fixes stale hardcoded values)
+  // const caps = apiModel.capabilities;
+  // if (caps?.effort?.supported && updated.parameterSpecs) {
+  //   const apiEffortValues = (['low', 'medium', 'high', 'max'] as const).filter(l => caps.effort?.[l]?.supported);
+  //   if (apiEffortValues.length) {
+  //     const effortIdx = updated.parameterSpecs.findIndex(s => s.paramId === 'llmVndAntEffort');
+  //     if (effortIdx >= 0) {
+  //       const currentValues = updated.parameterSpecs[effortIdx].enumValues;
+  //       if (currentValues && currentValues.join(',') !== apiEffortValues.join(',')) {
+  //         const newSpecs = [...updated.parameterSpecs];
+  //         newSpecs[effortIdx] = { ...newSpecs[effortIdx], enumValues: apiEffortValues };
+  //         updated = { ...updated, parameterSpecs: newSpecs };
+  //       }
+  //     }
+  //   }
+  // }
+
+  return updated;
+}
 
 // -- Anthropic-through-Bedrock models lookup --
 

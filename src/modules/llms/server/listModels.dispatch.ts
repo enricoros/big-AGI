@@ -12,7 +12,7 @@ import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces } from './mod
 
 
 // protocol: Anthropic
-import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel } from './anthropic/anthropic.models';
+import { llmsAntFuseModelKnowledge, llmsAntInjectVariants, llmsAntValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Bedrock
@@ -122,7 +122,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           const { data: availableModels } = wireModelsResponse;
 
           // [DEV] check for stale/unknown model definitions
-          anthropicValidateModelDefs_DEV(availableModels);
+          llmsAntValidateModelDefs_DEV(availableModels);
 
           // sort by: family (desc) > class (desc) > date (desc) -- Future NOTE: -5- will match -4-5- and -3-5-.. figure something else out
           const familyPrecedence = ['-4-7-', '-4-6', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
@@ -146,23 +146,17 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // date desc (newer first) - string comparison works since format is YYYYMMDD
               return b.id.localeCompare(a.id);
             })
-            .map((model): ModelDescriptionSchema => {
-              // match model definition
-              const knownModel = hardcodedAnthropicModels.find(m => m.id === model.id);
-              if (knownModel) {
+            .map((apiModel): ModelDescriptionSchema => {
+              // merge API-provided metadata (token limits, effort levels) with hardcoded definition
+              const knownModel = hardcodedAnthropicModels.find(m => m.id === apiModel.id);
+              if (knownModel)
+                return llmsAntFuseModelKnowledge(knownModel, apiModel);
 
-                // update model creation time, if provided
-                if (!knownModel.created && model.created_at)
-                  knownModel.created = Math.round(new Date(model.created_at).getTime() / 1000);
-
-                return knownModel;
-              }
-
-              // 0-day, new model: create an approximate model definition (placeholder) with sensible defaultss
-              return llmsAntCreatePlaceholderModel(model);
+              // 0-day, new model: create an API-informed model definition (placeholder)
+              return llmsAntCreatePlaceholderModel(apiModel);
             })
             // inject thinking variants using the centralized variant system
-            .reduce(anthropicInjectVariants, []);
+            .reduce(llmsAntInjectVariants, []);
         },
       });
     }
