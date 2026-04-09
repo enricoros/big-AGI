@@ -1,9 +1,4 @@
-// TODO: OpenAI container_file_citation support (via: 'openai' with fileId + containerId)
-// TODO: click chip to preview text files inline (expand content, like doc attachments)
-// TODO: download + store as Zync asset for local persistence (survives Anthropic file expiry/deletion)
-
 import * as React from 'react';
-
 import TimeAgo from 'react-timeago';
 
 import { Box, CircularProgress, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet, Typography } from '@mui/joy';
@@ -15,64 +10,40 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import type { AnthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
-import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DLLMId } from '~/common/stores/llms/llms.types';
-import type { DMessageContentFragment, DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
-import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { mimeTypeIsPlainText } from '~/common/attachment-drafts/attachment.mimetypes';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
+import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
 import { downloadBlob } from '~/common/util/downloadUtils';
-import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';
 import { humanReadableBytes } from '~/common/util/textUtils';
 import { imageBlobTransform } from '~/common/util/imageUtils';
+import { mimeTypeIsPlainText } from '~/common/attachment-drafts/attachment.mimetypes';
+import { useLlmServiceAccess } from '~/common/stores/llms/hooks/useLlmServiceAccess';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 
-/**
- * Hook: reactively resolve the Anthropic service ID for file access.
- * Selects a stable string (service ID) so Zustand won't trigger re-render loops.
- * Prefers the generator's own service, falls back to the first available Anthropic service.
- */
-function useAnthropicServiceId(generatorLlmId?: DLLMId): DModelsServiceId | null {
-  return useModelsStore(({ llms, sources }) => {
-    if (generatorLlmId) {
-      const llm = llms.find(m => m.id === generatorLlmId);
-      if (llm) {
-        const service = findModelsServiceOrNull(llm.sId);
-        if (service?.vId === 'anthropic')
-          return service.id;
-      }
-    }
-    return sources.find(s => s.vId === 'anthropic')?.id ?? null;
-  });
+// -- react-query enrichers - stable select functions --
+
+function _enrichMetadataWithMimeFlags<T extends { mime_type: string }>(meta: T) {
+  return {
+    ...meta,
+    mimeIsText: mimeTypeIsPlainText(meta.mime_type),
+    mimeIsImage: meta.mime_type.startsWith('image/'),
+  };
 }
 
-/** Derive access credentials from a resolved service ID (non-reactive, called on-demand). */
-function _accessFromServiceId(serviceId: DModelsServiceId): AnthropicAccessSchema | null {
-  const vendor = findModelVendor<any, AnthropicAccessSchema>('anthropic');
-  if (!vendor) return null;
-  const service = findModelsServiceOrNull(serviceId);
-  if (!service) return null;
-  return vendor.getTransportAccess(service.setup);
-}
-
-
-function NoAccessChip(props: { fileId: string }) {
-  return (
-    <Sheet variant='outlined' sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 'sm' }}>
-      <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.4 }} />
-      <Typography level='body-sm' sx={{ opacity: 0.5 }}>
-        {props.fileId} (no credentials)
-      </Typography>
-    </Sheet>
-  );
+function _base64ResponseToBlob({ base64Data, mimeType }: { base64Data: string; mimeType: string }) {
+  const bytes = convert_Base64_To_UInt8Array(base64Data, 'hosted-resource-ant-file');
+  return {
+    blob: new Blob([bytes], { type: mimeType }),
+    httpMimeType: mimeType,
+    httpMimeIsText: mimeTypeIsPlainText(mimeType),
+    httpMimeIsImage: mimeType.startsWith('image/'),
+  };
 }
 
 
@@ -93,11 +64,14 @@ function AnthropicFileChip(props: {
   const { access, fileId, onFragmentDelete, onFragmentReplace } = props;
 
   // external state
-  const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmAnthropic.fileApiGetMetadata.useQuery(
-    // metadata query - cached by React Query, staleTime: Infinity (file metadata is immutable)
-    { access, fileId },
-    { staleTime: Infinity },
-  );
+  const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmAnthropic.fileApiGetMetadata.useQuery({ access, fileId }, {
+    staleTime: Infinity,
+    select: _enrichMetadataWithMimeFlags,
+  });
+  const { data: fileContent, refetch: refetchFileContent } = apiQuery.llmAnthropic.fileApiDownload.useQuery({ access, fileId }, {
+    enabled: false, // on-demand only
+    select: _base64ResponseToBlob,
+  });
 
 
   // derive display info from typed metadata
@@ -105,35 +79,34 @@ function AnthropicFileChip(props: {
   const displayName = fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName;
 
 
-  // shared: fetch file content as { blob, mimeType }
-  const _fetchFileBlob = React.useCallback(async (): Promise<{ blob: Blob, mimeType: string }> => {
-    const { base64Data, mimeType } = await apiAsync.llmAnthropic.fileApiDownload.query({ access, fileId });
-    const bytes = convert_Base64_To_UInt8Array(base64Data, 'hosted-resource-ant-file');
-    return { blob: new Blob([bytes], { type: mimeType }), mimeType };
-  }, [access, fileId]);
+  const _getOrFetchFileContent = React.useCallback(async () => {
+    const content = fileContent ?? (await refetchFileContent()).data;
+    if (!content) throw new Error('File download failed');
+    return content;
+  }, [fileContent, refetchFileContent]);
 
 
   const handleDownload = React.useCallback(async () => {
     setBusy('download');
     setActionError(null);
     try {
-      const { blob } = await _fetchFileBlob();
+      const { blob } = await _getOrFetchFileContent();
       downloadBlob(blob, fileName);
     } catch (error: any) {
       setActionError(error?.message || 'Download failed');
     } finally {
       setBusy(false);
     }
-  }, [_fetchFileBlob, fileName]);
+  }, [_getOrFetchFileContent, fileName]);
 
   const handleCopy = React.useCallback(async () => {
     setBusy('copy');
     setActionError(null);
     try {
-      const { blob, mimeType: blobMimeType } = await _fetchFileBlob();
-      if (blobMimeType.startsWith('image/')) {
+      const { blob, httpMimeIsImage } = await _getOrFetchFileContent();
+      if (httpMimeIsImage) {
         // ClipboardItem only supports image/png - convert from jpeg/webp/gif/etc. if needed
-        const pngBlob = blobMimeType === 'image/png' ? blob
+        const pngBlob = blob.type === 'image/png' ? blob
           : (await imageBlobTransform(blob, { convertToMimeType: 'image/png', throwOnTypeConversionError: true })).blob;
         copyBlobPromiseToClipboard('image/png', Promise.resolve(pngBlob), fileName);
       } else {
@@ -144,7 +117,7 @@ function AnthropicFileChip(props: {
     } finally {
       setBusy(false);
     }
-  }, [_fetchFileBlob, fileName]);
+  }, [_getOrFetchFileContent, fileName]);
 
   const handleDelete = React.useCallback(async (event: React.MouseEvent) => {
     if (!onFragmentDelete) return;
@@ -175,10 +148,10 @@ function AnthropicFileChip(props: {
     setBusy('inline');
     setActionError(null);
     try {
-      const { blob, mimeType } = await _fetchFileBlob();
+      const { blob, httpMimeIsText } = await _getOrFetchFileContent();
 
       // only inline textual content
-      if (!mimeTypeIsPlainText(mimeType)) {
+      if (!httpMimeIsText) {
         setActionError('Cannot inline binary file');
         return;
       }
@@ -209,10 +182,11 @@ function AnthropicFileChip(props: {
     } finally {
       setBusy(false);
     }
-  }, [_fetchFileBlob, access, fileId, fileName, onFragmentReplace]);
+  }, [_getOrFetchFileContent, access, fileId, fileName, onFragmentReplace]);
 
 
-  const canInline = !!onFragmentReplace && !!metadata && mimeTypeIsPlainText(metadata.mime_type);
+  const canCopy = !!metadata && (metadata.mimeIsText || metadata.mimeIsImage);
+  const canInline = !!onFragmentReplace && !!metadata?.mimeIsText;
 
   const isBusy = !!busy || metaLoading;
   const hasError = !!metaError || !!actionError;
@@ -252,7 +226,7 @@ function AnthropicFileChip(props: {
       {!isFileGone ? <>
 
         <GoodTooltip title='Copy to clipboard'>
-          <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleCopy} size='sm'>
+          <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone || !canCopy} onClick={handleCopy} size='sm'>
             {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
           </IconButton>
         </GoodTooltip>
@@ -295,6 +269,17 @@ function AnthropicFileChip(props: {
   );
 }
 
+function NoAccessChip(props: { fileId: string }) {
+  return (
+    <Sheet variant='outlined' sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 'sm' }}>
+      <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.4 }} />
+      <Typography level='body-sm' sx={{ opacity: 0.5 }}>
+        {props.fileId} (no credentials)
+      </Typography>
+    </Sheet>
+  );
+}
+
 
 export function BlockPartHostedResource(props: {
   hostedResourcePart: DMessageHostedResourcePart,
@@ -316,19 +301,19 @@ export function BlockPartHostedResource(props: {
     onFragmentReplace?.(fragmentId, newFragment);
   }, [fragmentId, onFragmentReplace]);
 
-  // reactive service resolution (stable string selector, no re-render loops)
-  const serviceId = useAnthropicServiceId(resource.via === 'anthropic' ? (props.messageGeneratorLlmId ?? undefined) : undefined);
+  // TODO: OpenAI container_file_citation support (via: 'openai' with fileId + containerId)?
 
-  // derive access credentials on-demand from the resolved service ID
-  const access = React.useMemo(() => serviceId ? _accessFromServiceId(serviceId) : null, [serviceId]);
+  // reactive service + access resolution
+  const isAnthropic = resource.via === 'anthropic';
+  const antAccess = useLlmServiceAccess(isAnthropic ? props.messageGeneratorLlmId : undefined, 'anthropic');
 
   // only support Anthropic files for now
-  if (resource.via !== 'anthropic' || !access)
+  if (!isAnthropic || !antAccess)
     return <NoAccessChip fileId={resource?.fileId || 'unknown'} />;
 
   return (
     <AnthropicFileChip
-      access={access}
+      access={antAccess}
       fileId={resource.fileId}
       contentScaling={props.contentScaling}
       onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
