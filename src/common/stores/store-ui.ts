@@ -57,9 +57,6 @@ interface UIPreferencesStore {
   composerQuickButton: 'off' | 'call' | 'beam';
   setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => void;
 
-  startupNewChat: boolean;
-  setStartupNewChat: (startupNewChat: boolean) => void;
-
   // Advanced features
 
   aixInspector: boolean;
@@ -134,9 +131,6 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       composerQuickButton: 'beam',
       setComposerQuickButton: (composerQuickButton: 'off' | 'call' | 'beam') => set({ composerQuickButton }),
-
-      startupNewChat: true,
-      setStartupNewChat: (startupNewChat: boolean) => set({ startupNewChat }),
 
       // Advanced features
 
