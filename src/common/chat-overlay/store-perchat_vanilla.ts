@@ -2,6 +2,7 @@ import { StoreApi, useStore } from 'zustand';
 import { createStore as createVanillaStore } from 'zustand/vanilla';
 
 import { AttachmentDraftsStoreApi, AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-attachment-drafts_slice';
+import { Release } from '~/common/app.release';
 
 import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-perchat-composer_slice';
 import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './store-perchat-ephemerals_slice';
@@ -34,16 +35,27 @@ export const createPerChatVanillaStore = (): StoreApi<PerChatOverlayStore> => cr
 }));
 
 
-const fallbackStoreApi = createPerChatVanillaStore();
-
 // usages: ChatMessagesList
 export const useChatOverlayStore = <T, >(vanillaStore: Readonly<StoreApi<PerChatOverlayStore>> | null, selector: (store: PerChatOverlayStore) => T): T =>
-  useStore(vanillaStore || fallbackStoreApi, selector);
+  useStore(vanillaStore || _getFallbackStoreApi('store'), selector);
 
 // usages: useAttachmentDrafts
 export const useChatAttachmentsStore = <T, >(vanillaStore: Readonly<AttachmentDraftsStoreApi> | null, selector: (store: AttachmentsDraftsStore) => T): T =>
-  useStore(vanillaStore || fallbackStoreApi, selector);
+  useStore(vanillaStore || _getFallbackStoreApi('attachments'), selector);
 
 // usages: Composer
 export const useChatComposerOverlayStore = <T, >(vanillaStore: Readonly<StoreApi<ComposerOverlayStore>> | null, selector: (store: ComposerOverlayStore) => T): T =>
-  useStore(vanillaStore || fallbackStoreApi, selector);
+  useStore(vanillaStore || _getFallbackStoreApi('composer'), selector);
+
+
+// -- Lazy fallback store --
+
+let _fallbackStoreApi: StoreApi<PerChatOverlayStore> | null = null;
+
+function _getFallbackStoreApi(caller: string): StoreApi<PerChatOverlayStore> {
+  if (!_fallbackStoreApi) {
+    console[Release.IsNodeDevBuild ? 'warn' : 'log'](`[DEV] Requiring fallback Session ${caller} store`);
+    _fallbackStoreApi = createPerChatVanillaStore();
+  }
+  return _fallbackStoreApi;
+}
