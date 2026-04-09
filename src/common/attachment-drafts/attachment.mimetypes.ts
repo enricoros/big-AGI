@@ -30,11 +30,13 @@ const GuessedMimeLookupTable: Record<string, GuessedMimeInfo> = {
   // Code (including various programming languages)
   'text/css': { ext: ['css', 'scss', 'less', 'sass'], dt: 'code' },
   'text/javascript': { ext: ['js', 'mjs', 'jsx'], dt: 'code' },
+  'application/javascript': { ext: null, dt: 'code' }, // [Anthropic 2026-04-09] non-standard variant returned by the Anthropic Files API
   'application/x-javascript': { ext: null, dt: 'code' },
   'text/x-typescript': { ext: ['ts', 'tsx', 'd.ts'], dt: 'code' }, // TypeScript files (recommended is application/typescript, but we standardize to text/x-typescript instead as per Gemini's standard)
   'application/x-typescript': { ext: null, dt: 'code' },
   'text/csv': { ext: ['csv', 'tsv'], dt: 'code' },
   'text/x-python': { ext: ['py', 'pyw'], dt: 'code' },
+  'text/x-script.python': { ext: null, dt: 'code' }, // [Anthropic 2026-04-09]
   'application/x-python-code': { ext: null, dt: 'code' },
   'application/x-ipynb+json': { ext: ['ipynb'], dt: 'code' },
   'application/json': { ext: ['json', 'jsonld'], dt: 'code' },
