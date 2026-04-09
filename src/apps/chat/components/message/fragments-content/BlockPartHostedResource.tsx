@@ -16,11 +16,10 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
-import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { humanReadableBytes } from '~/common/util/textUtils';
-import { imageBlobTransform } from '~/common/util/imageUtils';
 import { mimeTypeIsPlainText } from '~/common/attachment-drafts/attachment.mimetypes';
 import { useLlmServiceAccess } from '~/common/stores/llms/hooks/useLlmServiceAccess';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -32,7 +31,6 @@ function _enrichMetadataWithMimeFlags<T extends { mime_type: string }>(meta: T) 
   return {
     ...meta,
     mimeIsText: mimeTypeIsPlainText(meta.mime_type),
-    mimeIsImage: meta.mime_type.startsWith('image/'),
   };
 }
 
@@ -42,7 +40,6 @@ function _base64ResponseToBlob({ base64Data, mimeType }: { base64Data: string; m
     blob: new Blob([bytes], { type: mimeType }),
     httpMimeType: mimeType,
     httpMimeIsText: mimeTypeIsPlainText(mimeType),
-    httpMimeIsImage: mimeType.startsWith('image/'),
   };
 }
 
@@ -79,45 +76,33 @@ function AnthropicFileChip(props: {
   const displayName = fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName;
 
 
-  const _getOrFetchFileContent = React.useCallback(async () => {
-    const content = fileContent ?? (await refetchFileContent()).data;
-    if (!content) throw new Error('File download failed');
-    return content;
-  }, [fileContent, refetchFileContent]);
-
+  // handlers
 
   const handleDownload = React.useCallback(async () => {
     setBusy('download');
     setActionError(null);
     try {
-      const { blob } = await _getOrFetchFileContent();
-      downloadBlob(blob, fileName);
+      const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
+      data && downloadBlob(data.blob, fileName);
     } catch (error: any) {
       setActionError(error?.message || 'Download failed');
     } finally {
       setBusy(false);
     }
-  }, [_getOrFetchFileContent, fileName]);
+  }, [fileContent, refetchFileContent, fileName]);
 
   const handleCopy = React.useCallback(async () => {
     setBusy('copy');
     setActionError(null);
     try {
-      const { blob, httpMimeIsImage } = await _getOrFetchFileContent();
-      if (httpMimeIsImage) {
-        // ClipboardItem only supports image/png - convert from jpeg/webp/gif/etc. if needed
-        const pngBlob = blob.type === 'image/png' ? blob
-          : (await imageBlobTransform(blob, { convertToMimeType: 'image/png', throwOnTypeConversionError: true })).blob;
-        copyBlobPromiseToClipboard('image/png', Promise.resolve(pngBlob), fileName);
-      } else {
-        copyToClipboard(await blob.text(), fileName);
-      }
+      const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
+      data && copyToClipboard(await data.blob.text(), fileName);
     } catch (error: any) {
       setActionError(error?.message || 'Copy failed');
     } finally {
       setBusy(false);
     }
-  }, [_getOrFetchFileContent, fileName]);
+  }, [fileContent, refetchFileContent, fileName]);
 
   const handleDelete = React.useCallback(async (event: React.MouseEvent) => {
     if (!onFragmentDelete) return;
@@ -148,22 +133,20 @@ function AnthropicFileChip(props: {
     setBusy('inline');
     setActionError(null);
     try {
-      const { blob, httpMimeIsText } = await _getOrFetchFileContent();
+      const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
+      if (!data) return;
 
       // only inline textual content
-      if (!httpMimeIsText) {
-        setActionError('Cannot inline binary file');
-        return;
-      }
+      if (!data.httpMimeIsText)
+        return setActionError('Cannot inline binary file');
 
-      const text = await blob.text();
+      const text = await data.blob.text();
 
       // fence with adaptive depth (extra backticks if content contains ```)
       let fence = '```';
-      while (text.includes(fence))
+      while (text.includes(fence) && fence.length < 10)
         fence += '`';
-      const newFragment = createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`);
-      onFragmentReplace(newFragment);
+      onFragmentReplace(createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`));
 
       // // doc attachment alternative (richer: title bar, edit, live file sync)
       // const isCode = mimeType !== 'text/plain';
@@ -175,17 +158,16 @@ function AnthropicFileChip(props: {
       // );
 
       // fire-and-forget: delete from provider
-      apiAsync.llmAnthropic.fileApiDelete.mutate({ access, fileId }).catch(() => {/* silent */
-      });
+      apiAsync.llmAnthropic.fileApiDelete.mutate({ access, fileId }).catch(console.error);
     } catch (error: any) {
       setActionError(error?.message || 'Inline failed');
     } finally {
       setBusy(false);
     }
-  }, [_getOrFetchFileContent, access, fileId, fileName, onFragmentReplace]);
+  }, [fileContent, refetchFileContent, access, fileId, fileName, onFragmentReplace]);
 
 
-  const canCopy = !!metadata && (metadata.mimeIsText || metadata.mimeIsImage);
+  const canCopy = !!metadata?.mimeIsText;
   const canInline = !!onFragmentReplace && !!metadata?.mimeIsText;
 
   const isBusy = !!busy || metaLoading;
