@@ -45,8 +45,8 @@ export type ModelVendorId =
   | 'zai'
   ;
 
-/** Global: Vendor Instances Registry **/
-const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
+/** Global: Vendor Instances Registry (`satisfies` validates keys, TS preserves specific vendor types) **/
+const MODEL_VENDOR_REGISTRY = {
   alibaba: ModelVendorAlibaba,
   anthropic: ModelVendorAnthropic,
   azure: ModelVendorAzure,
@@ -66,7 +66,13 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   togetherai: ModelVendorTogetherAI,
   xai: ModelVendorXAI,
   zai: ModelVendorZAI,
-} as Record<string, IModelVendor>;
+} as const satisfies Record<ModelVendorId, IModelVendor>;
+
+
+// --- Type Helpers - for Id -> concrete type mappings ---
+// NOTE: we haven't ported the full system to type inference, this is just a way forward
+export type ModelVendorOf<V extends ModelVendorId> = (typeof MODEL_VENDOR_REGISTRY)[V];
+export type ModelVendorAccessOf<V extends ModelVendorId> = ModelVendorOf<V> extends IModelVendor<any, infer TAccess> ? TAccess : never;
 
 
 export function findAllModelVendors(): IModelVendor[] {
