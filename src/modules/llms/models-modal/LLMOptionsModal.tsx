@@ -270,7 +270,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
       onClick={handleResetParameters}
       // sx={{ mt: 0.125 }}
     >
-      Reset to defaults ...
+      Reset to defaults...
     </Link>
   );
 

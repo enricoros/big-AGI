@@ -97,6 +97,10 @@ export function isLLMVisible(llm: DLLM): boolean {
   return !(llm.userHidden ?? llm.hidden ?? false);
 }
 
+export function isLLMCustomUserParameters(llm: DLLM): boolean {
+  return !!(llm.userParameters && Object.keys(llm.userParameters).length > 0);
+}
+
 /**
  * Returns the effective context token limit for a model.
  * Checks user override first, then vendor-specific parameters, then falls back to model default.
