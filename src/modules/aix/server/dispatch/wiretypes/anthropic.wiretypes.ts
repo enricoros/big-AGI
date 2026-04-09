@@ -276,7 +276,7 @@ export namespace AnthropicWire_Blocks {
       z.object({ url: z.string() }), // web_fetch
       z.object({ code: z.string() }), // code_execution
       z.object({ command: z.string() }), // bash_code_execution
-      z.object({ command: z.string(), path: z.string() }).passthrough(), // text_editor_code_execution (+ file_text, old_str, new_str, view_range, etc.)
+      z.object({ command: z.string(), path: z.string() }), // text_editor_code_execution (+ file_text, old_str, new_str, view_range, etc.)
       z.object({ pattern: z.string() }), // tool_search_tool_regex
       z.object({ query: z.string() }), // tool_search_tool_bm25
     ]).or(z.any()), // see the comment on ToolUseBlock_schema.input

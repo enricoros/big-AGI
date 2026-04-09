@@ -711,12 +711,12 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
     case 'code_execution':
       // input: { code: string } - Python code for sandbox execution
       const pyCode = typeof inputObj?.code === 'string' ? inputObj.code : undefined;
-      pt.sendOperationState('code-exec', pyCode ? 'Running code...' : 'Writing code...', { ...srvOp, ...(pyCode ? { iTexts: [_ellipsizeContext(pyCode)] } : undefined) });
+      pt.sendOperationState('code-exec', !pyCode ? 'Writing code...' : 'Running code...', { ...srvOp, ...(pyCode ? { iTexts: [_ellipsizeContext(pyCode)] } : undefined) });
       break;
     case 'bash_code_execution':
       // input: { command: string } - bash command for sandbox execution
       const bashCmd = typeof inputObj?.command === 'string' ? inputObj.command : undefined;
-      pt.sendOperationState('code-exec', bashCmd ? 'Running bash...' : 'Writing bash...', { ...srvOp, ...(bashCmd ? { iTexts: [_ellipsizeContext(bashCmd)] } : undefined) });
+      pt.sendOperationState('code-exec', !bashCmd ? 'Writing bash...' : 'Running bash...', { ...srvOp, ...(bashCmd ? { iTexts: [_ellipsizeContext(bashCmd)] } : undefined) });
       break;
     case 'text_editor_code_execution':
       // input: { command: 'view'|'create'|'str_replace'|'insert'|'undo_edit', path: string, file_text?: string, old_str?: string, new_str?: string, ... }
@@ -726,13 +726,19 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
       if (tePath)
         iTexts.push(tePath);
       switch (teCommand) {
-        case 'view':
-          if (inputObj?.view_range) iTexts.push(`lines: ${JSON.stringify(inputObj.view_range)}`);
-          pt.sendOperationState('code-exec', `Viewing ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+        default:
+          console.log('[DEV] Anthropic: server_tool_use(content_block_start): unrecognized text editor command', { teCommand, inputObj });
+        // fallthrough
+        case undefined: // EXPECTED in Streaming: we don't know the command yet, the input object is empty - in NS, we have the details upfront (cases below)
+          pt.sendOperationState('code-exec', `Text editor: ${teCommand || 'working'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'create':
           if (typeof inputObj?.file_text === 'string') iTexts.push(_ellipsizeContext(inputObj.file_text));
           pt.sendOperationState('code-exec', `Creating ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'view':
+          if (inputObj?.view_range) iTexts.push(`lines: ${JSON.stringify(inputObj.view_range)}`);
+          pt.sendOperationState('code-exec', `Viewing ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'str_replace':
           if (typeof inputObj?.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(inputObj.old_str, 256)}`);
@@ -745,9 +751,6 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
           break;
         case 'undo_edit':
           pt.sendOperationState('code-exec', `Undoing edit in ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
-          break;
-        default:
-          pt.sendOperationState('code-exec', `Text editor: ${teCommand || 'working'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
       }
       break;
@@ -780,7 +783,8 @@ function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name
   let input: Record<string, any> | undefined;
   try {
     input = typeof inputStr === 'string' ? JSON.parse(inputStr) : inputStr;
-  } catch { /* ignore parse errors */ }
+  } catch { /* ignore parse errors */
+  }
   if (typeof input !== 'object') {
     // No parseable input - still update state so UI doesn't stay on "Writing..."
     pt.sendOperationState('code-exec', 'Executing...', { opId });
@@ -790,26 +794,44 @@ function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name
   switch (name) {
     case 'code_execution': {
       const code = typeof input.code === 'string' ? input.code : undefined;
-      pt.sendOperationState('code-exec', 'Executing code...', { opId, ...code && { iTexts: [_ellipsizeContext(code)] } });
+      pt.sendOperationState('code-exec', 'Executing code...', { opId, ...code && { iTexts: [_ellipsizeContext('input code:\n' + code)] } });
       break;
     }
     case 'bash_code_execution': {
       const cmd = typeof input.command === 'string' ? input.command : undefined;
-      pt.sendOperationState('code-exec', 'Executing bash...', { opId, ...cmd && { iTexts: [_ellipsizeContext(cmd)] } });
+      pt.sendOperationState('code-exec', 'Executing bash...', { opId, ...cmd && { iTexts: [_ellipsizeContext('bash command:\n' + cmd)] } });
       break;
     }
     case 'text_editor_code_execution': {
       const path = typeof input.path === 'string' ? input.path : 'file';
-      const verb = input.command === 'view' ? 'Viewing' : input.command === 'create' ? 'Creating' : input.command === 'str_replace' ? 'Editing' : input.command === 'insert' ? 'Inserting in' : 'Editing';
       const iTexts: string[] = [];
-      if (path !== 'file') iTexts.push(path);
-      if (input.command === 'str_replace') {
-        if (typeof input.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(input.old_str, 256)}`);
-        if (typeof input.new_str === 'string') iTexts.push(`+ ${_ellipsizeContext(input.new_str, 256)}`);
-      } else if (input.command === 'create' && typeof input.file_text === 'string') {
-        iTexts.push(_ellipsizeContext(input.file_text));
+      if (path !== 'file') iTexts.push(`path: ${path}`);
+      switch (input.command) {
+        default: // not expected: the input shall be valid here
+          console.log('[DEV] Anthropic: server_tool_use(content_block_stop): unrecognized text editor command', { command: input.command, input });
+          pt.sendOperationState('code-exec', `Text editor: ${input.command || 'working'}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'create':
+          if (typeof input.file_text === 'string') iTexts.push(_ellipsizeContext('file contents:\n' + input.file_text));
+          pt.sendOperationState('code-exec', `Creating ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'view':
+          if (input.view_range) iTexts.push(`lines: ${JSON.stringify(input.view_range)}`);
+          pt.sendOperationState('code-exec', `Viewing ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'str_replace':
+          if (typeof input.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(input.old_str, 256)}`);
+          if (typeof input.new_str === 'string') iTexts.push(`+ ${_ellipsizeContext(input.new_str, 256)}`);
+          pt.sendOperationState('code-exec', `Editing ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'insert':
+          if (typeof input.insert_text === 'string') iTexts.push(_ellipsizeContext(input.insert_text, 256));
+          pt.sendOperationState('code-exec', `Inserting in ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'undo_edit':
+          pt.sendOperationState('code-exec', `Undoing edit in ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
       }
-      pt.sendOperationState('code-exec', `${verb} ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
       break;
     }
     default:
@@ -940,15 +962,15 @@ function _handleCBS_TextEditorCodeExecutionToolResult(pt: IParticleTransmitter, 
   const opId = block.tool_use_id;
   const oTexts: string[] = [];
   switch (block.content.type) {
+    case 'text_editor_code_execution_create_result':
+      pt.sendOperationState('code-exec', block.content.is_file_update ? 'File updated' : 'File created', { opId, state: 'done' });
+      break;
     case 'text_editor_code_execution_view_result':
       if (block.content.total_lines != null) oTexts.push(`${block.content.total_lines} lines total`);
       // only include text content in oTexts - image/pdf would be base64 noise
-      if (block.content.file_type === 'text' && block.content.content)
-        oTexts.push(_ellipsizeContext(block.content.content));
-      pt.sendOperationState('code-exec', `Viewed file (${block.content.file_type})`, { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
-      break;
-    case 'text_editor_code_execution_create_result':
-      pt.sendOperationState('code-exec', block.content.is_file_update ? 'File updated' : 'File created', { opId, state: 'done' });
+      if (block.content.file_type === 'text')
+        oTexts.push(_ellipsizeContext(block.content.content || 'content: (not provided)'));
+      pt.sendOperationState('code-exec', `Viewed file${block.content.file_type !== 'text' ? ` (${block.content.file_type})` : ''}`, { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
       break;
     case 'text_editor_code_execution_str_replace_result':
       if (block.content.old_start != null && block.content.old_lines != null)
@@ -1064,7 +1086,7 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
 
     default:
       const _exhaustiveCheck: never = stopReason;
-      // fallthrough
+    // fallthrough
     case null:
       console.warn(`_fromAnthropicStopReason(${debugCaller}): unexpected stop_reason: ${stopReason}`);
       return null;
