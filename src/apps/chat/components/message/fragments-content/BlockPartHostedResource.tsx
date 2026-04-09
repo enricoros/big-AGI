@@ -16,11 +16,11 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
+import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { humanReadableBytes } from '~/common/util/textUtils';
-import { mimeTypeIsPlainText } from '~/common/attachment-drafts/attachment.mimetypes';
+import { mimeTypeIsPlainText, mimeTypeIsSupportedImage } from '~/common/attachment-drafts/attachment.mimetypes';
 import { useLlmServiceAccess } from '~/common/stores/llms/hooks/useLlmServiceAccess';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -31,6 +31,7 @@ function _enrichMetadataWithMimeFlags<T extends { mime_type: string }>(meta: T) 
   return {
     ...meta,
     mimeIsText: mimeTypeIsPlainText(meta.mime_type),
+    mimeIsImage: mimeTypeIsSupportedImage(meta.mime_type),
   };
 }
 
@@ -40,6 +41,7 @@ function _base64ResponseToBlob({ base64Data, mimeType }: { base64Data: string; m
     blob: new Blob([bytes], { type: mimeType }),
     httpMimeType: mimeType,
     httpMimeIsText: mimeTypeIsPlainText(mimeType),
+    httpMimeIsImage: mimeTypeIsSupportedImage(mimeType),
   };
 }
 
@@ -96,7 +98,11 @@ function AnthropicFileChip(props: {
     setActionError(null);
     try {
       const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
-      data && copyToClipboard(await data.blob.text(), fileName);
+      if (!data) return;
+      if (data.httpMimeIsText)
+        copyToClipboard(await data.blob.text(), fileName);
+      else
+        copyBlobPromiseToClipboard(data.httpMimeType, Promise.resolve(data.blob), fileName);
     } catch (error: any) {
       setActionError(error?.message || 'Copy failed');
     } finally {
@@ -136,26 +142,42 @@ function AnthropicFileChip(props: {
       const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
       if (!data) return;
 
-      // only inline textual content
-      if (!data.httpMimeIsText)
-        return setActionError('Cannot inline binary file');
+      // text: inline as fenced code block
+      if (data.httpMimeIsText) {
+        const text = await data.blob.text();
 
-      const text = await data.blob.text();
-
-      // fence with adaptive depth (extra backticks if content contains ```)
-      let fence = '```';
-      while (text.includes(fence) && fence.length < 10)
-        fence += '`';
-      onFragmentReplace(createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`));
-
-      // // doc attachment alternative (richer: title bar, edit, live file sync)
-      // const isCode = mimeType !== 'text/plain';
-      // const vdt = isCode ? DVMimeType.VndAgiCode : DVMimeType.TextPlain;
-      // const newFragment = createDocAttachmentFragment(
-      //   fileName, 'Inlined from hosted file', vdt,
-      //   createDMessageDataInlineText(text, mimeType),
-      //   fileName, 1,
-      // );
+        // fence with adaptive depth (extra backticks if content contains ```)
+        let fence = '```';
+        while (text.includes(fence) && fence.length < 10)
+          fence += '`';
+        onFragmentReplace(createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`));
+      }
+      // image: get dimensions, store in DBlob, and create a Zync asset reference
+      // else if (data.httpMimeIsImage) {
+      //
+      //   const { width, height } = await imageBlobGetDimensions(data.blob).catch(() => ({ width: 0, height: 0 }));
+      //
+      //   const dblobAssetId = await addDBImageAsset('app-chat', data.blob, {
+      //     label: fileName,
+      //     origin: { ot: 'generated', source: 'ai-text-to-image', generatorName: 'anthropic-code-execution', prompt: '', parameters: {}, generatedAt: new Date().toISOString() },
+      //     metadata: { width, height },
+      //   });
+      //
+      //   onFragmentReplace(createZyncAssetReferenceContentFragment(
+      //     nanoidToUuidV4(dblobAssetId, 'convert-dblob-to-dasset'),
+      //     fileName,
+      //     'image',
+      //     {
+      //       pt: 'image_ref',
+      //       dataRef: createDMessageDataRefDBlob(dblobAssetId, data.httpMimeType, data.blob.size),
+      //       ...(fileName ? { altText: fileName } : {}),
+      //       ...(width ? { width } : {}),
+      //       ...(height ? { height } : {}),
+      //     },
+      //   ));
+      // }
+      else
+        return setActionError('Cannot inline this file type');
 
       // fire-and-forget: delete from provider
       apiAsync.llmAnthropic.fileApiDelete.mutate({ access, fileId }).catch(console.error);
@@ -167,8 +189,8 @@ function AnthropicFileChip(props: {
   }, [fileContent, refetchFileContent, access, fileId, fileName, onFragmentReplace]);
 
 
-  const canCopy = !!metadata?.mimeIsText;
-  const canInline = !!onFragmentReplace && !!metadata?.mimeIsText;
+  const canCopy = !!metadata?.mimeIsText || !!metadata?.mimeIsImage;
+  const canInline = !!onFragmentReplace && !!metadata?.mimeIsText; // for images, replace with ... && canCopy
 
   const isBusy = !!busy || metaLoading;
   const hasError = !!metaError || !!actionError;
