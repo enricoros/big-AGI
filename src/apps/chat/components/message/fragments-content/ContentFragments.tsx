@@ -370,6 +370,7 @@ export function ContentFragments(props: {
               messageGeneratorLlmId={props.messageGeneratorLlmId}
               contentScaling={props.contentScaling}
               onFragmentDelete={props.onFragmentDelete}
+              onFragmentReplace={props.onFragmentReplace}
             />
           );
 

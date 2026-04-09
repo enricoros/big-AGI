@@ -6,19 +6,23 @@ import * as React from 'react';
 
 import TimeAgo from 'react-timeago';
 
-import { Box, CircularProgress, IconButton, Sheet, Typography } from '@mui/joy';
+import { Box, CircularProgress, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet, Typography } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import type { AnthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import type { DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageContentFragment, DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { mimeTypeIsPlainText } from '~/common/attachment-drafts/attachment.mimetypes';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
@@ -77,15 +81,16 @@ function AnthropicFileChip(props: {
   fileId: string,
   contentScaling: ContentScaling,
   onFragmentDelete?: () => void,
+  onFragmentReplace?: (newFragment: DMessageContentFragment) => void,
 }) {
 
   // state
-  const [busy, setBusy] = React.useState<false | 'download' | 'copy' | 'delete'>(false);
+  const [busy, setBusy] = React.useState<false | 'download' | 'copy' | 'delete' | 'inline'>(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const { showPromisedOverlay } = useOverlayComponents();
 
   // props
-  const { access, fileId, onFragmentDelete } = props;
+  const { access, fileId, onFragmentDelete, onFragmentReplace } = props;
 
   // external state
   const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmAnthropic.fileApiGetMetadata.useQuery(
@@ -165,9 +170,53 @@ function AnthropicFileChip(props: {
   }, [access, fileId, fileName, onFragmentDelete, showPromisedOverlay]);
 
 
+  const handleInline = React.useCallback(async () => {
+    if (!onFragmentReplace) return;
+    setBusy('inline');
+    setActionError(null);
+    try {
+      const { blob, mimeType } = await _fetchFileBlob();
+
+      // only inline textual content
+      if (!mimeTypeIsPlainText(mimeType)) {
+        setActionError('Cannot inline binary file');
+        return;
+      }
+
+      const text = await blob.text();
+
+      // fence with adaptive depth (extra backticks if content contains ```)
+      let fence = '```';
+      while (text.includes(fence))
+        fence += '`';
+      const newFragment = createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`);
+      onFragmentReplace(newFragment);
+
+      // // doc attachment alternative (richer: title bar, edit, live file sync)
+      // const isCode = mimeType !== 'text/plain';
+      // const vdt = isCode ? DVMimeType.VndAgiCode : DVMimeType.TextPlain;
+      // const newFragment = createDocAttachmentFragment(
+      //   fileName, 'Inlined from hosted file', vdt,
+      //   createDMessageDataInlineText(text, mimeType),
+      //   fileName, 1,
+      // );
+
+      // fire-and-forget: delete from provider
+      apiAsync.llmAnthropic.fileApiDelete.mutate({ access, fileId }).catch(() => {/* silent */
+      });
+    } catch (error: any) {
+      setActionError(error?.message || 'Inline failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [_fetchFileBlob, access, fileId, fileName, onFragmentReplace]);
+
+
+  const canInline = !!onFragmentReplace && !!metadata && mimeTypeIsPlainText(metadata.mime_type);
+
   const isBusy = !!busy || metaLoading;
   const hasError = !!metaError || !!actionError;
-  const isFileGone = !!metaError && typeof metaError === 'object' && 'data' in metaError && metaError.data?.httpStatus === 404;
+  const isFileGone = !!metaError && typeof metaError === 'object' && 'data' in metaError && (metaError.data?.httpStatus === 404 || metaError.data?.aixFHttpStatus === 404);
 
 
   return (
@@ -188,6 +237,7 @@ function AnthropicFileChip(props: {
       }}
     >
       <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.5 }} />
+
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
           {metaLoading ? 'Loading...' : isFileGone ? `${fileId} - file no longer available` : hasError ? `${displayName} - ${actionError || 'Could not load file info'}` : displayName}
@@ -198,20 +248,46 @@ function AnthropicFileChip(props: {
           </Box>
         )}
       </Box>
-      <GoodTooltip title='Copy to clipboard'>
-        <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleCopy} size='sm'>
-          {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
-        </IconButton>
-      </GoodTooltip>
-      <GoodTooltip title='Download file'>
-        <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleDownload} size='sm'>
-          {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
-        </IconButton>
-      </GoodTooltip>
-      {onFragmentDelete && (
-        <GoodTooltip title='Delete from Anthropic servers'>
-          <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDelete} size='sm'>
-            {busy === 'delete' ? <CircularProgress size='sm' /> : <DeleteOutlineIcon sx={{ fontSize: 'lg' }} />}
+
+      {!isFileGone ? <>
+
+        <GoodTooltip title='Copy to clipboard'>
+          <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleCopy} size='sm'>
+            {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
+          </IconButton>
+        </GoodTooltip>
+        <GoodTooltip title='Download file'>
+          <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleDownload} size='sm'>
+            {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
+          </IconButton>
+        </GoodTooltip>
+        {(onFragmentDelete || onFragmentReplace) && (
+          <Dropdown>
+            <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', color: 'primary', size: 'sm', disabled: isBusy && busy !== 'inline' } }}>
+              {(busy === 'delete' || busy === 'inline') ? <CircularProgress size='sm' /> : <MoreVertIcon sx={{ fontSize: 'lg' }} />}
+            </MenuButton>
+            <Menu placement='bottom-end' sx={{ minWidth: 180 }}>
+              {/* Inline as doc attachment */}
+              <MenuItem disabled={!canInline || isBusy} onClick={handleInline}>
+                <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+                Inline
+              </MenuItem>
+              {!!onFragmentDelete && <ListDivider />}
+              {/* Delete from provider */}
+              {!!onFragmentDelete && (
+                <MenuItem color='danger' disabled={isBusy} onClick={handleDelete}>
+                  <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+                  Delete
+                </MenuItem>
+              )}
+            </Menu>
+          </Dropdown>
+        )}
+
+      </> : onFragmentDelete && (
+        <GoodTooltip title='Remove from message'>
+          <IconButton variant='plain' color='danger' onClick={onFragmentDelete} size='sm'>
+            <DeleteOutlineIcon sx={{ fontSize: 'lg' }} />
           </IconButton>
         </GoodTooltip>
       )}
@@ -226,14 +302,19 @@ export function BlockPartHostedResource(props: {
   messageGeneratorLlmId?: string | null,
   contentScaling: ContentScaling,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
 
   const { resource } = props.hostedResourcePart;
-  const { fragmentId, onFragmentDelete } = props;
+  const { fragmentId, onFragmentDelete, onFragmentReplace } = props;
 
   const handleFragmentDelete = React.useCallback(() => {
     onFragmentDelete?.(fragmentId);
   }, [fragmentId, onFragmentDelete]);
+
+  const handleFragmentReplace = React.useCallback((newFragment: DMessageContentFragment) => {
+    onFragmentReplace?.(fragmentId, newFragment);
+  }, [fragmentId, onFragmentReplace]);
 
   // reactive service resolution (stable string selector, no re-render loops)
   const serviceId = useAnthropicServiceId(resource.via === 'anthropic' ? (props.messageGeneratorLlmId ?? undefined) : undefined);
@@ -251,6 +332,7 @@ export function BlockPartHostedResource(props: {
       fileId={resource.fileId}
       contentScaling={props.contentScaling}
       onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
+      onFragmentReplace={onFragmentReplace ? handleFragmentReplace : undefined}
     />
   );
 }
