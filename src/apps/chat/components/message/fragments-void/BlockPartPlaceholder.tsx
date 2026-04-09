@@ -258,7 +258,7 @@ function ModelOperationChip(props: {
   const isError = state === 'error';
   const isFinished = isDone || isError;
 
-  const iText = iTexts?.join('\n').trimStart() ?? null;
+  const iText = iTexts?.join('\n\n').trimStart() ?? null;
   const oText = oTexts?.join('\n') ?? null;
   const hasDetails = !!iText || !!oText;
 
