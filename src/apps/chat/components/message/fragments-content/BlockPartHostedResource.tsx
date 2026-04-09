@@ -207,11 +207,13 @@ function AnthropicFileChip(props: {
 
       {!isFileGone ? <>
 
-        <GoodTooltip title='Copy to clipboard'>
-          <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone || !canCopy} onClick={handleCopy} size='sm'>
-            {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
-          </IconButton>
-        </GoodTooltip>
+        {canCopy && (
+          <GoodTooltip title='Copy to clipboard'>
+            <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleCopy} size='sm'>
+              {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
+            </IconButton>
+          </GoodTooltip>
+        )}
         <GoodTooltip title='Download file'>
           <IconButton variant='soft' color='primary' disabled={isBusy || isFileGone} onClick={handleDownload} size='sm'>
             {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
