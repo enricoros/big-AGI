@@ -28,7 +28,7 @@ export const wireOllamaListModelsSchema = z.object({
  */
 export const wireOllamaModelInfoSchema = z.object({
   license: z.string().optional(),
-  modelfile: z.string(),
+  modelfile: z.string().optional(),
   parameters: z.string().optional(),
   template: z.string().optional(),
   details: wireOllamaModelDetailsSchema.nullable().optional(),
