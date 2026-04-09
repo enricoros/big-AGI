@@ -70,8 +70,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive */ },
-      // Note: sweep validates 'max' effort, but Anthropic docs state max is not available on Sonnet 4.6 as of 2026-02-18
-      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       { paramId: 'llmVndAnt1MContext' },
       ...ANT_TOOLS_DYNAMIC,
     ],
@@ -221,8 +220,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
-      // Note: sweep validates 'max' effort, but Anthropic docs state max is not available on Sonnet 4.6 as of 2026-02-18
-      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       { paramId: 'llmVndAnt1MContext' },
       ...ANT_TOOLS_DYNAMIC,
     ],
