@@ -255,16 +255,17 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           _wire?.logResponse(wireModels);
           const models = wireOllamaListModelsSchema.parse(wireModels).models;
 
-          // retrieve info for each of the models
-          return await Promise.all(models.map(async (model) => {
-
-            // perform /api/show on each model to get detailed info
+          // retrieve info for each of the models (don't fail all if a single /api/show fails)
+          const results = await Promise.allSettled(models.map(async (model) => {
             const { headers, url } = ollamaAccess(access, '/api/show');
             const wireModelInfo = await fetchJsonOrTRPCThrow({ url, method: 'POST', headers, body: { 'name': model.name }, name: 'Ollama', signal });
 
             const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
             return { ...model, ...modelInfo };
           }));
+          return results.map((result, i) =>
+            result.status === 'fulfilled' ? result.value : { ...models[i], details: null },
+          );
         },
         convertToDescriptions: (detailedModels) => {
           return detailedModels.map((model) => {
