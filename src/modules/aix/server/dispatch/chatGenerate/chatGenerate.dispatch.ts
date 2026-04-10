@@ -17,6 +17,7 @@ import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
 import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
+import { createAnthropicFileInlineTransform } from './parsers/anthropic.transform-fileInline';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
@@ -80,6 +81,10 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+        particleTransform: !model.vndAntTransformInlineFiles ? undefined : createAnthropicFileInlineTransform(
+          anthropicAccess(access, ANTHROPIC_API_PATHS.files, hostedFeatures),
+          model.vndAntTransformInlineFiles === 'inline-file-and-delete',
+        ),
       };
     }
 

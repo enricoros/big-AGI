@@ -485,6 +485,7 @@ export namespace AixWire_API {
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
     vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
+    vndAntTransformInlineFiles: z.enum(['inline-file', 'inline-file-and-delete']).optional(),
     vndAntWebDynamic: z.boolean().optional(),
     vndAntWebFetch: z.enum(['auto']).optional(),
     vndAntWebFetchMaxUses: z.number().int().min(1).max(50).optional(),
