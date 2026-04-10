@@ -1,6 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { MaybePromise } from '~/common/types/useful.types';
+import { AIVndAntInlineFilesPolicy, getVndAntInlineFiles } from '~/common/stores/store-ai';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageGenerator, createGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
@@ -112,7 +113,7 @@ export function aixCreateModelFromLLMOptions(
     // Cross-provider unified options
     reasoningEffort: llmVndAntEffort ?? llmVndGemEffort ?? llmVndOaiEffort ?? llmVndMiscEffort, // strippable
 
-    // Anthropic
+    // Anthropic - (vndAntContainerId, vndAntTransformInlineFiles are set in the decorate function)
     ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget === -1 ? 'adaptive' as const : llmVndAntThinkingBudget } : {}),
     ...(llmVndAnt1MContext ? { vndAnt1MContext: llmVndAnt1MContext } : {}),
     ...(llmVndAntInfSpeed === 'fast' ? { vndAntInfSpeed: 'fast' } : {}),
@@ -162,6 +163,23 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndXaiXSearch === 'auto' ? { vndXaiXSearch: llmVndXaiXSearch } : {}),
     ...(llmVndXaiXSearchHandles ? { vndXaiXSearchHandles: llmVndXaiXSearchHandles } : {}),
   });
+}
+
+export function aixDecorateModelFromGlobals(model: AixAPI_Model, decorations: {
+  // [Anthropic Container] Container ID from a prior turn (caller is responsible for expiry checks)
+  vndAntContainerId?: string;
+  // [Anthropic File Inlining] Global user policy; 'off' means don't decorate (caller can pass it raw)
+  vndAntTransformInlineFiles?: AIVndAntInlineFilesPolicy;
+}): void {
+
+  // [Anthropic Container] Inject session state from a prior turn
+  if (decorations.vndAntContainerId)
+    model.vndAntContainerId = decorations.vndAntContainerId;
+
+  // [Anthropic File Inlining] Apply only when not 'off' - the wire enum doesn't include 'off'
+  if (decorations.vndAntTransformInlineFiles && decorations.vndAntTransformInlineFiles !== 'off')
+    model.vndAntTransformInlineFiles = decorations.vndAntTransformInlineFiles;
+
 }
 
 
@@ -507,10 +525,10 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
   const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmOptionsOverride, llmId);
-
-  // [Anthropic Container] Inject session state: Anthropic container from a prior turn (must be unexpired)
-  if (clientOptions?.antContainerId)
-    aixModel.vndAntContainerId = clientOptions.antContainerId;
+  aixDecorateModelFromGlobals(aixModel, {
+    vndAntContainerId: clientOptions?.antContainerId,
+    vndAntTransformInlineFiles: aixAccess.dialect === 'anthropic' ? getVndAntInlineFiles() : undefined,
+  });
 
   // Client-side late stage model HotFixes
   const { shallDisableStreaming } = await clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llmParameters.llmRef || llm.id);
