@@ -3,10 +3,10 @@ import * as z from 'zod/v4';
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { ListModelsResponse_schema } from '../llm.server.types';
+import { FileMetadataResponse_schema, ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
-import { anthropicAccess, anthropicAccessSchema, AnthropicAccessSchema, AnthropicHostedFeatures, ANTHROPIC_API_PATHS } from './anthropic.access';
+import { ANTHROPIC_API_PATHS, anthropicAccess, AnthropicAccessSchema, anthropicAccessSchema, AnthropicHostedFeatures } from './anthropic.access';
 
 
 // Mappers
@@ -100,15 +100,7 @@ export const llmAnthropicRouter = createTRPCRouter({
       access: anthropicAccessSchema,
       fileId: z.string(),
     }))
-    .output(z.object({
-      id: z.string(),
-      type: z.literal('file'),
-      filename: z.string(),
-      mime_type: z.string(),
-      size_bytes: z.number(),
-      created_at: z.string(),
-      downloadable: z.boolean().optional(),
-    }))
+    .output(FileMetadataResponse_schema)
     .query(async ({ input: { access, fileId } }) => {
       return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
     }),

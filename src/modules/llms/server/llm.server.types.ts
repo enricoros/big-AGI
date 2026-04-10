@@ -166,3 +166,16 @@ export type OrtVendorLookupResult = {
 export const ListModelsResponse_schema = z.object({
   models: z.array(ModelDescription_schema),
 });
+
+
+/// File Metadata Response
+
+export const FileMetadataResponse_schema = z.object({
+  id: z.string(),
+  type: z.literal('file'),
+  filename: z.string(),
+  mime_type: z.string(),
+  size_bytes: z.number(),
+  created_at: z.string(),
+  downloadable: z.boolean().optional(),
+});
