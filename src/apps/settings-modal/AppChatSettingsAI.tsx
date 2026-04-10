@@ -6,6 +6,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
+import { AIVndAntInlineFilesPolicy, useAIPreferencesStore } from '~/common/stores/store-ai';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
@@ -31,6 +32,12 @@ const _keepThinkingBlocksOptions: FormSelectOption<ChatThinkingPolicy>[] = [
     label: 'Discard All',
     description: 'May reduce quality',
   },
+] as const;
+
+const _vndAntInlineFilesOptions: FormSelectOption<AIVndAntInlineFilesPolicy>[] = [
+  { value: 'off', label: 'Show', description: 'Keep as links' },
+  { value: 'inline-file', label: 'Embed', description: 'Default, embed in chat' },
+  { value: 'inline-file-and-delete', label: 'Embed + Free', description: 'Embed, then free' },
 ] as const;
 
 const _tokenCountingMethodOptions: FormSelectOption<TokenCountingMethod>[] = [
@@ -82,6 +89,7 @@ export function AppChatSettingsAI() {
     chatThinkingPolicy, setChatThinkingPolicy,
     tokenCountingMethod, setTokenCountingMethod,
   } = useChatAutoAI();
+  const vndAntInlineFiles = useAIPreferencesStore(state => state.vndAntInlineFiles);
 
   const showModelIcons = false; // useUIComplexityMode() === 'extra';
 
@@ -151,6 +159,22 @@ export function AppChatSettingsAI() {
       options={_keepThinkingBlocksOptions}
       value={chatThinkingPolicy}
       onChange={setChatThinkingPolicy}
+    />
+
+    <FormSelectControl<AIVndAntInlineFilesPolicy>
+      title='Anthropic Files'
+      tooltip={<>
+        When Claude uses tools like code execution, it may produce text and image files stored in Anthropic&apos;s File API. This setting controls whether Big-AGI should automatically download and embed them in the chat.
+        <ul>
+          <li><b>Off</b>: keep as references (default).</li>
+          <li><b>Inline</b>: download and embed text/images.</li>
+          <li><b>Inline + Free</b>: embed, then delete from Anthropic to free storage.</li>
+        </ul>
+        Only affects Anthropic models.
+      </>}
+      options={_vndAntInlineFilesOptions}
+      value={vndAntInlineFiles}
+      onChange={useAIPreferencesStore.getState().setVndAntInlineFiles}
     />
 
     <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
