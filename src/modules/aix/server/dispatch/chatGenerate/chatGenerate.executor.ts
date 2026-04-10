@@ -50,27 +50,47 @@ export async function* executeChatGenerateDispatch(
   if (_d.requestBodyOverride && 'body' in dispatch.request)
     dispatch.request.body = { ...dispatch.request.body, ..._d.requestBodyOverride };
 
-  // Connect to the dispatch
+  // Connect to the dispatch (yields debug echo particles directly, bypasses particle transforms)
   const dispatchResponse = yield* _connectToDispatch(dispatch.request, intakeAbortSignal, chatGenerateTx, _d);
   if (!dispatchResponse)
     return; // exit: error already handled
 
-  // Consume dispatch response
-  if (!streaming)
-    yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
-  else
-    yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+  // Inner stream
+  const innerStream = (async function* () {
 
-  // Tack profiling particles if generated
-  if (_d.profiler) {
-    chatGenerateTx.addDebugProfilerData(_d.profiler.getResultsData());
-    // performanceProfilerLog('AIX Router Performance', profiler?.getResultsData()); // uncomment to log to server console
-    _d.profiler.clearMeasurements();
+    // Consume dispatch response
+    if (!streaming)
+      yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+    else
+      yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+
+    // Tack profiling particles if generated
+    if (_d.profiler) {
+      chatGenerateTx.addDebugProfilerData(_d.profiler.getResultsData());
+      // performanceProfilerLog('AIX Router Performance', profiler?.getResultsData()); // uncomment to log to server console
+      _d.profiler.clearMeasurements();
+    }
+
+    // Flush everything that's left; if we're here we have encountered a clean end condition,
+    // or an error that has already been queued up for this last flush
+    yield* chatGenerateTx.flushParticles();
+
+  })();
+
+  // Transform (optional): pipe the stream through a 1:1 async particle transformer (see anthropic.transform-fileInline.ts)
+  const transform = dispatch.particleTransform;
+  if (!transform) {
+    yield* innerStream; // no transform, passthrough
+    return;
   }
-
-  // Flush everything that's left; if we're here we have encountered a clean end condition,
-  // or an error that has already been queued up for this last flush
-  yield* chatGenerateTx.flushParticles();
+  for await (const particle of innerStream) {
+    try {
+      yield await transform(particle);
+    } catch (error: any) {
+      console.warn(`[AIX] ${_d.prettyDialect}: particle transform '${transform.name}' threw, passing original particle through`, { error: error?.message || error });
+      yield particle;
+    }
+  }
 }
 
 

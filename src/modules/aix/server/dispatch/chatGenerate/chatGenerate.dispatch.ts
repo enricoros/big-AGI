@@ -4,7 +4,7 @@ import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLR
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
-import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request, AixWire_Particles } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
@@ -31,6 +31,7 @@ export type ChatGenerateDispatch = {
   bodyTransform?: AixDemuxers.StreamBodyTransform;
   demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
+  particleTransform?: ChatGenerateParticleTransformFunction;
 };
 
 export type ChatGenerateDispatchRequest =
@@ -42,6 +43,13 @@ export type ChatGenerateParseContext = {
 };
 
 export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void;
+
+/**
+ * 1->1 particle transform applied by the executor to every emitted particle.
+ * Return the input for pass-through, or a new particle to replace it.
+ * Thrown errors are caught by the executor and fall back to the original particle.
+ */
+export type ChatGenerateParticleTransformFunction = (particle: AixWire_Particles.ChatGenerateOp) => Promise<AixWire_Particles.ChatGenerateOp>;
 
 
 // -- Specialized Implementations -- Core of Server-side AI Vendors abstraction --

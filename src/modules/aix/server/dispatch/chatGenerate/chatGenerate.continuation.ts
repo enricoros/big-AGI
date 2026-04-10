@@ -50,6 +50,7 @@ export class DispatchContinuationSignal extends Error {
  *  executeChatGenerateWithContinuation (catches DispatchContinuationSignal, mutates body, re-dispatches)
  *    -> executeChatGenerateWithOperationRetry (catches OperationRetrySignal, retries same dispatch)
  *      -> executeChatGenerateDispatch (single dispatch: connect, consume, yield particles)
+ *         | particle pipeline: each yielded particle is piped through dispatch.particleTransform (e.g. Anthropic file inline)
  *        -> fetchWithAbortableConnectionRetry (retries HTTP connection)
  */
 export async function* executeChatGenerateWithContinuation(
