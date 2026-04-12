@@ -55,6 +55,8 @@ let _fallbackStoreApi: StoreApi<PerChatOverlayStore> | null = null;
 function _getFallbackStoreApi(caller: string): StoreApi<PerChatOverlayStore> {
   if (!_fallbackStoreApi) {
     console[Release.IsNodeDevBuild ? 'warn' : 'log'](`[DEV] Requiring fallback Session ${caller} store`);
+    if (Release.IsNodeDevBuild)
+      debugger; // We want to see the backtrace
     _fallbackStoreApi = createPerChatVanillaStore();
   }
   return _fallbackStoreApi;
