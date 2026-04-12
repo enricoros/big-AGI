@@ -20,6 +20,7 @@ const slotPropsInputSx: InputSlotsAndSlotProps['slotProps'] = {
 
 export function FormInputKey(props: {
   autoCompleteId: string, // introduced to avoid clashes
+  size?: 'sm' | 'md' | 'lg',
   label?: string, rightLabel?: string | React.JSX.Element,
   tooltip?: string,
   description?: string | React.JSX.Element,
@@ -73,6 +74,7 @@ export function FormInputKey(props: {
           name={acId}
           autoComplete={props.noKey ? 'on' /* e.g. host names */ : 'new-password' /* tells password managers this is a 'new password' entry */}
           autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
+          size={props.size}
           variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
           value={props.value} onChange={handleChange}
           placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
