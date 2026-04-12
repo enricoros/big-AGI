@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { Box, FormControl, FormHelperText, FormLabel, IconButton, Input, InputSlotsAndSlotProps } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -41,7 +41,7 @@ export function FormInputKey(props: {
 
   const endDecorator = React.useMemo(() => !!props.value && !props.noKey && (
     <IconButton onClick={() => setIsVisible(!isVisible)}>
-      {isVisible ? <VisibilityIcon sx={{ fontSize: 'lg' }} /> : <VisibilityOffIcon sx={{ fontSize: 'md' }} />}
+      {isVisible ? <VisibilityOutlinedIcon sx={{ fontSize: 'lg' }} /> : <VisibilityOffOutlinedIcon sx={{ fontSize: 'md' }} />}
     </IconButton>
   ), [props.value, props.noKey, isVisible]);
 
@@ -49,7 +49,7 @@ export function FormInputKey(props: {
   const ghostUsername = props.noKey ? null : props.autoCompleteId.replace('-key', '').replace('-', ' ');
 
   return (
-    <FormControl id={acId}>
+    <FormControl size={props.size} id={acId}>
 
       {!!props.label && <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         {props.tooltip ? (
@@ -74,7 +74,7 @@ export function FormInputKey(props: {
           name={acId}
           autoComplete={props.noKey ? 'on' /* e.g. host names */ : 'new-password' /* tells password managers this is a 'new password' entry */}
           autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
-          size={props.size}
+          // size={props.size}
           variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
           value={props.value} onChange={handleChange}
           placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
