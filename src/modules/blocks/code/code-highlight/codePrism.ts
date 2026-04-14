@@ -13,6 +13,12 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-typescript';
 
+
+// configuration
+const UNKNOWN_AS_NULL = false; // if true, skip the 11-language auto-detect loop
+const AUTO_DETECT_SAMPLE_CHARS = 2048; // cap auto-detection sampling - language is obvious from the first chunk
+
+
 // NOTE: must match Prism components imports
 const hPrismLanguages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'mermaid', 'plant-uml', 'python', 'sql', 'typescript'];
 
@@ -47,6 +53,11 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
     const extension = blockTitle.split('.').pop();
     if (extension && hFileExtensionsMap.hasOwnProperty(extension))
       return hFileExtensionsMap[extension];
+
+    // title provided but unknown extension: optionally skip the expensive 11-language auto-detect
+    // (when enabled, we trust the user's title and let highlightCode fall back to typescript)
+    if (UNKNOWN_AS_NULL)
+      return null;
   }
 
   // or, based on the first line of code, return the language
@@ -57,6 +68,7 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
   // or, use Prism with language tokenization to and-detect the language
   // FIXME: this is a very poor way to detect the language, as it's tokenizing it in any language
   //        and getting the one with the most tokens - which may as well be the wrong one
+  const sample = code.length > AUTO_DETECT_SAMPLE_CHARS ? code.slice(0, AUTO_DETECT_SAMPLE_CHARS) : code;
   let detectedLanguage: string | null = null;
   let maxTokens = 0;
   hPrismLanguages.forEach((language) => {
@@ -70,7 +82,7 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
     //     console.warn(`Prism language '${language}' not found, falling back to 'typescript'`);
     //   }
     // }
-    const tokens = Prism.tokenize(code, grammar);
+    const tokens = Prism.tokenize(sample, grammar);
     const tokenCount = tokens.filter((token) => typeof token !== 'string').length;
     if (tokenCount > maxTokens) {
       maxTokens = tokenCount;
