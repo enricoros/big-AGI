@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { estimateTokensForFragments } from '~/common/stores/chat/chat.tokens';
-import { useShallowStable } from '~/common/util/hooks/useShallowObject';
+import { useMemoShallowStable } from '~/common/util/hooks/useShallowObject';
 
 import type { AttachmentDraft } from '../attachment.types';
 import type { AttachmentEnrichmentSummary, IAttachmentEnrichment } from './attachment.enrichment';
@@ -64,7 +64,7 @@ class LLMAttachmentEnrichment implements IAttachmentEnrichment {
  * Hook that creates an LLM-specific IAttachmentEnrichment and computes
  * collection-level summary for the given attachment drafts.
  */
-export function useAttachmentDraftsEnrichment(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null, chatLLMSupportsImages: boolean): {
+export function useAttachmentDraftsEnrichment(attachmentDraftsStable: AttachmentDraft[], chatLLM: DLLM | null, chatLLMSupportsImages: boolean): {
   enrichment: IAttachmentEnrichment;
   summary: AttachmentEnrichmentSummary;
 } {
@@ -76,12 +76,12 @@ export function useAttachmentDraftsEnrichment(attachmentDrafts: AttachmentDraft[
   );
 
   // Collection-level summary - shallow-stabilized to avoid unnecessary re-renders
-  const summary = useShallowStable<AttachmentEnrichmentSummary>({
-    allCompatible: attachmentDrafts.every(enrichment.isCompatible),
-    anyImages: attachmentDrafts.some(enrichment.hasImages),
-    anyInlinable: attachmentDrafts.some(enrichment.supportsTextInline),
-    totalTokensApprox: enrichment.estimateTotalTokens(attachmentDrafts),
-  });
+  const summary = useMemoShallowStable<AttachmentEnrichmentSummary>(() => ({
+    allCompatible: attachmentDraftsStable.every(enrichment.isCompatible),
+    anyImages: attachmentDraftsStable.some(enrichment.hasImages),
+    anyInlinable: attachmentDraftsStable.some(enrichment.supportsTextInline),
+    totalTokensApprox: enrichment.estimateTotalTokens(attachmentDraftsStable),
+  }), [attachmentDraftsStable, enrichment]);
 
   return { enrichment, summary };
 }
