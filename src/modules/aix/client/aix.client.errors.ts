@@ -45,6 +45,11 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (error instanceof Error && error.message === 'Stream closed')
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' /* DO NOT CHANGE '**connection terminated**' - usually server (Vercel) side broken */ };
 
+  // Undici (Node/Edge/Electron fetch) mid-stream TLS or socket drop - surfaces on any node-backed path (CSF, Electron, SSR).
+  // Distinct from 'Stream closed' (tRPC wrapper): this one typically means the upstream LLM provider closed the TLS socket mid-stream, not the Vercel edge.
+  if (error instanceof TypeError && error.message === 'terminated')
+    return { errorType: 'net-disconnected', errorMessage: 'The AI provider interrupted mid-stream: **upstream dropped**.' /* DO NOT CHANGE '**upstream dropped**' - matched in BlockPartError */ };
+
 
   // tRPC-level protocol errors (wrapped by tRPC client)
   // Initial connection failures, HTTP errors, or text responses that blow up tRPC's JSON parser

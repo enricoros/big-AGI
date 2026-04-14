@@ -21,11 +21,15 @@ export function BlockPartError(props: {
   // special error presentation, based on hints
   switch (props.errorHint) {
     case 'aix-net-disconnected':
-      // determine the 2 'kinds' of disconnection errors in aix.client.ts
+      // determine the 'kinds' of disconnection errors in aix.client.ts
+      // - 'network error' (browser) -> client side
+      // - 'connection terminated' (tRPC 'Stream closed' wrapper) -> server/edge side (CSF recovery)
+      // - 'upstream dropped' (undici TypeError 'terminated') -> upstream provider socket drop (CSF recovery applies)
       const kind =
         props.errorText.includes('**network error**') ? 'net-client-closed'
           : props.errorText.includes('**connection terminated**') ? 'net-server-closed'
-            : 'net-unknown-closed';
+            : props.errorText.includes('**upstream dropped**') ? 'net-server-closed'
+              : 'net-unknown-closed';
 
       // For client-side error, we don't show the _NetDisconnected component
       if (kind === 'net-client-closed')
