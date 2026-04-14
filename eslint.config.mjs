@@ -14,4 +14,10 @@ const compat = new FlatCompat({
 
 export default defineConfig([{
     extends: compat.extends("next/core-web-vitals"),
+    rules: {
+        //
+        "react-hooks/exhaustive-deps": ["warn", {
+            additionalHooks: "(useMemoShallowStable)",
+        }],
+    },
 }]);
