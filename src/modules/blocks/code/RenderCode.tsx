@@ -202,12 +202,17 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     return inferCodeLanguage(blockTitle, code);
   }, [blockTitle, code, inferCodeLanguage, isHTMLCode]);
 
-  const highlightedCode = React.useMemo(() => {
+  const codeSyntaxHtml = React.useMemo(() => {
     // fast-off
     if (!renderSyntaxHighlight || !code)
       return null;
     return highlightCode(inferredCodeLanguage, code, renderLineNumbers);
   }, [code, highlightCode, inferredCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
+
+  // Perf: defer only the Prism-highlighted HTML injected into RenderCodeSyntax; the live `code`, heuristics, buttons,
+  // and non-syntax renderers (HTML/SVG/Mermaid/PlantUML/ChartJS) still see the current value. React may keep the
+  // previous colored tokens painted for a frame while reconciling a new highlight, coalescing fast streaming updates.
+  const deferredCodeSyntaxHtml = React.useDeferredValue(codeSyntaxHtml);
 
 
   // Title
@@ -286,7 +291,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
               : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                 : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                  : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} presenterMode={isFullscreen} />}
+                  : <RenderCodeSyntax highlightedSyntaxAsHtml={deferredCodeSyntaxHtml} presenterMode={isFullscreen} />}
         </Box>
 
       </Box>
