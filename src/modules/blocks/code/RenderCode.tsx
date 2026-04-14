@@ -35,6 +35,11 @@ import './RenderCode.css';
 // configuration
 const ALWAYS_SHOW_OVERLAY = true;
 
+// Perf: while streaming a large code block, throttle Prism re-highlighting (decimator ~15Hz -> capped here to ~7Hz).
+// Set BYTES to 0 to disable the optimization entirely (zero runtime cost when disabled).
+const PARTIAL_HIGHLIGHT_THROTTLE_BYTES = 8 * 1024;
+const PARTIAL_HIGHLIGHT_THROTTLE_MS = 150;
+
 
 // RenderCode
 
@@ -202,10 +207,21 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     return inferCodeLanguage(blockTitle, code);
   }, [blockTitle, code, inferCodeLanguage, isHTMLCode]);
 
-  // Perf: React-defer the *input* to Prism syntax highlight memo -> the highlight pass runs in a low-priority, interruptible render.
+
+  // Optimization 1: highlight decimation: max 6.6Hz throttle during large partial streams, as skipped intermediates are harmless.
+  const snapRef = React.useRef({ at: 0, code });
+  const throttle = !!PARTIAL_HIGHLIGHT_THROTTLE_BYTES && blockIsPartial && code.length > PARTIAL_HIGHLIGHT_THROTTLE_BYTES;
+  const now = throttle ? performance.now() : 0;
+  if (!throttle || now - snapRef.current.at >= PARTIAL_HIGHLIGHT_THROTTLE_MS) {
+    snapRef.current.at = now;
+    snapRef.current.code = code;
+  }
+  const throttledCodeForHighlight = snapRef.current.code;
+
+  // Optimization 2: highlight cancellation: React-defer the *input* to Prism syntax highlight memo -> the highlight pass runs in a low-priority, interruptible render.
   // A higher-priority update (input, scroll, another state change) aborts the pending pass -- so rapid streaming updates coalesce
   // into fewer Prism runs under pressure.
-  const deferredCodeForHighlight = React.useDeferredValue(code);
+  const deferredCodeForHighlight = React.useDeferredValue(throttledCodeForHighlight);
 
   const codeSyntaxHtml = React.useMemo(() => {
     // fast-off
