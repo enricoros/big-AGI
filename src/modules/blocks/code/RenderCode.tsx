@@ -168,10 +168,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // const handleMouseOverLeave = React.useCallback(() => setIsHovering(false), []);
 
+  // Optimization: stabilize the copy handler
+  const codeRef = React.useRef(code);
+  codeRef.current = code;
   const handleCopyToClipboard = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(code, 'Code');
-  }, [code]);
+    copyToClipboard(codeRef.current, 'Code');
+  }, []);
 
 
   // heuristics for specialized rendering
@@ -259,6 +262,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     flexDirection: 'column',
     // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
 
+    // in fullscreen mode, amplify contrast
+    ...isFullscreen && { backgroundColor: 'background.surface' },
+
     // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
     '[data-joy-color-scheme="dark"] &': isRenderingDiagram ? { backgroundColor: 'neutral.500' } : {},
 
@@ -268,7 +274,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     // patch the min height if we have the second row
     // ...(hasExternalButtons ? { minHeight: '5.25rem' } : {}),
 
-  }), [isBorderless, isRenderingDiagram, props.sx, showSoftWrap]);
+  }), [isBorderless, isFullscreen, isRenderingDiagram, props.sx, showSoftWrap]);
 
 
   return (
@@ -283,7 +289,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         ref={fullScreenElementRef}
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
-        sx={!isFullscreen ? codeSx : { ...codeSx, backgroundColor: 'background.surface' }}
+        sx={codeSx}
       >
 
         {/* Markdown Title (File/Type) */}
