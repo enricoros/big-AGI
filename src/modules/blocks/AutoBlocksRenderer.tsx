@@ -89,8 +89,15 @@ export function AutoBlocksRenderer(props: {
 
   // handlers
   const { setText } = props;
+
+  // Perf: stabilize text alteration callbacks. During streaming, `text` changes every packet, and we don't want to
+  // re-render completed non-last Code/Markdown blocks.
+  const curTextRef = React.useRef(text);
+  curTextRef.current = text;
+
   const handleReplaceCode = React.useCallback((search: string, replace: string): boolean => {
     if (setText) {
+      const text = curTextRef.current;
       const newText = text.replace(search, replace);
       if (newText !== text) {
         setText(newText);
@@ -98,7 +105,7 @@ export function AutoBlocksRenderer(props: {
       }
     }
     return false;
-  }, [setText, text]);
+  }, [setText]);
 
 
   // Memo the styles, to minimize re-renders
