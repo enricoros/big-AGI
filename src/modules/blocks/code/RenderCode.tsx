@@ -202,17 +202,17 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     return inferCodeLanguage(blockTitle, code);
   }, [blockTitle, code, inferCodeLanguage, isHTMLCode]);
 
+  // Perf: React-defer the *input* to Prism syntax highlight memo -> the highlight pass runs in a low-priority, interruptible render.
+  // A higher-priority update (input, scroll, another state change) aborts the pending pass -- so rapid streaming updates coalesce
+  // into fewer Prism runs under pressure.
+  const deferredCodeForHighlight = React.useDeferredValue(code);
+
   const codeSyntaxHtml = React.useMemo(() => {
     // fast-off
-    if (!renderSyntaxHighlight || !code)
+    if (!renderSyntaxHighlight || !deferredCodeForHighlight)
       return null;
-    return highlightCode(inferredCodeLanguage, code, renderLineNumbers);
-  }, [code, highlightCode, inferredCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
-
-  // Perf: defer only the Prism-highlighted HTML injected into RenderCodeSyntax; the live `code`, heuristics, buttons,
-  // and non-syntax renderers (HTML/SVG/Mermaid/PlantUML/ChartJS) still see the current value. React may keep the
-  // previous colored tokens painted for a frame while reconciling a new highlight, coalescing fast streaming updates.
-  const deferredCodeSyntaxHtml = React.useDeferredValue(codeSyntaxHtml);
+    return highlightCode(inferredCodeLanguage, deferredCodeForHighlight, renderLineNumbers);
+  }, [deferredCodeForHighlight, highlightCode, inferredCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
 
 
   // Title
@@ -291,7 +291,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
               : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                 : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                  : <RenderCodeSyntax highlightedSyntaxAsHtml={deferredCodeSyntaxHtml} presenterMode={isFullscreen} />}
+                  : <RenderCodeSyntax highlightedSyntaxAsHtml={codeSyntaxHtml} presenterMode={isFullscreen} />}
         </Box>
 
       </Box>
