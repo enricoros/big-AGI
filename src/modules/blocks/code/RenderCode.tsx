@@ -67,7 +67,7 @@ function RenderCode(props: RenderCodeBaseProps) {
       fallback={
         // Mimic the structure of the RenderCodeImpl - to mitigate race conditions that could cause problematic rendering
         // of code (where two components were missing from the structure)
-        <Box sx={renderCodecontainerSx}>
+        <Box sx={_styles.renderCodecontainer}>
           <Box component='code' className='language-unknown' aria-label='Displaying Code...' sx={{ p: 1.5, display: 'block', ...props.sx }}>
             <Box component='span' sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <Box component='span' className='code-container' aria-label='Code block'>
@@ -98,16 +98,38 @@ const _DynamicPrism = React.lazy(async () => {
 
 // Actual implemetation of the code rendering
 
-const renderCodecontainerSx: SxProps = {
-  // position the overlay buttons - this has to be one level up from the code, otherwise the buttons will h-scroll with the code
-  position: 'relative',
+const _styles = {
+  renderCodecontainer: {
+    // position the overlay buttons - this has to be one level up from the code, otherwise the buttons will h-scroll with the code
+    position: 'relative',
 
-  // style
-  '--IconButton-radius': OVERLAY_BUTTON_RADIUS,
+    // style
+    '--IconButton-radius': OVERLAY_BUTTON_RADIUS,
 
-  // fade in children buttons
-  [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
-};
+    // fade in children buttons
+    [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
+  },
+
+  blockTitle: {
+    backgroundColor: 'background.popup',
+    boxShadow: 'xs',
+    borderRadius: 'sm',
+    border: '1px solid var(--joy-palette-neutral-outlinedBorder)',
+    m: -0.5,
+    mb: 1.5,
+  },
+  blockTitleText: {
+    px: 1,
+    py: 0.5,
+    color: 'text.primary',
+  },
+
+  fullscreenSyntaxFix: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+} as const satisfies Record<string, SxProps>;
 
 const overlayGridSx: SxProps = {
   ...overlayButtonsTopRightSx,
@@ -116,11 +138,11 @@ const overlayGridSx: SxProps = {
   justifyItems: 'end',
 };
 
-
 const overlayFirstRowSx: SxProps = {
   display: 'flex',
   gap: 0.5,
 };
+
 
 function RenderCodeImpl(props: RenderCodeBaseProps & {
   highlightCode: (inferredCodeLanguage: string | null, code: string, addLineNumbers: boolean) => string,
@@ -282,7 +304,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
       ref={overlayBoundaryRef}
       // onMouseEnter={handleMouseOverEnter}
       // onMouseLeave={handleMouseOverLeave}
-      sx={renderCodecontainerSx}
+      sx={_styles.renderCodecontainer}
     >
 
       <Box
@@ -294,8 +316,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
         {/* Markdown Title (File/Type) */}
         {showBlockTitle && (
-          <Sheet sx={{ backgroundColor: 'background.popup', boxShadow: 'xs', borderRadius: 'sm', border: '1px solid var(--joy-palette-neutral-outlinedBorder)', m: -0.5, mb: 1.5 }}>
-            <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }} className='agi-ellipsize'>
+          <Sheet sx={_styles.blockTitle}>
+            <Typography level='body-sm' sx={_styles.blockTitleText} className='agi-ellipsize'>
               {blockTitle}
               {/*{inferredCodeLanguage}*/}
             </Typography>
@@ -307,7 +329,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             chars in a non-proper way.
             Since this damages the 'fullscreen' operation, we restore it somehow.
         */}
-        <Box component='span' sx={!isFullscreen ? undefined : { flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box component='span' sx={!isFullscreen ? undefined : _styles.fullscreenSyntaxFix}>
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
           {renderHTML ? <RenderCodeHtmlIFrame key={htmlReloadKey} htmlCode={code} isFullscreen={isFullscreen} />
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
