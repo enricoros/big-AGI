@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, BoxProps, styled } from '@mui/joy';
 
 
@@ -28,6 +29,13 @@ const BoxCollapser = styled(Box)({
   contain: 'layout',
 });
 
+// Fix for RenderCode losing fixed OverlayButtons positioning system: drops the `contain` which would create a
+// containing block for fixed-positioned descendants and trap things like position:fixed sticky overlays inside this collapser).
+// `overflow: clip` alone keeps the collapse animation clipping without the trap.
+const collapserNoContainSx = {
+  contain: 'none',
+} as const satisfies SxProps;
+
 const BoxCollapsee = styled(Box)({
   /**
    * FIX: the absence of this made the ChatPanelModelParameters content overflow on the horizontal
@@ -37,9 +45,9 @@ const BoxCollapsee = styled(Box)({
 });
 
 
-export function ExpanderControlledBox({ expanded, children, ...rest }: BoxProps & { expanded: boolean }) {
+export function ExpanderControlledBox({ expanded, noContain, children, ...rest }: BoxProps & { expanded: boolean, noContain?: boolean, sx?: never }) {
   return (
-    <BoxCollapser aria-hidden={!expanded ? true : undefined} data-agi-no-copy={!expanded || undefined} {...rest}>
+    <BoxCollapser aria-hidden={!expanded ? true : undefined} data-agi-no-copy={!expanded || undefined} {...rest} sx={noContain ? collapserNoContainSx : undefined}>
       <BoxCollapsee>
         {children}
       </BoxCollapsee>

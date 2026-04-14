@@ -200,7 +200,7 @@ export function EnhancedRenderCode(props: {
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
-      <ExpanderControlledBox expanded={!isCodeCollapsed}>
+      <ExpanderControlledBox noContain={true /* Important, allow fixed positioning on OverlayButttons */} expanded={!isCodeCollapsed}>
         <RenderCodeMemo
           semiStableId={props.semiStableId}
           code={props.code} title={props.title} isPartial={props.isPartial}
