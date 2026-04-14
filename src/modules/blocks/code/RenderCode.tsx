@@ -329,14 +329,14 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             chars in a non-proper way.
             Since this damages the 'fullscreen' operation, we restore it somehow.
         */}
-        <Box component='span' sx={!isFullscreen ? undefined : _styles.fullscreenSyntaxFix}>
+        <span style={!isFullscreen ? undefined : _styles.fullscreenSyntaxFix}>
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
           {renderHTML ? <RenderCodeHtmlIFrame key={htmlReloadKey} htmlCode={code} isFullscreen={isFullscreen} />
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
               : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                 : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
                   : <RenderCodeSyntax highlightedSyntaxAsHtml={codeSyntaxHtml} presenterMode={isFullscreen} />}
-        </Box>
+        </span>
 
       </Box>
 
