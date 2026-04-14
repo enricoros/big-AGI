@@ -105,6 +105,8 @@ function _maybeMarkdownReasoning(trimmed: string): boolean {
 }
 
 
+export const BlockPartModelAuxMemo = React.memo(BlockPartModelAux);
+
 export function BlockPartModelAux(props: {
   fragmentId: DMessageFragmentId,
   auxType: 'reasoning' | string,
