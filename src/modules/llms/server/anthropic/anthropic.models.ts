@@ -256,7 +256,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     label: 'Claude Sonnet 4.6',
     description: 'Best combination of speed and intelligence for everyday tasks',
     contextWindow: 1_000_000, // 1M GA at standard pricing since 2026-03-13 (no opt-in required)
-    maxCompletionTokens: 128000,
+    maxCompletionTokens: 128000, // docs say 64000, API reports 128000
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
