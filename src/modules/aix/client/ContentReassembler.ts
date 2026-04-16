@@ -34,6 +34,18 @@ const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 //   | 'interleaved-log' // batch VP OPs, but interleave them with the other content
 //   ;
 
+/**
+ * Performs 1:1 particle transformation before Reassembly. Executed on client.
+ *
+ * Two-phase design:
+ *  - shallTransform(particle) - sync gate: cheap check whether this transform applies (avoids async overhead)
+ *  - transform(particle) - async: performs the actual work and returns a replacement particle, or null to pass through unchanged.
+ */
+export interface ReassemblerParticleTransforms {
+  shallTransform(particle: AixWire_Particles.ChatGenerateOp): boolean;
+  transform(particle: AixWire_Particles.ChatGenerateOp): Promise<AixWire_Particles.ChatGenerateOp | null>;
+}
+
 
 /**
  * Internal reassembly state - extends the streaming type with reassembly-internal fields.
@@ -80,9 +92,10 @@ export class ContentReassembler {
     initialGenerator: DMessageGenerator,
     aiInspectorTransport: undefined | AixClientDebugger.Transport,
     aiInspectorContext: undefined | AixClientDebugger.Context,
+    private readonly particleTransforms: ReassemblerParticleTransforms[],
     private readonly skipImageCompression?: boolean,
-    private readonly wireAbortSignal?: AbortSignal,
     private readonly onInlineAudio?: (audio: { blob: Blob; mimeType: string; label: string; durationMs?: number }) => void,
+    private readonly wireAbortSignal?: AbortSignal,
   ) {
     this.initialState = {
       // AixChatGenerateContent_LL fields:
@@ -293,6 +306,21 @@ export class ContentReassembler {
   /// Particle Reassembly ///
 
   async #reassembleParticle(op: AixWire_Particles.ChatGenerateOp): Promise<void> {
+
+    // Reassembler Particle Transforms
+    for (const ct of this.particleTransforms)
+      if (ct.shallTransform(op)) {
+        try {
+          const replacement = await ct.transform(op);
+          if (replacement) {
+            op = replacement; // continue to the switch with the transformed particle
+            break; // first matching transform wins
+          }
+        } catch (error: any) {
+          console.log('[ContentReassembler] client particle transform failed, using original particle', { error: error?.message || error });
+        }
+      }
+
     switch (true) {
 
       // TextParticleOp
