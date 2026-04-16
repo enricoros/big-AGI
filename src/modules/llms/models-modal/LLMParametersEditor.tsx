@@ -13,7 +13,6 @@ import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
-import { useUIComplexityMode } from '~/common/stores/store-ui';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
 import { AnthropicSkillsConfig } from './AnthropicSkillsConfig';
@@ -208,10 +207,6 @@ export function LLMParametersEditor(props: {
   // rendering options
   simplified?: boolean,
 }) {
-
-  // external state
-  const isExtra = useUIComplexityMode() === 'extra';
-
 
   // registry (const) values
   const defAntTB = DModelParameterRegistry['llmVndAntThinkingBudget'];
@@ -572,7 +567,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {isExtra && showParam('llmVndAntSkills') && (
+    {showParam('llmVndAntSkills') && (
       <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
     )}
 

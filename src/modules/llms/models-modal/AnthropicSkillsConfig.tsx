@@ -7,10 +7,10 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 // [EDITORIAL] Anthropic Default Skills
 const DEFAULT_SKILLS = [
-  { id: 'xlsx', label: 'Excel' },
-  { id: 'pptx', label: 'PPT' },
   { id: 'pdf', label: 'PDF' },
+  { id: 'pptx', label: 'PPT' },
   { id: 'docx', label: 'Word' },
+  { id: 'xlsx', label: 'Excel' },
 ] as const;
 
 
@@ -33,7 +33,7 @@ export function AnthropicSkillsConfig({ smaller, llmVndAntSkills, onChangeParame
   };
 
   return (
-    <FormControl orientation='horizontal' sx={{ flexWrap: smaller ? 'nowrap' : 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2, width: '100%' }}>
+    <FormControl size={smaller ? 'sm' : undefined} orientation='horizontal' sx={{ flexWrap: smaller ? 'nowrap' : 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1, width: '100%' }}>
       <FormLabelStart
         title={smaller ? 'Skills' : 'Anthropic Skills (Alpha)'}
         description={smaller ? undefined : 'Server-side'}
