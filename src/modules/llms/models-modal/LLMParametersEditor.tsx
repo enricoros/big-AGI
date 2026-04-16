@@ -26,6 +26,7 @@ const _UNSPECIFIED = '_UNSPECIFIED' as const;
 
 const _antEffortOptions = [
   { value: 'max', label: 'Max', description: 'Deepest reasoning' } as const,
+  { value: 'xhigh', label: 'X-High', description: 'Extended' } as const,
   { value: 'high', label: 'High', description: 'Maximum capability' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced' } as const,
   { value: 'low', label: 'Low', description: 'Most efficient' } as const,

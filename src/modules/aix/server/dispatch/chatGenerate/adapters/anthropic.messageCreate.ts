@@ -178,8 +178,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     // top_p: undefined,
   };
 
-  // Top-P instead of temperature
-  if (model.topP !== undefined) {
+  // Top-P instead of temperature (Opus 4.7+: HOTFIX_NoTemperature sets temperature=null; also strip top_p to avoid the 400)
+  if (model.topP !== undefined && model.temperature !== null) {
     payload.top_p = model.topP;
     delete payload.temperature;
   }
@@ -191,14 +191,14 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     if (model.vndAntThinkingBudget === 'adaptive') {
       payload.thinking = {
         type: 'adaptive',
-        // display: 'summarized', // default, use 'omitted' to not include it and stream faster while preserving the signature
+        display: 'summarized', // Opus 4.7 defaults to 'omitted' - explicit 'summarized' preserves 4.6-era UX (slight latency cost)
       };
       delete payload.temperature;
     } else if (model.vndAntThinkingBudget !== null) {
       payload.thinking = {
         type: 'enabled',
         budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
-        // display: 'summarized', // default, use 'omitted' to not include it and stream faster while preserving the signature
+        // display: 'summarized', // default on 4.5/earlier
       };
       delete payload.temperature;
     } else {
@@ -210,10 +210,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     }
   }
 
-  // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
+  // [Anthropic] Effort parameter
   const reasoningEffort = model.reasoningEffort; // ?? model.vndAntEffort;
   if (reasoningEffort) {
-    if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh') throw new Error(`Anthropic API does not support '${reasoningEffort}' effort level`);
+    if (reasoningEffort === 'none' || reasoningEffort === 'minimal') throw new Error(`Anthropic API does not support '${reasoningEffort}' effort level`);
     payload.output_config = {
       effort: reasoningEffort,
     };

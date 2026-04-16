@@ -84,8 +84,9 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
 
   // Computer use on newer models requires a different beta header:
   //   computer-use-2025-01-24 -> Sonnet 3.7, Sonnet 4, Opus 4, Opus 4.1, Sonnet 4.5, Haiku 4.5
-  //   computer-use-2025-11-24 -> Opus 4.5, Sonnet 4.6, Opus 4.6 (adds enable_zoom)
+  //   computer-use-2025-11-24 -> Opus 4.5, Sonnet 4.6, Opus 4.6, Opus 4.7 (adds enable_zoom)
   // Uncomment and adjust model IDs when computer use is enabled for these models:
+  // 'claude-opus-4-7': ['computer-use-2025-11-24'] as const,
   // 'claude-sonnet-4-6': ['computer-use-2025-11-24'] as const,
   // 'claude-opus-4-6': ['computer-use-2025-11-24'] as const,
   // 'claude-opus-4-5': ['computer-use-2025-11-24'] as const,

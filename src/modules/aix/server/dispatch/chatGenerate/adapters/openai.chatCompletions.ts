@@ -245,9 +245,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     const isTunneledGemini = model.id.startsWith('google/');
     if (isTunneledAnt) {
       // Effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
+      // OR verbosity supports low/medium/high/xhigh/max (2026-04-16). 'none'/'minimal' are OpenAI-only.
       const antEffort = model.reasoningEffort; // ?? model.vndAntEffort;
       if (antEffort) {
-        if (antEffort === 'none' || antEffort === 'minimal' || antEffort === 'xhigh') // domain validation
+        if (antEffort === 'none' || antEffort === 'minimal') // domain validation
           throw new Error(`OpenRouter->Anthropic API does not support '${antEffort}' reasoning effort`);
         payload.verbosity = antEffort;
       }

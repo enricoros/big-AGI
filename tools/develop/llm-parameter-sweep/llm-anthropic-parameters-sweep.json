@@ -1,6 +1,10 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: ant-effort, ant-thinking-budget, temperature. If missing, the parameter is not supported by that model.",
+  "claude-opus-4-7": {
+    "ant-effort": ["low","medium","high","xhigh","max"],
+    "temperature": [1]
+  },
   "claude-opus-4-6": {
     "ant-effort": ["low","medium","high","max"],
     "ant-thinking-budget-range": [1024,65536],

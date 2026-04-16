@@ -963,7 +963,7 @@ export namespace AnthropicWire_API_Message_Create {
      * - format: [Anthropic, 2026-01-29 GA] JSON schema constraint on output. Replaces deprecated top-level `output_format`.
      */
     output_config: z.object({
-      effort: z.enum(['low', 'medium', 'high', 'max']).optional(),
+      effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(), // 'xhigh' added for Opus 4.7 (2026-04-16)
       format: z.object({
         type: z.literal('json_schema'),
         schema: z.any(), // JSON Schema object - validated by Anthropic

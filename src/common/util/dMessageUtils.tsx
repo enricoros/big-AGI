@@ -520,34 +520,15 @@ export function prettyShortChatModelName(model: string | undefined): string {
 }
 
 function _prettyAnthropicModelName(modelId: string): string | null {
-  if (modelId.indexOf('claude-') === -1) return null; // not a Claude model
+  if (!modelId.includes('claude-')) return null;
 
-  // must match any known prefix
-  let claudeIndex = -1;
-  const claudePrefixes = ['claude-opus-4', 'claude-sonnet-4', 'claude-haiku-4', 'claude-3', 'claude-2'];
-  for (const prefix of claudePrefixes) {
-    const index = modelId.indexOf(prefix);
-    if (index !== -1) {
-      claudeIndex = index;
-      break;
-    }
-  }
+  // extract version as N.M (e.g. `-4-7` -> 4.7, `-4-` -> 4); (?!\d) guards against date digits
+  const m = modelId.match(/-(\d)(?:-(\d)(?!\d))?/);
+  const version = m ? (m[2] ? `${m[1]}.${m[2]}` : m[1]) : '?';
 
-  const subStr = modelId.slice(claudeIndex);
-  const version =
-    subStr.includes('-4-6') ? '4.6'
-      : subStr.includes('-4-5') ? '4.5' // fixes the -5
-        : subStr.includes('-3-5') ? '3.5' // fixes the -5
-          : subStr.includes('-5') ? '5'
-            : subStr.includes('-4-1') ? '4.1'
-              : subStr.includes('-4') ? '4'
-                : subStr.includes('-3-7') ? '3.7'
-                  : subStr.includes('-3') ? '3'
-                    : '?';
-
-  if (subStr.includes(`-opus`)) return `Claude Opus ${version}`;
-  if (subStr.includes(`-sonnet`)) return `Claude Sonnet ${version}`;
-  if (subStr.includes(`-haiku`)) return `Claude Haiku ${version}`;
+  if (modelId.includes('-opus')) return `Claude Opus ${version}`;
+  if (modelId.includes('-sonnet')) return `Claude Sonnet ${version}`;
+  if (modelId.includes('-haiku')) return `Claude Haiku ${version}`;
 
   return `Claude ${version}`;
 }

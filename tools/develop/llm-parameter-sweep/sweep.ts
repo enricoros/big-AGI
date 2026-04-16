@@ -104,7 +104,7 @@ const SWEEP_DEFINITIONS = [
     description: 'Anthropic output_config.effort values',
     applicability: { type: 'dialects', dialects: ['anthropic'] },
     applyToModel: (value) => ({ reasoningEffort: value }),
-    values: ['low', 'medium', 'high', 'max'] satisfies AixAPI_Model['reasoningEffort'][],
+    values: ['low', 'medium', 'high', 'xhigh', 'max'] satisfies AixAPI_Model['reasoningEffort'][],
     mode: 'enumerate',
   }),
 

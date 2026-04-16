@@ -151,7 +151,7 @@ export const DModelParameterRegistry = {
     label: 'Effort',
     type: 'enum',
     description: 'Controls reasoning depth. Works alongside thinking budget.',
-    values: ['low', 'medium', 'high', 'max'],
+    values: ['low', 'medium', 'high', 'xhigh', 'max'],
     // undefined means high effort (default)
   }),
 
