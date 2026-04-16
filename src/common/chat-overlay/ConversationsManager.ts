@@ -54,6 +54,10 @@ export class ConversationsManager {
     const instance = ConversationsManager._instance || (ConversationsManager._instance = new ConversationsManager());
     let handler = instance.handlers.get(conversationId);
     if (!handler) {
+      if (!conversationId) {
+        // this shall not happen, so we check here just in case
+        debugger;
+      }
       handler = new ConversationHandler(conversationId);
       instance.handlers.set(conversationId, handler);
     }
