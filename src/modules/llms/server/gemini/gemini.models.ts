@@ -75,7 +75,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Apr 2, 2026)
+// Pricing based on https://ai.google.dev/pricing (Apr 15, 2026)
 
 const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
@@ -141,6 +141,16 @@ const gemini25FlashPreviewTTSPricing: ModelDescriptionSchema['chatPrice'] = {
 const gemini25ProPreviewTTSPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 1.00, // text input
   // output: 20.00, // AUDIO - not ready for audio output yet, as of 2025-05-27
+};
+
+const gemini31FlashTTSPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 1.00, // text input
+  // output: 20.00, // AUDIO - not ready for audio output yet (as of Apr 15, 2026)
+};
+
+const geminiRoboticsER16Pricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 1.00, // text/image/video; audio is $2.00 but we don't differentiate yet
+  output: 5.00,
 };
 
 const gemini20FlashPricing: ModelDescriptionSchema['chatPrice'] = {
@@ -255,23 +265,7 @@ const _knownGeminiModels: ({
 
   /// Generation 3.0
 
-  // 3.0 Pro (Preview) - Released November 18, 2025; DEPRECATED: shutdown March 9, 2026 (still available)
-  {
-    id: 'models/gemini-3-pro-preview',
-    labelOverride: 'Gemini 3 Pro Preview',
-    isPreview: true,
-    deprecated: '2026-03-09',
-    chatPrice: gemini30ProPricing,
-    interfaces: IF_30,
-    parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['low', 'high'] },
-      { paramId: 'llmVndGeminiMediaResolution' },
-      { paramId: 'llmVndGeminiCodeExecution' },
-      { paramId: 'llmVndGeminiGoogleSearch' },
-      // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
-    ],
-    benchmark: { cbaElo: 1487 }, // gemini-3-pro
-  },
+  // REMOVED: models/gemini-3-pro-preview (SHUT DOWN March 9, 2026, superseded by gemini-3.1-pro-preview)
 
   // 3.0 Pro Image Preview - Released November 20, 2025
   {
@@ -422,11 +416,24 @@ const _knownGeminiModels: ({
     hidden: true, // Hidden: requires external client-side implementation not available in Big-AGI
   },
 
-  // 2.5 Flash-Based: Gemini Robotics-ER 1.5 Preview - Released September 25, 2025
+  // Gemini Robotics-ER 1.6 Preview - Released April 14, 2026
+  // Enhanced embodied reasoning with instrument reading and improved spatial reasoning
+  {
+    id: 'models/gemini-robotics-er-1.6-preview',
+    labelOverride: 'Gemini Robotics-ER 1.6 Preview',
+    isPreview: true,
+    chatPrice: geminiRoboticsER16Pricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
+    benchmark: undefined, // Robotics model, not benchmarkable on standard tests
+  },
+
+  // 2.5 Flash-Based: Gemini Robotics-ER 1.5 Preview - Released September 25, 2025; DEPRECATED: shutdown April 30, 2026
   {
     id: 'models/gemini-robotics-er-1.5-preview',
     labelOverride: 'Gemini Robotics-ER 1.5 Preview',
     isPreview: true,
+    deprecated: '2026-04-30',
     chatPrice: gemini25FlashPricing, // Uses same pricing as 2.5 Flash per pricing page
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
@@ -450,6 +457,23 @@ const _knownGeminiModels: ({
   // - models/gemini-2.5-flash-preview-04-17 (superseded by 05-20 version)
   // - models/gemini-2.5-flash-preview-04-17-thinking (Cursor variant, superseded)
 
+
+  // 3.1 Flash TTS Preview - Released April 15, 2026
+  // Cost-efficient, expressive, and steerable text-to-speech model
+  {
+    hidden: true, // audio outputs are unavailable
+    id: 'models/gemini-3.1-flash-tts-preview',
+    labelOverride: 'Gemini 3.1 Flash TTS Preview',
+    isPreview: true,
+    chatPrice: gemini31FlashTTSPricing,
+    interfaces: [
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+      LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
+      LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
+      LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
+    ],
+    benchmark: undefined, // TTS models are not benchmarkable
+  },
 
   // 2.5 Flash Preview TTS
   {
@@ -707,9 +731,10 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.1-pro-preview-customtools',
   'models/gemini-3.1-flash-image-preview',
   'models/gemini-3.1-flash-preview',
+  'models/gemini-3.1-flash-lite-preview',
+  'models/gemini-3.1-flash-tts-preview',
   'models/gemini-3.1-',
   'models/gemini-3.1',
-  'models/gemini-3-pro-preview',
   'models/gemini-3-pro-image-preview',
   'models/nano-banana-pro-preview',
   'models/gemini-3-flash-preview',
