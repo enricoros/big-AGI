@@ -730,7 +730,7 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
           console.log('[DEV] Anthropic: server_tool_use(content_block_start): unrecognized text editor command', { teCommand, inputObj });
         // fallthrough
         case undefined: // EXPECTED in Streaming: we don't know the command yet, the input object is empty - in NS, we have the details upfront (cases below)
-          pt.sendOperationState('code-exec', `Text editor: ${teCommand || 'working'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          pt.sendOperationState('code-exec', `Editor: ${teCommand || 'working'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'create':
           if (typeof inputObj?.file_text === 'string') iTexts.push(_ellipsizeContext(inputObj.file_text));
@@ -809,7 +809,7 @@ function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name
       switch (input.command) {
         default: // not expected: the input shall be valid here
           console.log('[DEV] Anthropic: server_tool_use(content_block_stop): unrecognized text editor command', { command: input.command, input });
-          pt.sendOperationState('code-exec', `Text editor: ${input.command || 'working'}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          pt.sendOperationState('code-exec', `Editor: ${input.command || 'working'}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'create':
           if (typeof input.file_text === 'string') iTexts.push(_ellipsizeContext('file contents:\n' + input.file_text));
