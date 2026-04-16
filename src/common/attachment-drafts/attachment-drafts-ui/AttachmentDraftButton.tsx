@@ -6,7 +6,6 @@ import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import HtmlIcon from '@mui/icons-material/Html';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
 import PhotoSizeSelectSmallOutlinedIcon from '@mui/icons-material/PhotoSizeSelectSmallOutlined';
@@ -24,6 +23,7 @@ import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import { DMessageDataRef, DMessageImageRefPart, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
+import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
@@ -97,10 +97,10 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'rich-text-cleaner': CodeIcon,
   'rich-text-markdown': TextFieldsIcon,
   'rich-text-table': PivotTableChartIcon,
-  'image-original': ImageOutlinedIcon,
+  'image-original': PhImageSquare,
   'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
   'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
-  'image-to-default': ImageOutlinedIcon,
+  'image-to-default': PhImageSquare,
   'image-caption': AbcIcon,
   'image-ocr': AbcIcon,
   'pdf-auto': PictureAsPdfIcon,
@@ -113,7 +113,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'url-page-markdown': CodeIcon, // was LanguageIcon
   'url-page-html': HtmlIcon, // was LanguageIcon
   'url-page-null': TextureIcon,
-  'url-page-image': ImageOutlinedIcon,
+  'url-page-image': PhImageSquare,
   'youtube-transcript': YouTubeIcon,
   'youtube-transcript-simple': YouTubeIcon,
   'ego-fragments-inlined': TelegramIcon,

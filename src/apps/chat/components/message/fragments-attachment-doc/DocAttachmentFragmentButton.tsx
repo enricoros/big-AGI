@@ -5,7 +5,6 @@ import { Box, Button, ColorPaletteProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
@@ -13,6 +12,7 @@ import TextureIcon from '@mui/icons-material/Texture';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
+import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
@@ -48,7 +48,7 @@ export function buttonIconForFragment(part: DMessageAttachmentFragment['part']):
               const assetType = part.assetType;
               switch (assetType) {
                 case 'image':
-                  return ImageOutlinedIcon;
+                  return PhImageSquare;
                 case 'audio':
                   return PhVoice;
                 default:
@@ -93,7 +93,7 @@ export function buttonIconForFragment(part: DMessageAttachmentFragment['part']):
 
     // [OLD-style] Image Attachment Fragment
     case 'image_ref':
-      return ImageOutlinedIcon;
+      return PhImageSquare;
 
     case '_pt_sentinel':
       return TextureIcon; // nothing to do here - this is a sentinel type
