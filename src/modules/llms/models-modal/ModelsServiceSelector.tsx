@@ -1,12 +1,12 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Badge, Box, Button, IconButton, MenuItem, Option, Select, Tooltip, Typography } from '@mui/joy';
-import AddIcon from '@mui/icons-material/Add';
+import { Badge, Box, IconButton, MenuItem, Option, Select, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { ButtonServiceAdd } from '~/common/components/ButtonServiceAdd';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
@@ -378,17 +378,13 @@ export function ModelsServiceSelector(props: {
         {/*</ListItem>*/}
       </Select>
 
-      {(isMobile && !noServices) ? (
-        <IconButton variant={noServices ? 'solid' : 'outlined'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ borderColor: 'neutral.outlinedBorder' }}>
-          <AddIcon />
-        </IconButton>
-      ) : (
-        <Tooltip open={noServices && !vendorsMenuAnchor} variant='outlined' color='primary' size='md' placement={isMobile ? 'bottom-end' : 'top-start'} arrow title='Add your first AI service'>
-          <Button variant={noServices ? 'solid' : 'outlined'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ borderColor: 'neutral.outlinedBorder' }}>
-            Add
-          </Button>
-        </Tooltip>
-      )}
+      <ButtonServiceAdd
+        isMobile={isMobile}
+        isEmpty={noServices}
+        emptyHint='Add your first AI service'
+        menuOpen={!!vendorsMenuAnchor}
+        onClick={handleShowVendors}
+      />
 
       {enableDeleteButton && (
         <TooltipOutlined title={`Remove ${selectedServiceItem?.service.label || 'Service'}`}>
