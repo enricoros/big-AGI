@@ -49,8 +49,12 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
  * 1->1 particle transform applied by the executor to every emitted particle.
  * Return the input for pass-through, or a new particle to replace it.
  * Thrown errors are caught by the executor and fall back to the original particle.
+ *
+ * Set `csfUnsafe` to true if the transform cannot be performed by CSF (e.g. relies on
+ * relies on server-side fetch. The CSF entry point strips these transforms and delegates to the
+ * ContentReassembler's transforms instead (which shall operate on the same particles).
  */
-export type ChatGenerateParticleTransformFunction = (particle: AixWire_Particles.ChatGenerateOp) => Promise<AixWire_Particles.ChatGenerateOp>;
+export type ChatGenerateParticleTransformFunction = ((particle: AixWire_Particles.ChatGenerateOp) => Promise<AixWire_Particles.ChatGenerateOp>) & { csfUnsafe?: true };
 
 
 // -- Specialized Implementations -- Core of Server-side AI Vendors abstraction --
