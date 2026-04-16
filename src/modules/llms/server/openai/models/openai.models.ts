@@ -109,7 +109,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmForceNoStream' },
     ],
     chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 0.25 }, output: 15 },
-    // benchmark: TBD
+    benchmark: { cbaElo: 1481 }, // gpt-5.4-high (preliminary)
   },
   {
     idPrefix: 'gpt-5.4',

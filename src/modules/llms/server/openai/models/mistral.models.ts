@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-01-29
+// Updated 2026-04-16
 // - models on: https://docs.mistral.ai/getting-started/models/models_overview/
 // - pricing on: https://mistral.ai/pricing#api-pricing
 // - benchmark elo on CBA
@@ -69,10 +69,13 @@ const _knownMistralModelDetails: Record<string, {
   'ministral-3b-latest': { chatPrice: { input: 0.1, output: 0.1 }, hidden: true }, // symlink
 
   // Open models
-  'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1356 } }, // Mistral Small 3.2
-  'mistral-small-latest': { chatPrice: { input: 0.1, output: 0.3 }, hidden: true }, // symlink
+  'mistral-small-2603': { chatPrice: { input: 0.15, output: 0.6 } }, // Mistral Small 4 - 119B hybrid (instruct+reasoning+coding), 256k ctx
+  'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1356 }, hidden: true }, // Mistral Small 3.2
+  'mistral-small-latest': { chatPrice: { input: 0.15, output: 0.6 }, hidden: true }, // → 2603
 
   'labs-mistral-small-creative': { label: 'Mistral Small Creative', chatPrice: { input: 0.1, output: 0.3 } }, // creative writing, roleplay (Labs)
+
+  'labs-leanstral-2603': { label: 'Leanstral (2603)', chatPrice: { input: 0, output: 0 } }, // Lean 4 formal proof engineering (Labs, free for limited period)
 
   'magistral-small-2509': { chatPrice: { input: 0.5, output: 1.5 } }, // reasoning
   'magistral-small-latest': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // symlink
@@ -114,6 +117,7 @@ const mistralModelFamilyOrder = [
   'labs-mistral-small-creative', // Mistral Small Creative (Labs) - must come after mistral-small
   'labs-devstral-small-2512', // Devstral Small 2 (Labs) - must come before generic prefixes
   'devstral-small',
+  'labs-leanstral', // Leanstral (Labs) - Lean 4 formal proof engineering
   'voxtral-small',
   'voxtral-mini',
   'mistral-embed',

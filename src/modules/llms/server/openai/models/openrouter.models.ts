@@ -30,6 +30,8 @@ const orModelFamilyOrder = [
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
   'perplexity/', 'inflection/',
+  // Chinese majors (now surfaced on OpenRouter directly)
+  'alibaba/', 'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'openchat/', // 'huggingfaceh4/',
   // Community/other providers

@@ -159,10 +159,9 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   {
     id: 'Qwen/Qwen2.5-14B-Instruct',
     label: '💾 Qwen 2.5 · 14B Instruct',
-    description: 'Alibaba Qwen 2.5 14B Instruct - hosted inference with per-token pricing',
+    description: 'Alibaba Qwen 2.5 14B Instruct - hosted inference (hourly compute unit pricing)',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 1.00, output: 1.50 },
   },
   {
     id: 'Qwen/Qwen2.5-72B-Instruct',

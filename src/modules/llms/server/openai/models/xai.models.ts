@@ -16,7 +16,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2026-03-21
+// Verified: 2026-04-16
 
 // Flat pricing for Grok 4.20 flagship models
 const PRICE_420 = {
@@ -25,17 +25,19 @@ const PRICE_420 = {
   cache: { cType: 'oai-ac' as const, read: 0.2 },
 };
 
-// Tiered pricing for Grok 4.1 Fast models (both reasoning and non-reasoning)
+// Flat pricing for Grok 4.1 Fast models (both reasoning and non-reasoning)
+// Note: xAI flattened pricing - no longer tiered at 128K context
 const PRICE_41 = {
-  input: [{ upTo: 128000, price: 0.2 }, { upTo: null, price: 0.4 }],
-  output: [{ upTo: 128000, price: 0.5 }, { upTo: null, price: 1.0 }],
+  input: 0.2,
+  output: 0.5,
   cache: { cType: 'oai-ac' as const, read: 0.05 },
 };
 
-// Tiered pricing for Grok 4.0 Fast models (both reasoning and non-reasoning)
+// Flat pricing for Grok 4.0 Fast models (both reasoning and non-reasoning)
+// Note: xAI flattened pricing - no longer tiered at 128K context
 const PRICE_40 = {
-  input: [{ upTo: 128000, price: 0.2 }, { upTo: null, price: 0.4 }],
-  output: [{ upTo: 128000, price: 0.5 }, { upTo: null, price: 1.0 }],
+  input: 0.2,
+  output: 0.5,
   cache: { cType: 'oai-ac' as const, read: 0.05 },
 };
 

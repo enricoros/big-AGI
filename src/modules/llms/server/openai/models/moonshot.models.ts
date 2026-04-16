@@ -26,9 +26,9 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
 
 /**
  * Moonshot AI (Kimi) models.
- * - models list and pricing: https://platform.moonshot.ai/docs/pricing/chat
- * - API docs: https://platform.moonshot.ai/docs/api/chat
- * - updated: 2026-01-26
+ * - models list and pricing: https://platform.kimi.ai/docs/pricing/chat (was platform.moonshot.ai - now 301 redirect)
+ * - API docs: https://platform.kimi.ai/docs/api/chat
+ * - updated: 2026-04-16
  */
 const _knownMoonshotModels: ManualMappings = [
 

@@ -14,7 +14,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-04-02
+ * - updated: 2026-04-16
  */
 const _knownGroqModels: ManualMappings = [
 
