@@ -3,7 +3,7 @@ import * as React from 'react';
 import { SvgIcon, SvgIconProps } from '@mui/joy';
 
 /*
- * Source: 'https://phosphoricons.com/' - paint-brush-household
+ * Source: 'https://phosphoricons.com/' - paint-brush
  */
 export function PhPaintBrush(props: SvgIconProps) {
   return (
