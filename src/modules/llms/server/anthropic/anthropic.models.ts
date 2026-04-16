@@ -16,11 +16,17 @@ import { llmDevCheckModels_DEV } from '../models.mappings';
 // configuration
 const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 
-// Cap the API-reported max_input_tokens to this value for contextWindow.
-// The Anthropic API reports 1M for models that support extended context, but 1M requires
-// a beta header and has tiered pricing - we let the llmVndAnt1MContext parameter opt-in.
-// Set to `false` to use raw API values (useful for debugging mismatches).
+// Cap applied ONLY to models that declare the `llmVndAnt1MContext` opt-in parameter
+// (Sonnet 4.5 / Sonnet 4 - beta 1M with tiered pricing, retiring 2026-04-30).
+// For models with 1M GA at standard pricing (Opus 4.7/4.6, Sonnet 4.6 since 2026-03-13),
+// we report the API-provided context window as-is (1M) and do NOT add the opt-in.
+// Set to `false` to disable the cap entirely (useful for debugging mismatches).
 const ANT_CAP_CONTEXT_WINDOW: number | false = 200_000;
+
+/** True if the model uses the opt-in `llmVndAnt1MContext` beta path (Sonnet 4.5 / Sonnet 4). */
+function _hasLegacy1MContextOptIn(model: Pick<ModelDescriptionSchema, 'parameterSpecs'>): boolean {
+  return !!model.parameterSpecs?.some(s => s.paramId === 'llmVndAnt1MContext');
+}
 
 
 
@@ -214,7 +220,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     id: 'claude-opus-4-7', // Active - 2026-04-16
     label: 'Claude Opus 4.7',
     description: 'Most capable generally available model for complex reasoning and agentic coding',
-    contextWindow: 200000, // 1M GA at standard pricing, display capped to 200K - no opt-in param needed
+    contextWindow: 1_000_000, // 1M GA at standard pricing (no opt-in required)
     maxCompletionTokens: 128000,
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
@@ -233,7 +239,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     id: 'claude-opus-4-6', // Active
     label: 'Claude Opus 4.6',
     description: 'Previous most intelligent model for complex agents and coding, with adaptive thinking',
-    contextWindow: 200000,
+    contextWindow: 1_000_000, // 1M GA at standard pricing since 2026-03-13 (no opt-in required)
     maxCompletionTokens: 128000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
@@ -249,7 +255,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     id: 'claude-sonnet-4-6', // Active
     label: 'Claude Sonnet 4.6',
     description: 'Best combination of speed and intelligence for everyday tasks',
-    contextWindow: 200000,
+    contextWindow: 1_000_000, // 1M GA at standard pricing since 2026-03-13 (no opt-in required)
     maxCompletionTokens: 128000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
@@ -515,11 +521,12 @@ function _llmsAntCheckApiCapabilities_DEV(availableModels: AnthropicWire_API_Mod
     if (apiModel.max_tokens && hc.maxCompletionTokens && apiModel.max_tokens !== hc.maxCompletionTokens)
       console.log(`[DEV] Anthropic '${apiModel.id}': maxCompletionTokens mismatch - hardcoded=${hc.maxCompletionTokens}, api=${apiModel.max_tokens}`);
 
-    // contextWindow vs max_input_tokens
+    // contextWindow vs max_input_tokens (only cap if the model uses the opt-in beta path)
     if (apiModel.max_input_tokens) {
-      const expectedBase = ANT_CAP_CONTEXT_WINDOW ? Math.min(apiModel.max_input_tokens, ANT_CAP_CONTEXT_WINDOW) : apiModel.max_input_tokens;
+      const shouldCap = _hasLegacy1MContextOptIn(hc) && !!ANT_CAP_CONTEXT_WINDOW;
+      const expectedBase = shouldCap ? Math.min(apiModel.max_input_tokens, ANT_CAP_CONTEXT_WINDOW) : apiModel.max_input_tokens;
       if (hc.contextWindow !== null && hc.contextWindow !== expectedBase)
-        console.log(`[DEV] Anthropic '${apiModel.id}': contextWindow mismatch - hardcoded=${hc.contextWindow}, api=${apiModel.max_input_tokens}${ANT_CAP_CONTEXT_WINDOW ? ` (capped=${expectedBase})` : ''}`);
+        console.log(`[DEV] Anthropic '${apiModel.id}': contextWindow mismatch - hardcoded=${hc.contextWindow}, api=${apiModel.max_input_tokens}${shouldCap ? ` (capped=${expectedBase})` : ''}`);
     }
 
     // effort enumValues mismatch
@@ -580,22 +587,20 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
       parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget' });
   }
 
-  // 1M context param heuristic
-  const maxInputTokens = model.max_input_tokens;
-  if (ANT_CAP_CONTEXT_WINDOW && maxInputTokens && maxInputTokens > ANT_CAP_CONTEXT_WINDOW)
-    parameterSpecs.push({ paramId: 'llmVndAnt1MContext' });
-
   // +standard tool params
+  // Note: 1M context is GA for recent Anthropic models - we do NOT add the `llmVndAnt1MContext` opt-in
+  // for unknown models. If a 0-day model still requires the beta header (rare now), users can hit it
+  // through a hardcoded definition instead.
   parameterSpecs.push(...ANT_TOOLS);
 
-  const defaultContextWindow = ANT_CAP_CONTEXT_WINDOW || 200_000;
+  const maxInputTokens = model.max_input_tokens;
   return {
     id: model.id,
     idVariant: '::placeholder',
     label: model.display_name,
     created: Math.round(new Date(model.created_at).getTime() / 1000),
     description: 'Newest model, description not available yet.',
-    contextWindow: maxInputTokens ? (ANT_CAP_CONTEXT_WINDOW ? Math.min(maxInputTokens, ANT_CAP_CONTEXT_WINDOW) : maxInputTokens) : defaultContextWindow,
+    contextWindow: maxInputTokens ?? 200_000, // report API value as-is (no cap for unknown models)
     maxCompletionTokens: model.max_tokens || 32768,
     interfaces,
     parameterSpecs,
@@ -616,9 +621,12 @@ export function llmsAntFuseModelKnowledge(knownModel: ModelDescriptionSchema, ap
   if (!updated.created && apiModel.created_at)
     updated = { ...updated, created: Math.round(new Date(apiModel.created_at).getTime() / 1000) };
 
-  // API-authoritative: context window (optionally capped - the 1M context param handles the rest)
+  // API-authoritative: context window
+  // Only cap when the model uses the `llmVndAnt1MContext` opt-in (beta 1M path, e.g. Sonnet 4.5 / 4).
+  // For models with 1M GA at standard pricing (no opt-in), we report the API value as-is.
   if (apiModel.max_input_tokens) {
-    const apiContextWindow = ANT_CAP_CONTEXT_WINDOW ? Math.min(apiModel.max_input_tokens, ANT_CAP_CONTEXT_WINDOW) : apiModel.max_input_tokens;
+    const shouldCap = _hasLegacy1MContextOptIn(updated) && !!ANT_CAP_CONTEXT_WINDOW;
+    const apiContextWindow = shouldCap ? Math.min(apiModel.max_input_tokens, ANT_CAP_CONTEXT_WINDOW) : apiModel.max_input_tokens;
     if (updated.contextWindow !== apiContextWindow)
       updated = { ...updated, contextWindow: apiContextWindow };
   }
