@@ -243,7 +243,7 @@ function AnthropicFileChip(props: {
 
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
-          {metaLoading ? 'Loading...' : isFileGone ? `${fileId} - file no longer available` : hasError ? `${displayName} - ${actionError || 'Could not load file info'}` : displayName}
+          {metaLoading ? 'Loading...' : isFileGone ? `${fileId} - file no longer available` : hasError ? `${displayName} - ${actionError || metaError?.message || 'Could not load file info'}` : displayName}
         </Box>
         {metadata && (
           <Box sx={{ fontSize: 'xs', opacity: 0.6 }}>
