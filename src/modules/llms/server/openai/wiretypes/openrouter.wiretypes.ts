@@ -20,6 +20,7 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     prompt: z.string(),
     completion: z.string(),
     image: z.string().optional(),
+    audio: z.string().optional(),
     request: z.string().optional(),
     web_search: z.string().optional(),
     internal_reasoning: z.string().optional(),
@@ -56,13 +57,14 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     completion_tokens: z.string(),
   }).nullable(), // null on 'openrouter/auto'
 
-  // [OpenRouter, 2025-11-11] Supported API parameters for this model
+  // [OpenRouter, 2026-04-16] Supported API parameters for this model
   supported_parameters: z.array(z.union([
     z.enum([
       'frequency_penalty',
       'include_reasoning', // Reasoning 2
       'logit_bias',
       'logprobs',
+      'max_completion_tokens',
       'max_tokens',
       'min_p',
       'parallel_tool_calls',
@@ -77,7 +79,7 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
       'temperature',
       'tool_choice',
       'tools', // FC
-      'top_a',
+      'top_a', // still tolerated - no longer surfaced by OR as of 2026-04-16
       'top_k',
       'top_logprobs',
       'top_p',
