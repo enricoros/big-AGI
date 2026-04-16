@@ -149,7 +149,8 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
 
     // 4. Fire-and-forget delete if policy requires (raw fetch - we don't care about result/errors)
     if (deleteAfterInline)
-      fetchResponseOrTRPCThrow({ url: fileUrl, headers, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true }).catch(error => console.log(`[AnthropicFileInlineTransform] Failed to delete file ${fileId} after inlining:`, { error }));
+      fetchResponseOrTRPCThrow({ url: fileUrl, headers, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true })
+        .catch(error => console.log(`[AnthropicFileInlineTransform] Failed to delete file ${fileId} after inlining:`, { error }));
 
     return particle;
   };

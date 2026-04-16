@@ -22,10 +22,10 @@ import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Conte
 
 import { AixStreamRetry } from './aix.client.retry';
 import { ReassemblerParticleTransforms, ContentReassembler } from './ContentReassembler';
-// import { createClientAnthropicFileInlineTransform } from './aix.client.transform-fileInline';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { aixClassifyStreamingError } from './aix.client.errors';
 import { aixClientDebuggerGetRBO, getAixDebuggerNoStreaming } from './debugger/memstore-aix-client-debugger';
+import { createClientAnthropicFileInlineTransform } from './aix.client.transform-antFileInline';
 import { withDecimator } from './withDecimator';
 
 
@@ -744,8 +744,8 @@ async function _aixChatGenerateContent_LL(
   // - CSF mode: server-side transforms tagged csfUnsafe are stripped; we add these to re-transform here via tRPC
   // - in tRPC mode the server-side transforms handle everything elegantly - but we still add failsafes in case the server has a transform issue
   const particleTransforms: ReassemblerParticleTransforms[] = [];
-  // if (aixModel.vndAntTransformInlineFiles /* && clientSideChatGenerate */)
-  //   particleTransforms.push(createClientAnthropicFileInlineTransform(aixAccess, aixModel.vndAntTransformInlineFiles === 'inline-file-and-delete'));
+  if (aixAccess.dialect === 'anthropic' && aixModel.vndAntTransformInlineFiles /* && clientSideChatGenerate */)
+    particleTransforms.push(createClientAnthropicFileInlineTransform(aixAccess, aixModel.vndAntTransformInlineFiles === 'inline-file-and-delete'));
 
 
   // Particles Reassembler - owns the accumulator, reused across Client-side retries
