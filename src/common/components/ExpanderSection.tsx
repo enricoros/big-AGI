@@ -76,6 +76,7 @@ export function ExpanderSection(props: {
   expandRequest?: boolean, // the internal expanded state will track this on change
   initialExpanded: boolean, // only read at first mount
   startDecorator?: React.ReactNode,
+  persistentDivider?: boolean, // keep the header divider line visible even when expanded
   children: React.ReactNode,
 }) {
 
@@ -114,7 +115,7 @@ export function ExpanderSection(props: {
         {!!description && <FormHelperText>{description}</FormHelperText>}
       </Box>
 
-      {isCollapsible && !isExpanded && <Box sx={_styles.aeDivider} />}
+      {isCollapsible && (!isExpanded || props.persistentDivider) && <Box sx={_styles.aeDivider} />}
 
       {isCollapsible && (isExpanded
           ? <UnfoldMoreIcon sx={_styles.aeHeaderIcon} />
