@@ -4,12 +4,12 @@ import { FormControl, Typography } from '@mui/joy';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import SpeedIcon from '@mui/icons-material/Speed';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
+import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
@@ -29,7 +29,7 @@ export function UxLabsSettings() {
   return <>
 
     <FormSwitchControl
-      title={<><ImageOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Lossless Images</>} description={labsLosslessImages ? 'Large storage use' : 'Compress'}
+      title={<><PhImageSquare sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Lossless Images</>} description={labsLosslessImages ? 'Large storage use' : 'Compress'}
       tooltipWarning={labsLosslessImages}
       tooltip={<>
         Preserves the original lossless PNG format for AI-generated images instead of compressing them to WebP/JPEG.

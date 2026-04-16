@@ -5,13 +5,13 @@ import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ErrorIcon from '@mui/icons-material/ErrorRounded';
-import ImageIcon from '@mui/icons-material/ImageRounded';
 import TextFieldsIcon from '@mui/icons-material/TextFieldsRounded';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessageUtils';
 
 import { TokenBadgeMemo } from '../composer/tokens/TokenBadge';
@@ -273,7 +273,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
               </Chip>
             )}
             {analysis.imageCount > 0 && (
-              <Chip size='sm' variant='solid' color='success' startDecorator={<ImageIcon />} sx={{ px: 1 }}>
+              <Chip size='sm' variant='solid' color='success' startDecorator={<PhImageSquare />} sx={{ px: 1 }}>
                 {analysis.imageCount} image{analysis.imageCount > 1 ? 's' : ''}
               </Chip>
             )}
