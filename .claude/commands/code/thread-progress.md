@@ -46,7 +46,7 @@ A tree, where every rabbithole that was taken adds a level.
 - Decisions: state what was chosen, not the alternatives
 - If a former phase produced no code change or decision, omit
 - Very important to insert incomplete `[ ]` items for things that wre mentioned and are likely useful but mentioned at higher levels of the rabbithole so they must come after, when unwinding the stack
-- Keep it short, tight (min 0 max half the user messages as far as count). This is a navigation aid, not a transcript
+- Keep it short, tight (min 0 max item count below *ONE QUARTER the user messages*). This is a navigation aid, not a transcript
 
 It's important for this to represent a high-level sequence of important actions and turns and pivots and rabbiholes, all focuses on trying to solve something.
 
