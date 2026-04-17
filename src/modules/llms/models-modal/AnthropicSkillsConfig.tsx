@@ -23,23 +23,29 @@ export function AnthropicSkillsConfig({ smaller, llmVndAntSkills, onChangeParame
 
   const skillsArray = llmVndAntSkills ? llmVndAntSkills.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-  const handleSkillToggle = (skillId: string) => {
-    const newSkills = skillsArray.includes(skillId)
-      ? skillsArray.filter(id => id !== skillId)
-      : [...skillsArray, skillId];
-    const newValue = newSkills.length > 0 ? newSkills.join(',') : undefined;
-    if (!newValue) onRemoveParameter('llmVndAntSkills');
-    else onChangeParameter({ llmVndAntSkills: newValue });
-  };
+  const handleSkillToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    // id from the element, not a parameter (MUI Joy Chip bubbles from inner action button)
+    const skillId = (event.target as HTMLElement).closest<HTMLElement>('[data-skill-id]')?.dataset.skillId;
+    if (!skillId) return;
+
+    // recompute the new skills
+    const current = llmVndAntSkills ? llmVndAntSkills.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const next = current.includes(skillId) ? current.filter(id => id !== skillId) : [...current, skillId];
+    const newSkills = next.length > 0 ? next.join(',') : undefined;
+
+    // remove or set the parameter
+    if (!newSkills) onRemoveParameter('llmVndAntSkills');
+    else onChangeParameter({ llmVndAntSkills: newSkills });
+  }, [llmVndAntSkills, onChangeParameter, onRemoveParameter]);
 
   return (
-    <FormControl size={smaller ? 'sm' : undefined} orientation='horizontal' sx={{ flexWrap: smaller ? 'nowrap' : 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1, width: '100%' }}>
+    <FormControl size={smaller ? 'sm' : undefined} orientation='horizontal' sx={{ flexWrap: smaller ? 'nowrap' : 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 0.5, width: '100%', minHeight: '2rem' }}>
       <FormLabelStart
         title={smaller ? 'Skills' : 'Anthropic Skills (Alpha)'}
-        description={smaller ? undefined : 'Server-side'}
+        description={!smaller ? 'Server-side' : undefined}
         // tooltip='Select which document types Claude can create using server-side Skills API. Skills run on Anthropic servers and may incur additional costs.'
       />
-      <Box sx={{ display: 'flex', gap: 1, py: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      <Box sx={{ display: 'flex', gap: 0.5, py: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         {DEFAULT_SKILLS.map((skill) => {
           const isSelected = skillsArray.includes(skill.id);
           return (
@@ -48,7 +54,8 @@ export function AnthropicSkillsConfig({ smaller, llmVndAntSkills, onChangeParame
               key={skill.id}
               variant={isSelected ? 'solid' : 'outlined'}
               color={isSelected ? 'primary' : 'neutral'}
-              onClick={() => handleSkillToggle(skill.id)}
+              data-skill-id={skill.id}
+              onClick={handleSkillToggle}
               sx={{ borderRadius: 'sm' }}
             >
               {skill.label}
