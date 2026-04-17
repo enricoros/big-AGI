@@ -265,7 +265,23 @@ const _knownGeminiModels: ({
 
   /// Generation 3.0
 
-  // REMOVED: models/gemini-3-pro-preview (SHUT DOWN March 9, 2026, superseded by gemini-3.1-pro-preview)
+  // 3.0 Pro (Preview) - Released November 18, 2025; DEPRECATED: shutdown March 9, 2026 (still served by API as of Apr 17, 2026)
+  {
+    id: 'models/gemini-3-pro-preview',
+    labelOverride: 'Gemini 3 Pro Preview',
+    isPreview: true,
+    deprecated: '2026-03-09',
+    chatPrice: gemini30ProPricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'high'] },
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
+    ],
+    benchmark: { cbaElo: 1487 }, // gemini-3-pro
+  },
 
   // 3.0 Pro Image Preview - Released November 20, 2025
   {
@@ -735,6 +751,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.1-flash-tts-preview',
   'models/gemini-3.1-',
   'models/gemini-3.1',
+  'models/gemini-3-pro-preview',
   'models/gemini-3-pro-image-preview',
   'models/nano-banana-pro-preview',
   'models/gemini-3-flash-preview',
