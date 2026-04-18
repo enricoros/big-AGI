@@ -172,14 +172,17 @@ export namespace V3StoreDataToHead {
       userTitle, autoTitle,
       systemPurposeId,
       messages,
+      beamIsOpen,
       beamResults,
       updated,
       created,
-    } = ic as (ImportConversationV3 & { beamResults?: DMessage[] });
+    } = ic as (ImportConversationV3 & { beamIsOpen?: boolean; beamResults?: DMessage[] });
 
     const cc = createDConversation(systemPurposeId as SystemPurposeId);
     if (id) cc.id = id;
     cc.messages = messages.map(_recreateMessage);
+    if (beamIsOpen !== undefined)
+      cc.beamIsOpen = beamIsOpen;
     if (beamResults)
       cc.beamResults = beamResults;
     if (userTitle) cc.userTitle = userTitle;
@@ -336,6 +339,7 @@ export namespace DataAtRestV1 {
     return {
       id: ec.id,
       messages: ec.messages,
+      beamIsOpen: ec.beamIsOpen,
       beamResults: ec.beamResults,
       systemPurposeId: ec.systemPurposeId,
       userTitle: ec.userTitle,
@@ -358,6 +362,7 @@ export namespace DataAtRestV1 {
   export type RestChatJsonV1 = {
     id: string;
     messages: (DMessage | V3StoreDataToHead.ImportMessageV3)[];
+    beamIsOpen?: boolean;
     beamResults?: DMessage[];
     systemPurposeId: string;
     userTitle?: string;

@@ -11,6 +11,8 @@ export interface DConversation {
   id: DConversationId;                // unique identifier for this conversation
 
   messages: DMessage[];               // linear list of messages in this conversation
+  beamIsOpen?: boolean;
+  beamResults?: DMessage[];
 
   // editable
   userTitle?: string;
@@ -36,8 +38,6 @@ export interface DConversation {
   // Not persisted, used while in-memory, or temporarily by the UI
   // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
   _abortController: AbortController | null;
-  beamResults?: DMessage[];
-
   // future additions:
   // draftUserMessage?: { text: string; attachments: any[] };
   // isMuted: boolean; isStarred: boolean;
@@ -92,6 +92,8 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
     messages: conversation.messages
       .slice(0, messagesToKeep)
       .map(message => duplicateDMessage(message, skipVoid)), // [*] duplicate conversation - see downstream
+    beamIsOpen: conversation.beamIsOpen,
+    beamResults: conversation.beamResults?.map(message => duplicateDMessage(message, false)),
 
     // userTitle: conversation.userTitle, // undefined
     autoTitle: newTitle,

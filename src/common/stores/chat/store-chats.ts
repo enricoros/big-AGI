@@ -55,6 +55,7 @@ export interface ChatActions {
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
   setArchived: (cId: DConversationId, isArchived: boolean) => void;
+  setBeamIsOpen: (cId: DConversationId, beamIsOpen: boolean | undefined) => void;
   setBeamResults: (cId: DConversationId, beamResults: DMessage[] | undefined) => void;
   title: (cId: DConversationId) => string | undefined;
 
@@ -446,6 +447,12 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           {
             isArchived: isArchived,
             // updated: Date.now(), // don't update this - the 'entity state' shall update, but not this soft time
+          }),
+
+      setBeamIsOpen: (conversationId: DConversationId, beamIsOpen: boolean | undefined) =>
+        _get()._editConversation(conversationId,
+          {
+            beamIsOpen,
           }),
 
       setBeamResults: (conversationId: DConversationId, beamResults: DMessage[] | undefined) =>
