@@ -136,7 +136,6 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     }
   },
 
-
   setIsMaximized: (maximized: boolean) =>
     _set({
       isMaximized: maximized,
@@ -169,4 +168,3 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     })),
 
 });
-

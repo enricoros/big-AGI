@@ -35,6 +35,9 @@ export namespace V4ToHeadConverters {
 
     for (const message of c.messages)
       inMemHeadCleanDMessage(message, validLiveFileIDs);
+
+    if (c.beamResults)
+      c.beamResults.forEach(message => inMemHeadCleanDMessage(message, validLiveFileIDs));
   }
 
 
@@ -169,13 +172,16 @@ export namespace V3StoreDataToHead {
       userTitle, autoTitle,
       systemPurposeId,
       messages,
+      beamResults,
       updated,
       created,
-    } = ic;
+    } = ic as (ImportConversationV3 & { beamResults?: DMessage[] });
 
     const cc = createDConversation(systemPurposeId as SystemPurposeId);
     if (id) cc.id = id;
     cc.messages = messages.map(_recreateMessage);
+    if (beamResults)
+      cc.beamResults = beamResults;
     if (userTitle) cc.userTitle = userTitle;
     if (autoTitle) cc.autoTitle = autoTitle;
     if (created) cc.created = created;
@@ -330,6 +336,7 @@ export namespace DataAtRestV1 {
     return {
       id: ec.id,
       messages: ec.messages,
+      beamResults: ec.beamResults,
       systemPurposeId: ec.systemPurposeId,
       userTitle: ec.userTitle,
       autoTitle: ec.autoTitle,
@@ -351,6 +358,7 @@ export namespace DataAtRestV1 {
   export type RestChatJsonV1 = {
     id: string;
     messages: (DMessage | V3StoreDataToHead.ImportMessageV3)[];
+    beamResults?: DMessage[];
     systemPurposeId: string;
     userTitle?: string;
     autoTitle?: string;

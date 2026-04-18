@@ -9,7 +9,7 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { ChatActions, getConversation, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
@@ -23,6 +23,12 @@ import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_
 
 // optimization: cache the actions
 const _chatStoreActions = useChatStore.getState() as ChatActions;
+
+const cloneBeamResultMessage = (message: DMessage): DMessage => {
+  const cloned = structuredClone(message);
+  delete cloned.pendingIncomplete;
+  return cloned;
+};
 
 
 /**
@@ -45,6 +51,24 @@ export class ConversationHandler {
       if (state.isOpen === prevState.isOpen) return;
       useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, state.isOpen);
     });
+
+    this.beamStore.subscribe((state) => {
+      const beamResults = [
+        ...state.rays
+          .filter(ray => ray.status !== 'empty' && ray.status !== 'scattering' && !!ray.message.fragments.length)
+          .map(ray => cloneBeamResultMessage(ray.message)),
+        ...state.fusions
+          .filter(fusion => fusion.stage !== 'idle' && fusion.stage !== 'fusing' && !!fusion.outputDMessage?.fragments.length)
+          .map(fusion => cloneBeamResultMessage(fusion.outputDMessage!)),
+      ];
+      const nextResultsString = JSON.stringify(beamResults);
+      const currentResultsString = JSON.stringify(getConversation(this.conversationId)?.beamResults ?? []);
+      if (nextResultsString === currentResultsString)
+        return;
+      _chatStoreActions.setBeamResults(this.conversationId, beamResults.length ? beamResults : undefined);
+    });
+
+    useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, this.beamStore.getState().isOpen);
   }
 
 
@@ -250,6 +274,7 @@ export class ConversationHandler {
    */
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
+    const savedBeamResults = getConversation(this.conversationId)?.beamResults ?? [];
 
     const onBeamSuccess = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => {
 
@@ -278,7 +303,8 @@ export class ConversationHandler {
     };
 
     beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
-    importMessages.length && beamImportRays(importMessages, getChatLLMId());
+    const seedMessages = [...importMessages, ...savedBeamResults];
+    seedMessages.length && beamImportRays(seedMessages, getChatLLMId());
   }
 
 

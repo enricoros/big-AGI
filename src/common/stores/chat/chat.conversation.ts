@@ -36,6 +36,7 @@ export interface DConversation {
   // Not persisted, used while in-memory, or temporarily by the UI
   // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
   _abortController: AbortController | null;
+  beamResults?: DMessage[];
 
   // future additions:
   // draftUserMessage?: { text: string; attachments: any[] };
