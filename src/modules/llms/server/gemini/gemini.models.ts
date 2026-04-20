@@ -171,9 +171,9 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 
-// Gemini Thinking Control (as of 2026-02-19):
+// Gemini Thinking Control (as of 2026-04-19):
 // - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) - NOT thinkingBudget.
-//   Supported levels: 3.1 Pro=['low','medium','high'], 3 Pro=['low','high'], Flash=['minimal','low','medium','high']. Default is 'high' (dynamic).
+//   Supported levels: 3.1 Pro=['low','medium','high'], 3 Pro=['low','medium','high'], Flash=['minimal','low','medium','high']. Default is 'high' (dynamic).
 //   Pro does not support disabling thinking. Flash's 'minimal' does not guarantee thinking is off.
 // - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) - NOT thinkingLevel.
 //   Budget=0 disables thinking (Flash/Flash-Lite only; Pro cannot disable). Undefined = auto.
@@ -274,7 +274,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProPricing,
     interfaces: IF_30,
     parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['low', 'high'] },
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
@@ -291,6 +291,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
@@ -307,6 +308,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini30ProImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
@@ -621,6 +623,7 @@ const _knownGeminiModels: ({
     id: 'models/gemma-4-31b-it',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
   },
   {
@@ -628,6 +631,7 @@ const _knownGeminiModels: ({
     id: 'models/gemma-4-26b-a4b-it',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
   },
 
