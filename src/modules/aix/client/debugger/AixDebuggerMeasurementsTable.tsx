@@ -23,9 +23,7 @@ export function AixDebuggerMeasurementsTable(props: {
   return (
     <Table
       size='sm'
-      variant='outlined'
       sx={{
-
         backgroundColor: 'background.surface',
         '& th': { fontWeight: 'bold', whiteSpace: 'nowrap', p: 1 },
         '& td': { fontFamily: 'code', p: 1 },

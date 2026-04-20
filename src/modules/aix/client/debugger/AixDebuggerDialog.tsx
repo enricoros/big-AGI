@@ -36,7 +36,7 @@ const _styles = {
   frameViewer: {
     overflow: 'auto', // scroll this part of the dialog, i.e. the full debugging frame
 
-    // backgroundColor: 'background.level1',
+    backgroundColor: 'background.level1',
     borderBottom: '1px solid',
     borderBottomColor: 'divider',
 
