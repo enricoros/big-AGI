@@ -15,7 +15,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixTools_ToolDefinition, AixTools_ToolsPolicy, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
 import { ChatGenerateDispatch, createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
@@ -174,6 +174,104 @@ const SWEEP_DEFINITIONS = [
 ] as const satisfies SweepDefinition<any>[];
 
 
+// --- TOOL PROBE DEFINITIONS ---
+
+/**
+ * Tool probes verify real function-calling support by invoking a tool and inspecting the response.
+ * Distinct from sweeps (which vary AixAPI_Model parameters): a probe sets request-level `tools` + `toolsPolicy`
+ * and a user prompt, then classifies pass/fail from the parser's function-call events.
+ *
+ * Output: passing probes are written to the dialect JSON under `probe.outputKey` as a list of `probe.passValue`
+ * entries (e.g. `"fn": ["auto"]`). Absence of the key means the probe did not pass for that model.
+ */
+interface ToolProbeDefinition {
+  /** Probe name, shown in logs. Also used as the output JSON key (e.g. 'fn'). */
+  name: string;
+  /** Human-readable description for --help */
+  description: string;
+  applicability:
+    | { type: 'all' }
+    | { type: 'dialects'; dialects: AixAPI_Access['dialect'][] };
+  userPrompt: string;
+  tools: AixTools_ToolDefinition[];
+  toolsPolicy: AixTools_ToolsPolicy;
+  /** Function name that must be called for the probe to pass. */
+  expectedFunctionName: string;
+  /** Value listed under the output key when the probe passes (e.g. 'auto'). */
+  passValue: string;
+  /** Optional additional validation on the parsed args object (must return true). */
+  validateArgs?: (args: any) => boolean;
+  /**
+   * If set, after the model emits a valid tool call we inject a canned tool_response and re-dispatch.
+   * Pass then additionally requires: turn 2 emits text (no loop, no empty), and that text contains
+   * at least one of `signalTokens` (case-insensitive substring) - proving the model actually consumed
+   * the tool result rather than ignoring it.
+   */
+  roundtrip?: {
+    /** Serialized tool result (typically a JSON-stringified object). Must be a JSON object string per validation upstream. */
+    cannedResult: string;
+    /** At least one of these substrings must appear (case-insensitive) in turn 2's text. */
+    signalTokens: string[];
+  };
+}
+
+const _getWeatherTool: AixTools_ToolDefinition = {
+  type: 'function_call',
+  function_call: {
+    name: 'get_current_weather',
+    description: 'Look up the current weather for a given city. Call this whenever the user asks about current weather conditions.',
+    input_schema: {
+      properties: {
+        location: { type: 'string', description: 'The city and optional region/country, e.g. "Tokyo, Japan".' },
+        unit: { type: 'string', description: 'Temperature unit.', enum: ['celsius', 'fahrenheit'] },
+      },
+      required: ['location'],
+    },
+  },
+};
+
+const TOOL_PROBE_DEFINITIONS: ToolProbeDefinition[] = [
+  {
+    name: 'fn',
+    description: 'Basic function-calling (single tool, policy=auto). Pass = real tool call with valid args.',
+    applicability: { type: 'all' },
+    userPrompt: 'What is the current weather in Tokyo? Use the provided tool to find out.',
+    tools: [_getWeatherTool],
+    toolsPolicy: { type: 'auto' },
+    expectedFunctionName: 'get_current_weather',
+    passValue: 'auto',
+    validateArgs: (args) => typeof args?.location === 'string' && args.location.length > 0,
+  },
+  {
+    name: 'fn',
+    description: 'Forced tool call (single tool, policy=any). Pass = tool call is emitted with valid args.',
+    applicability: { type: 'all' },
+    userPrompt: 'What is the current weather in Tokyo? You must call the available tool.',
+    tools: [_getWeatherTool],
+    toolsPolicy: { type: 'any' },
+    expectedFunctionName: 'get_current_weather',
+    passValue: 'required',
+    validateArgs: (args) => typeof args?.location === 'string' && args.location.length > 0,
+  },
+  {
+    name: 'fn',
+    description: 'Round-trip: tool call then canned response, verify model produces coherent text (2 API calls).',
+    applicability: { type: 'all' },
+    userPrompt: 'What is the current weather in Tokyo? Use the provided tool to find out.',
+    tools: [_getWeatherTool],
+    toolsPolicy: { type: 'auto' },
+    expectedFunctionName: 'get_current_weather',
+    passValue: 'roundtrip',
+    validateArgs: (args) => typeof args?.location === 'string' && args.location.length > 0,
+    roundtrip: {
+      cannedResult: JSON.stringify({ temperature_c: 18, condition: 'cloudy', wind_kph: 12 }),
+      // 'cloudy' is the strongest signal (unambiguous, lowercase-stable); '18' also works.
+      signalTokens: ['cloudy', '18'],
+    },
+  },
+];
+
+
 interface SweepDefinition<TValue> {
   name: string;
   description: string;
@@ -299,8 +397,19 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   tokenStopReason: AixWire_Particles.GCTokenStopReason | null = null;
   endReason: string | null = null;
 
+  // Function-call capture (for tool probes)
+  fnInvocationCount: number = 0;
+  firstFnId: string | null = null;
+  firstFnName: string | null = null;
+  firstFnArgs: string = '';
+  private _firstArgsCompleteFromStart: boolean = false;
+
+  // Vendor state capture (for round-trip continuity - e.g. Gemini 3 requires echoing thoughtSignature on functionCall parts)
+  geminiThoughtSignature: string | null = null;
+
   get hasText(): boolean { return this.text.length > 0; }
   get hasError(): boolean { return this.dialectIssue !== null; }
+  get hasFnInvocation(): boolean { return this.fnInvocationCount > 0; }
 
   // Parser-initiated Control
   setDialectEnded(reason: ParticleCGDialectEndReason): void {
@@ -325,8 +434,23 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   appendAudioInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _durationMs: number): void { /* no-op */ }
   appendImageInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _prompt: string): void { /* no-op */ }
   appendHostedResource(_hres: any): void { /* no-op */ }
-  startFunctionCallInvocation(_id: string | null, _functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', _args: string | object | null): void { /* no-op */ }
-  appendFunctionCallInvocationArgs(_id: string | null, _argsJsonChunk: string): void { /* no-op */ }
+  startFunctionCallInvocation(id: string | null, functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', args: string | object | null): void {
+    this.fnInvocationCount++;
+    if (this.firstFnName === null) {
+      this.firstFnName = functionName;
+      this.firstFnId = id;
+      if (args != null) {
+        this.firstFnArgs = typeof args === 'string' ? args : JSON.stringify(args);
+        this._firstArgsCompleteFromStart = true;
+      }
+    }
+  }
+
+  appendFunctionCallInvocationArgs(_id: string | null, argsJsonChunk: string): void {
+    // Only accumulate chunks for the first invocation, and only if `start` did not already deliver complete args.
+    if (this.fnInvocationCount === 1 && !this._firstArgsCompleteFromStart)
+      this.firstFnArgs += argsJsonChunk;
+  }
   addCodeExecutionInvocation(_id: string | null, _language: string, _code: string, _author: 'gemini_auto_inline' | 'code_interpreter'): void { /* no-op */ }
   addCodeExecutionResponse(_id: string | null, _error: boolean | string, _result: string, _executor: 'gemini_auto_inline' | 'code_interpreter', _environment: 'upstream'): void { /* no-op */ }
   appendUrlCitation(_title: string, _url: string, _citationNumber?: number, _startIndex?: number, _endIndex?: number, _textSnippet?: string, _pubTs?: number): void { /* no-op */ }
@@ -334,7 +458,11 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   // Special
   sendCGControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
   sendOperationState(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string, _opts?: any): void { /* no-op */ }
-  sendSetVendorState(_svs: any): void { /* no-op */ }
+  sendSetVendorState(svs: any): void {
+    // Capture Gemini thoughtSignature for round-trip tool continuity (see parser: sendSetVendorState({p:'svs', vendor:'gemini', state:{thoughtSignature}}))
+    if (svs?.vendor === 'gemini' && typeof svs?.state?.thoughtSignature === 'string' && !this.geminiThoughtSignature)
+      this.geminiThoughtSignature = svs.state.thoughtSignature;
+  }
 
   // Non-parts data
   setModelName(_modelName: string): void { /* no-op */ }
@@ -575,6 +703,286 @@ async function testParameterValue(
       durationMs,
     });
   }
+}
+
+
+// ============================================================================
+// Tool Probe Execution
+// ============================================================================
+
+/**
+ * Result of a single dispatch+parse cycle. `fatalResult` is set when the dispatch itself failed or
+ * produced a non-ok stop reason, meaning the caller should immediately return a classified TestResult
+ * (the collector's function-call state is not reliable in that case).
+ */
+interface _DispatchResult {
+  collector: SweepCollectorTransmitter;
+  verboseLogs: string[];
+  debugRequestBody: string | undefined;
+  fatalResult?: Pick<TestResult, 'outcome' | 'errorMessage' | 'errorCategory' | 'httpStatus' | 'verboseLogs'>;
+}
+
+/**
+ * Build the vendor HTTP request, fetch, parse the response into a collector, and classify top-level outcomes
+ * that are independent of probe semantics (dispatch errors, dialect issues, stop reasons, HTTP failures).
+ */
+async function _dispatchAndCollect(
+  access: AixAPI_Access,
+  model: AixAPI_Model,
+  chatGenerate: AixAPIChatGenerate_Request,
+  probeLabel: string,
+): Promise<_DispatchResult> {
+  const collector = new SweepCollectorTransmitter();
+  const verboseLogs: string[] = [];
+  let dispatch: ChatGenerateDispatch | undefined;
+
+  try {
+    dispatch = await createChatGenerateDispatch(access, model, chatGenerate, false, false);
+  } catch (error: any) {
+    const errorMessage = error?.message ? String(error.message).slice(0, 300) : String(error).slice(0, 300);
+    return {
+      collector, verboseLogs,
+      debugRequestBody: undefined,
+      fatalResult: {
+        outcome: 'fail', errorCategory: 'dialect', errorMessage,
+        verboseLogs: [`Exception creating request: ${error?.message || String(error)}`],
+      },
+    };
+  }
+
+  const debugRequestBody = 'body' in dispatch.request ? JSON.stringify(dispatch.request.body) : undefined;
+
+  try {
+    const response = await fetchResponseOrTRPCThrow({
+      ...dispatch.request,
+      name: probeLabel,
+      throwWithoutName: true,
+    });
+    const body = await response.text();
+
+    try { dispatch.chatGenerateParse(collector, body); }
+    catch (error) { verboseLogs.push(`Parse error: ${(error instanceof Error ? error.message : String(error)).slice(0, 100)}`); }
+
+    if (collector.hasError) {
+      const errorMessage = collector.dialectIssue || 'Unknown dialect issue';
+      verboseLogs.push(`Dialect issue: ${errorMessage}`);
+      return {
+        collector, verboseLogs, debugRequestBody,
+        fatalResult: { outcome: 'fail', errorCategory: 'dialect', errorMessage, verboseLogs },
+      };
+    }
+
+    const stopReason = collector.tokenStopReason;
+    const isValidStop = !stopReason || stopReason === 'ok' || stopReason === 'ok-tool_invocations';
+    if (stopReason === 'out-of-tokens') {
+      return {
+        collector, verboseLogs, debugRequestBody,
+        fatalResult: { outcome: 'truncated', errorMessage: 'out-of-tokens', verboseLogs },
+      };
+    }
+    if (!isValidStop) {
+      return {
+        collector, verboseLogs, debugRequestBody,
+        fatalResult: { outcome: 'fail', errorCategory: 'dialect', errorMessage: `Unexpected stop reason: ${stopReason}`, verboseLogs },
+      };
+    }
+
+    return { collector, verboseLogs, debugRequestBody };
+
+  } catch (error: any) {
+    if (error instanceof TRPCFetcherError) {
+      const errorMessage = (error.message || '').slice(0, 300);
+      const isTransient = error.httpStatus === 503 || error.httpStatus === 429;
+      return {
+        collector, verboseLogs, debugRequestBody,
+        fatalResult: {
+          outcome: isTransient ? 'blocked' : 'fail',
+          httpStatus: error.httpStatus, errorCategory: error.category, errorMessage,
+          verboseLogs: [`[${error.category}${error.httpStatus ? ` ${error.httpStatus}` : ''}] ${errorMessage}`],
+        },
+      };
+    }
+    const errorMessage = (error?.message || String(error)).slice(0, 300);
+    return {
+      collector, verboseLogs, debugRequestBody,
+      fatalResult: {
+        outcome: 'error', errorCategory: 'exception', errorMessage,
+        verboseLogs: [`Exception: ${errorMessage}`],
+      },
+    };
+  }
+}
+
+/**
+ * Check whether the collector captured a valid function call matching the probe's expectations.
+ * Pushes a descriptive line into `verboseLogs` on success (for consistent output) or on failure.
+ */
+function _checkFunctionCall(
+  collector: SweepCollectorTransmitter,
+  probe: ToolProbeDefinition,
+  verboseLogs: string[],
+): Pick<TestResult, 'outcome' | 'errorMessage'> {
+  if (!collector.hasFnInvocation) {
+    const preview = collector.hasText
+      ? (collector.text.length > 120 ? collector.text.slice(0, 120) + '...' : collector.text)
+      : '(no text)';
+    verboseLogs.push(`No function call; text: "${preview}"`);
+    return { outcome: 'fail', errorMessage: 'no function call emitted' };
+  }
+  if (collector.firstFnName !== probe.expectedFunctionName) {
+    verboseLogs.push(`Wrong function name: "${collector.firstFnName}" (expected "${probe.expectedFunctionName}")`);
+    return { outcome: 'fail', errorMessage: `wrong function name: ${collector.firstFnName}` };
+  }
+  let parsedArgs: any;
+  try {
+    parsedArgs = JSON.parse(collector.firstFnArgs || '{}');
+  } catch {
+    verboseLogs.push(`Unparseable args: ${collector.firstFnArgs.slice(0, 120)}`);
+    return { outcome: 'fail', errorMessage: 'unparseable function args' };
+  }
+  if (probe.validateArgs && !probe.validateArgs(parsedArgs)) {
+    verboseLogs.push(`Args validation failed: ${JSON.stringify(parsedArgs).slice(0, 120)}`);
+    return { outcome: 'fail', errorMessage: 'args failed validation' };
+  }
+  verboseLogs.push(`-> ${probe.expectedFunctionName}(${JSON.stringify(parsedArgs).slice(0, 120)})`);
+  return { outcome: 'pass', errorMessage: null };
+}
+
+/**
+ * Probe a model by invoking it with a function-call tool and classifying the response.
+ * For plain probes (no `roundtrip`): pass requires a valid tool call from turn 1.
+ * For round-trip probes: also injects a canned tool_response and runs turn 2, requiring coherent text that
+ * contains at least one of `signalTokens` (proving the model consumed the injected tool result).
+ */
+async function testToolProbe(
+  access: AixAPI_Access,
+  modelId: string,
+  probe: ToolProbeDefinition,
+  maxTokens: number,
+  baseModelOverrides: Partial<AixAPI_Model> | undefined,
+): Promise<TestResult> {
+  const startTime = Date.now();
+  const baseModel = createBaseModel(modelId, maxTokens);
+  const model: AixAPI_Model = { ...baseModel, ...baseModelOverrides };
+  const debugRequestAixModel = JSON.stringify(model);
+
+  // Turn 1 request
+  const turn1Request: AixAPIChatGenerate_Request = {
+    systemMessage: null,
+    chatSequence: [{ role: 'user' as const, parts: [{ pt: 'text' as const, text: probe.userPrompt }] }],
+    tools: probe.tools,
+    toolsPolicy: probe.toolsPolicy,
+  };
+
+  const turn1 = await _dispatchAndCollect(access, model, turn1Request, `ToolProbe-${probe.name}-${probe.passValue}-t1`);
+
+  const makeResult = (fields: Omit<TestResult, 'sweepName' | 'paramValue' | 'debugRequestAixModel' | 'debugRequestBody'>, debugBody?: string): TestResult => ({
+    sweepName: probe.name,
+    paramValue: probe.passValue,
+    debugRequestAixModel,
+    debugRequestBody: debugBody ?? turn1.debugRequestBody,
+    ...fields,
+  });
+
+  if (turn1.fatalResult) {
+    return makeResult({ ...turn1.fatalResult, durationMs: Date.now() - startTime });
+  }
+
+  // Turn 1 function-call classification
+  const fcCheck = _checkFunctionCall(turn1.collector, probe, turn1.verboseLogs);
+  if (fcCheck.outcome !== 'pass') {
+    return makeResult({ ...fcCheck, verboseLogs: turn1.verboseLogs, durationMs: Date.now() - startTime });
+  }
+
+  // Single-turn probe: done
+  if (!probe.roundtrip) {
+    return makeResult({
+      outcome: 'pass',
+      errorMessage: null,
+      verboseLogs: turn1.verboseLogs,
+      durationMs: Date.now() - startTime,
+    });
+  }
+
+  // Round-trip: build turn 2 with the assistant's call + an injected tool_response (both in one model message)
+  const toolCallId = turn1.collector.firstFnId || 'probe_call_1';
+  const fnName = turn1.collector.firstFnName!;
+  const fnArgs = turn1.collector.firstFnArgs || '{}';
+
+  // Gemini 3+ requires a real thought_signature on echoed-back functionCall parts (error: MISSING_THOUGHT_SIGNATURE).
+  // We ONLY echo a signature we actually captured from turn 1 - never a fabricated/bypass value - so failures
+  // reflect real provider behavior. Non-Gemini dialects ignore _vnd.gemini, so this is harmless cross-vendor.
+  const toolInvocationPart = {
+    pt: 'tool_invocation' as const,
+    id: toolCallId,
+    invocation: { type: 'function_call' as const, name: fnName, args: fnArgs },
+    ...(turn1.collector.geminiThoughtSignature ? { _vnd: { gemini: { thoughtSignature: turn1.collector.geminiThoughtSignature } } } : {}),
+  };
+
+  const turn2Request: AixAPIChatGenerate_Request = {
+    systemMessage: null,
+    chatSequence: [
+      { role: 'user' as const, parts: [{ pt: 'text' as const, text: probe.userPrompt }] },
+      {
+        role: 'model' as const,
+        parts: [
+          toolInvocationPart,
+          { pt: 'tool_response' as const, id: toolCallId, response: { type: 'function_call' as const, name: fnName, result: probe.roundtrip.cannedResult } },
+        ],
+      },
+    ],
+    tools: probe.tools,
+    toolsPolicy: probe.toolsPolicy,
+  };
+
+  const turn2 = await _dispatchAndCollect(access, model, turn2Request, `ToolProbe-${probe.name}-${probe.passValue}-t2`);
+  const combinedLogs = [...turn1.verboseLogs, ...turn2.verboseLogs];
+
+  if (turn2.fatalResult) {
+    return makeResult(
+      { ...turn2.fatalResult, verboseLogs: combinedLogs, durationMs: Date.now() - startTime },
+      turn2.debugRequestBody,
+    );
+  }
+
+  // Turn 2 classification: must produce coherent text that uses the tool result
+  if (turn2.collector.hasFnInvocation) {
+    combinedLogs.push('Turn 2 re-emitted a function call (loop, not answering)');
+    return makeResult({
+      outcome: 'fail',
+      errorMessage: 'loop: re-emitted fn call in turn 2',
+      verboseLogs: combinedLogs,
+      durationMs: Date.now() - startTime,
+    }, turn2.debugRequestBody);
+  }
+  if (!turn2.collector.hasText) {
+    combinedLogs.push('Turn 2 emitted no text');
+    return makeResult({
+      outcome: 'fail',
+      errorMessage: 'no text in turn 2',
+      verboseLogs: combinedLogs,
+      durationMs: Date.now() - startTime,
+    }, turn2.debugRequestBody);
+  }
+  const lowerText = turn2.collector.text.toLowerCase();
+  const hasSignal = probe.roundtrip.signalTokens.some(tok => lowerText.includes(tok.toLowerCase()));
+  if (!hasSignal) {
+    combinedLogs.push(`Turn 2 missing signals [${probe.roundtrip.signalTokens.join(',')}]: "${turn2.collector.text.slice(0, 120)}"`);
+    return makeResult({
+      outcome: 'fail',
+      errorMessage: `turn 2 text missing tool-response signals (${probe.roundtrip.signalTokens.join('|')})`,
+      verboseLogs: combinedLogs,
+      durationMs: Date.now() - startTime,
+    }, turn2.debugRequestBody);
+  }
+
+  combinedLogs.push(`Turn 2: "${turn2.collector.text.slice(0, 120)}"`);
+  return makeResult({
+    outcome: 'pass',
+    errorMessage: null,
+    verboseLogs: combinedLogs,
+    durationMs: Date.now() - startTime,
+  }, turn2.debugRequestBody);
 }
 
 
@@ -1037,6 +1445,15 @@ ${SWEEP_DEFINITIONS.map(s => {
     return `  ${COLORS.cyan}${s.name.padEnd(26)}${COLORS.reset} ${s.description} [${dialects}]`;
   }).join('\n')}
 
+${COLORS.bright}Available tool probes:${COLORS.reset}
+${TOOL_PROBE_DEFINITIONS.map(p => {
+    const dialects = p.applicability.type === 'all'
+      ? `${COLORS.green}all${COLORS.reset}`
+      : p.applicability.dialects.map(d => `${COLORS.magenta}${d}${COLORS.reset}`).join(', ');
+    return `  ${COLORS.cyan}${p.name.padEnd(26)}${COLORS.reset} ${p.description} [${dialects}]`;
+  }).join('\n')}
+  ${COLORS.dim}Probes share the --sweep-filter namespace. e.g. --sweep-filter fn runs only the fn probe.${COLORS.reset}
+
 ${COLORS.bright}Examples:${COLORS.reset}
   # Test temperature on a single OpenAI model
   sweep.sh --dialect openai --key sk-... --model-filter "gpt-4o-mini" --max-models 1 --sweep-filter temperature
@@ -1244,7 +1661,7 @@ async function runSweep(
         const sweep = SWEEP_DEFINITIONS.find(s => s.name === sweepName);
         if (sweep)
           applicableSweeps.push(sweep);
-        else
+        else if (!TOOL_PROBE_DEFINITIONS.find(p => p.name === sweepName)) // probe names are valid, handled separately
           console.warn(`  ${COLORS.yellow}Warning: Unknown sweep "${sweepName}" - skipping${COLORS.reset}`);
       }
     } else {
@@ -1261,11 +1678,24 @@ async function runSweep(
       applicableSweeps = applicableSweeps.filter(s => allowed.includes(s.name));
     }
 
-    if (applicableSweeps.length === 0) {
-      console.log(`  ${COLORS.yellow}No applicable sweeps for dialect: ${access.dialect}${COLORS.reset}`);
+    // 5b. Determine applicable tool probes
+    // Probes are ADDITIVE: they run by dialect applicability regardless of vendorConfig.sweeps
+    // (which only controls parameter sweeps). Users opt out via --sweep-filter.
+    let applicableProbes: ToolProbeDefinition[] = TOOL_PROBE_DEFINITIONS.filter(p =>
+      p.applicability.type === 'all' || p.applicability.dialects.includes(access.dialect),
+    );
+    if (options.sweepFilter) {
+      const allowed = options.sweepFilter.split(',').map(x => x.trim());
+      applicableProbes = applicableProbes.filter(p => allowed.includes(p.name));
+    }
+
+    if (applicableSweeps.length === 0 && applicableProbes.length === 0) {
+      console.log(`  ${COLORS.yellow}No applicable sweeps or probes for dialect: ${access.dialect}${COLORS.reset}`);
       continue;
     }
-    console.log(`  Applicable sweeps: ${applicableSweeps.map(s => COLORS.magenta + s.name + COLORS.reset).join(', ')}`);
+    const sweepLabels = applicableSweeps.map(s => COLORS.magenta + s.name + COLORS.reset);
+    const probeLabels = applicableProbes.map(p => COLORS.cyan + p.name + COLORS.reset);
+    console.log(`  Applicable: ${[...sweepLabels, ...probeLabels].join(', ')}`);
 
     // Build effective model filter string for JSON output
     const effectiveFilters: string[] = [];
@@ -1378,6 +1808,37 @@ async function runSweep(
             process.stdout.write(`${COLORS.cyan}${r.verboseLogs.join(' · ').trim()/*.replaceAll('\n',' · ')*/}${COLORS.reset}\n`);
           }
 
+      }
+
+      // 6b. For each applicable tool probe (runs after parameter sweeps for this model)
+      for (const probe of applicableProbes) {
+        process.stdout.write(`    ${probe.name.padEnd(26)} `);
+
+        if (options.dryRun) {
+          process.stdout.write(`${COLORS.dim}[probe:${probe.passValue}]${COLORS.reset}`);
+          console.log('');
+          continue;
+        }
+
+        const result = await testToolProbe(access, modelDesc.id, probe, maxTokens, mergedOverrides);
+        modelResult.results.push(result);
+        printProbeResultInline(result);
+        if (globalDelay > 0)
+          await sleep(globalDelay);
+        console.log('');
+
+        // Debug/Verbose output, same convention as sweeps
+        if (options.debug || options.verbose) {
+          const printRequest = options.debug && result.debugRequestBody;
+          const printLogs = options.verbose && result.verboseLogs.length > 0;
+          const mayDim = result.outcome === 'pass' ? COLORS.dim : '';
+          if (printRequest || printLogs) {
+            process.stdout.write(`      ${mayDim}(${String(result.paramValue)})`);
+            if (printRequest || (result.outcome !== 'pass' && result.debugRequestBody))
+              process.stdout.write(` -> ${result.debugRequestBody}${COLORS.reset}\n      ${mayDim}    `);
+            process.stdout.write(`${COLORS.cyan}${result.verboseLogs.join(' · ').trim()}${COLORS.reset}\n`);
+          }
+        }
       }
 
       vendorResult.models.push(modelResult);
