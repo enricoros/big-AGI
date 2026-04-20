@@ -1,42 +1,54 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
-  "_evaluated": "Evaluated: gemini-thinking-budget, gemini-thinking-level, temperature. If missing, the parameter is not supported by that model.",
+  "_evaluated": "Evaluated: fn, gemini-thinking-budget, gemini-thinking-level, temperature. If missing, the parameter is not supported by that model.",
   "_modelFilter": "models/gemini-3, models/gemini-2, models/gemma",
   "models/gemini-3.1-pro-preview": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [1024,16384,24576,32768,65535],
     "gemini-thinking-level": ["low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3.1-pro-preview-customtools": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [1024,16384,24576,32768,65535],
     "gemini-thinking-level": ["low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3.1-flash-image-preview": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["minimal","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3.1-flash-lite-preview": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
+  "models/gemini-3.1-flash-tts-preview": {
+    "temperature-range": [0,2]
+  },
   "models/gemini-3-pro-preview": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [1024,16384,24576,32768,65535],
-    "gemini-thinking-level": ["low","high"],
+    "gemini-thinking-level": ["low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3-pro-image-preview": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3-flash-preview": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-2.5-pro": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [1024,16384,24576,32768],
     "temperature-range": [0,2]
   },
@@ -44,6 +56,7 @@
     "temperature-range": [0,2]
   },
   "models/gemini-2.5-flash": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,24576],
     "temperature-range": [0,2]
   },
@@ -51,25 +64,31 @@
     "temperature-range": [0,2]
   },
   "models/gemini-2.5-flash-preview-tts": {
-    "temperature-range": [0,1.5]
-  },
-  "models/gemini-2.5-flash-lite-preview-09-2025": {
-    "gemini-thinking-budget-range": [0,24576],
-    "temperature-range": [0,2]
+    "temperature": [1,1.5,2]
   },
   "models/gemini-2.5-flash-lite": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,24576],
-    "temperature-range": [0,2]
-  },
-  "models/gemini-2.0-flash-exp-image-generation": {
     "temperature-range": [0,2]
   },
   "models/gemini-2.0-flash-lite-001": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [0],
     "temperature-range": [0,2]
   },
   "models/gemini-2.0-flash-001": {
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [0],
+    "temperature-range": [0,2]
+  },
+  "models/gemma-4-31b-it": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-level": ["minimal","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemma-4-26b-a4b-it": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-level": ["minimal","high"],
     "temperature-range": [0,2]
   },
   "models/gemma-3n-e4b-it": {
@@ -88,6 +107,11 @@
     "temperature-range": [0,2]
   },
   "models/gemma-3-12b-it": {
+    "temperature-range": [0,2]
+  },
+  "models/gemini-2.5-computer-use-preview-10-2025": {
+    "fn": ["auto"],
+    "gemini-thinking-budget-range": [0,65535],
     "temperature-range": [0,2]
   }
 }

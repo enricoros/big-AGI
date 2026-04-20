@@ -1,46 +1,56 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
-  "_evaluated": "Evaluated: ant-effort, ant-thinking-budget, temperature. If missing, the parameter is not supported by that model.",
+  "_evaluated": "Evaluated: ant-effort, ant-thinking-budget, fn, temperature. If missing, the parameter is not supported by that model.",
   "claude-opus-4-7": {
     "ant-effort": ["low","medium","high","xhigh","max"],
+    "fn": ["auto","required","roundtrip"],
     "temperature": [1]
   },
   "claude-opus-4-6": {
     "ant-effort": ["low","medium","high","max"],
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-sonnet-4-6": {
     "ant-effort": ["low","medium","high","max"],
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-opus-4-5-20251101": {
     "ant-effort": ["low","medium","high"],
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-sonnet-4-5-20250929": {
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-haiku-4-5-20251001": {
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-opus-4-1-20250805": {
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-opus-4-20250514": {
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-sonnet-4-20250514": {
     "ant-thinking-budget-range": [1024,65536],
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   },
   "claude-3-haiku-20240307": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
   }
 }
