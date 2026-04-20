@@ -23,11 +23,12 @@ If `$ARGUMENTS` provided, verify only that dialect, which includes reading the p
 
 ## Task
 
-The sweep data is the source of truth for allowed model parameter values or value ranges.
+The sweep data is the source of truth for allowed model parameter values or value ranges, and for the `fn` function-calling capability probe.
 
 For each model in the sweep, verify the model definition exposes exactly those capabilities - no more, no less. This includes:
 - The parameter is present in parameterSpecs
 - The paramId variant covers exactly the values from the sweep, if applicable
+- `LLM_IF_OAI_Fn` in `interfaces` matches `"roundtrip"` in the sweep's `fn` array (see below)
 - etc.
 
 Report models where the definition doesn't match the sweep.
@@ -49,6 +50,14 @@ and need to be carefully updated, otherwise thousands of clients may break.
 | Gemini    | `gemini-thinking-level`  | `llmVndGemEffort`            |
 | Gemini    | `gemini-thinking-budget` | `llmVndGeminiThinkingBudget` |
 | xAI       | `xai-web-search`         | `llmVndXaiWebSearch`         |
+
+## Function-Calling Capability (`fn`)
+
+The sweep `fn` array is a capability probe (not a paramId). `"roundtrip"` is the authoritative signal - full tool-call -> response -> coherent follow-up. `LLM_IF_OAI_Fn` in the model's `interfaces` must track `"roundtrip"`: present iff present.
+
+Flag:
+- `"roundtrip"` in sweep but `LLM_IF_OAI_Fn` missing (or vice versa)
+- `fn` contains `"auto"`/`"required"` without `"roundtrip"` - partial capability, call it out
 
 ## Output
 
