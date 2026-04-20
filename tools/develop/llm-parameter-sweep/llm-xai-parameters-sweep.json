@@ -1,28 +1,57 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
-  "_evaluated": "Evaluated: xai-reasoning-effort, xai-web-search. If missing, the parameter is not supported by that model.",
-  "grok-3-mini": {
+  "_evaluated": "Evaluated: fn, temperature, xai-reasoning-effort, xai-web-search. If missing, the parameter is not supported by that model.",
+  "grok-4.20-0309-reasoning": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,2],
-    "xai-reasoning-effort": ["low","medium","high"]
+    "xai-tools": ["xai-web-search"]
   },
-  "grok-4-0709": {
+  "grok-4.20-0309-non-reasoning": {
+    "fn": ["auto","required","roundtrip"],
+    "temperature-range": [0,2],
+    "xai-tools": ["xai-web-search"]
+  },
+  "grok-4.20-multi-agent-0309": {
+    "temperature-range": [0,2],
+    "xai-reasoning-effort": ["low","medium","high"],
+    "xai-tools": ["xai-web-search"]
+  },
+  "grok-4-1-fast-reasoning": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,2],
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-1-fast-non-reasoning": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,2],
     "xai-tools": ["xai-web-search"]
   },
-  "grok-4-1-fast-reasoning": {
+  "grok-code-fast-1": {
+    "fn": ["auto","required","roundtrip"],
+    "temperature-range": [0,2]
+  },
+  "grok-4-fast-reasoning": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,2],
     "xai-tools": ["xai-web-search"]
   },
   "grok-4-fast-non-reasoning": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,2],
     "xai-tools": ["xai-web-search"]
   },
-  "grok-4-fast-reasoning": {
+  "grok-4-0709": {
+    "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,2],
     "xai-tools": ["xai-web-search"]
+  },
+  "grok-3": {
+    "fn": ["auto","required","roundtrip"],
+    "temperature-range": [0,2]
+  },
+  "grok-3-mini": {
+    "fn": ["auto","required","roundtrip"],
+    "temperature-range": [0,2],
+    "xai-reasoning-effort": ["low","medium","high"]
   }
 }
