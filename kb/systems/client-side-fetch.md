@@ -1,6 +1,22 @@
 # CSF - Client-Side Fetch
 
-Client-Side Fetch (CSF) enables direct browser-to-API communication, bypassing the server for LLM requests. When enabled, the browser makes requests directly to vendor APIs (e.g., `api.openai.com`, `api.groq.com`) instead of routing through the Next.js server. This reduces latency, decreases server load, and is particularly useful for local models where the browser can communicate directly with Ollama or LM Studio.
+Client-Side Fetch (CSF), surfaced to users as **"Direct Connection"**, enables direct browser-to-API communication, bypassing the server for LLM requests. When enabled, the browser makes requests directly to vendor APIs (e.g., `api.openai.com`, `api.groq.com`) instead of routing through the Next.js server. This reduces latency, decreases server load, and is particularly useful for local models where the browser can communicate directly with Ollama or LM Studio.
+
+## User-facing tradeoffs (Direct Connection vs via-server)
+
+Wins when Direct Connection is on:
+- **No 4.5MB upload limit** (Vercel body-size cap does not apply to direct browser-to-API requests).
+- **No 300s function timeout** (Vercel serverless/edge timeout does not apply; call duration is bound only by the AI service).
+- **More privacy**: connection metadata (IP, timestamp, edge region, Vercel telemetry) is not observable by the Big-AGI edge server.
+
+Costs:
+- **Slightly more downlink bandwidth**: when traffic passes through the Big-AGI server, repetitive streaming frames are shed/compacted; direct streams arrive verbatim.
+
+Availability requires both:
+1. The API key is on the **client** (localStorage), not a server-side env var. Server-key deployments cannot use CSF because the browser has no credential to send.
+2. The AI service **allows CORS** from browsers. Most major providers do; some require specific headers which Big-AGI sets.
+
+Net: Direct Connection is a win on speed, limits, and privacy whenever the provider permits it. It is unavailable when keys are server-side or the provider blocks browser-origin requests.
 
 ## Implementation
 

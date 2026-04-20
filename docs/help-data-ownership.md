@@ -80,6 +80,27 @@ and then are send to the upstream AI services.
 
 ![data_ownership_hosted.png](pixels/data_ownership_hosted.png)
 
+### Direct Connection (Browser → AI Service)
+
+Most AI services offer a **Direct Connection** toggle (under a service's Advanced settings). When enabled, the browser calls the AI provider's API directly, skipping the Big-AGI server entirely.
+
+Benefits:
+
+- **No 4.5 MB upload limit** - the Vercel body-size cap does not apply, so larger attachments and long prompts go through.
+- **No 300-second timeout** - the Vercel function timeout does not apply, so long-running generations keep streaming.
+- **More privacy** - connection metadata (IP, timestamp, edge region, Vercel telemetry) is not observable by the Big-AGI edge server.
+
+Tradeoff:
+
+- **Slightly more downlink bandwidth**: when traffic passes through the Big-AGI edge, repetitive streaming frames are compacted; direct streams arrive verbatim from the provider.
+
+Availability requires both:
+
+1. The API key is set in your browser (client-side), not via server environment variables. Server-key deployments cannot use Direct Connection because the browser has no credential to send.
+2. The AI service allows CORS (browser-origin requests). Most major providers do; Big-AGI sets any extra headers they require.
+
+Direct Connection is a net win on speed, limits, and privacy whenever the provider permits it.
+
 ## Security Best Practices
 
 **Basic Security**:
