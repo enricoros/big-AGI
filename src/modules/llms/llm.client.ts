@@ -18,6 +18,12 @@ import { findServiceAccessOrThrow } from './vendors/vendor.helpers';
  */
 export const LLMS_VARIANT_SEPARATOR = '::' as const;
 
+// Cap for the *initial* llmResponseTokens default to avoid runaway defaults on huge-context models.
+// The model's maxOutputTokens is unchanged (vendor-reported cap remains true); users can still raise
+// llmResponseTokens via the slider up to maxOutputTokens. On reset, this capped initial is used.
+const _INITIAL_RESPONSE_TOKENS_CAP = 128_000;
+
+
 function _clientIdWithVariant(id: string, idVariant?: string): string {
   return !idVariant ? id
     : idVariant.startsWith(LLMS_VARIANT_SEPARATOR) ? `${id}${idVariant}`
@@ -86,8 +92,9 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   const contextTokens = d.contextWindow || null;
   const maxOutputTokens = d.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null); // fallback to half context window
 
-  // initial (user overridable) response tokens setting: equal to the max, if the max is given, or to 1/8th of the context window (when max is set to 1/2 of context)
-  const llmResponseTokens = !maxOutputTokens ? null : !d.maxCompletionTokens ? Math.round(maxOutputTokens / 4) : d.maxCompletionTokens;
+  // initial (user overridable) response tokens setting: equal to the max, if the max is given, or to 1/8th of the context window (when max is set to 1/2 of context); clamped to cap
+  const llmResponseTokens = !maxOutputTokens ? null
+    : Math.min(d.maxCompletionTokens ?? Math.round(maxOutputTokens / 4), _INITIAL_RESPONSE_TOKENS_CAP);
 
 
   // DLLM is a fundamental type in our application
