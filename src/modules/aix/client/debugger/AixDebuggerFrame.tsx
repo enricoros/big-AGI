@@ -174,11 +174,7 @@ export function AixDebuggerFrame(props: {
       {showParticles && (
         <Sheet variant='outlined' color='neutral' sx={_styles.requestSheetParticles}>
           {/* Zero state */}
-          {!frame.particles.length && (
-            <Typography>
-              No particles received yet
-            </Typography>
-          )}
+          {!frame.particles.length && <div>No particles received yet</div>}
 
           {/* List of particles */}
           {frame.particles.map((particle, idx) => {
