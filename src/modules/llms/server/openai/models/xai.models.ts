@@ -2,7 +2,7 @@ import * as z from 'zod/v4';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
@@ -45,7 +45,7 @@ const PRICE_40 = {
 // we don't add LLM_IF_OAI_Responses explicitly here, as the code fully treats XAI/XAI Models with responses
 
 const XAI_IF: ModelDescriptionSchema['interfaces'] = [
-  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn,
 ] as const;
 
 const XAI_IF_Vision: ModelDescriptionSchema['interfaces'] = [
@@ -70,7 +70,7 @@ const XAI_PAR_Reasoning = XAI_PAR;
 
 // Pre-Grok 4 models do NOT support server-side tools (web_search, x_search, code_interpreter)
 const XAI_IF_Pre4: ModelDescriptionSchema['interfaces'] = [
-  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn,
 ] as const;
 
 const XAI_IF_Pre4_Vision: ModelDescriptionSchema['interfaces'] = [
@@ -111,8 +111,12 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'Multi-agent reasoning model that runs 4 specialized agents in parallel (coordinator, fact-checker, analyst, challenger) for collaborative verification with reduced hallucination.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Reasoning,
+    // no LLM_IF_OAI_Fn: multi-agent does not support function calling
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
+      ...XAI_PAR_Reasoning,
+    ],
     chatPrice: PRICE_420,
   },
 
