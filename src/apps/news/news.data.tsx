@@ -191,7 +191,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>Major <B href='https://x.com/enricoros/status/1756553038293303434'>performance optimizations</B>: runs faster, saves power, saves memory</> },
       { text: <>Improvements: auto-size charts, search and folder experience</> },
       { text: <>Perfect chat scaling, with rapid keyboard shortcuts</> },
-      { text: <>Also: diagrams auto-resize, open code with StackBlitz and JSFiddle, quick model visibility toggle, open links externally, docs on the web</> },
+      { text: <>Also: diagrams auto-resize, quick model visibility toggle, open links externally, docs on the web</> },
       { text: <>Fixes: standalone LaTeX blocks, close views by dragging, knowledge cutoff dates, crashes on Google translate (thanks dad)</> },
     ],
   },

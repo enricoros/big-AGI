@@ -2,10 +2,9 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, Dropdown, ListItem, Menu, MenuButton, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
@@ -18,14 +17,13 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
-import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx, StyledOverlayButton } from '../OverlayButton';
+import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
 import { heuristicIsSVGCode, RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
-import { useOpenInWebEditors } from './code-buttons/useOpenInWebEditors';
 import { useStickyCodeOverlay } from './useStickyCodeOverlay';
 
 // style for line-numbers
@@ -264,13 +262,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const isBorderless = (renderHTML || renderSVG) && !showBlockTitle;
 
 
-  // External Buttons
-  const openExternallyItems = useOpenInWebEditors(code, blockTitle, blockIsPartial, inferredCodeLanguage, isSVGCode);
-
   // style
 
   const isRenderingDiagram = renderMermaid || renderPlantUML;
-  const hasExternalButtons = openExternallyItems.length > 0;
 
   const codeSx: SxProps = React.useMemo(() => ({
 
@@ -292,9 +286,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
     // lots more style, incl font, background, embossing, radius, etc.
     ...props.sx,
-
-    // patch the min height if we have the second row
-    // ...(hasExternalButtons ? { minHeight: '5.25rem' } : {}),
 
   }), [isBorderless, isFullscreen, isRenderingDiagram, props.sx, showSoftWrap]);
 
@@ -417,26 +408,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                 </OverlayButton>
               )}
 
-              {/* Open In Web Editors */}
-              {hasExternalButtons && (
-                <Dropdown>
-                  <Tooltip disableInteractive arrow placement='top' title='Web Editors'>
-                    <MenuButton
-                      slots={{ root: StyledOverlayButton }}
-                      slotProps={{ root: { variant: 'outlined' } }}
-                    >
-                      <EditRoundedIcon />
-                    </MenuButton>
-                  </Tooltip>
-                  <Menu sx={{ minWidth: 160 }} placement='bottom-end'>
-                    <ListItem>
-                      <Typography level='body-sm'>Edit with:</Typography>
-                    </ListItem>
-                    {openExternallyItems}
-                  </Menu>
-                </Dropdown>
-              )}
-
               {/* Copy */}
               {props.noCopyButton !== true && (
                 <OverlayButton tooltip={noTooltips ? null : 'Copy Code'} variant='outlined' onClick={handleCopyToClipboard}>
@@ -446,14 +417,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             </ButtonGroup>
 
           </Box>
-
-          {/* DISABLED: Converted to a Dropdown */}
-          {/* [row 2, optional] Group: Open Externally */}
-          {/*{!!openExternallyButtons.length && (*/}
-          {/*  <ButtonGroup aria-label='Open code in external editors' sx={overlayGroupWithShadowSx}>*/}
-          {/*    {openExternallyButtons}*/}
-          {/*  </ButtonGroup>*/}
-          {/*)}*/}
 
         </Box>
       )}

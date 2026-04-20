@@ -346,7 +346,6 @@ Configure 100s of AI models from 20+ providers:
 |:--------------|:---------------------------------------------------------------------------------------------------------------| 
 | Web Browse    | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
 | Web Search    | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
-| Code Editors  | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
 | Observability | [Helicone](https://www.helicone.ai)                                                                            |
 
 ---
