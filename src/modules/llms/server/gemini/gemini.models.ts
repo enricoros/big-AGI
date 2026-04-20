@@ -1,7 +1,7 @@
 import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
-import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../llm.server.types';
@@ -168,7 +168,7 @@ const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
+const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 
 // Gemini Thinking Control (as of 2026-02-19):
@@ -363,7 +363,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25ProPreviewTTSPricing,
     interfaces: [
-      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision,
       LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
       LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
       LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
@@ -423,7 +423,8 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.5 Computer Use Preview 10-2025',
     isPreview: true,
     chatPrice: gemini25ProPricing, // Uses same pricing as 2.5 Pro (pricing page doesn't list separately)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    // NOTE: sweep shows fn=['auto'] only (no 'roundtrip') - partial Fn capability, do not advertise LLM_IF_OAI_Fn
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiComputerUse' }, // Sets environment=ENVIRONMENT_BROWSER in Computer Use tool
@@ -439,7 +440,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini Robotics-ER 1.6 Preview',
     isPreview: true,
     chatPrice: geminiRoboticsER16Pricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
     benchmark: undefined, // Robotics model, not benchmarkable on standard tests
   },
@@ -451,7 +452,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     deprecated: '2026-04-30',
     chatPrice: gemini25FlashPricing, // Uses same pricing as 2.5 Flash per pricing page
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
     benchmark: undefined, // Robotics model, not benchmarkable on standard tests
   },
@@ -462,7 +463,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Nano Banana',
     deprecated: '2026-10-02',
     chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' }],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
@@ -483,7 +484,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini31FlashTTSPricing,
     interfaces: [
-      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision,
       LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
       LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
       LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
@@ -498,7 +499,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini25FlashPreviewTTSPricing,
     interfaces: [
-      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json,
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision,
       LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
       LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
       LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
@@ -555,7 +556,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-001',
     deprecated: '2026-06-01',
     chatPrice: gemini20FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1361 }, // gemini-2.0-flash-001
   },
   {
@@ -564,7 +565,7 @@ const _knownGeminiModels: ({
     deprecated: '2026-06-01',
     // copied from symlink
     chatPrice: gemini20FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1361 }, // gemini-2.0-flash
   },
 
@@ -619,14 +620,14 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemma-4-31b-it',
     isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
   },
   {
     hidden: true, // smaller MoE variant
     id: 'models/gemma-4-26b-a4b-it',
     isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
   },
 
@@ -896,7 +897,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   const interfaces: ModelDescriptionSchema['interfaces'] = knownModel?.interfaces || [];
   if (!interfaces.length && hasChatInterfaces) {
     // newer models get good capabilities by default
-    interfaces.push(LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json);
+    interfaces.push(LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn);
   }
 
   // validate the recommended temperature, we expect the default temperature
@@ -937,7 +938,7 @@ const _hardcodedGeminiVariants: ModelVariantMap = {
   //   idVariant: 'non-thinking',
   //   label: 'Gemini 2.5 Flash Preview (Non-thinking, 05-20)',
   //   chatPrice: gemini25FlashPricing,
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
+  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
   //   parameterSpecs: [{
   //     paramId: 'llmVndGeminiThinkingBudget',
   //     hidden: true,
@@ -951,7 +952,7 @@ const _hardcodedGeminiVariants: ModelVariantMap = {
   //   idVariant: 'non-thinking',
   //   label: 'Gemini 2.5 Flash Preview (Non-thinking, 04-17)',
   //   chatPrice: gemini25FlashPricing,
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
+  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, /*LLM_IF_OAI_Reasoning,*/ LLM_IF_GEM_CodeExecution],
   //   parameterSpecs: [{
   //     paramId: 'llmVndGeminiThinkingBudget',
   //     hidden: true,
@@ -970,7 +971,7 @@ export function geminiModelsAddVariants(models: ModelDescriptionSchema[]): Model
 // -- Gemini-through-OpenRouter Vendor Lookup --
 
 const _ORT_GEM_IF_ALLOWLIST: ReadonlySet<string> = new Set([
-  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning,
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
   LLM_IF_Outputs_Image, // let image generation happen through OR (works also with the params below) - NOTE: for the few models that don't have image config params and so it's not added to those
   LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, // for Gemma support, client-side fixes
 ] as const);
