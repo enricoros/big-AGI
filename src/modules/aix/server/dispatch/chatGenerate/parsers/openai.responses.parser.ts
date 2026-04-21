@@ -316,7 +316,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // -> Upstream Handle (for remote control: resume, cancel, delete)
         // Implementation NOTE: we won't uproll sequence numbers for partial resumes - we'll just download the full response
         if (event.response.store && event.response.id)
-          pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
+          pt.setUpstreamHandle(event.response.id, 'vnd.oai.responses' /*, event.sequence_number - commented, unused for now */);
 
         // -> Hosted tool configs: cache for per-event enrichment (e.g. image generation progress)
         R.captureHostedToolConfigs(event.response.tools);

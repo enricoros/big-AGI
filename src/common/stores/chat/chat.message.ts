@@ -130,11 +130,10 @@ export type DMessageGenerator = ({
     containerId: string,
     expiresAt: string,                // ISO 8601 UTC timestamp (e.g., "2026-04-07T05:59:32Z")
   },
-  upstreamHandle?: {
-    uht: 'vnd.oai.responses',
-    responseId: string,
-    expiresAt: number | null,         // null = never expires
-  },
+  upstreamHandle?:
+    // unified `runId` across variants - vendor-specific id lives behind it; `uht` is consulted only for dispatch routing
+    | { uht: 'vnd.oai.responses', runId: string /* OpenAI `response.id` */, expiresAt: number | null /* null = never expires */ }
+    | { uht: 'vnd.gem.interactions', runId: string /* Gemini `interaction.id` */, expiresAt: number | null },
   tokenStopReason?:
     | 'client-abort'                  // if the generator stopped due to a client abort signal
     | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter

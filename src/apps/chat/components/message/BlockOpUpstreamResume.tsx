@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 
 import { Box, Button, ButtonGroup, Tooltip, Typography } from '@mui/joy';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
@@ -21,6 +22,11 @@ export function BlockOpUpstreamResume(props: {
   const [isCancelling, setIsCancelling] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // expiration: boolean is evaluated at render (may lag briefly if nothing re-renders past expiry).
+  // TimeAgo handles its own tick for the label; the button's disabled state is the only consumer of this flag.
+  const { expiresAt, runId = '' } = props.upstreamHandle;
+  const isExpired = expiresAt != null && Date.now() > expiresAt;
 
   // handlers
 
@@ -77,7 +83,7 @@ export function BlockOpUpstreamResume(props: {
         {props.onResume && (
           <Tooltip title='Resume generation from last checkpoint'>
             <Button
-              disabled={isResuming || isCancelling || isDeleting}
+              disabled={isResuming || isCancelling || isDeleting || isExpired}
               loading={isResuming}
               startDecorator={<PlayArrowRoundedIcon sx={{ color: 'success.solidBg' }} />}
               onClick={handleResume}
@@ -121,7 +127,8 @@ export function BlockOpUpstreamResume(props: {
       )}
 
       <Typography level='body-xs' sx={{ fontSize: '0.65rem', opacity: 0.6 }}>
-        Response ID: {props.upstreamHandle.responseId.slice(0, 12)}...
+        Run ID: {runId.slice(0, 12)}...
+        {!!expiresAt && <> · Expires <TimeAgo date={expiresAt} /></>}
       </Typography>
     </Box>
   );

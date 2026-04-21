@@ -162,6 +162,7 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageContinue?: (messageId: string, continueText: null | string) => void,
+  onMessageUpstreamResume?: (messageId: string) => Promise<void>,
   onMessageDelete?: (messageId: string) => void,
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
@@ -246,7 +247,7 @@ export function ChatMessage(props: {
   // const wordsDiff = useWordsDifference(textSubject, props.diffPreviousText, showDiff);
 
 
-  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageContinue } = props;
+  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageContinue, onMessageUpstreamResume } = props;
 
   const handleFragmentNew = React.useCallback(() => {
     onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
@@ -263,6 +264,10 @@ export function ChatMessage(props: {
   const handleMessageContinue = React.useCallback((continueText: null | string) => {
     onMessageContinue?.(messageId, continueText);
   }, [messageId, onMessageContinue]);
+
+  const handleUpstreamResume = React.useCallback(() => {
+    return onMessageUpstreamResume?.(messageId);
+  }, [messageId, onMessageUpstreamResume]);
 
 
   // Text Editing
@@ -887,13 +892,11 @@ export function ChatMessage(props: {
             />
           )}
 
-          {/* Upstream Resume... */}
-          {props.isBottom && fromAssistant && lastFragmentIsError && messageGenerator?.upstreamHandle?.responseId && (
+          {/* Upstream Resume - shows whenever there's a stored handle (incl. post-reload, where no error fragment is present) */}
+          {fromAssistant && messageGenerator?.upstreamHandle && (
             <BlockOpUpstreamResume
               upstreamHandle={messageGenerator.upstreamHandle}
-              onResume={console.error}
-              onCancel={console.error}
-              onDelete={console.error}
+              onResume={onMessageUpstreamResume ? handleUpstreamResume : undefined}
             />
           )}
 

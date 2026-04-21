@@ -496,6 +496,7 @@ export namespace AixWire_API {
     vndBedrockAPI: z.enum(['converse', 'invoke-anthropic', 'mantle']).optional(),
 
     // Gemini
+    vndGeminiAPI: z.enum(['interactions-agent']).optional(), // opt-in per-model API dialect; unset = generateContent
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
     vndGeminiCodeExecution: z.enum(['auto']).optional(),
     vndGeminiComputerUse: z.enum(['browser']).optional(),
@@ -535,13 +536,21 @@ export namespace AixWire_API {
   /// Resume Handle
 
   /**
-   * TEMP - Not well defined yet - OpenAI Responses-only implementation
-   * [OpenAI Responses API] Allows reconnecting to an in-progress response by its ID.
+   * Discriminated by upstream handle type:
+   *  - vnd.oai.responses: OpenAI Responses API - GET /v1/responses/{id}
+   *  - vnd.gem.interactions: Gemini Interactions API for background agents - GET-poll /v1beta/interactions/{id}
    */
-  export const ResumeHandle_schema = z.object({
-    responseId: z.string(),
-    startingAfter: z.number().optional(), // the sequence number of event after which to start streaming
-  });
+  export const ResumeHandle_schema = z.discriminatedUnion('uht', [
+    z.object({
+      uht: z.literal('vnd.oai.responses'),
+      runId: z.string(), // upstream: OpenAI Responses `response.id`
+      startingAfter: z.number().optional(), // the sequence number of event after which to start streaming
+    }),
+    z.object({
+      uht: z.literal('vnd.gem.interactions'),
+      runId: z.string(), // upstream: Gemini Interactions `interaction.id`
+    }),
+  ]);
 
   /// Context
 
@@ -674,7 +683,7 @@ export namespace AixWire_Particles {
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
     | { cg: 'set-provider-infra', label: string }
-    | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses', responseId: string, expiresAt: number | null } }
+    | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses' | 'vnd.gem.interactions', runId: string, expiresAt: number | null } }
     | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 

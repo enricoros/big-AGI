@@ -518,16 +518,19 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Communicates the upstream response handle, for remote control/resumability */
-  setUpstreamHandle(handle: string, _type: 'oai-responses' /* the only one for now, used for type safety */) {
+  setUpstreamHandle(handle: string, type: 'vnd.oai.responses' | 'vnd.gem.interactions') {
     if (SERVER_DEBUG_WIRE)
-      console.log('|response-handle|', handle);
+      console.log('|response-handle|', type, handle);
     // NOTE: if needed, we could store the handle locally for server-side resumability, but we just implement client-side (correction, manual) for now
+    const expireDays = type === 'vnd.gem.interactions'
+      ? 1 // Gemini Interactions: 1d free / 55d paid - use the conservative lower bound
+      : 30; // OpenAI Responses: default 30 days
     this.transmissionQueue.push({
       cg: 'set-upstream-handle',
       handle: {
-        uht: 'vnd.oai.responses',
-        responseId: handle,
-        expiresAt: Date.now() + 30 * 24 * 3600 * 1000, // default: 30 days expiry
+        uht: type,
+        runId: handle,
+        expiresAt: Date.now() + expireDays * 24 * 3600 * 1000,
       },
     });
     // send it right away, in case the connection closes soon

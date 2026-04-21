@@ -96,7 +96,7 @@ export interface IParticleTransmitter {
   setProviderInfraLabel(label: string): void;
 
   /** Communicates the upstream response handle, for remote control/resumability */
-  setUpstreamHandle(handle: string, type: 'oai-responses'): void;
+  setUpstreamHandle(handle: string, type: 'vnd.oai.responses' | 'vnd.gem.interactions'): void;
 
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
   updateMetrics(update: Partial<AixWire_Particles.CGSelectMetrics>): void;

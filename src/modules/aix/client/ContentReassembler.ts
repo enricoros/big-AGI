@@ -1043,7 +1043,8 @@ export class ContentReassembler {
 
   private onResponseHandle({ handle }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-upstream-handle' }>): void {
     // validate the handle
-    if (handle?.uht !== 'vnd.oai.responses' || !handle?.responseId || handle?.expiresAt === undefined) {
+    const knownUht = handle?.uht === 'vnd.oai.responses' || handle?.uht === 'vnd.gem.interactions';
+    if (!knownUht || !handle?.runId || handle.expiresAt === undefined) {
       this._appendReassemblyDevError(`Invalid response handle received: ${JSON.stringify(handle)}`);
       return;
     }
