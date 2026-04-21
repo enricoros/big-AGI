@@ -42,7 +42,7 @@ const _knownMoonshotModels: ManualMappings = [
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
-    benchmark: { cbaElo: 1450 }, // kimi-k2.5-thinking
+    benchmark: { cbaElo: 1451 }, // kimi-k2.5-thinking
   },
 
   // Kimi K2 Series - Latest Models
@@ -57,7 +57,7 @@ const _knownMoonshotModels: ManualMappings = [
     interfaces: IF_K2_REASON,
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }], // NOT WORKING YET
     chatPrice: { input: 1.15, output: 8.00, cache: { cType: 'oai-ac', read: 0.15 } },
-    benchmark: { cbaElo: 1429 }, // kimi-k2-thinking-turbo
+    benchmark: { cbaElo: 1430 }, // kimi-k2-thinking-turbo
   },
   // Thinking
   {

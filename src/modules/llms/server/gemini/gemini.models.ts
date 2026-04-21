@@ -208,7 +208,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: undefined, // too new for CBA ELO (released Feb 19, 2026)
+    benchmark: { cbaElo: 1493 }, // gemini-3.1-pro-preview
   },
   // 3.1 Pro (Preview) - Custom Tools variant - Released February 19, 2026
   // Better at prioritizing custom tools for users building with a mix of bash and tools
@@ -225,7 +225,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: undefined,
+    benchmark: { cbaElo: 1493 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
   // 3.1 Flash Image Preview - Released February 26, 2026
@@ -259,7 +259,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: undefined, // too new (released March 3, 2026)
+    benchmark: { cbaElo: 1438 }, // gemini-3.1-flash-lite-preview
   },
 
 
@@ -280,7 +280,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1487 }, // gemini-3-pro
+    benchmark: { cbaElo: 1486 }, // gemini-3-pro
   },
 
   // 3.0 Pro Image Preview - Released November 20, 2025
@@ -331,7 +331,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1471 }, // gemini-3-flash
+    benchmark: { cbaElo: 1474 }, // gemini-3-flash
   },
 
   /// Generation 2.5
@@ -350,7 +350,7 @@ const _knownGeminiModels: ({
       },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1450 }, // gemini-2.5-pro
+    benchmark: { cbaElo: 1448 }, // gemini-2.5-pro
   },
 
   // REMOVED MODELS (no longer returned by API as of Jan 8, 2026):
@@ -403,7 +403,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1409 }, // gemini-2.5-flash
+    benchmark: { cbaElo: 1411 }, // gemini-2.5-flash
   },
 
   // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
@@ -559,7 +559,7 @@ const _knownGeminiModels: ({
     deprecated: '2026-06-01',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1361 }, // gemini-2.0-flash-001
+    benchmark: { cbaElo: 1360 }, // gemini-2.0-flash-001
   },
   {
     id: 'models/gemini-2.0-flash',
@@ -568,7 +568,7 @@ const _knownGeminiModels: ({
     // copied from symlink
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1361 }, // gemini-2.0-flash
+    benchmark: { cbaElo: 1360 }, // gemini-2.0-flash
   },
 
   // 2.0 Flash Lite - DEPRECATED: shutdown June 1, 2026 (announced Feb 18, 2026)
@@ -625,6 +625,7 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
+    benchmark: { cbaElo: 1451 }, // gemma-4-31b
   },
   {
     hidden: true, // smaller MoE variant
@@ -633,6 +634,7 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
+    benchmark: { cbaElo: 1439 }, // gemma-4-26b-a4b
   },
 
   // Gemma 3n Model (newer than 3, first seen on the May 2025 update)
@@ -641,7 +643,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
-    benchmark: { cbaElo: 1319 }, // gemma-3n-e4b-it
+    benchmark: { cbaElo: 1318 }, // gemma-3n-e4b-it
   },
   {
     id: 'models/gemma-3n-e2b-it',
@@ -659,7 +661,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: geminiExpFree, // Pricing page indicates free tier only
-    benchmark: { cbaElo: 1365 }, // gemma-3-27b-it
+    benchmark: { cbaElo: 1366 }, // gemma-3-27b-it
     // hidden: true, // Keep visible if it's a distinct offering
   },
   {

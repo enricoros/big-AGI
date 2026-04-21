@@ -92,7 +92,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: XAI_PAR_Reasoning,
     chatPrice: PRICE_420,
-    benchmark: { cbaElo: 1481 }, // grok-4.20-beta-0309-reasoning (CBA name)
+    benchmark: { cbaElo: 1480 }, // grok-4.20-beta-0309-reasoning (CBA name)
   },
   {
     idPrefix: 'grok-4.20-0309-non-reasoning',
@@ -103,7 +103,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: XAI_IF_Vision,
     parameterSpecs: XAI_PAR,
     chatPrice: PRICE_420,
-    benchmark: { cbaElo: 1492 }, // grok-4.20-beta1 (CBA name, preliminary)
+    benchmark: { cbaElo: 1482 }, // grok-4.20-beta1 (CBA name)
   },
   {
     idPrefix: 'grok-4.20-multi-agent-0309',
@@ -118,6 +118,7 @@ const _knownXAIChatModels: ManualMappings = [
       ...XAI_PAR_Reasoning,
     ],
     chatPrice: PRICE_420,
+    benchmark: { cbaElo: 1474 }, // grok-4.20-multi-agent-beta-0309
   },
 
   // Grok 4.1
@@ -130,7 +131,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: XAI_PAR_Reasoning,
     chatPrice: PRICE_41,
-    benchmark: { cbaElo: 1430 }, // grok-4-1-fast-reasoning
+    benchmark: { cbaElo: 1432 }, // grok-4-1-fast-reasoning
   },
   {
     idPrefix: 'grok-4-1-fast-non-reasoning',
@@ -141,7 +142,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: XAI_IF_Vision,
     parameterSpecs: XAI_PAR,
     chatPrice: PRICE_41,
-    benchmark: { cbaElo: 1466 }, // grok-4.1
+    benchmark: { cbaElo: 1461 }, // grok-4.1
   },
 
   // Grok 4
@@ -167,6 +168,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: XAI_IF_Vision,
     parameterSpecs: XAI_PAR,
     chatPrice: PRICE_40,
+    benchmark: { cbaElo: 1421 }, // grok-4-fast-chat
   },
   {
     hidden: true, // yield to 4.20
@@ -191,7 +193,7 @@ const _knownXAIChatModels: ManualMappings = [
     interfaces: XAI_IF_Pre4,
     parameterSpecs: XAI_PAR_Pre4,
     chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1411 }, // grok-3-preview-02-24
+    benchmark: { cbaElo: 1412 }, // grok-3-preview-02-24
   },
   {
     idPrefix: 'grok-3-mini',

@@ -22,7 +22,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     // ],
     maxCompletionTokens: 32768, // default, max: 65536
     chatPrice: { input: 0.28, output: 0.42, cache: { cType: 'oai-ac', read: 0.028 } },
-    benchmark: { cbaElo: 1412 }, //deepseek-v3.2-exp-thinking
+    benchmark: { cbaElo: 1425 }, // deepseek-v3.2-exp-thinking
   },
   {
     idPrefix: 'deepseek-chat',
@@ -32,7 +32,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     interfaces: IF_3,
     maxCompletionTokens: 8192, // default is 4096, max is 8192
     chatPrice: { input: 0.28, output: 0.42, cache: { cType: 'oai-ac', read: 0.028 } },
-    benchmark: { cbaElo: 1420 }, // deepseek-v3.2
+    benchmark: { cbaElo: 1424 }, // deepseek-v3.2
   },
 ];
 

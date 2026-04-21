@@ -25,16 +25,16 @@ const _knownMistralModelDetails: Record<string, {
 }> = {
 
   // Premier models - Mistral 3 (Dec 2025)
-  'mistral-large-2512': { chatPrice: { input: 0.5, output: 1.5 }, benchmark: { cbaElo: 1414 } }, // Mistral Large 3 - MoE 41B active / 675B total
+  'mistral-large-2512': { chatPrice: { input: 0.5, output: 1.5 }, benchmark: { cbaElo: 1415 } }, // Mistral Large 3 - MoE 41B active / 675B total
   'mistral-large-2411': { chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1305 }, hidden: true }, // older version
   'mistral-large-latest': { chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // → 2512
 
-  'mistral-medium-2508': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1412 } }, // Mistral Medium 3
-  'mistral-medium-2505': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1384 }, hidden: true }, // older version
+  'mistral-medium-2508': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1410 } }, // Mistral Medium 3
+  'mistral-medium-2505': { chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1387 }, hidden: true }, // older version
   'mistral-medium-latest': { chatPrice: { input: 0.4, output: 2 }, hidden: true }, // → 2508
   'mistral-medium': { chatPrice: { input: 0.4, output: 2 }, hidden: true }, // symlink
 
-  'magistral-medium-2509': { chatPrice: { input: 2, output: 5 }, benchmark: { cbaElo: 1305 } }, // reasoning
+  'magistral-medium-2509': { chatPrice: { input: 2, output: 5 }, benchmark: { cbaElo: 1304 } }, // reasoning (leaderboard: magistral-medium-2506 = 1304)
   'magistral-medium-latest': { chatPrice: { input: 2, output: 5 }, hidden: true }, // symlink
 
   'devstral-2512': { label: 'Devstral 2 (2512)', chatPrice: { input: 0.4, output: 2 } }, // Devstral 2 - 123B coding agents (API returns "Mistral Vibe Cli")
@@ -70,7 +70,7 @@ const _knownMistralModelDetails: Record<string, {
 
   // Open models
   'mistral-small-2603': { chatPrice: { input: 0.15, output: 0.6 } }, // Mistral Small 4 - 119B hybrid (instruct+reasoning+coding), 256k ctx
-  'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1356 }, hidden: true }, // Mistral Small 3.2
+  'mistral-small-2506': { chatPrice: { input: 0.1, output: 0.3 }, benchmark: { cbaElo: 1357 }, hidden: true }, // Mistral Small 3.2
   'mistral-small-latest': { chatPrice: { input: 0.15, output: 0.6 }, hidden: true }, // → 2603
 
   'labs-mistral-small-creative': { label: 'Mistral Small Creative', chatPrice: { input: 0.1, output: 0.3 } }, // creative writing, roleplay (Labs)
