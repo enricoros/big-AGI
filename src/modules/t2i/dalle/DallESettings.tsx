@@ -17,6 +17,7 @@ import { openAIImageModelsPricing } from './openaiGenerateImages';
 const CONF = {
 
   MODEL_OPTS: [
+    { value: 'gpt-image-2', label: 'GPT Image 2' },
     { value: 'gpt-image-1.5', label: 'GPT Image 1.5' },
     { value: 'gpt-image-1', label: 'GPT Image 1' },
     { value: 'gpt-image-1-mini', label: 'GPT Image Mini' },

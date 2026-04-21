@@ -85,11 +85,12 @@ export async function openAIGenerateImagesOrThrow(
       access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceIdForAccess).transportAccess,
       // [LocalAI, 2025-11-18] LocalAI uses the default model 'stablediffusion' and we don't have any dynamic model selection yet
       generationConfig: modelVendor === 'localai' ? {
-        model: dalleModelId === 'gpt-image-1' ? 'stablediffusion'
-          : dalleModelId === 'gpt-image-1-mini' ? 'dreamshaper'
-            : dalleModelId === 'dall-e-3' ? 'sd-3.5-large-ggml'
-              : dalleModelId === 'dall-e-2' ? 'sd-3.5-medium-ggml'
-                : 'dreamshaper',
+        model: dalleModelId === 'gpt-image-2' ? 'stablediffusion'
+          : dalleModelId === 'gpt-image-1' ? 'stablediffusion'
+            : dalleModelId === 'gpt-image-1-mini' ? 'dreamshaper'
+              : dalleModelId === 'dall-e-3' ? 'sd-3.5-large-ggml'
+                : dalleModelId === 'dall-e-2' ? 'sd-3.5-medium-ggml'
+                  : 'dreamshaper',
         prompt,
         count: imageCount,
         // [LocalAI] size mapping - FIXME! - TEMP CODE
@@ -98,7 +99,7 @@ export async function openAIGenerateImagesOrThrow(
             : '1024x1024',
         response_format: 'b64_json',
       } : getImageModelFamily(dalleModelId) === 'gpt-image' ? {
-        model: dalleModelId as 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini',
+        model: dalleModelId as 'gpt-image-2' | 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini',
         prompt: prompt.slice(0, 32000 - 1), // GPT Image family accepts much longer prompts
         count: imageCount,
         size: dalleSizeGI,
@@ -199,6 +200,7 @@ export async function openAIGenerateImagesOrThrow(
 export function openAIImageModelsCurrentGeneratorName() {
   const dalleModelSelection = useDalleStore.getState().dalleModelId;
   const dalleModelId = resolveDalleModelId(dalleModelSelection);
+  if (dalleModelId === 'gpt-image-2') return 'GPT Image 2';
   if (dalleModelId === 'gpt-image-1.5') return 'GPT Image 1.5';
   if (dalleModelId === 'gpt-image-1') return 'GPT Image 1';
   if (dalleModelId === 'gpt-image-1-mini') return 'GPT Image Mini';
@@ -217,10 +219,13 @@ export function openAIImageModelsCurrentGeneratorName() {
  * - Deduct credits after successful generation
  */
 const IMAGE_MODEL_PRICING = {
-  // Token-based pricing (GPT Image family) - Note: chatgpt-image-latest has same pricing as gpt-image-1.5
-  'gpt-image-1.5': { inputText: 5.00, inputImage: 8.0, outputImage: 32.0 },
-  'gpt-image-1': { inputText: 5.00, inputImage: 10.0, outputImage: 40.0 },
-  'gpt-image-1-mini': { inputText: 2.00, inputImage: 2.50, outputImage: 8.00 },
+  // Token-based pricing (GPT Image family). Per $1M tokens. Note: chatgpt-image-latest mirrors gpt-image-1.5.
+  // Cached-input discounts exist (gpt-image-2/1.5: $2/img $1.25/txt, gpt-image-1: $2.50/img $1.25/txt,
+  // gpt-image-1-mini: $0.25/img $0.20/txt) but are not tracked here yet - add when the usage field is wired up.
+  'gpt-image-2':      { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
+  'gpt-image-1.5':    { inputText: 5.00, inputImage:  8.00, outputImage: 32.00 },
+  'gpt-image-1':      { inputText: 5.00, inputImage: 10.00, outputImage: 40.00 },
+  'gpt-image-1-mini': { inputText: 2.00, inputImage:  2.50, outputImage:  8.00 },
   // Fixed pricing models handled separately in openAIImageModelsPricing()
   'dall-e-3': null,
   'dall-e-2': null,
@@ -235,8 +240,7 @@ function openAIImageModelsPrice(modelId: DalleModelId): undefined | { inputText:
  * TODO: update this when the OpenAI pricing changes.
  */
 export function openAIImageModelsPricing(modelId: DalleModelId, quality: DalleImageQuality, size: DalleSize): string {
-  // GPT Image family (gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
-  if (modelId === 'gpt-image-1.5' || modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini') {
+  if (getImageModelFamily(modelId) === 'gpt-image') {
 
     // gpt-image-1-mini does not support high quality
     if (modelId === 'gpt-image-1-mini' && quality === 'high') quality = 'medium';
