@@ -5,10 +5,11 @@ import { hasKeys } from '~/common/util/objectUtils';
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
+import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCreate';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
-import { OpenAIWire_API_Responses } from '../../wiretypes/openai.wiretypes';
+import { OpenAIWire_API_Responses, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 
 // configuration
@@ -41,6 +42,9 @@ function sanitizeUrlForDisplay(url: string | null): string {
 type TResponse = OpenAIWire_API_Responses.Response;
 type TOutputItem = OpenAIWire_API_Responses.Response['output'][number];
 type TEventType = OpenAIWire_API_Responses.StreamingEvent['type'];
+
+// cached config for the image_generation hosted tool, captured at response.created
+type TImageGenToolCfg = Extract<OpenAIWire_Responses_Tools.Tool, { type: 'image_generation' }>;
 
 
 /**
@@ -75,6 +79,9 @@ class ResponseParserStateMachine {
 
   // streaming state tracking
   #hasFunctionCalls: boolean = false; // tracks if we've seen function_call output items
+
+  // hosted tool configuration echo (captured at response.created)
+  #imageGenToolCfg: TImageGenToolCfg | undefined;
 
 
   // Validations
@@ -237,6 +244,18 @@ class ResponseParserStateMachine {
     return this.#hasFunctionCalls;
   }
 
+
+  // Hosted tool config capture
+
+  captureHostedToolConfigs(tools: TResponse['tools']) {
+    if (!tools?.length) return;
+    this.#imageGenToolCfg = tools.find((t): t is TImageGenToolCfg => t.type === 'image_generation');
+  }
+
+  get imageGenToolCfg() {
+    return this.#imageGenToolCfg;
+  }
+
 }
 
 
@@ -298,6 +317,9 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
         // Implementation NOTE: we won't uproll sequence numbers for partial resumes - we'll just download the full response
         if (event.response.store && event.response.id)
           pt.setUpstreamHandle(event.response.id, 'oai-responses' /*, event.sequence_number - commented, unused for now */);
+
+        // -> Hosted tool configs: cache for per-event enrichment (e.g. image generation progress)
+        R.captureHostedToolConfigs(event.response.tools);
 
         // TODO: [FUTURE] Accumulate in DMessage.sessionMetadata:
         //   pt.setSessionMetadata('openai.response.id', response.id)
@@ -403,14 +425,17 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'image_generation_call':
             // -> IGC: process completed image generation using 'ii' particle for inline images
-            const { result: igResult, revised_prompt: igRevisedPrompt } = doneItem;
+            const { id: igId, result: igResult, revised_prompt: igRevisedPrompt } = doneItem;
+            const igDoneText = !igRevisedPrompt?.length ? 'Image generated'
+              : `Generated: "${igRevisedPrompt.length > 100 ? igRevisedPrompt.slice(0, 100) + '...' : igRevisedPrompt}"`;
+            pt.sendOperationState('gen-image', igDoneText, { opId: igId, state: 'done' });
             // Create inline image with base64 data
             if (igResult)
               pt.appendImageInline(
                 _imageGenerationMimeType(doneItem), // infer from output_format echoed in the item
                 igResult,
                 igRevisedPrompt || 'Generated image',
-                'gpt-image-1', // generator
+                R.imageGenToolCfg?.model || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: prefer the cached tool config, fallback to current default
                 igRevisedPrompt || '', // prompt used
               );
             else
@@ -569,7 +594,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.in_progress':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendOperationState('gen-image', 'Generating image...', { opId: event.item_id });
+        pt.sendOperationState('gen-image', `Generating image${_prettyImageGenConfigSuffix(R.imageGenToolCfg)}...`, { opId: event.item_id });
         break;
 
       case 'response.image_generation_call.generating':
@@ -579,15 +604,19 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
       case 'response.image_generation_call.partial_image':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        // SKIP partial images to avoid duplicates - only use final result
-        // const { partial_image_index: piIndex } = event;
-        // console.log('[DEV] AIX: OpenAI Responses: skipping partial_image event to avoid duplicates:', { piIndex });
-        // The final image will be handled in response.output_item.done
+        // NOTE: We don't surface the partial image data yet (it would require a new particle type)
+        // NOTE: Also for now we do not use the partial_image_index as a progress counter in the status text.
+        // const piIndex = event.partial_image_index;
+        // const piMax = R.imageGenToolCfg?.partial_images;
+        // const piProgress = piMax ? `${piIndex + 1}/${piMax}` : `step ${piIndex + 1}`;
+        // pt.sendOperationState('gen-image', `Generating image${_prettyImageGenConfigSuffix(R.imageGenToolCfg)}... (${piProgress})`, { opId: event.item_id });
         break;
 
       case 'response.image_generation_call.completed':
         R.outputItemVisit(eventType, event.output_index, 'image_generation_call');
-        pt.sendOperationState('gen-image', 'Image generated', { opId: event.item_id, state: 'done' });
+        // NOTE: we defer the 'done' status to response.output_item.done, where we also have the revised_prompt for decoration;
+        //       the semantics of the below would be better (to close the in_progress), but we assume that the response will come immediately after
+        // pt.sendOperationState('gen-image', 'Image generated', { opId: event.item_id, state: 'done' });
         // -> Final image result is handled in response.output_item.done
         break;
 
@@ -892,7 +921,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
               _imageGenerationMimeType(oItem), // infer from output_format echoed in the item
               igResult,
               igRevisedPrompt || 'Generated image',
-              'gpt-image-1', // generator
+              AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: non-streaming path has no captured tool config, use current default
               igRevisedPrompt || '', // prompt used
             );
           else
@@ -1034,6 +1063,22 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
       console.log(`[DEV] AIX: OpenAI-Responses - Unhandled annotation:`, { annotation });
       break;
   }
+}
+
+/**
+ * Builds a concise " (model · size · quality · format)" suffix from the image-gen tool
+ * config captured at response.created, so in-flight status messages carry real info
+ * instead of a generic "Generating image...".
+ */
+function _prettyImageGenConfigSuffix(cfg: TImageGenToolCfg | undefined): string {
+  if (!cfg) return '';
+  const parts: string[] = [];
+  if (cfg.model) parts.push(cfg.model);
+  if (cfg.size && cfg.size !== 'auto') parts.push(cfg.size);
+  if (cfg.quality && cfg.quality !== 'auto') parts.push(cfg.quality);
+  if (cfg.output_format) parts.push(cfg.output_format);
+  if (cfg.background && cfg.background !== 'auto') parts.push(cfg.background);
+  return parts.length ? ` (${parts.join(' · ')})` : '';
 }
 
 /**

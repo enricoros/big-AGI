@@ -11,6 +11,7 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } fro
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
+export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { type: 'image_generation' }>['model'], undefined> = 'gpt-image-2';
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
@@ -207,6 +208,7 @@ export function aixToOpenAIResponses(
     const imageMode = model.vndOaiImageGeneration;
     const imageGenerationTool: Extract<TRequestTool, { type: 'image_generation' }> = {
       type: 'image_generation',
+      ...(AIX_OAI_DEFAULT_IMAGE_GEN_MODEL && { model: AIX_OAI_DEFAULT_IMAGE_GEN_MODEL }),
       ...(imageMode === 'mq' ? { quality: 'medium' } : { /* quality: 'high' -- auto */ }),
       // ...(imageMode === 'hq' ? ... auto ... ),
       ...(imageMode === 'hq_edit' && { input_fidelity: 'high' }),
