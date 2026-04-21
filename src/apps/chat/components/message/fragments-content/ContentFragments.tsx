@@ -339,6 +339,7 @@ export function ContentFragments(props: {
               // renderWordsDiff={wordsDiff || undefined}
               showUnsafeHtmlCode={props.showUnsafeHtmlCode}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
+              optiStreamingLastFragment={!!props.optiAllowSubBlocksMemo && isLastFragment && props.uiComplexityMode === 'minimal'}
               onContextMenu={props.onContextMenu}
               onDoubleClick={props.onDoubleClick}
             />
