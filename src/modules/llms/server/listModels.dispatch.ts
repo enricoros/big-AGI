@@ -31,7 +31,7 @@ import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/
 
 // protocol: OpenAI-compatible
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-import { llmsHostnameMatches, OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
+import { OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { arceeAIHeuristic, arceeAIModelsToModelDescriptions } from './openai/models/arceeai.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
@@ -40,8 +40,9 @@ import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
-import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
 import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
+import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
+import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
@@ -505,8 +506,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 return fastAPIModels(maybeModels);
 
               // [OpenAI or OpenAI-compatible]: chat-only models, custom sort, manual mapping
-              const oaiClientHost = access.oaiHost;
-              const isNotOpenai = !!(oaiClientHost && !llmsHostnameMatches(oaiClientHost, 'api.openai.com')); // empty host (uses default) or explicitly api.openai.com
+              const isNotOpenai = !llmsIsNativeOpenAIHost(access.oaiHost); // native = empty host (uses default) or explicitly api.openai.com
               const models = maybeModels
                 // limit to only 'gpt' and 'non instruct' models
                 .filter(openAIModelFilter)

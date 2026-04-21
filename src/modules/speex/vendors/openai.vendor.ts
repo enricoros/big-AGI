@@ -1,3 +1,6 @@
+import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
+import { llmsIsNativeOpenAIHost } from '~/modules/llms/shared/llm.isomorphic';
+
 import type { ISpeexVendor } from '../ISpeexVendor';
 import { SPEEX_DEFAULTS } from '../speex.config';
 
@@ -15,6 +18,11 @@ export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
     'openai',   // default OpenAI mapping, note that this is
     // more.. ?
   ],
+
+  // auto-link only native OpenAI and not OpenAI-compatible (MiniMax, ChutesAI, self-hosted, ...)
+  shouldAutoLinkFromLLMSource: (source) => {
+    return llmsIsNativeOpenAIHost((source?.setup as Partial<DOpenAIServiceSettings> | undefined)?.oaiHost?.trim());
+  },
 
   capabilities: {
     streaming: true,

@@ -1,5 +1,7 @@
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DModelsService } from '~/common/stores/llms/llms.service.types';
+
 import type { DSpeexCredentials, DSpeexVoice, DSpeexVendorType } from './speex.types';
 
 
@@ -19,6 +21,8 @@ export interface ISpeexVendor<TVt extends DSpeexVendorType> {
 
   // auto-detection info
   readonly autoFromLlmVendorIds?: ModelVendorId[];
+  // optional secondary qualifier
+  readonly shouldAutoLinkFromLLMSource?: (source?: DModelsService) => boolean;
 
   // capabilities
   readonly capabilities: {

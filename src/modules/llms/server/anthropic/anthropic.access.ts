@@ -10,7 +10,7 @@ import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env.server';
 
-import { llmsFixupHost, llmsHostnameMatches } from '../openai/openai.access';
+import { llmsFixupHost, llmsHostnameMatches } from '../../shared/llm.isomorphic';
 
 
 // configuration

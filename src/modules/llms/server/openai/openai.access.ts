@@ -16,6 +16,7 @@ import { BaseProduct } from '~/common/app.release';
 import { env } from '~/server/env.server';
 
 import type { RequestAccessValues } from '../llm.server.types';
+import { llmsFixupHost, llmsHostnameMatches } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -58,35 +59,6 @@ export const OPENAI_API_PATHS = {
   xaiLanguageModels: '/v1/language-models',
 } as const;
 
-
-// --- Fixup Host (all accesses) ---
-
-/** Add https if missing, and remove trailing slash if present and the path starts with a slash. */
-export function llmsFixupHost(host: string, apiPath: string): string {
-  if (!host)
-    return '';
-  if (!host.startsWith('http'))
-    host = `https://${host}`;
-  if (host.endsWith('/') && apiPath.startsWith('/'))
-    host = host.slice(0, -1);
-  return host;
-}
-
-/**
- * Safely check if a host URL's hostname matches the expected hostname.
- * This prevents DNS spoofing attacks where malicious hosts like "api.openai.com.evil.com"
- * would pass simple string `.includes()` checks.
- */
-export function llmsHostnameMatches(hostUrl: string | undefined, expectedHostname: string): boolean {
-  if (!hostUrl)
-    return false;
-  try {
-    const url = new URL(hostUrl.startsWith('http') ? hostUrl : `https://${hostUrl}`);
-    return url.hostname === expectedHostname;
-  } catch {
-    return false;
-  }
-}
 
 /** Select a random key from a comma-separated list of API keys, used to load balance. */
 export function llmsRandomKeyFromMultiKey(multiKeyString: string): string {

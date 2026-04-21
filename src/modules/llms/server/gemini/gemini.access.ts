@@ -16,7 +16,8 @@ import { env } from '~/server/env.server';
 
 import { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
-import { llmsFixupHost, llmsRandomKeyFromMultiKey } from '../openai/openai.access';
+import { llmsFixupHost } from '../../shared/llm.isomorphic';
+import { llmsRandomKeyFromMultiKey } from '../openai/openai.access';
 
 
 // configuration

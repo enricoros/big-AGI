@@ -1,8 +1,10 @@
 import * as React from 'react';
 
 import type { AixParts_InlineImagePart } from '~/modules/aix/server/api/aix.wiretypes';
+import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { getImageModelFamily, resolveDalleModelId, useDalleStore } from '~/modules/t2i/dalle/store-module-dalle';
+import { llmsIsNativeOpenAIHost } from '~/modules/llms/shared/llm.isomorphic';
 
 import { addDBImageAsset, DBlobDBScopeId } from '~/common/stores/blob/dblobs-portability';
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
@@ -204,7 +206,14 @@ interface T2ILlmsModelService {
 
 function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray<DModelsService>) {
   return services
-    .filter(s => ['azure', 'openai', 'localai'].includes(s.vId))
+    .filter(s => {
+      // allowlist azure and localai
+      if (s.vId === 'azure' || s.vId === 'localai') return true;
+      // denylist non-openai
+      if (s.vId !== 'openai') return false;
+      // openai: skip OpenAI-compatible proxies (MiniMax, ChutesAI, Fireworks, ...)
+      return llmsIsNativeOpenAIHost((s.setup as Partial<DOpenAIServiceSettings> | undefined)?.oaiHost?.trim());
+    })
     .map((s): T2ILlmsModelService => ({
       label: s.label,
       modelVendorId: s.vId,

@@ -9,7 +9,7 @@ import * as z from 'zod/v4';
 
 import { env } from '~/server/env.server';
 
-import { llmsFixupHost } from '../openai/openai.access';
+import { llmsFixupHost } from '../../shared/llm.isomorphic';
 
 
 // configuration

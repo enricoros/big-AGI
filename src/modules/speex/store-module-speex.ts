@@ -187,6 +187,9 @@ export const useSpeexStore = create<SpeexStore>()(persist(
         const vendor = speexFindVendorForLLMVendor(source.vId);
         if (!vendor) continue;
 
+        // allow secondary qualifier: e.g. OpenAI only links native OpenAI hosts, not OpenAI-compatible customs
+        if (vendor.shouldAutoLinkFromLLMSource && !vendor.shouldAutoLinkFromLLMSource(source)) continue;
+
         // check if we already have an auto-linked engine for this service
         let existing: DSpeexEngineAny | undefined;
         for (const engineId in engines) {
