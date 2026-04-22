@@ -32,6 +32,16 @@ const modelOperationConfig: Record<DVoidPlaceholderMOp['mot'], { Icon: React.Ele
   'code-exec': { Icon: CodeIcon, color: 'primary' },
 } as const;
 
+function _formatElapsed(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m < 60) return s ? `${m}m ${s}s` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const rm = m % 60;
+  return rm ? `${h}h ${rm}m` : `${h}h`;
+}
+
 
 const _styles = {
   followUpChip: {
@@ -301,7 +311,7 @@ function ModelOperationChip(props: {
         {text}
         {elapsedSeconds >= MODELOP_TIMEOUT_DELAY && (
           <span style={{ opacity: 0.6 }}>
-            {' · '}<span style={{ display: 'inline-block', minWidth: elapsedSeconds >= 100 ? '4ch' : '3ch' }}>{elapsedSeconds}s</span>
+            {' · '}<span style={{ display: 'inline-block', minWidth: elapsedSeconds >= 60 ? '6ch' : '3ch' }}>{_formatElapsed(elapsedSeconds)}</span>
           </span>
         )}
       </span>
