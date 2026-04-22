@@ -917,9 +917,10 @@ export class ContentReassembler {
         'cg-issue': { outcome: 'failed', tsr: 'issue' },
         // model completed but with a specific stop condition
         'out-of-tokens': { outcome: 'completed', tsr: 'out-of-tokens' },
-        'filter-content': { outcome: 'completed', tsr: 'filter' },
-        'filter-recitation': { outcome: 'completed', tsr: 'filter' },
-        'filter-refusal': { outcome: 'completed', tsr: 'filter' },
+        // filter-triggered terminations - treated as failures so all surfaces (chat, beam, etc.) render the error state uniformly
+        'filter-content': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked by the provider\'s content filter.' },
+        'filter-recitation': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked - potential copyrighted/recited content.' },
+        'filter-refusal': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response refused by the provider\'s safety filter.' },
       } as const;
       if (dialectTokenStopReason in classification)
         return classification[dialectTokenStopReason];
