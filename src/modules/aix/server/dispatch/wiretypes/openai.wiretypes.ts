@@ -1438,10 +1438,11 @@ export namespace OpenAIWire_Responses_Tools {
     search_context_size: z.enum(['low', 'medium', 'high']).optional(),
     user_location: z.object({
       type: z.literal('approximate'),
-      city: z.string().optional(),
-      country: z.string().optional(),
-      region: z.string().optional(),
-      timezone: z.string().optional(),
+      // API echoes these as `null` when unset, not omitted - so .nullish()
+      city: z.string().nullish(),
+      country: z.string().nullish(),
+      region: z.string().nullish(),
+      timezone: z.string().nullish(),
     }).optional(),
     external_web_access: z.boolean().optional(),
   });

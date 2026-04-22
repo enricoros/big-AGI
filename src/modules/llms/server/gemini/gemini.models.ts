@@ -72,7 +72,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Apr 15, 2026)
+// Pricing based on https://ai.google.dev/pricing (Apr 22, 2026)
 
 const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
@@ -142,7 +142,7 @@ const gemini25ProPreviewTTSPricing: ModelDescriptionSchema['chatPrice'] = {
 
 const gemini31FlashTTSPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 1.00, // text input
-  // output: 20.00, // AUDIO - not ready for audio output yet (as of Apr 15, 2026)
+  // output: 20.00, // AUDIO - not ready for audio output yet (as of Apr 22, 2026)
 };
 
 const geminiRoboticsER16Pricing: ModelDescriptionSchema['chatPrice'] = {
