@@ -114,30 +114,6 @@ const fragmentsListSx: SxProps = {
   gap: 1.5,     // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
 };
 
-const messageTimestampBaseSx: SxProps = {
-  mx: 1.5,
-  mt: 0.5,
-  fontSize: 'xs',
-  lineHeight: 'sm',
-  opacity: 0.5,
-};
-
-const messageTimestampAssistantSx: SxProps = {
-  ...messageTimestampBaseSx,
-  textAlign: 'left',
-};
-
-const messageTimestampUserSx: SxProps = {
-  ...messageTimestampBaseSx,
-  textAlign: 'right',
-};
-
-function _isToday(timestamp: number): boolean {
-  const now = new Date();
-  const date = new Date(timestamp);
-  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
-}
-
 const antCachePromptOffSx: SxProps = {
   transition: 'color 0.16s, transform 0.16s',
 };
@@ -940,16 +916,6 @@ export function ChatMessage(props: {
           {/*    {fragmentFlattenedText.length.toLocaleString()} chars · {(fragmentFlattenedText.match(/\S+/g) || []).length.toLocaleString()} words*/}
           {/*  </Typography>*/}
           {/*)}*/}
-
-          {/* Message timestamp */}
-          {!zenMode && !isEditingText && !fromSystem && !!(messageCreated || messageUpdated) && (
-            <Box sx={fromAssistant ? messageTimestampAssistantSx : messageTimestampUserSx}>
-              {(messagePendingIncomplete || _isToday(messageUpdated || messageCreated!))
-                ? <TimeAgo date={messageUpdated || messageCreated!} />
-                : new Date(messageUpdated || messageCreated!).toLocaleString()
-              }
-            </Box>
-          )}
 
         </Box>
 

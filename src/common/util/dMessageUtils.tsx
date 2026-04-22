@@ -70,6 +70,12 @@ const tooltipCreationTimeSx: SxProps = {
   color: 'text.tertiary',
 };
 
+function _isToday(timestamp: number): boolean {
+  const now = new Date();
+  const date = new Date(timestamp);
+  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+}
+
 export const tooltipMetricsGridSx: SxProps = {
   // grid of 2 columns, the first fits the labels, the other expends with the values
   display: 'grid',
@@ -262,7 +268,10 @@ export function useMessageAvatarLabel(
           {(modelId && complexity === 'extra') && <div>{modelId}</div>}
           {metrics && <div>{metrics}</div>}
           {stopReason && <div>{stopReason}</div>}
-          {complexity === 'extra' && !!created && <Box sx={tooltipCreationTimeSx}>{updated ? 'Updated' : 'Created'} <TimeAgo date={updated || created} />.</Box>}
+          {!!created && <Box sx={tooltipCreationTimeSx}>
+            {(updated && updated !== created) ? 'Updated' : 'Created'}{' '}
+            {_isToday(updated || created) ? <TimeAgo date={updated || created} /> : new Date(updated || created).toLocaleString()}
+          </Box>}
         </Box>
       ),
     };
