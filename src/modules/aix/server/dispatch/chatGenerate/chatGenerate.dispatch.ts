@@ -9,9 +9,12 @@ import type { AixDemuxers } from '../stream.demuxers';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
+import { createGeminiInteractionsConnect, createGeminiInteractionsResumeConnect } from './connectors/gemini.interactionsPoller';
+
 import { aixAnthropicHostedFeatures, aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
 import { aixToBedrockConverse } from './adapters/bedrock.converse';
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
+import { aixToGeminiInteractionsCreate } from './adapters/gemini.interactionsCreate';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
 import { aixToXAIResponses } from './adapters/xai.responsesCreate';
@@ -21,6 +24,7 @@ import { createAnthropicFileInlineTransform } from './parsers/anthropic.transfor
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
+import { createGeminiInteractionsParser } from './parsers/gemini.interactions.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 
@@ -164,9 +168,17 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     }
 
     case 'gemini':
-      /**
-       * [Gemini, 2025-04-17] For newer thinking parameters, use v1alpha (we only see statistically better results)
-       */
+      const requestedModelName = model.id.replace('models/', '');
+
+      // [Gemini Interactions API - ALPHA TEST]
+      if (model.vndGeminiAPI === 'interactions-agent')
+        return {
+          // { request, customConnect }
+          ...createGeminiInteractionsConnect(access, aixToGeminiInteractionsCreate(model, chatGenerate)),
+          demuxerFormat: 'fast-sse',
+          chatGenerateParse: createGeminiInteractionsParser(requestedModelName),
+        };
+
       const useV1Alpha = false; // !!model.vndGeminiShowThoughts || model.vndGeminiThinkingBudget !== undefined;
       return {
         request: {
@@ -176,7 +188,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
         },
         // we verified that 'fast-sse' works well with Gemini
         demuxerFormat: streaming ? 'fast-sse' : null,
-        chatGenerateParse: createGeminiGenerateContentResponseParser(model.id.replace('models/', ''), streaming),
+        chatGenerateParse: createGeminiGenerateContentResponseParser(requestedModelName, streaming),
       };
 
     /**
@@ -267,8 +279,9 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
 
 
 /**
- * Specializes to the correct vendor a request for resuming chat generation (OpenAI Responses API only).
- * Constructs a GET request to retrieve and stream a response by its ID.
+ * Specializes to the correct vendor a request for reattaching to an in-progress upstream run.
+ * - OpenAI Responses API: GET /v1/responses/{id} to resume streaming from a response id
+ * - Gemini Interactions API: GET-poll /v1beta/interactions/{id} to resume a Deep Research run
  */
 export async function createChatGenerateResumeDispatch(access: AixAPI_Access, resumeHandle: AixAPI_ResumeHandle, streaming: boolean): Promise<ChatGenerateDispatch> {
 
@@ -294,6 +307,17 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
         chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
       };
 
+    case 'gemini':
+      // [Gemini Interactions] Reattach to an in-progress Deep Research interaction by polling GET.
+      if (resumeHandle.uht !== 'vnd.gem.interactions')
+        throw new Error(`Resume handle mismatch for gemini: expected 'vnd.gem.interactions', got '${resumeHandle.uht}'`);
+      return {
+        // { request, customConnect }
+        ...createGeminiInteractionsResumeConnect(access, resumeHandle.runId /* Gemini interaction.id */),
+        demuxerFormat: 'fast-sse',
+        chatGenerateParse: createGeminiInteractionsParser(null /* model name unknown at resume time - caller's DMessage already has it */),
+      };
+
     default:
       const _exhaustiveCheck: never = dialect;
     // fallthrough
@@ -301,7 +325,6 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'anthropic':
     case 'bedrock':
     case 'deepseek':
-    case 'gemini':
     case 'groq':
     case 'lmstudio':
     case 'localai':
