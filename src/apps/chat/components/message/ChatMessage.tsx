@@ -36,7 +36,7 @@ import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
@@ -162,7 +162,7 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageContinue?: (messageId: string, continueText: null | string) => void,
-  onMessageUpstreamResume?: (messageId: string) => Promise<void>,
+  onMessageUpstreamResume?: (generator: DMessageGenerator, messageId: string) => Promise<void>,
   onMessageDelete?: (messageId: string) => void,
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
@@ -266,8 +266,9 @@ export function ChatMessage(props: {
   }, [messageId, onMessageContinue]);
 
   const handleUpstreamResume = React.useCallback(() => {
-    return onMessageUpstreamResume?.(messageId);
-  }, [messageId, onMessageUpstreamResume]);
+    if (!messageGenerator) return;
+    return onMessageUpstreamResume?.(messageGenerator, messageId);
+  }, [messageGenerator, messageId, onMessageUpstreamResume]);
 
 
   // Text Editing

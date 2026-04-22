@@ -15,7 +15,7 @@ import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/cha
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -123,11 +123,9 @@ export function ChatMessageList(props: {
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
-  const handleMessageUpstreamResume = React.useCallback(async (messageId: DMessageId) => {
+  const handleMessageUpstreamResume = React.useCallback(async (generator: DMessageGenerator, messageId: DMessageId) => {
     if (!conversationId || !conversationHandler) return;
-    const message = conversationHandler.historyFindMessageOrThrow(messageId);
-    const generator = message?.generator;
-    if (!generator?.upstreamHandle) throw new Error('No upstream handle on message');
+    if (!generator.upstreamHandle) throw new Error('No upstream handle on generator');
 
     // For AIX generators the DLLMId is at .aix.mId
     const llmId = generator.mgt === 'aix' ? generator.aix.mId : undefined;
