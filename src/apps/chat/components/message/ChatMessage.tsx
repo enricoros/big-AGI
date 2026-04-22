@@ -893,10 +893,10 @@ export function ChatMessage(props: {
           )}
 
           {/* Upstream Resume - shows whenever there's a stored handle (incl. post-reload, where no error fragment is present) */}
-          {fromAssistant && messageGenerator?.upstreamHandle && (
+          {!messagePendingIncomplete && props.isBottom && fromAssistant && messageGenerator?.upstreamHandle && !!onMessageUpstreamResume && (
             <BlockOpUpstreamResume
               upstreamHandle={messageGenerator.upstreamHandle}
-              onResume={onMessageUpstreamResume ? handleUpstreamResume : undefined}
+              onResume={handleUpstreamResume}
             />
           )}
 

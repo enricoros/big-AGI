@@ -123,6 +123,32 @@ export function ChatMessageList(props: {
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
+  const handleMessageUpstreamResume = React.useCallback(async (messageId: DMessageId) => {
+    if (!conversationId || !conversationHandler) return;
+    const message = conversationHandler.historyFindMessageOrThrow(messageId);
+    const generator = message?.generator;
+    if (!generator?.upstreamHandle) throw new Error('No upstream handle on message');
+
+    // For AIX generators the DLLMId is at .aix.mId
+    const llmId = generator.mgt === 'aix' ? generator.aix.mId : undefined;
+    if (!llmId) throw new Error('No model id on generator');
+
+    const { aixCreateChatGenerateContext, aixReattachContent_DMessage_orThrow } = await import('~/modules/aix/client/aix.client');
+    await aixReattachContent_DMessage_orThrow(
+      llmId,
+      generator,
+      aixCreateChatGenerateContext('conversation', conversationId),
+      { abortSignal: 'NON_ABORTABLE', throttleParallelThreads: 0 },
+      async (update, isDone) => {
+        conversationHandler.messageEdit(messageId, {
+          fragments: update.fragments,
+          generator: update.generator,
+          pendingIncomplete: update.pendingIncomplete,
+        }, isDone /* messageComplete */, true /* touch */);
+      },
+    );
+  }, [conversationHandler, conversationId]);
+
 
   // message menu methods proxy
 
@@ -371,6 +397,7 @@ export function ChatMessageList(props: {
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}
               onMessageContinue={handleMessageContinue}
+              onMessageUpstreamResume={handleMessageUpstreamResume}
               onMessageDelete={handleMessageDelete}
               onMessageFragmentAppend={handleMessageAppendFragment}
               onMessageFragmentDelete={handleMessageDeleteFragment}
