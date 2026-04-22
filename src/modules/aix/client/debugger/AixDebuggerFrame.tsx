@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Chip, Divider, Sheet, Typography } from '@mui/joy';
@@ -10,6 +11,7 @@ import TimelapseIcon from '@mui/icons-material/Timelapse';
 
 import type { AixClientDebugger } from './memstore-aix-client-debugger';
 import { AixDebuggerMeasurementsTable } from './AixDebuggerMeasurementsTable';
+import { useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
 
 const _styles = {
@@ -79,14 +81,17 @@ export function AixDebuggerFrame(props: {
   frame: AixClientDebugger.Frame;
 }) {
 
-  // state
-  const [showHeaders, setShowHeaders] = React.useState(true);
-  const [showBody, setShowBody] = React.useState(true);
-  const [showParticles, setShowParticles] = React.useState(false); // hide by default (heavy)
+  // state: section open/close is kept in the debugger store so it persists across frame switches
+  const { showHeaders, showBody, showParticles, toggleOpenState } = useAixClientDebuggerStore(useShallow(state => ({
+    showHeaders: !!state.openStates.headers,
+    showBody: !!state.openStates.body,
+    showParticles: !!state.openStates.particles,
+    toggleOpenState: state.toggleOpenState,
+  })));
 
-  const handleToggleShowHeaders = React.useCallback(() => setShowHeaders(on => !on), []);
-  const handleToggleShowBody = React.useCallback(() => setShowBody(on => !on), []);
-  const handleToggleShowParticles = React.useCallback(() => setShowParticles(on => !on), []);
+  const handleToggleShowHeaders = React.useCallback(() => toggleOpenState('headers'), [toggleOpenState]);
+  const handleToggleShowBody = React.useCallback(() => toggleOpenState('body'), [toggleOpenState]);
+  const handleToggleShowParticles = React.useCallback(() => toggleOpenState('particles'), [toggleOpenState]);
 
   const { frame } = props;
 

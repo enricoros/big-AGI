@@ -89,10 +89,14 @@ function _createAixClientDebuggerFrame(transport: AixClientDebugger.Transport, f
 
 /// Store ///
 
+export type AixDebuggerOpenKey = 'headers' | 'body' | 'particles';
+
 interface AixClientDebuggerState {
   frames: AixClientDebugger.Frame[];
   activeFrameId: AixFrameId | null;
   maxFrames: number;
+  // per-section open state for the current frame view
+  openStates: Partial<Record<AixDebuggerOpenKey, true>>;
   // AIX force disable streaming for all requests (separate from per-model llmForceNoStream)
   aixNoStreaming: boolean;
   // AIX next payload override - JSON string injected into requests after validation
@@ -111,6 +115,7 @@ interface AixClientDebuggerActions {
   setActiveFrame: (activeFrameId: AixFrameId | null) => void;
   setMaxFrames: (count: number) => void;
   clearHistory: () => void;
+  toggleOpenState: (key: AixDebuggerOpenKey) => void;
 }
 
 type AixClientDebuggerStore = AixClientDebuggerState & AixClientDebuggerActions;
@@ -122,6 +127,7 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
   frames: [],
   activeFrameId: null,
   maxFrames: DEFAULT_FRAMES_COUNT,
+  openStates: { headers: true, body: true }, // headers + body open by default; particles closed (heavy)
   aixNoStreaming: false,
   requestBodyOverrideJson: '',
 
@@ -135,11 +141,16 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
     // stealing focus from the main conversation request
     const isBackgroundOperation = (BACKGROUND_CONTEXT_NAMES as readonly string[]).includes(initialContext.contextName);
 
-    _set((state) => ({
-      frames: [newFrame, ...state.frames].slice(0, state.maxFrames),
-      // Auto-select if: no active frame yet, OR this is not a background operation
-      activeFrameId: (!state.activeFrameId || !isBackgroundOperation) ? newFrame.id : state.activeFrameId,
-    }));
+    _set(({ activeFrameId, frames, maxFrames }) => {
+      // Sticky selection: only snap to the new frame if the user was following latest (nothing selected, or the current selection is the previous top frame).
+      const previousLatestId = frames[0]?.id ?? null;
+      const isFollowingLatest = activeFrameId === null || activeFrameId === previousLatestId;
+      const shouldAutoSelect = isFollowingLatest && !isBackgroundOperation;
+      return {
+        frames: [newFrame, ...(frames)].slice(0, maxFrames),
+        activeFrameId: shouldAutoSelect ? newFrame.id : activeFrameId,
+      };
+    });
 
     return newFrame.id;
   },
@@ -191,6 +202,13 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
   clearHistory: () => _set({
     frames: [],
     activeFrameId: null,
+  }),
+
+  toggleOpenState: (key) => _set(state => {
+    const next = { ...state.openStates };
+    if (next[key]) delete next[key];
+    else next[key] = true;
+    return { openStates: next };
   }),
 
 }));
