@@ -1121,7 +1121,8 @@ export namespace OpenAIWire_Responses_Items {
     phase: z.enum(['commentary', 'final_answer']).or(z.string()).optional(), // [OpenAI, 2026-03-03] message phase indicator for multi-phase responses
   });
 
-  const OutputReasoningItem = _OutputItemBase_schema.extend({
+  export type OutputReasoningItem = z.infer<typeof OutputReasoningItem_schema>;
+  export const OutputReasoningItem_schema = _OutputItemBase_schema.extend({
     type: z.literal('reasoning'),
     /**
      * ID seems missing from the reasoning output (at least in response.reasoning_summary_part.added),
@@ -1280,7 +1281,7 @@ export namespace OpenAIWire_Responses_Items {
   export const OutputItem_schema = z.union([
     // Text output
     OutputContentItem_schema, // assistant/tool message/refusal
-    OutputReasoningItem,
+    OutputReasoningItem_schema,
 
     // Client tool invocation output
     OutputFunctionCallItem_schema,
@@ -1600,10 +1601,10 @@ export namespace OpenAIWire_API_Responses {
     include: z.array(z.enum([
       'web_search_call.action.sources', // get web search citations
       'code_interpreter_call.outputs', // get code execution logs and images
+      'reasoning.encrypted_content', // get per-reasoning-item encrypted blob for stateless multi-turn continuity
       // 'file_search_call.results',
       // 'message.input_image.image_url',
       // 'computer_call_output.output.image_url',
-      // 'reasoning.encrypted_content',
     ])).optional(), // additional output to include in the response
     user: z.string().optional(), // stable identifier for your end-users
 
