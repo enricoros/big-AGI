@@ -918,8 +918,11 @@ export class ContentReassembler {
         // model completed but with a specific stop condition
         'out-of-tokens': { outcome: 'completed', tsr: 'out-of-tokens' },
         // filter-triggered terminations - treated as failures so all surfaces (chat, beam, etc.) render the error state uniformly
+        // emitted by: OpenAI content_filter, Gemini SAFETY/BLOCKLIST/PROHIBITED_CONTENT/SPII/IMAGE_*, Bedrock content filter
         'filter-content': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked by the provider\'s content filter.' },
+        // emitted by: Gemini RECITATION/IMAGE_RECITATION (note: can be FP-prone on benign content like code/quotes)
         'filter-recitation': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked - potential copyrighted/recited content.' },
+        // emitted by: Anthropic stop_reason=refusal, Gemini LANGUAGE (unsupported)
         'filter-refusal': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response refused by the provider\'s safety filter.' },
       } as const;
       if (dialectTokenStopReason in classification)
