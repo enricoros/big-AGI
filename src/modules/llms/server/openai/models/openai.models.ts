@@ -375,7 +375,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmVndOaiCodeInterpreter' },
     ],
-    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 }, // TODO: Update with official pricing when available - this is `gpt-5-chat-latest` pricing
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
     // benchmark: TBD
   },
 
@@ -478,6 +478,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-5 Chat Latest
   {
+    hidden: true, // deprecated per OpenAI docs (2026-04)
     idPrefix: 'gpt-5-chat-latest',
     label: 'GPT-5 ChatGPT (Non-Thinking)',
     description: 'GPT-5 model used in ChatGPT. Points to the GPT-5 snapshot currently used in ChatGPT.',
@@ -491,6 +492,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-5 Codex
   {
+    hidden: true, // deprecated per OpenAI docs (2026-04), superseded by gpt-5.1-codex/gpt-5.3-codex
     idPrefix: 'gpt-5-codex',
     label: 'GPT-5 Codex',
     description: 'A version of GPT-5 optimized for agentic coding in Codex.',
