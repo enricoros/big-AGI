@@ -29,6 +29,8 @@ import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from '
 
 export type ChatGenerateDispatch = {
   request: ChatGenerateDispatchRequest;
+  /** Used by dialects that need multi-step I/O. The returned response is consumed normally via demuxerFormat/chatGenerateParse */
+  customConnect?: (signal: AbortSignal) => Promise<Response>;
   bodyTransform?: AixDemuxers.StreamBodyTransform;
   demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
