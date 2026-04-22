@@ -373,7 +373,7 @@ export function prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason
 
 
 const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|osb-|chatgpt-[45]o?|gpt-5-chat|computer-use-/;
-const geminiRegex = /gemini-|gemma-|learnlm-/;
+const geminiRegex = /gemini-|gemma-|learnlm-|deep-research-|nano-banana-/;
 
 
 /** Pretty name for a chat model ID - VERY HARDCODED - shall use the Avatar Label-style code instead */
@@ -381,6 +381,10 @@ export function prettyShortChatModelName(model: string | undefined): string {
   if (!model) return '';
 
   // TODO: fully reform this function to be using information from the DLLM, rather than this manual mapping
+
+  // [Gemini / Google] short-circuit canonical 'models/' prefix before OpenAI regex, to avoid substring collisions (e.g. '-computer-use-' in 'models/gemini-2.5-computer-use-...')
+  if (model.startsWith('models/'))
+    return _prettyGeminiModelName(model.slice(7));
 
   // [OpenAI]
   let prefixIndex = model.search(oaiORegex);
@@ -400,6 +404,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .replace('-realtime', ' Realtime')
       .replace('-search-preview', ' Search')
       .replace('-search', ' Search')
+      .replace('-deep-research', ' Deep Research')
       .replace('-tts', ' TTS')
       .replace('-turbo', ' Turbo')
       // price variants
@@ -429,41 +434,10 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Anthropic]
   const prettyAnthropic = _prettyAnthropicModelName(model);
   if (prettyAnthropic) return prettyAnthropic;
-  // [Gemini]
+  // [Gemini / Google] fallback regex path (e.g. openrouter 'google/gemini-...' form); canonical 'models/' path is handled earlier
   prefixIndex = model.search(geminiRegex);
-  if (prefixIndex !== -1) {
-    let cutModel = prefixIndex === -1 ? model : model.slice(prefixIndex);
-    // Check for -NN-NN at the end (e.g., -05-15)
-    let datePattern = '';
-    const dateMatch = cutModel.match(/-(\d{2}-\d{2})$/);
-    if (dateMatch) {
-      datePattern = ' ' + dateMatch[1]; // extract '05-15'
-      cutModel = cutModel.slice(0, cutModel.length - dateMatch[0].length); // remove '-05-15'
-    }
-    const geminiName = cutModel
-      // commercial aliases
-      .replace('gemini-3-pro-image', 'Nano Banana Pro')
-      .replace('gemini-2.5-flash-image', 'Nano Banana')
-      // root changes
-      .replace('non-thinking', '') // NOTE: this is our variant, injected in gemini.models.ts
-      .replaceAll('-', ' ')
-      // products
-      .replace('gemini', 'Gemini')
-      .replace('gemma', 'Gemma')
-      .replace('learnlm', 'LearnLM')
-      // price variants
-      .replace('pro', 'Pro')
-      .replace('flash', 'Flash')
-      // feature variants
-      .replace('robotics er', 'Robotics')
-      .replace('generation', 'Gen')
-      .replace('image', 'Image')
-      .replace('thinking', 'Thinking')
-      .replace('preview', '')
-      .replace('experimental', 'exp')
-      .replace('exp', '(exp)');
-    return geminiName + datePattern;
-  }
+  if (prefixIndex !== -1)
+    return _prettyGeminiModelName(model.slice(prefixIndex));
   // [Deepseek]
   if (model.includes('deepseek-')) {
     // start past the last /, if any
@@ -526,6 +500,56 @@ export function prettyShortChatModelName(model: string | undefined): string {
     return subStr.replaceAll('/models/', ' · ').replaceAll(/[_-]/g, ' ');
   }
   return model;
+}
+
+function _prettyGeminiModelName(cutModel: string): string {
+  // strip stable numeric revision suffix: '-001', '-002', ...
+  cutModel = cutModel.replace(/-00\d$/, '');
+  // date suffix: try '-MM-YYYY$' first (e.g. '-04-2026' -> '(2026-04)'), then '-MM-YY$' (e.g. '-05-15' -> '05-15')
+  let datePattern = '';
+  const longDateMatch = cutModel.match(/-(\d{2})-(\d{4})$/);
+  if (longDateMatch) {
+    datePattern = ` (${longDateMatch[2]}-${longDateMatch[1]})`;
+    cutModel = cutModel.slice(0, -longDateMatch[0].length);
+  } else {
+    const shortDateMatch = cutModel.match(/-(\d{2}-\d{2})$/);
+    if (shortDateMatch) {
+      datePattern = ' ' + shortDateMatch[1];
+      cutModel = cutModel.slice(0, -shortDateMatch[0].length);
+    }
+  }
+  const geminiName = cutModel
+    // commercial aliases (applied before separator normalization)
+    .replace('gemini-3-pro-image', 'Nano Banana Pro')
+    .replace('gemini-2.5-flash-image', 'Nano Banana')
+    // root changes
+    .replace('non-thinking', '') // NOTE: this is our variant, injected in gemini.models.ts
+    .replaceAll('-', ' ')
+    // products
+    .replace('gemini', 'Gemini')
+    .replace('gemma', 'Gemma')
+    .replace('learnlm', 'LearnLM')
+    .replace('deep research', 'Deep Research')
+    .replace('nano banana', 'Nano Banana')
+    // size/price variants
+    .replace('pro', 'Pro')
+    .replace('flash', 'Flash')
+    .replace('max', 'Max')
+    .replace('lite', 'Lite')
+    // feature variants
+    .replace('robotics er', 'Robotics')
+    .replace('computer use', 'Computer Use')
+    .replace('generation', 'Gen')
+    .replace('image', 'Image')
+    .replace('tts', 'TTS')
+    .replace('thinking', 'Thinking')
+    .replace('preview', '')
+    .replace('experimental', 'exp')
+    .replace('exp', '(exp)')
+    // collapse extra whitespace left by removals
+    .replace(/\s+/g, ' ')
+    .trim();
+  return geminiName + datePattern;
 }
 
 function _prettyAnthropicModelName(modelId: string): string | null {
