@@ -190,6 +190,10 @@ interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
 
+  // [Reattach] Internal hook - set by `aixReattachContent_DMessage_orThrow`. When present, seeds the LL
+  // with this generator; the upstreamHandle on it triggers the LL reattach branch (Gemini Deep Research GET-poll).
+  reattachGenerator?: Readonly<DMessageGenerator> & Required<Pick<DMessageGenerator, 'upstreamHandle'>>;
+
   // LLM parameter configuration layers: full replacement of user params and/or overrides of a set of individual params
   llmUserParametersReplacement?: DModelParameterValues; // can replace the 'global' llm user configuration with an alternate config (e.g. persona, or per-chat)
   llmOptionsOverride?: Omit<DModelParameterValues, 'llmRef'>; // overrides (sets/replaces) individual LLM parameters
@@ -494,7 +498,7 @@ type _AixChatGenerateContent_DMessageGuts_WithOutcome = AixChatGenerateContent_D
  * @throws Error if the LLM is not found or other misconfigurations, but handles most other errors internally.
  *
  * Features:
- * - Throttling if requrested (decimates the requests based on the square root of the number parllel hints)
+ * - Throttling if requested (decimates the requests based on the square root of the number parallel hints)
  * - computes the costs and metrics for the chat generation
  * - vendor-specific rate limit
  * - 'pendingIncomplete' logic
@@ -543,7 +547,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   // Aix LL Chat Generation
   const dMessage: AixChatGenerateContent_DMessageGuts = {
     fragments: [],
-    generator: createGeneratorAIX_AutoLabel(llm.vId, llm.id), // using llm.id (not aixModel.id/ref) so we can re-select them in the UI (Beam)
+    generator: clientOptions.reattachGenerator ?? createGeneratorAIX_AutoLabel(llm.vId, llm.id), // using llm.id (not aixModel.id/ref) so we can re-select them in the UI (Beam)
     pendingIncomplete: true,
   };
 
@@ -623,6 +627,45 @@ function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGener
 
   // Merge costs into a new generator
   return metricsMd;
+}
+
+
+// --- L2 - Content Generation reattachment as DMessage ---
+
+/**
+ * Reattach facade: wraps `aixChatGenerateContent_DMessage_orThrow` for the reattach-to-upstream flow.
+ *
+ * On an in-progress upstream run (Gemini Deep Research today, extensible to OAI Responses), the server
+ * just needs the handle to GET-poll; no chat-generate body is needed. This facade:
+ * - validates the generator carries an `upstreamHandle`,
+ * - stubs the chat-generate request (unused on the reattach path - the server uses the handle),
+ * - seeds the base function via `clientOptions.reattachGenerator` so the LL's reattach branch fires.
+ *
+ * The reassembler starts with empty fragments; since Gemini Interactions snapshots are cumulative,
+ * the stream will rebuild the complete content from scratch. Any partial content from the original run is replaced.
+ */
+export async function aixReattachContent_DMessage_orThrow(
+  llmId: DLLMId,
+  reattachGenerator: Readonly<DMessageGenerator>,
+  aixContext: AixAPI_Context_ChatGenerate,
+  clientOptions: Pick<AixClientOptions, 'abortSignal' | 'throttleParallelThreads'>,
+  onStreamingUpdate?: (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => MaybePromise<void>,
+): Promise<_AixChatGenerateContent_DMessageGuts_WithOutcome> {
+
+  if (!reattachGenerator.upstreamHandle)
+    throw new Error('aixReattachContent: generator must have an upstreamHandle');
+
+  // Stub chat-generate request - unused on reattach (server GET-polls by the handle on reattachGenerator)
+  const stubChatGenerate: AixAPIChatGenerate_Request = { systemMessage: null, chatSequence: [] };
+
+  return aixChatGenerateContent_DMessage_orThrow(
+    llmId,
+    stubChatGenerate,
+    aixContext,
+    true, // streaming
+    { ...clientOptions, reattachGenerator: reattachGenerator as any /* guaranteed by the check */ },
+    onStreamingUpdate,
+  );
 }
 
 
@@ -770,7 +813,7 @@ async function _aixChatGenerateContent_LL(
 
   // Retry/Reconnect - LL state machine
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
-  // - resume: for network disconnects with OpenAI Responses API handle
+  // - reattach: for network disconnects with uptream handles
   const rsm = new AixStreamRetry(0, 0); // sensible: 3, 2
 
   while (true) {
@@ -818,7 +861,7 @@ async function _aixChatGenerateContent_LL(
           connectionOptions: aixConnectionOptions,
         }, { signal: abortSignal });
 
-      // AIX tRPC Streaming re-attachment from handle - for LL auto-resume
+      // AIX tRPC Streaming re-attachment from handle - for LL auto-reattach
       else
         particleStream = await apiStream.aix.reattachContent.mutate({
           access: aixAccess,
@@ -867,7 +910,7 @@ async function _aixChatGenerateContent_LL(
       const { errorType, errorMessage } = aixClassifyStreamingError(error, abortSignal.aborted, !!accumulator_LL.fragments.length);
       const maybeErrorStatusCode = error?.status || error?.response?.status || undefined;
 
-      // client-side-retry decision - resume handle from accumulator determines strategy (resume vs reconnect)
+      // client-side-retry decision - reattach handle from accumulator determines strategy (reattach vs reconnect)
       const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode, !!accumulator_LL.generator.upstreamHandle);
       if (shallRetry) {
 

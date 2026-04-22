@@ -154,6 +154,10 @@ export class ContentReassembler {
     // termination -> User/AI issue message
     if (errorMessage) this._appendErrorFragment(errorMessage);
 
+    // clean completion -> remove upstreamHandle (SET in onResponseHandle, CLEARED here on clean completion)
+    if (outcome === 'completed' && this.S.generator.upstreamHandle)
+      this._clearGeneratorUpstreamHandle();
+
 
     // Fragment finalization heuristics:
 
@@ -1050,6 +1054,12 @@ export class ContentReassembler {
     }
     // type check point for AixWire_Particles.ChatControlOp('set-upstream-handle') -> DUpstreamResponseHandle
     this.S.generator = { ...this.S.generator, upstreamHandle: handle };
+  }
+
+  private _clearGeneratorUpstreamHandle(): void {
+    if (!this.S.generator?.upstreamHandle) return;
+    const { upstreamHandle, ...rest } = this.S.generator;
+    this.S.generator = rest;
   }
 
 
