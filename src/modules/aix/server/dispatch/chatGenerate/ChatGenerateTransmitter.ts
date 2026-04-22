@@ -522,6 +522,9 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (SERVER_DEBUG_WIRE)
       console.log('|response-handle|', type, handle);
     // NOTE: if needed, we could store the handle locally for server-side resumability, but we just implement client-side (correction, manual) for now
+    // createdAt/expiresAt are server-clock at emit time; on reattach the server has no knowledge of the original create,
+    // so it emits fresh values. The client reassembler preserves the earliest values for a given runId.
+    const now = Date.now();
     const expireDays = type === 'vnd.gem.interactions'
       ? 1 // Gemini Interactions: 1d free / 55d paid - use the conservative lower bound
       : 30; // OpenAI Responses: default 30 days
@@ -530,7 +533,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       handle: {
         uht: type,
         runId: handle,
-        expiresAt: Date.now() + expireDays * 24 * 3600 * 1000,
+        createdAt: now,
+        expiresAt: now + expireDays * 24 * 3600 * 1000,
       },
     });
     // send it right away, in case the connection closes soon

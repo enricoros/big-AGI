@@ -540,6 +540,9 @@ export namespace AixWire_API {
    *  - vnd.oai.responses: OpenAI Responses API - GET /v1/responses/{id}
    *  - vnd.gem.interactions: Gemini Interactions API for background agents - GET-poll /v1beta/interactions/{id}
    */
+  // Wire input for reattach: server only consumes `runId` (+ `startingAfter` for OpenAI). Timestamps live
+  // on the persisted `DMessageGenerator.upstreamHandle` (client concerns) and on the `set-upstream-handle`
+  // particle (server-to-client transport), but don't need to travel back in the reattach request.
   export const ResumeHandle_schema = z.discriminatedUnion('uht', [
     z.object({
       uht: z.literal('vnd.oai.responses'),
@@ -683,7 +686,7 @@ export namespace AixWire_Particles {
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
     | { cg: 'set-provider-infra', label: string }
-    | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses' | 'vnd.gem.interactions', runId: string, expiresAt: number | null } }
+    | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses' | 'vnd.gem.interactions', runId: string, createdAt: number | null, expiresAt: number | null } }
     | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 

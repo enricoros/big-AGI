@@ -1052,10 +1052,17 @@ export class ContentReassembler {
   private onResponseHandle({ handle }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-upstream-handle' }>): void {
     // validate the handle
     const knownUht = handle?.uht === 'vnd.oai.responses' || handle?.uht === 'vnd.gem.interactions';
-    if (!knownUht || !handle?.runId || handle.expiresAt === undefined) {
+    if (!knownUht || !handle?.runId || handle.createdAt === undefined || handle.expiresAt === undefined) {
       this._appendReassemblyDevError(`Invalid response handle received: ${JSON.stringify(handle)}`);
       return;
     }
+
+    // Preserve earliest-observed timestamps for a given runId: on reattach the server emits fresh server-clock
+    // values but the original createdAt is the truth we want to keep (so retention is measured from creation, not reattach).
+    const existing = this.S.generator.upstreamHandle;
+    if (existing && existing.runId === handle.runId && existing.createdAt !== null && handle.createdAt !== null && existing.createdAt <= handle.createdAt)
+      return; // no-op: existing handle already carries the earliest createdAt for this runId
+
     // type check point for AixWire_Particles.ChatControlOp('set-upstream-handle') -> DUpstreamResponseHandle
     this.S.generator = { ...this.S.generator, upstreamHandle: handle };
   }
