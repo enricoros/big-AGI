@@ -28,28 +28,28 @@ export const aixRouter = createTRPCRouter({
     }))
     .mutation(async function* ({ input, ctx }) {
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
-      const chatGenerateDispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
+      const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
 
-      yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(dispatchCreator, input.streaming, ctx.reqSignal, _d);
     }),
 
   /**
-   * Chat content generation RESUME, streaming only.
-   * Reconnects to an in-progress response by its ID - OpenAI Responses API only.
+   * Chat content generation - reattach to an in-progress upstream run by handle, streaming only.
+   * Today: OpenAI Responses API (network-disconnect recovery) and Gemini Interactions (Deep Research across reloads).
    */
   reattachContent: edgeProcedure
     .input(z.object({
       access: AixWire_API.Access_schema,
-      resumeHandle: AixWire_API.ResumeHandle_schema, // resume has a handle instead of 'model + chatGenerate'
+      resumeHandle: AixWire_API.ResumeHandle_schema, // reattach uses a handle instead of 'model + chatGenerate'
       context: AixWire_API.ContextChatGenerate_schema,
-      streaming: z.literal(true), // resume is always streaming
+      streaming: z.literal(true), // reattach is always streaming
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.pick({ debugDispatchRequest: true }).optional(), // debugDispatchRequest
     }))
     .mutation(async function* ({ input, ctx }) {
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
-      const resumeDispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.resumeHandle, input.streaming);
+      const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.resumeHandle, input.streaming);
 
-      yield* executeChatGenerateWithContinuation(resumeDispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(dispatchCreator, input.streaming, ctx.reqSignal, _d);
     }),
 
 });
