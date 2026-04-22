@@ -11,7 +11,7 @@ import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.
 
 // configuration
 const INITIAL_POLL_DELAY_MS = 3_000; // first poll happens this long after the POST accepted the job
-const STEADY_POLL_INTERVAL_MS = 5_000; // subsequent polls
+const STEADY_POLL_INTERVAL_MS = 10_000; // subsequent polls
 const MAX_SLEEP_CHUNK_MS = 1_000; // wake often to honor abort promptly
 
 
