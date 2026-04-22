@@ -132,7 +132,7 @@ export function ChatMessageList(props: {
     if (!llmId) throw new Error('No model id on generator');
 
     const { aixCreateChatGenerateContext, aixReattachContent_DMessage_orThrow } = await import('~/modules/aix/client/aix.client');
-    await aixReattachContent_DMessage_orThrow(
+    const result = await aixReattachContent_DMessage_orThrow(
       llmId,
       generator,
       aixCreateChatGenerateContext('conversation', conversationId),
@@ -145,6 +145,14 @@ export function ChatMessageList(props: {
         }, isDone /* messageComplete */, true /* touch */);
       },
     );
+
+    // Manual reattach is one-shot: on failure (e.g. upstream 404 from expired or already-consumed handle),
+    // drop the upstreamHandle so the Resume button doesn't keep luring the user into the same error.
+    // On 'aborted' we keep it so the user can try again later; on 'completed' the reassembler already cleared it.
+    if (result.outcome === 'failed' && result.generator?.upstreamHandle)
+      conversationHandler.messageEdit(messageId, {
+        generator: { ...result.generator, upstreamHandle: undefined },
+      }, false /* messageComplete */, true /* touch */);
   }, [conversationHandler, conversationId]);
 
 
