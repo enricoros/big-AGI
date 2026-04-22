@@ -6,10 +6,10 @@
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 // IMPORTANT: client-side bundle imports server-side code including stubbed code
-import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request, AixWire_Particles } from '../server/api/aix.wiretypes';
 import type { AixDebugObject } from '../server/dispatch/chatGenerate/chatGenerate.debug';
 import { AIX_INSPECTOR_ALLOWED_CONTEXTS, AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../server/api/aix.security';
-import { createChatGenerateDispatch } from '../server/dispatch/chatGenerate/chatGenerate.dispatch';
+import { createChatGenerateDispatch, createChatGenerateResumeDispatch } from '../server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { executeChatGenerateWithContinuation } from '../server/dispatch/chatGenerate/chatGenerate.continuation';
 
 
@@ -38,6 +38,24 @@ export async function* clientSideChatGenerate(
     });
 
   yield* executeChatGenerateWithContinuation(chatGenerateDispatchCreator, streaming, abortSignal, _d);
+}
+
+/**
+ * Client-side reattach - uses server's executeChatGenerateWithContinuation directly.
+ * Matches the `aixRouter.reattachContent` server-side procedure. Streaming-only.
+ */
+export async function* clientSideReattach(
+  access: AixAPI_Access,
+  resumeHandle: AixAPI_ResumeHandle,
+  context: AixAPI_Context_ChatGenerate,
+  connectionOptions: AixAPI_ConnectionOptions_ChatGenerate,
+  abortSignal: AbortSignal,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
+  // keep in sync with the `aixRouter.reattachContent` server-side procedure
+  const _d: AixDebugObject = _createClientDebugConfig(access, connectionOptions, context.name);
+  const resumeDispatchCreator = () => createChatGenerateResumeDispatch(access, resumeHandle, true /* streaming */);
+
+  yield* executeChatGenerateWithContinuation(resumeDispatchCreator, true /* streaming */, abortSignal, _d);
 }
 
 // CSF debug config - lighter than server-side
