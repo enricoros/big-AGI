@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRenameOutlineRounded';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
@@ -141,7 +141,7 @@ export function BeamScatterDropdown(props: {
               }}
               sx={{ ml: 'auto' }}
             >
-              <DeleteOutlineRoundedIcon />
+              <DeleteOutlineIcon />
             </IconButton>
           </MenuItem>,
         )}
