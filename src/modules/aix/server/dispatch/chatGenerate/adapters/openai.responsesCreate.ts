@@ -133,8 +133,8 @@ export function aixToOpenAIResponses(
       payload.reasoning.summary = 'detailed';
   }
 
-  // ALWAYS REQUERST Reasoning items: always include encrypted_content if there's any reasoning done; we had this inside the
-  // former block, but models can reason even if reasoningEffor === undefined;
+  // ALWAYS REQUEST Reasoning items: always include encrypted_content if there's any reasoning done; we had this inside the
+  // former block, but models can reason even if reasoningEffort === undefined;
   if (!payload.store && reasoningEffort !== 'none') {
     const includes = new Set(payload.include);
     includes.add('reasoning.encrypted_content');

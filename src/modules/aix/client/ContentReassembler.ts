@@ -853,6 +853,14 @@ export class ContentReassembler {
       return;
     }
 
+    // Guard: OpenAI reasoningItem state must land on the ma (reasoning) fragment that produced it.
+    // If no summary was appended during the reasoning item (summary disabled / skipped), the last
+    // fragment will belong to an unrelated preceding item - dropping the handle is safer than contaminating.
+    if (vs.vendor === 'openai' && 'reasoningItem' in vs.state && lastFragment.part.pt !== 'ma') {
+      console.warn('[ContentReassembler] OpenAI reasoningItem state without preceding ma fragment - dropping continuity handle', { lastFragmentPt: lastFragment.part.pt });
+      return;
+    }
+
     // attach fragment-level vendor state
     this._replaceFragmentAt(lastIdx, {
       ...lastFragment,

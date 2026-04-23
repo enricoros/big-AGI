@@ -402,11 +402,19 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
           case 'reasoning':
             // Reasoning Text already streamed via response.reasoning_summary_text.delta;
-            // apture the continuity handle (encrypted_content + id) for stateless multi-turn round-tripping.
+            // capture the continuity handle (encrypted_content + id) for stateless multi-turn round-tripping.
             // NOTE: the authoritative encrypted_content arrives on .done (differs from the earlier .added event).
-            // FIXME: make sure we are attaching to an 'ma' (i.e. reasoning text or somehting was emitted)
             const { id: reasoningId, encrypted_content: reasoningEC } = doneItem;
-            if (reasoningEC || reasoningId)
+
+            // [DEV] surface cases that diverge from our continuity round-trip expectations
+            if (!reasoningId && !reasoningEC)
+              console.warn('[DEV] AIX: OpenAI Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn', { doneItem });
+            else if (!reasoningEC)
+              console.log('[DEV] AIX: OpenAI Responses: reasoning item done has id but no encrypted_content - stateless round-trip requires include:[\'reasoning.encrypted_content\'] on the request');
+
+            if (reasoningEC || reasoningId) {
+              // Defensive: ensure an ma fragment exists as the attach target for the svs particle below.
+              pt.appendReasoningText('');
               pt.sendSetVendorState({
                 p: 'svs',
                 vendor: 'openai',
@@ -416,12 +424,8 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
                     ...(reasoningEC ? { encryptedContent: reasoningEC } : {}),
                   },
                 },
-              })
-            else if (!reasoningId && !reasoningEC)
-              console.warn('[DEV] AIX: OpenAI Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn', { doneItem },);
-            else if (!reasoningEC)
-              console.log("[DEV] AIX: OpenAI Responses: reasoning item done has id but no encrypted_content - stateless round-trip requires include:['reasoning.encrypted_content'] on the request",);
-
+              });
+            }
             break;
 
           case 'function_call':
