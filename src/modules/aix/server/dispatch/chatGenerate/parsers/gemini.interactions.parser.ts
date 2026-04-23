@@ -15,271 +15,299 @@ const DISABLE_CITATIONS = true;
 type TInteraction = z.infer<typeof GeminiInteractionsWire_API_Interactions.Interaction_schema>;
 type TUsage = NonNullable<TInteraction['usage']>;
 
+type BlockState = {
+  kind: 'thought' | 'text' | 'image' | 'other';
+  emittedCitationKeys: Set<string>; // `${url}@${start}-${end}` for de-dupe (url_citations can repeat)
+};
+
 
 /**
- * Gemini Interactions API parser (for Deep Research and future multimodal agents).
+ * Gemini Interactions API SSE parser (for Deep Research and future agents).
  *
- * Each SSE frame carries a *full* Interaction snapshot (from POST or from a GET poll).
- * The parser diffs against prior state and emits only new content.
+ * The upstream request is sent with `stream=true` and returns `text/event-stream` with events:
+ *  - interaction.start / interaction.status_update / interaction.complete  (lifecycle)
+ *  - content.start / content.delta / content.stop                          (per-index content blocks)
+ *  - error                                                                 (non-fatal, empty payload observed mid-stream)
+ *  - done                                                                  (terminator, data: [DONE])
  *
- * Emission rules per output type:
- *  - `text`           -> `pt.appendText(newSuffix)`. New url_citation annotations are emitted once.
- *  - `thought`        -> `pt.appendReasoningText(newSuffix)`; signatures recorded via `setReasoningSignature`.
- *  - `image`          -> `pt.appendImageInline(...)` once per index (images are whole, not incremental).
- *                        URI-only variants emit a visible note + `console.warn` (not yet wired as fetches).
- *  - `audio`          -> PCM -> WAV via `geminiConvertPCM2WAV`, then `pt.appendAudioInline(...)` once per index.
- *  - unknown types    -> `console.warn` + inline `_Unsupported content block: <type>_` note, once per index.
- *                        Non-terminating: Deep Research streams are long-lived and must not blow up on new blocks.
+ * The SSE demuxer (`fast-sse`) invokes this parser once per frame with `eventData` (the JSON body)
+ * and `eventName` (the `event:` line). We dispatch on the JSON payload's `event_type` field which
+ * mirrors the SSE event name - staying resilient if the demuxer drops the event name.
  *
- * Part boundaries: when the output type at a given index changes kind (e.g. thought -> text),
- * we call `endMessagePart()` so the transmitter flushes the previous part cleanly.
+ * Delta variants (content.delta's `delta` payload):
+ *  - thought_summary  -> `pt.appendReasoningText(delta.content.text)`
+ *  - text             -> `pt.appendText(delta.text)`
+ *  - text_annotation  -> `pt.appendUrlCitation(...)` for each url_citation (if `DISABLE_CITATIONS` is false)
+ *  - image            -> `pt.appendImageInline(...)` (forward-looking; not observed in captures yet)
+ *
+ * Resume: GET /v1beta/interactions/{id}?stream=true[&last_event_id=<cursor>] - Gemini replays from
+ * the cursor (or from start if omitted). Our parser is position-idempotent within a single run
+ * because the transmitter's state carries across events.
  */
 export function createGeminiInteractionsParser(requestedModelName: string | null): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
-  let timeToFirstEvent: number | undefined;
+  let timeToFirstContent: number | undefined;
 
-  // on resume we don't know the model name (the DMessage already has it) - skip emission
-  let modelNameSent = requestedModelName == null;
+  let modelNameSent = requestedModelName == null; // on resume, DMessage already has the model name
   let upstreamHandleSent = false;
-  let operationOpId: string | null = null; // interaction id, set once; used to pair in-progress/done operation state
+  let operationOpId: string | null = null; // interaction id; used to pair in-progress / done operation-state updates
   let operationOpenEmitted = false;
+  let interactionIdCache: string | null = null; // cached for the `operation-state done` emission on interaction.complete
 
-  // per-index emission state (array index in `outputs[]`)
-  type EmittedState = {
-    kind: 'text' | 'thought' | 'image' | 'audio' | 'other';
-    emittedTextLen: number;
-    emittedCitationKeys: Set<string>; // `${url}@${start}-${end}` to de-dupe
-    signatureSent: boolean;
-    mediaEmitted: boolean; // image/audio: emit only once (whole, not incremental)
-    otherWarned: boolean; // unknown type: warn only once per index
-  };
-  const emitted: EmittedState[] = [];
-  let lastOpenIdx = -1; // index of the most recently opened part; -1 = none
+  // per-index content-block state (mirrors what content.start declared; persists across delta/stop)
+  const blocks: Record<number, BlockState> = Object.create(null);
+  let lastOpenIdx = -1; // most recently opened content-block index; -1 = none open
 
-  return function parse(pt: IParticleTransmitter, rawEventData: string): void {
+  return function parse(pt: IParticleTransmitter, rawEventData: string, _eventName?: string): void {
 
-    // model name is announced once (agents don't populate modelVersion the same way)
+    // model name announced once (agents don't populate modelVersion the way generateContent does)
     if (!modelNameSent && requestedModelName != null) {
       pt.setModelName(requestedModelName);
       modelNameSent = true;
     }
 
-    // parse + validate
-    const parsed = GeminiInteractionsWire_API_Interactions.Interaction_schema.safeParse(JSON.parse(rawEventData));
-    if (!parsed.success)
-      throw new Error(`malformed interaction snapshot: ${parsed.error.message}`);
-    const interaction: TInteraction = parsed.data;
+    // `event: done` carries the literal string `[DONE]` - terminate cleanly without a JSON parse
+    if (rawEventData === '[DONE]')
+      return;
 
-    // emit the upstream handle on the first frame that has an id (enables reattach across reloads)
-    if (!upstreamHandleSent && interaction.id) {
-      pt.setUpstreamHandle(interaction.id, 'vnd.gem.interactions');
-      upstreamHandleSent = true;
+    // parse the JSON body + validate against the event-union
+    let rawJson: unknown;
+    try {
+      rawJson = JSON.parse(rawEventData);
+    } catch (e: any) {
+      throw new Error(`malformed SSE frame (not JSON): ${e?.message || String(e)}`);
     }
-
-    // Operation state: give the UI a live progress indicator while the background agent runs.
-    // Pinned to the interaction id so the terminal 'done'/'error' replaces the same entry.
-    if (interaction.id && !operationOpId)
-      operationOpId = interaction.id;
-    if (operationOpId && !operationOpenEmitted && interaction.status === 'in_progress') {
-      pt.sendOperationState('search-web', 'Deep Research in progress...', { opId: operationOpId });
-      operationOpenEmitted = true;
+    const parsed = GeminiInteractionsWire_API_Interactions.StreamEvent_schema.safeParse(rawJson);
+    if (!parsed.success) {
+      // tolerate future/unknown event types rather than failing the whole stream
+      console.warn('[GeminiInteractions] unknown SSE event shape:', rawJson);
+      return;
     }
+    const event = parsed.data;
 
-    // record time-to-first-content (first frame that carries outputs)
-    if (timeToFirstEvent === undefined && interaction.outputs && interaction.outputs.length > 0)
-      timeToFirstEvent = Date.now() - parserCreationTimestamp;
+    switch (event.event_type) {
 
-    // process outputs (may be absent on early in_progress frames).
-    // Each raw output is classified via Zod safeParse against a discriminated union.
-    // - Untyped/empty placeholders (`{}`, no `type` field) are skipped silently without creating
-    //   state, so a later snapshot that populates them can classify cleanly.
-    // - Typed-but-unknown shapes warn once per index with a visible note (non-terminating).
-    const outputs = interaction.outputs ?? [];
-    for (let i = 0; i < outputs.length; i++) {
-      const raw = outputs[i] as { type?: unknown };
-      const rawType = typeof raw?.type === 'string' ? raw.type : null;
+      // --- Lifecycle ---
 
-      // skip not-yet-populated placeholder blocks silently (Deep Research pre-allocates slots)
-      if (rawType === null) continue;
+      case 'interaction.start':
+        interactionIdCache = event.interaction.id;
+        if (!upstreamHandleSent) {
+          pt.setUpstreamHandle(event.interaction.id, 'vnd.gem.interactions');
+          upstreamHandleSent = true;
+        }
+        break;
 
-      // silent-skip Deep Research internal tool call/result blocks. These are streamed as content
-      // alongside text/thought but shouldn't surface to the user - the top-level "Deep Research in
-      // progress" operation state already signals activity.
-      if (GeminiInteractionsWire_API_Interactions.INTERNAL_OUTPUT_TYPES.has(rawType)) continue;
+      case 'interaction.status_update':
+        interactionIdCache = event.interaction_id;
+        if (!upstreamHandleSent) {
+          pt.setUpstreamHandle(event.interaction_id, 'vnd.gem.interactions');
+          upstreamHandleSent = true;
+        }
+        // Surface the in-progress label the first time we see it. Pinned to the interaction id so
+        // the terminal done/error (emitted from interaction.complete) replaces the same entry.
+        if (event.status === 'in_progress' && !operationOpenEmitted) {
+          operationOpId = event.interaction_id;
+          pt.sendOperationState('search-web', 'Deep Research in progress...', { opId: operationOpId });
+          operationOpenEmitted = true;
+        }
+        break;
 
-      const classified = GeminiInteractionsWire_API_Interactions.KnownOutput_schema.safeParse(raw);
-      const kind: EmittedState['kind'] = !classified.success ? 'other' : classified.data.type;
+      case 'interaction.complete':
+        _handleInteractionComplete(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent);
+        break;
 
-      // first time we see this index: initialize + flush previous part if switching kinds
-      let state = emitted[i];
-      if (!state) {
-        state = { kind, emittedTextLen: 0, emittedCitationKeys: new Set(), signatureSent: false, mediaEmitted: false, otherWarned: false };
-        emitted[i] = state;
+      // --- Content-block lifecycle ---
 
-        // close previous part if we're opening a new index (natural part boundary)
-        if (lastOpenIdx !== -1 && lastOpenIdx !== i)
+      case 'content.start': {
+        const kind = _classifyContentKind(event.content?.type);
+        blocks[event.index] = { kind, emittedCitationKeys: new Set() };
+        // natural part boundary: close any previously open part when switching indices
+        if (lastOpenIdx !== -1 && lastOpenIdx !== event.index)
           pt.endMessagePart();
-        lastOpenIdx = i;
+        lastOpenIdx = event.index;
+        break;
       }
 
-      // 'other': warn once per index with visible note, then continue
-      if (!classified.success) {
-        if (!state.otherWarned) {
-          console.warn(`[GeminiInteractions] unsupported output type: ${rawType}`, raw);
-          pt.appendText(`\n_Unsupported content block: ${rawType}_\n`);
-          state.otherWarned = true;
-        }
-        continue;
-      }
+      case 'content.stop':
+        // the final `endMessagePart` is emitted by `interaction.complete` after status evaluation,
+        // so we don't auto-close here - lets multi-block streams flow naturally
+        break;
 
-      const out = classified.data;
-      switch (out.type) {
-        case 'text': {
-          if (out.text.length > state.emittedTextLen) {
-            pt.appendText(out.text.slice(state.emittedTextLen));
-            state.emittedTextLen = out.text.length;
-          }
-          // url_citation annotations: loose-typed in Output_schema, validated per-item here
-          if (!DISABLE_CITATIONS && out.annotations) {
-            for (const annRaw of out.annotations) {
-              const annParse = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
-              if (!annParse.success) continue; // not a url_citation (place_citation, file_citation, ...)
-              const ann = annParse.data;
-              const key = `${ann.url}@${ann.start_index ?? ''}-${ann.end_index ?? ''}`;
-              if (state.emittedCitationKeys.has(key)) continue;
-              state.emittedCitationKeys.add(key);
-              pt.appendUrlCitation(ann.title || ann.url, ann.url, undefined, ann.start_index, ann.end_index, undefined, undefined);
+      // --- Delta routing ---
+
+      case 'content.delta': {
+        if (timeToFirstContent === undefined)
+          timeToFirstContent = Date.now() - parserCreationTimestamp;
+
+        // Ensure state exists even if we missed content.start (tolerant)
+        if (!blocks[event.index])
+          blocks[event.index] = { kind: 'other', emittedCitationKeys: new Set() };
+        const state = blocks[event.index];
+
+        // Classify the delta payload - unknown types warn once and are dropped
+        const deltaParse = GeminiInteractionsWire_API_Interactions.StreamDelta_schema.safeParse(event.delta);
+        if (!deltaParse.success) {
+          // Empty deltas ({}) appear alongside placeholder blocks (e.g. internal tool slots) - silent skip
+          if (event.delta && Object.keys(event.delta).length === 0) break;
+          console.warn('[GeminiInteractions] unknown content.delta shape at index', event.index, event.delta);
+          break;
+        }
+        const delta = deltaParse.data;
+
+        switch (delta.type) {
+          case 'thought_summary':
+            if (delta.content?.text) pt.appendReasoningText(delta.content.text);
+            // Intentionally NOT re-emitting sendOperationState here. The chip is created ONCE at
+            // interaction.status_update and left alone - its `cts` is anchored to the run's
+            // createdAt via the upstream handle (reassembler line 775), so the chip's timer shows
+            // the true elapsed run time and survives reattach cleanly. Re-emitting would pollute
+            // the opLog without adding user value.
+            break;
+          case 'thought_signature':
+            if (delta.signature) pt.setReasoningSignature(delta.signature);
+            break;
+          case 'text':
+            pt.appendText(delta.text);
+            break;
+          case 'text_annotation':
+            if (!DISABLE_CITATIONS && delta.annotations) {
+              for (const annRaw of delta.annotations) {
+                const ann = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
+                if (!ann.success) continue; // place_citation, file_citation, etc. - not surfaced here
+                const a = ann.data;
+                const key = `${a.url}@${a.start_index ?? ''}-${a.end_index ?? ''}`;
+                if (state.emittedCitationKeys.has(key)) continue;
+                state.emittedCitationKeys.add(key);
+                pt.appendUrlCitation(a.title || a.url, a.url, undefined, a.start_index, a.end_index, undefined, undefined);
+              }
             }
-          }
-          break;
-        }
-        case 'thought': {
-          // summary may be a string (preview) or an array of {type:'text', text} blocks (documented shape)
-          const summary = typeof out.summary === 'string'
-            ? out.summary
-            : Array.isArray(out.summary)
-              ? out.summary.map(s => s.text).join('\n\n')
-              : '';
-          if (summary.length > state.emittedTextLen) {
-            pt.appendReasoningText(summary.slice(state.emittedTextLen));
-            state.emittedTextLen = summary.length;
-          }
-          if (!state.signatureSent && out.signature) {
-            pt.setReasoningSignature(out.signature);
-            state.signatureSent = true;
-          }
-          break;
-        }
-        case 'image': {
-          if (!state.mediaEmitted) {
-            if (out.data) {
-              // hintSkipResize=true: Deep Research images are typically figures/charts where
-              // PNG->jpeg recompression would degrade text legibility and fine detail.
-              pt.appendImageInline(out.mime_type, out.data, 'Gemini Generated Image', 'Gemini', '', true);
-            } else if (out.uri) {
-              // URI-hosted images aren't fetched here (yet); surface the link inline
-              console.warn('[GeminiInteractions] image output via URI is not yet fetched inline:', out.uri);
-              pt.appendText(`\n[Image: ${out.uri}]\n`);
-            } else {
-              console.warn('[GeminiInteractions] image output with neither data nor uri:', out);
-              pt.appendText(`\n_Image block without payload_\n`);
+            break;
+          case 'image':
+            // Forward-looking: inline bytes flow through appendImageInline; URI-only gets a visible note.
+            if (delta.data && delta.mime_type) {
+              pt.appendImageInline(delta.mime_type, delta.data, 'Gemini Generated Image', 'Gemini', '', true);
+            } else if (delta.uri) {
+              console.warn('[GeminiInteractions] image delta via URI not fetched:', delta.uri);
+              pt.appendText(`\n[Image: ${delta.uri}]\n`);
             }
-            state.mediaEmitted = true;
-          }
-          break;
-        }
-        case 'audio': {
-          if (!state.mediaEmitted) {
-            if (out.data) {
-              const mime = out.mime_type.toLowerCase();
+            break;
+          case 'audio':
+            // Forward-looking: audio deltas per spec (not yet observed in DR streams). PCM needs WAV conversion; packaged formats pass through.
+            if (delta.data && delta.mime_type) {
+              const mime = delta.mime_type.toLowerCase();
               const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
               if (isPCM) {
                 try {
-                  const wav = geminiConvertPCM2WAV(out.mime_type, out.data);
+                  const wav = geminiConvertPCM2WAV(delta.mime_type, delta.data);
                   pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
                 } catch (error) {
                   console.warn('[GeminiInteractions] audio PCM convert failed:', error);
-                  pt.appendText(`\n_Audio conversion failed: ${String(error)}_\n`);
                 }
               } else {
-                // already a packaged format (audio/wav, audio/mp3, audio/aac, ...) - pass through
-                pt.appendAudioInline(out.mime_type, out.data, 'Gemini Generated Audio', 'Gemini', 0);
+                pt.appendAudioInline(delta.mime_type, delta.data, 'Gemini Generated Audio', 'Gemini', 0);
               }
-            } else if (out.uri) {
-              console.warn('[GeminiInteractions] audio output via URI is not yet fetched inline:', out.uri);
-              pt.appendText(`\n[Audio: ${out.uri}]\n`);
-            } else {
-              console.warn('[GeminiInteractions] audio output with neither data nor uri:', out);
-              pt.appendText(`\n_Audio block without payload_\n`);
             }
-            state.mediaEmitted = true;
+            break;
+          default: {
+            const _exhaustive: never = delta;
+            break;
           }
-          break;
         }
-        default: {
-          const _exhaustiveCheck: never = out;
-          console.warn('[GeminiInteractions] unreachable: unhandled emittable type', { out });
-          break;
-        }
+        break;
       }
-    }
 
-    // terminal states: flush current part and signal end
-    switch (interaction.status) {
-      case 'completed':
-        if (lastOpenIdx !== -1) pt.endMessagePart();
-        if (operationOpId)
-          pt.sendOperationState('search-web', 'Deep Research complete', { opId: operationOpId, state: 'done' });
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstEvent);
-        pt.setTokenStopReason('ok');
-        pt.setDialectEnded('done-dialect');
-        break;
-
-      case 'failed':
-        if (operationOpId)
-          pt.sendOperationState('search-web', 'Deep Research failed', { opId: operationOpId, state: 'error' });
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstEvent);
-        pt.setDialectTerminatingIssue('Deep Research interaction failed', null, 'srv-warn');
-        break;
-
-      case 'cancelled':
-        if (operationOpId)
-          pt.sendOperationState('search-web', 'Deep Research cancelled', { opId: operationOpId, state: 'done' });
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstEvent);
-        pt.setTokenStopReason('cg-issue');
-        pt.setDialectEnded('done-dialect');
-        break;
-
-      case 'requires_action':
-        // Not expected for Deep Research agents - fail loudly so we notice
-        if (operationOpId)
-          pt.sendOperationState('search-web', 'Deep Research needs action', { opId: operationOpId, state: 'error' });
-        pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
-        break;
-
-      case 'incomplete':
-        // Run stopped early (token limit, etc.). Terminate gracefully with a visible note; we keep any content already emitted.
-        if (lastOpenIdx !== -1) pt.endMessagePart();
-        if (operationOpId)
-          pt.sendOperationState('search-web', 'Deep Research incomplete', { opId: operationOpId, state: 'done' });
-        pt.appendText('\n_Response incomplete (run stopped early)._\n');
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstEvent);
-        pt.setTokenStopReason('out-of-tokens');
-        pt.setDialectEnded('done-dialect');
-        break;
-
-      case 'in_progress':
-        // keep polling
+      case 'error':
+        // Observed mid-stream with an empty payload between content blocks - non-fatal, the stream
+        // continues with further events and eventually an interaction.complete. Silent-skip empty
+        // payloads (Beta noise); warn only when actual error info is present.
+        if (event.error?.message || event.error?.code)
+          console.warn('[GeminiInteractions] SSE error event:', event.error);
         break;
 
       default: {
-        const _exhaustiveCheck: never = interaction.status;
-        console.warn('[GeminiInteractions] unreachable: unhandled status', { status: interaction.status });
+        const _exhaustiveCheck: never = event;
+        console.warn('[GeminiInteractions] unreachable: unhandled emittable type', { event });
         break;
       }
     }
   };
+}
+
+
+// --- helpers ---
+
+function _classifyContentKind(rawType: unknown): BlockState['kind'] {
+  if (rawType === 'thought') return 'thought';
+  if (rawType === 'text') return 'text';
+  if (rawType === 'image') return 'image';
+  return 'other';
+}
+
+function _handleInteractionComplete(
+  pt: IParticleTransmitter,
+  interaction: TInteraction,
+  operationOpId: string | null,
+  lastOpenIdx: number,
+  parserCreationTimestamp: number,
+  timeToFirstContent: number | undefined,
+): void {
+
+  // Flush any content parts that were open when the final block arrived
+  if (lastOpenIdx !== -1) pt.endMessagePart();
+
+  switch (interaction.status) {
+    case 'completed':
+      if (operationOpId)
+        pt.sendOperationState('search-web', 'Deep Research complete', { opId: operationOpId, state: 'done' });
+      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+      pt.setTokenStopReason('ok');
+      pt.setDialectEnded('done-dialect');
+      break;
+
+    case 'failed':
+      if (operationOpId)
+        pt.sendOperationState('search-web', 'Deep Research failed', { opId: operationOpId, state: 'error' });
+      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+      pt.setDialectTerminatingIssue('Deep Research interaction failed', null, 'srv-warn');
+      break;
+
+    case 'cancelled':
+      if (operationOpId)
+        pt.sendOperationState('search-web', 'Deep Research cancelled', { opId: operationOpId, state: 'done' });
+      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+      pt.setTokenStopReason('cg-issue');
+      pt.setDialectEnded('done-dialect');
+      break;
+
+    case 'requires_action':
+      // Not expected for Deep Research agents - fail loudly so we notice
+      if (operationOpId)
+        pt.sendOperationState('search-web', 'Deep Research needs action', { opId: operationOpId, state: 'error' });
+      pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
+      break;
+
+    case 'incomplete':
+      // Run stopped early (token limit, etc.). Terminate gracefully with a visible note; we keep any content already emitted.
+      if (operationOpId)
+        pt.sendOperationState('search-web', 'Deep Research incomplete', { opId: operationOpId, state: 'done' });
+      pt.appendText('\n_Response incomplete (run stopped early)._\n');
+      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+      pt.setTokenStopReason('out-of-tokens');
+      pt.setDialectEnded('done-dialect');
+      break;
+
+    case 'in_progress':
+      // interaction.complete with in_progress shouldn't happen per the spec - log and keep the stream open
+      console.warn('[GeminiInteractions] interaction.complete with status=in_progress; ignoring');
+      break;
+
+    default: {
+      const _exhaustiveCheck: never = interaction.status;
+      console.warn('[GeminiInteractions] unreachable status', interaction.status);
+      break;
+    }
+  }
 }
 
 
@@ -292,14 +320,14 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
  *  - `total_tool_use_tokens` is distinct from input/output/thought and accounts for internal tool calls
  *    (web search, code exec, etc.). For Deep Research this dominates - we fold it into TIn so displayed
  *    input reflects true model consumption; there is no dedicated slot in CGSelectMetrics today.
- *  - `total_output_tokens` excludes thought tokens; `gemini.parser.ts` (line 110) already adds TOutR into TOut
+ *  - `total_output_tokens` excludes thought tokens; `gemini.parser.ts` already adds TOutR into TOut
  *    for consistency, and we follow the same convention here.
  */
 function _emitUsageMetrics(
   pt: IParticleTransmitter,
   usage: TUsage | undefined,
   parserCreationTimestamp: number,
-  timeToFirstEvent: number | undefined,
+  timeToFirstContent: number | undefined,
 ): void {
   if (!usage) return;
 
@@ -324,9 +352,9 @@ function _emitUsageMetrics(
   // timing
   const dtAll = Date.now() - parserCreationTimestamp;
   m.dtAll = dtAll;
-  if (timeToFirstEvent !== undefined) {
-    m.dtStart = timeToFirstEvent;
-    const dtInner = dtAll - timeToFirstEvent;
+  if (timeToFirstContent !== undefined) {
+    m.dtStart = timeToFirstContent;
+    const dtInner = dtAll - timeToFirstContent;
     if (dtInner > 0) {
       m.dtInner = dtInner;
       if (totalOut > 0)

@@ -78,12 +78,14 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
   return {
     agent,
     input,
-    background: true, // also must have this for stream=true;
-    store: true, // API rejects store=false with background=true; the poller issues DELETE after terminal status
+    stream: true, // SSE streaming - upstream returns event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). Required for live thought_summary deltas.
+    // FIXME: we only support SSE streaming parsing - we used to support parsing of the final answer (with the GET) but not anymore
+    background: true, // required by agents; also required alongside stream=true
+    store: true, // keep the interaction alive so clients can reattach via SSE replay within Gemini's retention window (1d free / 55d paid)
     ...(isDeepResearch && {
       agent_config: {
         type: 'deep-research',
-        thinking_summaries: 'auto', // Enable thought_summary blocks - without this the API would not emit summaries
+        thinking_summaries: 'auto', // Enable thought_summary blocks - without this the API would not emit summaries during streaming
         // visualization defaults to 'auto' upstream; leave unset to keep the default (agent may generate charts/images).
       },
     }),

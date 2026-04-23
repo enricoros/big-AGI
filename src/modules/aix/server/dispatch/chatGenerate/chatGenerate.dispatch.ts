@@ -8,8 +8,7 @@ import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenera
 import type { AixDemuxers } from '../stream.demuxers';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
-
-import { createGeminiInteractionsConnect, createGeminiInteractionsResumeConnect } from './connectors/gemini.interactionsPoller';
+import { GeminiInteractionsWire_API_Interactions } from '../wiretypes/gemini.interactions.wiretypes';
 
 import { aixAnthropicHostedFeatures, aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
 import { aixToBedrockConverse } from './adapters/bedrock.converse';
@@ -170,11 +169,14 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'gemini':
       const requestedModelName = model.id.replace('models/', '');
 
-      // [Gemini Interactions API - ALPHA TEST]
+      // [Gemini Interactions API - ALPHA TEST] SSE-native: POST with stream=true, upstream returns event-stream we pipe through the fast-sse demuxer.
       if (model.vndGeminiAPI === 'interactions-agent')
         return {
-          // { request, customConnect }
-          ...createGeminiInteractionsConnect(access, aixToGeminiInteractionsCreate(model, chatGenerate)),
+          request: {
+            ...geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.postPath, false),
+            method: 'POST',
+            body: aixToGeminiInteractionsCreate(model, chatGenerate),
+          },
           demuxerFormat: 'fast-sse',
           chatGenerateParse: createGeminiInteractionsParser(requestedModelName),
         };
@@ -307,16 +309,17 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
         chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
       };
 
-    case 'gemini':
-      // [Gemini Interactions] Reattach to an in-progress Deep Research interaction by polling GET.
+    case 'gemini': {
+      // [Gemini Interactions] Reattach via SSE stream - GET /interactions/{id}?stream=true replays all events from the start (intentional - client's ContentReassembler replaces message content on reattach; partial resume via last_event_id is deliberately NOT used).
       if (resumeHandle.uht !== 'vnd.gem.interactions')
         throw new Error(`Resume handle mismatch for gemini: expected 'vnd.gem.interactions', got '${resumeHandle.uht}'`);
+      const { url: _baseUrl, headers: _headers } = geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.getPath(resumeHandle.runId /* Gemini interaction.id */), false);
       return {
-        // { request, customConnect }
-        ...createGeminiInteractionsResumeConnect(access, resumeHandle.runId /* Gemini interaction.id */),
+        request: { url: `${_baseUrl}${_baseUrl.includes('?') ? '&' : '?'}stream=true`, method: 'GET', headers: _headers },
         demuxerFormat: 'fast-sse',
         chatGenerateParse: createGeminiInteractionsParser(null /* model name unknown at resume time - caller's DMessage already has it */),
       };
+    }
 
     default:
       const _exhaustiveCheck: never = dialect;

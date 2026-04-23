@@ -107,7 +107,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     // generation_config: GenerationConfig_schema.optional(), // model path - not modeled here yet
 
     // --- Runtime flags (literals below force correct behavior at the adapter layer) ---
-    stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). Enables `last_event_id` resume on GET.
+    stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). On reattach, GET ?stream=true replays the full event sequence (we do not send `last_event_id` - full replay is the intentional semantic; see poller comment).
     store: z.literal(true), // spec-optional; we lock to `true` so the interaction is retrievable post-run (replay via GET stream, resume via `last_event_id`). Required alongside `background=true` for agents per the DR guide.
     background: z.literal(true), // spec-optional; DR agents REQUIRE `true` ('Agents are required to use background=true'). Locked to true to prevent accidental sync-mode sends.
 
@@ -260,5 +260,159 @@ export namespace GeminiInteractionsWire_API_Interactions {
     // (remaining echo fields - system_instruction, tools, agent_config, previous_interaction_id,
     //  input, response_modalities, response_format, etc. - pass through via looseObject for now)
   });
+
+
+  // -- SSE Stream Events --
+  //
+  // When the POST (or resume GET) is sent with `stream=true`, the API returns `text/event-stream`
+  // with the following frames (captured empirically 2026-04-23, see _upstream/gemini.deep-research.guide.md#streaming):
+  //
+  //   event: interaction.start          one at the top; carries { interaction: {id, status, agent, ...} }
+  //   event: interaction.status_update  status transitions (in_progress, completed, ...)
+  //   event: content.start              opens a content block at {index, content:{type:'thought'|'text'|...}}
+  //   event: content.delta              incremental data for index; polymorphic delta (see below); some carry `event_id` for resume
+  //   event: content.stop               closes a content block at index
+  //   event: error                      spec shape: { error?: { code, message } }; observed with EMPTY payload in Beta - non-fatal, continue
+  //   event: interaction.complete       final snapshot carrying the full Interaction incl. usage
+  //   event: done                       terminator with data: [DONE] (OpenAI-style)
+  //
+  // Resume: GET /v1beta/interactions/{id}?stream=true
+  //   Spec also allows `&last_event_id=<event_id>` for incremental resume, but we do NOT use it.
+  //   Full replay from the beginning is the intentional semantic - the client's ContentReassembler
+  //   REPLACES message content on reattach, so partial resume would be a mismatch. Works identically
+  //   on in-progress, completed, failed, and cancelled interactions (within Gemini's retention window).
+
+  // --- ContentDeltaData variants (spec: polymorphic on `type`) ---
+  //
+  // Spec defines: text, image, audio, document, video, thought_summary, thought_signature,
+  // text_annotation, function_call, + tool-call/result variants (code_execution_*, url_context_*,
+  // google_search_*, google_maps_*, file_search_*, mcp_server_tool_*). We model variants we emit
+  // to the UI; unknown ones fail safeParse at the parser and are silently dropped (mirrors the
+  // INTERNAL_OUTPUT_TYPES policy on the non-streaming path).
+
+  const TextDelta_schema = z.object({
+    type: z.literal('text'),
+    text: z.string(),
+  });
+
+  const ThoughtSummaryDelta_schema = z.object({
+    type: z.literal('thought_summary'),
+    // Spec: ThoughtSummaryContent - polymorphic (only `text` variant documented). Optional per spec.
+    content: z.object({
+      type: z.literal('text'),
+      text: z.string(),
+    }).optional(),
+  });
+
+  // Backend validation hash - routed to `pt.setReasoningSignature` when present.
+  const ThoughtSignatureDelta_schema = z.object({
+    type: z.literal('thought_signature'),
+    signature: z.string().optional(),
+  });
+
+  // text_annotation arrives as its own delta on the same index as a text block, carrying citation metadata for the text already emitted.
+  const TextAnnotationDelta_schema = z.object({
+    type: z.literal('text_annotation'),
+    // Spec: Annotation - polymorphic on `type` (url_citation, file_citation, place_citation). Optional per spec.
+    annotations: z.array(z.looseObject({ type: z.string() })).optional(), // validated per-item via UrlCitationAnnotation_schema
+  });
+
+  const ImageDelta_schema = z.object({
+    type: z.literal('image'),
+    data: z.string().optional(),     // base64
+    uri: z.string().optional(),
+    mime_type: z.string().optional(), // spec enum: image/png, image/jpeg, image/webp, image/heic, image/heif, image/gif, image/bmp, image/tiff
+    resolution: z.enum(['low', 'medium', 'high', 'ultra_high']).optional(), // spec: MediaResolution
+  });
+
+  const AudioDelta_schema = z.object({
+    type: z.literal('audio'),
+    data: z.string().optional(),
+    uri: z.string().optional(),
+    mime_type: z.string().optional(), // spec enum: audio/wav, audio/mp3, audio/aiff, audio/aac, audio/ogg, audio/flac, audio/mpeg, audio/m4a, audio/l16, audio/opus, audio/alaw, audio/mulaw
+    rate: z.number().optional(),
+    channels: z.number().optional(),
+  });
+
+  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (document,
+  // video, function_call, + tool-call/result) fail safeParse in the parser and are silently dropped.
+  export const StreamDelta_schema = z.discriminatedUnion('type', [
+    TextDelta_schema,
+    ImageDelta_schema,
+    AudioDelta_schema,
+    ThoughtSummaryDelta_schema,
+    ThoughtSignatureDelta_schema,
+    TextAnnotationDelta_schema,
+  ]);
+
+  // --- SSE event data payloads (spec: InteractionSseEvent - polymorphic on `event_type`) ---
+  //
+  // Per spec, EVERY variant carries an OPTIONAL `event_id` resume cursor. At runtime only a subset
+  // of events actually include one, so the schema accepts it on all but our parser uses whichever
+  // is present to advance the cursor.
+
+  const InteractionStart_event_schema = z.object({
+    event_type: z.literal('interaction.start'),
+    interaction: Interaction_schema.partial().extend({ id: z.string(), status: Status_enum.optional() }),
+    event_id: z.string().optional(),
+  });
+
+  const InteractionStatusUpdate_event_schema = z.object({
+    event_type: z.literal('interaction.status_update'),
+    interaction_id: z.string(),
+    status: Status_enum,
+    event_id: z.string().optional(),
+  });
+
+  const ContentStart_event_schema = z.object({
+    event_type: z.literal('content.start'),
+    index: z.number(),
+    content: z.looseObject({ type: z.string() }), // spec: Content (polymorphic)
+    event_id: z.string().optional(),
+  });
+
+  const ContentDelta_event_schema = z.object({
+    event_type: z.literal('content.delta'),
+    index: z.number(),
+    delta: z.looseObject({}), // spec: ContentDeltaData - tolerant at ingest; parsed later via StreamDelta_schema.safeParse
+    event_id: z.string().optional(),
+  });
+
+  const ContentStop_event_schema = z.object({
+    event_type: z.literal('content.stop'),
+    index: z.number(),
+    event_id: z.string().optional(),
+  });
+
+  const Error_event_schema = z.object({
+    event_type: z.literal('error'),
+    // Spec: Error (optional) - { code?: string (URI), message?: string }. Observed empty in Beta.
+    error: z.object({
+      code: z.string().optional(),
+      message: z.string().optional(),
+    }).optional(),
+    event_id: z.string().optional(),
+  });
+
+  const InteractionComplete_event_schema = z.object({
+    event_type: z.literal('interaction.complete'),
+    // Spec note: "The completed interaction with EMPTY OUTPUTS to reduce the payload size. Use the
+    // preceding ContentDelta events for the actual output." We rely on `status` + `usage` here.
+    interaction: Interaction_schema,
+    event_id: z.string().optional(),
+  });
+
+  // `event: done` carries the literal string `[DONE]` instead of JSON; handled specially in the parser
+
+  /** Discriminated union of JSON-bodied SSE events. The `done` terminator is handled as a string-valued special case in the parser. */
+  export const StreamEvent_schema = z.discriminatedUnion('event_type', [
+    InteractionStart_event_schema,
+    InteractionStatusUpdate_event_schema,
+    ContentStart_event_schema,
+    ContentDelta_event_schema,
+    ContentStop_event_schema,
+    Error_event_schema,
+    InteractionComplete_event_schema,
+  ]);
 
 }
