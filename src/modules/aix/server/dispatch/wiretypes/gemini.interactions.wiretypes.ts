@@ -6,14 +6,16 @@ import * as z from 'zod/v4';
  *
  * 2026-04-21: NOTE - MINIMAL IMPL for DEEP RESEARCH AGENT
  * Scope: only what the Deep Research agents need.
- *  - Stateless (no `previous_interaction_id`)
- *  - `store: true` - required by the API when `background: true` (Deep Research agents are background-only).
+ *  - Single-turn by default (we don't yet send `previous_interaction_id` for multi-turn state reuse)
+ *  - `store: true` is sent (spec says optional; DR guide recommends it for background runs).
  *    We best-effort DELETE on completion/abort to minimize server-side retention.
- *  - Single-turn: last user text becomes `input`
- *  - No tools, no system_instruction, no thinking config
+ *  - `system_instruction` is accepted for non-DR agents; DR agents reject it and we prepend to `input` instead.
+ *  - No `tools` (yet), no model-side `generation_config`.
  *
- * Docs: https://ai.google.dev/gemini-api/docs/interactions
- *       https://ai.google.dev/api/interactions-api
+ * Source-of-truth snapshots (for diffing across upstream changes, see ./_upstream/sync.sh):
+ *   ./_upstream/gemini.interactions.spec.md  - the formal API reference
+ *   ./_upstream/gemini.interactions.guide.md - the prose guide
+ *   ./_upstream/gemini.deep-research.guide.md - the Deep Research agent guide
  */
 export namespace GeminiInteractionsWire_API_Interactions {
 
@@ -51,15 +53,66 @@ export namespace GeminiInteractionsWire_API_Interactions {
     ]),
   });
 
+  // agent_config: polymorphic discriminated union on `type` (formal spec: AgentConfig).
+  // Only applicable when `agent` is set (mutually exclusive with `generation_config`, which is the
+  // model-path equivalent). See ./_upstream/gemini.interactions.spec.md#agent_config.
+  //
+  // Variants:
+  //  - DynamicAgentConfig  { type: 'dynamic' }
+  //    Dynamic agents - no tunable config documented beyond the discriminator.
+  //  - DeepResearchAgentConfig  { type: 'deep-research', ... }
+  //    See ./_upstream/gemini.deep-research.guide.md#agent-configuration for defaults and semantics.
+
+  const _DynamicAgentConfig_schema = z.object({
+    type: z.literal('dynamic'),
+  });
+
+  const _DeepResearchAgentConfig_schema = z.object({
+    type: z.literal('deep-research'),
+    thinking_summaries: z.enum(['auto', 'none']).optional(),   // default 'none'. 'auto' emits intermediate reasoning events during streaming.
+    visualization: z.enum(['auto', 'off']).optional(),         // default 'auto'. 'auto' lets the agent generate charts/images as part of the output.
+    collaborative_planning: z.boolean().optional(),            // default false. Plan-then-execute: the agent returns a research plan that the user confirms in a follow-up interaction.
+  });
+
+  export const AgentConfig_schema = z.discriminatedUnion('type', [
+    _DynamicAgentConfig_schema,
+    _DeepResearchAgentConfig_schema,
+  ]);
+
+  // RequestBody_schema: POST /v1beta/interactions body.
+  //
+  // Cross-field constraints (from the formal spec):
+  //  - `agent` XOR `model` is REQUIRED. We only model the agent path here.
+  //  - `agent_config` XOR `generation_config` - config object is picked by path:
+  //      `agent`+`agent_config`  OR  `model`+`generation_config`. Never both.
+  //  - `system_instruction` is top-level (not inside config) but rejected by deep-research agents.
+  //  - `previous_interaction_id` carries conversation history but NOT per-interaction knobs:
+  //    `tools`, `system_instruction`, and `generation_config` are interaction-scoped and must be
+  //    re-sent each turn.
   export const RequestBody_schema = z.object({
-    agent: z.string(), // e.g. 'deep-research-pro-preview-12-2025' (note: we send bare id, without 'models/' prefix)
+    // --- Target: what to call ---
+    agent: z.string(), // Spec: agent is AgentOption (optional, required if `model` not provided). Send the BARE id; no 'models/' prefix.
+    // model: z.string(), // alternative path - not used here; would require generation_config instead of agent_config
+
+    // --- Inputs ---
     input: z.union([
-      z.string(), // single-turn text convenience
-      z.array(InputContentPart_schema), // single-turn multimodal
-      z.array(Turn_schema), // stateless multi-turn history
+      z.string(), // single-turn text convenience (string shortcut for a user-text turn)
+      z.array(InputContentPart_schema), // single-turn multimodal (text + image parts for one user turn)
+      z.array(Turn_schema), // stateless multi-turn history (role-tagged turns)
     ]),
-    background: z.literal(true), // required for agents
-    store: z.literal(true), // required when background=true; we DELETE after completion to minimize retention
+    system_instruction: z.string().optional(), // NOT supported by deep-research agents (tested 2026-04-23, API: 'not supported for the deep-research-* agent') - for those, prepend to `input` instead.
+
+    // --- Config (picks the agent or model path) ---
+    agent_config: AgentConfig_schema.optional(), // Polymorphic on `type`: 'deep-research' | 'dynamic'. MUTUALLY EXCLUSIVE with `generation_config` (model path). Enables thought-summary streaming, visualizations, collaborative planning.
+    // generation_config: GenerationConfig_schema.optional(), // model path - not modeled here yet
+
+    // --- Runtime flags (literals below force correct behavior at the adapter layer) ---
+    stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). Enables `last_event_id` resume on GET.
+    store: z.literal(true), // spec-optional; we lock to `true` so the interaction is retrievable post-run (replay via GET stream, resume via `last_event_id`). Required alongside `background=true` for agents per the DR guide.
+    background: z.literal(true), // spec-optional; DR agents REQUIRE `true` ('Agents are required to use background=true'). Locked to true to prevent accidental sync-mode sends.
+
+    // --- Multi-turn continuation ---
+    previous_interaction_id: z.string().optional(), // reuses prior interaction's stored inputs/outputs. Per-turn knobs (tools, system_instruction, generation_config) are NOT carried and must be re-sent.
   });
 
 
@@ -164,8 +217,10 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
   // -- Usage (populated in the terminal frame) --
 
+  // Modality enum: per spec ResponseModality - ISO 8601 in descriptions clarifies this is the
+  // runtime modality, not the model's response_modalities request field.
   const UsageByModality_schema = z.object({
-    modality: z.string(), // 'text' | 'image' | 'audio' | ...
+    modality: z.enum(['text', 'image', 'audio', 'video', 'document']).or(z.string()), // permissive for future modalities
     tokens: z.number(),
   });
 
@@ -175,17 +230,35 @@ export namespace GeminiInteractionsWire_API_Interactions {
     total_cached_tokens: z.number().optional(),
     total_output_tokens: z.number().optional(),
     total_thought_tokens: z.number().optional(),
-    total_tool_use_tokens: z.number().optional(), // Deep Research: tokens consumed by internal tool calls (web search, etc.)
+    total_tool_use_tokens: z.number().optional(),                       // Deep Research: tokens consumed by internal tool calls (web search, etc.)
     input_tokens_by_modality: z.array(UsageByModality_schema).optional(),
+    cached_tokens_by_modality: z.array(UsageByModality_schema).optional(),   // spec: cached-tokens breakdown (input subset)
     output_tokens_by_modality: z.array(UsageByModality_schema).optional(),
+    tool_use_tokens_by_modality: z.array(UsageByModality_schema).optional(), // spec: tool-use breakdown - DR search/urlcontext/code-exec consumption per modality
   });
 
-  export const Interaction_schema = z.object({
+  // Full Interaction resource (spec: Resource:Interaction). We model ALL required fields and the
+  // ones we observe in responses; remaining optional echo fields are left as `.passthrough()` - see
+  // `Output_schema` comment for rationale.
+  export const Interaction_schema = z.looseObject({
+    // required (all marked "Required. Output only." in spec)
     id: z.string(),
     status: Status_enum,
+    created: z.string().optional(),   // ISO 8601 - spec says Required but marked optional-with-default upstream; we keep optional for forward-compat
+    updated: z.string().optional(),   // ISO 8601
+
+    // commonly-observed fields
+    role: z.string().optional(),      // 'agent' | 'user' | ... - output only
+    object: z.string().optional(),    // 'interaction' literal observed in responses
+    agent: z.string().optional(),     // echoed back on agent-path interactions
+    model: z.string().optional(),     // echoed back on model-path interactions
+
+    // content + metrics
     outputs: z.array(Output_schema).optional(), // absent until first content arrives
-    usage: Usage_schema.optional(), // populated in terminal frames (completed/failed/cancelled)
-    // We ignore model/agent echo for now
+    usage: Usage_schema.optional(),             // populated in terminal frames (completed/failed/cancelled/incomplete)
+
+    // (remaining echo fields - system_instruction, tools, agent_config, previous_interaction_id,
+    //  input, response_modalities, response_format, etc. - pass through via looseObject for now)
   });
 
 }

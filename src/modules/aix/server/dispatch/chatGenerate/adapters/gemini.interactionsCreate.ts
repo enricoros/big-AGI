@@ -17,8 +17,13 @@ type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputCo
  *
  * Scope:
  *  - Stateless multi-turn: `chatSequence` is flattened to role-tagged turns and sent as `input`.
- *  - `systemMessage` text (if any) is prepended to the first user turn; background agents do not
- *    accept a dedicated `system_instruction`.
+ *  - `systemMessage` text: routing differs by agent type
+ *    - deep-research agents REJECT the top-level `system_instruction` field (tested 2026-04-23,
+ *      API error: "not supported for the deep-research-* agent. Please include any specific
+ *      instructions in the input prompt instead"), so we prepend the system text into the first
+ *      user turn.
+ *    - non-DR agents (future MCP/Computer Use) use the native `system_instruction` field, matching
+ *      the gemini.generateContent.ts convention for clean separation.
  *  - Multimodal: user and model turns carry images as content-part arrays when any image is present,
  *    otherwise stay as plain strings (preserves the API's convenience shape).
  *  - Doc parts render as text via `approxDocPart_To_String`; in-reference-to XML is prepended to the user turn.
@@ -30,8 +35,14 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
   // Normalize: move any 'spillable' system parts (e.g. images) into a synthetic user message up front
   const chatGenerate = aixSpillSystemToUser(chatGenerateRaw);
 
-  // Extract leftover system text (to be prepended to the first user turn)
-  const systemPrefix = _collectSystemText(chatGenerate.systemMessage);
+  // The API expects a bare agent id (no 'models/' prefix)
+  const agent = model.id.startsWith('models/') ? model.id.slice('models/'.length) : model.id;
+
+  // Deep Research agents reject `system_instruction` at the top level - we prepend to input instead
+  const isDeepResearch = agent.includes('deep-research');
+
+  // Extract flattened system text (consumed below - DR: prepend to first user turn; else: native field)
+  const systemText = _collectSystemText(chatGenerate.systemMessage);
 
   // Walk chatSequence -> turns
   const turns: TTurn[] = [];
@@ -48,11 +59,11 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
   if (!turns.length)
     throw new Error('Gemini Interactions: no usable turns (Deep Research agents require at least one user message)');
 
-  // Prepend system prefix to the FIRST user turn (skip if none exists)
-  if (systemPrefix) {
+  // DR only: prepend system text into the first user turn (native `system_instruction` rejected)
+  if (isDeepResearch && systemText) {
     const firstUserIdx = turns.findIndex(t => t.role === 'user');
     if (firstUserIdx >= 0)
-      turns[firstUserIdx] = { role: 'user', content: _prependSystemText(turns[firstUserIdx].content, systemPrefix) };
+      turns[firstUserIdx] = { role: 'user', content: _prependSystemText(turns[firstUserIdx].content, systemText) };
   }
 
   // Sanity: the API expects the last turn to be 'user' (we're asking the model to respond)
@@ -64,14 +75,20 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
     ? turns[0].content
     : turns;
 
-  // The API expects a bare agent id (no 'models/' prefix)
-  const agent = model.id.startsWith('models/') ? model.id.slice('models/'.length) : model.id;
-
   return {
     agent,
     input,
-    background: true,
+    background: true, // also must have this for stream=true;
     store: true, // API rejects store=false with background=true; the poller issues DELETE after terminal status
+    ...(isDeepResearch && {
+      agent_config: {
+        type: 'deep-research',
+        thinking_summaries: 'auto', // Enable thought_summary blocks - without this the API would not emit summaries
+        // visualization defaults to 'auto' upstream; leave unset to keep the default (agent may generate charts/images).
+      },
+    }),
+    // non-DR agents: use native system_instruction field (matches gemini.generateContent.ts convention)
+    ...(!isDeepResearch && systemText && { system_instruction: systemText }),
   };
 }
 
