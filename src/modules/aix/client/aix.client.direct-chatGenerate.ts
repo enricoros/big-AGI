@@ -9,7 +9,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request, AixWire_Particles } from '../server/api/aix.wiretypes';
 import type { AixDebugObject } from '../server/dispatch/chatGenerate/chatGenerate.debug';
 import { AIX_INSPECTOR_ALLOWED_CONTEXTS, AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../server/api/aix.security';
-import { createChatGenerateDispatch, createChatGenerateResumeDispatch } from '../server/dispatch/chatGenerate/chatGenerate.dispatch';
+import { createChatGenerateDispatch, createChatGenerateResumeDispatch, executeChatGenerateDelete } from '../server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { executeChatGenerateWithContinuation } from '../server/dispatch/chatGenerate/chatGenerate.continuation';
 
 
@@ -58,6 +58,20 @@ export async function* clientSideReattachUpstream(
 
   yield * executeChatGenerateWithContinuation(dispatchCreator, streaming, abortSignal, _d);
 }
+
+/**
+ * Client-side delete - direct DELETE to the provider, bypasses the edge proxy.
+ * Matches the `aixRouter.deleteUpstreamContent` server-side procedure. One-shot, non-streaming.
+ */
+export async function clientSideDeleteUpstream(
+  access: AixAPI_Access,
+  handle: AixAPI_ResumeHandle,
+  abortSignal: AbortSignal,
+) {
+  // keep in sync with the `aixRouter.deleteUpstreamContent` server-side procedure
+  return executeChatGenerateDelete(access, handle, abortSignal);
+}
+
 
 // CSF debug config - lighter than server-side
 function _createClientDebugConfig(access: AixAPI_Access, options: undefined | { debugDispatchRequest?: boolean, debugProfilePerformance?: boolean, debugRequestBodyOverride?: Record<string, unknown> }, chatGenerateContextName: string): AixDebugObject {

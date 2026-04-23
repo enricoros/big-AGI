@@ -7,7 +7,7 @@ import { DLLM, DLLMId, LLM_IF_GEM_Interactions, LLM_IF_HOTFIX_NoTemperature, LLM
 import { DMessage, DMessageGenerator, createGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
 import { DMetricsChatGenerate_Lg, DMetricsChatGenerate_Md, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
-import { apiStream } from '~/common/util/trpc.client';
+import { apiAsync, apiStream } from '~/common/util/trpc.client';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
@@ -18,7 +18,7 @@ import { stripUndefined } from '~/common/util/objectUtils';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
 import { AixStreamRetry } from './aix.client.retry';
 import { ReassemblerParticleTransforms, ContentReassembler } from './ContentReassembler';
@@ -680,6 +680,40 @@ export async function aixReattachContent_DMessage_orThrow(
     { ...clientOptions, reattachGenerator: reattachGenerator as any /* guaranteed by the check */ },
     onStreamingUpdate,
   );
+}
+
+
+// --- L2 - Delete upstream handle (symmetric to reattach) ---
+
+/**
+ * Delete facade: DELETE the upstream-stored run identified by the generator's handle.
+ * Symmetric to `aixReattachContent_DMessage_orThrow` but terminal - after this, the handle is gone upstream.
+ *
+ * Does NOT mutate the DMessage - the caller decides how to react (typically clear the handle on ok).
+ * Shape mirrors reattach: resolve access from the generator's llmId, then call the procedure (tRPC or CSF).
+ */
+export async function aixDeleteUpstreamContent_orThrow(
+  llmId: DLLMId,
+  generator: Readonly<DMessageGenerator>,
+  abortSignal?: AbortSignal,
+) {
+  if (!generator.upstreamHandle) throw new Error('aixDeleteUpstreamContent: generator must have an upstreamHandle');
+
+  // short-circuit if already expired upstream - no network call, caller can clear locally.
+  // if (expiresAt != null && Date.now() > expiresAt)
+  //   return { ok: true, message: 'Already expired upstream' };
+
+  // resolve the vendor access from the LLM
+  const llm = findLLMOrThrow(llmId);
+  const { transportAccess: aixAccess } = findServiceAccessOrThrow<object, AixAPI_Access>(llm.sId);
+
+  // AIX [CSF] Direct delete when the vendor supports it
+  if (aixAccess.clientSideFetch) {
+    const { clientSideDeleteUpstream } = await _loadCsfModuleOrThrow();
+    return await clientSideDeleteUpstream(aixAccess, generator.upstreamHandle, abortSignal ?? new AbortController().signal);
+  }
+  // ... otherwise, tRPC delete
+  return await apiAsync.aix.upstreamDeleteContent.mutate({ access: aixAccess, upstreamHandle: generator.upstreamHandle }, { signal: abortSignal });
 }
 
 

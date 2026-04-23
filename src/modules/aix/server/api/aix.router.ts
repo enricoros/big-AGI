@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 
 import { _createDebugConfig } from '../dispatch/chatGenerate/chatGenerate.debug';
-import { createChatGenerateDispatch, createChatGenerateResumeDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
+import { createChatGenerateDispatch, createChatGenerateResumeDispatch, executeChatGenerateDelete } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { executeChatGenerateWithContinuation } from '../dispatch/chatGenerate/chatGenerate.continuation';
 
 import { AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
@@ -50,6 +50,19 @@ export const aixRouter = createTRPCRouter({
       const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.upstreamHandle, input.streaming);
 
       yield* executeChatGenerateWithContinuation(dispatchCreator, input.streaming, ctx.reqSignal, _d);
+    }),
+
+  /**
+   * Delete an upstream-stored run by handle. One-shot, non-streaming, terminal: removes the
+   * server-side resource (Gemini interaction / OpenAI response). Symmetric to `reattachContent`.
+   */
+  upstreamDeleteContent: edgeProcedure
+    .input(z.object({
+      access: AixWire_API.Access_schema,
+      upstreamHandle: AixWire_API.UpstreamHandle_schema, // { uht, runId, ... } - the schema strips unknown fields (createdAt/expiresAt)
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return await executeChatGenerateDelete(input.access, input.upstreamHandle, ctx.reqSignal);
     }),
 
 });

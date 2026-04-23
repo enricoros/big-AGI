@@ -156,6 +156,28 @@ export function ChatMessageList(props: {
     //   }, false /* messageComplete */, true /* touch */);
   }, [conversationHandler, conversationId]);
 
+  const handleMessageUpstreamDelete = React.useCallback(async (generator: DMessageGenerator, messageId: DMessageId) => {
+    if (!conversationId || !conversationHandler) return;
+    if (!generator.upstreamHandle) throw new Error('No upstream handle on generator');
+
+    // For AIX generators the DLLMId is at .aix.mId
+    const llmId = generator.mgt === 'aix' ? generator.aix.mId : undefined;
+    if (!llmId) throw new Error('No model id on generator');
+
+    const { aixDeleteUpstreamContent_orThrow } = await import('~/modules/aix/client/aix.client');
+    const result = await aixDeleteUpstreamContent_orThrow(llmId, generator);
+
+    // On success (or 404 already-gone), clear the handle locally so the buttons disappear
+    if (result.ok) {
+      conversationHandler.messageEdit(messageId, {
+        generator: { ...generator, upstreamHandle: undefined },
+      }, false /* messageComplete */, true /* touch */);
+      return;
+    }
+    // On failure: surface to the button's error UI
+    throw new Error(result.message || `Delete failed${result.httpStatus ? ` (HTTP ${result.httpStatus})` : ''}`);
+  }, [conversationHandler, conversationId]);
+
 
   // message menu methods proxy
 
@@ -405,6 +427,7 @@ export function ChatMessageList(props: {
               onMessageBranch={handleMessageBranch}
               onMessageContinue={handleMessageContinue}
               onMessageUpstreamResume={handleMessageUpstreamResume}
+              onMessageUpstreamDelete={handleMessageUpstreamDelete}
               onMessageDelete={handleMessageDelete}
               onMessageFragmentAppend={handleMessageAppendFragment}
               onMessageFragmentDelete={handleMessageDeleteFragment}

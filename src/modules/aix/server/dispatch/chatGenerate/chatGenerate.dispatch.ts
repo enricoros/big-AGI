@@ -4,7 +4,7 @@ import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLR
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
-import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request, AixWire_Particles } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
@@ -352,5 +352,76 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       // Throw on unsupported protocols (Azure and OpenRouter are speculatively supported)
       throw new Error(`Resume not supported for dialect: ${dialect}`);
 
+  }
+}
+
+
+// -- Delete Upstream Handle --
+
+export type ChatGenerateDeleteResult = {
+  ok: boolean; // server-side acknowledged removal (2xx or 404-already-gone)
+  httpStatus?: number;
+  message?: string; // optional detail, typically present on failure
+};
+
+/**
+ * Delete an upstream-stored run by handle. One-shot DELETE, no streaming, no parser.
+ * Symmetric to `createChatGenerateResumeDispatch` but terminal: removes the server-side
+ * resource so no future reattach is possible.
+ *
+ * Policy:
+ * - 2xx -> ok: true
+ * - 404 -> ok: true (already gone upstream; caller should clear the local handle)
+ * - everything else -> ok: false with status/message for the caller to render
+ * - abort passes through as a thrown AbortError/TRPCFetcherError
+ *
+ * NOTE on provider semantics (observed 2026-04-23):
+ * - Gemini: returns 200 for any valid-shaped interaction id, whether it actually existed or not.
+ *   So `ok: true` here means "the handle is now terminal for reattach purposes", NOT "we proved
+ *   a deletion happened". Fine for our UX contract (button disappears, reattach will fail).
+ * - OpenAI Responses: TBA
+ * - Don't surface a "deleted successfully" message to users based on `ok` alone - it'd overclaim.
+ */
+export async function executeChatGenerateDelete(access: AixAPI_Access, handle: AixAPI_ResumeHandle, abortSignal: AbortSignal): Promise<ChatGenerateDeleteResult> {
+  const { dialect } = access;
+
+  let url: string;
+  let headers: HeadersInit;
+  let name: string;
+
+  switch (dialect) {
+    case 'gemini':
+      if (handle.uht !== 'vnd.gem.interactions')
+        throw new Error(`Delete handle mismatch for gemini: expected 'vnd.gem.interactions', got '${handle.uht}'`);
+      ({ url, headers } = geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.deletePath(handle.runId), false));
+      name = 'Aix.Gemini.Interactions.delete';
+      break;
+
+    case 'azure':
+    case 'openai':
+    case 'openrouter':
+      if (handle.uht !== 'vnd.oai.responses')
+        throw new Error(`Delete handle mismatch for ${dialect}: expected 'vnd.oai.responses', got '${handle.uht}'`);
+      ({ url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${handle.runId}`));
+      name = `Aix.${dialect}.Responses.delete`;
+      break;
+
+    default:
+      throw new Error(`Delete not supported for dialect '${dialect}'`);
+  }
+
+  try {
+    const response = await fetchResponseOrTRPCThrow({ url, method: 'DELETE', headers, signal: abortSignal, name, throwWithoutName: true });
+    return { ok: response.ok, httpStatus: response.status };
+  } catch (error: any) {
+    if (abortSignal.aborted) throw error; // let the caller handle abort
+    // 404 = already removed upstream; treat as success so the client clears its handle
+    if (error instanceof TRPCFetcherError && error.httpStatus === 404)
+      return { ok: true, httpStatus: 404, message: 'Already removed upstream' };
+    return {
+      ok: false,
+      httpStatus: error instanceof TRPCFetcherError ? error.httpStatus : undefined,
+      message: error?.message || 'Delete failed',
+    };
   }
 }
