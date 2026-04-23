@@ -85,7 +85,7 @@ export function BlockOpUpstreamResume(props: {
             <Button
               disabled={isResuming || isCancelling || isDeleting || isExpired}
               loading={isResuming}
-              startDecorator={<PlayArrowRoundedIcon sx={{ color: 'success.solidBg' }} />}
+              startDecorator={<PlayArrowRoundedIcon color='success' />}
               onClick={handleResume}
             >
               Resume
@@ -126,10 +126,11 @@ export function BlockOpUpstreamResume(props: {
         </Typography>
       )}
 
-      <Typography level='body-xs' sx={{ fontSize: '0.65rem', opacity: 0.6 }}>
-        Run ID: {runId.slice(0, 12)}...
-        {!!expiresAt && <> · Expires <TimeAgo date={expiresAt} /></>}
-      </Typography>
+      {!!expiresAt && <Typography level='body-xs' sx={{ fontSize: '0.65rem', opacity: 0.6 }}>
+        {/*Run ID: {runId.slice(0, 12)}...*/}
+        {/*{!!expiresAt && <> · Expires <TimeAgo date={expiresAt} /></>}*/}
+        Expires <TimeAgo date={expiresAt} />
+      </Typography>}
     </Box>
   );
 }
