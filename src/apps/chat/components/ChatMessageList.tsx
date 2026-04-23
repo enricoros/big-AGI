@@ -142,7 +142,7 @@ export function ChatMessageList(props: {
           fragments: update.fragments,
           generator: update.generator,
           pendingIncomplete: update.pendingIncomplete,
-        }, isDone /* messageComplete */, true /* touch */);
+        }, isDone, isDone); // remove the pending state and updte only when done
       },
     );
 
