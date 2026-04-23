@@ -1,10 +1,9 @@
 <!--
-  Upstream snapshot - DO NOT EDIT
+  Upstream snapshot - DO NOT EDIT - run _upstream/sync.sh to refresh
   Source: https://ai.google.dev/gemini-api/docs/deep-research.md.txt
   Synced: 2026-04-23
-  Re-sync: curl -sSL -o "$(git rev-parse --show-toplevel)/src/modules/aix/server/dispatch/wiretypes/_upstream/gemini.deep-research.api.md" https://ai.google.dev/gemini-api/docs/deep-research.md.txt
   Consumed by: gemini.interactions.wiretypes.ts, gemini.interactions.parser.ts, gemini.interactionsCreate.ts, gemini.interactionsPoller.ts
-  Companion: ./gemini.interactions.api.md (the general Interactions API spec)
+  Companion: ./gemini.interactions.guide.md (the Interactions API guide)
 -->
 
 The Gemini Deep Research Agent autonomously plans, executes, and synthesizes

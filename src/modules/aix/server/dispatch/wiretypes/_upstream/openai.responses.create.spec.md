@@ -1,10 +1,8 @@
 <!--
-  Upstream snapshot - DO NOT EDIT
+  Upstream snapshot - DO NOT EDIT - run _upstream/sync.sh to refresh
   Source: https://developers.openai.com/api/reference/resources/responses/methods/create/index.md
   Synced: 2026-04-23
-  Re-sync: curl -sSL -o "$(git rev-parse --show-toplevel)/src/modules/aix/server/dispatch/wiretypes/_upstream/openai.responses.create.api.md" https://developers.openai.com/api/reference/resources/responses/methods/create/index.md
   Consumed by: openai.wiretypes.ts, openai.responses.parser.ts, openai.responsesCreate.ts
-  Diff workflow: re-run the curl above and `git diff` to see what changed upstream.
 -->
 
 ## Create a model response

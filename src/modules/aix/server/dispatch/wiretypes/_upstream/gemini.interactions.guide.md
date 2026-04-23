@@ -1,10 +1,9 @@
 <!--
-  Upstream snapshot - DO NOT EDIT
+  Upstream snapshot - DO NOT EDIT - run _upstream/sync.sh to refresh
   Source: https://ai.google.dev/gemini-api/docs/interactions.md.txt
   Synced: 2026-04-23
-  Re-sync: curl -sSL -o "$(git rev-parse --show-toplevel)/src/modules/aix/server/dispatch/wiretypes/_upstream/gemini.interactions.api.md" https://ai.google.dev/gemini-api/docs/interactions.md.txt
   Consumed by: gemini.interactions.wiretypes.ts, gemini.interactions.parser.ts, gemini.interactionsCreate.ts, gemini.interactionsPoller.ts
-  Diff workflow: re-run the curl above and `git diff` to see what changed upstream.
+  Companion: ./gemini.interactions.spec.md (the Interactions API reference spec), ./gemini.deep-research.guide.md (the Deep Research agent guide)
 -->
 
 > [!IMPORTANT]

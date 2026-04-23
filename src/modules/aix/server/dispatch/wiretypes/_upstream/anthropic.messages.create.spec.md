@@ -1,10 +1,8 @@
 <!--
-  Upstream snapshot - DO NOT EDIT
+  Upstream snapshot - DO NOT EDIT - run _upstream/sync.sh to refresh
   Source: https://platform.claude.com/docs/en/api/messages/create.md
   Synced: 2026-04-23
-  Re-sync: curl -sSL -o "$(git rev-parse --show-toplevel)/src/modules/aix/server/dispatch/wiretypes/_upstream/anthropic.messages.create.api.md" https://platform.claude.com/docs/en/api/messages/create.md
   Consumed by: anthropic.wiretypes.ts, anthropic.parser.ts, anthropic.messageCreate.ts, anthropic.transform-fileInline.ts
-  Diff workflow: re-run the curl above and `git diff` to see what changed upstream.
 -->
 
 ## Create

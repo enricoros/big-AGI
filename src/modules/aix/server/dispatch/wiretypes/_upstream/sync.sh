@@ -4,10 +4,6 @@
 # preserve the header block (everything through the closing `-->`), bump the
 # `Synced:` date, and rewrite the body in place. Add a new snapshot with the
 # same header convention and it gets picked up automatically.
-#
-# Note: the per-file `Re-sync:` line is documentation only - it shows the raw
-# curl for ad-hoc inspection but would wipe the header. Use this script for
-# in-place updates.
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 TODAY=$(date -u +%Y-%m-%d)
