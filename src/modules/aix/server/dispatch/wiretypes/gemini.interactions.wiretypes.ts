@@ -92,9 +92,15 @@ export namespace GeminiInteractionsWire_API_Interactions {
     annotations: z.array(z.looseObject({ type: z.string() })).optional(),
   });
 
+  // `thought.summary` is documented as an array of `{type:'text', text}` blocks (ThoughtSummaryContent).
+  // Preview builds sometimes emit a bare string; accept either shape to avoid classification drops.
+  const ThoughtSummaryItem_schema = z.looseObject({
+    type: z.literal('text'),
+    text: z.string(),
+  });
   const ThoughtOutput_schema = z.object({
     type: z.literal('thought'),
-    summary: z.string().optional(), // may be absent on simple/minimal thinking
+    summary: z.union([z.string(), z.array(ThoughtSummaryItem_schema)]).optional(),
     signature: z.string().optional(),
   });
 
@@ -105,15 +111,34 @@ export namespace GeminiInteractionsWire_API_Interactions {
     data: z.string().optional(), // base64-encoded bytes
     uri: z.string().optional(),
     mime_type: z.string(),
+    resolution: z.string().optional(), // 'low' | 'medium' | 'high' | 'ultra_high'
   });
 
   const AudioOutput_schema = z.object({
     type: z.literal('audio'),
-    data: z.string(), // base64-encoded bytes (Gemini serves PCM; parser converts to WAV)
-    mime_type: z.string(), // e.g. 'audio/L16;codec=pcm;rate=24000'
+    // Per docs: data or uri, mime_type covers both PCM (audio/l16) and packaged formats (audio/wav, audio/mp3, ...).
+    data: z.string().optional(),
+    uri: z.string().optional(),
+    mime_type: z.string(),
+    rate: z.number().optional(), // sample rate, when known
+    channels: z.number().optional(),
   });
 
-  /** Discriminated union of output shapes we act on. Anything else: safeParse fails -> parser warns once per index. */
+  // Deep Research internals: tool calls + results are streamed as content blocks. We recognize their
+  // `type` strings but treat them as transient (no user-visible emission here). They're listed as a
+  // plain enum so the parser can silent-skip them without trying to schema-parse each variant.
+  export const INTERNAL_OUTPUT_TYPES = new Set<string>([
+    'function_call', 'function_result',
+    'code_execution_call', 'code_execution_result',
+    'url_context_call', 'url_context_result',
+    'google_search_call', 'google_search_result',
+    'google_maps_call', 'google_maps_result',
+    'file_search_call', 'file_search_result',
+    'mcp_server_tool_call', 'mcp_server_tool_result',
+  ]);
+
+  /** Discriminated union of output shapes we emit to the UI. Everything else is either silently skipped
+   *  (INTERNAL_OUTPUT_TYPES) or warned as unknown by the parser. */
   export const KnownOutput_schema = z.discriminatedUnion('type', [
     TextOutput_schema,
     ThoughtOutput_schema,

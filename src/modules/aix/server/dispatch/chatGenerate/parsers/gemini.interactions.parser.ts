@@ -103,6 +103,11 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
       // skip not-yet-populated placeholder blocks silently (Deep Research pre-allocates slots)
       if (rawType === null) continue;
 
+      // silent-skip Deep Research internal tool call/result blocks. These are streamed as content
+      // alongside text/thought but shouldn't surface to the user - the top-level "Deep Research in
+      // progress" operation state already signals activity.
+      if (GeminiInteractionsWire_API_Interactions.INTERNAL_OUTPUT_TYPES.has(rawType)) continue;
+
       const classified = GeminiInteractionsWire_API_Interactions.KnownOutput_schema.safeParse(raw);
       const kind: EmittedState['kind'] = !classified.success ? 'other' : classified.data.type;
 
@@ -147,7 +152,12 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
           }
         }
       } else if (out.type === 'thought') {
-        const summary = out.summary ?? '';
+        // summary may be a string (preview) or an array of {type:'text', text} blocks (documented shape)
+        const summary = typeof out.summary === 'string'
+          ? out.summary
+          : Array.isArray(out.summary)
+            ? out.summary.map(s => s.text).join('\n\n')
+            : '';
         if (summary.length > state.emittedTextLen) {
           pt.appendReasoningText(summary.slice(state.emittedTextLen));
           state.emittedTextLen = summary.length;
@@ -172,12 +182,27 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
         }
       } else /* out.type === 'audio' */ {
         if (!state.mediaEmitted) {
-          try {
-            const wav = geminiConvertPCM2WAV(out.mime_type, out.data);
-            pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
-          } catch (error) {
-            console.warn('[GeminiInteractions] audio convert failed:', error);
-            pt.appendText(`\n_Audio conversion failed: ${String(error)}_\n`);
+          if (out.data) {
+            const mime = out.mime_type.toLowerCase();
+            const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
+            if (isPCM) {
+              try {
+                const wav = geminiConvertPCM2WAV(out.mime_type, out.data);
+                pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
+              } catch (error) {
+                console.warn('[GeminiInteractions] audio PCM convert failed:', error);
+                pt.appendText(`\n_Audio conversion failed: ${String(error)}_\n`);
+              }
+            } else {
+              // already a packaged format (audio/wav, audio/mp3, audio/aac, ...) - pass through
+              pt.appendAudioInline(out.mime_type, out.data, 'Gemini Generated Audio', 'Gemini', 0);
+            }
+          } else if (out.uri) {
+            console.warn('[GeminiInteractions] audio output via URI is not yet fetched inline:', out.uri);
+            pt.appendText(`\n[Audio: ${out.uri}]\n`);
+          } else {
+            console.warn('[GeminiInteractions] audio output with neither data nor uri:', out);
+            pt.appendText(`\n_Audio block without payload_\n`);
           }
           state.mediaEmitted = true;
         }
