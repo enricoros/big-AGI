@@ -401,7 +401,27 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             break;
 
           case 'reasoning':
-            // already parsed incrementally
+            // Reasoning Text already streamed via response.reasoning_summary_text.delta;
+            // apture the continuity handle (encrypted_content + id) for stateless multi-turn round-tripping.
+            // NOTE: the authoritative encrypted_content arrives on .done (differs from the earlier .added event).
+            // FIXME: make sure we are attaching to an 'ma' (i.e. reasoning text or somehting was emitted)
+            const { id: reasoningId, encrypted_content: reasoningEC } = doneItem;
+            if (reasoningEC || reasoningId)
+              pt.sendSetVendorState({
+                p: 'svs',
+                vendor: 'openai',
+                state: {
+                  reasoningItem: {
+                    ...(reasoningId ? { id: reasoningId } : {}),
+                    ...(reasoningEC ? { encryptedContent: reasoningEC } : {}),
+                  },
+                },
+              })
+            else if (!reasoningId && !reasoningEC)
+              console.warn('[DEV] AIX: OpenAI Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn', { doneItem },);
+            else if (!reasoningEC)
+              console.log("[DEV] AIX: OpenAI Responses: reasoning item done has id but no encrypted_content - stateless round-trip requires include:['reasoning.encrypted_content'] on the request",);
+
             break;
 
           case 'function_call':
@@ -831,9 +851,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
         // Reasoning contains all the reasoning summaries (if present)
         case 'reasoning':
           const {
-            // id: reasoningId,
+            id: reasoningId,
             summary: reasoningSummary,
-            // encrypted_content: reasoningEC,
+            encrypted_content: reasoningEC,
           } = oItem;
 
           // pedantic check
@@ -842,7 +862,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
             break;
           }
 
-          // TODO: implement once we know how this looks like
+          // -> all reasoning Text summary items
           for (const item of reasoningSummary) {
             if (!item.text) {
               console.warn('[DEV] AIX: OpenAI-Response-NS unexpected reasoning summary item:', { item });
@@ -850,6 +870,26 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
             }
             pt.appendReasoningText(item.text);
           }
+
+          // Capture the continuity handle (encrypted_content + id) for stateless multi-turn round-tripping.
+          // Attached to the ma fragment produced by the summary above; if no summary was emitted, this may
+          // attach to an unrelated preceding fragment - tolerable as the worst case is a misfiled blob.
+          // FIXME: make sure we are attaching to an 'ma' (i.e. reasoning text or somehting was emitted)
+          if (reasoningEC || reasoningId)
+            pt.sendSetVendorState({
+              p: 'svs',
+              vendor: 'openai',
+              state: {
+                reasoningItem: {
+                  ...(reasoningId ? { id: reasoningId } : {}),
+                  ...(reasoningEC ? { encryptedContent: reasoningEC } : {}),
+                },
+              },
+            });
+          else if (!reasoningId && !reasoningEC)
+            console.warn('[DEV] AIX: OpenAI-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn', { oItem });
+          else if (!reasoningEC)
+            console.log('[DEV] AIX: OpenAI-Response-NS: reasoning item has id but no encrypted_content - stateless round-trip requires include:[\'reasoning.encrypted_content\'] on the request');
           break;
 
         // Message contains the main 'assistant' response

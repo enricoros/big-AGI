@@ -133,6 +133,14 @@ export function aixToOpenAIResponses(
       payload.reasoning.summary = 'detailed';
   }
 
+  // ALWAYS REQUERST Reasoning items: always include encrypted_content if there's any reasoning done; we had this inside the
+  // former block, but models can reason even if reasoningEffor === undefined;
+  if (!payload.store && reasoningEffort !== 'none') {
+    const includes = new Set(payload.include);
+    includes.add('reasoning.encrypted_content');
+    payload.include = Array.from(includes);
+  }
+
   // GPT-5 Verbosity: Add to existing text config or create new one
   if (model.vndOaiVerbosity) {
     payload.text = {
@@ -294,11 +302,12 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
 
 
   // We decide to adopt these schemas for the conversion (API gives us a few choices)
-  const chatMessages: (UserMessage | ModelMessage | FunctionCallMessage | FunctionCallOutputMessage)[] = [];
+  const chatMessages: (UserMessage | ModelMessage | FunctionCallMessage | FunctionCallOutputMessage | ReasoningMessage)[] = [];
   type UserMessage = Omit<OpenAIWire_Responses_Items.UserItemMessage, 'role'> & { role: 'user' };
   type ModelMessage = Extract<OpenAIWire_Responses_Items.InputMessage_Compat, { role: 'assistant' }>;
   type FunctionCallMessage = OpenAIWire_Responses_Items.OutputFunctionCallItem;
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
+  type ReasoningMessage = OpenAIWire_Responses_Items.OutputReasoningItem;
 
   let allowUserAppend = true;
 
@@ -337,6 +346,20 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
       call_id: callId,
       name: functionName,
       arguments: functionArguments,
+    };
+    chatMessages.push(newMessage);
+    return newMessage;
+  }
+
+  function newReasoningMessage(itemId: string | undefined, encryptedContent: string | undefined) {
+    // Stateless multi-turn continuity: echo a reasoning item back so the model can resume its prior
+    // thought KV state. In stateful mode (store=true + previous_response_id) the id alone is enough;
+    // in stateless mode (our default) the encrypted_content is what the provider actually decodes.
+    const newMessage: ReasoningMessage = {
+      type: 'reasoning',
+      ...(itemId ? { id: itemId } : {}),
+      summary: [], // display-only, never part of the continuity contract
+      ...(encryptedContent ? { encrypted_content: encryptedContent } : {}),
     };
     chatMessages.push(newMessage);
     return newMessage;
@@ -471,7 +494,13 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             case 'ma':
-              // TODO: support this in the future - may contain the encrypted reasoning data, although we don't parse this yet
+              // Preserve reasoning continuity across turns via _vnd.openai.reasoningItem (set by openai.responses.parser).
+              // Stateless (store=false, our default): encryptedContent is the protocol-critical blob for the provider to reconstruct internal reasoning state.
+              const oaiReasoning = modelPart._vnd?.openai?.reasoningItem;
+              if (oaiReasoning?.encryptedContent || oaiReasoning?.id)
+                newReasoningMessage(oaiReasoning.id, oaiReasoning.encryptedContent);
+              else
+                console.warn('[DEV] OpenAI Responses: skipping reasoning item due to missing encrypted content and id', { modelPart });
               break;
 
             case 'tool_response':

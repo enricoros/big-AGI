@@ -409,14 +409,18 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'ma':
-            // https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#why-thinking-blocks-must-be-preserved
-            // [Anthropic] special case: despite being Void, we send the DVoidModelAuxPart which has signed Thinking blocks and Redacted data,
-            //             which may be instrumental for the model to execute tools-result follow-up actions/text.
-            const isAntModelAux = aPart.textSignature || aPart.redactedData?.length;
-            if (isAntModelAux) {
+            // Preserve reasoning continuity across turns. Two channels, any one is sufficient:
+            // - Anthropic: part.textSignature / part.redactedData (bespoke fields, see Anthropic extended thinking docs)
+            // - OpenAI/Gemini: _vnd sidecar (reasoningItem.* / thoughtSignature, generic vendor-state mechanism)
+            const oaiReasoning = _vnd?.openai?.reasoningItem;
+            const hasReasoningHandle = aPart.textSignature || aPart.redactedData?.length || oaiReasoning?.encryptedContent || oaiReasoning?.id;
+            if (hasReasoningHandle) {
               const aModelAuxPart = aPart as AixParts_ModelAuxPart; // NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here
-              // modelMessage.parts.push(_vnd ? { ...aModelAuxPart, _vnd } : aModelAuxPart);
-              modelMessage.parts.push(aModelAuxPart);
+              modelMessage.parts.push(_vnd ? { ...aModelAuxPart, _vnd } : aModelAuxPart);
+            } else {
+              // If none are present (e.g. summary-only reasoning from a vendor with no signed handle), drop the ma part silently;
+              // - passing a bare reasoning reference errors out on some providers (e.g. OpenAI stateless returns "Item with id rs_... not found. ... remove this item from your input.")
+              // console.log('[DEV] aixCGR_FromDMessages: dropping ma part from Assistant message as it has no reasoning handle', { aPart });
             }
             break;
 

@@ -101,6 +101,14 @@ export namespace AixWire_Parts {
       gemini: z.object({
         thoughtSignature: z.string().optional(),
       }).optional(),
+      openai: z.object({
+        // Responses API reasoning item continuity handle. Sub-object mirrors the shape of the source output item
+        // and parallels _vnd Anthropic's { container: { id, expiresAt } } pattern.
+        reasoningItem: z.object({
+          id: z.string().optional(),               // rs_... - item id
+          encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
+        }).optional(),
+      }).optional(),
       // NOTE: we do NOT use this mechanism for per-vendor customization/ALT for parts
       // anthropic: z.object({
       //   containerUpload: z.object({
@@ -239,8 +247,10 @@ export namespace AixWire_Parts {
 
   // Model Auxiliary Part (for thinking blocks)
 
-  // NOTE: not a _BasePart_schema for now, may become if we put the vndAnt attributes there
-  export const ModelAuxPart_schema = z.object({
+  // Inherits _BasePart_schema so vendor-opaque protocol state (e.g. OpenAI Responses encrypted_content,
+  // future Anthropic/Gemini continuity handles) can ride on the ma part via _vnd, instead of adding
+  // more vendor-specific top-level fields alongside the existing Anthropic textSignature/redactedData.
+  export const ModelAuxPart_schema = _BasePart_schema.extend({
     pt: z.literal('ma'),
     aType: z.literal('reasoning'),
     aText: z.string(),
@@ -775,6 +785,7 @@ export namespace AixWire_Particles {
     | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
       | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
+      | { vendor: 'openai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level (attach to ma reasoning fragment)
       // | { vendor: string, state: Record<string, unknown> } // disable catch-all becasue it forces casts in type discriminations
       )
     ;

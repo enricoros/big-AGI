@@ -102,7 +102,11 @@ export type DMessageFragmentVendorState = Record<string, unknown> & {
   gemini?: {
     thoughtSignature?: string; // Gemini 3+ - echoed back to maintain reasoning context
   };
-  // Future: openai?: { ... }, anthropic?: { ... }
+  openai?: {
+    // Responses API reasoning item continuity handle
+    reasoningItem?: { id?: string; encryptedContent?: string; };
+  };
+  // Future: anthropic?: { ... }
 }
 
 
