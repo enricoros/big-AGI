@@ -10,9 +10,11 @@ import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.
 
 
 // configuration
+const KEEP_INTERACTION_FOR_REATTACH = true; // when true, NEVER DELETE upstream - keep interactions alive for the full Gemini retention window so the client can always reattach. Trades storage cost for reattach reliability.
 const INITIAL_POLL_DELAY_MS = 3_000; // first poll happens this long after the POST accepted the job
 const STEADY_POLL_INTERVAL_MS = 10_000; // subsequent polls
 const MAX_SLEEP_CHUNK_MS = 1_000; // wake often to honor abort promptly
+const TERMINAL_DRAIN_GRACE_MS = 10_000; // after terminal status: let client drain the final frame before DELETE; abort during this window cancels DELETE so the client can reattach
 
 
 type TRequestBody = z.infer<typeof GeminiInteractionsWire_API_Interactions.RequestBody_schema>;
@@ -29,9 +31,11 @@ type TInteraction = z.infer<typeof GeminiInteractionsWire_API_Interactions.Inter
  *  2. Return a `Response` whose body is a ReadableStream of SSE frames
  *  3. Background producer polls GET /v1beta/interactions/{id} every few seconds until status is terminal
  *  4. Each poll writes one SSE frame (the full Interaction JSON) - the parser diffs vs. prior state
- *  5. DELETE only on natural terminal status (completed/failed/cancelled). On client abort or stream
- *     error we leave the interaction ALIVE upstream so the client can reattach across reloads via
- *     `createGeminiInteractionsResumeConnect`. Gemini auto-cleans after its retention window (1d free / 55d paid).
+ *  5. DELETE only on natural terminal status (completed/failed/cancelled) AND only after a short
+ *     drain grace window during which the client stays connected. On client abort or stream
+ *     error (including abort during the drain window) we leave the interaction ALIVE upstream so
+ *     the client can reattach across reloads via `createGeminiInteractionsResumeConnect`. Gemini
+ *     auto-cleans after its retention window (1d free / 55d paid).
  *     WARNING: this trades off orphan risk for reattach viability - if the client never reattaches,
  *     the upstream agent keeps running and consuming tokens until the retention window expires.
  */
@@ -110,8 +114,11 @@ function _buildStreamingResponse(
           if (initial) {
             emitSseFrame(initial);
             if (_isTerminalStatus(initial.status)) {
-              shouldDelete = true;
               controller.close();
+              // Drain window: if the client disconnects during this wait, signal.aborted
+              // flips true and we skip DELETE so the client can reattach via resume.
+              await _sleepOrAbort(TERMINAL_DRAIN_GRACE_MS, signal);
+              shouldDelete = !signal.aborted;
               return;
             }
             await _sleepOrAbort(INITIAL_POLL_DELAY_MS, signal);
@@ -122,8 +129,11 @@ function _buildStreamingResponse(
             const snapshot = await _getInteraction(access, interactionId, signal);
             emitSseFrame(snapshot);
             if (_isTerminalStatus(snapshot.status)) {
-              shouldDelete = true;
               controller.close();
+              // Drain window: if the client disconnects during this wait, signal.aborted
+              // flips true and we skip DELETE so the client can reattach via resume.
+              await _sleepOrAbort(TERMINAL_DRAIN_GRACE_MS, signal);
+              shouldDelete = !signal.aborted;
               return;
             }
             await _sleepOrAbort(STEADY_POLL_INTERVAL_MS, signal);
@@ -139,7 +149,7 @@ function _buildStreamingResponse(
           else
             controller.error(err);
         } finally {
-          if (shouldDelete)
+          if (shouldDelete && !KEEP_INTERACTION_FOR_REATTACH)
             void _deleteInteraction(access, interactionId).catch(() => { /* ignore */ });
         }
       })();
