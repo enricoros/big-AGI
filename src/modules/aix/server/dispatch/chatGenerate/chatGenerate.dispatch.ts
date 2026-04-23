@@ -4,6 +4,8 @@ import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLR
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
+import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request, AixWire_Particles } from '../../api/aix.wiretypes';
 import type { AixDemuxers } from '../stream.demuxers';
 
@@ -170,16 +172,24 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       const requestedModelName = model.id.replace('models/', '');
 
       // [Gemini Interactions API - ALPHA TEST] SSE-native: POST with stream=true, upstream returns event-stream we pipe through the fast-sse demuxer.
-      if (model.vndGeminiAPI === 'interactions-agent')
+      if (model.vndGeminiAPI === 'interactions-agent') {
+        const request: ChatGenerateDispatchRequest = {
+          ...geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.postPath, false),
+          method: 'POST',
+          body: aixToGeminiInteractionsCreate(model, chatGenerate),
+        };
         return {
-          request: {
-            ...geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.postPath, false),
-            method: 'POST',
-            body: aixToGeminiInteractionsCreate(model, chatGenerate),
-          },
+          request,
+          // Custom-connect so we can neutralize the outer retrier on HTTP errors: a retried POST would create a second (billable) Deep Research interaction upstream
+          customConnect: (signal) => fetchResponseOrTRPCThrow({ ...request, signal, name: 'Aix.Gemini.Interactions.create', throwWithoutName: true })
+            .catch((error: any) => {
+              if (signal.aborted) throw error; // preserve abort identity for the executor's abort classifier
+              throw new Error(`Gemini Interactions POST: ${error?.message || 'upstream error'}`); // rewrapping TRPCFetcherError as plain Error makes the retrier treat it as non-retryable
+            }),
           demuxerFormat: 'fast-sse',
           chatGenerateParse: createGeminiInteractionsParser(requestedModelName),
         };
+      }
 
       const useV1Alpha = false; // !!model.vndGeminiShowThoughts || model.vndGeminiThinkingBudget !== undefined;
       return {
