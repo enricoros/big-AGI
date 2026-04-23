@@ -5,6 +5,7 @@ import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 
 import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.interactions.wiretypes';
+import { geminiConvertPCM2WAV } from './gemini.audioutils';
 
 
 // Kill-switch: drop url_citation annotations - Deep Research ships opaque grounding-redirect URLs with no titles, and the text already contains a numbered source list.
@@ -16,7 +17,7 @@ type TUsage = NonNullable<TInteraction['usage']>;
 
 
 /**
- * Gemini Interactions API parser (for Deep Research agents).
+ * Gemini Interactions API parser (for Deep Research and future multimodal agents).
  *
  * Each SSE frame carries a *full* Interaction snapshot (from POST or from a GET poll).
  * The parser diffs against prior state and emits only new content.
@@ -24,7 +25,11 @@ type TUsage = NonNullable<TInteraction['usage']>;
  * Emission rules per output type:
  *  - `text`           -> `pt.appendText(newSuffix)`. New url_citation annotations are emitted once.
  *  - `thought`        -> `pt.appendReasoningText(newSuffix)`; signatures recorded via `setReasoningSignature`.
- *  - any other type   -> ignored (Deep Research primarily emits text + thought).
+ *  - `image`          -> `pt.appendImageInline(...)` once per index (images are whole, not incremental).
+ *                        URI-only variants emit a visible note + `console.warn` (not yet wired as fetches).
+ *  - `audio`          -> PCM -> WAV via `geminiConvertPCM2WAV`, then `pt.appendAudioInline(...)` once per index.
+ *  - unknown types    -> `console.warn` + inline `_Unsupported content block: <type>_` note, once per index.
+ *                        Non-terminating: Deep Research streams are long-lived and must not blow up on new blocks.
  *
  * Part boundaries: when the output type at a given index changes kind (e.g. thought -> text),
  * we call `endMessagePart()` so the transmitter flushes the previous part cleanly.
@@ -42,10 +47,12 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
 
   // per-index emission state (array index in `outputs[]`)
   type EmittedState = {
-    kind: 'text' | 'thought' | 'other';
+    kind: 'text' | 'thought' | 'image' | 'audio' | 'other';
     emittedTextLen: number;
     emittedCitationKeys: Set<string>; // `${url}@${start}-${end}` to de-dupe
     signatureSent: boolean;
+    mediaEmitted: boolean; // image/audio: emit only once (whole, not incremental)
+    otherWarned: boolean; // unknown type: warn only once per index
   };
   const emitted: EmittedState[] = [];
   let lastOpenIdx = -1; // index of the most recently opened part; -1 = none
@@ -84,17 +91,25 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // process outputs (may be absent on early in_progress frames).
-    // Each raw output is classified via Zod safeParse against a discriminated union; unknown
-    // shapes fall through to `kind: 'other'` and are silently ignored.
+    // Each raw output is classified via Zod safeParse against a discriminated union.
+    // - Untyped/empty placeholders (`{}`, no `type` field) are skipped silently without creating
+    //   state, so a later snapshot that populates them can classify cleanly.
+    // - Typed-but-unknown shapes warn once per index with a visible note (non-terminating).
     const outputs = interaction.outputs ?? [];
     for (let i = 0; i < outputs.length; i++) {
-      const classified = GeminiInteractionsWire_API_Interactions.KnownOutput_schema.safeParse(outputs[i]);
+      const raw = outputs[i] as { type?: unknown };
+      const rawType = typeof raw?.type === 'string' ? raw.type : null;
+
+      // skip not-yet-populated placeholder blocks silently (Deep Research pre-allocates slots)
+      if (rawType === null) continue;
+
+      const classified = GeminiInteractionsWire_API_Interactions.KnownOutput_schema.safeParse(raw);
       const kind: EmittedState['kind'] = !classified.success ? 'other' : classified.data.type;
 
       // first time we see this index: initialize + flush previous part if switching kinds
       let state = emitted[i];
       if (!state) {
-        state = { kind, emittedTextLen: 0, emittedCitationKeys: new Set(), signatureSent: false };
+        state = { kind, emittedTextLen: 0, emittedCitationKeys: new Set(), signatureSent: false, mediaEmitted: false, otherWarned: false };
         emitted[i] = state;
 
         // close previous part if we're opening a new index (natural part boundary)
@@ -103,7 +118,15 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
         lastOpenIdx = i;
       }
 
-      if (!classified.success) continue; // 'other': ignored for now
+      // 'other': warn once per index with visible note, then continue
+      if (!classified.success) {
+        if (!state.otherWarned) {
+          console.warn(`[GeminiInteractions] unsupported output type: ${rawType}`, raw);
+          pt.appendText(`\n_Unsupported content block: ${rawType}_\n`);
+          state.otherWarned = true;
+        }
+        continue;
+      }
 
       const out = classified.data;
       if (out.type === 'text') {
@@ -123,7 +146,7 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
             pt.appendUrlCitation(ann.title || ann.url, ann.url, undefined, ann.start_index, ann.end_index, undefined, undefined);
           }
         }
-      } else /* out.type === 'thought' */ {
+      } else if (out.type === 'thought') {
         const summary = out.summary ?? '';
         if (summary.length > state.emittedTextLen) {
           pt.appendReasoningText(summary.slice(state.emittedTextLen));
@@ -132,6 +155,31 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
         if (!state.signatureSent && out.signature) {
           pt.setReasoningSignature(out.signature);
           state.signatureSent = true;
+        }
+      } else if (out.type === 'image') {
+        if (!state.mediaEmitted) {
+          if (out.data) {
+            pt.appendImageInline(out.mime_type, out.data, 'Gemini Generated Image', 'Gemini', '');
+          } else if (out.uri) {
+            // URI-hosted images aren't fetched here (yet); surface the link inline
+            console.warn('[GeminiInteractions] image output via URI is not yet fetched inline:', out.uri);
+            pt.appendText(`\n[Image: ${out.uri}]\n`);
+          } else {
+            console.warn('[GeminiInteractions] image output with neither data nor uri:', out);
+            pt.appendText(`\n_Image block without payload_\n`);
+          }
+          state.mediaEmitted = true;
+        }
+      } else /* out.type === 'audio' */ {
+        if (!state.mediaEmitted) {
+          try {
+            const wav = geminiConvertPCM2WAV(out.mime_type, out.data);
+            pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
+          } catch (error) {
+            console.warn('[GeminiInteractions] audio convert failed:', error);
+            pt.appendText(`\n_Audio conversion failed: ${String(error)}_\n`);
+          }
+          state.mediaEmitted = true;
         }
       }
     }

@@ -8,18 +8,22 @@ import { approxDocPart_To_String, approxInReferenceTo_To_XMLString, aixSpillSyst
 
 type TRequestBody = z.infer<typeof GeminiInteractionsWire_API_Interactions.RequestBody_schema>;
 type TTurn = z.infer<typeof GeminiInteractionsWire_API_Interactions.Turn_schema>;
+type TTurnContent = TTurn['content']; // string | InputContentPart[]
+type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputContentPart_schema>;
 
 
 /**
- * MINIMAL - Build the POST /v1beta/interactions body for Deep Research agents.
+ * Build the POST /v1beta/interactions body for Deep Research (and future agents).
  *
  * Scope:
- *  - Stateless multi-turn: the full `chatSequence` is flattened to role-tagged turns and sent as `input`.
- *  - `systemMessage` text (if any) is prepended to the first user turn, since the Interactions API for
- *    background agents does not accept a dedicated `system_instruction`.
- *  - Text-only content: doc parts are rendered via `approxDocPart_To_String`; in-reference-to XML is prepended to the user turn.
- *  - Model messages containing only tool invocations/responses/aux (no text) are dropped.
- *  - Non-text user parts (images, audio, cache-control) are silently dropped.
+ *  - Stateless multi-turn: `chatSequence` is flattened to role-tagged turns and sent as `input`.
+ *  - `systemMessage` text (if any) is prepended to the first user turn; background agents do not
+ *    accept a dedicated `system_instruction`.
+ *  - Multimodal: user and model turns carry images as content-part arrays when any image is present,
+ *    otherwise stay as plain strings (preserves the API's convenience shape).
+ *  - Doc parts render as text via `approxDocPart_To_String`; in-reference-to XML is prepended to the user turn.
+ *  - Model messages containing only tool invocations/responses/aux (no text or images) are dropped.
+ *  - Audio and cache-control parts are silently dropped (unsupported on this path).
  */
 export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateRaw: AixAPIChatGenerate_Request): TRequestBody {
 
@@ -33,11 +37,11 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
   const turns: TTurn[] = [];
   for (const msg of chatGenerate.chatSequence) {
     if (msg.role === 'user') {
-      const content = _flattenUserParts(msg.parts);
-      if (content) turns.push({ role: 'user', content });
+      const content = _buildUserContent(msg.parts);
+      if (_hasTurnContent(content)) turns.push({ role: 'user', content });
     } else if (msg.role === 'model') {
-      const content = _flattenModelParts(msg.parts);
-      if (content) turns.push({ role: 'model', content });
+      const content = _buildModelContent(msg.parts);
+      if (_hasTurnContent(content)) turns.push({ role: 'model', content });
     }
   }
 
@@ -48,14 +52,14 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
   if (systemPrefix) {
     const firstUserIdx = turns.findIndex(t => t.role === 'user');
     if (firstUserIdx >= 0)
-      turns[firstUserIdx] = { role: 'user', content: `${systemPrefix}\n\n${turns[firstUserIdx].content}` };
+      turns[firstUserIdx] = { role: 'user', content: _prependSystemText(turns[firstUserIdx].content, systemPrefix) };
   }
 
   // Sanity: the API expects the last turn to be 'user' (we're asking the model to respond)
   if (turns[turns.length - 1].role !== 'user')
     throw new Error('Gemini Interactions: last turn must be from user (chat sequence ended with a model message)');
 
-  // Simplify single-turn to string form (matches the Python/JS SDK convenience shape)
+  // Simplify single-turn to bare content form (matches the Python/JS SDK convenience shape)
   const input: TRequestBody['input'] = (turns.length === 1 && turns[0].role === 'user')
     ? turns[0].content
     : turns;
@@ -95,23 +99,26 @@ function _collectSystemText(systemMessage: AixAPIChatGenerate_Request['systemMes
   return chunks.join('\n').trim();
 }
 
-function _flattenUserParts(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'user' }>['parts']): string {
-  const chunks: string[] = [];
+function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'user' }>['parts']): TTurnContent {
+  const textChunks: string[] = [];
   const prefixChunks: string[] = []; // in-reference-to goes before body
+  const images: TInputPart[] = [];
 
   for (const part of parts) {
     switch (part.pt) {
       case 'text':
-        chunks.push(part.text);
+        textChunks.push(part.text);
         break;
       case 'doc':
-        chunks.push(approxDocPart_To_String(part));
+        textChunks.push(approxDocPart_To_String(part));
         break;
       case 'meta_in_reference_to':
         const irt = approxInReferenceTo_To_XMLString(part);
         if (irt) prefixChunks.push(irt);
         break;
       case 'inline_image':
+        images.push({ type: 'image', data: part.base64, mime_type: part.mimeType });
+        break;
       case 'meta_cache_control':
         break; // unsupported here; dropped
       default:
@@ -119,26 +126,64 @@ function _flattenUserParts(parts: Extract<AixAPIChatGenerate_Request['chatSequen
     }
   }
 
-  return [...prefixChunks, ...chunks].join('\n\n').trim();
+  const text = [...prefixChunks, ...textChunks].join('\n\n').trim();
+
+  // text-only turn: return string (API convenience shape)
+  if (!images.length) return text;
+
+  // multimodal turn: emit as content-parts array; text first, then images (matches generateContent convention)
+  const contentParts: TInputPart[] = [];
+  if (text) contentParts.push({ type: 'text', text });
+  contentParts.push(...images);
+  return contentParts;
 }
 
-function _flattenModelParts(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'model' }>['parts']): string {
-  const chunks: string[] = [];
+function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'model' }>['parts']): TTurnContent {
+  const textChunks: string[] = [];
+  const images: TInputPart[] = [];
+
   for (const part of parts) {
     switch (part.pt) {
       case 'text':
-        chunks.push(part.text);
+        textChunks.push(part.text);
+        break;
+      case 'inline_image':
+        // model-authored images (e.g. from a prior generation) - replay as context
+        images.push({ type: 'image', data: part.base64, mime_type: part.mimeType });
         break;
       case 'inline_audio':
-      case 'inline_image':
       case 'tool_invocation':
       case 'tool_response':
       case 'ma': // model aux (reasoning, etc.)
       case 'meta_cache_control':
-        break; // drop non-text model output for Deep Research replays
+        break; // drop non-text/image model output for Deep Research replays
       default:
         const _exhaustive: never = part;
     }
   }
-  return chunks.join('\n\n').trim();
+
+  const text = textChunks.join('\n\n').trim();
+
+  if (!images.length) return text;
+
+  const contentParts: TInputPart[] = [];
+  if (text) contentParts.push({ type: 'text', text });
+  contentParts.push(...images);
+  return contentParts;
+}
+
+
+// -- helpers --
+
+function _hasTurnContent(content: TTurnContent): boolean {
+  return typeof content === 'string' ? content.length > 0 : content.length > 0;
+}
+
+function _prependSystemText(content: TTurnContent, systemPrefix: string): TTurnContent {
+  if (typeof content === 'string')
+    return `${systemPrefix}\n\n${content}`;
+  // multimodal: inject a text part at the front, or fold into the leading text part if present
+  if (content.length > 0 && content[0].type === 'text')
+    return [{ type: 'text', text: `${systemPrefix}\n\n${content[0].text}` }, ...content.slice(1)];
+  return [{ type: 'text', text: systemPrefix }, ...content];
 }

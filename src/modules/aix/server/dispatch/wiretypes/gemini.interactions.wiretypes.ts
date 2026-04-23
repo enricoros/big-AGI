@@ -26,17 +26,36 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
   // -- Request Body (POST /v1beta/interactions) --
 
+  // Multimodal content parts (used when a turn carries images/audio in addition to text).
+  // Single-modal text turns stay as a plain string to match the API's convenience shape.
+  const InputTextPart_schema = z.object({
+    type: z.literal('text'),
+    text: z.string(),
+  });
+  const InputImagePart_schema = z.object({
+    type: z.literal('image'),
+    data: z.string(), // base64-encoded bytes
+    mime_type: z.string(), // e.g. 'image/png', 'image/jpeg', 'image/webp'
+  });
+  export const InputContentPart_schema = z.discriminatedUnion('type', [
+    InputTextPart_schema,
+    InputImagePart_schema,
+  ]);
+
   // A turn in a stateless multi-turn conversation (when `input` is an array).
-  // Content is kept as a plain string for now; the API also accepts a list of content objects for multimodal.
   export const Turn_schema = z.object({
     role: z.enum(['user', 'model']),
-    content: z.string(),
+    content: z.union([
+      z.string(), // text-only turn (API convenience shape)
+      z.array(InputContentPart_schema), // multimodal turn
+    ]),
   });
 
   export const RequestBody_schema = z.object({
     agent: z.string(), // e.g. 'deep-research-pro-preview-12-2025' (note: we send bare id, without 'models/' prefix)
     input: z.union([
-      z.string(), // single-turn convenience
+      z.string(), // single-turn text convenience
+      z.array(InputContentPart_schema), // single-turn multimodal
       z.array(Turn_schema), // stateless multi-turn history
     ]),
     background: z.literal(true), // required for agents
@@ -79,10 +98,27 @@ export namespace GeminiInteractionsWire_API_Interactions {
     signature: z.string().optional(),
   });
 
-  /** Discriminated union of output shapes we act on. Anything else: safeParse fails -> parser skips. */
+  const ImageOutput_schema = z.object({
+    type: z.literal('image'),
+    // API may return inline bytes (`data` + `mime_type`) or a URI. We accept both shapes;
+    // the parser prefers inline and falls back to a URI note when only `uri` is present.
+    data: z.string().optional(), // base64-encoded bytes
+    uri: z.string().optional(),
+    mime_type: z.string(),
+  });
+
+  const AudioOutput_schema = z.object({
+    type: z.literal('audio'),
+    data: z.string(), // base64-encoded bytes (Gemini serves PCM; parser converts to WAV)
+    mime_type: z.string(), // e.g. 'audio/L16;codec=pcm;rate=24000'
+  });
+
+  /** Discriminated union of output shapes we act on. Anything else: safeParse fails -> parser warns once per index. */
   export const KnownOutput_schema = z.discriminatedUnion('type', [
     TextOutput_schema,
     ThoughtOutput_schema,
+    ImageOutput_schema,
+    AudioOutput_schema,
   ]);
 
 
