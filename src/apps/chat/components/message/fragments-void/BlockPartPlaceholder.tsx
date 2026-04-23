@@ -24,7 +24,7 @@ import { animationSpinHalfPause } from '~/common/util/animUtils';
 // configuration
 const DATASTREAM_VISUALIZATION_DELAY = Math.round(2 * Math.PI * 1000);
 const MODELOP_TIMEOUT_DELAY = 5; // seconds
-const MODELOP_TIMEOUT_LIMIT = 6 * 60 * 60; // seconds - 6hr for long ops, such as Gemini Deep Research
+const MODELOP_TIMEOUT_LIMIT = 7 * 24 * 60 * 60; // seconds - 1 week for long ops, such as Gemini Deep Research
 
 const modelOperationConfig: Record<DVoidPlaceholderMOp['mot'], { Icon: React.ElementType, color: ColorPaletteProp }> = {
   'search-web': { Icon: SearchRoundedIcon, color: 'neutral' },
