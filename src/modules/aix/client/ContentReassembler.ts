@@ -681,6 +681,8 @@ export class ContentReassembler {
       this._pushFragment(zyncImageAssetFragmentWithLegacy);
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
+      // User-visible error fragment so a silent dblob/resize failure doesn't look like "image just didn't arrive"
+      this._appendErrorFragment(`Failed to process image: ${error?.message || 'Unknown error'}`, 'aix-image-processing');
     }
   }
 
