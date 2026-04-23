@@ -2,8 +2,8 @@ import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
 import { Box, Button, ButtonGroup, Tooltip, Typography } from '@mui/joy';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 
@@ -126,16 +126,16 @@ export function BlockOpUpstreamResume(props: {
         )}
 
         {props.onDelete && (
-          <Tooltip title={deleteArmed ? 'Click again to confirm - removes the run upstream (no resume after)' : 'Delete the stored run upstream'}>
+          <Tooltip title={deleteArmed ? 'Click again to confirm - cancels the run upstream (no resume after)' : 'Cancel the upstream run'}>
             <Button
               loading={isDeleting}
               color={deleteArmed ? 'danger' : 'neutral'}
               variant={deleteArmed ? 'solid' : 'outlined'}
-              startDecorator={<DeleteOutlineIcon />}
+              startDecorator={<StopRoundedIcon />}
               onClick={handleDelete}
               disabled={isResuming || isCancelling || isDeleting}
             >
-              {deleteArmed ? 'Confirm?' : 'Kill'}
+              {deleteArmed ? 'Confirm?' : 'Cancel'}
             </Button>
           </Tooltip>
         )}
