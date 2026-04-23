@@ -134,79 +134,93 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
       }
 
       const out = classified.data;
-      if (out.type === 'text') {
-        if (out.text.length > state.emittedTextLen) {
-          pt.appendText(out.text.slice(state.emittedTextLen));
-          state.emittedTextLen = out.text.length;
-        }
-        // url_citation annotations: loose-typed in Output_schema, validated per-item here
-        if (!DISABLE_CITATIONS && out.annotations) {
-          for (const annRaw of out.annotations) {
-            const annParse = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
-            if (!annParse.success) continue; // not a url_citation (place_citation, file_citation, ...)
-            const ann = annParse.data;
-            const key = `${ann.url}@${ann.start_index ?? ''}-${ann.end_index ?? ''}`;
-            if (state.emittedCitationKeys.has(key)) continue;
-            state.emittedCitationKeys.add(key);
-            pt.appendUrlCitation(ann.title || ann.url, ann.url, undefined, ann.start_index, ann.end_index, undefined, undefined);
+      switch (out.type) {
+        case 'text': {
+          if (out.text.length > state.emittedTextLen) {
+            pt.appendText(out.text.slice(state.emittedTextLen));
+            state.emittedTextLen = out.text.length;
           }
-        }
-      } else if (out.type === 'thought') {
-        // summary may be a string (preview) or an array of {type:'text', text} blocks (documented shape)
-        const summary = typeof out.summary === 'string'
-          ? out.summary
-          : Array.isArray(out.summary)
-            ? out.summary.map(s => s.text).join('\n\n')
-            : '';
-        if (summary.length > state.emittedTextLen) {
-          pt.appendReasoningText(summary.slice(state.emittedTextLen));
-          state.emittedTextLen = summary.length;
-        }
-        if (!state.signatureSent && out.signature) {
-          pt.setReasoningSignature(out.signature);
-          state.signatureSent = true;
-        }
-      } else if (out.type === 'image') {
-        if (!state.mediaEmitted) {
-          if (out.data) {
-            // hintSkipResize=true: Deep Research images are typically figures/charts where
-            // PNG->jpeg recompression would degrade text legibility and fine detail.
-            pt.appendImageInline(out.mime_type, out.data, 'Gemini Generated Image', 'Gemini', '', true);
-          } else if (out.uri) {
-            // URI-hosted images aren't fetched here (yet); surface the link inline
-            console.warn('[GeminiInteractions] image output via URI is not yet fetched inline:', out.uri);
-            pt.appendText(`\n[Image: ${out.uri}]\n`);
-          } else {
-            console.warn('[GeminiInteractions] image output with neither data nor uri:', out);
-            pt.appendText(`\n_Image block without payload_\n`);
-          }
-          state.mediaEmitted = true;
-        }
-      } else /* out.type === 'audio' */ {
-        if (!state.mediaEmitted) {
-          if (out.data) {
-            const mime = out.mime_type.toLowerCase();
-            const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
-            if (isPCM) {
-              try {
-                const wav = geminiConvertPCM2WAV(out.mime_type, out.data);
-                pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
-              } catch (error) {
-                console.warn('[GeminiInteractions] audio PCM convert failed:', error);
-                pt.appendText(`\n_Audio conversion failed: ${String(error)}_\n`);
-              }
-            } else {
-              // already a packaged format (audio/wav, audio/mp3, audio/aac, ...) - pass through
-              pt.appendAudioInline(out.mime_type, out.data, 'Gemini Generated Audio', 'Gemini', 0);
+          // url_citation annotations: loose-typed in Output_schema, validated per-item here
+          if (!DISABLE_CITATIONS && out.annotations) {
+            for (const annRaw of out.annotations) {
+              const annParse = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
+              if (!annParse.success) continue; // not a url_citation (place_citation, file_citation, ...)
+              const ann = annParse.data;
+              const key = `${ann.url}@${ann.start_index ?? ''}-${ann.end_index ?? ''}`;
+              if (state.emittedCitationKeys.has(key)) continue;
+              state.emittedCitationKeys.add(key);
+              pt.appendUrlCitation(ann.title || ann.url, ann.url, undefined, ann.start_index, ann.end_index, undefined, undefined);
             }
-          } else if (out.uri) {
-            console.warn('[GeminiInteractions] audio output via URI is not yet fetched inline:', out.uri);
-            pt.appendText(`\n[Audio: ${out.uri}]\n`);
-          } else {
-            console.warn('[GeminiInteractions] audio output with neither data nor uri:', out);
-            pt.appendText(`\n_Audio block without payload_\n`);
           }
-          state.mediaEmitted = true;
+          break;
+        }
+        case 'thought': {
+          // summary may be a string (preview) or an array of {type:'text', text} blocks (documented shape)
+          const summary = typeof out.summary === 'string'
+            ? out.summary
+            : Array.isArray(out.summary)
+              ? out.summary.map(s => s.text).join('\n\n')
+              : '';
+          if (summary.length > state.emittedTextLen) {
+            pt.appendReasoningText(summary.slice(state.emittedTextLen));
+            state.emittedTextLen = summary.length;
+          }
+          if (!state.signatureSent && out.signature) {
+            pt.setReasoningSignature(out.signature);
+            state.signatureSent = true;
+          }
+          break;
+        }
+        case 'image': {
+          if (!state.mediaEmitted) {
+            if (out.data) {
+              // hintSkipResize=true: Deep Research images are typically figures/charts where
+              // PNG->jpeg recompression would degrade text legibility and fine detail.
+              pt.appendImageInline(out.mime_type, out.data, 'Gemini Generated Image', 'Gemini', '', true);
+            } else if (out.uri) {
+              // URI-hosted images aren't fetched here (yet); surface the link inline
+              console.warn('[GeminiInteractions] image output via URI is not yet fetched inline:', out.uri);
+              pt.appendText(`\n[Image: ${out.uri}]\n`);
+            } else {
+              console.warn('[GeminiInteractions] image output with neither data nor uri:', out);
+              pt.appendText(`\n_Image block without payload_\n`);
+            }
+            state.mediaEmitted = true;
+          }
+          break;
+        }
+        case 'audio': {
+          if (!state.mediaEmitted) {
+            if (out.data) {
+              const mime = out.mime_type.toLowerCase();
+              const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
+              if (isPCM) {
+                try {
+                  const wav = geminiConvertPCM2WAV(out.mime_type, out.data);
+                  pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
+                } catch (error) {
+                  console.warn('[GeminiInteractions] audio PCM convert failed:', error);
+                  pt.appendText(`\n_Audio conversion failed: ${String(error)}_\n`);
+                }
+              } else {
+                // already a packaged format (audio/wav, audio/mp3, audio/aac, ...) - pass through
+                pt.appendAudioInline(out.mime_type, out.data, 'Gemini Generated Audio', 'Gemini', 0);
+              }
+            } else if (out.uri) {
+              console.warn('[GeminiInteractions] audio output via URI is not yet fetched inline:', out.uri);
+              pt.appendText(`\n[Audio: ${out.uri}]\n`);
+            } else {
+              console.warn('[GeminiInteractions] audio output with neither data nor uri:', out);
+              pt.appendText(`\n_Audio block without payload_\n`);
+            }
+            state.mediaEmitted = true;
+          }
+          break;
+        }
+        default: {
+          const _exhaustiveCheck: never = out;
+          console.warn('[GeminiInteractions] unreachable: unhandled emittable type', { out });
+          break;
         }
       }
     }
@@ -244,10 +258,26 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
         pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
         break;
 
+      case 'incomplete':
+        // Run stopped early (token limit, etc.). Terminate gracefully with a visible note; we keep any content already emitted.
+        if (lastOpenIdx !== -1) pt.endMessagePart();
+        if (operationOpId)
+          pt.sendOperationState('search-web', 'Deep Research incomplete', { opId: operationOpId, state: 'done' });
+        pt.appendText('\n_Response incomplete (run stopped early)._\n');
+        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstEvent);
+        pt.setTokenStopReason('out-of-tokens');
+        pt.setDialectEnded('done-dialect');
+        break;
+
       case 'in_progress':
-      default:
         // keep polling
         break;
+
+      default: {
+        const _exhaustiveCheck: never = interaction.status;
+        console.warn('[GeminiInteractions] unreachable: unhandled status', { status: interaction.status });
+        break;
+      }
     }
   };
 }

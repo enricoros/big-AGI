@@ -127,8 +127,12 @@ export namespace GeminiInteractionsWire_API_Interactions {
   // Deep Research internals: tool calls + results are streamed as content blocks. We recognize their
   // `type` strings but treat them as transient (no user-visible emission here). They're listed as a
   // plain enum so the parser can silent-skip them without trying to schema-parse each variant.
+  //
+  // Note: `function_call` / `function_result` are INTENTIONALLY absent. Those are the canonical
+  // user-facing tool-call format - if the Interactions API is ever used with a model + `tools`,
+  // they'd need real handling (start/append/end a function invocation). They fall through to the
+  // warn-once path so we notice the moment they appear on this code path.
   export const INTERNAL_OUTPUT_TYPES = new Set<string>([
-    'function_call', 'function_result',
     'code_execution_call', 'code_execution_result',
     'url_context_call', 'url_context_result',
     'google_search_call', 'google_search_result',
@@ -155,6 +159,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     'failed',
     'cancelled',
     'requires_action',
+    'incomplete', // run stopped early (e.g. token limit) - terminate gracefully with a note
   ]);
 
   // -- Usage (populated in the terminal frame) --
