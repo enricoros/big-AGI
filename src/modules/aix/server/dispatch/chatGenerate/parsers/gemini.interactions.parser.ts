@@ -169,7 +169,9 @@ export function createGeminiInteractionsParser(requestedModelName: string | null
       } else if (out.type === 'image') {
         if (!state.mediaEmitted) {
           if (out.data) {
-            pt.appendImageInline(out.mime_type, out.data, 'Gemini Generated Image', 'Gemini', '');
+            // hintSkipResize=true: Deep Research images are typically figures/charts where
+            // PNG->jpeg recompression would degrade text legibility and fine detail.
+            pt.appendImageInline(out.mime_type, out.data, 'Gemini Generated Image', 'Gemini', '', true);
           } else if (out.uri) {
             // URI-hosted images aren't fetched here (yet); surface the link inline
             console.warn('[GeminiInteractions] image output via URI is not yet fetched inline:', out.uri);
