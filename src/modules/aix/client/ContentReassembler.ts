@@ -766,6 +766,12 @@ export class ContentReassembler {
     // destructure
     const { text, mot, opId, state, parentOpId, iTexts, oTexts } = os;
 
+    // Pin cts to the upstream handle's original createdAt when the op IS the run (opId === runId,
+    // e.g. Gemini Deep Research where operationOpId === interaction.id). The reassembler preserves
+    // the earliest createdAt for a given runId across reattaches, so cts survives reloads.
+    const uh = this.S.generator.upstreamHandle;
+    const anchorCts = (uh && uh.runId === opId && uh.createdAt != null) ? uh.createdAt : Date.now();
+
     const newEntry: DVoidPlaceholderMOp = {
       opId,
       text,
@@ -775,7 +781,7 @@ export class ContentReassembler {
       ...oTexts ? { oTexts } : undefined,
       ...parentOpId ? { parentOpId } : undefined,
       level: 0,
-      cts: Date.now(),
+      cts: anchorCts,
     };
 
     const phIdx = this.S.fragments.findLastIndex(isVoidPlaceholderFragment);
