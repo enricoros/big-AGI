@@ -37,6 +37,20 @@ export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['
   return { method: 'chat-generate', name, ref };
 }
 
+
+/**
+ * [CSF] Load the client-side-fetch executor module with a uniform error surface.
+ * ES modules are cached by the loader, so repeated calls are cheap (no re-fetch, no re-evaluate).
+ * Throws with a clear "Direct connection unsuccessful: ..." on chunk-load failure (preserves .cause).
+ */
+async function _loadCsfModuleOrThrow(): Promise<typeof import('./aix.client.direct-chatGenerate')> {
+  try {
+    return await import('./aix.client.direct-chatGenerate');
+  } catch (error) {
+    throw new Error(`Direct connection unsuccessful: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
+  }
+}
+
 export function aixCreateModelFromLLMOptions(
   llmInterfaces: DLLM['interfaces'],
   llmOptions: DModelParameterValues, // this must have been already externally computed, usually as the initial values + user/over replacements
@@ -762,10 +776,11 @@ async function _aixChatGenerateContent_LL(
 
   /**
    * FIXME: implement client selection of resumability - aixAccess option?
-   * For now we turn it on for Responses API for select kinds of request.
+   * NOTE: for Gemini Deep Research, it's on by default, so both auto-reattach on network breaks (currently disabled)
+   * and manual reattach (coming into this same function) both work.
    */
-  const requestResumability = !!aixModel.vndOaiResponsesAPI &&
-    (['conversation', 'beam-scatter', 'beam-gather'] satisfies (AixAPI_Context_ChatGenerate['name'] | string)[]).includes(aixContext.name);
+  // const requestResumability = !!aixModel.vndOaiResponsesAPI &&
+  //   (['conversation', 'beam-scatter', 'beam-gather'] satisfies (AixAPI_Context_ChatGenerate['name'] | string)[]).includes(aixContext.name);
 
   const aixConnectionOptions: AixAPI_ConnectionOptions_ChatGenerate = {
     ...inspectorEnabled && { debugDispatchRequest: true, debugProfilePerformance: true },
@@ -775,17 +790,11 @@ async function _aixChatGenerateContent_LL(
   } as const;
 
 
-  // [CSF] Pre-load client-side executor if needed
-  let clientSideChatGenerate: typeof import('./aix.client.direct-chatGenerate').clientSideChatGenerate | undefined = undefined;
-  let clientSideReattachUpstream: typeof import('./aix.client.direct-chatGenerate').clientSideReattachUpstream | undefined = undefined;
+  // [CSF] Pre-load client-side executor if needed - type inference works here, no need to type
+  let clientSideChatGenerate;
+  let clientSideReattachUpstream;
   if (aixAccess.clientSideFetch)
-    try {
-      const csfModule = await import('./aix.client.direct-chatGenerate');
-      clientSideChatGenerate = csfModule.clientSideChatGenerate;
-      clientSideReattachUpstream = csfModule.clientSideReattachUpstream;
-    } catch (error) {
-      throw new Error(`Direct connection unsuccessful: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
-    }
+    ({ clientSideChatGenerate, clientSideReattachUpstream } = await _loadCsfModuleOrThrow());
 
 
   // Client-side particle transforms:
