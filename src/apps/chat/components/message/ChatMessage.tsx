@@ -5,7 +5,6 @@ import TimeAgo from 'react-timeago';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
-import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -17,7 +16,6 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
@@ -42,6 +40,7 @@ import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { Release } from '~/common/app.release';
+import { StarredState } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
@@ -986,15 +985,8 @@ export function ChatMessage(props: {
             {/* Starred */}
             {!!onMessageToggleUserFlag && (
               <MenuItem onClick={handleOpsToggleStarred} sx={{ flexGrow: 0, px: 1 }}>
-                <Tooltip disableInteractive title={!isUserStarred ? 'Link message - use @ to refer to it from another chat' : 'Remove link'}>
-                  {isUserStarred
-                    ? <AlternateEmailIcon color='primary' sx={{ fontSize: 'xl' }} />
-                    : <InsertLinkIcon sx={{ rotate: '45deg' }} />
-                  }
-                  {/*{isUserStarred*/}
-                  {/*  ? <StarRoundedIcon color='primary' sx={{ fontSize: 'xl2' }} />*/}
-                  {/*  : <StarOutlineRoundedIcon sx={{ fontSize: 'xl2' }} />*/}
-                  {/*}*/}
+                <Tooltip disableInteractive title={!isUserStarred ? 'Star message - use @ to refer to it from another chat' : 'Remove star'}>
+                  <StarredState isStarred={isUserStarred} />
                 </Tooltip>
               </MenuItem>
             )}
