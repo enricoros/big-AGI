@@ -220,6 +220,16 @@ function _toXAIResponsesInput(
     });
   }
 
+  function newReasoningItem(itemId: string | undefined, encryptedContent: string | undefined) {
+    // Mirror of the OpenAI Responses adapter - xAI Responses accepts the same reasoning input item shape.
+    inputItems.push({
+      type: 'reasoning' as const,
+      ...(itemId ? { id: itemId } : {}),
+      summary: [],
+      ...(encryptedContent ? { encrypted_content: encryptedContent } : {}),
+    });
+  }
+
   for (const aixMessage of chatSequence) {
     const { role: messageRole, parts: messageParts } = aixMessage;
 
@@ -319,7 +329,12 @@ function _toXAIResponsesInput(
               break;
 
             case 'ma':
-              // reasoning/thinking block - ignored for input
+              // xAI reuses the OpenAI Responses continuity namespace (_vnd.openai.reasoningItem).
+              // Only active when AIX_XAI_ADD_ENCRYPTED_REASONING is enabled and encrypted_content is captured;
+              // otherwise the handle is absent and we skip to avoid "Item with id rs_... not found" style errors.
+              const oaiReasoning = part._vnd?.openai?.reasoningItem;
+              if (oaiReasoning?.encryptedContent || oaiReasoning?.id)
+                newReasoningItem(oaiReasoning.id, oaiReasoning.encryptedContent);
               break;
 
             case 'tool_response':
