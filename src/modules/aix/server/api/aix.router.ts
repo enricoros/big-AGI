@@ -37,17 +37,17 @@ export const aixRouter = createTRPCRouter({
    * Chat content generation - reattach to an in-progress upstream run by handle, streaming only.
    * Today: OpenAI Responses API (network-disconnect recovery) and Gemini Interactions (Deep Research across reloads).
    */
-  reattachContent: edgeProcedure
+  upstreamReattachContent: edgeProcedure
     .input(z.object({
       access: AixWire_API.Access_schema,
-      resumeHandle: AixWire_API.ResumeHandle_schema, // reattach uses a handle instead of 'model + chatGenerate'
+      upstreamHandle: AixWire_API.UpstreamHandle_schema, // reattach uses a handle instead of 'model + chatGenerate'
       context: AixWire_API.ContextChatGenerate_schema,
       streaming: z.literal(true), // reattach is always streaming
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.pick({ debugDispatchRequest: true }).optional(), // debugDispatchRequest
     }))
     .mutation(async function* ({ input, ctx }) {
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
-      const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.resumeHandle, input.streaming);
+      const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.upstreamHandle, input.streaming);
 
       yield* executeChatGenerateWithContinuation(dispatchCreator, input.streaming, ctx.reqSignal, _d);
     }),

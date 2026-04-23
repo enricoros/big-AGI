@@ -37,7 +37,7 @@ export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_sc
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
 export type AixAPI_Context_ChatGenerate = z.infer<typeof AixWire_API.ContextChatGenerate_schema>;
 export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
-export type AixAPI_ResumeHandle = z.infer<typeof AixWire_API.ResumeHandle_schema>;
+export type AixAPI_ResumeHandle = z.infer<typeof AixWire_API.UpstreamHandle_schema>;
 export type AixAPI_ConnectionOptions_ChatGenerate = z.infer<typeof AixWire_API.ConnectionOptionsChatGenerate_schema>;
 export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatContentGenerate.Request_schema>;
 
@@ -553,7 +553,7 @@ export namespace AixWire_API {
   // Wire input for reattach: server only consumes `runId` (+ `startingAfter` for OpenAI). Timestamps live
   // on the persisted `DMessageGenerator.upstreamHandle` (client concerns) and on the `set-upstream-handle`
   // particle (server-to-client transport), but don't need to travel back in the reattach request.
-  export const ResumeHandle_schema = z.discriminatedUnion('uht', [
+  export const UpstreamHandle_schema = z.discriminatedUnion('uht', [
     z.object({
       uht: z.literal('vnd.oai.responses'),
       runId: z.string(), // upstream: OpenAI Responses `response.id`

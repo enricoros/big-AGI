@@ -777,12 +777,12 @@ async function _aixChatGenerateContent_LL(
 
   // [CSF] Pre-load client-side executor if needed
   let clientSideChatGenerate: typeof import('./aix.client.direct-chatGenerate').clientSideChatGenerate | undefined = undefined;
-  let clientSideReattach: typeof import('./aix.client.direct-chatGenerate').clientSideReattach | undefined = undefined;
+  let clientSideReattachUpstream: typeof import('./aix.client.direct-chatGenerate').clientSideReattachUpstream | undefined = undefined;
   if (aixAccess.clientSideFetch)
     try {
       const csfModule = await import('./aix.client.direct-chatGenerate');
       clientSideChatGenerate = csfModule.clientSideChatGenerate;
-      clientSideReattach = csfModule.clientSideReattach;
+      clientSideReattachUpstream = csfModule.clientSideReattachUpstream;
     } catch (error) {
       throw new Error(`Direct connection unsuccessful: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
     }
@@ -839,11 +839,11 @@ async function _aixChatGenerateContent_LL(
 
     try {
 
-      let particleStream: AsyncIterable<AixWire_Particles.ChatGenerateOp, void>;
+      // let particleStream: AsyncIterable<AixWire_Particles.ChatGenerateOp, void>;
+      const particleStream = !accumulator_LL.generator.upstreamHandle ? (
 
-      // AIX [CSF] Direct Execution - fresh
-      if (!accumulator_LL.generator.upstreamHandle && clientSideChatGenerate)
-        particleStream = clientSideChatGenerate(
+        // AIX Fesh from Chat Input - [CSF] Direct Execution
+        clientSideChatGenerate ? clientSideChatGenerate(
           aixAccess,
           aixModel,
           aixChatGenerate,
@@ -851,38 +851,38 @@ async function _aixChatGenerateContent_LL(
           getAixDebuggerNoStreaming() ? false : aixStreaming,
           aixConnectionOptions,
           abortSignal,
-        );
-
-      // AIX tRPC Streaming Generation from Chat input
-      else if (!accumulator_LL.generator.upstreamHandle)
-        particleStream = await apiStream.aix.chatGenerateContent.mutate({
+        ) :
+        // AIX Fresh from Chat Input - tRPC
+        await apiStream.aix.chatGenerateContent.mutate({
           access: aixAccess,
           model: aixModel,
           chatGenerate: aixChatGenerate,
           context: aixContext,
           streaming: getAixDebuggerNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
           connectionOptions: aixConnectionOptions,
-        }, { signal: abortSignal });
+        }, { signal: abortSignal })
 
-      // AIX [CSF] Direct Reattach from handle - bypasses edge runtime, no 5-min timeout
-      else if (clientSideReattach)
-        particleStream = clientSideReattach(
+      ) : (
+
+        // AIX Reattach from Upstream Handle - [CSF] - bypasses edge runtime, no 5-min timeout
+        clientSideReattachUpstream ? clientSideReattachUpstream(
           aixAccess,
           accumulator_LL.generator.upstreamHandle,
           aixContext,
+          true, // streaming - reattach is only validated for streaming for now
           aixConnectionOptions,
           abortSignal,
-        );
-
-      // AIX tRPC Streaming re-attachment from handle - for LL auto-reattach
-      else
-        particleStream = await apiStream.aix.reattachContent.mutate({
+        ) :
+        // AIX Reattach from Upstream Handle - tRPC
+        await apiStream.aix.upstreamReattachContent.mutate({
           access: aixAccess,
-          resumeHandle: accumulator_LL.generator.upstreamHandle,
+          upstreamHandle: accumulator_LL.generator.upstreamHandle,
           context: aixContext,
           streaming: true,
           connectionOptions: aixConnectionOptions,
-        }, { signal: abortSignal });
+        }, { signal: abortSignal })
+
+      );
 
       /**
        * Stream Consumption Loop - MUST be synchronous (no awaits).
