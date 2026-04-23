@@ -336,7 +336,7 @@ export class ContentReassembler {
       // PartParticleOp
       case 'p' in op:
         // heuristics to remove the placeholder if real user-destined content arrives
-        if (op.p !== '❤' && op.p !== 'vp' && op.p !== 'urlc' && op.p !== 'svs')
+        if (op.p !== '❤' && op.p !== 'vp' && op.p !== 'urlc' && op.p !== 'hres' && op.p !== 'svs' && op.p !== 'tr_' && op.p !== 'trs')
           await this._removeLastVoidPlaceholderDelayed();
         switch (op.p) {
           case '❤':
@@ -880,6 +880,11 @@ export class ContentReassembler {
   }
 
   private async _removeLastVoidPlaceholderDelayed(): Promise<boolean> {
+    // NOTE: disabled because it also introduces visual bugs - instead added tr_ and trs exceptions on a caller
+    // function _isVPNotOp(f: DMessageFragment) {
+    //   // make 'vp' fragments eligible for removal only if they have no opLog entries, like tool invocations (the explicit counterpart)
+    //   return isVoidPlaceholderFragment(f) && !f.part.opLog?.length;
+    // }
     // skip if none
     if (this.S.fragments.findLastIndex(isVoidPlaceholderFragment) < 0) return false;
 
