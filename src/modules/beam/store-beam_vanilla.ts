@@ -76,6 +76,10 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, isEditMode: boolean, callback: BeamSuccessCallback) => {
     const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, hadImportedRays, setRayLlmIds, setCurrentGatherLlmId } = _get();
 
+    // don't wipe an ongoing beam - preserve existing rays and fusions
+    if (wasAlreadyOpen)
+      return;
+
     // reset pending operations
     terminateKeepingSettings();
 
@@ -96,8 +100,8 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // rays already reset
       hadImportedRays,
 
-      // update the model only if the dialog was not already open
-      ...(!wasAlreadyOpen && initialChatLlmId && {
+      // set the gather model for a fresh open
+      ...(initialChatLlmId && {
         currentGatherLlmId: initialChatLlmId,
       } satisfies Partial<GatherStoreSlice>),
     });
