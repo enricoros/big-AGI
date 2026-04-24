@@ -166,9 +166,9 @@ export function AppChatSettingsAI() {
       tooltip={<>
         When Claude uses tools like code execution, it may produce text and image files stored in Anthropic&apos;s File API. This setting controls whether Big-AGI should automatically download and embed them in the chat.
         <ul>
-          <li><b>Off</b>: keep as references (default).</li>
-          <li><b>Inline</b>: download and embed text/images.</li>
-          <li><b>Inline + Free</b>: embed, then delete from Anthropic to free storage.</li>
+          <li><b>Show</b>: keep as references.</li>
+          <li><b>Embed</b>: download and embed text/images (default).</li>
+          <li><b>Embed + Free</b>: embed, then delete from Anthropic to free storage.</li>
         </ul>
         Only affects Anthropic models.
       </>}
