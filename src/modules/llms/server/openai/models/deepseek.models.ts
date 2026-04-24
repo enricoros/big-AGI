@@ -7,9 +7,11 @@ import { fromManualMapping, ManualMappings } from '../../models.mappings';
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
-// [DeepSeek, 2026-04-23] V4 release - https://api-docs.deepseek.com/quick_start/pricing
+// [DeepSeek, 2026-04-24] V4 release - https://api-docs.deepseek.com/news/news260424
+// - V4-Pro: 1.6T total / 49B active params; V4-Flash: 284B total / 13B active params (Novel Attention: token-wise compression + DSA)
 // - Model IDs listed by /models: deepseek-v4-flash, deepseek-v4-pro
-// - Legacy aliases still accepted: deepseek-chat -> v4-flash (thinking disabled), deepseek-reasoner -> v4-flash (thinking enabled)
+// - 1M context is the default across services; text-only (no vision/multimodal)
+// - Legacy aliases still accepted until 2026-07-24: deepseek-chat -> v4-flash (thinking disabled), deepseek-reasoner -> v4-flash (thinking enabled)
 // - Reasoning control: object `thinking: { type: 'enabled'|'disabled', reasoning_effort?: 'high'|'max' }`
 //   (the live API also accepts type: 'adaptive', but it is undocumented and empirically behaves the same as 'enabled'
 //    on current builds -- deliberately not exposed here; add it once docs + semantics stabilize)
@@ -45,7 +47,7 @@ const _knownDeepseekChatModels: ManualMappings = [
   {
     idPrefix: 'deepseek-reasoner',
     label: 'DeepSeek Reasoner (legacy)',
-    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking enabled.',
+    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking enabled. Retires 2026-07-24.',
     contextWindow: 1_048_576,
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
@@ -56,7 +58,7 @@ const _knownDeepseekChatModels: ManualMappings = [
   {
     idPrefix: 'deepseek-chat',
     label: 'DeepSeek Chat (legacy)',
-    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking disabled.',
+    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking disabled. Retires 2026-07-24.',
     contextWindow: 1_048_576,
     interfaces: IF_4,
     maxCompletionTokens: 65536,
