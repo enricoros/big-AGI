@@ -378,7 +378,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Deep Research Preview (2026-04)',
     isPreview: true,
     chatPrice: gemini25ProPricing, // pricing not explicitly listed; using 2.5 Pro as baseline
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
     parameterSpecs: [],
     benchmark: undefined, // Deep research model, not benchmarkable on standard tests
     // 128K input, 64K output
@@ -390,7 +390,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Deep Research Max Preview (2026-04)',
     isPreview: true,
     chatPrice: gemini25ProPricing, // baseline estimate (see note above)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
     parameterSpecs: [],
     benchmark: undefined, // Deep research model, not benchmarkable on standard tests
   },
@@ -402,7 +402,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Deep Research Pro Preview',
     isPreview: true,
     chatPrice: gemini25ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
     parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
     benchmark: undefined, // Deep research model, not benchmarkable on standard tests
     // Note: 128K input context, 64K output context
