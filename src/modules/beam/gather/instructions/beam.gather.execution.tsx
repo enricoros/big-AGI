@@ -58,7 +58,7 @@ export function gatherStartFusion(
   if (chatMessages.length < 1)
     return onError('No conversation history available');
   if (rayMessages.length <= 1)
-    return onError('No responses available');
+    return onError('No replies to merge');
   if (!initialFusion.llmId)
     return onError('No Merge model selected');
 

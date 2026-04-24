@@ -246,9 +246,9 @@ export function BeamView(props: {
         onPositive={handleStartMergeConfirmation}
         // lowStakes
         noTitleBar
-        confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
-        positiveActionText='Proceed with Merge'
-        negativeActionText='Wait for All Responses'
+        confirmationText={'Some replies are still generating. Merge what\'s ready?'}
+        positiveActionText='Merge now'
+        negativeActionText='Wait for all'
         negativeActionStartDecorator={
           <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
         }

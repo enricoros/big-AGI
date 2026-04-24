@@ -49,7 +49,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
   if (!inputs.chatMessages.length)
     throw new Error('No conversation history available');
   if (!inputs.rayMessages.length)
-    throw new Error('No responses available');
+    throw new Error('No replies to merge');
   for (let rayMessage of inputs.rayMessages)
     if (rayMessage.role !== 'assistant')
       throw new Error('Invalid response role');

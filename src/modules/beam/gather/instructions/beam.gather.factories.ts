@@ -122,7 +122,7 @@ The final output should reflect a deep understanding of the user's preferences a
     addLabel: 'Add Breakdown',
     cardTitle: 'Evaluation Table',
     Icon: TableViewRoundedIcon as typeof SvgIcon,
-    description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice.',
+    description: 'Analyzes and compares replies, with a structured framework to support your choice.',
     createInstructions: () => [
       {
         type: 'gather',
