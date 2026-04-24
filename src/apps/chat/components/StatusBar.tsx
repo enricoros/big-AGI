@@ -10,6 +10,7 @@ import { ShortcutKey, ShortcutObject } from '~/common/components/shortcuts/useGl
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
+import { useShortcutsPreferencesStore, shortcutFingerprint } from '~/common/components/shortcuts/store-shortcuts-preferences';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
@@ -176,9 +177,12 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
 
   // external state
   const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
+  const disabledShortcuts = useShortcutsPreferencesStore(state => state.disabledShortcuts);
   const shortcuts = useGlobalShortcutsStore(useShallow(state => {
-    // get visible shortcuts
-    let visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+    // get visible shortcuts, excluding user-denied ones
+    let visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut =>
+      !!shortcut.description && !disabledShortcuts.includes(shortcutFingerprint(shortcut)),
+    );
 
     // filter by highest level if levels are present
     const maxLevel = Math.max(...visibleShortcuts.map(s => s.level ?? 0));

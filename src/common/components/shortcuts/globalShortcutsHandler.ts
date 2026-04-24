@@ -1,4 +1,5 @@
 import { useGlobalShortcutsStore } from './store-global-shortcuts';
+import { isShortcutDenied } from './store-shortcuts-preferences';
 
 
 export function ensureGlobalShortcutHandler() {
@@ -39,6 +40,10 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
 
     // Skip if a text input element is focused and the shortcut opts into this guard
     if (shortcut.skipIfInput && _isTextInputFocused())
+      continue;
+
+    // Skip if the shortcut is on the user's denylist
+    if (isShortcutDenied(shortcut))
       continue;
 
     // Execute the action (and prevent the default browser action)

@@ -26,6 +26,7 @@ import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager
 import { DMessageId, DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { isShortcutDenied } from '~/common/components/shortcuts/store-shortcuts-preferences';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
@@ -545,16 +546,20 @@ export function Composer(props: {
 
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey && !e.metaKey && !e.ctrlKey) {
-        if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
-          e.stopPropagation();
-        return e.preventDefault();
+        if (!isShortcutDenied({ key: 'Enter', alt: true })) {
+          if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
+            e.stopPropagation();
+          return e.preventDefault();
+        }
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
-          e.stopPropagation();
-        return e.preventDefault();
+        if (!isShortcutDenied({ key: 'Enter', ctrl: true })) {
+          if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
+            e.stopPropagation();
+          return e.preventDefault();
+        }
       }
 
       // Shift: toggles the 'enter is newline'

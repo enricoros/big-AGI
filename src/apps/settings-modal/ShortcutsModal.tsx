@@ -1,10 +1,13 @@
 import * as React from 'react';
 
-import { Box, Chip, Divider, Typography } from '@mui/joy';
+import { Box, Chip, Divider, IconButton, Tooltip, Typography } from '@mui/joy';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import type { ShortcutDefinition } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { shortcutsCatalog } from '~/common/components/shortcuts/shortcutsCatalog';
+import { shortcutFingerprint, useShortcutsPreferencesStore } from '~/common/components/shortcuts/store-shortcuts-preferences';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { Is } from '~/common/util/pwaUtils';
@@ -34,6 +37,11 @@ const _styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 1,
+  },
+  rowLeft: {
+    display: 'flex',
+    alignItems: 'center',
     gap: 1,
   },
   keys: {
@@ -111,6 +119,42 @@ function ShortcutKeyCombo(props: { def: ShortcutDefinition }) {
 }
 
 
+function ShortcutRow(props: { item: typeof shortcutsCatalog[number]['items'][number], active: boolean }) {
+  const { item, active } = props;
+
+  const fp = shortcutFingerprint(item);
+  const isDenied = useShortcutsPreferencesStore((state) => state.disabledShortcuts.includes(fp));
+
+  const handleToggle = React.useCallback(() => {
+    useShortcutsPreferencesStore.getState().toggleShortcutDisabled(fp);
+  }, [fp]);
+
+  const effectivelyActive = active && !isDenied;
+
+  return (
+    <Box sx={_styles.row}>
+      <Box sx={_styles.rowLeft}>
+        <Tooltip title={isDenied ? 'Enable shortcut' : 'Disable shortcut'} variant='soft'>
+          <IconButton
+            size='sm'
+            variant={isDenied ? 'soft' : 'plain'}
+            color={isDenied ? 'danger' : 'neutral'}
+            onClick={handleToggle}
+            sx={{ minWidth: 28, minHeight: 28 }}
+          >
+            {isDenied ? <BlockIcon sx={{ fontSize: 16 }} /> : <CheckCircleOutlineIcon sx={{ fontSize: 16, opacity: 0.5 }} />}
+          </IconButton>
+        </Tooltip>
+        <ShortcutKeyCombo def={item} />
+      </Box>
+      <Typography level='body-xs' sx={!effectivelyActive ? { opacity: 0.5, textDecoration: isDenied ? 'line-through' : undefined } : undefined}>
+        {item.description}
+      </Typography>
+    </Box>
+  );
+}
+
+
 export function ShortcutsModal(props: { onClose: () => void }) {
 
   // external state
@@ -130,14 +174,7 @@ export function ShortcutsModal(props: { onClose: () => void }) {
             </Typography>
             {category.items.map((item, i) => {
               const active = _isActive(item, activeFingerprints);
-              return (
-                <Box key={i} sx={_styles.row}>
-                  <ShortcutKeyCombo def={item} />
-                  <Typography level='body-xs' sx={!active ? { opacity: 0.5 } : undefined}>
-                    {item.description}
-                  </Typography>
-                </Box>
-              );
+              return <ShortcutRow key={i} item={item} active={active} />;
             })}
           </React.Fragment>
         ))}
