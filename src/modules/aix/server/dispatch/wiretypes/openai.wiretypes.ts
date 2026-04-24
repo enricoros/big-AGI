@@ -1183,9 +1183,11 @@ export namespace OpenAIWire_Responses_Items {
         // [OpenAI 2026-03-xx] DEPRECATED query might not always be present in done event
         query: z.string().optional(),
         // the output websites, if any [{"type":"url","url":"https://www.enricoros.com/"}, {"type":"url","url": "https://linkedin.com/in/enricoros/"}, ...]
+        // [OpenAI 2026-04-23, GPT-5.5] new source types: { type: 'api', name: 'oai-calculator' } for hosted-tool invocations (no url)
         sources: z.array(z.object({
-          type: z.literal('url').optional(), // source type
-          url: z.string(),
+          type: z.enum(['url', 'api']).or(z.string()).optional(), // 'url' (default) | 'api' (GPT-5.5 hosted tools) | future types
+          url: z.string().nullish(), // optional: 'api' sources have no url, only name
+          name: z.string().nullish(), // for 'api' sources (e.g., 'oai-calculator')
           // [OpenAI 2026-03-xx] not present anymore
           // title: z.string().optional(),
           // snippet: z.string().optional(),
@@ -1446,6 +1448,7 @@ export namespace OpenAIWire_Responses_Tools {
   const WebSearchTool_schema = z.object({
     type: z.enum(['web_search', 'web_search_preview', 'web_search_preview_2025_03_11']),
     search_context_size: z.enum(['low', 'medium', 'high']).optional(),
+    // [OpenAI 2026-04-23, GPT-5.5] API echoes user_location as `null` (not undefined) when unset - so .nullish()
     user_location: z.object({
       type: z.literal('approximate'),
       // API echoes these as `null` when unset, not omitted - so .nullish()
@@ -1453,7 +1456,7 @@ export namespace OpenAIWire_Responses_Tools {
       country: z.string().nullish(),
       region: z.string().nullish(),
       timezone: z.string().nullish(),
-    }).optional(),
+    }).nullish(),
     external_web_access: z.boolean().optional(),
   });
 
