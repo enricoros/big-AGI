@@ -7,6 +7,7 @@ import { Box, List } from '@mui/joy';
 import type { SystemPurposeExample } from '../../../data';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/speex/speex.client';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
@@ -28,7 +29,7 @@ import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
+import { getChatAutoAI, useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
 
 
 const stableNoMessages: DMessage[] = [];
@@ -201,17 +202,20 @@ export function ChatMessageList(props: {
     const lastTruncatedMessage = truncatedHistory[truncatedHistory.length - 1];
     if (!lastTruncatedMessage) return;
 
+    // auto-title callback (injected to avoid common/ -> apps/ dependency)
+    const _autoTitle = conversationId ? () => getChatAutoAI().autoTitleChat && void autoConversationTitle(conversationId, false) : undefined;
+
     // assistant: do an in-place beam
     if (lastTruncatedMessage.role === 'assistant') {
       if (truncatedHistory.length >= 2)
-        conversationHandler.beamInvoke(truncatedHistory.slice(0, -1), [lastTruncatedMessage], lastTruncatedMessage.id);
+        conversationHandler.beamInvoke(truncatedHistory.slice(0, -1), [lastTruncatedMessage], lastTruncatedMessage.id, _autoTitle);
     } else if (lastTruncatedMessage.role === 'user') {
       // user: truncate and append (but if the next message is an assistant message, import it)
       const possibleNextMessage = inputHistory[truncatedHistory.length];
       if (possibleNextMessage?.role === 'assistant')
-        conversationHandler.beamInvoke(truncatedHistory, [possibleNextMessage], null);
+        conversationHandler.beamInvoke(truncatedHistory, [possibleNextMessage], null, _autoTitle);
       else
-        conversationHandler.beamInvoke(truncatedHistory, [], null);
+        conversationHandler.beamInvoke(truncatedHistory, [], null, _autoTitle);
     }
   }, [conversationHandler, conversationId]);
 

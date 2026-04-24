@@ -6,6 +6,7 @@ import { Box, useTheme } from '@mui/joy';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
@@ -53,6 +54,7 @@ import { usePanesManager } from './components/panes/store-panes-manager';
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
 
 import { _handleExecute } from './editors/_handleExecute';
+import { getChatAutoAI } from './store-app-chat';
 
 
 // what to say when a chat is new and has no title
@@ -315,10 +317,11 @@ export function AppChat() {
 
     // replace the prompt in history
     const lastMessage = inputHistory[inputHistory.length - 1];
+    const _autoTitle = () => getChatAutoAI().autoTitleChat && void autoConversationTitle(focusedPaneConversationId, false);
     if (lastMessage.role === 'assistant')
-      cHandler.beamInvoke(inputHistory.slice(0, -1), [lastMessage], lastMessage.id);
+      cHandler.beamInvoke(inputHistory.slice(0, -1), [lastMessage], lastMessage.id, _autoTitle);
     else if (lastMessage.role === 'user')
-      cHandler.beamInvoke(inputHistory, [], null);
+      cHandler.beamInvoke(inputHistory, [], null, _autoTitle);
   }, [focusedPaneConversationId]);
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);

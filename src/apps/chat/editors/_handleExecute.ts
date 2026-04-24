@@ -1,3 +1,5 @@
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
+
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -8,6 +10,7 @@ import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPar
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
+import { getChatAutoAI } from '../store-app-chat';
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
 import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
@@ -73,7 +76,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
     case 'beam-content':
       const updatedInputHistory = cHandler.historyViewHeadOrThrow('chat-beam-execute');
-      cHandler.beamInvoke(updatedInputHistory, [], null);
+      cHandler.beamInvoke(updatedInputHistory, [], null, () => getChatAutoAI().autoTitleChat && void autoConversationTitle(conversationId, false));
       return true;
 
     case 'append-user':

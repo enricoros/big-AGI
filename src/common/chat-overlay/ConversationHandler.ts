@@ -248,7 +248,7 @@ export class ConversationHandler {
    * @param importMessages If set, any message to import into the beam as pre-set rays
    * @param destReplaceMessageId If set, the output will replace the message with this id, otherwise it will append to the history
    */
-  beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
+  beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null, onSuccess?: () => void): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
     const onBeamSuccess = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => {
@@ -275,6 +275,9 @@ export class ConversationHandler {
 
       // close beam
       terminateKeepingSettings();
+
+      // caller-injected post-success hook (e.g. auto-titling)
+      onSuccess?.();
     };
 
     beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
