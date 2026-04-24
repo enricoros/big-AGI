@@ -12,6 +12,7 @@ import { Box, Chip } from '@mui/joy';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { CustomARenderer } from './CustomARenderer';
 import { remarkTableCellBreaks } from './tableBreaks.remark';
@@ -208,18 +209,18 @@ const reactMarkdownComponents = {
   // math/inlineMath components are not needed, rehype-katex handles this automatically
 } as ReactMarkdownComponents;
 
-const remarkPluginsStable: UnifiedPluggable[] = [
+const remarkPluginsBase: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
   remarkMark, // Mark-Highlight, for ==yellow==
   remarkTableCellBreaks, // Convert <br> HTML tags inside tables to break nodes (for line breaks in table cells)
-  [remarkMath, {
-    /**
-     * NOTE: this could be configurable, some users reported liking single dollar signs math, despite even the official
-     * LaTeX documentation recommending against it: https://docs.mathjax.org/en/latest/input/tex/delimiters.html
-     * So in the future this could be a user setting.
-     */
-    singleDollarTextMath: false,
-  }],
+  [remarkMath, { singleDollarTextMath: false }],
+];
+
+const remarkPluginsSingleDollar: UnifiedPluggable[] = [
+  remarkGfm,
+  remarkMark,
+  remarkTableCellBreaks,
+  [remarkMath, { singleDollarTextMath: true }],
 ];
 
 const rehypePluginsStable: UnifiedPluggable[] = [
@@ -275,10 +276,14 @@ function preprocessMarkdown(markdownText: string) {
 }
 
 export default function CustomMarkdownRenderer(props: { content: string, disablePreprocessor?: boolean }) {
+
+  // external state
+  const singleDollarLatex = useUXLabsStore((s) => s.labsSingleDollarLatex);
+
   return (
     <ReactMarkdown
       components={reactMarkdownComponents}
-      remarkPlugins={remarkPluginsStable}
+      remarkPlugins={singleDollarLatex ? remarkPluginsSingleDollar : remarkPluginsBase}
       rehypePlugins={rehypePluginsStable}
     >
       {props.disablePreprocessor ? props.content : preprocessMarkdown(props.content)}

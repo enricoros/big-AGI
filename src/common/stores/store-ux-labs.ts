@@ -25,6 +25,9 @@ interface UXLabsStore {
   labsLosslessImages: boolean;
   setLabsPreserveLosslessImages: (labsLosslessImages: boolean) => void;
 
+  labsSingleDollarLatex: boolean;
+  setLabsSingleDollarLatex: (labsSingleDollarLatex: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -45,6 +48,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsLosslessImages: false,
       setLabsPreserveLosslessImages: (labsLosslessImages: boolean) => set({ labsLosslessImages }),
+
+      labsSingleDollarLatex: false,
+      setLabsSingleDollarLatex: (labsSingleDollarLatex: boolean) => set({ labsSingleDollarLatex }),
 
     }),
     {

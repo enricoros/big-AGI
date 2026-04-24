@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, Typography } from '@mui/joy';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+import FunctionsIcon from '@mui/icons-material/Functions';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
 
@@ -24,6 +25,7 @@ export function UxLabsSettings() {
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsComposerAttachmentsInline, setLabsComposerAttachmentsInline,
+    labsSingleDollarLatex, setLabsSingleDollarLatex,
   } = useUXLabsStore();
 
   return <>
@@ -37,6 +39,17 @@ export function UxLabsSettings() {
         WARNING: PNG images can be very large (e.g. 10-20MB each in high quality modes in Gemini Nano Banana models). This will use significantly more storage.
       </>}
       checked={labsLosslessImages} onChange={setLabsPreserveLosslessImages}
+    />
+
+    <FormSwitchControl
+      title={<><FunctionsIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Dollar Inline LaTeX</>} description={labsSingleDollarLatex ? 'Enabled' : 'Disabled'}
+      tooltipWarning={labsSingleDollarLatex}
+      tooltip={<>
+        Renders single-dollar <code>$...$</code> as inline LaTeX math formulas, in addition to the default <code>{'\\\\(...)\\\\)'}</code> and <code>$$...$$</code> formats.
+        <hr />
+        WARNING: This may cause false positives - currency values like $10 or stock symbols like $AAPL could be incorrectly rendered as math.
+      </>}
+      checked={labsSingleDollarLatex} onChange={setLabsSingleDollarLatex}
     />
 
     <FormSwitchControl
