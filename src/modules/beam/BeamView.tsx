@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Alert, Box, CircularProgress } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress } from '@mui/joy';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -204,12 +206,29 @@ export function BeamView(props: {
         isMobile={props.isMobile}
         rayIds={rayIds}
         showRayAdd={cardAdd}
-        showRaysOps={(isScattering || raysReady < 2) ? undefined : raysReady}
         hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
-        onRaysOperation={handleRaysOperation}
         // linkedLlmId={currentGatherLlmId}
       />
+
+      {/* Rays Action Bar (2+ ready beams) - sibling of the grid (NOT a grid child); an in-grid spanning element with gridColumn:'1/-1' pins all auto-fit tracks open and leaves dead whitespace when raysCount < tracksCount. Fixes #1073. */}
+      {(!isScattering && raysReady >= 2) && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mx: 'var(--Pad)' }}>
+          <Button size='sm' variant='outlined' color='neutral' onClick={() => handleRaysOperation('copy')} endDecorator={<ContentCopyIcon sx={{ fontSize: 'md' }} />} sx={{
+            backgroundColor: 'background.surface',
+            '&:hover': { backgroundColor: 'background.popup' },
+          }}>
+            Copy {raysReady}
+          </Button>
+          <Button size='sm' variant='outlined' color='success' onClick={() => handleRaysOperation('use')} endDecorator={<TelegramIcon sx={{ fontSize: 'xl' }} />} sx={{
+            justifyContent: 'space-between',
+            backgroundColor: 'background.surface',
+            '&:hover': { backgroundColor: 'background.popup' },
+          }}>
+            Use {raysReady === 2 ? 'both' : 'all ' + raysReady} messages
+          </Button>
+        </Box>
+      )}
 
 
       {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
