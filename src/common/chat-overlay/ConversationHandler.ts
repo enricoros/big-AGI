@@ -9,7 +9,7 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { ChatActions, getConversation, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
@@ -24,6 +24,17 @@ import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_
 // optimization: cache the actions
 const _chatStoreActions = useChatStore.getState() as ChatActions;
 
+const cloneBeamResultMessage = (message: DMessage): DMessage => {
+  const cloned = structuredClone(message);
+  delete cloned.pendingIncomplete;
+  return cloned;
+};
+
+const toBeamRestoreHistory = (messages: readonly DMessage[]): DMessage[] => {
+  const lastUserIndex = messages.findLastIndex(message => message.role === 'user');
+  return lastUserIndex >= 0 ? [...messages.slice(0, lastUserIndex + 1)] : [...messages];
+};
+
 
 /**
  * ConversationHandler is a class to overlay state onto a conversation.
@@ -35,16 +46,45 @@ export class ConversationHandler {
 
   private readonly beamStore: StoreApi<BeamStore>;
   private readonly overlayStore: StoreApi<PerChatOverlayStore>;
+  private beamResults: DMessage[];
+  private isRestoringBeam: boolean = false;
 
   constructor(private readonly conversationId: DConversationId) {
     this.beamStore = createBeamVanillaStore();
     this.overlayStore = createPerChatVanillaStore();
+    const conversation = getConversation(this.conversationId);
+    this.beamResults = (conversation?.beamResults ?? []).map(cloneBeamResultMessage);
 
     // track the open status of beams - this is meant to be an accelerator for the UI
     this.beamStore.subscribe((state, prevState) => {
       if (state.isOpen === prevState.isOpen) return;
       useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, state.isOpen);
+      _chatStoreActions.setBeamIsOpen(this.conversationId, state.isOpen || undefined);
     });
+
+    this.beamStore.subscribe((state) => {
+      if (this.isRestoringBeam)
+        return;
+      this.persistBeamResultsFromStore();
+    });
+
+    if (conversation?.beamIsOpen && this.beamResults.length) {
+      this.isRestoringBeam = true;
+      try {
+        this.beamStore.getState().open(
+          toBeamRestoreHistory(conversation.messages),
+          getChatLLMId(),
+          false,
+          this.createBeamSuccessHandler(null),
+        );
+        this.beamStore.getState().importRays(this.beamResults, getChatLLMId());
+      } finally {
+        this.isRestoringBeam = false;
+      }
+      this.persistBeamResultsFromStore();
+    }
+
+    useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, this.beamStore.getState().isOpen);
   }
 
 
@@ -241,6 +281,46 @@ export class ConversationHandler {
 
   getBeamStore = () => this.beamStore;
 
+  private persistBeamResultsFromStore() {
+    const state = this.beamStore.getState();
+    const beamResults = [
+      ...state.rays
+        .filter(ray => ray.status !== 'empty' && ray.status !== 'scattering' && !!ray.message.fragments.length)
+        .map(ray => cloneBeamResultMessage(ray.message)),
+      ...state.fusions
+        .filter(fusion => fusion.stage !== 'idle' && fusion.stage !== 'fusing' && !!fusion.outputDMessage?.fragments.length)
+        .map(fusion => cloneBeamResultMessage(fusion.outputDMessage!)),
+    ];
+    const nextResultsString = JSON.stringify(beamResults);
+    const currentResultsString = JSON.stringify(this.beamResults);
+    if (nextResultsString === currentResultsString)
+      return;
+    this.beamResults = beamResults;
+    _chatStoreActions.setBeamResults(this.conversationId, beamResults.length ? beamResults : undefined);
+  }
+
+  private createBeamSuccessHandler(destReplaceMessageId: DMessage['id'] | null) {
+    return (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => {
+
+      if (destReplaceMessageId) {
+        this.messageEdit(destReplaceMessageId, messageUpdate, true, true);
+      } else {
+        const newMessage = createDMessageFromFragments('assistant', messageUpdate.fragments);
+        newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
+        newMessage.generator = messageUpdate.generator;
+        this.messageAppend(newMessage);
+      }
+
+      const chatThinkingPolicy = getChatThinkingPolicy();
+      if (chatThinkingPolicy === 'last-only')
+        this.historyStripThinking(1);
+      else if (chatThinkingPolicy === 'discard-all')
+        this.historyStripThinking(0);
+
+      this.beamStore.getState().terminateKeepingSettings();
+    };
+  }
+
   /**
    * Opens a beam over the given history
    *
@@ -249,36 +329,19 @@ export class ConversationHandler {
    * @param destReplaceMessageId If set, the output will replace the message with this id, otherwise it will append to the history
    */
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
-    const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
+    const { open: beamOpen, importRays: beamImportRays } = this.beamStore.getState();
 
-    const onBeamSuccess = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => {
+    this.beamResults = (getConversation(this.conversationId)?.beamResults ?? []).map(cloneBeamResultMessage);
+    const seedMessages = [...importMessages, ...this.beamResults];
 
-      // set output when going back to the chat
-      if (destReplaceMessageId) {
-        // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, messageUpdate, true, true); // [chat] replace assistant:Beam contentParts
-      } else {
-        // replace (may truncate) the conversation history and append a message
-        const newMessage = createDMessageFromFragments('assistant', messageUpdate.fragments); // [chat] append Beam message
-        newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
-        newMessage.generator = messageUpdate.generator;
-        // TODO: put the other rays in the metadata?! (reqby @Techfren)
-        this.messageAppend(newMessage);
-      }
-
-      // post-result: strip reasoning traces per user's thinking policy (issue #1003)
-      const chatThinkingPolicy = getChatThinkingPolicy();
-      if (chatThinkingPolicy === 'last-only')
-        this.historyStripThinking(1);
-      else if (chatThinkingPolicy === 'discard-all')
-        this.historyStripThinking(0);
-
-      // close beam
-      terminateKeepingSettings();
-    };
-
-    beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
-    importMessages.length && beamImportRays(importMessages, getChatLLMId());
+    this.isRestoringBeam = true;
+    try {
+      beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, this.createBeamSuccessHandler(destReplaceMessageId));
+      seedMessages.length && beamImportRays(seedMessages, getChatLLMId());
+    } finally {
+      this.isRestoringBeam = false;
+    }
+    this.persistBeamResultsFromStore();
   }
 
 

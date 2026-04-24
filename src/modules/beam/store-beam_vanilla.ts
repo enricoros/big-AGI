@@ -76,8 +76,9 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, isEditMode: boolean, callback: BeamSuccessCallback) => {
     const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, hadImportedRays, setRayLlmIds, setCurrentGatherLlmId } = _get();
 
-    // reset pending operations
-    terminateKeepingSettings();
+    // reset pending operations only when reopening an already-open Beam
+    if (wasAlreadyOpen)
+      terminateKeepingSettings();
 
     // validate history
     const history = [...chatHistory];
@@ -136,7 +137,6 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     }
   },
 
-
   setIsMaximized: (maximized: boolean) =>
     _set({
       isMaximized: maximized,
@@ -169,4 +169,3 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     })),
 
 });
-
