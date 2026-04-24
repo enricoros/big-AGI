@@ -46,6 +46,11 @@ type TEventType = OpenAIWire_API_Responses.StreamingEvent['type'];
 // cached config for the image_generation hosted tool, captured at response.created
 type TImageGenToolCfg = Extract<OpenAIWire_Responses_Tools.Tool, { type: 'image_generation' }>;
 
+/** Extract the image_generation tool config from the echoed tools array (API does not echo `model` per-item). Shared by streaming and non-streaming paths. */
+function _findImageGenToolCfg(tools: TResponse['tools']): TImageGenToolCfg | undefined {
+  return tools?.find((t): t is TImageGenToolCfg => t.type === 'image_generation');
+}
+
 
 /**
  * We need this just to ensure events are not out of order, as out streaming is progressive
@@ -248,8 +253,7 @@ class ResponseParserStateMachine {
   // Hosted tool config capture
 
   captureHostedToolConfigs(tools: TResponse['tools']) {
-    if (!tools?.length) return;
-    this.#imageGenToolCfg = tools.find((t): t is TImageGenToolCfg => t.type === 'image_generation');
+    this.#imageGenToolCfg = _findImageGenToolCfg(tools);
   }
 
   get imageGenToolCfg() {
@@ -765,6 +769,9 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
     if (response.model)
       pt.setModelName(response.model);
 
+    // -> Hosted tool config capture (needed for enriching done-item particles with tool params the API does not echo per-item, e.g. image_generation.model)
+    const imageGenToolCfg = _findImageGenToolCfg(response.tools);
+
     // -> Upstream Handle (for remote control: resume, cancel, delete)
     // NOTE: we don't do it for full responses, because they're supposed to be 'complete' - i.e. no 'background' execution
 
@@ -965,7 +972,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
               _imageGenerationMimeType(oItem), // infer from output_format echoed in the item
               igResult,
               igRevisedPrompt || 'Generated image',
-              AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: non-streaming path has no captured tool config, use current default
+              imageGenToolCfg?.model || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: read from echoed tools (API does not echo model per-item), fallback to current default
               igRevisedPrompt || '', // prompt used
             );
           else
