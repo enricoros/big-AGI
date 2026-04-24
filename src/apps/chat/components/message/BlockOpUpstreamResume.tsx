@@ -30,8 +30,8 @@ export function BlockOpUpstreamResume(props: {
 
   // expiration: boolean is evaluated at render (may lag briefly if nothing re-renders past expiry).
   // TimeAgo handles its own tick for the label; the button's disabled state is the only consumer of this flag.
-  const { expiresAt, runId = '' } = props.upstreamHandle;
-  const isExpired = expiresAt != null && Date.now() > expiresAt;
+  const { expiresAt /*, runId = ''*/ } = props.upstreamHandle;
+  // const isExpired = expiresAt != null && Date.now() > expiresAt;
 
   // handlers
 
@@ -102,7 +102,7 @@ export function BlockOpUpstreamResume(props: {
         {props.onResume && (
           <Tooltip title='Resume generation from last checkpoint'>
             <Button
-              disabled={isResuming || isCancelling || isDeleting || isExpired}
+              disabled={isResuming || isCancelling || isDeleting}
               loading={isResuming}
               startDecorator={<PlayArrowRoundedIcon color='success' />}
               onClick={handleResume}
