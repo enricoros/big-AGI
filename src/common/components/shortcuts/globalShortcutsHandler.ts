@@ -37,6 +37,10 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
       (shortcut.shift && !event.shiftKey) || (!shortcut.shift && event.shiftKey))
       continue;
 
+    // Skip disabled shortcuts - let the browser handle the keystroke
+    if (shortcut.disabled)
+      continue;
+
     // Skip if a text input element is focused and the shortcut opts into this guard
     if (shortcut.skipIfInput && _isTextInputFocused())
       continue;
