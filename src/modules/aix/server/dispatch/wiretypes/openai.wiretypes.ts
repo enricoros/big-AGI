@@ -447,8 +447,11 @@ export namespace OpenAIWire_API_Chat_Completions {
     search_after_date_filter: z.string().optional(), // Date filter in MM/DD/YYYY format
 
     // [Moonshot, 2026-01-26] Kimi K2.5 thinking mode control
+    // [Z.ai, 2025-xx] GLM thinking mode: type 'enabled' | 'disabled'
+    // [DeepSeek, 2026-04-23] V4 thinking mode: adds optional `reasoning_effort` ('high' | 'max')
     thinking: z.object({
       type: z.enum(['enabled', 'disabled']),
+      reasoning_effort: z.enum(['high', 'max']).optional(), // [2026-04-23, Deepseek] introduced this here - a not to Anthropic values, and semantics different from OpenRouter
     }).optional(),
 
     seed: z.number().int().optional(),

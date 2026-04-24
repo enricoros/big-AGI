@@ -51,6 +51,7 @@ const _oaiEffortOptions = [
 ] as const;
 
 const _miscEffortOptions = [
+  { value: 'max', label: 'Max', description: 'Hardest thinking' } as const,
   { value: 'high', label: 'On', description: 'Multi-step reasoning' } as const,
   { value: 'none', label: 'Off', description: 'Disable thinking mode' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Model Default' } as const,

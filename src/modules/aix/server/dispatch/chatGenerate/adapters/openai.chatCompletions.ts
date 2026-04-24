@@ -152,11 +152,20 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
   // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher) - https://docs.z.ai/guides/capabilities/thinking-mode
+  // [DeepSeek, 2026-04-23] V4 thinking control
   if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
-    if (reasoningEffort !== 'none' && reasoningEffort !== 'high') // domain validation
-      throw new Error(`${openAIDialect} only supports reasoning effort 'none' or 'high', got '${reasoningEffort}'`);
+    const allowedEffort = openAIDialect === 'deepseek' ? ['none', 'high', 'max'] : ['none', 'high'];
+    if (!allowedEffort.includes(reasoningEffort)) // domain validation
+      throw new Error(`${openAIDialect} only supports reasoning effort ${allowedEffort.join(', ')}, got '${reasoningEffort}'`);
 
-    payload.thinking = { type: reasoningEffort === 'none' ? 'disabled' : 'enabled' };
+    if (reasoningEffort === 'none')
+      payload.thinking = { type: 'disabled' };
+    else
+      payload.thinking = {
+        type: 'enabled',
+        // DeepSeek: forward the user-selected effort to tune thinking depth ('high' | 'max')
+        ...(openAIDialect === 'deepseek' && { reasoning_effort: reasoningEffort as 'high' | 'max' }),
+      };
   }
 
 
