@@ -5,6 +5,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { SystemPurposes } from '../../data';
 
 import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -275,6 +276,10 @@ export class ConversationHandler {
 
       // close beam
       terminateKeepingSettings();
+
+      // auto-title the conversation if enabled (parity with chat-persona flow — fixes #1078)
+      if (getChatAutoAI().autoTitleChat)
+        void autoConversationTitle(this.conversationId, false);
     };
 
     beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
