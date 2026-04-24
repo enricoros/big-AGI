@@ -882,11 +882,16 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
             pt.appendReasoningText(item.text);
           }
 
+          // [DEV] surface cases that diverge from our continuity round-trip expectations
+          if (!reasoningId && !reasoningEC)
+            console.warn('[DEV] AIX: OpenAI-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn', { oItem });
+          else if (!reasoningEC)
+            console.log('[DEV] AIX: OpenAI-Response-NS: reasoning item has id but no encrypted_content - stateless round-trip requires include:[\'reasoning.encrypted_content\'] on the request');
+
           // Capture the continuity handle (encrypted_content + id) for stateless multi-turn round-tripping.
-          // Attached to the ma fragment produced by the summary above; if no summary was emitted, this may
-          // attach to an unrelated preceding fragment - tolerable as the worst case is a misfiled blob.
-          // FIXME: make sure we are attaching to an 'ma' (i.e. reasoning text or somehting was emitted)
-          if (reasoningEC || reasoningId)
+          if (reasoningEC || reasoningId) {
+            // Defensive: ensure an ma fragment exists as the attach target for the svs particle below (parity with the streaming path).
+            pt.appendReasoningText('');
             pt.sendSetVendorState({
               p: 'svs',
               vendor: 'openai',
@@ -897,10 +902,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
                 },
               },
             });
-          else if (!reasoningId && !reasoningEC)
-            console.warn('[DEV] AIX: OpenAI-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn', { oItem });
-          else if (!reasoningEC)
-            console.log('[DEV] AIX: OpenAI-Response-NS: reasoning item has id but no encrypted_content - stateless round-trip requires include:[\'reasoning.encrypted_content\'] on the request');
+          }
           break;
 
         // Message contains the main 'assistant' response
