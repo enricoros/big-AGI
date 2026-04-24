@@ -7,6 +7,7 @@ import { Box, Card, Chip, Divider, Sheet, Typography } from '@mui/joy';
 import { RenderCodeMemo } from '~/modules/blocks/code/RenderCode';
 
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
+import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 import TimelapseIcon from '@mui/icons-material/Timelapse';
 
 import type { AixClientDebugger } from './memstore-aix-client-debugger';
@@ -184,12 +185,10 @@ export function AixDebuggerFrame(props: {
           {/* List of particles */}
           {frame.particles.map((particle, idx) => {
 
-            // truncated preview of particle content
+            // preview of particle content: preserve structure, trim long string fields
             let jsonPreview = '';
             try {
-              const content = particle.content;
-              jsonPreview = JSON.stringify(content).substring(0, 1024);
-              if (jsonPreview.length >= 1024) jsonPreview += '...';
+              jsonPreview = JSON.stringify(objectDeepCloneWithStringLimit(particle.content, 'aix-debugger-particle', 64));
             } catch (e) {
               jsonPreview = 'Error parsing content';
             }
