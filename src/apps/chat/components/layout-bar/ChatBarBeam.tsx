@@ -33,7 +33,10 @@ const _styles = {
     } as const,
     '& nav > ol > li:first-of-type': {
       overflow: 'hidden',
-      maxWidth: { xs: '110px', md: '140px' },
+      // allow the chat title to use available space, shrinking gracefully when the bar is narrow
+      // NOTE: already performed by virtue of the breadcrumb having agi-ellipsize on the crumbs
+      // flexShrink: 1,
+      // minWidth: '60px',
     } as const,
 
   } as const,
