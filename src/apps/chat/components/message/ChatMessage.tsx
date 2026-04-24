@@ -898,11 +898,11 @@ export function ChatMessage(props: {
             />
           )}
 
-          {/* Upstream Resume - shows whenever there's a stored handle (incl. post-reload, where no error fragment is present) */}
-          {!messagePendingIncomplete && props.isBottom && fromAssistant && messageGenerator?.upstreamHandle && (!!onMessageUpstreamResume || !!onMessageUpstreamDelete) && (
+          {/* Upstream Resume - shows whenever there's a stored handle (incl. post-reload, and while streaming so Stop can cancel the upstream run) */}
+          {props.isBottom && fromAssistant && messageGenerator?.upstreamHandle && (!!onMessageUpstreamResume || !!onMessageUpstreamDelete) && (
             <BlockOpUpstreamResume
               upstreamHandle={messageGenerator.upstreamHandle}
-              onResume={onMessageUpstreamResume ? handleUpstreamResume : undefined}
+              onResume={(!messagePendingIncomplete && onMessageUpstreamResume) ? handleUpstreamResume : undefined}
               onDelete={onMessageUpstreamDelete ? handleUpstreamDelete : undefined}
             />
           )}
