@@ -1641,7 +1641,7 @@ export namespace OpenAIWire_API_Responses {
     // NOTE: .catch() gracefully degrades to undefined since this is a non-critical enrichment path
     tools: z.array(OpenAIWire_Responses_Tools.Tool_schema).optional().catch((ctx) => {
       console.warn('[DEV] AIX: OpenAI Responses: unable to parse echoed tools, ignoring:', { tools: ctx.value });
-      return;
+      return undefined;
     }),
 
     output: z.array(OpenAIWire_Responses_Items.OutputItem_schema),
