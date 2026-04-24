@@ -401,6 +401,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (delta.container)
           _emitContainerState(pt, delta.container);
 
+        // -> Refusal details (structured) - surface category/explanation when stop_reason === 'refusal'
+        if (delta.stop_reason === 'refusal' && delta.stop_details)
+          _emitRefusalDetails(pt, delta.stop_details);
+
         // -> Token Stop Reason
         const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason, 'message_delta');
         if (tokenStopReason !== null)
@@ -511,6 +515,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       content,
       container,
       stop_reason,
+      stop_details,
       usage,
     } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
 
@@ -650,6 +655,10 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         _createAnthropicPauseTurnContinuation(content, container?.id),
       );
 
+    // -> Refusal details (structured) - surface category/explanation when stop_reason === 'refusal'
+    if (stop_reason === 'refusal' && stop_details)
+      _emitRefusalDetails(pt, stop_details);
+
     // -> Token Stop Reason (pause_turn already thrown above)
     const tokenStopReason = _fromAnthropicStopReason(stop_reason, 'parser_NS');
     if (tokenStopReason !== null)
@@ -679,6 +688,20 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
     vendor: 'anthropic',
     state: { container: { id: container.id, expiresAt: container.expires_at } },
   });
+}
+
+/**
+ * Surface structured refusal details (stop_reason === 'refusal') as inline text.
+ * Anthropic's streaming classifiers can intervene mid-generation; appending the category + explanation
+ * as text lets the user see WHY the model refused without touching terminationReason (which message_stop
+ * will set to 'done-dialect') - avoids a spurious override warning.
+ */
+function _emitRefusalDetails(pt: IParticleTransmitter, stopDetails: { type: 'refusal'; category?: 'cyber' | 'bio' | null; explanation?: string | null }): void {
+  const parts: string[] = [];
+  if (stopDetails.category) parts.push(`[${stopDetails.category}]`);
+  if (stopDetails.explanation) parts.push(stopDetails.explanation);
+  if (!parts.length) return;
+  pt.appendText(`\n\n${IssueSymbols.PromptBlocked} **Refusal:** ${parts.join(' ')}`);
 }
 
 

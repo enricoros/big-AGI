@@ -13,6 +13,10 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-04-24 - API Sync: stop_details for structured refusals
+ * - Response: added `stop_details` ({ type: 'refusal', category: 'cyber'|'bio'|null, explanation: string|null })
+ * - event_MessageDelta.delta: added `stop_details` (arrives alongside stop_reason in streaming)
+ *
  * ### 2026-03-21 - API Sync: GA tool versions, thinking display, caller updates, cache_control
  * - Tools: Added web_search_20260209 (GA), web_fetch_20260209/20260309 (GA), code_execution_20260120 (GA REPL)
  * - Request: Added top-level `cache_control` for automatic caching (Feb 2026)
@@ -825,6 +829,17 @@ export namespace AnthropicWire_API_Message_Create {
     'model_context_window_exceeded',
   ]);
 
+  /**
+   * Structured stop details, paired with stop_reason. Currently only populated when stop_reason === 'refusal'.
+   * - category: 'cyber' | 'bio' when the refusal maps to a named policy category, null otherwise
+   * - explanation: human-readable explanation (NOT guaranteed stable), null when unavailable
+   */
+  const StopDetails_schema = z.object({
+    type: z.literal('refusal'),
+    category: z.enum(['cyber', 'bio']).nullish(),
+    explanation: z.string().nullish(),
+  });
+
   /// Request
 
   export type Request = z.infer<typeof Request_schema>;
@@ -1031,6 +1046,12 @@ export namespace AnthropicWire_API_Message_Create {
     stop_sequence: z.string().nullable(),
 
     /**
+     * Structured stop details. Present when stop_reason === 'refusal' (carries category + explanation).
+     * In streaming, stop_details is null at message_start and appears on message_delta alongside stop_reason.
+     */
+    stop_details: StopDetails_schema.nullish(),
+
+    /**
      * Billing and rate-limit usage.
      * Token counts represent the underlying cost to Anthropic's systems.
      */
@@ -1088,6 +1109,10 @@ export namespace AnthropicWire_API_Message_Create {
     delta: z.object({
       stop_reason: StopReason_schema.nullable(),
       stop_sequence: z.string().nullable(),
+      /**
+       * Structured stop details - present alongside stop_reason === 'refusal' (category + explanation).
+       */
+      stop_details: StopDetails_schema.nullish(),
       /**
        * Container state updates - present when Skills/code_execution tools are used.
        * Provides container id/expiry that may differ from message_start if the container was created mid-stream.
