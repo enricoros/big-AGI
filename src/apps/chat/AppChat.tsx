@@ -583,9 +583,11 @@ export function AppChat() {
   }, []);
 
   useGlobalShortcuts('AppChat', React.useMemo(() => [
-    // focused conversation
-    { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
-    { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam Edit' },
+    // focused conversation (excluded when Beam is open so the keystroke passes through to the browser)
+    ...(beamOpenStoreInFocusedPane ? [] : [
+      { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
+      { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam Edit' },
+    ]),
     { key: 'o', ctrl: true, action: handleConversationsImportFormFilePicker },
     { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
     { key: 'n', ctrl: true, shift: true, action: () => handleConversationNewInFocusedPane(false, false) },
@@ -603,7 +605,7 @@ export function AppChat() {
     { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+  ], [beamOpenStoreInFocusedPane, focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   return <>
