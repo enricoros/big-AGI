@@ -494,6 +494,10 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 
+      // [DeepSeek, 2026-04-24] Non-streaming reasoning_content -> 'ma' reasoning part (mirror of streaming path above)
+      if (typeof message.reasoning_content === 'string' && message.reasoning_content)
+        pt.appendReasoningText(message.reasoning_content);
+
       // [OpenRouter, 2025-01-20] Handle structured reasoning_details
       if (Array.isArray(message.reasoning_details)) {
         for (const reasoningDetail of message.reasoning_details) {

@@ -189,6 +189,13 @@ export namespace OpenAIWire_Messages {
     /** [OpenRouter, 2025-01-20] Reasoning traces with multiple blocks (summary, text, encrypted). */
     reasoning_details: z.array(OpenAIWire_ContentParts.OpenRouter_ReasoningDetail_schema).optional(),
 
+    /**
+     * [DeepSeek, 2026-04-24] Chain-of-thought reasoning text.
+     * - Response: emitted by V4 thinking-by-default; parsed into a 'ma' reasoning part.
+     * - (this) Request: MUST be echoed back on assistant turns that carry tool_calls (otherwise HTTP 400: "The reasoning_content in the thinking mode must be passed back to the API.").
+     */
+    reasoning_content: z.string().nullable().optional(),
+
     // function_call: // ignored, as it's deprecated
     // name: _optionalParticipantName, // omitted by choice: generally unsupported
   });
