@@ -331,7 +331,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     stream_options: z.object({
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
-    reasoning_effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort
+    reasoning_effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(), // [OpenAI, 2024-12-17] [Perplexity, 2025-06-23] reasoning effort; [DeepSeek, 2026-04-23] 'max' added for V4
     // OpenAI and [OpenRouter, 2025-01-20] Verbosity parameter - maps to output_config.effort for Anthropic models
     // https://openrouter.ai/docs/api/reference/parameters#verbosity
     verbosity: z.enum([
@@ -342,7 +342,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [OpenRouter, 2025-11-11] Unified reasoning parameter for all models
     reasoning: z.object({
       max_tokens: z.int().optional(), // Token-based control (Anthropic, Gemini): 1024-32000
-      effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(), // Effort-based control (OpenAI o1/o3/GPT-5, xAI, DeepSeek): allocates % of max_tokens
+      effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(), // Effort-based control (OpenAI o1/o3/GPT-5, xAI, DeepSeek): allocates % of max_tokens
       enabled: z.boolean().optional(), // Simple enable with medium effort defaults
       exclude: z.boolean().optional(), // Use reasoning internally without returning it in response
     }).optional(),
@@ -448,10 +448,9 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [Moonshot, 2026-01-26] Kimi K2.5 thinking mode control
     // [Z.ai, 2025-xx] GLM thinking mode: type 'enabled' | 'disabled'
-    // [DeepSeek, 2026-04-23] V4 thinking mode: adds optional `reasoning_effort` ('high' | 'max')
+    // [DeepSeek, 2026-04-23] V4 thinking mode: same binary shape; depth is controlled via top-level `reasoning_effort`
     thinking: z.object({
       type: z.enum(['enabled', 'disabled']),
-      reasoning_effort: z.enum(['high', 'max']).optional(), // [2026-04-23, Deepseek] introduced this here - a not to Anthropic values, and semantics different from OpenRouter
     }).optional(),
 
     seed: z.number().int().optional(),

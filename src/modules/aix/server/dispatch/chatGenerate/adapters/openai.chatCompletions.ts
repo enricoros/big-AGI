@@ -145,27 +145,23 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // MoonShot maps to none->disabled / high->enabled
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
-    if (reasoningEffort === 'max') // domain validation
-      throw new Error(`OpenAI ChatCompletions API does not support '${reasoningEffort}' reasoning effort`);
+    // for: 'alibaba' | 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'openpipe' | 'togetherai' | 'xai'
     payload.reasoning_effort = reasoningEffort;
   }
 
   // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
   // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher) - https://docs.z.ai/guides/capabilities/thinking-mode
-  // [DeepSeek, 2026-04-23] V4 thinking control
+  // [DeepSeek, 2026-04-23] V4 thinking control https://api-docs.deepseek.com/guides/thinking_mode
   if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
     const allowedEffort = openAIDialect === 'deepseek' ? ['none', 'high', 'max'] : ['none', 'high'];
     if (!allowedEffort.includes(reasoningEffort)) // domain validation
       throw new Error(`${openAIDialect} only supports reasoning effort ${allowedEffort.join(', ')}, got '${reasoningEffort}'`);
 
-    if (reasoningEffort === 'none')
-      payload.thinking = { type: 'disabled' };
-    else
-      payload.thinking = {
-        type: 'enabled',
-        // DeepSeek: forward the user-selected effort to tune thinking depth ('high' | 'max')
-        ...(openAIDialect === 'deepseek' && { reasoning_effort: reasoningEffort as 'high' | 'max' }),
-      };
+    payload.thinking = { type: reasoningEffort !== 'none' ? 'enabled' : 'disabled' };
+
+    // [DeepSeek, 2026-04-23] DeepSeek also supports effort control for reasoning-enabled requests - set it here as it was carved from the reasoningEffort setter before
+    if (openAIDialect === 'deepseek' && reasoningEffort !== 'none')
+      payload.reasoning_effort = reasoningEffort;
   }
 
 

@@ -26,6 +26,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     ],
     maxCompletionTokens: 65536, // conservative default; docs advertise up to 384K
     chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
+    benchmark: { cbaElo: 1463 }, // lmarena: deepseek-v4-pro (thinking variant 1462, near-tied)
   },
   {
     idPrefix: 'deepseek-v4-flash',
@@ -38,6 +39,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     ],
     maxCompletionTokens: 65536, // conservative default; docs advertise up to 384K
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    benchmark: { cbaElo: 1439 }, // lmarena: deepseek-v4-flash-thinking (non-thinking variant 1433)
   },
   // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
   {
@@ -48,6 +50,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    benchmark: { cbaElo: 1439 }, // lmarena: deepseek-v4-flash-thinking
     isLegacy: true,
   },
   {
@@ -58,6 +61,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     interfaces: IF_4,
     maxCompletionTokens: 65536,
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    benchmark: { cbaElo: 1433 }, // lmarena: deepseek-v4-flash (non-thinking)
     isLegacy: true,
   },
 ];
