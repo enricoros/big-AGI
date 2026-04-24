@@ -60,7 +60,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     throw new Error('This service does not support function calls');
 
   // Convert the chat messages to the OpenAI 4-Messages format
-  let chatMessages = _toOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence, hotFixOpenAIOFamily);
+  let chatMessages = _toOpenAIMessages(openAIDialect, chatGenerate.systemMessage, chatGenerate.chatSequence, hotFixOpenAIOFamily);
 
   // Apply hotfixes
 
@@ -69,6 +69,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   if (hotFixAlternateUserAssistantRoles)
     chatMessages = _fixAlternateUserAssistantRoles(chatMessages);
+
+  // [DeepSeek, 2026-04-24] When tools are present and thinking isn't disabled, V4 demands reasoning_content on EVERY assistant message in history
+  // Inject '' placeholder where missing; real reasoning is attached by _toOpenAIMessages
+  if (openAIDialect === 'deepseek' && chatGenerate.tools?.length)
+    for (const m of chatMessages)
+      if (m.role === 'assistant' && m.reasoning_content === undefined)
+        m.reasoning_content = '';
 
 
   // constrained output modes - both JSON and tool invocations
@@ -452,7 +459,10 @@ function _fixVndOaiRestoreMarkdown_Inline(payload: TRequest) {
 }*/
 
 
-function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], hotFixOpenAIo1Family: boolean): TRequestMessages {
+function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], hotFixOpenAIo1Family: boolean): TRequestMessages {
+
+  // [DeepSeek, 2026-04-24] V4 thinking-by-default - reasoning_content must round-trip on tool-call turns; payload is the 'ma' part's aText (unlike Gemini/OpenAI-Responses which carry opaque handles).
+  const echoDeepseekReasoning = openAIDialect === 'deepseek';
 
   // Transform the chat messages into OpenAI's format (an array of 'system', 'user', 'assistant', and 'tool' messages)
   const chatMessages: TRequestMessages = [];
@@ -565,6 +575,8 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
         break;
 
       case 'model':
+        // Accumulate 'ma' reasoning text across this turn; echoed below onto the assistant message if it carries tool_calls (DeepSeek only).
+        let pendingReasoningText = '';
         for (const part of parts) {
           const currentMessage = chatMessages[chatMessages.length - 1];
           switch (part.pt) {
@@ -640,7 +652,9 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             case 'ma':
-              // ignore this thinking block - Anthropic only
+              // [DeepSeek only] accumulate reasoning text for the echo-back below. Other dialects ignore 'ma' (reasoning continuity flows via _vnd opaque handles, not via this adapter).
+              if (echoDeepseekReasoning && part.aType === 'reasoning' && part.aText)
+                pendingReasoningText += part.aText;
               break;
 
             case 'tool_response':
@@ -661,6 +675,18 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
           }
 
         }
+
+        // [DeepSeek] attach accumulated reasoning to this turn's assistant message only if it carries tool_calls; plain-text turns don't need the echo per docs.
+        if (echoDeepseekReasoning && pendingReasoningText) {
+          for (let i = chatMessages.length - 1; i >= 0; i--) {
+            const m = chatMessages[i];
+            if (m.role !== 'assistant') continue;
+            if (m.tool_calls?.length)
+              m.reasoning_content = pendingReasoningText;
+            break; // stop at the most recent assistant message from this turn
+          }
+        }
+
         break;
     }
   }

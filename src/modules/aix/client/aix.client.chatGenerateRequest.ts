@@ -409,11 +409,15 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'ma':
-            // Preserve reasoning continuity across turns. Two channels, any one is sufficient:
+            // Preserve reasoning continuity across turns. Three channels, any one is sufficient:
             // - Anthropic: part.textSignature / part.redactedData (bespoke fields, see Anthropic extended thinking docs)
-            // - OpenAI/Gemini: _vnd sidecar (reasoningItem.* / thoughtSignature, generic vendor-state mechanism)
+            // - OpenAI Responses / Gemini: _vnd sidecar (reasoningItem.* / thoughtSignature, opaque continuity handle)
+            // - DeepSeek V4 (OpenAI chat-completions): plain reasoning text in aText is the payload itself
             const oaiReasoning = _vnd?.openai?.reasoningItem;
-            const hasReasoningHandle = aPart.textSignature || aPart.redactedData?.length || oaiReasoning?.encryptedContent || oaiReasoning?.id;
+            const hasReasoningHandle =
+              (aPart.textSignature || aPart.redactedData?.length)
+              || (oaiReasoning?.encryptedContent || oaiReasoning?.id)
+              || (aPart.aText && aPart.aType === 'reasoning'); // DeepSeek V4 reasoning in plain text - NOTE: will send LOTS of 'ma' parts (e.g. to Gemini, which doesn't even need them)
             if (hasReasoningHandle) {
               const aModelAuxPart = aPart as AixParts_ModelAuxPart; // NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here
               modelMessage.parts.push(_vnd ? { ...aModelAuxPart, _vnd } : aModelAuxPart);
