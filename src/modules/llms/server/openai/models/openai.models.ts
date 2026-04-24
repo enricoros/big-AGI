@@ -12,6 +12,23 @@ import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } 
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: ModelVariantMap = {
 
+  // GPT-5.5 with reasoning disabled (non-thinking) - supports temperature control
+  'gpt-5.5-2026-04-23': {
+    idVariant: '::thinking-none',
+    label: 'GPT-5.5 (No-thinking)',
+    hidden: true, // hidden by default as redundant, user can unhide in settings
+    description: 'Supports temperature control for creative applications. GPT-5.5 with reasoning disabled (reasoning_effort=none).',
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching], // NO LLM_IF_OAI_Reasoning, NO LLM_IF_HOTFIX_NoTemperature
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'none', hidden: true }, // factory 'none', not changeable
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+  },
+
   // GPT-5.4 with reasoning disabled (non-thinking) - supports temperature control
   'gpt-5.4-2026-03-05': {
     idVariant: '::thinking-none',
@@ -87,6 +104,58 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // https://platform.openai.com/docs/models
 // https://platform.openai.com/docs/pricing
 export const _knownOpenAIChatModels: ManualMappings = [
+
+  /// GPT-5.5 series - Released April 23, 2026
+
+  // GPT-5.5
+  {
+    idPrefix: 'gpt-5.5-2026-04-23',
+    label: 'GPT-5.5 (2026-04-23)',
+    description: 'New baseline for complex production workflows. Stronger task execution, more precise tool use, more efficient reasoning with fewer tokens. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' }, // medium is the new default for 5.5
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 0.5 }, output: 30 },
+    // benchmark: TBD - no CBA ELO yet
+  },
+  {
+    idPrefix: 'gpt-5.5',
+    label: 'GPT-5.5',
+    symLink: 'gpt-5.5-2026-04-23',
+  },
+
+  // GPT-5.5 Pro
+  {
+    idPrefix: 'gpt-5.5-pro-2026-04-23',
+    label: 'GPT-5.5 Pro (2026-04-23)',
+    description: 'Most capable model for complex tasks. Uses more compute for smarter, more precise responses on the hardest problems.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 272000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['medium', 'high', 'xhigh'] }, // Pro: no low/none
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 30, output: 180 },
+    // benchmark: TBD
+  },
+  {
+    idPrefix: 'gpt-5.5-pro',
+    label: 'GPT-5.5 Pro',
+    symLink: 'gpt-5.5-pro-2026-04-23',
+  },
+
 
   /// GPT-5.4 series - Released March 5, 2026
 
@@ -1250,6 +1319,12 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5.5
+  'gpt-5.5-20',
+  'gpt-5.5-pro-20',
+  'gpt-5.5-pro',
+  'gpt-5.5-chat-latest',
+  'gpt-5.5',
   // GPT-5.4
   'gpt-5.4-20',
   'gpt-5.4-pro-20',
@@ -1449,6 +1524,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
   // typemap to known models
   const ortOaiRefMap: Record<string, string | null> = {
     // renames
+    'gpt-5.5-chat': 'gpt-5.5-2026-04-23', // no chat-latest yet, map to snapshot
     'gpt-5.4-chat': 'gpt-5.4-2026-03-05', // no chat-latest yet, map to snapshot
     'gpt-5.3-chat': 'gpt-5.3-chat-latest',
     'gpt-5.2-chat': 'gpt-5.2-chat-latest',
