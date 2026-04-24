@@ -72,7 +72,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Apr 22, 2026)
+// Pricing based on https://ai.google.dev/pricing (Apr 24, 2026)
 
 const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
@@ -262,8 +262,10 @@ const _knownGeminiModels: ({
 
   /// Generation 3.0
 
-  // 3.0 Pro (Preview) - Released November 18, 2025; DEPRECATED: shutdown March 9, 2026 (still served by API as of Apr 17, 2026)
+  // 3.0 Pro (Preview) - Released November 18, 2025; SHUT DOWN March 9, 2026 - now silently routed to gemini-3.1-pro-preview
+  // Kept hidden (still returned by API) to avoid confusing users with a silently-redirected model.
   {
+    hidden: true, // March 9, 2026: API silently routes 'gemini-3-pro-preview' to 'gemini-3.1-pro-preview' - hide to prevent user confusion
     id: 'models/gemini-3-pro-preview',
     labelOverride: 'Gemini 3 Pro Preview',
     isPreview: true,
@@ -335,6 +337,7 @@ const _knownGeminiModels: ({
 
   // 2.5 Pro (Stable) - Released June 17, 2025; DEPRECATED: shutdown June 17, 2026
   {
+    hidden: true, // outperformed by 3.1 Pro (1493) and even 3 Flash (1474) - deprecated in 2 months
     id: 'models/gemini-2.5-pro',
     labelOverride: 'Gemini 2.5 Pro',
     deprecated: '2026-06-17',
@@ -412,6 +415,7 @@ const _knownGeminiModels: ({
 
   // 2.5 Flash
   {
+    hidden: true, // outperformed by 3 Flash Preview (1474 vs 1411) - deprecated in 2 months
     id: 'models/gemini-2.5-flash',
     labelOverride: 'Gemini 2.5 Flash',
     deprecated: '2026-06-17',
@@ -467,6 +471,7 @@ const _knownGeminiModels: ({
 
   // 2.5 Flash-Based: Gemini Robotics-ER 1.5 Preview - Released September 25, 2025; DEPRECATED: shutdown April 30, 2026
   {
+    hidden: true, // superseded by Robotics-ER 1.6 - shutdown April 30, 2026
     id: 'models/gemini-robotics-er-1.5-preview',
     labelOverride: 'Gemini Robotics-ER 1.5 Preview',
     isPreview: true,
@@ -573,6 +578,7 @@ const _knownGeminiModels: ({
 
   // 2.0 Flash - DEPRECATED: shutdown June 1, 2026 (announced Feb 18, 2026)
   {
+    hidden: true, // outclassed by all Flash models in 2.5/3.x series - shutdown in ~5 weeks
     id: 'models/gemini-2.0-flash-001',
     deprecated: '2026-06-01',
     chatPrice: gemini20FlashPricing,
@@ -580,6 +586,7 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1360 }, // gemini-2.0-flash-001
   },
   {
+    hidden: true, // outclassed by all Flash models in 2.5/3.x series - shutdown in ~5 weeks
     id: 'models/gemini-2.0-flash',
     symLink: 'models/gemini-2.0-flash-001',
     deprecated: '2026-06-01',
@@ -591,6 +598,7 @@ const _knownGeminiModels: ({
 
   // 2.0 Flash Lite - DEPRECATED: shutdown June 1, 2026 (announced Feb 18, 2026)
   {
+    hidden: true, // outclassed by 2.5/3.1 Flash-Lite - shutdown in ~5 weeks
     id: 'models/gemini-2.0-flash-lite',
     chatPrice: gemini20FlashLitePricing,
     symLink: 'models/gemini-2.0-flash-lite-001',
@@ -599,6 +607,7 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1310 },
   },
   {
+    hidden: true, // outclassed by 2.5/3.1 Flash-Lite - shutdown in ~5 weeks
     id: 'models/gemini-2.0-flash-lite-001',
     chatPrice: gemini20FlashLitePricing,
     deprecated: '2026-06-01',
