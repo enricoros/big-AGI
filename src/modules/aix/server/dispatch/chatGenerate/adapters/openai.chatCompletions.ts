@@ -37,6 +37,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
 
   // Dialect incompatibilities -> Hotfixes
+  // [DeepSeek, 2026-04-24] V4 doesn't require strict alternation but we keep coalescing for cleanliness; the reducer only merges assistant/user, tool messages stay separate (parallel tool_calls).
   const hotFixAlternateUserAssistantRoles = openAIDialect === 'deepseek' || openAIDialect === 'perplexity';
   const hotFixRemoveEmptyMessages = openAIDialect === 'moonshot' || openAIDialect === 'perplexity'; // [Moonshot, 2026-02-10] consecutive assistant messages (empty + content) break Moonshot - coalesce to fix
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
@@ -353,19 +354,23 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
       };
     }
 
-    // if the current item has the same role as the last item, concatenate their content
+    // If current item has the same role as the last, coalesce ONLY assistant/user.
+    // Tool/system/developer must stay separate - tool messages each pair with a tool_call_id; merging corrupts the protocol.
     if (acc.length > 0) {
       const lastItem = acc[acc.length - 1];
       if (lastItem.role === historyItem.role) {
         if (lastItem.role === 'assistant') {
           lastItem.content += hotFixSquashTextSeparator + historyItem.content;
-        } else if (lastItem.role === 'user') {
+          return acc;
+        }
+        if (lastItem.role === 'user') {
           lastItem.content = [
             ...(Array.isArray(lastItem.content) ? lastItem.content : [OpenAIWire_ContentParts.TextContentPart(lastItem.content)]),
             ...(Array.isArray(historyItem.content) ? historyItem.content : historyItem.content ? [OpenAIWire_ContentParts.TextContentPart(historyItem.content)] : []),
           ];
+          return acc;
         }
-        return acc;
+        // fall through to push for tool/system/developer - each stays its own message
       }
     }
 
