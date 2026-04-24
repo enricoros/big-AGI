@@ -23,7 +23,11 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
   export const getPath = (id: string) => `/v1beta/interactions/${encodeURIComponent(id)}`;
 
+  // DELETE. Removes the stored record. Orthogonal to cancel; when removed the original connection may still be running and streaming
   export const deletePath = (id: string) => `/v1beta/interactions/${encodeURIComponent(id)}`;
+
+  // POST. Only cancels background interactions that are still running
+  export const cancelPath = (id: string) => `/v1beta/interactions/${encodeURIComponent(id)}/cancel`;
 
 
   // -- Request Body (POST /v1beta/interactions) --

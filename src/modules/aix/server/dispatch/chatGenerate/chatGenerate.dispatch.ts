@@ -398,6 +398,21 @@ export async function executeChatGenerateDelete(access: AixAPI_Access, handle: A
     case 'gemini':
       if (handle.uht !== 'vnd.gem.interactions')
         throw new Error(`Delete handle mismatch for gemini: expected 'vnd.gem.interactions', got '${handle.uht}'`);
+
+      // Gemini: cancel the background run first (stops token generation), then DELETE the stored record.
+      // The DELETE endpoint only removes the resource; it does NOT cancel an in-flight run.
+      // Cancel may 404 "Method not found" on the Developer API (API-key mode, googleapis/python-genai#1971) -
+      // we log the outcome and proceed to DELETE so local cleanup still happens.
+      const { url: cancelUrl, headers: cancelHeaders } = geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.cancelPath(handle.runId), false);
+      try {
+        const cancelResp = await fetchResponseOrTRPCThrow({ url: cancelUrl, method: 'POST', body: {}, headers: cancelHeaders, signal: abortSignal, name: 'Aix.Gemini.Interactions.cancel', throwWithoutName: true });
+        console.log(`[AIX] Gemini.Interactions.cancel: ok=${cancelResp.ok} status=${cancelResp.status}`);
+      } catch (error: any) {
+        if (abortSignal.aborted) throw error;
+        const status = error instanceof TRPCFetcherError ? error.httpStatus : undefined;
+        console.log(`[AIX] Gemini.Interactions.cancel: failed status=${status ?? '?'} msg=${error?.message ?? 'unknown'}`);
+      }
+
       ({ url, headers } = geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.deletePath(handle.runId), false));
       name = 'Aix.Gemini.Interactions.delete';
       break;
