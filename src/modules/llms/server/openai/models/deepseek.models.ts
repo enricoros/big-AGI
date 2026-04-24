@@ -11,6 +11,7 @@ const _knownDeepseekChatModels: ManualMappings = [
   // [Models and Pricing](https://api-docs.deepseek.com/quick_start/pricing)
   // [List Models](https://api-docs.deepseek.com/api/list-models)
   // [Release Notes - V3.2](https://api-docs.deepseek.com/news/news251201) - Released 2025-12-01
+  // Last re-verified 2026-04-24: V3.2 pricing and models unchanged; V4 not yet released
   {
     idPrefix: 'deepseek-reasoner',
     label: 'DeepSeek V3.2 (Reasoner)',
