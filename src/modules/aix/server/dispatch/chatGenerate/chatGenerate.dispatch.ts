@@ -25,7 +25,7 @@ import { createAnthropicFileInlineTransform } from './parsers/anthropic.transfor
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
-import { createGeminiInteractionsParser } from './parsers/gemini.interactions.parser';
+import { createGeminiInteractionsParserSSE } from './parsers/gemini.interactions.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 
@@ -37,7 +37,8 @@ export type ChatGenerateDispatch = {
   /** Used by dialects that need multi-step I/O. The returned response is consumed normally via demuxerFormat/chatGenerateParse */
   customConnect?: (signal: AbortSignal) => Promise<Response>;
   bodyTransform?: AixDemuxers.StreamBodyTransform;
-  demuxerFormat: AixDemuxers.StreamDemuxerFormat;
+  /** Source of truth for the consumer mode: null = NS */
+  demuxerFormat: null | AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
   particleTransform?: ChatGenerateParticleTransformFunction;
 };
@@ -173,6 +174,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
 
       // [Gemini Interactions API - ALPHA TEST] SSE-native: POST with stream=true, upstream returns event-stream we pipe through the fast-sse demuxer.
       if (model.vndGeminiAPI === 'interactions-agent') {
+        if (!streaming) console.warn(`[DEV] Gemini Interactions API - only supported in SSE mode, ignoring streaming=false for model ${model.id}`);
         const request: ChatGenerateDispatchRequest = {
           ...geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.postPath, false),
           method: 'POST',
@@ -186,8 +188,9 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
               if (signal.aborted) throw error; // preserve abort identity for the executor's abort classifier
               throw new Error(`Gemini Interactions POST: ${error?.message || 'upstream error'}`); // rewrapping TRPCFetcherError as plain Error makes the retrier treat it as non-retryable
             }),
+          /** Upstream hardcodes stream=true + background=true (required by deep-research agents) and has no non-streaming alternative. */
           demuxerFormat: 'fast-sse',
-          chatGenerateParse: createGeminiInteractionsParser(requestedModelName),
+          chatGenerateParse: createGeminiInteractionsParserSSE(requestedModelName),
         };
       }
 
@@ -323,11 +326,13 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       // [Gemini Interactions] Reattach via SSE stream - GET /interactions/{id}?stream=true replays all events from the start (intentional - client's ContentReassembler replaces message content on reattach; partial resume via last_event_id is deliberately NOT used).
       if (resumeHandle.uht !== 'vnd.gem.interactions')
         throw new Error(`Resume handle mismatch for gemini: expected 'vnd.gem.interactions', got '${resumeHandle.uht}'`);
+      if (!streaming) console.warn(`[DEV] Gemini Interactions API - Resume only supported in SSE mode, ignoring streaming=false for ${resumeHandle.runId}`);
       const { url: _baseUrl, headers: _headers } = geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.getPath(resumeHandle.runId /* Gemini interaction.id */), false);
       return {
         request: { url: `${_baseUrl}${_baseUrl.includes('?') ? '&' : '?'}stream=true`, method: 'GET', headers: _headers },
+        /** Again, only support SSE here, for now (see comment in `createChatGenerateDispatch`) */
         demuxerFormat: 'fast-sse',
-        chatGenerateParse: createGeminiInteractionsParser(null /* model name unknown at resume time - caller's DMessage already has it */),
+        chatGenerateParse: createGeminiInteractionsParserSSE(null /* model name unknown at resume time - caller's DMessage already has it */),
       };
     }
 

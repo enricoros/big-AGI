@@ -44,7 +44,6 @@ export class OperationRetrySignal extends Error {
  */
 export async function* executeChatGenerateWithOperationRetry(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
-  streaming: boolean,
   abortSignal: AbortSignal,
   _d: AixDebugObject,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
@@ -55,7 +54,7 @@ export async function* executeChatGenerateWithOperationRetry(
   while (true) {
     try {
 
-      yield* executeChatGenerateDispatch(dispatchCreatorFn, streaming, abortSignal, _d, {
+      yield* executeChatGenerateDispatch(dispatchCreatorFn, abortSignal, _d, {
         retriesAvailable: attemptNumber < maxAttempts,
       });
 

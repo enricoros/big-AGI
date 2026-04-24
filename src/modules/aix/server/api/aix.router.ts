@@ -30,7 +30,7 @@ export const aixRouter = createTRPCRouter({
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
 
-      yield* executeChatGenerateWithContinuation(dispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
     }),
 
   /**
@@ -42,14 +42,14 @@ export const aixRouter = createTRPCRouter({
       access: AixWire_API.Access_schema,
       upstreamHandle: AixWire_API.UpstreamHandle_schema, // reattach uses a handle instead of 'model + chatGenerate'
       context: AixWire_API.ContextChatGenerate_schema,
-      streaming: z.literal(true), // reattach is always streaming
+      streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.pick({ debugDispatchRequest: true }).optional(), // debugDispatchRequest
     }))
     .mutation(async function* ({ input, ctx }) {
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.upstreamHandle, input.streaming);
 
-      yield* executeChatGenerateWithContinuation(dispatchCreator, input.streaming, ctx.reqSignal, _d);
+      yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
     }),
 
   /**

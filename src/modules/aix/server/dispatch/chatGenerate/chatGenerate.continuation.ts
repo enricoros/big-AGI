@@ -55,7 +55,6 @@ export class DispatchContinuationSignal extends Error {
  */
 export async function* executeChatGenerateWithContinuation(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
-  streaming: boolean,
   abortSignal: AbortSignal,
   _d: AixDebugObject,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
@@ -65,7 +64,7 @@ export async function* executeChatGenerateWithContinuation(
   for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
     try {
 
-      yield* executeChatGenerateWithOperationRetry(currentCreator, streaming, abortSignal, _d);
+      yield* executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d);
       return; // normal completion
 
     } catch (error) {

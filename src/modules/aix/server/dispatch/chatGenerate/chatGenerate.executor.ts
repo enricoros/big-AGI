@@ -26,7 +26,6 @@ import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
  */
 export async function* executeChatGenerateDispatch(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
-  streaming: boolean,
   intakeAbortSignal: AbortSignal,
   _d: AixDebugObject,
   parseContext?: { retriesAvailable: boolean },
@@ -59,7 +58,7 @@ export async function* executeChatGenerateDispatch(
   const innerStream = (async function* () {
 
     // Consume dispatch response
-    if (!streaming)
+    if (dispatch.demuxerFormat === null /* NS */)
       yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
     else
       yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);

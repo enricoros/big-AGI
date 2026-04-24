@@ -37,7 +37,7 @@ export async function* clientSideChatGenerate(
       return dispatch;
     });
 
-  yield* executeChatGenerateWithContinuation(dispatchCreator, streaming, abortSignal, _d);
+  yield* executeChatGenerateWithContinuation(dispatchCreator, abortSignal, _d);
 }
 
 /**
@@ -48,7 +48,7 @@ export async function* clientSideReattachUpstream(
   access: AixAPI_Access,
   resumeHandle: AixAPI_ResumeHandle,
   context: AixAPI_Context_ChatGenerate,
-  streaming: true,
+  streaming: boolean,
   connectionOptions: AixAPI_ConnectionOptions_ChatGenerate,
   abortSignal: AbortSignal,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
@@ -56,7 +56,7 @@ export async function* clientSideReattachUpstream(
   const _d: AixDebugObject = _createClientDebugConfig(access, connectionOptions, context.name);
   const dispatchCreator = () => createChatGenerateResumeDispatch(access, resumeHandle, streaming);
 
-  yield * executeChatGenerateWithContinuation(dispatchCreator, streaming, abortSignal, _d);
+  yield * executeChatGenerateWithContinuation(dispatchCreator, abortSignal, _d);
 }
 
 /**

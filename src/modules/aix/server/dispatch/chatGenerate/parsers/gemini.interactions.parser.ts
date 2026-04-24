@@ -44,7 +44,7 @@ type BlockState = {
  * the cursor (or from start if omitted). Our parser is position-idempotent within a single run
  * because the transmitter's state carries across events.
  */
-export function createGeminiInteractionsParser(requestedModelName: string | null): ChatGenerateParseFunction {
+export function createGeminiInteractionsParserSSE(requestedModelName: string | null): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
   let timeToFirstContent: number | undefined;

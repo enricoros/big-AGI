@@ -653,7 +653,7 @@ function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): Aix
 
 
 export async function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interfaces'], aixChatGenerate: AixAPIChatGenerate_Request, modelName: string): Promise<{
-  shallDisableStreaming: boolean;
+  hotfixNoStream: boolean;
   workaroundsCount: number;
 }> {
 
@@ -676,12 +676,12 @@ export async function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['
     workaroundsCount += await clientHotFixGenerateRequest_ConvertWebP(aixChatGenerate, 'image/jpeg');
 
   // Disable streaming for select chat models that don't support it (e.g. o1-preview (old) and o1-2024-12-17)
-  const shallDisableStreaming = llmInterfaces.includes(LLM_IF_HOTFIX_NoStream);
+  const hotfixNoStream = llmInterfaces.includes(LLM_IF_HOTFIX_NoStream);
 
   if (workaroundsCount > 0)
     console.warn(`[DEV] Working around '${modelName}' model limitations: client-side applied ${workaroundsCount} workarounds`);
 
-  return { shallDisableStreaming, workaroundsCount };
+  return { hotfixNoStream, workaroundsCount };
 
 }
 
