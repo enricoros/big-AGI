@@ -19,6 +19,21 @@ const INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES = 250_000; // skip resize for small
 
 
 /**
+ * Wishlist marker: hosted tool calls (web_search_call, image_generation_call, code_interpreter_call, ...)
+ * are rendered via ephemeral OperationState/inline-asset paths and are NOT round-tripped as structured
+ * fragments. This breaks stateless multi-turn with reasoning models. See PRD.FUTURE-atol.md "Wishlist:
+ * Hosted tool invocations as first-class fragments".
+ */
+// const _hostedToolWishlistSeen = new Set<string>();
+function _hostedToolWishlistHint(family: 'web_search' | 'image_generation' | 'code_interpreter' | 'custom_tool'): void {
+  // if (_hostedToolWishlistSeen.has(family)) return;
+  // _hostedToolWishlistSeen.add(family);
+  // NOTE: disable the log because it's logging all the time evenrwyehre; just implement this
+  // console.log(`[DEV] AIX: ATOL wishlist - hosted '${family}' call observed; not round-tripped as a structured fragment yet (see kb/product/PRD.FUTURE-atol.md)`);
+}
+
+
+/**
  * Safely sanitizes a URL for display in placeholders by removing query parameters and paths
  * to prevent leaking sensitive information while keeping the domain recognizable.
  */
@@ -452,6 +467,7 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             break;
 
           case 'image_generation_call':
+            _hostedToolWishlistHint('image_generation');
             // -> IGC: process completed image generation using 'ii' particle for inline images
             const { id: igId, result: igResult, revised_prompt: igRevisedPrompt } = doneItem;
             const igDoneText = !igRevisedPrompt?.length ? 'Image generated'
@@ -966,6 +982,7 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
           break;
 
         case 'image_generation_call':
+          _hostedToolWishlistHint('image_generation');
           // -> IGC: process completed image generation using 'ii' particle for inline images
           const { result: igResult, revised_prompt: igRevisedPrompt } = oItem;
           // Create inline image with base64 data
@@ -1159,6 +1176,7 @@ function _imageGenerationMimeType(item: { output_format?: string }): string {
  * - citations: High-quality links (2-3) via annotations in message content
  */
 function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'web_search_call' }>, opId: string): void {
+  _hostedToolWishlistHint('web_search');
   const { action, status } = webSearchCall;
 
   const doneOpts = { opId, state: 'done' } as const;
@@ -1212,6 +1230,7 @@ function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: 
  * - addCodeExecutionResponse for each output result
  */
 function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
+  _hostedToolWishlistHint('code_interpreter');
   const { id, code, outputs, status /*,container_id*/ } = codeInterpreterCall;
 
   // <- Emit code (like Gemini's executableCode)
