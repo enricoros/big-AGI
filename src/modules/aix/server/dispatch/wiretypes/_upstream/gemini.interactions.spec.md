@@ -1,7 +1,7 @@
 <!--
   Upstream snapshot - DO NOT EDIT - run _upstream/sync.sh to refresh
   Source: https://ai.google.dev/api/interactions-api.md.txt
-  Synced: 2026-04-23
+  Synced: 2026-04-24
   Consumed by: gemini.interactions.wiretypes.ts, gemini.interactions.parser.ts, gemini.interactionsCreate.ts, gemini.interactionsPoller.ts
   Companion: ./gemini.interactions.guide.md (the Interactions API guide)
 -->

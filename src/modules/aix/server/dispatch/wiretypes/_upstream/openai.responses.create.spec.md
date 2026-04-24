@@ -1,7 +1,7 @@
 <!--
   Upstream snapshot - DO NOT EDIT - run _upstream/sync.sh to refresh
   Source: https://developers.openai.com/api/reference/resources/responses/methods/create/index.md
-  Synced: 2026-04-23
+  Synced: 2026-04-24
   Consumed by: openai.wiretypes.ts, openai.responses.parser.ts, openai.responsesCreate.ts
 -->
 
