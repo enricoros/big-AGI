@@ -16,6 +16,7 @@ const ARM_TIMEOUT_MS = 4000;
  */
 export function BlockOpUpstreamResume(props: {
   upstreamHandle: Exclude<DMessageGenerator['upstreamHandle'], undefined>,
+  pending?: boolean; // true while the message is actively streaming; labels the Delete button as "Stop"
   onResume?: () => void | Promise<void>;
   onCancel?: () => void | Promise<void>;
   onDelete?: () => void | Promise<void>;
@@ -126,7 +127,7 @@ export function BlockOpUpstreamResume(props: {
         )}
 
         {props.onDelete && (
-          <Tooltip title={deleteArmed ? 'Click again to confirm - cancels the run upstream (no resume after)' : 'Cancel the upstream run'}>
+          <Tooltip title={deleteArmed ? 'Click again to confirm - cancels the run upstream (no resume after)' : (props.pending ? 'Stop this response and cancel the upstream run' : 'Cancel the upstream run')}>
             <Button
               loading={isDeleting}
               color={deleteArmed ? 'danger' : 'neutral'}
@@ -135,7 +136,7 @@ export function BlockOpUpstreamResume(props: {
               onClick={handleDelete}
               disabled={isResuming || isCancelling || isDeleting}
             >
-              {deleteArmed ? 'Confirm?' : 'Cancel'}
+              {deleteArmed ? 'Confirm?' : (props.pending ? 'Stop' : 'Cancel')}
             </Button>
           </Tooltip>
         )}

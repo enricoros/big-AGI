@@ -902,6 +902,7 @@ export function ChatMessage(props: {
           {props.isBottom && fromAssistant && messageGenerator?.upstreamHandle && (!!onMessageUpstreamResume || !!onMessageUpstreamDelete) && (
             <BlockOpUpstreamResume
               upstreamHandle={messageGenerator.upstreamHandle}
+              pending={messagePendingIncomplete}
               onResume={(!messagePendingIncomplete && onMessageUpstreamResume) ? handleUpstreamResume : undefined}
               onDelete={onMessageUpstreamDelete ? handleUpstreamDelete : undefined}
             />
