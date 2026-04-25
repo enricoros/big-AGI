@@ -56,6 +56,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   // Token stop reason
   private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
+  private tokenStopError: string | undefined = undefined;
 
   // Metrics
   private accMetrics: AixWire_Particles.CGSelectMetrics | undefined = undefined;
@@ -105,6 +106,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
         cg: 'end',
         terminationReason: this.terminationReason,
         tokenStopReason: this.tokenStopReason, // See NOTE above - || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
+        ...(this.tokenStopError && { tokenStopError: this.tokenStopError }),
       });
       // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
       // this.terminationReason = null;
@@ -201,12 +203,13 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.setDialectEnded('issue-dialect');
   }
 
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, errorText?: string) {
     if (SERVER_DEBUG_WIRE)
-      console.log('|token-stop|', reason);
+      console.log('|token-stop|', reason, errorText ?? '');
     if (this.tokenStopReason && this.tokenStopReason !== reason)
       console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
     this.tokenStopReason = reason;
+    if (errorText) this.tokenStopError = errorText;
   }
 
 

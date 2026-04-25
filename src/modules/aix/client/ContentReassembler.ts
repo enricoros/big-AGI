@@ -905,9 +905,12 @@ export class ContentReassembler {
   /**
    * Stores raw termination data from the wire - classification deferred to finalizeReassembly()
    */
-  private onCGEnd({ terminationReason, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
+  private onCGEnd({ terminationReason, tokenStopReason, tokenStopError }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
     this.S.terminationReason = terminationReason;
     this.S.dialectStopReason = tokenStopReason;
+    // Vendor-composed stop error, surfaced as a complementary error fragment alongside the generic classification message
+    if (tokenStopError)
+      this._appendErrorFragment(tokenStopError);
   }
 
   /**

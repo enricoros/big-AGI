@@ -15,8 +15,8 @@ export interface IParticleTransmitter {
   /** End the current part and flush it, which also calls `setDialectEnded('issue-dialect')` */
   setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
 
-  /** Communicates the finish reason to the client - Data only, this does not do Control, like the above */
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
+  /** Communicates the finish reason to the client - Data only. Optional `errorText` is a vendor-composed string rendered as a complementary error fragment alongside the generic classification message. */
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, errorText?: string): void;
 
 
   // Parts data //

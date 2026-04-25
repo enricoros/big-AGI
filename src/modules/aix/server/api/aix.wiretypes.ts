@@ -689,7 +689,7 @@ export namespace AixWire_Particles {
 
   export type ChatControlOp =
   // | { cg: 'start' } // not really used for now
-    | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */ }
+    | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */, tokenStopError?: string /* optional vendor-composed human-readable detail paired with tokenStopReason */ }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'aix-info', ait: 'flow-cont' /* important: establishes a checkpoint */, text: string }
     | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string }

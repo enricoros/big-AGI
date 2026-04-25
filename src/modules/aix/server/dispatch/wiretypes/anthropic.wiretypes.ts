@@ -831,12 +831,11 @@ export namespace AnthropicWire_API_Message_Create {
 
   /**
    * Structured stop details, paired with stop_reason. Currently only populated when stop_reason === 'refusal'.
-   * - category: 'cyber' | 'bio' when the refusal maps to a named policy category, null otherwise
-   * - explanation: human-readable explanation (NOT guaranteed stable), null when unavailable
+   * Both `type` and `category` are loosely typed for forward-compat - parser warns on unknown `type`.
    */
   const StopDetails_schema = z.object({
-    type: z.literal('refusal'),
-    category: z.enum(['cyber', 'bio']).nullish(),
+    type: z.enum(['refusal']).or(z.string()),
+    category: z.enum(['cyber', 'bio']).or(z.string()).nullish(),
     explanation: z.string().nullish(),
   });
 
