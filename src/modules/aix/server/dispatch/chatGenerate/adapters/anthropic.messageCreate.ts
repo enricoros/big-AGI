@@ -415,8 +415,10 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           case 'ma':
-            if (!part.aText && !part.textSignature && !part.redactedData)
-              throw new Error('Extended Thinking data is missing');
+            if (!part.aText && !part.textSignature && !part.redactedData) {
+              console.warn('Anthropic: broken empty thinking block', { part });
+              break;
+            }
             if (part.aText && part.textSignature)
               yield { role: 'assistant', content: AnthropicWire_Blocks.ThinkingBlock(part.aText, part.textSignature) };
             for (const redactedData of part.redactedData || [])
