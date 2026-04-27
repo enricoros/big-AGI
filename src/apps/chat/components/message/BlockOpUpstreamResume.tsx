@@ -134,7 +134,7 @@ export function BlockOpUpstreamResume(props: {
               variant={deleteArmed ? 'solid' : 'outlined'}
               startDecorator={<StopRoundedIcon />}
               onClick={handleDelete}
-              disabled={isResuming || isCancelling || isDeleting}
+              disabled={isCancelling || isDeleting}
             >
               {deleteArmed ? 'Confirm?' : (props.pending ? 'Stop' : 'Cancel')}
             </Button>
@@ -148,7 +148,7 @@ export function BlockOpUpstreamResume(props: {
         </Typography>
       )}
 
-      {!!expiresAt && <Typography level='body-xs' sx={{ fontSize: '0.65rem', opacity: 0.6 }}>
+      {!props.pending && !!expiresAt && <Typography level='body-xs' sx={{ fontSize: '0.65rem', opacity: 0.6 }}>
         {/*Run ID: {runId.slice(0, 12)}...*/}
         {/*{!!expiresAt && <> · Expires <TimeAgo date={expiresAt} /></>}*/}
         Expires <TimeAgo date={expiresAt} />
