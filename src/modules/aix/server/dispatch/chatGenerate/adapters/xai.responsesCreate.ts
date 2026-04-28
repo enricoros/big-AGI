@@ -8,7 +8,7 @@ import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } fro
 
 
 // configuration
-const AIX_XAI_ADD_ENCRYPTED_REASONING = false;
+const AIX_XAI_ADD_ENCRYPTED_REASONING = true;
 // const AIX_XAI_ADD_INLINE_CITATIONS = true; // yes but we don't know how yet
 
 
