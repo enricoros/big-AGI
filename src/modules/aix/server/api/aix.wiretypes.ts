@@ -104,9 +104,18 @@ export namespace AixWire_Parts {
       openai: z.object({
         // Responses API reasoning item continuity handle. Sub-object mirrors the shape of the source output item
         // and parallels _vnd Anthropic's { container: { id, expiresAt } } pattern.
+        // IMPORTANT: this blob is OpenAI-server-encrypted; do NOT round-trip to xAI (different keys + private item ids).
         reasoningItem: z.object({
           id: z.string().optional(),               // rs_... - item id
           encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
+        }).optional(),
+      }).optional(),
+      xai: z.object({
+        // xAI Responses API reasoning item continuity handle. Same WIRE shape as OpenAI's, but the encrypted_content
+        // is encrypted with xAI's keys and the item id references xAI server state - NOT cross-portable to OpenAI.
+        reasoningItem: z.object({
+          id: z.string().optional(),
+          encryptedContent: z.string().optional(),
         }).optional(),
       }).optional(),
       // NOTE: we do NOT use this mechanism for per-vendor customization/ALT for parts
@@ -786,6 +795,7 @@ export namespace AixWire_Particles {
       | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
       | { vendor: 'openai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level (attach to ma reasoning fragment)
+      | { vendor: 'xai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level - DISTINCT from openai (different encryption keys, different server-side ids)
       // | { vendor: string, state: Record<string, unknown> } // disable catch-all becasue it forces casts in type discriminations
       )
     ;

@@ -495,12 +495,15 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
 
             case 'ma':
               // Preserve reasoning continuity across turns via _vnd.openai.reasoningItem (set by openai.responses.parser).
-              // Stateless (store=false, our default): encryptedContent is the protocol-critical blob for the provider to reconstruct internal reasoning state.
+              // Round-trip ONLY when both encrypted_content AND id are present (canonical, complete handle).
+              // - bare id without EC -> 404 "Item with id rs_... not found" in stateless mode
+              // - bare EC without id -> torn handle, undefined behavior across providers/versions
+              // Defense-in-depth: matches the parser's capture gate; rejects torn handles even if any sneak through.
+              // ma fragments without an openai handle are common (e.g., DeepSeek reasoning_content emits ma fragments
+              // with no continuity blob) - skip without warning to avoid log noise on cross-vendor history.
               const oaiReasoning = modelPart._vnd?.openai?.reasoningItem;
-              if (oaiReasoning?.encryptedContent || oaiReasoning?.id)
+              if (oaiReasoning?.encryptedContent && oaiReasoning?.id)
                 newReasoningMessage(oaiReasoning.id, oaiReasoning.encryptedContent);
-              else
-                console.warn('[DEV] OpenAI Responses: skipping reasoning item due to missing encrypted content and id', { modelPart });
               break;
 
             case 'tool_response':

@@ -247,9 +247,9 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'zai':
 
       // newer: OpenAI Responses API, for models that support it and all XAI models
-      const isResponsesAPI = !!model.vndOaiResponsesAPI;
       const isXAIModel = dialect === 'xai'; // All XAI models are accessed via Responses now
-      if (isResponsesAPI || isXAIModel) {
+      const isResponsesAPI = !!model.vndOaiResponsesAPI || isXAIModel;
+      if (isResponsesAPI) {
         return {
           request: {
             ...openAIAccess(access, model.id, OPENAI_API_PATHS.responses),
@@ -264,11 +264,17 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
              *
              * Note: Response format is compatible with OpenAI parser.
              */
-            body: isXAIModel ? aixToXAIResponses(model, chatGenerate, streaming, enableResumability)
+            body: isXAIModel
+              ? aixToXAIResponses(model, chatGenerate, streaming, enableResumability)
               : aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
-          chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
+          // IMPORTANT: tag the parser with the actual vendor so reasoning continuity blobs
+          // (encrypted_content + rs_... id) land in the matching _vnd namespace and never leak
+          // across providers (different keys + different server-side state).
+          chatGenerateParse: streaming
+            ? createOpenAIResponsesEventParser(isXAIModel ? 'xai' : 'openai')
+            : createOpenAIResponseParserNS(isXAIModel ? 'xai' : 'openai'),
         };
       }
 
@@ -319,7 +325,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       return {
         request: { url: `${url}?${queryParams.toString()}`, method: 'GET', headers },
         demuxerFormat: streaming ? 'fast-sse' : null,
-        chatGenerateParse: streaming ? createOpenAIResponsesEventParser() : createOpenAIResponseParserNS(),
+        chatGenerateParse: streaming ? createOpenAIResponsesEventParser('openai') : createOpenAIResponseParserNS('openai'),
       };
 
     case 'gemini': {

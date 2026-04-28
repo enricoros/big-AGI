@@ -834,11 +834,11 @@ export class ContentReassembler {
 
   }
 
-  private onSetVendorState(vs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void {
+  private onSetVendorState({ state, vendor }: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>): void {
 
     // Promote Anthropic container state -> Generator (message-scoped, for cross-turn reuse)
-    if (vs.vendor === 'anthropic' && 'container' in vs.state) {
-      const { id, expiresAt } = vs.state.container;
+    if (vendor === 'anthropic' && 'container' in state) {
+      const { id, expiresAt } = state.container;
       if (id && expiresAt)
         this.S.generator = {
           ...this.S.generator,
@@ -855,11 +855,12 @@ export class ContentReassembler {
       return;
     }
 
-    // Guard: OpenAI reasoningItem state must land on the ma (reasoning) fragment that produced it.
+    // Guard: reasoningItem state must land on the ma (reasoning) fragment that produced it.
     // If no summary was appended during the reasoning item (summary disabled / skipped), the last
     // fragment will belong to an unrelated preceding item - dropping the handle is safer than contaminating.
-    if (vs.vendor === 'openai' && 'reasoningItem' in vs.state && lastFragment.part.pt !== 'ma') {
-      console.warn('[ContentReassembler] OpenAI reasoningItem state without preceding ma fragment - dropping continuity handle', { lastFragmentPt: lastFragment.part.pt });
+    // Applies to both OpenAI and xAI namespaces; each is opaque/private to its producing vendor.
+    if ((vendor === 'openai' || vendor === 'xai') && 'reasoningItem' in state && lastFragment.part.pt !== 'ma') {
+      console.warn(`[ContentReassembler] ${vendor} reasoningItem state without preceding ma fragment - dropping continuity handle`, { lastFragmentPt: lastFragment.part.pt });
       return;
     }
 
@@ -868,7 +869,7 @@ export class ContentReassembler {
       ...lastFragment,
       vendorState: {
         ...lastFragment.vendorState,
-        [vs.vendor]: vs.state,
+        [vendor]: state,
       },
     });
   }

@@ -329,12 +329,15 @@ function _toXAIResponsesInput(
               break;
 
             case 'ma':
-              // xAI reuses the OpenAI Responses continuity namespace (_vnd.openai.reasoningItem).
-              // Only active when AIX_XAI_ADD_ENCRYPTED_REASONING is enabled and encrypted_content is captured;
-              // otherwise the handle is absent and we skip to avoid "Item with id rs_... not found" style errors.
-              const oaiReasoning = part._vnd?.openai?.reasoningItem;
-              if (oaiReasoning?.encryptedContent || oaiReasoning?.id)
-                newReasoningItem(oaiReasoning.id, oaiReasoning.encryptedContent);
+              // xAI uses its OWN _vnd namespace - the wire schema mirrors OpenAI's, but encrypted_content is
+              // encrypted with xAI-private keys and the rs_... id references xAI-private server state. Crossing
+              // these (e.g., replaying an OpenAI handle to xAI or vice versa) yields "Item with id rs_... not
+              // found" or silent reasoning corruption.
+              // Round-trip ONLY when both encrypted_content AND id are present (canonical, complete handle).
+              // Defense-in-depth: matches the parser's capture gate; rejects torn handles even if any sneak through.
+              const xaiReasoning = part._vnd?.xai?.reasoningItem;
+              if (xaiReasoning?.encryptedContent && xaiReasoning?.id)
+                newReasoningItem(xaiReasoning.id, xaiReasoning.encryptedContent);
               break;
 
             case 'tool_response':

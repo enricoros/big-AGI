@@ -103,7 +103,13 @@ export type DMessageFragmentVendorState = Record<string, unknown> & {
     thoughtSignature?: string; // Gemini 3+ - echoed back to maintain reasoning context
   };
   openai?: {
-    // Responses API reasoning item continuity handle
+    // Responses API reasoning item continuity handle.
+    // IMPORTANT: OpenAI-private encryption + server-side item id; never round-trip to xAI.
+    reasoningItem?: { id?: string; encryptedContent?: string; };
+  };
+  xai?: {
+    // xAI Responses API reasoning item continuity handle.
+    // IMPORTANT: xAI-private encryption + server-side item id; never round-trip to OpenAI.
     reasoningItem?: { id?: string; encryptedContent?: string; };
   };
   // Future: anthropic?: { ... }

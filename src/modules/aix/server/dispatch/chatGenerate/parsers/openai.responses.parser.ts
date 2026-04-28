@@ -280,8 +280,13 @@ class ResponseParserStateMachine {
 
 /**
  * OpenAI Responses API Streaming Parser
+ *
+ * @param vendor 'openai' (default) or 'xai' - tags the reasoning continuity handle so it round-trips back
+ *   to the SAME provider. The OpenAI Responses wire format is shared with xAI, but the encrypted_content blob
+ *   and the rs_... id are vendor-server-private (different keys, different state). Mixing them produces
+ *   "Item with id rs_... not found" or worse silent corruption.
  */
-export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
+export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): ChatGenerateParseFunction {
 
   const R = new ResponseParserStateMachine();
 
@@ -425,22 +430,28 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
             // NOTE: the authoritative encrypted_content arrives on .done (differs from the earlier .added event).
             const { id: reasoningId, encrypted_content: reasoningEC } = doneItem;
 
-            // [DEV] surface cases that diverge from our continuity round-trip expectations
+            // Capture ONLY when BOTH encrypted_content AND id are present (the canonical reasoning item shape).
+            // - id-only: refers to server state we don't keep in stateless mode (store: false, our default) -> 404 next turn
+            // - EC-only: a "torn" handle that breaks future stateful flows and possible id<->EC integrity checks
+            // - neither: nothing to round-trip
+            // [DEV] surface divergences from this contract
             if (!reasoningId && !reasoningEC)
-              console.warn('[DEV] AIX: OpenAI Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn', { doneItem });
+              console.warn(`[DEV] AIX: ${vendor} Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn`, { doneItem });
             else if (!reasoningEC)
-              console.log('[DEV] AIX: OpenAI Responses: reasoning item done has id but no encrypted_content - stateless round-trip requires include:[\'reasoning.encrypted_content\'] on the request');
+              console.log(`[DEV] AIX: ${vendor} Responses: reasoning item done has id but no encrypted_content - dropping handle (stateless round-trip requires include:['reasoning.encrypted_content'] on the request)`);
+            else if (!reasoningId)
+              console.log(`[DEV] AIX: ${vendor} Responses: reasoning item done has encrypted_content but no id - dropping handle (incomplete reasoning item from upstream)`);
 
-            if (reasoningEC || reasoningId) {
+            if (reasoningEC && reasoningId) {
               // Defensive: ensure an ma fragment exists as the attach target for the svs particle below.
               pt.appendReasoningText('');
               pt.sendSetVendorState({
                 p: 'svs',
-                vendor: 'openai',
+                vendor: vendor,
                 state: {
                   reasoningItem: {
-                    ...(reasoningId ? { id: reasoningId } : {}),
-                    ...(reasoningEC ? { encryptedContent: reasoningEC } : {}),
+                    id: reasoningId,
+                    encryptedContent: reasoningEC,
                   },
                 },
               });
@@ -760,8 +771,11 @@ export function createOpenAIResponsesEventParser(): ChatGenerateParseFunction {
 
 /**
  * OpenAI Responses API Non-Streaming Parser
+ *
+ * @param vendor 'openai' (default) or 'xai' - see createOpenAIResponsesEventParser for the rationale on
+ *   why xAI gets its own _vnd namespace (different encryption keys + private item ids).
  */
-export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
+export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
 
@@ -898,23 +912,25 @@ export function createOpenAIResponseParserNS(): ChatGenerateParseFunction {
             pt.appendReasoningText(item.text);
           }
 
-          // [DEV] surface cases that diverge from our continuity round-trip expectations
+          // [DEV] surface cases that diverge from our continuity round-trip expectations (see streaming path for rationale)
           if (!reasoningId && !reasoningEC)
-            console.warn('[DEV] AIX: OpenAI-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn', { oItem });
+            console.warn(`[DEV] AIX: ${vendor}-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn`, { oItem });
           else if (!reasoningEC)
-            console.log('[DEV] AIX: OpenAI-Response-NS: reasoning item has id but no encrypted_content - stateless round-trip requires include:[\'reasoning.encrypted_content\'] on the request');
+            console.log(`[DEV] AIX: ${vendor}-Response-NS: reasoning item has id but no encrypted_content - dropping handle (stateless round-trip requires include:['reasoning.encrypted_content'] on the request)`);
+          else if (!reasoningId)
+            console.log(`[DEV] AIX: ${vendor}-Response-NS: reasoning item has encrypted_content but no id - dropping handle (incomplete reasoning item from upstream)`);
 
-          // Capture the continuity handle (encrypted_content + id) for stateless multi-turn round-tripping.
-          if (reasoningEC || reasoningId) {
+          // Capture ONLY when both id and encryptedContent are present (canonical, complete handle).
+          if (reasoningEC && reasoningId) {
             // Defensive: ensure an ma fragment exists as the attach target for the svs particle below (parity with the streaming path).
             pt.appendReasoningText('');
             pt.sendSetVendorState({
               p: 'svs',
-              vendor: 'openai',
+              vendor: vendor,
               state: {
                 reasoningItem: {
-                  ...(reasoningId ? { id: reasoningId } : {}),
-                  ...(reasoningEC ? { encryptedContent: reasoningEC } : {}),
+                  id: reasoningId,
+                  encryptedContent: reasoningEC,
                 },
               },
             });
