@@ -35,7 +35,7 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
   const _hasAixToolRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
 
   // Dynamic web tools (20260209) require code execution for programmatic tool calling
-  const hasDynamicWebTools = model.vndAntWebDynamic === true && (model.vndAntWebSearch === 'auto' || model.vndAntWebFetch === 'auto');
+  // const hasDynamicWebTools = model.vndAntWebDynamic === true && (model.vndAntWebSearch === 'auto' || model.vndAntWebFetch === 'auto');
 
   // Programmatic Tool Calling - tools with allowed_callers or input_examples
   const programmaticToolCalling = chatGenerate.tools?.some(tool =>
@@ -45,10 +45,15 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
     ),
   ) ?? false;
 
+  // [Anthropic, issue #1087] Dynamic web tools (20260209) have INTERNAL code execution. We do not
+  // explicitly add the code_execution tool nor the beta header for them: Anthropic enables what is
+  // needed implicitly behind the scenes. Adding our own creates two execution environments and
+  // confuses the model (e.g. bash searches for inlined attachments, web tools called from scripts
+  // without `allowed_callers` permission, runaway tool loops).
   return {
     disableAllHostedTools: !!(_hasAixCustomTools && _hasAixToolRestrictivePolicy),
     enable1MContext: model.vndAnt1MContext === true,
-    enableCodeExecution: !!model.vndAntSkills || !!model.vndAntContainerId || hasDynamicWebTools || programmaticToolCalling,
+    enableCodeExecution: !!model.vndAntSkills || !!model.vndAntContainerId || programmaticToolCalling,
     enableFastMode: model.vndAntInfSpeed === 'fast',
     enableSkills: !!model.vndAntSkills,
     enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations,
@@ -284,7 +289,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
         name: 'tool_search_tool_bm25',
       });
 
-    // Code Execution tool - required for dynamic filtering, Skills, etc.
+    // Code Execution tool - for Skills, container reuse, and Programmatic Tool Calling.
+    // Note: NOT added for dynamic web tools (_20260209) - they execute code internally and adding
+    // a standalone environment confuses the model (issue #1087).
     if (enableCodeExecution)
       hostedTools.push({ type: 'code_execution_20260120', name: 'code_execution' });
 

@@ -177,7 +177,8 @@ export function anthropicBetaFeatures(options?: AnthropicHostedFeatures): string
   if (options?.enable1MContext)
     bf.add('context-1m-2025-08-07');
 
-  // Code execution (for dynamic web tools PFC, or Skills) + files API for container downloads
+  // Code execution (for Skills, container reuse, Programmatic Tool Calling) + files API for container downloads.
+  // NOT enabled for dynamic web tools (_20260209): those have internal code execution managed by Anthropic.
   // Note: SDK defines code-execution-2025-05-22; we use 2025-08-25 (newer iteration, not yet in SDK types).
   // Code execution may be GA now (most SDK examples skip the beta namespace), but keeping for safety.
   if (options?.enableCodeExecution) {
