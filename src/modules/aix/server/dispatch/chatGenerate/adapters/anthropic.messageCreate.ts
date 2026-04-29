@@ -47,13 +47,15 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
 
   // [Anthropic, issue #1087] Dynamic web tools (20260209) have INTERNAL code execution. We do not
   // explicitly add the code_execution tool nor the beta header for them: Anthropic enables what is
-  // needed implicitly behind the scenes. Adding our own creates two execution environments and
-  // confuses the model (e.g. bash searches for inlined attachments, web tools called from scripts
-  // without `allowed_callers` permission, runaway tool loops).
+  // needed implicitly behind the scenes.
   return {
     disableAllHostedTools: !!(_hasAixCustomTools && _hasAixToolRestrictivePolicy),
     enable1MContext: model.vndAnt1MContext === true,
-    enableCodeExecution: !!model.vndAntSkills || !!model.vndAntContainerId || programmaticToolCalling,
+    enableCodeExecution:
+      !!model.vndAntSkills ||
+      // || hasDynamicWebTools // https://platform.claude.com/docs/en/agents-and-tools/tool-use/server-tools#dynamic-filtering-with-code-execution
+      // || !!model.vndAntContainerId // do not re-enable code execution jsut for continuity - would have parasitic effects: https://github.com/enricoros/big-AGI/issues/1087#issuecomment-4340352958
+      programmaticToolCalling,
     enableFastMode: model.vndAntInfSpeed === 'fast',
     enableSkills: !!model.vndAntSkills,
     enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations,
