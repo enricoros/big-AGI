@@ -14,6 +14,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { STAR_EMOJI, StarredToggle, starredToggleStyle } from '~/common/components/StarIcons';
 import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
 import { useLLMsByService } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
@@ -283,7 +284,9 @@ export function ModelsList(props: {
 
     // are we showing multiple services
     const showAllServices = !props.filterServiceId;
-    const hasManyServices = llms.length >= 2 && llms.some(llm => llm.sId !== llms[0].sId);
+    // sort by service label so vendor groups appear alphabetically when showing all services (single-service view keeps existing order)
+    const orderedLLMs = showAllServices ? sortLLMsByServiceLabel(llms) : llms;
+    const hasManyServices = orderedLLMs.length >= 2 && orderedLLMs.some(llm => llm.sId !== orderedLLMs[0].sId);
     let lastGroupLabel = '';
 
     // derived
@@ -293,7 +296,7 @@ export function ModelsList(props: {
 
     // generate the list items, prepending headers when necessary
     const items: React.JSX.Element[] = [];
-    for (const llm of llms) {
+    for (const llm of orderedLLMs) {
 
       // skip hidden models if requested
       if (!props.showHiddenModels && isLLMHidden(llm))

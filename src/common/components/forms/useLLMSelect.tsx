@@ -19,6 +19,7 @@ import { StarIconUnstyled, StarredNoXL2 } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { findModelsServiceOrNull, getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
 import { useToggleableStringSet } from '~/common/util/hooks/useToggleableStringSet';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
@@ -202,12 +203,15 @@ export function useLLMSelect(
   const optimizeToSingleVisibleId = (!controlledOpen && _filteredLLMs.length > LLM_SELECT_REDUCE_OPTIONS) ? llmId : null; // id to keep visible when optimizing
 
   const optionsArray = React.useMemo(() => {
+    // sort LLMs alphabetically by service label so vendor groups appear in a stable order (groups remain contiguous because sort is stable on equal keys)
+    const sortedLLMs = sortLLMsByServiceLabel(_filteredLLMs);
+
     // check if we have multiple services (to show collapsible headers)
-    const hasMultipleServices = _filteredLLMs.some((llm, i, arr) => i > 0 && llm.sId !== arr[i - 1].sId);
+    const hasMultipleServices = sortedLLMs.some((llm, i, arr) => i > 0 && llm.sId !== arr[i - 1].sId);
 
     // create the option items
     let prevServiceId: DModelsServiceId | null = null;
-    return _filteredLLMs.reduce((acc, llm, _index) => {
+    return sortedLLMs.reduce((acc, llm, _index) => {
 
       if (optimizeToSingleVisibleId && llm.id !== optimizeToSingleVisibleId)
         return acc;

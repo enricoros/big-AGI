@@ -42,17 +42,44 @@ export interface LLMServiceGroup {
 }
 
 /**
- * Group LLMs by service, resolving service display labels.
+ * Resolve display label for each unique service in the input.
+ * Fallback chain: service.label -> vendor.name -> service.id.
+ */
+function _resolveServiceLabels(llms: ReadonlyArray<DLLM>): Map<DModelsServiceId, string> {
+  const labelById = new Map<DModelsServiceId, string>();
+  for (const llm of llms) {
+    if (labelById.has(llm.sId)) continue;
+    const vendor = findModelVendor(llm.vId);
+    labelById.set(llm.sId, findModelsServiceOrNull(llm.sId)?.label || vendor?.name || llm.sId);
+  }
+  return labelById;
+}
+
+/**
+ * Stably sort LLMs by their service label (alphabetical, locale-aware).
+ * Preserves intra-service order (e.g. starred-first), since JS sort is stable.
+ */
+export function sortLLMsByServiceLabel<T extends DLLM>(llms: ReadonlyArray<T>): T[] {
+  if (llms.length < 2) return [...llms];
+  const labelById = _resolveServiceLabels(llms);
+  return [...llms].sort((a, b) => labelById.get(a.sId)!.localeCompare(labelById.get(b.sId)!));
+}
+
+/**
+ * Group LLMs by service, alphabetically sorted by service label.
+ * Preserves intra-service order.
  */
 export function groupLLMsByService(llms: ReadonlyArray<DLLM>): LLMServiceGroup[] {
+  const labelById = _resolveServiceLabels(llms);
+  if (llms.length >= 2)
+    llms = [...llms].sort((a, b) => labelById.get(a.sId)!.localeCompare(labelById.get(b.sId)!));
+
   const groups: LLMServiceGroup[] = [];
   let currentGroup: LLMServiceGroup | null = null;
 
   for (const llm of llms) {
     if (!currentGroup || currentGroup.serviceId !== llm.sId) {
-      const vendor = findModelVendor(llm.vId);
-      const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || vendor?.name || llm.sId;
-      currentGroup = { serviceId: llm.sId, serviceLabel, models: [] };
+      currentGroup = { serviceId: llm.sId, serviceLabel: labelById.get(llm.sId)!, models: [] };
       groups.push(currentGroup);
     }
     currentGroup.models.push(llm);

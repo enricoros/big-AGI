@@ -15,6 +15,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
+import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
@@ -72,7 +73,10 @@ function LLMDropdown(props: {
       return lcFilterString ? true : isLLMVisible(llm);
     });
 
-    for (const llm of filteredLLMs) {
+    // sort by service label so vendor groups appear alphabetically (groups remain contiguous because sort is stable on equal keys)
+    const sortedLLMs = sortLLMsByServiceLabel(filteredLLMs);
+
+    for (const llm of sortedLLMs) {
       // add separators when changing services
       if (!prevServiceId || llm.sId !== prevServiceId) {
         const vendor = findModelVendor(llm.vId);
