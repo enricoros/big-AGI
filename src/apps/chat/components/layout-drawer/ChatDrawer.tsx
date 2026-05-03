@@ -310,6 +310,18 @@ function ChatDrawer(props: {
     return activeItem ? [...sliced, activeItem] : sliced;
   }, [renderNavItems, renderLimit, props.activeConversationId]);
 
+
+  // when filters/search transition from active to inactive, the active chat may end up
+  // submerged below the fold of a much longer list - scroll it back into view
+  const chatsListRef = React.useRef<HTMLDivElement>(null);
+  const isFiltering = isSearching || filterHasBeamOpen || filterHasDocFragments || filterHasImageAssets || filterHasStars || filterIsArchived;
+  React.useLayoutEffect(() => {
+    if (isFiltering) return;
+    const activeEl = chatsListRef.current?.querySelector('[aria-current="true"]') as HTMLElement | null;
+    activeEl?.scrollIntoView({ block: 'nearest' });
+  }, [isFiltering]);
+
+
   return <>
 
     {/* Drawer Header */}
@@ -396,7 +408,7 @@ function ChatDrawer(props: {
       </Box>
 
       {/* Chat Titles List (shrink as half the rate as the Folders List) */}
-      <Box sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
+      <Box key='chatlist' ref={chatsListRef} sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
         {displayNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}

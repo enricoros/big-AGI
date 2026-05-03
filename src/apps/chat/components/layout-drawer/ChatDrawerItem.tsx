@@ -308,6 +308,7 @@ function ChatDrawerItem(props: {
 
     // Active or Also Open
     <Sheet
+      aria-current={isActive ? 'true' : undefined}
       variant={isActive ? 'solid' : 'outlined'}
       invertedColors={isActive}
       onClick={!isActive ? handleConversationActivate : undefined}
