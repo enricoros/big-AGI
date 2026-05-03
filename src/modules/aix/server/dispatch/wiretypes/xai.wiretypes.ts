@@ -118,9 +118,9 @@ export namespace XAIWire_API_Responses {
     // configure reasoning
     // [2026-01-22] OBSOLETE - only grok-3-mini)(!)
     reasoning: z.object({
-      effort: z.enum([/*'none', 'minimal',*/ 'low', 'medium', 'high' /*, 'xhigh'*/]).nullish(), // XAI: 3 levels only
+      effort: z.enum([/*'none', 'minimal',*/ 'low', 'medium', 'high' /*, 'xhigh'*/]).nullish(), // only grok-4.20-multi-agent; grok-4.3 and grok-4-1-fast error if set
+      summary: z.enum(['auto', 'concise', 'detailed']).nullish(), // request reasoning summaries
       // [XAI-UNSUPPORTED] // generate_summary: z.string().nullish(),
-      // [XAI-UNSUPPORTED] // summary: z.enum(['auto', 'concise', 'detailed']).nullish(), // XAI: The model shall always return 'detailed'
     }).nullish(),
 
     // configure search

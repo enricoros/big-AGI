@@ -99,13 +99,13 @@ export function aixToXAIResponses(
   if (reasoningEffort === 'none' || reasoningEffort === 'minimal' || reasoningEffort === 'xhigh' || reasoningEffort === 'max') // domain validation
     throw new Error(`XAI Responses API does not support reasoning effort '${reasoningEffort}'`);
 
-  if (reasoningEffort) {
-    payload.reasoning = {
-      effort: reasoningEffort,
-      // generate_summary: unsupported
-      // summary: unsupported, defaults to 'detailed'
-    };
-  }
+  // Always request detailed reasoning summaries - grok-4.3 and others have always-on reasoning
+  // but only return summary text when explicitly requested. Also set effort when configured
+  // (only grok-4.20-multi-agent supports effort).
+  payload.reasoning = {
+    ...(reasoningEffort ? { effort: reasoningEffort } : {}),
+    summary: 'detailed',
+  };
 
   // Add include options for reasoning and specialized for tool sources
   if (AIX_XAI_ADD_ENCRYPTED_REASONING)
