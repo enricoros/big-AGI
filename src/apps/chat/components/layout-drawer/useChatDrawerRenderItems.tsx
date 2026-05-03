@@ -86,6 +86,7 @@ export function useChatDrawerRenderItems(
   filterByQuery: string,
   activeFolder: DFolder | null,
   allFolders: DFolder[],
+  filterHasBeamOpen: boolean,
   filterHasStars: boolean,
   filterHasImageAssets: boolean,
   filterHasDocFragments: boolean,
@@ -146,7 +147,8 @@ export function useChatDrawerRenderItems(
           }
 
           // filter for required attributes
-          if ((filterHasStars && !hasStars) || (filterHasImageAssets && !hasImages) || (filterHasDocFragments && !hasDocs))
+          const hasBeamOpen = openBeamConversationIds[_c.id];
+          if ((filterHasBeamOpen && !hasBeamOpen) || (filterHasStars && !hasStars) || (filterHasImageAssets && !hasImages) || (filterHasDocFragments && !hasDocs))
             return null;
 
           // rich properties
@@ -186,7 +188,7 @@ export function useChatDrawerRenderItems(
                 ? allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null
                 : null,
             updatedAt: _c.updated || _c.created || 0,
-            hasBeamOpen: !!openBeamConversationIds?.[_c.id],
+            hasBeamOpen,
             messageCount,
             beingGenerated: !!_c._abortController, // FIXME: when the AbortController is moved at the message level, derive the state in the conv
             systemPurposeId: _c.systemPurposeId,
@@ -287,19 +289,21 @@ export function useChatDrawerRenderItems(
         renderNavItems.push({
           type: 'nav-item-info-message',
           message: (filterHasStars && (filterHasImageAssets || filterHasDocFragments)) ? 'No results'
-            : filterHasDocFragments ? 'No attachment results'
-              : filterHasImageAssets ? 'No image results'
-                : filterHasStars ? 'No starred results'
-                  : filterIsArchived ? 'No archived conversations'
-                    : isSearching ? 'Text not found'
-                      : 'No conversations in folder',
+            : filterHasBeamOpen ? 'No beam conversations'
+              : filterHasDocFragments ? 'No attachment results'
+                : filterHasImageAssets ? 'No image results'
+                  : filterHasStars ? 'No starred results'
+                    : filterIsArchived ? 'No archived conversations'
+                      : isSearching ? 'Text not found'
+                        : 'No conversations in folder',
         });
       } else {
         // filtering reminder (will be rendered with a clear button too)
-        if (filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) {
+        if (filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) {
           renderNavItems.unshift({
             type: 'nav-item-info-message',
             message: `${filterIsArchived ? 'Showing' : 'Filtering by'} ${[
+              filterHasBeamOpen && 'beam',
               filterHasStars && 'stars',
               filterHasImageAssets && 'images',
               filterHasDocFragments && 'attachments',

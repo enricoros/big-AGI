@@ -16,6 +16,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
@@ -89,6 +90,7 @@ function ChatDrawer(props: {
   // external state
   const {
     clearFilters,
+    filterHasBeamOpen, toggleFilterHasBeamOpen,
     filterHasDocFragments, toggleFilterHasDocFragments,
     filterHasImageAssets, toggleFilterHasImageAssets,
     filterHasStars, toggleFilterHasStars,
@@ -98,7 +100,7 @@ function ChatDrawer(props: {
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, navGrouping, searchSorting, showRelativeSize, searchDepth,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, navGrouping, searchSorting, showRelativeSize, searchDepth,
   );
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
@@ -240,6 +242,10 @@ function ChatDrawer(props: {
             <ListItemDecorator>{filterHasDocFragments && <CheckRoundedIcon />}</ListItemDecorator>
             Has Attachments <AttachFileRoundedIcon />
           </MenuItem>
+          <MenuItem onClick={toggleFilterHasBeamOpen}>
+            <ListItemDecorator>{filterHasBeamOpen && <CheckRoundedIcon />}</ListItemDecorator>
+            Beam Open <ChatBeamIcon />
+          </MenuItem>
 
           <ListDivider />
           <ListItem>
@@ -288,8 +294,8 @@ function ChatDrawer(props: {
       )}
     </Dropdown>
   ), [
-    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize,
-    toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize,
+    filterHasBeamOpen, filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize,
+    toggleFilterHasBeamOpen, toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize,
   ]);
 
   const displayNavItems = React.useMemo(() => {
@@ -422,7 +428,7 @@ function ChatDrawer(props: {
                 {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
                 {item.message}
               </Typography>
-              {(filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) && (
+              {(filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) && (
                 <Tooltip title='Clear Filters'>
                   <IconButton size='sm' color='primary' onClick={clearFilters}>
                     <ClearIcon />
