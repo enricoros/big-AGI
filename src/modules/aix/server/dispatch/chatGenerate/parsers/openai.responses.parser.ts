@@ -99,6 +99,7 @@ class ResponseParserStateMachine {
 
   // streaming state tracking
   #hasFunctionCalls: boolean = false; // tracks if we've seen function_call output items
+  #responseSealed: boolean = false; // true once response.completed/failed/incomplete has been processed - trailing 'error' events are advisory only
 
   // hosted tool configuration echo (captured at response.created)
   #imageGenToolCfg: TImageGenToolCfg | undefined;
@@ -264,6 +265,14 @@ class ResponseParserStateMachine {
     return this.#hasFunctionCalls;
   }
 
+  markResponseSealed() {
+    this.#responseSealed = true;
+  }
+
+  get responseSealed() {
+    return this.#responseSealed;
+  }
+
 
   // Hosted tool config capture
 
@@ -377,11 +386,13 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         }
 
         // -> End of the response
+        R.markResponseSealed();
         pt.setDialectEnded('done-dialect'); // OpenAI Responses: 'response.completed'
         break;
 
       case 'response.failed':
         R.setResponse(eventType, event.response);
+        R.markResponseSealed();
         pt.setTokenStopReason('cg-issue'); // generic issue?
         console.warn(`[DEV] AIX: FIXME: OpenAI-Response failed ${eventType}:`, event.response);
         // TODO: extract and forward error details
@@ -390,6 +401,7 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
       case 'response.incomplete':
         // TODO: We haven't seen one of those events yet; we need to see what happens and parse it!
         R.setResponse(eventType, event.response);
+        R.markResponseSealed();
 
         // -> Status: handle incomplete response
         if (event.response.incomplete_details?.reason === 'max_output_tokens')
@@ -728,6 +740,14 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         const errorCode = safeErrorString(event.error?.type || event.error?.code || event.code) ?? undefined;
         const errorMessage = safeErrorString(event.error?.message || event?.message) ?? undefined;
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
+
+        // Trailing-error guard: if the response already reached a terminal state (completed/failed/incomplete),
+        // an 'error' event arriving after is an upstream advisory (e.g. rate-limit headroom) and must NOT
+        // override the prior termination - otherwise it flips the message to red and the Beam ray to 'error'.
+        if (R.responseSealed) {
+          console.warn(`[DEV] AIX: OpenAI Responses: trailing 'error' after sealed response - ignored: ${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`);
+          break;
+        }
 
         // Transmit the error as text - note: throw if you want to transmit as 'error'
         // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
