@@ -16,7 +16,14 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2026-04-16
+// Verified: 2026-05-03
+
+// Flat pricing for Grok 4.3 flagship (April 2026)
+const PRICE_43 = {
+  input: 1.25,
+  output: 2.5,
+  cache: { cType: 'oai-ac' as const, read: 0.2 },
+};
 
 // Flat pricing for Grok 4.20 flagship models
 const PRICE_420 = {
@@ -82,11 +89,25 @@ const XAI_PAR_Pre4: ModelDescriptionSchema['parameterSpecs'] = [] as const;
 
 const _knownXAIChatModels: ManualMappings = [
 
-  // Grok 4.20 (flagship, March 2026) - note: model IDs use dot (4.20), unlike earlier models
+  // Grok 4.3 (flagship, April 2026) - always-on reasoning, no reasoning_effort support
   {
+    idPrefix: 'grok-4.3',
+    label: 'Grok 4.3',
+    description: 'xAI\'s latest flagship model with always-on reasoning and a 1M token context window. Supports text, image, and video inputs with improved agentic performance at lower cost.',
+    contextWindow: 1000000,
+    maxCompletionTokens: undefined,
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR, // no reasoning_effort - always-on reasoning
+    chatPrice: PRICE_43,
+    benchmark: { cbaElo: 1456 }, // grok-4.3
+  },
+
+  // Grok 4.20 (flagship, March 2026) - superseded by 4.3
+  {
+    hidden: true, // yield to 4.3
     idPrefix: 'grok-4.20-0309-reasoning',
     label: 'Grok 4.20 Reasoning',
-    description: 'xAI\'s most advanced flagship reasoning model with a 2M token context window. Deep reasoning and problem-solving capabilities with text and image inputs.',
+    description: 'xAI\'s previous flagship reasoning model with a 2M token context window. Deep reasoning and problem-solving capabilities with text and image inputs.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
@@ -95,9 +116,10 @@ const _knownXAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1480 }, // grok-4.20-beta-0309-reasoning (CBA name)
   },
   {
+    hidden: true, // yield to 4.3
     idPrefix: 'grok-4.20-0309-non-reasoning',
     label: 'Grok 4.20',
-    description: 'xAI\'s most advanced flagship model with a 2M token context window. Non-reasoning variant for fast, high-quality responses with text and image inputs.',
+    description: 'xAI\'s previous flagship model with a 2M token context window. Non-reasoning variant for fast, high-quality responses with text and image inputs.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
     interfaces: XAI_IF_Vision,
@@ -320,6 +342,7 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
 
 // manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
+  'grok-4.3',
   'grok-4.20-0309-reasoning',
   'grok-4.20-0309-non-reasoning',
   'grok-4.20-multi-agent-0309',
