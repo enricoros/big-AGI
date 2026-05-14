@@ -91,6 +91,9 @@ export const env = createEnv({
     // LLM: Perplexity
     PERPLEXITY_API_KEY: z.string().optional(),
 
+    // LLM: Tensorix
+    TENSORIX_API_KEY: z.string().optional(),
+
     // LLM: Together AI
     TOGETHERAI_API_KEY: z.string().optional(),
 
