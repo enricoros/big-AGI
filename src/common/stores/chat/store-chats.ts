@@ -419,6 +419,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             autoTitle,
+            updated: Date.now(),
           }),
 
       setUserTitle: (conversationId: DConversationId, userTitle: string) =>
@@ -426,6 +427,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           {
             userTitle,
             ...(!userTitle && { autoTitle: undefined }), // clear autotitle when clearing usertitle
+            updated: Date.now(),
           }),
 
       title: (conversationId: DConversationId): string | undefined => {
@@ -437,6 +439,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             userSymbol: userSymbol || undefined,
+            updated: Date.now(),
           }),
 
       setArchived: (conversationId: DConversationId, isArchived: boolean) =>
