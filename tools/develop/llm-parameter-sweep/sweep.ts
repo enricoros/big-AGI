@@ -152,12 +152,14 @@ const SWEEP_DEFINITIONS = [
 
 
   // xAI: reasoning effort (Responses API)
+  // grok-4.3: none/low/medium/high (default 'low')
+  // grok-4.20-multi-agent: low/medium/high/xhigh (4 vs 16 agents)
   defineSweep({
     name: 'xai-reasoning-effort',
     description: 'xAI reasoning.effort values',
     applicability: { type: 'dialects', dialects: ['xai'] },
     applyToModel: (value) => ({ reasoningEffort: value }),
-    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['reasoningEffort'][],
+    values: ['none', 'low', 'medium', 'high', 'xhigh'] satisfies AixAPI_Model['reasoningEffort'][],
     mode: 'enumerate',
   }),
 
