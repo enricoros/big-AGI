@@ -116,9 +116,9 @@ export namespace XAIWire_API_Responses {
     parallel_tool_calls: z.boolean().nullish(),
 
     // configure reasoning
-    // [2026-01-22] OBSOLETE - only grok-3-mini)(!)
+    // [2026-05-15] grok-4.3: none/low(default)/medium/high; grok-4.20-multi-agent: low/medium/high/xhigh (4 vs 16 agents)
     reasoning: z.object({
-      effort: z.enum([/*'none', 'minimal',*/ 'low', 'medium', 'high' /*, 'xhigh'*/]).nullish(), // only grok-4.20-multi-agent; grok-4.3 and grok-4-1-fast error if set
+      effort: z.enum([/*'minimal',*/ 'none', 'low', 'medium', 'high', 'xhigh' /*, 'max'*/]).nullish(),
       summary: z.enum(['auto', 'concise', 'detailed']).nullish(), // request reasoning summaries
       // [XAI-UNSUPPORTED] // generate_summary: z.string().nullish(),
     }).nullish(),
