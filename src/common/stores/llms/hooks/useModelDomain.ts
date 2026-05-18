@@ -46,6 +46,16 @@ function _getDomainModelConfigurationFromState({ llms, modelAssignments }: LlmsR
 
 
 /**
+ * Non-hook setter for the primary chat model. Use from event handlers / callbacks
+ * (e.g. the top bar dropdown, or the right-side chat pane on the `dev` branch)
+ * when you want to update the global default that drives the next chat run.
+ */
+export function setPrimaryChatModelId(modelId: DLLMId | null): void {
+  useModelsStore.getState().assignDomainModelId('primaryChat', modelId);
+}
+
+
+/**
  * Single hooks to access per-domain LLM configurations.
  * - Since this is reactive, we assume we don't do 'automated domain fallback' here
  * - We also verify mandatory LLM existence
