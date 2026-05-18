@@ -16,36 +16,13 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2026-05-03
+// Verified: 2026-05-18 (post-2026-05-15 retirement: grok-4-1-fast, grok-4-fast, grok-4-0709, grok-code-fast-1, grok-3 all redirect to grok-4.3)
 
-// Flat pricing for Grok 4.3 flagship (April 2026)
-const PRICE_43 = {
+// Flat pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026)
+const PRICE_FLAGSHIP = {
   input: 1.25,
   output: 2.5,
   cache: { cType: 'oai-ac' as const, read: 0.2 },
-};
-
-// Flat pricing for Grok 4.20 flagship models
-const PRICE_420 = {
-  input: 2,
-  output: 6,
-  cache: { cType: 'oai-ac' as const, read: 0.2 },
-};
-
-// Flat pricing for Grok 4.1 Fast models (both reasoning and non-reasoning)
-// Note: xAI flattened pricing - no longer tiered at 128K context
-const PRICE_41 = {
-  input: 0.2,
-  output: 0.5,
-  cache: { cType: 'oai-ac' as const, read: 0.05 },
-};
-
-// Flat pricing for Grok 4.0 Fast models (both reasoning and non-reasoning)
-// Note: xAI flattened pricing - no longer tiered at 128K context
-const PRICE_40 = {
-  input: 0.2,
-  output: 0.5,
-  cache: { cType: 'oai-ac' as const, read: 0.05 },
 };
 
 // Interfaces: ALL XAI MODELS use the OpenAI Responses API (XAI dialect)
@@ -89,144 +66,74 @@ const XAI_PAR_Pre4: ModelDescriptionSchema['parameterSpecs'] = [] as const;
 
 const _knownXAIChatModels: ManualMappings = [
 
-  // Grok 4.3 (flagship, April 2026) - always-on reasoning, no reasoning_effort support
+  // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high
   {
     idPrefix: 'grok-4.3',
     label: 'Grok 4.3',
     pubDate: '20260417',
-    description: 'xAI\'s latest flagship model with always-on reasoning and a 1M token context window. Supports text, image, and video inputs with improved agentic performance at lower cost.',
+    description: 'xAI\'s latest flagship model with reasoning and a 1M token context window. Supports text and image inputs, with reasoning_effort control (none/low/medium/high). Knowledge cutoff: November 2024.',
     contextWindow: 1000000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR, // no reasoning_effort - always-on reasoning
-    chatPrice: PRICE_43,
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] }, // vendor default 'low'; 'none' disables reasoning
+      ...XAI_PAR_Reasoning,
+    ],
+    chatPrice: PRICE_FLAGSHIP,
     benchmark: { cbaElo: 1456 }, // grok-4.3
   },
 
-  // Grok 4.20 (flagship, March 2026) - superseded by 4.3
+  // Grok 4.20 (flagship, March 2026) - superseded by 4.3 but still active with unified pricing
   {
-    hidden: true, // yield to 4.3
     idPrefix: 'grok-4.20-0309-reasoning',
     label: 'Grok 4.20 Reasoning',
     pubDate: '20260309',
-    description: 'xAI\'s previous flagship reasoning model with a 2M token context window. Deep reasoning and problem-solving capabilities with text and image inputs.',
-    contextWindow: 2000000,
+    description: 'xAI flagship reasoning model with a 1M token context window. Deep reasoning and problem-solving with text and image inputs.',
+    contextWindow: 1000000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: XAI_PAR_Reasoning,
-    chatPrice: PRICE_420,
+    chatPrice: PRICE_FLAGSHIP,
     benchmark: { cbaElo: 1480 }, // grok-4.20-beta-0309-reasoning (CBA name)
   },
   {
-    hidden: true, // yield to 4.3
     idPrefix: 'grok-4.20-0309-non-reasoning',
     label: 'Grok 4.20',
     pubDate: '20260309',
-    description: 'xAI\'s previous flagship model with a 2M token context window. Non-reasoning variant for fast, high-quality responses with text and image inputs.',
-    contextWindow: 2000000,
+    description: 'xAI flagship model with a 1M token context window. Non-reasoning variant for fast, high-quality responses with text and image inputs.',
+    contextWindow: 1000000,
     maxCompletionTokens: undefined,
     interfaces: XAI_IF_Vision,
     parameterSpecs: XAI_PAR,
-    chatPrice: PRICE_420,
+    chatPrice: PRICE_FLAGSHIP,
     benchmark: { cbaElo: 1482 }, // grok-4.20-beta1 (CBA name)
   },
   {
     idPrefix: 'grok-4.20-multi-agent-0309',
     label: 'Grok 4.20 Multi-Agent',
     pubDate: '20260309',
-    description: 'Multi-agent reasoning model that runs 4 specialized agents in parallel (coordinator, fact-checker, analyst, challenger) for collaborative verification with reduced hallucination.',
+    description: 'Multi-agent model that runs specialized agents in parallel for collaborative verification with reduced hallucination. Reasoning effort selects 4 vs 16 agents.',
     contextWindow: 2000000,
     maxCompletionTokens: undefined,
     // no LLM_IF_OAI_Fn: multi-agent does not support function calling
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }, // low/medium = 4 agents, high/xhigh = 16 agents
       ...XAI_PAR_Reasoning,
     ],
-    chatPrice: PRICE_420,
+    chatPrice: PRICE_FLAGSHIP,
     benchmark: { cbaElo: 1474 }, // grok-4.20-multi-agent-beta-0309
   },
 
-  // Grok 4.1
-  {
-    idPrefix: 'grok-4-1-fast-reasoning',
-    label: 'Grok 4.1 Fast Reasoning',
-    pubDate: '20251119',
-    description: 'Next generation frontier multimodal model optimized for high-performance agentic tool calling with a 2M token context window. Trained specifically for real-world enterprise use cases with exceptional performance on agentic workflows.',
-    contextWindow: 2000000,
-    maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Reasoning,
-    chatPrice: PRICE_41,
-    benchmark: { cbaElo: 1432 }, // grok-4-1-fast-reasoning
-  },
-  {
-    idPrefix: 'grok-4-1-fast-non-reasoning',
-    label: 'Grok 4.1 Fast', // 'Grok 4.1 Fast Non-Reasoning'
-    pubDate: '20251119',
-    description: 'Next generation frontier multimodal model optimized for high-performance agentic tool calling with a 2M token context window. Non-reasoning variant for instant responses.',
-    contextWindow: 2000000,
-    maxCompletionTokens: undefined,
-    interfaces: XAI_IF_Vision,
-    parameterSpecs: XAI_PAR,
-    chatPrice: PRICE_41,
-    benchmark: { cbaElo: 1461 }, // grok-4.1
-  },
+  // Retired on 2026-05-15 (slugs still resolve, redirect to grok-4.3 at $1.25/$2.50 pricing):
+  // - grok-4-1-fast-reasoning / grok-4-1-fast-non-reasoning
+  // - grok-4-fast-reasoning / grok-4-fast-non-reasoning
+  // - grok-4-0709
+  // - grok-code-fast-1
+  // - grok-3
+  // Removed from manual mappings; will fall through to unknownModelFallback if listed by API.
 
-  // Grok 4
-  {
-    hidden: true, // yield to 4.1
-    idPrefix: 'grok-4-fast-reasoning',
-    label: 'Grok 4 Fast Reasoning',
-    pubDate: '20250919',
-    description: 'Cost-efficient reasoning model with a 2M token context window. Optimized for fast reasoning in agentic workflows. 98% cost reduction vs Grok 4 with comparable performance.',
-    contextWindow: 2000000,
-    maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Reasoning,
-    chatPrice: PRICE_40,
-    benchmark: { cbaElo: 1404 }, // grok-4-fast-reasoning
-  },
-  {
-    hidden: true, // yield to 4.1
-    idPrefix: 'grok-4-fast-non-reasoning',
-    label: 'Grok 4 Fast', // 'Grok 4 Fast Non-Reasoning'
-    pubDate: '20250919',
-    description: 'Cost-efficient non-reasoning model with a 2M token context window. Same weights as grok-4-fast-reasoning but constrained by non-reasoning system prompt for quick responses.',
-    contextWindow: 2000000,
-    maxCompletionTokens: undefined,
-    interfaces: XAI_IF_Vision,
-    parameterSpecs: XAI_PAR,
-    chatPrice: PRICE_40,
-    benchmark: { cbaElo: 1421 }, // grok-4-fast-chat
-  },
-  {
-    hidden: true, // yield to 4.20
-    idPrefix: 'grok-4-0709',
-    label: 'Grok 4 (0709)',
-    pubDate: '20250709',
-    description: 'xAI\'s most advanced model, offering state-of-the-art reasoning and problem-solving capabilities over a massive 256k context window. Supports text and image inputs.',
-    contextWindow: 256000,
-    maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Reasoning,
-    chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1410 }, // grok-4-0709
-  },
-
-  // Grok 3 (Pre-Grok 4: no server-side tools)
-  {
-    idPrefix: 'grok-3',
-    label: 'Grok 3',
-    pubDate: '20250217',
-    description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
-    contextWindow: 131072,
-    maxCompletionTokens: undefined,
-    interfaces: XAI_IF_Pre4,
-    parameterSpecs: XAI_PAR_Pre4,
-    chatPrice: { input: 3, output: 15, cache: { cType: 'oai-ac', read: 0.75 } },
-    benchmark: { cbaElo: 1412 }, // grok-3-preview-02-24
-  },
+  // Grok 3 Mini (Pre-Grok 4: no server-side tools) - not in 2026-05-15 retirement list
   {
     idPrefix: 'grok-3-mini',
     label: 'Grok 3 Mini',
@@ -243,21 +150,7 @@ const _knownXAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1357 }, // grok-3-mini-beta
   },
 
-  // Grok Code (Pre-Grok 4: no server-side tools)
-  {
-    idPrefix: 'grok-code-fast-1',
-    label: 'Grok Code Fast 1',
-    pubDate: '20250828',
-    description: 'Specialized reasoning model for agentic coding workflows. Fast, economical, and optimized for code generation, debugging, and software development tasks.',
-    contextWindow: 256000,
-    maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Pre4, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Pre4,
-    chatPrice: { input: 0.2, output: 1.5, cache: { cType: 'oai-ac', read: 0.02 } },
-    benchmark: { cbaElo: 1380 }, // Estimated for coding-specialized model
-  },
-
-  // Grok 2 (Pre-Grok 4: no server-side tools)
+  // Grok 2 (Pre-Grok 4: no server-side tools) - not in 2026-05-15 retirement list
   {
     idPrefix: 'grok-2-vision-1212',
     label: 'Grok 2 Vision (1212)',
@@ -359,20 +252,10 @@ const _xaiIdStartsWithOrder = [
   'grok-4.20-0309-reasoning',
   'grok-4.20-0309-non-reasoning',
   'grok-4.20-multi-agent-0309',
-  'grok-4-1-fast-reasoning',
-  'grok-4-1-fast-non-reasoning',
-  'grok-code-fast-1',
-  'grok-4-fast-reasoning',
-  'grok-4-fast-non-reasoning',
-  'grok-4-0709',
-  'grok-3-fast',
-  'grok-3',
   'grok-3-mini-fast',
   'grok-3-mini',
   'grok-2-vision-1212',
   'grok-2-1212',
-  'grok-vision-beta',
-  'grok-beta',
 ];
 
 export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
