@@ -373,7 +373,7 @@ export function prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason
 
 
 const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|osb-|chatgpt-[45]o?|gpt-5-chat|computer-use-/;
-const geminiRegex = /gemini-|gemma-|learnlm-|deep-research-|nano-banana-/;
+const geminiRegex = /gemini-|gemma-|learnlm-|deep-research-|antigravity-|nano-banana-/;
 
 
 /** Pretty name for a chat model ID - VERY HARDCODED - shall use the Avatar Label-style code instead */
@@ -530,6 +530,7 @@ function _prettyGeminiModelName(cutModel: string): string {
     .replace('gemma', 'Gemma')
     .replace('learnlm', 'LearnLM')
     .replace('deep research', 'Deep Research')
+    .replace('antigravity', 'Antigravity')
     .replace('nano banana', 'Nano Banana')
     // size/price variants
     .replace('pro', 'Pro')
