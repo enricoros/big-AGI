@@ -284,8 +284,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       true,
       clientOptions,
       async (update: AixChatGenerateContent_DMessageGuts, isDone: boolean) => {
-        lastDMessage = update;
-        await onStreamingUpdate(lastDMessage, isDone);
+        await onStreamingUpdate(lastDMessage = update, isDone);
       },
     );
 
@@ -301,6 +300,11 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       generator: { ...lastDMessage.generator, tokenStopReason: 'issue' },
       pendingIncomplete: false,
     }
+
+    // final update
+    // emitted because we modify the contents above, and the logic may use the callback rather than the final return value's message
+    await onStreamingUpdate(lastDMessage /* last we heard + the error */, true);
+
     return { outcome: 'failed', lastDMessage, outcomeFailedMessage: errorMessage };
 
   }
