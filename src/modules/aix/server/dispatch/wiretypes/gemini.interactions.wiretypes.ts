@@ -221,18 +221,20 @@ export namespace GeminiInteractionsWire_API_Interactions {
     channels: z.number().optional(),
   });
 
-  // Deep Research internals: tool calls + results are streamed as content blocks. We recognize their
-  // `type` strings but treat them as transient (no user-visible emission here). They're listed as a
-  // plain enum so the parser can silent-skip them without trying to schema-parse each variant.
+  // Managed-agent internals that are NOT surfaced to the user. The SSE parser silent-skips these on
+  // `content.delta`; the NS parser silent-skips them when walking `outputs[]`.
   //
-  // Note: `function_call` / `function_result` are INTENTIONALLY absent. Those are the canonical
-  // user-facing tool-call format - if the Interactions API is ever used with a model + `tools`,
-  // they'd need real handling (start/append/end a function invocation). They fall through to the
-  // warn-once path so we notice the moment they appear on this code path.
+  // Antigravity's default tool set surfaces a different group of types - we surface those via
+  // op-state placeholders so the user sees what the agent did. The "surfaced" set (handled by
+  // `_emitAntigravityToolOp` in the SSE parser):
+  //   function_call / function_result               (sandbox filesystem: list_files, read_file, ...)
+  //   code_execution_call / code_execution_result   (bash/python in the sandbox)
+  //   google_search_call / google_search_result     (web search)
+  //   url_context_call / url_context_result         (web page fetch)
+  //
+  // The set below is the residual: tool types we DO NOT surface (not part of Antigravity's default
+  // set, never observed on DR streams in practice, or carry payloads not useful as chip detail).
   export const INTERNAL_OUTPUT_TYPES = new Set<string>([
-    'code_execution_call', 'code_execution_result',
-    'url_context_call', 'url_context_result',
-    'google_search_call', 'google_search_result',
     'google_maps_call', 'google_maps_result',
     'file_search_call', 'file_search_result',
     'mcp_server_tool_call', 'mcp_server_tool_result',

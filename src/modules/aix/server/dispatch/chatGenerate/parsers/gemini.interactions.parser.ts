@@ -50,9 +50,17 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
   const parserCreationTimestamp = Date.now();
   let timeToFirstContent: number | undefined;
 
+  // Antigravity is bound to its connection (background=false), so the upstream resource is GONE the
+  // moment the stream disconnects (probe: GET 404s within seconds of abort). Suppressing the upstream
+  // handle hides the Resume/Recover/Stop UI - the local-fetch abort path is still wired for cancel.
+  const isAntigravity = (requestedModelName ?? '').includes('antigravity-');
+  // Per-agent run-chip presentation (only DR's text was hard-coded historically).
+  const runChipMotif: 'search-web' | 'code-exec' = isAntigravity ? 'code-exec' : 'search-web';
+  const runChipText: string = isAntigravity ? 'Antigravity Agent running...' : 'Deep Research in progress...';
+
   let modelNameSent = requestedModelName == null; // on resume, DMessage already has the model name
-  let upstreamHandleSent = false;
-  let operationOpId: string | null = null; // interaction id; used to pair in-progress / done operation-state updates
+  let upstreamHandleSent = isAntigravity; // never emit a handle for Antigravity (non-resumable)
+  let operationOpId: string | null = null; // interaction id; used to pair in-progress / done operation-state updates AND as parentOpId for nested tool ops
   let operationOpenEmitted = false;
   let interactionIdCache: string | null = null; // cached for the `operation-state done` emission on interaction.complete
 
@@ -106,16 +114,17 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
           upstreamHandleSent = true;
         }
         // Surface the in-progress label the first time we see it. Pinned to the interaction id so
-        // the terminal done/error (emitted from interaction.complete) replaces the same entry.
+        // the terminal done/error (emitted from interaction.complete) replaces the same entry, AND
+        // serves as parentOpId for nested tool ops (Antigravity sandbox function_call/function_result).
         if (event.status === 'in_progress' && !operationOpenEmitted) {
           operationOpId = event.interaction_id;
-          pt.sendOperationState('search-web', 'Deep Research in progress...', { opId: operationOpId });
+          pt.sendOperationState(runChipMotif, runChipText, { opId: operationOpId });
           operationOpenEmitted = true;
         }
         break;
 
       case 'interaction.complete':
-        _handleInteractionComplete(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent);
+        _handleInteractionComplete(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent, runChipMotif, isAntigravity ? 'Antigravity Agent' : 'Deep Research');
         break;
 
       // --- Content-block lifecycle ---
@@ -151,8 +160,18 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
         if (!deltaParse.success) {
           // Empty deltas ({}) appear alongside placeholder blocks (e.g. internal tool slots) - silent skip
           if (event.delta && Object.keys(event.delta).length === 0) break;
-          // Known-but-not-surfaced delta types (mirrors NS parser's INTERNAL_OUTPUT_TYPES policy + spec's document/video variants we don't model) - silent skip
           const deltaType = (event.delta as { type?: string })?.type;
+          // Antigravity sandbox tool calls/results: surface as nested op-state placeholders under the
+          // run chip. Paired by id/call_id across the call/result variants:
+          //   function_call/_result          - filesystem ops (list_files, read_file, ...)
+          //   code_execution_call/_result    - bash/python in the sandbox
+          //   google_search_call/_result     - web search
+          //   url_context_call/_result       - web page fetch
+          if (deltaType && _ANTIGRAVITY_SURFACED_TYPES.has(deltaType) && operationOpId !== null) {
+            _emitAntigravityToolOp(pt, event.delta, operationOpId);
+            break;
+          }
+          // Known-but-not-surfaced delta types (mirrors NS parser's INTERNAL_OUTPUT_TYPES policy + spec's document/video variants we don't model) - silent skip
           if (deltaType && (GeminiInteractionsWire_API_Interactions.INTERNAL_OUTPUT_TYPES.has(deltaType) || deltaType === 'document' || deltaType === 'video')) break;
           console.warn('[GeminiInteractions] unknown content.delta shape at index', event.index, event.delta);
           break;
@@ -439,6 +458,152 @@ function _classifyContentKind(rawType: unknown): BlockState['kind'] {
   return 'other';
 }
 
+
+// -- Antigravity sandbox tool surfacing --
+//
+// The Antigravity Agent emits its sandbox tools as content.delta payloads. We pair call/result via
+// id/call_id and route through `sendOperationState`, with `parentOpId` set to the run's main chip
+// (operationOpId === interaction.id). The reassembler accumulates these into a single VoidPlaceholder
+// fragment's opLog with inferred `level`, producing a tree of actions under the run chip. Active on
+// call, done on result. Empty `text` on result preserves the call's chip-line via the reassembler's
+// falsy-skip in the merge logic.
+//
+// Observed delta shapes (probed 2026-05-19, antigravity-preview-05-2026):
+//   function_call            { id, type: 'function_call',          name, arguments }
+//   function_result          { call_id, type: 'function_result',   name, result: [{ type:'text', text }] }
+//   code_execution_call      { id, type: 'code_execution_call',    arguments: { code: string } }
+//   code_execution_result    { call_id, type: 'code_execution_result', result: string (stdout+stderr) }
+//   google_search_call       { id, type: 'google_search_call',     arguments: { queries: string[] } }
+//   google_search_result     { call_id, type: 'google_search_result', result: [{ search_suggestions: <html> }, ...] }
+//   url_context_call         { id, type: 'url_context_call',       arguments: { url(s)? } }    [shape inferred]
+//   url_context_result       { call_id, type: 'url_context_result', result: ?? }              [shape inferred]
+
+const _ANTIGRAVITY_SURFACED_TYPES = new Set<string>([
+  'function_call', 'function_result',
+  'code_execution_call', 'code_execution_result',
+  'google_search_call', 'google_search_result',
+  'url_context_call', 'url_context_result',
+]);
+
+const _TOOL_TEXT_MAX = 80;   // chip-line cap (single-line summary)
+const _TOOL_DETAIL_MAX = 240; // iTexts/oTexts cap (expanded detail)
+
+function _truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max - 3) + '...' : s;
+}
+
+function _summarizeFunctionArgs(name: string, args: unknown): string {
+  if (typeof args !== 'object' || args === null) return name;
+  const a = args as Record<string, unknown>;
+  // Prefer the first stringy field that typically identifies the target of the call.
+  for (const key of ['path', 'query', 'url', 'command', 'pattern']) {
+    const v = a[key];
+    if (typeof v === 'string' && v.length > 0) return _truncate(`${name} ${v}`, _TOOL_TEXT_MAX);
+  }
+  if (Object.keys(a).length === 0) return name;
+  let json: string;
+  try { json = JSON.stringify(a); } catch { return name; }
+  return _truncate(`${name} ${json}`, _TOOL_TEXT_MAX);
+}
+
+function _snippetFromArrayOfText(result: unknown): string | undefined {
+  if (!Array.isArray(result)) return undefined;
+  for (const item of result) {
+    const t = (item as { type?: unknown; text?: unknown })?.text;
+    if (typeof t === 'string' && t.length > 0) return _truncate(t, _TOOL_DETAIL_MAX);
+  }
+  return undefined;
+}
+
+function _emitAntigravityToolOp(pt: IParticleTransmitter, delta: unknown, parentOpId: string): void {
+  const d = delta as {
+    type?: string; id?: string; call_id?: string;
+    name?: string; arguments?: unknown; result?: unknown;
+  };
+
+  switch (d.type) {
+
+    // --- filesystem tools (list_files, read_file, write_file, edit_file, search_files, ...) ---
+    case 'function_call': {
+      if (!d.id) return;
+      const name = d.name || 'tool';
+      pt.sendOperationState('code-exec', _summarizeFunctionArgs(name, d.arguments), { opId: d.id, parentOpId });
+      return;
+    }
+    case 'function_result': {
+      if (!d.call_id) return;
+      const snippet = _snippetFromArrayOfText(d.result);
+      pt.sendOperationState('code-exec', '', {
+        opId: d.call_id, parentOpId, state: 'done',
+        ...(snippet ? { oTexts: [snippet] } : {}),
+      });
+      return;
+    }
+
+    // --- bash / python in the sandbox ---
+    case 'code_execution_call': {
+      if (!d.id) return;
+      const code = ((d.arguments as { code?: unknown })?.code ?? '') as string;
+      const firstLine = typeof code === 'string' ? (code.split('\n')[0] || '') : '';
+      const text = firstLine ? _truncate(`$ ${firstLine}`, _TOOL_TEXT_MAX) : 'execute';
+      // Full code goes into iTexts so the user can inspect multi-line scripts in the placeholder UI.
+      pt.sendOperationState('code-exec', text, {
+        opId: d.id, parentOpId,
+        ...(typeof code === 'string' && code.length > 0 ? { iTexts: [_truncate(code, _TOOL_DETAIL_MAX)] } : {}),
+      });
+      return;
+    }
+    case 'code_execution_result': {
+      if (!d.call_id) return;
+      const result = typeof d.result === 'string' ? d.result : (d.result == null ? '' : JSON.stringify(d.result));
+      const snippet = result ? _truncate(result, _TOOL_DETAIL_MAX) : undefined;
+      pt.sendOperationState('code-exec', '', {
+        opId: d.call_id, parentOpId, state: 'done',
+        ...(snippet ? { oTexts: [snippet] } : {}),
+      });
+      return;
+    }
+
+    // --- web search ---
+    case 'google_search_call': {
+      if (!d.id) return;
+      const queries = ((d.arguments as { queries?: unknown })?.queries) as unknown;
+      const first = Array.isArray(queries) && typeof queries[0] === 'string' ? queries[0] as string : '';
+      const text = first ? _truncate(`search: ${first}`, _TOOL_TEXT_MAX) : 'web search';
+      pt.sendOperationState('search-web', text, { opId: d.id, parentOpId });
+      return;
+    }
+    case 'google_search_result': {
+      if (!d.call_id) return;
+      // Result carries `search_suggestions` HTML widgets - not useful as a chip detail. Skip oTexts.
+      pt.sendOperationState('search-web', '', { opId: d.call_id, parentOpId, state: 'done' });
+      return;
+    }
+
+    // --- url fetch (shape not yet observed; defensive extraction) ---
+    case 'url_context_call': {
+      if (!d.id) return;
+      const a = (d.arguments as Record<string, unknown>) || {};
+      const url = (typeof a.url === 'string' ? a.url : '')
+        || (Array.isArray(a.urls) && typeof a.urls[0] === 'string' ? (a.urls[0] as string) : '');
+      const text = url ? _truncate(`fetch: ${url}`, _TOOL_TEXT_MAX) : 'url fetch';
+      pt.sendOperationState('search-web', text, { opId: d.id, parentOpId });
+      return;
+    }
+    case 'url_context_result': {
+      if (!d.call_id) return;
+      const snippet = typeof d.result === 'string'
+        ? _truncate(d.result, _TOOL_DETAIL_MAX)
+        : _snippetFromArrayOfText(d.result);
+      pt.sendOperationState('search-web', '', {
+        opId: d.call_id, parentOpId, state: 'done',
+        ...(snippet ? { oTexts: [snippet] } : {}),
+      });
+      return;
+    }
+  }
+}
+
 function _handleInteractionComplete(
   pt: IParticleTransmitter,
   interaction: TInteraction,
@@ -446,6 +611,8 @@ function _handleInteractionComplete(
   lastOpenIdx: number,
   parserCreationTimestamp: number,
   timeToFirstContent: number | undefined,
+  runChipMotif: 'search-web' | 'code-exec',
+  agentLabel: string, // 'Deep Research' | 'Antigravity Agent' - used for the terminal chip text
 ): void {
 
   // Flush any content parts that were open when the final block arrived
@@ -454,7 +621,7 @@ function _handleInteractionComplete(
   switch (interaction.status) {
     case 'completed':
       if (operationOpId)
-        pt.sendOperationState('search-web', 'Deep Research complete', { opId: operationOpId, state: 'done' });
+        pt.sendOperationState(runChipMotif, `${agentLabel} complete`, { opId: operationOpId, state: 'done' });
       _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('ok');
       pt.setDialectEnded('done-dialect');
@@ -462,30 +629,30 @@ function _handleInteractionComplete(
 
     case 'failed':
       if (operationOpId)
-        pt.sendOperationState('search-web', 'Deep Research failed', { opId: operationOpId, state: 'error' });
+        pt.sendOperationState(runChipMotif, `${agentLabel} failed`, { opId: operationOpId, state: 'error' });
       _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
-      pt.setDialectTerminatingIssue('Deep Research interaction failed', null, 'srv-warn');
+      pt.setDialectTerminatingIssue(`${agentLabel} interaction failed`, null, 'srv-warn');
       break;
 
     case 'cancelled':
       if (operationOpId)
-        pt.sendOperationState('search-web', 'Deep Research cancelled', { opId: operationOpId, state: 'done' });
+        pt.sendOperationState(runChipMotif, `${agentLabel} cancelled`, { opId: operationOpId, state: 'done' });
       _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('cg-issue');
       pt.setDialectEnded('done-dialect');
       break;
 
     case 'requires_action':
-      // Not expected for Deep Research agents - fail loudly so we notice
+      // Not expected for Deep Research; not expected for Antigravity in current preview
       if (operationOpId)
-        pt.sendOperationState('search-web', 'Deep Research needs action', { opId: operationOpId, state: 'error' });
-      pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
+        pt.sendOperationState(runChipMotif, `${agentLabel} needs action`, { opId: operationOpId, state: 'error' });
+      pt.setDialectTerminatingIssue(`${agentLabel} returned requires_action (not supported in this client)`, null, 'srv-warn');
       break;
 
     case 'incomplete':
       // Run stopped early (token limit, etc.). Terminate gracefully with a visible note; we keep any content already emitted.
       if (operationOpId)
-        pt.sendOperationState('search-web', 'Deep Research incomplete', { opId: operationOpId, state: 'done' });
+        pt.sendOperationState(runChipMotif, `${agentLabel} incomplete`, { opId: operationOpId, state: 'done' });
       pt.appendText('\n_Response incomplete (run stopped early)._\n');
       _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('out-of-tokens');

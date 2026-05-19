@@ -89,10 +89,9 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
     input,
     stream: true, // SSE streaming - upstream returns event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). Required for live thought_summary deltas.
     // FIXME: we only support SSE streaming parsing - we used to support parsing of the final answer (with the GET) but not anymore
-    // background: DR requires true, Antigravity rejects true; conditionally added below.
     store: true, // keep the interaction alive so clients can reattach via SSE replay within Gemini's retention window (1d free / 55d paid). Required by both DR and Antigravity agents.
+    background: isDeepResearch, // DR REQUIRES true ('Agents are required to use background=true'); Antigravity REJECTS true ('does not support using background=True'); future agents default false.
     ...(isDeepResearch && {
-      background: true, // DR REQUIRES true ('Agents are required to use background=true')
       agent_config: {
         type: 'deep-research',
         thinking_summaries: 'auto', // Enable thought_summary blocks - without this the API would not emit summaries during streaming
@@ -101,13 +100,11 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
       },
     }),
     ...(isAntigravity && {
-      background: false,
       // Antigravity: 'remote' selects a fresh Google-hosted Linux sandbox. Stateful re-use (env_<id>)
       // is not exposed yet - would need a per-conversation env handle stored alongside the run.
-      environment: 'remote',
-      // background intentionally NOT set (upstream rejects background=true on this agent)
-      // tools intentionally NOT set (omitting tools enables the full default set: code_execution,
+      // `tools` intentionally NOT set: omitting it enables the full default set (code_execution,
       // google_search, url_context, filesystem). Specify only when restricting.
+      environment: 'remote',
     }),
     // non-DR agents: use native system_instruction field (matches gemini.generateContent.ts convention)
     ...(!isDeepResearch && systemText && { system_instruction: systemText }),
