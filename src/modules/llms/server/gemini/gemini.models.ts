@@ -428,6 +428,27 @@ const _knownGeminiModels: ({
     // hidden: true, // audio outputs are unavailable as of 2025-05-27
   },
 
+  // Managed Agents - require the Interactions API (agent path, not generateContent)
+
+  // Antigravity Agent Preview - Released May 19, 2026
+  // General-purpose managed agent: powered by Gemini 3.5 Flash, runs inside a Google-hosted Linux
+  // sandbox with default tools (code_execution, google_search, url_context, filesystem). 1M context
+  // (compacted at ~135k), 64K output. Sandbox compute is not billed during the preview. We send
+  // `environment: "remote"` (fresh sandbox per run) and intentionally omit `background` (upstream
+  // rejects background=true on this agent). See gemini.interactionsCreate.ts for the request shape.
+  // Docs: https://ai.google.dev/gemini-api/docs/antigravity-agent
+  {
+    id: 'models/antigravity-preview-05-2026',
+    labelOverride: 'Antigravity Agent Preview (2026-05)',
+    pubDate: '20260519',
+    isPreview: true,
+    chatPrice: gemini35FlashPricing, // PAYG on underlying Gemini 3.5 Flash tokens; tool/compute not billed during preview
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
+    // No per-model parameters yet - default tool set is enabled implicitly. Future: expose env handle
+    // reuse for stateful sessions, or a tools-allowlist parameter to restrict the default set.
+    benchmark: undefined, // Agent harness, not benchmarkable on standard tests
+  },
+
   // Deep Research agents - require the Interactions API
   // Deep Research Preview - Released April 21, 2026 (latest)
   {
@@ -880,6 +901,8 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-2.5-pro-preview',
   'models/gemini-2.5-pro-',
   'models/gemini-2.5-pro-preview-tts',
+
+  'models/antigravity-',
 
   'models/deep-research-max-preview',
   'models/deep-research-preview',

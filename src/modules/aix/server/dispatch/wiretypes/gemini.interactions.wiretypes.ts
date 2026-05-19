@@ -88,6 +88,9 @@ export namespace GeminiInteractionsWire_API_Interactions {
   //    Dynamic agents - no tunable config documented beyond the discriminator.
   //  - DeepResearchAgentConfig  { type: 'deep-research', ... }
   //    See ./_upstream/gemini.deep-research.guide.md#agent-configuration for defaults and semantics.
+  //
+  // Note: the Antigravity Agent (antigravity-preview-05-2026, released 2026-05-19) does NOT use
+  // `agent_config` - it is configured via the top-level `environment` and `tools` fields instead.
 
   const _DynamicAgentConfig_schema = z.object({
     type: z.literal('dynamic'),
@@ -132,10 +135,25 @@ export namespace GeminiInteractionsWire_API_Interactions {
     agent_config: AgentConfig_schema.optional(), // Polymorphic on `type`: 'deep-research' | 'dynamic'. MUTUALLY EXCLUSIVE with `generation_config` (model path). Enables thought-summary streaming, visualizations, collaborative planning.
     // generation_config: GenerationConfig_schema.optional(), // model path - not modeled here yet
 
+    // --- Sandbox (Antigravity Agent + future managed agents) ---
+    // `environment` is the top-level sandbox handle on the agent path. Accepts the literal "remote"
+    // (fresh sandbox with defaults), an existing `env_<id>` string (reuses sandbox state across turns),
+    // or an `EnvironmentConfig` object (custom sources / network rules). DR agents ignore this field.
+    environment: z.union([z.string(), z.looseObject({})]).optional(),
+
     // --- Runtime flags (literals below force correct behavior at the adapter layer) ---
     stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). On reattach, GET ?stream=true replays the full event sequence (we do not send `last_event_id` - full replay is the intentional semantic; see poller comment).
-    store: z.literal(true), // spec-optional; we lock to `true` so the interaction is retrievable post-run (replay via GET stream, resume via `last_event_id`). Required alongside `background=true` for agents per the DR guide.
-    background: z.literal(true), // spec-optional; DR agents REQUIRE `true` ('Agents are required to use background=true'). Locked to true to prevent accidental sync-mode sends.
+    /**
+     * spec-optional; we lock to `true` so the interaction is retrievable post-run
+     * Required by DR agents AND by Antigravity Agent.
+     */
+    store: z.literal(true),
+    /**
+     * spec-optional, but we mandate it for clarity:
+     * - DR agents REQUIRE `true` ('Agents are required to use background=true').
+     * - Antigravity Agent REJECTS `true` ('does not support using background=True'). Adapter sets per-agent.
+     */
+    background: z.boolean(),
 
     // --- Multi-turn continuation ---
     previous_interaction_id: z.string().optional(), // reuses prior interaction's stored inputs/outputs. Per-turn knobs (tools, system_instruction, generation_config) are NOT carried and must be re-sent.
