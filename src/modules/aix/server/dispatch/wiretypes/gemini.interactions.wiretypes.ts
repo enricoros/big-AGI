@@ -12,6 +12,28 @@ import * as z from 'zod/v4';
  *  - `system_instruction` is accepted for non-DR agents; DR agents reject it and we prepend to `input` instead.
  *  - No `tools` (yet), no model-side `generation_config`.
  *
+ * ============================================================================
+ * 2026-05-06: BREAKING CHANGE ANNOUNCED - REQUIRES MIGRATION BEFORE 2026-06-08
+ * ============================================================================
+ * Upstream is replacing the response schema: `outputs[]` -> `steps[]`, each step has
+ * `content[]` blocks. New SSE events: `interaction.created`, `step.start`,
+ * `step.delta`, `step.stop`, `interaction.completed`, `interaction.in_progress`,
+ * `interaction.requires_action`. Also `response_mime_type` moves into
+ * `response_format.mime_type`, and `image_config` becomes a `response_format`
+ * entry with `type: 'image'`.
+ *
+ * Timeline:
+ *   2026-05-07  new schema available via `Api-Revision: 2026-05-20` request header
+ *   2026-05-26  new schema becomes the DEFAULT; opt out via `Api-Revision: 2026-05-07`
+ *   2026-06-08  legacy schema PERMANENTLY REMOVED
+ *
+ * Migration guide: https://ai.google.dev/gemini-api/docs/interactions-breaking-changes-may-2026
+ * TODO: rewrite request body, response Interaction.outputs -> steps, and the full
+ *       SSE event union in this file + parsers/gemini.interactions.parser.ts +
+ *       adapters/gemini.interactionsCreate.ts. Until then, the dispatch layer can
+ *       send `Api-Revision: 2026-05-07` to keep the legacy schema alive through 6/8.
+ * ============================================================================
+ *
  * Source-of-truth snapshots (for diffing across upstream changes, see ./_upstream/sync.sh):
  *   ./_upstream/gemini.interactions.spec.md  - the formal API reference
  *   ./_upstream/gemini.interactions.guide.md - the prose guide
