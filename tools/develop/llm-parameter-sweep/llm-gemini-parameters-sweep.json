@@ -2,6 +2,12 @@
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: fn, gemini-thinking-budget, gemini-thinking-level, temperature. If missing, the parameter is not supported by that model.",
   "_modelFilter": "models/gemini-3, models/gemini-2, models/gemma",
+  "models/gemini-3.5-flash": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
   "models/gemini-3.1-pro-preview": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [1024,16384,24576,32768,65535],

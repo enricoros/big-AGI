@@ -72,7 +72,13 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (Apr 24, 2026)
+// Pricing based on https://ai.google.dev/pricing (May 19, 2026)
+
+const gemini35FlashPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 1.50, // text/image/video; cache storage $1.00/MTok-hour (not tracked here)
+  output: 9.00, // including thinking tokens
+  cache: { cType: 'oai-ac', read: 0.15 },
+};
 
 const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
@@ -188,6 +194,25 @@ const _knownGeminiModels: ({
   // _delete removed - models are now physically removed from the list instead of marked for deletion
 } & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'> & { pubDate: string /* make it required */})[] = [
 
+  /// Generation 3.5
+
+  // 3.5 Flash (Stable) - Released May 19, 2026 (Google I/O 2026)
+  {
+    id: 'models/gemini-3.5-flash',
+    labelOverride: 'Gemini 3.5 Flash',
+    pubDate: '20260519',
+    chatPrice: gemini35FlashPricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
+    benchmark: { cbaElo: 1480 }, // gemini-3.5-flash
+  },
+
+
   /// Generation 3.1
 
   // 3.1 Pro (Preview) - Released February 19, 2026
@@ -206,7 +231,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1493 }, // gemini-3.1-pro-preview
+    benchmark: { cbaElo: 1488 }, // gemini-3.1-pro-preview
   },
   // 3.1 Pro (Preview) - Custom Tools variant - Released February 19, 2026
   // Better at prioritizing custom tools for users building with a mix of bash and tools
@@ -224,7 +249,7 @@ const _knownGeminiModels: ({
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1493 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
+    benchmark: { cbaElo: 1488 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
   // 3.1 Flash Image Preview - Released February 26, 2026
@@ -245,12 +270,12 @@ const _knownGeminiModels: ({
     benchmark: undefined, // Non-benchmarkable because generates images
   },
 
-  // 3.1 Flash-Lite (Stable) - Released May 2026 (graduated from preview)
+  // 3.1 Flash-Lite (Stable) - Released May 7, 2026 (graduated from preview)
   // First Flash-Lite model in the Gemini 3 series - cost-efficient, high-throughput
   {
     id: 'models/gemini-3.1-flash-lite',
     labelOverride: 'Gemini 3.1 Flash-Lite',
-    pubDate: '20260506',
+    pubDate: '20260507',
     chatPrice: gemini31FlashLitePricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -262,14 +287,15 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1438 }, // same lineage as gemini-3.1-flash-lite-preview
   },
 
-  // 3.1 Flash-Lite (Preview) - Released March 3, 2026
+  // 3.1 Flash-Lite (Preview) - Released March 3, 2026; DEPRECATED: shutdown May 25, 2026 (announced May 7, 2026)
   // First Flash-Lite model in the Gemini 3 series - cost-efficient, high-throughput
   {
-    hidden: true, // superseded by stable gemini-3.1-flash-lite (May 2026)
+    hidden: true, // superseded by stable gemini-3.1-flash-lite (May 7, 2026)
     id: 'models/gemini-3.1-flash-lite-preview',
     labelOverride: 'Gemini 3.1 Flash-Lite Preview',
     pubDate: '20260303',
     isPreview: true,
+    deprecated: '2026-05-25',
     chatPrice: gemini31FlashLitePricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -363,7 +389,7 @@ const _knownGeminiModels: ({
 
   // 2.5 Pro (Stable) - Released June 17, 2025; DEPRECATED: shutdown June 17, 2026
   {
-    hidden: true, // outperformed by 3.1 Pro (1493) and even 3 Flash (1474) - deprecated in 2 months
+    hidden: true,
     id: 'models/gemini-2.5-pro',
     labelOverride: 'Gemini 2.5 Pro',
     pubDate: '20250617',
@@ -828,6 +854,9 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 
 const _sortOderIdPrefix: string[] = [
+  'models/gemini-3.5-flash',
+  'models/gemini-3.5-',
+  'models/gemini-3.5',
   'models/gemini-3.1-pro-preview',
   'models/gemini-3.1-pro-preview-customtools',
   'models/gemini-3.1-flash-image-preview',
