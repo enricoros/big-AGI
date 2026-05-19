@@ -1,6 +1,10 @@
 # Gemini Interactions API
 
-The Interactions API powers Gemini's agent runs (Deep Research today, more agent types planned). This doc is the source of truth for protocol shape, failure modes, and the recovery model — code comments link here instead of repeating the rationale.
+The Interactions API powers Gemini's managed-agent runs. Currently wired:
+- **Deep Research** (`deep-research-*-preview-*`) — research/synthesis agent. Requires `background=true`; rejects top-level `system_instruction` (we prepend to input). Configurable via `agent_config` (`thinking_summaries`, `visualization`).
+- **Antigravity Agent** (`antigravity-preview-05-2026`, released 2026-05-19) — general-purpose Gemini-3.5-Flash-powered agent inside a Google-hosted Linux sandbox with code_execution / google_search / url_context / filesystem tools. REJECTS `background=true` (we omit it); accepts native `system_instruction`; needs `environment` ('remote' for fresh sandbox; `env_<id>` to resume). [Docs](https://ai.google.dev/gemini-api/docs/antigravity-agent).
+
+Per-agent flags live in `gemini.interactionsCreate.ts` (`isDeepResearch` / `isAntigravity` gates). This doc is the source of truth for protocol shape, failure modes, and the recovery model — code comments link here instead of repeating the rationale.
 
 ## References
 
