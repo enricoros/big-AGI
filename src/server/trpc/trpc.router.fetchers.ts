@@ -266,9 +266,9 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     const s: number = response.status;
     let payloadString = safeErrorString(notOkayPayload);
     if (payloadString) {
-      // truncate
-      if (payloadString.length > 240)
-        payloadString = payloadString.slice(0, 240) + '...';
+      // truncate (480 chars: fits typical provider rate-limit/auth/quota messages with org IDs, token counts, and help URLs)
+      if (payloadString.length > 480)
+        payloadString = payloadString.slice(0, 480) + '...';
       // frame
       const inferredType = _inferTextPayloadType(payloadString);
       if (inferredType)
@@ -369,7 +369,7 @@ async function _jsonResponseParserOrThrow(response: Response) {
         throw new TRPCFetcherError({
           category: 'parse',
           message: `Expected JSON data but received ${inferredType ? inferredType + ', likely an error page' : 'NON-JSON content'}${contentTypeInfo}:`
-            + ` \n\n"${text.length > 200 ? text.slice(0, 200) + '...' : text}"`,
+            + ` \n\n"${text.length > 480 ? text.slice(0, 480) + '...' : text}"`,
           // cause: error,
         });
       }
