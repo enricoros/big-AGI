@@ -78,7 +78,74 @@ The Recover gate is an inline `uht === 'vnd.gem.interactions'` check in `BlockOp
 
 ## Visualization control (#1095)
 
-Deep Research accepts `agent_config.visualization: 'auto' | 'off'`. Exposed as `llmVndGeminiAgentViz` (label "Visualizations"). Forwarded only when explicitly `'off'` so the upstream `'auto'` default stays untouched. Useful when merging multiple reports — image fragments break Beam fusion.
+Deep Research accepts `agent_config.visualization: 'auto' | 'off'`. Exposed as `llmVndGeminiAgentViz` (label "Visualizations"). Forwarded only when explicitly `'off'` so the upstream `'auto'` default stays untouched. Useful when merging multiple reports - image fragments break Beam fusion.
+
+## Antigravity Agent surface (empirical, 2026-05-19)
+
+`antigravity-preview-05-2026` runs on the same Interactions API path but with materially different contracts from Deep Research. The notes below are pinned to observed behavior across an 8-prompt sweep (see probe tool below) and are the source of truth for the agent-variant branches in `gemini.interactionsCreate.ts` and `gemini.interactions.parser.ts`.
+
+### Request contracts (differ from DR)
+
+| Field | DR | Antigravity |
+|---|---|---|
+| `background` | MUST be `true` ('Agents are required to use background=true') | MUST NOT be `true` ('Agent does not support using background=True'); adapter sends `false` |
+| `system_instruction` | rejected at top level (prepend to first user turn) | natively accepted |
+| `agent_config` | `{ type: 'deep-research', ... }` | NOT used |
+| `environment` | ignored | `"remote"` for fresh sandbox; `env_<id>` for reuse (not yet wired) |
+| `store` | `true` (required for resume) | `true` (required by docs) but moot for resume - see below |
+
+### Resumability: none
+
+With `background=false` the resource is bound to the connection. Probed empirically: GET on the interaction id 404s within seconds of stream disconnect, regardless of `store=true`. The SSE parser therefore SUPPRESSES `setUpstreamHandle` for `antigravity-*` models (`upstreamHandleSent` initialized `true`), which in turn hides `BlockOpUpstreamResume` entirely - no Resume / Recover / Cancel buttons. The local-fetch abort path is still wired for cancel-while-streaming.
+
+### Tool delta surface (observed)
+
+Antigravity emits sandbox tools as `content.delta` payloads. Surfaced by `_emitAntigravityToolOp` (in `gemini.interactions.parser.ts`) as nested op-state placeholders under the run chip:
+
+| Delta type pair | Use | Payload shape | Chip rendering |
+|---|---|---|---|
+| `function_call` / `function_result` | filesystem (`list_files`, `read_file`, `write_file`, `edit_file`, `search_files`) | call: `{ id, name, arguments: {path, ...} }`; result: `{ call_id, name, result: [{type:'text', text}] }` | `list_files /tmp` -> done + result text in oTexts |
+| `code_execution_call` / `code_execution_result` | bash / python in the sandbox | call: `{ id, arguments: { code: string } }`; result: `{ call_id, result: string (stdout+stderr) }` | `$ <first line>` + full code in iTexts -> done + stdout/stderr in oTexts |
+| `google_search_call` / `google_search_result` | web search | call: `{ id, arguments: { queries: string[] } }`; result: `{ call_id, result: [{ search_suggestions: <html> }, ...] }` | `search: <first query>` -> done (no oTexts: search_suggestions are HTML widgets, not useful as detail) |
+| `url_context_call` / `url_context_result` | URL fetch | shape inferred (NEVER OBSERVED in 8 probe runs) | defensive handler kept for forward-compat; Antigravity prefers bash `curl` |
+
+`thought_summary` fires on its own (no `agent_config` toggle needed). Routed to `appendReasoningText`.
+
+Run chip lifecycle:
+- `interaction.status_update(in_progress)` -> `sendOperationState('code-exec', 'Antigravity Agent running...', { opId: interaction.id })`
+- per-tool deltas -> `sendOperationState(..., { opId: tool.id, parentOpId: interaction.id })` (active on call, done on result)
+- `interaction.complete` -> root chip merges to `Antigravity Agent complete` / `failed` / `cancelled` / `incomplete` / `needs action` (text picked by status; motif preserved)
+
+### Verified: no protocol gaps
+
+Sweep on 2026-05-19 across 8 prompts (filesystem / clone / build / search / fetch / research / report / mixed) produced **zero `unknown content.delta shape` warnings**. The aggregate delta histogram:
+
+```
+   text: 80   function_call: 18   function_result: 18
+   thought_summary: 16
+   code_execution_call: 12   code_execution_result: 12
+   google_search_call: 3     google_search_result: 3
+   url_context_*: 0
+```
+
+All eight runs terminated cleanly (`setTokenStopReason('ok')` + `setDialectEnded('done-dialect')`). Next sweep should run when Google flips the API revision default (2026-05-26 per the migration notice in `gemini.interactions.wiretypes.ts`).
+
+### Probe tool
+
+`tools/develop/aix-gemini-antigravity-probe/` captures real SSE streams and replays them through the actual parser (`createGeminiInteractionsParserSSE`) with a recording `IParticleTransmitter`. Use:
+
+```bash
+# one-shot capture + replay
+GEMINI_API_KEY=... npx tsx tools/develop/aix-gemini-antigravity-probe/probe.ts run "<prompt>"
+
+# pre-cooked scenarios
+GEMINI_API_KEY=... ./tools/develop/aix-gemini-antigravity-probe/examples.sh <name>  # fs|clone|build|search|fetch|research|report|mixed|all
+
+# replay a saved fixture (no API call)
+npx tsx tools/develop/aix-gemini-antigravity-probe/probe.ts replay <capture.jsonl>
+```
+
+Captures land in `./captures/` (gitignored). Move a capture file out of `captures/` to commit it as a regression fixture for later parser changes.
 
 ## Code map
 
