@@ -45,7 +45,6 @@
 //   openai-compatible   openai          OPENAI_API_KEY *        api.openai.com
 //                                       (* default-host ONLY; not forwarded to custom hosts)
 //   openai-compatible   openai (host)   (no env fallback)       custom host (Chutes, Fireworks, MiniMax, ...)
-//   openai-compatible   openpipe        OPENPIPE_API_KEY        app.openpipe.ai
 //   openai-compatible   openrouter      OPENROUTER_API_KEY      openrouter.ai  (listing is PUBLIC)
 //   openai-compatible   perplexity      PERPLEXITY_API_KEY      api.perplexity.ai (no listing API; hardcoded)
 //   openai-compatible   togetherai      TOGETHERAI_API_KEY      api.together.xyz
@@ -278,13 +277,6 @@ describe('listModels enumeration', () => {
       1, 'openai/minimax',
     );
     ok(models.some(m => /minimax/i.test(m.id)), 'minimax: MiniMax-* present');
-  });
-
-  test('openai-compat/openpipe: live listing', { skip: skipIfMissing('OPENPIPE_API_KEY') }, async () => {
-    await expectOk(
-      { dialect: 'openpipe', ...openAIShape({ oaiKey: E.OPENPIPE_API_KEY || '' }) } as AixAPI_Access,
-      1, 'openpipe/live',
-    );
   });
 
   test('openai-compat/openrouter: live listing (endpoint is PUBLIC; any bearer accepted)', async () => {

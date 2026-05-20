@@ -32,7 +32,6 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 | Local AI   | ✅          | ✅                |                   | ❌         | Yes  + 📦 |               |
 | Mistral    | ✅          | ✅                |                   | ✅         | Yes  + 📦 |               |
 | OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | ✅         | Yes + 📦  |               |
-| OpenPipe   | ✅          | ✅                | Img: ✅            | ✅         | Yes + 📦  |               |
 | OpenRouter | ✅          | ❌ (inconsistent) |                   | ✅         | Yes + 📦  |               |
 | Perplexity | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
 | TogetherAI | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |

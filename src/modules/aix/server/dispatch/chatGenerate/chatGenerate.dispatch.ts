@@ -239,7 +239,6 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'mistral':
     case 'moonshot':
     case 'openai':
-    case 'openpipe':
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':
@@ -355,7 +354,6 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'mistral':
     case 'moonshot':
     case 'ollama':
-    case 'openpipe':
     case 'perplexity':
     case 'togetherai':
     case 'xai':

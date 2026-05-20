@@ -816,7 +816,6 @@ function createSingleConfig(
     case 'localai':
     case 'mistral':
     case 'moonshot':
-    case 'openpipe':
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':

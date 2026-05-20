@@ -153,7 +153,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // MoonShot maps to none->disabled / high->enabled
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
-    // for: 'alibaba' | 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'openpipe' | 'togetherai' | 'xai'
+    // for: 'alibaba' | 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'togetherai' | 'xai'
     payload.reasoning_effort = reasoningEffort;
   }
 

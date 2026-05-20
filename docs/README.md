@@ -30,7 +30,6 @@ How to set up AI models and features in big-AGI.
     [Mistral](https://console.mistral.ai/api-keys/),
     [Moonshot](https://platform.moonshot.cn/console/api-keys),
     [OpenAI](https://platform.openai.com/api-keys),
-    [OpenPipe](https://app.openpipe.ai/settings),
     [Perplexity](https://www.perplexity.ai/settings/api),
     [TogetherAI](https://api.together.xyz/settings/api-keys),
     [xAI](https://x.ai/api),

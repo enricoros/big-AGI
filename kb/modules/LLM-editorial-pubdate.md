@@ -52,7 +52,7 @@ It is **not**:
 2. **Anthropic exception**: Anthropic's date suffixes are typically the **snapshot/training-cutoff date, not the public release date**. For example, `claude-3-7-sonnet-20250219` was released on 2025-02-24, `claude-opus-4-20250514` was released 2025-05-22, and `claude-haiku-4-5-20251001` was released 2025-10-15. Always corroborate against Anthropic's blog/press for the actual release date. Only `claude-sonnet-4-5-20250929` and `claude-opus-4-1-20250805` have suffixes that match.
 3. **Closed beta -> public beta -> GA**: use the first date *external* users could access the specific variant.
 4. **Family-headline IDs and dated snapshots** (e.g., `claude-opus-4-1` and `claude-opus-4-1-20250805`): typically share a release date.
-5. **Hosted on a third party** (Groq hosting Llama, OpenPipe mirroring others, OpenRouter aggregating): use the *underlying* model's original release date by its creator, not when the host added it.
+5. **Hosted on a third party** (Groq hosting Llama, OpenRouter aggregating): use the *underlying* model's original release date by its creator, not when the host added it.
 6. **Symlinks** (entries with `symLink:`): inherit the target's date.
 7. **Partial dates** (only month known): use the 1st of the month and tag as MEDIUM confidence in the editor's note.
 
@@ -78,7 +78,6 @@ Three categories:
 | DeepSeek | Hybrid | `openai/models/deepseek.models.ts` | `_knownDeepseekChatModels` | 4 | 4/4 HIGH |
 | Groq | Hybrid (host) | `openai/models/groq.models.ts` | `_knownGroqModels` | 11 | 11/11 HIGH (underlying-model date) |
 | Z.AI / GLM | Hybrid | `openai/models/zai.models.ts` | `_knownZAIModels` | 17 | 16/17 (`glm-5-code` UNCONFIRMED) |
-| OpenPipe | Editorial (mirror) | `openai/models/openpipe.models.ts` | `_knownOpenPipeChatModels` | 30 | 30/30 HIGH (all upstream-mirror, no OpenPipe originals) |
 | Bedrock | Reuses Anthropic | `bedrock/bedrock.models.ts` | -> `hardcodedAnthropicModels` | (12) | inherited |
 | Ollama | Editorial (catalog) | `ollama/ollama.models.ts` | `OLLAMA_BASE_MODELS` | 209 | **deferred** - see notes |
 | Arcee AI | Dynamic | `openai/models/arceeai.models.ts` | `_arceeKnownModels` | 0 | n/a (empty) |
