@@ -120,7 +120,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       showPersonaFinder: false,
       setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
 
-      showModelsHidden: false,
+      showModelsHidden: true,
       setShowModelsHidden: (showModelsHidden: boolean) => set({ showModelsHidden }),
 
       showModelsStarredOnly: false,
