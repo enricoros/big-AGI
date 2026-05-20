@@ -299,6 +299,9 @@ export namespace GeminiInteractionsWire_API_Interactions {
     agent: z.string().optional(),     // echoed back on agent-path interactions
     model: z.string().optional(),     // echoed back on model-path interactions
 
+    // session/sandbox handle for managed agents (today: Antigravity); forward-carried via the request `environment` field. No expiry on the wire; best-effort reuse with no auto-fallback - if the env is invalidated upstream the request fails.
+    environment_id: z.string().optional(),
+
     // content + metrics
     outputs: z.array(Output_schema).optional(), // absent until first content arrives
     usage: Usage_schema.optional(),             // populated in terminal frames (completed/failed/cancelled/incomplete)

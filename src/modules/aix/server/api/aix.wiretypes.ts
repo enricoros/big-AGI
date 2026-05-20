@@ -520,6 +520,7 @@ export namespace AixWire_API {
     vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
     vndGeminiCodeExecution: z.enum(['auto']).optional(),
     vndGeminiComputerUse: z.enum(['browser']).optional(),
+    vndGeminiEnvironmentId: z.string().optional(), // [vndGeminiAPI === 'interactions-agent'] Gemini Interactions API session/sandbox handle from a prior turn (forward-carry; best-effort - if upstream rejects the env, the request fails and the error surfaces)
     vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
     vndGeminiImageSize: z.enum(['1K', '2K', '4K']).optional(),
     vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
@@ -793,7 +794,8 @@ export namespace AixWire_Particles {
       | { kind: 'vnd.ant.file', fileId: string, containerId?: string }
       )
     | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
-      | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level
+      | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level - container reuse
+      | { vendor: 'gemini-envid', state: { environment: { id: string; expiresAt: string | null } } } // message-level - Gemini Interactions session/sandbox handle (today: Antigravity `interaction.start.environment_id`); expiresAt null when upstream doesn't expose retention
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
       | { vendor: 'openai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level (attach to ma reasoning fragment)
       | { vendor: 'xai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level - DISTINCT from openai (different encryption keys, different server-side ids)

@@ -188,6 +188,8 @@ export function aixDecorateModelFromGlobals(model: AixAPI_Model, decorations: {
   vndAntContainerId?: string;
   // [Anthropic File Inlining] Global user policy; 'off' means don't decorate (caller can pass it raw)
   vndAntTransformInlineFiles?: AIVndAntInlineFilesPolicy;
+  // [Gemini Interactions] Session/sandbox env ID from a prior turn (no expiry gate on the wire today)
+  vndGeminiEnvironmentId?: string;
 }): void {
 
   // [Anthropic Container] Inject session state from a prior turn
@@ -197,6 +199,10 @@ export function aixDecorateModelFromGlobals(model: AixAPI_Model, decorations: {
   // [Anthropic File Inlining] Apply only when not 'off' - the wire enum doesn't include 'off'
   if (decorations.vndAntTransformInlineFiles && decorations.vndAntTransformInlineFiles !== 'off')
     model.vndAntTransformInlineFiles = decorations.vndAntTransformInlineFiles;
+
+  // [Gemini Interactions] Inject session/sandbox env from a prior turn
+  if (decorations.vndGeminiEnvironmentId)
+    model.vndGeminiEnvironmentId = decorations.vndGeminiEnvironmentId;
 
 }
 
@@ -214,10 +220,37 @@ interface AixClientOptions {
   llmOptionsOverride?: Omit<DModelParameterValues, 'llmRef'>; // overrides (sets/replaces) individual LLM parameters
 
   // -- Session State - extract? --
-  // [Anthropic Container] Container ID from a prior turn (caller checks expiry before setting)
-  antContainerId?: string;
+  // Cross-turn sandbox/container handles. Caller may pre-populate; resolver walks chat history to fill any unset slot.
+  antContainerId?: string;            // [Anthropic Container] Container ID from a prior turn (caller checks expiry before setting)
+  gemEnvironmentId?: string;                  // [Gemini Interactions] Session/sandbox env id from a prior turn (today: Antigravity; no expiry on the wire; best-effort - no auto-fallback if upstream rejects)
 }
 
+
+/**
+ * Walks chat history newest-first for the most recent `upstreamContainer` matching `uct`. Stops at
+ * the first match - older candidates would be at least as expired. Returns null if not found or
+ * if the candidate expires within `expiryBufferMs` (default 15s; only gated when `expiresAt` is a
+ * string - `null` is accepted unconditionally).
+ *
+ * NOTE: the returned handle points at a MUTATING upstream resource, not a snapshot. Re-running an
+ * earlier turn rejoins the same container with whatever state intervening turns left behind.
+ * NOTE: there is no automatic fallback if upstream rejects the returned handle - the request fails
+ * and the error surfaces to the user. Recovery is on the next turn (which walks fresh history).
+ */
+type _UC = NonNullable<DMessageGenerator['upstreamContainer']>;
+
+function _findRecentUpstreamContainer<Uct extends _UC['uct']>(history: readonly DMessage[], uct: Uct, expiryBufferMs = 15_000): Extract<_UC, { uct: Uct }> | null {
+  for (let i = history.length - 1; i >= 0; i--) {
+    const uc = history[i].generator?.upstreamContainer;
+    if (uc?.uct !== uct) continue;
+    if (typeof uc.expiresAt === 'string' && Date.parse(uc.expiresAt) - Date.now() <= expiryBufferMs) {
+      console.log(`[DEV] AIX: ${uc.uct} expired, not reusing.`);
+      return null;
+    }
+    return uc as Extract<_UC, { uct: Uct }>;
+  }
+  return null;
+}
 
 // --- L3 - Conversation-level generation (builds chat request, error wrapping) ---
 
@@ -261,21 +294,19 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
 
-    // [Anthropic Container] Session resolution: walk history backwards to find the most recent
-    // unexpired container. Stops at the first container found (same session = same container;
-    // older containers from the same session would be at least as expired).
-    if (!clientOptions.antContainerId)
-      for (let i = chatHistoryWithoutSystemMessages.length - 1; i >= 0; i--) {
-        const uc = chatHistoryWithoutSystemMessages[i].generator?.upstreamContainer;
-        if (uc?.uct === 'vnd.ant.container') {
-          const remainingMs = Date.parse(uc.expiresAt) - Date.now();
-          if (remainingMs <= 15_000)
-            console.log(`[DEV] AIX: Anthropic container ${uc.containerId} expired ${Math.round(-remainingMs / 1000)}s ago, not reusing.`);
-          else
-            clientOptions = { ...clientOptions, antContainerId: uc.containerId };
-          break;
-        }
-      }
+    // Cross-turn upstream-container resolution. Walks history newest-first, stops at the first
+    // match per `uct`. Each vendor has different expiry semantics - see `findRecentUpstreamContainer`.
+    //  - Anthropic: server returns `expiresAt` ISO string; 15s buffer before reuse.
+    //  - Gemini Interactions: no expiry on the wire today (`expiresAt: null`); reuse and fall back
+    //    to fresh sandbox if the upstream returns an error on the prior env id.
+    if (!clientOptions.antContainerId) {
+      const uc = _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.ant.container');
+      if (uc) clientOptions = { ...clientOptions, antContainerId: uc.containerId };
+    }
+    if (!clientOptions.gemEnvironmentId) {
+      const uc = _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.gem.interactions');
+      if (uc) clientOptions = { ...clientOptions, gemEnvironmentId: uc.envId };
+    }
 
     const { outcome, ...resultDMessage } = await aixChatGenerateContent_DMessage_orThrow(
       llmId,
@@ -553,6 +584,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   aixDecorateModelFromGlobals(aixModel, {
     vndAntContainerId: clientOptions?.antContainerId,
     vndAntTransformInlineFiles: aixAccess.dialect === 'anthropic' ? getVndAntInlineFiles() : undefined,
+    vndGeminiEnvironmentId: clientOptions?.gemEnvironmentId,
   });
 
   // Client-side late stage model HotFixes - collapse the caller's requested streaming preference into the effective wire-streaming decision after constraints (hotfix gate, model.forceNoStream)

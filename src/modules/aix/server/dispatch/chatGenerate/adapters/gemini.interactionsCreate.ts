@@ -100,11 +100,14 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
       },
     }),
     ...(isAntigravity && {
-      // Antigravity: 'remote' selects a fresh Google-hosted Linux sandbox. Stateful re-use (env_<id>)
-      // is not exposed yet - would need a per-conversation env handle stored alongside the run.
-      // `tools` intentionally NOT set: omitting it enables the full default set (code_execution,
-      // google_search, url_context, filesystem). Specify only when restricting.
-      environment: 'remote',
+      // Reuse the prior turn's sandbox via `upstreamContainer.uct === 'vnd.gem.interactions'` walk
+      // (see aix.client.ts). `"remote"` (fresh sandbox) only when no prior env exists in history -
+      // NOT a fallback on upstream rejection. If the env is invalidated upstream this POST fails
+      // and the error surfaces; recovery happens on the next user turn (which re-walks history).
+      // NOTE: the env is a MUTATING handle, not a snapshot - re-running an earlier turn rejoins
+      // the same sandbox with whatever files/state intervening turns left behind. Tools default
+      // set is enabled implicitly by omitting `tools` (code_execution, google_search, url_context, fs).
+      environment: model.vndGeminiEnvironmentId || 'remote',
     }),
     // non-DR agents: use native system_instruction field (matches gemini.generateContent.ts convention)
     ...(!isDeepResearch && systemText && { system_instruction: systemText }),

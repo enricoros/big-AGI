@@ -105,6 +105,16 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
           pt.setUpstreamHandle(event.interaction.id, 'vnd.gem.interactions');
           upstreamHandleSent = true;
         }
+        // Capture the Interactions API session handle (`environment_id`) so the next turn can reuse
+        // the same upstream sandbox. Mirrors Anthropic's container forward-carry pattern. Stored
+        // with `expiresAt: null` (upstream doesn't expose retention); reuse is best-effort - if the
+        // env is invalidated upstream, the next turn's POST fails and surfaces the error.
+        if (isAntigravity && event.interaction.environment_id)
+          pt.sendSetVendorState({
+            p: 'svs',
+            vendor: 'gemini-envid',
+            state: { environment: { id: event.interaction.environment_id, expiresAt: null } },
+          });
         break;
 
       case 'interaction.status_update':

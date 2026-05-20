@@ -847,6 +847,19 @@ export class ContentReassembler {
       return; // container is message-scoped, not fragment-scoped
     }
 
+    // Promote Gemini Interactions session handle -> Generator (message-scoped, for cross-turn reuse).
+    // Today populated by Antigravity's `interaction.start.environment_id`; future Interactions
+    // managed agents may emit the same svs vendor/state shape and slot in here without protocol changes.
+    if (vendor === 'gemini-envid' && 'environment' in state) {
+      const { id, expiresAt } = state.environment;
+      if (id)
+        this.S.generator = {
+          ...this.S.generator,
+          upstreamContainer: { uct: 'vnd.gem.interactions', envId: id, expiresAt },
+        };
+      return; // session handle is message-scoped, not fragment-scoped
+    }
+
     // Fragment-scoped vendor states - attach to the last fragment (e.g. Gemini thoughtSignature)
     const lastIdx = this.S.fragments.length - 1;
     const lastFragment = this.S.fragments[lastIdx];
