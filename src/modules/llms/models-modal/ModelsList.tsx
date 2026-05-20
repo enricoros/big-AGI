@@ -70,6 +70,11 @@ const styles = {
   chipDisabled: {
     opacity: 0.5,
   } as const,
+  chipNew: {
+    bgcolor: '#d4ff3a',
+    color: 'black',
+    fontWeight: 'lg',
+  },
   // styleNameChip: {
   //   marginLeft: '0.5rem',
   //   fontSize: '0.75rem',
@@ -231,7 +236,11 @@ export const ModelItem = React.memo(function ModelItem(props: {
         </>}
 
         {/* Features Chips - sync with `useLLMSelect.tsx` */}
-        {isRecentlyPublished && isNotSymlink && pubDate && <GoodTooltip title={`Released ${pubDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}`}><Chip size='sm' variant='solid' sx={isHidden ? styles.chipDisabled : { bgcolor: '#d4ff3a', color: 'black', fontWeight: 'lg' }}>new</Chip></GoodTooltip>}
+        {isRecentlyPublished && isNotSymlink && pubDate && (
+          <GoodTooltip title={`Released ${pubDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}`}>
+            <Chip size='sm' variant='solid' sx={styles.chipNew}>new</Chip>
+          </GoodTooltip>
+        )}
         {featuresChipMemo}
         {seemsFree && isNotSymlink && <Chip size='sm' color='success' variant='plain' sx={isHidden ? styles.chipDisabled : styles.chipFree}>free</Chip>}
 
