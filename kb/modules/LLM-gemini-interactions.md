@@ -91,7 +91,7 @@ Deep Research accepts `agent_config.visualization: 'auto' | 'off'`. Exposed as `
 | `background` | MUST be `true` ('Agents are required to use background=true') | MUST NOT be `true` ('Agent does not support using background=True'); adapter sends `false` |
 | `system_instruction` | rejected at top level (prepend to first user turn) | natively accepted |
 | `agent_config` | `{ type: 'deep-research', ... }` | NOT used |
-| `environment` | ignored | `"remote"` for fresh sandbox; `env_<id>` for reuse (not yet wired) |
+| `environment` | ignored | `"remote"` for fresh sandbox; bare UUID for sandbox reuse (wired - see "Sandbox reuse" below) |
 | `store` | `true` (required for resume) | `true` (required by docs) but moot for resume - see below |
 
 ### Resumability: none
@@ -129,6 +129,44 @@ Sweep on 2026-05-19 across 8 prompts (filesystem / clone / build / search / fetc
 ```
 
 All eight runs terminated cleanly (`setTokenStopReason('ok')` + `setDialectEnded('done-dialect')`). Next sweep should run when Google flips the API revision default (2026-05-26 per the migration notice in `gemini.interactions.wiretypes.ts`).
+
+### Session reuse (cross-turn `environment_id` forward-carry)
+
+The Gemini Interactions API session/sandbox persists across runs by passing the prior run's `environment_id` in the next request's `environment` field. Today the only consumer is Antigravity; the mechanism is generic across the Interactions API (one `uct` per vendor protocol, not per agent). Wiring mirrors Anthropic's container reuse (same `DMessageGenerator.upstreamContainer` slot, extended discriminator).
+
+| Stage | File:fn | What |
+|---|---|---|
+| 1. Schema | `chat.message.ts` `DMessageGenerator.upstreamContainer` | Discriminator extended: `{ uct: 'vnd.gem.interactions', envId, expiresAt: string | null }` alongside the existing `vnd.ant.container` variant |
+| 2. Wire | `aix.wiretypes.ts` `svs` particle | New `vendor: 'gemini-envid'` variant carrying `state.environment.{id,expiresAt}` |
+| 3. Parser | `gemini.interactions.parser.ts` `interaction.start` case | Emits `pt.sendSetVendorState({...})` when `event.interaction.environment_id` is present AND `isAntigravity` |
+| 4. Reassembler | `ContentReassembler.ts` `onSetVendorState` | Promotes the svs to `S.generator.upstreamContainer` (message-scoped) |
+| 5. Walk | `aix.client.ts` `findRecentUpstreamContainer(history, uct)` | Generic helper. Newest-first, stops at first match per `uct`. Applies a 15s expiry buffer when `expiresAt` is a string; accepts unconditionally when `null` (Interactions API case). Replaces the previously-inline Anthropic loop |
+| 6. Decorate | `aix.client.ts` `aixDecorateModelFromGlobals` | Sets `model.vndGeminiEnvironmentId` from `clientOptions.gemEnvironmentId` |
+| 7. Adapter | `gemini.interactionsCreate.ts` | `environment: model.vndGeminiEnvironmentId || 'remote'` |
+
+**Mutating handle, NOT a snapshot:** `upstreamContainer` stores *who to rejoin*, not *what state was at that point*. Going back to an earlier turn and re-running reuses the same upstream sandbox, with whatever files/state intervening turns left behind. There is no per-turn checkpoint upstream; if a clean sandbox is desired the user starts a new chat (which has no prior `upstreamContainer` in history, so the walk returns null and the adapter falls back to `"remote"`).
+
+**Expiry contract (per docs):** environments follow Created → Active → Idle (auto-snapshot after 15min) → Offline (retained 7 days from last-active) → Deleted. The wire does NOT expose `environment_expires_at`, so the parser stamps `expiresAt = now + 7d` on every turn that touches the env (refresh-on-use). The walk's existing 15s expiry buffer then correctly skips stale envs.
+
+**No auto-fallback on upstream rejection:** the adapter sends `environment: <prior env id> || 'remote'` exactly once. `'remote'` is the value used when no prior env exists in history OR when the prior env is past its derived 7d TTL - it is NOT a fallback path on upstream errors mid-turn. If Google invalidates a previously-valid env between turns (e.g. shorter-than-7d retention, server-side eviction), the POST fails and the error surfaces. Auto-fallback (catch invalid-env error → retry with `'remote'`) would require error-classification work in dispatch and is not done today.
+
+### Rich environment config (NOT YET WIRED)
+
+The `environment` request field accepts THREE shapes per the docs ([Antigravity Environments](https://ai.google.dev/gemini-api/docs/managed-agents/environments)):
+
+| Shape | Example | Status |
+|---|---|---|
+| `"remote"` literal | `environment: "remote"` | ✅ wired (fresh sandbox) |
+| Env id string | `environment: "<uuid>"` | ✅ wired (reuse via history walk + 7d TTL) |
+| Config object | `environment: { type: "remote", sources?, network? }` | ❌ NOT wired |
+
+The config-object form lets the user mount Git repos / Cloud Storage / inline content into the sandbox at creation, and constrain outbound network access via an allowlist with header injection (for credentials). Today we always send the string form. Wiring the config form would be a chat-level concept (conversation-scoped config, not per-message) since sandbox composition is a project property, not a turn property.
+
+**Forward-compat note:** the `upstreamContainer.uct === 'vnd.gem.interactions'` variant stores only `envId` today. When rich-config support lands, the variant grows an optional `config` field OR the chat/conversation grows a `vendorConfig.gemini.environment` field that the adapter reads on the FIRST turn (no prior env id available in history). The capture path is unchanged - `interaction.start.environment_id` always comes back, regardless of which form was sent.
+
+**Why `previous_interaction_id` is NOT wired:** the docs pair it with env reuse for server-side conversation memory. We deliberately re-send the full chat history on each turn instead (stateless multi-turn), because our edit-anywhere/branch chat model is incompatible with server-side turn-chaining. Skip.
+
+**Format contract (verified empirically):** the canonical reuse value is the **bare UUID** from `environment_id`. Sending `env_<uuid>` works but the server treats it as a literal string key for a separate sandbox (no reuse). Our parser extracts the bare UUID unchanged.
 
 ### Probe tool
 

@@ -12,6 +12,12 @@ import { geminiConvertPCM2WAV } from './gemini.audioutils';
 // Kill-switch: drop url_citation annotations - Deep Research ships opaque grounding-redirect URLs with no titles, and the text already contains a numbered source list.
 const DISABLE_CITATIONS = true;
 
+// Gemini Interactions Environment retention (per docs: Idle after 15min, retained 7 days since last
+// active, then deleted). Wire doesn't expose `environment_expires_at`, so we stamp the env handle
+// with `now + 7d` on every turn that touches it. The history walk's 15s expiry buffer skips stale
+// candidates and the adapter falls through to `"remote"` (fresh sandbox) when none are usable.
+const _GEM_ENV_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 
 type TInteraction = z.infer<typeof GeminiInteractionsWire_API_Interactions.Interaction_schema>;
 type TUsage = NonNullable<TInteraction['usage']>;
@@ -106,14 +112,20 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
           upstreamHandleSent = true;
         }
         // Capture the Interactions API session handle (`environment_id`) so the next turn can reuse
-        // the same upstream sandbox. Mirrors Anthropic's container forward-carry pattern. Stored
-        // with `expiresAt: null` (upstream doesn't expose retention); reuse is best-effort - if the
-        // env is invalidated upstream, the next turn's POST fails and surfaces the error.
-        if (isAntigravity && event.interaction.environment_id)
+        // the same upstream sandbox. Interaction-level field (not agent-specific) - any future
+        // managed agent with a sandbox returns it. Lifecycle per docs: Idle after 15min, retained
+        // 7 days since last active, then deleted - so we stamp `expiresAt: now + 7d` on every turn
+        // that touches the env (refresh-on-use). The walk's existing 15s gate skips stale envs.
+        if (event.interaction.environment_id)
           pt.sendSetVendorState({
             p: 'svs',
             vendor: 'gemini-envid',
-            state: { environment: { id: event.interaction.environment_id, expiresAt: null } },
+            state: {
+              environment: {
+                id: event.interaction.environment_id,
+                expiresAt: new Date(Date.now() + _GEM_ENV_TTL_MS).toISOString(),
+              },
+            },
           });
         break;
 

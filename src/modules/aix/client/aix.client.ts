@@ -297,8 +297,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
     // Cross-turn upstream-container resolution. Walks history newest-first, stops at the first
     // match per `uct`. Each vendor has different expiry semantics - see `findRecentUpstreamContainer`.
     //  - Anthropic: server returns `expiresAt` ISO string; 15s buffer before reuse.
-    //  - Gemini Interactions: no expiry on the wire today (`expiresAt: null`); reuse and fall back
-    //    to fresh sandbox if the upstream returns an error on the prior env id.
+    //  - Gemini Interactions: 7d retention from last-active (per docs); parser stamps `expiresAt: now + 7d` on every turn that touches the env, so the same 15s buffer works.
     if (!clientOptions.antContainerId) {
       const uc = _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.ant.container');
       if (uc) clientOptions = { ...clientOptions, antContainerId: uc.containerId };

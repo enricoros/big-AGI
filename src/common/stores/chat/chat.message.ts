@@ -134,7 +134,7 @@ export type DMessageGenerator = ({
     | {
       uct: 'vnd.gem.interactions',      // today: Antigravity sandbox via `interaction.start.environment_id`
       envId: string,
-      expiresAt: string | null,         // null when upstream doesn't expose retention; reuse is best-effort (no auto-fallback if upstream rejects)
+      expiresAt: string | null,         // server doesn't expose retention; parser stamps now+7d per docs (env retained 7d from last-active)
     },
   upstreamHandle?:
     // unified `runId` across variants - vendor-specific id lives behind it; `uht` is consulted only for dispatch routing
