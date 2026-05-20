@@ -118,7 +118,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       return;
 
     // it no config (first-time): Heuristic: auto-pick the best models for the user, based on their ELO and variety
-    const autoLlmIds = llmsHeuristicGetTopDiverseLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId);
+    const autoLlmIds = llmsHeuristicGetTopDiverseLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId ?? undefined);
     if (autoLlmIds.length > 0) {
       setRayLlmIds(autoLlmIds);
       setCurrentGatherLlmId(autoLlmIds[0]);

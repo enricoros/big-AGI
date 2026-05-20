@@ -125,7 +125,7 @@ type PreferredRankedVendors = RankedVendorLLMs[];
  * @param requireElo if true, only LLMs with elo are returned
  * @param fallback the LLM to use if there are not enough LLMs
  */
-export function llmsHeuristicGetTopDiverseLlmIds(count: number, requireElo: boolean, fallback: DLLMId | null): DLLMId[] {
+export function llmsHeuristicGetTopDiverseLlmIds(count: number, requireElo: boolean, fallback?: DLLMId): DLLMId[] {
   const llmIDs: DLLMId[] = [];
 
   // iterate through the groups, and top to bottom
