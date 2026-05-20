@@ -287,23 +287,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     // benchmark: TBD
   },
 
-  // GPT-5.3 Codex Spark - Research preview, text-only, optimized for real-time coding iteration
-  {
-    hidden: true, // Research preview, ChatGPT Pro only - API access limited to design partners
-    idPrefix: 'gpt-5.3-codex-spark',
-    label: 'GPT-5.3 Codex Spark',
-    pubDate: '20260212',
-    description: 'Text-only research preview optimized for real-time coding iteration. Delivers 1000+ tokens/sec on low-latency hardware.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
-      { paramId: 'llmForceNoStream' },
-    ],
-    // chatPrice: TBD - separate usage limits, not standard token pricing
-    // benchmark: TBD
-  },
+  // GPT-5.3 Codex Spark: removed, no longer returned by API (was ChatGPT Pro / design-partner only)
 
   // GPT-5.3 Chat Latest - Released March 3, 2026
   {
@@ -680,21 +664,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
-  /// OSB-120b - Speculative support for new model appearing in API
-  {
-    idPrefix: 'osb-120b',
-    label: 'OSB-120B',
-    description: 'Speculative support for osb-120b model. Uses Responses API.',
-    contextWindow: 128000,
-    maxCompletionTokens: 32768,
-    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
-      { paramId: 'llmForceNoStream' },
-    ],
-    // chatPrice: TBD - unknown pricing
-    benchmark: { cbaElo: 1353 }, // gpt-oss-120b
-  },
+  // osb-120b: removed, no longer returned by API (was speculative)
 
 
   /// [OpenAI, 2025-03-11] NEW `v1/responses` API MODELS - UNSUPPORTED YET
@@ -1067,38 +1037,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-4o-search-preview-2025-03-11',
   },
 
-  // GPT-4o Audio Preview
-  {
-    hidden: true, // old
-    idPrefix: 'gpt-4o-audio-preview-2025-06-03',
-    label: 'GPT-4o Audio Preview (2025-06-03)',
-    pubDate: '20250603',
-    description: 'Latest snapshot for the Audio API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: IFS_GPT_AUDIO,
-    chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to audio models
-    isPreview: true,
-  },
-  {
-    hidden: true, // old
-    idPrefix: 'gpt-4o-audio-preview-2024-12-17',
-    label: 'GPT-4o Audio Preview (2024-12-17)',
-    pubDate: '20241217',
-    description: 'Snapshot for the Audio API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: IFS_GPT_AUDIO,
-    chatPrice: { input: 2.5, output: 10 /* AUDIO PRICING UNSUPPORTED 40/80 */ },
-    // benchmarks don't apply to audio models
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-audio-preview',
-    label: 'GPT-4o Audio Preview',
-    symLink: 'gpt-4o-audio-preview-2025-06-03',
-  },
+  // GPT-4o Audio Preview: removed, no longer returned by API (superseded by GPT Audio family)
 
   // GPT-4o mini
   {
@@ -1117,24 +1056,8 @@ export const _knownOpenAIChatModels: ManualMappings = [
     label: 'GPT-4o mini',
     symLink: 'gpt-4o-mini-2024-07-18',
   },
-  {
-    hidden: true, // UNSUPPORTED yet (audio output model)
-    idPrefix: 'gpt-4o-mini-audio-preview-2024-12-17',
-    label: 'GPT-4o Mini Audio Preview (2024-12-17)',
-    pubDate: '20241217',
-    description: 'Snapshot for the Audio API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: IFS_GPT_AUDIO,
-    chatPrice: { input: 0.15, output: 0.6 /* AUDIO PRICING UNSUPPORTED 10/20 */ },
-    // benchmarks don't apply to audio models
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-mini-audio-preview',
-    label: 'GPT-4o Mini Audio Preview',
-    symLink: 'gpt-4o-mini-audio-preview-2024-12-17',
-  },
+  // GPT-4o Mini Audio Preview: removed, no longer returned by API (superseded by GPT Audio Mini family)
+
   // GPT-4o Mini Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
     hidden: true, // old
@@ -1174,36 +1097,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     label: 'GPT-4 Turbo',
     symLink: 'gpt-4-turbo-2024-04-09',
   },
-  {
-    idPrefix: 'gpt-4-0125-preview',
-    label: 'GPT-4 Turbo (0125)',
-    pubDate: '20240125',
-    hidden: true, // OLD
-    description: 'GPT-4 Turbo preview model intended to reduce cases of "laziness" where the model doesn\'t complete a task.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1313 }, // gpt-4-0125-preview
-  },
-  {
-    idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
-    label: 'GPT-4 Turbo (1106)',
-    pubDate: '20231106',
-    hidden: true, // OLD
-    description: 'GPT-4 Turbo preview model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1312 }, // gpt-4-1106-preview
-  },
-  {
-    idPrefix: 'gpt-4-turbo-preview',
-    label: 'GPT-4 Turbo Preview',
-    symLink: 'gpt-4-0125-preview',
-    isLegacy: true,
-  },
+  // gpt-4-0125-preview / gpt-4-1106-preview / gpt-4-turbo-preview: removed, no longer returned by API
 
   // GPT4's
   {
@@ -1218,18 +1112,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1274 }, // gpt-4-0613
     isLegacy: true,
   },
-  {
-    idPrefix: 'gpt-4-0314',
-    label: 'GPT-4 (0314)',
-    pubDate: '20230314',
-    hidden: true, // OLD
-    description: 'Snapshot of gpt-4 from March 14th 2023 with function calling data. Data up to Sep 2021.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 30, output: 60 },
-    benchmark: { cbaElo: 1286 }, // gpt-4-0314
-    isLegacy: true,
-  },
+  // gpt-4-0314: removed, no longer returned by API
   {
     idPrefix: 'gpt-4',
     label: 'GPT-4',
@@ -1305,6 +1188,11 @@ function _isLikelyResponsesAPIModel(modelId: string): boolean {
 }
 
 
+// exact-match deny list (id must equal entry, not just include it) - use for ambiguous aliases
+const openAIModelsDenyExactList: string[] = [
+  'chat-latest', // unstable alias (not a real model); included by the API list. Filtered to avoid noise in dev checks.
+];
+
 const openAIModelsDenyList: string[] = [
   // [OpenAI, 2025-08-28] FIXME: NOT YET SUPPORTED - "REALTIME API"
   // 'gpt-realtime', // leave this just for kicks, but it's hidden by default and won't work if unhidden
@@ -1363,6 +1251,7 @@ const openAIModelsDenyList: string[] = [
 ];
 
 export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
+  if (openAIModelsDenyExactList.includes(model.id)) return false;
   return !openAIModelsDenyList.some(deny => model.id.includes(deny));
 }
 
@@ -1392,7 +1281,6 @@ const _manualOrderingIdPrefixes = [
   'gpt-5.3-20',
   'gpt-5.3-pro-20',
   'gpt-5.3-pro',
-  'gpt-5.3-codex-spark',
   'gpt-5.3-codex',
   'gpt-5.3-chat-latest',
   // GPT-5.2
@@ -1418,8 +1306,6 @@ const _manualOrderingIdPrefixes = [
   'gpt-5-chat-latest',
   'gpt-5-codex',
   'gpt-5-',
-  // OSB models?
-  'osb-',
   // Reasoning models
   'o5-20',
   'o5-mini-20',
@@ -1457,10 +1343,8 @@ const _manualOrderingIdPrefixes = [
   // 4o-derived?
   'gpt-audio-1.5',
   'gpt-audio-2',
-  'gpt-4o-audio-preview',
   'gpt-audio-mini-',
   'gpt-audio-mini',
-  'gpt-4o-mini-audio-preview',
   'gpt-audio',
   // Preferred models
   'gpt-4o-20',
