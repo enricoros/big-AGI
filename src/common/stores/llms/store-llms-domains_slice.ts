@@ -160,6 +160,50 @@ export function llmsHeuristicGetTopDiverseLlmIds(count: number, requireElo: bool
 
 
 /**
+ * Heuristics to return fast/low-cost LLMs from different vendors,
+ * using the same strategy as utility models (topVendorLowestCost).
+ * Round-robin picks the lowest-cost model from each vendor.
+ */
+export function llmsHeuristicGetTopFastLlmIds(count: number): DLLMId[] {
+  const llmIDs: DLLMId[] = [];
+
+  const { llms } = useModelsStore.getState();
+  const groupedLlms = _groupLlmsByVendorRankedByElo(llms);
+
+  // For each vendor, sort by cost (lowest first, excluding free/0-cost)
+  const vendorsByCost = groupedLlms.map(vendor => ({
+    vendorId: vendor.vendorId,
+    llmsByCost: vendor.llmsByElo.toSorted((a, b) => {
+      if (!a.costRank && !b.costRank) return 0;
+      if (!a.costRank) return 1; // push 0-cost to end
+      if (!b.costRank) return -1;
+      return a.costRank - b.costRank;
+    }),
+  }));
+
+  // Round-robin pick lowest-cost models from each vendor
+  let costLevel = 0;
+  while (llmIDs.length < count) {
+    let added = false;
+
+    for (const vendor of vendorsByCost) {
+      if (costLevel < vendor.llmsByCost.length) {
+        const llmEntry = vendor.llmsByCost[costLevel];
+        if (!llmEntry.id) continue;
+        llmIDs.push(llmEntry.id);
+        added = true;
+        if (llmIDs.length === count) break; // fast exit
+      }
+    }
+
+    if (!added) break;
+    costLevel++;
+  }
+
+  return llmIDs;
+}
+
+/**
  * Heuristic to update the assignments (either missing or invalid due to removed models).
  */
 export function llmsHeuristicUpdateAssignments(allLlms: ReadonlyArray<DLLM>, existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>): LlmsAssignmentsState['modelAssignments'] {
