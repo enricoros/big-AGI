@@ -3,6 +3,7 @@ import * as React from 'react';
 import { BaseProduct } from '~/common/app.release';
 import { logger } from '~/common/logger';
 import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
+import { isBenignDomMutationError } from '~/common/util/errorUtils';
 
 
 export interface ErrorBoundaryProps {
@@ -51,7 +52,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     const { componentName, onError } = this.props;
 
     // Check for benign DOM errors and handle silently
-    if (error.name === 'NotFoundError' && error.message?.includes('removeChild')) {
+    if (isBenignDomMutationError(error)) {
       console.warn(`Benign DOM error in ${componentName}: ${error.message}`);
       this.setState({ hasError: false, error: null });
       return;
