@@ -705,6 +705,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // o4-mini-deep-research - (v1/responses API)
   {
+    hidden: true, // deprecated, shutdown 2026-07-23
     idPrefix: 'o4-mini-deep-research-2025-06-26',
     label: 'o4 Mini Deep Research [Deprecated]',
     pubDate: '20250626',
@@ -745,6 +746,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
 
   // o3-deep-research - (v1/responses API)
   {
+    hidden: true, // deprecated, shutdown 2026-07-23
     idPrefix: 'o3-deep-research-2025-06-26',
     label: 'o3 Deep Research [Deprecated]',
     pubDate: '20250626',
@@ -1239,9 +1241,6 @@ const openAIModelsDenyList: string[] = [
   'gpt-3.5-turbo-0613',
   'gpt-3.5-turbo-16k',
   'gpt-3.5-turbo-16k-0613',
-
-  // Other unwanted GPT models
-  'gpt-4-turbo-preview',
 
   // Non-chat GPT models
   '-turbo-instruct', 'davinci-', 'babbage-',
