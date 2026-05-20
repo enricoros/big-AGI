@@ -45,6 +45,9 @@ interface UIPreferencesStore {
   showPersonaFinder: boolean;
   setShowPersonaFinder: (showPersonaFinder: boolean) => void;
 
+  showModelsFn: boolean; // =false, DEV only
+  setShowModelsFn: (showModelsFn: boolean) => void;
+
   showModelsHidden: boolean;
   setShowModelsHidden: (showModelsHidden: boolean) => void;
 
@@ -119,6 +122,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       // Deprecated
       showPersonaFinder: false,
       setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
+
+      showModelsFn: false,
+      setShowModelsFn: (showModelsFn: boolean) => set({ showModelsFn }),
 
       showModelsHidden: true,
       setShowModelsHidden: (showModelsHidden: boolean) => set({ showModelsHidden }),
