@@ -2,7 +2,7 @@
 
 The Interactions API powers Gemini's managed-agent runs. Currently wired:
 - **Deep Research** (`deep-research-*-preview-*`) — research/synthesis agent. Requires `background=true`; rejects top-level `system_instruction` (we prepend to input). Configurable via `agent_config` (`thinking_summaries`, `visualization`).
-- **Antigravity Agent** (`antigravity-preview-05-2026`, released 2026-05-19) — general-purpose Gemini-3.5-Flash-powered agent inside a Google-hosted Linux sandbox with code_execution / google_search / url_context / filesystem tools. REJECTS `background=true` (we omit it); accepts native `system_instruction`; needs `environment` ('remote' for fresh sandbox; `env_<id>` to resume). [Docs](https://ai.google.dev/gemini-api/docs/antigravity-agent).
+- **Antigravity Agent** (`antigravity-preview-05-2026`, released 2026-05-19) — general-purpose Gemini-3.5-Flash-powered agent inside a Google-hosted Linux sandbox with code_execution / google_search / url_context / filesystem tools. REJECTS `background=true` (we omit it); accepts native `system_instruction`; `environment` is auto-reused across turns via the history walk (bare UUID, NOT `env_<id>` - see "Session reuse" below). [Docs](https://ai.google.dev/gemini-api/docs/antigravity-agent).
 
 Per-agent flags live in `gemini.interactionsCreate.ts` (`isDeepResearch` / `isAntigravity` gates). This doc is the source of truth for protocol shape, failure modes, and the recovery model — code comments link here instead of repeating the rationale.
 
@@ -167,6 +167,8 @@ The config-object form lets the user mount Git repos / Cloud Storage / inline co
 **Why `previous_interaction_id` is NOT wired:** the docs pair it with env reuse for server-side conversation memory. We deliberately re-send the full chat history on each turn instead (stateless multi-turn), because our edit-anywhere/branch chat model is incompatible with server-side turn-chaining. Skip.
 
 **Format contract (verified empirically):** the canonical reuse value is the **bare UUID** from `environment_id`. Sending `env_<uuid>` works but the server treats it as a literal string key for a separate sandbox (no reuse). Our parser extracts the bare UUID unchanged.
+
+**Deep Research has no sandbox:** verified 2026-05-19 that `deep-research-preview-04-2026` does NOT include `environment_id` in `interaction.start`. The parser's `if (event.interaction.environment_id)` field-presence check makes this a no-op for DR - no special-case gate needed. Same code path, narrower behavior; if Google ever adds an environment to DR or another managed agent, capture starts working automatically.
 
 ### Probe tool
 
