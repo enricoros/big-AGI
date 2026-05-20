@@ -267,7 +267,7 @@ export function BeamView(props: {
         noTitleBar
         confirmationText={'Some replies are still generating. Merge what\'s ready?'}
         positiveActionText='Merge now'
-        negativeActionText='Wait for all'
+        negativeActionText='Waiting for all...'
         negativeActionStartDecorator={
           <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
         }
