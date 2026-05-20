@@ -9,6 +9,51 @@ export function abortWithReason(controller: AbortController | undefined | null, 
   controller?.abort(new DOMException(message, 'AbortError'));
 }
 
+/**
+ * Detect cancellation errors that are expected when users stop generation,
+ * navigate away, or an operation is intentionally torn down.
+ */
+export function isAbortErrorLike(error: unknown): boolean {
+  if (!error) return false;
+
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError')
+    return true;
+
+  if (error instanceof Error) {
+    if (error.name === 'AbortError')
+      return true;
+    if (error.cause)
+      return isAbortErrorLike(error.cause);
+  }
+
+  if (typeof error === 'object') {
+    const maybeError = error as { name?: unknown; message?: unknown; cause?: unknown; error?: unknown };
+    if (maybeError.name === 'AbortError')
+      return true;
+    if (maybeError.error)
+      return isAbortErrorLike(maybeError.error);
+    if (maybeError.cause)
+      return isAbortErrorLike(maybeError.cause);
+  }
+
+  return false;
+}
+
+/**
+ * React can throw these when browser extensions or translation tools mutate
+ * the DOM tree behind React's back. They are not actionable app crashes.
+ */
+export function isBenignDomMutationError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message || '';
+  if (error.name !== 'NotFoundError') return false;
+
+  return message.includes('removeChild')
+    || message.includes('insertBefore')
+    || message.includes('The node before which the new node is to be inserted is not a child of this node');
+}
+
 
 /**
  * Present an error to the user in a human-readable format.

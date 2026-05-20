@@ -1,4 +1,4 @@
-import { maybeDebuggerBreak, serializeError } from '~/common/util/errorUtils';
+import { isAbortErrorLike, maybeDebuggerBreak, serializeError } from '~/common/util/errorUtils';
 import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
 
 import type { ClientLogger, LogEntry, LogLevel, LogOptions, LogSource } from './logger.types';
@@ -101,7 +101,7 @@ class LoggerImplementation implements ClientLogger {
       maybeDebuggerBreak();
 
     // Send error/critical logs to PostHog for monitoring
-    if ((level === 'error' || level === 'critical') && !finalOptions.skipReporting)
+    if ((level === 'error' || level === 'critical') && !finalOptions.skipReporting && !isAbortErrorLike(originalDetails))
       this.#sendToPostHogIfError(level, message, originalDetails, finalSource);
 
     return this._actions._addEntry({
