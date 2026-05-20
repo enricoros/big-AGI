@@ -18,6 +18,7 @@ import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dro
 import { useLLMsByService } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { findModelVendor } from '../vendors/vendors.registry';
@@ -89,6 +90,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
   chipChat: boolean,
   chipCode: boolean,
   chipFast: boolean,
+  debugShowFn: boolean,
   isMobile: boolean,
   onModelClicked: (llmId: DLLMId) => void,
   onModelSetHidden: (llmId: DLLMId, hidden: boolean) => void,
@@ -283,6 +285,7 @@ export function ModelsList(props: {
 
   // external state
   const isMobile = useIsMobile();
+  const showModelsFn = useUIPreferencesStore(state => state.showModelsFn);
   const domainAssignments = useModelDomains();
   const llms = useLLMsByService(props.filterServiceId === null ? false : props.filterServiceId);
 
@@ -342,6 +345,7 @@ export function ModelsList(props: {
           chipChat={llm.id === primaryChatLlmId}
           chipCode={llm.id === codeApplyLlmId}
           chipFast={llm.id === fastUtilLlmId}
+          debugShowFn={showModelsFn}
           isMobile={isMobile}
           onModelClicked={handleModelClicked}
           onModelSetHidden={handleModelSetHidden}
@@ -351,7 +355,7 @@ export function ModelsList(props: {
     }
 
     return items;
-  }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId, props.showHiddenModels]);
+  }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId, props.showHiddenModels, showModelsFn]);
 
   return (
     <List size={!isMobile ? undefined : 'sm'} sx={props.sx}>

@@ -68,7 +68,9 @@ export function ModelsConfiguratorModal(props: {
   const isMobile = useIsMobile();
   const hasLLMs = useHasLLMs();
   const { showPromisedOverlay } = useOverlayComponents();
-  const { showModelsHidden, setShowModelsHidden, starredOnTop, setStarredOnTop } = useUIPreferencesStore(useShallow(state => ({
+  const { showModelsFn, setShowModelsFn, showModelsHidden, setShowModelsHidden, starredOnTop, setStarredOnTop } = useUIPreferencesStore(useShallow(state => ({
+    showModelsFn: state.showModelsFn,
+    setShowModelsFn: state.setShowModelsFn,
     showModelsHidden: state.showModelsHidden,
     setShowModelsHidden: state.setShowModelsHidden,
     starredOnTop: state.modelsStarredOnTop,
@@ -285,6 +287,11 @@ export function ModelsConfiguratorModal(props: {
 
               <ListDivider />
 
+              <MenuItem onClick={joyKeepPopup(() => setShowModelsHidden(!showModelsHidden))}>
+                <ListItemDecorator><Checkbox color='neutral' checked={showModelsHidden} /></ListItemDecorator>
+                View Hidden Models
+              </MenuItem>
+
               <MenuItem onClick={joyKeepPopup((event: any) => setVisMenuAnchor(visMenuAnchor ? null : event.currentTarget))}>
                 <ListItemDecorator />
                 Visibility
@@ -337,7 +344,7 @@ export function ModelsConfiguratorModal(props: {
       );
 
     return undefined;
-  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcMenuAnchor, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsHidden, setStarredOnTop, showModelsHidden, starredOnTop, visMenuAnchor]);
+  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcMenuAnchor, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, visMenuAnchor]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
