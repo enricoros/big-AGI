@@ -93,7 +93,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
   debugShowFn: boolean,
   isMobile: boolean,
   onModelClicked: (llmId: DLLMId) => void,
-  onModelSetHidden: (llmId: DLLMId, hidden: boolean) => void,
+  onModelSetHidden?: (llmId: DLLMId, hidden: boolean) => void,
   onModelSetStarred: (llmId: DLLMId, starred: boolean) => void,
 }) {
 
@@ -122,12 +122,12 @@ export const ModelItem = React.memo(function ModelItem(props: {
 
   const handleLLMHide = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    onModelSetHidden(llm.id, true);
+    onModelSetHidden?.(llm.id, true);
   }, [llm.id, onModelSetHidden]);
 
   const handleLLMUnhide = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    onModelSetHidden(llm.id, false);
+    onModelSetHidden?.(llm.id, false);
   }, [llm.id, onModelSetHidden]);
 
   // const handleLLMToggleStar = React.useCallback((event: React.MouseEvent) => {
@@ -245,6 +245,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
         )}
         {featuresChipMemo}
         {seemsFree && isNotSymlink && <Chip size='sm' color='success' variant='plain' sx={isHidden ? styles.chipDisabled : styles.chipFree}>free</Chip>}
+        {props.debugShowFn && llm.interfaces.includes(LLM_IF_OAI_Fn) && <Chip size='sm' variant='solid' color='warning'>fn</Chip>}
 
 
         {/* Action Buttons */}
@@ -257,7 +258,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
           {/*  </IconButton>*/}
           {/*</GoodTooltip>}*/}
 
-          {!props.isMobile && <GoodTooltip title={isHidden ? 'Hidden' : 'Shown in Chat'}>
+          {!props.isMobile && !!onModelSetHidden && <GoodTooltip title={isHidden ? 'Hidden' : 'Shown in Chat'}>
             <IconButton aria-label={isHidden ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={isHidden ? handleLLMUnhide : handleLLMHide} sx={absorbListPadding}>
               {isHidden ? <VisibilityOffOutlinedIcon sx={{ opacity: 0.5, fontSize: 'md' }} /> : <VisibilityOutlinedIcon />}
             </IconButton>
@@ -348,7 +349,7 @@ export function ModelsList(props: {
           debugShowFn={showModelsFn}
           isMobile={isMobile}
           onModelClicked={handleModelClicked}
-          onModelSetHidden={handleModelSetHidden}
+          onModelSetHidden={props.showHiddenModels ? handleModelSetHidden : undefined}
           onModelSetStarred={handleModelSetStarred}
         />,
       );
