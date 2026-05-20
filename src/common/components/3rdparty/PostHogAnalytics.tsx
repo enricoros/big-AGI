@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { PostHog, Properties } from 'posthog-js';
 
+import { isAbortErrorLike, isBenignDomMutationError } from '~/common/util/errorUtils';
 import { isBrowser } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
 
@@ -28,7 +29,10 @@ export function posthogCaptureEvent(eventName: string, properties?: Properties, 
 }
 
 export function posthogCaptureException(error: Error | unknown, additionalProperties?: Properties) {
-  if (isBrowser && hasPostHogAnalytics && _posthog) {
+  if (
+    isBrowser && hasPostHogAnalytics && _posthog &&
+    !isAbortErrorLike(error) && !isBenignDomMutationError(error)
+  ) {
     _posthog.captureException(error, additionalProperties);
   }
 }
