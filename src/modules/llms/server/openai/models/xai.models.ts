@@ -16,7 +16,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2026-05-18 (post-2026-05-15 retirement: grok-4-1-fast, grok-4-fast, grok-4-0709, grok-code-fast-1, grok-3 all redirect to grok-4.3)
+// Verified: 2026-05-20 (post-2026-05-15 retirement: grok-4-1-fast, grok-4-fast, grok-4-0709, grok-3 redirect to grok-4.3; grok-code-fast-1 now aliases grok-build-0.1)
 
 // Flat pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026)
 const PRICE_FLAGSHIP = {
@@ -129,9 +129,22 @@ const _knownXAIChatModels: ManualMappings = [
   // - grok-4-1-fast-reasoning / grok-4-1-fast-non-reasoning
   // - grok-4-fast-reasoning / grok-4-fast-non-reasoning
   // - grok-4-0709
-  // - grok-code-fast-1
   // - grok-3
   // Removed from manual mappings; will fall through to unknownModelFallback if listed by API.
+  // Note: grok-code-fast-1 / grok-code-fast / grok-code-fast-1-0825 now alias grok-build-0.1 (see below).
+
+  // Grok Build 0.1 (May 2026) - fast coding model, replaces grok-code-fast-1 family
+  {
+    idPrefix: 'grok-build-0.1',
+    label: 'Grok Build 0.1',
+    pubDate: '20260520',
+    description: 'xAI fast coding model with reasoning, function calling, and structured outputs. Text and image inputs, 256K context. Aliases: grok-code-fast-1, grok-code-fast, grok-code-fast-1-0825.',
+    contextWindow: 256000,
+    maxCompletionTokens: undefined,
+    interfaces: [...XAI_IF_Pre4_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Pre4,
+    chatPrice: { input: 1.00, output: 2.00, cache: { cType: 'oai-ac', read: 0.20 } },
+  },
 
   // Grok 3 Mini (Pre-Grok 4: no server-side tools) - not in 2026-05-15 retirement list
   {
@@ -252,6 +265,7 @@ const _xaiIdStartsWithOrder = [
   'grok-4.20-0309-reasoning',
   'grok-4.20-0309-non-reasoning',
   'grok-4.20-multi-agent-0309',
+  'grok-build-0.1',
   'grok-3-mini-fast',
   'grok-3-mini',
   'grok-2-vision-1212',
