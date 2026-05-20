@@ -204,6 +204,16 @@ export function llmsHeuristicGetTopFastLlmIds(count: number): DLLMId[] {
 }
 
 /**
+ * Heuristic to return starred LLMs from all vendors.
+ */
+export function llmsHeuristicGetStarredLlmIds(): DLLMId[] {
+  const { llms } = useModelsStore.getState();
+  const starredLlms = llms.filter(llm => llm.userStarred && llm.id);
+  return starredLlms.map(llm => llm.id);
+}
+
+
+/**
  * Heuristic to update the assignments (either missing or invalid due to removed models).
  */
 export function llmsHeuristicUpdateAssignments(allLlms: ReadonlyArray<DLLM>, existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>): LlmsAssignmentsState['modelAssignments'] {
