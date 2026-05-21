@@ -29,6 +29,7 @@ const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_MOONSHOT_HOST = 'https://api.moonshot.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
+const DEFAULT_ORCAROUTER_HOST = 'https://api.orcarouter.ai';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
@@ -84,7 +85,7 @@ export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai',
-    'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
+    'orcarouter', 'openrouter', 'perplexity', 'togetherai', 'xai', 'zai',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   oaiKey: z.string().trim(),
@@ -305,6 +306,24 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'X-Title': BaseProduct.ProductName,
         },
         url: orHost + apiPath,
+      };
+
+    case 'orcarouter':
+      let orcaKey = access.oaiKey || env.OPENAI_API_KEY || '';
+      const orcaHost = llmsFixupHost(access.oaiHost || DEFAULT_ORCAROUTER_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      orcaKey = llmsRandomKeyFromMultiKey(orcaKey);
+
+      if (!orcaKey || !orcaHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing OrcaRouter API Key or Host. Add it on the UI or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${orcaKey}`,
+        },
+        url: orcaHost + apiPath,
       };
 
     case 'perplexity':

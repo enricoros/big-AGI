@@ -22,6 +22,7 @@ import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 import { MoonshotIcon } from '~/common/components/icons/vendors/MoonshotIcon';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
+import { OrcaRouterIcon } from '~/common/components/icons/vendors/OrcaRouterIcon';
 import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
 import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon';
 import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
@@ -48,6 +49,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   moonshot: MoonshotIcon,
   ollama: OllamaIcon,
   openai: OpenAIIcon,
+  orcarouter: OrcaRouterIcon,
   openrouter: OpenRouterIcon,
   perplexity: PerplexityIcon,
   togetherai: TogetherIcon,

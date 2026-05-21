@@ -239,6 +239,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'mistral':
     case 'moonshot':
     case 'openai':
+    case 'orcarouter':
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':
@@ -309,6 +310,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
   switch (dialect) {
     case 'azure':
     case 'openai':
+    case 'orcarouter':
     case 'openrouter':
 
       // ASSUME the OpenAI Responses API - https://platform.openai.com/docs/api-reference/responses/get
@@ -423,6 +425,7 @@ export async function executeChatGenerateDelete(access: AixAPI_Access, handle: A
 
     case 'azure':
     case 'openai':
+    case 'orcarouter':
     case 'openrouter':
       if (handle.uht !== 'vnd.oai.responses')
         throw new Error(`Delete handle mismatch for ${dialect}: expected 'vnd.oai.responses', got '${handle.uht}'`);

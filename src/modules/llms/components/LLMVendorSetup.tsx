@@ -19,6 +19,7 @@ import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
 import { MoonshotServiceSetup } from '../vendors/moonshot/MoonshotServiceSetup';
 import { OllamaServiceSetup } from '../vendors/ollama/OllamaServiceSetup';
 import { OpenAIServiceSetup } from '../vendors/openai/OpenAIServiceSetup';
+import { OrcaRouterServiceSetup } from '../vendors/orcarouter/OrcaRouterServiceSetup';
 import { OpenRouterServiceSetup } from '../vendors/openrouter/OpenRouterServiceSetup';
 import { PerplexityServiceSetup } from '../vendors/perplexity/PerplexityServiceSetup';
 import { TogetherAIServiceSetup } from '../vendors/togetherai/TogetherAIServiceSetup';
@@ -45,6 +46,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   moonshot: MoonshotServiceSetup,
   ollama: OllamaServiceSetup,
   openai: OpenAIServiceSetup,
+  orcarouter: OrcaRouterServiceSetup,
   openrouter: OpenRouterServiceSetup,
   perplexity: PerplexityServiceSetup,
   togetherai: TogetherAIServiceSetup,

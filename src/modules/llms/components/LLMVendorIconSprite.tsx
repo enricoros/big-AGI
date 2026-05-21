@@ -25,6 +25,7 @@ const VI: Record<ModelVendorId, string> = {
   moonshot: 'vi-moonshot',
   ollama: 'vi-ollama',
   openai: 'vi-openai',
+  orcarouter: 'vi-orcarouter',
   openrouter: 'vi-openrouter',
   perplexity: 'vi-perplexity',
   togetherai: 'vi-togetherai',
@@ -143,6 +144,15 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
           <path d='M12.783 4.616a3.501 3.501 0 0 0 -6.783 1.217v5.067l6 3.45' fill='none' />
           <path d='M18.786 8.986a3.501 3.501 0 0 0 -4.446 -5.266l-4.34 2.534v6.946' fill='none' />
           <path d='M18 16.302c1.391 .236 2.787 -.395 3.534 -1.689a3.474 3.474 0 0 0 -1.271 -4.745l-4.308 -2.514l-5.955 3.42' fill='none' />
+          </g>
+        </symbol>
+
+        <symbol id={VI.orcarouter} viewBox='0 0 512 512'>
+          <g strokeWidth={0} stroke='currentColor' fill='currentColor' strokeLinecap='round' strokeLinejoin='round'>
+          <path d='M3 248.945C18 248.945 76 236 106 219C136 202 136 202 198 158C276.497 102.293 332 120.945 423 120.945' strokeWidth={70} />
+          <path d='M511 121.5L357.25 210.268L357.25 32.7324L511 121.5Z' />
+          <path d='M0 249C15 249 73 261.945 103 278.945C133 295.945 133 295.945 195 339.945C273.497 395.652 329 377 420 377' strokeWidth={70} />
+          <path d='M508 376.445L354.25 287.678L354.25 465.213L508 376.445Z' />
           </g>
         </symbol>
 

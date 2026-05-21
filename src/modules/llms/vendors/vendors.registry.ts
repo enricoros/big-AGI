@@ -13,6 +13,7 @@ import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorMoonshot } from './moonshot/moonshot.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
+import { ModelVendorOrcaRouter } from './orcarouter/orcarouter.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
@@ -36,6 +37,7 @@ export type ModelVendorId =
   | 'moonshot'
   | 'ollama'
   | 'openai'
+  | 'orcarouter'
   | 'openrouter'
   | 'perplexity'
   | 'togetherai'
@@ -58,6 +60,7 @@ const MODEL_VENDOR_REGISTRY = {
   moonshot: ModelVendorMoonshot,
   ollama: ModelVendorOllama,
   openai: ModelVendorOpenAI,
+  orcarouter: ModelVendorOrcaRouter,
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
   togetherai: ModelVendorTogetherAI,

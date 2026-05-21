@@ -16,6 +16,7 @@ import { ModelVendorLMStudio } from '../vendors/lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from '../vendors/localai/localai.vendor';
 import { ModelVendorOllama } from '../vendors/ollama/ollama.vendor';
 import { ModelVendorOpenAI } from '../vendors/openai/openai.vendor';
+import { ModelVendorOrcaRouter } from '../vendors/orcarouter/orcarouter.vendor';
 import { ModelVendorOpenRouter } from '../vendors/openrouter/openrouter.vendor';
 import { llmsUpdateModelsForServiceOrThrow } from '../llm.client';
 
@@ -23,6 +24,7 @@ import { llmsUpdateModelsForServiceOrThrow } from '../llm.client';
 // configuration
 const WizardProviders: ReadonlyArray<WizardProvider> = [
   { cat: 'popular', vendor: ModelVendorOpenAI, settingsKey: 'oaiKey' } as const,
+  { cat: 'popular', vendor: ModelVendorOrcaRouter, settingsKey: 'orcaKey' } as const,
   { cat: 'popular', vendor: ModelVendorAnthropic, settingsKey: 'anthropicKey' } as const,
   { cat: 'popular', vendor: ModelVendorGemini, settingsKey: 'geminiKey' } as const,
   { cat: 'popular', vendor: ModelVendorOpenRouter, settingsKey: 'oaiKey' } as const,

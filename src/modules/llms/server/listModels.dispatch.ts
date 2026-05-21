@@ -48,6 +48,7 @@ import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
+import { orcaRouterModelSortFn, orcaRouterModelToModelDescription } from './openai/models/orcarouter.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels, openaiValidateModelDefs_DEV } from './openai/models/openai.models';
 import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from './openai/models/perplexity.models';
@@ -376,6 +377,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'mistral':
     case 'moonshot':
     case 'openai':
+    case 'orcarouter':
     case 'openrouter':
     case 'togetherai':
  
@@ -526,6 +528,12 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .map(openRouterModelToModelDescription)
                 .filter(desc => !!desc)
                 .reduce(openRouterInjectVariants, []);
+
+            case 'orcarouter':
+              return maybeModels
+                .sort(orcaRouterModelSortFn)
+                .map(orcaRouterModelToModelDescription)
+                .filter((desc): desc is ModelDescriptionSchema => !!desc);
 
             default:
               const _exhaustiveCheck: never = dialect;
