@@ -425,8 +425,9 @@ export const useModelsStore = create<LlmsStore>()(persist(
      *  3: big-AGI v2.x upgrade
      *  4: migrate .options to .initialParameters/.userParameters
      *  4B: we changed from .chatLLMId/.fastLLMId to modelAssignments: {}, without explicit migration (done on rehydrate, and for no particular reason)
+     *  5: global model assignments default to dynamic Auto, stored as missing assignments
      */
-    version: 4,
+    version: 5,
     migrate: (_state: any, fromVersion: number): LlmsStore => {
 
       if (!_state) return _state;
@@ -464,6 +465,10 @@ export const useModelsStore = create<LlmsStore>()(persist(
           // ... if there's any error, ignore - shall be okay
         }
       }
+
+      // 4 -> 5: reset everyone to dynamic Auto
+      if (fromVersion < 5)
+        state.modelAssignments = {};
 
       return state;
     },
