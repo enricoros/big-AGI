@@ -12,6 +12,31 @@ export const hasPostHogAnalytics = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
 // global to survive route changes
 let _posthog: undefined | PostHog | null = undefined; // undefined: not loaded, null: loading or opt-out, PostHog: loaded
 
+// function shouldSuppressPostHogCapture(captureResult: any): boolean {
+//   if (captureResult?.event !== '$exception') return false;
+//
+//   const properties = captureResult?.properties || {};
+//   const exceptionTypes = properties.$exception_types;
+//   const exceptionValues = properties.$exception_values;
+//
+//   const text = [
+//     Array.isArray(exceptionTypes) ? exceptionTypes.join(' ') : exceptionTypes,
+//     Array.isArray(exceptionValues) ? exceptionValues.join(' ') : exceptionValues,
+//     properties.$exception_type,
+//     properties.$exception_message,
+//   ]
+//     .filter(Boolean)
+//     .join(' ');
+//
+//   if (!text) return false;
+//
+//   return text.includes('AbortError')
+//     || text.includes('signal is aborted without reason')
+//     || text.includes('The user aborted a request')
+//     || text.includes("Failed to execute 'removeChild' on 'Node'")
+//     || text.includes("Failed to execute 'insertBefore' on 'Node'");
+// }
+
 
 // noinspection JSUnusedGlobalSymbols - unused yet
 export function posthogAnalyticsOptOut() {
@@ -100,6 +125,7 @@ export function OptionalPostHogAnalytics() {
           ui_host: 'https://us.posthog.com',
           defaults: '2026-01-30',
           capture_exceptions: true, // captures exceptions using Error Tracking
+          // before_send: (captureResult) => shouldSuppressPostHogCapture(captureResult) ? null : captureResult,
           // capture_pageview: false, // we used to handle this manually, but changed to the 'defaults' option which captures pageviews automatically
           // capture_pageleave: true, // we used to track goodbyes, now included in 'defaults'
           person_profiles: 'identified_only',
