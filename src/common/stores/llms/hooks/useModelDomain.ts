@@ -66,16 +66,12 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
   assignDomainModelId: (modelId: DLLMId | null) => void;
 
   domainModelConfiguration: DModelConfiguration | undefined;
-  assignDomainModelConfiguration: (config: DModelConfiguration) => void;
 
 } {
 
   const domainModelConfiguration = useModelsStore(state =>
     _getDomainModelConfigurationFromState(state, modelDomainId, true, false),
   );
-
-  const assignDomainModelConfiguration = React.useCallback((modelConfiguration: DModelConfiguration) =>
-    useModelsStore.getState().assignDomainModelConfiguration(modelConfiguration), []);
 
   const assignDomainModelId = React.useCallback((modelId: DLLMId | null) =>
     useModelsStore.getState().assignDomainModelId(modelDomainId, modelId), [modelDomainId]);
@@ -88,7 +84,6 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
 
     // full
     domainModelConfiguration,
-    assignDomainModelConfiguration,
 
   };
 }

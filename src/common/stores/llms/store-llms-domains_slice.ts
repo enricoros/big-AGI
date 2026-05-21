@@ -21,7 +21,6 @@ export interface LlmsAssignmentsState {
 
 export interface LlmsAssignmentsActions {
 
-  assignDomainModelConfiguration: (config: DModelConfiguration) => void;
   assignDomainModelId: (domainId: DModelDomainId, llmId: DLLMId | null) => void;
 
   autoReassignDomainModel: (domainId: DModelDomainId, ifNotPresent: boolean, ifNotVisible: boolean) => void;
@@ -37,13 +36,6 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
   modelAssignments: {},
 
   // actions
-  assignDomainModelConfiguration: (config) =>
-    _set(state => ({
-      modelAssignments: {
-        ...state.modelAssignments,
-        [config.domainId]: config,
-      },
-    })),
 
   assignDomainModelId: (domainId, llmId) =>
     _set(state => {
