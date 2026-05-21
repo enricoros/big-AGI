@@ -3,7 +3,7 @@ import * as React from 'react';
 import { BaseProduct } from '~/common/app.release';
 import { logger } from '~/common/logger';
 import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
-import { isBenignDomMutationError } from '~/common/util/errorUtils';
+import { isBenignDomMutationError, isChunkLoadError } from '~/common/util/errorUtils';
 
 
 export interface ErrorBoundaryProps {
@@ -90,6 +90,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render(): React.ReactNode {
     const { hasError, error } = this.state;
     const { outer, children, fallback } = this.props;
+    const isChunkLoad = isChunkLoadError(error);
+    const heading = isChunkLoad ? 'Update Required' : 'Oops, we hit a snag';
+    const message = isChunkLoad
+      ? 'A part of Big-AGI could not be loaded. This usually happens when the app has been updated while this tab is still running, '
+        + 'so the loaded app and deployed files are out of sync. Reloading should fetch the current version.'
+      : `An unexpected error occurred.${outer ? ' Please try reloading Big-AGI.' : ''}`;
 
     if (hasError && error)
       return fallback ? fallback : (
@@ -114,9 +120,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             maxWidth: '90%',
           }}>
             <div className='vivided'>
-              <h2 className='heading'>Oops, we hit a snag</h2>
+              <h2 className='heading'>{heading}</h2>
               <div className='message'>
-                <p style={{ fontWeight: 500 }}>An unexpected error occurred.{outer ? ' Please try reloading Big-AGI.' : ''}</p>
+                <p style={{ fontWeight: 500 }}>{message}</p>
                 {outer && (
                   <p style={{ fontWeight: 500 }}>
                     {' '}If the issue persists, please{' '}
@@ -139,7 +145,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-              {outer ? (
+              {outer || isChunkLoad ? (
                 <button className='button' onClick={() => window.location.reload()}>
                   Reload Big-AGI
                 </button>
