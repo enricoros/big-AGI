@@ -13,9 +13,12 @@ import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_adjusted
 
 /// LLMs Assignments Slice
 
+type _LlmAssignments = Record<DModelDomainId, DModelConfiguration>;
+type _PartialLlmAssignments = Partial<_LlmAssignments>;
+
 export interface LlmsAssignmentsState {
 
-  modelAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>;
+  modelAssignments: _PartialLlmAssignments;
 
 }
 
@@ -206,28 +209,26 @@ export function llmsHeuristicGetStarredLlmIds(): DLLMId[] {
 
 
 /**
- * Heuristic to update the assignments (either missing or invalid due to removed models).
+ * Prune-only reconciliation: drop explicit assignments that reference to a no longer existing LLM.
+ * Dropped or missing entities mean 'Auto' and are resolved read-time.
+ *
+ * Called by LLM global list (universe) mutation and initial store rehydration.
  */
-export function llmsHeuristicUpdateAssignments(allLlms: ReadonlyArray<DLLM>, existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>): LlmsAssignmentsState['modelAssignments'] {
-  return ModelDomainsList.reduce((acc, domainId: DModelDomainId) => {
+export function llmsHeuristicUpdateAssignments(universe: ReadonlyArray<DLLM>, existingAssignments: _PartialLlmAssignments): _PartialLlmAssignments {
+  const result: _PartialLlmAssignments = {};
+  for (const domainId of ModelDomainsList) {
 
-    // reuse the existing assignment, if present
-    const existingAssignment = existingAssignments[domainId] ?? undefined;
-    if (existingAssignment && (
-      existingAssignment.modelId === null || // we allow for "don't have a model", which is the null option
-      allLlms.find(({ id }) => id === existingAssignment.modelId) // otherwise we must have a valid model
-    )) {
-      acc[domainId] = existingAssignment;
-      return acc;
-    }
+    // absent = Auto, keep absent
+    const existing = existingAssignments[domainId];
+    if (!existing) continue;
 
-    // apply the spec strategy for the domain
-    const autoLLMId = _autoSelectDomainLLMId(domainId, allLlms);
-    if (autoLLMId)
-      acc[domainId] = createDModelConfiguration(domainId, autoLLMId, undefined);
+    // valid pin or explicit 'no model'
+    if (existing.modelId === null || universe.find(({ id }) => id === existing.modelId))
+      result[domainId] = existing;
 
-    return acc;
-  }, {} as LlmsAssignmentsState['modelAssignments']);
+    // else: broken pin -> drop the entry (degrades to Auto)
+  }
+  return result;
 }
 
 

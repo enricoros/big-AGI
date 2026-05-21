@@ -16,7 +16,6 @@ import type { DModelDomainId } from './model.domains.types';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterValues, LLMImplicitParametersRuntimeFallback } from './llms.parameters';
-import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
 import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
 import { getDomainModelConfiguration } from './hooks/useModelDomain';
 import { portModelPricingV2toV3 } from './llms.pricing';
@@ -496,27 +495,10 @@ export const useModelsStore = create<LlmsStore>()(persist(
         return llm.vId ? llm : { ...llm, vId: service.vId };
       }).filter(llm => !!llm) as DLLM[];
 
-      // Select the best LLMs automatically, if not set
+      // Prune stale assignments. Missing assignments mean dynamic Auto.
       try {
-        //  auto-detect assignments, or re-import them from the old format
-        if (!hasKeys(state.modelAssignments)) {
-
-          // reimport the former chatLLMId and fastLLMId if set
-          const prevState = state as { chatLLMId?: DLLMId, fastLLMId?: DLLMId };
-          const existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>> = {};
-          if (prevState.chatLLMId) {
-            existingAssignments['primaryChat'] = createDModelConfiguration('primaryChat', prevState.chatLLMId, undefined);
-            existingAssignments['codeApply'] = createDModelConfiguration('codeApply', prevState.chatLLMId, undefined);
-            delete prevState.chatLLMId;
-          }
-          if (prevState.fastLLMId) {
-            existingAssignments['fastUtil'] = createDModelConfiguration('fastUtil', prevState.fastLLMId, undefined);
-            delete prevState.fastLLMId;
-          }
-
-          // auto-pick models
-          state.modelAssignments = llmsHeuristicUpdateAssignments(state.llms, existingAssignments);
-        }
+        if (hasKeys(state.modelAssignments))
+          state.modelAssignments = llmsHeuristicUpdateAssignments(state.llms, state.modelAssignments);
       } catch (error) {
         console.error('Error in autoPickModels', error);
       }
