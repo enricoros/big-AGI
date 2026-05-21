@@ -54,6 +54,23 @@ export function isBenignDomMutationError(error: unknown): boolean {
     || message.includes('The node before which the new node is to be inserted is not a child of this node');
 }
 
+/**
+ * Detect lazy bundle loading failures. These usually happen when a deployment
+ * changes chunk filenames while a browser tab is still running the old app.
+ */
+export function isChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const name = error.name || '';
+  const message = error.message || '';
+
+  return name === 'ChunkLoadError'
+    || name === 'CSS_CHUNK_LOAD_FAILED'
+    || message.includes('ChunkLoadError')
+    || (message.includes('Loading chunk') && message.includes('failed'))
+    || (message.includes('Loading CSS chunk') && message.includes('failed'));
+}
+
 
 /**
  * Present an error to the user in a human-readable format.
