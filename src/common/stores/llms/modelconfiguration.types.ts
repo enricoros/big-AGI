@@ -28,9 +28,3 @@ export function createDModelConfiguration(domainId: DModelDomainId, modelId: DLL
     ...(modelParameters !== undefined ? { modelParameters: modelParameters } : {}),
   };
 }
-
-
-// TODO: remove this
-export function createDModelConfigurationPrimaryChat(modelId: DLLMId | null, modelParameters?: DModelParameterValues): DModelConfiguration {
-  return createDModelConfiguration('primaryChat', modelId, modelParameters);
-}
