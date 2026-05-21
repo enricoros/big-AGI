@@ -309,7 +309,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'orcarouter':
-      let orcaKey = access.oaiKey || env.OPENAI_API_KEY || '';
+      let orcaKey = access.oaiKey || env.ORCAROUTER_API_KEY || '';
       const orcaHost = llmsFixupHost(access.oaiHost || DEFAULT_ORCAROUTER_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
