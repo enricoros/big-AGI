@@ -13,6 +13,7 @@
  * @module llms
  */
 
+import type { Immutable } from '~/common/types/immutable.types';
 
 /**
  * Implicit common parameters always supported by all models, not listed in parameterSpecs.
@@ -571,6 +572,11 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
 
 
 /// Utility Functions
+
+export function duplicateDModelParameterValues(values: Immutable<DModelParameterValues>): DModelParameterValues {
+  // shallow clone is sufficient since values are primitives
+  return { ...values };
+}
 
 export function applyModelParameterSpecsInitialValues(destValues: DModelParameterValues, modelParameterSpecs: DModelParameterSpecAny[], overwriteExisting: boolean): void {
   for (const parameterSpec of modelParameterSpecs) {
