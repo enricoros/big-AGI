@@ -26,7 +26,7 @@ function LLMDropdown(props: {
   dropdownRef: React.Ref<OptimaBarControlMethods>,
   llms: ReadonlyArray<DLLM>,
   chatLlmId: undefined | DLLMId | null,
-  setChatLlmId: (llmId: DLLMId | null) => void,
+  setChatLlmId: (llmId: DLLMId) => void,
   placeholder?: string,
 }) {
 
