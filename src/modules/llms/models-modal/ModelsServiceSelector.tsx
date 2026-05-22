@@ -146,7 +146,7 @@ function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemD
 
       <Box sx={_styles.vendorItemIcon}>
         {/*<Box >*/}
-        {vendorInstancesCount ? <CheckRoundedIcon /> : vendorIconWithMark(vendor, !Release.IsNodeDevBuild && !vendorInstancesCount && vendorHasBackendCap(vendor))}
+        {vendorIconWithMark(vendor, !Release.IsNodeDevBuild && !vendorInstancesCount && vendorHasBackendCap(vendor))}
         {/*</Box>*/}
       </Box>
 
