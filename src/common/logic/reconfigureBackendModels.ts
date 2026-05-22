@@ -91,12 +91,12 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   // Auto-assignment conditions
   if (initiallyEmpty) {
     // in case we refreshed all vendors, auto-assign the primary chat model, so it doesn't get locked to the first vendor
-    llmsStoreActions().assignDomainModelId('primaryChat', null);
+    llmsStoreActions().assignDomainModelAuto('primaryChat');
   } else {
     // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
-    llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
-    llmsStoreActions().autoReassignDomainModel('codeApply', true, false);
-    llmsStoreActions().autoReassignDomainModel('fastUtil', true, false);
+    llmsStoreActions().assignDomainModelAutoIfStale('primaryChat', true);
+    llmsStoreActions().assignDomainModelAutoIfStale('codeApply', false);
+    llmsStoreActions().assignDomainModelAutoIfStale('fastUtil', false);
   }
 
   // end configuration

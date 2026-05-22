@@ -87,9 +87,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
   llm: DLLM,
   serviceLabel: string,
   vendor: IModelVendor,
-  chipChat: boolean,
-  chipCode: boolean,
-  chipFast: boolean,
+  domains: ReturnType<typeof useModelDomains>,
   debugShowFn: boolean,
   isMobile: boolean,
   onModelClicked: (llmId: DLLMId) => void,
@@ -98,7 +96,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
 }) {
 
   // derived
-  const { llm, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
+  const { llm, domains, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
 
   const seemsFree = isLLMChatFree_cached(llm);
   const isHidden = isLLMHidden(llm);
@@ -232,9 +230,9 @@ export const ModelItem = React.memo(function ModelItem(props: {
             {chipsComponentsMemo}
           </Box>
         )) : <>
-          {props.chipChat && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>chat</Chip>}
-          {props.chipCode && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>code</Chip>}
-          {props.chipFast && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>fast</Chip>}
+          {/*{domains['primaryChat']?.resolvedModelId === llm.id && <Chip size='sm' variant={domains['primaryChat']?.resolvedModelIsAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Chat</Chip>}*/}
+          {domains['codeApply']?.resolvedModelId === llm.id && <Chip size='sm' variant={domains['codeApply']?.resolvedModelIsAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Code</Chip>}
+          {domains['fastUtil']?.resolvedModelId === llm.id && <Chip size='sm' variant={domains['fastUtil']?.resolvedModelIsAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Fast</Chip>}
         </>}
 
         {/* Features Chips - sync with `useLLMSelect.tsx` */}
@@ -307,11 +305,6 @@ export function ModelsList(props: {
     const hasManyServices = orderedLLMs.length >= 2 && orderedLLMs.some(llm => llm.sId !== orderedLLMs[0].sId);
     let lastGroupLabel = '';
 
-    // derived
-    const primaryChatLlmId = domainAssignments['primaryChat']?.modelId;
-    const codeApplyLlmId = domainAssignments['codeApply']?.modelId;
-    const fastUtilLlmId = domainAssignments['fastUtil']?.modelId;
-
     // generate the list items, prepending headers when necessary
     const items: React.JSX.Element[] = [];
     for (const llm of orderedLLMs) {
@@ -343,9 +336,7 @@ export function ModelsList(props: {
           llm={llm}
           serviceLabel={serviceLabel}
           vendor={vendor}
-          chipChat={llm.id === primaryChatLlmId}
-          chipCode={llm.id === codeApplyLlmId}
-          chipFast={llm.id === fastUtilLlmId}
+          domains={domainAssignments}
           debugShowFn={showModelsFn}
           isMobile={isMobile}
           onModelClicked={handleModelClicked}

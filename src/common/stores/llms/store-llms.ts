@@ -16,7 +16,7 @@ import type { DModelDomainId } from './model.domains.types';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterValues, LLMImplicitParametersRuntimeFallback } from './llms.parameters';
-import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
+import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsAssignmentsPruneStale } from './store-llms-domains_slice';
 import { getDomainModelConfiguration } from './hooks/useModelDomain';
 import { portModelPricingV2toV3 } from './llms.pricing';
 
@@ -81,11 +81,11 @@ export const useModelsStore = create<LlmsStore>()(persist(
     // actions
 
     setServiceLLMs: (serviceId: DModelsServiceId, updatedServiceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false) =>
-      set(({ llms, modelAssignments }) => {
+      set(state => {
 
         // separate existing models
-        const otherServiceLLMs = llms.filter(llm => llm.sId !== serviceId);
-        const previousServiceLLMs = llms.filter(llm => llm.sId === serviceId);
+        const otherServiceLLMs = state.llms.filter(llm => llm.sId !== serviceId);
+        const previousServiceLLMs = state.llms.filter(llm => llm.sId === serviceId);
         const consumedPreviousIds = new Set<DLLMId>();
 
         // process updated models, re-applying user customizations where applicable
@@ -165,7 +165,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = [...customModels, ...missingModels, ...mergedServiceLLMs, ...otherServiceLLMs];
         return {
           llms: newLlms,
-          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, modelAssignments),
+          modelAssignments: llmsAssignmentsPruneStale(newLlms, state.modelAssignments),
         };
       }),
 
@@ -174,7 +174,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = state.llms.filter(llm => llm.id !== id);
         return {
           llms: newLlms,
-          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
+          modelAssignments: llmsAssignmentsPruneStale(newLlms, state.modelAssignments),
         };
       }),
 
@@ -183,7 +183,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = state.llms.filter(llm => !(llm.sId === serviceId && llm.isUserClone === true));
         return {
           llms: newLlms,
-          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
+          modelAssignments: llmsAssignmentsPruneStale(newLlms, state.modelAssignments),
         };
       }),
 
@@ -366,7 +366,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         return {
           llms,
           sources: state.sources.filter(s => s.id !== id),
-          modelAssignments: llmsHeuristicUpdateAssignments(llms, state.modelAssignments),
+          modelAssignments: llmsAssignmentsPruneStale(llms, state.modelAssignments),
         };
       }),
 
@@ -498,7 +498,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
       // Prune stale assignments. Missing assignments mean dynamic Auto.
       try {
         if (hasKeys(state.modelAssignments))
-          state.modelAssignments = llmsHeuristicUpdateAssignments(state.llms, state.modelAssignments);
+          state.modelAssignments = llmsAssignmentsPruneStale(state.llms, state.modelAssignments);
       } catch (error) {
         console.error('Error in autoPickModels', error);
       }

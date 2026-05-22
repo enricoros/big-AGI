@@ -117,7 +117,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
   const [showOverrides, setshowOverrides] = React.useState(!!llm?.userPricing || llm?.userContextTokens !== undefined || llm?.userMaxOutputTokens !== undefined);
   const [cloneDialogOpen, setCloneDialogOpen] = React.useState(false);
   const domainAssignments = useModelDomains();
-  const { removeLLM, updateLLM, assignDomainModelId, resetLLMUserParameters } = llmsStoreActions();
+  const { removeLLM, updateLLM, assignDomainModelId, assignDomainModelAuto, resetLLMUserParameters } = llmsStoreActions();
 
   const handleResetParameters = React.useCallback(() => {
     llm?.id && resetLLMUserParameters(llm?.id);
@@ -420,14 +420,19 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
           <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
             {ModelDomainsList.filter(dId => !['imageCaption'].includes(dId)).map(domainId => {
               const domainSpec = ModelDomainsRegistry[domainId];
-              const domainModelId = domainAssignments[domainId]?.modelId;
-              const isActive = domainModelId === llm.id;
+              const domainEntry = domainAssignments[domainId];
+              const isActive = domainEntry?.resolvedModelId === llm.id;
+              const isAuto = domainEntry?.resolvedModelIsAuto;
               return (
                 // Note: use Tooltip instead of GoodTooltip here, because GoodTooltip is not working well with ButtonGroup
-                <Tooltip arrow placement='top' key={domainId} title={domainSpec.confTooltip}>
+                <Tooltip arrow placement='top' key={domainId} title={isActive && isAuto ? `${domainSpec.confTooltip} (currently Auto - click to pin this model)` : domainSpec.confTooltip}>
                   <Button
-                    variant={isActive ? 'solid' : undefined}
-                    onClick={() => assignDomainModelId(domainId, isActive ? null : llm.id)}
+                    variant={!isActive ? undefined : isAuto ? 'outlined' : 'solid'}
+                    onClick={() => {
+                      // not active OR active-via-Auto -> pin (materialize); active-and-pinned -> back to Auto
+                      if (!isActive || isAuto) assignDomainModelId(domainId, llm.id);
+                      else assignDomainModelAuto(domainId);
+                    }}
                     sx={isActive ? undefined : _styles.multiSelectButton}
                   >
                     {domainSpec.confLabel}

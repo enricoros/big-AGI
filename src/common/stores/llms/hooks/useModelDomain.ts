@@ -1,89 +1,118 @@
 import * as React from 'react';
 
 import type { DLLMId } from '../llms.types';
-import type { DModelConfiguration } from '../modelconfiguration.types';
 import type { DModelDomainId } from '../model.domains.types';
-import type { LlmsAssignmentsState } from '../store-llms-domains_slice';
-import { LlmsRootState, useModelsStore } from '../store-llms';
+import { LlmsAssignmentsState, llmsAssignmentsAutoModelId } from '../store-llms-domains_slice';
+import { LlmsRootState, llmsStoreActions, llmsStoreState, useModelsStore } from '../store-llms';
 import { ModelDomainsRegistry } from '../model.domains.registry';
+import { createDModelConfiguration, DModelConfiguration } from '../modelconfiguration.types';
 
 
 /**
- * Getter for a single domain model configuration.
- * - Can optionally verify that the LLM exists.
- * - Can optionally use a fallback domain.
+ * Resolver: returns both the resolved DModelConfiguration and whether it came from Auto.
+ *
+ * Storage semantics (modelAssignments[domainId]):
+ * - undefined            -> Auto: resolve dynamically via heuristic
+ * - { modelId: null }    -> explicit "no model" (rare; kept as-is)
+ * - { modelId: '<id>' }  -> pinned (if the id still resolves; otherwise degrades to Auto)
+ *
+ * `isAuto` is true whenever the returned config was produced by the heuristic (entry absent,
+ * or pinned id no longer exists). It is false for explicit pins, including `modelId: null`.
+ *
+ * The fallback-domain path is used only when this domain's heuristic returns nothing (no
+ * compatible models at all). A successful fallback hit is reported as isAuto=true since the
+ * user did not pick it on the source domain.
+ */
+export function llmsResolveDomainModel(
+  state: Pick<LlmsRootState, 'llms'> & LlmsAssignmentsState, // store state
+  modelDomainId: DModelDomainId,
+  verifyLLMExists: boolean,
+  autoDomainFallback: boolean,
+): { config: undefined | DModelConfiguration, isAuto: boolean } {
+
+  // use the domain directly
+  const { llms, modelAssignments } = state;
+  const stored = modelAssignments?.[modelDomainId];
+  if (stored) {
+    // explicit 'no model', or pinned-and-still-valid, or pinned-and-caller-doesn't-care
+    if (stored.modelId === null || !verifyLLMExists || llms.find(llm => llm.id === stored.modelId))
+      return { config: stored, isAuto: false };
+
+    // else: broken pin - degrade to Auto via the heuristic below
+  }
+
+  // auto-resolve in case of absent assingment, or broken pin under verifyLLMExists
+  const autoLLMId = llmsAssignmentsAutoModelId(modelDomainId, llms);
+  if (autoLLMId)
+    return { config: createDModelConfiguration(modelDomainId, autoLLMId, undefined), isAuto: true };
+
+  // try the fallback domain when this domain can't auto-resolve at all
+  const fallbackDomain = !autoDomainFallback ? undefined : ModelDomainsRegistry[modelDomainId]?.fallbackDomain;
+  if (!fallbackDomain) return { config: undefined, isAuto: false };
+  const fb = llmsResolveDomainModel(state, fallbackDomain, verifyLLMExists, false);
+  return { config: fb.config, isAuto: fb.config !== undefined };
+}
+
+
+/**
+ * Getter for a single domain's resolved model configuration.
+ * - `verifyLLMExists`: when true, broken pins are degraded to Auto rather than returned.
+ * - `autoDomainFallback`: when true, fall through to the registry's `fallbackDomain`
  */
 export function getDomainModelConfiguration(modelDomainId: DModelDomainId, verifyLLMExists: boolean, autoDomainFallback: boolean): DModelConfiguration | undefined {
-  return _getDomainModelConfigurationFromState(useModelsStore.getState(), modelDomainId, verifyLLMExists, autoDomainFallback);
+  const { config /*, isAuto*/ } = llmsResolveDomainModel(llmsStoreState(), modelDomainId, verifyLLMExists, autoDomainFallback);
+  return config;
 }
-
-function _getDomainModelConfigurationFromState({ llms, modelAssignments }: LlmsRootState & LlmsAssignmentsState, modelDomainId: DModelDomainId, verifyLLMExists: boolean, autoDomainFallback: boolean): DModelConfiguration | undefined {
-  const modelConfiguration = modelAssignments?.[modelDomainId] ?? undefined;
-  if (modelConfiguration) {
-    if (!verifyLLMExists)
-      return modelConfiguration;
-    if (llms.find(llm => llm.id === modelConfiguration.modelId))
-      return modelConfiguration;
-  }
-
-  // Try fallback domain
-  if (!autoDomainFallback)
-    return undefined;
-  const fallbackDomain = ModelDomainsRegistry[modelDomainId]?.fallbackDomain ?? undefined;
-  if (!fallbackDomain)
-    return undefined;
-  const fallbackModelConfiguration = modelAssignments?.[fallbackDomain] ?? undefined;
-  if (fallbackModelConfiguration) {
-    if (!verifyLLMExists)
-      return fallbackModelConfiguration;
-    if (llms.find(llm => llm.id === fallbackModelConfiguration.modelId))
-      return fallbackModelConfiguration;
-  }
-
-  // couldn't find or verify domain or fallback domain
-  return undefined;
-}
-
 
 /**
  * Non-hook setter for the primary chat model. Use from event handlers / callbacks
  * (e.g. the top bar dropdown, or the right-side chat pane on the `dev` branch)
  * when you want to update the global default that drives the next chat run.
  */
-export function setPrimaryChatModelId(modelId: DLLMId | null): void {
-  useModelsStore.getState().assignDomainModelId('primaryChat', modelId);
+export function setPrimaryChatModelId(modelId: DLLMId): void {
+  llmsStoreActions().assignDomainModelId('primaryChat', modelId);
 }
 
-
 /**
- * Single hooks to access per-domain LLM configurations.
- * - Since this is reactive, we assume we don't do 'automated domain fallback' here
- * - We also verify mandatory LLM existence
+ * Reactive single-domain hook that _resolves_ the per-domain LLM configuration.
+ *
+ * The hook never returns the raw 'Auto' sentinel state to consumers: callers always see:
+ * - resolved `domainModelId | null` (if resolution succeeded) or `undefined` (if resolution failed, e.g. in the models zero state)
+ *
  */
 export function useModelDomain(modelDomainId: DModelDomainId): {
 
-  domainModelId: undefined | DLLMId | null;
-  assignDomainModelId: (modelId: DLLMId | null) => void;
+  /** resolved DLLMId, not renamed just for legacy/compatibility reasons */
+  domainModelId: undefined | DLLMId | null; // resolved DLLMId: after applying the pin or the Auto heuristic; undefined for zero state, null for explicit no-model
+  resolvedModelIsAuto: boolean; // true when `domainModelId` came from the Auto heuristic rather than a user pin (missing entry or broken pin)
 
-  domainModelConfiguration: DModelConfiguration | undefined;
+  assignDomainModelId: (modelId: DLLMId) => void; // explicit pin only; use assignDomainModelAuto() to reset to Auto
+  assignDomainModelAuto: () => void; // reset pinning
 
 } {
 
-  const domainModelConfiguration = useModelsStore(state =>
-    _getDomainModelConfigurationFromState(state, modelDomainId, true, false),
-  );
+  // external state
+  const { llms, modelAssignments } = useModelsStore(); // no selector because that's all the state we have
 
-  const assignDomainModelId = React.useCallback((modelId: DLLMId | null) =>
-    useModelsStore.getState().assignDomainModelId(modelDomainId, modelId), [modelDomainId]);
+  // memo the resolution logic, by state
+  const resolved = React.useMemo(() => {
+    return llmsResolveDomainModel({ llms, modelAssignments }, modelDomainId, true, false);
+  }, [llms, modelAssignments, modelDomainId]);
+
+
+  const assignDomainModelId = React.useCallback((modelId: DLLMId) =>
+    llmsStoreActions().assignDomainModelId(modelDomainId, modelId), [modelDomainId]);
+
+  const assignDomainModelAuto = React.useCallback(() =>
+    llmsStoreActions().assignDomainModelAuto(modelDomainId), [modelDomainId]);
 
   return {
 
-    // simple
-    domainModelId: domainModelConfiguration?.modelId,
-    assignDomainModelId,
+    domainModelId: resolved.config?.modelId,
+    resolvedModelIsAuto: resolved.isAuto,
 
-    // full
-    domainModelConfiguration,
+    assignDomainModelId,
+    assignDomainModelAuto,
 
   };
 }
