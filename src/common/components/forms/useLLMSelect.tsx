@@ -137,7 +137,7 @@ interface LLMSelectOptions {
   placeholder?: string;
   isHorizontal?: boolean;
   setLlmToAuto?: () => void; // caller-supplied strategy to reset to Auto (e.g. assignDomainModelAuto for domain-backed, or undefined for backends with no Auto concept). When provided, the Auto option/indicator are surfaced.
-  isLlmAuto?: boolean; // when true, render the selected label as "Auto (<resolved name>)" and surface the AutoMode indicator (requires setLlmIdToAuto)
+  isLlmAuto?: boolean; // when true, render the selected label as "Auto (<resolved name>)" and surface the AutoMode indicator (requires setLlmToAuto)
   appendConfigureModels?: boolean; // appends a bottom option to open the Models panel
   showStarFilter?: boolean; // show a button to filter starred models only
 }
@@ -147,7 +147,7 @@ interface LLMSelectOptions {
  *
  * @param llmId (required) the LLM id
  * @param setLlmId (required) function to set the LLM id to a specific model (explicit pin)
- * @param options (required) the options bag. `setLlmIdToAuto` here is the caller-supplied
+ * @param options (required) the options bag. `setLlmToAuto` here is the caller-supplied
  *        reset-to-Auto strategy: pass it for backends that support Auto (domain-backed hooks
  *        pass `assignDomainModelAuto`), omit for backends with no Auto concept.
  */
