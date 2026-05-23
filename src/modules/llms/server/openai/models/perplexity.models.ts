@@ -1,5 +1,9 @@
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
+import { llmsDefineModels } from '../../models.mappings';
+
+// --- Perplexity Model ID inference (auto-derived from _knownPerplexityChatModels) ---
+export type LlmsPerplexityModelId = typeof _knownPerplexityChatModels[number]['id'];
 
 import { LLM_IF_HOTFIX_NoStream, LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
@@ -33,7 +37,7 @@ const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANT
 };
 
 
-const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
+const _knownPerplexityChatModels = llmsDefineModels<ModelDescriptionSchema>()([
 
   // Research Models
   {
@@ -120,7 +124,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
   // - r1-1776: Removed August 2025. Use Sonar Reasoning Pro instead.
   // - llama-3.1-sonar-*-128k-online aliases: Removed February 2025.
 
-];
+]);
 
 
 export function perplexityHardcodedModelDescriptions() {

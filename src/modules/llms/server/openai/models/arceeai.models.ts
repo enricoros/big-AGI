@@ -4,7 +4,10 @@ import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- Arcee AI Model ID inference (auto-derived from _arceeKnownModels) ---
+export type LlmsArceeAIModelId = typeof _arceeKnownModels[number]['idPrefix'];
 
 
 export function arceeAIHeuristic(hostname: string) {
@@ -42,9 +45,9 @@ const _wireArceeAIListOutputSchema = z.object({
 type WireArceeAIModel = z.infer<typeof _wireArceeAIModelSchema>;
 
 
-const _arceeKnownModels: ManualMappings = [
+const _arceeKnownModels = llmsDefineManualMappings([
   // NOTE: no manual patching needed - API provides rich metadata
-] as const;
+]);
 
 
 function _prettyModelName(model: WireArceeAIModel): string {

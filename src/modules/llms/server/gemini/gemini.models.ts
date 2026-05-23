@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../llm.server.variants';
-import { formatPubDate, llmDevCheckModels_DEV } from '../models.mappings';
+import { llmsDefineModels, formatPubDate, llmDevCheckModels_DEV } from '../models.mappings';
 
 
 // dev options
@@ -185,14 +185,19 @@ const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperatu
 // NOTE: LLM_IF_Outputs_Image is auto-implied by llmsAutoImplyInterfaces() from image parameterSpecs (llmVndGeminiAspectRatio, llmVndGeminiImageSize)
 
 
-const _knownGeminiModels: ({
+// --- Gemini Model ID inference (auto-derived from _knownGeminiModels) ---
+export type LlmsGeminiModelId = typeof _knownGeminiModels[number]['id'];
+
+type _GeminiModelDef = {
   id: string,
   labelOverride?: string,
   isPreview?: boolean,
   symLink?: string,
   deprecated?: string, // Gemini may provide deprecation dates
   // _delete removed - models are now physically removed from the list instead of marked for deletion
-} & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'> & { pubDate: string /* make it required */})[] = [
+} & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'> & { pubDate: string /* make it required */ };
+
+const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   /// Generation 3.5
 
@@ -823,7 +828,7 @@ const _knownGeminiModels: ({
   // - models/imagen-3.0-generate-002 (Imagen 3 image generation - replaced by Nano Banana models)
   // - models/veo-2.0-generate-001
 
-];
+]);
 
 
 export function geminiValidateModelDefs_DEV(apiModels: GeminiWire_API_Models_List.Model[]): void {

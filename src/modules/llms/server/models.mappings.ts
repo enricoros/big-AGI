@@ -137,6 +137,15 @@ export function formatPubDate(input?: number | Date): string {
 
 export type ManualMappings = (KnownModel | KnownLink)[];
 
+/** Defines a const-tracked array of models so editorial code can derive id unions via `typeof <result>[number]['<idField>']`. Curried for TElem-explicit + T-inferred. Empty arrays fall back to TElem (avoiding the `never` degeneration of `TElem & never`). */
+export function llmsDefineModels<TElem extends object>() {
+  return <const T extends readonly TElem[]>(models: T): ReadonlyArray<T extends readonly [] ? TElem : TElem & T[number]> => models as any;
+}
+
+/** Pre-instantiated `llmsDefineModels` for OpenAI-style ManualMappings vendors. */
+export const llmsDefineManualMappings = llmsDefineModels<ManualMappings[number]>();
+
+
 /**
  * Server-side default model description to complement the APIs usually just returning the model ID
  */
@@ -160,7 +169,7 @@ type KnownLink = {
  * Converts a KnownModel to ModelDescriptionSchema. Used by OpenAI-style vendors.
  * NOTE: Keep optional fields in sync with geminiModelToModelDescription (gemini.models.ts)
  */
-export function fromManualMapping(mappings: (KnownModel | KnownLink)[], upstreamModelId: string, created: undefined | number, updated: undefined | number, fallback: KnownModel, disableSymlinkLooks?: boolean): ModelDescriptionSchema {
+export function fromManualMapping(mappings: ReadonlyArray<KnownModel | KnownLink>, upstreamModelId: string, created: undefined | number, updated: undefined | number, fallback: KnownModel, disableSymlinkLooks?: boolean): ModelDescriptionSchema {
 
   // model resolution outputs
   let m: KnownModel;

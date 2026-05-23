@@ -4,7 +4,10 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- FireworksAI Model ID inference (auto-derived from _fireworksKnownModels) ---
+export type LlmsFireworksAIModelId = typeof _fireworksKnownModels[number]['idPrefix'];
 import { wireFireworksAIListOutputSchema } from '../wiretypes/fireworksai.wiretypes';
 
 
@@ -13,9 +16,9 @@ export function fireworksAIHeuristic(hostname: string) {
 }
 
 
-const _fireworksKnownModels: ManualMappings = [
+const _fireworksKnownModels = llmsDefineManualMappings([
   // NOTE: we don't need manual patching as we have enough info for now
-] as const;
+]);
 
 const _fireworksDenyListContains: string[] = [
   // nothing to deny for now

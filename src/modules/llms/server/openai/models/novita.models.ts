@@ -2,7 +2,10 @@ import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- Novita Model ID inference (auto-derived from _novitaKnownModels) ---
+export type LlmsNovitaModelId = typeof _novitaKnownModels[number]['idPrefix'];
 import { wireNovitaListOutputSchema, WireNovitaModel } from '../wiretypes/novita.wiretypes';
 
 
@@ -11,9 +14,9 @@ export function novitaHeuristic(hostname: string) {
 }
 
 
-const _novitaKnownModels: ManualMappings = [
+const _novitaKnownModels = llmsDefineManualMappings([
   // NOTE: we don't need manual patching as we have enough info from API
-] as const;
+]);
 
 const _novitaDenyListContains: string[] = [
   // OCR models - not chat models

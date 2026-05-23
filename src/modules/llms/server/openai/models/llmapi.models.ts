@@ -2,7 +2,10 @@ import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- LLMAPI Model ID inference (auto-derived from _llmapiKnownModels) ---
+export type LlmsLlmApiModelId = typeof _llmapiKnownModels[number]['idPrefix'];
 import { wireLlmApiListOutputSchema, type WireLlmApiModel } from '../wiretypes/llmapi.wiretypes';
 
 
@@ -15,9 +18,9 @@ export function llmapiHeuristic(hostname: string): boolean {
 }
 
 
-const _llmapiKnownModels: ManualMappings = [
+const _llmapiKnownModels = llmsDefineManualMappings([
   // NOTE: dynamic-only for now, no manual patching needed
-] as const;
+]);
 
 const _llmapiDenyIds: string[] = [
   'custom',   // llmapi internal routing meta-model

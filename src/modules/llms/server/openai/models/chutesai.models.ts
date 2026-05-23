@@ -6,7 +6,10 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- ChutesAI Model ID inference (auto-derived from _chutesKnownModels) ---
+export type LlmsChutesAIModelId = typeof _chutesKnownModels[number]['idPrefix'];
 
 
 export function chutesAIHeuristic(hostname: string) {
@@ -51,9 +54,9 @@ const _wireChutesAIListOutputSchema = z.object({
   data: z.array(z.unknown()),
 });
 
-const _chutesKnownModels: ManualMappings = [
+const _chutesKnownModels = llmsDefineManualMappings([
   // NOTE: we don't need manual patching as we have enough info for now
-] as const;
+]);
 
 const _chutesDenyListContains: string[] = [
   // nothing to deny for now

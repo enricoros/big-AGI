@@ -5,7 +5,10 @@ import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { _knownOpenAIChatModels, llmsFallbackForOpenAIModel } from './openai.models';
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- Azure Model ID inference (auto-derived from _knownAzureChatModels) ---
+export type LlmsAzureModelId = typeof _knownAzureChatModels[number]['idPrefix'];
 
 
 // configuration
@@ -22,7 +25,7 @@ const AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL = false;
 
 
 // [Azure]
-const _knownAzureChatModels: ManualMappings = [
+const _knownAzureChatModels = llmsDefineManualMappings([
   // ... if you have your own models, map them here ...
   //
   // NOTE: the ManualMapping object is similar to ModelDescriptionSchema,
@@ -59,7 +62,7 @@ const _knownAzureChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat], // as azure doesn't version model id's (in the deployments), let's assume no function calling
   },
 
-];
+]);
 
 
 // parser for Azure models - 2025-03-14: verified

@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../llm.server.variants';
-import { formatPubDate, llmDevCheckModels_DEV } from '../models.mappings';
+import { formatPubDate, llmDevCheckModels_DEV, llmsDefineModels } from '../models.mappings';
 
 
 // Note: these model definitions are shared across Anthropic API, OpenRouter, and AWS Bedrock.
@@ -214,7 +214,12 @@ export function llmsAntInjectVariants(acc: ModelDescriptionSchema[], model: Mode
 }
 
 
-export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean, pubDate: string /* make it required for the defs */ })[] = [
+// --- Anthropic Model ID inference (auto-derived from hardcodedAnthropicModels) ---
+export type LlmsAnthropicModelId = typeof hardcodedAnthropicModels[number]['id'];
+
+type _AnthropicModelDef = ModelDescriptionSchema & { isLegacy?: boolean, pubDate: string /* make it required for the defs */ };
+
+export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
   // Claude 4.7 models
   {
@@ -438,7 +443,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // retired: 'claude-3-sonnet-20240229'
   // retired: 'claude-2.1'
   // retired: 'claude-2.0'
-];
+]);
 
 
 // -- Wire Types --
@@ -752,7 +757,7 @@ export function llmOrtAntLookup_ThinkingVariants(orModelName: string): OrtVendor
   if (!_knownModel) return undefined;
 
   // found a model
-  let model = _knownModel;
+  let model: _AnthropicModelDef = _knownModel;
 
   // if there's a variant, it must be the thinking variant, so return that
   const thinkingVariant = _hardcodedAnthropicThinkingVariants[model.id];

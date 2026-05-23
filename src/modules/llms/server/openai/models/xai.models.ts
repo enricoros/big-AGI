@@ -7,7 +7,10 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { OPENAI_API_PATHS, openAIAccess, OpenAIAccessSchema } from '../openai.access';
-import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
+import { llmsDefineManualMappings, fromManualMapping, KnownModel, llmDevCheckModels_DEV } from '../../models.mappings';
+
+// --- xAI Model ID inference (auto-derived from _knownXAIChatModels) ---
+export type LlmsXAIModelId = typeof _knownXAIChatModels[number]['idPrefix'];
 
 
 // configuration
@@ -64,7 +67,7 @@ const XAI_IF_Pre4_Vision: ModelDescriptionSchema['interfaces'] = [
 const XAI_PAR_Pre4: ModelDescriptionSchema['parameterSpecs'] = [] as const;
 
 
-const _knownXAIChatModels: ManualMappings = [
+const _knownXAIChatModels = llmsDefineManualMappings([
 
   // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high
   {
@@ -177,7 +180,7 @@ const _knownXAIChatModels: ManualMappings = [
     // no benchmark: keep this out
   },
 
-] as const;
+]);
 
 
 // -- xAI Model Descriptions --

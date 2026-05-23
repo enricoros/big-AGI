@@ -3,12 +3,15 @@ import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- FastAPI Model ID inference (auto-derived from _fastAPIKnownModels) ---
+export type LlmsFastAPIModelId = typeof _fastAPIKnownModels[number]['idPrefix'];
 
 
-const _fastAPIKnownModels: ManualMappings = [
+const _fastAPIKnownModels = llmsDefineManualMappings([
   // NOTE: we don't need manual patching as we have enough info for now
-] as const;
+]);
 
 const _fastAPIDenyListContains: string[] = [
   // nothing to deny for now

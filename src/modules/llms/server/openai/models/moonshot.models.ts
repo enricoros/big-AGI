@@ -3,7 +3,10 @@ import * as z from 'zod/v4';
 import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+
+// --- Moonshot Model ID inference (auto-derived from _knownMoonshotModels) ---
+export type LlmsMoonshotModelId = typeof _knownMoonshotModels[number]['idPrefix'];
 
 
 const IF_K2 = [
@@ -31,7 +34,7 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
  * - updated: 2026-05-04
  * - NOTE: K2 series (non-2.5/2.6) is scheduled for discontinuation on 2026-05-25 per Moonshot docs.
  */
-const _knownMoonshotModels: ManualMappings = [
+const _knownMoonshotModels = llmsDefineManualMappings([
 
   // Kimi K2.6 Series - Current flagship (native multimodal, thinking + non-thinking)
   {
@@ -198,7 +201,7 @@ const _knownMoonshotModels: ManualMappings = [
     hidden: true,
   },
 
-];
+]);
 
 
 // Excluded models: aliases, embeddings, and unknown variants

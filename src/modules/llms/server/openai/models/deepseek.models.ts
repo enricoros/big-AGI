@@ -2,7 +2,10 @@ import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_R
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+
+// --- Deepseek Model ID inference (auto-derived from _knownDeepseekChatModels) ---
+export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPrefix'];
 
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
@@ -16,7 +19,7 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 //   (the live API also accepts type: 'adaptive', but it is undocumented and empirically behaves the same as 'enabled'
 //    on current builds -- deliberately not exposed here; add it once docs + semantics stabilize)
 // - V3.2 endpoints no longer accessible via direct model ID (API returns only v4-flash/v4-pro)
-const _knownDeepseekChatModels: ManualMappings = [
+const _knownDeepseekChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro',
@@ -68,7 +71,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     benchmark: { cbaElo: 1433 }, // lmarena: deepseek-v4-flash (non-thinking)
     isLegacy: true,
   },
-];
+]);
 
 const _unsupportedModelIds = [
   'deepseek-coder',

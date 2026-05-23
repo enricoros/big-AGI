@@ -2,7 +2,10 @@ import { LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_I
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+
+// --- Z.AI Model ID inference (auto-derived from _knownZAIModels) ---
+export type LlmsZAIModelId = typeof _knownZAIModels[number]['idPrefix'];
 
 
 // Interfaces for Z.ai models
@@ -25,7 +28,7 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
 // Also used for prefix-matching 0-day API-discovered models
 // Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing
 // Ref: https://docs.z.ai/api-reference/chat/completions (model enum), https://docs.z.ai/guides/overview/pricing
-const _knownZAIModels: ManualMappings = [
+const _knownZAIModels = llmsDefineManualMappings([
 
   // GLM-5 Series - Flagship (Agentic Engineering)
   // 200K context, 128K output. Thinking compulsory when enabled (default: enabled).
@@ -260,7 +263,7 @@ const _knownZAIModels: ManualMappings = [
     hidden: true,
   },
 
-];
+]);
 
 
 /// Curated model IDs - authoritative list of Z.ai models

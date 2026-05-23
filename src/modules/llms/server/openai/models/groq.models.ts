@@ -2,7 +2,10 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types'
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmDevCheckModels_DEV, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- Groq Model ID inference (auto-derived from _knownGroqModels) ---
+export type LlmsGroqModelId = typeof _knownGroqModels[number]['idPrefix'];
 import { wireGroqModelsListOutputSchema } from '../wiretypes/groq.wiretypes';
 
 
@@ -16,7 +19,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * - pricing: https://groq.com/pricing/
  * - updated: 2026-04-16
  */
-const _knownGroqModels: ManualMappings = [
+const _knownGroqModels = llmsDefineManualMappings([
 
   // Preview Models
   {
@@ -149,7 +152,7 @@ const _knownGroqModels: ManualMappings = [
 
   // (Feb 18, 2026) allam-2-7b (SDAIA) removed from docs and pricing, still returned by API -> deny list
 
-];
+]);
 
 
 const groqDenyList: string[] = [

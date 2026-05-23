@@ -1,6 +1,10 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
+import { llmsDefineModels } from '../../models.mappings';
+
+// --- MiniMax Model ID inference (auto-derived from _knownMiniMaxModels) ---
+export type LlmsMiniMaxModelId = typeof _knownMiniMaxModels[number]['id'];
 
 
 // [MiniMax] URL/host heuristic for OpenAI-compatible detection
@@ -16,7 +20,7 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - Updated: 2026-04-16
  */
-const _knownMiniMaxModels: ModelDescriptionSchema[] = [
+const _knownMiniMaxModels = llmsDefineModels<ModelDescriptionSchema>()([
 
   // M2.7 series
   {
@@ -136,9 +140,9 @@ const _knownMiniMaxModels: ModelDescriptionSchema[] = [
     hidden: true, // yield to newer
   },
 
-];
+]);
 
 
-export function minimaxHardcodedModelDescriptions(): ModelDescriptionSchema[] {
+export function minimaxHardcodedModelDescriptions(): ReadonlyArray<ModelDescriptionSchema> {
   return _knownMiniMaxModels;
 }

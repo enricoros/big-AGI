@@ -6,7 +6,10 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
-import { fromManualMapping, KnownModel, llmDevCheckModels_DEV, ManualMappings } from '../../models.mappings';
+import { llmsDefineManualMappings, fromManualMapping, KnownModel, llmDevCheckModels_DEV } from '../../models.mappings';
+
+// --- OpenAI Model ID inference (auto-derived from _knownOpenAIChatModels) ---
+export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'];
 
 
 // OpenAI Model Variants
@@ -103,7 +106,7 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // [OpenAI] Known Chat Models
 // https://platform.openai.com/docs/models
 // https://platform.openai.com/docs/pricing
-export const _knownOpenAIChatModels: ManualMappings = [
+export const _knownOpenAIChatModels = llmsDefineManualMappings([
 
   /// GPT-5.5 series - Released April 23, 2026
 
@@ -1177,7 +1180,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     symLink: 'gpt-3.5-turbo-0125',
   },
 
-];
+]);
 
 
 // -- 0-day or unknown models --
@@ -1443,7 +1446,7 @@ export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels?: o
 
     const apiIds = apiModels.map((model: any) => model.id);
     const knownIds = _knownOpenAIChatModels
-      .filter(model => model.idPrefix && model.idPrefix !== '') // exclude fallback model
+      .filter(model => !!model.idPrefix) // exclude fallback model
       .map(model => model.idPrefix);
 
     // 1 & 2: Check stale and unknown definitions

@@ -2,18 +2,21 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stor
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
+export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
 // - Models & Pricing: https://www.alibabacloud.com/help/en/model-studio/models
 // - Billing Guide: https://www.alibabacloud.com/help/en/model-studio/billing-for-model-studio
 // Note: Alibaba uses tiered pricing (cost varies by input token count per request)
 
-const _knownAlibabaChatModels: ManualMappings = [
+const _knownAlibabaChatModels = llmsDefineManualMappings([
 
   // NOTE: we removed all the content list, since Alibaba is switching from the former naming e.g. 'qwen-max' to
   //       more appropriate names, however we don't have pricing or more info about those models yet
 
-];
+]);
 
 // NOTE:
 

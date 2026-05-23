@@ -1,13 +1,16 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- TogetherAI Model ID inference (auto-derived from _knownTogetherAIChatModels) ---
+export type LlmsTogetherAIModelId = typeof _knownTogetherAIChatModels[number]['idPrefix'];
 import { wireTogetherAIListOutputSchema } from '../wiretypes/togetherai.wiretypes';
 
 
 // Note: 2025-01-28 - we used to have harcoded models here, but now we have a dynamic
 // list from the API, so we don't need to hardcode them here anymore.
-const _knownTogetherAIChatModels: ManualMappings = [
+const _knownTogetherAIChatModels = llmsDefineManualMappings([
   // {
   //   idPrefix: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
   //   label: 'Llama 3.3 70B Instruct Turbo',
@@ -15,7 +18,7 @@ const _knownTogetherAIChatModels: ManualMappings = [
   //   contextWindow: 131072,
   //   interfaces: [LLM_IF_OAI_Chat],
   // },
-] as const;
+]);
 
 // allow list patterns
 const _togetherAllowTypes = [
