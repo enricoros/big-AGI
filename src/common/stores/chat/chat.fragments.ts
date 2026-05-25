@@ -777,6 +777,13 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 /// Editor Helpers - Fragment Editing
 
+/** Strips vendorState from a fragment - for cross-context use where vendor protocol state is irrelevant. */
+export function fragmentStripVendorState(fragment: DMessageFragment): DMessageFragment {
+  if (!('vendorState' in fragment) || !fragment.vendorState) return fragment;
+  const { vendorState: _, ...rest } = fragment;
+  return rest as DMessageFragment;
+}
+
 /** Sets the originId on a single fragment (mutates in place). */
 export function fragmentSetOriginId<T extends DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment>(fragment: T, originId: DMessageContentFragment['originId']): T {
   fragment.originId = originId;

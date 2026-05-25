@@ -10,7 +10,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
-import { isErrorContentFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
+import { fragmentStripVendorState, isErrorContentFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
@@ -67,12 +67,12 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     // aN: every proposal is an assistant message
     // FIXME: there could be an issue with aix.dispatch fusion of assistant messages, and in the future, this should require a
     //        re-encoding or structuring of sorts, e.g.: .map(_m => ({ ..._m, metadata: { ..._m.metadata, asAttachment: true } }))
-    ...(!discardThinking
-      ? inputs.rayMessages
-      : inputs.rayMessages.map((_m) => ({
-          ..._m,
-          fragments: _m.fragments.filter((_f) => !isVoidThinkingFragment(_f)),
-        }))),
+    ...inputs.rayMessages.map((_m) => ({
+      ..._m,
+      fragments: _m.fragments
+        .filter((_f) => !(discardThinking && isVoidThinkingFragment(_f)))
+        .map(fragmentStripVendorState),
+    })),
     // u
     createDMessageTextContent('user', _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput)),
   ];
