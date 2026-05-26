@@ -8,6 +8,7 @@ import { DLLM, DLLMId, isLLMHidden, isLLMVisible } from './llms.types';
 import { LlmsRootState, useModelsStore } from './store-llms';
 import { ModelDomainsList, ModelDomainsRegistry } from './model.domains.registry';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
+import { llmsEditorialPickForDomain } from './model.domains.editorial';
 import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_adjusted } from './llms.pricing';
 
 
@@ -249,9 +250,9 @@ export function llmsAssignmentsAutoModelId(domainId: DModelDomainId, universe: R
   // Grouped ELO ranking
   const vendors = _groupLlmsByVendorRankedByElo(allowedLlms);
 
-  // Editorial layer: prefer per-vendor hand-curated picks before falling back to the generic ELO/cost strategy
-  // const editorialPick = llmsPickDomainAssignemntEditorial(domainId, vendors.map(v => v.vendorId), allowedLlms);
-  // if (editorialPick) return editorialPick;
+  // Editorial layer: prefer hand-curated favorites first (precedence is editorial-defined, see model.domains.editorial.ts)
+  const editorialPick = llmsEditorialPickForDomain(domainId, allowedLlms);
+  if (editorialPick) return editorialPick;
 
   // Apply the domain selection strategy
   switch (domainSpec?.autoStrategy) {
