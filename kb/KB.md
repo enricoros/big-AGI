@@ -19,6 +19,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 
 #### LLM - Language Model Metadata
 - **[LLM-editorial-control.md](modules/LLM-editorial-pubdate.md)** - Where we have editorial control over per-model metadata vs dynamic discovery; `pubDate` field semantics, propagation chain, resolution rules, per-vendor matrix
+- **[LLM-editorial-auto-picks.md](modules/LLM-editorial-auto-picks.md)** - Per-domain Auto model resolution: 3-layer fallback (pin, editorial pick, ELO/cost heuristic), editorial table shape, tolerant matching, compile-time type-safety chain
 - **[LLM-models-catalog-pipeline.md](modules/LLM-models-catalog-pipeline.md)** - Forward-looking pipeline: extraction script, snapshot artifact, website consumption, future schema extensions
 
 #### LLM - Vendor APIs
