@@ -156,6 +156,98 @@ export function objectDeepCloneWithStringLimit(value: unknown, debugCaller: stri
 }
 
 /**
+ * JSON.stringify with indentation only above a depth threshold.
+ *
+ * Levels 0..maxIndentDepth-1 are indented (like JSON.stringify(v, null, indent));
+ * deeper levels collapse to a single line. Useful for debug views where deep,
+ * repetitive structures (e.g., AIX request bodies with `contents[].parts[].text`)
+ * become unreadable when every level is on its own line.
+ *
+ * Implemented as a post-processor over JSON.stringify's output so it inherits
+ * all standard behavior: toJSON(), undefined/function/symbol skipping,
+ * sparse-array nulls, cycle detection, BigInt errors. Peak memory is ~2x the
+ * indented string, briefly. O(N) time, O(N) space.
+ */
+export function objectStringifyWithIndentDepth(
+  value: unknown,
+  debugCaller: string,
+  maxIndentDepth: number = 4,
+  indent: number = 2,
+): string {
+  // fast path: no indentation requested, single stringify pass
+  if (maxIndentDepth <= 0) {
+    try {
+      return JSON.stringify(value) ?? '';
+    } catch (e) {
+      console.warn(`[stringifyWithIndentDepth (${debugCaller})]`, e);
+      return '';
+    }
+  }
+
+  let indented: string | undefined;
+  try {
+    indented = JSON.stringify(value, null, indent);
+  } catch (e) {
+    console.warn(`[stringifyWithIndentDepth (${debugCaller})]`, e);
+    return '';
+  }
+  if (indented === undefined) return ''; // top-level was undefined/function/symbol
+
+  let out = '';
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = 0; i < indented.length; i++) {
+    const c = indented[i];
+
+    if (inString) {
+      out += c;
+      if (escape) escape = false;
+      else if (c === '\\') escape = true;
+      else if (c === '"') inString = false;
+      continue;
+    }
+
+    if (c === '"') {
+      inString = true;
+      out += c;
+      continue;
+    }
+
+    if (c === '{' || c === '[') {
+      out += c;
+      depth++;
+      // skip the following \n + indent at the threshold; no padding space inside braces
+      if (depth >= maxIndentDepth) {
+        while (i + 1 < indented.length && (indented[i + 1] === '\n' || indented[i + 1] === ' ')) i++;
+      }
+      continue;
+    }
+
+    if (c === '}' || c === ']') {
+      depth--;
+      out += c;
+      continue;
+    }
+
+    // collapse whitespace runs at or beyond the threshold; keep a single separator only
+    // between value tokens (suppress when adjacent to a brace/bracket on either side)
+    if ((c === '\n' || c === ' ') && depth >= maxIndentDepth) {
+      while (i + 1 < indented.length && (indented[i + 1] === '\n' || indented[i + 1] === ' ')) i++;
+      const last = out.length ? out[out.length - 1] : '';
+      const next = i + 1 < indented.length ? indented[i + 1] : '';
+      if (last !== '{' && last !== '[' && last !== ' ' && next !== '}' && next !== ']')
+        out += ' ';
+      continue;
+    }
+
+    out += c;
+  }
+  return out;
+}
+
+/**
  * Find the largest string values in an object tree
  *
  * Recursively traverses an object to find the top N largest string values,

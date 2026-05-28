@@ -1,7 +1,7 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
-import { objectDeepCloneWithStringLimit, objectEstimateJsonSize } from '~/common/util/objectUtils';
+import { objectDeepCloneWithStringLimit, objectEstimateJsonSize, objectStringifyWithIndentDepth } from '~/common/util/objectUtils';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
@@ -136,7 +136,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body?: object) {
     // Ellipsize individual strings in the body object (e.g., base64 images) to reduce debug packet size
     const ellipsizedBody = body ? objectDeepCloneWithStringLimit(body, 'aix.addDebugRequest', DEBUG_REQUEST_MAX_STRING_BYTES) : undefined;
-    const processedBody = ellipsizedBody ? JSON.stringify(ellipsizedBody, null, 2) : '';
+    const processedBody = ellipsizedBody ? objectStringifyWithIndentDepth(ellipsizedBody, 'aix.addDebugRequest', 4, 2) : '';
 
     this.transmissionQueue.push({
       cg: '_debugDispatchRequest',
