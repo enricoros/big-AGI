@@ -17,8 +17,8 @@ import { formatPubDate, llmDevCheckModels_DEV, llmsDefineModels } from '../model
 const DEV_DEBUG_ANTHROPIC_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO IN STAGING! */ || Release.IsNodeDevBuild;
 
 // Cap applied ONLY to models that declare the `llmVndAnt1MContext` opt-in parameter
-// (Sonnet 4.5 / Sonnet 4 - beta 1M with tiered pricing, retiring 2026-04-30).
-// For models with 1M GA at standard pricing (Opus 4.7/4.6, Sonnet 4.6 since 2026-03-13),
+// (Sonnet 4.5 / Sonnet 4 - beta 1M with tiered pricing, retired 2026-04-30 on the Anthropic API).
+// For models with 1M GA at standard pricing (Opus 4.8/4.7/4.6, Sonnet 4.6 since 2026-03-13),
 // we report the API-provided context window as-is (1M) and do NOT add the opt-in.
 // Set to `false` to disable the cap entirely (useful for debugging mismatches).
 const ANT_CAP_CONTEXT_WINDOW: number | false = 200_000;
@@ -39,12 +39,12 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 
 // Anthropic Parameters Semantics:
 // - llmVndAntEffort             Anthropic effort: each model declares its subset via enumValues. 4.7 adds `xhigh`.
-// - llmVndAnt1MContext         required for Sonnet 4.5 / Sonnet 4 (beta, tiered pricing, retiring 2026-04-30).
-//                              Not needed for Opus 4.7/4.6 and Sonnet 4.6 (1M GA at standard pricing since 2026-03-13).
+// - llmVndAnt1MContext         required for Sonnet 4.5 / Sonnet 4 (beta, tiered pricing, retired 2026-04-30 on the Anthropic API).
+//                              Not needed for Opus 4.8/4.7/4.6 and Sonnet 4.6 (1M GA at standard pricing since 2026-03-13).
 // - llmVndAntSkills            2026-02-06: seems GA to any model now: a parameter spec for user/UI configurability
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking; 4.7 REMOVES manual budgets
 //                              entirely (adaptive-only). We keep the param (hidden, initialValue -1) as our "force adaptive"
-//                              sentinel on 4.6/4.7 thinking variants, and for manual budget control on 4.5/earlier.
+//                              sentinel on 4.6/4.7/4.8 thinking variants, and for manual budget control on 4.5/earlier.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -66,6 +66,21 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
+  // Claude 4.8 models with thinking variants (adaptive-only, manual budgets removed)
+  'claude-opus-4-8': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4.8 (Adaptive)',
+    description: 'Claude Opus 4.8 with adaptive thinking for the most complex reasoning and agentic coding',
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - 4.8 rejects budget_tokens */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      { paramId: 'llmVndAntInfSpeed' },
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    benchmark: { cbaElo: 1512 }, // claude-opus-4-8-thinking (launch estimate, no arena data yet)
+  },
+
   // Claude 4.7 models with thinking variants (adaptive-only, manual budgets removed)
   'claude-opus-4-7': {
     idVariant: 'thinking',
@@ -75,6 +90,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - 4.7 rejects budget_tokens */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      { paramId: 'llmVndAntInfSpeed' },
       ...ANT_TOOLS_DYNAMIC,
     ],
     benchmark: { cbaElo: 1504 }, // claude-opus-4-7-thinking
@@ -221,20 +237,42 @@ type _AnthropicModelDef = ModelDescriptionSchema & { isLegacy?: boolean, pubDate
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
-  // Claude 4.7 models
+  // Claude 4.8 models
   {
-    id: 'claude-opus-4-7', // Active - 2026-04-16
-    label: 'Claude Opus 4.7',
-    pubDate: '20260416',
+    id: 'claude-opus-4-8', // Active - 2026-05-28
+    label: 'Claude Opus 4.8',
+    pubDate: '20260528',
     description: 'Most capable generally available model for complex reasoning and agentic coding',
     contextWindow: 1_000_000, // 1M GA at standard pricing (no opt-in required)
     maxCompletionTokens: 128000,
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      { paramId: 'llmVndAntInfSpeed' }, // fast mode: research preview, Anthropic API only (premium $10/$50, cheaper than 4.7/4.6)
       ...ANT_TOOLS_DYNAMIC,
     ],
-    // Opus 4.7: flat $5/$25 pricing across entire 1M context window (no long-context premium, no fast mode)
+    // Opus 4.8: flat $5/$25 pricing across entire 1M context window (same as Opus 4.7). Inherits Opus 4.7 API constraints:
+    // adaptive-only thinking (budget_tokens rejected), temperature/top_p/top_k rejected, new tokenizer (~1x to 1.35x tokens), no prefill.
+    // New vs 4.7: mid-conversation system messages, refusal stop_details, 1,024-token min cacheable prompt.
+    chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
+    benchmark: { cbaElo: 1505 }, // claude-opus-4-8 (launch estimate, no arena data yet)
+  },
+
+  // Claude 4.7 models
+  {
+    id: 'claude-opus-4-7', // Active - 2026-04-16
+    label: 'Claude Opus 4.7',
+    pubDate: '20260416',
+    description: 'Previous most capable model for complex reasoning and agentic coding',
+    contextWindow: 1_000_000, // 1M GA at standard pricing (no opt-in required)
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      { paramId: 'llmVndAntInfSpeed' }, // fast mode: research preview since 2026-05-12, Anthropic API only (premium $30/$150)
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Opus 4.7: flat $5/$25 pricing across entire 1M context window (no long-context premium; fast mode added 2026-05-12)
     // Breaking changes vs 4.6: extended thinking budgets removed (adaptive-only), temperature/top_p/top_k rejected,
     // thinking content omitted by default, new tokenizer (~1x to 1.35x tokens for same text), no prefill.
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
@@ -347,7 +385,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
   // Claude 4 models
   {
-    hidden: true, // Deprecated: April 14, 2026 | Retiring: June 15, 2026 | Replacement: claude-opus-4-7
+    hidden: true, // Deprecated: April 14, 2026 | Retiring: June 15, 2026 | Replacement: claude-opus-4-8
     id: 'claude-opus-4-20250514', // Deprecated
     label: 'Claude Opus 4 [Deprecated]',
     pubDate: '20250522',
