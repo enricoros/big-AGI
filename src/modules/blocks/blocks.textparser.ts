@@ -23,7 +23,10 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // This is way more promising, but will either not perform a partial match (no match at all) or match a single line
     // codeBlock: /^( {0,3})`{3,}([^\n`]*)\n([\s\S]*?)(?:\n^\1`{3,}[^\S\n]*(?=\n|$))?/gm,
     // codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ ]*(?:\n|$))|$)/g, // #983
-    codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g,
+    // codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g, // length-agnostic close: broke nested fences (any >=3 close)
+    // capture the opening fence (g1) and require the close to be at least as long (\1`*), per CommonMark.
+    // no-op for 3-backtick fences (the norm); only activates to keep nested fences (````md ... ``` ... ````) together.
+    codeBlock: /(`{3,})([^\n`]*)\n([\s\S]*?)(\1`*(?=[ *\n]|$)|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
   };
@@ -58,10 +61,11 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // add the block
     switch (matchType) {
       case 'codeBlock':
-        const blockTitle: string = (match[1] || '').trim();
+        // groups: [1]=opening fence, [2]=title/info, [3]=code, [4]=closing fence (or '' when unterminated)
+        const blockTitle: string = (match[2] || '').trim();
         // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
-        const blockCode: string = match[2].replace(/[\t ]+$/, '');
-        const blockEnd: string = match[3];
+        const blockCode: string = match[3].replace(/[\t ]+$/, '');
+        const blockEnd: string = match[4];
         blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
         break;
 
