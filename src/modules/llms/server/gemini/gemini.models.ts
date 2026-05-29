@@ -100,8 +100,8 @@ const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
 };
 
 const gemini30ProImagePricing: ModelDescriptionSchema['chatPrice'] = {
-  input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }], // text input uses tiered pricing same as 3 Pro
-  output: [{ upTo: 200000, price: 12.00 }, { upTo: null, price: 18.00 }], // text/thinking output uses tiered pricing same as 3 Pro
+  input: 2.00, // text/image input - flat, no >200k tier (Google prices image models flat; context is 128k anyway)
+  output: 12.00, // text/thinking output - flat, no >200k tier
   // NOTE: Additional image-specific pricing (not yet supported in schema):
   // - Image input: $2.00/MTok ($0.0011/image)
   // - Image output: $120.00/MTok ($0.134/image 1K/2K, $0.24/image 4K)
@@ -257,13 +257,31 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: { cbaElo: 1488 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
-  // 3.1 Flash Image Preview - Released February 26, 2026
-  // aka "Nano Banana 2" - high-efficiency image generation optimized for speed and high-volume use cases
+  // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
+  // aka "Nano Banana 2" - high-efficiency image generation optimized for speed and high-volume use; supports video-to-image input
   {
-    id: 'models/gemini-3.1-flash-image-preview',
+    id: 'models/gemini-3.1-flash-image',
     labelOverride: 'Nano Banana 2',
+    pubDate: '20260528',
+    chatPrice: gemini31FlashImagePricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+
+  // 3.1 Flash Image (Preview) - Released February 26, 2026; DEPRECATED: shutdown June 25, 2026 (announced May 28, 2026)
+  {
+    hidden: true, // superseded by GA gemini-3.1-flash-image - kept so users who already selected it still resolve until shutdown
+    id: 'models/gemini-3.1-flash-image-preview',
+    labelOverride: 'Nano Banana 2 Preview',
     pubDate: '20260226',
     isPreview: true,
+    deprecated: '2026-06-25',
     chatPrice: gemini31FlashImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -336,12 +354,31 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: { cbaElo: 1486 }, // gemini-3-pro
   },
 
-  // 3.0 Pro Image Preview - Released November 20, 2025
+  // 3 Pro Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
   {
-    id: 'models/gemini-3-pro-image-preview',
+    id: 'models/gemini-3-pro-image',
     labelOverride: 'Nano Banana Pro', // Marketing name for the technical model ID
+    pubDate: '20260528',
+    chatPrice: gemini30ProImagePricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
+      // { paramId: 'llmVndGeminiShowThoughts' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+
+  // 3.0 Pro Image (Preview) - Released November 20, 2025; DEPRECATED: shutdown June 25, 2026 (announced May 28, 2026)
+  {
+    hidden: true, // superseded by GA gemini-3-pro-image - kept so users who already selected it still resolve until shutdown
+    id: 'models/gemini-3-pro-image-preview',
+    labelOverride: 'Nano Banana Pro Preview',
     pubDate: '20251120',
     isPreview: true,
+    deprecated: '2026-06-25',
     chatPrice: gemini30ProImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -357,7 +394,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     id: 'models/nano-banana-pro-preview',
     labelOverride: 'Nano Banana Pro',
     pubDate: '20251120',
-    symLink: 'models/gemini-3-pro-image-preview',
+    symLink: 'models/gemini-3-pro-image',
     // copied from symlink
     isPreview: true,
     chatPrice: gemini30ProImagePricing,
@@ -885,6 +922,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.5',
   'models/gemini-3.1-pro-preview',
   'models/gemini-3.1-pro-preview-customtools',
+  'models/gemini-3.1-flash-image',
   'models/gemini-3.1-flash-image-preview',
   'models/gemini-3.1-flash-preview',
   'models/gemini-3.1-flash-lite',
@@ -893,6 +931,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.1-',
   'models/gemini-3.1',
   'models/gemini-3-pro-preview',
+  'models/gemini-3-pro-image',
   'models/gemini-3-pro-image-preview',
   'models/nano-banana-pro-preview',
   'models/gemini-3-flash-preview',

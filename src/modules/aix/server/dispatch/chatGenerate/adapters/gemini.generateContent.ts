@@ -14,11 +14,10 @@ const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 // https://ai.google.dev/gemini-api/docs/thought-signatures
 const GEMINI_BYPASS_THOUGHT_SIGNATURE = 'context_engineering_is_the_way_to_go';
 const MODELS_REQUIRING_THOUGHT_SIGNATURE = [
-  'nano-banana-pro',
-  // preview, e.g.:
-  // 'gemini-3.1-flash-image-preview',
-  // 'gemini-3-pro-image-preview',
-  '-image-preview', // catch-all for image (nano banana) preview models
+  'nano-banana-pro', // matches the 'nano-banana-pro-preview' alias
+  // Gemini 3 image models (Nano Banana Pro / Nano Banana 2) - substrings match both the '-preview' and the graduated stable IDs
+  'gemini-3-pro-image',
+  'gemini-3.1-flash-image',
 ] as const;
 
 
