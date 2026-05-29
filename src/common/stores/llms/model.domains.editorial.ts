@@ -55,6 +55,10 @@ type _EditorialDefaultsTable = {
 export const EditorialDefaults = {
 
   primaryChat: [
+    { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-4-8-thinking' },
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-8-thinking' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-4-7-thinking' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-7-thinking' },
@@ -81,6 +85,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-sonnet-4-6' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-sonnet-4-6' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'xai',        modelId: 'grok-build-0.1' },
     { vendor: 'zai',        modelId: 'glm-5-code' },
@@ -111,6 +116,7 @@ export const EditorialDefaults = {
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
     { vendor: 'openai',     modelId: 'gpt-5.4-mini' },
