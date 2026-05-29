@@ -75,7 +75,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - 4.8 rejects budget_tokens */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
-      { paramId: 'llmVndAntInfSpeed' },
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // 2x tier on 4.8 (vs 4.7/4.6's 6x)
       ...ANT_TOOLS_DYNAMIC,
     ],
     benchmark: { cbaElo: 1512 }, // claude-opus-4-8-thinking (launch estimate, no arena data yet)
@@ -90,7 +90,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - 4.7 rejects budget_tokens */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
-      { paramId: 'llmVndAntInfSpeed' },
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_6x'] },
       ...ANT_TOOLS_DYNAMIC,
     ],
     benchmark: { cbaElo: 1504 }, // claude-opus-4-7-thinking
@@ -105,7 +105,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
-      { paramId: 'llmVndAntInfSpeed' },
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_6x'] },
       ...ANT_TOOLS_DYNAMIC,
     ],
     benchmark: { cbaElo: 1502 }, // claude-opus-4-6-thinking
@@ -248,7 +248,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
-      { paramId: 'llmVndAntInfSpeed' }, // fast mode: research preview, Anthropic API only (premium $10/$50, cheaper than 4.7/4.6)
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only; 2x tier ($10/$50 vs std $5/$25), unlike 4.7/4.6's 6x
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Opus 4.8: flat $5/$25 pricing across entire 1M context window (same as Opus 4.7). Inherits Opus 4.7 API constraints:
@@ -269,7 +269,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
-      { paramId: 'llmVndAntInfSpeed' }, // fast mode: research preview since 2026-05-12, Anthropic API only (premium $30/$150)
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_6x'] }, // fast mode: research preview since 2026-05-12, Anthropic API only (6x tier, $30/$150)
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Opus 4.7: flat $5/$25 pricing across entire 1M context window (no long-context premium; fast mode added 2026-05-12)
@@ -290,7 +290,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
-      { paramId: 'llmVndAntInfSpeed' },
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_6x'] },
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Opus 4.6: flat $5/$25 pricing (1M context GA at standard pricing since 2026-03-13, no opt-in required)
@@ -557,6 +557,20 @@ export function llmsAntValidateModelDefs_DEV(availableModels: AnthropicWire_API_
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
     llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id));
     _llmsAntCheckApiCapabilities_DEV(availableModels);
+    _llmsAntCheckInfSpeedTiers_DEV();
+  }
+}
+
+/** DEV: each fast-mode (llmVndAntInfSpeed) spec must expose exactly ONE price tier via enumValues - the UI renders a binary toggle off the single allowed value (`[0]`). */
+function _llmsAntCheckInfSpeedTiers_DEV(): void {
+  const specLists: ModelDescriptionSchema['parameterSpecs'][] = [
+    ...hardcodedAnthropicModels.map(m => m.parameterSpecs),
+    ...Object.values(_hardcodedAnthropicThinkingVariants).map(v => (v as { parameterSpecs?: ModelDescriptionSchema['parameterSpecs'] }).parameterSpecs),
+  ];
+  for (const specs of specLists) {
+    const infSpec = specs?.find(s => s.paramId === 'llmVndAntInfSpeed');
+    if (infSpec && infSpec.enumValues?.length !== 1)
+      console.log(`[DEV] Anthropic: llmVndAntInfSpeed must expose exactly one tier via enumValues, got [${infSpec.enumValues?.join(',') ?? ''}]`);
   }
 }
 

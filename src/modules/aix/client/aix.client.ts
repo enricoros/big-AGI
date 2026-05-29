@@ -132,7 +132,7 @@ export function aixCreateModelFromLLMOptions(
     // Anthropic - (vndAntContainerId, vndAntTransformInlineFiles are set in the decorate function)
     ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget === -1 ? 'adaptive' as const : llmVndAntThinkingBudget } : {}),
     ...(llmVndAnt1MContext ? { vndAnt1MContext: llmVndAnt1MContext } : {}),
-    ...(llmVndAntInfSpeed === 'fast' ? { vndAntInfSpeed: 'fast' } : {}),
+    ...(llmVndAntInfSpeed ? { vndAntInfSpeed: 'fast' } : {}), // any tier (fast_2x/fast_6x/legacy fast) collapses to the wire 'fast'
     ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),
     ...(llmVndAntWebDynamic ? { vndAntWebDynamic: true } : {}),
     ...(llmVndAntWebFetch === 'auto' ? { vndAntWebFetch: llmVndAntWebFetch, ...(llmVndAntWebFetchMaxUses ? { vndAntWebFetchMaxUses: llmVndAntWebFetchMaxUses } : {}) } : {}),
