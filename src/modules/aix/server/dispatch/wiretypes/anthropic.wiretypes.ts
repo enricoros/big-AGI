@@ -13,6 +13,9 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-05-28 - API Sync: reasoning token breakdown
+ * - Response.usage + event_MessageDelta.usage: added `output_tokens_details` ({ thinking_tokens }) - subset of output_tokens, surfaced as the TOutR metric (like OpenAI/Gemini)
+ *
  * ### 2026-04-24 - API Sync: stop_details for structured refusals
  * - Response: added `stop_details` ({ type: 'refusal', category: 'cyber'|'bio'|null, explanation: string|null })
  * - event_MessageDelta.delta: added `stop_details` (arrives alongside stop_reason in streaming)
@@ -1057,6 +1060,10 @@ export namespace AnthropicWire_API_Message_Create {
     usage: z.object({
       input_tokens: z.number(),
       output_tokens: z.number(),
+      // [Anthropic, 2026-05-28] reasoning token breakdown - thinking_tokens is a subset of output_tokens (already counted in it)
+      output_tokens_details: z.object({
+        thinking_tokens: z.number(),
+      }).nullish(),
       cache_creation_input_tokens: z.number().nullish(),
       cache_read_input_tokens: z.number().nullish(),
       cache_creation: z.object({
@@ -1124,6 +1131,10 @@ export namespace AnthropicWire_API_Message_Create {
       cache_read_input_tokens: z.number().nullish(),
       input_tokens: z.number().nullish(),
       output_tokens: z.number(),
+      // [Anthropic, 2026-05-28] reasoning token breakdown - cumulative thinking_tokens (subset of output_tokens)
+      output_tokens_details: z.object({
+        thinking_tokens: z.number(),
+      }).nullish(),
       server_tool_use: z.object({
         web_fetch_requests: z.number().optional(),
         web_search_requests: z.number().optional(),

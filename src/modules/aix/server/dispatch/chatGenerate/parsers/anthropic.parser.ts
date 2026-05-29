@@ -414,6 +414,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           pt.updateMetrics({
             TIn: chatInTokens !== undefined ? chatInTokens : -1,
             TOut: usage.output_tokens,
+            // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
+            ...(typeof usage.output_tokens_details?.thinking_tokens === 'number' ? { TOutR: usage.output_tokens_details.thinking_tokens } : {}),
             vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
             dtStart: timeToFirstEvent,
             dtInner: elapsedTimeMilliseconds,
@@ -642,6 +644,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         if (typeof usage.cache_creation_input_tokens === 'number')
           metricsUpdate.TCacheWrite = usage.cache_creation_input_tokens;
       }
+      // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
+      if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
+        metricsUpdate.TOutR = usage.output_tokens_details.thinking_tokens;
       pt.updateMetrics(metricsUpdate);
     }
 
