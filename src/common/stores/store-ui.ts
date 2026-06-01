@@ -224,6 +224,10 @@ export function useUIContentScaling(): ContentScaling {
   return useUIPreferencesStore((state) => state.contentScaling);
 }
 
+export function getUIEnterIsNewline(): boolean {
+  return useUIPreferencesStore.getState().enterIsNewline;
+}
+
 export function getAixInspectorEnabled(): boolean {
   return useUIPreferencesStore.getState().aixInspector;
 }

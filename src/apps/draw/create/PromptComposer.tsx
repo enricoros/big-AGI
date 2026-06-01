@@ -17,7 +17,7 @@ import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imagineProm
 import { agiUuid } from '~/common/util/idUtils';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { lineHeightTextareaMd } from '~/common/app.theme';
-import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import { getUIEnterIsNewline, useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
 import { useDrawIdeas } from './useDrawIdeas';
@@ -106,12 +106,12 @@ export function PromptComposer(props: {
       return;
 
     // Shift: toggles the 'enter is newline'
-    if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+    if (getUIEnterIsNewline() ? e.shiftKey : !e.shiftKey) {
       if (userHasText)
         handlePromptEnqueue();
       return e.preventDefault();
     }
-  }, [enterIsNewline, handlePromptEnqueue, userHasText]);
+  }, [handlePromptEnqueue, userHasText]);
 
 
   // Ideas

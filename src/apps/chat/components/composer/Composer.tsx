@@ -44,7 +44,7 @@ import { useAttachHandler_CameraOpen, useAttachHandler_Files, useAttachHandler_P
 import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
-import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
+import { getUIEnterIsNewline, useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import type { ActileItem } from './actile/ActileProvider';
@@ -560,14 +560,14 @@ export function Composer(props: {
       // Shift: toggles the 'enter is newline'
       if (e.shiftKey)
         touchShiftEnter();
-      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+      if (getUIEnterIsNewline() ? e.shiftKey : !e.shiftKey) {
         if (!assistantAbortible)
           await handleSendAction(chatExecuteMode, composeText); // enter -> send
         return e.preventDefault();
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, handleSendAction, touchShiftEnter]);
 
 
   // Focus mode
