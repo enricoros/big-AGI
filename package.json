@@ -59,8 +59,8 @@
     "next": "~15.1.12",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "5.4.54",
-    "posthog-js": "^1.373.4",
-    "posthog-node": "^5.29.7",
+    "posthog-js": "^1.378.1",
+    "posthog-node": "^5.35.11",
     "prismjs": "^1.30.0",
     "puppeteer-core": "^24.43.1",
     "react": "^18",
@@ -96,7 +96,7 @@
     "eslint-config-next": "~15.1.12",
     "prettier": "^3.8.3",
     "prisma": "~5.22.0",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "engines": {
