@@ -3,45 +3,28 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, CircularProgress, Divider, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import DifferenceIcon from '@mui/icons-material/Difference';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
-import ReplayIcon from '@mui/icons-material/Replay';
 import ReplyAllRoundedIcon from '@mui/icons-material/ReplyAllRounded';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
-import TelegramIcon from '@mui/icons-material/Telegram';
-import TextureIcon from '@mui/icons-material/Texture';
-import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 
-import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { Release } from '~/common/app.release';
-import { StarredState } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
@@ -55,13 +38,13 @@ import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
+import { ChatMessageMenu } from './ChatMessageMenu';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { VoidFragments } from './fragments-void/VoidFragments';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
-import { setIsNotificationEnabledForModel, useChatShowTextDiff } from '../../store-app-chat';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
 
@@ -112,16 +95,6 @@ const fragmentsListSx: SxProps = {
   display: 'flex',
   flexDirection: 'column',
   gap: 1.5,     // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
-};
-
-const antCachePromptOffSx: SxProps = {
-  transition: 'color 0.16s, transform 0.16s',
-};
-
-const antCachePromptOnSx: SxProps = {
-  ...antCachePromptOffSx,
-  color: ModelVendorAnthropic.brandColor,
-  transform: 'rotate(90deg)',
 };
 
 
@@ -196,7 +169,6 @@ export function ChatMessage(props: {
     doubleClickToEdit: state.doubleClickToEdit,
     uiComplexityMode: state.complexityMode,
   })));
-  const [showDiff, setShowDiff] = useChatShowTextDiff();
 
 
   // derived state
@@ -367,16 +339,8 @@ export function ChatMessage(props: {
     handleCloseOpsMenu();
   }, [handleCloseOpsMenu, handleEditsBegin, handleEditsCancel, isEditingText, messagePendingIncomplete]);
 
-  const handleOpsToggleAntCacheUser = React.useCallback(() => {
-    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_VND_ANT_CACHE_USER, 2);
-  }, [messageId, onMessageToggleUserFlag]);
-
-  const handleOpsToggleSkipMessage = React.useCallback(() => {
-    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_AIX_SKIP);
-  }, [messageId, onMessageToggleUserFlag]);
-
-  const handleOpsToggleStarred = React.useCallback(() => {
-    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_STARRED);
+  const handleMessageUserFlagToggle = React.useCallback((flag: DMessageUserFlag, maxPerConversation?: number) => {
+    onMessageToggleUserFlag?.(messageId, flag, maxPerConversation);
   }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsShowInfo = React.useCallback(() => {
@@ -385,12 +349,6 @@ export function ChatMessage(props: {
   }, []);
 
   const handleInfoClose = React.useCallback(() => setShowInfoModal(false), []);
-
-  const handleOpsToggleNotifyComplete = React.useCallback(() => {
-    // also remember the preference, for auto-setting flags by the persona
-    setIsNotificationEnabledForModel(messageId, !isUserNotifyComplete);
-    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_NOTIFY_COMPLETE);
-  }, [isUserNotifyComplete, messageId, onMessageToggleUserFlag]);
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -411,7 +369,6 @@ export function ChatMessage(props: {
     handleCloseOpsMenu();
   };
 
-  const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
 
   const handleOpsDiagram = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -969,159 +926,41 @@ export function ChatMessage(props: {
 
       {/* Message Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
-        <CloseablePopup
-          menu anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
-          dense
-          minWidth={280}
-          placement={fromAssistant ? 'auto-start' : 'auto-end'}
-        >
+        <ChatMessageMenu
+          anchor={opsMenuAnchor}
+          onClose={handleCloseOpsMenu}
 
-          {fromSystem && (
-            <ListItem>
-              <Typography level='body-sm'>
-                System message
-              </Typography>
-            </ListItem>
-          )}
+          isMobile={props.isMobile}
+          isBottom={!!props.isBottom}
+          fromAssistant={fromAssistant}
+          fromSystem={fromSystem}
+          canTextDiagram={couldDiagram}
+          canTextImagine={couldImagine}
+          canTextSpeak={couldSpeak}
+          isEditingText={isEditingText}
+          isPendingIncomplete={!!messagePendingIncomplete}
+          isTextImagining={!!props.isImagining}
+          isUserMessageSkipped={isUserMessageSkipped}
+          isUserNotifyComplete={isUserNotifyComplete}
+          userNotifyCompleteLlmId={(messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined) ?? null}
+          isUserStarred={isUserStarred}
+          isVndAndCacheAuto={isVndAndCacheAuto}
+          isVndAndCacheUser={isVndAndCacheUser}
+          showVndAntCaching={uiComplexityMode === 'extra' && !!props.showAntPromptCaching && !isUserMessageSkipped}
 
-          {/* Edit / Copy */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {/* Edit */}
-            {!!props.onMessageFragmentReplace && (
-              <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEditToggle} sx={{ flex: 1 }}>
-                <ListItemDecorator>{isEditingText ? <CloseRoundedIcon /> : <EditRoundedIcon />}</ListItemDecorator>
-                {isEditingText ? 'Discard' : 'Edit'}
-              </MenuItem>
-            )}
-            {/* Copy */}
-            <MenuItem onClick={handleOpsMessageCopySrc} sx={{ flex: 1 }}>
-              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-              Copy
-            </MenuItem>
-            {/* Starred */}
-            {!!onMessageToggleUserFlag && (
-              <MenuItem onClick={handleOpsToggleStarred} sx={{ flexGrow: 0, px: 1 }}>
-                <Tooltip disableInteractive title={!isUserStarred ? 'Star message - use @ to refer to it from another chat' : 'Remove star'}>
-                  <StarredState isStarred={isUserStarred} />
-                </Tooltip>
-              </MenuItem>
-            )}
-            {/* Info */}
-            <MenuItem onClick={handleOpsShowInfo} sx={{ flexGrow: 0, px: 1 }}>
-              <InfoOutlinedIcon sx={{ fontSize: 'xl' }} />
-            </MenuItem>
-          </Box>
-
-          {/* Notify Complete */}
-          {messagePendingIncomplete && !!onMessageToggleUserFlag && <ListDivider />}
-          {messagePendingIncomplete && !!onMessageToggleUserFlag && (
-            <MenuItem onClick={handleOpsToggleNotifyComplete}>
-              <ListItemDecorator>{isUserNotifyComplete ? <NotificationsActiveIcon /> : <NotificationsOutlinedIcon />}</ListItemDecorator>
-              Notify on reply
-            </MenuItem>
-          )}
-
-          {/* Anthropic Breakpoint Toggle */}
-          {!messagePendingIncomplete && <ListDivider />}
-          {!messagePendingIncomplete && !isUserMessageSkipped && !!props.showAntPromptCaching && (
-            <MenuItem onClick={handleOpsToggleAntCacheUser}>
-              <ListItemDecorator><AnthropicIcon sx={isVndAndCacheUser ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
-              {isVndAndCacheUser ? 'Do not cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
-            </MenuItem>
-          )}
-          {!messagePendingIncomplete && !isUserMessageSkipped && !!props.showAntPromptCaching && isVndAndCacheAuto && !isVndAndCacheUser && (
-            <MenuItem disabled>
-              <ListItemDecorator><TextureIcon sx={{ color: ModelVendorAnthropic.brandColor }} /></ListItemDecorator>
-              Auto-Cached <span style={{ opacity: 0.5 }}>for 5 min</span>
-            </MenuItem>
-          )}
-          {/* Aix Skip Message */}
-          {!messagePendingIncomplete && !!props.onMessageToggleUserFlag && (
-            <MenuItem onClick={handleOpsToggleSkipMessage}>
-              <ListItemDecorator>{isUserMessageSkipped ? <VisibilityOffIcon sx={{ color: 'danger.plainColor' }} /> : <VisibilityIcon />}</ListItemDecorator>
-              {isUserMessageSkipped ? 'Unskip' : 'Skip AI processing'}
-            </MenuItem>
-          )}
-
-          {/* Delete / Branch / Truncate */}
-          {!!props.onMessageBranch && <ListDivider />}
-          {!!props.onMessageBranch && (
-            <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
-              <ListItemDecorator>
-                <ForkRightIcon />
-              </ListItemDecorator>
-              Branch
-              {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
-            </MenuItem>
-          )}
-          {!!props.onMessageDelete && (
-            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
-              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-              Delete
-              <span style={{ opacity: 0.5 }}>message</span>
-            </MenuItem>
-          )}
-          {!!props.onMessageTruncate && (
-            <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
-              <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-              Truncate
-              <span style={{ opacity: 0.5 }}>after this</span>
-            </MenuItem>
-          )}
-          {/* Diagram / Draw / Speak */}
-          {!!props.onTextDiagram && <ListDivider />}
-          {!!props.onTextDiagram && (
-            <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
-              <ListItemDecorator><PhTreeStructure /></ListItemDecorator>
-              Auto-Diagram ...
-            </MenuItem>
-          )}
-          {!!props.onTextImagine && (
-            <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintOutlinedIcon />}</ListItemDecorator>
-              Auto-Draw
-            </MenuItem>
-          )}
-          {!!props.onTextSpeak && (
-            <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <PhVoice />}</ListItemDecorator>
-              Speak
-            </MenuItem>
-          )}
-          {/* Diff Viewer */}
-          {!!props.diffPreviousText && <ListDivider />}
-          {!!props.diffPreviousText && (
-            <MenuItem onClick={handleOpsToggleShowDiff}>
-              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
-              Show difference
-              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
-            </MenuItem>
-          )}
-          {/* Beam/Restart */}
-          {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
-          {!!props.onMessageAssistantFrom && (
-            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFrom}>
-              <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
-              {!fromAssistant
-                ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
-                : !props.isBottom
-                  ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
-                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke variant='outlined' combo='Ctrl + Shift + Z' /></Box>}
-            </MenuItem>
-          )}
-          {!!props.onMessageBeam && (
-            <MenuItem disabled={fromSystem} onClick={handleOpsBeamFrom}>
-              <ListItemDecorator>
-                <ChatBeamIcon color={fromSystem ? undefined : 'primary'} />
-              </ListItemDecorator>
-              {!fromAssistant
-                ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
-                : !props.isBottom
-                  ? <>Beam Edit</>
-                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Beam Edit<KeyStroke variant='outlined' combo='Ctrl + Shift + B' /></Box>}
-            </MenuItem>
-          )}
-        </CloseablePopup>
+          onMessageDelete={!props.onMessageDelete ? undefined : handleOpsDelete}
+          onMessageUserFlagToggle={!onMessageToggleUserFlag ? undefined : handleMessageUserFlagToggle}
+          onOpsAssistantFrom={!props.onMessageAssistantFrom ? undefined : handleOpsAssistantFrom}
+          onOpsBeamFrom={!props.onMessageBeam ? undefined : handleOpsBeamFrom}
+          onOpsBranchFrom={!props.onMessageBranch ? undefined : handleOpsBranch}
+          onOpsMessageCopySrc={handleOpsMessageCopySrc}
+          onOpsMessageEditToggle={!props.onMessageFragmentReplace ? undefined : handleOpsEditToggle}
+          onOpsMessageTruncate={!props.onMessageTruncate ? undefined : handleOpsTruncate}
+          onOpsShowInfo={handleOpsShowInfo}
+          onOpsTextDiagram={!props.onTextDiagram ? undefined : handleOpsDiagram}
+          onOpsTextImagine={!props.onTextImagine ? undefined : handleOpsImagine}
+          onOpsTextSpeak={!props.onTextSpeak ? undefined : handleOpsSpeak}
+        />
       )}
 
 
