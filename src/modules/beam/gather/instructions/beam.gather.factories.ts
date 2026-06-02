@@ -34,14 +34,14 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     addLabel: 'Add Fusion',
     cardTitle: 'Combined Response',
     Icon: MediationOutlinedIcon as typeof SvgIcon,
-    description: 'AI combines conversation details and ideas into one clear, comprehensive answer.',
+    description: 'AI combines conversation details and ideas into one clear answer.',
     createInstructions: () => [
       {
         type: 'gather',
         label: 'Synthesizing Fusion',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
-You are an expert AI text synthesizer, your task is to analyze the following inputs and generate a single, comprehensive response that addresses the core objectives or questions.
+You are an expert AI text synthesizer, your task is to analyze the following inputs and generate a single response that addresses the core objectives or questions.
 
 Consider the conversation history, the last user message, and the diverse perspectives presented in the {{N}} response alternatives.
 
@@ -107,7 +107,7 @@ Your task is to combine the {{N}} response alternatives into a single coherent r
 This synthesis should address the user's original query comprehensively, incorporating the {{N}} response alternatives following the user's chosen options.
 Aim for clarity and coherence in your final output.`.trim(),
         userPrompt: `
-Given the user preferences below, synthesize the {{N}} response alternatives above into a single, coherent, comprehensive response that follows the user query and the preferences below:
+Given the user preferences below, synthesize the {{N}} response alternatives above into a single, coherent, response that follows the user query and the preferences below:
 
 {{PrevStepOutput}}
 
@@ -179,7 +179,7 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
 Your task is to synthesize a coherent and relevant response based on the following messages: the original system message, the full conversation history up to the user query, the user query, and a set of {{N}} answers generated independently.
 These alternatives explore different solutions and perspectives and are presented in random order. Your output should integrate insights from these alternatives, aligned with the conversation's context and objectives, into a single, coherent response that addresses the user's needs and questions as expressed throughout the conversation.`.trim(),
         userPrompt: `
-Based on the {{N}} alternatives provided, synthesize a single, comprehensive response.`.trim(),
+Based on the {{N}} alternatives provided, synthesize a single coherent response.`.trim(),
         // userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
         // userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response that effectively addresses the query or problem at hand.',
       },
