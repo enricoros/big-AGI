@@ -177,6 +177,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
       // for now, let text diff be off by default
       state.showTextDiff = false;
+
+      // reset the notifications for now, to make sure people don't forget the settings
+      state.notificationEnabledModelIds = [];
     },
 
     migrate: (state: any, fromVersion: number): AppChatStore => {
