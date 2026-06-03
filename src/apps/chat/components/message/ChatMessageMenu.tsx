@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, CircularProgress, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
+import { Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -10,7 +10,6 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -25,6 +24,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
+import { SubMenuHost, SubMenuItem, useSubMenuHost } from '~/common/components/SubMenu';
 import { DMessageUserFlag, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_USER } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
@@ -91,6 +91,7 @@ export function ChatMessageMenu(props: {
 
   // external state
   const doubleClickToEdit = useUIPreferencesStore(state => state.doubleClickToEdit);
+  const subMenuHost = useSubMenuHost();
 
   // state
   // const [showDiff, setShowDiff] = useChatShowTextDiff();
@@ -146,6 +147,7 @@ export function ChatMessageMenu(props: {
   }, [onClose, onPersonaVoiceSettings]);
 
   return (
+    <SubMenuHost host={subMenuHost}>
     <CloseablePopup
       menu anchorEl={props.anchor} onClose={props.onClose}
       dense
@@ -249,15 +251,13 @@ export function ChatMessageMenu(props: {
 
       {/* Diagram / Draw / Speak */}
       {onOpsTextDiagram && <ListDivider />}
-      {(onOpsTextDiagram || onOpsTextImagine) && <Dropdown>
-        <MenuButton disabled={pending} slots={{ root: ListItemButton }}>
-          <ListItemDecorator><AddCircleOutlineIcon color={(pending || fromSystem) ? undefined : 'success'} /></ListItemDecorator>
-          AI generate <KeyboardArrowRightIcon sx={{ ml: 'auto', mr: -0.5 }} />
-        </MenuButton>
-        <Menu
-          placement={props.isMobile ? undefined : 'right-start'}
-          popperOptions={props.isMobile ? undefined : { modifiers: [{ name: 'offset', options: { offset: [0 /*-40*/, -2] } }] }}
-          sx={{ minWidth: 260 }}
+      {(onOpsTextDiagram || onOpsTextImagine) && (
+        <SubMenuItem
+          label='AI generate'
+          decorator={<AddCircleOutlineIcon color={(pending || fromSystem) ? undefined : 'success'} />}
+          disabled={pending}
+          isMobile={props.isMobile}
+          minWidth={260}
         >
           <ListItem>
             <Typography level='body-sm'>Add Message</Typography>
@@ -274,8 +274,8 @@ export function ChatMessageMenu(props: {
               Create Picture
             </MenuItem>
           )}
-        </Menu>
-      </Dropdown>}
+        </SubMenuItem>
+      )}
       {onOpsTextSpeak && (
         <MenuItem disabled={pending} onClick={handleSpeakAndClose}>
           <ListItemDecorator>
@@ -334,5 +334,6 @@ export function ChatMessageMenu(props: {
       )}
 
     </CloseablePopup>
+    </SubMenuHost>
   );
 }
