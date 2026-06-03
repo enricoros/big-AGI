@@ -6,13 +6,16 @@
  * the actual parser (createGeminiInteractionsParserSSE), so we see exactly what the parser does and
  * what gets surfaced vs silent-skipped.
  *
- * Usage:
- *   GEMINI_API_KEY=... npx tsx tools/develop/aix-gemini-antigravity-probe/probe.ts run "<prompt>"
- *   GEMINI_API_KEY=... npx tsx tools/develop/aix-gemini-antigravity-probe/probe.ts capture <file> "<prompt>"
- *   npx tsx tools/develop/aix-gemini-antigravity-probe/probe.ts replay <file>
+ * Usage (set PROBE_AGENT=<id> to override the agent; `deep-research-*` switches to the DR request shape):
+ *   GEMINI_API_KEY=... npx tsx .../probe.ts run "<prompt>"        # SSE capture + replay (SSE parser)
+ *   GEMINI_API_KEY=... npx tsx .../probe.ts capture <file> "<prompt>"
+ *   npx tsx .../probe.ts replay <file>                            # re-replay a saved SSE capture
+ *   GEMINI_API_KEY=... npx tsx .../probe.ts get <id>              # GET the stored interaction JSON + replay (NS/recovery parser)
+ *   npx tsx .../probe.ts replay-ns <file>                         # re-replay a saved interaction JSON (NS parser)
  *
- * The `run` subcommand captures to tools/develop/aix-gemini-antigravity-probe/captures/<ts>.jsonl then replays.
- * Captures persist so you can diff parser output across changes without re-hitting the API.
+ * `run` captures to captures/<ts>.jsonl then replays. The `get` path exercises the recovery parser
+ * (createGeminiInteractionsParserNS) used by the "Recover" button. Captures persist so you can diff
+ * parser output across changes without re-hitting the API.
  *
  * Output: one line per parser-emitted particle, plus a delta-type histogram and any unknown shapes.
  */
@@ -20,7 +23,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { createGeminiInteractionsParserSSE } from '~/modules/aix/server/dispatch/chatGenerate/parsers/gemini.interactions.parser';
+import { createGeminiInteractionsParserNS, createGeminiInteractionsParserSSE } from '~/modules/aix/server/dispatch/chatGenerate/parsers/gemini.interactions.parser';
 import type { IParticleTransmitter } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
 
 
@@ -87,13 +90,18 @@ async function captureToFile(prompt: string, outPath: string): Promise<void> {
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) throw new Error('GEMINI_API_KEY not set');
   const url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
-  const body = {
-    agent: 'antigravity-preview-05-2026',
+  // Agent override via PROBE_AGENT (default Antigravity). Deep Research agents use a different request
+  // shape: background:true + agent_config (no sandbox environment). Mirrors gemini.interactionsCreate.ts.
+  const agent = process.env.PROBE_AGENT || 'antigravity-preview-05-2026';
+  const isDeepResearch = agent.includes('deep-research');
+  const body: Record<string, unknown> = {
+    agent,
     input: prompt,
     stream: true,
     store: true,
-    background: false,
-    environment: 'remote',
+    ...(isDeepResearch
+      ? { background: true, agent_config: { type: 'deep-research', thinking_summaries: 'auto' } }
+      : { background: false, environment: 'remote' }),
   };
 
   console.log('[capture] POST', url);
@@ -105,6 +113,8 @@ async function captureToFile(prompt: string, outPath: string): Promise<void> {
 
   const res = await fetch(url, {
     method: 'POST',
+    // No Api-Revision header - matches the app, which rides Google's default steps schema (the header
+    // is not CORS-safelisted and breaks the client-side-fetch path). Default = steps since 2026-05-26.
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': API_KEY, 'Accept': 'text/event-stream' },
     body: JSON.stringify(body),
   });
@@ -143,21 +153,24 @@ async function captureToFile(prompt: string, outPath: string): Promise<void> {
 type ReplayOptions = { modelName?: string };
 
 function replayFromFile(filePath: string, opts: ReplayOptions = {}): void {
-  const modelName = opts.modelName ?? 'antigravity-preview-05-2026';
-  console.log('[replay]', filePath, '(model:', modelName, ')');
-
   const lines = fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean);
   if (!lines.length) { console.error('empty file'); return; }
 
-  // First line may be a _meta envelope
+  // First line may be a _meta envelope (carries the request agent so we replay with the right model -
+  // matters for DR vs Antigravity run-chip text + the parser's isAntigravity branch).
   let firstIdx = 0;
+  let agentFromMeta: string | undefined;
   try {
     const first = JSON.parse(lines[0]);
     if (first?._meta) {
       console.log('[replay] meta:', first._meta.prompt);
+      agentFromMeta = first._meta.requestBody?.agent;
       firstIdx = 1;
     }
   } catch { /* not JSON */ }
+
+  const modelName = opts.modelName ?? agentFromMeta ?? 'antigravity-preview-05-2026';
+  console.log('[replay]', filePath, '(model:', modelName, ')');
 
   const { pt, log } = createRecordingTransmitter();
   const parse = createGeminiInteractionsParserSSE(modelName);
@@ -178,8 +191,8 @@ function replayFromFile(filePath: string, opts: ReplayOptions = {}): void {
     for (let i = firstIdx; i < lines.length; i++) {
       const f = JSON.parse(lines[i]) as SSEFrame;
       totalFrames++;
-      // delta-type histogram
-      if (f.event === 'content.delta') {
+      // delta-type histogram (steps schema: deltas ride `step.delta`, legacy was `content.delta`)
+      if (f.event === 'step.delta') {
         try {
           const p = JSON.parse(f.data);
           const t = p?.delta?.type ?? '(no-type)';
@@ -196,26 +209,31 @@ function replayFromFile(filePath: string, opts: ReplayOptions = {}): void {
   console.log(`\n[replay] frames processed: ${totalFrames}`);
 
   if (Object.keys(deltaTypes).length) {
-    console.log('\n[replay] content.delta type histogram:');
+    console.log('\n[replay] step.delta type histogram:');
     for (const [t, n] of Object.entries(deltaTypes).sort((a, b) => b[1] - a[1]))
       console.log(`  ${String(n).padStart(4)}  ${t}`);
   }
 
+  printParticleSummary('[replay]', log, warnings);
+}
+
+/** Shared output: warnings + particle histogram + the non-text particle log (used by SSE and NS replay). */
+function printParticleSummary(prefix: string, log: LogEntry[], warnings: { msg: string; args: unknown[] }[]): void {
   if (warnings.length) {
-    console.log(`\n[replay] parser warnings: ${warnings.length}`);
+    console.log(`\n${prefix} parser warnings: ${warnings.length}`);
     for (const w of warnings.slice(0, 10)) console.log('  -', w.msg, JSON.stringify(w.args).slice(0, 200));
     if (warnings.length > 10) console.log(`  ... and ${warnings.length - 10} more`);
   }
 
   // Particle log (pretty)
-  console.log(`\n[replay] particles emitted: ${log.length}`);
+  console.log(`\n${prefix} particles emitted: ${log.length}`);
   const interesting = ['sendOperationState', 'appendText', 'appendReasoningText', 'setUpstreamHandle', 'setModelName', 'setTokenStopReason', 'setDialectEnded', 'setDialectTerminatingIssue', 'updateMetrics', 'endMessagePart', 'appendImageInline', 'appendUrlCitation'];
   const histogram: Record<string, number> = {};
   for (const e of log) histogram[e.call] = (histogram[e.call] ?? 0) + 1;
   console.log('  histogram:', JSON.stringify(histogram));
 
   // Dump non-text particles in order (text would flood the log)
-  console.log('\n[replay] non-text particles (in order):');
+  console.log(`\n${prefix} non-text particles (in order):`);
   let printed = 0;
   for (const e of log) {
     if (e.call === 'appendText' || e.call === 'appendReasoningText' || e.call === 'appendAutoText_weak') continue;
@@ -224,6 +242,61 @@ function replayFromFile(filePath: string, opts: ReplayOptions = {}): void {
     console.log('  ·', e.call, _summarizeArgs(e.args));
     if (printed > 80) { console.log('  ... (truncated; pass --full to dump all)'); break; }
   }
+}
+
+
+// -- Recovery path: JSON GET capture + NS (non-streaming) replay --
+
+async function fetchInteractionJson(id: string, outPath: string): Promise<void> {
+  const API_KEY = process.env.GEMINI_API_KEY;
+  if (!API_KEY) throw new Error('GEMINI_API_KEY not set');
+  const agent = process.env.PROBE_AGENT || 'antigravity-preview-05-2026';
+  // No ?stream - returns the full Interaction JSON resource (the "Recover" path: GET /v1beta/interactions/{id})
+  const url = `https://generativelanguage.googleapis.com/v1beta/interactions/${encodeURIComponent(id)}`;
+  console.log('[get] GET', url);
+  console.log('[get] -> output:', outPath);
+  const res = await fetch(url, { method: 'GET', headers: { 'x-goog-api-key': API_KEY } });
+  console.log('[get] HTTP', res.status, res.headers.get('content-type'));
+  const text = await res.text();
+  if (!res.ok) { console.error(text); throw new Error(`HTTP ${res.status}`); }
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  // _meta line (carries the agent so NS replay picks the right model) + the verbatim resource JSON
+  fs.writeFileSync(outPath, JSON.stringify({ _meta: { id, agent } }) + '\n' + text + '\n');
+  console.log('[get] wrote interaction resource');
+}
+
+function replayNSFromFile(filePath: string, opts: ReplayOptions = {}): void {
+  const lines = fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean);
+  if (!lines.length) { console.error('empty file'); return; }
+
+  // First line may be a _meta envelope (carries the agent); the remainder is the JSON Interaction resource.
+  let agentFromMeta: string | undefined;
+  let bodyStart = 0;
+  try {
+    const first = JSON.parse(lines[0]);
+    if (first?._meta) { agentFromMeta = first._meta.agent; bodyStart = 1; console.log('[replay-ns] meta:', first._meta.id ?? '(resource)'); }
+  } catch { /* the whole file is the resource */ }
+  const jsonText = lines.slice(bodyStart).join('\n');
+
+  const modelName = opts.modelName ?? agentFromMeta ?? 'antigravity-preview-05-2026';
+  console.log('[replay-ns]', filePath, '(NS/recovery parser, model:', modelName, ')');
+
+  const { pt, log } = createRecordingTransmitter();
+  const parse = createGeminiInteractionsParserNS(modelName);
+
+  const origWarn = console.warn;
+  const warnings: { msg: string; args: unknown[] }[] = [];
+  console.warn = (msg?: any, ...args: any[]) => {
+    if (typeof msg === 'string') warnings.push({ msg, args });
+    origWarn.call(console, '[parser-warn]', msg, ...args);
+  };
+  try {
+    parse(pt, jsonText); // NS parser consumes the whole Interaction resource in one call
+  } finally {
+    console.warn = origWarn;
+  }
+
+  printParticleSummary('[replay-ns]', log, warnings);
 }
 
 function _summarizeArgs(args: unknown[]): string {
@@ -245,10 +318,12 @@ function tsCaptureName(): string {
 async function main(): Promise<void> {
   const [cmd, ...rest] = process.argv.slice(2);
   if (!cmd) {
-    console.log('usage:');
-    console.log('  run "<prompt>"             # capture to scripts/dev/captures/<ts>.jsonl, then replay');
-    console.log('  capture <file> "<prompt>"  # capture only');
-    console.log('  replay <file>              # replay a previously captured file through the parser');
+    console.log('usage:  (PROBE_AGENT=<id> overrides the agent; deep-research-* uses the DR request shape)');
+    console.log('  run "<prompt>"             # capture an SSE stream to captures/<ts>.jsonl, then replay (SSE parser)');
+    console.log('  capture <file> "<prompt>"  # capture an SSE stream only');
+    console.log('  replay <file>              # replay a captured SSE file through the SSE parser');
+    console.log('  get <id>                   # GET the stored interaction JSON and replay through the NS (recovery) parser');
+    console.log('  replay-ns <file>           # replay a saved interaction JSON through the NS (recovery) parser');
     process.exit(1);
   }
 
@@ -277,6 +352,23 @@ async function main(): Promise<void> {
     const [file] = rest;
     if (!file) { console.error('missing file'); process.exit(1); }
     replayFromFile(file);
+    return;
+  }
+
+  if (cmd === 'get') {
+    const [id] = rest;
+    if (!id) { console.error('missing interaction id'); process.exit(1); }
+    const outPath = path.join(capturesDir, `get-${id.slice(0, 16).replace(/[^a-zA-Z0-9_-]/g, '_')}.json`);
+    await fetchInteractionJson(id, outPath);
+    console.log('---');
+    replayNSFromFile(outPath);
+    return;
+  }
+
+  if (cmd === 'replay-ns') {
+    const [file] = rest;
+    if (!file) { console.error('missing file'); process.exit(1); }
+    replayNSFromFile(file);
     return;
   }
 

@@ -28,9 +28,9 @@ npx tsx tools/develop/aix-gemini-antigravity-probe/probe.ts replay ./captures/my
 
 The replay prints:
 
-- **content.delta type histogram** - every observed delta `type`, with counts. Useful to spot new
+- **step.delta type histogram** - every observed delta `type`, with counts. Useful to spot new
   variants (e.g. a new sandbox tool emitting an unfamiliar type).
-- **parser warnings** - any `[GeminiInteractions] unknown content.delta shape ...` shows up here.
+- **parser warnings** - any `[GeminiInteractions] unknown step.delta shape ...` shows up here.
   Zero warnings means every observed delta is being handled.
 - **particle histogram** - which `IParticleTransmitter` methods the parser called (text appends,
   operation-state placeholders, terminal status, etc.).
