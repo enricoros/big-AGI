@@ -117,7 +117,7 @@ export const ChatMessageMemo = React.memo(ChatMessage);
 export function ChatMessage(props: {
   actionsRef?: React.Ref<ChatMessageFunctionsHandle>,
   message: DMessage,
-  diffPreviousText?: string,
+  // diffPreviousText?: string, // DISABLE: unused, was the text from the former messages to delta between them
   fitScreen: boolean,
   hasInReferenceTo?: boolean;
   isMobile: boolean,
