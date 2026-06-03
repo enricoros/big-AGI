@@ -3,24 +3,23 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Checkbox, CircularProgress, Divider, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import RestoreIcon from '@mui/icons-material/Restore';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { CloseablePopup, joyKeepPopup } from '~/common/components/CloseablePopup';
+import { joyKeepPopup } from '~/common/components/CloseablePopup';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
+import { SubMenuHost, SubMenuItem, useSubMenuHost } from '~/common/components/SubMenu';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { optimaActions } from '~/common/layout/optima/useOptima';
-import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useAllServicesDCStatus } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
 import { useHasFreeLLMs, useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -61,8 +60,7 @@ export function ModelsConfiguratorModal(props: {
 
   // state - menus
   const [mainMenuOpen, setMainMenuOpen] = React.useState(false);
-  const [dcMenuAnchor, setDcMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [visMenuAnchor, setVisMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const subMenuHost = useSubMenuHost();
 
   // external state
   const isMobile = useIsMobile();
@@ -132,14 +130,12 @@ export function ModelsConfiguratorModal(props: {
 
   const handleMainMenuOpenChange = React.useCallback((_event: React.SyntheticEvent | null, newOpen: boolean) => {
     // submenu is open, stay open
-    if (!newOpen && (dcMenuAnchor || visMenuAnchor)) return;
+    if (!newOpen && subMenuHost.isAnyOpen()) return;
     setMainMenuOpen(newOpen);
     // close submenus when main closes
-    if (!newOpen) {
-      setDcMenuAnchor(null);
-      setVisMenuAnchor(null);
-    }
-  }, [dcMenuAnchor, visMenuAnchor]);
+    if (!newOpen)
+      subMenuHost.closeAll();
+  }, [subMenuHost]);
 
   const { isFetching: isRefreshing, refetch: handleRefreshModels } = useLlmUpdateModels(false, activeService ?? null);
 
@@ -231,6 +227,7 @@ export function ModelsConfiguratorModal(props: {
     // Service-level 3-dots menu when we have LLMs
     if (isTabSetup && hasLLMs)
       return (
+        <SubMenuHost host={subMenuHost}>
         <Box sx={{ flex: 1, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
           <Dropdown open={mainMenuOpen} onOpenChange={handleMainMenuOpenChange}>
             <MenuButton slots={{ root: IconButton }} /* slotProps={{ root: { variant: 'plain' } }} */>
@@ -240,13 +237,17 @@ export function ModelsConfiguratorModal(props: {
 
               {/*{dcHasEligible && <Typography level='body-sm' textAlign='center' my={1}>All services</Typography>}*/}
               {dcHasEligible && (
-                <MenuItem onClick={joyKeepPopup((event) => setDcMenuAnchor(dcMenuAnchor ? null : event.currentTarget))}>
-                  <ListItemDecorator />
-                  {/*<ListItemDecorator><ArrowForwardRoundedIcon /></ListItemDecorator>*/}
-                  All Services
-                  {/*<Box sx={{ color: 'text.tertiary' }}>({modelsServices.length})</Box>*/}
-                  <KeyboardArrowRightIcon sx={{ ml: 'auto' }} />
-                </MenuItem>
+                <SubMenuItem label='All Services' minWidth={220} isMobile={isMobile}>
+                  <ListDivider>Direct Connection {dcStatus.enabled}/{dcStatus.eligible}</ListDivider>
+                  <MenuItem disabled={dcAllEnabled} onClick={handleEnableAllDC}>
+                    {/*<ListItemDecorator><VisibilityIcon /></ListItemDecorator>*/}
+                    Enable for all
+                  </MenuItem>
+                  <MenuItem disabled={dcNoneEnabled} onClick={handleDisableAllDC}>
+                    {/*<ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>*/}
+                    Disable for all
+                  </MenuItem>
+                </SubMenuItem>
               )}
 
               {/* X Models */}
@@ -292,59 +293,40 @@ export function ModelsConfiguratorModal(props: {
                 View Hidden Models
               </MenuItem>
 
-              <MenuItem onClick={joyKeepPopup((event: any) => setVisMenuAnchor(visMenuAnchor ? null : event.currentTarget))}>
-                <ListItemDecorator />
-                Visibility
-                <KeyboardArrowRightIcon sx={{ ml: 'auto' }} />
-              </MenuItem>
+              <SubMenuItem label='Visibility' minWidth={160} isMobile={isMobile}>
+                <MenuItem onClick={handleShowAllModels}>
+                  <ListItemDecorator><VisibilityIcon /></ListItemDecorator>
+                  Show All
+                </MenuItem>
+                <MenuItem onClick={handleHideAllModels}>
+                  <ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>
+                  Hide All
+                </MenuItem>
+                {activeHasFreeLLMs && <ListDivider />}
+                {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyFree}>
+                  <ListItemDecorator><PhGift /></ListItemDecorator>
+                  Only Free
+                </MenuItem>}
+                {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyPaid}>
+                  <ListItemDecorator />
+                  Only Paid
+                </MenuItem>}
+                <ListDivider />
+                <MenuItem onClick={handleResetVisibility}>
+                  <ListItemDecorator><RestoreIcon /></ListItemDecorator>
+                  Reset
+                </MenuItem>
+              </SubMenuItem>
 
             </Menu>
           </Dropdown>
 
-          {/* DC submenu */}
-          {!!dcMenuAnchor && <CloseablePopup menu anchorEl={dcMenuAnchor} onClose={() => setDcMenuAnchor(null)} placement='right-start' zIndex={themeZIndexOverMobileDrawer} minWidth={220}>
-            <ListDivider>Direct Connection {dcStatus.enabled}/{dcStatus.eligible}</ListDivider>
-            <MenuItem disabled={dcAllEnabled} onClick={handleEnableAllDC}>
-              {/*<ListItemDecorator><VisibilityIcon /></ListItemDecorator>*/}
-              Enable for all
-            </MenuItem>
-            <MenuItem disabled={dcNoneEnabled} onClick={handleDisableAllDC}>
-              {/*<ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>*/}
-              Disable for all
-            </MenuItem>
-          </CloseablePopup>}
-
-          {/* Visibility submenu */}
-          {!!visMenuAnchor && <CloseablePopup menu anchorEl={visMenuAnchor} onClose={() => setVisMenuAnchor(null)} placement='right-start' zIndex={themeZIndexOverMobileDrawer} minWidth={160}>
-            <MenuItem onClick={handleShowAllModels}>
-              <ListItemDecorator><VisibilityIcon /></ListItemDecorator>
-              Show All
-            </MenuItem>
-            <MenuItem onClick={handleHideAllModels}>
-              <ListItemDecorator><VisibilityOffIcon /></ListItemDecorator>
-              Hide All
-            </MenuItem>
-            {activeHasFreeLLMs && <ListDivider />}
-            {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyFree}>
-              <ListItemDecorator><PhGift /></ListItemDecorator>
-              Only Free
-            </MenuItem>}
-            {activeHasFreeLLMs && <MenuItem onClick={handleShowOnlyPaid}>
-              <ListItemDecorator />
-              Only Paid
-            </MenuItem>}
-            <ListDivider />
-            <MenuItem onClick={handleResetVisibility}>
-              <ListItemDecorator><RestoreIcon /></ListItemDecorator>
-              Reset
-            </MenuItem>
-          </CloseablePopup>}
-
         </Box>
+        </SubMenuHost>
       );
 
     return undefined;
-  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcMenuAnchor, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, visMenuAnchor]);
+  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, subMenuHost]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
