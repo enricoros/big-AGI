@@ -11,6 +11,7 @@ import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
 
@@ -27,6 +28,7 @@ import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
+import { BeamUpstreamResume } from '../BeamUpstreamResume';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -207,6 +209,14 @@ export function BeamRay(props: {
       onSuccessCallback(ray.message);
   }, [props.beamStore, props.rayId]);
 
+  const handleRayReattach = React.useCallback((mode: AixReattachMode) => {
+    props.beamStore.getState().rayReattach(props.rayId, mode);
+  }, [props.beamStore, props.rayId]);
+
+  const handleRayClearUpstreamHandle = React.useCallback(() => {
+    props.beamStore.getState().rayClearUpstreamHandle(props.rayId);
+  }, [props.beamStore, props.rayId]);
+
   const handleDebugPrint = React.useCallback((event: React.MouseEvent) => {
     if (!event.shiftKey) return;
     const ray = props.beamStore.getState().rays.find(ray => ray.rayId === props.rayId);
@@ -290,6 +300,15 @@ export function BeamRay(props: {
           )}
         </Box>
       )}
+
+      {/* Gemini Interactions (Deep Research) resume - state-gated: only when idle with a live upstream handle */}
+      <BeamUpstreamResume
+        llmId={ray?.rayLlmId ?? null}
+        generator={ray?.message.generator}
+        isPending={isScattering}
+        onReattach={handleRayReattach}
+        onClearHandle={handleRayClearUpstreamHandle}
+      />
 
       {/* Use Ray */}
       {showUseButtons && (

@@ -4,6 +4,8 @@ import { Box, IconButton } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { AixReattachMode } from '~/modules/aix/client/aix.client';
+
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
 import { DLLMId, getLLMLabel } from '~/common/stores/llms/llms.types';
@@ -18,6 +20,7 @@ import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/uti
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
+import { BeamUpstreamResume } from '../BeamUpstreamResume';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FusionControlsMemo } from './FusionControls';
 import { FusionInstructionsEditor } from './FusionInstructionsEditor';
@@ -86,6 +89,14 @@ export function Fusion(props: {
     const fusion = fusions.find(fusion => fusion.fusionId === props.fusionId);
     if (fusion?.outputDMessage?.fragments.length && onSuccessCallback)
       onSuccessCallback(fusion.outputDMessage);
+  }, [props.beamStore, props.fusionId]);
+
+  const handleFusionReattach = React.useCallback((mode: AixReattachMode) => {
+    props.beamStore.getState().fusionReattach(props.fusionId, mode);
+  }, [props.beamStore, props.fusionId]);
+
+  const handleFusionClearUpstreamHandle = React.useCallback(() => {
+    props.beamStore.getState().fusionClearUpstreamHandle(props.fusionId);
   }, [props.beamStore, props.fusionId]);
 
   const handleIconClick = React.useCallback((event: React.MouseEvent) => {
@@ -191,6 +202,15 @@ export function Fusion(props: {
           )}
         </Box>
       )}
+
+      {/* Gemini Interactions (Deep Research) resume - state-gated: only when idle with a live upstream handle */}
+      <BeamUpstreamResume
+        llmId={fusion?.llmId ?? null}
+        generator={fusion?.outputDMessage?.generator}
+        isPending={isFusing}
+        onReattach={handleFusionReattach}
+        onClearHandle={handleFusionClearUpstreamHandle}
+      />
 
 
       {/* Use Fusion */}

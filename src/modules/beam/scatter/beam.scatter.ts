@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, AixReattachMode, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
@@ -13,6 +13,7 @@ import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.convers
 
 import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
+import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
 import { updateBeamLastConfig } from '../store-module-beam';
 
 
@@ -192,6 +193,8 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   startScatteringAll: (restart: boolean) => void;
   stopScatteringAll: () => void;
   rayToggleScattering: (rayId: BRayId) => void;
+  rayReattach: (rayId: BRayId, mode: AixReattachMode) => void;
+  rayClearUpstreamHandle: (rayId: BRayId) => void;
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
   rayDeleteFragment: (rayId: BRayId, fragmentId: DMessageFragmentId) => void;
   rayReplaceFragment: (rayId: BRayId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
@@ -341,6 +344,49 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     );
     _syncRaysStateToScatter();
   },
+
+  // Gemini Interactions (Deep Research) resume: re-stream (replay) or one-shot fetch (snapshot) the
+  // upstream-stored run into this ray. Enters 'scattering' so the header Stop aborts it (= detach, the
+  // background run survives) and the resume block hides. See kb/modules/LLM-gemini-interactions.md.
+  rayReattach: (rayId: BRayId, mode: AixReattachMode) => {
+    const { rays, _rayUpdate, _syncRaysStateToScatter } = _get();
+    const ray = rays.find(_r => _r.rayId === rayId);
+    if (!ray || ray.genAbortController) return; // missing, or already running
+    const generator = ray.message.generator;
+    if (!generator?.upstreamHandle) return;
+    const llmId = ray.rayLlmId || (generator.mgt === 'aix' ? generator.aix.mId : null);
+    if (!llmId) return;
+
+    const abortController = new AbortController();
+    beamReattachStream({
+      llmId, generator, contextName: 'beam-scatter', contextRef: rayId, mode,
+      abortSignal: abortController.signal,
+      onMessageUpdate: (guts, completed) => _rayUpdate(rayId, (ray) => ({ message: beamMergeStreamedGuts(ray.message, guts, completed) })),
+      onTerminal: (outcome) => {
+        _rayUpdate(rayId, (ray) => ({
+          status: (outcome === 'completed') ? 'success' : (outcome === 'failed') ? 'error' : 'stopped',
+          genAbortController: undefined,
+          message: { ...ray.message, pendingIncomplete: undefined },
+        }));
+        _syncRaysStateToScatter();
+      },
+    });
+
+    // optimistic: enter scattering (header shows Stop, resume block hides)
+    _rayUpdate(rayId, (ray) => ({
+      status: 'scattering',
+      scatterIssue: undefined,
+      genAbortController: abortController,
+      message: { ...ray.message, pendingIncomplete: true },
+    }));
+    _syncRaysStateToScatter();
+  },
+
+  rayClearUpstreamHandle: (rayId: BRayId) =>
+    _get()._rayUpdate(rayId, (ray) => {
+      if (!ray.message.generator?.upstreamHandle) return {};
+      return { message: { ...ray.message, generator: { ...ray.message.generator, upstreamHandle: undefined } } };
+    }),
 
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => {
     const { _rayUpdate, _storeLastScatterConfig } = _get();
