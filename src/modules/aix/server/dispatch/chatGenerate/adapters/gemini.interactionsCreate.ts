@@ -6,9 +6,13 @@ import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.
 import { approxDocPart_To_String, approxInReferenceTo_To_XMLString, aixSpillSystemToUser } from './adapters.common';
 
 
+// configuration
+const hotFixDeepResearchSystemPrompt = true;
+const sanityEnsureLastUserMessage = true;
+
+
 type TRequestBody = z.infer<typeof GeminiInteractionsWire_API_Interactions.RequestBody_schema>;
-type TTurn = z.infer<typeof GeminiInteractionsWire_API_Interactions.Turn_schema>;
-type TTurnContent = TTurn['content']; // string | InputContentPart[]
+type TInputStep = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputStep_schema>;
 type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputContentPart_schema>;
 
 
@@ -16,7 +20,8 @@ type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputCo
  * Build the POST /v1beta/interactions body for managed agents (Deep Research, Antigravity, ...).
  *
  * Scope:
- *  - Stateless multi-turn: `chatSequence` is flattened to role-tagged turns and sent as `input`.
+ *  - Stateless multi-turn: `chatSequence` is flattened to typed input steps (`user_input` / `model_output`)
+ *    and sent as `input` (single user turn -> bare `array(Content)`; multi-turn -> the `Step[]` array).
  *  - `systemMessage` text: routing differs by agent type
  *    - deep-research agents REJECT the top-level `system_instruction` field (tested 2026-04-23,
  *      API error: "not supported for the deep-research-* agent. Please include any specific
@@ -32,8 +37,9 @@ type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputCo
  *      and let the API default to false (sync streaming). `environment: "remote"` selects a fresh
  *      Google-hosted Linux sandbox; default tool set (code_execution, google_search, url_context,
  *      filesystem) is enabled implicitly. Powered by Gemini 3.5 Flash.
- *  - Multimodal: user and model turns carry images as content-part arrays when any image is present,
- *    otherwise stay as plain strings (preserves the API's convenience shape).
+ *  - Multimodal: each turn's content is always a content-part array (`{type:'text'|'image', ...}`), text
+ *    first then images. We do NOT collapse a text-only turn to a bare `input: "..."` string (the SDK
+ *    convenience shape) - it breaks some agent paths; see `_bareSingleTurn` (kept commented for reference).
  *  - Doc parts render as text via `approxDocPart_To_String`; in-reference-to XML is prepended to the user turn.
  *  - Model messages containing only tool invocations/responses/aux (no text or images) are dropped.
  *  - Audio and cache-control parts are silently dropped (unsupported on this path).
@@ -53,41 +59,43 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
   // Extract flattened system text (consumed below - DR: prepend to first user turn; else: native field)
   const systemText = _collectSystemText(chatGenerate.systemMessage);
 
-  // Walk chatSequence -> turns
-  const turns: TTurn[] = [];
+  // Walk chatSequence -> typed input steps. Content is always a content-part array here
+  const steps: TInputStep[] = [];
   for (const msg of chatGenerate.chatSequence) {
     if (msg.role === 'user') {
       const content = _buildUserContent(msg.parts);
-      if (_hasTurnContent(content)) turns.push({ role: 'user', content });
+      if (content.length) steps.push({ type: 'user_input', content });
     } else if (msg.role === 'model') {
       const content = _buildModelContent(msg.parts);
-      if (_hasTurnContent(content)) turns.push({ role: 'model', content });
+      if (content.length) steps.push({ type: 'model_output', content });
     }
   }
+  if (!steps.length)
+    throw new Error('Gemini Interactions: no usable steps (Deep Research agents require at least one user message)');
 
-  if (!turns.length)
-    throw new Error('Gemini Interactions: no usable turns (Deep Research agents require at least one user message)');
 
-  // DR only: prepend system text into the first user turn (native `system_instruction` rejected)
-  if (isDeepResearch && systemText) {
-    const firstUserIdx = turns.findIndex(t => t.role === 'user');
+  // DR only: prepend system text into the first user step (native `system_instruction` rejected)
+  if (hotFixDeepResearchSystemPrompt && isDeepResearch && systemText) {
+    const firstUserIdx = steps.findIndex(s => s.type === 'user_input');
     if (firstUserIdx >= 0)
-      turns[firstUserIdx] = { role: 'user', content: _prependSystemText(turns[firstUserIdx].content, systemText) };
+      steps[firstUserIdx] = { type: 'user_input', content: _prependSystemText(steps[firstUserIdx].content, systemText) };
   }
 
-  // Sanity: the API expects the last turn to be 'user' (we're asking the model to respond)
-  if (turns[turns.length - 1].role !== 'user')
+  // Sanity: the API expects the last step to be a user turn (we're asking the model to respond)
+  if (sanityEnsureLastUserMessage && steps[steps.length - 1].type !== 'user_input')
     throw new Error('Gemini Interactions: last turn must be from user (chat sequence ended with a model message)');
 
-  // Simplify single-turn to bare content form (matches the Python/JS SDK convenience shape)
-  const input: TRequestBody['input'] = (turns.length === 1 && turns[0].role === 'user')
-    ? turns[0].content
-    : turns;
+
+  // Single user turn -> the content-part array (the `array(Content)` input arm). Multi-turn -> the typed
+  // step array as-is (the steps schema replaced the legacy `{role, content}` turn shape)
+  const input: TRequestBody['input'] = (steps.length === 1 && steps[0].type === 'user_input')
+    ? steps[0].content
+    : steps;
 
   return {
     agent,
     input,
-    stream: true, // SSE streaming - upstream returns event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). Required for live thought_summary deltas.
+    stream: true, // SSE streaming - upstream returns event-stream (interaction.created, step.start/delta/stop, interaction.completed). Required for live thought_summary deltas.
     // FIXME: we only support SSE streaming parsing - we used to support parsing of the final answer (with the GET) but not anymore
     store: true, // keep the interaction alive so clients can reattach via SSE replay within Gemini's retention window (1d free / 55d paid). Required by both DR and Antigravity agents.
     background: isDeepResearch, // DR REQUIRES true ('Agents are required to use background=true'); Antigravity REJECTS true ('does not support using background=True'); future agents default false.
@@ -105,7 +113,7 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
       // NOT a fallback on upstream rejection. If the env is invalidated upstream this POST fails
       // and the error surfaces; recovery happens on the next user turn (which re-walks history).
       // NOTE: the env is a MUTATING handle, not a snapshot - re-running an earlier turn rejoins
-      // the same sandbox with whatever files/state intervening turns left behind. Tools default
+      // the same sandbox with whatever files/state intervening steps left behind. Tools default
       // set is enabled implicitly by omitting `tools` (code_execution, google_search, url_context, fs).
       environment: model.vndGeminiEnvironmentId || 'remote',
     }),
@@ -138,7 +146,7 @@ function _collectSystemText(systemMessage: AixAPIChatGenerate_Request['systemMes
   return chunks.join('\n').trim();
 }
 
-function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'user' }>['parts']): TTurnContent {
+function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'user' }>['parts']): TInputPart[] {
   const textChunks: string[] = [];
   const prefixChunks: string[] = []; // in-reference-to goes before body
   const images: TInputPart[] = [];
@@ -167,17 +175,15 @@ function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequen
 
   const text = [...prefixChunks, ...textChunks].join('\n\n').trim();
 
-  // text-only turn: return string (API convenience shape)
-  if (!images.length) return text;
-
-  // multimodal turn: emit as content-parts array; text first, then images (matches generateContent convention)
+  // Emit as a content-part array (text first, then images); the single-turn string convenience is
+  // applied later by _bareSingleTurn. An empty array (no text, no images) is filtered by the caller.
   const contentParts: TInputPart[] = [];
   if (text) contentParts.push({ type: 'text', text });
   contentParts.push(...images);
   return contentParts;
 }
 
-function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'model' }>['parts']): TTurnContent {
+function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'model' }>['parts']): TInputPart[] {
   const textChunks: string[] = [];
   const images: TInputPart[] = [];
 
@@ -203,8 +209,6 @@ function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSeque
 
   const text = textChunks.join('\n\n').trim();
 
-  if (!images.length) return text;
-
   const contentParts: TInputPart[] = [];
   if (text) contentParts.push({ type: 'text', text });
   contentParts.push(...images);
@@ -214,15 +218,16 @@ function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSeque
 
 // -- helpers --
 
-function _hasTurnContent(content: TTurnContent): boolean {
-  return typeof content === 'string' ? content.length > 0 : content.length > 0;
-}
-
-function _prependSystemText(content: TTurnContent, systemPrefix: string): TTurnContent {
-  if (typeof content === 'string')
-    return `${systemPrefix}\n\n${content}`;
-  // multimodal: inject a text part at the front, or fold into the leading text part if present
+function _prependSystemText(content: TInputPart[], systemPrefix: string): TInputPart[] {
+  // fold into the leading text part if present, else inject a text part at the front
   if (content.length > 0 && content[0].type === 'text')
     return [{ type: 'text', text: `${systemPrefix}\n\n${content[0].text}` }, ...content.slice(1)];
   return [{ type: 'text', text: systemPrefix }, ...content];
 }
+
+// NOTE: bare-string single-turn convenience - intentionally NOT used (left here for reference). Collapsing
+// a text-only single turn to a plain `input: "..."` string is syntactic sugar that breaks some agent paths,
+// so the adapter always sends the content-part array (the `array(Content)` input arm) instead.
+// function _bareSingleTurn(content: TInputPart[]): string | TInputPart[] {
+//   return (content.length === 1 && content[0].type === 'text') ? content[0].text : content;
+// }

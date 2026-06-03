@@ -5,7 +5,7 @@ import * as z from 'zod/v4';
  * Gemini Interactions API wiretypes (Beta)
  *
  * 2026-04-21: NOTE - MINIMAL IMPL for DEEP RESEARCH AGENT
- * Scope: only what the Deep Research agents need.
+ * Scope: only what the Deep Research + Antigravity agents need.
  *  - Single-turn by default (we don't yet send `previous_interaction_id` for multi-turn state reuse)
  *  - `store: true` is sent (spec says optional; DR guide recommends it for background runs).
  *    We best-effort DELETE on completion/abort to minimize server-side retention.
@@ -13,31 +13,38 @@ import * as z from 'zod/v4';
  *  - No `tools` (yet), no model-side `generation_config`.
  *
  * ============================================================================
- * 2026-05-06: BREAKING CHANGE ANNOUNCED - REQUIRES MIGRATION BEFORE 2026-06-08
+ * 2026-06-02: MIGRATED to the "steps" schema (the 2026-05-26 default flip).
  * ============================================================================
- * Upstream is replacing the response schema: `outputs[]` -> `steps[]`, each step has
- * `content[]` blocks. New SSE events: `interaction.created`, `step.start`,
- * `step.delta`, `step.stop`, `interaction.completed`, `interaction.in_progress`,
- * `interaction.requires_action`. Also `response_mime_type` moves into
- * `response_format.mime_type`, and `image_config` becomes a `response_format`
- * entry with `type: 'image'`.
+ * Google replaced the legacy `outputs[]` response with a typed `steps[]` timeline and
+ * renamed the SSE events. The legacy schema is REMOVED on 2026-06-08. We always rode
+ * Google's default (no `Api-Revision` header was ever sent), so the default flip on
+ * 2026-05-26 broke the legacy parser - this file + the parser + the dispatch (request build)
+ * are the migration. Mapping (legacy -> new):
+ *   outputs[]                 -> steps[] (Step union; text/image/audio nested in `model_output.content[]`)
+ *   interaction.start         -> interaction.created
+ *   interaction.status_update -> interaction.status_update (kept) | interaction.in_progress | interaction.requires_action
+ *   content.start/delta/stop  -> step.start/delta/stop  (keyed to typed steps)
+ *   interaction.complete      -> interaction.completed
+ *   delta type 'text_annotation' -> 'text_annotation_delta'
+ *   (new) delta type 'arguments_delta' for streamed client function-call args
+ *   (new) status 'budget_exceeded'
+ * Request side is unchanged EXCEPT multi-turn `input`: `{role,content}` turns are now
+ * `{type:'user_input'|'model_output', content[]}` steps. We never sent response_mime_type /
+ * image_config, so the `response_format` consolidation does not touch us.
  *
- * Timeline:
- *   2026-05-07  new schema available via `Api-Revision: 2026-05-20` request header
- *   2026-05-26  new schema becomes the DEFAULT; opt out via `Api-Revision: 2026-05-07`
- *   2026-06-08  legacy schema PERMANENTLY REMOVED
+ * We rely on Google's DEFAULT schema (steps, since the 2026-05-26 flip) and deliberately do NOT send
+ * an `Api-Revision` header: it is not CORS-safelisted, so on the client-side-fetch (direct browser->
+ * Google) path it forces a preflight the endpoint rejects, breaking direct connections. The header was
+ * only useful to opt in BEFORE the default flip, which has passed.
  *
  * Migration guide: https://ai.google.dev/gemini-api/docs/interactions-breaking-changes-may-2026
- * TODO: rewrite request body, response Interaction.outputs -> steps, and the full
- *       SSE event union in this file + parsers/gemini.interactions.parser.ts +
- *       adapters/gemini.interactionsCreate.ts. Until then, the dispatch layer can
- *       send `Api-Revision: 2026-05-07` to keep the legacy schema alive through 6/8.
  * ============================================================================
  *
  * Source-of-truth snapshots (for diffing across upstream changes, see ./_upstream/sync.sh):
  *   ./_upstream/gemini.interactions.spec.md  - the formal API reference
  *   ./_upstream/gemini.interactions.guide.md - the prose guide
  *   ./_upstream/gemini.deep-research.guide.md - the Deep Research agent guide
+ *   ./_upstream/gemini.interactions.breaking-changes.md - the May-2026 migration guide
  */
 export namespace GeminiInteractionsWire_API_Interactions {
 
@@ -70,13 +77,13 @@ export namespace GeminiInteractionsWire_API_Interactions {
     InputImagePart_schema,
   ]);
 
-  // A turn in a stateless multi-turn conversation (when `input` is an array).
-  export const Turn_schema = z.object({
-    role: z.enum(['user', 'model']),
-    content: z.union([
-      z.string(), // text-only turn (API convenience shape)
-      z.array(InputContentPart_schema), // multimodal turn
-    ]),
+  // A turn in stateless multi-turn history (when `input` is an array of steps). The new schema replaces
+  // the legacy `{role:'user'|'model', content}` turn with a typed input step: `user_input` / `model_output`,
+  // whose `content` is an array of Content parts (the API also accepts a bare string at the top-level input,
+  // but each history step carries an explicit content-part array).
+  export const InputStep_schema = z.object({
+    type: z.enum(['user_input', 'model_output']),
+    content: z.array(InputContentPart_schema),
   });
 
   // agent_config: polymorphic discriminated union on `type` (formal spec: AgentConfig).
@@ -127,7 +134,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     input: z.union([
       z.string(), // single-turn text convenience (string shortcut for a user-text turn)
       z.array(InputContentPart_schema), // single-turn multimodal (text + image parts for one user turn)
-      z.array(Turn_schema), // stateless multi-turn history (role-tagged turns)
+      z.array(InputStep_schema), // stateless multi-turn history (typed input steps: user_input / model_output)
     ]),
     system_instruction: z.string().optional(), // NOT supported by deep-research agents (tested 2026-04-23, API: 'not supported for the deep-research-* agent') - for those, prepend to `input` instead.
 
@@ -137,12 +144,12 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
     // --- Sandbox (Antigravity Agent + future managed agents) ---
     // `environment` is the top-level sandbox handle on the agent path. Accepts the literal "remote"
-    // (fresh sandbox with defaults), an existing `env_<id>` string (reuses sandbox state across turns),
+    // (fresh sandbox with defaults), an existing env id string (reuses sandbox state across turns),
     // or an `EnvironmentConfig` object (custom sources / network rules). DR agents ignore this field.
     environment: z.union([z.string(), z.looseObject({})]).optional(),
 
     // --- Runtime flags (literals below force correct behavior at the adapter layer) ---
-    stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.start, content.start/delta/stop, interaction.complete, done). On reattach, GET ?stream=true replays the full event sequence (we do not send `last_event_id` - full replay is the intentional semantic; see poller comment).
+    stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.created, step.start/delta/stop, interaction.completed). On reattach, GET ?stream=true replays the full event sequence (we do not send `last_event_id` - full replay is the intentional semantic; see poller comment).
     /**
      * spec-optional; we lock to `true` so the interaction is retrievable post-run
      * Required by DR agents AND by Antigravity Agent.
@@ -160,18 +167,12 @@ export namespace GeminiInteractionsWire_API_Interactions {
   });
 
 
-  // -- Output blocks --
+  // -- Content blocks (model_output.content[] and user_input.content[]) --
   //
-  // The top-level Output_schema is fully permissive because Deep Research (in preview) sometimes
-  // emits blocks without a `type` field or in shapes not yet documented. Validating strictly on
-  // ingestion would blow up the entire stream on a single unknown variant.
-  //
-  // The *known* shapes are defined as sub-schemas below. The parser `safeParse`s each output
-  // against `KnownOutput_schema` and skips anything that doesn't match - no casts, no duck-typing.
-  export const Output_schema = z.looseObject({});
-
-
-  // -- Known output variants (parser uses these via safeParse) --
+  // Content is permissive at ingest (looseObject) because preview builds occasionally emit
+  // undocumented shapes; the parser `safeParse`s each block against `KnownContent_schema` and
+  // skips anything that doesn't match - no casts, no duck-typing.
+  export const Content_schema = z.looseObject({});
 
   export const UrlCitationAnnotation_schema = z.looseObject({
     type: z.literal('url_citation'),
@@ -181,7 +182,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     end_index: z.number().optional(),
   });
 
-  const TextOutput_schema = z.object({
+  const TextContent_schema = z.object({
     type: z.literal('text'),
     text: z.string(),
     // annotations is a heterogeneous array (url_citation, place_citation, file_citation, ...) - we
@@ -189,19 +190,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     annotations: z.array(z.looseObject({ type: z.string() })).optional(),
   });
 
-  // `thought.summary` is documented as an array of `{type:'text', text}` blocks (ThoughtSummaryContent).
-  // Preview builds sometimes emit a bare string; accept either shape to avoid classification drops.
-  const ThoughtSummaryItem_schema = z.looseObject({
-    type: z.literal('text'),
-    text: z.string(),
-  });
-  const ThoughtOutput_schema = z.object({
-    type: z.literal('thought'),
-    summary: z.union([z.string(), z.array(ThoughtSummaryItem_schema)]).optional(),
-    signature: z.string().optional(),
-  });
-
-  const ImageOutput_schema = z.object({
+  const ImageContent_schema = z.object({
     type: z.literal('image'),
     // API may return inline bytes (`data` + `mime_type`) or a URI. We accept both shapes;
     // the parser prefers inline and falls back to a URI note when only `uri` is present.
@@ -211,42 +200,147 @@ export namespace GeminiInteractionsWire_API_Interactions {
     resolution: z.string().optional(), // 'low' | 'medium' | 'high' | 'ultra_high'
   });
 
-  const AudioOutput_schema = z.object({
+  const AudioContent_schema = z.object({
     type: z.literal('audio'),
     // Per docs: data or uri, mime_type covers both PCM (audio/l16) and packaged formats (audio/wav, audio/mp3, ...).
     data: z.string().optional(),
     uri: z.string().optional(),
     mime_type: z.string().optional(), // spec: optional - parser still requires it before emitting inline
-    rate: z.number().optional(), // sample rate, when known
+    sample_rate: z.number().optional(), // sample rate, when known (spec renamed `rate` -> `sample_rate`)
     channels: z.number().optional(),
   });
 
-  // Managed-agent internals that are NOT surfaced to the user. The SSE parser silent-skips these on
-  // `content.delta`; the NS parser silent-skips them when walking `outputs[]`.
+  /** Content blocks we emit to the UI (inside model_output steps). Everything else is skipped by the parser. */
+  export const KnownContent_schema = z.discriminatedUnion('type', [
+    TextContent_schema,
+    ImageContent_schema,
+    AudioContent_schema,
+  ]);
+
+  // `thought.summary` is documented as ThoughtSummaryContent (array of `{type:'text', text}` blocks).
+  // Preview builds sometimes emit a bare string; accept either shape to avoid classification drops.
+  const ThoughtSummaryItem_schema = z.looseObject({
+    type: z.literal('text'),
+    text: z.string(),
+  });
+  export const ThoughtSummary_schema = z.union([z.string(), z.array(ThoughtSummaryItem_schema)]);
+
+
+  // -- Steps (the response timeline: outputs[] -> steps[]) --
   //
-  // Antigravity's default tool set surfaces a different group of types - we surface those via
-  // op-state placeholders so the user sees what the agent did. The "surfaced" set (handled by
-  // `_emitAntigravityToolOp` in the SSE parser):
-  //   function_call / function_result               (sandbox filesystem: list_files, read_file, ...)
-  //   code_execution_call / code_execution_result   (bash/python in the sandbox)
-  //   google_search_call / google_search_result     (web search)
-  //   url_context_call / url_context_result         (web page fetch)
+  // Each step is a typed entry in the interaction timeline. `model_output` carries the user-facing
+  // content[] (text/image/audio); `thought` carries reasoning summaries; the *_call / *_result steps
+  // are tool invocations. The NS parser `safeParse`s each step against the known shapes below and skips
+  // unknown / internal ones (mirrors the SSE parser policy).
+  export const Step_schema = z.looseObject({});
+
+  const ModelOutputStep_schema = z.object({
+    type: z.literal('model_output'),
+    content: z.array(Content_schema).optional(),
+  });
+
+  const ThoughtStep_schema = z.object({
+    type: z.literal('thought'),
+    summary: ThoughtSummary_schema.optional(),
+    signature: z.string().optional(),
+  });
+
+  // Steps the NS parser turns into user-facing fragments. user_input is intentionally NOT here -
+  // the GET timeline echoes our own input back and we don't re-render it (the parser skips it explicitly).
+  export const KnownStep_schema = z.discriminatedUnion('type', [
+    ModelOutputStep_schema,
+    ThoughtStep_schema,
+  ]);
+
+  // -- Surfaced tool steps (Antigravity sandbox) --
   //
-  // The set below is the residual: tool types we DO NOT surface (not part of Antigravity's default
-  // set, never observed on DR streams in practice, or carry payloads not useful as chip detail).
-  export const INTERNAL_OUTPUT_TYPES = new Set<string>([
+  // In the steps schema, sandbox tool calls/results arrive as typed STEPS (step.start `step`) and may
+  // also stream incremental args/results via step.delta. These explicit per-tool schemas (vs a loose
+  // read) give the parser type-safe field access. Most fields are `.optional()` because step.start
+  // carries a minimal shell - e.g. `function_call` arrives with `arguments:{}` and the real args stream
+  // via `arguments_delta`; a `function_result` step.start is just `{call_id,type}` with the result on a
+  // following step.delta. Only the discriminator + the id/call_id we pair chips on are required. Extra
+  // upstream fields pass through (objects are non-strict). Field names per spec Step possible-types.
+
+  const FunctionCallStep_schema = z.object({
+    type: z.literal('function_call'),
+    id: z.string(),                              // Required. Pairs with FunctionResultStep.call_id.
+    name: z.string().optional(),                 // spec: required; tolerated optional
+    arguments: z.looseObject({}).optional(),     // empty `{}` in step.start; full args stream via arguments_delta
+    signature: z.string().optional(),
+  });
+  const CodeExecutionCallStep_schema = z.object({
+    type: z.literal('code_execution_call'),
+    id: z.string(),
+    arguments: z.object({ code: z.string().optional(), language: z.string().optional() }).optional(), // `{code}` arrives via typed step.delta
+    signature: z.string().optional(),
+  });
+  const UrlContextCallStep_schema = z.object({
+    type: z.literal('url_context_call'),
+    id: z.string(),
+    arguments: z.object({ url: z.string().optional(), urls: z.array(z.string()).optional() }).optional(),
+    signature: z.string().optional(),
+  });
+  const GoogleSearchCallStep_schema = z.object({
+    type: z.literal('google_search_call'),
+    id: z.string(),
+    arguments: z.object({ queries: z.array(z.string()).optional(), query: z.string().optional() }).optional(), // spec def: `queries`; spec example uses `query`
+    search_type: z.string().optional(),          // 'web_search' | 'image_search' | 'enterprise_web_search'
+    signature: z.string().optional(),
+  });
+  const FunctionResultStep_schema = z.object({
+    type: z.literal('function_result'),
+    call_id: z.string(),                         // Required. Matches the FunctionCallStep.id.
+    name: z.string().optional(),
+    result: z.unknown().optional(),              // FunctionResultSubcontent[] | string | object
+    is_error: z.boolean().optional(),
+    signature: z.string().optional(),
+  });
+  const CodeExecutionResultStep_schema = z.object({
+    type: z.literal('code_execution_result'),
+    call_id: z.string(),
+    result: z.unknown().optional(),              // stdout+stderr (normally a string; unknown so a non-string never fails the parse - parser stringifies)
+    is_error: z.boolean().optional(),
+    signature: z.string().optional(),
+  });
+  const UrlContextResultStep_schema = z.object({
+    type: z.literal('url_context_result'),
+    call_id: z.string(),
+    result: z.unknown().optional(),              // UrlContextResultItem | array (shape varies spec def vs example)
+    is_error: z.boolean().optional(),
+    signature: z.string().optional(),
+  });
+  const GoogleSearchResultStep_schema = z.object({
+    type: z.literal('google_search_result'),
+    call_id: z.string(),
+    result: z.unknown().optional(),              // { search_suggestions } | array (shape varies spec def vs example)
+    is_error: z.boolean().optional(),
+    signature: z.string().optional(),
+  });
+
+  /** Discriminated union of the Antigravity sandbox tool steps we surface as op-state chips. The parser
+   *  `safeParse`s the raw step (or a delta-synthesized {type,id/call_id,...}) against this for typed access. */
+  export const SurfacedToolStep_schema = z.discriminatedUnion('type', [
+    // late parsed calls
+    FunctionCallStep_schema, CodeExecutionCallStep_schema, UrlContextCallStep_schema, GoogleSearchCallStep_schema,
+    // late parsed results
+    FunctionResultStep_schema, CodeExecutionResultStep_schema, UrlContextResultStep_schema, GoogleSearchResultStep_schema,
+  ]);
+  // export type TSurfacedToolStep = z.infer<typeof SurfacedToolStep_schema>;
+
+  // Fast type-string routing (the parser checks these before parsing a loose step/delta). Kept in sync with SurfacedToolStep_schema above.
+  export const SURFACED_TOOL_CALL_TYPES = new Set<string>([
+    'function_call', 'code_execution_call', 'url_context_call', 'google_search_call',
+  ]);
+  export const SURFACED_TOOL_RESULT_TYPES = new Set<string>([
+    'function_result', 'code_execution_result', 'google_search_result', 'url_context_result',
+  ]);
+
+  // Tool steps we do NOT surface (not part of Antigravity's default set, or carry payloads not useful as chip detail). Silent-skipped on both the SSE and NS paths.
+  export const SILENCE_STEP_TYPES = new Set<string>([
     'google_maps_call', 'google_maps_result',
     'file_search_call', 'file_search_result',
     'mcp_server_tool_call', 'mcp_server_tool_result',
-  ]);
-
-  /** Discriminated union of output shapes we emit to the UI. Everything else is either silently skipped
-   *  (INTERNAL_OUTPUT_TYPES) or warned as unknown by the parser. */
-  export const KnownOutput_schema = z.discriminatedUnion('type', [
-    TextOutput_schema,
-    ThoughtOutput_schema,
-    ImageOutput_schema,
-    AudioOutput_schema,
   ]);
 
 
@@ -258,10 +352,11 @@ export namespace GeminiInteractionsWire_API_Interactions {
     'failed',
     'cancelled',
     'requires_action',
-    'incomplete', // run stopped early (e.g. token limit) - terminate gracefully with a note
+    'incomplete',       // run stopped early (e.g. token limit) - terminate gracefully with a note
+    'budget_exceeded',  // new in the steps schema - run hit a spend/compute budget cap; treat as terminal
   ]);
 
-  // -- Usage (populated in the terminal frame) --
+  // -- Usage (populated in the terminal frame) -- UNCHANGED across the steps migration.
 
   // Modality enum: per spec ResponseModality - ISO 8601 in descriptions clarifies this is the
   // runtime modality, not the model's response_modalities request field.
@@ -285,7 +380,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
   // Full Interaction resource (spec: Resource:Interaction). We model ALL required fields and the
   // ones we observe in responses; remaining optional echo fields are left as `.passthrough()` - see
-  // `Output_schema` comment for rationale.
+  // `Step_schema` comment for rationale.
   export const Interaction_schema = z.looseObject({
     // required (all marked "Required. Output only." in spec)
     id: z.string(),
@@ -303,8 +398,8 @@ export namespace GeminiInteractionsWire_API_Interactions {
     environment_id: z.string().optional(),
 
     // content + metrics
-    outputs: z.array(Output_schema).optional(), // absent until first content arrives
-    usage: Usage_schema.optional(),             // populated in terminal frames (completed/failed/cancelled/incomplete)
+    steps: z.array(Step_schema).optional(), // outputs[] -> steps[]. Absent until first content arrives; in interaction.completed it is empty (use preceding step.delta events).
+    usage: Usage_schema.optional(),         // populated in terminal frames (completed/failed/cancelled/incomplete/budget_exceeded)
 
     // (remaining echo fields - system_instruction, tools, agent_config, previous_interaction_id,
     //  input, response_modalities, response_format, etc. - pass through via looseObject for now)
@@ -314,30 +409,30 @@ export namespace GeminiInteractionsWire_API_Interactions {
   // -- SSE Stream Events --
   //
   // When the POST (or resume GET) is sent with `stream=true`, the API returns `text/event-stream`
-  // with the following frames (captured empirically 2026-04-23, see _upstream/gemini.deep-research.guide.md#streaming):
+  // with the following frames (steps schema; see _upstream/gemini.interactions.breaking-changes.md#streaming):
   //
-  //   event: interaction.start          one at the top; carries { interaction: {id, status, agent, ...} }
-  //   event: interaction.status_update  status transitions (in_progress, completed, ...)
-  //   event: content.start              opens a content block at {index, content:{type:'thought'|'text'|...}}
-  //   event: content.delta              incremental data for index; polymorphic delta (see below); some carry `event_id` for resume
-  //   event: content.stop               closes a content block at index
-  //   event: error                      spec shape: { error?: { code, message } }; observed with EMPTY payload in Beta - non-fatal, continue
-  //   event: interaction.complete       final snapshot carrying the full Interaction incl. usage
-  //   event: done                       terminator with data: [DONE] (OpenAI-style)
+  //   event: interaction.created          one at the top; carries { interaction: {id, status, model/agent, ...} }
+  //   event: interaction.status_update    status transitions (in_progress, completed, ...); carries { interaction_id, status }
+  //   event: interaction.in_progress      (migration-guide variant of status_update -> in_progress); carries { interaction_id }
+  //   event: interaction.requires_action  (migration-guide variant of status_update -> requires_action); carries { interaction_id }
+  //   event: step.start                   opens a step at {index, step:{type:'model_output'|'thought'|'<tool>_call'|...}}
+  //   event: step.delta                   incremental data for index; polymorphic delta (see below); some carry `event_id` for resume
+  //   event: step.stop                    closes a step at index
+  //   event: error                        spec shape: { error?: { code, message } }; observed with EMPTY payload in Beta - non-fatal, continue
+  //   event: interaction.completed        final snapshot carrying the full Interaction incl. usage (steps[] empty to reduce payload)
+  //   event: done                         legacy terminator with data: [DONE]; not part of the steps SSE union but kept defensively
   //
   // Resume: GET /v1beta/interactions/{id}?stream=true
   //   Spec also allows `&last_event_id=<event_id>` for incremental resume, but we do NOT use it.
   //   Full replay from the beginning is the intentional semantic - the client's ContentReassembler
-  //   REPLACES message content on reattach, so partial resume would be a mismatch. Works identically
-  //   on in-progress, completed, failed, and cancelled interactions (within Gemini's retention window).
+  //   REPLACES message content on reattach, so partial resume would be a mismatch.
 
-  // --- ContentDeltaData variants (spec: polymorphic on `type`) ---
+  // --- StepDeltaData variants (spec: polymorphic on `type`) ---
   //
   // Spec defines: text, image, audio, document, video, thought_summary, thought_signature,
-  // text_annotation, function_call, + tool-call/result variants (code_execution_*, url_context_*,
-  // google_search_*, google_maps_*, file_search_*, mcp_server_tool_*). We model variants we emit
-  // to the UI; unknown ones fail safeParse at the parser and are silently dropped (mirrors the
-  // INTERNAL_OUTPUT_TYPES policy on the non-streaming path).
+  // text_annotation_delta, arguments_delta, + tool-call/result variants (code_execution_*, url_context_*,
+  // google_search_*, google_maps_*, file_search_*, mcp_server_tool_*, function_result). We model variants
+  // we emit to the UI; unknown ones fail safeParse at the parser and are routed/dropped there.
 
   const TextDelta_schema = z.object({
     type: z.literal('text'),
@@ -346,11 +441,10 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
   const ThoughtSummaryDelta_schema = z.object({
     type: z.literal('thought_summary'),
-    // Spec: ThoughtSummaryContent - polymorphic (only `text` variant documented). Optional per spec.
-    content: z.object({
-      type: z.literal('text'),
-      text: z.string(),
-    }).optional(),
+    // Spec: ThoughtSummaryContent is polymorphic (text | image); only the `text` variant is surfaced.
+    // looseObject (text optional) keeps a non-text summary item from failing the union and getting
+    // warn-dropped - the parser emits only when `content.text` is a present string.
+    content: z.looseObject({ type: z.string(), text: z.string().optional() }).optional(),
   });
 
   // Backend validation hash - routed to `pt.setReasoningSignature` when present.
@@ -359,9 +453,10 @@ export namespace GeminiInteractionsWire_API_Interactions {
     signature: z.string().optional(),
   });
 
-  // text_annotation arrives as its own delta on the same index as a text block, carrying citation metadata for the text already emitted.
+  // text_annotation_delta (legacy: text_annotation) arrives on the same index as a text block, carrying
+  // citation metadata for the text already emitted.
   const TextAnnotationDelta_schema = z.object({
-    type: z.literal('text_annotation'),
+    type: z.literal('text_annotation_delta'),
     // Spec: Annotation - polymorphic on `type` (url_citation, file_citation, place_citation). Optional per spec.
     annotations: z.array(z.looseObject({ type: z.string() })).optional(), // validated per-item via UrlCitationAnnotation_schema
   });
@@ -379,12 +474,21 @@ export namespace GeminiInteractionsWire_API_Interactions {
     data: z.string().optional(),
     uri: z.string().optional(),
     mime_type: z.string().optional(), // spec enum: audio/wav, audio/mp3, audio/aiff, audio/aac, audio/ogg, audio/flac, audio/mpeg, audio/m4a, audio/l16, audio/opus, audio/alaw, audio/mulaw
-    rate: z.number().optional(),
+    sample_rate: z.number().optional(), // spec renamed `rate` -> `sample_rate` (rate kept deprecated upstream; we read sample_rate)
+    rate: z.number().optional(),         // deprecated alias - tolerated for forward/backward compat
     channels: z.number().optional(),
   });
 
-  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (document,
-  // video, function_call, + tool-call/result) fail safeParse in the parser and are silently dropped.
+  // arguments_delta: streamed partial-JSON args for a client function_call step (accumulate to get the
+  // full arguments). We don't execute client tools on this path, so we tolerate but don't act on these.
+  const ArgumentsDelta_schema = z.object({
+    type: z.literal('arguments_delta'),
+    arguments: z.string().optional(),
+  });
+
+  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (document, video,
+  // tool-call/result deltas) fail safeParse in the parser and are handled by the tool-surfacing branch
+  // or silently dropped.
   export const StreamDelta_schema = z.discriminatedUnion('type', [
     TextDelta_schema,
     ImageDelta_schema,
@@ -392,6 +496,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     ThoughtSummaryDelta_schema,
     ThoughtSignatureDelta_schema,
     TextAnnotationDelta_schema,
+    ArgumentsDelta_schema,
   ]);
 
   // --- SSE event data payloads (spec: InteractionSseEvent - polymorphic on `event_type`) ---
@@ -400,8 +505,8 @@ export namespace GeminiInteractionsWire_API_Interactions {
   // of events actually include one, so the schema accepts it on all but our parser uses whichever
   // is present to advance the cursor.
 
-  const InteractionStart_event_schema = z.object({
-    event_type: z.literal('interaction.start'),
+  const InteractionCreated_event_schema = z.object({
+    event_type: z.literal('interaction.created'),
     interaction: Interaction_schema.partial().extend({ id: z.string(), status: Status_enum.optional() }),
     event_id: z.string().optional(),
   });
@@ -413,23 +518,39 @@ export namespace GeminiInteractionsWire_API_Interactions {
     event_id: z.string().optional(),
   });
 
-  const ContentStart_event_schema = z.object({
-    event_type: z.literal('content.start'),
-    index: z.number(),
-    content: z.looseObject({ type: z.string() }), // spec: Content (polymorphic)
+  // Migration-guide variants of status_update (formal spec lists only status_update, but the guide's
+  // streaming example emits these). Tolerated so we react correctly whichever Google sends. They carry
+  // `interaction_id` and no `status` field (the status is implied by the event name).
+  const InteractionInProgress_event_schema = z.object({
+    event_type: z.literal('interaction.in_progress'),
+    interaction_id: z.string().optional(),
     event_id: z.string().optional(),
   });
 
-  const ContentDelta_event_schema = z.object({
-    event_type: z.literal('content.delta'),
-    index: z.number(),
-    delta: z.looseObject({}), // spec: ContentDeltaData - tolerant at ingest; parsed later via StreamDelta_schema.safeParse
+  const InteractionRequiresAction_event_schema = z.object({
+    event_type: z.literal('interaction.requires_action'),
+    interaction_id: z.string().optional(),
     event_id: z.string().optional(),
   });
 
-  const ContentStop_event_schema = z.object({
-    event_type: z.literal('content.stop'),
+  const StepStart_event_schema = z.object({
+    event_type: z.literal('step.start'),
     index: z.number(),
+    step: z.looseObject({ type: z.string() }), // spec: Step (polymorphic) - carries the step type + (for tool steps) id/name/arguments/call_id/result
+    event_id: z.string().optional(),
+  });
+
+  const StepDelta_event_schema = z.object({
+    event_type: z.literal('step.delta'),
+    index: z.number(),
+    delta: z.looseObject({}), // spec: StepDeltaData - tolerant at ingest; parsed later via StreamDelta_schema.safeParse / tool-surfacing
+    event_id: z.string().optional(),
+  });
+
+  const StepStop_event_schema = z.object({
+    event_type: z.literal('step.stop'),
+    index: z.number(),
+    status: z.string().optional(), // some frames carry a per-step status (e.g. 'done')
     event_id: z.string().optional(),
   });
 
@@ -443,10 +564,10 @@ export namespace GeminiInteractionsWire_API_Interactions {
     event_id: z.string().optional(),
   });
 
-  const InteractionComplete_event_schema = z.object({
-    event_type: z.literal('interaction.complete'),
+  const InteractionCompleted_event_schema = z.object({
+    event_type: z.literal('interaction.completed'),
     // Spec note: "The completed interaction with EMPTY OUTPUTS to reduce the payload size. Use the
-    // preceding ContentDelta events for the actual output." We rely on `status` + `usage` here.
+    // preceding StepDelta events for the actual output." We rely on `status` + `usage` here.
     interaction: Interaction_schema,
     event_id: z.string().optional(),
   });
@@ -455,13 +576,15 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
   /** Discriminated union of JSON-bodied SSE events. The `done` terminator is handled as a string-valued special case in the parser. */
   export const StreamEvent_schema = z.discriminatedUnion('event_type', [
-    InteractionStart_event_schema,
+    InteractionCreated_event_schema,
     InteractionStatusUpdate_event_schema,
-    ContentStart_event_schema,
-    ContentDelta_event_schema,
-    ContentStop_event_schema,
+    InteractionInProgress_event_schema,
+    InteractionRequiresAction_event_schema,
+    StepStart_event_schema,
+    StepDelta_event_schema,
+    StepStop_event_schema,
     Error_event_schema,
-    InteractionComplete_event_schema,
+    InteractionCompleted_event_schema,
   ]);
 
 }

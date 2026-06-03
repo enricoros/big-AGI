@@ -175,6 +175,10 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       // [Gemini Interactions API - ALPHA TEST] SSE-native: POST with stream=true, upstream returns event-stream we pipe through the fast-sse demuxer.
       if (model.vndGeminiAPI === 'interactions-agent') {
         if (!streaming) console.warn(`[DEV] Gemini Interactions API - only supported in SSE mode, ignoring streaming=false for model ${model.id}`);
+        // We rely on Google's DEFAULT schema (steps, since the 2026-05-26 flip) and deliberately do NOT
+        // send an `Api-Revision` header: it is not CORS-safelisted, so on the client-side-fetch (direct
+        // browser->Google) path it would trigger a preflight that the endpoint rejects, breaking direct
+        // connections. The header was only useful to opt in BEFORE the default flip, which has passed.
         const request: ChatGenerateDispatchRequest = {
           ...geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.postPath, false),
           method: 'POST',
@@ -332,6 +336,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       if (resumeHandle.uht !== 'vnd.gem.interactions')
         throw new Error(`Resume handle mismatch for gemini: expected 'vnd.gem.interactions', got '${resumeHandle.uht}'`);
       const { url: _baseUrl, headers: _headers } = geminiAccess(access, null, GeminiInteractionsWire_API_Interactions.getPath(resumeHandle.runId /* Gemini interaction.id */), false);
+      // No `Api-Revision` header here either - it breaks the client-side-fetch (direct) path via CORS preflight; we ride Google's default steps schema. See the create POST.
       return {
         request: { url: streaming ? `${_baseUrl}${_baseUrl.includes('?') ? '&' : '?'}stream=true` : _baseUrl, method: 'GET', headers: _headers },
         demuxerFormat: streaming ? 'fast-sse' : null,

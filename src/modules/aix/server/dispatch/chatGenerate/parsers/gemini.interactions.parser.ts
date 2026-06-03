@@ -21,35 +21,45 @@ const _GEM_ENV_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 type TInteraction = z.infer<typeof GeminiInteractionsWire_API_Interactions.Interaction_schema>;
 type TUsage = NonNullable<TInteraction['usage']>;
+type TToolStep = z.infer<typeof GeminiInteractionsWire_API_Interactions.SurfacedToolStep_schema>;
 
 type BlockState = {
-  kind: 'thought' | 'text' | 'image' | 'other';
+  stepType: string; // raw step.type from step.start (model_output | thought | <tool>_call | <tool>_result | ...)
+  kind: 'thought' | 'text' | 'image' | 'tool' | 'other';
   emittedCitationKeys: Set<string>; // `${url}@${start}-${end}` for de-dupe (url_citations can repeat)
+  // tool steps
+  toolOpId?: string;  // tool steps: opId to pair call/result chip ops (step.id for calls, step.call_id for results)
+  toolName?: string;  // tool steps: function/tool name, for delta-refined chip labels
+  argsAccum?: string; // tool calls: accumulated `arguments_delta` partial-JSON, finalized at step.stop
 };
 
 
 /**
- * Gemini Interactions API SSE parser (for Deep Research and future agents).
+ * Gemini Interactions API SSE parser (steps schema; Deep Research, Antigravity, future agents).
  *
  * The upstream request is sent with `stream=true` and returns `text/event-stream` with events:
- *  - interaction.start / interaction.status_update / interaction.complete  (lifecycle)
- *  - content.start / content.delta / content.stop                          (per-index content blocks)
+ *  - interaction.created / interaction.status_update | in_progress | requires_action / interaction.completed  (lifecycle)
+ *  - step.start / step.delta / step.stop                                   (per-index typed steps)
  *  - error                                                                 (non-fatal, empty payload observed mid-stream)
- *  - done                                                                  (terminator, data: [DONE])
+ *  - done                                                                  (legacy terminator, data: [DONE] - kept defensively)
  *
  * The SSE demuxer (`fast-sse`) invokes this parser once per frame with `eventData` (the JSON body)
  * and `eventName` (the `event:` line). We dispatch on the JSON payload's `event_type` field which
  * mirrors the SSE event name - staying resilient if the demuxer drops the event name.
  *
- * Delta variants (content.delta's `delta` payload):
- *  - thought_summary  -> `pt.appendReasoningText(delta.content.text)`
- *  - text             -> `pt.appendText(delta.text)`
- *  - text_annotation  -> `pt.appendUrlCitation(...)` for each url_citation (if `DISABLE_CITATIONS` is false)
- *  - image            -> `pt.appendImageInline(...)` (forward-looking; not observed in captures yet)
+ * Step routing (step.start declares the step `type`; step.delta carries incremental `delta`):
+ *  - model_output  -> content[] blocks: text -> appendText, image -> appendImageInline, audio -> appendAudioInline
+ *  - thought       -> summary -> appendReasoningText, signature -> setReasoningSignature
+ *  - <tool>_call   -> op-state chip (active) via `_emitAntigravityToolOp` (Antigravity sandbox surfacing)
+ *  - <tool>_result -> op-state chip (done) via `_emitAntigravityToolOp`
  *
- * Resume: GET /v1beta/interactions/{id}?stream=true[&last_event_id=<cursor>] - Gemini replays from
- * the cursor (or from start if omitted). Our parser is position-idempotent within a single run
- * because the transmitter's state carries across events.
+ * The 2026-05-26 "steps" migration renamed the legacy events (interaction.start -> interaction.created,
+ * content.* -> step.*, interaction.complete -> interaction.completed) and moved user-facing content into
+ * `model_output` steps' `content[]`. See gemini.interactions.wiretypes.ts and kb/modules/LLM-gemini-interactions.md.
+ *
+ * Resume: GET /v1beta/interactions/{id}?stream=true - Gemini replays the full event sequence from the
+ * start. Our parser is position-idempotent within a single run because the transmitter's state carries
+ * across events (the client's ContentReassembler REPLACES message content on reattach).
  */
 export function createGeminiInteractionsParserSSE(requestedModelName: string | null): ChatGenerateParseFunction {
 
@@ -68,11 +78,28 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
   let upstreamHandleSent = isAntigravity; // never emit a handle for Antigravity (non-resumable)
   let operationOpId: string | null = null; // interaction id; used to pair in-progress / done operation-state updates AND as parentOpId for nested tool ops
   let operationOpenEmitted = false;
-  let interactionIdCache: string | null = null; // cached for the `operation-state done` emission on interaction.complete
+  let interactionIdCache: string | null = null; // cached for the `operation-state done` emission on interaction.completed
 
-  // per-index content-block state (mirrors what content.start declared; persists across delta/stop)
+  // per-index step-block state (mirrors what step.start declared; persists across delta/stop)
   const blocks: Record<number, BlockState> = Object.create(null);
-  let lastOpenIdx = -1; // most recently opened content-block index; -1 = none open
+  let lastOpenIdx = -1; // most recently opened step index; -1 = none open
+
+  const markFirstContent = (): void => {
+    if (timeToFirstContent === undefined)
+      timeToFirstContent = Date.now() - parserCreationTimestamp;
+  };
+
+  // Surface the run-chip the first time an in-progress lifecycle event arrives. Pinned to the
+  // interaction id so the terminal done/error (from interaction.completed) replaces the same entry,
+  // AND serves as parentOpId for nested tool ops (Antigravity sandbox tool steps).
+  const openRunChip = (pt: IParticleTransmitter, interactionId: string | null): void => {
+    if (operationOpenEmitted) return;
+    operationOpId = interactionId ?? interactionIdCache;
+    if (operationOpId) {
+      pt.sendOperationState(runChipMotif, runChipText, { opId: operationOpId });
+      operationOpenEmitted = true;
+    }
+  };
 
   return function parse(pt: IParticleTransmitter, rawEventData: string, _eventName?: string): void {
 
@@ -105,7 +132,7 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
 
       // --- Lifecycle ---
 
-      case 'interaction.start':
+      case 'interaction.created':
         interactionIdCache = event.interaction.id;
         if (!upstreamHandleSent) {
           pt.setUpstreamHandle(event.interaction.id, 'vnd.gem.interactions');
@@ -127,6 +154,12 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
               },
             },
           });
+        // Open the run chip eagerly: in the steps schema the in-progress signal may arrive as a
+        // separate event (interaction.status_update / interaction.in_progress) OR be implied by created.
+        // Opening here too ensures operationOpId is set (tool ops require it as parentOpId) even if the
+        // separate in-progress event never lands. Idempotent via operationOpenEmitted.
+        if (event.interaction.status === undefined || event.interaction.status === 'in_progress')
+          openRunChip(pt, event.interaction.id);
         break;
 
       case 'interaction.status_update':
@@ -135,67 +168,131 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
           pt.setUpstreamHandle(event.interaction_id, 'vnd.gem.interactions');
           upstreamHandleSent = true;
         }
-        // Surface the in-progress label the first time we see it. Pinned to the interaction id so
-        // the terminal done/error (emitted from interaction.complete) replaces the same entry, AND
-        // serves as parentOpId for nested tool ops (Antigravity sandbox function_call/function_result).
-        if (event.status === 'in_progress' && !operationOpenEmitted) {
-          operationOpId = event.interaction_id;
-          pt.sendOperationState(runChipMotif, runChipText, { opId: operationOpId });
-          operationOpenEmitted = true;
+        if (event.status === 'in_progress')
+          openRunChip(pt, event.interaction_id);
+        break;
+
+      // Migration-guide variants of status_update (the formal spec only lists status_update, but the
+      // guide's streaming example emits these). Treat in_progress as the run-chip opener; capture the
+      // handle on either. requires_action is terminal-ish for our agents (we don't satisfy tool calls)
+      // and is finalized at interaction.completed - here we just capture the handle.
+      case 'interaction.in_progress':
+        if (event.interaction_id) {
+          interactionIdCache = event.interaction_id;
+          if (!upstreamHandleSent) {
+            pt.setUpstreamHandle(event.interaction_id, 'vnd.gem.interactions');
+            upstreamHandleSent = true;
+          }
+        }
+        openRunChip(pt, event.interaction_id ?? null);
+        break;
+
+      case 'interaction.requires_action':
+        if (event.interaction_id) {
+          interactionIdCache = event.interaction_id;
+          if (!upstreamHandleSent) {
+            pt.setUpstreamHandle(event.interaction_id, 'vnd.gem.interactions');
+            upstreamHandleSent = true;
+          }
         }
         break;
 
-      case 'interaction.complete':
-        _handleInteractionComplete(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent, runChipMotif, isAntigravity ? 'Antigravity Agent' : 'Deep Research');
+      case 'interaction.completed':
+        _handleInteractionCompleted(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent, runChipMotif, isAntigravity ? 'Antigravity Agent' : 'Deep Research');
         break;
 
-      // --- Content-block lifecycle ---
+      // --- Step lifecycle ---
 
-      case 'content.start': {
-        const kind = _classifyContentKind(event.content?.type);
-        blocks[event.index] = { kind, emittedCitationKeys: new Set() };
+      case 'step.start': {
+        const step = event.step;
+        const stepType = String(step.type);
+        const kind = _classifyStepKind(stepType);
+        const state: BlockState = { stepType, kind, emittedCitationKeys: new Set() };
+        blocks[event.index] = state;
+
         // natural part boundary: close any previously open part when switching indices
         if (lastOpenIdx !== -1 && lastOpenIdx !== event.index)
           pt.endMessagePart();
         lastOpenIdx = event.index;
+
+        if (stepType === 'model_output') {
+          // step.start may carry the first content chunk(s); subsequent chunks stream via step.delta.
+          if (Array.isArray(step.content) && step.content.length)
+            for (const block of step.content)
+              _emitContentBlock(pt, block, state, markFirstContent);
+        } else if (stepType === 'thought') {
+          // step.start may carry the summary + signature inline; later additions stream as thought_summary deltas.
+          markFirstContent();
+          _emitThoughtSummary(pt, step.summary);
+          if (typeof step.signature === 'string' && step.signature)
+            pt.setReasoningSignature(step.signature);
+        } else if (GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_CALL_TYPES.has(stepType) || GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_RESULT_TYPES.has(stepType)) {
+          // Antigravity sandbox tool call/result: surface as a nested op-state chip under the run chip.
+          // safeParse the loose step into the typed tool-step union for type-safe field access.
+          const toolStep = GeminiInteractionsWire_API_Interactions.SurfacedToolStep_schema.safeParse(step);
+          if (toolStep.success) {
+            const td = toolStep.data;
+            state.toolOpId = 'id' in td ? td.id : td.call_id; // call -> id, result -> call_id (pairs the chip)
+            state.toolName = 'name' in td ? td.name : undefined;
+            if (operationOpId !== null) _emitAntigravityToolOp(pt, td, operationOpId);
+          } else {
+            console.warn(`[GeminiInteractions] surfaced tool step '${stepType}' failed schema parse at index ${event.index} - chip not rendered`, step);
+          }
+        } else if (stepType === 'user_input' || GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(stepType)) {
+          // Expected-but-not-surfaced: `user_input` echo (appears on resume-GET replay, not on POST) and the
+          // internal tools (google_maps / file_search / mcp). Intentionally no emission.
+        } else {
+          // HIGH-PRIORITY: an unsupported/new step type. Surface loudly (non-fatal - we keep parsing the
+          // rest of the run) so a new tool or a changed schema gets noticed instead of silently dropping
+          // its output. To handle it, add the type to SURFACED_TOOL_*_TYPES / SILENCE_STEP_TYPES (wiretypes)
+          // or extend this step handler.
+          console.warn(`[GeminiInteractions] unsupported step.start type '${stepType}' at index ${event.index} - skipping (no surface)`, step);
+        }
         break;
       }
 
-      case 'content.stop':
-        // the final `endMessagePart` is emitted by `interaction.complete` after status evaluation,
-        // so we don't auto-close here - lets multi-block streams flow naturally
+      case 'step.stop': {
+        const state = blocks[event.index];
+        // Finalize a tool-call chip whose arguments arrived incrementally via `arguments_delta`.
+        if (state?.toolOpId && state.argsAccum && operationOpId !== null && GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_CALL_TYPES.has(state.stepType)) {
+          let args: unknown;
+          try { args = JSON.parse(state.argsAccum); } catch { args = undefined; }
+          if (args !== undefined) {
+            const synth = GeminiInteractionsWire_API_Interactions.SurfacedToolStep_schema.safeParse({ type: state.stepType, id: state.toolOpId, name: state.toolName, arguments: args });
+            if (synth.success) _emitAntigravityToolOp(pt, synth.data, operationOpId);
+          }
+        }
+        // content blocks: the final `endMessagePart` is emitted by interaction.completed after status
+        // evaluation, so we don't auto-close here - lets multi-step streams flow naturally.
         break;
+      }
 
       // --- Delta routing ---
 
-      case 'content.delta': {
-        if (timeToFirstContent === undefined)
-          timeToFirstContent = Date.now() - parserCreationTimestamp;
+      case 'step.delta': {
+        markFirstContent();
 
-        // Ensure state exists even if we missed content.start (tolerant)
+        // Ensure state exists even if we missed step.start (tolerant)
         if (!blocks[event.index])
-          blocks[event.index] = { kind: 'other', emittedCitationKeys: new Set() };
+          blocks[event.index] = { stepType: 'unknown', kind: 'other', emittedCitationKeys: new Set() };
         const state = blocks[event.index];
 
-        // Classify the delta payload - unknown types warn once and are dropped
+        // Classify the delta payload - unknown/tool types fall to the surfacing branch below
         const deltaParse = GeminiInteractionsWire_API_Interactions.StreamDelta_schema.safeParse(event.delta);
         if (!deltaParse.success) {
-          // Empty deltas ({}) appear alongside placeholder blocks (e.g. internal tool slots) - silent skip
+          // Empty deltas ({}) appear alongside placeholder steps (e.g. internal tool slots) - silent skip
           if (event.delta && Object.keys(event.delta).length === 0) break;
           const deltaType = (event.delta as { type?: string })?.type;
-          // Antigravity sandbox tool calls/results: surface as nested op-state placeholders under the
-          // run chip. Paired by id/call_id across the call/result variants:
-          //   function_call/_result          - filesystem ops (list_files, read_file, ...)
-          //   code_execution_call/_result    - bash/python in the sandbox
-          //   google_search_call/_result     - web search
-          //   url_context_call/_result       - web page fetch
-          if (deltaType && _ANTIGRAVITY_SURFACED_TYPES.has(deltaType) && operationOpId !== null) {
-            _emitAntigravityToolOp(pt, event.delta, operationOpId);
+          // Antigravity sandbox tool calls/results stream their typed delta on the matching step index.
+          // The typed delta carries no id/call_id, so we pair it with the opId captured at step.start.
+          if (deltaType && state.toolOpId && operationOpId !== null
+            && (GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_CALL_TYPES.has(deltaType) || GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_RESULT_TYPES.has(deltaType))) {
+            _emitAntigravityToolDeltaRefine(pt, event.delta, state, operationOpId);
             break;
           }
-          // Known-but-not-surfaced delta types (mirrors NS parser's INTERNAL_OUTPUT_TYPES policy + spec's document/video variants we don't model) - silent skip
-          if (deltaType && (GeminiInteractionsWire_API_Interactions.INTERNAL_OUTPUT_TYPES.has(deltaType) || deltaType === 'document' || deltaType === 'video')) break;
-          console.warn('[GeminiInteractions] unknown content.delta shape at index', event.index, event.delta);
+          // Known-but-not-surfaced delta types (internal tools + spec's document/video we don't model) - silent skip
+          if (deltaType && (GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(deltaType) || deltaType === 'document' || deltaType === 'video')) break;
+          console.warn('[GeminiInteractions] unknown step.delta shape at index', event.index, event.delta);
           break;
         }
         const delta = deltaParse.data;
@@ -203,11 +300,10 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
         switch (delta.type) {
           case 'thought_summary':
             if (delta.content?.text) pt.appendReasoningText(delta.content.text);
-            // Intentionally NOT re-emitting sendOperationState here. The chip is created ONCE at
-            // interaction.status_update and left alone - its `cts` is anchored to the run's
-            // createdAt via the upstream handle (reassembler line 775), so the chip's timer shows
-            // the true elapsed run time and survives reattach cleanly. Re-emitting would pollute
-            // the opLog without adding user value.
+            // Intentionally NOT re-emitting sendOperationState here. The chip is created ONCE at the
+            // in-progress lifecycle event and left alone - its `cts` is anchored to the run's createdAt
+            // via the upstream handle, so the chip's timer shows the true elapsed run time and survives
+            // reattach cleanly. Re-emitting would pollute the opLog without adding user value.
             break;
           case 'thought_signature':
             if (delta.signature) pt.setReasoningSignature(delta.signature);
@@ -215,21 +311,18 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
           case 'text':
             pt.appendText(delta.text);
             break;
-          case 'text_annotation':
-            if (!DISABLE_CITATIONS && delta.annotations) {
-              for (const annRaw of delta.annotations) {
-                const ann = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
-                if (!ann.success) continue; // place_citation, file_citation, etc. - not surfaced here
-                const a = ann.data;
-                const key = `${a.url}@${a.start_index ?? ''}-${a.end_index ?? ''}`;
-                if (state.emittedCitationKeys.has(key)) continue;
-                state.emittedCitationKeys.add(key);
-                pt.appendUrlCitation(a.title || a.url, a.url, undefined, a.start_index, a.end_index, undefined, undefined);
-              }
-            }
+          case 'text_annotation_delta':
+            if (!DISABLE_CITATIONS && delta.annotations)
+              _emitUrlCitations(pt, delta.annotations, state);
+            break;
+          case 'arguments_delta':
+            // Streamed client function-call args (partial JSON). We don't execute client tools, but we
+            // accumulate so a surfaced sandbox tool-call chip can be refined with the full args at step.stop.
+            if (delta.arguments && state.toolOpId)
+              state.argsAccum = (state.argsAccum ?? '') + delta.arguments;
             break;
           case 'image':
-            // Forward-looking: inline bytes flow through appendImageInline; URI-only gets a visible note.
+            // Inline bytes flow through appendImageInline; URI-only gets a visible note.
             if (delta.data && delta.mime_type) {
               pt.appendImageInline(delta.mime_type, delta.data, 'Gemini Generated Image', 'Gemini', '', true);
             } else if (delta.uri) {
@@ -238,21 +331,9 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
             }
             break;
           case 'audio':
-            // Forward-looking: audio deltas per spec (not yet observed in DR streams). PCM needs WAV conversion; packaged formats pass through.
-            if (delta.data && delta.mime_type) {
-              const mime = delta.mime_type.toLowerCase();
-              const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
-              if (isPCM) {
-                try {
-                  const wav = geminiConvertPCM2WAV(delta.mime_type, delta.data);
-                  pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
-                } catch (error) {
-                  console.warn('[GeminiInteractions] audio PCM convert failed:', error);
-                }
-              } else {
-                pt.appendAudioInline(delta.mime_type, delta.data, 'Gemini Generated Audio', 'Gemini', 0);
-              }
-            }
+            // PCM needs WAV conversion; packaged formats pass through.
+            if (delta.data && delta.mime_type)
+              _emitAudio(pt, delta.mime_type, delta.data, '[GeminiInteractions] audio PCM convert failed:');
             break;
           default: {
             const _exhaustive: never = delta;
@@ -265,7 +346,7 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
       case 'error':
         // Two observed shapes:
         //  1) Empty payload mid-stream (Beta noise): the stream continues with further events and
-        //     eventually an interaction.complete - silent-skip.
+        //     eventually an interaction.completed - silent-skip.
         //  2) Populated payload with message/code: terminal upstream error (also how Gemini reports
         //     cancelled interactions: HTTP 500 to the cancel call + an error SSE on the stream).
         //     Surface as a dialect-terminating issue so the UI renders it and the stream ends cleanly.
@@ -290,8 +371,10 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
  * particles the SSE parser would, in a single batch.
  *
  * Used by the "Recover" path when SSE delivery is broken upstream (10-min cuts; see KB doc) but the
- * resource is still fetchable. We always re-emit the upstream handle so failed/in_progress runs
- * remain retryable; only `status: completed` clears it (via the reassembler's outcome=='completed' policy).
+ * resource is still fetchable. The GET returns the FULL timeline including `user_input` steps - we
+ * skip those (they echo our own input) and walk `model_output` content + `thought` steps. We always
+ * re-emit the upstream handle so failed/in_progress runs remain retryable; only `status: completed`
+ * clears it (via the reassembler's outcome=='completed' policy).
  *
  * See `kb/modules/LLM-gemini-interactions.md` for failure modes and recovery model.
  */
@@ -322,94 +405,53 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
     // upstream handle - preserve so user can retry / delete
     pt.setUpstreamHandle(interaction.id, 'vnd.gem.interactions');
 
-    // Walk outputs in order. Each output is loose; we safeParse against KnownOutput_schema and
-    // silently skip INTERNAL_OUTPUT_TYPES (tool calls/results). Order matters - thoughts and
-    // text interleave in the report and the user reads them top-to-bottom.
-    const outputs = interaction.outputs ?? [];
+    // Walk steps in order. Each step is loose; we route by `type`:
+    //  - user_input  -> skip (the GET timeline echoes our own input back; not re-rendered)
+    //  - model_output -> walk content[] (text/thought interleave in the report; read top-to-bottom)
+    //  - thought     -> summary + signature
+    //  - tool steps  -> skip on the recovery snapshot (chips were a streaming-time affordance)
+    const steps = interaction.steps ?? [];
+    const markFirstContent = (): void => void 0; // no timing on the one-shot path
     let lastEmittedKind: 'thought' | 'text' | 'image' | 'audio' | null = null;
-    for (const rawOut of outputs) {
-      const outType = (rawOut as { type?: string })?.type;
+    const sharedState: BlockState = { stepType: 'model_output', kind: 'text', emittedCitationKeys: new Set() };
 
-      // silent-skip internal tool-call outputs (matches SSE parser policy for INTERNAL_OUTPUT_TYPES)
-      if (outType && GeminiInteractionsWire_API_Interactions.INTERNAL_OUTPUT_TYPES.has(outType))
-        continue;
+    for (const rawStep of steps) {
+      const stepType = (rawStep as { type?: string })?.type;
+      if (!stepType || stepType === 'user_input') continue;
 
-      const knownOut = GeminiInteractionsWire_API_Interactions.KnownOutput_schema.safeParse(rawOut);
-      if (!knownOut.success) {
-        if (outType) console.warn('[GeminiInteractions-NS] unknown output type, skipping:', outType);
+      if (stepType === 'thought') {
+        const known = GeminiInteractionsWire_API_Interactions.KnownStep_schema.safeParse(rawStep);
+        if (!known.success || known.data.type !== 'thought') continue;
+        if (lastEmittedKind !== null && lastEmittedKind !== 'thought') pt.endMessagePart();
+        _emitThoughtSummary(pt, known.data.summary);
+        if (known.data.signature) pt.setReasoningSignature(known.data.signature);
+        lastEmittedKind = 'thought';
         continue;
       }
 
-      // emit a part boundary when switching kinds, mirrors SSE behavior on content.start across indices
-      if (lastEmittedKind !== null && lastEmittedKind !== knownOut.data.type)
-        pt.endMessagePart();
-
-      switch (knownOut.data.type) {
-        case 'thought': {
-          const summary = knownOut.data.summary;
-          if (typeof summary === 'string') {
-            if (summary) pt.appendReasoningText(summary);
-          } else if (Array.isArray(summary)) {
-            for (const item of summary)
-              if (item.text) pt.appendReasoningText(item.text);
-          }
-          if (knownOut.data.signature)
-            pt.setReasoningSignature(knownOut.data.signature);
-          lastEmittedKind = 'thought';
-          break;
+      if (stepType === 'model_output') {
+        const known = GeminiInteractionsWire_API_Interactions.KnownStep_schema.safeParse(rawStep);
+        if (!known.success || known.data.type !== 'model_output') continue;
+        for (const block of known.data.content ?? []) {
+          const blockKind = _contentBlockKind(block);
+          if (blockKind && lastEmittedKind !== null && lastEmittedKind !== blockKind) pt.endMessagePart();
+          if (_emitContentBlock(pt, block, sharedState, markFirstContent)) lastEmittedKind = blockKind ?? lastEmittedKind;
         }
-        case 'text': {
-          if (knownOut.data.text)
-            pt.appendText(knownOut.data.text);
-          // Citations: matches SSE policy - DISABLE_CITATIONS kill-switch dictates Deep Research drops them
-          if (!DISABLE_CITATIONS && knownOut.data.annotations) {
-            for (const annRaw of knownOut.data.annotations) {
-              const ann = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
-              if (!ann.success) continue;
-              const a = ann.data;
-              pt.appendUrlCitation(a.title || a.url, a.url, undefined, a.start_index, a.end_index, undefined, undefined);
-            }
-          }
-          lastEmittedKind = 'text';
-          break;
-        }
-        case 'image': {
-          if (knownOut.data.data && knownOut.data.mime_type)
-            pt.appendImageInline(knownOut.data.mime_type, knownOut.data.data, 'Gemini Generated Image', 'Gemini', '', true);
-          else if (knownOut.data.uri)
-            pt.appendText(`\n[Image: ${knownOut.data.uri}]\n`);
-          lastEmittedKind = 'image';
-          break;
-        }
-        case 'audio': {
-          if (knownOut.data.data && knownOut.data.mime_type) {
-            const mime = knownOut.data.mime_type.toLowerCase();
-            const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
-            if (isPCM) {
-              try {
-                const wav = geminiConvertPCM2WAV(knownOut.data.mime_type, knownOut.data.data);
-                pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
-              } catch (error) {
-                console.warn('[GeminiInteractions-NS] audio PCM convert failed:', error);
-              }
-            } else {
-              pt.appendAudioInline(knownOut.data.mime_type, knownOut.data.data, 'Gemini Generated Audio', 'Gemini', 0);
-            }
-          }
-          lastEmittedKind = 'audio';
-          break;
-        }
-        default: {
-          const _exhaustive: never = knownOut.data;
-          break;
-        }
+        continue;
       }
+
+      // Tool steps (surfaced or internal) are intentionally not re-rendered on the recovery snapshot.
+      // Anything ELSE is an unsupported/new step type - surface loudly (non-fatal) so it gets noticed.
+      if (!GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_CALL_TYPES.has(stepType)
+        && !GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_RESULT_TYPES.has(stepType)
+        && !GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(stepType))
+        console.warn(`[GeminiInteractions-NS] unsupported step type '${stepType}' - skipping (no surface)`, rawStep);
     }
 
     // close out any open part before the terminal status emission
     if (lastEmittedKind !== null) pt.endMessagePart();
 
-    // Terminal status -> stop reason + dialect end (mirrors _handleInteractionComplete)
+    // Terminal status -> stop reason + dialect end (mirrors _handleInteractionCompleted)
     switch (interaction.status) {
       case 'completed':
         _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
@@ -431,6 +473,12 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
         pt.setTokenStopReason('out-of-tokens');
         pt.setDialectEnded('done-dialect');
         break;
+      case 'budget_exceeded':
+        pt.appendText('\n_Run stopped: budget exceeded._\n');
+        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
+        pt.setTokenStopReason('out-of-tokens');
+        pt.setDialectEnded('done-dialect');
+        break;
       case 'requires_action':
         pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
         break;
@@ -438,18 +486,18 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
         // Two scenarios both surface as `in_progress`:
         //  1) Run is genuinely live server-side (just slow) - polling later will yield content.
         //  2) "Zombie": the generator crashed but the status never transitioned. Stays `in_progress`
-        //     for days with no outputs. Not recoverable - the only remedy is delete + retry.
-        // We can't disambiguate from one frame, so we surface {created, updated, outputs.length}
+        //     for days with no steps. Not recoverable - the only remedy is delete + retry.
+        // We can't disambiguate from one frame, so we surface {created, updated, steps.length}
         // and let the user decide. `tokenStopReason='cg-issue'` keeps the upstream handle alive
         // (vs 'ok' which would clear it via the reassembler's clean-completion policy).
         // see kb/modules/LLM-gemini-interactions.md#failure-modes (C)
         const elapsedMin = _minutesSince(interaction.created);
         const updatedMin = _minutesSince(interaction.updated);
-        const outCount = (interaction.outputs ?? []).length;
+        const outCount = (interaction.steps ?? []).length;
         const lines: string[] = ['\n_Deep Research run is **`in_progress`** server-side._\n'];
         if (elapsedMin != null) lines.push(`- Started: **${_humanDuration(elapsedMin)} ago**`);
         if (updatedMin != null && updatedMin !== elapsedMin) lines.push(`- Last server update: **${_humanDuration(updatedMin)} ago**`);
-        lines.push(`- Outputs so far: **${outCount === 0 ? 'none' : outCount}**`);
+        lines.push(`- Steps so far: **${outCount === 0 ? 'none' : outCount}**`);
         // Heuristic threshold: stale-and-empty for >60 min is almost certainly a zombie.
         const looksStuck = outCount === 0 && elapsedMin != null && elapsedMin > 60;
         if (looksStuck)
@@ -471,41 +519,118 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
 }
 
 
-// --- helpers ---
+// --- content + thought emission (shared SSE step.start / NS walk) ---
 
-function _classifyContentKind(rawType: unknown): BlockState['kind'] {
-  if (rawType === 'thought') return 'thought';
-  if (rawType === 'text') return 'text';
-  if (rawType === 'image') return 'image';
+function _classifyStepKind(stepType: string): BlockState['kind'] {
+  if (stepType === 'thought') return 'thought';
+  if (stepType === 'model_output') return 'text';
+  if (stepType.endsWith('_call') || stepType.endsWith('_result')) return 'tool';
   return 'other';
+}
+
+function _contentBlockKind(block: unknown): 'text' | 'image' | 'audio' | null {
+  const t = (block as { type?: string })?.type;
+  if (t === 'text') return 'text';
+  if (t === 'image') return 'image';
+  if (t === 'audio') return 'audio';
+  return null;
+}
+
+/** Emit one model_output content block (text/image/audio). Returns true if anything was emitted. */
+function _emitContentBlock(pt: IParticleTransmitter, rawBlock: unknown, state: BlockState, markFirstContent: () => void): boolean {
+  const known = GeminiInteractionsWire_API_Interactions.KnownContent_schema.safeParse(rawBlock);
+  if (!known.success) {
+    const t = (rawBlock as { type?: string })?.type;
+    if (t && t !== 'document' && t !== 'video') console.warn('[GeminiInteractions] unknown content block, skipping:', t);
+    return false;
+  }
+  const block = known.data;
+  switch (block.type) {
+    case 'text':
+      if (block.text) {
+        markFirstContent();
+        pt.appendText(block.text);
+      }
+      if (!DISABLE_CITATIONS && block.annotations) _emitUrlCitations(pt, block.annotations, state);
+      return !!block.text;
+    case 'image':
+      markFirstContent();
+      if (block.data && block.mime_type)
+        pt.appendImageInline(block.mime_type, block.data, 'Gemini Generated Image', 'Gemini', '', true);
+      else if (block.uri)
+        pt.appendText(`\n[Image: ${block.uri}]\n`);
+      return true;
+    case 'audio':
+      markFirstContent();
+      if (block.data && block.mime_type)
+        _emitAudio(pt, block.mime_type, block.data, '[GeminiInteractions] audio PCM convert failed:');
+      return true;
+    default: {
+      const _exhaustive: never = block;
+      return false;
+    }
+  }
+}
+
+/** Emit a thought summary (string or array of {text}) as reasoning text. */
+function _emitThoughtSummary(pt: IParticleTransmitter, summary: unknown): void {
+  if (typeof summary === 'string') {
+    if (summary) pt.appendReasoningText(summary);
+  } else if (Array.isArray(summary)) {
+    for (const item of summary) {
+      const t = (item as { text?: unknown })?.text;
+      if (typeof t === 'string' && t) pt.appendReasoningText(t);
+    }
+  }
+}
+
+function _emitAudio(pt: IParticleTransmitter, mimeType: string, base64Data: string, errPrefix: string): void {
+  const mime = mimeType.toLowerCase();
+  const isPCM = mime.startsWith('audio/l16') || mime.includes('codec=pcm');
+  if (isPCM) {
+    try {
+      const wav = geminiConvertPCM2WAV(mimeType, base64Data);
+      pt.appendAudioInline(wav.mimeType, wav.base64Data, 'Gemini Generated Audio', 'Gemini', wav.durationMs);
+    } catch (error) {
+      console.warn(errPrefix, error);
+    }
+  } else {
+    pt.appendAudioInline(mimeType, base64Data, 'Gemini Generated Audio', 'Gemini', 0);
+  }
+}
+
+function _emitUrlCitations(pt: IParticleTransmitter, annotations: Array<{ type: string }>, state: BlockState): void {
+  for (const annRaw of annotations) {
+    const ann = GeminiInteractionsWire_API_Interactions.UrlCitationAnnotation_schema.safeParse(annRaw);
+    if (!ann.success) continue; // place_citation, file_citation, etc. - not surfaced here
+    const a = ann.data;
+    const key = `${a.url}@${a.start_index ?? ''}-${a.end_index ?? ''}`;
+    if (state.emittedCitationKeys.has(key)) continue;
+    state.emittedCitationKeys.add(key);
+    pt.appendUrlCitation(a.title || a.url, a.url, undefined, a.start_index, a.end_index, undefined, undefined);
+  }
 }
 
 
 // -- Antigravity sandbox tool surfacing --
 //
-// The Antigravity Agent emits its sandbox tools as content.delta payloads. We pair call/result via
-// id/call_id and route through `sendOperationState`, with `parentOpId` set to the run's main chip
-// (operationOpId === interaction.id). The reassembler accumulates these into a single VoidPlaceholder
-// fragment's opLog with inferred `level`, producing a tree of actions under the run chip. Active on
-// call, done on result. Empty `text` on result preserves the call's chip-line via the reassembler's
-// falsy-skip in the merge logic.
+// The Antigravity Agent surfaces its sandbox tools as typed STEPS (step.start carries the full step
+// object; step.delta may carry incremental args/results). We pair call/result via id/call_id and route
+// through `sendOperationState`, with `parentOpId` set to the run's main chip (operationOpId ===
+// interaction.id). The reassembler accumulates these into a single VoidPlaceholder fragment's opLog with
+// inferred `level`, producing a tree of actions under the run chip. Active on call, done on result.
 //
-// Observed delta shapes (probed 2026-05-19, antigravity-preview-05-2026):
-//   function_call            { id, type: 'function_call',          name, arguments }
-//   function_result          { call_id, type: 'function_result',   name, result: [{ type:'text', text }] }
-//   code_execution_call      { id, type: 'code_execution_call',    arguments: { code: string } }
-//   code_execution_result    { call_id, type: 'code_execution_result', result: string (stdout+stderr) }
-//   google_search_call       { id, type: 'google_search_call',     arguments: { queries: string[] } }
-//   google_search_result     { call_id, type: 'google_search_result', result: [{ search_suggestions: <html> }, ...] }
-//   url_context_call         { id, type: 'url_context_call',       arguments: { url(s)? } }    [shape inferred]
-//   url_context_result       { call_id, type: 'url_context_result', result: ?? }              [shape inferred]
-
-const _ANTIGRAVITY_SURFACED_TYPES = new Set<string>([
-  'function_call', 'function_result',
-  'code_execution_call', 'code_execution_result',
-  'google_search_call', 'google_search_result',
-  'url_context_call', 'url_context_result',
-]);
+// `_emitAntigravityToolOp` takes a typed `SurfacedToolStep` (the callers safeParse the loose step, or a
+// {type,id/call_id,...} synthesized from a typed step.delta, into the union first), so field access is
+// type-checked per variant. Wire shapes VERIFIED on the steps schema (live probe 2026-06-02, zero warnings):
+//   function_call       step.start { id, type:'function_call', name, arguments:{} (EMPTY) }; args stream as
+//                       a JSON string via `arguments_delta` deltas (accumulated -> finalized at step.stop)
+//   function_result     step.start { call_id, type:'function_result' } + typed result step.delta; call_id === call.id
+//   code_execution_call step.start { id, type:'code_execution_call' }; `{code}` arrives via typed code_execution_call step.delta
+//   code_execution_result typed step.delta { result: string (stdout+stderr) }; call_id === call.id
+//   google_search_call  step.start { id, type:'google_search_call' }; `{queries|query}` via typed step.delta
+//   google_search_result typed step.delta { result: { search_suggestions } }
+//   url_context_*        NOT observed (Antigravity prefers bash curl); defensive handler retained
 
 const _TOOL_TEXT_MAX = 80;   // chip-line cap (single-line summary)
 const _TOOL_DETAIL_MAX = 240; // iTexts/oTexts cap (expanded detail)
@@ -531,32 +656,23 @@ function _summarizeFunctionArgs(name: string, args: unknown): string {
 function _snippetFromArrayOfText(result: unknown): string | undefined {
   if (!Array.isArray(result)) return undefined;
   for (const item of result) {
-    const t = (item as { type?: unknown; text?: unknown })?.text;
+    const t = (item as { type?: unknown; text?: unknown; snippet?: unknown })?.text ?? (item as { snippet?: unknown })?.snippet;
     if (typeof t === 'string' && t.length > 0) return _truncate(t, _TOOL_DETAIL_MAX);
   }
   return undefined;
 }
 
-function _emitAntigravityToolOp(pt: IParticleTransmitter, delta: unknown, parentOpId: string): void {
-  const d = delta as {
-    type?: string; id?: string; call_id?: string;
-    name?: string; arguments?: unknown; result?: unknown;
-  };
-
-  switch (d.type) {
+function _emitAntigravityToolOp(pt: IParticleTransmitter, step: TToolStep, parentOpId: string): void {
+  switch (step.type) {
 
     // --- filesystem tools (list_files, read_file, write_file, edit_file, search_files, ...) ---
-    case 'function_call': {
-      if (!d.id) return;
-      const name = d.name || 'tool';
-      pt.sendOperationState('code-exec', _summarizeFunctionArgs(name, d.arguments), { opId: d.id, parentOpId });
+    case 'function_call':
+      pt.sendOperationState('code-exec', _summarizeFunctionArgs(step.name || 'tool', step.arguments), { opId: step.id, parentOpId });
       return;
-    }
     case 'function_result': {
-      if (!d.call_id) return;
-      const snippet = _snippetFromArrayOfText(d.result);
+      const snippet = _snippetFromArrayOfText(step.result) ?? (typeof step.result === 'string' ? _truncate(step.result, _TOOL_DETAIL_MAX) : undefined);
       pt.sendOperationState('code-exec', '', {
-        opId: d.call_id, parentOpId, state: 'done',
+        opId: step.call_id, parentOpId, state: 'done',
         ...(snippet ? { oTexts: [snippet] } : {}),
       });
       return;
@@ -564,23 +680,21 @@ function _emitAntigravityToolOp(pt: IParticleTransmitter, delta: unknown, parent
 
     // --- bash / python in the sandbox ---
     case 'code_execution_call': {
-      if (!d.id) return;
-      const code = ((d.arguments as { code?: unknown })?.code ?? '') as string;
-      const firstLine = typeof code === 'string' ? (code.split('\n')[0] || '') : '';
+      const code = step.arguments?.code ?? '';
+      const firstLine = code.split('\n')[0] || '';
       const text = firstLine ? _truncate(`$ ${firstLine}`, _TOOL_TEXT_MAX) : 'execute';
       // Full code goes into iTexts so the user can inspect multi-line scripts in the placeholder UI.
       pt.sendOperationState('code-exec', text, {
-        opId: d.id, parentOpId,
-        ...(typeof code === 'string' && code.length > 0 ? { iTexts: [_truncate(code, _TOOL_DETAIL_MAX)] } : {}),
+        opId: step.id, parentOpId,
+        ...(code.length > 0 ? { iTexts: [_truncate(code, _TOOL_DETAIL_MAX)] } : {}),
       });
       return;
     }
     case 'code_execution_result': {
-      if (!d.call_id) return;
-      const result = typeof d.result === 'string' ? d.result : (d.result == null ? '' : JSON.stringify(d.result));
+      const result = typeof step.result === 'string' ? step.result : (step.result == null ? '' : JSON.stringify(step.result));
       const snippet = result ? _truncate(result, _TOOL_DETAIL_MAX) : undefined;
       pt.sendOperationState('code-exec', '', {
-        opId: d.call_id, parentOpId, state: 'done',
+        opId: step.call_id, parentOpId, state: 'done',
         ...(snippet ? { oTexts: [snippet] } : {}),
       });
       return;
@@ -588,45 +702,63 @@ function _emitAntigravityToolOp(pt: IParticleTransmitter, delta: unknown, parent
 
     // --- web search ---
     case 'google_search_call': {
-      if (!d.id) return;
-      const queries = ((d.arguments as { queries?: unknown })?.queries) as unknown;
-      const first = Array.isArray(queries) && typeof queries[0] === 'string' ? queries[0] as string : '';
+      const a = step.arguments;
+      const first = (a && Array.isArray(a.queries) && typeof a.queries[0] === 'string') ? a.queries[0] : (a?.query ?? '');
       const text = first ? _truncate(`search: ${first}`, _TOOL_TEXT_MAX) : 'web search';
-      pt.sendOperationState('search-web', text, { opId: d.id, parentOpId });
+      pt.sendOperationState('search-web', text, { opId: step.id, parentOpId });
       return;
     }
-    case 'google_search_result': {
-      if (!d.call_id) return;
+    case 'google_search_result':
       // Result carries `search_suggestions` HTML widgets - not useful as a chip detail. Skip oTexts.
-      pt.sendOperationState('search-web', '', { opId: d.call_id, parentOpId, state: 'done' });
+      pt.sendOperationState('search-web', '', { opId: step.call_id, parentOpId, state: 'done' });
       return;
-    }
 
-    // --- url fetch (shape not yet observed; defensive extraction) ---
+    // --- url fetch (not observed on Antigravity - prefers bash curl; defensive extraction) ---
     case 'url_context_call': {
-      if (!d.id) return;
-      const a = (d.arguments as Record<string, unknown>) || {};
-      const url = (typeof a.url === 'string' ? a.url : '')
-        || (Array.isArray(a.urls) && typeof a.urls[0] === 'string' ? (a.urls[0] as string) : '');
+      const a = step.arguments;
+      const url = (a?.url ?? '') || (a && Array.isArray(a.urls) && typeof a.urls[0] === 'string' ? a.urls[0] : '');
       const text = url ? _truncate(`fetch: ${url}`, _TOOL_TEXT_MAX) : 'url fetch';
-      pt.sendOperationState('search-web', text, { opId: d.id, parentOpId });
+      pt.sendOperationState('search-web', text, { opId: step.id, parentOpId });
       return;
     }
     case 'url_context_result': {
-      if (!d.call_id) return;
-      const snippet = typeof d.result === 'string'
-        ? _truncate(d.result, _TOOL_DETAIL_MAX)
-        : _snippetFromArrayOfText(d.result);
+      const snippet = typeof step.result === 'string'
+        ? _truncate(step.result, _TOOL_DETAIL_MAX)
+        : _snippetFromArrayOfText(step.result);
       pt.sendOperationState('search-web', '', {
-        opId: d.call_id, parentOpId, state: 'done',
+        opId: step.call_id, parentOpId, state: 'done',
         ...(snippet ? { oTexts: [snippet] } : {}),
       });
+      return;
+    }
+
+    default: {
+      const _exhaustive: never = step;
       return;
     }
   }
 }
 
-function _handleInteractionComplete(
+/**
+ * Refine a tool chip from a step.delta payload (the typed call/result delta carries no id, so we pair it
+ * with the opId captured at step.start). Synthesizes the {type,id/call_id,...} shape `_emitAntigravityToolOp`
+ * expects from the delta + the step-block state.
+ */
+function _emitAntigravityToolDeltaRefine(pt: IParticleTransmitter, delta: unknown, state: BlockState, parentOpId: string): void {
+  const d = delta as { type?: string; arguments?: unknown; result?: unknown };
+  if (!d.type || !state.toolOpId) return;
+  const isResult = GeminiInteractionsWire_API_Interactions.SURFACED_TOOL_RESULT_TYPES.has(d.type);
+  const synthesized = isResult
+    ? { type: d.type, call_id: state.toolOpId, name: state.toolName, result: d.result }
+    : { type: d.type, id: state.toolOpId, name: state.toolName, arguments: d.arguments };
+  const parsed = GeminiInteractionsWire_API_Interactions.SurfacedToolStep_schema.safeParse(synthesized);
+  if (parsed.success) _emitAntigravityToolOp(pt, parsed.data, parentOpId);
+}
+
+
+// --- terminal status + usage ---
+
+function _handleInteractionCompleted(
   pt: IParticleTransmitter,
   interaction: TInteraction,
   operationOpId: string | null,
@@ -637,7 +769,7 @@ function _handleInteractionComplete(
   agentLabel: string, // 'Deep Research' | 'Antigravity Agent' - used for the terminal chip text
 ): void {
 
-  // Flush any content parts that were open when the final block arrived
+  // Flush any content parts that were open when the final step arrived
   if (lastOpenIdx !== -1) pt.endMessagePart();
 
   switch (interaction.status) {
@@ -681,9 +813,27 @@ function _handleInteractionComplete(
       pt.setDialectEnded('done-dialect');
       break;
 
+    case 'budget_exceeded':
+      // New steps-schema terminal status: the run hit a spend/compute budget cap. Keep emitted content.
+      if (operationOpId)
+        pt.sendOperationState(runChipMotif, `${agentLabel} budget exceeded`, { opId: operationOpId, state: 'error' });
+      pt.appendText('\n_Run stopped: budget exceeded._\n');
+      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+      pt.setTokenStopReason('out-of-tokens');
+      pt.setDialectEnded('done-dialect');
+      break;
+
     case 'in_progress':
-      // interaction.complete with in_progress shouldn't happen per the spec - log and keep the stream open
-      console.warn('[GeminiInteractions] interaction.complete with status=in_progress; ignoring');
+      // Anomalous: interaction.completed is the TERMINAL SSE event, so status=in_progress here means the
+      // run did not actually finish AND no further frames will arrive. Terminate cleanly instead of leaving
+      // the stream hanging until the socket times out (user-visible spinner hang). `cg-issue` keeps the
+      // upstream handle alive for retry, matching the NS parser's in_progress policy.
+      console.warn('[GeminiInteractions] interaction.completed with status=in_progress; terminating as retryable');
+      if (operationOpId)
+        pt.sendOperationState(runChipMotif, `${agentLabel} interrupted`, { opId: operationOpId, state: 'error' });
+      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+      pt.setTokenStopReason('cg-issue');
+      pt.setDialectEnded('done-dialect');
       break;
 
     default: {
