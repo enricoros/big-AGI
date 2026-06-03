@@ -196,7 +196,7 @@ export function ChatMessageList(props: {
     if (!llmId) throw new Error('No model id on generator');
 
     const { aixDeleteUpstreamContent_orThrow } = await import('~/modules/aix/client/aix.client');
-    const result = await aixDeleteUpstreamContent_orThrow(llmId, generator);
+    const result = await aixDeleteUpstreamContent_orThrow(llmId, generator.upstreamHandle);
 
     // On success (or 404 already-gone), clear the handle locally so the buttons disappear
     if (result.ok) {

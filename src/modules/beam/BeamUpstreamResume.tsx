@@ -7,6 +7,8 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 
 import { BlockOpUpstreamResume } from '../../apps/chat/components/message/BlockOpUpstreamResume';
 
+import { beamDeleteUpstreamOrThrow } from './beam.reattach';
+
 
 /**
  * Beam wrapper around the chat's BlockOpUpstreamResume, for Gemini Interactions (Deep Research) runs
@@ -33,14 +35,10 @@ export function BeamUpstreamResume(props: {
   const effectiveLlmId = llmId || (generator?.mgt === 'aix' ? generator.aix.mId : null);
 
   const handleDelete = React.useCallback(async () => {
-    if (!effectiveLlmId || !generator?.upstreamHandle) return;
-    const { aixDeleteUpstreamContent_orThrow } = await import('~/modules/aix/client/aix.client');
-    const result = await aixDeleteUpstreamContent_orThrow(effectiveLlmId, generator);
-    if (result.ok)
-      return onClearHandle();
-    // surface to the button's inline error UI
-    throw new Error(result.message || `Cancel failed${result.httpStatus ? ` (HTTP ${result.httpStatus})` : ''}`);
-  }, [effectiveLlmId, generator, onClearHandle]);
+    if (!effectiveLlmId || !upstreamHandle) return;
+    await beamDeleteUpstreamOrThrow(effectiveLlmId, upstreamHandle); // throws on failure -> button's inline error UI
+    onClearHandle();
+  }, [effectiveLlmId, upstreamHandle, onClearHandle]);
 
   // State-gated: nothing while the card is live (the header Stop is the only stop), or without a resumable handle
   if (isPending || !upstreamHandle || !effectiveLlmId)
@@ -50,7 +48,9 @@ export function BeamUpstreamResume(props: {
     <BlockOpUpstreamResume
       upstreamHandle={upstreamHandle}
       pending={false}
+      // inFlightMode={undefined} // because only shown when stopped
       onResume={onReattach}
+      // onDetach={undefined}
       onDelete={handleDelete}
     />
   );

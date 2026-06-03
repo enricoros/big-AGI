@@ -1,4 +1,4 @@
-import { AixChatGenerateContent_DMessageGuts, AixChatGenerateTerminal_LL, AixReattachMode, aixCreateChatGenerateContext, aixReattachContent_DMessage_orThrow } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, AixChatGenerateTerminal_LL, AixReattachMode, aixCreateChatGenerateContext, aixDeleteUpstreamContent_orThrow, aixReattachContent_DMessage_orThrow } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
@@ -48,4 +48,12 @@ export function beamReattachStream(args: {
   )
     .then((status) => args.onTerminal(status.outcome))
     .catch(() => args.onTerminal('failed'));
+}
+
+
+/** Cancel: delete the upstream-stored run by handle, throwing a user-facing message on failure (caller clears the handle on success). */
+export async function beamDeleteUpstreamOrThrow(llmId: DLLMId, upstreamHandle: Readonly<DMessageGenerator['upstreamHandle']>): Promise<void> {
+  const result = await aixDeleteUpstreamContent_orThrow(llmId, upstreamHandle);
+  if (result.ok) return;
+  throw new Error(result.message || `Cancel failed${result.httpStatus ? ` (HTTP ${result.httpStatus})` : ''}`);
 }

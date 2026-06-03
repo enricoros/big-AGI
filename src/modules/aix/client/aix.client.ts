@@ -728,18 +728,18 @@ export async function aixReattachContent_DMessage_orThrow(
 // --- L2 - Delete upstream handle (symmetric to reattach) ---
 
 /**
- * Delete facade: DELETE the upstream-stored run identified by the generator's handle.
+ * Delete facade: DELETE the upstream-stored run identified by its handle.
  * Symmetric to `aixReattachContent_DMessage_orThrow` but terminal - after this, the handle is gone upstream.
  *
- * Does NOT mutate the DMessage - the caller decides how to react (typically clear the handle on ok).
- * Shape mirrors reattach: resolve access from the generator's llmId, then call the procedure (tRPC or CSF).
+ * Does NOT mutate any DMessage - the caller decides how to react (typically clear the handle on ok).
+ * Shape mirrors reattach: resolve access from the llmId, then call the procedure (tRPC or CSF).
  */
 export async function aixDeleteUpstreamContent_orThrow(
   llmId: DLLMId,
-  generator: Readonly<DMessageGenerator>,
+  upstreamHandle: Readonly<DMessageGenerator['upstreamHandle']>,
   abortSignal?: AbortSignal,
 ) {
-  if (!generator.upstreamHandle) throw new Error('aixDeleteUpstreamContent: generator must have an upstreamHandle');
+  if (!upstreamHandle) throw new Error('aixDeleteUpstreamContent: missing upstreamHandle');
 
   // short-circuit if already expired upstream - no network call, caller can clear locally.
   // if (expiresAt != null && Date.now() > expiresAt)
@@ -752,10 +752,10 @@ export async function aixDeleteUpstreamContent_orThrow(
   // AIX [CSF] Direct delete when the vendor supports it
   if (aixAccess.clientSideFetch) {
     const { clientSideDeleteUpstream } = await _loadCsfModuleOrThrow();
-    return await clientSideDeleteUpstream(aixAccess, generator.upstreamHandle, abortSignal ?? new AbortController().signal);
+    return await clientSideDeleteUpstream(aixAccess, upstreamHandle, abortSignal ?? new AbortController().signal);
   }
   // ... otherwise, tRPC delete
-  return await apiAsync.aix.upstreamDeleteContent.mutate({ access: aixAccess, upstreamHandle: generator.upstreamHandle }, { signal: abortSignal });
+  return await apiAsync.aix.upstreamDeleteContent.mutate({ access: aixAccess, upstreamHandle: upstreamHandle }, { signal: abortSignal });
 }
 
 
