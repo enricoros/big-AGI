@@ -552,10 +552,10 @@ export function ChatMessage(props: {
   // Expose actions handle for parent components
   React.useImperativeHandle(props.actionsRef, () => ({
     beginEditTextContent: () => {
-      if (!isEditingText && props.onMessageFragmentReplace && !messagePendingIncomplete)
+      if (!isEditingText && onMessageFragmentReplace && !messagePendingIncomplete)
         handleEditsBegin();
     },
-  }), [handleEditsBegin, isEditingText, messagePendingIncomplete, props.onMessageFragmentReplace]);
+  }), [handleEditsBegin, isEditingText, messagePendingIncomplete, onMessageFragmentReplace]);
 
 
   // Blocks renderer
@@ -565,9 +565,9 @@ export function ChatMessage(props: {
   }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    if ((doubleClickToEdit || event.shiftKey) && props.onMessageFragmentReplace)
+    if ((doubleClickToEdit || event.shiftKey) && onMessageFragmentReplace)
       handleOpsMessageEditToggle(event);
-  }, [doubleClickToEdit, handleOpsMessageEditToggle, props.onMessageFragmentReplace]);
+  }, [doubleClickToEdit, handleOpsMessageEditToggle, onMessageFragmentReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
     // https://github.com/enricoros/big-AGI/issues/788
@@ -591,7 +591,7 @@ export function ChatMessage(props: {
 
   // Options interceptor
 
-  const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && messageGenerator?.tokenStopReason !== 'out-of-tokens' && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
+  const lookForOptions = onMessageContinue !== undefined && props.isBottom === true && messageGenerator?.tokenStopReason !== 'out-of-tokens' && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
   const { fragments: renderInterleavedFragments, options: continuationOptions } = React.useMemo(() => {
     return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, interleavedFragments);
@@ -783,7 +783,7 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               messageRole={messageRole}
               disabled={isEditingText}
-              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
             />
           )}
 
@@ -796,8 +796,8 @@ export function ChatMessage(props: {
               uiComplexityMode={uiComplexityMode}
               messageRole={messageRole}
               messagePendingIncomplete={messagePendingIncomplete}
-              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
-              onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
+              onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentReplace={!onMessageFragmentReplace ? undefined : handleFragmentReplace}
             />
           )}
 
@@ -818,17 +818,17 @@ export function ChatMessage(props: {
             showUnsafeHtmlCode={props.showUnsafeHtmlCode}
 
             textEditsState={textContentEditState}
-            setEditedText={(!props.onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}
+            setEditedText={(!onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
-            onFragmentAddBlank={!props.onMessageFragmentAppend ? undefined : handleFragmentNew}
-            onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
-            onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
+            onFragmentAddBlank={!onMessageFragmentAppend ? undefined : handleFragmentNew}
+            onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
+            onFragmentReplace={!onMessageFragmentReplace ? undefined : handleFragmentReplace}
             onMessageDelete={!onMessageDelete ? undefined : handleMessageDelete}
 
-            onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
-            onDoubleClick={(props.onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
+            onContextMenu={(onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
+            onDoubleClick={(onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
           />
 
           {/* Document Fragments */}
@@ -841,8 +841,8 @@ export function ChatMessage(props: {
               zenMode={zenMode}
               allowSelection={!isEditingText}
               disableMarkdownText={disableMarkdown}
-              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
-              onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
+              onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentReplace={!onMessageFragmentReplace ? undefined : handleFragmentReplace}
             />
           )}
 
@@ -861,12 +861,12 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               messageRole={messageRole}
               disabled={isEditingText}
-              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
             />
           )}
 
           {/* Continue... */}
-          {props.isBottom && fromAssistant && messageGenerator?.tokenStopReason === 'out-of-tokens' && !!props.onMessageContinue && (
+          {props.isBottom && fromAssistant && messageGenerator?.tokenStopReason === 'out-of-tokens' && !!onMessageContinue && (
             <BlockOpContinue
               contentScaling={adjContentScaling}
               messageRole={messageRole}
@@ -887,7 +887,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Continue Options... */}
-          {continuationOptions.length >= 1 && !!props.onMessageContinue && (
+          {continuationOptions.length >= 1 && !!onMessageContinue && (
             <BlockOpOptions
               contentScaling={adjContentScaling}
               options={continuationOptions}
@@ -1009,7 +1009,7 @@ export function ChatMessage(props: {
                   {props.hasInReferenceTo ? <ReplyAllRoundedIcon sx={{ fontSize: 'xl' }} /> : <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />}
                 </IconButton>
               </Tooltip>}
-              {/*{!!props.onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
+              {/*{!!onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
               {/*  <IconButton color='primary'>*/}
               {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
               {/*  </IconButton>*/}
@@ -1052,22 +1052,22 @@ export function ChatMessage(props: {
               {fromAssistant && <Divider />}
 
               {/* Intelligent functions */}
-              {props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
+              {onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
                 <IconButton color='success' onClick={couldDiagram ? handleOpsTextDiagram : undefined}>
                   <PhTreeStructure sx={{ color: couldDiagram ? 'primary' : 'neutral.plainDisabledColor' }} />
                 </IconButton>
               </Tooltip>}
-              {props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>
+              {onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>
                 <IconButton color='success' onClick={handleOpsTextImagine} disabled={!couldImagine || props.isImagining}>
                   {!props.isImagining ? <FormatPaintOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
                 </IconButton>
               </Tooltip>}
-              {props.onTextSpeak && <Tooltip disableInteractive arrow placement='top' title='Speak'>
+              {onTextSpeak && <Tooltip disableInteractive arrow placement='top' title='Speak'>
                 <IconButton color='success' onClick={handleOpsTextSpeak} disabled={!couldSpeak || props.isSpeaking}>
                   {!props.isSpeaking ? <PhVoice /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
                 </IconButton>
               </Tooltip>}
-              {(props.onTextDiagram || props.onTextImagine || props.onTextSpeak) && <Divider />}
+              {(onTextDiagram || onTextImagine || onTextSpeak) && <Divider />}
 
               {/* Bubble Copy */}
               <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
@@ -1102,16 +1102,16 @@ export function ChatMessage(props: {
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy
           </MenuItem>
-          {props.onTextDiagram && <ListDivider />}
-          {props.onTextDiagram && <MenuItem onClick={handleOpsTextDiagram} disabled={!couldDiagram || props.isImagining}>
+          {onTextDiagram && <ListDivider />}
+          {onTextDiagram && <MenuItem onClick={handleOpsTextDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><PhTreeStructure /></ListItemDecorator>
             Auto-Diagram ...
           </MenuItem>}
-          {props.onTextImagine && <MenuItem onClick={handleOpsTextImagine} disabled={!couldImagine || props.isImagining}>
+          {onTextImagine && <MenuItem onClick={handleOpsTextImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintOutlinedIcon />}</ListItemDecorator>
             Auto-Draw
           </MenuItem>}
-          {props.onTextSpeak && <MenuItem onClick={handleOpsTextSpeak} disabled={!couldSpeak || props.isSpeaking}>
+          {onTextSpeak && <MenuItem onClick={handleOpsTextSpeak} disabled={!couldSpeak || props.isSpeaking}>
             <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <PhVoice />}</ListItemDecorator>
             Speak
           </MenuItem>}
