@@ -15,6 +15,10 @@ import { AixDebuggerMeasurementsTable } from './AixDebuggerMeasurementsTable';
 import { useAixClientDebuggerStore } from './memstore-aix-client-debugger';
 
 
+// configuration
+const MAX_PARTICLE_STRLEN = 72; // ellipsize string fields within particles above this lenght
+
+
 const _styles = {
   requestSheet: {
     // backgroundColor: 'background.popup',
@@ -184,13 +188,13 @@ export function AixDebuggerFrame(props: {
           {/* Zero state */}
           {!frame.particles.length && <div>No particles received yet</div>}
 
-          {/* List of particles */}
           {frame.particles.map((particle, idx) => {
+          {/* List of particles */}
 
             // preview of particle content: preserve structure, trim long string fields
             let jsonPreview = '';
             try {
-              jsonPreview = JSON.stringify(objectDeepCloneWithStringLimit(particle.content, 'aix-debugger-particle', 64));
+              jsonPreview = JSON.stringify(objectDeepCloneWithStringLimit(particle.content, 'aix-debugger-particle', MAX_PARTICLE_STRLEN));
             } catch (e) {
               jsonPreview = 'Error parsing content';
             }
