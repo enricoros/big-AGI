@@ -10,6 +10,9 @@ const Popup = styled(Popper)({
   zIndex: 1000,
 });
 
+// data-attribute marking a CloseablePopup's DOM root, so sibling/parent popups don't treat a tap inside it as a click-away (see handleClickAway)
+const closeablePopupDataAttr = 'data-closeable-popup';
+
 
 /**
  * Use this for submenus on any Menu/Popup, to prevent the parent popup from closing when clicking on this item. e.g.
@@ -79,6 +82,15 @@ export function CloseablePopup(props: {
     onClose();
   }, [onClose]);
 
+  const handleClickAway = React.useCallback((event: MouseEvent | TouchEvent) => {
+    // a tap inside ANOTHER CloseablePopup (e.g. an open submenu) is not an "outside" tap for us: those popups
+    // render in a SEPARATE portal, so without this they look like a click-away. On mobile this fires on touchend
+    // and would close us - unmounting the tapped item before its onClick fires (swallowing the action).
+    const targetEl = event.target as Element | null;
+    if (targetEl?.closest?.(`[${closeablePopupDataAttr}]`)) return;
+    handleClose(event);
+  }, [handleClose]);
+
   const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
       // NOTE: the following is not needed since we fixed 'tab'
@@ -145,13 +157,13 @@ export function CloseablePopup(props: {
       modifiers={modifiersMemo}
       sx={popperMemoSx}
     >
-      <ClickAwayListener onClickAway={handleClose}>
+      <ClickAwayListener onClickAway={handleClickAway}>
         {props.menu ? (
-          <MenuList ref={props.noAutoFocus ? undefined : autoFocusOnMount} size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <MenuList ref={props.noAutoFocus ? undefined : autoFocusOnMount} size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx} {...{ [closeablePopupDataAttr]: '' }}>
             {props.children}
           </MenuList>
         ) : (
-          <Box ref={props.noAutoFocus ? undefined : autoFocusOnMount} onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <Box ref={props.noAutoFocus ? undefined : autoFocusOnMount} onKeyDown={handleKeyDown} sx={styleMemoSx} {...{ [closeablePopupDataAttr]: '' }}>
             {props.children}
           </Box>
         )}
