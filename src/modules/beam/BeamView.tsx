@@ -9,7 +9,10 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { fragmentsSetOriginId } from '~/common/stores/chat/chat.fragments';
+import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { useUICounter } from '~/common/stores/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
@@ -75,16 +78,38 @@ export function BeamView(props: {
 
   const handleRaysOperation = React.useCallback((operation: 'copy' | 'use') => {
     const { rays, onSuccessCallback } = props.beamStore.getState();
-    const allFragments = rays.flatMap(ray => ray.message.fragments);
-    if (allFragments.length) {
-      switch (operation) {
-        case 'copy':
-          const combinedText = messageFragmentsReduceText(allFragments, '\n\n\n---\n\n\n');
-          copyToClipboard(combinedText, 'All Beams');
-          break;
-        case 'use':
-          onSuccessCallback?.({ fragments: allFragments });
-          break;
+    const readyRays = rays.filter(ray => ray.message.fragments.length > 0);
+    if (!readyRays.length) return;
+
+    switch (operation) {
+
+      case 'copy': {
+        const allFragments = readyRays.flatMap(ray => ray.message.fragments);
+        copyToClipboard(messageFragmentsReduceText(allFragments, '\n\n\n---\n\n\n'), 'All Beams');
+        break;
+      }
+
+      case 'use': {
+        // tag each ray's fragments with originId and build a generator lookup map
+        const originGenerators: Record<string, DMessageGenerator> = {};
+        const modelNames: string[] = [];
+        const allFragments = readyRays.flatMap(ray => {
+          const originId = ray.rayId;
+          if (ray.message.generator) {
+            originGenerators[originId] = ray.message.generator;
+            modelNames.push(prettyShortChatModelName(ray.message.generator.name));
+          }
+          return fragmentsSetOriginId(ray.message.fragments, originId);
+        });
+
+        // synthesize a message-level generator label
+        const uniqueNames = [...new Set(modelNames)];
+        const generator: DMessageGenerator = uniqueNames.length === 1
+          ? readyRays.find(r => r.message.generator)!.message.generator!
+          : { mgt: 'named', name: `Beam (${uniqueNames.length > 3 ? uniqueNames.length + ' models' : uniqueNames.join(', ')})` };
+
+        onSuccessCallback?.({ fragments: allFragments, generator, originGenerators });
+        break;
       }
     }
   }, [props.beamStore]);

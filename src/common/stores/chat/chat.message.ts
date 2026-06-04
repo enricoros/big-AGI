@@ -26,6 +26,7 @@ export interface DMessage {
   metadata?: DMessageMetadata;        // Semantic augmentation, mainly at creation
 
   generator?: DMessageGenerator;      // Assistant generator info, and metrics
+  originGenerators?: Record<string, DMessageGenerator>; // maps fragment originId -> generator, for multi-model messages (e.g. Beam "Use All")
 
   // Session metadata for multi-turn agentic sessions was considered here (see commit 3cd38f47)
   // but vendor session state (container IDs, response handles) is stored on DMessageGenerator
@@ -209,6 +210,7 @@ export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean
 
     metadata: message.metadata ? duplicateDMessageMetadata(message.metadata) : undefined,
     generator: message.generator ? duplicateDMessageGenerator(message.generator) : undefined,
+    originGenerators: message.originGenerators ? duplicateOriginGenerators(message.originGenerators) : undefined,
     // sessionMetadata: message.sessionMetadata ? duplicateDMessageSession(message.sessionMetadata) : undefined,
     userFlags: message.userFlags ? [...message.userFlags] : undefined,
 
@@ -259,6 +261,13 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
       };
   }
+}
+
+function duplicateOriginGenerators(originGenerators: Readonly<Record<string, DMessageGenerator>>): Record<string, DMessageGenerator> {
+  const result: Record<string, DMessageGenerator> = {};
+  for (const [key, gen] of Object.entries(originGenerators))
+    result[key] = duplicateDMessageGenerator(gen);
+  return result;
 }
 
 

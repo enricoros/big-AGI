@@ -252,7 +252,7 @@ export class ConversationHandler {
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
-    const onBeamSuccess = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => {
+    const onBeamSuccess = (messageUpdate: Pick<DMessage, 'fragments' | 'generator' | 'originGenerators'>) => {
 
       // set output when going back to the chat
       if (destReplaceMessageId) {
@@ -263,7 +263,8 @@ export class ConversationHandler {
         const newMessage = createDMessageFromFragments('assistant', messageUpdate.fragments); // [chat] append Beam message
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
         newMessage.generator = messageUpdate.generator;
-        // TODO: put the other rays in the metadata?! (reqby @Techfren)
+        if (messageUpdate.originGenerators)
+          newMessage.originGenerators = messageUpdate.originGenerators;
         this.messageAppend(newMessage);
       }
 
