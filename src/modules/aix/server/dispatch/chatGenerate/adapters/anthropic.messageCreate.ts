@@ -414,7 +414,9 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
                 toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, part.invocation.name, part.invocation.args);
                 break;
               case 'code_execution':
-                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, part.invocation.code);
+                // wrap the raw code into a dict (Anthropic native code_execution input shape is { code }): ToolUseBlock JSON.parses its
+                // input, and Anthropic rejects non-dictionary .input - passing the bare code string would throw on JSON.parse
+                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, JSON.stringify({ code: part.invocation.code }));
                 break;
               default:
                 const _exhaustiveCheck: never = part.invocation;
