@@ -2,12 +2,16 @@ import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateConten
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
+import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+
 import { DConversationId, splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
+
+import { runSLMPipeline, extractLastUserMessageText, buildConversationContext } from '~/modules/slm/slm.pipeline';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI, getChatThinkingPolicy, getIsNotificationEnabledForModel } from '../store-app-chat';
@@ -63,6 +67,41 @@ export async function runPersonaOnConversationHead(
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
   cHandler.setAbortController(abortController, 'chat-persona');
+
+  // SLM Orchestrator: intercept and run the full multi-agent pipeline
+  if (chatSystemInstruction?.purposeId === 'SLMOrchestrator') {
+    try {
+      const userMessage = extractLastUserMessageText(chatHistory);
+      const conversationContext = buildConversationContext(chatHistory);
+
+      await runSLMPipeline({
+        userMessage,
+        conversationContext,
+        llmId: assistantLlmId,
+        abortSignal: abortController.signal,
+        onProgress: (progressText: string, done: boolean) => {
+          const progressMessage: AixChatGenerateContent_DMessage = {
+            fragments: [createTextContentFragment(progressText)],
+            generator: { mgt: 'named', name: assistantLlmId },
+            pendingIncomplete: !done,
+          };
+          cHandler.messageEdit(assistantMessageId, progressMessage, done, false);
+        },
+      });
+    } catch (err: any) {
+      const errText = `**SLM Pipeline Error**\n\n${err?.message ?? 'Unknown error'}\n\nFalling back to standard mode.`;
+      const errMessage: AixChatGenerateContent_DMessage = {
+        fragments: [createTextContentFragment(errText)],
+        generator: { mgt: 'named', name: assistantLlmId },
+        pendingIncomplete: false,
+      };
+      cHandler.messageEdit(assistantMessageId, errMessage, true, false);
+    }
+
+    cHandler.clearAbortController('chat-persona');
+    if (autoTitleChat) void autoConversationTitle(conversationId, false);
+    return !abortController.signal.aborted;
+  }
 
   // stream the assistant's messages directly to the state store
   const messageStatus = await aixChatGenerateContent_DMessage_FromConversation(

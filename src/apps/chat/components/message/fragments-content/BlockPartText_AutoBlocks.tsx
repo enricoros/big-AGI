@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { WordsDiff } from '~/modules/blocks/wordsdiff/RenderWordsDiff';
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { isSLMOutput, SLMOutputRenderer } from '~/modules/slm/SLMOutputRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
@@ -56,6 +57,11 @@ export function BlockPartText_AutoBlocks(props: {
     () => !messageText ? null : explainServiceErrors(messageText, fromAssistant),
     [fromAssistant, messageText],
   );
+
+  // SLM pipeline output: render with collapsible phase accordion UI
+  if (fromAssistant && isSLMOutput(messageText)) {
+    return <SLMOutputRenderer text={messageText} />;
+  }
 
   // if errored, render an Auto-Error message
   if (errorExplainer) {
