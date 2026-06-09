@@ -6,7 +6,7 @@ import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
-import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
+import { metricsChatGenerateLgToMd, metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
@@ -1114,7 +1114,11 @@ export class ContentReassembler {
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {
     // type check point for AixWire_Particles.CGSelectMetrics -> DMetricsChatGenerate_Lg
     this.S.cgMetricsLg = metrics;
-    metricsPendChatGenerateLg(this.S.cgMetricsLg);
+    metricsPendChatGenerateLg(this.S.cgMetricsLg); // sets TsR='pending'
+    // Reflect preliminary token counts on the generator during streaming, so the UI (avatar tooltip,
+    // Message Info modal) can show input/output tokens early. Costs are intentionally omitted here -
+    // they are computed at finalization (_finalizeLlmMetricsWithCosts), which then overwrites these.
+    this.S.generator = { ...this.S.generator, metrics: metricsChatGenerateLgToMd(this.S.cgMetricsLg) };
   }
 
   private onModelName({ name }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-model' }>): void {

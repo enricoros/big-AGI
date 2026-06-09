@@ -216,6 +216,9 @@ export function useMessageAvatarLabel(
   const laggedGeneratorRef = React.useRef<DMessageGenerator | undefined>(undefined);
   laggedGeneratorRef.current = generator;
   const generatorName = generator?.name ?? '';
+  // metrics ref changes only when token counts update (not every streaming tick), so depending on it
+  // recomputes the memo when preliminary metrics arrive - without losing the per-update lag optimization
+  const generatorMetrics = generator?.metrics;
 
   return React.useMemo(() => {
     if (created === undefined) {
@@ -232,17 +235,20 @@ export function useMessageAvatarLabel(
       };
     }
 
-    // incomplete: just the name
+    // incomplete: name + the "Thinking..." indicator, plus any preliminary metrics that already arrived (e.g. input tokens)
     const prettyName = prettyShortChatModelName(generatorName);
-    if (pendingIncomplete)
+    if (pendingIncomplete) {
+      const liveMetrics = generatorMetrics ? prettyMessageMetrics(generatorMetrics, complexity) : null;
       return {
         label: prettyName,
         tooltip: (!created || complexity === 'minimal') ? null : (
           <Box sx={tooltipSx}>
             <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
+            {liveMetrics}
           </Box>
         ),
       };
+    }
 
     // named generator: nothing else to do there
     if (generator.mgt === 'named')
@@ -275,7 +281,7 @@ export function useMessageAvatarLabel(
         </Box>
       ),
     };
-  }, [complexity, created, generatorName, pendingIncomplete, updated]);
+  }, [complexity, created, generatorMetrics, generatorName, pendingIncomplete, updated]);
 }
 
 /** Renders chat generation metrics as a grid. Exported for reuse in message info popup. */
