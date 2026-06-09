@@ -21,6 +21,10 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  * - event_ContentBlockDelta: resilient parsing of unknown delta types (e.g. 'compaction_delta')
  * - WebFetchToolResultError: added 'url_not_in_prior_context' error code
  * - Models: claude-fable-5 / claude-mythos-5 are adaptive-thinking-only ('enabled'/'disabled' return 400, no prefill, display defaults 'omitted') - coerced in the adapter
+ * - Fable/Mythos 5 tool calling (empirical, 14-case matrix): auto/parallel/disable_parallel/chaining/error-retry/streaming all OK; forced
+ *   tool_choice ('any'/'tool') returns 400 at the model level - the adapter downgrades to 'auto' + a system hint (empirically equivalent);
+ *   'none' with tools returns 200 with EMPTY content (big-AGI never sends 'none'); thinking blocks may be replayed verbatim OR stripped
+ *   (no signature enforcement on replay - we keep replaying them per the documented contract)
  * - NOT adopted (beta): `fallbacks` param (server-side-fallback-2026-06-01), advisor tool, compaction, cache diagnostics, task budgets, mid-conversation system messages (role: 'system')
  *
  * ### 2026-05-28 - API Sync: reasoning token breakdown

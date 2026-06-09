@@ -256,7 +256,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Fable 5: flat $10/$50 across the 1M window. Inherits Opus 4.7/4.8 API constraints: sampling params rejected,
-    // no prefill, same tokenizer as 4.7/4.8. New vs 4.8: always-on adaptive thinking (no thinking config needed),
+    // no prefill, same tokenizer as 4.7/4.8. Also rejects forced tool_choice 'any'/'tool' with a 400 (AIX downgrades
+    // to 'auto' + system hint). New vs 4.8: always-on adaptive thinking (no thinking config needed),
     // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
     // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },

@@ -194,6 +194,18 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // [Anthropic, 2026-06-09] Fable 5 / Mythos 5: adaptive is the only thinking mode - 'enabled' (budget_tokens) and 'disabled' return 400
   const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos)-5/.test(model.id);
 
+  // HOTFIX: Fable/Mythos 5 reject forced tool use: 400 'tool_choice forces tool use is not compatible with this model.'
+  // (model-level, regardless of thinking config). Downgrade to 'auto' + a system hint - empirically the model
+  // reliably calls the tool when instructed. Forced tool use is deprecated AIX-wide, see ToolsPolicy_schema.
+  if (hotFixAdaptiveThinkingOnlyModel && payload.tool_choice && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool')) {
+    const mustUseHint = payload.tool_choice.type === 'tool'
+      ? `IMPORTANT: You MUST respond by calling the \`${payload.tool_choice.name}\` tool. Do not respond with text.`
+      : 'IMPORTANT: You MUST respond by calling one of the provided tools. Do not respond with text.';
+    console.log(`[Anthropic] ${model.id}: coercing tool_choice '${payload.tool_choice.type}' -> 'auto' (forced tool use rejected by this model)`);
+    payload.tool_choice = { type: 'auto' };
+    payload.system = [...(payload.system ?? []), AnthropicWire_Blocks.TextBlock(mustUseHint, 'hotfix.forced-tools')];
+  }
+
   // [Anthropic] Thinking: adaptive (4.6+), enabled with budget (≤4.5), or disabled
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
   const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
