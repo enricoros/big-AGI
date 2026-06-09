@@ -2,7 +2,7 @@ import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
-import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
@@ -143,6 +143,34 @@ export const llmOpenAIRouter = createTRPCRouter({
       const models = await listModelsRunDispatch(access, signal);
 
       return { models };
+    }),
+
+
+  /* [OpenAI] Containers API - download a code-interpreter-generated container file (referenced by a container_file_citation annotation) */
+  containerFileDownload: edgeProcedure
+    .input(z.object({
+      access: openAIAccessSchema,
+      containerId: z.string(),
+      fileId: z.string(),
+    }))
+    .query(async ({ input: { access, containerId, fileId } }) => {
+      const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}/content`);
+      const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'OpenAI' });
+
+      // Guard against excessively large files (10 MB limit) - mirrors the Anthropic file download endpoint
+      const MAX_FILE_BYTES = 10 * 1024 * 1024;
+      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+      if (contentLength > MAX_FILE_BYTES)
+        throw new Error(`File too large to download (${(contentLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
+
+      const arrayBuffer = await response.arrayBuffer();
+      if (arrayBuffer.byteLength > MAX_FILE_BYTES)
+        throw new Error(`File too large to download (${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
+
+      return {
+        base64Data: Buffer.from(arrayBuffer).toString('base64'),
+        mimeType: response.headers.get('content-type') || 'application/octet-stream',
+      };
     }),
 
 
