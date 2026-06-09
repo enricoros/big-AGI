@@ -24,6 +24,8 @@ npm run build  # next build runs compile+lint+types but stops at first type-erro
 # npm run stripe:listen                 # Listen for Stripe webhooks
 ```
 
+For AI protocol development (model listing, live API requests/responses, parameter probing), real vendor API keys are in `.env.api-keys` if present (Anthropic, OpenAI, Gemini, etc., one VENDOR_API_KEY per line). Use them for empirical verification; never commit or echo the values.
+
 ### Git/GitHub remotes
 
 The `gh` command is available to interact with GitHub from the terminal, but **NEVER PUSH TO ANY BRANCH**. The user manages all 'write' git operations.
