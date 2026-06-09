@@ -13,6 +13,9 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-06-09 - API Sync: Claude Fable 5 / Mythos 5
+ * - StopDetails.category: added 'reasoning_extraction' (Fable 5 ToS classifier for reverse engineering / output duplication)
+ *
  * ### 2026-05-28 - API Sync: reasoning token breakdown
  * - Response.usage + event_MessageDelta.usage: added `output_tokens_details` ({ thinking_tokens }) - subset of output_tokens, surfaced as the TOutR metric (like OpenAI/Gemini)
  *
@@ -838,7 +841,7 @@ export namespace AnthropicWire_API_Message_Create {
    */
   const StopDetails_schema = z.object({
     type: z.enum(['refusal']).or(z.string()),
-    category: z.enum(['cyber', 'bio']).or(z.string()).nullish(),
+    category: z.enum(['cyber', 'bio', 'reasoning_extraction']).or(z.string()).nullish(),
     explanation: z.string().nullish(),
   });
 
@@ -1006,7 +1009,7 @@ export namespace AnthropicWire_API_Message_Create {
 
     /**
      * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode.
-     * Preview/waitlist. Only supported on Claude Opus 4.6.
+     * Preview/waitlist. Only supported on Claude Opus 4.6/4.7/4.8 (4.6 tier deprecated 2026-05-28; not available on Fable 5).
      */
     speed: z.enum(['fast']).optional(),
 

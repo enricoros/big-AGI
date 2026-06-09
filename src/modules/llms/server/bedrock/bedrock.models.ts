@@ -368,7 +368,7 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
       || a.label.localeCompare(b.label);
 
   // --- Anthropic: family > class > variant > region ---
-  const familyPrecedence = ['-4-7-', '-4-6', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
+  const familyPrecedence = ['-fable-5', '-mythos-5', '-4-8', '-4-7', '-4-6', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
   const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
 
   const getFamilyIdx = (id: string) => familyPrecedence.findIndex(f => id.includes(f));
