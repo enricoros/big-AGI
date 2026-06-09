@@ -22,7 +22,8 @@ import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SLMPhase {
-  num: number;
+  id: string;        // e.g. "1", "1.5", "5b", "6b"
+  num: number;       // parseFloat(id) - for color lookup only
   name: string;
   content: string;
   hasWarning: boolean;
@@ -39,19 +40,21 @@ interface ParsedSLMOutput {
 // ─── Parser ───────────────────────────────────────────────────────────────────
 
 function parseSLMOutput(text: string): ParsedSLMOutput {
-  const phaseRegex = /\*\*Phase (\d+(?:\.\d+)?) — ([^\n*]+)\*\*/g;
+  // Matches "1", "1.5", "5b", "6b" etc.
+  const phaseRegex = /\*\*Phase (\d+(?:[.]\d+|[a-z])?) — ([^\n*]+)\*\*/g;
   const finalMarker = '## ✦ Final Output';
 
-  const phaseHits: Array<{ index: number; num: number; name: string }> = [];
+  const phaseHits: Array<{ index: number; id: string; num: number; name: string }> = [];
   let m: RegExpExecArray | null;
   while ((m = phaseRegex.exec(text)) !== null) {
-    phaseHits.push({ index: m.index, num: parseFloat(m[1]), name: m[2].trim() });
+    const id = m[1];
+    phaseHits.push({ index: m.index, id, num: parseFloat(id), name: m[2].trim() });
   }
 
   const finalIdx = text.indexOf(finalMarker);
   const isComplete = finalIdx !== -1;
 
-  const phases: SLMPhase[] = phaseHits.map(({ index, num, name }, i) => {
+  const phases: SLMPhase[] = phaseHits.map(({ index, id, num, name }, i) => {
     const lineEnd = text.indexOf('\n', index);
     const contentStart = lineEnd > -1 ? lineEnd + 1 : index;
     const nextBoundary =
@@ -61,6 +64,7 @@ function parseSLMOutput(text: string): ParsedSLMOutput {
     const isLast = i === phaseHits.length - 1;
 
     return {
+      id,
       num,
       name,
       content,
@@ -119,12 +123,12 @@ function PhaseStatus({ hasWarning, isActive }: { hasWarning: boolean; isActive: 
 function PhaseAccordion({ phase, isOpen, onToggle }: {
   phase: SLMPhase;
   isOpen: boolean;
-  onToggle: (num: number) => void;
+  onToggle: (id: string) => void;
 }) {
   const color = phaseColor(phase.num);
   const handleChange = React.useCallback(
-    (_e: React.SyntheticEvent, expanded: boolean) => { void expanded; onToggle(phase.num); },
-    [onToggle, phase.num],
+    (_e: React.SyntheticEvent, expanded: boolean) => { void expanded; onToggle(phase.id); },
+    [onToggle, phase.id],
   );
 
   return (
@@ -161,7 +165,7 @@ function PhaseAccordion({ phase, isOpen, onToggle }: {
             color={color}
             sx={{ fontFamily: 'code', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0, letterSpacing: '0.03em' }}
           >
-            {Number.isInteger(phase.num) ? `P${phase.num}` : `P${phase.num}`}
+            {`P${phase.id}`}
           </Chip>
           <Typography
             level='body-sm'
@@ -205,12 +209,12 @@ export function SLMOutputRenderer({ text }: { text: string }) {
   const { phases, finalOutput, isComplete } = React.useMemo(() => parseSLMOutput(text), [text]);
 
   // Open/close state lives here so streaming re-renders don't reset expand choices
-  const [openPhases, setOpenPhases] = React.useState<Set<number>>(new Set());
+  const [openPhases, setOpenPhases] = React.useState<Set<string>>(new Set());
 
-  const handleToggle = React.useCallback((num: number) => {
+  const handleToggle = React.useCallback((id: string) => {
     setOpenPhases(prev => {
       const next = new Set(prev);
-      if (next.has(num)) next.delete(num); else next.add(num);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }, []);
@@ -255,9 +259,9 @@ export function SLMOutputRenderer({ text }: { text: string }) {
         <AccordionGroup disableDivider sx={{ gap: 0 }}>
           {phases.map(phase => (
             <PhaseAccordion
-              key={phase.num}
+              key={phase.id}
               phase={phase}
-              isOpen={openPhases.has(phase.num)}
+              isOpen={openPhases.has(phase.id)}
               onToggle={handleToggle}
             />
           ))}

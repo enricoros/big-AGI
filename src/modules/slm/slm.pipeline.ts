@@ -215,9 +215,15 @@ async function executeAgents(
   onAgentComplete: (output: AgentOutput) => void,
   abortSignal: AbortSignal,
 ): Promise<AgentOutput[]> {
-  const agentPromises = plan.agents.map(async ({ id, task }): Promise<AgentOutput | null> => {
+  const outputs: AgentOutput[] = [];
+
+  // Sequential execution - local model servers (LM Studio, Ollama) only handle
+  // one concurrent request; parallel calls cause all but one to fail silently.
+  for (const { id, task } of plan.agents) {
+    if (abortSignal.aborted) break;
+
     const agentDef = SLM_AGENTS[id];
-    if (!agentDef) return null;
+    if (!agentDef) continue;
 
     const systemPrompt = buildAgentSystemPrompt(agentDef);
 
@@ -230,13 +236,11 @@ async function executeAgents(
       `## Delivery Standard\nProduce a complete, production-ready deliverable — working code, not sketches. If the task names a language or technology, use exactly that. Apply security best practices, robust error handling, and idiomatic patterns without being asked. If web research is provided above, you MUST use it to ensure your output reflects current, accurate documentation — do not rely on potentially outdated training knowledge when authoritative source material is available.\n\n**STRUCTURE MANDATE**: If this task involves a system with multiple logical components (config, database, auth, services, routes, models, etc.), you MUST deliver each as a separate, complete file. Show the file path as a comment at the top of each file. Do NOT consolidate modules into a single file for brevity — that is treated as an incomplete delivery and will be sent back for full revision. Every file must be written in its entirety with no truncation.`,
     );
 
-    const userPrompt = parts.join('\n\n');
-
     try {
       const result = await aixChatGenerateText_Simple(
         llmId,
         systemPrompt,
-        userPrompt,
+        parts.join('\n\n'),
         'chat-react-turn',
         `slm-agent-${id}`,
         { abortSignal },
@@ -246,19 +250,14 @@ async function executeAgents(
       const confidence = confidenceMatch ? parseFloat(confidenceMatch[1]) : agentDef.brilliance;
 
       const output: AgentOutput = { id, name: agentDef.name, task, result, confidence };
+      outputs.push(output);
       onAgentComplete(output);
-      return output;
     } catch {
-      return null;
+      // one agent failing should not stop the rest
     }
-  });
+  }
 
-  // allSettled: one agent failure never kills the rest
-  const results = await Promise.allSettled(agentPromises);
-  return results
-    .filter((r): r is PromiseFulfilledResult<AgentOutput | null> => r.status === 'fulfilled')
-    .map(r => r.value)
-    .filter((r): r is AgentOutput => r !== null);
+  return outputs;
 }
 
 
@@ -770,12 +769,40 @@ export async function runSLMPipeline(params: {
   }
   emit('✅ Enhancement complete\n');
 
+  // Phase 6b: Post-Enhancement Review
+  // Re-runs the reviewer panel on the enhanced outputs to catch anything the
+  // enhancer introduced before committing to final assembly.
+  emit('**Phase 6b — Post-Enhancement Review**');
+  emit(`_Re-auditing enhanced outputs before final assembly..._`);
+  const postEnhanceReviews = await reviewOutputs(enhancedOutputs, userMessage, llmId, plan.reviewers, abortSignal);
+  const postEnhanceFailed = postEnhanceReviews.filter(r => !r.passed);
+
+  if (postEnhanceReviews.length > 0) {
+    emit('');
+    for (const r of postEnhanceReviews) {
+      const icon = r.passed ? '✅' : '⚠️';
+      const scorePct = Math.round(r.score * 100);
+      const fb = r.feedback ? ` — _${preview(r.feedback, 160)}_` : '';
+      emit(`- ${icon} \`${r.agentId}\` · score **${scorePct}%**${fb}`);
+    }
+    emit('');
+  }
+
+  let assemblyInputs = enhancedOutputs;
+  if (postEnhanceFailed.length > 0) {
+    emit(`⚠️ ${postEnhanceFailed.length} issue(s) found after enhancement — applying targeted fixes\n`);
+    assemblyInputs = await fixFailedOutputs(postEnhanceReviews, enhancedOutputs, userMessage, llmId, abortSignal);
+    emit('✅ Post-enhancement fixes applied\n');
+  } else {
+    emit('✅ All outputs clear — proceeding to assembly\n');
+  }
+
   // Phase 7: Assemble
   emit('**Phase 7 — Final Assembly**');
-  emit(`_Synthesizing outputs from ${enhancedOutputs.length} agent contribution(s) into unified response..._`);
-  emit(`_Contributors: ${enhancedOutputs.map(o => `\`${o.id}\``).join(', ')}_\n`);
+  emit(`_Synthesizing outputs from ${assemblyInputs.length} agent contribution(s) into unified response..._`);
+  emit(`_Contributors: ${assemblyInputs.map(o => `\`${o.id}\``).join(', ')}_\n`);
 
-  const finalOutput = await assembleOutput(enhancedOutputs, userMessage, llmId, abortSignal);
+  const finalOutput = await assembleOutput(assemblyInputs, userMessage, llmId, abortSignal);
 
   emit('---\n');
   emit('## ✦ Final Output\n');
