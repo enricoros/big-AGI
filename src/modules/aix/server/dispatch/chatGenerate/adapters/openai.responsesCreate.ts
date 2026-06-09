@@ -382,17 +382,17 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   }
 
   // The following 2 functions are to recreate native code execution (which includes the output) blocks
-  function newCodeInterpreterCallMessage(itemId: string, code: string) {
+  function newCodeInterpreterCallMessage(itemId: string, containerId: string, code: string) {
     // Round-trip the hosted call as its canonical 'code_interpreter_call' item (not a fake 'execute_code' function_call):
     // this also satisfies stateless reasoning's "a reasoning item must be followed by the item it produced" constraint.
-    // PROVENANCE: container_id here is the chat-wide most-recent (sessionContainerId), not each item's original sandbox -
-    // auto-mode still reuses the live container, but the replayed history isn't per-execution faithful. Faithful round-trip
-    // would store the id per cei fragment (see ContentReassembler.onSetVendorState 'openai-container' note).
+    // Caller gates on a live container, so container_id is always present (OpenAI rejects the item without it).
+    // PROVENANCE: containerId is the chat-wide most-recent (sessionContainerId), not each item's original sandbox -
+    // auto-mode still reuses the live container, but the replayed history isn't per-execution faithful.
     const newMessage: CodeInterpreterCallMessage = {
       type: 'code_interpreter_call',
       id: itemId,
       code: code,
-      ...(sessionContainerId ? { container_id: sessionContainerId } : {}),
+      container_id: containerId,
       status: 'completed',
     };
     chatMessages.push(newMessage);
@@ -525,7 +525,15 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                   newFunctionCallMessage(modelPart.id, invocation.name, invocation.args || '');
                   break;
                 case 'code_execution':
-                  newCodeInterpreterCallMessage(modelPart.id, invocation.code || '');
+                  // A 'code_interpreter_call' input item REQUIRES a container_id that still exists upstream (omitting it
+                  // 400s with "Missing required parameter: 'input[..].container_id'"; a stale id 404s). We only have a live
+                  // one when sessionContainerId is set. Without it - idle/expired, OR the prior execution was another
+                  // vendor's container (e.g. Gemini, stored as 'vnd.gem.interactions') - fall back to the container-
+                  // independent 'execute_code' function_call, which carries the code as context with no container dependency.
+                  if (sessionContainerId)
+                    newCodeInterpreterCallMessage(modelPart.id, sessionContainerId, invocation.code || '');
+                  else
+                    newFunctionCallMessage(modelPart.id, 'execute_code', invocation.code || '');
                   break;
                 default:
                   const _exhaustiveCheck: never = invocation;
@@ -554,8 +562,12 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                   newFunctionCallOutputMessage(modelPart.id, functionCallOutput);
                   break;
                 case 'code_execution':
-                  // Merge into the matching 'code_interpreter_call' item (paired by id) created above.
-                  attachCodeInterpreterCallOutputs(modelPart.id, modelPart.response.result, !!modelPart.error);
+                  // Mirror the invocation's representation (same sessionContainerId gate): merge outputs into the
+                  // code_interpreter_call when live, else emit a plain function_call_output for the 'execute_code' fallback.
+                  if (sessionContainerId)
+                    attachCodeInterpreterCallOutputs(modelPart.id, modelPart.response.result, !!modelPart.error);
+                  else
+                    newFunctionCallOutputMessage(modelPart.id, modelPart.response.result);
                   break;
                 default:
                   const _exhaustiveCheck: never = toolResponseType;
