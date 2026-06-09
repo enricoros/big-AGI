@@ -210,11 +210,22 @@ export namespace GeminiInteractionsWire_API_Interactions {
     channels: z.number().optional(),
   });
 
+  const DocumentContent_schema = z.object({
+    type: z.literal('document'),
+    // [inferred] Mirrors the image/audio block shape (inline `data`+`mime_type`, or a `uri`). The exact
+    // document-block layout is unverified - confirm against a real code-exec file artifact. Guarded in the
+    // parser: only inline bytes are downloaded, uri-only gets a note, anything else degrades to a silent skip.
+    data: z.string().optional(),
+    uri: z.string().optional(),
+    mime_type: z.string().optional(),
+  });
+
   /** Content blocks we emit to the UI (inside model_output steps). Everything else is skipped by the parser. */
   export const KnownContent_schema = z.discriminatedUnion('type', [
     TextContent_schema,
     ImageContent_schema,
     AudioContent_schema,
+    DocumentContent_schema,
   ]);
 
   // `thought.summary` is documented as ThoughtSummaryContent (array of `{type:'text', text}` blocks).
@@ -486,13 +497,21 @@ export namespace GeminiInteractionsWire_API_Interactions {
     arguments: z.string().optional(),
   });
 
-  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (document, video,
-  // tool-call/result deltas) fail safeParse in the parser and are handled by the tool-surfacing branch
-  // or silently dropped.
+  const DocumentDelta_schema = z.object({
+    type: z.literal('document'),
+    // [inferred] Same shape assumption as DocumentContent_schema - see note there.
+    data: z.string().optional(),
+    uri: z.string().optional(),
+    mime_type: z.string().optional(),
+  });
+
+  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (video, tool-call/result
+  // deltas) fail safeParse in the parser and are handled by the tool-surfacing branch or silently dropped.
   export const StreamDelta_schema = z.discriminatedUnion('type', [
     TextDelta_schema,
     ImageDelta_schema,
     AudioDelta_schema,
+    DocumentDelta_schema,
     ThoughtSummaryDelta_schema,
     ThoughtSignatureDelta_schema,
     TextAnnotationDelta_schema,

@@ -290,8 +290,8 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
             _emitAntigravityToolDeltaRefine(pt, event.delta, state, operationOpId);
             break;
           }
-          // Known-but-not-surfaced delta types (internal tools + spec's document/video we don't model) - silent skip
-          if (deltaType && (GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(deltaType) || deltaType === 'document' || deltaType === 'video')) break;
+          // Known-but-not-surfaced delta types (internal tools + spec's video we don't model) - silent skip
+          if (deltaType && (GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(deltaType) || deltaType === 'video')) break;
           console.warn('[GeminiInteractions] unknown step.delta shape at index', event.index, event.delta);
           break;
         }
@@ -334,6 +334,9 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
             // PCM needs WAV conversion; packaged formats pass through.
             if (delta.data && delta.mime_type)
               _emitAudio(pt, delta.mime_type, delta.data, '[GeminiInteractions] audio PCM convert failed:');
+            break;
+          case 'document':
+            _emitDocument(pt, delta.mime_type, delta.data, delta.uri);
             break;
           default: {
             const _exhaustive: never = delta;
@@ -541,7 +544,7 @@ function _emitContentBlock(pt: IParticleTransmitter, rawBlock: unknown, state: B
   const known = GeminiInteractionsWire_API_Interactions.KnownContent_schema.safeParse(rawBlock);
   if (!known.success) {
     const t = (rawBlock as { type?: string })?.type;
-    if (t && t !== 'document' && t !== 'video') console.warn('[GeminiInteractions] unknown content block, skipping:', t);
+    if (t && t !== 'video') console.warn('[GeminiInteractions] unknown content block, skipping:', t);
     return false;
   }
   const block = known.data;
@@ -565,6 +568,10 @@ function _emitContentBlock(pt: IParticleTransmitter, rawBlock: unknown, state: B
       if (block.data && block.mime_type)
         _emitAudio(pt, block.mime_type, block.data, '[GeminiInteractions] audio PCM convert failed:');
       return true;
+    case 'document':
+      markFirstContent();
+      _emitDocument(pt, block.mime_type, block.data, block.uri);
+      return true;
     default: {
       const _exhaustive: never = block;
       return false;
@@ -582,6 +589,14 @@ function _emitThoughtSummary(pt: IParticleTransmitter, summary: unknown): void {
       if (typeof t === 'string' && t) pt.appendReasoningText(t);
     }
   }
+}
+
+/** Emit a document/file artifact: inline bytes -> fire-and-forget client download (inline-download hres); URI-only -> a visible note. */
+function _emitDocument(pt: IParticleTransmitter, mimeType: string | undefined, base64Data: string | undefined, uri: string | undefined): void {
+  if (base64Data && mimeType)
+    pt.appendHostedResource({ p: 'hres', kind: 'inline-download', mimeType, b64: base64Data });
+  else if (uri)
+    pt.appendText(`\n[Document: ${uri}]\n`);
 }
 
 function _emitAudio(pt: IParticleTransmitter, mimeType: string, base64Data: string, errPrefix: string): void {

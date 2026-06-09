@@ -712,12 +712,20 @@ export class ContentReassembler {
         break;
 
       case 'inline-download': {
-        // [Gemini] Inline file artifact (bytes on the wire, one-shot): fire-and-forget client download.
-        // Intentionally NO _pushFragment - the file is not stored in the conversation, by design.
-        const ext = op.mimeType.split(';')[0].trim().split('/')[1] || 'bin';
+        // [Gemini] Inline file artifact (bytes arrive once on the wire): fire-and-forget client download,
+        // plus a one-line text-fragment breadcrumb in place of the download so the transcript records it
+        // (mirrors the 'Generated audio' breadcrumb in onAppendInlineAudio).
+        //
+        // PARITY GAP vs the two cases above: Anthropic ('vnd.ant.file') and OpenAI ('vnd.oai.container_file')
+        // are server-hosted and re-fetchable by id, so they persist as a hosted_resource fragment with a
+        // download-on-demand chip. Gemini sends the bytes once with no handle - so chip parity would require
+        // STORING the bytes in a fragment (a new DMessage part + persistence), which we deliberately avoid to
+        // keep the artifact out of the conversation. Hence: download + note, not a stored re-fetchable resource.
+        const filename = op.filename || `download.${op.mimeType.split(';')[0].trim().split('/')[1] || 'bin'}`;
         convert_Base64WithMimeType_To_Blob(op.b64, op.mimeType, 'ContentReassembler.onAppendHostedResource.inline-download')
-          .then(blob => downloadBlob(blob, op.filename || `download.${ext}`))
+          .then(blob => downloadBlob(blob, filename))
           .catch(error => console.warn('[ContentReassembler] inline-download failed:', error));
+        this._pushFragment(createTextContentFragment(`Generated file ⬇ \`${filename}\` (${op.mimeType})`));
         break;
       }
 
