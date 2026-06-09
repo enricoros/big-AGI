@@ -9,7 +9,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
-import { DLLM, DLLMId, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, getLLMPubDate, isLLMCustomUserParameters, isLLMHidden, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, getLLMPubDate, isLLMCustomUserParameters, isLLMHidden, isLLMRecentlyPublished, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { STAR_EMOJI, StarredToggle, starredToggleStyle } from '~/common/components/StarIcons';
@@ -104,9 +104,9 @@ export const ModelItem = React.memo(function ModelItem(props: {
   const isNotSymlink = !llm.label.startsWith('🔗'); // getLLMLabel exception: need access to the base
   const llmLabel = getLLMLabel(llm);
 
-  // "new" badge: shown only when pubDate is set AND within the last 30 days
+  // "new" badge: shown only when pubDate is set AND within the recency window (see LLM_RECENTLY_PUBLISHED_DAYS)
   const pubDate = getLLMPubDate(llm);
-  const isRecentlyPublished = pubDate ? (Date.now() - pubDate.getTime()) < 30 * 24 * 60 * 60 * 1000 : false;
+  const isRecentlyPublished = isLLMRecentlyPublished(llm);
 
 
   const handleLLMConfigure = React.useCallback((event: React.MouseEvent) => {

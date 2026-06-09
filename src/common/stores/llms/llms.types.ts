@@ -152,6 +152,19 @@ export function getLLMPubDate(llm: DLLM | null | undefined): Date | null {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
+/** Number of days a model is considered "recently published" (keeps the "new" badge) after its editorial pubDate. */
+export const LLM_RECENTLY_PUBLISHED_DAYS = 45; // ~1.5 vendor release cycles: outlasts launch-awareness, expires before the next-next model
+
+/**
+ * Whether the model was published within the last `LLM_RECENTLY_PUBLISHED_DAYS` days, based on its editorial `pubDate`.
+ * Returns false when there's no/invalid pubDate. Reusable for the "new" badge and (later) surfacing the newest accessible models on the home page.
+ */
+export function isLLMRecentlyPublished(llm: DLLM | null | undefined, nowMs: number = Date.now()): boolean {
+  const pubDate = getLLMPubDate(llm);
+  if (!pubDate) return false;
+  return (nowMs - pubDate.getTime()) < LLM_RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000;
+}
+
 /// Interfaces ///
 
 // do not change anything below! those will be persisted in data
