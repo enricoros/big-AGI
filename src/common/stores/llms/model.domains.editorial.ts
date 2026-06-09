@@ -55,6 +55,10 @@ type _EditorialDefaultsTable = {
 export const EditorialDefaults = {
 
   primaryChat: [
+    { vendor: 'anthropic',  modelId: 'claude-fable-5' },
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-fable-5' },
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-fable-5' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-fable-5' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-4-8-thinking' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-8-thinking' },
