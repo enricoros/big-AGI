@@ -566,6 +566,8 @@ function _prettyAnthropicModelName(modelId: string): string | null {
   const m = modelId.match(/-(\d)(?:-(\d)(?!\d))?/);
   const version = m ? (m[2] ? `${m[1]}.${m[2]}` : m[1]) : '?';
 
+  if (modelId.includes('-fable')) return `Claude Fable ${version}`;
+  if (modelId.includes('-mythos')) return modelId.includes('-preview') ? 'Claude Mythos Preview' : `Claude Mythos ${version}`;
   if (modelId.includes('-opus')) return `Claude Opus ${version}`;
   if (modelId.includes('-sonnet')) return `Claude Sonnet ${version}`;
   if (modelId.includes('-haiku')) return `Claude Haiku ${version}`;

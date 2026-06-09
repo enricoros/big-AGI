@@ -46,6 +46,8 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking; 4.7 REMOVES manual budgets
 //                              entirely (adaptive-only). We keep the param (hidden, initialValue -1) as our "force adaptive"
 //                              sentinel on 4.6/4.7/4.8 thinking variants, and for manual budget control on 4.5/earlier.
+//                              Fable/Mythos 5 (2026-06-09): adaptive thinking is ALWAYS ON (no thinking variant, the base
+//                              model reasons); `thinking: {type: 'disabled'}` and budget_tokens both return 400.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -239,12 +241,51 @@ type _AnthropicModelDef = ModelDescriptionSchema & { isLegacy?: boolean, pubDate
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
+  // Claude 5 models (Fable/Mythos) - NOTE: no thinking variants, adaptive thinking is always on
+  {
+    id: 'claude-fable-5', // Active - 2026-06-09
+    label: 'Claude Fable 5',
+    pubDate: '20260609',
+    description: 'Most capable widely released model for the most demanding reasoning and long-horizon agentic work',
+    contextWindow: 1_000_000, // 1M GA at standard pricing (no opt-in required)
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking is always on
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - the only mode; 'disabled' and budget_tokens return 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // default 'high'; docs recommend 'high' (not xhigh) for most tasks
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Fable 5: flat $10/$50 across the 1M window. Inherits Opus 4.7/4.8 API constraints: sampling params rejected,
+    // no prefill, same tokenizer as 4.7/4.8. New vs 4.8: always-on adaptive thinking (no thinking config needed),
+    // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
+    // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
+    chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
+    benchmark: { cbaElo: 1520 }, // claude-fable-5 (launch estimate, no arena data yet)
+  },
+  {
+    id: 'claude-mythos-5', // Limited availability (Project Glasswing) - 2026-06-09
+    label: 'Claude Mythos 5',
+    pubDate: '20260609',
+    description: 'Claude Fable 5 capabilities without the safety classifiers - limited availability through Project Glasswing',
+    contextWindow: 1_000_000,
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - always on */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
+    chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
+    // benchmark: no arena data - gated research model
+  },
+
   // Claude 4.8 models
   {
     id: 'claude-opus-4-8', // Active - 2026-05-28
     label: 'Claude Opus 4.8',
     pubDate: '20260528',
-    description: 'Most capable generally available model for complex reasoning and agentic coding',
+    description: 'Most capable Opus-tier model for complex reasoning and agentic coding',
     contextWindow: 1_000_000, // 1M GA at standard pricing (no opt-in required)
     maxCompletionTokens: 128000,
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
