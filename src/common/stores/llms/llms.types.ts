@@ -165,6 +165,75 @@ export function isLLMRecentlyPublished(llm: DLLM | null | undefined, nowMs: numb
   return (nowMs - pubDate.getTime()) < LLM_RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000;
 }
 
+/** Validated editorial `pubDate` as a sortable 'YYYYMMDD' string, or '' when missing/malformed ('' sorts before any real date). */
+function _llmPubKey(llm: DLLM | null | undefined): string {
+  const p = llm?.pubDate;
+  return p && /^\d{8}$/.test(p) ? p : '';
+}
+
+/** Format an epoch-ms instant as a local-time 'YYYYMMDD' string (same local-midnight basis as getLLMPubDate). */
+function _toPubDateStr(ms: number): string {
+  const d = new Date(ms);
+  const mm = d.getMonth() + 1, dd = d.getDate();
+  return `${d.getFullYear()}${mm < 10 ? '0' : ''}${mm}${dd < 10 ? '0' : ''}${dd}`;
+}
+
+/**
+ * Newest accessible models grouped by vendor, ordered most-recent-first: the vendor whose freshest
+ * surfaced model has the latest `pubDate` leads - fitting for a "what's new" surface.
+ *
+ * Per vendor:
+ *  - if it has recently-published models (within `LLM_RECENTLY_PUBLISHED_DAYS`, the "new" badge window),
+ *    surface up to `maxNew` of them, in display order;
+ *  - otherwise (when `maxFallback > 0`) surface up to `maxFallback` of its newest models by `pubDate`
+ *    (descending; or first-in-display-order when no dates are known).
+ * Vendors with no accessible models - or no pick - are omitted. Resolve the display name from `vendorId` at render time.
+ *
+ * Self-contained and fast: recency/ordering compare editorial 'YYYYMMDD' strings directly (no Date parsing per model).
+ * Intended for surfacing "what's new" (e.g. the home page). Pass `llmsStoreState().llms`.
+ */
+export function getNewestModelsByVendor(llms: ReadonlyArray<DLLM>, options?: {
+  maxNew?: number,       // cap of recently-published ("new") models per vendor (default 5)
+  maxFallback?: number,  // when a vendor has nothing recently published, surface up to this many newest-by-date (default 2; 0 disables)
+  onlyVisible?: boolean, // accessible (non-hidden) models only (default true)
+}) {
+  const { maxNew = 5, maxFallback = 2, onlyVisible = true } = options ?? {};
+  const cutoff = _toPubDateStr(Date.now() - LLM_RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000); // 'YYYYMMDD' recency threshold, computed once
+
+  // group accessible models by vendor (no clones, no symlink aliases), preserving the store's display order
+  const byVendor = new Map<ModelVendorId, DLLM[]>();
+  for (const llm of llms) {
+    if (llm.isUserClone) continue;
+    if (llm.label.startsWith('🔗')) continue; // skip symlink aliases: they share a base model and never carry the "new" badge
+    if (onlyVisible && !isLLMVisible(llm)) continue;
+    const group = byVendor.get(llm.vId);
+    if (group) group.push(llm);
+    else byVendor.set(llm.vId, [llm]);
+  }
+
+  return [...byVendor].flatMap(([vendorId, vendorModels]) => {
+
+    // 1. recently-published ("new"): pubDate >= cutoff, in display order, capped to maxNew
+    const isNew = vendorModels.filter(llm => _llmPubKey(llm) >= cutoff);
+    let models: DLLM[];
+    if (isNew.length)
+      models = isNew.slice(0, maxNew);
+    // 2. fallback: newest by pubDate (string-descending), else first-in-display-order, capped to maxFallback
+    else if (maxFallback > 0) {
+      const dated = vendorModels.map(llm => [llm, _llmPubKey(llm)] as const).filter(([, k]) => k !== '');
+      models = (dated.length ? dated.sort((a, b) => a[1] < b[1] ? 1 : a[1] > b[1] ? -1 : 0).map(([llm]) => llm) : vendorModels).slice(0, maxFallback);
+    } else
+      return [];
+
+    // freshest surfaced pubDate (string max) -> most-recent-first vendor ordering
+    const newest = models.reduce((mx, llm) => { const k = _llmPubKey(llm); return k > mx ? k : mx; }, '');
+    return [{ vendorId, models, newest }];
+  })
+    // most-recent-first across vendors, then drop the ordering key
+    .sort((a, b) => a.newest < b.newest ? 1 : a.newest > b.newest ? -1 : 0)
+    .map(({ vendorId, models }) => ({ vendorId, models }));
+}
+
 /// Interfaces ///
 
 // do not change anything below! those will be persisted in data
