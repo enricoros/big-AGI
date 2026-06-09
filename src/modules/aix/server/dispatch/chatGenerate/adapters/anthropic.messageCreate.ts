@@ -204,6 +204,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     console.log(`[Anthropic] ${model.id}: coercing tool_choice '${payload.tool_choice.type}' -> 'auto' (forced tool use rejected by this model)`);
     payload.tool_choice = { type: 'auto' };
     payload.system = [...(payload.system ?? []), AnthropicWire_Blocks.TextBlock(mustUseHint, 'hotfix.forced-tools')];
+    // Forced-tool requests are utility flows (autotitle, diagrams, follow-ups): adaptive thinking cannot be
+    // disabled on these models, so default effort to 'low' to bound the thinking spend (caller-overridable)
+    if (!model.reasoningEffort)
+      payload.output_config = { effort: 'low' };
   }
 
   // [Anthropic] Thinking: adaptive (4.6+), enabled with budget (≤4.5), or disabled
