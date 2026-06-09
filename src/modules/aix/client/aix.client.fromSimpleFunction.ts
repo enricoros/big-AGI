@@ -69,19 +69,23 @@ export function aixRequireSingleFunctionCallInvocation(fragments: (DMessageConte
     throw new Error('AIX: Unexpected response.');
   }
 
-  const toolIdx = allowThinkPart ? fragments.length - 1 : 0;
-  if (!isContentFragment(fragments[toolIdx]) || fragments[toolIdx].part.pt !== 'tool_invocation') {
+  // Positional logic over CONTENT fragments only: void fragments (e.g. 'ma' reasoning, which always-on
+  // adaptive thinking models like Fable/Mythos 5 prepend) must not shift the expected invocation position
+  const contentFragments = fragments.filter(isContentFragment);
+  const toolIdx = allowThinkPart ? contentFragments.length - 1 : 0;
+  const toolFragment = contentFragments[toolIdx];
+  if (!toolFragment || toolFragment.part.pt !== 'tool_invocation') {
     if (AIX_DEBUG_CLIENT_TOOLS)
-      console.error(`[DEV] single-function-call (${debugLabel}): invalid fragment part:`, { part: fragments[toolIdx].part });
+      console.error(`[DEV] single-function-call (${debugLabel}): invalid fragment part:`, { part: toolFragment?.part });
 
     // special case, if we have an error part, rethrow that message instead (better error message)
-    if (fragments[toolIdx].part.pt === 'error')
-      throw new Error('AIX: Error invoking function: ' + fragments[toolIdx].part.error);
+    if (toolFragment?.part.pt === 'error')
+      throw new Error('AIX: Error invoking function: ' + toolFragment.part.error);
 
     throw new Error('AIX: Missing function invocation.');
   }
 
-  const { invocation } = fragments[toolIdx].part;
+  const { invocation } = toolFragment.part;
 
   if (invocation.type !== 'function_call' || invocation.name !== expectedFunctionName) {
     if (AIX_DEBUG_CLIENT_TOOLS)
