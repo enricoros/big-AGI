@@ -4,6 +4,7 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { downloadBlob } from '~/common/util/downloadUtils';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
 import { metricsChatGenerateLgToMd, metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -709,6 +710,16 @@ export class ContentReassembler {
           ...(op.filename ? { filename: op.filename } : {}),
         }));
         break;
+
+      case 'inline-download': {
+        // [Gemini] Inline file artifact (bytes on the wire, one-shot): fire-and-forget client download.
+        // Intentionally NO _pushFragment - the file is not stored in the conversation, by design.
+        const ext = op.mimeType.split(';')[0].trim().split('/')[1] || 'bin';
+        convert_Base64WithMimeType_To_Blob(op.b64, op.mimeType, 'ContentReassembler.onAppendHostedResource.inline-download')
+          .then(blob => downloadBlob(blob, op.filename || `download.${ext}`))
+          .catch(error => console.warn('[ContentReassembler] inline-download failed:', error));
+        break;
+      }
 
       default:
         const _exhaustiveCheck: never = op;

@@ -206,8 +206,17 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 console.warn('[Gemini] Failed to convert audio:', error);
                 pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
               }
-            } else
-              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null, 'srv-warn');
+            } else {
+              // [Gemini, 2026-06] Code-execution file artifacts (PDF, CSV, xlsx, ...) arrive as inline base64.
+              // Unlike Anthropic/OpenAI (server-hosted, re-fetchable by id), Gemini sends the bytes once with no
+              // handle - so hand them to the client as a fire-and-forget download instead of terminating the turn.
+              pt.appendHostedResource({
+                p: 'hres',
+                kind: 'inline-download',
+                mimeType: mPart.inlineData.mimeType,
+                b64: mPart.inlineData.data,
+              });
+            }
             break;
 
           // <- FunctionCallPart
