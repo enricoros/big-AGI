@@ -54,7 +54,7 @@ async function planAgents(
 ): Promise<OrchestratorPlan> {
   const roster = buildOrchestratorRoster();
 
-  const planningPrompt = `You are the SLM Orchestrator. Analyze this request and produce an optimal agent execution plan.
+  const planningPrompt = `You are the SLM Orchestrator. Decompose this request into a precise execution plan.
 
 ## Available Agent Roster
 ${roster}
@@ -64,27 +64,33 @@ ${userMessage}
 
 ${conversationContext ? `## Conversation Context\n${conversationContext}` : ''}
 
-## Constraint Extraction (reason through this before selecting agents)
-Identify from the request:
-- Explicit programming language(s) (e.g., "Python", "TypeScript", "Go")
-- Frameworks or libraries named
-- Output type (script, API endpoint, UI component, config file, documentation, etc.)
-- Hard constraints ("must use X", "without Y", "only Z")
-- Architecture scope: Is this a multi-component system (API + DB + auth + services)? If yes, each agent task description MUST include the instruction: "Deliver as a complete multi-file project — separate file per module, each with its full path as a header comment. Do not consolidate into a single file."
+## Step 1 — Analyze the request
+Before writing the plan, identify:
+- What is the core deliverable? (code, docs, design, analysis, strategy?)
+- What technologies/languages are named or implied?
+- Is this a multi-component system? If yes, flag it.
+- What would a fully complete, high-quality response look like? List every part.
 
-## Agent Selection Rules
-- Select 2–4 agents whose domains DIRECTLY cover distinct parts of the request. Overlap wastes cycles.
-- LANGUAGE ENFORCEMENT: If the user names a specific programming language, assign ONLY the matching language specialist. Python → L1. JavaScript/Node.js → L2. Go → L3. Rust → L4. SQL → L7. NEVER assign a language specialist to produce output in a different language than requested.
-- Each agent's task description MUST explicitly state the target language/technology so the agent cannot drift.
-- Only use agent IDs that appear in the roster above. Do not invent agent IDs.
-- Reviewers: always include Q3 for code tasks. Include Q1 for security-sensitive work. Include Q4 for debugging tasks.
-- Enhancer: choose the agent best positioned to elevate the final output quality (often Q3, Q6, or A5).
+## Step 2 — Write agent task descriptions
+Each task description must be a DETAILED BRIEF, not a one-liner. Include:
+- The exact deliverable with scope (e.g., "Write the complete X, covering A, B, and C")
+- Technology/language constraint (e.g., "Use Python 3.11 with FastAPI")
+- Mandatory sections or components the agent must include
+- Quality bar: "Production-ready, complete, no stubs or placeholders"
+- If multi-file: "Deliver as separate complete files, each with full path as header comment"
 
-Return ONLY valid JSON (no markdown, no explanation):
+## Step 3 — Select agents
+- Choose 2–4 agents whose domains cover DISTINCT parts of the request
+- Language enforcement: Python → L1, JavaScript/Node.js/TypeScript → L2, Go → L3, Rust → L4, SQL → L7
+- Only use IDs from the roster above — do not invent IDs
+- Reviewers: Q3 for all code tasks, Q1 for security-sensitive work, Q4 for debugging
+- Enhancer: agent best suited to final quality elevation (A5, Q3, or Q6)
+
+Return ONLY valid JSON (no markdown fence, no explanation):
 {
-  "analysis": "one-sentence summary of what this request needs",
+  "analysis": "2-3 sentence breakdown of what this request needs and what complete looks like",
   "agents": [
-    {"id": "AGENT_ID", "task": "specific task with explicit language/tech constraint"}
+    {"id": "AGENT_ID", "task": "detailed multi-sentence task brief with scope, tech constraint, mandatory components, and quality bar"}
   ],
   "reviewers": ["Q3"],
   "enhancer": "AGENT_ID"
@@ -283,30 +289,29 @@ async function reviewOutputs(
     const reviewPrompt = `## Original Request
 ${userMessage}
 
-## Scoring Rubric (apply strictly — do not be generous)
-- 90–100%: Production-ready, expert-level. Complete, correct, secure, idiomatic. Handles realistic edge cases.
-- 70–89%: Good quality with minor gaps (one missing error case, a style issue). Fully addresses the request.
-- 40–69%: Partially addresses the request, or has meaningful correctness/completeness gaps.
-- 10–39%: Superficially related but fails the core requirement (wrong language, outline instead of implementation, broken logic).
-- 0–9%: Off-topic, dangerous, or completely wrong.
+## Scoring Rubric
+- 90–100%: Expert-level. Complete, correct, secure, idiomatic. Handles realistic edge cases. No gaps.
+- 75–89%: Good but with a specific addressable gap — one missing section, one unhandled error case. Passes with feedback.
+- 50–74%: Partially addresses the request. Missing significant components or depth. FAILS — requires revision.
+- 0–49%: Fails core requirements. Shallow, incomplete, wrong language, broken logic, or security holes. Hard fail.
 
-## Hard Fail Criteria (passed: false, score ≤ 0.30 — enforce without exception)
-An output FAILS automatically if:
-- It uses a different programming language than explicitly requested
-- It is an outline, concept, or architectural plan when runnable code was requested
-- It introduces security vulnerabilities: XSS (user data inserted into HTML without escaping), SQL injection, hardcoded credentials, unvalidated shell inputs
-- It ignores the primary requirement of the task
-- ARCHITECTURE COLLAPSE: A multi-component system (API, backend service, framework app) is delivered as a single monolithic file when it should be a proper multi-file project structure. Example: a FastAPI application with auth, database, services, and routes must NOT be crammed into one main.py — it must be delivered as separate files (config.py, database.py, models.py, services/, routers/, etc.). A single-file delivery of a multi-module system is an automatic hard fail regardless of whether the code runs.
-- ANY file is truncated, uses ellipsis ("..."), or contains stub placeholders ("# add your logic here", "pass", "TODO") where real implementation is required
+## Hard Fail Criteria (score ≤ 0.49, passed: false — no exceptions)
+- Wrong programming language than requested
+- Outline or concept instead of actual implementation
+- Security vulnerability: unescaped user data in HTML/SQL/shell, hardcoded credentials, unvalidated inputs
+- Core requirement ignored or only partially addressed
+- Architecture collapse: multi-component system crammed into one file instead of proper multi-file structure
+- Truncated output: "...", stubs, TODOs, "add your logic here" where real code is required
+- SHALLOW DEPTH: a response that only scratches the surface, omits key details, or wouldn't let the user proceed without asking follow-up questions — this is a fail
 
 ## Agent Outputs to Review
 ${outputSummary}
 
-Evaluate each output against the rubric and hard-fail criteria. Feedback must be specific and actionable — cite the exact issue and what the fix should be.
-Return JSON:
+For each output: score it honestly against the rubric. If it fails, give specific, actionable feedback citing the exact gap and what the fix must include.
+Return JSON only:
 {
   "reviews": [
-    {"agentId": "ID", "passed": true/false, "feedback": "specific actionable feedback with exact issues cited", "score": 0.00}
+    {"agentId": "ID", "passed": true/false, "feedback": "exact issues and what the revision must include", "score": 0.00}
   ]
 }`;
 
@@ -578,30 +583,45 @@ async function assembleOutput(
 ): Promise<string> {
   const outputSummary = agentOutputs.map(o => `### ${o.id} · ${o.name}\n${o.result}`).join('\n\n---\n\n');
 
-  const assemblePrompt = `You are the SLM Orchestrator performing final synthesis. This response goes directly to a senior engineer who will use it in production. There is no room for gaps, stubs, or mediocrity.
+  const assemblePrompt = `You are a world-class senior expert writing the definitive response to this request. You have reviewed research and contributions from specialist agents. Your job is NOT to stitch their outputs together — it is to use their work as reference material and write the best possible answer yourself, from scratch, as the foremost expert in this domain.
 
-## User's Original Request
+## The Request
 ${userMessage}
 
-## All Agent Contributions
-_Listed in order of authority. Entries marked "Highest Authority" or "Validation Fix" override earlier outputs on conflicting points._
-
+## Agent Contributions (your source material — read carefully, then write your own expert response)
 ${outputSummary}
 
-## Expert Assembly Protocol — every point is mandatory
-1. COMPLETENESS: Fully solve what was asked. No TODOs, no "left as an exercise", no unimplemented stubs. Placeholder values (credentials, domain names) should be clearly labeled YOUR_VALUE_HERE only when they are inherently user-specific.
-2. CORRECTNESS: Cross-check all code logic, imports, and API calls. Fix every bug you identify — do not propagate agent errors. Where outputs conflict, use the higher-authority version.
-3. SECURITY: Apply all applicable security practices: escape user-controlled data before inserting into HTML/SQL/shell, use environment variables for credentials, validate at all system boundaries, never expose internal errors to users.
-4. COHERENCE: Strip all agent headers, phase labels, and internal meta-commentary. One voice, no contradictions, no duplicate content.
-5. USABILITY: Structure for immediate use by a developer reading top-to-bottom. Every code block must run as-is. Shell commands must be accurate. Install instructions must match the actual packages used.
-6. AUTHORITY HIERARCHY: Any contribution labeled "Validation Fix — Highest Authority" or "Enhancement" contains final corrections. These MUST be fully incorporated — they represent post-review corrections and override original agent outputs on any point they address.
-7. STRUCTURE PRESERVATION — CRITICAL: If any agent delivered a proper multi-file project structure, you MUST reproduce that full structure in the final output. Never flatten or collapse it. If agent A1 delivered separate files (main.py, config.py, database.py, models.py, etc.) and agent L1 delivered a single file, the multi-file version wins — always adopt the most architecturally complete version. Every file that appeared in any agent's output must appear in the final output, complete and untruncated. Present files in logical dependency order with their full path as a heading.
+## How to produce a high-quality response
 
-Produce the response as if a single senior engineer with 30 years of deep cross-domain expertise wrote it from scratch after reviewing all agent contributions — complete, production-ready, immediately usable.`;
+**Write as the expert, not as the synthesizer.**
+Do not copy-paste agent outputs with headers stripped. Read what they produced, extract the best ideas and correct implementations, then write a single coherent expert response that is better than any individual contribution. Add your own expert context, rationale, and completeness that the agents may have missed.
+
+**Structure for immediate usability.**
+- Lead with what the user needs to know first
+- Use clear headings to organize complex responses
+- Put all code, config, and commands in proper code blocks
+- Present files in logical dependency order if it's a multi-file project
+- End with setup/usage instructions if applicable
+
+**Completeness is non-negotiable.**
+Every aspect of the request must be addressed. If it involves code: every file is complete, every import is present, every function is implemented. If it involves strategy or design: every major dimension is covered with depth. No TODOs, no stubs, no "you would add X here."
+
+**Depth and precision.**
+Go beyond the obvious. Explain the non-obvious decisions. Cover the realistic failure modes. Give the concrete recommendation, not "you could consider." Name the specific version, write the actual value, show the exact command.
+
+**Fix anything wrong.**
+If an agent produced incorrect code, wrong API usage, or a security hole — fix it in your output. Do not propagate errors. You are the last line of quality control.
+
+**Voice and format.**
+- One unified voice, no agent headers or meta-commentary
+- Confident and direct — no hedging, no "it depends" without a concrete follow-up
+- Only include placeholder values (YOUR_API_KEY etc.) when they are genuinely user-specific secrets
+
+Write the complete, expert-level response now:`;
 
   return await aixChatGenerateText_Simple(
     llmId,
-    'You are the SLM Orchestrator. Synthesize agent outputs into a single perfect response.',
+    'You are a world-class senior expert. Write the definitive, comprehensive response. Be thorough, precise, and complete. No hedging, no stubs.',
     assemblePrompt,
     'chat-react-turn',
     'slm-assemble',
