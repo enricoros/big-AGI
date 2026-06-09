@@ -186,11 +186,15 @@ Located in `/src/common/stores/` with stores like:
 - Use forward-looking patterns to minimize future refactors (e.g., discriminated unions, `satisfies` operator, as const assertions)
 - Type guards and exhaustiveChecks for robustness
 - Type inference where possible
+- No unnecessary TS casts: prefer narrowing/inference; only `as` when the compiler genuinely can't know the type
 - Runtime validation with Zod schemas for API inputs/outputs (usually server-side, with the client importing as types the inferred types)
 
 #### Module Integration
 - Modules register with central registries (e.g., `vendors.registry.ts`)
 - Configuration objects define module behavior
+
+#### UI & Icons
+- Prefer `@mui/icons-material` icons/variants already imported elsewhere in the app over new ones (keeps the bundle lean); new icons only when depicting genuinely novel functionality
 
 #### API Patterns
 - **tRPC routers** for type-safe API endpoints
