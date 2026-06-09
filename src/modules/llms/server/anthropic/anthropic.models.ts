@@ -560,6 +560,7 @@ export namespace AnthropicWire_API_Models_List {
       low: _Supported_schema.nullish(),
       medium: _Supported_schema.nullish(),
       high: _Supported_schema.nullish(),
+      xhigh: _Supported_schema.nullish(), // 4.7+ (2026-04-16)
       max: _Supported_schema.nullish(),
     }).nullish(),
     image_input: _Supported_schema.nullish(),
@@ -646,7 +647,7 @@ function _llmsAntCheckApiCapabilities_DEV(availableModels: AnthropicWire_API_Mod
 
     // effort enumValues mismatch
     if (apiModel.capabilities?.effort?.supported) {
-      const apiEffort = (['low', 'medium', 'high', 'max'] as const).filter(l => apiModel.capabilities?.effort?.[l]?.supported);
+      const apiEffort = (['low', 'medium', 'high', 'xhigh', 'max'] as const).filter(l => apiModel.capabilities?.effort?.[l]?.supported);
       const knownEffortSpec = hc.parameterSpecs?.find(s => s.paramId === 'llmVndAntEffort');
       if (knownEffortSpec?.enumValues) {
         const hardcoded = knownEffortSpec.enumValues.join(',');
@@ -687,6 +688,7 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
     if (caps.effort.low?.supported) effortValues.push('low');
     if (caps.effort.medium?.supported) effortValues.push('medium');
     if (caps.effort.high?.supported) effortValues.push('high');
+    if (caps.effort.xhigh?.supported) effortValues.push('xhigh');
     if (caps.effort.max?.supported) effortValues.push('max');
     if (effortValues.length)
       parameterSpecs.push({ paramId: 'llmVndAntEffort', enumValues: effortValues });
