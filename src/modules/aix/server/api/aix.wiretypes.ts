@@ -532,6 +532,7 @@ export namespace AixWire_API {
 
     // OpenAI
     vndOaiCodeInterpreter: z.enum(['off', 'auto']).optional(),
+    vndOaiContainerId: z.string().optional(), // [Responses] reuse a prior code-interpreter session container (caller checks expiry before setting)
     vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
     vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),

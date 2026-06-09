@@ -322,6 +322,9 @@ function _toXAIResponsesInput(
                   newFunctionCallItem(part.id, invocation.name, invocation.args || '');
                   break;
                 case 'code_execution':
+                  // NOTE: unlike OpenAI Responses (canonical 'code_interpreter_call' round-trip + container reuse),
+                  // xAI history still collapses this to a fake 'execute_code' function_call. xAI has no container concept
+                  // ([XAI-UNSUPPORTED] in xai.wiretypes.ts) and its code-execution continuity is unverified - revisit if needed.
                   newFunctionCallItem(part.id, 'execute_code', invocation.code || '');
                   break;
                 default:

@@ -58,7 +58,7 @@ export function aixToOpenAIResponses(
   // const strictJsonOutput = !!model.strictJsonOutput;
   const strictToolInvocations = !!model.strictToolInvocations;
 
-  const { requestInput, requestInstructions } = _toOpenAIResponsesRequestInput(chatGenerate.systemMessage, chatGenerate.chatSequence);
+  const { requestInput, requestInstructions } = _toOpenAIResponsesRequestInput(chatGenerate.systemMessage, chatGenerate.chatSequence, model.vndOaiContainerId);
   const payload: TRequest = {
 
     // Model configuration
@@ -238,7 +238,12 @@ export function aixToOpenAIResponses(
 
       payload.tools.push({
         type: 'code_interpreter',
-        container: { type: 'auto' }, // auto-create/reuse container
+        // Always 'auto'. Reuse is driven by the round-tripped code_interpreter_call items below, which carry the prior
+        // container_id: auto-mode reuses that active container (files + Python state persist) or creates a fresh one if
+        // it expired. We deliberately do NOT pin the container explicitly here - per OpenAI docs, referencing an EXPIRED
+        // container explicitly hard-fails the request, whereas auto degrades gracefully.
+        container: { type: 'auto' }, // memory_limit/file_ids not surfaced (default 1g tier)
+        // container: model.vndOaiContainerId ? model.vndOaiContainerId : { type: 'auto' },
       });
 
       // Include code execution outputs in the response
@@ -267,7 +272,7 @@ export function aixToOpenAIResponses(
 }
 
 
-function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[]): { requestInput: TRequestInput[], requestInstructions: TRequest['instructions'] } {
+function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], sessionContainerId: string | undefined): { requestInput: TRequestInput[], requestInstructions: TRequest['instructions'] } {
 
   /**
    * Instructions to the model
@@ -302,12 +307,13 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
 
 
   // We decide to adopt these schemas for the conversion (API gives us a few choices)
-  const chatMessages: (UserMessage | ModelMessage | FunctionCallMessage | FunctionCallOutputMessage | ReasoningMessage)[] = [];
+  const chatMessages: (UserMessage | ModelMessage | FunctionCallMessage | FunctionCallOutputMessage | ReasoningMessage | CodeInterpreterCallMessage)[] = [];
   type UserMessage = Omit<OpenAIWire_Responses_Items.UserItemMessage, 'role'> & { role: 'user' };
   type ModelMessage = Extract<OpenAIWire_Responses_Items.InputMessage_Compat, { role: 'assistant' }>;
   type FunctionCallMessage = OpenAIWire_Responses_Items.OutputFunctionCallItem;
   type FunctionCallOutputMessage = OpenAIWire_Responses_Items.FunctionToolCallOutput;
   type ReasoningMessage = OpenAIWire_Responses_Items.OutputReasoningItem;
+  type CodeInterpreterCallMessage = Extract<OpenAIWire_Responses_Items.InputItem, { type: 'code_interpreter_call' }>;
 
   let allowUserAppend = true;
 
@@ -374,6 +380,41 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
     chatMessages.push(newMessage);
     return newMessage;
   }
+
+  // The following 2 functions are to recreate native code execution (which includes the output) blocks
+  function newCodeInterpreterCallMessage(itemId: string, code: string) {
+    // Round-trip the hosted call as its canonical 'code_interpreter_call' item (not a fake 'execute_code' function_call):
+    // this also satisfies stateless reasoning's "a reasoning item must be followed by the item it produced" constraint.
+    // PROVENANCE: container_id here is the chat-wide most-recent (sessionContainerId), not each item's original sandbox -
+    // auto-mode still reuses the live container, but the replayed history isn't per-execution faithful. Faithful round-trip
+    // would store the id per cei fragment (see ContentReassembler.onSetVendorState 'openai-container' note).
+    const newMessage: CodeInterpreterCallMessage = {
+      type: 'code_interpreter_call',
+      id: itemId,
+      code: code,
+      ...(sessionContainerId ? { container_id: sessionContainerId } : {}),
+      status: 'completed',
+    };
+    chatMessages.push(newMessage);
+    return newMessage;
+  }
+
+  function attachCodeInterpreterCallOutputs(itemId: string, result: string, isError: boolean) {
+    // Merge the paired tool_response's logs into the 'code_interpreter_call' item created above (matched by id).
+    // There is no separate output item type for code interpreter, so outputs live on the call item itself.
+    for (let i = chatMessages.length - 1; i >= 0; i--) {
+      const candidate = chatMessages[i];
+      if (candidate.type === 'code_interpreter_call' && candidate.id === itemId) {
+        if (result)
+          candidate.outputs = [{ type: 'logs', logs: result }];
+        candidate.status = isError ? 'failed' : 'completed';
+        return;
+      }
+    }
+    // Orphaned: a code_execution response should always follow its paired invocation - if not, fragments got separated upstream.
+    console.warn(`[DEV] AIX: OpenAI Responses - orphaned code_execution response (id=${itemId}), dropping outputs`);
+  }
+
 
   /**
    * Input Messages
@@ -484,8 +525,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                   newFunctionCallMessage(modelPart.id, invocation.name, invocation.args || '');
                   break;
                 case 'code_execution':
-                  console.warn('[DEV] notImplemented: OpenAI Responses: code execution tool calls');
-                  newFunctionCallMessage(modelPart.id, 'execute_code', invocation.code || '');
+                  newCodeInterpreterCallMessage(modelPart.id, invocation.code || '');
                   break;
                 default:
                   const _exhaustiveCheck: never = invocation;
@@ -514,8 +554,8 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                   newFunctionCallOutputMessage(modelPart.id, functionCallOutput);
                   break;
                 case 'code_execution':
-                  const { result: codeExecutionOutput } = modelPart.response;
-                  newFunctionCallOutputMessage(modelPart.id, codeExecutionOutput);
+                  // Merge into the matching 'code_interpreter_call' item (paired by id) created above.
+                  attachCodeInterpreterCallOutputs(modelPart.id, modelPart.response.result, !!modelPart.error);
                   break;
                 default:
                   const _exhaustiveCheck: never = toolResponseType;
