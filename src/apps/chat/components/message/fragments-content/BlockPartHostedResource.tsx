@@ -21,7 +21,7 @@ import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId,
 import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { humanReadableBytes } from '~/common/util/textUtils';
-import { mimeTypeIsPlainText, mimeTypeIsSupportedImage } from '~/common/attachment-drafts/attachment.mimetypes';
+import { mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
 import { useAIPreferencesStore } from '~/common/stores/store-ai';
 import { useLlmServiceAccess } from '~/common/stores/llms/hooks/useLlmServiceAccess';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -45,6 +45,16 @@ function _base64ResponseToBlob({ base64Data, mimeType }: { base64Data: string; m
     httpMimeIsText: mimeTypeIsPlainText(mimeType),
     httpMimeIsImage: mimeTypeIsSupportedImage(mimeType),
   };
+}
+
+// OpenAI container files have no pre-download metadata, so we gate the chip's "Embed" on the citation filename's
+// extension: reverse-lookup the mime, then reuse mimeTypeIsPlainText (so binary like pdf/xlsx/png stays download-only).
+// The real downloaded content-type is checked again as a backstop in handleInline.
+function _filenameLooksTextual(filename: string): boolean {
+  const dot = filename.lastIndexOf('.');
+  if (dot < 0) return false;
+  const mimeType = reverseLookupMimeType(filename.slice(dot + 1).toLowerCase());
+  return !!mimeType && mimeTypeIsPlainText(mimeType);
 }
 
 
@@ -331,14 +341,15 @@ function OpenAIContainerFileChip(props: {
   fileId: string,
   filename?: string,
   onFragmentDelete?: () => void,
+  onFragmentReplace?: (newFragment: DMessageContentFragment) => void,
 }) {
 
   // state
-  const [busy, setBusy] = React.useState<false | 'download' | 'copy'>(false);
+  const [busy, setBusy] = React.useState<false | 'download' | 'copy' | 'inline'>(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   // props
-  const { access, containerId, fileId, filename, onFragmentDelete } = props;
+  const { access, containerId, fileId, filename, onFragmentDelete, onFragmentReplace } = props;
 
   // external state - download on-demand (no metadata endpoint: filename comes from the citation annotation)
   const { data: fileContent, refetch: refetchFileContent } = apiQuery.llmOpenAI.containerFileDownload.useQuery({ access, containerId, fileId }, {
@@ -383,9 +394,34 @@ function OpenAIContainerFileChip(props: {
     }
   }, [fileContent, refetchFileContent, fileName]);
 
+  const handleInline = React.useCallback(async () => {
+    if (!onFragmentReplace) return;
+    setBusy('inline');
+    setActionError(null);
+    try {
+      const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
+      if (!data) return;
+      // backstop the extension gate with the real downloaded content-type
+      if (!data.httpMimeIsText) {
+        setActionError('Cannot embed this file type');
+        return;
+      }
+      const text = await data.blob.text();
+      // adaptive fence depth (extra backticks if the content itself contains ```)
+      let fence = '```';
+      while (text.includes(fence) && fence.length < 10) fence += '`';
+      onFragmentReplace(createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`));
+    } catch (error: any) {
+      setActionError(error?.message || 'Embed failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [fileContent, refetchFileContent, fileName, onFragmentReplace]);
+
 
   const isBusy = !!busy;
   const hasError = !!actionError;
+  const canInline = !!onFragmentReplace && _filenameLooksTextual(fileName);
 
   return (
     <Sheet
@@ -420,6 +456,13 @@ function OpenAIContainerFileChip(props: {
           {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
         </IconButton>
       </GoodTooltip>
+      {canInline && (
+        <GoodTooltip title='Embed as text in the message'>
+          <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleInline} size='sm'>
+            {busy === 'inline' ? <CircularProgress size='sm' /> : <VerticalAlignBottomIcon sx={{ fontSize: 'lg' }} />}
+          </IconButton>
+        </GoodTooltip>
+      )}
       <GoodTooltip title='Download file'>
         <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDownload} size='sm'>
           {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
@@ -491,6 +534,7 @@ export function BlockPartHostedResource(props: {
         fileId={resource.fileId}
         filename={resource.filename}
         onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
+        onFragmentReplace={onFragmentReplace ? handleFragmentReplace : undefined}
       />
     );
 
