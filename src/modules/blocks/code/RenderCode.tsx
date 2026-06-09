@@ -6,7 +6,7 @@ import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
@@ -366,7 +366,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             {/* Show Markdown Preview */}
             {isMdCode && (
               <OverlayButton tooltip={noTooltips ? null : renderMarkdown ? 'Show Code' : 'Show Preview'} variant={renderMarkdown ? 'solid' : 'outlined'} smShadow onClick={() => setShowMarkdown(!showMarkdown)}>
-                <ArticleOutlinedIcon />
+                <DescriptionOutlinedIcon />
               </OverlayButton>
             )}
 
