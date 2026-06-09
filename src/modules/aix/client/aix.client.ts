@@ -18,7 +18,7 @@ import { stripUndefined } from '~/common/util/objectUtils';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../server/api/aix.wiretypes';
 
 import { AixStreamRetry } from './aix.client.retry';
 import { ReassemblerParticleTransforms, ContentReassembler } from './ContentReassembler';
@@ -230,6 +230,10 @@ interface AixClientOptions {
   antContainerId?: string;            // [Anthropic Container] Container ID from a prior turn (caller checks expiry before setting)
   oaiContainerId?: string;            // [OpenAI Responses Container] Code-interpreter container from a prior turn (caller checks expiry before setting)
   gemEnvironmentId?: string;                  // [Gemini Interactions] Session/sandbox env id from a prior turn (today: Antigravity; no expiry on the wire; best-effort - no auto-fallback if upstream rejects)
+
+  // Client-side tools (e.g., persona memory update)
+  tools?: AixTools_ToolDefinition[];
+  toolsPolicy?: AixTools_ToolsPolicy;
 }
 
 
@@ -299,6 +303,8 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
     const aixChatContentGenerateRequest: AixAPIChatGenerate_Request = {
       systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
+      ...(clientOptions.tools?.length ? { tools: clientOptions.tools } : undefined),
+      ...(clientOptions.toolsPolicy ? { toolsPolicy: clientOptions.toolsPolicy } : undefined),
     };
 
     // Cross-turn upstream-container resolution. Walks history newest-first, stops at the first
