@@ -6,7 +6,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
-import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { AnthropicWire_API_Message_Create, AnthropicWire_Messages } from '../../wiretypes/anthropic.wiretypes';
 import { DispatchContinuationSignal } from '../chatGenerate.continuation';
 import { OperationRetrySignal } from '../chatGenerate.operation-retry';
 
@@ -174,6 +174,13 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             throw new Error(`Unexpected content block start location (${requestedIndex})`);
         responseMessage.content[index] = contentBlock;
 
+        // [2026-06-09] Forward-compat: unknown/future block types ('fallback', 'compaction', 'advisor_tool_result', ...) are
+        // stored above (index integrity + pause_turn echo) but not processed - deltas/stop for this index are ignored too
+        if (!AnthropicWire_Messages.isKnownContentBlockOutput(contentBlock)) {
+          aixResilientUnknownValue('Anthropic', 'contentBlockType', contentBlock.type);
+          break;
+        }
+
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
           const debugInfo = contentBlock.type === 'tool_use' ? `tool=${contentBlock.name}`
             : contentBlock.type === 'server_tool_use' ? `server_tool=${contentBlock.name}`
@@ -282,6 +289,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (contentBlock === undefined)
           throw new Error(`Unexpected content block delta location (${index})`);
 
+        // [2026-06-09] Forward-compat: ignore deltas addressed to unknown block types (already reported at content_block_start)
+        if (!AnthropicWire_Messages.isKnownContentBlockOutput(contentBlock))
+          break;
+
+        // [2026-06-09] Forward-compat: unknown delta types (e.g. 'compaction_delta') are reported and skipped
+        if (!AnthropicWire_API_Message_Create.isKnownContentBlockDelta(delta)) {
+          aixResilientUnknownValue('Anthropic', 'deltaType', delta.type);
+          break;
+        }
+
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
           const debugInfo = delta.type === 'text_delta' ? `len=${delta.text.length}`
             : delta.type === 'input_json_delta' ? `json_len=${delta.partial_json.length}`
@@ -372,6 +389,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         const stoppedBlock = responseMessage.content[index];
         if (stoppedBlock === undefined)
           throw new Error(`Unexpected content block stop location (${index})`);
+
+        // [2026-06-09] Forward-compat: unknown block types were never started as message parts - nothing to finalize
+        if (!AnthropicWire_Messages.isKnownContentBlockOutput(stoppedBlock))
+          break;
 
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant content_block_stop[${index}]: type=${stoppedBlock.type}`);
 
@@ -529,6 +550,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     for (let i = 0; i < content.length; i++) {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
+
+      // [2026-06-09] Forward-compat: skip unknown/future block types ('fallback', 'compaction', 'advisor_tool_result', ...)
+      if (!AnthropicWire_Messages.isKnownContentBlockOutput(contentBlock)) {
+        aixResilientUnknownValue('Anthropic-NS', 'contentBlockType', contentBlock.type);
+        continue;
+      }
+
       switch (contentBlock.type) { // .content_block (non-streaming)
         case 'text':
           // Hotfix Opus-4.6: elide first text block if it's '\n\n'
@@ -688,7 +716,7 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
 }
 
 /** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */
-function _formatAnthropicStopError(stopDetails: { type: string; category?: string | null; explanation?: string | null } | null | undefined): string | undefined {
+function _formatAnthropicStopError(stopDetails: { type: string; category?: string | null; explanation?: string | null; recommended_model?: string | null } | null | undefined): string | undefined {
   if (!stopDetails) return undefined;
   if (stopDetails.type !== 'refusal') {
     aixResilientUnknownValue('Anthropic', 'stopDetailsType', stopDetails.type);
@@ -697,6 +725,7 @@ function _formatAnthropicStopError(stopDetails: { type: string; category?: strin
   const parts: string[] = [];
   if (stopDetails.category) parts.push(`[${stopDetails.category}]`);
   if (stopDetails.explanation) parts.push(stopDetails.explanation);
+  if (stopDetails.recommended_model) parts.push(`(consider retrying with ${stopDetails.recommended_model})`);
   return parts.length ? `Refusal: ${parts.join(' ')}` : undefined;
 }
 
@@ -1103,11 +1132,13 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
       // https://docs.claude.com/en/api/handling-stop-reasons#pause-turn
       return null;
 
-    default:
-      const _exhaustiveCheck: never = stopReason;
-    // fallthrough
     case null:
       console.warn(`_fromAnthropicStopReason(${debugCaller}): unexpected stop_reason: ${stopReason}`);
+      return null;
+
+    default:
+      // [2026-06-09] Forward-compat: unknown stop reasons (e.g. 'compaction' from the compact beta) must not kill the stream
+      aixResilientUnknownValue('Anthropic', 'stopReason', stopReason);
       return null;
   }
 }

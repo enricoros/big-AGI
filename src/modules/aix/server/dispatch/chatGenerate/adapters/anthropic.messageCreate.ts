@@ -191,14 +191,19 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     delete payload.temperature;
   }
 
+  // [Anthropic, 2026-06-09] Fable 5 / Mythos 5: adaptive is the only thinking mode - 'enabled' (budget_tokens) and 'disabled' return 400
+  const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos)-5/.test(model.id);
+
   // [Anthropic] Thinking: adaptive (4.6+), enabled with budget (≤4.5), or disabled
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
   const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
   if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
-    if (model.vndAntThinkingBudget === 'adaptive') {
+    if (model.vndAntThinkingBudget === 'adaptive' || hotFixAdaptiveThinkingOnlyModel) {
+      if (model.vndAntThinkingBudget !== 'adaptive')
+        console.log(`[Anthropic] ${model.id}: coercing thinking '${model.vndAntThinkingBudget}' -> 'adaptive' (adaptive-only model)`);
       payload.thinking = {
         type: 'adaptive',
-        display: 'summarized', // Opus 4.7 defaults to 'omitted' - explicit 'summarized' preserves 4.6-era UX (slight latency cost)
+        display: 'summarized', // Opus 4.7+ and Fable/Mythos 5 default to 'omitted' - explicit 'summarized' preserves 4.6-era UX (slight latency cost)
       };
       delete payload.temperature;
     } else if (model.vndAntThinkingBudget !== null) {
@@ -430,8 +435,9 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
               console.warn('Anthropic: broken empty thinking block', { part });
               break;
             }
-            if (part.aText && part.textSignature)
-              yield { role: 'assistant', content: AnthropicWire_Blocks.ThinkingBlock(part.aText, part.textSignature) };
+            // signature-only blocks (empty aText) happen with thinking.display: 'omitted' and must round-trip unchanged
+            if (part.textSignature)
+              yield { role: 'assistant', content: AnthropicWire_Blocks.ThinkingBlock(part.aText || '', part.textSignature) };
             for (const redactedData of part.redactedData || [])
               yield { role: 'assistant', content: AnthropicWire_Blocks.RedactedThinkingBlock(redactedData) };
             break;

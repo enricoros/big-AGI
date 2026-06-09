@@ -13,8 +13,15 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
- * ### 2026-06-09 - API Sync: Claude Fable 5 / Mythos 5
+ * ### 2026-06-09 - API Sync: Claude Fable 5 / Mythos 5, forward-compatible parsing
  * - StopDetails.category: added 'reasoning_extraction' (Fable 5 ToS classifier for reverse engineering / output duplication)
+ * - StopDetails: added `recommended_model` (suggested retry model when a server-side fallback could not run)
+ * - StopReason: tolerant parsing - future values (e.g. 'compaction' from the compact-2026-01-12 beta) must not kill the stream
+ * - ContentBlockOutput: resilient parsing of unknown/future block types ('fallback', 'compaction', 'advisor_tool_result', 'connector_text' - all beta-gated as of today)
+ * - event_ContentBlockDelta: resilient parsing of unknown delta types (e.g. 'compaction_delta')
+ * - WebFetchToolResultError: added 'url_not_in_prior_context' error code
+ * - Models: claude-fable-5 / claude-mythos-5 are adaptive-thinking-only ('enabled'/'disabled' return 400, no prefill, display defaults 'omitted') - coerced in the adapter
+ * - NOT adopted (beta): `fallbacks` param (server-side-fallback-2026-06-01), advisor tool, compaction, cache diagnostics, task budgets, mid-conversation system messages (role: 'system')
  *
  * ### 2026-05-28 - API Sync: reasoning token breakdown
  * - Response.usage + event_MessageDelta.usage: added `output_tokens_details` ({ thinking_tokens }) - subset of output_tokens, surfaced as the TOutR metric (like OpenAI/Gemini)
@@ -327,10 +334,8 @@ export namespace AnthropicWire_Blocks {
       }),
       z.object({
         type: z.literal('web_fetch_tool_result_error'),
-        error_code: z.union([
-          z.enum(['invalid_tool_input', 'url_too_long', 'url_not_allowed', 'url_not_accessible', 'unsupported_content_type', 'too_many_requests', 'max_uses_exceeded', 'unavailable']),
-          z.string(), // forward-compatibility
-        ]),
+        error_code: z.enum(['invalid_tool_input', 'url_too_long', 'url_not_allowed', 'url_not_in_prior_context', 'url_not_accessible', 'unsupported_content_type', 'too_many_requests', 'max_uses_exceeded', 'unavailable'])
+          .or(z.string()), // forward-compatibility
       }),
     ]),
     caller: _ToolUseCaller_schema.optional(),
@@ -580,6 +585,28 @@ export namespace AnthropicWire_Messages {
     AnthropicWire_Blocks.ContainerUploadBlock_schema,
     AnthropicWire_Blocks.ToolSearchToolResultBlock_schema, // [Anthropic, 2025-11-24] Tool Search Tool
   ]);
+
+  /// Forward-compatibility (2026-06-09): unknown/future output block types must not kill the stream
+
+  /** Runtime set of the known output block types - derived from ContentBlockOutput_schema. */
+  const _contentBlockOutputKnownTypes: ReadonlySet<string> = new Set<string>(
+    ContentBlockOutput_schema.options.map(option => option.shape.type.value),
+  );
+
+  /**
+   * Loose-parses output blocks with unknown types (e.g. 'fallback', 'compaction', 'advisor_tool_result', 'connector_text' - all beta-gated as of 2026-06-09).
+   * Known types are excluded, so malformed known blocks still fail validation instead of degrading silently.
+   */
+  const _ContentBlockOutputUnknown_schema = z.looseObject({
+    type: z.string().refine(type => !_contentBlockOutputKnownTypes.has(type)),
+  });
+
+  /** ContentBlockOutput with a loose fallback for unknown/future block types - parsers must gate on isKnownContentBlockOutput() before processing. */
+  export const ContentBlockOutputResilient_schema = z.union([ContentBlockOutput_schema, _ContentBlockOutputUnknown_schema]);
+
+  export function isKnownContentBlockOutput(block: z.infer<typeof ContentBlockOutputResilient_schema>): block is z.infer<typeof ContentBlockOutput_schema> {
+    return _contentBlockOutputKnownTypes.has(block.type);
+  }
 }
 
 export namespace AnthropicWire_Skills {
@@ -824,6 +851,9 @@ export namespace AnthropicWire_API_Message_Create {
    * - 'pause_turn': paused for server tools (e.g. web search)
    * - 'refusal': Claude refused due to safety concerns
    * - 'model_context_window_exceeded': hit the model's context window limit
+   *
+   * Tolerant parsing: unknown values (e.g. 'compaction' from the compact-2026-01-12 beta) must
+   * not kill the stream - the parser routes them through aixResilientUnknownValue.
    */
   const StopReason_schema = z.enum([
     'end_turn',
@@ -833,7 +863,7 @@ export namespace AnthropicWire_API_Message_Create {
     'pause_turn',
     'refusal',
     'model_context_window_exceeded',
-  ]);
+  ]).or(z.string());
 
   /**
    * Structured stop details, paired with stop_reason. Currently only populated when stop_reason === 'refusal'.
@@ -843,6 +873,8 @@ export namespace AnthropicWire_API_Message_Create {
     type: z.enum(['refusal']).or(z.string()),
     category: z.enum(['cyber', 'bio', 'reasoning_extraction']).or(z.string()).nullish(),
     explanation: z.string().nullish(),
+    /** [Anthropic, 2026-06-09] Model suggested for a direct retry when a server-side fallback could not run (e.g. fallback model rate-limited). Hint only, may be null. */
+    recommended_model: z.string().nullish(),
   });
 
   /// Request
@@ -1038,9 +1070,10 @@ export namespace AnthropicWire_API_Message_Create {
 
     /**
      * OUTPUT Content generated by the model.
-     * This is an array of content blocks, each of which has a type that determines its shape. Currently, the only type in responses is "text".
+     * This is an array of content blocks, each of which has a type that determines its shape.
+     * Resilient: unknown/future block types parse loosely - parsers gate on isKnownContentBlockOutput().
      */
-    content: z.array(AnthropicWire_Messages.ContentBlockOutput_schema),
+    content: z.array(AnthropicWire_Messages.ContentBlockOutputResilient_schema),
 
     /**
      * The reason why Claude stopped generating.
@@ -1149,7 +1182,7 @@ export namespace AnthropicWire_API_Message_Create {
   export const event_ContentBlockStart_schema = z.object({
     type: z.literal('content_block_start'),
     index: z.number(),
-    content_block: AnthropicWire_Messages.ContentBlockOutput_schema,
+    content_block: AnthropicWire_Messages.ContentBlockOutputResilient_schema,
   });
 
   export const event_ContentBlockStop_schema = z.object({
@@ -1157,32 +1190,51 @@ export namespace AnthropicWire_API_Message_Create {
     index: z.number(),
   });
 
+  const _ContentBlockDeltaKnown_schema = z.union([
+    z.object({
+      type: z.literal('text_delta'),
+      text: z.string(),
+    }),
+    z.object({
+      type: z.literal('input_json_delta'),
+      partial_json: z.string(),
+    }),
+    z.object({
+      type: z.literal('thinking_delta'),
+      thinking: z.string(),
+    }),
+    z.object({
+      type: z.literal('signature_delta'),
+      signature: z.string(),
+    }),
+    z.object({
+      // created by the hosted web_search tool, at least, in which case the citation is: Extract<typeof _TextBlockCitations_schema, { type: 'web_search_result_location' }>
+      type: z.literal('citations_delta'),
+      citation: AnthropicWire_Blocks._TextBlockCitations_schema,
+    }),
+  ]);
+
+  /** Runtime set of the known delta types - derived from _ContentBlockDeltaKnown_schema. */
+  const _contentBlockDeltaKnownTypes: ReadonlySet<string> = new Set<string>(
+    _ContentBlockDeltaKnown_schema.options.map(option => option.shape.type.value),
+  );
+
+  /**
+   * Forward-compatibility (2026-06-09): unknown delta types (e.g. 'compaction_delta' from the compact beta)
+   * parse loosely instead of failing the stream. Known types are excluded, so malformed known deltas still fail validation.
+   */
+  const _ContentBlockDeltaUnknown_schema = z.looseObject({
+    type: z.string().refine(type => !_contentBlockDeltaKnownTypes.has(type)),
+  });
+
   export const event_ContentBlockDelta_schema = z.object({
     type: z.literal('content_block_delta'),
     index: z.number(),
-    delta: z.union([
-      z.object({
-        type: z.literal('text_delta'),
-        text: z.string(),
-      }),
-      z.object({
-        type: z.literal('input_json_delta'),
-        partial_json: z.string(),
-      }),
-      z.object({
-        type: z.literal('thinking_delta'),
-        thinking: z.string(),
-      }),
-      z.object({
-        type: z.literal('signature_delta'),
-        signature: z.string(),
-      }),
-      z.object({
-        // created by the hosted web_search tool, at least, in which case the citation is: Extract<typeof _TextBlockCitations_schema, { type: 'web_search_result_location' }>
-        type: z.literal('citations_delta'),
-        citation: AnthropicWire_Blocks._TextBlockCitations_schema,
-      }),
-    ]),
+    delta: z.union([_ContentBlockDeltaKnown_schema, _ContentBlockDeltaUnknown_schema]),
   });
+
+  export function isKnownContentBlockDelta(delta: z.infer<typeof event_ContentBlockDelta_schema>['delta']): delta is z.infer<typeof _ContentBlockDeltaKnown_schema> {
+    return _contentBlockDeltaKnownTypes.has(delta.type);
+  }
 
 }
