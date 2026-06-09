@@ -247,7 +247,8 @@ type DMessageToolCodeExecutor = 'gemini_auto_inline' | 'code_interpreter';
 export type DMessageHostedResourcePart = {
   pt: 'hosted_resource';
   resource:
-    | { via: 'anthropic', fileId: string, containerId?: string };
+    | { via: 'anthropic', fileId: string, containerId?: string }
+    | { via: 'openai-container', fileId: string, containerId: string, filename?: string }; // OpenAI code-interpreter container file
 };
 
 

@@ -793,6 +793,7 @@ export namespace AixWire_Particles {
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
     | { p: 'hres' } & ( // hosted resource - provider-hosted resource
       | { kind: 'vnd.ant.file', fileId: string, containerId?: string }
+      | { kind: 'vnd.oai.container_file', fileId: string, containerId: string, filename?: string } // OpenAI code-interpreter container file (download via /v1/containers/.../files/.../content)
       )
     | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
       | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level - container reuse

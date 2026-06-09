@@ -701,8 +701,17 @@ export class ContentReassembler {
         }));
         break;
 
+      case 'vnd.oai.container_file':
+        this._pushFragment(createHostedResourceContentFragment({
+          via: 'openai-container',
+          fileId: op.fileId,
+          containerId: op.containerId,
+          ...(op.filename ? { filename: op.filename } : {}),
+        }));
+        break;
+
       default:
-        const _exhaustiveCheck: never = op.kind;
+        const _exhaustiveCheck: never = op;
         console.warn('[ContentReassembler] onAppendHostedResource: unrecognized hosted resource kind', { op });
         break;
     }

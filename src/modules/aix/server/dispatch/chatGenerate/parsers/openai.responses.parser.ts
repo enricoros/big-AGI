@@ -1160,13 +1160,24 @@ function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Ex
       );
       break;
 
+    case 'container_file_citation':
+      // Code-interpreter-generated file (e.g. a PDF the model created): emit a hosted resource so the UI
+      // renders a real download chip backed by /v1/containers/.../files/.../content. Mirrors Anthropic's vnd.ant.file.
+      pt.appendHostedResource({
+        p: 'hres',
+        kind: 'vnd.oai.container_file',
+        fileId: annotation.file_id,
+        containerId: annotation.container_id,
+        ...(annotation.filename ? { filename: annotation.filename } : {}),
+      });
+      break;
+
     default:
       const _exhaustiveCheck: never = annotation;
       // fallthrough
-    case 'container_file_citation':
     case 'file_citation':
     case 'file_path':
-      // Unknown annotation type - log for future implementation
+      // file_search / vector-store file references - not surfaced yet
       console.log(`[DEV] AIX: OpenAI-Responses - Unhandled annotation:`, { annotation });
       break;
   }
