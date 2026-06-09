@@ -118,6 +118,19 @@ export function CustomARenderer({ node, href, children, ...props }: {
   children: React.ReactNode;
 }) {
 
+  // Non-navigable model-sandbox links (e.g. OpenAI code-interpreter 'sandbox:/mnt/data/...'): the scheme can't be
+  // opened by the browser, and this generic renderer has no message/container context to resolve a path -> file_id.
+  // Render inert (not a broken target=_blank link); the real download is the container-file chip from the citation.
+  if (href && /^sandbox:/i.test(href)) {
+    return (
+      <TooltipOutlined title='File generated in the model sandbox - use the download above or below this message'>
+        <Box component='span' sx={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', opacity: 0.7, cursor: 'help' }}>
+          {children}
+        </Box>
+      </TooltipOutlined>
+    );
+  }
+
   const isEmptyInlineLink = React.Children.count(children) === 0;
 
   // Empty Inline Link:  render the favicon with a popup for [](https://..)
