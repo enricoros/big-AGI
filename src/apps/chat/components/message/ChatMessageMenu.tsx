@@ -206,13 +206,29 @@ export function ChatMessageMenu(props: {
       )}
 
 
-      {/* Delete / Branch / Truncate */}
+      {/* Use this message (new chat) / Delete / Truncate */}
       {onOpsBranchFrom && <ListDivider />}
       {onOpsBranchFrom && (
-        <MenuItem onClick={onOpsBranchFrom} disabled={fromSystem}>
-          <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
-          Branch {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
-        </MenuItem>
+        <SubMenuItem
+          label='Use this message'
+          decorator={<ForkRightIcon />}
+          disabled={fromSystem}
+          isMobile={props.isMobile}
+          minWidth={260}
+        >
+          <ListItem>
+            <Typography level='body-sm'>New chat from here</Typography>
+          </ListItem>
+          {/* TODO: future - seed a fresh conversation with just this message */}
+          <MenuItem disabled>
+            <ListItemDecorator><AddCircleOutlineIcon /></ListItemDecorator>
+            Start a new conversation
+          </MenuItem>
+          <MenuItem onClick={onOpsBranchFrom}>
+            <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
+            Branch <span style={{ opacity: 0.5 }}>history up to here</span>
+          </MenuItem>
+        </SubMenuItem>
       )}
       {onMessageDelete && (
         <MenuItem onClick={onMessageDelete}>
