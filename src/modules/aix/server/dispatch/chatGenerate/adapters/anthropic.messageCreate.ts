@@ -246,10 +246,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // [Anthropic, 2026-01-29 GA] Structured Outputs - JSON output format (now in output_config.format)
   if (model.strictJsonOutput) {
 
-    // auto-add additionalProperties: false to root object if not present - required by Anthropic
+    // auto-add additionalProperties: false to every object node if not present - required by Anthropic (see _strictNormalizeSchema)
     let schema = model.strictJsonOutput.schema;
-    if (schema && typeof schema === 'object' && schema.type === 'object' && schema.additionalProperties === undefined)
-      schema = { ...schema, additionalProperties: false };
+    if (schema && typeof schema === 'object')
+      schema = _strictNormalizeSchema(schema);
     payload.output_config = {
       ...payload.output_config,
       format: { type: 'json_schema', schema },
@@ -489,15 +489,16 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[], strictToolsEnabled: 
 
       case 'function_call':
         const { name, description, input_schema, allowed_callers, input_examples } = itd.function_call;
+        const properties = input_schema?.properties || null; // Anthropic valid values for input_schema.properties are 'object' or 'null' (null is used to declare functions with no inputs)
         return {
           type: 'custom', // we could not set it, but it helps our typesystem with discrimination
           name,
           description,
           input_schema: {
             type: 'object',
-            properties: input_schema?.properties || null, // Anthropic valid values for input_schema.properties are 'object' or 'null' (null is used to declare functions with no inputs)
+            properties: strictToolsEnabled && properties ? _strictNormalizeSchema(properties) : properties,
             required: input_schema?.required,
-            // [Anthropic, 2025-11-13] Structured Outputs requires additionalProperties: false
+            // [Anthropic, 2025-11-13] Structured Outputs requires additionalProperties: false (on every nested object too, see _strictNormalizeSchema)
             ...(strictToolsEnabled ? { additionalProperties: false } : {}),
           },
           // [Anthropic, 2025-11-13] Structured Outputs: strict mode guarantees tool inputs match schema
@@ -514,6 +515,22 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[], strictToolsEnabled: 
 
     }
   });
+}
+
+/**
+ * [Anthropic, 2025-11-13] Strict mode (tools and JSON output) requires `additionalProperties: false` on EVERY
+ * 'object' node in the schema, not just the root - 400 otherwise (verified empirically on Fable 5, 2026-06-09).
+ * Recursively adds it wherever undefined, without overriding explicit values.
+ */
+function _strictNormalizeSchema<T>(node: T): T {
+  if (!node || typeof node !== 'object') return node;
+  if (Array.isArray(node)) return node.map(_strictNormalizeSchema) as T;
+  const obj: Record<string, any> = {};
+  for (const [key, value] of Object.entries(node))
+    obj[key] = _strictNormalizeSchema(value);
+  if (obj.type === 'object' && obj.additionalProperties === undefined)
+    obj.additionalProperties = false;
+  return obj as T;
 }
 
 function _toAnthropicToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
