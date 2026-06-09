@@ -554,7 +554,10 @@ export namespace AnthropicWire_Messages {
   ]);
 
   export const MessageInput_schema = z.object({
-    role: z.enum(['user', 'assistant']),
+    role: z.enum([
+      'user', 'assistant',
+      // 'system', // [2026-06-09] we don't want to support this role for now, for uniformity with other ai providers; however we may want to specialize some high-level AIX parts to these in the future
+    ]),
     content: z.array(_ContentBlockInput_schema), // NOTE: could be a string (see below), but we force it to be an array
     // content: z.union([z.string(), z.array(_ContentBlockInput_schema)]),
   });
