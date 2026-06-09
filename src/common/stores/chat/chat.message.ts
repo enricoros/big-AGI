@@ -132,6 +132,11 @@ export type DMessageGenerator = ({
       expiresAt: string,                // ISO 8601 UTC timestamp (e.g., "2026-04-07T05:59:32Z")
     }
     | {
+      uct: 'vnd.oai.container',         // OpenAI Responses code-interpreter sandbox (auto or explicit), from code_interpreter_call.container_id
+      containerId: string,
+      expiresAt: string,                // server doesn't expose retention; parser stamps now+20min (OpenAI's inactivity TTL, refreshed on any container op)
+    }
+    | {
       uct: 'vnd.gem.interactions',      // today: Antigravity sandbox via `interaction.start.environment_id`
       envId: string,
       expiresAt: string | null,         // server doesn't expose retention; parser stamps now+7d per docs (env retained 7d from last-active)

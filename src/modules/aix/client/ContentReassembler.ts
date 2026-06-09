@@ -847,6 +847,24 @@ export class ContentReassembler {
       return; // container is message-scoped, not fragment-scoped
     }
 
+    // Promote OpenAI code-interpreter session container -> Generator (message-scoped, for cross-turn reuse + file downloads).
+    // Invariant: one container per Response - auto mode keeps every code_interpreter_call in a turn on the same sandbox.
+    // A divergence here is unexpected (a >20min single-Response container rotation, or an upstream/parser anomaly).
+    // Cross-turn round-trip then collapses to the most-recent container (see newCodeInterpreterCallMessage in openai.responsesCreate.ts).
+    if (vendor === 'openai-container' && 'container' in state) {
+      const { id, expiresAt } = state.container;
+      if (id && expiresAt) {
+        const prior = this.S.generator?.upstreamContainer;
+        if (prior?.uct === 'vnd.oai.container' && prior.containerId !== id)
+          console.warn(`[DEV] AIX: OpenAI Responses - container diverged within one message: ${prior.containerId} -> ${id}`);
+        this.S.generator = {
+          ...this.S.generator,
+          upstreamContainer: { uct: 'vnd.oai.container', containerId: id, expiresAt },
+        };
+      }
+      return; // container is message-scoped, not fragment-scoped
+    }
+
     // Promote Gemini Interactions session handle -> Generator (message-scoped, for cross-turn reuse).
     // Today populated by Antigravity's `interaction.start.environment_id`; future Interactions
     // managed agents may emit the same svs vendor/state shape and slot in here without protocol changes.

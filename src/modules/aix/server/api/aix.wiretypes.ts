@@ -795,6 +795,7 @@ export namespace AixWire_Particles {
       )
     | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
       | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level - container reuse
+      | { vendor: 'openai-container', state: { container: { id: string; expiresAt: string } } } // message-level - OpenAI Responses code-interpreter container reuse; 20min TTL stamped by parser
       | { vendor: 'gemini-envid', state: { environment: { id: string; expiresAt: string | null } } } // message-level - Gemini Interactions sandbox handle (today: Antigravity); 7d TTL stamped by parser
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
       | { vendor: 'openai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level (attach to ma reasoning fragment)

@@ -16,13 +16,14 @@ import { OpenAIWire_API_Responses, OpenAIWire_Responses_Tools } from '../../wire
 const OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
 const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n';
 const INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES = 250_000; // skip resize for small images (e.g. code interpreter charts)
+const OPENAI_DEFAULT_CONTAINER_TTL_MS = 20 * 60 * 1000; // OpenAI code-interpreter containers expire after 20 min of inactivity (per docs); we stamp this so the client's reuse walk skips stale handles
 
 
 /**
- * Wishlist marker: hosted tool calls (web_search_call, image_generation_call, code_interpreter_call, ...)
- * are rendered via ephemeral OperationState/inline-asset paths and are NOT round-tripped as structured
- * fragments. This breaks stateless multi-turn with reasoning models. See PRD.FUTURE-atol.md "Wishlist:
- * Hosted tool invocations as first-class fragments".
+ * Wishlist marker: hosted tool calls (web_search_call, image_generation_call, ...) are rendered via ephemeral
+ * OperationState/inline-asset paths and are NOT round-tripped as structured fragments (breaks stateless multi-turn
+ * with reasoning models). NOTE: code_interpreter_call IS now round-tripped (see openai.responsesCreate.ts).
+ * See PRD.FUTURE-atol.md "Wishlist: Hosted tool invocations as first-class fragments".
  */
 // const _hostedToolWishlistSeen = new Set<string>();
 function _hostedToolWishlistHint(family: 'web_search' | 'image_generation' | 'code_interpreter' | 'custom_tool'): void {
@@ -1267,7 +1268,16 @@ function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: 
  */
 function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
   _hostedToolWishlistHint('code_interpreter');
-  const { id, code, outputs, status /*,container_id*/ } = codeInterpreterCall;
+  const { id, code, outputs, status, container_id } = codeInterpreterCall;
+
+  // -> Session container (message-scoped): promote for cross-turn reuse (round-trip + explicit pinning) and file downloads.
+  // OpenAI omits a retention field, so we stamp now+20min (its inactivity TTL); the client's reuse walk gates on it.
+  if (container_id)
+    pt.sendSetVendorState({
+      p: 'svs',
+      vendor: 'openai-container',
+      state: { container: { id: container_id, expiresAt: new Date(Date.now() + OPENAI_DEFAULT_CONTAINER_TTL_MS).toISOString() } },
+    });
 
   // <- Emit code (like Gemini's executableCode)
   if (code)
