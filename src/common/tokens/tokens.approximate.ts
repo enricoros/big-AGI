@@ -21,6 +21,7 @@ const TOKEN_RATIOS = {
   'gpt': 3.85,     // GPT-3.5/4 refined ratio
   'o1': 3.9,       // O1 models slightly different
   'claude': 3.7,   // Claude models more efficient
+  'claude-47': 2.85, // Opus 4.7+ tokenizer (4.7/4.8, Fable/Mythos 5): ~30-35% more tokens for the same text
   'gemini': 4.1,   // Google models
   'llama': 4.0,    // Meta models
   'mistral': 3.95, // Mistral models
@@ -116,6 +117,9 @@ function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
   return 'default';
 }
 
+// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Fable 5, Mythos 5/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
+const _CLAUDE_NEW_TOKENIZER_RE = /(opus[-.]4[-.][789]|4[-.][789][-.]opus|fable|mythos)/;
+
 /**
  * Optimized model family detection with early exits
  */
@@ -126,7 +130,12 @@ function getModelFamily(llm: DLLM): keyof typeof TOKEN_RATIOS {
   
   // Use indexOf for faster string matching (no need to toLowerCase for common cases)
   if (modelId.indexOf('gpt') !== -1 || modelRef.indexOf('gpt') !== -1) return 'gpt';
-  if (modelId.indexOf('claude') !== -1 || modelRef.indexOf('claude') !== -1) return 'claude';
+  if (modelId.indexOf('claude') !== -1 || modelRef.indexOf('claude') !== -1) {
+    // Opus 4.7 introduced a denser tokenizer, also used by 4.8 and Fable/Mythos 5
+    // (also matches OpenRouter-style ids, e.g. 'claude-4.7-opus')
+    if (_CLAUDE_NEW_TOKENIZER_RE.test(modelId) || _CLAUDE_NEW_TOKENIZER_RE.test(modelRef)) return 'claude-47';
+    return 'claude';
+  }
   if (modelId.indexOf('gemini') !== -1 || modelRef.indexOf('gemini') !== -1) return 'gemini';
   
   // Less common models (now check lowercase for edge cases)
