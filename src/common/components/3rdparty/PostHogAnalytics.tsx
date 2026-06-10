@@ -46,6 +46,14 @@ export function posthogAnalyticsOptOut() {
   }
 }
 
+/**
+ * True once posthog-js has dynamically loaded and `init()` ran - i.e. it consumed the
+ * initial URL (UTMs, etc.). Stays false for opted-out users (init is never called).
+ */
+export function posthogIsLoaded(): boolean {
+  return _posthog?.__loaded === true;
+}
+
 export function posthogCaptureEvent(eventName: string, properties?: Properties, options?: { sendInstantly?: boolean }) {
   if (isBrowser && hasPostHogAnalytics) {
     // For events before navigation (e.g., login button clicks), send immediately
