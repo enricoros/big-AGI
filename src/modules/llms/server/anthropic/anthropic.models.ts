@@ -29,7 +29,6 @@ function _hasLegacy1MContextOptIn(model: Pick<ModelDescriptionSchema, 'parameter
 }
 
 
-
 const IF_4 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching];
 const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 // 4.7+: temperature/top_p/top_k return 400; HOTFIX strips temperature client-side (top_p handled in dispatch)
@@ -237,7 +236,11 @@ export function llmsAntInjectVariants(acc: ModelDescriptionSchema[], model: Mode
 // --- Anthropic Model ID inference (auto-derived from hardcodedAnthropicModels) ---
 export type LlmsAnthropicModelId = typeof hardcodedAnthropicModels[number]['id'];
 
-type _AnthropicModelDef = ModelDescriptionSchema & { isLegacy?: boolean, pubDate: string /* make it required for the defs */ };
+type _AnthropicModelDef = ModelDescriptionSchema & {
+  isLegacy?: boolean,
+  benchmark: NonNullable<ModelDescriptionSchema['benchmark']>, // require it, for good practices - if not available, it's inferred
+  pubDate: string // make it required for the defs
+};
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
@@ -261,7 +264,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
     // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
-    benchmark: { cbaElo: 1520 }, // claude-fable-5 (launch estimate, no arena data yet)
+    benchmark: { cbaElo: 1510 }, // claude-fable-5
   },
   {
     id: 'claude-mythos-5', // Limited availability (Project Glasswing) - 2026-06-09
@@ -278,7 +281,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
-    // benchmark: no arena data - gated research model
+    benchmark: { cbaElo: 1510 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
   // Claude 4.8 models
@@ -779,7 +782,7 @@ export function llmsAntFuseModelKnowledge(knownModel: ModelDescriptionSchema, ap
 // -- Anthropic-through-Bedrock models lookup --
 
 /** Find a hardcoded Anthropic model definition by its Bedrock model ID. */
-export function llmBedrockFindAnthropicModel(bedrockBaseId: string): (ModelDescriptionSchema & { isLegacy?: boolean }) | undefined {
+export function llmBedrockFindAnthropicModel(bedrockBaseId: string): _AnthropicModelDef | undefined {
   const anthropicId = _llmBedrockToAnthropicModelId(bedrockBaseId);
   if (!anthropicId) return undefined;
   return hardcodedAnthropicModels.find(m => m.id === anthropicId);
