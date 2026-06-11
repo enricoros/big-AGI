@@ -65,6 +65,7 @@ export function agiCustomId(digits: number) {
 type UuidV4Scope =
   | 'conversation-2'
   | 'persona-2'
+  | 'asrx.engine.instance'
   | 'speex.engine.instance'
   ;
 
