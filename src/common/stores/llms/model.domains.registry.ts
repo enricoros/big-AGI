@@ -16,6 +16,7 @@ type ModelDomainSpec = {
   requiredInterfaces?: DModelInterfaceV1[];
   autoStrategy: 'topVendorTopLlm' | 'topVendorLowestCost';
   fallbackDomain?: DModelDomainId;
+  editorialFallbackDomain?: DModelDomainId; // for editorial use only, in case of empty editorials
 };
 
 

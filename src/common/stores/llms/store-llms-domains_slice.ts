@@ -251,7 +251,7 @@ export function llmsAssignmentsAutoModelId(domainId: DModelDomainId, universe: R
   const vendors = _groupLlmsByVendorRankedByElo(allowedLlms);
 
   // Editorial layer: prefer hand-curated favorites first (precedence is editorial-defined, see model.domains.editorial.ts)
-  const editorialPick = llmsEditorialPickForDomain(domainId, allowedLlms);
+  const editorialPick = llmsEditorialPickForDomain(domainId, allowedLlms, domainSpec?.editorialFallbackDomain);
   if (editorialPick) return editorialPick;
 
   // Apply the domain selection strategy

@@ -142,8 +142,11 @@ export const EditorialDefaults = {
 export function llmsEditorialPickForDomain(
   domainId: DModelDomainId,
   filteredLlms: ReadonlyArray<DLLM>,
+  fallbackEditorialDomainId?: DModelDomainId, // optional secondary domain to check when the primary domain has no picks or no matches
 ): DLLMId | undefined {
-  const entries = EditorialDefaults[domainId];
+  const entries = EditorialDefaults[domainId]?.length ? EditorialDefaults[domainId]
+    : fallbackEditorialDomainId && EditorialDefaults[fallbackEditorialDomainId]?.length ? EditorialDefaults[fallbackEditorialDomainId]
+      : undefined;
   if (!entries) return undefined;
   for (const { vendor, modelId } of entries) {
     const hit = filteredLlms.find(llm => llm.vId === vendor && _editorialMatch(llm, modelId));
