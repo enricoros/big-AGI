@@ -10,6 +10,7 @@ import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
 
+import { ASRxConfigureEngines } from '~/modules/asrx/components/ASRxConfigureEngines';
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
@@ -274,6 +275,7 @@ export function SettingsModal(props: {
           <Topics>
             <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
               <VoiceInSettings isMobile={isMobile} />
+              <ASRxConfigureEngines isMobile={isMobile} />
             </Topic>
             <Topic icon={/*'📢'*/ <PhVoice />} title={'Speech'/*<>Voices <GoodBadge badge='New' /></>*/}>
               <VoiceOutSettings isMobile={isMobile} />
