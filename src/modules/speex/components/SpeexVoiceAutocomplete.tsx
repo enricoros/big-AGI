@@ -11,7 +11,7 @@
 import * as React from 'react';
 
 import { Autocomplete, AutocompleteOption, Box, CircularProgress, IconButton, Typography } from '@mui/joy';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
@@ -82,7 +82,7 @@ export function SpeexVoiceAutocomplete(props: SpeexVoiceAutocompleteProps) {
             disabled={isLoading}
             onClick={() => refetch()}
           >
-            {!isLoading ? <RefreshRoundedIcon /> : <CircularProgress size='sm' />}
+            {!isLoading ? <RefreshIcon /> : <CircularProgress size='sm' />}
           </IconButton>
         </TooltipOutlined>
       )}

@@ -6,7 +6,7 @@ import { Box, Button, Chip, Divider, FormControl, FormLabel, Option, Select, Tab
 import BugReportIcon from '@mui/icons-material/BugReport';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import ErrorIcon from '@mui/icons-material/Error';
-import InfoIcon from '@mui/icons-material/Info';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -24,7 +24,7 @@ function _getLogLevelIcon(level: LogLevel) {
     case 'debug':
       return <BugReportIcon fontSize='small' color='action' />;
     case 'info':
-      return <InfoIcon fontSize='small' color='info' />;
+      return <InfoOutlinedIcon fontSize='small' color='info' />;
     case 'warn':
       return <WarningRoundedIcon fontSize='small' color='warning' />;
     case 'error':

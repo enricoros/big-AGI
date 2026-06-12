@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, Grid, Typography } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
@@ -87,7 +87,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             <Button
               variant='soft' disabled={!hasConversation}
               color={downloadedJSONState === 'ok' ? 'success' : downloadedJSONState === 'fail' ? 'warning' : 'primary'}
-              endDecorator={downloadedJSONState === 'ok' ? <DoneIcon /> : downloadedJSONState === 'fail' ? '✘' : <FileDownloadIcon />}
+              endDecorator={downloadedJSONState === 'ok' ? <DoneIcon /> : downloadedJSONState === 'fail' ? '✘' : <FileDownloadOutlinedIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handleDownloadConversationJSON}
             >
@@ -98,7 +98,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
           <Button
             variant='soft' disabled={!hasConversation}
             color={downloadedMarkdownState === 'ok' ? 'success' : downloadedMarkdownState === 'fail' ? 'warning' : 'primary'}
-            endDecorator={downloadedMarkdownState === 'ok' ? <DoneIcon /> : downloadedMarkdownState === 'fail' ? '✘' : <FileDownloadIcon />}
+            endDecorator={downloadedMarkdownState === 'ok' ? <DoneIcon /> : downloadedMarkdownState === 'fail' ? '✘' : <FileDownloadOutlinedIcon />}
             sx={{ minWidth: 240, justifyContent: 'space-between' }}
             onClick={handleDownloadConversationMarkdown}
           >
@@ -137,7 +137,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             <Button
               variant='soft'
               color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
-              endDecorator={downloadedAllState === 'ok' ? <DoneIcon /> : downloadedAllState === 'fail' ? '✘' : <FileDownloadIcon />}
+              endDecorator={downloadedAllState === 'ok' ? <DoneIcon /> : downloadedAllState === 'fail' ? '✘' : <FileDownloadOutlinedIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handleDownloadAllConversationsJSON}
             >

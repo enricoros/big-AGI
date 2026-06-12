@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { FormHelperText, FormLabel } from '@mui/joy';
-import InfoIcon from '@mui/icons-material/Info';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -46,7 +46,7 @@ export const FormLabelStart = React.memo(function FormLabelStartBase(props: {
       <GoodTooltip title={props.tooltip} arrow placement='top'>
         {props.tooltipWarning
           ? <WarningRoundedIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'red' }} />
-          : <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
+          : <InfoOutlinedIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
         }
       </GoodTooltip>
     )}

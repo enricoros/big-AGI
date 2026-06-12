@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, Button, FormControl, Input, Sheet, Textarea, Typography } from '@mui/joy';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 
 import { Brand } from '~/common/app.config';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
@@ -133,7 +133,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
       <GoodTooltip title={<KeyStroke variant='solid' combo='Ctrl + O' />}>
         <Button
-          variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+          variant='soft' endDecorator={<FileUploadOutlinedIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
           onClick={handleImportFromFiles}
         >
           {Brand.Title.Base} · JSON

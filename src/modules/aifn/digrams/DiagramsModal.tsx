@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, Button, ButtonGroup, CircularProgress, Divider, FormControl, FormLabel, Grid, Input } from '@mui/joy';
-import ReplayIcon from '@mui/icons-material/Replay';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -287,7 +287,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
               // cHandler.setAbortController(null);
               setAbortController(null);
             } : handleGenerateNew}
-            endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayIcon /> : <PhTreeStructure />}
+            endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayRoundedIcon /> : <PhTreeStructure />}
             sx={{ minWidth: isMobile ? 160 : 220 }}
           >
             {abortController ? 'Stop' : diagramCode ? 'Regenerate' : 'Generate'}

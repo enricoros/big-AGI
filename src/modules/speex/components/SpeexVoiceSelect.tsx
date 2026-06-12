@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Box, CircularProgress, IconButton, Option, optionClasses, Select, SelectSlotsAndSlotProps } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -89,7 +89,7 @@ export function SpeexVoiceSelect(props: {
           disabled={isLoading}
           onClick={() => refetch()}
         >
-          {!isLoading ? <RefreshRoundedIcon /> : <CircularProgress size='sm' />}
+          {!isLoading ? <RefreshIcon /> : <CircularProgress size='sm' />}
         </IconButton>
       </TooltipOutlined>
     )}

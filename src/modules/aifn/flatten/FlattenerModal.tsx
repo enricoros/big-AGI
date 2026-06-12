@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormLabel, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Typography } from '@mui/joy';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
-import ReplayIcon from '@mui/icons-material/Replay';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
 import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
@@ -185,7 +185,7 @@ export function FlattenerModal(props: {
             {!!streamError && <Typography>LLM issue: {streamError}</Typography>}
           </Alert>
           <IconButton variant='solid' color='danger' onClick={handleErrorRetry}>
-            <ReplayIcon />
+            <ReplayRoundedIcon />
           </IconButton>
         </Box>}
 
@@ -196,7 +196,7 @@ export function FlattenerModal(props: {
               variant={isError ? 'solid' : 'plain'} color={isError ? 'danger' : 'primary'}
               onClick={handleErrorRetry}
             >
-              <ReplayIcon />
+              <ReplayRoundedIcon />
             </IconButton>
 
             <Button variant='outlined' onClick={() => setConfirmOverwrite(true)} sx={{ ml: 'auto' }}>

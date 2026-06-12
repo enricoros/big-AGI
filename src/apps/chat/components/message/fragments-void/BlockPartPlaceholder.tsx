@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, ColorPaletteProp, Divider, Tooltip } from '@mui/joy';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import ClearAllRoundedIcon from '@mui/icons-material/ClearAllRounded';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CodeIcon from '@mui/icons-material/Code';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -375,7 +375,7 @@ function OperationsHarakiriChip(props: {
       size='sm'
       variant='plain'
       onClick={handleDeleteSelf}
-      startDecorator={<ClearAllRoundedIcon /* sx={{ opacity: 0 }} */ />}
+      startDecorator={<ClearAllIcon /* sx={{ opacity: 0 }} */ />}
       sx={chipSx}
     >
       {props.label}

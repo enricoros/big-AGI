@@ -3,9 +3,9 @@ import * as React from 'react';
 import { Box, Button, Chip, IconButton, LinearProgress, Option, Select, Stack, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DownloadIcon from '@mui/icons-material/Download';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import StopIcon from '@mui/icons-material/Stop';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 
 export type DeclaredFcFilter = 'any' | 'yes' | 'no';
@@ -132,7 +132,7 @@ export function RunControls(props: RunControlsProps) {
             <Button
               size='sm'
               color='primary'
-              startDecorator={<PlayArrowIcon />}
+              startDecorator={<PlayArrowRoundedIcon />}
               onClick={onRunSelected}
               disabled={!canRun}
             >
@@ -160,7 +160,7 @@ export function RunControls(props: RunControlsProps) {
             size='sm'
             color='danger'
             variant='solid'
-            startDecorator={<StopIcon />}
+            startDecorator={<StopRoundedIcon />}
             onClick={onStop}
           >
             Stop

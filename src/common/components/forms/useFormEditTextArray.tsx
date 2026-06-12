@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, FormControl, IconButton, Textarea, Tooltip } from '@mui/joy';
-import ReplayIcon from '@mui/icons-material/Replay';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
@@ -31,7 +31,7 @@ export function useFormEditTextArray(initialStrings: string[], titles: string[])
         />
         <Tooltip title='Reset'>
           <IconButton size='sm' onClick={() => editString(i, initialStrings[i])}>
-            <ReplayIcon />
+            <ReplayRoundedIcon />
           </IconButton>
         </Tooltip>
       </Box>

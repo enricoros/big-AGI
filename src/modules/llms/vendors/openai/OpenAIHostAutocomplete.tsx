@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Autocomplete, AutocompleteOption, Box, FormControl, FormHelperText, FormLabel, ListItemDecorator, Typography } from '@mui/joy';
-import InfoIcon from '@mui/icons-material/Info';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
@@ -109,7 +109,7 @@ export function OpenAIHostAutocomplete(props: {
         <FormLabel sx={{ flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
           API Endpoint
           <GoodTooltip title={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nSelect a verified provider from the list, or type any custom URL.`} arrow placement='top'>
-            <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
+            <InfoOutlinedIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
           </GoodTooltip>
         </FormLabel>
         {rightLabel && <FormHelperText sx={{ display: 'block' }}>{rightLabel}</FormHelperText>}

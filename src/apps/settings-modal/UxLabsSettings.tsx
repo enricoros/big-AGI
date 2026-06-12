@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
-import EditNoteIcon from '@mui/icons-material/EditNote';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -74,7 +74,7 @@ export function UxLabsSettings() {
     />
 
     <FormSwitchControl
-      title={<><EditNoteIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Auto-hide input</>} description={labsAutoHideComposer ? 'Hover to show' : 'Always visible'}
+      title={<><EditNoteRoundedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Auto-hide input</>} description={labsAutoHideComposer ? 'Hover to show' : 'Always visible'}
       checked={labsAutoHideComposer} onChange={setLabsAutoHideComposer}
     />
 

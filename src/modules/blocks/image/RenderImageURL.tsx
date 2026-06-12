@@ -6,7 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import ReplayIcon from '@mui/icons-material/Replay';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
 import type { RenderBlockInputs } from '../blocks.types';
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx } from '../OverlayButton';
@@ -251,14 +251,14 @@ export const RenderImageURL = (props: {
         {/* Regenerate toggle/cancel - only in modal context (click image to view inline) */}
         {showRegenerate && !deleteArmed && (
           <OverlayButton tooltip={regenArmed ? 'Cancel Regeneration' : 'Draw again'} placement='bottom' variant={regenArmed ? 'solid' : 'outlined'} onClick={handleToggleRegenArmed} sx={{ gridRow: onImageDelete ? '2' : '1', gridColumn: onImageDelete ? '1' : '2' }}>
-            {regenArmed ? <CloseRoundedIcon /> : <ReplayIcon />}
+            {regenArmed ? <CloseRoundedIcon /> : <ReplayRoundedIcon />}
           </OverlayButton>
         )}
 
         {/* Regenerate confirm (armed) */}
         {regenArmed && !deleteArmed && (
           <OverlayButton tooltip='Confirm Regeneration' placement='bottom' variant='outlined' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
-            <ReplayIcon sx={{ color: 'success.solidBg' }} />
+            <ReplayRoundedIcon sx={{ color: 'success.solidBg' }} />
           </OverlayButton>
         )}
 
