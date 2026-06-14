@@ -29,6 +29,8 @@
 
 # Big-AGI Open 🧠
 
+[![Listed on TakoAPI](https://img.shields.io/badge/Listed%20on-TakoAPI-7c3aed)](https://takoapi.com/agents/enricoros-big-agi)
+
 This is the open-source foundation of **Big-AGI**, ___the multi-model AI workspace for experts___.
 
 Big-AGI is the multi-model AI workspace for experts: Engineers architecting systems. Founders making decisions. Researchers validating hypotheses.
