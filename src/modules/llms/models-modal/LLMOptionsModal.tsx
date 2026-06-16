@@ -303,7 +303,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
                 {visible ? <VisibilityIcon sx={{ fontSize: 'xl' }} /> : <VisibilityOffIcon />}
               </IconButton>
             </TooltipOutlined>}
-            <div>{getLLMLabel(llm)} <span style={{ opacity: 0.5 }}>options</span></div>
+            <div>{getLLMLabel(llm)}{/*<span style={{ opacity: 0.5 }}>options</span>*/}</div>
           </Box>
 
           {/* [Desktop] Reset to default - show only when user has customized parameters */}
