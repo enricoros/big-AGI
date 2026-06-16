@@ -15,7 +15,7 @@ For the forward-looking pipeline (extraction script, snapshot, website consumpti
 
 ### Where `pubDate` is guaranteed (always emitted)
 
-- **Editorial entries** in 12 hybrid/editorial vendors (282 models). Hand-curated, externally corroborated. Future entries in these arrays are expected to include `pubDate`.
+- **Editorial entries** in 12 hybrid/editorial vendors. Hand-curated, externally corroborated. Future entries in these arrays are expected to include `pubDate` - and Anthropic, Gemini, and Z.AI now **type-require** it (the model-def type intersects `& { pubDate: string }`).
 - **Anthropic 0-day placeholder** (`llmsAntCreatePlaceholderModel`): when the API surfaces an Anthropic model not in the editorial list, the placeholder uses the API's `created_at` ISO date, falling back to today via `formatPubDate()`.
 - **Gemini 0-day fallback** (`geminiModelToModelDescription`): when the API returns a Gemini model not in `_knownGeminiModels`, the converter falls back to today via `formatPubDate()` (Gemini API does not expose a creation timestamp).
 
@@ -77,7 +77,7 @@ Three categories:
 | MiniMax | Editorial | `openai/models/minimax.models.ts` | `_knownMiniMaxModels` | 10 | 10/10 HIGH |
 | DeepSeek | Hybrid | `openai/models/deepseek.models.ts` | `_knownDeepseekChatModels` | 4 | 4/4 HIGH |
 | Groq | Hybrid (host) | `openai/models/groq.models.ts` | `_knownGroqModels` | 11 | 11/11 HIGH (underlying-model date) |
-| Z.AI / GLM | Hybrid | `openai/models/zai.models.ts` | `_knownZAIModels` | 17 | 16/17 (`glm-5-code` UNCONFIRMED) |
+| Z.AI / GLM | Hybrid | `openai/models/zai.models.ts` | `_knownZAIModels` | 21 | 21/21 HIGH (`pubDate` type-required, like Anthropic) |
 | Bedrock | Reuses Anthropic | `bedrock/bedrock.models.ts` | -> `hardcodedAnthropicModels` | (12) | inherited |
 | Ollama | Editorial (catalog) | `ollama/ollama.models.ts` | `OLLAMA_BASE_MODELS` | 209 | **deferred** - see notes |
 | Arcee AI | Dynamic | `openai/models/arceeai.models.ts` | `_arceeKnownModels` | 0 | n/a (empty) |
@@ -94,7 +94,7 @@ Three categories:
 | LocalAI | Dynamic | `openai/models/localai.models.ts` | (parser) | -- | no |
 | FastAPI | Dynamic | `openai/models/fastapi.models.ts` | (parser) | -- | no |
 
-**Totals**: 284 editorial entries across 12 vendors, of which **282** have corroborated `pubDate` and **2** are intentional gaps (`osb-120b` speculative, `glm-5-code` not yet announced). All 12 vendor files type-check clean.
+**Totals**: editorial entries across 12 vendors, with the sole remaining intentional gap being `osb-120b` (speculative). `glm-5-code` was removed 2026-06-16 (not API-accessible, deny-listed in `zai.models.ts`), and Z.AI now type-requires `pubDate` on every entry (mirrors `_AnthropicModelDef`). NOTE: the 2026-06 catalog refresh shifted several per-vendor counts (e.g. Z.AI 17->21; xAI trimmed retired models) - the numbers above are being re-verified. All vendor files type-check clean.
 
 ### Notes
 

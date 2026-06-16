@@ -2,7 +2,7 @@ import { LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_I
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+import { KnownModel, llmsDefineModels, fromManualMapping } from '../../models.mappings';
 
 // --- Z.AI Model ID inference (auto-derived from _knownZAIModels) ---
 export type LlmsZAIModelId = typeof _knownZAIModels[number]['idPrefix'];
@@ -30,7 +30,10 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
 // Also used for prefix-matching 0-day API-discovered models
 // Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing
 // Ref: https://docs.z.ai/api-reference/llm/chat-completion (model enum), https://docs.z.ai/guides/overview/pricing
-const _knownZAIModels = llmsDefineManualMappings([
+// pubDate is REQUIRED on every entry (same pattern as _AnthropicModelDef in anthropic.models.ts).
+type _ZaiModelDef = KnownModel & { pubDate: string };
+
+const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 
   // GLM-5.2 - 1M context flagship (Agentic Coding)
   // 1M context, 128K output. Thinking default enabled. reasoning_effort supported (GLM-5.2 only).
@@ -220,6 +223,7 @@ const _knownZAIModels = llmsDefineManualMappings([
   {
     idPrefix: 'autoglm-phone-multilingual',
     label: 'AutoGLM Phone',
+    pubDate: '20251211', // open-sourced + API launch announced 2025-12-11
     description: 'Mobile phone automation agent. Understands phone screens via multimodal perception and executes automated operations.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
