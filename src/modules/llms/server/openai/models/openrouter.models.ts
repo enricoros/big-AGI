@@ -21,6 +21,7 @@ const FIXUP_MAX_OUTPUT = true;
 // - models list API: https://openrouter.ai/docs/models
 
 
+// NOTE: this list doubles as the visibility allow-list - any model whose family prefix is NOT here is hidden by default (see `hidden` below).
 const orModelFamilyOrder = [
   // Leading models/organizations (based on capabilities and popularity)
   'anthropic/', 'deepseek/', 'google/', 'openai/', 'x-ai/',
@@ -29,24 +30,21 @@ const orModelFamilyOrder = [
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'inflection/',
-  // Chinese majors (now surfaced on OpenRouter directly)
-  'alibaba/', 'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/',
+  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/',
+  // Chinese majors (surfaced on OpenRouter directly)
+  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/',
   // Research/open models
-  'nvidia/', 'microsoft/', 'nousresearch/', 'openchat/', // 'huggingfaceh4/',
-  // Community/other providers
-  // 'gryphe/', 'thedrummer/', 'undi95/', 'cognitivecomputations/', 'sao10k/',
+  'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/',
 ] as const;
 
 const orOldModelIDs = [
-  // Older OpenAI models
-  'openai/gpt-3.5-turbo-0301', 'openai/gpt-3.5-turbo-0613', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
+  // Older OpenAI models (no longer on OR but kept for safety)
+  'openai/gpt-3.5-turbo-', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
   // Older Anthropic models
-  'anthropic/claude-1', 'anthropic/claude-1.2', 'anthropic/claude-instant-1.0', 'anthropic/claude-instant-1.1',
-  'anthropic/claude-2', 'anthropic/claude-2:beta', 'anthropic/claude-2.0', 'anthropic/claude-2.1', 'anthropic/claude-2.0:beta',
+  'anthropic/claude-1', 'anthropic/claude-2', 'anthropic/claude-instant-',
   // Older Google models
   'google/palm-2-',
-  // Older Meta models
+  // Older Meta models (Llama 2 and Llama 3.0; keeps 3.1/3.2/3.3/4 visible)
   'meta-llama/llama-3-', 'meta-llama/llama-2-',
 ] as const;
 
@@ -174,7 +172,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     if (lookup?.parameterSpecs)
       for (const param of lookup.parameterSpecs)
         if (!parameterSpecs.some(p => p.paramId === param.paramId))
-          parameterSpecs.push(...lookup.parameterSpecs);
+          parameterSpecs.push(param);
     if (lookup?.initialTemperature !== undefined)
       initialTemperature = lookup.initialTemperature;
   };
@@ -189,14 +187,19 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       const antLookup = llmOrtAntLookup_ThinkingVariants(llmRef);
       _mergeLookup(antLookup);
 
-      if (DEV_DEBUG_OPENROUTER_MODELS && !antLookup && ['anthropic/claude-3.5-sonnet'].every(silence => !model.id.startsWith(silence)))
+      if (DEV_DEBUG_OPENROUTER_MODELS && !antLookup)
         console.log('[DEV] openRouterModelToModelDescription: unknown Anthropic model:', model.id);
 
-      // 0-day: non-indexed models only - indexed ones use native definitions via llmOrtAntLookup.
+      // 0-day: unknown models only - indexed ones use native definitions via llmOrtAntLookup.
       // OR sweep shows effort on all Anthropic models because OR translates reasoning_effort internally;
       // the native API only supports effort on select models - trust the manual definitions for those.
-      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndAntThinkingBudget')) {
-        DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: unexpected ${antLookup ? 'KNOWN' : 'unknown'} Anthropic reasoning model:`, model.id);
+
+      // NOTE: Fable/Mythos 5+ use always-on adaptive thinking (no budget param). The guard `!antLookup`
+      // ensures we only inject the thinking budget for genuinely unknown models, not indexed ones that
+      // intentionally omit it.
+      const isAntUnknown = !antLookup;
+      if (isAntUnknown && interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndAntThinkingBudget')) {
+        DEV_DEBUG_OPENROUTER_MODELS && console.log('[DEV] openRouterModelToModelDescription: unknown Anthropic reasoning model:', model.id);
         parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget' }); // configurable thinking budget
         if (!parameterSpecs.some(p => p.paramId === 'llmVndAntEffort'))
           parameterSpecs.push({ paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }); // tunneled via OpenRouter's `verbosity` field
