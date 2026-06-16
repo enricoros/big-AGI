@@ -680,27 +680,7 @@ export const _knownOpenAIChatModels = llmsDefineManualMappings([
   // osb-120b: removed, no longer returned by API (was speculative)
 
 
-  /// [OpenAI, 2025-03-11] NEW `v1/responses` API MODELS - UNSUPPORTED YET
-
-  // Computer Use Preview - INTERNAL MODEL FOR AGENTS - UNSUPPORTED YET
-  {
-    hidden: true, // UNSUPPORTED YET
-    idPrefix: 'computer-use-preview-2025-03-11',
-    label: 'Computer Use Preview [Deprecated]',
-    pubDate: '20250311',
-    isLegacy: true,
-    description: '[Use: GPT-5.4 Mini - Shut down: 2026-07-23] Specialized model for computer use tool. Optimized for computer interaction capabilities.',
-    contextWindow: 8192,
-    maxCompletionTokens: 1024,
-    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_NoTemperature],
-    chatPrice: { input: 3, output: 12 },
-    isPreview: true,
-  },
-  {
-    idPrefix: 'computer-use-preview',
-    label: 'Computer Use Preview',
-    symLink: 'computer-use-preview-2025-03-11',
-  },
+  // computer-use-preview: removed, no longer returned by API (shut down 2026-07-23)
   // codex-mini-latest: removed, shut down February 12, 2026
 
 
@@ -1229,9 +1209,9 @@ const openAIModelsDenyList: string[] = [
   'gpt-realtime',
   'gpt-realtime-mini',
   'gpt-realtime-1.5',
-
-  // [OpenAI, 2025-03-11] FIXME: NOT YET SUPPORTED - "RESPONSES API"
-  'computer-use-preview', 'computer-use-preview-2025-03-11', // FIXME: support these
+  'gpt-realtime-2',
+  'gpt-realtime-translate',
+  'gpt-realtime-whisper',
 
   // [OpenAI Deprecations] Explicitly deny shut-down model IDs that we removed
   'codex-mini-latest', // shut down February 12, 2026
@@ -1256,7 +1236,7 @@ const openAIModelsDenyList: string[] = [
   'tts-1-hd', 'tts-1', 'gpt-4o-mini-tts', // FIXME: support these
 
   // STT models: /v1/audio/transcriptions, /v1/audio/translations
-  'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', // FIXME: support these
+  'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize', // FIXME: support these
 
   // Image-focused chat models (non-standard image output pricing)
   'gpt-5-image', 'gpt-5-image-mini',
@@ -1386,10 +1366,6 @@ const _manualOrderingIdPrefixes = [
   'chatgpt-',
   // Codex
   'codex-',
-  // Computer use models
-  'computer-use-20',
-  'computer-use-preview',
-  'computer-use',
   // ...rest
   // 'gpt-4-turbo-',
   // 'gpt-4-',
