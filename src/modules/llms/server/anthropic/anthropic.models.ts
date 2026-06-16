@@ -183,12 +183,12 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     benchmark: { cbaElo: 1449 }, // claude-opus-4-1-20250805-thinking-16k
   },
 
-  // Claude 4 models with thinking variants
+  // Claude 4 models with thinking variants (retired June 15, 2026)
   'claude-opus-4-20250514': {
     idVariant: 'thinking',
-    hidden: true, // superseded by 4.1
+    // hidden: true, // retired
     label: 'Claude Opus 4 (Thinking)',
-    description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning',
+    description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning. Retired June 15, 2026.',
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
     parameterSpecs: [
@@ -200,8 +200,9 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
 
   'claude-sonnet-4-20250514': {
     idVariant: 'thinking',
+    // hidden: true, // retired
     label: 'Claude Sonnet 4 (Thinking)',
-    description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
+    description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning. Retired June 15, 2026.',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
     parameterSpecs: [
@@ -434,11 +435,11 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
   // Claude 4 models
   {
-    hidden: true, // Deprecated: April 14, 2026 | Retiring: June 15, 2026 | Replacement: claude-opus-4-8
-    id: 'claude-opus-4-20250514', // Deprecated
-    label: 'Claude Opus 4 [Deprecated]',
+    hidden: true, // Deprecated: April 14, 2026 | Retired: June 15, 2026 | Replacement: claude-opus-4-8
+    id: 'claude-opus-4-20250514', // Retired (except on Vertex AI)
+    label: 'Claude Opus 4 [Retired]',
     pubDate: '20250522',
-    description: 'Previous flagship model. Deprecated April 14, 2026, retiring June 15, 2026.',
+    description: 'Previous flagship model. Retired June 15, 2026 (except on Vertex AI).',
     contextWindow: 200000,
     maxCompletionTokens: 32000,
     interfaces: IF_4,
@@ -448,11 +449,11 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     isLegacy: true,
   },
   {
-    hidden: true, // Deprecated: April 14, 2026 | Retiring: June 15, 2026 | Replacement: claude-sonnet-4-6
-    id: 'claude-sonnet-4-20250514', // Deprecated
-    label: 'Claude Sonnet 4 [Deprecated]',
+    hidden: true, // Deprecated: April 14, 2026 | Retired: June 15, 2026 | Replacement: claude-sonnet-4-6
+    id: 'claude-sonnet-4-20250514', // Retired (except on Bedrock and Vertex AI)
+    label: 'Claude Sonnet 4 [Retired]',
     pubDate: '20250522',
-    description: 'High-performance model. Deprecated April 14, 2026, retiring June 15, 2026.',
+    description: 'High-performance model. Retired June 15, 2026 (except on Bedrock and Vertex AI).',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: IF_4,
