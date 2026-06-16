@@ -75,7 +75,7 @@ export const EditorialDefaults = {
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
     { vendor: 'xai',        modelId: 'grok-4.3' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
-    { vendor: 'zai',        modelId: 'glm-5' },
+    { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-pro' },
   ],
 
@@ -92,7 +92,7 @@ export const EditorialDefaults = {
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'xai',        modelId: 'grok-build-0.1' },
-    { vendor: 'zai',        modelId: 'glm-5-code' },
+    { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'zai',        modelId: 'glm-5' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
@@ -112,7 +112,7 @@ export const EditorialDefaults = {
     { vendor: 'moonshot',   modelId: 'kimi-k2.5' },
     { vendor: 'xai',        modelId: 'grok-4.20-0309-non-reasoning' },
     { vendor: 'xai',        modelId: 'grok-4.3' },
-    { vendor: 'zai',        modelId: 'glm-4.7-flash' },
+    { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
   ],
 

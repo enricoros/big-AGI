@@ -1,4 +1,4 @@
-import { LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -9,16 +9,18 @@ export type LlmsZAIModelId = typeof _knownZAIModels[number]['idPrefix'];
 
 
 // Interfaces for Z.ai models
-// - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5)
+// - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5, 5.1, 5.2)
 // - Text-only models strip images (Z.ai API rejects image parts on non-vision models)
 // - Ref: https://docs.z.ai/guides/capabilities/thinking-mode
-const _IF_Chat = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_HOTFIX_StripImages];
-const _IF_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_StripImages];
-const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning];
+const _IF_Chat = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages];
+const _IF_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_StripImages];
+const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning];
 
 // Parameter specs for Z.ai models
-// - Z.ai thinking maps from effort: 'none' → disabled, anything else → enabled
-// - Z.ai only supports binary enabled/disabled, so we expose 'none' and 'high'
+// - Z.ai thinking maps from effort: 'none' -> disabled, anything else -> enabled
+// - Most models support binary enabled/disabled, so we expose 'none' and 'high'
+// - GLM-5.2 additionally supports reasoning_effort (max/xhigh/high/medium/low/minimal/none) - we expose 'none', 'high', 'max'
+//   The zai adapter (openai.chatCompletions.ts) gates reasoning_effort to glm-5.2 and sends it alongside thinking:enabled
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
@@ -27,11 +29,40 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
 // [Z.ai] Known Models - Manual Mappings
 // Also used for prefix-matching 0-day API-discovered models
 // Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing
-// Ref: https://docs.z.ai/api-reference/chat/completions (model enum), https://docs.z.ai/guides/overview/pricing
+// Ref: https://docs.z.ai/api-reference/llm/chat-completion (model enum), https://docs.z.ai/guides/overview/pricing
 const _knownZAIModels = llmsDefineManualMappings([
 
-  // GLM-5 Series - Flagship (Agentic Engineering)
+  // GLM-5.2 - 1M context flagship (Agentic Coding)
+  // 1M context, 128K output. Thinking default enabled. reasoning_effort supported (GLM-5.2 only).
+  {
+    idPrefix: 'glm-5.2',
+    label: 'GLM-5.2 (1M)',
+    pubDate: '20260613',
+    description: 'Z.ai 1M-context flagship (744B MoE, 40B activated). Agentic coding with reasoning_effort control (high/max). 1M context, 128K output.',
+    contextWindow: 1048576, // 1M
+    interfaces: _IF_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
+    chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
+    initialTemperature: 1.0,
+    benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2 (max)
+  },
+
+  // GLM-5.1 / GLM-5 Series - Flagship (Agentic Engineering)
   // 200K context, 128K output. Thinking compulsory when enabled (default: enabled).
+  {
+    idPrefix: 'glm-5.1',
+    label: 'GLM-5.1',
+    pubDate: '20260407',
+    description: 'Z.ai flagship (744B MoE, 40B activated). Post-training upgrade over GLM-5 with stronger coding and long-horizon task autonomy. 200K context, thinking mode.',
+    contextWindow: 204800, // 200K
+    interfaces: _IF_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning,
+    chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
+    initialTemperature: 1.0,
+    benchmark: { cbaElo: 1475 }, // lmarena: glm-5.1
+  },
   {
     idPrefix: 'glm-5',
     label: 'GLM-5',
@@ -43,19 +74,19 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1, output: 3.2, cache: { cType: 'oai-ac', read: 0.2 } },
     initialTemperature: 1.0, // Z.ai default for GLM-5
+    benchmark: { cbaElo: 1457 }, // lmarena: glm-5
   },
   {
-    idPrefix: 'glm-5-code',
-    label: 'GLM-5 Code',
-    // pubDate: UNCONFIRMED - 'glm-5-code' not in Z.ai pricing table or release-notes; Z.ai's coding plan documents GLM-5.1 / GLM-5-Turbo / GLM-4.7 / GLM-4.5-Air, no 'glm-5-code'
-    description: 'GLM-5 optimized for coding tasks. Uses the dedicated Coding endpoint. 200K context, thinking mode.',
+    idPrefix: 'glm-5-turbo',
+    label: 'GLM-5 Turbo',
+    pubDate: '20260315',
+    description: 'Speed-optimized GLM-5 variant for agent workflows. Enhanced tool invocation and long-chain execution. 200K context, thinking mode.',
     contextWindow: 204800, // 200K
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 1.2, output: 5, cache: { cType: 'oai-ac', read: 0.3 } },
+    chatPrice: { input: 1.2, output: 4, cache: { cType: 'oai-ac', read: 0.24 } },
     initialTemperature: 1.0,
-    // hidden: true,
   },
 
   // GLM-4.7 Series
@@ -71,6 +102,7 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
     initialTemperature: 1.0,
+    benchmark: { cbaElo: 1443 }, // lmarena: glm-4.7
   },
   {
     idPrefix: 'glm-4.7-flashx',
@@ -95,6 +127,22 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 'free', output: 'free' },
     initialTemperature: 1.0,
+    benchmark: { cbaElo: 1368 }, // lmarena: glm-4.7-flash
+  },
+
+  // GLM-5V-Turbo (Vision + Reasoning)
+  // 200K context, 128K output. Multimodal coding model: images, video, files.
+  {
+    idPrefix: 'glm-5v-turbo',
+    label: 'GLM-5V Turbo',
+    pubDate: '20260401',
+    description: 'First multimodal GLM-5 model. Vision-based coding agent with image/video/file inputs. 200K context, 128K output, thinking mode.',
+    contextWindow: 204800, // 200K
+    interfaces: _IF_Vision_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning,
+    chatPrice: { input: 1.2, output: 4, cache: { cType: 'oai-ac', read: 0.24 } },
+    initialTemperature: 0.8, // Z.ai default for vision models
   },
 
   // GLM-4.6V Series (Vision + Reasoning)
@@ -135,6 +183,7 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.3, output: 0.9, cache: { cType: 'oai-ac', read: 0.05 } },
     initialTemperature: 0.8,
+    benchmark: { cbaElo: 1377 }, // lmarena: glm-4.6v
   },
 
   // GLM-4.6 Text
@@ -150,6 +199,7 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
     initialTemperature: 1.0,
+    benchmark: { cbaElo: 1425 }, // lmarena: glm-4.6
   },
 
   // GLM-OCR (Vision, no reasoning)
@@ -166,6 +216,19 @@ const _knownZAIModels = llmsDefineManualMappings([
     // hidden: true,
   },
 
+  // AutoGLM Phone (Vision, mobile automation, no reasoning)
+  {
+    idPrefix: 'autoglm-phone-multilingual',
+    label: 'AutoGLM Phone',
+    description: 'Mobile phone automation agent. Understands phone screens via multimodal perception and executes automated operations.',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    maxCompletionTokens: 4096, // 4K
+    chatPrice: { input: 'free', output: 'free' }, // launched free for limited time
+    initialTemperature: 0.0, // Z.ai default for autoglm
+    hidden: true,
+  },
+
   // GLM-4.5V (Vision + Reasoning)
   // 96K context, 16K output. Supports interleaved thinking.
   {
@@ -179,6 +242,7 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 1.8, cache: { cType: 'oai-ac', read: 0.11 } },
     initialTemperature: 0.8,
+    benchmark: { cbaElo: 1353 }, // lmarena: glm-4.5v
     hidden: true,
   },
 
@@ -221,6 +285,7 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.2, output: 1.1, cache: { cType: 'oai-ac', read: 0.03 } },
     initialTemperature: 0.6,
+    benchmark: { cbaElo: 1373 }, // lmarena: glm-4.5-air
     hidden: true,
   },
   {
@@ -247,6 +312,7 @@ const _knownZAIModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
     initialTemperature: 0.6,
+    benchmark: { cbaElo: 1411 }, // lmarena: glm-4.5
   },
 
   // GLM-4 Special Models (no thinking support)
@@ -269,21 +335,30 @@ const _knownZAIModels = llmsDefineManualMappings([
 /// Curated model IDs - authoritative list of Z.ai models
 /// This is the primary source; the list API is unreliable.
 const _zaiCuratedModelIds: string[] = [
-  // Text: GLM-5 series
-  'glm-5', 'glm-5-code',
+  // Text: GLM-5.2
+  'glm-5.2',
+  // Text: GLM-5.1 / GLM-5 series
+  'glm-5.1', 'glm-5', 'glm-5-turbo',
   // Text: GLM-4.7 series
   'glm-4.7', 'glm-4.7-flash', 'glm-4.7-flashx',
+  // Vision: GLM-5V-Turbo
+  'glm-5v-turbo',
   // Vision: GLM-4.6V series
   'glm-4.6v', 'glm-4.6v-flash', 'glm-4.6v-flashx',
   // Text: GLM-4.6
   'glm-4.6',
-  // Vision: GLM-OCR, GLM-4.5V
-  'glm-ocr', 'glm-4.5v',
+  // Vision: GLM-OCR, AutoGLM, GLM-4.5V
+  'glm-ocr', 'autoglm-phone-multilingual', 'glm-4.5v',
   // Text: GLM-4.5 series
   'glm-4.5', 'glm-4.5-air', 'glm-4.5-x', 'glm-4.5-airx', 'glm-4.5-flash',
   // Text: GLM-4 special
   'glm-4-32b-0414-128k',
 ];
+
+
+/// Denylist: never surface these, even if the Z.ai API returns them.
+/// - glm-5-code: advertised but not actually working/accessible via the API (verified 2026-06-16).
+const _zaiDeniedModelIdPrefixes: string[] = ['glm-5-code'];
 
 
 /**
@@ -301,7 +376,7 @@ export function zaiCuratedModelDescriptions(): ModelDescriptionSchema[] {
 export function zaiDiscoverModels(apiModelIds: string[]): ModelDescriptionSchema[] {
   const curatedSet = new Set(_zaiCuratedModelIds);
   return apiModelIds
-    .filter(id => !curatedSet.has(id))
+    .filter(id => !curatedSet.has(id) && !_zaiDeniedModelIdPrefixes.some(prefix => id.startsWith(prefix)))
     .map(id => _zaiModelToDescription(id));
 }
 
