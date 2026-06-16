@@ -18,7 +18,7 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Models: https://platform.minimax.io/docs/release-notes/models.md
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
- * - Updated: 2026-06-01
+ * - Updated: 2026-06-16
  */
 const _knownMiniMaxModels = llmsDefineModels<ModelDescriptionSchema>()([
 
@@ -31,8 +31,12 @@ const _knownMiniMaxModels = llmsDefineModels<ModelDescriptionSchema>()([
     contextWindow: 1000000,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    // standard PAYG pricing; 7-day launch promo (until ~2026-06-07) halves these to 0.30 / 1.20 / read 0.06
-    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.12 } },
+    // tiered PAYG pricing: boundary at 512K input tokens, >512K tier doubles. Priority tier (1.5x) not modeled.
+    chatPrice: {
+      input: [{ upTo: 512000, price: 0.30 }, { upTo: null, price: 0.60 }],
+      output: [{ upTo: 512000, price: 1.20 }, { upTo: null, price: 2.40 }],
+      cache: { cType: 'oai-ac', read: [{ upTo: 512000, price: 0.06 }, { upTo: null, price: 0.12 }] },
+    },
   },
 
   // M2.7 series

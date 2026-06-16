@@ -31,8 +31,8 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
     ],
     maxCompletionTokens: 65536, // conservative default; docs advertise up to 384K
-    chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
-    benchmark: { cbaElo: 1463 }, // lmarena: deepseek-v4-pro (thinking variant 1462, near-tied)
+    chatPrice: { input: 0.435, output: 0.87, cache: { cType: 'oai-ac', read: 0.003625 } },
+    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro-thinking
   },
   {
     idPrefix: 'deepseek-v4-flash',
@@ -45,8 +45,8 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
     ],
     maxCompletionTokens: 65536, // conservative default; docs advertise up to 384K
-    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
-    benchmark: { cbaElo: 1439 }, // lmarena: deepseek-v4-flash-thinking (non-thinking variant 1433)
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.0028 } },
+    benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash-thinking
   },
   // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
   {
@@ -56,8 +56,8 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     contextWindow: 1_048_576,
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
-    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
-    benchmark: { cbaElo: 1439 }, // lmarena: deepseek-v4-flash-thinking
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.0028 } },
+    benchmark: { cbaElo: 1436 - 1 }, // lmarena: deepseek-v4-flash-thinking - 1 (yield)
     isLegacy: true,
   },
   {
@@ -67,8 +67,8 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     contextWindow: 1_048_576,
     interfaces: IF_4,
     maxCompletionTokens: 65536,
-    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
-    benchmark: { cbaElo: 1433 }, // lmarena: deepseek-v4-flash (non-thinking)
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.0028 } },
+    benchmark: { cbaElo: 1436 - 2 }, // lmarena: deepseek-v4-flash-thinking - 2 (yield)
     isLegacy: true,
   },
 ]);
