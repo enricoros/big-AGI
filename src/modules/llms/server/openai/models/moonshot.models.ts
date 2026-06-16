@@ -21,6 +21,7 @@ const IF_K2_5 = [
   LLM_IF_OAI_Vision, // this is supported since 2.5
   LLM_IF_HOTFIX_NoTemperature, // no temperature control
 ];
+const IF_K2_7_CODE = [...IF_K2_5, LLM_IF_OAI_Reasoning]; // always-on thinking, cannot be disabled
 
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
@@ -31,12 +32,37 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
  * Moonshot AI (Kimi) models.
  * - models list and pricing: https://platform.kimi.ai/docs/pricing/chat (was platform.moonshot.ai - now 301 redirect)
  * - API docs: https://platform.kimi.ai/docs/api/chat
- * - updated: 2026-05-04
- * - NOTE: K2 series (non-2.5/2.6) is scheduled for discontinuation on 2026-05-25 per Moonshot docs.
+ * - updated: 2026-06-16
+ * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  */
 const _knownMoonshotModels = llmsDefineManualMappings([
 
-  // Kimi K2.6 Series - Current flagship (native multimodal, thinking + non-thinking)
+  // Kimi K2.7-code Series - Code-focused flagship (native multimodal, always-on thinking)
+  {
+    idPrefix: 'kimi-k2.7-code',
+    label: 'Kimi K2.7 Code',
+    pubDate: '20260601',
+    description: 'Code-focused multimodal model (text, image, video inputs) with always-on thinking. ~180 tok/s output (up to 260 in short contexts for highspeed). 256K context.',
+    contextWindow: 262144,
+    maxCompletionTokens: 32768,
+    interfaces: IF_K2_7_CODE,
+    // no _PS_Reasoning - thinking is always on (cannot be disabled)
+    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
+    benchmark: { cbaElo: 1460 + 2 } // not available yet, assuming kimi-k2.6 + 2
+  },
+  {
+    idPrefix: 'kimi-k2.7-code-highspeed',
+    label: 'Kimi K2.7 Code Highspeed',
+    pubDate: '20260601',
+    description: 'High-speed code variant with ~180 tok/s output (up to 260 in short contexts). Native multimodal with always-on thinking. 256K context.',
+    contextWindow: 262144,
+    maxCompletionTokens: 32768,
+    interfaces: IF_K2_7_CODE,
+    chatPrice: { input: 1.90, output: 8.00, cache: { cType: 'oai-ac', read: 0.38 } },
+    benchmark: { cbaElo: 1460 + 1 } // not available yet, assuming kimi-k2.6 + 1
+  },
+
+  // Kimi K2.6 Series - General-purpose flagship (native multimodal, thinking + non-thinking)
   {
     idPrefix: 'kimi-k2.6',
     label: 'Kimi K2.6',
@@ -47,7 +73,7 @@ const _knownMoonshotModels = llmsDefineManualMappings([
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
-    // benchmark: { cbaElo: ... } // not available yet
+    benchmark: { cbaElo: 1460 } // kimi-k2.6
   },
 
   // Kimi K2.5 Series - still API-listed; pricing page no longer documents it (superseded by K2.6)
@@ -61,17 +87,18 @@ const _knownMoonshotModels = llmsDefineManualMappings([
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
-    benchmark: { cbaElo: 1451 }, // kimi-k2.5-thinking
+    benchmark: { cbaElo: 1450 }, // kimi-k2.5-thinking
   },
 
-  // Kimi K2 Series - scheduled for discontinuation on 2026-05-25
+  // Kimi K2 Series - discontinued on 2026-05-25, removed from API
 
   // Fast, Thinking
   {
+    hidden: true,
     idPrefix: 'kimi-k2-thinking-turbo',
     label: 'Kimi K2 Thinking Turbo',
     pubDate: '20251106',
-    description: 'High-speed reasoning model with advanced thinking and tool calling capabilities. Faster inference (~50 tok/s) with optimized performance. 256K context. Temperature 1.0 recommended.',
+    description: 'Discontinued. High-speed reasoning model with thinking and tool calling. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 65536,
     interfaces: IF_K2_REASON,
@@ -81,10 +108,11 @@ const _knownMoonshotModels = llmsDefineManualMappings([
   },
   // Thinking
   {
+    hidden: true,
     idPrefix: 'kimi-k2-thinking',
     label: 'Kimi K2 Thinking',
     pubDate: '20251106',
-    description: 'Advanced reasoning model with multi-step thinking and autonomous tool calling (200-300 sequential calls). Interleaves chain-of-thought with tool use. 256K context. Temperature 1.0 recommended.',
+    description: 'Discontinued. Advanced reasoning model with multi-step thinking and tool calling. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 65536,
     interfaces: IF_K2_REASON,
@@ -95,10 +123,11 @@ const _knownMoonshotModels = llmsDefineManualMappings([
 
   // K2
   {
+    hidden: true,
     idPrefix: 'kimi-k2-0905-preview',
     label: 'Kimi K2 0905 (Preview)',
     pubDate: '20250905',
-    description: 'State-of-the-art MoE model (1T total, 32B active) with extended 256K context. Enhanced agentic coding intelligence and improved instruction following.',
+    description: 'Discontinued. MoE model (1T total, 32B active) with 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
     interfaces: IF_K2,
@@ -122,6 +151,7 @@ const _knownMoonshotModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1417 }, // kimi-k2-0711-preview
   },
   {
+    hidden: true,
     idPrefix: 'kimi-k2-turbo-preview',
     label: 'Kimi K2 Turbo (Preview)',
     pubDate: '20250801',
