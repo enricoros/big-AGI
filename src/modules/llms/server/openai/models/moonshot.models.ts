@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+import { llmsDefineModels, fromManualMapping, KnownModel } from '../../models.mappings';
 
 // --- Moonshot Model ID inference (auto-derived from _knownMoonshotModels) ---
 export type LlmsMoonshotModelId = typeof _knownMoonshotModels[number]['idPrefix'];
@@ -35,7 +35,9 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
  * - updated: 2026-06-16
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  */
-const _knownMoonshotModels = llmsDefineManualMappings([
+type _MoonshotModelDef = KnownModel & { pubDate: string };
+
+const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
 
   // Kimi K2.7-code Series - Code-focused flagship (native multimodal, always-on thinking)
   {

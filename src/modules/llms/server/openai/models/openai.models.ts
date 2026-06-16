@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
-import { llmsDefineManualMappings, fromManualMapping, KnownModel, llmDevCheckModels_DEV } from '../../models.mappings';
+import { type KnownLink, type KnownModel, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
 
 // --- OpenAI Model ID inference (auto-derived from _knownOpenAIChatModels) ---
 export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'];
@@ -106,7 +106,10 @@ const PS_DEEP_RESEARCH = [{ paramId: 'llmVndOaiWebSearchContext' as const, initi
 // [OpenAI] Known Chat Models
 // https://platform.openai.com/docs/models
 // https://platform.openai.com/docs/pricing
-export const _knownOpenAIChatModels = llmsDefineManualMappings([
+// pubDate is REQUIRED on every real model entry (same pattern as _ZaiModelDef in zai.models.ts).
+type _OpenAIModelDef = (KnownModel & { pubDate: string }) | KnownLink;
+
+export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   /// GPT-5.5 series - Released April 23, 2026
 

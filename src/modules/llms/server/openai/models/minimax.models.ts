@@ -20,7 +20,9 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - Updated: 2026-06-16
  */
-const _knownMiniMaxModels = llmsDefineModels<ModelDescriptionSchema>()([
+type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
+
+const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
 
   // M3 - flagship, natively multimodal, 1M context (2026-05-31)
   {

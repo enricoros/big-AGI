@@ -158,7 +158,7 @@ export type KnownModel = {
 /**
  * Symlink -> KnownModel; all properties except overrides are inherited from the target model.
  */
-type KnownLink = {
+export type KnownLink = {
   idPrefix: string;
   label: string;        // Forcing the label, otherwise we'll just use the target's, which is wrong
   symLink: string;      // -> KnownModel.idPrefix

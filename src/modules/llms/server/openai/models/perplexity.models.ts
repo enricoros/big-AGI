@@ -37,7 +37,9 @@ const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANT
 };
 
 
-const _knownPerplexityChatModels = llmsDefineModels<ModelDescriptionSchema>()([
+type _PerplexityModelDef = ModelDescriptionSchema & { pubDate: string };
+
+const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
 
   // Research Models
   {

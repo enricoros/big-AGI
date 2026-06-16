@@ -17,13 +17,15 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 // - pricing on: https://mistral.ai/pricing#api-pricing
 // - benchmark elo on CBA
 
-const _knownMistralModelDetails: Record<string, {
+type _MistralModelDef = {
   label?: string; // override the API-provided name
-  pubDate?: string; // YYYYMMDD - earliest public availability (announcement / La Plateforme / HF upload)
+  pubDate: string; // YYYYMMDD - earliest public availability (announcement / La Plateforme / HF upload)
   chatPrice?: { input: number; output: number };
   benchmark?: { cbaElo: number };
   hidden?: boolean;
-}> = {
+};
+
+const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
 
   // Premier models - Mistral 3 (Dec 2025)
   'mistral-large-2512': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5 }, benchmark: { cbaElo: 1415 } }, // Mistral Large 3 - MoE 41B active / 675B total

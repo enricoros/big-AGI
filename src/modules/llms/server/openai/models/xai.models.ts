@@ -7,7 +7,8 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { OPENAI_API_PATHS, openAIAccess, OpenAIAccessSchema } from '../openai.access';
-import { llmsDefineManualMappings, fromManualMapping, KnownModel, llmDevCheckModels_DEV } from '../../models.mappings';
+import type { KnownLink, KnownModel } from '../../models.mappings';
+import { fromManualMapping, llmsDefineModels, llmDevCheckModels_DEV } from '../../models.mappings';
 
 // --- xAI Model ID inference (auto-derived from _knownXAIChatModels) ---
 export type LlmsXAIModelId = typeof _knownXAIChatModels[number]['idPrefix'];
@@ -67,7 +68,10 @@ const XAI_IF_Pre4_Vision: ModelDescriptionSchema['interfaces'] = [
 const XAI_PAR_Pre4: ModelDescriptionSchema['parameterSpecs'] = [] as const;
 
 
-const _knownXAIChatModels = llmsDefineManualMappings([
+// pubDate is REQUIRED on every real model entry; symlinks inherit it.
+type _XaiModelDef = (KnownModel & { pubDate: string }) | KnownLink;
+
+const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
 
   // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high
   {

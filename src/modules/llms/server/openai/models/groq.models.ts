@@ -2,7 +2,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types'
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, llmDevCheckModels_DEV, llmsDefineManualMappings } from '../../models.mappings';
+import { type KnownLink, type KnownModel, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
 
 // --- Groq Model ID inference (auto-derived from _knownGroqModels) ---
 export type LlmsGroqModelId = typeof _knownGroqModels[number]['idPrefix'];
@@ -19,7 +19,9 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * - pricing: https://groq.com/pricing/
  * - updated: 2026-04-16
  */
-const _knownGroqModels = llmsDefineManualMappings([
+type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
+
+const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
 
   // Preview Models
   {
