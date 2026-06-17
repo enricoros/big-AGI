@@ -178,15 +178,13 @@ export function ResultsTable(props: ResultsTableProps) {
                   <Typography level='body-xs' noWrap sx={{ opacity: 0.8 }}>{serviceLabelById[llm.sId] || llm.sId}</Typography>
                 </td>
                 <td>
-                  <Tooltip title={llm.id} size='sm' placement='top-start'>
-                    <Box sx={hidden ? { opacity: 0.55 } : undefined}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        {hidden && <Chip size='sm' variant='outlined' color='neutral' sx={{ fontSize: '10px' }}>hidden</Chip>}
-                        <Typography level='body-sm' sx={{ fontWeight: 500 }}>{label}</Typography>
-                      </Box>
-                      <Typography level='body-xs' sx={{ opacity: 0.55, fontFamily: 'code', fontSize: '10px' }}>{llm.id}</Typography>
+                  <Box sx={hidden ? { opacity: 0.55 } : undefined}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {hidden && <Chip size='sm' variant='outlined' color='neutral' sx={{ fontSize: '10px' }}>hidden</Chip>}
+                      <Typography level='body-sm' sx={{ fontWeight: 500 }}>{label}</Typography>
                     </Box>
-                  </Tooltip>
+                    <Typography level='body-xs' sx={{ opacity: 0.55, fontFamily: 'code', fontSize: '10px' }}>{llm.id}</Typography>
+                  </Box>
                 </td>
                 <td>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.25 }}>
