@@ -1,11 +1,17 @@
-import { TRPCError } from '@trpc/server';
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
-import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { authedProcedure, createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { Search } from './search.types';
+import type { Search } from './search.types';
+import { VERTEX_GROUNDING_REDIRECT_PREFIX } from './vertexai.types';
+
+
+// configuration (Vertex AI grounding links)
+const GROUNDING_MAX_URLS_PER_CALL = 64;
+const GROUNDING_PER_URL_TIMEOUT_MS = 4000;
 
 
 export const googleSearchRouter = createTRPCRouter({
@@ -63,6 +69,31 @@ export const googleSearchRouter = createTRPCRouter({
           snippet: result.snippet,
         })) || [],
       };
+    }),
+
+
+  /// Vertex AI - grounding redirect links - https://github.com/enricoros/big-AGI/issues/1114 ///
+
+  /**
+   * Batch-resolves 'vertexaisearch.cloud.google.com/grounding-api-redirect/...' URLs (302 + Location).
+   * Server-side because the redirect host sends no CORS headers, so a browser cannot read the Location header.
+   * Failed/expired/timed-out links resolve to null and are kept as-is by the client.
+   */
+  resolveGroundingRedirects: authedProcedure
+    .input(z.object({
+      urls: z.array(z.string().startsWith(VERTEX_GROUNDING_REDIRECT_PREFIX)).min(1).max(GROUNDING_MAX_URLS_PER_CALL),
+    }))
+    .mutation(async ({ input }): Promise<{ resolutions: { url: string, resolved: string | null }[] }> => {
+      const resolutions = await Promise.all(input.urls.map(async (url) => {
+        try {
+          const response = await fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(GROUNDING_PER_URL_TIMEOUT_MS) });
+          const location = (response.status >= 300 && response.status < 400) ? response.headers.get('location') : null;
+          return { url, resolved: location?.startsWith('http') ? location : null };
+        } catch {
+          return { url, resolved: null };
+        }
+      }));
+      return { resolutions };
     }),
 
 });
