@@ -20,10 +20,22 @@
     "gemini-thinking-level": ["low","medium","high"],
     "temperature-range": [0,2]
   },
+  "models/gemini-3.1-flash-image": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","high"],
+    "temperature-range": [0,2]
+  },
   "models/gemini-3.1-flash-image-preview": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["minimal","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.1-flash-lite": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3.1-flash-lite-preview": {
@@ -35,10 +47,10 @@
   "models/gemini-3.1-flash-tts-preview": {
     "temperature-range": [0,2]
   },
-  "models/gemini-3-pro-preview": {
+  "models/gemini-3-pro-image": {
     "fn": ["auto","required","roundtrip"],
-    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
-    "gemini-thinking-level": ["low","medium","high"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemini-3-pro-image-preview": {
@@ -70,21 +82,16 @@
     "temperature-range": [0,2]
   },
   "models/gemini-2.5-flash-preview-tts": {
-    "temperature": [1,1.5,2]
+    "temperature-range": [0,2]
   },
   "models/gemini-2.5-flash-lite": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,24576],
     "temperature-range": [0,2]
   },
-  "models/gemini-2.0-flash-lite-001": {
-    "fn": ["auto","required","roundtrip"],
-    "gemini-thinking-budget": [0],
-    "temperature-range": [0,2]
-  },
-  "models/gemini-2.0-flash-001": {
-    "fn": ["auto","required","roundtrip"],
-    "gemini-thinking-budget": [0],
+  "models/gemini-2.5-computer-use-preview-10-2025": {
+    "fn": ["auto","roundtrip"],
+    "gemini-thinking-budget-range": [0,65535],
     "temperature-range": [0,2]
   },
   "models/gemma-4-31b-it": {
@@ -95,29 +102,6 @@
   "models/gemma-4-26b-a4b-it": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-level": ["minimal","high"],
-    "temperature-range": [0,2]
-  },
-  "models/gemma-3n-e4b-it": {
-    "temperature-range": [0,2]
-  },
-  "models/gemma-3n-e2b-it": {
-    "temperature-range": [0,2]
-  },
-  "models/gemma-3-4b-it": {
-    "temperature-range": [0,2]
-  },
-  "models/gemma-3-27b-it": {
-    "temperature-range": [0,2]
-  },
-  "models/gemma-3-1b-it": {
-    "temperature-range": [0,2]
-  },
-  "models/gemma-3-12b-it": {
-    "temperature-range": [0,2]
-  },
-  "models/gemini-2.5-computer-use-preview-10-2025": {
-    "fn": ["auto"],
-    "gemini-thinking-budget-range": [0,65535],
     "temperature-range": [0,2]
   }
 }

@@ -48,15 +48,5 @@
     "ant-thinking-budget-range": [1024,65536],
     "fn": ["auto","required","roundtrip"],
     "temperature-range": [0,1]
-  },
-  "claude-opus-4-20250514": {
-    "ant-thinking-budget-range": [1024,65536],
-    "fn": ["auto","required","roundtrip"],
-    "temperature-range": [0,1]
-  },
-  "claude-sonnet-4-20250514": {
-    "ant-thinking-budget-range": [1024,65536],
-    "fn": ["auto","required","roundtrip"],
-    "temperature-range": [0,1]
   }
 }

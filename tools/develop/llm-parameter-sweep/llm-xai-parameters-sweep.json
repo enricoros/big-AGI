@@ -21,5 +21,10 @@
     "temperature-range": [0,2],
     "xai-reasoning-effort": ["none","low","medium","high","xhigh"],
     "xai-tools": ["xai-web-search"]
+  },
+  "grok-build-0.1": {
+    "fn": ["auto","required","roundtrip"],
+    "temperature-range": [0,2],
+    "xai-tools": ["xai-web-search"]
   }
 }
