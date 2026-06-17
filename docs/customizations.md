@@ -81,7 +81,7 @@ The application includes a client-side logging system. You can view recent logs 
 
 For deeper debugging during development:
 
-1. **Debug Page**: Access the `/info/debug` page for an overview of the application's environment, configuration, API status, and environment variables available to the client.
+1. **Debug Page**: Access the `/dev/debug` page for an overview of the application's environment, configuration, API status, and environment variables available to the client.
 2. **Conditional Breakpoints**: To automatically pause execution in your browser's developer tools when critical errors (`error`, `critical`, `DEV` levels) are logged to the console, set the following environment variable in your local `.env.local` file and restart your development server:
    ```bash
    NEXT_PUBLIC_DEBUG_BREAKS=true

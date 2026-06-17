@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>big-AGI dev tools</title>
+  <link rel="stylesheet" href="/dev/inspect/_inspect.css" />
+</head>
+<body>
+  <div class="wrap narrow">
+    <header>
+      <div class="brand">Dev tools</div>
+    </header>
+    <div class="tagline">Developer tools for big-AGI. The Inspect tools are static pages with zero app imports, safe to open even when big-AGI is not working properly; the app tools need the running app.</div>
+
+    <h3>Inspect - static</h3>
+    <div class="applist">
+      <a href="/dev/inspect/storage"><span class="r">/dev/inspect/storage</span><span class="d">Per-key sizes across localStorage, IndexedDB, OPFS and quota, with store sub-key breakdowns.</span></a>
+      <a href="/dev/inspect/logs"><span class="r">/dev/inspect/logs</span><span class="d">The client log buffer with level and source filters, plus search.</span></a>
+      <a href="/dev/inspect/doctor"><span class="r">/dev/inspect/doctor</span><span class="d">One-glance PASS/FAIL of the things that break boot.</span></a>
+      <a href="/dev/inspect/heal"><span class="r">/dev/inspect/heal</span><span class="d">Detects known storage corruption &amp; bloat and offers confirmed, type-to-confirm repairs.</span></a>
+    </div>
+
+    <h3>App tools - require the running app</h3>
+    <div class="applist">
+      <a href="/dev/llms"><span class="r">/dev/llms</span><span class="d">Function-calling capability matrix across configured vendors.</span></a>
+      <a href="/dev/debug"><span class="r">/dev/debug</span><span class="d">Client capabilities, product state, and backend/cloud info. Downloadable JSON.</span></a>
+    </div>
+
+    <div class="foot">The Inspect tools read only your own browser data and run entirely on your device. The app tools run in big-AGI - and /dev/llms sends probes to your configured model providers.</div>
+  </div>
+
+  <script src="/dev/inspect/_inspect.js"></script>
+</body>
+</html>
