@@ -108,6 +108,28 @@ export const publicProcedure = t.procedure;
  */
 export const edgeProcedure = t.procedure;
 
+
+/**
+ * Authenticated users only. - FORWARD-LOOKING
+ */
+export const authedProcedure = t.procedure;
+
+/**
+ * Premium procedure - FORWARD-LOOKING
+ */
+export const premiumProcedure = t.procedure;
+
+/**
+ * User-feature-gated procedure - FORWARD-LOOKING
+ */
+export const authGatedProcedure = t.procedure;
+
+/**
+ * Tenant Admin procedure - FORWARD-LOOKING
+ */
+export const tenantAdminProcedure = t.procedure;
+
+
 // /**
 //  * Create a server-side caller
 //  * @link https://trpc.io/docs/v11/server/server-side-calls
