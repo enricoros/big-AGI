@@ -8,8 +8,10 @@ import { AppPlaceholder } from '../AppPlaceholder';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import { LLM_IF_OAI_Fn, getLLMLabel, isLLMHidden } from '~/common/stores/llms/llms.types';
+import { ModelsModals } from '~/modules/llms/models-modal/ModelsModals';
 import { Release } from '~/common/app.release';
 import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
@@ -273,6 +275,7 @@ function AppLlmCapabilitiesAllowed() {
             onDeclaredFcFilterChange={setDeclaredFcFilter}
             showHidden={showHidden}
             onShowHiddenChange={setShowHidden}
+            onOpenServices={optimaOpenModels}
             concurrency={concurrency}
             onConcurrencyChange={setConcurrency}
             timeoutSec={timeoutSec}
@@ -303,6 +306,9 @@ function AppLlmCapabilitiesAllowed() {
           onToggleAll={toggleAll}
         />
       </Box>
+
+      {/* mounted explicitly (this page uses the 'noop' layout, so the Optima <Modals/> aren't present) */}
+      <ModelsModals />
     </AppPlaceholder>
   );
 }
