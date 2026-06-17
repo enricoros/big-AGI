@@ -1,5 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
+import { vertexLinksAutoResolveFragments } from '~/modules/google/vertexai.client';
+
 import type { MaybePromise } from '~/common/types/useful.types';
 import { AIVndAntInlineFilesPolicy, getVndAntInlineFiles } from '~/common/stores/store-ai';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
@@ -16,6 +18,7 @@ import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
+
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../server/api/aix.wiretypes';
@@ -655,6 +658,14 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, `aix_chatgenerate_content-${aixContext.name}`);
   if (metrics) dMessage.generator = { ...dMessage.generator, metrics };
   dMessage.pendingIncomplete = false;
+
+  // [#1114] resolve Gemini/Vertex AI grounding redirect links before the final 'done' update, so every
+  // caller (chat, Beam scatter/fusion, reattach) gets resolved links atomically with completion.
+  // Policy-gated (no-op unless 'resolve') and timeout-capped; failures keep the originals.
+  if (outcome === 'completed' && dMessage.fragments.length) {
+    const resolvedFragments = await vertexLinksAutoResolveFragments(dMessage.fragments);
+    if (resolvedFragments) dMessage.fragments = resolvedFragments;
+  }
 
   // final update
   await onStreamingUpdate?.(dMessage, true);
