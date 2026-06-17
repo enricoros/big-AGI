@@ -36,6 +36,18 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   'models/gemini-3-pro-preview',
 ];
 
+// Phantom models: listed by the API but return HTTP 'not found' on actual use (generateContent 404s).
+// Hidden entirely so users can't select a model that will fail. (Verified 2026-06-17.)
+// NOTE: we keep their _knownGeminiModels defs around on purpose - they're still resolved via
+// Vertex AI and OpenRouter->Gemini (llmOrtGemLookup). Expunge the defs from _knownGeminiModels
+// only once the native API stops returning them entirely.
+const filterNotFoundModelNames: GeminiWire_API_Models_List.Model['name'][] = [
+  'models/gemini-robotics-er-1.5-preview',
+  'models/gemini-2.0-flash-lite-001',
+  'models/gemini-2.0-flash-lite',
+  'models/gemini-2.0-flash',
+];
+
 
 /* Manual models details
    Gemini Name Mapping example:
@@ -794,7 +806,7 @@ export function geminiValidateModelDefs_DEV(apiModels: GeminiWire_API_Models_Lis
   if (DEV_DEBUG_GEMINI_MODELS) {
     // Filter to chat-capable models first, then check for stale/unknown definitions
     const chatModelIds = apiModels.filter(geminiFilterModels).map(m => m.name);
-    const knownIds = _knownGeminiModels.filter(m => !filterLyingModelNames.includes(m.id)).map(m => m.id);
+    const knownIds = _knownGeminiModels.filter(m => !filterLyingModelNames.includes(m.id) && !filterNotFoundModelNames.includes(m.id)).map(m => m.id);
     llmDevCheckModels_DEV('Gemini', chatModelIds, knownIds);
   }
 
@@ -834,7 +846,8 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
   // const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
   const isChatSupported = geminiModel.supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
   const isWhatItSaysItIs = !filterLyingModelNames.includes(geminiModel.name);
-  return isAllowed && isChatSupported && isWhatItSaysItIs;
+  const isReachable = !filterNotFoundModelNames.includes(geminiModel.name); // drop API-listed but 404-on-use models
+  return isAllowed && isChatSupported && isWhatItSaysItIs && isReachable;
 }
 
 
