@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Inspect · Storage - big-AGI</title>
+  <link rel="stylesheet" href="/dev/inspect/_inspect.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><a href="/dev/inspect">Inspect</a><span class="sub">/ storage</span></div>
+    </header>
+    <div class="tagline">Standalone storage diagnostics. No app frameworks loaded. Safe to open even when big-AGI is broken.</div>
+
+    <div class="toolbar">
+      <button class="primary" id="btn-copy">Copy for GitHub</button>
+      <button id="btn-refresh">Refresh</button>
+      <div class="spacer"></div>
+      <span class="meta" id="gen-time"></span>
+    </div>
+
+    <div id="root"></div>
+  </div>
+
+  <script src="/dev/inspect/_inspect.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var esc = Inspect.esc, utf16Bytes = Inspect.utf16Bytes, fmtKB = Inspect.fmtKB, fmtMB = Inspect.fmtMB,
+        pct = Inspect.pct, reqP = Inspect.reqP, openDB = Inspect.openDB, roughSizeOf = Inspect.roughSizeOf;
+
+    var MODEL = null;
+    // Healing mode (opened from Heal): adds a Delete button to each localStorage key.
+    var HEAL = /(?:^|[?&])heal=1(?:&|$)/.test(location.search);
+
+    function safe(fn) { try { return fn(); } catch (e) { return { __error: String(e && e.message || e) }; } }
+
+    // ---------- collectors ----------
+
+    function looksLikeJson(s) { var t = s.trim(); return t.charAt(0) === '{' || t.charAt(0) === '['; }
+
+    function analyzeValue(raw) {
+      var bytes = utf16Bytes(raw);
+      var out = { bytes: bytes, kind: 'string', version: undefined, items: undefined, subs: null, malformed: false };
+      var json;
+      try { json = JSON.parse(raw); } catch (e) { json = undefined; }
+      if (json === undefined) {
+        if (looksLikeJson(raw)) { out.kind = 'malformed'; out.malformed = true; }
+        return out;
+      }
+      if (Array.isArray(json)) { out.kind = 'array'; out.items = json.length; return out; }
+      if (json && typeof json === 'object') {
+        var isEnvelope = Object.prototype.hasOwnProperty.call(json, 'state');
+        var target = isEnvelope ? json.state : json;
+        out.kind = isEnvelope ? 'store' : 'object';
+        if (isEnvelope && Object.prototype.hasOwnProperty.call(json, 'version')) out.version = json.version;
+        if (target && typeof target === 'object' && !Array.isArray(target)) {
+          var subs = [];
+          for (var k in target) if (Object.prototype.hasOwnProperty.call(target, k)) {
+            var sv;
+            try { sv = utf16Bytes(JSON.stringify(target[k])); } catch (e2) { sv = roughSizeOf(target[k]); }
+            subs.push({ key: k, bytes: sv });
+          }
+          subs.sort(function (a, b) { return b.bytes - a.bytes; });
+          out.subs = subs;
+          out.items = subs.length;
+        } else if (Array.isArray(target)) {
+          out.items = target.length;
+        }
+        return out;
+      }
+      out.kind = (json === null) ? 'null' : typeof json;
+      return out;
+    }
+
+    function collectLocalStorage() {
+      var store = window.localStorage;
+      var entries = [];
+      var total = 0;
+      var n = store.length;
+      for (var i = 0; i < n; i++) {
+        var key = store.key(i);
+        var raw;
+        try { raw = store.getItem(key); } catch (e) { raw = ''; }
+        var a = analyzeValue(raw == null ? '' : raw);
+        var rec = { key: key, bytes: a.bytes + utf16Bytes(key), kind: a.kind, version: a.version, items: a.items, subs: a.subs, malformed: a.malformed };
+        total += rec.bytes;
+        entries.push(rec);
+      }
+      entries.sort(function (a, b) { return b.bytes - a.bytes; });
+      return { entries: entries, total: total, count: n };
+    }
+
+    function collectCookies() {
+      var raw = '';
+      try { raw = document.cookie || ''; } catch (e) { return { __error: String(e) }; }
+      var list = [];
+      var total = 0;
+      if (raw) {
+        raw.split('; ').forEach(function (c) {
+          var i = c.indexOf('=');
+          var k = i < 0 ? c : c.slice(0, i);
+          var v = i < 0 ? '' : c.slice(i + 1);
+          var b = utf16Bytes(k) + utf16Bytes(v);
+          total += b;
+          list.push({ key: k, bytes: b });
+        });
+        list.sort(function (a, b) { return b.bytes - a.bytes; });
+      }
+      return { cookies: list, total: total };
+    }
+
+    async function collectEstimate() {
+      var out = {};
+      try {
+        if (navigator.storage && navigator.storage.estimate) {
+          var e = await navigator.storage.estimate();
+          out.usage = e.usage; out.quota = e.quota;
+        }
+        if (navigator.storage && navigator.storage.persisted) out.persisted = await navigator.storage.persisted();
+      } catch (e2) { out.__error = String(e2); }
+      return out;
+    }
+
+    function collectEnv() {
+      return {
+        url: location.href,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || '-',
+        language: navigator.language,
+        secureContext: !!window.isSecureContext,
+        online: !!navigator.onLine,
+        cookieEnabled: !!navigator.cookieEnabled,
+        broadcastChannel: (function () { try { var b = new BroadcastChannel('agi-inspect-probe'); b.close(); return true; } catch (e) { return false; } })(),
+        localStorageOK: (function () { try { return !!window.localStorage; } catch (e) { return false; } })(),
+        indexedDBOK: (function () { try { return !!window.indexedDB; } catch (e) { return false; } })(),
+        viewport: window.innerWidth + ' × ' + window.innerHeight,
+        dpr: window.devicePixelRatio,
+        generatedAt: new Date().toISOString(),
+      };
+    }
+
+    function measureStore(objectStore) {
+      return new Promise(function (res, rej) {
+        var bytes = 0, count = 0;
+        var cur = objectStore.openCursor();
+        cur.onsuccess = function () {
+          var c = cur.result;
+          if (!c) { res({ bytes: bytes, count: count }); return; }
+          try { bytes += roughSizeOf(c.value); } catch (e) { /* skip */ }
+          count++;
+          c.continue();
+        };
+        cur.onerror = function () { rej(cur.error); };
+      });
+    }
+
+    async function collectIndexedDB(measure) {
+      if (!window.indexedDB) return { __error: 'indexedDB not available' };
+      if (!indexedDB.databases) return { enumUnavailable: true, dbs: [] };
+      var list;
+      try { list = await indexedDB.databases(); } catch (e) { return { __error: String(e) }; }
+      var dbs = [];
+      for (var i = 0; i < list.length; i++) {
+        var name = list[i].name;
+        var declaredVer = list[i].version;
+        if (!name) continue;
+        try {
+          var db = await openDB(name);
+          var stores = [];
+          var names = Array.prototype.slice.call(db.objectStoreNames);
+          for (var j = 0; j < names.length; j++) {
+            var sn = names[j];
+            var info = { name: sn, count: 0, indexes: [], bytes: undefined };
+            try {
+              var os = db.transaction(sn, 'readonly').objectStore(sn);
+              info.indexes = Array.prototype.slice.call(os.indexNames); // sync read, before any await
+              info.count = await reqP(os.count());                      // single request keeps this tx alive
+              if (measure) {
+                var os2 = db.transaction(sn, 'readonly').objectStore(sn); // fresh tx (the one above auto-closed)
+                var m = await measureStore(os2);
+                info.bytes = m.bytes;
+              }
+            } catch (e2) { info.error = String(e2); }
+            stores.push(info);
+          }
+          db.close();
+          dbs.push({ name: name, version: declaredVer || db.version, stores: stores });
+        } catch (e3) {
+          dbs.push({ name: name, version: declaredVer, error: String(e3 && e3.message || e3) });
+        }
+      }
+      return { dbs: dbs };
+    }
+
+    async function collectOPFS() {
+      if (!navigator.storage || !navigator.storage.getDirectory) return { available: false };
+      var root;
+      try { root = await navigator.storage.getDirectory(); } catch (e) { return { available: false, __error: String(e) }; }
+      var entries = [];
+      var total = 0;
+      async function walk(dir, path, depth) {
+        if (depth > 6) return;
+        for await (var ent of dir.entries()) {
+          var nm = ent[0], handle = ent[1];
+          if (handle.kind === 'file') {
+            try { var f = await handle.getFile(); entries.push({ path: path + nm, bytes: f.size }); total += f.size; }
+            catch (e) { entries.push({ path: path + nm, bytes: 0, error: String(e) }); }
+          } else {
+            await walk(handle, path + nm + '/', depth + 1);
+          }
+        }
+      }
+      try { await walk(root, '', 0); } catch (e2) { return { available: true, entries: entries, total: total, __error: String(e2) }; }
+      entries.sort(function (a, b) { return b.bytes - a.bytes; });
+      return { available: true, entries: entries, total: total };
+    }
+
+    async function collectCaches() {
+      if (!('caches' in window)) return { available: false };
+      try {
+        var keys = await caches.keys();
+        var out = [];
+        for (var i = 0; i < keys.length; i++) {
+          var c = await caches.open(keys[i]);
+          var reqs = await c.keys();
+          out.push({ name: keys[i], count: reqs.length });
+        }
+        return { available: true, caches: out };
+      } catch (e) { return { available: true, __error: String(e) }; }
+    }
+
+    async function collect(measureIDB) {
+      var idbP = collectIndexedDB(measureIDB);
+      var opfsP = collectOPFS();
+      var cachesP = collectCaches();
+      var estP = collectEstimate();
+      MODEL = {
+        env: safe(collectEnv),
+        estimate: await estP,
+        localStorage: safe(collectLocalStorage),
+        cookies: safe(collectCookies),
+        indexedDB: await idbP,
+        opfs: await opfsP,
+        caches: await cachesP,
+        measuredIDB: !!measureIDB,
+      };
+      return MODEL;
+    }
+
+    // ---------- rendering ----------
+
+    function badge(text, cls) { return '<span class="badge ' + (cls || '') + '">' + esc(text) + '</span>'; }
+
+    function renderSizeCell(bytes, maxBytes) {
+      return '<div class="size">' + fmtKB(bytes) + '</div>' +
+        '<div class="sizebar"><i style="width:' + pct(bytes, maxBytes).toFixed(1) + '%"></i></div>';
+    }
+
+    function renderLocalStorage(data) {
+      var inner = '';
+      if (data && data.__error) {
+        inner = '<div class="err">' + esc(data.__error) + '</div>';
+      } else if (!data || data.count === 0) {
+        inner = '<div class="empty">No keys.</div>';
+      } else {
+        var max = data.entries.length ? data.entries[0].bytes : 1;
+        inner = '<div class="sec-body">';
+        data.entries.forEach(function (e) {
+          var badges = '';
+          if (e.kind === 'store') badges += badge(e.version != null ? 'store · v' + e.version : 'store', 'store');
+          else if (e.kind === 'object') badges += badge('object');
+          else if (e.kind === 'array') badges += badge('array');
+          else if (e.malformed) badges += badge('⚠ malformed JSON', 'warn');
+          else badges += badge(e.kind);
+          var itemsTxt = (e.items != null) ? (e.items + (e.kind === 'array' ? ' items' : ' keys')) : '';
+          var delBtn = HEAL ? ('<button class="delbtn" data-del="' + esc(e.key) + '" title="Delete this key">Delete</button>') : '';
+          var head =
+            '<div class="row' + (HEAL ? ' heal' : '') + '">' +
+              '<div class="chev">' + (e.subs && e.subs.length ? '▶' : '') + '</div>' +
+              '<div class="keycol"><div class="keyname">' + esc(e.key) + '</div><div class="badges">' + badges + '</div></div>' +
+              '<div class="items">' + esc(itemsTxt) + '</div>' +
+              '<div class="sizecol">' + renderSizeCell(e.bytes, max) + '</div>' +
+              delBtn +
+            '</div>';
+          if (e.subs && e.subs.length) {
+            var subMax = e.subs[0].bytes || 1;
+            var subsHtml = '<div class="subs"><div class="subhead">Sub-keys by size (state)</div>';
+            e.subs.forEach(function (s) {
+              subsHtml +=
+                '<div class="sub">' +
+                  '<div class="sk">' + esc(s.key) + '</div>' +
+                  '<div class="sv">' + fmtKB(s.bytes) + '</div>' +
+                  '<div class="sbar"><i style="width:' + pct(s.bytes, subMax).toFixed(1) + '%"></i></div>' +
+                '</div>';
+            });
+            subsHtml += '</div>';
+            inner += '<details class="entry"><summary>' + head + '</summary>' + subsHtml + '</details>';
+          } else {
+            inner += '<div class="entry">' + head + '</div>';
+          }
+        });
+        inner += '</div>';
+      }
+      var meta = (data && !data.__error) ? (data.count + ' keys · ' + fmtKB(data.total)) : '';
+      return '<section id="s-ls"><div class="sec-head"><h2>localStorage</h2><div class="spacer"></div><div class="meta">' + esc(meta) + '</div></div>' +
+        inner +
+        '<div class="sec-note">Shared across all users on this origin (~5 MB quota). Expand a store to find oversized fields.</div>' +
+        '</section>';
+    }
+
+    function renderIDBSection(data, measured) {
+      var measureBtn = '<button data-action="measure" title="Walk every record to estimate byte sizes (can be slow)">' + (measured ? 'Re-measure sizes' : 'Measure sizes') + '</button>';
+      var inner = '';
+      if (data && data.__error) inner = '<div class="err">' + esc(data.__error) + '</div>';
+      else if (data && data.enumUnavailable) inner = '<div class="empty">This browser does not support <code class="inline">indexedDB.databases()</code> enumeration.</div>';
+      else if (!data || !data.dbs || !data.dbs.length) inner = '<div class="empty">No IndexedDB databases.</div>';
+      else {
+        var dbMetric = function (db) { var t = 0; (db.stores || []).forEach(function (s) { t += measured ? (s.bytes || 0) : (s.count || 0); }); return t; };
+        var maxMetric = 1, maxDbMetric = 1;
+        data.dbs.forEach(function (db) {
+          (db.stores || []).forEach(function (s) { var mm = measured ? (s.bytes || 0) : (s.count || 0); if (mm > maxMetric) maxMetric = mm; });
+          var dt = dbMetric(db); if (dt > maxDbMetric) maxDbMetric = dt;
+        });
+        inner = '';
+        data.dbs.forEach(function (db) {
+          var dt = dbMetric(db);
+          var totalTxt = measured ? fmtKB(dt) : (dt.toLocaleString('en-US') + ' obj');
+          var dbname = '<div class="dbname">' + esc(db.name) + ' <span class="dbmeta">v' + esc(db.version != null ? db.version : '?') + '</span> &nbsp;' + (db.error ? '' : '<span class="dbtotal">' + esc(totalTxt) + '</span>') + '</div>';
+          var body = '<div class="db">' + dbname;
+          if (db.error) { body += '<div class="err">' + esc(db.error) + '</div></div>'; inner += body; return; }
+          body += '<div class="sizebar dbbar"><i style="width:' + pct(dt, maxDbMetric).toFixed(1) + '%"></i></div>';
+          body += '<div class="stores">';
+          db.stores.forEach(function (s) {
+            var sizeTxt = (s.bytes != null) ? fmtKB(s.bytes) : (measured ? '-' : '');
+            var idxN = (s.indexes || []).length;
+            var idxHtml = idxN ? ' <span class="idx" title="' + esc((s.indexes || []).join(', ')) + '">' + idxN + ' idx</span>' : '';
+            var metric = measured ? (s.bytes || 0) : (s.count || 0);
+            var barW = pct(metric, maxMetric).toFixed(1);
+            body += '<div class="ostore-wrap"><div class="ostore">' +
+              '<div class="on">' + esc(s.name) + idxHtml + (s.error ? ' <span class="badge warn">err</span>' : '') + '</div>' +
+              '<div class="oc">' + s.count.toLocaleString('en-US') + ' obj</div>' +
+              '<div class="oc">' + esc(sizeTxt) + '</div>' +
+              '</div><div class="sizebar"><i style="width:' + barW + '%"></i></div></div>';
+          });
+          body += '</div></div>';
+          inner += body;
+        });
+      }
+      var note = measured ? '' : 'Object counts shown; bars show relative object counts (per database and per store). Click <b>Measure sizes</b> for byte estimates (bars then reflect size).';
+      var meta = (data && data.dbs) ? (data.dbs.length + ' database' + (data.dbs.length === 1 ? '' : 's')) : '';
+      return '<section id="s-idb"><div class="sec-head"><h2>IndexedDB</h2><div class="spacer"></div>' + measureBtn + '<div class="meta" style="margin-left:10px">' + esc(meta) + '</div></div>' +
+        inner + (note ? '<div class="sec-note">' + note + '</div>' : '') + '</section>';
+    }
+
+    // OPFS rendered as an indented tree (no repeated full paths)
+    function buildTree(entries) {
+      var root = { children: {}, files: [] };
+      entries.forEach(function (e) {
+        var parts = String(e.path).split('/').filter(Boolean);
+        var node = root;
+        for (var i = 0; i < parts.length - 1; i++) {
+          var p = parts[i];
+          node.children[p] = node.children[p] || { name: p, children: {}, files: [] };
+          node = node.children[p];
+        }
+        node.files.push({ name: parts.length ? parts[parts.length - 1] : '(root)', bytes: e.bytes });
+      });
+      return root;
+    }
+    function renderTree(node, depth, maxBytes, out) {
+      Object.keys(node.children).sort().forEach(function (k) {
+        var c = node.children[k];
+        out.push('<div class="tdir" style="padding-left:' + (depth * 16 + 4) + 'px">' + esc(c.name) + '/</div>');
+        renderTree(c, depth + 1, maxBytes, out);
+      });
+      node.files.sort(function (a, b) { return b.bytes - a.bytes; }).forEach(function (f) {
+        out.push('<div class="tfile" style="padding-left:' + (depth * 16 + 4) + 'px"><div class="trow"><span class="tname">' + esc(f.name) + '</span><span class="tsize">' + fmtKB(f.bytes) + '</span></div><div class="sizebar"><i style="width:' + pct(f.bytes, maxBytes).toFixed(1) + '%"></i></div></div>');
+      });
+    }
+    function renderOPFS(data) {
+      var inner = '';
+      if (!data || data.available === false) inner = '<div class="empty">Not available in this browser/context.</div>';
+      else if (!data.entries || !data.entries.length) inner = '<div class="empty">No files.</div>';
+      else {
+        var maxB = data.entries.reduce(function (m, e) { return Math.max(m, e.bytes || 0); }, 1);
+        var out = [];
+        renderTree(buildTree(data.entries), 0, maxB, out);
+        inner = '<div class="flat">' + out.join('') + '</div>';
+      }
+      var meta = (data && data.available) ? ((data.entries || []).length + ' files · ' + fmtKB(data.total || 0)) : '';
+      return '<section id="s-opfs"><div class="sec-head"><h2>OPFS (Origin Private File System)</h2><div class="spacer"></div><div class="meta">' + esc(meta) + '</div></div>' +
+        inner + (data && data.__error ? '<div class="sec-note">' + esc(data.__error) + '</div>' : '') + '</section>';
+    }
+
+    function renderFlatSection(title, secId, data, opts) {
+      opts = opts || {};
+      var inner = '';
+      if (data && data.__error) inner = '<div class="err">' + esc(data.__error) + '</div>';
+      else if (opts.available === false) inner = '<div class="empty">Not available in this browser/context.</div>';
+      else if (!opts.rows || !opts.rows.length) inner = '<div class="empty">' + (opts.emptyText || 'Nothing.') + '</div>';
+      else {
+        inner = '<div class="flat">';
+        opts.rows.forEach(function (r) {
+          inner += '<div class="fr"><div class="fn">' + esc(r.name) + '</div><div class="fs">' + (r.right != null ? esc(r.right) : fmtKB(r.bytes)) + '</div></div>';
+        });
+        inner += '</div>';
+      }
+      return '<section id="' + secId + '"><div class="sec-head"><h2>' + esc(title) + '</h2><div class="spacer"></div><div class="meta">' + esc(opts.meta || '') + '</div></div>' +
+        inner + (opts.note ? '<div class="sec-note">' + opts.note + '</div>' : '') + '</section>';
+    }
+
+    function renderSummary(model) {
+      var est = model.estimate || {};
+      var lsTotal = (model.localStorage && model.localStorage.total) || 0;
+      var idbCount = (model.indexedDB && model.indexedDB.dbs) ? model.indexedDB.dbs.length : 0;
+      var html = '<section style="border:none;background:none;margin:0"><div class="summary">';
+      if (est.usage != null) {
+        html += '<div class="stat"><div class="k">Estimated usage</div><div class="v">' + fmtMB(est.usage) + '</div>' +
+          (est.quota ? '<div class="quota-bar"><i style="width:' + pct(est.usage, est.quota).toFixed(1) + '%"></i></div>' : '') +
+          (est.quota ? '<div class="k" style="margin-top:5px">of ' + fmtMB(est.quota) + ' quota</div>' : '') + '</div>';
+      }
+      html += '<a class="stat" href="#s-ls"><div class="k">localStorage</div><div class="v">' + fmtKB(lsTotal) + ' <small>' + ((model.localStorage && model.localStorage.count) || 0) + ' keys</small></div></a>';
+      html += '<a class="stat" href="#s-idb"><div class="k">IndexedDB</div><div class="v">' + idbCount + ' <small>db' + (idbCount === 1 ? '' : 's') + '</small></div></a>';
+      html += '<div class="stat"><div class="k">Persisted</div><div class="v">' + (est.persisted === true ? 'yes' : est.persisted === false ? 'no' : '-') + '</div></div>';
+      html += '</div></section>';
+      return html;
+    }
+
+    function renderEnvSection(env) {
+      if (!env || env.__error) return '<section id="s-env"><div class="sec-head"><h2>Environment</h2></div><div class="err">' + esc(env && env.__error || 'error') + '</div></section>';
+      var rows = [
+        ['URL', env.url], ['User agent', env.userAgent], ['Platform', env.platform], ['Language', env.language],
+        ['Secure context', String(env.secureContext)], ['Online', String(env.online)], ['Cookies enabled', String(env.cookieEnabled)],
+        ['BroadcastChannel', String(env.broadcastChannel)], ['localStorage', String(env.localStorageOK)], ['IndexedDB', String(env.indexedDBOK)],
+        ['Viewport', env.viewport + ' @ ' + env.dpr + 'x'], ['Generated', env.generatedAt],
+      ];
+      var inner = rows.map(function (r) { return '<div class="kv"><div class="kk">' + esc(r[0]) + '</div><div class="vv">' + esc(r[1]) + '</div></div>'; }).join('');
+      return '<section id="s-env"><div class="sec-head"><h2>Environment</h2></div><div style="padding:8px 0 12px">' + inner + '</div></section>';
+    }
+
+    function safeRender(fn) {
+      try { return fn(); }
+      catch (e) { return '<section><div class="err">render error: ' + esc(String(e && e.message || e)) + '</div></section>'; }
+    }
+
+    function renderAll(model) {
+      var root = document.getElementById('root');
+      var html = '';
+      if (HEAL) html += '<div class="warnbar danger">⚠ <b>Healing mode.</b> Delete buttons are enabled on localStorage below. Deleting a store wipes that data and resets the feature to defaults on next load; some data cannot be recovered. Each delete asks you to type the key name. <b>Reload big-AGI</b> afterward. &nbsp;<a href="/dev/inspect/storage">Exit healing</a></div>';
+      html += safeRender(function () { return renderSummary(model); });
+      html += safeRender(function () { return renderLocalStorage(model.localStorage); });
+      html += safeRender(function () { return renderIDBSection(model.indexedDB, model.measuredIDB); });
+      html += safeRender(function () { return renderOPFS(model.opfs || {}); });
+
+      var ck = model.cookies || {};
+      html += safeRender(function () {
+        return renderFlatSection('Cookies (JS-readable)', 's-cookies', ck, {
+          rows: (ck.cookies || []).map(function (c) { return { name: c.key, bytes: c.bytes }; }),
+          emptyText: 'No JS-readable cookies.',
+          meta: ck.cookies ? (ck.cookies.length + ' · ' + fmtKB(ck.total || 0)) : '',
+          note: 'httpOnly cookies (e.g. the auth session token) are <b>not</b> visible to JavaScript and are not listed here.',
+        });
+      });
+
+      var ca = model.caches || {};
+      html += safeRender(function () {
+        return renderFlatSection('Cache Storage', 's-caches', ca, {
+          available: ca.available,
+          rows: (ca.caches || []).map(function (c) { return { name: c.name, right: c.count + ' entries' }; }),
+          emptyText: 'No caches.',
+          meta: ca.caches ? (ca.caches.length + ' caches') : '',
+          note: ca.__error ? esc(ca.__error) : '',
+        });
+      });
+
+      html += safeRender(function () { return renderEnvSection(model.env); });
+      root.innerHTML = html;
+
+      var gt = document.getElementById('gen-time');
+      if (gt && model.env && model.env.generatedAt) gt.textContent = 'read ' + model.env.generatedAt;
+    }
+
+    // ---------- markdown ----------
+
+    function mdTable(headers, aligns, rows) {
+      var h = '| ' + headers.join(' | ') + ' |\n';
+      var sep = '| ' + headers.map(function (_, i) { return aligns && aligns[i] === 'r' ? '--:' : '---'; }).join(' | ') + ' |\n';
+      var body = rows.map(function (r) { return '| ' + r.join(' | ') + ' |'; }).join('\n');
+      return h + sep + body + '\n';
+    }
+    function mdEsc(s) { return String(s).replace(/\|/g, '\\|'); }
+
+    function toMarkdown(model) {
+      var L = [];
+      var env = model.env || {};
+      L.push('# big-AGI - Storage Inspect');
+      L.push('');
+      L.push('- Generated: ' + (env.generatedAt || '-'));
+      L.push('- URL: ' + (env.url || '-'));
+      L.push('- User agent: ' + (env.userAgent || '-'));
+      L.push('- Platform: ' + (env.platform || '-') + ' · Secure: ' + env.secureContext + ' · Online: ' + env.online);
+
+      var est = model.estimate || {};
+      L.push('');
+      L.push('## Summary');
+      if (est.usage != null) L.push('- Estimated usage: ' + fmtMB(est.usage) + (est.quota ? ' of ' + fmtMB(est.quota) + ' quota (' + pct(est.usage, est.quota).toFixed(1) + '%)' : ''));
+      L.push('- Persisted storage: ' + (est.persisted === true ? 'yes' : est.persisted === false ? 'no' : '-'));
+      if (model.localStorage && !model.localStorage.__error) L.push('- localStorage: ' + fmtKB(model.localStorage.total) + ' across ' + model.localStorage.count + ' keys');
+
+      L.push('');
+      L.push('## localStorage');
+      if (model.localStorage && model.localStorage.__error) L.push('> error: ' + model.localStorage.__error);
+      else if (model.localStorage) {
+        var ls = model.localStorage;
+        var rows = ls.entries.map(function (e) {
+          var kind = e.kind === 'store' ? ('store' + (e.version != null ? ' v' + e.version : '')) : e.malformed ? '⚠ malformed' : e.kind;
+          var top = (e.subs && e.subs.length) ? (mdEsc(e.subs[0].key) + ' (' + fmtKB(e.subs[0].bytes) + ')') : '';
+          return [mdEsc(e.key), kind, fmtKB(e.bytes), (e.items != null ? e.items : ''), top];
+        });
+        L.push(mdTable(['Key', 'Kind', 'Size', 'Items', 'Heaviest sub-key'], ['l', 'l', 'r', 'r', 'l'], rows));
+        var heavy = ls.entries.filter(function (e) { return e.subs && e.subs.length; }).slice(0, 8);
+        if (heavy.length) {
+          L.push('### Heaviest stores - sub-key breakdown');
+          heavy.forEach(function (e) {
+            L.push('');
+            L.push('**' + mdEsc(e.key) + '** - ' + fmtKB(e.bytes));
+            var srows = e.subs.slice(0, 20).map(function (s) { return [mdEsc(s.key), fmtKB(s.bytes)]; });
+            L.push(mdTable(['Sub-key', 'Size'], ['l', 'r'], srows));
+          });
+        }
+      }
+
+      L.push('');
+      L.push('## IndexedDB' + (model.measuredIDB ? ' (sizes measured)' : ' (counts only)'));
+      var idb = model.indexedDB || {};
+      if (idb.__error) L.push('> error: ' + idb.__error);
+      else if (idb.enumUnavailable) L.push('> enumeration not supported by this browser');
+      else if (idb.dbs && idb.dbs.length) {
+        idb.dbs.forEach(function (db) {
+          L.push('');
+          var ver = (db.version != null ? db.version : '?');
+          if (db.error) { L.push('**' + mdEsc(db.name) + '** (v' + ver + ')'); L.push('> error: ' + db.error); return; }
+          var dt = db.stores.reduce(function (t, s) { return t + (model.measuredIDB ? (s.bytes || 0) : (s.count || 0)); }, 0);
+          L.push('**' + mdEsc(db.name) + '** (v' + ver + ', ' + (model.measuredIDB ? fmtKB(dt) : dt.toLocaleString('en-US') + ' obj') + ')');
+          var srows = db.stores.map(function (s) { return [mdEsc(s.name), s.count, (s.bytes != null ? fmtKB(s.bytes) : '-'), (s.indexes || []).length + ' idx']; });
+          L.push(mdTable(['Object store', 'Objects', 'Size', 'Indexes'], ['l', 'r', 'r', 'r'], srows));
+        });
+      } else L.push('_none_');
+
+      var opfs = model.opfs || {};
+      if (opfs.available && opfs.entries && opfs.entries.length) {
+        L.push('');
+        L.push('## OPFS - ' + fmtKB(opfs.total || 0));
+        L.push(mdTable(['Path', 'Size'], ['l', 'r'], opfs.entries.map(function (e) { return [mdEsc(e.path), fmtKB(e.bytes)]; })));
+      }
+
+      var ck = model.cookies || {};
+      L.push('');
+      L.push('## Cookies (JS-readable)');
+      if (ck.cookies && ck.cookies.length) L.push(mdTable(['Name', 'Size'], ['l', 'r'], ck.cookies.map(function (c) { return [mdEsc(c.key), fmtKB(c.bytes)]; })));
+      else L.push('_none readable (httpOnly cookies not visible to JS)_');
+
+      var ca = model.caches || {};
+      if (ca.available && ca.caches && ca.caches.length) {
+        L.push('');
+        L.push('## Cache Storage');
+        L.push(mdTable(['Cache', 'Entries'], ['l', 'r'], ca.caches.map(function (c) { return [mdEsc(c.name), c.count]; })));
+      }
+
+      return L.join('\n') + '\n';
+    }
+
+    // ---------- actions ----------
+
+    function onRootClick(e) {
+      var t = e.target;
+      var mb = (t && t.closest) ? t.closest('button[data-action="measure"]') : null;
+      if (mb) { e.preventDefault(); Inspect.toast('Measuring...'); refresh(true); return; }
+      var del = (t && t.closest) ? t.closest('button.delbtn') : null;
+      if (!del) return;
+      e.preventDefault(); e.stopPropagation();
+      var key = del.getAttribute('data-del');
+      if (!Inspect.confirmHard('Delete "' + key + '" from localStorage? This cannot be undone.\n\nType the key name (' + key + ') to confirm:', key)) { Inspect.toast('Cancelled'); return; }
+      try { window.localStorage.removeItem(key); Inspect.toast('Deleted "' + key + '" - reload big-AGI to apply'); } catch (err) { Inspect.toast('Failed: ' + err); }
+      refresh(measured);
+    }
+
+    var measured = false;
+    async function refresh(withMeasure) {
+      measured = !!withMeasure;
+      var rbtn = document.getElementById('btn-refresh');
+      if (rbtn) rbtn.disabled = true;
+      try {
+        await collect(withMeasure);
+        renderAll(MODEL);
+      } catch (e) {
+        document.getElementById('root').innerHTML = '<section><div class="err">Fatal: ' + esc(String(e && e.message || e)) + '</div></section>';
+      } finally {
+        if (rbtn) rbtn.disabled = false;
+      }
+    }
+
+    document.getElementById('root').addEventListener('click', onRootClick);
+    document.getElementById('btn-copy').addEventListener('click', function () { if (MODEL) Inspect.copyText(toMarkdown(MODEL), 'Copied for GitHub'); });
+    document.getElementById('btn-refresh').addEventListener('click', function () { refresh(measured); });
+
+    refresh(false);
+  })();
+  </script>
+</body>
+</html>

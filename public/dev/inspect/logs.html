@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Inspect · Logs - big-AGI</title>
+  <link rel="stylesheet" href="/dev/inspect/_inspect.css" />
+</head>
+<body>
+  <div class="wrap wide">
+    <header>
+      <div class="brand"><a href="/dev/inspect">Inspect</a><span class="sub">/ logs</span></div>
+    </header>
+    <div class="tagline">Reads the persisted client log buffer <code class="inline">agi-logger-log</code> directly, newest first. Up to 100 entries are persisted; <code class="inline">debug</code>-level and dismissed entries are not stored.</div>
+
+    <div class="toolbar">
+      <button class="primary" id="btn-copy">Copy for GitHub</button>
+      <button id="btn-refresh">Refresh</button>
+      <input type="search" id="search" placeholder="Filter text (message · source · details)..." />
+      <select id="src-filter"><option value="">All sources</option></select>
+      <div class="spacer"></div>
+      <span class="meta" id="count"></span>
+    </div>
+
+    <div class="filters" id="levels"></div>
+    <div id="root"></div>
+  </div>
+
+  <script src="/dev/inspect/_inspect.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var esc = Inspect.esc;
+
+    var STORE_KEY = 'agi-logger-log';
+    var LEVELS = ['critical', 'error', 'warn', 'DEV', 'info', 'debug'];
+    var ALL = null;
+    var ACTIVE = {};
+    LEVELS.forEach(function (l) { ACTIVE[l] = true; });
+    var parseError = null;
+    var rawValue = null;
+
+    function load() {
+      ALL = null; parseError = null; rawValue = null;
+      var raw;
+      try { raw = localStorage.getItem(STORE_KEY); } catch (e) { parseError = 'localStorage unavailable: ' + e; return; }
+      rawValue = raw;
+      if (raw == null) { ALL = []; return; }
+      var parsed;
+      try { parsed = JSON.parse(raw); } catch (e) { parseError = 'Could not parse ' + STORE_KEY + ' as JSON: ' + (e && e.message || e); return; }
+      var entries = parsed && parsed.state && parsed.state.entries;
+      if (!Array.isArray(entries)) { parseError = 'Unexpected shape: state.entries is not an array.'; return; }
+      ALL = entries.slice();
+    }
+
+    function relTime(ts) {
+      if (typeof ts !== 'number') return '';
+      var d = Date.now() - ts; if (d < 0) d = 0;
+      var s = Math.floor(d / 1000); if (s < 60) return s + 's ago';
+      var m = Math.floor(s / 60); if (m < 60) return m + 'm ago';
+      var h = Math.floor(m / 60); if (h < 24) return h + 'h ago';
+      return Math.floor(h / 24) + 'd ago';
+    }
+    function absTime(ts) { try { return new Date(ts).toISOString(); } catch (e) { return String(ts); } }
+
+    function detailsToText(d) {
+      if (d == null) return null;
+      if (typeof d === 'string') return d;
+      if (typeof d === 'object' && d.truncated === true) return (d.preview != null ? String(d.preview) : '') + '\n...(truncated for storage)';
+      if (typeof d === 'object' && d._isError) {
+        var t = (d.name || 'Error') + ': ' + (d.message || '');
+        if (d.stack) t += '\n' + d.stack;
+        if (d.cause) { try { t += '\ncause: ' + JSON.stringify(d.cause, null, 2); } catch (e) { t += '\ncause: ' + String(d.cause); } }
+        return t;
+      }
+      try { return JSON.stringify(d, null, 2); } catch (e) { return String(d); }
+    }
+
+    function matches(e, q, src) {
+      if (!ACTIVE[e.level]) return false;
+      if (src && e.source !== src) return false;
+      if (q) {
+        var hay = (e.message || '') + ' ' + (e.source || '') + ' ' + (e.level || '');
+        var dt = detailsToText(e.details); if (dt) hay += ' ' + dt;
+        if (hay.toLowerCase().indexOf(q) < 0) return false;
+      }
+      return true;
+    }
+
+    function getFiltered() {
+      if (!ALL) return [];
+      var q = (document.getElementById('search').value || '').trim().toLowerCase();
+      var src = document.getElementById('src-filter').value || '';
+      return ALL.filter(function (e) { return matches(e, q, src); });
+    }
+
+    function levelCounts() {
+      var c = {}; LEVELS.forEach(function (l) { c[l] = 0; });
+      (ALL || []).forEach(function (e) { if (c[e.level] != null) c[e.level]++; else c[e.level] = 1; });
+      return c;
+    }
+
+    function renderLevels() {
+      var c = levelCounts();
+      var html = '';
+      LEVELS.forEach(function (l) {
+        html += '<button class="lvlbtn ' + (ACTIVE[l] ? 'active' : '') + '" data-lvl="' + l + '">' +
+          '<span class="lvl ' + l + '" style="border:none;padding:0;background:none">' + l + '</span>' +
+          '<span class="n">' + (c[l] || 0) + '</span></button>';
+      });
+      var lv = document.getElementById('levels');
+      lv.innerHTML = html;
+      Array.prototype.forEach.call(lv.querySelectorAll('.lvlbtn'), function (b) {
+        b.addEventListener('click', function () { var l = b.getAttribute('data-lvl'); ACTIVE[l] = !ACTIVE[l]; renderLevels(); renderList(); });
+      });
+    }
+
+    function fillSources() {
+      var sel = document.getElementById('src-filter');
+      var cur = sel.value;
+      var seen = {};
+      (ALL || []).forEach(function (e) { if (e.source) seen[e.source] = (seen[e.source] || 0) + 1; });
+      var opts = '<option value="">All sources</option>';
+      Object.keys(seen).sort().forEach(function (s) { opts += '<option value="' + esc(s) + '">' + esc(s) + ' (' + seen[s] + ')</option>'; });
+      sel.innerHTML = opts;
+      if (cur) sel.value = cur;
+    }
+
+    function renderList() {
+      var root = document.getElementById('root');
+      if (parseError) {
+        var extra = (rawValue != null) ? '<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--text-secondary)">Show raw value</summary><pre>' + esc(rawValue.slice(0, 20000)) + (rawValue.length > 20000 ? '\n...(' + (rawValue.length - 20000) + ' more chars)' : '') + '</pre></details>' : '';
+        root.innerHTML = '<div class="list"><div class="err">' + esc(parseError) + '</div>' + extra + '</div>';
+        document.getElementById('count').textContent = '';
+        return;
+      }
+      var rows = getFiltered();
+      document.getElementById('count').textContent = rows.length + ' / ' + (ALL ? ALL.length : 0) + ' shown';
+      if (!ALL || ALL.length === 0) { root.innerHTML = '<div class="list"><div class="empty">No log entries persisted.</div></div>'; return; }
+      if (rows.length === 0) { root.innerHTML = '<div class="list"><div class="empty">No entries match the current filters.</div></div>'; return; }
+      var html = '<div class="list">';
+      rows.forEach(function (e) {
+        var dt = detailsToText(e.details);
+        var rep = (e.repetitionCount && e.repetitionCount > 1) ? '<span class="rep">×' + e.repetitionCount + '</span>' : '';
+        var summary =
+          '<summary><div class="lerow">' +
+            '<div class="chev">' + (dt ? '▶' : '') + '</div>' +
+            '<div class="time" title="' + esc(absTime(e.timestamp)) + '">' + esc(relTime(e.timestamp)) + '</div>' +
+            '<div class="lvl ' + esc(e.level) + '">' + esc(e.level) + '</div>' +
+            '<div class="src" title="' + esc(e.source || '') + '">' + esc(e.source || '') + '</div>' +
+            '<div class="msg">' + esc(e.message || '') + rep + '</div>' +
+          '</div></summary>';
+        var body = '';
+        if (dt) {
+          body = '<div class="det"><div class="grid2">' +
+            '<span>level: ' + esc(e.level) + '</span><span>source: ' + esc(e.source || '-') + '</span>' +
+            '<span>' + esc(absTime(e.timestamp)) + '</span>' +
+            (e.repetitionCount > 1 ? '<span>repeats: ' + e.repetitionCount + '</span>' : '') +
+            (e.shown ? '<span>shown</span>' : '') +
+            '</div><pre>' + esc(dt) + '</pre>' +
+            (typeof e.details === 'object' && e.details && e.details.truncated ? '<div class="hint">Details were truncated to fit the persisted store.</div>' : '') +
+            '</div>';
+        }
+        html += '<details class="le">' + summary + body + '</details>';
+      });
+      html += '</div>';
+      root.innerHTML = html;
+    }
+
+    function toMarkdown() {
+      var rows = getFiltered();
+      var L = [];
+      L.push('# big-AGI - Logs');
+      L.push('');
+      L.push('- Generated: ' + new Date().toISOString());
+      L.push('- URL: ' + location.href);
+      L.push('- User agent: ' + navigator.userAgent);
+      L.push('- Shown: ' + rows.length + ' of ' + (ALL ? ALL.length : 0) + ' persisted entries');
+      if (parseError) {
+        L.push(''); L.push('> parse error: ' + parseError);
+        if (rawValue != null) { L.push(''); L.push('Raw value:'); L.push('```'); L.push(String(rawValue).slice(0, 8000) + (String(rawValue).length > 8000 ? '\n...(truncated)' : '')); L.push('```'); }
+        return L.join('\n') + '\n';
+      }
+      L.push('');
+      L.push('| Time (UTC) | Level | Source | Message | Rep |');
+      L.push('| --- | --- | --- | --- | --: |');
+      rows.forEach(function (e) {
+        var msg = String(e.message || '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+        L.push('| ' + absTime(e.timestamp) + ' | ' + e.level + ' | ' + (e.source || '') + ' | ' + msg + ' | ' + (e.repetitionCount > 1 ? e.repetitionCount : '') + ' |');
+      });
+      var withDetails = rows.filter(function (e) { return e.details != null; }).slice(0, 60);
+      if (withDetails.length) {
+        L.push('');
+        L.push('## Details');
+        withDetails.forEach(function (e) {
+          L.push('');
+          L.push('**[' + e.level + '] ' + String(e.message || '').replace(/\n/g, ' ') + '** - ' + absTime(e.timestamp));
+          L.push('```');
+          L.push(String(detailsToText(e.details) || '').slice(0, 4000));
+          L.push('```');
+        });
+      }
+      return L.join('\n') + '\n';
+    }
+
+    function refresh() { load(); fillSources(); renderLevels(); renderList(); }
+
+    document.getElementById('btn-copy').addEventListener('click', function () { Inspect.copyText(toMarkdown(), 'Copied for GitHub'); });
+    document.getElementById('btn-refresh').addEventListener('click', refresh);
+    document.getElementById('search').addEventListener('input', renderList);
+    document.getElementById('src-filter').addEventListener('change', renderList);
+
+    refresh();
+  })();
+  </script>
+</body>
+</html>

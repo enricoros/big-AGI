@@ -40,6 +40,8 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
     display: themeFontFamilyCss,
     code: themeCodeFontFamilyCss,
   },
+  // NOTE: the standalone /dev/inspect/*.html dev tools hand-mirror these neutral/background hex tokens
+  // (they intentionally have zero app imports). If you change the palette below, update those pages' CSS to match.
   colorSchemes: {
     light: {
       palette: {

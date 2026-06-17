@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Inspect · Boot Doctor - big-AGI</title>
+  <link rel="stylesheet" href="/dev/inspect/_inspect.css" />
+</head>
+<body>
+  <div class="wrap narrow">
+    <header>
+      <div class="brand"><a href="/dev/inspect">Inspect</a><span class="sub">/ doctor</span></div>
+    </header>
+    <div class="tagline">A one-glance health check of the things that break big-AGI's boot. Read-only, it runs entirely on your device.</div>
+
+    <div class="toolbar">
+      <button class="primary" id="btn-copy">Copy for GitHub</button>
+      <button id="btn-run">Run again</button>
+      <div class="spacer"></div>
+      <span class="links"><a href="/dev/inspect/storage">Storage ▸</a><a href="/dev/inspect/logs">Logs ▸</a></span>
+    </div>
+
+    <div id="verdict"></div>
+    <div id="root"></div>
+  </div>
+
+  <script src="/dev/inspect/_inspect.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var esc = Inspect.esc, fmtMB = Inspect.fmtMB, reqP = Inspect.reqP, openDB = Inspect.openDB;
+
+    // Boot-critical localStorage stores: app-ui is read inside ProviderTheming BEFORE the ErrorBoundary mounts,
+    // so a malformed value there white-screens the app uncaught. The others gate large parts of boot.
+    var BOOT_CRITICAL = ['app-ui', 'app-models', 'app-device', 'app-app-chat'];
+    var ZYNC_EXPECTED_STORES = ['atoms-chat', 'atoms-persona', 'atoms-asset', 'kv-zync'];
+    var LEGACY_DBS = { 'keyval-store': 'legacy chats', 'Big-AGI': 'legacy assets' };
+    var CHECKS = [];
+
+    function add(status, title, detail) { CHECKS.push({ status: status, title: title, detail: detail || '' }); }
+
+    function checkStorageAPIs() {
+      try { var ok = !!window.localStorage; add(ok ? 'pass' : 'fail', 'localStorage available', ok ? '' : 'window.localStorage missing - persistence disabled'); }
+      catch (e) { add('fail', 'localStorage available', 'access threw: ' + e); }
+      try { add(window.indexedDB ? 'pass' : 'fail', 'IndexedDB available', window.indexedDB ? '' : 'window.indexedDB missing - Zync cannot start'); }
+      catch (e) { add('fail', 'IndexedDB available', 'access threw: ' + e); }
+    }
+
+    function checkBootCritical() {
+      BOOT_CRITICAL.forEach(function (key) {
+        var raw;
+        try { raw = localStorage.getItem(key); } catch (e) { add('fail', 'Store ' + key, 'read threw: ' + e); return; }
+        if (raw == null) { add('info', 'Store ' + key, 'absent - defaults will be used (normal on a fresh profile)'); return; }
+        try {
+          var j = JSON.parse(raw);
+          var hasState = j && typeof j === 'object' && Object.prototype.hasOwnProperty.call(j, 'state');
+          if (key === 'app-ui' && !hasState) add('warn', 'Store app-ui', 'parses but has no { state } - unexpected shape; theming reads this before the ErrorBoundary');
+          else add('pass', 'Store ' + key, hasState ? 'parses OK' : 'parses OK (no envelope)');
+        } catch (e) {
+          var crit = (key === 'app-ui');
+          add('fail', 'Store ' + key, 'MALFORMED JSON' + (crit ? ' - app-ui loads before the ErrorBoundary, this white-screens the whole app' : ' - this store will reset to defaults'));
+        }
+      });
+    }
+
+    function checkMalformedScan() {
+      var bad = [];
+      var n = 0;
+      try { n = localStorage.length; } catch (e) { add('warn', 'localStorage scan', 'could not enumerate: ' + e); return; }
+      for (var i = 0; i < n; i++) {
+        var k = localStorage.key(i); var v;
+        try { v = localStorage.getItem(k); } catch (e) { continue; }
+        if (v == null) continue;
+        var t = v.charAt(0);
+        if (t === '{' || t === '[') { try { JSON.parse(v); } catch (e) { if (BOOT_CRITICAL.indexOf(k) < 0) bad.push(k); } }
+      }
+      if (bad.length) add('warn', 'Malformed localStorage values', bad.length + ' key(s) look like JSON but fail to parse: ' + bad.join(', '));
+      else add('pass', 'localStorage JSON integrity', 'all object/array values parse');
+    }
+
+    async function checkQuota() {
+      try {
+        if (navigator.storage && navigator.storage.estimate) {
+          var e = await navigator.storage.estimate();
+          if (e.quota) {
+            var r = e.usage / e.quota;
+            add(r > 0.9 ? 'warn' : 'pass', 'Storage quota', fmtMB(e.usage || 0) + ' / ' + fmtMB(e.quota) + ' (' + (r * 100).toFixed(0) + '%)' + (r > 0.9 ? ' - near full; writes may fail silently' : ''));
+          } else add('info', 'Storage quota', 'estimate unavailable');
+        } else add('info', 'Storage quota', 'navigator.storage.estimate not supported');
+        if (navigator.storage && navigator.storage.persisted) {
+          var p = await navigator.storage.persisted();
+          add(p ? 'pass' : 'info', 'Persistent storage', p ? 'granted (not subject to eviction)' : 'not granted - browser may evict data under pressure');
+        }
+      } catch (e2) { add('warn', 'Storage quota', 'check threw: ' + e2); }
+    }
+
+    function checkBroadcastChannel() {
+      try { var b = new BroadcastChannel('agi-inspect-probe'); b.close(); add('pass', 'BroadcastChannel', 'constructs OK (single-tab enforcer safe)'); }
+      catch (e) { add('warn', 'BroadcastChannel', 'unavailable - the single-tab enforcer can crash uncaught: ' + e); }
+    }
+
+    async function checkIndexedDB() {
+      if (!window.indexedDB) return;
+      if (!indexedDB.databases) { add('info', 'IndexedDB enumeration', 'this browser does not support indexedDB.databases()'); return; }
+      var list;
+      try { list = await indexedDB.databases(); } catch (e) { add('warn', 'IndexedDB enumeration', 'failed: ' + e); return; }
+      var zyncFound = 0;
+      for (var i = 0; i < list.length; i++) {
+        var name = list[i].name; if (!name) continue;
+        if (name.indexOf('zync-storage-') === 0) {
+          zyncFound++;
+          try {
+            var db = await openDB(name);
+            var stores = Array.prototype.slice.call(db.objectStoreNames);
+            var missing = ZYNC_EXPECTED_STORES.filter(function (s) { return stores.indexOf(s) < 0; });
+            db.close();
+            if (missing.length) add('warn', 'Zync DB ' + name, 'v' + (list[i].version || '?') + ' opens, but missing store(s): ' + missing.join(', '));
+            else add('pass', 'Zync DB ' + name, 'v' + (list[i].version || '?') + ' opens, all stores present');
+          } catch (e) {
+            add('fail', 'Zync DB ' + name, 'UNOPENABLE (' + e + ') - this triggers the "Cannot Launch big-AGI" screen. Heal can delete it (data re-syncs).');
+          }
+        } else if (LEGACY_DBS[name]) {
+          add('info', 'Legacy DB ' + name, LEGACY_DBS[name] + ' still present - Heal can remove it to reclaim space');
+        }
+      }
+      if (!zyncFound) add('info', 'Zync storage', 'no zync-storage-* database yet (normal before first run / sign-in)');
+    }
+
+    async function runAll() {
+      CHECKS = [];
+      checkStorageAPIs();
+      checkBootCritical();
+      checkMalformedScan();
+      checkBroadcastChannel();
+      await checkQuota();
+      await checkIndexedDB();
+      render();
+    }
+
+    function render() {
+      var fails = CHECKS.filter(function (c) { return c.status === 'fail'; }).length;
+      var warns = CHECKS.filter(function (c) { return c.status === 'warn'; }).length;
+      var v = document.getElementById('verdict');
+      if (fails) v.className = 'verdict fail', v.innerHTML = '<span class="big">✕</span><span>' + fails + ' issue' + (fails > 1 ? 's' : '') + ' likely to block or threaten boot' + (warns ? ' · ' + warns + ' warning' + (warns > 1 ? 's' : '') : '') + '</span>';
+      else if (warns) v.className = 'verdict warn', v.innerHTML = '<span class="big">!</span><span>' + warns + ' warning' + (warns > 1 ? 's' : '') + ' - boot should work, worth a look</span>';
+      else v.className = 'verdict ok', v.innerHTML = '<span class="big">✓</span><span>All clear - no boot-threatening issues found</span>';
+
+      var html = '<div class="checks">';
+      CHECKS.forEach(function (c) {
+        html += '<div class="check"><div class="sdot ' + c.status + '"></div><div><div class="title">' + esc(c.title) + '<span class="st ' + c.status + '">' + c.status + '</span></div>' + (c.detail ? '<div class="detail">' + esc(c.detail) + '</div>' : '') + '</div></div>';
+      });
+      html += '</div>';
+      document.getElementById('root').innerHTML = html;
+    }
+
+    function toMarkdown() {
+      var L = ['# big-AGI - Boot Doctor', '', '- Generated: ' + new Date().toISOString(), '- URL: ' + location.href, '- User agent: ' + navigator.userAgent, ''];
+      var fails = CHECKS.filter(function (c) { return c.status === 'fail'; }).length;
+      var warns = CHECKS.filter(function (c) { return c.status === 'warn'; }).length;
+      L.push('**Verdict:** ' + (fails ? (fails + ' FAIL') : warns ? (warns + ' WARN') : 'all clear') + (warns && fails ? ', ' + warns + ' WARN' : ''));
+      L.push('');
+      L.push('| Status | Check | Detail |');
+      L.push('| --- | --- | --- |');
+      CHECKS.forEach(function (c) { L.push('| ' + c.status.toUpperCase() + ' | ' + c.title.replace(/\|/g, '\\|') + ' | ' + String(c.detail).replace(/\|/g, '\\|') + ' |'); });
+      return L.join('\n') + '\n';
+    }
+
+    document.getElementById('btn-copy').addEventListener('click', function () { Inspect.copyText(toMarkdown(), 'Copied for GitHub'); });
+    document.getElementById('btn-run').addEventListener('click', runAll);
+
+    runAll();
+  })();
+  </script>
+</body>
+</html>

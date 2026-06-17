@@ -100,6 +100,10 @@ let nextConfig: NextConfig = {
       { source: '/a/ph/static/:path*', destination: 'https://us-assets.i.posthog.com/static/:path*' },
       { source: '/a/ph/array/:path*', destination: 'https://us-assets.i.posthog.com/array/:path*' },
       { source: '/a/ph/:path*', destination: 'https://us.i.posthog.com/:path*' },
+      // Inspect: standalone static dev tools under /public/dev/inspect/*.html (clean URLs, no .html)
+      // The (\w+) constraint excludes paths with a dot, so '/dev/inspect/storage.html' is still served directly.
+      { source: '/dev/inspect/:tool(\\w+)', destination: '/dev/inspect/:tool.html' },
+      { source: '/dev/inspect', destination: '/dev/inspect/index.html' },
     ];
   },
 

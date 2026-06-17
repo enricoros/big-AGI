@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Inspect · Heal - big-AGI</title>
+  <link rel="stylesheet" href="/dev/inspect/_inspect.css" />
+</head>
+<body>
+  <div class="wrap narrow">
+    <header>
+      <div class="brand"><a href="/dev/inspect">Inspect</a><span class="sub">/ heal</span></div>
+    </header>
+    <div class="tagline">Detects known corruption &amp; bloat and offers confirmed repairs. Everything runs on your device.</div>
+    <div class="warnbar danger">⚠ <b>Do NOT run these unless you know what you are doing.</b> Each repair permanently modifies this browser's storage and asks you to type a confirmation. Deleting a synced database re-downloads from the server, but local-only unsynced changes are lost. <b>Reload big-AGI</b> afterward.</div>
+
+    <div class="toolbar">
+      <button class="primary" id="btn-rescan">Re-scan</button>
+      <button id="btn-reload" onclick="location.href='/'">Reload big-AGI</button>
+      <button id="btn-heal-storage" onclick="location.href='/dev/inspect/storage?heal=1'">Open Storage for Healing</button>
+      <button id="btn-copy">Copy for GitHub</button>
+      <div class="spacer"></div>
+      <span class="links"><a href="/dev/inspect/storage">Storage ▸</a><a href="/dev/inspect/doctor">Doctor ▸</a></span>
+    </div>
+
+    <div id="root"></div>
+  </div>
+
+  <script src="/dev/inspect/_inspect.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var esc = Inspect.esc, fmtKB = Inspect.fmtKB, toast = Inspect.toast, deleteDB = Inspect.deleteDB;
+
+    var LOG_KEY = 'agi-logger-log';
+    var LOG_VACUUM_KEEP = 20;
+    var BIG_VALUE_BYTES = 256 * 1024;
+    var FINDINGS = [];
+
+    function listDBs() {
+      if (!window.indexedDB || !indexedDB.databases) return Promise.resolve([]);
+      return indexedDB.databases().then(function (l) { return l || []; }).catch(function () { return []; });
+    }
+    function canOpen(name) {
+      return new Promise(function (res) {
+        var existed = true;
+        var r = indexedDB.open(name);
+        r.onupgradeneeded = function () { existed = false; };
+        r.onsuccess = function () { try { r.result.close(); } catch (e) {} res(existed); };
+        r.onerror = function () { res(false); };
+        r.onblocked = function () { res(true); };
+      });
+    }
+    function lsBytes(key, val) { return (key.length + (val ? val.length : 0)) * 2; }
+
+    async function scan() {
+      var F = [];
+      var dbs = await listDBs();
+      var hasZync = dbs.some(function (d) { return d.name && d.name.indexOf('zync-storage-') === 0; });
+
+      // 1. Legacy databases
+      [['keyval-store', 'legacy chats (pre-ZYNC, can be very large)'], ['Big-AGI', 'legacy assets / images']].forEach(function (pair) {
+        var nm = pair[0];
+        if (!dbs.some(function (d) { return d.name === nm; })) return;
+        if (hasZync) F.push({ sev: 'bloat', title: 'Legacy database "' + nm + '"', detail: pair[1] + '. A zync-storage-* database exists, so migration has run - safe to drop and reclaim space.', actions: [{ label: 'Drop "' + nm + '"', danger: true, confirmPhrase: nm, confirmText: 'Permanently delete the legacy database "' + nm + '". Your current data lives in the zync-storage-* database and is unaffected.\n\nType the database name (' + nm + ') to confirm:', run: function () { return deleteDB(nm); } }] });
+        else F.push({ sev: 'info', title: 'Legacy database "' + nm + '"', detail: pair[1] + '. No zync-storage-* database found yet - migration may not have run. Not offering to drop, to avoid data loss. Open the app while signed in to migrate first.' });
+      });
+
+      // 2. Unopenable Zync DBs (the "Cannot Launch" cause)
+      for (var i = 0; i < dbs.length; i++) {
+        var d = dbs[i];
+        if (!d.name || d.name.indexOf('zync-storage-') !== 0) continue;
+        var ok = await canOpen(d.name);
+        if (!ok) {
+          (function (name) {
+            F.push({ sev: 'issue', title: 'Zync database "' + name + '" is unopenable', detail: 'This triggers the "Cannot Launch big-AGI" screen. Deleting it lets the app recreate it and re-sync from the server. Local-only changes that were never synced would be lost.', actions: [{ label: 'Delete "' + name + '"', danger: true, confirmPhrase: name, confirmText: 'Delete the corrupted database "' + name + '". The app will recreate it and re-download synced data; unsynced local changes will be lost.\n\nType the database name (' + name + ') to confirm:', run: function () { return deleteDB(name); } }] });
+          })(d.name);
+        }
+      }
+
+      // 3. Log store bloat
+      try {
+        var rawLog = localStorage.getItem(LOG_KEY);
+        if (rawLog != null) {
+          var bytes = lsBytes(LOG_KEY, rawLog);
+          var count = 0, ok2 = true;
+          try { var p = JSON.parse(rawLog); count = (p && p.state && Array.isArray(p.state.entries)) ? p.state.entries.length : 0; } catch (e) { ok2 = false; }
+          if (!ok2) {
+            F.push({ sev: 'issue', title: 'Log store is corrupt', detail: LOG_KEY + ' (' + fmtKB(bytes) + ') is not valid JSON. Clearing it is safe - it only holds diagnostic logs.', actions: [{ label: 'Clear log store', danger: true, confirmPhrase: 'CLEAR', confirmText: 'Type CLEAR to remove the corrupt ' + LOG_KEY + ' (only diagnostic logs are lost):', run: function () { localStorage.removeItem(LOG_KEY); return 'ok'; } }] });
+          } else if (bytes > 64 * 1024 || count > LOG_VACUUM_KEEP) {
+            F.push({ sev: 'bloat', title: 'Log buffer is large', detail: LOG_KEY + ' holds ' + count + ' entries (' + fmtKB(bytes) + '). Logs are non-essential - vacuum to the newest ' + LOG_VACUUM_KEEP + ' or clear entirely.', actions: [
+              { label: 'Vacuum to ' + LOG_VACUUM_KEEP, run: function () { var pp = JSON.parse(localStorage.getItem(LOG_KEY)); if (pp && pp.state && Array.isArray(pp.state.entries)) pp.state.entries = pp.state.entries.slice(0, LOG_VACUUM_KEEP); localStorage.setItem(LOG_KEY, JSON.stringify(pp)); return 'ok'; } },
+              { label: 'Clear all', danger: true, confirmPhrase: 'CLEAR', confirmText: 'Type CLEAR to clear all log entries:', run: function () { localStorage.removeItem(LOG_KEY); return 'ok'; } },
+            ] });
+          }
+        }
+      } catch (e) { /* localStorage unavailable */ }
+
+      // 4. Removable leftovers
+      [['app-fabric-cache', 'cached cloud info for a currently-disabled feature'], ['agi-scratch-clip', 'orphaned key from a removed scratch-clip store']].forEach(function (pair) {
+        var k = pair[0], v;
+        try { v = localStorage.getItem(k); } catch (e) { return; }
+        if (v == null) return;
+        F.push({ sev: 'info', title: '"' + k + '" present', detail: pair[1] + '. Safe to remove (' + fmtKB(lsBytes(k, v)) + ').', actions: [{ label: 'Remove', danger: true, confirmPhrase: k, confirmText: 'Type the key name (' + k + ') to remove it:', run: function () { localStorage.removeItem(k); return 'ok'; } }] });
+      });
+
+      // 5. Oversized stores (report only - deleting a live store is done from Storage healing mode)
+      try {
+        var big = [];
+        for (var j = 0; j < localStorage.length; j++) { var key = localStorage.key(j); var val = localStorage.getItem(key); var b = lsBytes(key, val); if (b > BIG_VALUE_BYTES) big.push({ key: key, b: b }); }
+        big.sort(function (a, c) { return c.b - a.b; });
+        if (big.length) F.push({ sev: 'info', title: big.length + ' oversized localStorage store(s)', detail: 'Largest: ' + big.slice(0, 4).map(function (x) { return x.key + ' (' + fmtKB(x.b) + ')'; }).join(', ') + '. Inspect field-level sizes - and delete individual keys - in Storage healing mode.', actions: [{ label: 'Open Storage for Healing ▸', run: function () { location.href = '/dev/inspect/storage?heal=1'; return 'ok'; } }] });
+      } catch (e) { /* ignore */ }
+
+      if (!F.length) F.push({ sev: 'ok', title: 'Nothing to heal', detail: 'No known corruption or bloat detected. If the app still misbehaves, check Doctor and Logs.' });
+      return F;
+    }
+
+    function render() {
+      var html = '<div class="findings">';
+      FINDINGS.forEach(function (f, fi) {
+        html += '<div class="finding"><div class="sdot ' + f.sev + '"></div><div><div class="ftitle">' + esc(f.title) + '</div><div class="fdetail">' + esc(f.detail) + '</div>';
+        if (f.actions && f.actions.length) {
+          html += '<div class="factions">';
+          f.actions.forEach(function (a, ai) { html += '<button class="' + (a.danger ? 'danger' : '') + '" data-f="' + fi + '" data-a="' + ai + '">' + esc(a.label) + '</button>'; });
+          html += '</div>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div>';
+      var root = document.getElementById('root');
+      root.innerHTML = html;
+      Array.prototype.forEach.call(root.querySelectorAll('button[data-f]'), function (b) { b.addEventListener('click', onAction); });
+    }
+
+    async function onAction() {
+      var fi = +this.getAttribute('data-f'), ai = +this.getAttribute('data-a');
+      var act = FINDINGS[fi] && FINDINGS[fi].actions && FINDINGS[fi].actions[ai];
+      if (!act) return;
+      if (act.danger) {
+        var phrase = act.confirmPhrase || 'DELETE';
+        if (!Inspect.confirmHard(act.confirmText || ('Type ' + phrase + ' to confirm.'), phrase)) { toast('Cancelled'); return; }
+      }
+      this.disabled = true; var prev = this.textContent; this.textContent = 'Working...';
+      try {
+        var r = await act.run();
+        toast(r === 'blocked' ? 'Blocked - close other big-AGI tabs and retry' : 'Done - reload big-AGI to apply');
+      } catch (e) { toast('Failed: ' + (e && e.message || e)); this.textContent = prev; this.disabled = false; }
+      await rescan();
+    }
+
+    async function rescan() {
+      var btn = document.getElementById('btn-rescan'); btn.disabled = true; var prev = btn.textContent; btn.textContent = 'Scanning...';
+      try { FINDINGS = await scan(); } catch (e) { FINDINGS = [{ sev: 'issue', title: 'Scan failed', detail: String(e && e.message || e) }]; }
+      btn.disabled = false; btn.textContent = prev;
+      render();
+    }
+
+    function toMarkdown() {
+      var L = ['# big-AGI - Heal report', '', '- Generated: ' + new Date().toISOString(), '- URL: ' + location.href, ''];
+      FINDINGS.forEach(function (f) { L.push('- [' + f.sev.toUpperCase() + '] ' + f.title + ' - ' + f.detail); });
+      return L.join('\n') + '\n';
+    }
+
+    document.getElementById('btn-rescan').addEventListener('click', rescan);
+    document.getElementById('btn-copy').addEventListener('click', function () { Inspect.copyText(toMarkdown(), 'Copied for GitHub'); });
+
+    rescan();
+  })();
+  </script>
+</body>
+</html>
