@@ -97,22 +97,9 @@ let nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true, // required to support PostHog trailing slash API requests
   async rewrites() {
     return [
-      {
-        source: '/a/ph/static/:path*',
-        destination: 'https://us-assets.i.posthog.com/static/:path*',
-      },
-      {
-        source: '/a/ph/:path*',
-        destination: 'https://us.i.posthog.com/:path*',
-      },
-      {
-        source: '/a/ph/decide',
-        destination: 'https://us.i.posthog.com/decide',
-      },
-      {
-        source: '/a/ph/flags',
-        destination: 'https://us.i.posthog.com/flags',
-      },
+      { source: '/a/ph/static/:path*', destination: 'https://us-assets.i.posthog.com/static/:path*' },
+      { source: '/a/ph/array/:path*', destination: 'https://us-assets.i.posthog.com/array/:path*' },
+      { source: '/a/ph/:path*', destination: 'https://us.i.posthog.com/:path*' },
     ];
   },
 
