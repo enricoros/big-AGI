@@ -56,34 +56,23 @@ const XAI_PAR: ModelDescriptionSchema['parameterSpecs'] = [
 // hence it's the same parameters
 const XAI_PAR_Reasoning = XAI_PAR;
 
-// Pre-Grok 4 models do NOT support server-side tools (web_search, x_search, code_interpreter)
-const XAI_IF_Pre4: ModelDescriptionSchema['interfaces'] = [
-  LLM_IF_OAI_Chat, LLM_IF_OAI_Fn,
-] as const;
-
-const XAI_IF_Pre4_Vision: ModelDescriptionSchema['interfaces'] = [
-  ...XAI_IF_Pre4, LLM_IF_OAI_Vision,
-] as const;
-
-const XAI_PAR_Pre4: ModelDescriptionSchema['parameterSpecs'] = [] as const;
-
 
 // pubDate is REQUIRED on every real model entry; symlinks inherit it.
 type _XaiModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
 
-  // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high
+  // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high/xhigh
   {
     idPrefix: 'grok-4.3',
     label: 'Grok 4.3',
     pubDate: '20260417',
-    description: 'xAI\'s latest flagship model with reasoning and a 1M token context window. Supports text and image inputs, with reasoning_effort control (none/low/medium/high). Knowledge cutoff: November 2024.',
+    description: 'xAI\'s latest flagship model with reasoning and a 1M token context window. Supports text and image inputs, with reasoning_effort control (none/low/medium/high/xhigh). Knowledge cutoff: November 2024.',
     contextWindow: 1000000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] }, // vendor default 'low'; 'none' disables reasoning
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'] }, // vendor default 'low'; 'none' disables reasoning; 'xhigh' per 2026-06 sweep
       ...XAI_PAR_Reasoning,
     ],
     chatPrice: PRICE_FLAGSHIP,
@@ -125,7 +114,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     // no LLM_IF_OAI_Fn: multi-agent does not support function calling
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }, // low/medium = 4 agents, high/xhigh = 16 agents
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'] }, // 'none' disables reasoning (per 2026-06 sweep); low/medium = 4 agents, high/xhigh = 16 agents
       ...XAI_PAR_Reasoning,
     ],
     chatPrice: PRICE_FLAGSHIP,
@@ -149,8 +138,8 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     description: 'xAI fast coding model with reasoning, function calling, and structured outputs. Text and image inputs, 256K context. Aliases: grok-code-fast-1, grok-code-fast, grok-code-fast-1-0825.',
     contextWindow: 256000,
     maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Pre4_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Pre4,
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: XAI_PAR_Reasoning, // sweep (2026-06) confirms web search; rolled into the standard Grok-4 server-side toolset
     chatPrice: { input: 1.00, output: 2.00, cache: { cType: 'oai-ac', read: 0.20 } },
   },
 

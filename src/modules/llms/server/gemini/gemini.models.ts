@@ -552,8 +552,8 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     pubDate: '20251007',
     isPreview: true,
     chatPrice: gemini25ProPricing, // Uses same pricing as 2.5 Pro (pricing page doesn't list separately)
-    // NOTE: sweep shows fn=['auto'] only (no 'roundtrip') - partial Fn capability, do not advertise LLM_IF_OAI_Fn
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    // NOTE: sweep (2026-06) now shows fn=['auto','roundtrip'] - full function-calling roundtrip, advertise LLM_IF_OAI_Fn
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiComputerUse' }, // Sets environment=ENVIRONMENT_BROWSER in Computer Use tool
