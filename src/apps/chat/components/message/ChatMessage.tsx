@@ -18,6 +18,7 @@ import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
 
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
+import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
@@ -35,6 +36,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
+import { BlockOpResolveLinks } from './BlockOpResolveLinks';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
@@ -205,6 +207,11 @@ export function ChatMessage(props: {
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
   const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, interleavedFragments.filter(f => f.ft === 'content'), fromAssistant, props.onMessageFragmentReplace);
 
+  // [#1114] Vertex AI grounding redirect links present in this message (skip the scan while streaming - the button is gated on completion anyway)
+  const vertexLinksCount = React.useMemo(() => {
+    return fromAssistant && !messagePendingIncomplete ? vertexLinksCountInFragments(messageFragments) : 0;
+  }, [fromAssistant, messagePendingIncomplete, messageFragments]);
+
   const textSubject = selText ? selText : fragmentFlattenedText;
   const isSpecialT2I = textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
   const couldDiagram = textSubject.length >= 100 && !isSpecialT2I;
@@ -234,6 +241,14 @@ export function ChatMessage(props: {
   const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
     onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
   }, [messageId, onMessageFragmentReplace]);
+
+  const handleResolveVertexLinks = React.useCallback(async () => {
+    const resolution = await vertexLinksResolveFragments(messageFragments);
+    if (!resolution) return 'Could not resolve links';
+    for (const { fragmentId, newFragment } of resolution.changedFragments)
+      onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
+    return undefined; // success
+  }, [messageFragments, messageId, onMessageFragmentReplace]);
 
   const handleMessageContinue = React.useCallback((continueText: null | string) => {
     onMessageContinue?.(messageId, continueText);
@@ -830,6 +845,15 @@ export function ChatMessage(props: {
             onContextMenu={(onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
           />
+
+          {/* [#1114] Resolve Vertex AI grounding redirect links in place */}
+          {vertexLinksCount >= 1 && !messagePendingIncomplete && !isEditingText && !!onMessageFragmentReplace && (
+            <BlockOpResolveLinks
+              contentScaling={adjContentScaling}
+              linksCount={vertexLinksCount}
+              onResolve={handleResolveVertexLinks}
+            />
+          )}
 
           {/* Document Fragments */}
           {nonImageAttachments.length >= 1 && (
