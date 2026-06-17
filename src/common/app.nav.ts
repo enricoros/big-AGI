@@ -19,7 +19,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 import { Brand } from '~/common/app.config';
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { PhChats } from '~/common/components/icons/phosphor/PhChats';
 import { PhChatsDuotone } from '~/common/components/icons/phosphor/PhChatsDuotone';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
@@ -176,15 +175,6 @@ export const navItems: {
       route: '/tokens',
       hideDrawer: true,
       hideOnMobile: true,
-      hideIcon: true,
-      isDev: true,
-    },
-    {
-      name: 'Beam',
-      icon: ChatBeamIcon,
-      type: 'app',
-      route: '/dev/beam',
-      hideDrawer: true,
       hideIcon: true,
       isDev: true,
     },
