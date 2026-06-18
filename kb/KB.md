@@ -13,6 +13,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 #### AIX - AI Communication Framework
 - **[AIX.md](modules/AIX.md)** - AIX streaming architecture documentation
 - **[AIX-callers-analysis.md](modules/AIX-callers-analysis.md)** - Analysis of AIX entry points, call chains, common and different rendering, error handling, etc.
+- **[AIX-anthropic-code-execution.md](modules/AIX-anthropic-code-execution.md)** - Anthropic code execution: the three triggers + one container, the #1087 single-environment history, empirically-verified behavior (version-pin/400, coexist, container continuity), the shipped standalone Sandbox toggle + container decoupling, and the forward Sandbox/execution-environment direction
 
 #### CSF - Client-Side Fetch
 - **[CSF.md](systems/client-side-fetch.md)** - Direct browser-to-API communication for LLM requests

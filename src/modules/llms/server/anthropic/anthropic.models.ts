@@ -57,9 +57,15 @@ const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = 
   { paramId: 'llmVndAntWebSearchMaxUses' },
 ] as const;
 
-/** Dynamic filtering for web search/fetch - only Opus/Sonnet 4.6+ */
+/**
+ * Dynamic filtering for web search/fetch - only Opus/Sonnet 4.6+.
+ * Also the home of the standalone Code Sandbox toggle (code_execution_20260120), whose model support
+ * (Fable/Mythos 5, Opus/Sonnet 4.6+) is a clean subset of this set. NOT added to the base
+ * ANT_TOOLS, as Haiku 4.5 only supports code_execution_20250825 (not the 20260120 we ship).
+ */
 const ANT_TOOLS_DYNAMIC: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
   ...ANT_TOOLS,
+  { paramId: 'llmVndAntCodeSandbox' },
   { paramId: 'llmVndAntWebDynamic' },
 ] as const;
 

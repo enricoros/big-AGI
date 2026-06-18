@@ -504,6 +504,7 @@ export namespace AixWire_API {
 
     // Anthropic
     vndAnt1MContext: z.boolean().optional(),
+    vndAntCodeSandbox: z.enum(['auto']).optional(), // standalone server-side code sandbox (also implied by Skills / programmatic tool calling)
     vndAntContainerId: z.string().optional(),
     vndAntInfSpeed: z.enum(['fast']).optional(),
     vndAntSkills: z.string().optional(),

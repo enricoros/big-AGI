@@ -240,6 +240,7 @@ export function LLMParametersEditor(props: {
     llmTemperature, // null: no temperature, number: temperature value, undefined: shall not happen, we treat is similarly to null
     llmForceNoStream,
     llmVndAnt1MContext,
+    llmVndAntCodeSandbox,
     llmVndAntEffort,
     llmVndAntInfSpeed,
     llmVndAntSkills,
@@ -549,6 +550,24 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+    {showParam('llmVndAntCodeSandbox') && (
+      <FormSwitchControl
+        title='Code Sandbox'
+        description={llmVndAntSkills ? 'On (via Skills)' : 'Hosted-container sandbox'}
+        tooltip='Run code in a server-side hosted-container sandbox for data analysis, file processing, and charts. Document Skills and programmatic tool calls enable this automatically. Can be combined with Web Search/Fetch (free when used together).'
+        disabled={!!llmVndAntSkills} // Skills require the container, so it is implied-on and locked
+        checked={!!llmVndAntCodeSandbox || !!llmVndAntSkills}
+        onChange={checked => {
+          if (!checked) onRemoveParameter('llmVndAntCodeSandbox');
+          else onChangeParameter({ llmVndAntCodeSandbox: 'auto' });
+        }}
+      />
+    )}
+
+    {showParam('llmVndAntSkills') && (
+      <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
+    )}
+
     {showParam('llmVndAnt1MContext') && (
       <FormSwitchControl
         title='1M Context Window (Beta)'
@@ -574,10 +593,6 @@ export function LLMParametersEditor(props: {
           else if (antInfSpeedTier) onChangeParameter({ llmVndAntInfSpeed: antInfSpeedTier });
         }}
       />
-    )}
-
-    {showParam('llmVndAntSkills') && (
-      <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
     )}
 
 
@@ -671,7 +686,7 @@ export function LLMParametersEditor(props: {
 
     {showParam('llmVndGeminiCodeExecution') && (
       <FormSelectControl
-        title='Code Execution'
+        title='Code Sandbox'
         tooltip='Enable automatic Python code generation and execution by the model'
         value={llmVndGeminiCodeExecution ?? _UNSPECIFIED}
         onChange={(value) => {
@@ -791,7 +806,7 @@ export function LLMParametersEditor(props: {
 
     {showParam('llmVndOaiCodeInterpreter') && (
       <FormSelectControl
-        title='Code Interpreter'
+        title='Code Sandbox'
         tooltip='Enable Python code execution in a sandboxed container. Costs $0.03 per container (expires after 20 minutes of inactivity).'
         value={llmVndOaiCodeInterpreter ?? _UNSPECIFIED}
         onChange={(value) => {
@@ -882,7 +897,7 @@ export function LLMParametersEditor(props: {
 
     {showParam('llmVndXaiCodeExecution') && (
       <FormSelectControl
-        title='Run Code'
+        title='Code Sandbox'
         value={llmVndXaiCodeExecution ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value || value === 'off') onRemoveParameter('llmVndXaiCodeExecution');

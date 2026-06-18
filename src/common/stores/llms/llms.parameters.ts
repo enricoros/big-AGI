@@ -191,6 +191,15 @@ export const DModelParameterRegistry = {
     // undefined means off (e.g. default 200K context window)
   },
 
+  llmVndAntCodeSandbox: _enumDef({
+    label: 'Code Sandbox',
+    type: 'enum',
+    description: 'Run code in a server-side hosted-container sandbox (data analysis, files, charts). Skills and programmatic tool calls enable this automatically.',
+    values: ['auto'],
+    // undefined means off (the code_execution_20260120 tool is not added). Enum (not boolean) for future
+    // extensibility, matching the other vendors' code-exec params (Gemini/xAI/OpenAI). UI renders as a toggle.
+  }),
+
   llmVndAntInfSpeed: _enumDef({
     label: 'Fast Mode',
     type: 'enum',
@@ -300,7 +309,7 @@ export const DModelParameterRegistry = {
   }),
 
   llmVndGeminiCodeExecution: _enumDef({
-    label: 'Code Execution',
+    label: 'Code Sandbox',
     type: 'enum',
     description: 'Enable automatic Python code generation and execution by the model',
     values: ['auto'],
@@ -428,7 +437,7 @@ export const DModelParameterRegistry = {
   }),
 
   llmVndOaiCodeInterpreter: _enumDef({
-    label: 'Code Interpreter',
+    label: 'Code Sandbox',
     type: 'enum',
     description: 'Python code execution ($0.03/container)',
     values: ['off', 'auto'],
@@ -469,7 +478,7 @@ export const DModelParameterRegistry = {
   // xAI-specific parameters
 
   llmVndXaiCodeExecution: _enumDef({
-    label: 'Code Execution',
+    label: 'Code Sandbox',
     type: 'enum',
     description: 'Enable server-side code execution by the model',
     values: ['off', 'auto'],
