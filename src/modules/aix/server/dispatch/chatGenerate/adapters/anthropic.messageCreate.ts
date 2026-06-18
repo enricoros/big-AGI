@@ -333,9 +333,20 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     }
   }
 
-  // --- Container - for code execution (Skills, dynamic filtering, etc.) continuity between calls ---
+  // --- Container continuity between calls ---
+  // Re-attaching the container is DECOUPLED from enableCodeExecution: dynamic web tools (_20260209)
+  // use a container internally, and the API accepts a `container` alongside them WITHOUT the standalone
+  // code_execution tool (empirically verified). So we keep ONE sandbox across mixed search/skills/code
+  // turns - a file written by code execution survives an intervening search turn (verified: ls /tmp). This
+  // does NOT add code_execution to dynamic-web turns (so #1087 stays fixed). When nothing container-using
+  // is active (no code exec, no skills, no PTC, no dynamic web), no container is sent. Plain (non-dynamic)
+  // web search creates no container, so it is intentionally excluded.
+  // Retention: a reused container is server-retained ~30 days (same profile as the Skills/code-exec
+  // containers we already reuse) - dynamic-web conversations now share one retained sandbox per
+  // conversation instead of a fresh one each turn.
+  const hasDynamicWeb = model.vndAntWebDynamic === true && (model.vndAntWebSearch === 'auto' || model.vndAntWebFetch === 'auto');
 
-  if (enableCodeExecution) {
+  if (enableCodeExecution || hasDynamicWeb) {
 
     // Container ID from a previous turn (expiry already checked client-side)
     const containerId = model.vndAntContainerId;
