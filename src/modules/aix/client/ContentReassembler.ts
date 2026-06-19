@@ -1120,7 +1120,9 @@ export class ContentReassembler {
     }
 
     // -> ph: show retry status
-    const retryMessage = `${reason ? `${reason} - ` : ''}Retrying in ${Math.round(delayMs / 100) / 10}s - ${attempt}/${maxAttempts}`;
+    const retryMessage =  delayMs > 0
+      ? `${reason ? `${reason} - ` : ''}Retrying in ${Math.round(delayMs / 100) / 10}s - ${attempt}/${maxAttempts}`
+      : `Connection failed (${attempt} retries)`;
     this._pushFragment(createPlaceholderVoidFragment(retryMessage, undefined, {
       ctl: 'ec-retry',
       rScope: rScope,

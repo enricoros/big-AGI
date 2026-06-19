@@ -152,6 +152,8 @@ export function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<
             const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
             console.warn(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
           }
+          // gave up after `attemptNumber` total attempts (incl. the original); the `-1` is a magic constant to signal end of retries
+          onRetry?.({ attempt: attemptNumber, maxAttempts: attemptNumber, causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined, causeConn: 'ERR', delayMs: -1 });
           reject(error);
           return;
         }
