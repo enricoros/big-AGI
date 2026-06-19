@@ -129,23 +129,36 @@ async function* _connectToDispatch(
       name: `Aix.${_d.prettyDialect}`,
       throwWithoutName: true,
     });
+    // drain (▼) signal allows to interrupt the heartbeat loop and yield particles
+    let singnaldrain = Promise.withResolvers<'▼'>();
     const onRetryAttempt = (info: RetryAttempt) => {
       // -> retry-server-dispatch
       chatGenerateTx.sendCGControl({
         cg: 'aix-retry-reset', rScope: 'srv-dispatch',
         rClearStrategy: 'none', // clear nothing, because no content has been streamed while trying to connect
-        reason: 'retrying connection',
+        reason: 'Connect issue',
         ...info, attempt: info.attempt - 1, maxAttempts: info.maxAttempts - 1,
       });
+      singnaldrain.resolve('▼'); // -> breaks the heartbeat loop
     };
-    // throws the original error (TRPCFetcherError) from fetchResponseOrTRPCThrow when: not retryable, aborted, or all attempts exhausted
+    // loops on connection issues, or throws the original error (TRPCFetcherError) from fetchResponseOrTRPCThrow when: not retryable, aborted, or attempts exhausted
     const chatGenerateResponsePromise = fetchWithAbortableConnectionRetry(connectionOperationCreator, intakeAbortSignal, onRetryAttempt);
-    const dispatchResponse = yield* heartbeatsWhileAwaiting(chatGenerateResponsePromise);
-    _d.profiler?.measureEnd('connect');
 
-    // Continue with the successful Fetch response (errors are caught below)
-    return dispatchResponse;
+    while (true) {
+      // this only yields heartbeat particles, does not yield while blocked on the connection attempt (which could be a long loop)
+      const dispatchResponse = yield* heartbeatsWhileAwaiting(Promise.race([chatGenerateResponsePromise, singnaldrain.promise]));
 
+      // ▼ interrupt: emit particles and restart heartbeat loop
+      if (dispatchResponse === '▼') {
+        singnaldrain = Promise.withResolvers<'▼'>(); // re-arm BEFORE draining, so a retry firing mid-drain resolves the fresh promise (else it's lost)
+        yield* chatGenerateTx.emitParticles();
+        continue;
+      }
+      _d.profiler?.measureEnd('connect');
+
+      // Continue with the successful Fetch response (errors are caught below)
+      return dispatchResponse;
+    }
   } catch (error: any) {
 
     // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error

@@ -1120,7 +1120,7 @@ export class ContentReassembler {
     }
 
     // -> ph: show retry status
-    const retryMessage = `Retrying [${attempt}/${maxAttempts}] in ${Math.round(delayMs / 100) / 10}s - ${reason}`;
+    const retryMessage = `${reason ? `${reason} - ` : ''}Retrying in ${Math.round(delayMs / 100) / 10}s - ${attempt}/${maxAttempts}`;
     this._pushFragment(createPlaceholderVoidFragment(retryMessage, undefined, {
       ctl: 'ec-retry',
       rScope: rScope,
