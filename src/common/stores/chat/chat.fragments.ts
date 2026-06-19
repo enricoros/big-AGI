@@ -593,7 +593,7 @@ export function createDMessageZyncAssetReferencePart(zUuid: ZYNC_Entity.UUID, re
 }
 
 function _create_Doc_Part(vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, version: number, meta?: DMessageDocMeta): DMessageDocPart {
-  return { pt: 'doc', vdt, data, ref, l1Title, version, meta };
+  return { pt: 'doc', vdt, data, ref, l1Title, version, ...(meta && { meta }) };
 }
 
 function _create_ImageRef_Part(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
