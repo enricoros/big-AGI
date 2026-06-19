@@ -24,8 +24,9 @@ export async function* heartbeatsWhileAwaiting<TOut>(operationPromise: Promise<T
   while (true) {
 
     // setup next ❤ timeout
+    let heartbeatTimer: ReturnType<typeof setTimeout>;
     const heartbeatPromise = new Promise<'❤'>(resolve => {
-      setTimeout(() => resolve('❤'), timeoutMs);
+      heartbeatTimer = setTimeout(() => resolve('❤'), timeoutMs);
     });
 
     // race ❤|operation
@@ -37,6 +38,7 @@ export async function* heartbeatsWhileAwaiting<TOut>(operationPromise: Promise<T
       operationWrapper,
       heartbeatPromise,
     ]);
+    clearTimeout(heartbeatTimer!); // clear the pending ❤ timer (no-op if already fired), so a fast operation doesn't leave a live timer
 
     // if the operation won, great, we're done
     if (winner !== '❤')
