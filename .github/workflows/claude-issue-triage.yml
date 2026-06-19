@@ -17,7 +17,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: read # was write, but we're not altering PRs here
+      pull-requests: read # allows Claude to open/link a PR via 'gh pr' when proposing a fix
       actions: read
       id-token: write # required to use OIDC to authenticate to Claude Code API
 
@@ -35,7 +35,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: '*'
           # track_progress: true # Enables tracking comments
-          show_full_output: ${{ github.event.repository.private }} # security: do not log verbosely in private repo
+          show_full_output: ${{ github.event.repository.private }} # security: only show full output in private repos (public action logs are world-readable)
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -78,6 +78,6 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
           claude_args: |
-            --model claude-opus-4-6
-            --max-turns 75
+            --model claude-opus-4-8[1m]
+            --max-turns 200
             --allowedTools "Edit,Read,Write,WebFetch,WebSearch,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*),SlashCommand"
