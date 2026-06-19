@@ -62,12 +62,12 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
         }));
       },
 
-      deleteFolder: (folderId: string): void =>
+      deleteFolder: (folderId: string) =>
         set(state => ({
           folders: state.folders.filter(folder => folder.id !== folderId),
         })),
 
-      moveFolder: (fromIndex: number, toIndex: number): void =>
+      moveFolder: (fromIndex: number, toIndex: number) =>
         set(state => {
           const newFolders = [...state.folders];
           const [movedFolder] = newFolders.splice(fromIndex, 1);
@@ -75,7 +75,7 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           return { folders: newFolders };
         }),
 
-      setFolderName: (folderId: string, title: string): void =>
+      setFolderName: (folderId: string, title: string) =>
         set(state => ({
           folders: state.folders.map(folder =>
             folder.id === folderId
@@ -84,7 +84,7 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           ),
         })),
 
-      setFolderColor: (folderId: string, color: string): void =>
+      setFolderColor: (folderId: string, color: string) =>
         set(state => ({
           folders: state.folders.map(folder =>
             folder.id === folderId
@@ -106,7 +106,7 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           return { folders };
         }),
 
-      removeConversationFromFolder: (folderId: string, conversationId: DConversationId): void =>
+      removeConversationFromFolder: (folderId: string, conversationId: DConversationId) =>
         set(state => ({
           folders: state.folders.map(folder =>
             folder.id === folderId

@@ -80,7 +80,7 @@
     "tiktoken": "^1.0.22",
     "turndown": "^7.2.4",
     "zod": "^4.4.3",
-    "zustand": "5.0.7"
+    "zustand": "5.0.14"
   },
   "devDependencies": {
     "@posthog/nextjs-config": "~1.6.4",
@@ -100,6 +100,6 @@
     "typescript": "^6.0.3"
   },
   "engines": {
-    "node": "^24.0.0 || ^22.0.0 || ^20.0.0"
+    "node": "^26.0.0 || ^24.0.0 || ^22.0.0"
   }
 }
