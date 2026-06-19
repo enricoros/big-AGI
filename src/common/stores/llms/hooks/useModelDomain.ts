@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import type { DLLMId } from '../llms.types';
 import type { DModelDomainId } from '../model.domains.types';
+import { DLLMId, getLLMLabel } from '../llms.types';
 import { LlmsAssignmentsState, llmsAssignmentsAutoModelId } from '../store-llms-domains_slice';
 import { LlmsRootState, llmsStoreActions, llmsStoreState, useModelsStore } from '../store-llms';
 import { ModelDomainsRegistry } from '../model.domains.registry';
@@ -85,6 +85,7 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
   /** resolved DLLMId, not renamed just for legacy/compatibility reasons */
   domainModelId: undefined | DLLMId | null; // resolved DLLMId: after applying the pin or the Auto heuristic; undefined for zero state, null for explicit no-model
   resolvedModelIsAuto: boolean; // true when `domainModelId` came from the Auto heuristic rather than a user pin (missing entry or broken pin)
+  autoModelLabel: undefined | string; // display label of the model Auto would pick for this domain, computed independently of the current pin (so the "Auto: <name>" label is accurate even when pinned)
 
   assignDomainModelId: (modelId: DLLMId) => void; // explicit pin only; use assignDomainModelAuto() to reset to Auto
   assignDomainModelAuto: () => void; // reset pinning
@@ -99,6 +100,13 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
     return llmsResolveDomainModel({ llms, modelAssignments }, modelDomainId, true, false);
   }, [llms, modelAssignments, modelDomainId]);
 
+  // the model Auto would resolve to, regardless of the current pin (for the "Auto: <name>" label)
+  const autoModelLabel = React.useMemo(() => {
+    const autoLLMId = llmsAssignmentsAutoModelId(modelDomainId, llms);
+    const autoLLM = !autoLLMId ? undefined : llms.find(llm => llm.id === autoLLMId);
+    return autoLLM ? getLLMLabel(autoLLM) : undefined;
+  }, [llms, modelDomainId]);
+
 
   const assignDomainModelId = React.useCallback((modelId: DLLMId) =>
     llmsStoreActions().assignDomainModelId(modelDomainId, modelId), [modelDomainId]);
@@ -110,6 +118,8 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
 
     domainModelId: resolved.config?.modelId,
     resolvedModelIsAuto: resolved.isAuto,
+
+    autoModelLabel,
 
     assignDomainModelId,
     assignDomainModelAuto,
