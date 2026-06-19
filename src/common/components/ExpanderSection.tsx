@@ -111,7 +111,7 @@ export function ExpanderSection(props: {
       {props.startDecorator}
 
       <Box sx={_styles.headerTextWrapper}>
-        <Typography level='title-sm'>{title}</Typography>
+        <Typography level='body-sm'>{title}</Typography>
         {!!description && <FormHelperText>{description}</FormHelperText>}
       </Box>
 
