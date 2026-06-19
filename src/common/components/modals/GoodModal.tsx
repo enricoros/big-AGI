@@ -10,7 +10,7 @@ export const darkerBackdropSlotProps = {
   backdrop: {
     sx: {
       backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel, 11 13 14) / 0.5)',
-      // backdropFilter: 'none',
+      backdropFilter: 'none',
       // backdropFilter: 'blur(2px)',
     },
   },
