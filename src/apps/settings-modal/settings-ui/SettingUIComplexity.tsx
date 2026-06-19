@@ -8,7 +8,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 const AppearanceOptions: FormSelectOption<UIComplexityMode>[] = [
   { value: 'minimal', label: 'Minimal', description: 'Clean' },
-  { value: 'pro', label: 'Pro (default)', description: 'Perfect' },
+  { value: 'pro', label: 'Pro', description: 'Default' },
   { value: 'extra', label: 'Extra', description: 'GIFs & more.' },
 ];
 
@@ -19,11 +19,11 @@ export function SettingUIComplexity(props: { noLabel?: boolean }) {
 
   return (
     <FormSelectControl
-      title={props.noLabel ? undefined : 'Appearance'}
+      title={props.noLabel ? undefined : 'Detail'}
       options={AppearanceOptions}
       value={complexityMode}
       onChange={setComplexityMode}
-      selectSx={{ minWidth: 150 }}
+      // selectSx={{ minWidth: 150 }}
     />
   );
 }
