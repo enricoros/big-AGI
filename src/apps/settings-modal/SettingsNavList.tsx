@@ -11,15 +11,16 @@ const _styles = {
   // List's intrinsic flex-grow can't widen it) - the space below the items reads as a panel.
   list: {
     height: '100%',
-    py: 1.75,
+    // py: 1.75,
+    py: 2,
     // pl: 1.5,
     // pr: 1,
-    gap: 0.25,
+    // gap: 0.25,
     // borderRight: '1px solid',
     // borderColor: 'divider',
     // backgroundColor: 'background.level2',
     overflowY: 'auto',
-    // '--ListItem-minHeight': '2rem',
+    '--ListItem-minHeight': '2.25rem',
     '--ListItemDecorator-size': '1.75rem',
   },
 

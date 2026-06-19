@@ -27,6 +27,7 @@ const _styles = {
 
   // desktop: tuned width (keeps form rows paired, not stretched) + height-bounded so the right pane scrolls internally
   modalDesktop: {
+    boxShadow: 'none',
     backgroundColor: 'background.level1',
     width: 'min(780px, 94vw)',
     maxWidth: 'min(780px, 94vw)',
@@ -51,14 +52,19 @@ const _styles = {
   content: {
     backgroundColor: 'background.surface',
     borderRadius: 'lg',
-    // borderTopRightRadius: 0,
-    // borderBottomRightRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
     boxShadow: 'md',
+    // boxShadow: 'inset 1px 1px 4px -2px rgba(0, 0, 0, 0.2)', // sync with PersonaDescriptionCard.tsx
+    // outline: '1px solid',
+    // outlineColor: 'divider',
     minWidth: 0,
-    minHeight: 482,
+    minHeight: 'max(490px, 45svh)',
     overflowY: 'auto',
-    px: 3,
-    py: 1.5,
+    px: 'var(--Card-padding)', // was px: 3, py: 1.5
+    py: 2,
+    // mr: 'var(--Card-padding)',
+    // mb: 0.5,
     zIndex: 1,
   },
 
@@ -135,7 +141,6 @@ export function SettingsModal(props: {
         </Box>
       }
       unfilterBackdrop
-      darkerBackdrop
       sx={isMobile ? _styles.modalMobile : _styles.modalDesktop}
     >
 

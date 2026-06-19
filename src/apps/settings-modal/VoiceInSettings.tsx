@@ -42,7 +42,7 @@ export function VoiceInSettings(props: { isMobile: boolean }) {
 
     {!props.isMobile && (
       <FormChipControl
-        title='Timeout'
+        title='Mic Timeout'
         // color='primary'
         options={_minTimeouts}
         value={chatTimeoutValue}
