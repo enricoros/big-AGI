@@ -16,7 +16,7 @@ import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceInSettings } from './VoiceInSettings';
 import { VoiceOutSettings } from './VoiceOutSettings';
-import { getNavChildren } from './settings.nav';
+import { getSettingsNavChildren } from './settings.nav';
 
 
 const _styles = {
@@ -87,7 +87,7 @@ function SectionHeader(props: { label: string }) {
 function ChildNav(props: { parentId: SettingsNavId, onSelect: (id: SettingsNavId) => void }) {
   return (
     <List sx={_styles.childNavList}>
-      {getNavChildren(props.parentId).map((child) => (
+      {getSettingsNavChildren(props.parentId).map((child) => (
         <ListItem key={child.id}>
           <ListItemButton variant='outlined' onClick={() => props.onSelect(child.id)} sx={_styles.childNavButton}>
             <ListItemDecorator>{child.icon}</ListItemDecorator>

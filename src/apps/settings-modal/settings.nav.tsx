@@ -29,6 +29,7 @@ export type SettingsNavId =
 export interface SettingsNavNode {
   id: SettingsNavId;
   label: string;
+  path?: string;
   icon: React.ReactNode;
   description?: string; // subtitle shown on the parent 'hub' navigation cards
   children?: SettingsNavNode[];
@@ -44,24 +45,25 @@ export const SETTINGS_NAV: SettingsNavNode[] = [
   {
     id: 'voice', label: 'Voice', icon: <RecordVoiceOverRoundedIcon />,
     children: [
-      { id: 'voice-in', label: 'Input', icon: <MicIcon />, description: 'Microphone, language, transcription' },
-      { id: 'voice-out', label: 'Output', icon: <PhVoice />, description: 'Speech, voices, auto-speak' },
+      { id: 'voice-in', label: 'Input', path: 'Voice > Input', icon: <MicIcon />, description: 'Microphone, language, transcription' },
+      { id: 'voice-out', label: 'Output', path: 'Voice > Output', icon: <PhVoice />, description: 'Speech, voices, auto-speak' },
     ],
   },
   { id: 'draw', label: 'Draw', icon: <FormatPaintTwoToneIcon /> },
   {
     id: 'tools', label: 'Tools', icon: <ConstructionIcon />,
     children: [
-      { id: 'tools-browse', label: 'Browsing', icon: <LanguageRoundedIcon />, description: 'Load web pages into chats' },
-      { id: 'tools-search', label: 'Custom Search', icon: <SearchIcon />, description: 'Google Programmable Search' },
+      { id: 'tools-browse', label: 'Browsing', path: 'Tools > Browsing', icon: <LanguageRoundedIcon />, description: 'Load web pages into chats' },
+      { id: 'tools-search', label: 'Custom Search', path: 'Tools > Custom Search', icon: <SearchIcon />, description: 'Google Programmable Search' },
     ],
   },
   { id: 'labs', label: 'Labs', icon: <ScienceIcon /> },
-];
+] as const;
 
 export interface SettingsNavFlatItem {
   id: SettingsNavId;
   label: string;
+  path?: string;
   icon: React.ReactNode;
   isChild: boolean;
 }
@@ -69,12 +71,12 @@ export interface SettingsNavFlatItem {
 /** Flattened view (children marked) for the mobile selector. */
 export const SETTINGS_NAV_FLAT: SettingsNavFlatItem[] = SETTINGS_NAV.flatMap((node) => [
   { id: node.id, label: node.label, icon: node.icon, isChild: false },
-  ...(node.children?.map((child) => ({ id: child.id, label: child.label, icon: child.icon, isChild: true })) ?? []),
+  ...(node.children?.map((child) => ({ id: child.id, label: child.label, path: child.path, icon: child.icon, isChild: true })) ?? []),
 ]);
 
 
 /** Map the external (possibly legacy/undefined) tab id to a concrete nav node id. */
-export function resolveNavId(tab: PreferencesTabId): SettingsNavId {
+export function resolveSettingsNavId(tab: PreferencesTabId): SettingsNavId {
   if (tab === undefined || tab === 'chat') {
     // NOTE: always start from the 'ai' configuration, it's most likely that something has
     //       to be changed there
@@ -86,12 +88,12 @@ export function resolveNavId(tab: PreferencesTabId): SettingsNavId {
 }
 
 /** The sub-items of a top-level node (empty for leaves); used to render a parent 'hub' page. */
-export function getNavChildren(id: SettingsNavId): SettingsNavNode[] {
+export function getSettingsNavChildren(id: SettingsNavId): SettingsNavNode[] {
   return SETTINGS_NAV.find((node) => node.id === id)?.children ?? [];
 }
 
 /** The top-level ancestor of a nav id (e.g. 'voice-in' -> 'voice'); used for footer/section logic. */
-export function getTopLevelGroup(id: SettingsNavId): SettingsNavId {
+export function getSettingsNavTopLevelGroup(id: SettingsNavId): SettingsNavId {
   switch (id) {
     case 'voice-in':
     case 'voice-out':

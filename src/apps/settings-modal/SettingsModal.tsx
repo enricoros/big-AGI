@@ -14,7 +14,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { SettingsContent } from './SettingsContent';
 import { SettingsNavList } from './SettingsNavList';
 import { SettingsNavSelect } from './SettingsNavSelect';
-import { getTopLevelGroup, resolveNavId } from './settings.nav';
+import { getSettingsNavTopLevelGroup, resolveSettingsNavId } from './settings.nav';
 
 
 const _styles = {
@@ -106,8 +106,8 @@ export function SettingsModal(props: {
 
   // derived nav state
   const { setTab } = props;
-  const nodeId = resolveNavId(props.tab);
-  const isToolsSection = getTopLevelGroup(nodeId) === 'tools';
+  const nodeId = resolveSettingsNavId(props.tab);
+  const isToolsSection = getSettingsNavTopLevelGroup(nodeId) === 'tools';
   const enableAixDebuggerDialog = true;
 
   return (
