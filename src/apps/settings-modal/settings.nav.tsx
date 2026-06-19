@@ -79,7 +79,7 @@ export function resolveNavId(tab: PreferencesTabId): SettingsNavId {
     // NOTE: always start from the 'ai' configuration, it's most likely that something has
     //       to be changed there
     // return !llmsStoreState().sources?.length ? 'ai' : 'appearance';
-    return 'ai';
+    return 'appearance';
   }
   // every remaining PreferencesTabId member coincides with a SettingsNavId
   return tab;

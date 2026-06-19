@@ -6,13 +6,13 @@ import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
-import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { isPwa } from '~/common/util/pwaUtils';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
 
 import { SettingUIComplexity } from './SettingUIComplexity';
 import { SettingUIComposerQuickButton } from './SettingUIComposerQuickButton';
@@ -39,8 +39,8 @@ export function ModelsSetupButton(props: { isMissingModels?: boolean }) {
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-      // minWidth: 150,
-      boxShadow: props.isMissingModels ? 'lg' : 'md',
+      minWidth: 150,
+      boxShadow: props.isMissingModels ? 'lg' : undefined,
     }}
   >
     {/*Admin Models*/}
@@ -53,7 +53,7 @@ export function AppChatSettingsUI() {
 
   // external state
   const isMobile = useIsMobile();
-  // const isMissingModels = useModelsZeroState();
+  const isMissingModels = useModelsZeroState();
   const {
     centerMode, setCenterMode,
     disableMarkdown, setDisableMarkdown,
@@ -78,15 +78,10 @@ export function AppChatSettingsUI() {
 
   return <>
 
-    {/*<FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>*/}
-    {/*  <FormLabelStart title='AI Models'*/}
-    {/*                  description='Configure' />*/}
-    {/*  <ModelsSetupButton isMissingModels={isMissingModels} />*/}
-    {/*</FormControl>*/}
-
-    <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-      <FormLabelStart title='Colors' />
-      <DarkModeToggleButton hasText />
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='AI Models'
+                      description='Configure' />
+      <ModelsSetupButton isMissingModels={isMissingModels} />
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
