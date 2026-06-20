@@ -49,13 +49,23 @@ const orOldModelIDs = [
 ] as const;
 
 
-export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {
+export function openRouterModelFamilySortFn(a: { id: string, created?: number }, b: { id: string, created?: number }): number {
   const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
   const bPrefixIndex = orModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
 
-  // If both have a prefix, sort by prefix first, and then alphabetically
-  if (aPrefixIndex !== -1 && bPrefixIndex !== -1)
-    return aPrefixIndex !== bPrefixIndex ? aPrefixIndex - bPrefixIndex : b.id.localeCompare(a.id);
+  // If both have a prefix, sort by family first
+  if (aPrefixIndex !== -1 && bPrefixIndex !== -1) {
+    if (aPrefixIndex !== bPrefixIndex)
+      return aPrefixIndex - bPrefixIndex;
+    // ...then within the same family, newest-first by OpenRouter 'created' timestamp.
+    // Reverse-alphabetical id sorting got this wrong: the tier name dominated, so 'sonnet'/'opus'
+    // outranked 'fable' and the latest flagship (e.g. claude-fable-5) sank below older tiers.
+    // By release date this yields fable-5, then opus 4.8 > 4.7 > 4.6 > 4.5, etc.
+    if ((a.created ?? 0) !== (b.created ?? 0))
+      return (b.created ?? 0) - (a.created ?? 0);
+    // stable final tiebreaker for same-day releases (e.g. base vs '-fast' variants)
+    return b.id.localeCompare(a.id);
+  }
 
   // If one has a prefix and the other doesn't, prioritize the one with prefix
   return aPrefixIndex !== -1 ? -1 : 1;
