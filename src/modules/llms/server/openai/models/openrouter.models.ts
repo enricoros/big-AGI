@@ -260,7 +260,20 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       break;
 
     default:
-      // in the default case, we let it be
+      // 0-day: generic reasoning models with no upstream-specific vendor mapping get the shared
+      // on/off/Default thinking toggle (llmVndMiscEffort). OpenRouter's unified reasoning API (2025-11-11)
+      // translates it via the OAI-compatible branch in openai.chatCompletions.ts to `reasoning: { enabled }`:
+      // 'high' -> enabled:true, 'none' -> enabled:false, unset ('Default') -> no field (model default).
+      // We pin enumValues to ['none', 'high'] (binary on/off, no effort levels) since generic models may
+      // not honor effort granularity. Guard: only when the model advertises reasoning AND no equivalent
+      // reasoning control is already present (so we never double up or override a vendor-specific one).
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p =>
+        p.paramId === 'llmVndMiscEffort'
+        || p.paramId === 'llmVndAntEffort' || p.paramId === 'llmVndAntThinkingBudget'
+        || p.paramId === 'llmVndGemEffort' || p.paramId === 'llmVndGeminiThinkingBudget'
+        || p.paramId === 'llmVndOaiEffort',
+      ))
+        parameterSpecs.push({ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] });
       break;
   }
 
