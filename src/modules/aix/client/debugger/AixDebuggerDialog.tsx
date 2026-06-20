@@ -96,6 +96,9 @@ function useDebouncedAixDebuggerStore() {
 }
 
 
+// auto-enable inspection the first time the dialog is opened (per app session); afterwards it follows the on/off toggle
+let inspectorAutoArmed = false;
+
 export function AixDebuggerDialog(props: {
   onClose: () => void;
 }) {
@@ -114,6 +117,18 @@ export function AixDebuggerDialog(props: {
   // derived state
   const activeFrame = frames.find(f => f.id === activeFrameId) ?? null;
   const willInjectJson = hasInspector && hasInjectorJson;
+
+
+  // [effect] auto-enable inspection ~1s after the very first open (then follow the on/off toggle)
+  React.useEffect(() => {
+    if (inspectorAutoArmed) return;
+    inspectorAutoArmed = true;
+    const timeoutId = setTimeout(() => {
+      if (!useUIPreferencesStore.getState().aixInspector)
+        useUIPreferencesStore.getState().toggleAixInspector();
+    }, 1000);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
 
   // handlers
