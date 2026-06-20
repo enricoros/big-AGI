@@ -16,6 +16,19 @@ import { OperationRetrySignal } from './chatGenerate.operation-retry';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
 
+/**
+ * Local replacement for Promise.withResolvers (ES2024). Native in Node 22+/Edge, but this file
+ * ships to the browser via AIX client-side-fetch (CSF), where older browsers (Safari < 17.4,
+ * Chrome < 119, Firefox < 121) lack it. This manual form works on every runtime.
+ */
+function promiseWithResolvers<T>(): { promise: Promise<T>, resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void } {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: any) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
+
 // --- ChatGenerate Core procedure ---
 
 /**
@@ -130,7 +143,7 @@ async function* _connectToDispatch(
       throwWithoutName: true,
     });
     // drain (▼) signal allows to interrupt the heartbeat loop and yield particles
-    let singnaldrain = Promise.withResolvers<'▼'>();
+    let singnaldrain = promiseWithResolvers<'▼'>();
     const onRetryAttempt = (info: RetryAttempt) => {
       // -> retry-server-dispatch
       chatGenerateTx.sendCGControl({
@@ -150,7 +163,7 @@ async function* _connectToDispatch(
 
       // ▼ interrupt: emit particles and restart heartbeat loop
       if (dispatchResponse === '▼') {
-        singnaldrain = Promise.withResolvers<'▼'>(); // re-arm BEFORE draining, so a retry firing mid-drain resolves the fresh promise (else it's lost)
+        singnaldrain = promiseWithResolvers<'▼'>(); // re-arm BEFORE draining, so a retry firing mid-drain resolves the fresh promise (else it's lost)
         yield* chatGenerateTx.emitParticles();
         continue;
       }
