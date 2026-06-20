@@ -40,9 +40,19 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (error instanceof TypeError && error.message === 'network error')
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' /* DO NOT CHANGE '**network error**' - usually client-side broken */ };
 
-  // tRPC <= 11.5.1 - Vercel Edge network disconnects are thrown form tRPC as 'Stream closed'
-  // NOTE The behavior changed in 11.6+ for which we have an open upstream ticket: #6989
-  if (error instanceof Error && error.message === 'Stream closed')
+  // Mid-stream remote termination (e.g. Vercel Edge function timeout = graceful HTTP EOF deep inside the
+  // httpBatchStreamLink async-iterable). tRPC has thrown a DIFFERENT shape for this SAME event in each era (upstream #6989):
+  //   <= 11.5.1:    Error('Stream closed')
+  //   11.6 - 11.7:  bare `undefined`                  (the #6989 regression, PR #6960 - avoided: we ship >= 11.18)
+  //   >= 11.14:     TypeError('... is not iterable')  (PR #7233 restored a real Error; message is engine/bundle-dependent)
+  // We match the Error-typed shapes structurally. We deliberately do NOT match the bare `undefined` case: it is too broad
+  // a signal (an undefined can originate anywhere) and 11.18+ no longer throws it. Re-enable the commented line below
+  // only if a future tRPC version regresses to throwing `undefined` for a mid-stream cut.
+  const isMidStreamTeardown =
+    // (hasFragments && error === undefined) ||  // intentionally disabled - too broad; see note above (#6989)
+    (error instanceof Error && error.message === 'Stream closed')
+    || (error instanceof TypeError && /is not iterable/i.test(error.message));
+  if (isMidStreamTeardown)
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' /* DO NOT CHANGE '**connection terminated**' - usually server (Vercel) side broken */ };
 
   // Undici (Node/Edge/Electron fetch) mid-stream TLS or socket drop - surfaces on any node-backed path (CSF, Electron, SSR).
