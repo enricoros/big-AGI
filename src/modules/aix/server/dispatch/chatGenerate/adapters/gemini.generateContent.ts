@@ -243,10 +243,14 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   const hasUserTools = chatGenerate.tools?.some(t => t.type === 'function_call');
 
   // Tool Context Circulation: Gemini 3+ can combine hosted + custom tools and expose server-side tool invocations.
+  // (What it is: the server replays its OWN hosted-tool calls/results back into the stream as toolCall/toolResponse
+  //  parts - enabled via `includeServerSideToolInvocations`; models that don't support it reject the request with HTTP 400.)
   // - https://ai.google.dev/gemini-api/docs/tool-combination
   // - AUTO mode is NOT supported - forces VALIDATED.
-  // Deny-list: models WITHOUT tool context circulation (pre-Gemini 3, image models, deep research)
-  const _noToolContextCirculation = ['gemini-2.', '-image-preview', 'nano-banana', 'deep-research'];
+  // Deny-list: models WITHOUT circulation (pre-Gemini 3, dedicated image-gen models, deep research).
+  // Match the '-image' id segment. '-image' also covers the '-image-preview' aliases, and
+  // the graduated GA ids like 'gemini-3.1-flash-image'.
+  const _noToolContextCirculation = ['gemini-2.', '-image', 'nano-banana', 'deep-research'];
   const hasToolContextCirculation = !_noToolContextCirculation.some((p) => model.id.includes(p));
 
   // [NO-CIRCULATION] can't combine hosted + custom tools with restrictive policies - custom wins -> wipe hosted if any
