@@ -1216,6 +1216,9 @@ const openAIModelsDenyList: string[] = [
   'gpt-realtime-translate',
   'gpt-realtime-whisper',
 
+  // [OpenAI, 2025-03-11] Computer Use (Responses API) - NOT YET SUPPORTED; still returned by some accounts until shutdown 2026-07-23
+  'computer-use-preview', // single entry catches '-2025-03-11' too via includes()
+
   // [OpenAI Deprecations] Explicitly deny shut-down model IDs that we removed
   'codex-mini-latest', // shut down February 12, 2026
   'chatgpt-4o-latest', // shut down February 17, 2026
