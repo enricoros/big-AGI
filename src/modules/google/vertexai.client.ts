@@ -22,6 +22,17 @@ export interface VertexLinksResolution {
   changedFragments: { fragmentId: DMessageFragmentId; newFragment: DMessageFragment }[];
 }
 
+/**
+ * Outcome of a resolve attempt. 'unresolved' (links present, but the redirect host no longer 302s -
+ * typically because the links have aged out; confirmed to expire within ~8-58 days) is deliberately
+ * distinct from 'failed' (the resolve request itself errored/timed out - transient, worth a retry).
+ */
+export type VertexLinksOutcome =
+  | { status: 'resolved'; resolution: VertexLinksResolution }
+  | { status: 'none' }        // no redirect links present in the fragments
+  | { status: 'unresolved' }  // links present, but none could be resolved (likely expired)
+  | { status: 'failed' };     // resolve request failed or timed out (transient)
+
 
 /** Counts the unique unresolved redirect links in a message's fragments (text parts + citation annotations). */
 export function vertexLinksCountInFragments(fragments: readonly DMessageFragment[]): number {
@@ -36,9 +47,9 @@ export function vertexLinksCountInFragments(fragments: readonly DMessageFragment
  */
 export async function vertexLinksAutoResolveFragments<TFragment extends DMessageFragment>(fragments: readonly TFragment[]): Promise<TFragment[] | null> {
   if (getVndGeminiVertexLinks() !== 'resolve') return null;
-  const resolution = await vertexLinksResolveFragments(fragments);
+  const outcome = await vertexLinksResolveFragments(fragments);
   // cast: the rewrite preserves each fragment's kind, only URL strings change
-  return resolution ? resolution.newFragments as TFragment[] : null;
+  return outcome.status === 'resolved' ? outcome.resolution.newFragments as TFragment[] : null;
 }
 
 
@@ -46,14 +57,14 @@ export async function vertexLinksAutoResolveFragments<TFragment extends DMessage
  * Resolves all Vertex AI grounding redirect links found in the given fragments, rewriting both
  * in-text markdown links and citation annotation URLs to their real destinations.
  *
- * Never throws. Returns null when there is nothing to do or the resolution failed/timed out -
- * callers proceed with the original fragments (links that fail stay as-is and remain detectable).
- * Idempotent by construction: resolved links no longer match the redirect pattern.
+ * Never throws. Reports its outcome via the discriminated VertexLinksOutcome - on anything other
+ * than 'resolved' the caller proceeds with the original fragments (links that fail stay as-is and
+ * remain detectable). Idempotent by construction: resolved links no longer match the redirect pattern.
  */
-export async function vertexLinksResolveFragments(fragments: readonly DMessageFragment[], timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<VertexLinksResolution | null> {
+export async function vertexLinksResolveFragments(fragments: readonly DMessageFragment[], timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<VertexLinksOutcome> {
 
   const redirectUrls = Array.from(_collectRedirectUrls(fragments));
-  if (!redirectUrls.length) return null;
+  if (!redirectUrls.length) return { status: 'none' };
 
   // batch-resolve on the server - the redirect host sends no CORS headers, so the browser cannot follow the 302s itself
   const resolvedMap = new Map<string, string>();
@@ -72,11 +83,12 @@ export async function vertexLinksResolveFragments(fragments: readonly DMessageFr
           resolvedMap.set(url, resolved);
   } catch (error) {
     console.warn('[DEV] vertexLinksResolveFragments: resolution failed', { error });
-    return null;
+    return { status: 'failed' };
   } finally {
     clearTimeout(timeout);
   }
-  if (!resolvedMap.size) return null;
+  // links present but none came back resolved: the redirect host no longer 302s, typically expiry
+  if (!resolvedMap.size) return { status: 'unresolved' };
 
   // rewrite the fragments - new objects (same fId) only where something changed
   const changedFragments: VertexLinksResolution['changedFragments'] = [];
@@ -109,7 +121,7 @@ export async function vertexLinksResolveFragments(fragments: readonly DMessageFr
     return fragment;
   });
 
-  return { newFragments, changedFragments };
+  return { status: 'resolved', resolution: { newFragments, changedFragments } };
 }
 
 

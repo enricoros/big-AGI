@@ -60,7 +60,7 @@ export function BlockOpResolveLinks(props: {
         }}
       >
         {isPending ? `Resolving ${props.linksCount} link${plural}...`
-          : isError ? `${error.message} - retry`
+          : isError ? error.message /* the handler's message carries its own hint (e.g. '- retry' only when retrying helps) */
             : `Resolve ${props.linksCount} Vertex AI link${plural}`}
       </Chip>
     </Box>

@@ -243,11 +243,19 @@ export function ChatMessage(props: {
   }, [messageId, onMessageFragmentReplace]);
 
   const handleResolveVertexLinks = React.useCallback(async () => {
-    const resolution = await vertexLinksResolveFragments(messageFragments);
-    if (!resolution) return 'Could not resolve links';
-    for (const { fragmentId, newFragment } of resolution.changedFragments)
-      onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
-    return undefined; // success
+    const outcome = await vertexLinksResolveFragments(messageFragments);
+    switch (outcome.status) {
+      case 'resolved':
+        for (const { fragmentId, newFragment } of outcome.resolution.changedFragments)
+          onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
+        return undefined; // success
+      case 'unresolved':
+        return 'Links may have expired'; // aged out (no retry hint - retrying won't help)
+      case 'failed':
+        return 'Could not resolve - retry'; // transient: network/timeout
+      case 'none':
+        return undefined; // nothing to resolve (button shouldn't be showing)
+    }
   }, [messageFragments, messageId, onMessageFragmentReplace]);
 
   const handleMessageContinue = React.useCallback((continueText: null | string) => {
