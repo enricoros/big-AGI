@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "@posthog/nextjs-config": "~1.6",
-    "@types/node": "^24",
+    "@types/node": "^22",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.6",
     "@types/react": "^18",
