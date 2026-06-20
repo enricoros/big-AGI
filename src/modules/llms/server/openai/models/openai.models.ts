@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
-import { type KnownLink, type KnownModel, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
+import { type KnownLink, type KnownModel, formatPubDate, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
 
 // --- OpenAI Model ID inference (auto-derived from _knownOpenAIChatModels) ---
 export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'];
@@ -1266,7 +1266,16 @@ export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
 }
 
 export function openAIModelToModelDescription(modelId: string, options?: { isNotOpenai?: boolean, modelCreated?: number, modelUpdated?: number }): ModelDescriptionSchema {
-  return fromManualMapping(_knownOpenAIChatModels, modelId, options?.modelCreated, options?.modelUpdated, llmsFallbackForOpenAIModel(modelId, !options?.isNotOpenai));
+  const md = fromManualMapping(_knownOpenAIChatModels, modelId, options?.modelCreated, options?.modelUpdated, llmsFallbackForOpenAIModel(modelId, !options?.isNotOpenai));
+
+  // pubDate fallback: surface the "new" badge for genuinely-new OpenAI models not yet catalogued editorially.
+  // Native OpenAI's 'created' is verified real per-model dates (124/124 unique, 2022-2026 spread). Gated to
+  // native OpenAI only - generic OpenAI-compatible custom hosts (isNotOpenai) have unverified 'created'.
+  // Editorial pubDate (from _knownOpenAIChatModels) always wins.
+  if (!options?.isNotOpenai && md.pubDate === undefined && md.created)
+    md.pubDate = formatPubDate(md.created);
+
+  return md;
 }
 
 export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: ModelDescriptionSchema): ModelDescriptionSchema[] {
