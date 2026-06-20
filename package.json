@@ -94,6 +94,7 @@
     "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "~15.1.12",
+    "eslint-plugin-compat": "^7.0.2",
     "prettier": "^3.8.4",
     "prisma": "~5.22.0",
     "tsx": "^4.22.4",
@@ -101,5 +102,22 @@
   },
   "engines": {
     "node": "^26.0.0 || ^24.0.0 || ^22.0.0"
+  },
+  "browserslist": {
+    "production": [
+      "chrome >= 110",
+      "edge >= 110",
+      "firefox >= 115",
+      "safari >= 16.4",
+      "ios_saf >= 16.4",
+      "and_chr >= 110",
+      "samsung >= 21",
+      "not dead"
+    ],
+    "development": [
+      "last 2 chrome versions",
+      "last 2 firefox versions",
+      "last 2 safari versions"
+    ]
   }
 }
