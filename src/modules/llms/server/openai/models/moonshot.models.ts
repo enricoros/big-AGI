@@ -266,6 +266,11 @@ export function moonshotModelToModelDescription(_model: unknown): ModelDescripti
   if (!knownModel)
     console.log(`moonshot.models: unknown model ${model.id}`, model);
 
+  // NOTE: 'created' is passed for the indexed/created field but is deliberately NOT used as a pubDate
+  // fallback for the "new" badge (unlike Groq/OpenAI/the aggregators): Moonshot's API returns a single
+  // constant 'created' for ALL models (verified 2026-06-19: 11 models all stamped 2026-06-15), so it
+  // can't tell new from old - a fallback would false-badge the entire catalog as "new". Known models
+  // still get their real editorial pubDate via _knownMoonshotModels.
   const description = fromManualMapping(_knownMoonshotModels, model.id, model.created, undefined, {
     // NOTE: default: let us know if any of these show up
     idPrefix: model.id,
