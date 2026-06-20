@@ -4,7 +4,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCachi
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
-import { fromManualMapping } from '../../models.mappings';
+import { formatPubDate, fromManualMapping } from '../../models.mappings';
 import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
 import { llmOrtGemLookup } from '../../gemini/gemini.models';
 import { llmOrtOaiLookup } from './openai.models';
@@ -293,6 +293,16 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
   const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
     || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
+
+
+  // -- pubDate fallback --
+
+  // When no editorial vendor pubDate was inherited (generic / 0-day / unmapped OR models), derive a
+  // day-precision pubDate from OpenRouter's 'created' (catalog/release timestamp) so the "new" badge and
+  // newest-model surfaces light up for OR models too. An inherited vendor pubDate always wins (more
+  // authoritative than OR's index date), and stale models fall outside the recency window automatically.
+  if (pubDate === undefined && model.created)
+    pubDate = formatPubDate(model.created);
 
 
   return fromManualMapping([], model.id, model?.created, undefined, {
