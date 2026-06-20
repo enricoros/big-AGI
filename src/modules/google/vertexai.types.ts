@@ -8,6 +8,7 @@ export const VERTEX_GROUNDING_REDIRECT_REGEX = /https:\/\/vertexaisearch\.cloud\
 
 /*
  * MAINTENANCE - redirect link lifetime is UNDOCUMENTED by Google, re-verify periodically.
+ * CONFIRMED: links DO expire. Observed window (as of 2026-06-19): alive at ~8d, dead (404) by ~58d.
  *
  * If these links expire, resolution of OLD messages silently degrades: the server returns null
  * (non-302 response) and the links are kept as-is, so the manual 'Resolve N Vertex AI links'
@@ -17,7 +18,9 @@ export const VERTEX_GROUNDING_REDIRECT_REGEX = /https:\/\/vertexaisearch\.cloud\
  * To test, HEAD a dated sample below and expect '302' with the matching 'location:' header:
  *   curl -sI 'https://vertexaisearch.cloud.google.com/...' | grep -iE '^(HTTP|location)'
  *
- * Samples created 2026-06-11 (gemini-2.5-flash + google_search grounding), verified same day:
+ * Samples created 2026-06-11 (gemini-2.5-flash + google_search grounding), verified same day.
+ * Re-verified 2026-06-19 (age ~8d): all three still 302 to the expected locations - links survive >=8 days.
+ * Older sample from 2026-04-22 (age ~58d) returned 404 (no location) on 2026-06-19 - expiry confirmed.
  * - expect location: https://www.anthropic.com/news/claude-fable-5-mythos-5
  *   https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvVhBBwjWESwXcWQH8wm6MNDyJY3FOqt7Q4Jkij_DodoMI0dtx5g-q6BNc6CxgGKmQWrCjLDQ_5-4bIQSzAE2akCOrP-R4EaS91YKk6Bfu153zEuCxXN1Vlcx9IOIBOQmw8l5_wnPvYNFdHNLAs6cw
  * - expect location: https://overchat.ai/ai-hub/the-best-ai-model
