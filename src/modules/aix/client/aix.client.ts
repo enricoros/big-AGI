@@ -1014,9 +1014,9 @@ async function _aixChatGenerateContent_LL(
        * causing "closed connection" exceptions when resuming. Processing happens in
        * ContentReassembler's background promise chain.
        *
-       * Error handling split:
-       * - This catch: tRPC/network errors (connection, stream, abort)
-       * - Reassembler catch: processing errors (malformed particles, async work)
+       * Error handling split (see the channel map in aix.client.errors.ts):
+       * - This catch [Error Channel 1]: tRPC/network/transport errors (connection, stream, abort) -> aixClassifyStreamingError
+       * - Reassembler catch [Error Channel 2]: particle-processing errors (malformed particles, async work) -> aixClassifyReassemblyError
        */
       for await (const particle of particleStream)
         reassembler.enqueueWireParticle(particle);

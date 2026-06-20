@@ -27,6 +27,30 @@ const enableLoggerLink = (opts: any) => {
 };
 
 
+/**
+ * Fetch wrapper for the STREAMING links only (httpBatchStreamLink).
+ *
+ * Detects transport-layer failures by HTTP status / content-type, BEFORE tRPC's JSONL parser turns them into
+ * engine-specific `SyntaxError`s (which are only string-matchable on V8 - see aix.client.errors.ts). We tag a typed,
+ * engine-independent marker (`error.cause.aixTransportCode`), read by [Error Channel 1] aixClassifyStreamingError - see the channel map in aix.client.errors.ts.
+ * - 413 (Vercel rejects request bodies over the edge ~4.5MB limit, as `text/plain`, before the function runs)
+ * - text/html where a JSON(L) stream is expected (captive portals / proxies / gateway error pages)
+ *
+ * NOTE: only the server-side tRPC path passes through here. CSF (client-side-fetch, direct browser->provider) has its
+ * own error surface and structurally cannot hit a Vercel 413 (there is no edge hop), so it intentionally bypasses this.
+ */
+const streamingTransportFetch: typeof fetch = async (input, init) => {
+  const res = await fetch(input, init);
+  if (res.status === 413)
+    throw Object.assign(new Error('AIX transport: request entity too large'), { aixTransportCode: 'request-exceeded' as const });
+  // A legitimate tRPC stream is always application/json - any text/html means a captive portal / proxy / gateway error
+  // page (commonly non-2xx), regardless of status. We flag it before the JSONL parser chokes on the '<!DOCTYPE'.
+  if ((res.headers.get('content-type') ?? '').includes('text/html'))
+    throw Object.assign(new Error('AIX transport: captive/HTML response'), { aixTransportCode: 'response-captive' as const });
+  return res;
+};
+
+
 /// Edge APIs: async, query, and stream
 
 /** Typesafe async/await hooks for the the Edge-Runtime API */
@@ -85,6 +109,7 @@ export const apiStream = createTRPCClient<AppRouterEdge>({
     httpBatchStreamLink({
       url: `${getBaseUrl()}/api/edge`,
       transformer: transformer,
+      fetch: streamingTransportFetch,
       /**
        * WORKAROUND:
        * Due to the fact that we are sending large payloads with images, and having a 1MB max payload size
@@ -117,6 +142,7 @@ export const apiStreamNode = createTRPCClient<AppRouterCloud>({
     httpBatchStreamLink({
       url: `${getBaseUrl()}/api/cloud`,
       transformer: transformer,
+      fetch: streamingTransportFetch,
       maxItems: 1, // to not wait for the last connection to close
     }),
   ],
