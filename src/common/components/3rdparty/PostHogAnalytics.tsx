@@ -12,30 +12,67 @@ export const hasPostHogAnalytics = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
 // global to survive route changes
 let _posthog: undefined | PostHog | null = undefined; // undefined: not loaded, null: loading or opt-out, PostHog: loaded
 
-// function shouldSuppressPostHogCapture(captureResult: any): boolean {
-//   if (captureResult?.event !== '$exception') return false;
-//
-//   const properties = captureResult?.properties || {};
-//   const exceptionTypes = properties.$exception_types;
-//   const exceptionValues = properties.$exception_values;
-//
-//   const text = [
-//     Array.isArray(exceptionTypes) ? exceptionTypes.join(' ') : exceptionTypes,
-//     Array.isArray(exceptionValues) ? exceptionValues.join(' ') : exceptionValues,
-//     properties.$exception_type,
-//     properties.$exception_message,
-//   ]
-//     .filter(Boolean)
-//     .join(' ');
-//
-//   if (!text) return false;
-//
-//   return text.includes('AbortError')
-//     || text.includes('signal is aborted without reason')
-//     || text.includes('The user aborted a request')
-//     || text.includes("Failed to execute 'removeChild' on 'Node'")
-//     || text.includes("Failed to execute 'insertBefore' on 'Node'");
-// }
+/**
+ * Known-benign exception substrings to drop from PostHog Error Tracking autocapture.
+ *
+ * SCOPE: noise only - request cancellations, extension/page-translator DOM interference,
+ * and opaque cross-origin/extension errors that carry zero actionable signal. We deliberately
+ * do NOT suppress IndexedDB/storage DOMExceptions here: those stay visible until the
+ * storage-resilience work lands, so we don't go blind to real breakage.
+ */
+const SUPPRESSED_EXCEPTION_SUBSTRINGS = [
+  // user/teardown-initiated request cancellations (never actionable - see isAbortErrorLike)
+  'AbortError',
+  'signal is aborted without reason',
+  'The user aborted a request',
+  // browser extensions / page translators mutating the DOM behind React's back (see isBenignDomMutationError)
+  'Failed to execute \'removeChild\' on \'Node\'',
+  'Failed to execute \'insertBefore\' on \'Node\'',
+  // opaque cross-origin script errors (no stack, no message, no actionable info)
+  'Script error.',
+  // browser extensions reaching into React internals across origins
+  '__reactFiber',
+];
+
+/**
+ * `capture_exceptions: true` installs posthog-js's own global error/unhandledrejection
+ * handlers, which bypass `posthogCaptureException()` (and thus our isAbortErrorLike /
+ * isBenignDomMutationError filters). `before_send` is the only hook that intercepts those.
+ *
+ * We match on serialized exception text: client-side, posthog-js populates `$exception_list`
+ * ({type,value} per exception); the `$exception_values`/`$exception_types` scalars are derived
+ * server-side and are usually absent here - so we read `$exception_list` first, with the
+ * derived fields as a fallback.
+ */
+function shouldSuppressPostHogCapture(captureResult: any): boolean {
+  if (!captureResult || captureResult.event !== '$exception') return false;
+
+  const properties = captureResult.properties || {};
+  const parts: string[] = [];
+
+  // primary (client-side): the per-exception type/value list
+  if (Array.isArray(properties.$exception_list)) {
+    for (const ex of properties.$exception_list) {
+      if (ex?.type) parts.push(String(ex.type));
+      if (ex?.value) parts.push(String(ex.value));
+    }
+  }
+
+  // fallback (server-derived shapes, in case they are present)
+  const exceptionTypes = properties.$exception_types;
+  const exceptionValues = properties.$exception_values;
+  if (Array.isArray(exceptionTypes)) parts.push(exceptionTypes.join(' '));
+  else if (exceptionTypes) parts.push(String(exceptionTypes));
+  if (Array.isArray(exceptionValues)) parts.push(exceptionValues.join(' '));
+  else if (exceptionValues) parts.push(String(exceptionValues));
+  if (properties.$exception_type) parts.push(String(properties.$exception_type));
+  if (properties.$exception_message) parts.push(String(properties.$exception_message));
+
+  const text = parts.join(' ');
+  if (!text) return false;
+
+  return SUPPRESSED_EXCEPTION_SUBSTRINGS.some(s => text.includes(s));
+}
 
 
 // noinspection JSUnusedGlobalSymbols - unused yet
@@ -133,7 +170,7 @@ export function OptionalPostHogAnalytics() {
           ui_host: 'https://us.posthog.com',
           defaults: '2026-01-30',
           capture_exceptions: true, // captures exceptions using Error Tracking
-          // before_send: (captureResult) => shouldSuppressPostHogCapture(captureResult) ? null : captureResult,
+          before_send: (captureResult) => shouldSuppressPostHogCapture(captureResult) ? null : captureResult,
           // capture_pageview: false, // we used to handle this manually, but changed to the 'defaults' option which captures pageviews automatically
           // capture_pageleave: true, // we used to track goodbyes, now included in 'defaults'
           person_profiles: 'identified_only',
