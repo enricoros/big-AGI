@@ -111,13 +111,17 @@ export function textEscapeHtml(text: string): string {
 
 
 export function textIsSingleEmoji(text: string): boolean {
-  if (!Intl.Segmenter)
-    throw new Error('Intl.Segmenter is not supported');
+  // Prefer grapheme segmentation when available (correctly counts ZWJ emoji sequences as one)
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    // eslint-disable-next-line no-restricted-syntax -- guarded above by the Intl.Segmenter feature check
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+    return Array.from(segmenter.segment(text)).length === 1;
+  }
 
-  // create segmenter instance with default locale
-  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-  const segments = Array.from(segmenter.segment(text));
-  return segments.length === 1;
+  // Fallback for engines without Intl.Segmenter (e.g. older Chromium): count by code point.
+  // String spread iterates by code point (not UTF-16 unit), so a basic emoji counts as 1.
+  // ZWJ sequences may count as >1 here and fail validation gracefully instead of crashing.
+  return [...text].length === 1;
 }
 
 
