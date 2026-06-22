@@ -60,7 +60,7 @@ export function textTokensForLLM(text: string, llm: DLLM, debugFrom: string): nu
       console.warn('textTokensForLLM: Tiktoken library is not yet loaded, loading now...');
       informTheUser = true;
     }
-    void preloadTiktokenLibrary(); // Attempt to preload without waiting.
+    void preloadTiktokenLibrary().catch(() => {}); // preload without waiting; swallow rejection (already logged, falls back to approximate counting) to avoid an unhandled-rejection report
     return null;
   }
 
@@ -111,7 +111,7 @@ export function textTokensForEncodingId(text: string, encodingId: string, debugF
       console.warn('textTokensForEncodingId: Tiktoken library is not yet loaded, loading now...');
       informTheUser = true;
     }
-    void preloadTiktokenLibrary(); // Attempt to preload without waiting.
+    void preloadTiktokenLibrary().catch(() => {}); // preload without waiting; swallow rejection (already logged, falls back to approximate counting) to avoid an unhandled-rejection report
     return null;
   }
 
