@@ -24,7 +24,7 @@ export function useWorkspaceContentsMetadata(workspaceId: DWorkspaceId | null): 
       return null;
 
     // re-renders if the array changes at all
-    return state.liveFilesByWorkspace[workspaceId].toReversed();
+    return [...state.liveFilesByWorkspace[workspaceId]].reverse();
   }));
 
   // reactive stable reference to the Workspace (only) LiveFiles

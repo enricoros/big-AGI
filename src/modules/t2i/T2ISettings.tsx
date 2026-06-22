@@ -28,7 +28,7 @@ export function T2ISettings() {
         disabled: !provider.configured,
       });
     });
-    return options.toReversed();
+    return options.reverse();
   }, [providers]);
 
 

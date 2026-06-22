@@ -28,7 +28,7 @@ export function LinkChatDrawer(props: {
 
   // derived state
   const { activeLinkId, onDeleteLink } = props;
-  const chatLinkItems = props.sharedChatLinkItems.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const chatLinkItems = [...props.sharedChatLinkItems].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const hasLinks = chatLinkItems.length > 0;
 
 

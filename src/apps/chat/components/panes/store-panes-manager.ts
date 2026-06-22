@@ -270,7 +270,7 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         if (paneIndex < 0 || paneIndex >= chatPanes.length)
           return state;
 
-        const newPanes = chatPanes.toSpliced(paneIndex, 1);
+        const newPanes = chatPanes.filter((_, i) => i !== paneIndex);
 
         // when a pane is removed, focus the pane 0, or null if no panes remain
         return {
