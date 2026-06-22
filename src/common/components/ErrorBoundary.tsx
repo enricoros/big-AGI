@@ -58,6 +58,22 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return;
     }
 
+    // Stale-deploy chunk load failures: auto-reload once per session to fetch current files.
+    // The transient first-time case is expected after a deploy (don't report it); only a
+    // failure that survives a reload (broken deploy / CDN / offline) is worth reporting.
+    if (isChunkLoadError(error)) {
+      if (this.tryReloadOnceForChunkError())
+        return; // reloading now - fallback UI not needed
+      console.warn(`Persistent chunk load error in ${componentName}: ${error.message}`);
+      posthogCaptureException(error, {
+        agi_domain: 'client-error-boundary',
+        agi_runtime: 'browser',
+        component: componentName,
+        chunk_reload_failed: true,
+      });
+      return; // keep hasError=true so the "Update Required" fallback renders
+    }
+
     // Log the error using the custom logger (skip reporting to PostHog since we handle it directly below)
     logger.error(
       `ErrorBoundary caught an error in ${componentName}`,
@@ -79,6 +95,27 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     // Call the optional onError callback for external reporting
     onError?.(error, errorInfo);
+  }
+
+  /**
+   * Reload the page once per session to recover from a stale-deploy chunk load failure.
+   * Guarded by sessionStorage (with a short time window) to avoid reload loops when the
+   * chunk is genuinely unreachable (offline / broken deploy / sessionStorage unavailable).
+   * @returns true if a reload was triggered, false if we should fall back to the manual UI.
+   */
+  private tryReloadOnceForChunkError(): boolean {
+    if (typeof window === 'undefined') return false;
+    const RELOAD_GUARD_KEY = 'agi-chunk-reload-at';
+    try {
+      const prev = window.sessionStorage.getItem(RELOAD_GUARD_KEY);
+      if (prev && (Date.now() - Number(prev)) < 30_000)
+        return false; // already auto-reloaded recently - don't loop
+      window.sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
+    } catch {
+      return false; // sessionStorage unavailable (private mode etc.) - don't risk a loop
+    }
+    window.location.reload();
+    return true;
   }
 
   resetErrorBoundary = (): void => {
