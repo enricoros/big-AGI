@@ -133,8 +133,24 @@ function safeObjectToString(obj: object): string {
 
 /**
  * Serialize an error object to a plain object for storage or transmission.
+ * Guards against circular references and pathological depth (cyclic `cause` chains,
+ * self-referencing payloads, React fibers/DOM nodes) which would otherwise throw
+ * 'Maximum call stack size exceeded' as this runs on every logged error payload.
  */
+const SERIALIZE_ERROR_MAX_DEPTH = 24;
+
 export function serializeError(value: any): any {
+  return _serializeError(value, new WeakSet(), 0);
+}
+
+function _serializeError(value: any, seen: WeakSet<object>, depth: number): any {
+  // cycle / depth guards (only objects can recurse)
+  if (value !== null && typeof value === 'object') {
+    if (seen.has(value)) return '[Circular]';
+    if (depth > SERIALIZE_ERROR_MAX_DEPTH) return '[MaxDepth]';
+    seen.add(value);
+  }
+
   // handle Error objects
   if (value instanceof Error) {
     return {
@@ -142,7 +158,7 @@ export function serializeError(value: any): any {
       name: value.name ?? 'SError',
       message: value.message ?? 'No SMessage',
       ...(value.stack !== undefined && { stack: value.stack }), // Include stack if available
-      ...(value.cause !== undefined && { cause: serializeError(value.cause) }), // Recursively serialize cause
+      ...(value.cause !== undefined && { cause: _serializeError(value.cause, seen, depth + 1) }), // Recursively serialize cause
       // Capture other properties
       ...Object.fromEntries(
         Object.entries(value).filter(([k]) => !['name', 'message', 'stack', 'cause'].includes(k)),
@@ -153,12 +169,12 @@ export function serializeError(value: any): any {
   // handle objects that might contain errors
   if (value && typeof value === 'object') {
     if (Array.isArray(value)) {
-      return value.map(serializeError);
+      return value.map((v) => _serializeError(v, seen, depth + 1));
     }
 
     const result: Record<string, any> = {};
     for (const [key, val] of Object.entries(value)) {
-      result[key] = serializeError(val);
+      result[key] = _serializeError(val, seen, depth + 1);
     }
     return result;
   }
