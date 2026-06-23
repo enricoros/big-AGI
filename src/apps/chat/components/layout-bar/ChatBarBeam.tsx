@@ -6,13 +6,14 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 
-import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Release } from '~/common/app.release';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationBackgroundBeamGather, animationColorBeamScatterINV, animationEnterBelow } from '~/common/util/animUtils';
+
+import { ChatBarBreadcrumbs } from './ChatBarBreadcrumbs';
 
 
 const _styles = {
@@ -22,23 +23,7 @@ const _styles = {
     display: 'flex',
     alignItems: 'center',
     gap: { xs: 1, md: 2 } as const,
-
-    minWidth: 0, // ensures the breadcrumbs don't overflow
-    // Customize breadcrumbs to enable collapse of the first one (chat title)
-    '& nav': {
-      overflow: 'hidden',
-    },
-    '& nav > ol': {
-      flexWrap: 'nowrap',
-    } as const,
-    '& nav > ol > li:first-of-type': {
-      overflow: 'hidden',
-      // allow the chat title to use available space, shrinking gracefully when the bar is narrow
-      // NOTE: already performed by virtue of the breadcrumb having agi-ellipsize on the crumbs
-      // flexShrink: 1,
-      // minWidth: '60px',
-    } as const,
-
+    minWidth: 0, // ensures the breadcrumbs can shrink/ellipsize instead of overflowing (collapse rules live in ChatBarBreadcrumbs)
   } as const,
 
   barScatter: {
@@ -117,13 +102,15 @@ export function ChatBarBeam(props: {
         </GoodTooltip>
       )}
 
-      <AppBreadcrumbs rootTitle={
-        props.conversationTitle?.length > 3
-          ? <Box className='agi-ellipsize'>{props.conversationTitle || 'Chat'}</Box>
-          : undefined
-      }>
+      {/* Unified context breadcrumbs: the chat title is now a clickable *ancestor* (back to chat), Beam is the leaf */}
+      <ChatBarBreadcrumbs
+        conversationId={null /* sub-context: the crumb navigates, it is not the editable leaf */}
+        conversationTitle={props.conversationTitle}
+        isMobile={props.isMobile}
+        onConversationClick={handleCloseBeam}
+      >
 
-        {/* Title & Status */}
+        {/* Beam status leaf */}
         <Typography level='title-md' noWrap>
           <Box
             component='span'
@@ -137,7 +124,7 @@ export function ChatBarBeam(props: {
           {(!isGatheringAny && !isScattering && !isEditMode) && ' Mode'}
         </Typography>
 
-      </AppBreadcrumbs>
+      </ChatBarBreadcrumbs>
 
       {/* Right Close Icon */}
       <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke variant='outlined' combo='Esc' /></Box>}>

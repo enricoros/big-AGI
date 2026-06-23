@@ -80,6 +80,9 @@ interface AppChatStore {
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
+  showToolbarNavigation: boolean;
+  toggleShowToolbarNavigation: () => void;
+
   // other chat-specific configuration
 
   notificationEnabledModelIds: DLLMId[];
@@ -155,6 +158,10 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     showSystemMessages: false,
     setShowSystemMessages: (showSystemMessages: boolean) => _set({ showSystemMessages }),
+
+    // off by default + no setting UI on `main`: the breadcrumb stays dormant here; `dev` adds the toggle
+    showToolbarNavigation: false,
+    toggleShowToolbarNavigation: () => _set(({ showToolbarNavigation }) => ({ showToolbarNavigation: !showToolbarNavigation })),
 
     // Other chat-specific configuration
 
@@ -269,6 +276,9 @@ export const getChatShowSystemMessages = (): boolean =>
 
 export const useChatShowSystemMessages = (): [boolean, (showSystemMessages: boolean) => void] =>
   useAppChatStore(useShallow(state => [state.showSystemMessages, state.setShowSystemMessages]));
+
+export const useChatShowToolbarNavigation = (): boolean =>
+  useAppChatStore(state => state.showToolbarNavigation);
 
 export const getIsNotificationEnabledForModel = (modelId: DLLMId): boolean =>
   useAppChatStore.getState().isNotificationEnabledForModel(modelId);
