@@ -33,6 +33,7 @@ The `gh` command is available to interact with GitHub from the terminal, but **N
 - `private` -> `big-agi/big-agi-private` (private, default branch: `dev`) - main dev repo with `dev`->`staging`->`prod` pipeline
 - **Always use `git mv` instead of `mv`** when renaming or moving files - preserves git history tracking
 - **NEVER run `git stash`** - it causes work loss
+- **Commit subjects**: `Area: terse imperative` (e.g. `LLMs: OpenAI: ...`, `Build: ...`), single line, no body unless needed, and no `Co-Authored-By` trailer
 
 **Branch contents:**
 - `main` is the open-source build: local-first, BYO-keys, full AIX and provider coverage
@@ -43,6 +44,7 @@ The `gh` command is available to interact with GitHub from the terminal, but **N
 - `dev` is rebased on top of `main` (never merged) - `main` changes flow into `dev` on the next rebase, no manual forward-port needed
 - Never `git merge` between the two branches - breaks the linear topology
 - Backporting `dev` -> `main` is a re-implementation, never a cherry-pick - keep `main`-side edits minimal/additive so the existing `dev` version lands cleanly on rebase; split into small commits when natural
+- Rebasing `dev` onto `main`: work on a scratch branch (never `private/dev` directly); only files `main` changed since the merge-base can conflict - forecast with `git diff --name-only $(git merge-base private/dev opensource/main) opensource/main`
 
 ### Core Directory Structure
 
@@ -216,11 +218,15 @@ Located in `/src/common/stores/` with stores like:
 - Run `npm run lint` before committing
 - Type-check with `tsc --noEmit`
 - Test critical user flows manually
+- Browser floor is lint-enforced: `no-restricted-syntax` bans ES2023 `toSorted/toReversed/toSpliced/with` + unguarded `Intl.Segmenter` (they crash Chrome 109 / Win7 holdouts). Use `[...x].sort()` etc.; don't lower `browserslist` to "fix" it - SWC won't polyfill prototype methods
 
 ### Debugging Storage Issues
 - Check IndexedDB: DevTools -> Application -> IndexedDB -> `app-chats`
 - Monitor Zustand state: Use Zustand DevTools
 - Check migration logs in console during rehydration
+
+### Production errors (app.big-agi.com)
+- That host is the deployed build - triage runtime errors via the PostHog MCP (filter `url: app.big-agi.com`). Client noise filter (`before_send` / `shouldSuppressPostHogCapture`, matched on `$exception_list`) lives in `src/common/components/3rdparty/PostHogAnalytics.tsx`; `mechanism.handled:false` = an unhandled rejection via autocapture. Suppress only environmental/extension noise, never real bugs
 
 
 ## Server Architecture
