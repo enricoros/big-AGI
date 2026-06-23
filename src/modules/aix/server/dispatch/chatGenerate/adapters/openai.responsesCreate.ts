@@ -48,6 +48,7 @@ export function aixToOpenAIResponses(
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
 
   const isDialectAzure = openAIDialect === 'azure';
+  const isDialectSakana = openAIDialect === 'sakanaai';
 
   // ---
   // construct the request payload
@@ -177,6 +178,8 @@ export function aixToOpenAIResponses(
         payload.tools = [];
       const webSearchTool: TRequestTool = model.id.includes('-deep-research') ? {
         type: 'web_search_preview', // HOTFIX for deep research models, which only seem to support the outdated 'web_search_preview' tool
+      } : isDialectSakana ? {
+        type: 'web_search', // [Sakana.ai] bare tool only - advanced options (context size, location, access) are not supported
       } : {
         type: 'web_search',
         search_context_size: model.vndOaiWebSearchContext ?? undefined,

@@ -245,13 +245,15 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'openai':
     case 'openrouter':
     case 'perplexity':
+    case 'sakanaai':
     case 'togetherai':
     case 'xai':
     case 'zai':
 
-      // newer: OpenAI Responses API, for models that support it and all XAI models
+      // newer: OpenAI Responses API, for models that support it and all XAI/Sakana models
+      const isSakanaModel = dialect === 'sakanaai'; // All Sakana Fugu models use the Responses API (tools, multimodal, reasoning)
       const isXAIModel = dialect === 'xai'; // All XAI models are accessed via Responses now
-      const isResponsesAPI = !!model.vndOaiResponsesAPI || isXAIModel;
+      const isResponsesAPI = !!model.vndOaiResponsesAPI || isSakanaModel || isXAIModel;
       if (isResponsesAPI) {
         return {
           request: {
@@ -360,6 +362,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'moonshot':
     case 'ollama':
     case 'perplexity':
+    case 'sakanaai':
     case 'togetherai':
     case 'xai':
     case 'zai':

@@ -15,6 +15,7 @@ import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
+import { ModelVendorSakanaAI } from './sakanaai/sakanaai.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
 import { ModelVendorXAI } from './xai/xai.vendor';
 import { ModelVendorZAI } from './zai/zai.vendor';
@@ -38,6 +39,7 @@ export type ModelVendorId =
   | 'openai'
   | 'openrouter'
   | 'perplexity'
+  | 'sakanaai'
   | 'togetherai'
   | 'xai'
   | 'zai'
@@ -60,6 +62,7 @@ const MODEL_VENDOR_REGISTRY = {
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
+  sakanaai: ModelVendorSakanaAI,
   togetherai: ModelVendorTogetherAI,
   xai: ModelVendorXAI,
   zai: ModelVendorZAI,

@@ -499,6 +499,12 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .replace(/-x$/, ' X')
       .replace(/-32b.*$/, ' 32B');
   }
+  // [Sakana.ai] fugu, fugu-ultra, fugu-ultra-20260615 (service prefix already stripped by the auto-label heuristic)
+  if (model === 'fugu' || model.startsWith('fugu-')) {
+    return model
+      .replace(/-20\d{6}$/, '') // strip dated snapshot suffix (e.g. -20260615)
+      .split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  }
   // [FireworksAI]
   if (model.includes('accounts/')) {
     const index = model.indexOf('accounts/');

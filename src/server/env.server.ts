@@ -88,6 +88,10 @@ export const env = createEnv({
     // LLM: Perplexity
     PERPLEXITY_API_KEY: z.string().optional(),
 
+    // LLM: Sakana AI
+    SAKANA_API_KEY: z.string().optional(),
+    SAKANA_API_HOST: z.url().optional(),
+
     // LLM: Together AI
     TOGETHERAI_API_KEY: z.string().optional(),
 

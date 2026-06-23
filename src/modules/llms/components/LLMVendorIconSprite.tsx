@@ -27,6 +27,7 @@ const VI: Record<ModelVendorId, string> = {
   openai: 'vi-openai',
   openrouter: 'vi-openrouter',
   perplexity: 'vi-perplexity',
+  sakanaai: 'vi-sakanaai',
   togetherai: 'vi-togetherai',
   xai: 'vi-xai',
   zai: 'vi-zai',
@@ -164,6 +165,13 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
           <path d='M 5.7,13.9 12,8.1 V 16.2 L 5.7,21.8 Z' fill='none' />
           <path d='M 3.1,8.1 V 16.5 H 5.7 V 13.9 L 12,8.1 Z' fill='none' />
           <path d='m 12,8.2 6.3,5.8 v 2.6 h 2.6 V 8.2 Z' fill='none' />
+          </g>
+        </symbol>
+
+        <symbol id={VI.sakanaai} viewBox='0 0 24 24'>
+          <g fill='currentColor'>
+          <path fillRule='evenodd' clipRule='evenodd' d='M2 12C4 8 8 6 12 7C15 7.5 17 9.5 18 12C17 14.5 15 16.5 12 17C8 18 4 16 2 12ZM7.5 10.5C7.5 11.05 7.05 11.5 6.5 11.5C5.95 11.5 5.5 11.05 5.5 10.5C5.5 9.95 5.95 9.5 6.5 9.5C7.05 9.5 7.5 9.95 7.5 10.5Z' />
+          <path d='M18 12L22.5 8.5V15.5L18 12Z' />
           </g>
         </symbol>
 

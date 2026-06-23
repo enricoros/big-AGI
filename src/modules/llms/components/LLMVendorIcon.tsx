@@ -24,6 +24,7 @@ import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
 import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon';
+import { SakanaAIIcon } from '~/common/components/icons/vendors/SakanaAIIcon';
 import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
 import { XAIIcon } from '~/common/components/icons/vendors/XAIIcon';
 import { ZAIIcon } from '~/common/components/icons/vendors/ZAIIcon';
@@ -50,6 +51,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   openai: OpenAIIcon,
   openrouter: OpenRouterIcon,
   perplexity: PerplexityIcon,
+  sakanaai: SakanaAIIcon,
   togetherai: TogetherIcon,
   xai: XAIIcon,
   zai: ZAIIcon,

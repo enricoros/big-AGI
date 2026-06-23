@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
@@ -10,12 +10,6 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 
 // --- SakanaAI Model ID inference (auto-derived from _sakanaKnownModels) ---
 export type LlmsSakanaAIModelId = typeof _sakanaKnownModels[number]['idPrefix'];
-
-
-// [Sakana.ai] host heuristic - matches 'api.sakana.ai' when configured as a custom OpenAI host (dialect 'openai').
-export function sakanaAIHeuristic(hostnameOrUrl: string) {
-  return hostnameOrUrl.includes('.sakana.ai');
-}
 
 
 // [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (2026-06-23).
@@ -40,8 +34,19 @@ const _fuguUltraPrice: ModelDescriptionSchema['chatPrice'] = {
   cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
 };
 
-// Reasoning effort: Fugu accepts two levels - 'high' and 'xhigh' ('max' is a compat alias for 'xhigh').
-const _fuguEffortSpec = { paramId: 'llmVndOaiEffort' as const, enumValues: ['high', 'xhigh'] };
+// Fugu params (Responses API). Reasoning effort: 'high' / 'xhigh' ('max' is a compat alias for 'xhigh',
+// rejected by the Responses adapter, so not offered). Web search reuses the OpenAI Responses 'web_search'
+// hosted tool: Sakana ignores the context-size value and accepts only the bare tool - the responses adapter
+// emits `{ type: 'web_search' }` for the 'sakanaai' dialect.
+const _fuguParamSpecs = [
+  { paramId: 'llmVndOaiEffort' as const, enumValues: ['high', 'xhigh'] },
+  // Sakana web_search is a bare on/off tool (no context-size levels) - restrict the enum to a single
+  // value so the UI shows just On/Off; the adapter emits `{ type: 'web_search' }` regardless of the value.
+  { paramId: 'llmVndOaiWebSearchContext' as const, enumValues: ['high'] },
+];
+
+// Common Fugu interfaces. LLM_IF_OAI_Responses: all Fugu models are driven via the Responses API (see chatGenerate.dispatch).
+const _fuguUltraInterfaces = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching];
 
 const _sakanaKnownModels = llmsDefineManualMappings([
   // Fugu Ultra - dated snapshot (pinnable). Same capabilities/pricing as the floating 'fugu-ultra'.
@@ -50,8 +55,8 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     label: 'Sakana Fugu Ultra (2026-06-15)',
     description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Dated snapshot. 1M context.',
     contextWindow: 1000000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [_fuguEffortSpec],
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
     chatPrice: _fuguUltraPrice,
     pubDate: '20260615',
   },
@@ -61,8 +66,8 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     label: 'Sakana Fugu Ultra',
     description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. 1M context.',
     contextWindow: 1000000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [_fuguEffortSpec],
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
     chatPrice: _fuguUltraPrice,
     pubDate: '20260622',
   },
@@ -72,8 +77,8 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     label: 'Sakana Fugu',
     description: 'Fast orchestration model routing tasks across a swappable pool of frontier LLMs - low latency, high quality. 1M context. Billed at the routed underlying model\'s standard rate.',
     contextWindow: 1000000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    parameterSpecs: [_fuguEffortSpec],
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
+    parameterSpecs: _fuguParamSpecs,
     pubDate: '20260622',
   },
 ]);
